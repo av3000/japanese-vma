@@ -16,7 +16,7 @@ class CreateArticleWordTable extends Migration
         Schema::create('article_word', function (Blueprint $table) {
             $table->increments("id");
             $table->integer('article_id')->unsigned();
-            $table->integer('kanji_id')->unsigned();
+            $table->integer('word_id')->unsigned();
         });
     }
 

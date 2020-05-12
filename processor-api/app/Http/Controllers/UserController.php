@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
 use Illuminate\Http\Request;
+use App\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Facades\JWTFactory;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Contracts\JWTSubject;
-use Tymon\JWTAuth\PayloadFactory;
-use Tymon\JWTAuth\JWTManager as JWT;
 
 class UserController extends Controller
 {
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+    	$validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:6|max:20|confirmed'
@@ -33,69 +27,52 @@ class UserController extends Controller
             'password' => Hash::make($request->get('password'))
         ]);
 
-        $token = JWTAuth::fromUser($user);
+     	$accessToken = $user->createToken('authToken');
 
-        return response()->json(compact('user', 'token'), 201);
+     	return response(['user'=>$user, 'accessToken'=>$accessToken]);
     }
 
-
-    public function login(Request $request)
+    public function login(Request $request) 
     {
+    	$loginData = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
         $user = User::where('email', $request->email)->get()->first();
-        if ($user && \Hash::check($request->password, $user->password))
+
+        if(!auth()->attempt($loginData)) 
         {
-            $credentials = $request->all();
-            // Can user connect with failed credential?
-            // Or should he able to connect without it too?
-            try {
-                if(! $token = JWTAuth::attempt($credentials)) {
-                    return response()->json(['error' => 'invalid_credentials'], 400);
-                }
-            } catch(JWTException $e) {
-                return response()->json(['error' => 'could_not_create_token'], 500);
-            }
-            
-            return response()->json(compact('token'));
+        	return response(['message' => 'Invalid credentialS ...']);
         }
-        else 
-            $response = ['success'=>false, 'data'=>'Record does not exist'];
+        
+    	$accessToken = auth()->user()->createToken('authToken');
+
+     	return response(['user'=>auth()->user(), 'accessToken'=>$accessToken]);
+    }
+
+    /**
+     * Logout user (Revoke the token)
+     *
+     * @return [string] message
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->token()->revoke();
+        return response()->json([
+            'message' => 'Successfully logged out'
+        ]);
+    }
   
-        return response()->json($response, 201);
+    /**
+     * Get the authenticated User
+     *
+     * @return [json] user object
+     */
+    public function user(Request $request)
+    {
+        return response()->json($request->user());
     }
+    // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
 
-    private function getToken($email, $password) {
-        $token = null;
-        try {
-            if (!$token = JWTAuth::attempt( ['email'=>$email, 'password'=>$password])) {
-                return response()->json([
-                    'response' => 'error',
-                    'message' => 'Password or email is invalid',
-                    'token'=>$token
-                ]);
-            }
-        } catch (JWTAuthException $e) {
-            return response()->json([
-                'response' => 'error',
-                'message' => 'Token creation failed',
-            ]);
-        }
-
-        return $token;
-    }
-
-    // public function getAuthenticatedUser()
-    // {
-    //     try {
-    //         if (! $user = JWTAuth::parseToken()->authenticate()) {
-    //             return response()->json(['user_not_found'], 404);
-    //         }
-    //     } catch (Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
-    //         return response()->json(['token_expired'], $e->getStatusCode());
-    //     } catch (Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
-    //         return response()->json(['token_invalid'], $e->getStatusCode());
-    //     } catch (Tymon\JWTAuth\Exceptions\JWTException $e) {
-    //         return response()->json(['token_absent'], $e->getStatusCode());
-    //     }
-    //     return response()->json(compact('user'));
-    // }
 }

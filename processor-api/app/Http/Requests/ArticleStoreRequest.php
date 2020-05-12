@@ -13,7 +13,7 @@ class ArticleStoreRequest extends FormRequest
      */
     public function authorize()
     {
-        return false; // What authorized means? is simple user is already authorized?
+        return true; // What authorized means? is simple user is already authorized?
     }
 
     /**
@@ -24,10 +24,10 @@ class ArticleStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'title_en'    => 'min:6|max:255',
-            'title_jp'    => 'required|min:6|max:255',
+            'title_en'    => 'max:255',
+            'title_jp'    => 'required|min:2|max:255',
             'content_en'  => 'max:3000',
-            'content_jp'  => 'required|min:10|max:3000',
+            'content_jp'  => 'required|min:2|max:3000',
             'status'      => 'required',
             'source_link' => 'required'
         ];
@@ -42,4 +42,18 @@ class ArticleStoreRequest extends FormRequest
             'status.required' => 'An Article needs to have a Status'
         ];
     }
+
+
+    // /**
+    //  *  Filters to be applied to the input.
+    //  *
+    //  * @return array
+    //  */
+    // public function filters()
+    // {
+    //     return [
+    //         'email' => 'trim|lowercase',
+    //         'name' => 'trim|capitalize|escape'
+    //     ];
+    // }
 }

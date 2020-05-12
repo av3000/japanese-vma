@@ -12,12 +12,34 @@ use App\Http\Requests\ArticleStoreRequest;
 
 class ArticleController extends Controller
 {
-    public function index() {
-        return Article::all();
+    public function __constructor(){
+        // Do the middleware stuff
+        //  or add only to specific routes "auth()->user()" 
+        // or something like that.
+        //  FOR NOW AUTH:API ROUTES ARE DOING IT
     }
 
-    public function show($id) { // Helper function which will count and save jlpts after kanji extract
+    public function index() {
+        $articles = Article::all();
+        if(isset($articles))
+         {
+            return response()->json([
+                'success' => true, 'articles' => $articles
+             ]);
+         }
+         return response()->json([
+            'success' => false, 'message' => 'There are no articles...'
+         ]);
+    }
+
+    public function show($id) {
         $article = Article::find($id);
+        if(!isset($article)){
+            return response()->json([
+                'success' => false, 'message' => 'Requested article does not exist'
+            ]);
+        }
+
         $article->jlpt1 = 0;
         $article->jlpt2 = 0;
         $article->jlpt3 = 0;
@@ -25,6 +47,7 @@ class ArticleController extends Controller
         $article->jlpt5 = 0;
         $article->jlptcommon = 0;
 
+        $article->words = $article->words()->get();
         $article->kanjis = $article->kanjis()->get();
         foreach($article->kanjis as $kanji){
             if($kanji->jlpt == "1")      { $article->jlpt1++; }
@@ -37,62 +60,170 @@ class ArticleController extends Controller
         $article->kanjiTotal = $article->jlpt1 + $article->jlpt2 + $article->jlpt3 + $article->jlpt4 + $article->jlpt5 + $article->jlptcommon;
 
         $user = User::find($article->user_id);
-        $article->author = $user->name;
-        
-        return $article;
+        $article->userName = $user->name;
+        $article->userId = $user->id;
+
+        #           Method 1:
+        // Furigana battle. Display furigana above text functionality
+        // $article->wordsWithFurigana = [
+        //     array($recognizedWordFromContentJp, $wordFromArticleWords)
+        //     array($recognizedWordFromContentJp, $wordFromArticleWords)
+        //     array($recognizedWordFromContentJp, $wordFromArticleWords)
+        //     ...
+        // ]
+        #  Seems like we will need to save straight after WordsExtracting
+        # into DB table "articles.content_furi"
+        #           Method 2:
+        # display ONLY furigana, without trying to find each of content_jp word place in text.
+
+        return response()->json([
+            'success' => true,
+            'article' => $article
+        ]);
     }
 
     public function getUserArticles($id) {
-        return $articles = Article::where("user_id", $id)->get();
+         $articles = Article::where("user_id", $id)->get();
+         if(isset($articles))
+         {
+            return response()->json([
+                'success' => true, 'articles' => $articles
+             ]);
+         }
+         return response()->json([
+            'success' => false, 'message' => 'Requested Article does not exist or User has no articles'
+         ]);
     }
 
     public function articleKanjis($id){
-        return $article = Text::find($id)->kanjis()->get();
+        $articleKanjis = Article::find($id)->kanjis()->get();
+
+        if(isset($articleKanjis))
+         {
+            return response()->json([
+                'success' => true, 'articleKanjis' => $articleKanjis
+             ]);
+         }
+         return response()->json([
+            'success' => false, 'message' => 'Requested Article does not have kanjis'
+         ]);
     }
 
     public function articleWords($id){
-        return $article = Text::find($id)->words()->get();
+        $articleWords = Article::find($id)->words()->get();
+
+        if(isset($articleWords))
+         {
+            return response()->json([
+                'success' => true, 'articleWords' => $articleWords
+             ]);
+         }
+         return response()->json([
+            'success' => false, 'message' => 'Requested Article does not have words'
+         ]);
     }
 
     public function generateQuery(Request $request) { // Not sure about encoding part if it work.
         $q = $request->get("q");
-        return Article::where("title_en", "like", "%".$q."%")
+        $results = Article::where("title_en", "like", "%".$q."%")
                         ->orWhere("title_jp", "like", "%".$q."%")->get();
+        if(!isset($results)) {
+            return response()->json([
+                'success' => false, 'message' => 'Requested query: '.$q. ' returned zero results'
+             ]);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Requested query: '.$q. ' returned: '.count($results).' results',
+            'results' => $results
+        ]);
     }
 
-    public function store(ArticleStoreRequest $request) { // Test out the request
+    public function store(ArticleStoreRequest $request) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }   
 
-        return $validated = $request->validated();
+        $validated = $request->validated();
 
-        // $article = new Article;
-        // $article->title = $request->title;
-        // $article->user_id = $request->user_id;
-        // $article->content = $request->content;
-        // $article->source_link = $request->source_link;
-        
-        // $article->save();
+        $article = new Article;
+        $article->user_id = auth()->user()->id;
+        $article->title_jp = $validated['title_jp'];
+        if(isset($validated['title_en']))
+        {
+            $article->title_en = $validated['title_en'];
+        } else {
+            $article->title_en = "";
+        }
+        if(isset($validated['content_en']))
+        {
+            $article->content_en = $validated['content_en'];
+        } else {
+            $article->content_en = "";
+        }
+        $article->content_jp = $validated['content_jp'];
+        $article->source_link = $validated['source_link'];
+        $article->status = $validated['status'];
+        $article->save();
 
-        // $this->getKanjiIdsFromText($article);
-        // $this->getWordIdsFromText($article);
+        $kanjiResponse = $this->getKanjiIdsFromText($article);
+        $wordResponse  = $this->getWordIdsFromText($article);
 
-        // return response()->json('Article created!');
+        return response()->json([
+            'success' => true,
+            'article' => $article,
+            'kanjis' => $kanjiResponse,
+            'words' => $wordResponse
+        ]);
     }
 
     public function update(Request $request, $id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }   
         $article = Article::find($id);
+        $article->title_jp = $request->title_jp;
+        if(isset($request->title_en))
+        {
+            $article->title_en = $request->title_en;
+        } else {
+            $article->title_en = "";
+        }
+        if(isset($request->content_en))
+        {
+            $article->content_en = $request->content_en;
+        } else {
+            $article->content_en = "";
+        }
+        $article->content_jp = $request->content_jp;
+        $article->source_link = $request->source_link;
+        $article->status = $request->status;
+        $article->save();
 
         $article->kanjis()->wherePivot('article_id', $article->id)->detach();
         $article->words()->wherePivot('article_id', $article->id)->detach();
         
-        $article->update($request->all());
+        $kanjiResponse = $this->getKanjiIdsFromText($article);
+        $wordResponse  = $this->getWordIdsFromText($article);
 
-        $this->getKanjiIdsFromText($article);
-        $this->getWordIdsFromText($article);
-        
-        return response()->json("Article updated!");
+        return response()->json([
+            'success' => true,
+            'updated_article' => $article,
+            'reattached_kanjis' => $kanjiResponse,
+            'retattached_words' => $wordResponse
+        ]);
     }
 
     public function delete(Request $request, $id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }   
         $article = article::find($id);
 
         $article->kanjis()->wherePivot('article_id', $article->id)->detach();
@@ -100,10 +231,18 @@ class ArticleController extends Controller
 
         $article->delete();
 
-        return response()->json("Article deleted!");
+        return response()->json([
+            'success' => true,
+            'deleted_article' => $article,
+        ]);
     }
 
     #====================================================== Japanese Text Handling
+
+    // Optional. 
+    // public function addJltpsToArticle(Article $article){
+    //     return $article;
+    // }
 
     /**
      * Return true if string found in string array
@@ -148,27 +287,31 @@ class ArticleController extends Controller
      * @param object Article
      */
     public function getKanjiIdsFromText(Article $article) {
-        $raw_text    = $this->mb_str_split($article->title . $article->content);
+        $raw_text    = $this->mb_str_split($article->title_jp . $article->content_jp);
         $total       = sizeof($raw_text);
         $foundKanjis = [];
         $index       = 0;
-
         while($index < $total) {
             $kanji = Kanji::where( 'kanji', 'like', $raw_text[$index])->first();
                 if(isset($kanji) && !in_array($kanji->id, $foundKanjis, TRUE) ){ 
                     array_push($foundKanjis, $kanji->id);
+                    // echo "<p>kanji found: " .$kanji->kanji. "</p>";
                     $article->kanjis()->attach($kanji);
                 }
             $index++;
         }
 
+        if( count($foundKanjis)  == 0) {
+            return response()->json(['success' => false, 'kanji_message'=> 'There was no kanji characters in article text...']);
+        }
+        return response()->json(['success' => true, 'kanji_message'=> 'Kanji characters were attached to the article!']);
     }
 
     /**
      * @param object Article
      */
     public function getWordIdsFromText(Article $article) {
-        $testString     = $article->title . $article->content;
+        $testString     = $article->title_jp . $article->content_jp;
         $testString     = str_replace(array("\n", "\r", " "), "", $testString);
         $fullText       = $this->mb_str_split($testString);
         $duplicateArray = [];
@@ -279,5 +422,20 @@ class ArticleController extends Controller
             # and $cursor is the ending of the word and it takes +1 step to the upcoming word.
             $cursor++;
         }
+
+        if( count($duplicateArray) == 0) 
+        {
+            return response()->json(['success' => false, 'word_message'=> 'There was no words found in the article text...'
+            ]);
+        }
+        return response()->json(['success' => true, 'word_message'=> 'Words were attached to the article!']);
+    }
+
+    /**
+     * @param object Article TODO
+     *
+     */
+    public function getWordsFuriganaFromText(Article $article){
+
     }
 }
