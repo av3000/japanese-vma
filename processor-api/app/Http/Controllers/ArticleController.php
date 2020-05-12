@@ -8,6 +8,8 @@ use App\User;
 use App\Article;
 use App\Kanji;
 use App\Word;
+use App\Like;
+use App\ObjectTemplate;
 use App\Http\Requests\ArticleStoreRequest;
 
 class ArticleController extends Controller
@@ -21,6 +23,7 @@ class ArticleController extends Controller
 
     public function index() {
         $articles = Article::all();
+
         if(isset($articles))
          {
             return response()->json([
@@ -32,6 +35,54 @@ class ArticleController extends Controller
          ]);
     }
 
+    public function unlikeArticle($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $like = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ]);
+
+        $like->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "like was deleted",
+        ]);
+    }
+
+    public function likeArticle($id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'message' => 'you cannot like it twice!'
+            ]);
+        }
+        
+        $like = new Like;
+        $like->user_id = auth()->user()->id;
+        $like->template_id = $objectTemplateId;
+        $like->real_object_id = $id;
+        $like->value=1;
+        $like->save();
+
+        return response()->json([
+            'success' => true, 'You liked article of id: '.$id, 'like' => $like
+        ]);
+    }
+
     public function show($id) {
         $article = Article::find($id);
         if(!isset($article)){
@@ -39,6 +90,13 @@ class ArticleController extends Controller
                 'success' => false, 'message' => 'Requested article does not exist'
             ]);
         }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $article->likes = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $article->id
+        ])->get();
+        $article->likesTotal = count($article->likes);
 
         $article->jlpt1 = 0;
         $article->jlpt2 = 0;

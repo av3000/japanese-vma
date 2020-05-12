@@ -12,11 +12,25 @@ class Kanji extends Model
         return $this->belongsToMany('App\Word', 'japanese_kanji_word_long');
     }
 
+    public function sentences() {
+        return $this->belongsToMany('App\Sentence', 'japanese_sentence_kanji');
+    }
+
     public function articles() {
         return $this->belongsToMany('App\Article', 'article_kanji');
     }
 
     public function radicals() {
         return $this->belongsToMany('App\Radical', 'japanese_radical_kanji_long');
+    }
+
+    /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName()
+    {
+        return 'kanji';
     }
 }

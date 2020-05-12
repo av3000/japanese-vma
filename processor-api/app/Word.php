@@ -15,4 +15,8 @@ class Word extends Model
     public function articles() {
         return $this->belongsToMany('App\Article', 'article_word');
     }
+
+    // public function sentences() { Not yet
+    //     return $this->belongsToMany('App\Sentence', 'japanese_sentence_word');
+    // }
 }
