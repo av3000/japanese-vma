@@ -31,6 +31,15 @@ Route::group([
 		Route::put('article/{id}', 'ArticleController@update');
 		Route::delete('article/{id}', 'ArticleController@delete');
 		
+		// Lists CUD
+		Route::post('list', 'CustomListController@store');
+		Route::put('list/{id}', 'CustomListController@update');
+		Route::delete('list/{id}', 'CustomListController@delete');
+		Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
+		Route::post('list/{id}/additem', 'CustomListController@addToList');
+		Route::post('list/{id}/like', 'CustomListController@likeList');
+		Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
+
 		// Sentences CUD
 		Route::post('sentence', 'JapaneseDataController@storeSentence');
 		Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
@@ -68,3 +77,9 @@ Route::get('sentences/{id}', 'JapaneseDataController@showSentence');
 Route::get('sentences/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');
 Route::get('sentences/{id}/words', 'JapaneseDataController@sentenceWords');
 Route::get('material/search', 'JapaneseDataController@generateQuery');
+
+// Custom Lists
+Route::get('lists', 'CustomListController@index');
+Route::get('list/{id}', 'CustomListController@show');
+Route::post('lists/search', 'CustomListController@generateQuery');
+Route::get('user/{id}/lists', 'CustomListController@getUserLists');

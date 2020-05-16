@@ -24,6 +24,17 @@ class ArticleController extends Controller
     public function index() {
         $articles = Article::all();
 
+        # Need to Test
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        foreach($articles as $singleArticle)
+        {
+            $singleArticle->likes = Like::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $singleArticle->id
+            ])->get();
+            $singleArticle->likesTotal = count($singleArticle->likes);
+        }
+
         if(isset($articles))
          {
             return response()->json([
@@ -141,7 +152,21 @@ class ArticleController extends Controller
     }
 
     public function getUserArticles($id) {
-         $articles = Article::where("user_id", $id)->get();
+        $articles = Article::where("user_id", $id)->get();
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $article->likes = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $article->id
+        ])->get();
+        $article->likesTotal = count($article->likes);
+        # Need to Test
+        //  foreach($articles as $singleArticle)
+        //  {
+        //      $singleArticle->kanjis = $this->articleKanjis($singleArticle->id);
+        //      $singleArticle->words = $this->articleWords($singleArticle->id);
+        //  }
+
          if(isset($articles))
          {
             return response()->json([
