@@ -1,3 +1,4 @@
+# Development branch
 # Japanese Learning Environment
 
 Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side.
@@ -5,8 +6,6 @@ Built using [Laravel](https://laravel.com/docs) for Server API and [React](https
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
 
 ## libraries
-
-
 
 ### Backend
 - [mpdf](https://mpdf.github.io/)
