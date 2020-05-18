@@ -519,12 +519,26 @@ class ArticleController extends Controller
      * @param object Article TODO
      *
      */
-    public function getWordsFuriganaFromText(Article $article){
-    }
+    public function getWordsFuriganaFromText(Article $article){ return response()->json([ 'message' => 'getWordsFuriganaFromText. Im still empty tho.']); }
 
-    public function generateWordsPdf(Article $article) 
+    public function generateWordsPdf($id) 
 	{
-        $user = User::find($article->user_id)->first();
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $article = Article::find($id);
+
+        if( !$article )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested article does not exist'
+            ]);
+        }
+        $user = User::find($article->user_id);
         $wordList = $article->words()->get();
 
         $differentTags = [];
@@ -632,10 +646,26 @@ class ArticleController extends Controller
         return $pdf->stream("article-words.pdf");
     }
     
-    public function generateKanjisPdf(Article $article) 
+    public function generateKanjisPdf($id) 
 	{
-        $user = User::find($article->user_id)->first();
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $article = Article::find($id);
+
+        if( !$article )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested article does not exist'
+            ]);
+        }
+        $user = User::find($article->user_id);
         $kanjiList = $article->kanjis()->get();
+
         foreach($kanjiList as $kanji) {
             $kanji->onyomi = implode(", ", array_slice(explode("|", $kanji->onyomi), 0, 3));
             $kanji->kunyomi = implode(", ", array_slice(explode("|", $kanji->kunyomi), 0, 3));

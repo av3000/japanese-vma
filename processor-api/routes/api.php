@@ -31,6 +31,8 @@ Route::group([
 		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
 		Route::put('article/{id}', 'ArticleController@update');
 		Route::delete('article/{id}', 'ArticleController@delete');
+		Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
+		Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
 		
 		// Lists CUD
 		Route::post('list', 'CustomListController@store');
@@ -40,6 +42,10 @@ Route::group([
 		Route::post('list/{id}/additem', 'CustomListController@addToList');
 		Route::post('list/{id}/like', 'CustomListController@likeList');
 		Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
+		Route::get('list/{id}/radicals-pdf', 'CustomListController@generateRadicalsPdf');
+		Route::get('list/{id}/kanjis-pdf', 'CustomListController@generateKanjisPdf');
+		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
+		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
 
 		// Sentences CUD
 		Route::post('sentence', 'JapaneseDataController@storeSentence');
@@ -61,8 +67,6 @@ Route::post('/login', 'UserController@login');
 
 // Articles
 Route::get('article/{id}', 'ArticleController@show');
-Route::get('article/{article}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
-Route::get('article/{article}/words-pdf', 'ArticleController@generateWordsPdf');
 
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
@@ -87,3 +91,4 @@ Route::get('lists', 'CustomListController@index');
 Route::get('list/{id}', 'CustomListController@show');
 Route::post('lists/search', 'CustomListController@generateQuery');
 Route::get('user/{id}/lists', 'CustomListController@getUserLists');
+

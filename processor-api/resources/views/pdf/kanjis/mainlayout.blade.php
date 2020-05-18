@@ -29,7 +29,7 @@
           padding: 0;
       }
       #kanjiTd {
-        font-size: 2rem;
+        font-size: 1.5rem;
       }
       .kanjis-table {
         overflow-x: visible !important;
@@ -41,20 +41,6 @@
           }
         }
     </style>
-    <!-- <style type="text/css">
-        @media print {
-                .element-that-contains-table {
-                    overflow: visible !important;
-                }
-            }
-
-        thead{display: table-header-group;}
-        tfoot {display: table-row-group;}
-        tr {page-break-inside: avoid;}
-
-    </style> -->
-    <!-- Custom styles for this template -->
-    <!-- <link href="/css/kanjis.css" rel="stylesheet"> -->
  </head>
  <body>
   <!-- @include('pdf.kanjis.nav') -->

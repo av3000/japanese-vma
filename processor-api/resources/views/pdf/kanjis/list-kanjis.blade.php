@@ -1,30 +1,24 @@
 @extends('pdf.kanjis.mainlayout')
 
 @section('title')
-{{ $title_jp }}
+{{ $title }}
 @endsection
 
 @section("links")
     <div class="col-md-6">
-        <a class="text-primary float-left" href="{{ url('article/'.$article_id) }}">www.jplearning.online/article/{{$article_id}}</a>
+        <a class="text-primary float-left" href="{{ url('list/'.$list_id) }}">www.jplearning.online/list/{{$list_id}}</a>
     </div>
     <div class="col-md-6">
-        <a class="text-primary float-right" href="{{ url($source_link) }}">original source</a>
+        <!-- <a class="text-primary float-right" href="{{ url('user/'.$user_id) }}">Author profile</a> -->
     </div>
 @endsection
 
 @section('content')
-<div class="col-md-12 mb-5">
-    <h3>{{ $title_jp }}</h3>
-    <p> {{ $content_jp }} </p>
-</div>
-<div class="page-break"></div>
-
 <div class="col-lg-6 col-md-12 mb-5">
     <div class="card">
         <div class="card-header card-header-warning">
-            <!-- <h4 class="card-title">Employees Stats</h4> -->
-            <p class="card-category">Found Kanjis</p>
+            <p class="card-category">Kanjis list | {{ $title }} by 
+            <a class="text-primary float-right" href="{{ url('user/'.$user_id) }}"> {{ $author }} </a></p>
         </div>
         <div class="card-body table-responsive kanjis-table">
             <table class="table table-hover">
@@ -40,7 +34,8 @@
             <tbody>
                 @foreach($kanjiList as $singleKanji)
                     <tr>
-                    <td lang="ja" id="kanjiTd"> <a href="{{ url('kanji/'. $singleKanji->id)}}" target="_blank"> {{ $singleKanji->kanji }} </a></td>
+                    <!-- <td lang="ja" id="kanjiTd"> <a href="{{ url('kanji/'. $singleKanji->id)}}" target="_blank"> {{ $singleKanji->kanji }} </a></td> -->
+                    <td lang="ja" id="kanjiTd"> {{ $singleKanji->kanji }} </td>
                     <td lang="ja"> {{ $singleKanji->onyomi }} </td>
                     <td lang="ja"> {{ $singleKanji->kunyomi }} </td>
                     <td> {{ $singleKanji->meaning }} </td>

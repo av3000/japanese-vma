@@ -15,6 +15,7 @@ use App\CustomList;
 use App\Like;
 use App\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class CustomListController extends Controller
 {
@@ -345,6 +346,282 @@ class CustomListController extends Controller
         ]);
     }
 
+    # PDF generating
+    public function generateRadicalsPdf($id)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $list = CustomList::find($id);
+
+        if( !$list )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist'
+            ]);
+        }
+
+        if( $list->type != 1 || $list->type != 5)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not contain radicals'
+            ]);
+        }
+
+        $user = User::find($list->user_id);
+        $list = $this->getListItems($list);
+
+        $data = [
+            'list_id' => $list->id,
+            'title' => $list->title,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $list->created_at,
+            'radicalList' => $list->listItems
+        ];
+
+        $pdf = PDF::loadView("pdf.kanjis.list-radicals", $data);
+        $pdf->setOptions([
+            'footer-center' => '[page]',
+            'page-size'=> 'a4'
+        ]);
+        
+        return $pdf->stream("list-radicals.pdf");
+    }
+
+    public function generateKanjisPdf($id)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $list = CustomList::find($id);
+
+        if( !$list )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist'
+            ]);
+        }
+
+        if( $list->type != 2 || $list->type != 6)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not contain radicals'
+            ]);
+        }
+
+        $user = User::find($list->user_id);
+        $list = $this->getListItems($list);
+
+        $kanjiList = $list->listItems;
+        foreach($kanjiList as $kanji) {
+            $kanji->onyomi = implode(", ", array_slice(explode("|", $kanji->onyomi), 0, 3));
+            $kanji->kunyomi = implode(", ", array_slice(explode("|", $kanji->kunyomi), 0, 3));
+            $kanji->meaning = implode(", ", array_slice(explode("|", $kanji->meaning), 0, 3));
+        }
+
+        $data = [
+            'list_id' => $list->id,
+            'title' => $list->title,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $list->created_at,
+            'kanjiList' => $list->listItems
+        ];
+
+        $pdf = PDF::loadView("pdf.kanjis.list-kanjis", $data);
+        $pdf->setOptions([
+            'footer-center' => '[page]',
+            'page-size'=> 'a4'
+        ]);
+        
+        return $pdf->stream("list-kanjis.pdf");
+    }
+
+    public function generateWordsPdf($id)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $list = CustomList::find($id);
+
+        if( !$list )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist'
+            ]);
+        }
+
+        if( $list->type != 3 || $list->type != 7)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not contain radicals'
+            ]);
+        }
+
+        $user = User::find($list->user_id);
+        $list = $this->getListItems($list);
+
+        $wordList = $list->listItems;
+
+        foreach($wordList as $word){
+            $posArr=[];
+            $miscArr=[];
+            $glossArr=[];
+            $fieldArr=[];
+
+            foreach(json_decode($word->sense) as $singleSense)
+            {
+                // if(count($singleSense) > $maxCount) { $maxCount = count($singleSense); }
+                $pos="";
+                $misc="";
+                $gloss="";
+                $field="";
+                
+                // echo "<h2> singleSense </h2>";
+                // echo "<pre>";
+                // print_r($singleSense);
+                // echo "</pre>";
+                foreach($singleSense as $singleTag)
+                {
+                    // echo "<h3> singleTag </h3>";
+                    // echo "<pre>";
+                    // print_r($singleTag);
+                    // echo "</pre>";
+                    // if( !in_array($singleTag[0], $differentTags) ) { array_push($differentTags, $singleTag[0]); }
+                    if( isset( $singleTag[0] ) )
+                    {
+                        // echo "<p>TagType: " .$singleTag[0]. "</p>";
+                        # Exceptions for empty or wrong values
+                        if( strcmp( $singleTag[0], "lsource" ) == 0 ) { continue; }
+                        # stdClass conversion to get string
+                        if( isset($singleTag[1]) && !is_string($singleTag[1]) )
+                        {
+                            $itemAsArr = json_decode(json_encode($singleTag[1]), true);
+                            // echo "<p>STR TagValue: " .$itemAsArr[0]. "</p>";
+                            # TagType assigning
+                            if( strcmp( $singleTag[0], "gloss" ) == 0) 
+                            {
+                                $gloss .= $itemAsArr[0] . "|";
+                            }
+                            // else if( strcmp( $singleTag[0], "pos" ) == 0) 
+                            // {
+                            //     $pos .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "misc" ) == 0) 
+                            // {
+                            //     $misc .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "field" ) == 0) 
+                            // {
+                            //     $field .= $itemAsArr[0] . "|";
+                            // }
+                        }
+                    }
+                }
+                // echo "<h4> Assigning values: </h4>";
+                // echo "<p>pos: " .$pos. "</p>";
+                // echo "<p>misc: " .$misc. "</p>";
+                // echo "<p>gloss: " .$gloss. "</p>";
+                // echo "<p>field: " .$field. "</p>";
+                
+                array_push($posArr, $pos);
+                array_push($miscArr, $misc);
+                array_push($glossArr, $gloss);
+                array_push($fieldArr, $field);
+                
+            }
+            $word->pos = $posArr;
+            $word->gloss = $glossArr;
+            $word->misc = $miscArr;
+            $word->field = $fieldArr;
+        }
+
+        foreach($wordList as $word) {
+            $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+        }
+
+        $data = [
+            'list_id' => $list->id,
+            'title' => $list->title,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $list->created_at,
+            'wordList' => $list->listItems
+        ];
+
+        $pdf = PDF::loadView("pdf.kanjis.list-words", $data);
+        $pdf->setOptions([
+            'footer-center' => '[page]',
+            'page-size'=> 'a4'
+        ]);
+        
+        return $pdf->stream("list-words.pdf");
+    }
+
+    public function generateSentencesPdf($id)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $list = CustomList::find($id);
+
+        if( !$list )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist'
+            ]);
+        }
+
+        if( $list->type != 4 || $list->type != 8)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not contain radicals'
+            ]);
+        }
+
+        $user = User::find($list->user_id);
+        $list = $this->getListItems($list);
+
+        $data = [
+            'list_id' => $list->id,
+            'title' => $list->title,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $list->created_at,
+            'sentenceList' => $list->listItems
+        ];
+
+        $pdf = PDF::loadView("pdf.kanjis.list-sentences", $data);
+        $pdf->setOptions([
+            'footer-center' => '[page]',
+            'page-size'=> 'a4'
+        ]);
+        
+        return $pdf->stream("list-sentences.pdf");
+    }
+
+    # Impressions
     public function unlikeList($id) {
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         $like = Like::where([
