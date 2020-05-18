@@ -11,6 +11,7 @@ use App\Word;
 use App\Like;
 use App\ObjectTemplate;
 use App\Http\Requests\ArticleStoreRequest;
+use PDF;
 
 class ArticleController extends Controller
 {
@@ -519,6 +520,152 @@ class ArticleController extends Controller
      *
      */
     public function getWordsFuriganaFromText(Article $article){
-
     }
+
+    public function generateWordsPdf(Article $article) 
+	{
+        $user = User::find($article->user_id)->first();
+        $wordList = $article->words()->get();
+
+        $differentTags = [];
+        foreach($wordList as $word){
+            $posArr=[];
+            $miscArr=[];
+            $glossArr=[];
+            $fieldArr=[];
+
+            foreach(json_decode($word->sense) as $singleSense)
+            {
+                // if(count($singleSense) > $maxCount) { $maxCount = count($singleSense); }
+                $pos="";
+                $misc="";
+                $gloss="";
+                $field="";
+                
+                // echo "<h2> singleSense </h2>";
+                // echo "<pre>";
+                // print_r($singleSense);
+                // echo "</pre>";
+                foreach($singleSense as $singleTag)
+                {
+                    // echo "<h3> singleTag </h3>";
+                    // echo "<pre>";
+                    // print_r($singleTag);
+                    // echo "</pre>";
+                    if( !in_array($singleTag[0], $differentTags) ) { array_push($differentTags, $singleTag[0]); }
+                    if( isset( $singleTag[0] ) )
+                    {
+                        // echo "<p>TagType: " .$singleTag[0]. "</p>";
+                        # Exceptions for empty or wrong values
+                        if( strcmp( $singleTag[0], "lsource" ) == 0 ) { continue; }
+                        # stdClass conversion to get string
+                        if( isset($singleTag[1]) && !is_string($singleTag[1]) )
+                        {
+                            $itemAsArr = json_decode(json_encode($singleTag[1]), true);
+                            // echo "<p>STR TagValue: " .$itemAsArr[0]. "</p>";
+                            # TagType assigning
+                            if( strcmp( $singleTag[0], "gloss" ) == 0) 
+                            {
+                                $gloss .= $itemAsArr[0] . "|";
+                            }
+                            // else if( strcmp( $singleTag[0], "pos" ) == 0) 
+                            // {
+                            //     $pos .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "misc" ) == 0) 
+                            // {
+                            //     $misc .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "field" ) == 0) 
+                            // {
+                            //     $field .= $itemAsArr[0] . "|";
+                            // }
+                        }
+                    }
+                }
+                // echo "<h4> Assigning values: </h4>";
+                // echo "<p>pos: " .$pos. "</p>";
+                // echo "<p>misc: " .$misc. "</p>";
+                // echo "<p>gloss: " .$gloss. "</p>";
+                // echo "<p>field: " .$field. "</p>";
+                
+                array_push($posArr, $pos);
+                array_push($miscArr, $misc);
+                array_push($glossArr, $gloss);
+                array_push($fieldArr, $field);
+                
+            }
+            $word->pos = $posArr;
+            $word->gloss = $glossArr;
+            $word->misc = $miscArr;
+            $word->field = $fieldArr;
+        }
+
+        foreach($wordList as $word) {
+            $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+        }
+
+        $data = [
+            'article_id' => $article->id,
+            'title_jp' => $article->title_jp,
+            'title_en' => $article->title_en,
+            'content_jp' => $article->content_jp,
+            'content_en' => $article->content_en,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $article->created_at,
+            'source_link' => $article->source_link,
+            'wordList' => $wordList
+        ];
+        // return $data;
+        // return view("pdf.words.article-pdf", $data);
+        $pdf = PDF::loadView("pdf.kanjis.article-words", $data);
+        $pdf->setOptions([
+            // 'footer-html' => view('pdf.words._footer')
+            'footer-center' => '[page]',
+            // 'header-left' => 'header-left',
+            // 'header-right' => 'header-right',
+            'page-size'=> 'a4'
+        ]);
+        
+        // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
+        return $pdf->stream("article-words.pdf");
+    }
+    
+    public function generateKanjisPdf(Article $article) 
+	{
+        $user = User::find($article->user_id)->first();
+        $kanjiList = $article->kanjis()->get();
+        foreach($kanjiList as $kanji) {
+            $kanji->onyomi = implode(", ", array_slice(explode("|", $kanji->onyomi), 0, 3));
+            $kanji->kunyomi = implode(", ", array_slice(explode("|", $kanji->kunyomi), 0, 3));
+            $kanji->meaning = implode(", ", array_slice(explode("|", $kanji->meaning), 0, 3));
+        }
+
+        $data = [
+            'article_id' => $article->id,
+            'title_jp' => $article->title_jp,
+            'title_en' => $article->title_en,
+            'content_jp' => $article->content_jp,
+            'content_en' => $article->content_en,
+            'author' => $user->name,
+            'user_id' => $user->id,
+            'date' => $article->created_at,
+            'source_link' => $article->source_link,
+            'kanjiList' => $kanjiList
+        ];
+        // return $data;
+        // return view("pdf.kanjis.article-pdf", $data);
+        $pdf = PDF::loadView("pdf.kanjis.article-kanjis", $data);
+        $pdf->setOptions([
+            // 'footer-html' => view('pdf.kanjis._footer')
+            'footer-center' => '[page]',
+            // 'header-left' => 'header-left',
+            // 'header-right' => 'header-right',
+            'page-size'=> 'a4'
+        ]);
+        
+        // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
+        return $pdf->stream("article-kanjis.pdf");
+	}
 }

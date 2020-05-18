@@ -23,7 +23,8 @@ Route::group([
       'middleware' => 'auth:api'
     ], function() {
         Route::get('logout', 'UserController@logout');
-        Route::get('user', 'UserController@user');
+		Route::get('user', 'UserController@user');
+		
 		// Articles CUD
 		Route::post('article', 'ArticleController@store');
 		Route::post('article/{id}/like', 'ArticleController@likeArticle');
@@ -60,6 +61,9 @@ Route::post('/login', 'UserController@login');
 
 // Articles
 Route::get('article/{id}', 'ArticleController@show');
+Route::get('article/{article}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
+Route::get('article/{article}/words-pdf', 'ArticleController@generateWordsPdf');
+
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
 Route::get('articles/search', 'ArticleController@generateQuery');
