@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Like extends Model
+class Comment extends Model
 {
     public function objecttemplate() 
     {
@@ -16,8 +16,8 @@ class Like extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function comment() 
+    public function likes() 
     {
-        return $this->belongsTo(Comment::class);
+        return $this->hasMany(Like::class);
     }
 }

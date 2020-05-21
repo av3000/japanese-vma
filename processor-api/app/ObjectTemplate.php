@@ -21,4 +21,9 @@ class ObjectTemplate extends Model
     {
         $this->hasMany(View::class);
     }
+
+    public function comments()
+    {
+        $this->hasMany(Comment::class);
+    }
 }

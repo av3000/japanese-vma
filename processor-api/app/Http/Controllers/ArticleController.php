@@ -12,6 +12,7 @@ use App\Word;
 use App\Like;
 use App\Download;
 use App\View;
+use App\Comment;
 use App\ObjectTemplate;
 use App\Http\Requests\ArticleStoreRequest;
 use PDF;
@@ -25,14 +26,13 @@ class ArticleController extends Controller
     public function index() {
         $articles = Article::all();
 
-        # Need to Test
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         foreach($articles as $singleArticle)
         {
             $singleArticle->likesTotal = $this->getImpression("like", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->downloadsTotal = $this->getImpression("downloads", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
             $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
-            // commentsTotal
+            $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
             // hashtags
         }
 
@@ -47,54 +47,6 @@ class ArticleController extends Controller
          ]);
     }
 
-    public function unlikeArticle($id) {
-        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $like = Like::where([
-            'template_id' => $objectTemplateId,
-            'real_object_id' => $id,
-            'user_id' => auth()->user()->id
-        ]);
-
-        $like->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => "like was deleted",
-        ]);
-    }
-
-    public function likeArticle($id) {
-        if(!auth()->user()){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }
-        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-
-        $checkLike = Like::where([
-            'template_id' => $objectTemplateId,
-            'real_object_id' => $id,
-            'user_id' => auth()->user()->id
-        ])->first();
-        
-        if($checkLike) {
-            return response()->json([
-                'message' => 'you cannot like it twice!'
-            ]);
-        }
-        
-        $like = new Like;
-        $like->user_id = auth()->user()->id;
-        $like->template_id = $objectTemplateId;
-        $like->real_object_id = $id;
-        $like->value=1;
-        $like->save();
-
-        return response()->json([
-            'success' => true, 'You liked article of id: '.$id, 'like' => $like
-        ]);
-    }
-
     public function show($id) {
         $article = Article::find($id);
         if(!isset($article)){
@@ -107,6 +59,16 @@ class ArticleController extends Controller
         $article->likesTotal = $this->getImpression("like", $objectTemplateId, $article, "total");
         $article->downloadsTotal = $this->getImpression("download", $objectTemplateId, $article, "total");
         $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
+        $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
+        $article->commentsTotal = count($article->comments);
+
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        foreach($article->comments as $comment)
+        {
+            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
+            $comment->likesTotal = count($comment->likes);
+        }
+        
 
         $article->jlptcommon = 0;
 
@@ -143,17 +105,15 @@ class ArticleController extends Controller
         $articles = Article::where("user_id", $id)->get();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $article->likes = Like::where([
-            'template_id' => $objectTemplateId,
-            'real_object_id' => $article->id
-        ])->get();
-        $article->likesTotal = count($article->likes);
-        # Need to Test
-        //  foreach($articles as $singleArticle)
-        //  {
-        //      $singleArticle->kanjis = $this->articleKanjis($singleArticle->id);
-        //      $singleArticle->words = $this->articleWords($singleArticle->id);
-        //  }
+
+        foreach($articles as $singleArticle)
+        {
+            $singleArticle->likesTotal = $this->getImpression("like", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
+            // hashtags
+        }
 
          if(isset($articles))
          {
@@ -311,6 +271,7 @@ class ArticleController extends Controller
 
         $article->kanjis()->wherePivot('article_id', $article->id)->detach();
         $article->words()->wherePivot('article_id', $article->id)->detach();
+        $this->removeArticleImpressions($article);
 
         $article->delete();
 
@@ -695,6 +656,22 @@ class ArticleController extends Controller
         return $pdf->stream("article-kanjis.pdf");
     }
     
+    #========================= Impressions
+
+    public function removeArticleImpressions(Article $article)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->delete();
+        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->delete();
+
+        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->get();
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        foreach($comments as $comment){
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
+            $comment->delete();
+        }
+    }
+
     public function incrementDownload(Article $article)
     {
         // if( !auth()->user() ){
@@ -742,43 +719,270 @@ class ArticleController extends Controller
         }
     }
 
-    public function getImpression($impressionType, $objectTemplateId, $article, $amount)
+    public function getImpression($impressionType, $objectTemplateId, $object, $amount)
     {
         if($impressionType == 'like') 
         {
+            // die( response()->json([
+            //     'impressionType' => $impressionType,
+            //     'objectTemplateId' => $objectTemplateId,
+            //     'object' => $object,
+            //     'amount' => $amount
+            // ]));
             $likes = Like::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $article->id
+                'real_object_id' => $object->id
                 ]);
             if($amount == "total") { return $likes->count(); }        
-            else if($amount == "all") { return $likes->all(); }        
+            else if($amount == "all") { return $likes->get(); }        
         }
         else if($impressionType == 'download') 
         {
             $downloads = Download::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $article->id
+                'real_object_id' => $object->id
                 ]);   
             if($amount == "total") { return $downloads->count(); }        
-            else if($amount == "all") { return $downloads->all(); }        
+            else if($amount == "all") { return $downloads->get(); }        
         }
         else if($impressionType == 'view') 
         {
             $views = View::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $article->id
+                'real_object_id' => $object->id
                 ]);   
             if($amount == "total") { return $views->count(); }        
-            else if($amount == "all") { return $views->all(); }        
+            else if($amount == "all") { return $views->get(); }        
         }
-        // else if($impressionType == 'comment') 
-        // {
-        //     $comments = View::where([
-        //         'template_id' => $objectTemplateId,
-        //         'real_object_id' => $article->id
-        //         ]);   
-        //     if($amount == "total") { return $comments->count(); }        
-        //     else if($amount == "all") { return $comments->all(); }        
-        // }
+        else if($impressionType == 'comment') 
+        {
+            $comments = Comment::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);   
+            if($amount == "total") { return $comments->count(); }        
+            else if($amount == "all") { return $comments->get(); }        
+        }
+    }
+
+    // public function getComments($id)
+    // {
+    //     $article = Article::find($id);
+
+    //     if( !$article )
+    //     {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'requested article does not exist'
+    //         ]);
+    //     }
+    //     $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+    //     $article->comments = $this->getImpression('comment', $objectTemplateId, $article, 'total');
+    // }
+
+    public function storeComment(Request $request, $id, $parentCommentId = null)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|min:2|max:1000',
+        ]);
+
+        if($validator->fails()) {
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        
+        $comment = new Comment;
+        $comment->user_id = auth()->user()->id;
+        $comment->template_id = $objectTemplateId;
+        $comment->real_object_id = $id;
+        $comment->content = $request->get('content');
+        $comment->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You commented article of id: '.$id,
+            'comment' => $comment
+        ]);
+    }
+
+    public function deleteComment($id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $comment = Comment::where([
+            'id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+
+        if(isset($comment))
+        {
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
+
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted",
+            ]);
+        }
+        else {
+            return response()->json([
+                'success' => false,
+                'message' => "Comment does not belong to user or comment doesnt exist",
+            ]);
+        }
+    }
+
+    public function updateComment(Request $request, $id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|min:2|max:1000',
+        ]);
+
+        if($validator->fails()) {
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        $comment = Comment::where([
+            'id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+
+        if(isset($comment))
+        {
+            $comment->content = $request->get('content');
+            $comment->updated_at = date('Y-m-d H:i:s');
+            $comment->update();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was updated",
+            ]);
+        }
+        else {
+            return response()->json([
+                'success' => false,
+                'message' => "Comment does not belong to user or comment doesnt exist",
+            ]);
+        }
+    }
+
+    public function likeComment($id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'message' => 'you cannot like the comment twice!'
+            ]);
+        }
+        
+        $like = new Like;
+        $like->user_id = auth()->user()->id;
+        $like->template_id = $objectTemplateId;
+        $like->real_object_id = $commentid;
+        $like->value=1;
+        $like->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You liked comment of id: '.$commentid,
+            'like' => $like
+        ]);
+    }
+
+    public function unlikeComment($id, $commentid) {
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        $like = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $commentid,
+            'user_id' => auth()->user()->id
+        ]);
+
+        $like->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "like was deleted",
+        ]);
+    }
+
+    public function unlikeArticle($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $like = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ]);
+
+        $like->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "like was deleted",
+        ]);
+    }
+
+    public function likeArticle($id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'message' => 'you cannot like it twice!'
+            ]);
+        }
+        
+        $like = new Like;
+        $like->user_id = auth()->user()->id;
+        $like->template_id = $objectTemplateId;
+        $like->real_object_id = $id;
+        $like->value=1;
+        $like->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You liked list of id: '.$id,
+            'like' => $like
+        ]);
     }
 }

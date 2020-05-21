@@ -34,7 +34,12 @@ Route::group([
 		Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
 		Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
 		Route::get('article/{id}', 'ArticleController@show');
-
+		// Article Comment
+		Route::post('article/{id}/comment', 'ArticleController@storeComment');
+		Route::delete('article/{id}/comment/{commentid}', 'ArticleController@deleteComment');
+		Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
+		Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
+		Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
 		
 		// Lists CUD
 		Route::post('list', 'CustomListController@store');
@@ -49,6 +54,12 @@ Route::group([
 		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
 		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
 		Route::get('list/{id}', 'CustomListController@show');
+		// List Comment
+		Route::post('list/{id}/comment', 'CustomListController@storeComment');
+		Route::delete('list/{id}/comment/{commentid}', 'CustomListController@deleteComment');
+		Route::put('list/{id}/comment/{commentid}', 'CustomListController@updateComment');
+		Route::post('list/{id}/comment/{commentid}/like', 'CustomListController@likeComment');
+		Route::post('list/{id}/comment/{commentid}/unlike', 'CustomListController@unlikeComment');
 
 		// Sentences CUD
 		Route::post('sentence', 'JapaneseDataController@storeSentence');

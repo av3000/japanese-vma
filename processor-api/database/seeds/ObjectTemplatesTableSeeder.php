@@ -46,5 +46,9 @@ class ObjectTemplatesTableSeeder extends Seeder
         $postTemplate = new \App\ObjectTemplate;
         $postTemplate->title = "post";
         $postTemplate->save();
+
+        $commentTemplate = new \App\ObjectTemplate;
+        $commentTemplate->title = "comment";
+        $commentTemplate->save();
     }
 }

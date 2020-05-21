@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
+use App\CustomList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    const KNOWNRADICALS = 1;
+    const KNOWNKANJIS = 2;
+    const KNOWNWORDS = 3;
+    const KNOWNSENTENCES = 4;
+
     public function register(Request $request)
     {
     	$validator = Validator::make($request->all(), [
@@ -26,6 +32,35 @@ class UserController extends Controller
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password'))
         ]);
+
+        // rads
+        $radsList = new CustomList;
+        $radsList->user_id = auth()->user()->id;
+        $radsList->status = "default";
+        $radsList->type = self::KNOWNRADICALS;
+        $radsList->title = "My Known Radicals";
+        $radsList->save();
+        // kanjis
+        $kanjiList = new CustomList;
+        $kanjiList->user_id = auth()->user()->id;
+        $kanjiList->status = "default";
+        $kanjiList->type = self::KNOWNKANJIS;
+        $kanjiList->title = "My Known Kanjis";
+        $kanjiList->save();
+        // words
+        $wordList = new CustomList;
+        $wordList->user_id = auth()->user()->id;
+        $wordList->status = "default";
+        $wordList->type = self::KNOWNWORDS;
+        $wordList->title = "My Known Words";
+        $wordList->save();
+        // sentences
+        $sentenceList = new CustomList;
+        $sentenceList->user_id = auth()->user()->id;
+        $sentenceList->status = "default";
+        $sentenceList->type = self::KNOWNSENTENCES;
+        $sentenceList->title = "My Known Sentences";
+        $sentenceList->save();
 
      	$accessToken = $user->createToken('authToken');
 
