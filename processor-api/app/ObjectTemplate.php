@@ -12,4 +12,13 @@ class ObjectTemplate extends Model
     {
         $this->hasMany(Like::class);
     }
+    public function downloads()
+    {
+        $this->hasMany(Download::class);
+    }
+
+    public function views()
+    {
+        $this->hasMany(View::class);
+    }
 }

@@ -13,39 +13,25 @@ use App\Word;
 use App\Sentence;
 use App\CustomList;
 use App\Like;
+use App\Download;
+use App\View;
 use App\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
 class CustomListController extends Controller
 {
-    public function getListTypes()
-    {      
-        /* 
-            // $knowRadicalsList    = 1;
-            // $knowKanjisList      = 2;
-            // $knowWordsList       = 3;
-            // $knowSentencesList   = 4;
-            // $customRadicalsList  = 5;
-            // $customKanjisList    = 6;
-            // $customWordsList     = 7;
-            // $customSentencesList = 8;
-            // $customArticlesList  = 9;
-            // $customLyricsList    = 10;
-            // $customArtistsList   = 11;
-        */
-        $createListOptions = [
-            5 => "Radicals",
-            6 => "Kanjis",
-            7 => "Words",
-            8 => "Sentences",
-            9 => "Articles",
-            10 => "Lyrics",
-            11 => "Artists"
-        ];
-
-        return $createListOptions;
-    }
+    const KNOWNRADICALS = 1;
+    const KNOWNKANJIS = 2;
+    const KNOWNWORDS = 3;
+    const KNOWNSENTENCES = 4;
+    const RADICALS  = 5;
+    const KANJIS    = 6;
+    const WORDS     = 7;
+    const SENTENCES = 8;
+    const ARTICLES  = 9;
+    const LYRICS    = 10;
+    const ARTISTS   = 11;
 
     public function getListItems(CustomList $list)
     {
@@ -53,31 +39,31 @@ class CustomListController extends Controller
         $foundRows    = [];
 
         $foundRows = DB::table('customlist_object')->where('list_id', $list->id)->get();
-        if( $list->type == 1 || $list->type == 5 ){ // radicals
+        if( $list->type == self::KNOWNRADICALS || $list->type == self::RADICALS ){ // radicals
             foreach( $foundRows as $row )
             {
                 array_push( $objectsArray, Radical::where('id', $row->real_object_id)->first() );
             }
         }
-        else if( $list->type == 2 || $list->type == 6 ){ // kanjis
+        else if( $list->type == self::KNOWNKANJIS || $list->type == self::KANJIS ){ // kanjis
             foreach( $foundRows as $row )
             {
                 array_push( $objectsArray, Kanji::where('id', $row->real_object_id)->first() );
             }
         }
-        else if( $list->type == 3 || $list->type == 7 ){ // words
+        else if( $list->type == self::KNOWNWORDS || $list->type == self::WORDS ){ // words
             foreach( $foundRows as $row )
             {
                 array_push( $objectsArray, Word::where('id', $row->real_object_id)->first() );
             }
         }
-        else if( $list->type == 4 || $list->type == 8 ){ // sentences
+        else if( $list->type == self::KNOWNSENTENCES || $list->type == self::SENTENCES ){ // sentences
             foreach( $foundRows as $row )
             {
                 array_push( $objectsArray, Sentence::where('id', $row->real_object_id)->first() );
             }
         }
-        else if( $list->type == 9 ){ // articles
+        else if( $list->type == self::ARTICLES ){ // articles
             foreach( $foundRows as $row )
             {
                 array_push( $objectsArray, Article::where('id', $row->real_object_id)->first() );
@@ -99,13 +85,13 @@ class CustomListController extends Controller
         }
 
         $list = $this->getListItems($list);
-
+        $this->incrementView($list);
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-        $list->likes = Like::where([
-            'template_id' => $objectTemplateId,
-            'real_object_id' => $list->id
-        ])->get();
-        $list->likesTotal = count($list->likes);
+        $list->likesTotal = $this->getImpression("like", $objectTemplateId, $list, "total");
+        $list->downloadsTotal = $this->getImpression("download", $objectTemplateId, $list, "total");
+        $list->viewsTotal = $this->getImpression("view", $objectTemplateId, $list, "total");
+        // commentsTotal
+        // hashtags
 
         if($list->listItems)
         {
@@ -140,11 +126,11 @@ class CustomListController extends Controller
         {
             $singleList = $this->getListItems($singleList);
             $singleList->itemsTotal = count($singleList->listItems);
-            $singleList->likes = Like::where([
-                'template_id' => $objectTemplateId,
-                'real_object_id' => $singleList->id
-            ])->get();
-            $singleList->likesTotal = count($singleList->likes);
+            $singleList->likesTotal = $this->getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
+            $singleList->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleList, "total");
+            // commentsTotal
+            // hashtags
         }
 
         return response()->json([
@@ -168,7 +154,7 @@ class CustomListController extends Controller
         $newList->type = $request->type;
         $newList->title = $request->title;
         $newList->save();
-
+        
         return response()->json([
             'success' => true,
             'newList' => $newList
@@ -233,9 +219,29 @@ class CustomListController extends Controller
         ]);
     }
 
+    public function handleListJlpt(CustomList $list, $id, $method)
+    {
+        $kanji = Kanji::find($id);
+        if($method == "add"){
+            if     ($kanji->jlpt == "1") { $list->n1 = intval($list->n1) + 1; }
+            else if($kanji->jlpt == "2") { $list->n2 = intval($list->n2) + 1; }
+            else if($kanji->jlpt == "3") { $list->n3 = intval($list->n3) + 1; }
+            else if($kanji->jlpt == "4") { $list->n4 = intval($list->n4) + 1; }
+            else if($kanji->jlpt == "5") { $list->n5 = intval($list->n5) + 1; }
+        }
+        else if( $method == "remove"){
+            if     ($kanji->jlpt == "1") { $list->n1 = intval($list->n1) - 1; }
+            else if($kanji->jlpt == "2") { $list->n2 = intval($list->n2) - 1; }
+            else if($kanji->jlpt == "3") { $list->n3 = intval($list->n3) - 1; }
+            else if($kanji->jlpt == "4") { $list->n4 = intval($list->n4) - 1; }
+            else if($kanji->jlpt == "5") { $list->n5 = intval($list->n5) - 1; }
+        }
+    }
+
     public function addToList(Request $request, $id)
     {
-        $list = CustomList::find($id)->first();
+        $list = CustomList::find($id);
+
         if(!auth()->user()){
             return response()->json([
                 'message' => 'you are not a user'
@@ -249,11 +255,16 @@ class CustomListController extends Controller
         }
 
         $newObjectId = $request->get("real_object_id");
+
         $row = [
             'real_object_id' => $newObjectId,
             'list_id' => $id
         ];
+
         $x = DB::table('customlist_object')->insert($row);
+
+        if($list->type == self::KANJIS || $list->type == self::KNOWNKANJIS) { $this->handleListJlpt($list, $newObjectId, "add"); $list->save(); }
+
         if($x) {
             return response()->json([
                 'success' => true,
@@ -269,7 +280,7 @@ class CustomListController extends Controller
 
     public function removeFromList(Request $request, $id)
     {
-        $list = CustomList::find($id)->first();
+        $list = CustomList::find($id);
         if(!auth()->user()){
             return response()->json([
                 'message' => 'you are not a user'
@@ -283,8 +294,11 @@ class CustomListController extends Controller
         }
 
         $deletedId = $request->get("real_object_id");
+
         $x = DB::table('customlist_object')->where('list_id', $id)->where('real_object_id', $deletedId)->delete();
-        
+
+        if($list->type == self::KANJIS || $list->type == self::KNOWNKANJIS) { $this->handleListJlpt($list, $deletedId, "remove"); $list->save(); }
+
         if($x) {
             return response()->json([
                 'success' => true,
@@ -330,6 +344,16 @@ class CustomListController extends Controller
         ]);
     }
 
+    // TODO. 
+    // Question is, should user be able to save it? 
+    // Well, some kind of bookmarking is definitely necessary.
+    // You can save stuff into lists of other users
+    // But how about lists of other users?
+    public function saveUserList(CustomList $list)
+    {
+        
+    }
+
     public function generateQuery(Request $request) { // Not sure about encoding part if it work.
         $q = $request->get("title");
         $results = CustomList::where("title", "like", "%".$q."%")->get();
@@ -365,14 +389,15 @@ class CustomListController extends Controller
             ]);
         }
 
-        if( $list->type != 1 || $list->type != 5)
+        if( $list->type != self::RADICALS && $list->type != self::KNOWNRADICALS)
         {
             return response()->json([
                 'success' => false,
-                'message' => 'requested list does not contain radicals'
+                'message' => 'requested list does not contain Radicals'
             ]);
         }
 
+        $this->incrementDownload($list);
         $user = User::find($list->user_id);
         $list = $this->getListItems($list);
 
@@ -412,14 +437,15 @@ class CustomListController extends Controller
             ]);
         }
 
-        if( $list->type != 2 || $list->type != 6)
+        if( $list->type != self::KANJIS && $list->type != self::KNOWNKANJIS)
         {
             return response()->json([
                 'success' => false,
-                'message' => 'requested list does not contain radicals'
+                'message' => 'requested list does not contain Kanjis'
             ]);
         }
 
+        $this->incrementDownload($list);
         $user = User::find($list->user_id);
         $list = $this->getListItems($list);
 
@@ -457,7 +483,6 @@ class CustomListController extends Controller
         }
 
         $list = CustomList::find($id);
-
         if( !$list )
         {
             return response()->json([
@@ -466,14 +491,15 @@ class CustomListController extends Controller
             ]);
         }
 
-        if( $list->type != 3 || $list->type != 7)
+        if( $list->type != self::WORDS && $list->type != self::KNOWNWORDS)
         {
             return response()->json([
                 'success' => false,
-                'message' => 'requested list does not contain radicals'
+                'message' => 'requested list does not contain Words'
             ]);
         }
 
+        $this->incrementDownload($list);
         $user = User::find($list->user_id);
         $list = $this->getListItems($list);
 
@@ -592,14 +618,15 @@ class CustomListController extends Controller
             ]);
         }
 
-        if( $list->type != 4 || $list->type != 8)
+        if( $list->type != self::SENTENCES && $list->type != self::KNOWNSENTENCES )
         {
             return response()->json([
                 'success' => false,
-                'message' => 'requested list does not contain radicals'
+                'message' => 'requested list does not contain Sentences'
             ]);
         }
 
+        $this->incrementDownload($list);
         $user = User::find($list->user_id);
         $list = $this->getListItems($list);
 
@@ -645,7 +672,7 @@ class CustomListController extends Controller
             ]);
         }
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-
+        
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
@@ -668,5 +695,87 @@ class CustomListController extends Controller
         return response()->json([
             'success' => true, 'You liked list of id: '.$id, 'like' => $like
         ]);
+    }
+
+    public function getImpression($impressionType, $objectTemplateId, $list, $amount)
+    {
+        if($impressionType == 'like') 
+        {
+            $likes = Like::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $list->id
+                ]);
+            if($amount == "total") { return $likes->count(); }        
+            else if($amount == "all") { return $likes->all(); }        
+        }
+        else if($impressionType == 'download') 
+        {
+            $downloads = Download::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $list->id
+                ]);   
+            if($amount == "total") { return $downloads->count(); }        
+            else if($amount == "all") { return $downloads->all(); }        
+        }
+        else if($impressionType == 'view') 
+        {
+            $views = View::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $list->id
+                ]);   
+            if($amount == "total") { return $views->count(); }        
+            else if($amount == "all") { return $views->all(); }        
+        }
+        // else if($impressionType == 'comment') 
+        // {
+        //     $comments = View::where([
+        //         'template_id' => $objectTemplateId,
+        //         'real_object_id' => $article->id
+        //         ]);   
+        //     if($amount == "total") { return $comments->count(); }        
+        //     else if($amount == "all") { return $comments->all(); }        
+        // }
+    }
+
+    public function incrementDownload(CustomList $list)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        $download = new Download;
+        $download->user_id = auth()->user()->id;
+        $download->template_id = $objectTemplateId;
+        $download->real_object_id = $list->id;
+        $download->save();
+    }
+
+    public function incrementView(CustomList $list)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'success' => true,
+                'message' => "User unauthenticated, no views counted"
+            ]);
+        }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        $checkView = View::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $list->id,
+            'user_id' => auth()->user()->id,
+            'user_ip' => request()->ip()
+        ])->first();
+
+        if($checkView)
+        {
+            $checkView->updated_at = date('Y-m-d H:i:s');
+            $checkView->update();
+        }
+        else {
+            $view = new View;
+            $view->user_id = auth()->user()->id;
+            $view->user_ip = request()->ip();
+            $view->template_id = $objectTemplateId;
+            $view->real_object_id = $list->id;
+            $view->save();
+        }
     }
 }

@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use App\User;
 use App\Article;
 use App\Kanji;
 use App\Word;
 use App\Like;
+use App\Download;
+use App\View;
 use App\ObjectTemplate;
 use App\Http\Requests\ArticleStoreRequest;
 use PDF;
@@ -16,10 +19,7 @@ use PDF;
 class ArticleController extends Controller
 {
     public function __constructor(){
-        // Do the middleware stuff
-        //  or add only to specific routes "auth()->user()" 
-        // or something like that.
-        //  FOR NOW AUTH:API ROUTES ARE DOING IT
+
     }
 
     public function index() {
@@ -29,11 +29,11 @@ class ArticleController extends Controller
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         foreach($articles as $singleArticle)
         {
-            $singleArticle->likes = Like::where([
-                'template_id' => $objectTemplateId,
-                'real_object_id' => $singleArticle->id
-            ])->get();
-            $singleArticle->likesTotal = count($singleArticle->likes);
+            $singleArticle->likesTotal = $this->getImpression("like", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->downloadsTotal = $this->getImpression("downloads", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
+            // commentsTotal
+            // hashtags
         }
 
         if(isset($articles))
@@ -102,32 +102,20 @@ class ArticleController extends Controller
                 'success' => false, 'message' => 'Requested article does not exist'
             ]);
         }
-
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $article->likes = Like::where([
-            'template_id' => $objectTemplateId,
-            'real_object_id' => $article->id
-        ])->get();
-        $article->likesTotal = count($article->likes);
+        $this->incrementView($article);
+        $article->likesTotal = $this->getImpression("like", $objectTemplateId, $article, "total");
+        $article->downloadsTotal = $this->getImpression("download", $objectTemplateId, $article, "total");
+        $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
 
-        $article->jlpt1 = 0;
-        $article->jlpt2 = 0;
-        $article->jlpt3 = 0;
-        $article->jlpt4 = 0;
-        $article->jlpt5 = 0;
         $article->jlptcommon = 0;
 
         $article->words = $article->words()->get();
         $article->kanjis = $article->kanjis()->get();
         foreach($article->kanjis as $kanji){
-            if($kanji->jlpt == "1")      { $article->jlpt1++; }
-            else if($kanji->jlpt == "2") { $article->jlpt2++; }
-            else if($kanji->jlpt == "3") { $article->jlpt3++; }
-            else if($kanji->jlpt == "4") { $article->jlpt4++; }
-            else if($kanji->jlpt == "5") { $article->jlpt5++; }
-            else { $article->jlptcommon++; }
+            if($kanji->jlpt == "-") { $article->jlptcommon++; }
         }
-        $article->kanjiTotal = $article->jlpt1 + $article->jlpt2 + $article->jlpt3 + $article->jlpt4 + $article->jlpt5 + $article->jlptcommon;
+        $article->kanjiTotal = intval($article->n1) + intval($article->n2) + intval($article->n3) + intval($article->n4) + intval($article->n5) + $article->jlptcommon;
 
         $user = User::find($article->user_id);
         $article->userName = $user->name;
@@ -145,7 +133,6 @@ class ArticleController extends Controller
         # into DB table "articles.content_furi"
         #           Method 2:
         # display ONLY furigana, without trying to find each of content_jp word place in text.
-
         return response()->json([
             'success' => true,
             'article' => $article
@@ -223,7 +210,8 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function store(ArticleStoreRequest $request) {
+    public function store(ArticleStoreRequest $request) 
+    {
         if(!auth()->user()){
             return response()->json([
                 'message' => 'you are not a user'
@@ -254,6 +242,17 @@ class ArticleController extends Controller
 
         $kanjiResponse = $this->getKanjiIdsFromText($article);
         $wordResponse  = $this->getWordIdsFromText($article);
+
+        $article->kanjis = $article->kanjis()->get();
+        foreach($article->kanjis as $kanji){
+            if     ($kanji->jlpt == "1") { $article->n1 = intval($article->n1) + 1; }
+            else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 2; }
+            else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 3; }
+            else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 4; }
+            else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 5; }
+        }
+
+        $article->save();
 
         return response()->json([
             'success' => true,
@@ -322,11 +321,6 @@ class ArticleController extends Controller
     }
 
     #====================================================== Japanese Text Handling
-
-    // Optional. 
-    // public function addJltpsToArticle(Article $article){
-    //     return $article;
-    // }
 
     /**
      * Return true if string found in string array
@@ -538,6 +532,7 @@ class ArticleController extends Controller
                 'message' => 'requested article does not exist'
             ]);
         }
+        $this->incrementDownload($article);
         $user = User::find($article->user_id);
         $wordList = $article->words()->get();
 
@@ -663,6 +658,7 @@ class ArticleController extends Controller
                 'message' => 'requested article does not exist'
             ]);
         }
+        $this->incrementDownload($article);
         $user = User::find($article->user_id);
         $kanjiList = $article->kanjis()->get();
 
@@ -697,5 +693,92 @@ class ArticleController extends Controller
         
         // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
         return $pdf->stream("article-kanjis.pdf");
-	}
+    }
+    
+    public function incrementDownload(Article $article)
+    {
+        // if( !auth()->user() ){
+        //     return response()->json([
+        //         'message' => 'you are not a user'
+        //     ]);
+        // }
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $download = new Download;
+        $download->user_id = auth()->user()->id;
+        $download->template_id = $objectTemplateId;
+        $download->real_object_id = $article->id;
+        $download->save();
+    }
+
+    public function incrementView(Article $article)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'success' => true,
+                'message' => "User unauthenticated, no views counted"
+            ]);
+        }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $checkView = View::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $article->id,
+            'user_id' => auth()->user()->id,
+            'user_ip' => request()->ip()
+        ])->first();
+
+        if($checkView)
+        {
+            $checkView->updated_at = date('Y-m-d H:i:s');
+            $checkView->update();
+        }
+        else {
+            $view = new View;
+            $view->user_id = auth()->user()->id;
+            $view->user_ip = request()->ip();
+            $view->template_id = $objectTemplateId;
+            $view->real_object_id = $article->id;
+            $view->save();
+        }
+    }
+
+    public function getImpression($impressionType, $objectTemplateId, $article, $amount)
+    {
+        if($impressionType == 'like') 
+        {
+            $likes = Like::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $article->id
+                ]);
+            if($amount == "total") { return $likes->count(); }        
+            else if($amount == "all") { return $likes->all(); }        
+        }
+        else if($impressionType == 'download') 
+        {
+            $downloads = Download::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $article->id
+                ]);   
+            if($amount == "total") { return $downloads->count(); }        
+            else if($amount == "all") { return $downloads->all(); }        
+        }
+        else if($impressionType == 'view') 
+        {
+            $views = View::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $article->id
+                ]);   
+            if($amount == "total") { return $views->count(); }        
+            else if($amount == "all") { return $views->all(); }        
+        }
+        // else if($impressionType == 'comment') 
+        // {
+        //     $comments = View::where([
+        //         'template_id' => $objectTemplateId,
+        //         'real_object_id' => $article->id
+        //         ]);   
+        //     if($amount == "total") { return $comments->count(); }        
+        //     else if($amount == "all") { return $comments->all(); }        
+        // }
+    }
 }
