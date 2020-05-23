@@ -14,11 +14,25 @@ use App\Download;
 use App\View;
 use App\Comment;
 use App\ObjectTemplate;
+use App\Uniquehashtag;
 use App\Http\Requests\ArticleStoreRequest;
 use PDF;
+use DB;
 
 class ArticleController extends Controller
 {
+    const KNOWNRADICALS = 1;
+    const KNOWNKANJIS = 2;
+    const KNOWNWORDS = 3;
+    const KNOWNSENTENCES = 4;
+    const RADICALS  = 5;
+    const KANJIS    = 6;
+    const WORDS     = 7;
+    const SENTENCES = 8;
+    const ARTICLES  = 9;
+    const LYRICS    = 10;
+    const ARTISTS   = 11;
+
     public function __constructor(){
 
     }
@@ -49,11 +63,13 @@ class ArticleController extends Controller
 
     public function show($id) {
         $article = Article::find($id);
+
         if(!isset($article)){
             return response()->json([
                 'success' => false, 'message' => 'Requested article does not exist'
             ]);
         }
+
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $this->incrementView($article);
         $article->likesTotal = $this->getImpression("like", $objectTemplateId, $article, "total");
@@ -69,7 +85,6 @@ class ArticleController extends Controller
             $comment->likesTotal = count($comment->likes);
         }
         
-
         $article->jlptcommon = 0;
 
         $article->words = $article->words()->get();
@@ -99,6 +114,184 @@ class ArticleController extends Controller
             'success' => true,
             'article' => $article
         ]);
+    }
+
+    public function store(ArticleStoreRequest $request) 
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $validated = $request->validated();
+
+        $article = new Article;
+        $article->user_id = auth()->user()->id;
+        $article->title_jp = $validated['title_jp'];
+        if(isset($validated['title_en']))
+        {
+            $article->title_en = $validated['title_en'];
+        } else {
+            $article->title_en = "";
+        }
+        if(isset($validated['content_en']))
+        {
+            $article->content_en = $validated['content_en'];
+        } else {
+            $article->content_en = "";
+        }
+        $article->content_jp = $validated['content_jp'];
+        $article->source_link = $validated['source_link'];
+        $article->save();
+
+        $this->attachHashTags($request->tags, $article);
+
+        if(isset($request->attach) && $request->attach == 1)
+        {
+            $kanjiResponse = $this->getKanjiIdsFromText($article);
+            $wordResponse  = $this->getWordIdsFromText($article);
+            $kanjis = $article->kanjis()->get();
+            foreach($kanjis as $kanji){
+                if     ($kanji->jlpt == "1") { $article->n1 = intval($article->n1) + 1; }
+                else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 2; }
+                else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 3; }
+                else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 4; }
+                else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 5; }
+            }
+
+            $article->update();
+
+            return response()->json([
+                'success' => true,
+                'attach' => $request->attach,
+                'article' => $article,
+                'kanjis' => $kanjiResponse,
+                'words' => $wordResponse
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'attach' => $request->attach,
+            'article' => $article
+        ]);
+    }
+
+    public function update(Request $request, $id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }   
+        
+        $article = Article::find($id);
+
+        if( !$article || $article->user_id != auth()->user()->id ){
+            return response()->json([
+                'success' => false,
+                'message' => 'article doesnt exist or does not belong to the user'
+            ]);
+        }   
+
+        if(isset($request->title_jp))
+        {
+            $article->title_jp = $request->title_jp;
+        }
+        if(isset($request->title_en))
+        {
+            $article->title_en = $request->title_en;
+        }
+        if(isset($request->content_en))
+        {
+            $article->content_en = $request->content_en;
+        } 
+        if(isset($request->content_jp))
+        {
+            $article->content_jp = $request->content_jp;
+        } 
+        if(isset($request->source_link))
+        {
+            $article->source_link = $request->source_link;
+        } 
+        if(isset($request->status))
+        {
+            $article->status = $request->status;
+        } 
+        $article->update();
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        if(isset($request->tags))
+        {
+            $this->removeHashtags($article->id, $objectTemplateId, $request->tags);
+            $this->attachHashTags($request->tags, $article);
+        }
+
+        if( $request->reattach == 1)
+        {
+            die("I should not have been here");
+            $article->kanjis()->wherePivot('article_id', $article->id)->detach();
+            $article->words()->wherePivot('article_id', $article->id)->detach();
+        
+            $kanjiResponse = $this->getKanjiIdsFromText($article);
+            $wordResponse  = $this->getWordIdsFromText($article);
+
+            return response()->json([
+                'success' => true,
+                'reattach' => $request->reattach,
+                'updated_article' => $article,
+                'reattached_kanjis' => $kanjiResponse,
+                'reattached_words' => $wordResponse
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'reattach' => $request->reattach,
+            'updated_article' => $article,
+            'reattached_kanjis' => "none",
+            'reattached_words' => "none"
+        ]);
+    }
+
+    public function delete(Request $request, $id) {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }   
+        $article = Article::find($id);
+
+        if( !$article || $article->user_id != auth()->user()->id ){
+            return response()->json([
+                'success' => false,
+                'message' => 'article doesnt exist or does not belong to the user'
+            ]);
+        }  
+
+        $article->kanjis()->wherePivot('article_id', $article->id)->detach();
+        $article->words()->wherePivot('article_id', $article->id)->detach();
+        $this->removeImpressions($article);
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $this->removeHashtags($article->id, $objectTemplateId);
+        $this->removeArticleFromLists($article->id);
+
+        $article->delete();
+
+        return response()->json([
+            'success' => true,
+            'deleted_article' => $article,
+        ]);
+    }
+
+    public function removeArticleFromLists($id)
+    {
+        DB::table('customlist_object')
+            ->where('real_object_id', $id)
+            ->where('listtype_id', self::ARTICLES)
+            ->delete();
     }
 
     public function getUserArticles($id) {
@@ -170,117 +363,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function store(ArticleStoreRequest $request) 
-    {
-        if(!auth()->user()){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }   
-
-        $validated = $request->validated();
-
-        $article = new Article;
-        $article->user_id = auth()->user()->id;
-        $article->title_jp = $validated['title_jp'];
-        if(isset($validated['title_en']))
-        {
-            $article->title_en = $validated['title_en'];
-        } else {
-            $article->title_en = "";
-        }
-        if(isset($validated['content_en']))
-        {
-            $article->content_en = $validated['content_en'];
-        } else {
-            $article->content_en = "";
-        }
-        $article->content_jp = $validated['content_jp'];
-        $article->source_link = $validated['source_link'];
-        $article->status = $validated['status'];
-        $article->save();
-
-        $kanjiResponse = $this->getKanjiIdsFromText($article);
-        $wordResponse  = $this->getWordIdsFromText($article);
-
-        $article->kanjis = $article->kanjis()->get();
-        foreach($article->kanjis as $kanji){
-            if     ($kanji->jlpt == "1") { $article->n1 = intval($article->n1) + 1; }
-            else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 2; }
-            else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 3; }
-            else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 4; }
-            else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 5; }
-        }
-
-        $article->save();
-
-        return response()->json([
-            'success' => true,
-            'article' => $article,
-            'kanjis' => $kanjiResponse,
-            'words' => $wordResponse
-        ]);
-    }
-
-    public function update(Request $request, $id) {
-        if(!auth()->user()){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }   
-        $article = Article::find($id);
-        $article->title_jp = $request->title_jp;
-        if(isset($request->title_en))
-        {
-            $article->title_en = $request->title_en;
-        } else {
-            $article->title_en = "";
-        }
-        if(isset($request->content_en))
-        {
-            $article->content_en = $request->content_en;
-        } else {
-            $article->content_en = "";
-        }
-        $article->content_jp = $request->content_jp;
-        $article->source_link = $request->source_link;
-        $article->status = $request->status;
-        $article->save();
-
-        $article->kanjis()->wherePivot('article_id', $article->id)->detach();
-        $article->words()->wherePivot('article_id', $article->id)->detach();
-        
-        $kanjiResponse = $this->getKanjiIdsFromText($article);
-        $wordResponse  = $this->getWordIdsFromText($article);
-
-        return response()->json([
-            'success' => true,
-            'updated_article' => $article,
-            'reattached_kanjis' => $kanjiResponse,
-            'retattached_words' => $wordResponse
-        ]);
-    }
-
-    public function delete(Request $request, $id) {
-        if(!auth()->user()){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }   
-        $article = article::find($id);
-
-        $article->kanjis()->wherePivot('article_id', $article->id)->detach();
-        $article->words()->wherePivot('article_id', $article->id)->detach();
-        $this->removeArticleImpressions($article);
-
-        $article->delete();
-
-        return response()->json([
-            'success' => true,
-            'deleted_article' => $article,
-        ]);
-    }
-
     #====================================================== Japanese Text Handling
 
     /**
@@ -339,7 +421,6 @@ class ArticleController extends Controller
                 }
             $index++;
         }
-
         if( count($foundKanjis)  == 0) {
             return response()->json(['success' => false, 'kanji_message'=> 'There was no kanji characters in article text...']);
         }
@@ -655,16 +736,63 @@ class ArticleController extends Controller
         // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
         return $pdf->stream("article-kanjis.pdf");
     }
+
+    public function togglePublicity($id)
+    {
+        $article = Article::find($id);
+
+        if( !$article || $article->user_id != auth()->user()->id || auth()->user()->role() != "admin" )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested article does not exist or user is unauthorized'
+            ]);
+        }
+
+        if($article->publicity == 1)
+        {
+            $article->publicity = 0;
+            $article->update();
+            return response()->json([
+                'success' => true,
+                'message' => 'Article of id: '.$id. ' is now private'
+            ]);
+        }
+        else {
+            $article->publicity = 1;
+            $article->update();
+            return response()->json([
+                'success' => true,
+                'message' => 'Article of id: '.$id. ' is now public'
+            ]);
+        }
+    }
+
+    public function setStatus(Request $request, $id)
+    {
+        $article = Article::find($id);
+        $article->status = $request->get('status');
+
+        if     ($request->get('status') == 2) $status = "approved";
+        else if($request->get('status') == 1) $status = "unapproved";
+        
+        $article->update();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Article of id: '.$id. ' set to ' .$status
+        ]);
+    }
     
     #========================= Impressions
 
-    public function removeArticleImpressions(Article $article)
+    public function removeImpressions($object)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->delete();
-        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->delete();
+        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
+        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
 
-        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $article->id)->get();
+        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->get();
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach($comments as $comment){
             $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
@@ -828,7 +956,7 @@ class ArticleController extends Controller
         if(isset($comment))
         {
             $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
 
             $comment->delete();
 
@@ -984,5 +1112,93 @@ class ArticleController extends Controller
             'message' => 'You liked list of id: '.$id,
             'like' => $like
         ]);
+    }
+
+    #======================== Hashtags
+
+    public function getUniquehashtags($id, $objectTemplateId)
+    {  
+        $foundRows = DB::table('hashtags')->where('real_object_id', $id)
+        ->where('template_id', $objectTemplateId)->get();
+        $finalTags = [];
+
+        foreach($foundRows as $taglink)
+        {
+            $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+            $finalTags[] = $uniqueTag;
+        }
+
+        return $finalTags;
+    }
+
+    public function checkIfHashtagsAreUnique($tags)
+    {
+        $finalTags = [];
+        $same = 0;
+        $unique = 0;
+        foreach($tags as $tag)
+        {
+            $uniqueTag = Uniquehashtag::where("content", $tag)->first();
+            if($uniqueTag)
+            {   
+                // tag is not unique
+                $finalTags[] = $uniqueTag;
+                $same++;
+            }
+            else {
+                // tag is unique
+                $uniqueTag = new Uniquehashtag;
+                $uniqueTag->content = $tag;
+                $uniqueTag->save();
+                $finalTags[] = $uniqueTag;
+                $unique++;
+            }
+        }
+
+        return $finalTags;
+    }
+
+    public function removeHashtags($id, $objectTemplateId)
+    {
+        $oldTags = DB::table('hashtags')
+            ->where('template_id', $objectTemplateId)
+            ->where('real_object_id', $id)
+            ->delete();
+    }
+
+    public function attachHashTags($tags, $object)
+    {
+        $tags = $this->getHashtags($tags);
+        $tags = $this->checkIfHashtagsAreUnique($tags);
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        foreach($tags as $tag)
+        {
+            $row = [
+                'template_id' => $objectTemplateId,
+                'uniquehashtag_id' => $tag->id,
+                'real_object_id' => $object->id,
+                'user_id' => $object->user_id,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $x = DB::table('hashtags')->insert($row);            
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "hashtags were added."
+        ]);
+    }
+
+    public function getHashtags($string) {  
+        $hashtags= FALSE;  
+        preg_match_all("/(#\w+)/u", $string, $matches);  
+        if ($matches) {
+            $hashtagsArray = array_count_values($matches[0]);
+            $hashtags = array_keys($hashtagsArray);
+        }
+        return $hashtags;
     }
 }

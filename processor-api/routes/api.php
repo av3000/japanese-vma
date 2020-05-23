@@ -27,13 +27,14 @@ Route::group([
 		
 		// Articles CUD
 		Route::post('article', 'ArticleController@store');
-		Route::post('article/{id}/like', 'ArticleController@likeArticle');
-		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
 		Route::put('article/{id}', 'ArticleController@update');
 		Route::delete('article/{id}', 'ArticleController@delete');
+		Route::get('article/{id}', 'ArticleController@show');
+		Route::post('article/{id}/like', 'ArticleController@likeArticle');
+		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
 		Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
 		Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
-		Route::get('article/{id}', 'ArticleController@show');
+		Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
 		// Article Comment
 		Route::post('article/{id}/comment', 'ArticleController@storeComment');
 		Route::delete('article/{id}/comment/{commentid}', 'ArticleController@deleteComment');
@@ -54,6 +55,7 @@ Route::group([
 		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
 		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
 		Route::get('list/{id}', 'CustomListController@show');
+		Route::post('list/{id}/togglepublicity', 'CustomListController@togglePublicity');
 		// List Comment
 		Route::post('list/{id}/comment', 'CustomListController@storeComment');
 		Route::delete('list/{id}/comment/{commentid}', 'CustomListController@deleteComment');
@@ -66,11 +68,29 @@ Route::group([
 		Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
 		Route::delete('sentence/{id}', 'JapaneseDataController@deleteSentence');
 
+		// Posts
+		Route::post('post', 'PostController@store');
+		Route::put('post/{id}', 'PostController@update');
+		Route::delete('post/{id}', 'PostController@delete');
+		Route::get('post/{id}', 'PostController@show');
+		Route::post('post/{id}/like', 'PostController@likePost');
+		Route::post('post/{id}/unlike', 'PostController@unlikePost');
+		
+		// Posts Comment
+		Route::post('post/{id}/comment', 'PostController@storeComment');
+		Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
+		Route::put('post/{id}/comment/{commentid}', 'PostController@updateComment');
+		Route::post('post/{id}/comment/{commentid}/like', 'PostController@likeComment');
+		Route::post('post/{id}/comment/{commentid}/unlike', 'PostController@unlikeComment');
+
 		// Admin example route
 		Route::group([
 			'middleware'=> 'checkRole:admin'
 			], function() {
 				Route::get('articles', 'ArticleController@index');
+				Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
+				Route::get('posts', 'PostController@index');
+				Route::post('post/{id}/togglelock', 'PostController@toggleLock');
 			}
 		);
 	});
@@ -102,4 +122,6 @@ Route::get('material/search', 'JapaneseDataController@generateQuery');
 Route::get('lists', 'CustomListController@index');
 Route::post('lists/search', 'CustomListController@generateQuery');
 Route::get('user/{id}/lists', 'CustomListController@getUserLists');
+
+
 

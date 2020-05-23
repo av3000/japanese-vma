@@ -26,4 +26,8 @@ class ObjectTemplate extends Model
     {
         $this->hasMany(Comment::class);
     }
+    public function posts()
+    {
+        $this->hasMany(Post::class);
+    }
 }

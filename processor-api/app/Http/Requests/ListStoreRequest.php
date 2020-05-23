@@ -26,7 +26,6 @@ class ListStoreRequest extends FormRequest
         return [
             'title' => 'required|min:2|max:255',
             'type'  => 'required',
-            'status'  => 'required'
         ];
     }
 

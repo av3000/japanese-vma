@@ -24,13 +24,13 @@ class Kanji extends Model
         return $this->belongsToMany('App\Radical', 'japanese_radical_kanji_long');
     }
 
-    /**
-     * Get the route key for the model.
-     *
-     * @return string
-     */
-    public function getRouteKeyName()
-    {
-        return 'kanji';
-    }
+    // /**
+    //  * Get the route key for the model.
+    //  *
+    //  * @return string
+    //  */
+    // public function getRouteKeyName()
+    // {
+    //     return 'kanji';
+    // }
 }

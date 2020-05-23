@@ -28,7 +28,6 @@ class ArticleStoreRequest extends FormRequest
             'title_jp'    => 'required|min:2|max:255',
             'content_en'  => 'max:3000',
             'content_jp'  => 'required|min:2|max:3000',
-            'status'      => 'required',
             'source_link' => 'required'
         ];
     }

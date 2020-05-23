@@ -16,7 +16,8 @@ class CreateArticlesTable extends Migration
         Schema::create('articles', function (Blueprint $table) {
             $table->increments("id");
             $table->integer("user_id");
-            $table->string("status")->default("pending");
+            $table->smallInteger('status')->default(0);
+            $table->boolean('publicity')->default(0);
             $table->string("title_en")->default("");
             $table->text("content_en")->default("");
             $table->string("title_jp");

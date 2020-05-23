@@ -16,7 +16,7 @@ class CreateCustomlistsTable extends Migration
         Schema::create('customlists', function (Blueprint $table) {
             $table->increments("id");
             $table->integer("user_id")->unsigned();
-            $table->integer("status");
+            $table->boolean("publicity")->default(0);
             $table->integer("type");
             $table->string("title");
             $table->integer("n1")->default(0);

@@ -12,10 +12,12 @@ use App\Kanji;
 use App\Word;
 use App\Sentence;
 use App\CustomList;
+use App\Comment;
 use App\Like;
 use App\Download;
 use App\View;
 use App\ObjectTemplate;
+use App\Uniquehashtag;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -64,13 +66,26 @@ class CustomListController extends Controller
             }
         }
         else if( $list->type == self::ARTICLES ){ // articles
+            $downloadsTotal=0;
+
             foreach( $foundRows as $row )
-            {
-                array_push( $objectsArray, Article::where('id', $row->real_object_id)->first() );
+            {   
+                $article = Article::where('id', $row->real_object_id)->first();
+                $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+                $article->likesTotal     = $this->getImpression("like", $objectTemplateId, $article, "total");
+                $article->downloadsTotal = $this->getImpression("download", $objectTemplateId, $article, "total");
+                $downloadsTotal += $article->downloadsTotal;
+                $article->viewsTotal     = $this->getImpression("view", $objectTemplateId, $article, "total");
+                $article->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $article, "total");
+                $article->hashtags       = $this->getUniquehashtags($article->id, $objectTemplateId);
+                array_push( $objectsArray, $article );
             }
+
+            $list->downloadsTotal = $downloadsTotal;
         }
 
         $list->listItems = $objectsArray;
+        
         return $list;
     }
 
@@ -86,32 +101,31 @@ class CustomListController extends Controller
 
         $list = $this->getListItems($list);
         $this->incrementView($list);
-        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-        $list->likesTotal = $this->getImpression("like", $objectTemplateId, $list, "total");
-        $list->downloadsTotal = $this->getImpression("download", $objectTemplateId, $list, "total");
-        $list->viewsTotal = $this->getImpression("view", $objectTemplateId, $list, "total");
-        // commentsTotal
-        // hashtags
-
-        if($list->listItems)
+        $objectTemplateId     = ObjectTemplate::where('title', 'list')->first()->id;
+        $list->hashtags       = $this->getUniquehashtags($list->id, $objectTemplateId);
+        $list->likesTotal     = $this->getImpression("like", $objectTemplateId, $list, "total");
+        $list->viewsTotal     = $this->getImpression("view", $objectTemplateId, $list, "total");
+        $list->comments       = $this->getImpression("comment", $objectTemplateId, $list, "all");
+        
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        foreach($list->comments as $comment)
         {
-            return response()->json([
-                'success' => true,
-                'listItemsCount' => count($list->listItems),
-                'list' => $list
-            ]);
+            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
+            $comment->likesTotal = count($comment->likes);
         }
-        else {
-            return response()->json([
-                'success' => false,
-                'message' => "List is empty",
-            ]);
-        }
+
+        $list->commentsTotal  = count($list->comments);
+
+        return response()->json([
+            'success' => true,
+            'listItemsCount' => count($list->listItems),
+            'list' => $list
+        ]);
     }
 
     public function index()
     {
-        $lists = CustomList::where('status', 1)->get();
+        $lists = CustomList::where('publicity', 1)->get();
 
         if(!$lists)
         {
@@ -124,13 +138,13 @@ class CustomListController extends Controller
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         foreach($lists as $singleList)
         {
-            $singleList = $this->getListItems($singleList);
-            $singleList->itemsTotal = count($singleList->listItems);
-            $singleList->likesTotal = $this->getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList                 = $this->getListItems($singleList);
+            $singleList->itemsTotal     = count($singleList->listItems);
+            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
             $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
-            $singleList->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleList, "total");
-            // commentsTotal
-            // hashtags
+            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
+            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
+            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
         }
 
         return response()->json([
@@ -150,10 +164,11 @@ class CustomListController extends Controller
 
         $newList = new CustomList;
         $newList->user_id = auth()->user()->id;
-        $newList->status = $request->status;
         $newList->type = $request->type;
         $newList->title = $request->title;
         $newList->save();
+        
+        $this->attachHashTags($request->tags, $newList);
         
         return response()->json([
             'success' => true,
@@ -170,16 +185,25 @@ class CustomListController extends Controller
         }   
         $list = CustomList::find($id);
         
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|min:2|max:255',
-        ]);
+        if( !$list || $list->user_id != auth()->user()->id ){
+            return response()->json([
+                'message' => 'list doesnt exist or does not belong to the user'
+            ]);
+        } 
 
-        if($validator->fails()) {
-            return response()->json($validator->errors()->toJson(), 400);
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
+        if( isset($request->tags) )
+        {
+            $this->removeHashtags($list->id, $objectTemplateId, $request->tags);
+            $this->attachHashTags($request->tags, $list);
         }
 
-        $list->title = $request->get("title");
-        $list->save();
+        if( isset($request->title) )
+        {
+            $list->title = $request->get("title");
+        }
+        $list->update();
 
         return response()->json([
             'success' => true,
@@ -197,20 +221,17 @@ class CustomListController extends Controller
 
         $list = CustomList::find($id);
         
-        if( !$list ) {
+        if( !$list || $list->user_id != auth()->user()->id ){
             return response()->json([
                 'success' => false,
-                'message' => "List is not found",
+                'message' => 'list doesnt exist or does not belong to the user'
             ]);
-        }
+        } 
 
-        $foundRows = DB::table('customlist_object')->where('list_id', $list->id)->get();
-        foreach($foundRows as $row)
-        {
-            DB::table('customlist_object')->where('list_id', $row->id)->delete();
-        }    
-
-        $this->removeCustomListImpressions($list);
+        $this->removeListItems($list->id);
+        $this->removeImpressions($list);
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        $this->removeHashtags($list->id, $objectTemplateId);
 
         $list->delete();
 
@@ -259,6 +280,7 @@ class CustomListController extends Controller
 
         $row = [
             'real_object_id' => $newObjectId,
+            'listtype_id' => $list->type,
             'list_id' => $id
         ];
 
@@ -649,15 +671,51 @@ class CustomListController extends Controller
         return $pdf->stream("list-sentences.pdf");
     }
 
+    public function togglePublicity($id)
+    {
+        $list = CustomList::find($id);
+
+        if( !$list || $list->user_id != auth()->user()->id || auth()->user()->role() != "admin" )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist or user is unauthorized'
+            ]);
+        }
+
+        if($list->publicity == 1)
+        {
+            $list->publicity = 0;
+            $list->update();
+            return response()->json([
+                'success' => true,
+                'message' => 'list of id: '.$id. ' is now private'
+            ]);
+        }
+        else {
+            $list->publicity = 1;
+            $list->update();
+            return response()->json([
+                'success' => true,
+                'message' => 'list of id: '.$id. ' is now public'
+            ]);
+        }
+    }
+
     #===================================== Impressions
 
-    public function removeCustomListImpressions(CustomList $list)
+    public function removeListItems($id)
+    {
+        DB::table('customlist_object')->where('list_id', $id)->delete();
+    }
+
+    public function removeImpressions($object)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $list->id)->delete();
-        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $list->id)->delete();
+        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
+        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
 
-        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $list->id)->get();
+        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->get();
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach($comments as $comment){
             $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
@@ -753,6 +811,15 @@ class CustomListController extends Controller
             if($amount == "total") { return $comments->count(); }        
             else if($amount == "all") { return $comments->get(); }        
         }
+        else if($impressionType == 'hashtag') 
+        {
+            $hashtags = Comment::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);   
+            if($amount == "total") { return $hashtags->count(); }        
+            else if($amount == "all") { return $hashtags->get(); }        
+        }
     }
 
     public function incrementDownload(CustomList $list)
@@ -845,7 +912,7 @@ class CustomListController extends Controller
         if(isset($comment))
         {
             $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $list->id)->delete();
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
  
             $comment->delete();
 
@@ -951,5 +1018,107 @@ class CustomListController extends Controller
             'success' => true,
             'message' => "like was deleted",
         ]);
+    }
+
+    public function getUniquehashtags($id, $objectTemplateId)
+    {  
+        $foundRows = DB::table('hashtags')->where('real_object_id', $id)
+        ->where('template_id', $objectTemplateId)->get();
+        $finalTags = [];
+
+        foreach($foundRows as $taglink)
+        {
+            $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+            $finalTags[] = $uniqueTag;
+        }
+
+        return $finalTags;
+    }
+
+    public function checkIfHashtagsAreUnique($tags)
+    {
+        $finalTags = [];
+        $same = 0;
+        $unique = 0;
+        foreach($tags as $tag)
+        {
+            $uniqueTag = Uniquehashtag::where("content", $tag)->first();
+            if($uniqueTag)
+            {   
+                // tag is not unique
+                $finalTags[] = $uniqueTag;
+                $same++;
+            }
+            else {
+                // tag is unique
+                $uniqueTag = new Uniquehashtag;
+                $uniqueTag->content = $tag;
+                $uniqueTag->save();
+                $finalTags[] = $uniqueTag;
+                $unique++;
+            }
+        }
+
+        // if(count($finalTags) > 0)
+        // {
+        //     return response()->json([
+        //         'success' => true,
+        //         'same' => $same,
+        //         'unique' => $unique,
+        //         'finalTags' => $finalTags
+        //     ]);
+        // }
+
+        // return response()->json([
+        //     'success' => false,
+        //     'same' => $same,
+        //     'unique' => $unique,
+        //     'finalTags' => $finalTags
+        // ]);
+        return $finalTags;
+    }
+
+    public function removeHashtags($id, $objectTemplateId)
+    {
+        $oldTags = DB::table('hashtags')
+            ->where('template_id', $objectTemplateId)
+            ->where('real_object_id', $id)
+            ->delete();
+    }
+
+    public function attachHashtags($tags, $object)
+    {
+        $tags = $this->getHashtags($tags);
+        $tags = $this->checkIfHashtagsAreUnique($tags);
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
+        foreach($tags as $tag)
+        {
+            $row = [
+                'template_id' => $objectTemplateId,
+                'uniquehashtag_id' => $tag->id,
+                'real_object_id' => $object->id,
+                'user_id' => $object->user_id,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $x = DB::table('hashtags')->insert($row);            
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "hashtags were added."
+        ]);
+    }
+
+    public function getHashtags($string) {  
+        $hashtags= FALSE;  
+        preg_match_all("/(#\w+)/u", $string, $matches);  
+        if ($matches) {
+            $hashtagsArray = array_count_values($matches[0]);
+            $hashtags = array_keys($hashtagsArray);
+        }
+        return $hashtags;
     }
 }
