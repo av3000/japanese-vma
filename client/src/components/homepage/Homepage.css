@@ -1,0 +1,91 @@
+:root {
+    --main-text-color: #303030;
+    --alternative-text-color: #f9f9f9;
+    --link-hover-color: #9099a7;
+    --main-brand-color: #f79862;
+    --secondary-brand-color: #3058A4;
+}
+/* Layouts */
+.homepage-upper-page {
+    display: flex;
+    height: 85vh;
+}
+
+.homepage-left {
+    flex: 2;
+    background: url("../../assets/images/adrian-Xft-JdC-Jbc-unsplash.jpg") no-repeat center;
+    background-size: cover;
+}
+
+.homepage-right {
+    flex: 1;
+    background-color: var(--main-brand-color);
+}
+
+.homepage-left-column {
+    margin-left: 10%;
+    margin-top: 10%;
+    margin-right: 30%;
+    display: flex;
+    height: 82%;
+    flex-wrap: wrap;
+    align-content: space-between;
+}
+
+/* inner elements */
+
+.home-hero-learnmore {
+    color: var(--main-brand-color);
+    width: 100%;
+    text-align: left;
+}
+
+.home-hero-social-links {
+    margin-right: 5%;
+    margin-top: 5%;
+}
+
+.home-hero-header p {
+    text-align: left;
+}
+
+.home-hero-header h1 {
+    font-size: 3.5rem;
+}
+
+.home-hero-links .text-brand,
+.text-brand {
+    color: var(--main-brand-color);
+    text-shadow: 0 0 1px #f9f9f9;
+}
+
+/* Form */
+
+.landing-register-form {
+    background-color: #fff;
+    margin: 10% auto;
+    border-radius: 5px;
+    padding: 15px;
+    color: var(--main-text-color);
+}
+
+.landing-register-form a {
+    color: var(--link-hover-color);
+}
+
+.brand-button {
+    border-radius: 18px;
+    border: 2px solid var(--main-brand-color);
+    color: var(--main-brand-color);
+}
+.brand-button:hover {
+    background-color: var(--main-brand-color);
+    border: 2px solid var(--main-brand-color);
+    color: #fff;
+}
+
+.form-control:focus{
+    outline: none !important;
+    border: 2px solid var(--main-brand-color);
+    box-shadow: 0 0 5px var(--link-hover-color);
+}

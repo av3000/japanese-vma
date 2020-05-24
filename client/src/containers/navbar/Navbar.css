@@ -1,0 +1,70 @@
+:root {
+    --main-text-color: #303030;
+    --alternative-text-color: #f9f9f9;
+    --link-hover-color: #9099a7;
+    --main-brand-color: #f79862;
+    --secondary-brand-color: #3058A4;
+}
+
+.dropdown-menu {
+    padding: 0;
+}
+
+.bb-2 {
+    box-shadow: 0 0.2px 0px 0px #666;
+}
+
+.link-button:focus {
+    background-color: #fff;
+}
+
+.link-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    padding: .5rem 1rem;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ and Edge */
+    user-select: none; /* Standard syntax */
+}
+
+a:visited,
+.dropdown-item.active,
+.dropdown-item:active,
+.dropdown-item.focus,
+.dropdown-item:focus
+{
+    background-color: #fff;
+    color: var(--main-text-color);
+    box-shadow: 0 0.2px 0px 0px #666;
+}
+
+.navbar {
+    box-shadow: 0 0.2px 0px 0px #666;
+}
+
+.navbar .link-button,
+.navbar a {
+    color: var(--main-text-color);
+}
+
+.navbar-header {
+    font-weight: bold;
+    text-shadow: 0.3px 0.3px var(--link-hover-color);
+}
+
+.navbar .link-button:hover {
+    text-decoration: none;
+    color: var(--link-hover-color);
+    cursor: pointer;
+}
+
+.navbar-right-auth li {
+    margin: 0 0.4rem;
+}
+
+.navbar-right li {
+    margin: 0 1rem;
+}

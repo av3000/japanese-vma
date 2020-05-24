@@ -98,6 +98,7 @@ Route::group([
 // Authentication routes
 Route::post('/register', 'UserController@register');
 Route::post('/login', 'UserController@login');
+Route::get('/testing', 'UserController@testing');
 
 // Articles
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
