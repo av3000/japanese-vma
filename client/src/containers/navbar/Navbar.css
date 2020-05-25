@@ -30,11 +30,11 @@
     user-select: none; /* Standard syntax */
 }
 
-a:visited,
-.dropdown-item.active,
-.dropdown-item:active,
-.dropdown-item.focus,
-.dropdown-item:focus
+nav a:visited,
+nav .dropdown-item.active,
+nav .dropdown-item:active,
+nav .dropdown-item.focus,
+nav .dropdown-item:focus
 {
     background-color: #fff;
     color: var(--main-text-color);

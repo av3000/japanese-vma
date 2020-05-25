@@ -18,13 +18,13 @@ class UserController extends Controller
     public function register(Request $request)
     {
     	$validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:users',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:6|max:20|confirmed'
         ]);
 
         if($validator->fails()) {
-            return response()->json($validator->errors()->toJson(), 400);
+            return response()->json(['error' => $validator->errors()], 400);
         }
 
         $user = User::create([
@@ -35,36 +35,36 @@ class UserController extends Controller
 
         // rads
         $radsList = new CustomList;
-        $radsList->user_id = auth()->user()->id;
-        $radsList->status = "default";
+        $radsList->user_id = $user->id;
+        $radsList->publicity = 0;
         $radsList->type = self::KNOWNRADICALS;
         $radsList->title = "My Known Radicals";
         $radsList->save();
         // kanjis
         $kanjiList = new CustomList;
-        $kanjiList->user_id = auth()->user()->id;
-        $kanjiList->status = "default";
+        $kanjiList->user_id = $user->id;
+        $kanjiList->publicity = "default";
         $kanjiList->type = self::KNOWNKANJIS;
         $kanjiList->title = "My Known Kanjis";
         $kanjiList->save();
         // words
         $wordList = new CustomList;
-        $wordList->user_id = auth()->user()->id;
-        $wordList->status = "default";
+        $wordList->user_id = $user->id;
+        $wordList->publicity = "default";
         $wordList->type = self::KNOWNWORDS;
         $wordList->title = "My Known Words";
         $wordList->save();
         // sentences
         $sentenceList = new CustomList;
-        $sentenceList->user_id = auth()->user()->id;
-        $sentenceList->status = "default";
+        $sentenceList->user_id = $user->id;
+        $sentenceList->publicity = "default";
         $sentenceList->type = self::KNOWNSENTENCES;
         $sentenceList->title = "My Known Sentences";
         $sentenceList->save();
 
      	$accessToken = $user->createToken('authToken');
 
-     	return response(['user'=>$user, 'accessToken'=>$accessToken]);
+     	return response()->json(['user'=>$user, 'accessToken'=>$accessToken->accessToken]);
     }
 
     public function login(Request $request) 
@@ -78,12 +78,12 @@ class UserController extends Controller
 
         if(!auth()->attempt($loginData)) 
         {
-        	return response(['message' => 'Invalid credentialS ...']);
+        	return response()->json(['error' => ['login' => 'Invalid email/password']], 400);
         }
         
     	$accessToken = auth()->user()->createToken('authToken');
 
-     	return response(['user'=>auth()->user(), 'accessToken'=>$accessToken]);
+     	return response()->json(['user'=>auth()->user(), 'accessToken'=>$accessToken->accessToken]);
     }
 
     /**

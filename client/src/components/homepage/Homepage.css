@@ -8,11 +8,11 @@
 /* Layouts */
 .homepage-upper-page {
     display: flex;
-    height: 85vh;
+    height: 80vh;
 }
 
 .homepage-left {
-    flex: 2;
+    flex: 5;
     background: url("../../assets/images/adrian-Xft-JdC-Jbc-unsplash.jpg") no-repeat center;
     background-size: cover;
 }
@@ -23,13 +23,16 @@
 }
 
 .homepage-left-column {
+    display: flex;
+    height: 100%;
+    flex-wrap: wrap;
+    align-content: space-between;
+}
+
+.home-hero-header {
     margin-left: 10%;
     margin-top: 10%;
     margin-right: 30%;
-    display: flex;
-    height: 82%;
-    flex-wrap: wrap;
-    align-content: space-between;
 }
 
 /* inner elements */
@@ -37,7 +40,9 @@
 .home-hero-learnmore {
     color: var(--main-brand-color);
     width: 100%;
-    text-align: left;
+    margin-right: 5%;
+    text-align: right;
+    font-weight: bold;
 }
 
 .home-hero-social-links {
@@ -56,7 +61,7 @@
 .home-hero-links .text-brand,
 .text-brand {
     color: var(--main-brand-color);
-    text-shadow: 0 0 1px #f9f9f9;
+    text-shadow: 0 0 1px #303030;
 }
 
 /* Form */

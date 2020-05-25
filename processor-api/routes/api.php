@@ -72,7 +72,6 @@ Route::group([
 		Route::post('post', 'PostController@store');
 		Route::put('post/{id}', 'PostController@update');
 		Route::delete('post/{id}', 'PostController@delete');
-		Route::get('post/{id}', 'PostController@show');
 		Route::post('post/{id}/like', 'PostController@likePost');
 		Route::post('post/{id}/unlike', 'PostController@unlikePost');
 		
@@ -87,9 +86,7 @@ Route::group([
 		Route::group([
 			'middleware'=> 'checkRole:admin'
 			], function() {
-				Route::get('articles', 'ArticleController@index');
 				Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
-				Route::get('posts', 'PostController@index');
 				Route::post('post/{id}/togglelock', 'PostController@toggleLock');
 			}
 		);
@@ -101,6 +98,7 @@ Route::post('/login', 'UserController@login');
 Route::get('/testing', 'UserController@testing');
 
 // Articles
+Route::get('articles', 'ArticleController@index');
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
 Route::get('articles/search', 'ArticleController@generateQuery');
@@ -124,5 +122,6 @@ Route::get('lists', 'CustomListController@index');
 Route::post('lists/search', 'CustomListController@generateQuery');
 Route::get('user/{id}/lists', 'CustomListController@getUserLists');
 
-
-
+// Posts
+Route::get('posts', 'PostController@index');
+Route::get('post/{id}', 'PostController@show');

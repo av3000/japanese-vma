@@ -2,9 +2,16 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import './Navbar.css';
+import { logout } from '../../store/actions/auth';
 
 
 class Navbar extends Component {
+
+    logout = e => {
+        e.preventDefault();
+        this.props.logout();
+    }
+
     render(){
         return(
             <nav className="navbar navbar-expand">
@@ -47,6 +54,13 @@ class Navbar extends Component {
                             <Link className="nav-link" to="/about">About</Link>
                         </li>
                     </ul>
+                    { this.props.currentUser.isAuthenticated ? (
+                        <ul className="nav nav-navbar-nav navbar-right">
+                            <li>
+                                <button className="btn btn-outline-danger" onClick={this.logout}>Logout</button>
+                            </li>
+                        </ul> 
+                    ) : (
                     <ul className="nav navbar-nav navbar-right-auth">
                         <li className="nav-item">
                             <Link className="nav-link" to="/register">Sign Up</Link>
@@ -55,6 +69,7 @@ class Navbar extends Component {
                             <Link className="nav-link" to="/login">Log In</Link>
                         </li>
                     </ul>
+                    )}
                 </div>
             </nav>
         )
@@ -67,4 +82,4 @@ function mapStateToProps(state) {
     };
 }
 
-export default connect(mapStateToProps, null)(Navbar);
+export default connect(mapStateToProps, { logout })(Navbar);

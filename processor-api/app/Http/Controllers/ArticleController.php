@@ -47,13 +47,13 @@ class ArticleController extends Controller
             $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
             $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
             $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            // hashtags
+            $singleArticle->hashtags      = $this->getUniquehashtags($singleArticle->id, $objectTemplateId);
         }
 
         if(isset($articles))
          {
             return response()->json([
-                'success' => true, 'articles' => $articles
+                'success' => true, 'articles' => $articles, 'message'=> 'articles fetched'
              ]);
          }
          return response()->json([
@@ -77,6 +77,8 @@ class ArticleController extends Controller
         $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
         $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
         $article->commentsTotal = count($article->comments);
+        $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
+
 
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach($article->comments as $comment)

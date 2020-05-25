@@ -1,0 +1,27 @@
+:root {
+    --main-text-color: #303030;
+    --alternative-text-color: #f9f9f9;
+    --link-hover-color: #9099a7;
+    --main-brand-color: #f79862;
+    --secondary-brand-color: #3058A4;
+}
+
+.card-body p a .tag-link {
+    color: var(--secondary-brand-color);
+}
+
+.card-body .article-title {
+    /* font-weight: bold; */
+}
+
+body {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+h2 {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+a {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}

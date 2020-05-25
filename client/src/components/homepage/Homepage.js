@@ -1,8 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Homepage.css';
+import ArticleTimeline from '../article/ArticleTimeline';
 
-const Homepage = () => (
+const Homepage = ({ currentUser }) => {
+    if( !currentUser.isAuthenticated ){
+
+    return (
+<div className="fullpage">
     <div className="homepage">
         <div className="homepage-upper-page">
             <div className="homepage-left">
@@ -17,7 +22,7 @@ const Homepage = () => (
                 </div>
             </div>
             <div className="homepage-right">
-                <div className="landing-register-form col-md-10">
+                {/* <div className="landing-register-form col-md-10">
                     <form action="" className="col-md-12">
                         <h5 className="text-center">Create an free account</h5>
                         <label htmlFor="email">Email</label>
@@ -31,14 +36,33 @@ const Homepage = () => (
                             Submit
                         </button>
                     </form>
-                </div>
+                </div> */}
                 <div className="home-hero-social-links float-right">
                     <p>FB | IG</p>
                 </div>
             </div>
         </div>
     </div>
-);
+
+    <div className="container"> 
+        <h2>Explore!</h2>
+        <div className="row">
+            <ArticleTimeline/>
+        </div>
+    </div>
+</div>
+
+
+    )
+    }
+
+    return (
+        <div className="container"> 
+            <h1>Welcome back!</h1>
+            <ArticleTimeline/>
+        </div>
+    );
+};
 
 export default Homepage;
 
