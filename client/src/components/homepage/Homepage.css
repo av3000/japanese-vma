@@ -5,7 +5,11 @@
     --main-brand-color: #f79862;
     --secondary-brand-color: #3058A4;
 }
+
+html { scroll-behavior: smooth; } 
+
 /* Layouts */
+
 .homepage-upper-page {
     display: flex;
     height: 80vh;
@@ -38,16 +42,35 @@
 /* inner elements */
 
 .home-hero-learnmore {
-    color: var(--main-brand-color);
     width: 100%;
     margin-right: 5%;
+    margin-bottom: 1%;
     text-align: right;
     font-weight: bold;
+}
+
+.home-hero-learnmore-link {
+    color: var(--main-brand-color);
+}
+
+.home-hero-learnmore-link:hover {
+    color: var(--main-brand-color);
+    opacity: .7;
+    text-decoration: none;
+}
+
+.homepage-section-title:hover {
+    text-decoration: none;
+    color: var(--link-hover-color);
 }
 
 .home-hero-social-links {
     margin-right: 5%;
     margin-top: 5%;
+}
+
+.home-hero-social-links a:hover {
+    opacity: .7;
 }
 
 .home-hero-header p {
@@ -63,6 +86,8 @@
     color: var(--main-brand-color);
     text-shadow: 0 0 1px #303030;
 }
+
+
 
 /* Form */
 

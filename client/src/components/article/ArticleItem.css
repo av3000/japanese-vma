@@ -18,10 +18,30 @@ body {
     font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 
-h2 {
+h2,
+.homepage-section-title span {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+.homepage-section-title span:hover {
+    color: var(--link-hover-color);
+}
+.homepage-section-title span {
+    color: var(--main-text-color);
+    font-size: 2rem;
+}
+
+a,
+.link-button
+ {
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
-a {
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+.article-title-link {
+    color: var(--main-text-color);
+    text-decoration: none;
+}
+
+.article-title-link:hover {
+    color: var(--link-hover-color);
+    text-decoration: none;
 }

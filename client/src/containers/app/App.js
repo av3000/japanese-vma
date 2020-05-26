@@ -4,6 +4,7 @@ import { configureStore } from '../../store';
 import './App.css';
 import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from '../navbar/Navbar';
+import Footer from '../../components/footer/Footer';
 import Main from '../Main';
 import { setAuthorizationToken, setCurrentUser } from '../../store/actions/auth';
 
@@ -31,6 +32,7 @@ const App = () => (
         <div className="onboarding">
           <Navbar/>
           <Main/>
+          <Footer/>
         </div>
       </Router>
   </Provider>

@@ -2,10 +2,19 @@ import React from 'react';
 import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import DownloadsImg from '../../assets/icons/download-icon.svg';
+import ViewsImg from '../../assets/icons/views-eye-icon.svg';
+import CommentsImg from '../../assets/icons/comments-icon.svg';
+import BookmarkImg from '../../assets/icons/bookmark-icon.svg';
+import LikesImg from '../../assets/icons/like-icon.svg';
 import './ArticleItem.css';
 
 const ArticleItem = ({ 
     created_at,
+    jp_year,
+    jp_month,
+    jp_day,
+    jp_hour,
     title_jp, 
     commentsTotal, 
     viewsTotal, 
@@ -23,47 +32,37 @@ const ArticleItem = ({
             />
             </Link>
             <div className="card-body">
-                <h4 className="card-text article-title">{title_jp}</h4> 
+                <Link to="/" className="article-title-link">
+                    <h4 className="card-text article-title">{title_jp}</h4> 
+                </Link>
                 <p> {hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)} </p>
-                <span className="text-muted">
-                    <Moment className="text-muted" format="Do MMM YYYY">
+                <p className="text-muted">
+                    {/* <Moment className="text-muted" format="Do MMM YYYY">
                         {created_at}
-                    </Moment>
-                </span>
-                <div className="d-flex justify-content-between align-items-center">
-                    <div className="btn-group">
+                    </Moment> */}
+                    {jp_year} {jp_month} {jp_day} {jp_hour}
+                </p>
+                <p className="text-muted">
+                    {viewsTotal+30} views &nbsp; {commentsTotal} comments
+                    <img src={BookmarkImg} className="float-right" alt="bookmark"/>
+                </p>
+                <hr/>
+                <div className="d-flex justify-content-between align-items-center text-muted">
                         <span>
-                        Comments: {commentsTotal}
+                         {commentsTotal}&nbsp;N1 
                         </span>
                         <span>
-                        Views: {viewsTotal}
+                         {viewsTotal}&nbsp;N2
                         </span>
                         <span>
-                        Likes: {likesTotal}
+                         {likesTotal}&nbsp;N3
                         </span>
                         <span>
-                        Downloads: {downloadsTotal}
-                        </span>
-                    </div>
-                </div>
-                <div className="d-flex justify-content-between align-items-center">
-                <div className="btn-group">
-                        <span>
-                        N1: {commentsTotal}
+                         {downloadsTotal}&nbsp;N4
                         </span>
                         <span>
-                        N2: {viewsTotal}
+                         {downloadsTotal}&nbsp;N5
                         </span>
-                        <span>
-                        N3: {likesTotal}
-                        </span>
-                        <span>
-                        N4: {downloadsTotal}
-                        </span>
-                        <span>
-                        N5: {downloadsTotal}
-                        </span>
-                    </div>
                 </div>
                 
             </div>

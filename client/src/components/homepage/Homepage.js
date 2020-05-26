@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ArrowIcon from '../../assets/icons/arrow-navigation-icon.svg';
 import './Homepage.css';
 import ArticleTimeline from '../article/ArticleTimeline';
+import InstagramIcon from '../../assets/icons/ig-icon.svg';
+import FacebookIcon from '../../assets/icons/fb-icon.svg';
+import LearnmoreIcon from '../../assets/icons/expand-more-icon.svg';
 
 const Homepage = ({ currentUser }) => {
     if( !currentUser.isAuthenticated ){
@@ -17,7 +21,9 @@ const Homepage = ({ currentUser }) => {
                         <p>JPLearning is the unique community and language learning environment <span className="text-brand">for you</span> to find &amp; share readings and material of your interest</p>
                     </div>
                     <div className="home-hero-learnmore">
-                        <p>Learn more V</p>
+                        <a href="#readings" className="home-hero-learnmore-link">
+                            Learn more <img src={LearnmoreIcon} alt="expand-more-icon"/>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -38,42 +44,34 @@ const Homepage = ({ currentUser }) => {
                     </form>
                 </div> */}
                 <div className="home-hero-social-links float-right">
-                    <p>FB | IG</p>
+                    <Link to="https://www.facebook.com/" className="mr-2">
+                        <img src={FacebookIcon} alt="facebook-social-icon"/>
+                    </Link>
+                    <Link to="https://www.instagram.com/">
+                        <img src={InstagramIcon} alt="instagram-social-icon"/>
+                    </Link>
                 </div>
             </div>
         </div>
     </div>
-
-    <div className="container"> 
-        <h2>Explore!</h2>
-        <div className="row">
-            <ArticleTimeline/>
-        </div>
+    <div className="container" id="readings"> 
+        <Link to="/articles" className="homepage-section-title">
+            <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
+        <ArticleTimeline/>
     </div>
 </div>
-
-
     )
-    }
+}
 
     return (
         <div className="container"> 
-            <h1>Welcome back!</h1>
+        <Link to="/articles" className="homepage-section-title">
+            <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
             <ArticleTimeline/>
         </div>
     );
 };
 
 export default Homepage;
-
-/* <div className="homepage-lower-page" >
-            <div className="home-hero"></div>
-            <div className="home-hero-links text-center">
-                <Link className="text-brand">
-                    Learn more V
-                </Link>
-            </div>
-            <div className="background"></div>
-        </div> */
-
-            
