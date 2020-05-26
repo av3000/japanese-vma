@@ -81,15 +81,28 @@ class ArticleController extends Controller
             ]);
         }
 
+        $jp_month = "月";
+        $jp_day = "日";
+        $jp_hour = "時";
+        $jp_minute = "分";
+        $jp_year = "年";
+
+        $article->jp_year   = $article->created_at->year   . $jp_year;
+        $article->jp_month  = $article->created_at->month  . $jp_month;
+        $article->jp_day    = $article->created_at->day    . $jp_day;
+        $article->jp_hour   = $article->created_at->hour   . $jp_hour;
+        $article->jp_minute = $article->created_at->minute . $jp_minute;
+
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $this->incrementView($article);
-        $article->likesTotal = $this->getImpression("like", $objectTemplateId, $article, "total");
+
+        $article->likes = $this->getImpression("like", $objectTemplateId, $article, "all");
+        $article->likesTotal = count($article->likes);
         $article->downloadsTotal = $this->getImpression("download", $objectTemplateId, $article, "total");
         $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
         $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
         $article->commentsTotal = count($article->comments);
         $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
-
 
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach($article->comments as $comment)
@@ -906,21 +919,6 @@ class ArticleController extends Controller
         }
     }
 
-    // public function getComments($id)
-    // {
-    //     $article = Article::find($id);
-
-    //     if( !$article )
-    //     {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'requested article does not exist'
-    //         ]);
-    //     }
-    //     $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-    //     $article->comments = $this->getImpression('comment', $objectTemplateId, $article, 'total');
-    // }
-
     public function storeComment(Request $request, $id, $parentCommentId = null)
     {
         if(!auth()->user()){
@@ -1127,6 +1125,28 @@ class ArticleController extends Controller
         ]);
     }
 
+    public function checkIfLikedArticle($id, Request $request) {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => $request->user_id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'isLiked' => true,
+                'message' => 'you already liked this article'
+            ]);
+        }
+
+        return response()->json([
+            'isLiked' => false,
+            'message' => 'you havent liked the article yet'
+        ]);
+    }
+    
     #======================== Hashtags
 
     public function getUniquehashtags($id, $objectTemplateId)

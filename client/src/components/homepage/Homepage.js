@@ -22,7 +22,7 @@ const Homepage = ({ currentUser }) => {
                     </div>
                     <div className="home-hero-learnmore">
                         <a href="#readings" className="home-hero-learnmore-link">
-                            Learn more <img src={LearnmoreIcon} alt="expand-more-icon"/>
+                            Explore <img src={LearnmoreIcon} alt="expand-more-icon"/>
                         </a>
                     </div>
                 </div>
@@ -54,9 +54,17 @@ const Homepage = ({ currentUser }) => {
             </div>
         </div>
     </div>
-    <div className="container" id="readings"> 
-        <Link to="/articles" className="homepage-section-title">
+    <div className="container" > 
+        <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
+        <ArticleTimeline/>
+        <Link to="/lyrics" className="homepage-section-title" id="lyrics">
+            <span>Lyrics <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
+        <ArticleTimeline/>
+        <Link to="/lists" className="homepage-section-title" id="lists">
+            <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
         <ArticleTimeline/>
     </div>
@@ -65,12 +73,20 @@ const Homepage = ({ currentUser }) => {
 }
 
     return (
-        <div className="container"> 
-        <Link to="/articles" className="homepage-section-title">
+    <div className="container" > 
+        <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
-            <ArticleTimeline/>
-        </div>
+        <ArticleTimeline/>
+        <Link to="/lyrics" className="homepage-section-title" id="lyrics">
+            <span>Lyrics <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
+        <ArticleTimeline/>
+        <Link to="/lists" className="homepage-section-title" id="lists">
+            <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
+        </Link>
+        <ArticleTimeline/>
+    </div>
     );
 };
 

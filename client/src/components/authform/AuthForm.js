@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Link } from 'react-router-dom';
 
 class AuthForm extends Component {
     constructor(props) {
@@ -42,7 +43,10 @@ class AuthForm extends Component {
                 <div className="row justify-content-md-center text-center mt-5">
                     <div className="col-md-6">
                         <form onSubmit={this.handleSubmit}>
-                            <h2 className="mb-5">{heading}</h2>
+                            <h2 >{heading}</h2>
+                            { signUp ? ( <h6 className="mb-5">Already have an account? <Link to="/login">Login.</Link> </h6> )
+                            : (<h6 className="mb-5">Don't have an account yet? <Link to="/register">Create now.</Link> </h6>)
+                            }
                             {errors.message && ( <div className="alert alert-danger"> {errors.message} </div>
                             )}
                             <label className="mt-3" htmlFor="email">Email:</label>

@@ -6,6 +6,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from '../navbar/Navbar';
 import Footer from '../../components/footer/Footer';
 import Main from '../Main';
+import ScrollToTop from '../../components/util/scrolltotop/ScrollToTop';
 import { setAuthorizationToken, setCurrentUser } from '../../store/actions/auth';
 
 const store = configureStore()
@@ -29,6 +30,7 @@ if(localStorage.token) {
 const App = () => (
   <Provider store={store}>
       <Router>
+      <ScrollToTop/>
         <div className="onboarding">
           <Navbar/>
           <Main/>

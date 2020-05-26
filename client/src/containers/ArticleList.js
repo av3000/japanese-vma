@@ -10,11 +10,10 @@ class ArticleList extends Component {
 
     render() {
         const { articles } = this.props;
-        console.log("props are ARTICLES: ")
-        console.log(articles);
         let articleList = articles.map(a => (
             <ArticleItem
                 key={a.id}
+                id={a.id}
                 created_at={a.created_at}
                 jp_year={a.jp_year}
                 jp_month={a.jp_month}

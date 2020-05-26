@@ -29,9 +29,9 @@ Route::group([
 		Route::post('article', 'ArticleController@store');
 		Route::put('article/{id}', 'ArticleController@update');
 		Route::delete('article/{id}', 'ArticleController@delete');
-		Route::get('article/{id}', 'ArticleController@show');
 		Route::post('article/{id}/like', 'ArticleController@likeArticle');
 		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
+		Route::post('article/{id}/checklike', 'ArticleController@checkIfLikedArticle');
 		Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
 		Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
 		Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
@@ -99,6 +99,7 @@ Route::get('/testing', 'UserController@testing');
 
 // Articles
 Route::get('articles', 'ArticleController@index');
+Route::get('article/{id}', 'ArticleController@show');
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
 Route::get('articles/search', 'ArticleController@generateQuery');
