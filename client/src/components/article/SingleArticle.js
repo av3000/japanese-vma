@@ -37,21 +37,22 @@ class SingleArticle extends Component {
 
         if(this.props.currentUser.isAuthenticated)
         {
-            // return apiCall("post", `/api/article/${id}/checklike`, )
-            // check if user likes this article
-            // if yes, return isLiked: true
-            
+            return apiCall("post", `/api/article/${id}/checklike`)
+              .then(res=> { 
+                let newState = Object.assign({}, this.state);
+                console.log(res)
+                newState.article.isLiked = res.isLiked;
+                this.setState(newState);
+               });
             // plan B. Analize other apps authorization on creating resources 
 
             // plan C. Modify '/api/article/{id}' and add optional param 'user_id'
             // if $request->user_id -> then do CheckIfLikedArticle($id, $user_id)
-
         }
       })
       .catch(err => {
           console.log(err);
       });
-
   };
 
   addToList() {
@@ -64,20 +65,20 @@ class SingleArticle extends Component {
 
   likeArticle() {
     
-    let endpoint = this.state.isLiked == true ? "unlike" : "like";
+    let endpoint = this.state.article.isLiked == true ? "unlike" : "like";
     console.log("endpoint: " + endpoint);
-    console.log("isLiked: " + this.state.isLiked);
+    console.log("isLiked: " + this.state.article.isLiked);
     let id = this.state.article.id;
     axios.post('/api/article/'+id+'/'+endpoint)
         .then(res => {
             console.log(res);
             let newState = Object.assign({}, this.state);
-            if(endpoint){
+            if(endpoint == "unlike"){
                 newState.article.isLiked = !newState.article.isLiked;
                 newState.article.likesTotal -= 1;
                 this.setState(newState);
             }
-            else {
+            else if (endpoint == "like"){
                 newState.article.isLiked = !newState.article.isLiked;
                 newState.article.likesTotal += 1;
                 this.setState(newState);
@@ -106,8 +107,9 @@ class SingleArticle extends Component {
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
                     <br/><span>{article.viewsTotal + 40} views</span>
                     <span className="mr-1 float-right d-flex">
-                        <img onClick={this.addToList} src={BookmarkImg} className="ml-2" alt=""/>
-                        <img onClick={this.downloadPdf} src={DownloadsImg} className="ml-2" alt=""/>
+                        <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
+                        {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
+                        <i onClick={this.downloadPdf} className="fas fa-file-download ml-3 fa-lg"></i>
                     </span>
                 </p>
                 <img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img"/>
@@ -116,7 +118,10 @@ class SingleArticle extends Component {
                 <p>
                     {article.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
                     <span className="mr-1 float-right d-flex text-muted">
-                    {article.likesTotal+24} likes &nbsp;<img onClick={this.likeArticle} src={LikesImg} className="ml-1 mr-1" alt=""/>
+                    {article.likesTotal+24} likes &nbsp;
+                       {article.isLiked ? (<i onClick={this.likeArticle} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       : (<i onClick={this.likeArticle} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       }
                     </span>
                 </p>
                 <hr/>
@@ -145,5 +150,10 @@ class SingleArticle extends Component {
     )
   }
 }
+
+const likeStyle = {
+  border: "1px solid orange",
+  borderRadius: "30%"
+};
 
 export default SingleArticle;

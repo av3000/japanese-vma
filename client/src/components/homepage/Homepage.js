@@ -59,10 +59,7 @@ const Homepage = ({ currentUser }) => {
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
         <ArticleTimeline/>
-        <Link to="/lyrics" className="homepage-section-title" id="lyrics">
-            <span>Lyrics <img src={ArrowIcon} alt="arrow icon" /> </span>
-        </Link>
-        <ArticleTimeline/>
+
         <Link to="/lists" className="homepage-section-title" id="lists">
             <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
@@ -78,10 +75,7 @@ const Homepage = ({ currentUser }) => {
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
         <ArticleTimeline/>
-        <Link to="/lyrics" className="homepage-section-title" id="lyrics">
-            <span>Lyrics <img src={ArrowIcon} alt="arrow icon" /> </span>
-        </Link>
-        <ArticleTimeline/>
+
         <Link to="/lists" className="homepage-section-title" id="lists">
             <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>

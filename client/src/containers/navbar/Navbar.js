@@ -27,8 +27,6 @@ class Navbar extends Component {
                                 Readings
                                 <div className="dropdown-menu" aria-labelledby="dropdown01">
                                     <Link className="dropdown-item bb-2" to="/articles">Articles</Link>
-                                    <Link className="dropdown-item bb-2" to="/lyrics">Lyrics</Link>
-                                    <Link className="dropdown-item bb-2" to="/artists">Artists</Link>
                                     <Link className="dropdown-item" to="/lists">Lists</Link>
                                 </div>
                             </div>

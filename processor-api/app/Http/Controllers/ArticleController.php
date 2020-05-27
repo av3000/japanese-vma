@@ -1125,23 +1125,25 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function checkIfLikedArticle($id, Request $request) {
+    public function checkIfLikedArticle($id) {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => $request->user_id
+            'user_id' => auth()->user()->id
         ])->first();
         
         if($checkLike) {
             return response()->json([
+                'userId' => auth()->user()->id,
                 'isLiked' => true,
                 'message' => 'you already liked this article'
             ]);
         }
 
         return response()->json([
+            'userId' => auth()->user()->id,
             'isLiked' => false,
             'message' => 'you havent liked the article yet'
         ]);
