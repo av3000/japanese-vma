@@ -19,11 +19,11 @@ const ArticleItem = ({
     downloadsTotal,
     hashtags
 }) => (
-    <div className="col-md-10">
+    <div className="col-md-4">
         <div className="card mb-4 shadow-sm">
             <Link to={'/article/' + id}>
             <img src={DefaultArticleImg}
-                alt="article-image"
+                alt="article-default"
                 height="225" width="100%"
                 className="timelines-image"     
             />

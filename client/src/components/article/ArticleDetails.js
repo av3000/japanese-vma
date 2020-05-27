@@ -1,15 +1,11 @@
 import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom';
-import { apiCall } from "../../services/api"; 
+import { apiCall } from '../../services/api'; 
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
-import DownloadsImg from '../../assets/icons/download-icon.svg';
-import CommentsImg from '../../assets/icons/comments-icon.svg';
-import BookmarkImg from '../../assets/icons/bookmark-icon.svg';
-import LikesImg from '../../assets/icons/like-icon.svg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
 
-class SingleArticle extends Component {
+class ArticleDetails extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -17,6 +13,8 @@ class SingleArticle extends Component {
         };
 
         this.likeArticle = this.likeArticle.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
+        this.downloadPdf = this.downloadPdf.bind(this);
     };
   
   componentDidMount(){
@@ -26,28 +24,21 @@ class SingleArticle extends Component {
         this.setState({
           article: res.data.article
         });
-
         return res.data.article;
       })
       .then(article => {
         if(!article)
         {
-            this.props.history.push('/login');
+            this.props.history.push('/articles');
         }
-
-        if(this.props.currentUser.isAuthenticated)
+        else if(this.props.currentUser.isAuthenticated)
         {
-            return apiCall("post", `/api/article/${id}/checklike`)
-              .then(res=> { 
-                let newState = Object.assign({}, this.state);
-                console.log(res)
-                newState.article.isLiked = res.isLiked;
-                this.setState(newState);
-               });
-            // plan B. Analize other apps authorization on creating resources 
-
-            // plan C. Modify '/api/article/{id}' and add optional param 'user_id'
-            // if $request->user_id -> then do CheckIfLikedArticle($id, $user_id)
+          return apiCall("post", `/api/article/${id}/checklike`)
+            .then(res => { 
+              let newState = Object.assign({}, this.state);
+              newState.article.isLiked = res.isLiked;
+              this.setState(newState);
+            });
         }
       })
       .catch(err => {
@@ -55,49 +46,85 @@ class SingleArticle extends Component {
       });
   };
 
+  handleDelete(){
+    console.log("deleted article: " + this.state.article.id);
+    return apiCall("delete", `/api/article/${this.state.article.id}`)
+      .then(res => { 
+        console.log(res);
+        this.props.history.push('/articles');
+      })
+      .catch(err => {
+        console.log(err);
+      });
+      
+  }
+
   addToList() {
       console.log("addToList");
   };
 
   downloadPdf() {
-    console.log("downloadPdf");
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
+
+    let id = this.state.article.id;
+    axios.get('/api/article/'+id+'/kanjis-pdf', {
+      responseType: 'blob'
+    })
+    .then(res => {
+      //Create a Blob from the PDF Stream
+        const file = new Blob(
+          [res.data], 
+          {type: 'application/pdf'});
+      //Build a URL from the file
+        const fileURL = URL.createObjectURL(file);
+      //Open the URL on new Window
+        window.open(fileURL);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
+    
+
   };
 
   likeArticle() {
-    
-    let endpoint = this.state.article.isLiked == true ? "unlike" : "like";
-    console.log("endpoint: " + endpoint);
-    console.log("isLiked: " + this.state.article.isLiked);
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
+
+    let endpoint = this.state.article.isLiked === true ? "unlike" : "like";
     let id = this.state.article.id;
+
     axios.post('/api/article/'+id+'/'+endpoint)
-        .then(res => {
-            console.log(res);
-            let newState = Object.assign({}, this.state);
-            if(endpoint == "unlike"){
-                newState.article.isLiked = !newState.article.isLiked;
-                newState.article.likesTotal -= 1;
-                this.setState(newState);
-            }
-            else if (endpoint == "like"){
-                newState.article.isLiked = !newState.article.isLiked;
-                newState.article.likesTotal += 1;
-                this.setState(newState);
-            }
-            
-        })
-        .catch(err => {
-            console.log(err);
-        })
+      .then(res => {
+        let newState = Object.assign({}, this.state);
+
+        if(endpoint === "unlike"){
+            newState.article.isLiked = !newState.article.isLiked;
+            newState.article.likesTotal -= 1;
+            this.setState(newState);
+        }
+        else if (endpoint === "like"){
+            newState.article.isLiked = !newState.article.isLiked;
+            newState.article.likesTotal += 1;
+            this.setState(newState);
+        }
+      })
+      .catch(err => {
+          console.log(err);
+      })
   };
 
-  handleLike() {
-
-  }
-
-  
   render() {
+    
     const { article } = this.state;
-    console.log(article);
+    const { currentUser } = this.props;
+
     const singleArticle = article ? (
       <div className="container">
           <div className="row justify-content-center">
@@ -107,6 +134,7 @@ class SingleArticle extends Component {
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
                     <br/><span>{article.viewsTotal + 40} views</span>
                     <span className="mr-1 float-right d-flex">
+                        {currentUser.user.id === article.user_id ? (<i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>) : ""}
                         <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
                         {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
                         <i onClick={this.downloadPdf} className="fas fa-file-download ml-3 fa-lg"></i>
@@ -127,7 +155,7 @@ class SingleArticle extends Component {
                 <hr/>
                 <div className="text-muted">
                     <div className="mr-1 float-left d-flex">
-                        <img src={AvatarImg} alt="default-avatar-image"/>
+                        <img src={AvatarImg} alt="book-japanese"/>
                         <p className="ml-3 mt-3">
                             uploaded by {article.userName}
                         </p>
@@ -151,9 +179,4 @@ class SingleArticle extends Component {
   }
 }
 
-const likeStyle = {
-  border: "1px solid orange",
-  borderRadius: "30%"
-};
-
-export default SingleArticle;
+export default ArticleDetails;

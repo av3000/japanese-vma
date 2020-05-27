@@ -7,12 +7,15 @@ export const loadArticles = articles => ({
     articles
 });
 
+export const remove = id => ({
+    type: REMOVE_ARTICLE,
+    id
+});
+
 export const fetchArticles = () => {
     return dispatch => {
         return apiCall("get", '/api/articles')
             .then(res => {
-                console.log("apiCall returned something");
-                console.log(res);
                 dispatch(loadArticles(res));
             })
             .catch(err => {
@@ -21,3 +24,23 @@ export const fetchArticles = () => {
             })
     };
 };
+
+export const removeArticle = (article_id) => {
+    return dispatch => {
+      return apiCall("delete", `/api/article/${article_id}`)
+        .then(res =>  {
+            dispatch(remove(article_id)) 
+        })
+        .catch(err => {
+            addError(err.message);
+        });
+    };
+  };
+
+
+  export const postNewArticle = article => (dispatch, getState) => {
+    let { currentUser } = getState();
+    return apiCall("post", `/api/article`, { article })
+      .then(res => {})
+      .catch(err => addError(err));
+  };

@@ -1,10 +1,13 @@
 import React from 'react';
-import ArticleList from '../../containers/ArticleList';
+import ExploreArticleList from '../../containers/ExploreArticleList';
 
 const ArticleTimeline = props => {
     return (
         <div className="row">
-            <ArticleList/>
+            <ExploreArticleList/>
+            {/* sidebar */}
+            {/* ads bar */}
+            {/* etc.... */}
         </div>
     );
 };

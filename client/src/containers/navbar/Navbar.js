@@ -51,11 +51,15 @@ class Navbar extends Component {
                         <li className="nav-item">
                             <Link className="nav-link" to="/about">About</Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/newarticle">New Article</Link>
+                        </li>
                     </ul>
                     { this.props.currentUser.isAuthenticated ? (
                         <ul className="nav nav-navbar-nav navbar-right">
                             <li>
                                 <button className="btn btn-outline-danger" onClick={this.logout}>Logout</button>
+                                {/* dropdown UserName, NewArticle, NewList, Logout */}
                             </li>
                         </ul> 
                     ) : (
