@@ -22,6 +22,7 @@ export function apiCall(method, path, data) {
         return resolve(res.data);
       })
       .catch(err => {
+        console.log(err);
         return reject(err.response.data.error);
       });
   });

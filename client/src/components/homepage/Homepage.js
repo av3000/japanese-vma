@@ -6,6 +6,7 @@ import ArticleTimeline from '../article/ArticleTimeline';
 import InstagramIcon from '../../assets/icons/ig-icon.svg';
 import FacebookIcon from '../../assets/icons/fb-icon.svg';
 import LearnmoreIcon from '../../assets/icons/expand-more-icon.svg';
+import SearchBar from '../../components/search/Searchbar';
 
 const Homepage = ({ currentUser }) => {
     if( !currentUser.isAuthenticated ){
@@ -55,6 +56,7 @@ const Homepage = ({ currentUser }) => {
         </div>
     </div>
     <div className="container" > 
+        <SearchBar/>
         <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
@@ -71,6 +73,7 @@ const Homepage = ({ currentUser }) => {
 
     return (
     <div className="container" > 
+        <SearchBar/>
         <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>

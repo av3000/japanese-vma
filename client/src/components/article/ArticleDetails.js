@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom';
-import { apiCall } from '../../services/api'; 
+import { connect } from "react-redux";
+import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
+import { hideLoader, showLoader } from "../../store/actions/application";
 
 class ArticleDetails extends Component {
     constructor(props) {
@@ -69,11 +71,14 @@ class ArticleDetails extends Component {
       this.props.history.push('/login');
     }
 
+    this.props.dispatch( showLoader("Creating a PDF, please wait.") );
+
     let id = this.state.article.id;
     axios.get('/api/article/'+id+'/kanjis-pdf', {
       responseType: 'blob'
     })
     .then(res => {
+      this.props.dispatch( hideLoader() );
       //Create a Blob from the PDF Stream
         const file = new Blob(
           [res.data], 
@@ -134,7 +139,12 @@ class ArticleDetails extends Component {
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
                     <br/><span>{article.viewsTotal + 40} views</span>
                     <span className="mr-1 float-right d-flex">
-                        {currentUser.user.id === article.user_id ? (<i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>) : ""}
+                        {currentUser.user.id === article.user_id ? (
+                          <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
+                        ) : ""}
+                        {currentUser.user.id === article.user_id ?
+                          (<Link to={`/article/edit/${article.id}`}><i class="far fa-edit ml-3 fa-lg"></i></Link>) : ""
+                        }
                         <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
                         {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
                         <i onClick={this.downloadPdf} className="fas fa-file-download ml-3 fa-lg"></i>
@@ -178,5 +188,6 @@ class ArticleDetails extends Component {
     )
   }
 }
+const mapStateToProps = state => ({})
 
-export default ArticleDetails;
+export default connect(mapStateToProps)(ArticleDetails);

@@ -1,0 +1,24 @@
+:root {
+    --main-text-color: #303030;
+    --alternative-text-color: #f9f9f9;
+    --link-hover-color: #9099a7;
+    --main-brand-color: #f79862;
+    --secondary-brand-color: #3058A4;
+}
+
+.loader-container {
+    opacity: .8;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--alternative-text-color);
+}
+
+.loader {
+    left: 35%;
+    top: 45%;
+    z-index: 10;
+    position: absolute;
+}

@@ -3,13 +3,13 @@ import { Provider } from 'react-redux';
 import { configureStore } from '../../store';
 import './App.css';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { apiCall } from '../../services/api';
+import { setAuthorizationToken, setCurrentUser } from '../../store/actions/auth';
 import Navbar from '../navbar/Navbar';
 import Footer from '../../components/footer/Footer';
 import Main from '../Main';
-import { apiCall } from '../../services/api';
 import ScrollToTop from '../../components/util/scrolltotop/ScrollToTop';
-import SearchBar from '../../components/search/Searchbar';
-import { setAuthorizationToken, setCurrentUser } from '../../store/actions/auth';
+import PageLoader from '../../components/PageLoader/PageLoader';
 
 const store = configureStore()
 
@@ -33,9 +33,9 @@ const App = () => (
       <ScrollToTop/>
         <div className="onboarding">
           <Navbar/>
-          <SearchBar/>
           <Main/>
           <Footer/>
+          <PageLoader />
         </div>
       </Router>
   </Provider>

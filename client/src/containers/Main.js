@@ -1,14 +1,15 @@
 import React from 'react';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
+import { authUser } from '../store/actions/auth';
+import { removeError} from '../store/actions/errors';
 import Homepage from '../components/homepage/Homepage';
 import ArticleDetails from '../components/article/ArticleDetails';
 import ArticleListTimeline from '../components/article/ArticleListTimeline';
 import ArticleForm from '../components/article/ArticleForm';
+import ArticleEdit from '../components/article/ArticleEdit';
 import AuthForm from '../components/authform/AuthForm';
-import withAuth from "../hocs/withAuth";
-import { authUser } from '../store/actions/auth';
-import { removeError} from '../store/actions/errors';
+
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -42,6 +43,19 @@ const Main = props => {
                         />
                     )
                 }}/>
+                <Route
+                    exact path="/newarticle"
+                    render={ props => {
+                        return (
+                            <ArticleForm
+                                removeError={removeError}
+                                errors={errors}
+                                {...props} 
+                            />
+                        )
+                    }}
+                />
+                <Route exact path="/article/edit/:article_id" component={ArticleEdit} />
                 <Route exact path="/articles" render={props =>{
                     return (
                         <ArticleListTimeline
@@ -57,18 +71,6 @@ const Main = props => {
                         />
                     )
                 }} />
-                <Route
-                    path="/newarticle"
-                    component={ArticleForm}
-                    // {props => {
-                    //     return (
-                    //         <ArticleForm
-                    //         currentUser={currentUser}
-                    //             {...props}
-                    //         />
-                    //     )
-                    // }}
-                    />
             </Switch>
         </div>
     );

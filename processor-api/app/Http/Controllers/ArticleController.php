@@ -58,7 +58,7 @@ class ArticleController extends Controller
             $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
             $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
             $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            $singleArticle->hashtags      = $this->getUniquehashtags($singleArticle->id, $objectTemplateId);
+            $singleArticle->hashtags      = array_slice($this->getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
 
         if(isset($articles))
@@ -142,33 +142,44 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function store(ArticleStoreRequest $request) 
+    public function store(Request $request) 
     {
         if(!auth()->user()){
             return response()->json([
                 'message' => 'you are not a user'
             ]);
         }
+        // $validated = $request->validated();
 
-        $validated = $request->validated();
+        $validator = Validator::make($request->all(), [
+            // 'title_en'    => 'max:255',
+            'title_jp'    => 'required|min:2|max:255',
+            // 'content_en'  => 'max:3000',
+            'content_jp'  => 'required|min:2|max:3000',
+            'source_link' => 'required'
+        ]);
+
+        if($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
 
         $article = new Article;
         $article->user_id = auth()->user()->id;
-        $article->title_jp = $validated['title_jp'];
-        if(isset($validated['title_en']))
+        $article->title_jp = $request->get('title_jp');
+        if(isset( $request->title_en ))
         {
-            $article->title_en = $validated['title_en'];
+            $article->title_en = $request->get('title_en');
         } else {
             $article->title_en = "";
         }
-        if(isset($validated['content_en']))
+        if(isset( $request->content_en ))
         {
-            $article->content_en = $validated['content_en'];
+            $article->content_en = $request->get('content_en');
         } else {
             $article->content_en = "";
         }
-        $article->content_jp = $validated['content_jp'];
-        $article->source_link = $validated['source_link'];
+        $article->content_jp = $request->get('content_jp');
+        $article->source_link = $request->get('source_link');
         $article->save();
 
         $this->attachHashTags($request->tags, $article);
@@ -256,7 +267,7 @@ class ArticleController extends Controller
 
         if( $request->reattach == 1)
         {
-            die("I should not have been here");
+            // die("I should not have been here"); debugging
             $article->kanjis()->wherePivot('article_id', $article->id)->detach();
             $article->words()->wherePivot('article_id', $article->id)->detach();
         

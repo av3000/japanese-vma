@@ -36,11 +36,3 @@ export const removeArticle = (article_id) => {
         });
     };
   };
-
-
-  export const postNewArticle = article => (dispatch, getState) => {
-    let { currentUser } = getState();
-    return apiCall("post", `/api/article`, { article })
-      .then(res => {})
-      .catch(err => addError(err));
-  };
