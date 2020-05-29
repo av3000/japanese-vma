@@ -18,18 +18,23 @@ class ArticleDetails extends Component {
 
         this.likeArticle = this.likeArticle.bind(this);
         this.addComment = this.addComment.bind(this);
+        this.deleteComment = this.deleteComment.bind(this);
+        this.likeComment = this.likeComment.bind(this);
+        this.editComment = this.editComment.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.downloadPdf = this.downloadPdf.bind(this);
     };
-  
+
   componentDidMount(){
+
+    console.log("Im componentDidMount.");
     let id = this.props.match.params.article_id;
     axios.get('/api/article/' + id)
       .then(res => {
         this.setState({
           article: res.data.article
         });
-        // console.log(res.data.article.comments);
+
         return res.data.article;
       })
       .then(article => {
@@ -47,9 +52,25 @@ class ArticleDetails extends Component {
             });
         }
       })
+      .then( res => {
+        let newState = Object.assign({}, this.state);
+      if(this.props.currentUser.isAuthenticated)
+      {
+        newState.article.comments.map(comment => {
+          let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
+          if(temp) { comment.isLiked = true}
+          else { comment.isLiked = false}
+        })
+
+        this.setState(newState);
+        console.log(this.state.article.comments);
+      }
+
+      })
       .catch(err => {
           console.log(err);
       });
+
   };
 
   handleDelete(){
@@ -62,7 +83,6 @@ class ArticleDetails extends Component {
       .catch(err => {
         console.log(err);
       });
-      
   }
 
   addToList() {
@@ -128,33 +148,75 @@ class ArticleDetails extends Component {
       })
   };
 
+  likeComment(commentId) {
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
+
+    let theComment = this.state.article.comments.find(comment => comment.id === commentId)
+
+    console.log(theComment);
+    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+
+    console.log("endpoint: " + endpoint);
+
+    axios.post('/api/article/'+this.state.article.id+'/comment/'+commentId+'/'+endpoint)
+      .then(res => {
+        console.log(res);
+        let newState = Object.assign({}, this.state);
+        let index = this.state.article.comments.findIndex(comment => comment.id === commentId)
+        newState.article.comments[index].isLiked = !newState.article.comments[index].isLiked
+        
+        if(endpoint === "unlike"){
+            newState.article.comments[index].likesTotal -= 1;
+        }
+        else if (endpoint === "like"){
+          newState.article.comments[index].likesTotal += 1;
+        }
+
+        this.setState(newState);
+      })
+      .catch(err => {
+          console.log(err);
+      })
+
+  }
+
   addComment(comment) {
       let newState = Object.assign({}, this.state);
       newState.article.comments.unshift(comment)
-      this.setState({ newState });
+      this.setState( newState );
+      console.log(this.state);
   }
 
   deleteComment(commentId) {
-    console.log("deleteComment");
+    return apiCall("delete", `/api/article/${this.state.article.id}/comment/${commentId}`)
+      .then(res => { 
+        console.log(res);
+        // let newState = Object.assign({}, this.state);
+        // newState.article.comments.filter(comment => comment.id !== commentId);
+        // this.setState( newState );
+        window.location.reload(false);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
   }
 
   editComment(commentId){
     console.log("editComment");
-  }
-
-  deleteComment(commentId){
-    console.log("deleteComment");
+    console.log(commentId);
   }
 
   render() {
     
     const { article } = this.state;
     const { currentUser } = this.props;
-    // let comments = [];
     let comments = article ? article.comments : "";
 
     const singleArticle = article ? (
-
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
@@ -214,7 +276,7 @@ class ArticleDetails extends Component {
                 <div className="col-lg-8 pt-3 border-right">
                 <hr/>
                   <h6>Share what's on your mind</h6>
-                  <CommentForm addComment={this.addComment} articleId={this.state.article.id}/>
+                  <CommentForm addComment={this.addComment} currentUser={currentUser} articleId={this.state.article.id}/>
                 </div>
               ) : ( 
                 <div className="col-lg-8 pt-3 border-right">
@@ -227,10 +289,13 @@ class ArticleDetails extends Component {
               <div className="col-lg-8 pt-3 bg-white">
                 {comments ? (
                   <CommentList 
+                    articleId={this.state.article.id}
+                    currentUser={currentUser}
                     comments={comments}
                     deleteComment={this.deleteComment}
+                    likeComment={this.likeComment}
                     editComment={this.editComment}
-                    />) : ("empty comments components")}
+                    />) : ("Loading comments")}
               </div>
         </div>
       </div>

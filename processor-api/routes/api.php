@@ -41,6 +41,7 @@ Route::group([
 		Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
 		Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
 		Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
+		Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
 		
 		// Lists CUD
 		Route::post('list', 'CustomListController@store');

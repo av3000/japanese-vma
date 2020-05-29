@@ -109,7 +109,7 @@ class ArticleController extends Controller
         {
             $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
             $comment->likesTotal = count($comment->likes);
-            $comment->userName = User::find($article->user_id)->name;
+            $comment->userName = User::find($comment->user_id)->name;
         }
         
         $article->jlptcommon = 0;
@@ -950,6 +950,8 @@ class ArticleController extends Controller
         $comment->parent_comment_id = null;
         $comment->content = $request->get('content');
         $comment->save();
+        $comment->likesTotal = 0;
+        $comment->likes = [];
 
         return response()->json([
             'success' => true,
@@ -1153,6 +1155,30 @@ class ArticleController extends Controller
             'userId' => auth()->user()->id,
             'isLiked' => false,
             'message' => 'you havent liked the article yet'
+        ]);
+    }
+
+    public function checkIfLikedComment($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'userId' => auth()->user()->id,
+                'isLiked' => true,
+                'message' => 'you already liked this comment'
+            ]);
+        }
+
+        return response()->json([
+            'userId' => auth()->user()->id,
+            'isLiked' => false,
+            'message' => 'you havent liked the comment yet'
         ]);
     }
     

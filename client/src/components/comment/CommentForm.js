@@ -25,6 +25,11 @@ export default class CommentForm extends Component {
   onSubmit(e) {
     // prevent default form submission
     e.preventDefault();
+    
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
 
     if (!this.isFormValid()) {
       this.setState({ error: "All fields are required." });
@@ -42,6 +47,7 @@ export default class CommentForm extends Component {
       content: message
     })
     .then(res => {
+      res.data.comment.userName = this.props.currentUser.user.name;
       this.props.addComment(res.data.comment);
       // clear the message box
       this.setState({
