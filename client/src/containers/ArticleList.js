@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { fetchArticles, removeArticle } from '../store/actions/articles';
 import ArticleItem from '../components/article/ArticleItem';
 
+
 class ArticleList extends Component {
     componentDidMount() {
         this.props.fetchArticles();
@@ -32,6 +33,7 @@ class ArticleList extends Component {
         ));
 
         return articleList;
+
     }
 }
 

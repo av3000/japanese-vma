@@ -1,10 +1,10 @@
-import React from 'react';
-import ArticleList from '../../containers/ArticleList';
+import React, { Component } from 'react'
+import ListsList from '../../containers/ListsList';
 import SearchBar from '../search/Searchbar';
 
-const ArticleTimeline = props => {
-    return (
-        <div className="container">
+const ListTimeline = props => {
+        return (
+            <div className="container">
             <div className="row mt-5">
                 <SearchBar/>
                 {/* by tag */}
@@ -12,13 +12,13 @@ const ArticleTimeline = props => {
                 {/* by newest/popular */}
             </div>
             <div className="row mt-5">
-                <ArticleList/>
+                <ListsList/>
             {/* sidebar */}
             {/* ads bar */}
             {/* etc.... */}
             </div>
         </div>
-    );
+        )
 };
 
-export default ArticleTimeline;
+export default ListTimeline;

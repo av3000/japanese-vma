@@ -54,7 +54,6 @@ Route::group([
 		Route::get('list/{id}/kanjis-pdf', 'CustomListController@generateKanjisPdf');
 		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
 		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
-		Route::get('list/{id}', 'CustomListController@show');
 		Route::post('list/{id}/togglepublicity', 'CustomListController@togglePublicity');
 		// List Comment
 		Route::post('list/{id}/comment', 'CustomListController@storeComment');
@@ -120,6 +119,7 @@ Route::get('material/search', 'JapaneseDataController@generateQuery');
 
 // Custom Lists
 Route::get('lists', 'CustomListController@index');
+Route::get('list/{id}', 'CustomListController@show');
 Route::post('lists/search', 'CustomListController@generateQuery');
 Route::get('user/{id}/lists', 'CustomListController@getUserLists');
 

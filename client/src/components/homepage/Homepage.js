@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import ArrowIcon from '../../assets/icons/arrow-navigation-icon.svg';
 import './Homepage.css';
-import ArticleTimeline from '../article/ArticleTimeline';
+import ExploreArticleTimeline from '../article/ExploreArticleTimeline';
+import ExploreListTimeline from '../list/ExploreListTimeline';
 import InstagramIcon from '../../assets/icons/ig-icon.svg';
 import FacebookIcon from '../../assets/icons/fb-icon.svg';
 import LearnmoreIcon from '../../assets/icons/expand-more-icon.svg';
-import SearchBar from '../../components/search/Searchbar';
 
 const Homepage = ({ currentUser }) => {
     if( !currentUser.isAuthenticated ){
@@ -55,34 +55,32 @@ const Homepage = ({ currentUser }) => {
             </div>
         </div>
     </div>
-    <div className="container" > 
-        <SearchBar/>
+    <div className="container mt-4" > 
         <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
-        <ArticleTimeline/>
+        <ExploreArticleTimeline/>
 
         <Link to="/lists" className="homepage-section-title" id="lists">
             <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
-        <ArticleTimeline/>
+        <ExploreListTimeline/>
     </div>
 </div>
     )
 }
 
     return (
-    <div className="container" > 
-        <SearchBar/>
+    <div className="container mt-4" > 
         <Link to="/articles" className="homepage-section-title" id="readings">
             <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
-        <ArticleTimeline/>
+        <ExploreArticleTimeline/>
 
         <Link to="/lists" className="homepage-section-title" id="lists">
             <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
         </Link>
-        <ArticleTimeline/>
+        <ExploreListTimeline/>
     </div>
     );
 };

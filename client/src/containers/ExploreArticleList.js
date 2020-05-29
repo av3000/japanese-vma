@@ -9,7 +9,8 @@ class ExploreArticleList extends Component {
     }
 
     render() {
-        const { articles } = this.props;
+        let { articles } = this.props;
+        articles = articles.slice(0,3);
         let articleList = articles.map(a => (
             <ExploreArticleItem
                 key={a.id}

@@ -3,16 +3,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import BookmarkImg from '../../assets/icons/bookmark-icon.svg';
-import './ArticleItem.css';
+import '../article/ArticleItem.css';
 
-const ArticleItem = ({ 
+const ListItem = ({ 
     id,
     created_at,
     jp_year,
     jp_month,
     jp_day,
     jp_hour,
-    title_jp, 
+    title, 
     commentsTotal, 
     viewsTotal, 
     likesTotal, 
@@ -21,7 +21,7 @@ const ArticleItem = ({
 }) => (
     <div className="col-lg-4 col-md-6 col-sm-8">
         <div className="card mb-4 shadow-sm">
-            <Link to={'/article/' + id}>
+            <Link to={'/list/' + id}>
             <img src={DefaultArticleImg}
                 alt="article-image"
                 height="225" width="100%"
@@ -29,8 +29,8 @@ const ArticleItem = ({
             />
             </Link>
             <div className="card-body">
-                <Link to={'/article/' + id} className="article-title-link">
-                    <h4 className="card-text article-title"> {title_jp}</h4> 
+                <Link to={'/list/' + id} className="article-title-link">
+                    <h4 className="card-text article-title"> {title}</h4> 
                 </Link>
                 <p> {hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)} </p>
                 <p className="text-muted">
@@ -68,4 +68,4 @@ const ArticleItem = ({
     </div>
 );
 
-export default ArticleItem;
+export default ListItem;

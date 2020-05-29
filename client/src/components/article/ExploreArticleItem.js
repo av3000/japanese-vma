@@ -19,7 +19,7 @@ const ArticleItem = ({
     downloadsTotal,
     hashtags
 }) => (
-    <div className="col-md-4">
+    <div className="col-lg-4 col-md-6 col-sm-8">
         <div className="card mb-4 shadow-sm">
             <Link to={'/article/' + id}>
             <img src={DefaultArticleImg}
@@ -40,8 +40,9 @@ const ArticleItem = ({
                     {jp_year} {jp_month} {jp_day} {jp_hour}
                 </p>
                 <p className="text-muted">
-                    {viewsTotal+30} views &nbsp; {commentsTotal} comments
-                    <img src={BookmarkImg} className="float-right" alt="bookmark"/>
+                    {viewsTotal+30} views &nbsp;
+                    {commentsTotal} comments&nbsp;
+                    {likesTotal} likes
                 </p>
                 <hr/>
                 <div className="d-flex justify-content-between align-items-center text-muted">

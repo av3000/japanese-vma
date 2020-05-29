@@ -3,13 +3,19 @@ import { Switch, Route, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { authUser } from '../store/actions/auth';
 import { removeError} from '../store/actions/errors';
+import AuthForm from '../components/authform/AuthForm';
+// Landing
 import Homepage from '../components/homepage/Homepage';
+// Articles
 import ArticleDetails from '../components/article/ArticleDetails';
-import ArticleListTimeline from '../components/article/ArticleListTimeline';
+import ArticleTimeline from '../components/article/ArticleTimeline';
 import ArticleForm from '../components/article/ArticleForm';
 import ArticleEdit from '../components/article/ArticleEdit';
-import AuthForm from '../components/authform/AuthForm';
-
+// Lists
+import ListTimeline from '../components/list/ListTimeline';
+import ListDetails from '../components/list/ListDetails';
+// import ListForm from '../components/list/ListForm';
+// import ListEdit from '../components/list/ListEdit';
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -43,6 +49,7 @@ const Main = props => {
                         />
                     )
                 }}/>
+                {/* Articles */}
                 <Route
                     exact path="/newarticle"
                     render={ props => {
@@ -58,7 +65,7 @@ const Main = props => {
                 <Route exact path="/article/edit/:article_id" component={ArticleEdit} />
                 <Route exact path="/articles" render={props =>{
                     return (
-                        <ArticleListTimeline
+                        <ArticleTimeline
 
                         />
                     )
@@ -66,6 +73,22 @@ const Main = props => {
                 <Route exact path="/article/:article_id" render={props => {
                     return (
                         <ArticleDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
+                {/* Custom Lists */}
+                <Route exact path="/lists" render={props =>{
+                    return (
+                        <ListTimeline
+
+                        />
+                    )
+                }}/>
+                <Route exact path="/list/:list_id" render={props => {
+                    return (
+                        <ListDetails 
                             currentUser={currentUser}
                             {...props}
                         />

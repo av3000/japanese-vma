@@ -92,8 +92,8 @@ class ArticleForm extends Component {
   render() {
     return (
         <div className="container">
-            <div className="row justify-content-md-center text-center">
-                <form onSubmit={this.handleNewArticle} className="article-new-form col-md-10">
+            <div className="row justify-content-lg-center text-center">
+                <form onSubmit={this.handleNewArticle} className="article-new-form">
                 {this.props.errors.message && (
                     <div className="alert alert-danger">{this.props.errors.message}</div>
                 )}

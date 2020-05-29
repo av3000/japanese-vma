@@ -109,6 +109,7 @@ class ArticleController extends Controller
         {
             $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
             $comment->likesTotal = count($comment->likes);
+            $comment->userName = User::find($article->user_id)->name;
         }
         
         $article->jlptcommon = 0;
@@ -888,12 +889,6 @@ class ArticleController extends Controller
     {
         if($impressionType == 'like') 
         {
-            // die( response()->json([
-            //     'impressionType' => $impressionType,
-            //     'objectTemplateId' => $objectTemplateId,
-            //     'object' => $object,
-            //     'amount' => $amount
-            // ]));
             $likes = Like::where([
                 'template_id' => $objectTemplateId,
                 'real_object_id' => $object->id
@@ -926,7 +921,7 @@ class ArticleController extends Controller
                 'real_object_id' => $object->id
                 ]);   
             if($amount == "total") { return $comments->count(); }        
-            else if($amount == "all") { return $comments->get(); }        
+            else if($amount == "all") { return $comments->orderBy('created_at', "DESC")->get(); }        
         }
     }
 
@@ -952,6 +947,7 @@ class ArticleController extends Controller
         $comment->user_id = auth()->user()->id;
         $comment->template_id = $objectTemplateId;
         $comment->real_object_id = $id;
+        $comment->parent_comment_id = null;
         $comment->content = $request->get('content');
         $comment->save();
 

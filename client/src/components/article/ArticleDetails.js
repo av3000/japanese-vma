@@ -6,6 +6,8 @@ import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
 import { hideLoader, showLoader } from "../../store/actions/application";
+import CommentList from '../comment/CommentList';
+import CommentForm from '../comment/CommentForm';
 
 class ArticleDetails extends Component {
     constructor(props) {
@@ -15,6 +17,7 @@ class ArticleDetails extends Component {
         };
 
         this.likeArticle = this.likeArticle.bind(this);
+        this.addComment = this.addComment.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.downloadPdf = this.downloadPdf.bind(this);
     };
@@ -26,6 +29,7 @@ class ArticleDetails extends Component {
         this.setState({
           article: res.data.article
         });
+        // console.log(res.data.article.comments);
         return res.data.article;
       })
       .then(article => {
@@ -70,29 +74,28 @@ class ArticleDetails extends Component {
     {
       this.props.history.push('/login');
     }
+    else {
+      this.props.dispatch( showLoader("Creating a PDF, please wait.") );
 
-    this.props.dispatch( showLoader("Creating a PDF, please wait.") );
-
-    let id = this.state.article.id;
-    axios.get('/api/article/'+id+'/kanjis-pdf', {
-      responseType: 'blob'
-    })
-    .then(res => {
-      this.props.dispatch( hideLoader() );
-      //Create a Blob from the PDF Stream
-        const file = new Blob(
-          [res.data], 
-          {type: 'application/pdf'});
-      //Build a URL from the file
-        const fileURL = URL.createObjectURL(file);
-      //Open the URL on new Window
-        window.open(fileURL);
-    })
-    .catch(err => {
-      console.log(err);
-    })
-
-    
+      let id = this.state.article.id;
+      axios.get('/api/article/'+id+'/kanjis-pdf', {
+        responseType: 'blob'
+      })
+      .then(res => {
+        this.props.dispatch( hideLoader() );
+        //Create a Blob from the PDF Stream
+          const file = new Blob(
+            [res.data], 
+            {type: 'application/pdf'});
+        //Build a URL from the file
+          const fileURL = URL.createObjectURL(file);
+        //Open the URL on new Window
+          window.open(fileURL);
+      })
+      .catch(err => {
+        console.log(err);
+      })
+    }
 
   };
 
@@ -125,12 +128,33 @@ class ArticleDetails extends Component {
       })
   };
 
+  addComment(comment) {
+      let newState = Object.assign({}, this.state);
+      newState.article.comments.unshift(comment)
+      this.setState({ newState });
+  }
+
+  deleteComment(commentId) {
+    console.log("deleteComment");
+  }
+
+  editComment(commentId){
+    console.log("editComment");
+  }
+
+  deleteComment(commentId){
+    console.log("deleteComment");
+  }
+
   render() {
     
     const { article } = this.state;
     const { currentUser } = this.props;
+    // let comments = [];
+    let comments = article ? article.comments : "";
 
     const singleArticle = article ? (
+
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
@@ -143,7 +167,7 @@ class ArticleDetails extends Component {
                           <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
                         ) : ""}
                         {currentUser.user.id === article.user_id ?
-                          (<Link to={`/article/edit/${article.id}`}><i class="far fa-edit ml-3 fa-lg"></i></Link>) : ""
+                          (<Link to={`/article/edit/${article.id}`}><i className="far fa-edit ml-3 fa-lg"></i></Link>) : ""
                         }
                         <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
                         {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
@@ -184,6 +208,31 @@ class ArticleDetails extends Component {
     return (
       <div className="container">
         {singleArticle}
+        <br/>
+        <div className="row justify-content-center">
+              { currentUser.isAuthenticated && article ? (
+                <div className="col-lg-8 pt-3 border-right">
+                <hr/>
+                  <h6>Share what's on your mind</h6>
+                  <CommentForm addComment={this.addComment} articleId={this.state.article.id}/>
+                </div>
+              ) : ( 
+                <div className="col-lg-8 pt-3 border-right">
+                <hr/>
+                  <h6>You need to 
+                  <Link to="/login"> login </Link>
+                  to comment</h6> 
+                </div>
+              )}
+              <div className="col-lg-8 pt-3 bg-white">
+                {comments ? (
+                  <CommentList 
+                    comments={comments}
+                    deleteComment={this.deleteComment}
+                    editComment={this.editComment}
+                    />) : ("empty comments components")}
+              </div>
+        </div>
       </div>
     )
   }
