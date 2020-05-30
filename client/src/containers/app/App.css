@@ -6,9 +6,20 @@
     --secondary-brand-color: #3058A4;
 }
 
-i:hover {
-    opacity: .8;
+i {
+    opacity: .7;
     cursor: pointer;
+}
+i:hover {
+    opacity: .5;
+}
+
+.comment-like i {
+    opacity: .7;
+}
+
+.comment-like i:hover {
+    opacity: .5;
 }
 
 a i {

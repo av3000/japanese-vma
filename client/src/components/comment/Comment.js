@@ -9,9 +9,7 @@ const Comment = ({ comment, editComment, deleteComment, likeComment, currentUser
         <div className="media-body">
             <div>
                 <h5>@{comment.userName}</h5>
-                <span className="mr-1 float-right d-flex">
-                    {/* <button onClick={editComment} className="btn btn-outline-primary btn-sm">Edit</button> */}
-                    {/* <button onClick={deleteComment} className="btn btn-outline-danger btn-sm">delete</button> */}
+                <span className="mr-1 float-right d-flex text-muted comment-like">
                     {currentUser.user.id === comment.user_id ? (
                           <i className="far fa-trash-alt fa-lg" onClick={deleteComment}></i>
                         ) : ""}
@@ -21,7 +19,7 @@ const Comment = ({ comment, editComment, deleteComment, likeComment, currentUser
                 {comment.content}  
             </div>
             <br/>
-            <div>
+            <div className="text-muted comment-like">
                 {comment.likesTotal} likes
                 {comment.isLiked ? (<i onClick={likeComment} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
                        : (<i onClick={likeComment} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)

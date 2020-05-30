@@ -8,16 +8,10 @@ class CommentList extends Component {
     }
 
     onDeleteComment(id){
-        console.log("onDeleteComment");
-        console.log(id);
         this.props.deleteComment(id);
-        console.log("CommentList says: Deleted!");
-        console.log(this.props.comments);
     }
 
     onEditComment(id){
-        console.log("onEditComment");
-        console.log(id);
         this.props.editComment(id);
     }
 

@@ -26,8 +26,6 @@ class ArticleDetails extends Component {
     };
 
   componentDidMount(){
-
-    console.log("Im componentDidMount.");
     let id = this.props.match.params.article_id;
     axios.get('/api/article/' + id)
       .then(res => {
@@ -53,19 +51,17 @@ class ArticleDetails extends Component {
         }
       })
       .then( res => {
-        let newState = Object.assign({}, this.state);
-      if(this.props.currentUser.isAuthenticated)
-      {
-        newState.article.comments.map(comment => {
-          let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
-          if(temp) { comment.isLiked = true}
-          else { comment.isLiked = false}
-        })
+          let newState = Object.assign({}, this.state);
+          if(this.props.currentUser.isAuthenticated)
+          {
+            newState.article.comments.map(comment => {
+              let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
+              if(temp) { comment.isLiked = true}
+              else { comment.isLiked = false}
+          })
 
-        this.setState(newState);
-        console.log(this.state.article.comments);
-      }
-
+          this.setState(newState);
+          }
       })
       .catch(err => {
           console.log(err);
@@ -74,10 +70,8 @@ class ArticleDetails extends Component {
   };
 
   handleDelete(){
-    console.log("deleted article: " + this.state.article.id);
     return apiCall("delete", `/api/article/${this.state.article.id}`)
       .then(res => { 
-        console.log(res);
         this.props.history.push('/articles');
       })
       .catch(err => {
@@ -156,14 +150,10 @@ class ArticleDetails extends Component {
 
     let theComment = this.state.article.comments.find(comment => comment.id === commentId)
 
-    console.log(theComment);
     let endpoint = theComment.isLiked === true ? "unlike" : "like";
-
-    console.log("endpoint: " + endpoint);
 
     axios.post('/api/article/'+this.state.article.id+'/comment/'+commentId+'/'+endpoint)
       .then(res => {
-        console.log(res);
         let newState = Object.assign({}, this.state);
         let index = this.state.article.comments.findIndex(comment => comment.id === commentId)
         newState.article.comments[index].isLiked = !newState.article.comments[index].isLiked
@@ -187,13 +177,12 @@ class ArticleDetails extends Component {
       let newState = Object.assign({}, this.state);
       newState.article.comments.unshift(comment)
       this.setState( newState );
-      console.log(this.state);
   }
 
   deleteComment(commentId) {
     return apiCall("delete", `/api/article/${this.state.article.id}/comment/${commentId}`)
       .then(res => { 
-        console.log(res);
+        // console.log(res);
         // let newState = Object.assign({}, this.state);
         // newState.article.comments.filter(comment => comment.id !== commentId);
         // this.setState( newState );

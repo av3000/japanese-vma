@@ -12,22 +12,32 @@ class ListsList extends Component {
     }
 
     render() {
+        const listTypes = [
+            "knownradicals list",
+            'knownkanjis list',
+            'knownwords list',
+            'knownsentences list',
+            'Radicals List',
+            'Kanjis List',
+            'Words List',
+            'Sentences List',
+            'Articles List'
+        ];
+
         let { lists } = this.props;
         let customLists = lists.map(l => (
             <ListItem
                 key={l.id}
                 id={l.id}
+                listType={listTypes[l.type]}
                 created_at={l.created_at}
-                // jp_year={l.jp_year}
-                // jp_month={l.jp_month}
-                // jp_day={l.jp_day}
-                // jp_hour={l.jp_hour}
                 title={l.title}
                 commentsTotal={l.commentsTotal}
                 likesTotal={l.likesTotal}
                 viewsTotal={l.viewsTotal}
                 downloadsTotal={l.downloadsTotal}
                 hashtags={l.hashtags}
+                listItems={l.listItems}
             />
         ));
 

@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import axios from 'axios'
+import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
-import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import DefaultArticleImg from '../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
 import { hideLoader, showLoader } from "../../store/actions/application";
 
@@ -133,9 +134,13 @@ class ListDetails extends Component {
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
-                <h1 className="mt-4">{list.title_jp}</h1>
+                <h1 className="mt-4">{list.title}</h1>
                 <p className="text-muted"> 
-                    Posted on {list.jp_year} {list.jp_month} {list.jp_day} {list.jp_hour}
+                  
+                  Posted on {" "}
+                  <Moment className="text-muted" format="Do MMM YYYY">
+                   {list.created_at}
+                    </Moment>
                     <br/><span>{list.viewsTotal + 40} views</span>
                     <span className="mr-1 float-right d-flex">
                         {currentUser.user.id === list.user_id ? (
@@ -171,6 +176,46 @@ class ListDetails extends Component {
                     </div>
                 </div>
               </div>
+
+              {/* List Items */}
+              {/* by type decide which component to load */}
+              <div className="col-lg-8 mt-5">
+              <table className="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Resource Content</th>
+                      <th scope="col">Hiragana</th>
+                      <th scope="col">Meaning</th>
+                      <th scope="col">Additionals*</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scrope="row">1</th>
+                      <td>kanji</td>
+                      <td>ki</td>
+                      <td>hiragana ki</td>
+                      <td>strokes</td>
+                    </tr>
+                    <tr>
+                      <th scrope="row">2</th>
+                      <td>kanji</td>
+                      <td>ki</td>
+                      <td>hiragana ki</td>
+                      <td>strokes</td>
+                    </tr>
+                    <tr>
+                      <th scrope="row">3</th>
+                      <td>kanji</td>
+                      <td>ki</td>
+                      <td>hiragana ki</td>
+                      <td>strokes</td>
+                    </tr>
+                  </tbody>
+              </table>
+              </div>
+
           </div>
       </div>
     ) : (
@@ -180,6 +225,38 @@ class ListDetails extends Component {
     return (
       <div className="container">
         {singleList}
+        <br/>
+        {/* <div className="row justify-content-center">
+              { currentUser.isAuthenticated && article ? ( 
+                <div className="col-lg-8 pt-3 border-right">
+                <hr/>
+                  <h6>Share what's on your mind</h6>
+                  <CommentForm 
+                    addComment={this.addComment}
+                    currentUser={currentUser}
+                    articleId={this.state.article.id} # change to 'object' to make abstract
+                  />
+                </div>
+              ) : ( 
+                <div className="col-lg-8 pt-3 border-right">
+                <hr/>
+                  <h6>You need to 
+                  <Link to="/login"> login </Link>
+                  to comment</h6> 
+                </div>
+              )}
+              <div className="col-lg-8 pt-3 bg-white">
+                {comments ? (
+                  <CommentList 
+                    articleId={this.state.article.id} # change to 'object' to make abstract
+                    currentUser={currentUser}
+                    comments={comments}
+                    deleteComment={this.deleteComment}
+                    likeComment={this.likeComment}
+                    editComment={this.editComment}
+                    />) : ("Loading comments")}
+              </div>
+        </div> */}
       </div>
     )
   }

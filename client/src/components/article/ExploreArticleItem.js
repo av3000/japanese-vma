@@ -25,7 +25,7 @@ const ArticleItem = ({
             <img src={DefaultArticleImg}
                 alt="article-default"
                 height="225" width="100%"
-                className="timelines-image"     
+                className="timelines-image hover"     
             />
             </Link>
             <div className="card-body">
