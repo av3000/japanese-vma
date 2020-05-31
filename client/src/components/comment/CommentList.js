@@ -40,7 +40,7 @@ class CommentList extends Component {
                         key={index}
                         currentUser={this.props.currentUser}
                         comment={comment}
-                        articleId={this.props.articleId}
+                        objectId={this.props.objectId}
                         deleteComment={this.onDeleteComment.bind(this, comment.id)}
                         editComment={this.onEditComment.bind(this, comment.id)}
                         likeComment={this.onLikeComment.bind(this, comment.id)}

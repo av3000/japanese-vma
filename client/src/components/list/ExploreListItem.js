@@ -2,7 +2,6 @@ import React from 'react';
 import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
-import BookmarkImg from '../../assets/icons/bookmark-icon.svg';
 import '../article/ArticleItem.css';
 
 const ExploreListItem = ({ 

@@ -41,7 +41,7 @@ Route::group([
 		Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
 		Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
 		Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
-		Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
+		// Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
 		
 		// Lists CUD
 		Route::post('list', 'CustomListController@store');
@@ -51,6 +51,7 @@ Route::group([
 		Route::post('list/{id}/additem', 'CustomListController@addToList');
 		Route::post('list/{id}/like', 'CustomListController@likeList');
 		Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
+		Route::post('list/{id}/checklike', 'CustomListController@checkIfLikedList');
 		Route::get('list/{id}/radicals-pdf', 'CustomListController@generateRadicalsPdf');
 		Route::get('list/{id}/kanjis-pdf', 'CustomListController@generateKanjisPdf');
 		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');

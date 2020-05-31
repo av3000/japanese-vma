@@ -33,10 +33,11 @@ class ListsList extends Component {
                 created_at={l.created_at}
                 title={l.title}
                 commentsTotal={l.commentsTotal}
+                itemsTotal={l.listItems.length}
                 likesTotal={l.likesTotal}
                 viewsTotal={l.viewsTotal}
                 downloadsTotal={l.downloadsTotal}
-                hashtags={l.hashtags}
+                hashtags={l.hashtags.slice(0, 3)}
                 listItems={l.listItems}
             />
         ));

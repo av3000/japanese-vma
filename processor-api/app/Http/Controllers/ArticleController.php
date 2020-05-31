@@ -38,7 +38,7 @@ class ArticleController extends Controller
     }
 
     public function index() {
-        $articles = Article::all();
+        $articles = Article::orderBy('created_at', "DESC")->get();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $jp_month = "月";
@@ -114,7 +114,7 @@ class ArticleController extends Controller
         
         $article->jlptcommon = 0;
 
-        $article->words = $article->words()->get();
+        $article->words = $this->extractWordsListAttributes($article->words()->get());
         $article->kanjis = $article->kanjis()->get();
         foreach($article->kanjis as $kanji){
             if($kanji->jlpt == "-") { $article->jlptcommon++; }
@@ -178,6 +178,9 @@ class ArticleController extends Controller
             $article->content_en = $request->get('content_en');
         } else {
             $article->content_en = "";
+        }
+        if(isset( $request->publicity )) {
+            $article->publicity = $request->get('publicity');
         }
         $article->content_jp = $request->get('content_jp');
         $article->source_link = $request->get('source_link');
@@ -256,6 +259,10 @@ class ArticleController extends Controller
         {
             $article->status = $request->status;
         } 
+        if(isset( $request->publicity )) {
+            $article->publicity = $request->publicity;
+        }
+
         $article->update();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
@@ -595,27 +602,8 @@ class ArticleController extends Controller
      */
     public function getWordsFuriganaFromText(Article $article){ return response()->json([ 'message' => 'getWordsFuriganaFromText. Im still empty tho.']); }
 
-    public function generateWordsPdf($id) 
-	{
-        if( !auth()->user() ){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }
-
-        $article = Article::find($id);
-
-        if( !$article )
-        {
-            return response()->json([
-                'success' => false,
-                'message' => 'requested article does not exist'
-            ]);
-        }
-        $this->incrementDownload($article);
-        $user = User::find($article->user_id);
-        $wordList = $article->words()->get();
-
+    public function extractWordsListAttributes($wordList)
+    {
         $differentTags = [];
         foreach($wordList as $word){
             $posArr=[];
@@ -691,8 +679,35 @@ class ArticleController extends Controller
         }
 
         foreach($wordList as $word) {
-            $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+            $word->meaning = "000";
+            // implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
         }
+
+        return $wordList;
+    }
+
+    public function generateWordsPdf($id) 
+	{
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $article = Article::find($id);
+
+        if( !$article )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested article does not exist'
+            ]);
+        }
+        $this->incrementDownload($article);
+        $user = User::find($article->user_id);
+        $wordList = $article->words()->get();
+
+        $wordList = $this->extractWordsListAttributes($wordList);
 
         $data = [
             'article_id' => $article->id,

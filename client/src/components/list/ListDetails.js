@@ -7,6 +7,9 @@ import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
 import { hideLoader, showLoader } from "../../store/actions/application";
+import CommentList from '../comment/CommentList';
+import CommentForm from '../comment/CommentForm';
+import ListItems from './ListItems';
 
 class ListDetails extends Component {
     constructor(props) {
@@ -16,6 +19,10 @@ class ListDetails extends Component {
         };
 
         this.likeList = this.likeList.bind(this);
+        this.addComment = this.addComment.bind(this);
+        this.deleteComment = this.deleteComment.bind(this);
+        this.likeComment = this.likeComment.bind(this);
+        this.editComment = this.editComment.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.downloadPdf = this.downloadPdf.bind(this);
     };
@@ -27,6 +34,9 @@ class ListDetails extends Component {
         this.setState({
           list: res.data.list
         });
+
+        console.log(res.data.list.listItems);
+
         return res.data.list;
       })
       .then(list => {
@@ -34,26 +44,37 @@ class ListDetails extends Component {
         {
             this.props.history.push('/lists');
         }
-        // else if(this.props.currentUser.isAuthenticated)
-        // {
-        //   return apiCall("post", `/api/list/${id}/checklike`) TODO -
-        //     .then(res => { 
-        //       let newState = Object.assign({}, this.state);
-        //       newState.article.isLiked = res.isLiked;
-        //       this.setState(newState);
-        //     });
-        // }
+        else if(this.props.currentUser.isAuthenticated)
+        {
+          return apiCall("post", `/api/list/${id}/checklike`) 
+            .then(res => { 
+              let newState = Object.assign({}, this.state);
+              newState.list.isLiked = res.isLiked;
+              this.setState(newState);
+            });
+        }
       })
+      .then( res => {
+        let newState = Object.assign({}, this.state);
+        if(this.props.currentUser.isAuthenticated)
+        {
+          newState.list.comments.map(comment => {
+            let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
+            if(temp) { comment.isLiked = true}
+            else { comment.isLiked = false}
+        })
+
+        this.setState(newState);
+        }
+    })
       .catch(err => {
           console.log(err);
       });
   };
 
   handleDelete(){
-    console.log("deleted list: " + this.state.list.id);
     return apiCall("delete", `/api/list/${this.state.list.id}`)
       .then(res => { 
-        console.log(res);
         this.props.history.push('/lists');
       })
       .catch(err => {
@@ -62,20 +83,34 @@ class ListDetails extends Component {
       
   }
 
-  addToList() {
-      console.log("addToList");
-  };
-
   downloadPdf() {
     if(!this.props.currentUser.isAuthenticated)
     {
       this.props.history.push('/login');
     }
+    else if(this.state.list.listItems.length === 0){
+      this.props.dispatch( showLoader("There are no items in the list!") );
+      setTimeout(() => {this.props.dispatch( hideLoader() );}, 2500 )
+    }
     else {
       this.props.dispatch( showLoader("Creating a PDF, please wait.") );
+      let endpoint="";
+      if(this.state.list.type === 1 || this.state.list.type === 5){
+        endpoint = 'radicals-pdf';
+      } else if (this.state.list.type === 2 || this.state.list.type === 6){
+        endpoint = 'kanjis-pdf';
+      } else if (this.state.list.type === 3 || this.state.list.type === 7){
+        endpoint = 'words-pdf';
+      } else if (this.state.list.type === 4 || this.state.list.type === 8){
+        endpoint = 'sentences-pdf';
+      } else if (this.state.list.type === 9){
+        // endpoint = 'modal';
+        console.log("pdf icon should not be displayed");
+        return;
+      } 
 
       let id = this.state.list.id;
-      axios.get('/api/list/'+id+'/kanjis-pdf', {
+      axios.get('/api/list/'+id+'/'+endpoint, {
         responseType: 'blob'
       })
       .then(res => {
@@ -125,15 +160,73 @@ class ListDetails extends Component {
       })
   };
 
+  likeComment(commentId) {
+
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
+
+    let theComment = this.state.list.comments.find(comment => comment.id === commentId)
+
+    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+
+    axios.post('/api/list/'+this.state.list.id+'/comment/'+commentId+'/'+endpoint)
+      .then(res => {
+        let newState = Object.assign({}, this.state);
+        let index = this.state.list.comments.findIndex(comment => comment.id === commentId)
+        newState.list.comments[index].isLiked = !newState.list.comments[index].isLiked
+        
+        if(endpoint === "unlike"){
+            newState.list.comments[index].likesTotal -= 1;
+        }
+        else if (endpoint === "like"){
+          newState.list.comments[index].likesTotal += 1;
+        }
+
+        this.setState(newState);
+      })
+      .catch(err => {
+          console.log(err);
+      })
+  }
+
+  addComment(comment) {
+      let newState = Object.assign({}, this.state);
+      newState.list.comments.unshift(comment)
+      this.setState( newState );
+  }
+
+  deleteComment(commentId) {
+    return apiCall("delete", `/api/list/${this.state.list.id}/comment/${commentId}`)
+      .then(res => { 
+        // console.log(res);
+        // let newState = Object.assign({}, this.state);
+        // newState.article.comments.filter(comment => comment.id !== commentId);
+        // this.setState( newState );
+        window.location.reload(false);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
+  }
+
+  editComment(commentId){
+    console.log("editComment");
+    console.log(commentId);
+  }
+
   render() {
     
     const { list } = this.state;
     const { currentUser } = this.props;
+    let comments = list ? list.comments : "";
 
     const singleList = list ? (
       <div className="container">
           <div className="row justify-content-center">
-              <div className="col-lg-8 ">
+              <div className="col-lg-8 col-md-12 col-sm-12">
                 <h1 className="mt-4">{list.title}</h1>
                 <p className="text-muted"> 
                   
@@ -142,27 +235,29 @@ class ListDetails extends Component {
                    {list.created_at}
                     </Moment>
                     <br/><span>{list.viewsTotal + 40} views</span>
+                    {currentUser.user.id === list.user_id ? (list.publicity === 1 ? " | public" : " | private" ) : ""}
                     <span className="mr-1 float-right d-flex">
                         {currentUser.user.id === list.user_id ? (
                           <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
                         ) : ""}
                         {currentUser.user.id === list.user_id ?
-                          (<Link to={`/list/edit/${list.id}`}><i className="far fa-edit ml-3 fa-lg"></i></Link>) : ""
+                          (<Link to={`/list/edit/${list.id}`}><i className="fas fa-pen-alt ml-3 fa-lg"></i></Link>) : ""
                         }
-                        <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
-                        {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
-                        <i onClick={this.downloadPdf} className="fas fa-file-download ml-3 fa-lg"></i>
+                        {
+                         list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)
+                        : ("")
+                        }
                     </span>
                 </p>
                 <img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img"/>
-                <p className="lead">{list.content_jp} </p>
+                <p className="lead">{list.content} </p>
                 <br/>
                 <p>
                     {list.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
                     <span className="mr-1 float-right d-flex text-muted">
                     {list.likesTotal+24} likes &nbsp;
-                       {list.isLiked ? (<i onClick={this.likelist} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       : (<i onClick={this.likelist} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       {list.isLiked ? (<i onClick={this.likeList} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       : (<i onClick={this.likeList} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
                        }
                     </span>
                 </p>
@@ -179,42 +274,7 @@ class ListDetails extends Component {
 
               {/* List Items */}
               {/* by type decide which component to load */}
-              <div className="col-lg-8 mt-5">
-              <table className="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">Resource Content</th>
-                      <th scope="col">Hiragana</th>
-                      <th scope="col">Meaning</th>
-                      <th scope="col">Additionals*</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scrope="row">1</th>
-                      <td>kanji</td>
-                      <td>ki</td>
-                      <td>hiragana ki</td>
-                      <td>strokes</td>
-                    </tr>
-                    <tr>
-                      <th scrope="row">2</th>
-                      <td>kanji</td>
-                      <td>ki</td>
-                      <td>hiragana ki</td>
-                      <td>strokes</td>
-                    </tr>
-                    <tr>
-                      <th scrope="row">3</th>
-                      <td>kanji</td>
-                      <td>ki</td>
-                      <td>hiragana ki</td>
-                      <td>strokes</td>
-                    </tr>
-                  </tbody>
-              </table>
-              </div>
+              
 
           </div>
       </div>
@@ -226,29 +286,39 @@ class ListDetails extends Component {
       <div className="container">
         {singleList}
         <br/>
-        {/* <div className="row justify-content-center">
-              { currentUser.isAuthenticated && article ? ( 
-                <div className="col-lg-8 pt-3 border-right">
+        <div className="row justify-content-center">
+          <div className="col-lg-8">
+          { list && list.listItems.length > 0 ? (<ListItems objects={this.state.list.listItems} listType={this.state.list.type}/>) : (<h4>List is empty.</h4>) }
+          {
+            list && list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)
+          : ("")
+          }
+          </div>
+        </div>
+        <div className="row justify-content-center">
+              { currentUser.isAuthenticated && list ? ( 
+                <div className="col-lg-8">
                 <hr/>
                   <h6>Share what's on your mind</h6>
                   <CommentForm 
                     addComment={this.addComment}
                     currentUser={currentUser}
-                    articleId={this.state.article.id} # change to 'object' to make abstract
+                    objectId={this.state.list.id}
+                    objectType="list"
                   />
                 </div>
               ) : ( 
-                <div className="col-lg-8 pt-3 border-right">
+                <div className="col-lg-8">
                 <hr/>
                   <h6>You need to 
                   <Link to="/login"> login </Link>
                   to comment</h6> 
                 </div>
               )}
-              <div className="col-lg-8 pt-3 bg-white">
+              <div className="col-lg-8 bg-white">
                 {comments ? (
                   <CommentList 
-                    articleId={this.state.article.id} # change to 'object' to make abstract
+                    objectId={this.state.list.id}
                     currentUser={currentUser}
                     comments={comments}
                     deleteComment={this.deleteComment}
@@ -256,7 +326,7 @@ class ListDetails extends Component {
                     editComment={this.editComment}
                     />) : ("Loading comments")}
               </div>
-        </div> */}
+        </div>
       </div>
     )
   }

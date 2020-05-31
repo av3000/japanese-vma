@@ -14,8 +14,8 @@ import ArticleEdit from '../components/article/ArticleEdit';
 // Lists
 import ListTimeline from '../components/list/ListTimeline';
 import ListDetails from '../components/list/ListDetails';
-// import ListForm from '../components/list/ListForm';
-// import ListEdit from '../components/list/ListEdit';
+import ListForm from '../components/list/ListForm';
+import ListEdit from '../components/list/ListEdit';
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -79,6 +79,19 @@ const Main = props => {
                     )
                 }} />
                 {/* Custom Lists */}
+                <Route
+                    exact path="/newlist"
+                    render={ props => {
+                        return (
+                            <ListForm
+                                removeError={removeError}
+                                errors={errors}
+                                {...props} 
+                            />
+                        )
+                    }}
+                />
+                <Route exact path="/list/edit/:list_id" component={ListEdit} />
                 <Route exact path="/lists" render={props =>{
                     return (
                         <ListTimeline

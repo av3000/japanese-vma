@@ -43,6 +43,7 @@ class ArticleForm extends Component {
         content_jp: this.state.content_jp,
         source_link: this.state.source_link,
         tags: this.state.tags,
+        publicity: this.state.publicity,
         attach: 1
     };
 
@@ -134,6 +135,12 @@ class ArticleForm extends Component {
                     name="tags"
                     onChange={this.handleChange}
                 />
+                <label htmlFor="publicity" className="mt-3">Publicity</label>
+                <select name="publicity" value={this.state.publicity} className="form-control" onChange={this.handleChange}>
+                    <option value="2">Public</option>
+                    <option value="1">Private</option>
+                    <option value="0">Draft</option>
+                </select>
                 <button type="submit" className="btn btn-outline-primary col-md-3 brand-button mt-5">
                     Post the Article
                 </button>

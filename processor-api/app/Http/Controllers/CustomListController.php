@@ -44,25 +44,42 @@ class CustomListController extends Controller
         if( $list->type == self::KNOWNRADICALS || $list->type == self::RADICALS ){ // radicals
             foreach( $foundRows as $row )
             {
-                array_push( $objectsArray, Radical::where('id', $row->real_object_id)->first() );
+                $radical = Radical::where('id', $row->real_object_id)->first();
+                $radical->savesTotal = DB::table('customlist_object')
+                    ->where('real_object_id', $row->real_object_id)
+                    ->where('listtype_id', $list->type)->count();
+                array_push( $objectsArray, $radical );
             }
         }
         else if( $list->type == self::KNOWNKANJIS || $list->type == self::KANJIS ){ // kanjis
             foreach( $foundRows as $row )
             {
-                array_push( $objectsArray, Kanji::where('id', $row->real_object_id)->first() );
+                $kanji = Kanji::where('id', $row->real_object_id)->first();
+                $kanji->savesTotal = DB::table('customlist_object')
+                    ->where('real_object_id', $row->real_object_id)
+                    ->where('listtype_id', $list->type)->count();
+                array_push( $objectsArray, $kanji );
             }
         }
         else if( $list->type == self::KNOWNWORDS || $list->type == self::WORDS ){ // words
             foreach( $foundRows as $row )
             {
-                array_push( $objectsArray, Word::where('id', $row->real_object_id)->first() );
+                $word = Word::where('id', $row->real_object_id)->first();
+                $word->savesTotal = DB::table('customlist_object')
+                    ->where('real_object_id', $row->real_object_id)
+                    ->where('listtype_id', $list->type)->count();
+                array_push( $objectsArray, $word );
             }
+            $objectsArray = $this->extractWordsListAttributes($objectsArray);
         }
         else if( $list->type == self::KNOWNSENTENCES || $list->type == self::SENTENCES ){ // sentences
             foreach( $foundRows as $row )
             {
-                array_push( $objectsArray, Sentence::where('id', $row->real_object_id)->first() );
+                $sentence = Sentence::where('id', $row->real_object_id)->first();
+                $sentence->savesTotal = DB::table('customlist_object')
+                    ->where('real_object_id', $row->real_object_id)
+                    ->where('listtype_id', $list->type)->count();
+                array_push( $objectsArray, $sentence );
             }
         }
         else if( $list->type == self::ARTICLES ){ // articles
@@ -78,6 +95,11 @@ class CustomListController extends Controller
                 $article->viewsTotal     = $this->getImpression("view", $objectTemplateId, $article, "total");
                 $article->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $article, "total");
                 $article->hashtags       = $this->getUniquehashtags($article->id, $objectTemplateId);
+
+                $article->savesTotal = DB::table('customlist_object')
+                    ->where('real_object_id', $row->real_object_id)
+                    ->where('listtype_id', $list->type)->count();
+
                 array_push( $objectsArray, $article );
             }
 
@@ -112,9 +134,12 @@ class CustomListController extends Controller
         {
             $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
             $comment->likesTotal = count($comment->likes);
+            $comment->userName = User::find($comment->user_id)->name;
         }
 
         $list->commentsTotal  = count($list->comments);
+        $list->userName = User::find($list->user_id)->name;
+
 
         return response()->json([
             'success' => true,
@@ -125,7 +150,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->get();
+        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->get();
 
         if(!$lists)
         {
@@ -166,6 +191,7 @@ class CustomListController extends Controller
         $newList->user_id = auth()->user()->id;
         $newList->type = $request->type;
         $newList->title = $request->title;
+        $newList->publicity = $request->publicity;
         $newList->save();
         
         $this->attachHashTags($request->tags, $newList);
@@ -198,10 +224,17 @@ class CustomListController extends Controller
             $this->removeHashtags($list->id, $objectTemplateId, $request->tags);
             $this->attachHashTags($request->tags, $list);
         }
-
         if( isset($request->title) )
         {
             $list->title = $request->get("title");
+        }
+        if( isset($request->publicity) )
+        {
+            $list->publicity = $request->get("publicity");
+        }
+        if( isset($request->type) )
+        {
+            $list->type = $request->get("type");
         }
         $list->update();
 
@@ -371,7 +404,7 @@ class CustomListController extends Controller
     // Question is, should user be able to save it? 
     // Well, some kind of bookmarking is definitely necessary.
     // You can save stuff into lists of other users
-    // But how about lists of other users?
+    // But how about lists of other users? Duplicate vs create references?
     public function saveUserList(CustomList $list)
     {
         
@@ -497,37 +530,8 @@ class CustomListController extends Controller
         return $pdf->stream("list-kanjis.pdf");
     }
 
-    public function generateWordsPdf($id)
+    public function extractWordsListAttributes($wordList)
     {
-        if( !auth()->user() ){
-            return response()->json([
-                'message' => 'you are not a user'
-            ]);
-        }
-
-        $list = CustomList::find($id);
-        if( !$list )
-        {
-            return response()->json([
-                'success' => false,
-                'message' => 'requested list does not exist'
-            ]);
-        }
-
-        if( $list->type != self::WORDS && $list->type != self::KNOWNWORDS)
-        {
-            return response()->json([
-                'success' => false,
-                'message' => 'requested list does not contain Words'
-            ]);
-        }
-
-        $this->incrementDownload($list);
-        $user = User::find($list->user_id);
-        $list = $this->getListItems($list);
-
-        $wordList = $list->listItems;
-
         foreach($wordList as $word){
             $posArr=[];
             $miscArr=[];
@@ -604,6 +608,40 @@ class CustomListController extends Controller
         foreach($wordList as $word) {
             $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
         }
+
+        return $wordList;
+    }
+
+    public function generateWordsPdf($id)
+    {
+        if( !auth()->user() ){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $list = CustomList::find($id);
+        if( !$list )
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not exist'
+            ]);
+        }
+
+        if( $list->type != self::WORDS && $list->type != self::KNOWNWORDS)
+        {
+            return response()->json([
+                'success' => false,
+                'message' => 'requested list does not contain Words'
+            ]);
+        }
+
+        $this->incrementDownload($list);
+        $user = User::find($list->user_id);
+        $list = $this->getListItems($list);
+
+        $wordList = $this->extractWordsListAttributes($list->listItems);
 
         $data = [
             'list_id' => $list->id,
@@ -773,6 +811,54 @@ class CustomListController extends Controller
         ]);
     }
 
+    public function checkIfLikedList($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'userId' => auth()->user()->id,
+                'isLiked' => true,
+                'message' => 'you already liked this list'
+            ]);
+        }
+
+        return response()->json([
+            'userId' => auth()->user()->id,
+            'isLiked' => false,
+            'message' => 'you havent liked the list yet'
+        ]);
+    }
+
+    public function checkIfLikedComment($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'userId' => auth()->user()->id,
+                'isLiked' => true,
+                'message' => 'you already liked this comment'
+            ]);
+        }
+
+        return response()->json([
+            'userId' => auth()->user()->id,
+            'isLiked' => false,
+            'message' => 'you havent liked the comment yet'
+        ]);
+    } // Client app check by map.likes (like => like.user_id === currentUser.user.id)
+
     public function getImpression($impressionType, $objectTemplateId, $object, $amount)
     {
         if($impressionType == 'like') 
@@ -888,6 +974,8 @@ class CustomListController extends Controller
         $comment->real_object_id = $id;
         $comment->content = $request->get('content');
         $comment->save();
+        $comment->likesTotal = 0;
+        $comment->likes = [];
 
         return response()->json([
             'success' => true,

@@ -31,12 +31,10 @@ const App = () => (
   <Provider store={store}>
       <Router>
       <ScrollToTop/>
-        <div className="onboarding">
           <Navbar/>
           <Main/>
           <Footer/>
           <PageLoader />
-        </div>
       </Router>
   </Provider>
 );

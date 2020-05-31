@@ -2,7 +2,6 @@ import React from 'react';
 // import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
-import BookmarkImg from '../../assets/icons/bookmark-icon.svg';
 import './ArticleItem.css';
 
 const ArticleItem = ({ 

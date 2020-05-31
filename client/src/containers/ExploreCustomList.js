@@ -35,7 +35,7 @@ class ExploreCustomList extends Component {
                 likesTotal={l.likesTotal}
                 viewsTotal={l.viewsTotal}
                 downloadsTotal={l.downloadsTotal}
-                hashtags={l.hashtags}
+                hashtags={l.hashtags.slice(0, 3)}
                 itemsTotal={l.listItems.length}
                 n1={l.n1}
                 n2={l.n2}

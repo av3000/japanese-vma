@@ -213,6 +213,7 @@ class ArticleDetails extends Component {
                 <p className="text-muted"> 
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
                     <br/><span>{article.viewsTotal + 40} views</span>
+                    {currentUser.user.id === article.user_id ? (article.publicity === 1 ? " | public" : " | private" ) : ""}
                     <span className="mr-1 float-right d-flex">
                         {currentUser.user.id === article.user_id ? (
                           <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
@@ -262,23 +263,28 @@ class ArticleDetails extends Component {
         <br/>
         <div className="row justify-content-center">
               { currentUser.isAuthenticated && article ? (
-                <div className="col-lg-8 pt-3 border-right">
+                <div className="col-lg-8">
                 <hr/>
                   <h6>Share what's on your mind</h6>
-                  <CommentForm addComment={this.addComment} currentUser={currentUser} articleId={this.state.article.id}/>
+                  <CommentForm 
+                    addComment={this.addComment}
+                    currentUser={currentUser} 
+                    objectId={this.state.article.id}
+                    objectType="article"
+                    />
                 </div>
               ) : ( 
-                <div className="col-lg-8 pt-3 border-right">
+                <div className="col-lg-8">
                 <hr/>
                   <h6>You need to 
                   <Link to="/login"> login </Link>
                   to comment</h6> 
                 </div>
               )}
-              <div className="col-lg-8 pt-3 bg-white">
+              <div className="col-lg-8">
                 {comments ? (
                   <CommentList 
-                    articleId={this.state.article.id}
+                    objectId={this.state.article.id}
                     currentUser={currentUser}
                     comments={comments}
                     deleteComment={this.deleteComment}

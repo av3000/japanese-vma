@@ -37,6 +37,7 @@ class ArticleEdit extends Component{
                 content_jp: res.article.content_jp,
                 source_link: res.article.source_link,
                 tags: tags,
+                publicity: res.article.publicity,
                 old_title_jp: res.article.title_jp,
                 old_content_jp: res.article.content_jp,
             }, () => {
@@ -170,6 +171,12 @@ class ArticleEdit extends Component{
                 name="tags"
                 onChange={this.handleChange}
             />
+             <label htmlFor="publicity" className="mt-3">Publicity</label>
+                <select name="publicity" value={this.state.publicity} className="form-control" onChange={this.handleChange}>
+                    <option value="2">Public</option>
+                    <option value="1">Private</option>
+                    <option value="0">Draft</option>
+                </select>
             <button type="submit" className="btn btn-outline-primary col-md-3 brand-button mt-5">
                 Update the Article
             </button>

@@ -25,7 +25,7 @@ class ExploreArticleList extends Component {
                 likesTotal={a.likesTotal}
                 viewsTotal={a.viewsTotal}
                 downloadsTotal={a.downloadsTotal}
-                hashtags={a.hashtags}
+                hashtags={a.hashtags.slice(0, 3)}
             />
         ));
 
