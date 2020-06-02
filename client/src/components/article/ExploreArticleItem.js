@@ -31,7 +31,7 @@ const ArticleItem = ({
                 <Link to={'/article/' + id} className="article-title-link">
                     <h4 className="card-text article-title"> {title_jp}</h4> 
                 </Link>
-                <p> {hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)} </p>
+                <p> {hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)} </p>
                 <p className="text-muted">
                     {/* <Moment className="text-muted" format="Do MMM YYYY">
                         {created_at}

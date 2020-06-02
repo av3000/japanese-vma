@@ -402,7 +402,6 @@ class ArticleController extends Controller
         $jp_year = "年";
         foreach($articles as $singleArticle)
         {
-            
             $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
             $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
             $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;

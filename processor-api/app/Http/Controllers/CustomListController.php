@@ -150,7 +150,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(6);
+        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
 
         if(!$lists)
         {
@@ -405,24 +405,84 @@ class CustomListController extends Controller
     // Well, some kind of bookmarking is definitely necessary.
     // You can save stuff into lists of other users
     // But how about lists of other users? Duplicate vs create references?
-    public function saveUserList(CustomList $list)
-    {
-        
+    public function saveUserList(CustomList $list){
+       // 
     }
 
-    public function generateQuery(Request $request) { // Not sure about encoding part if it work.
-        $q = $request->get("title");
-        $results = CustomList::where("title", "like", "%".$q."%")->get();
-        
-        if(!isset($results)) {
-            return response()->json([
-                'success' => false, 'message' => ' returned zero results'
-             ]);
+    public function getListImpressionsSearch($lists)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        foreach($lists as $singleList)
+        {
+            $singleList                 = $this->getListItems($singleList);
+            $singleList->itemsTotal     = count($singleList->listItems);
+            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
+            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
+            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
+            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
         }
+
+        return $lists;
+    }
+
+    public function generateQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $request->title = trim($request->title);
+            $singleTag = explode(' ',trim($request->title))[0];
+
+            $search = '#';
+            if(preg_match("/{$search}/i", $singleTag)) {
+            // if( strpos($request->title, "#") === true){
+
+                $lists = $this->getUniquehashtagLists($singleTag);
+                $q .= $singleTag;
+                if( isset($lists) )
+                {
+                    $lists = $lists->where('publicity', 1);
+                }
+            }
+            else {
+                $lists = CustomList::whereLike(['title'], $request->title)->where('publicity', 1);
+                $q .= $request->title;
+            }
+        } 
+
+        //if search has search fields, return lists of requested fields
+        if(isset( $lists )) {
+            $lists = $lists->paginate(3);
+
+            // add impressions
+            $lists = $this->getListImpressionsSearch($lists);
+
+            return response()->json([
+                'success' => true,
+                'lists' => $lists,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default lists
+        if( $q == "")
+        {
+            $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+
+            // add impressions
+            $lists = $this->getListImpressionsSearch($lists);
+
+             return response()->json([
+                'success' => true,
+                'lists' => $lists,
+                'q' => $q
+            ]);
+        }
+        
         return response()->json([
-            'success' => true,
-            'message' => ' returned: '.count($results).' results',
-            'results' => $results
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero lists',
+            'q' => $q
         ]);
     }
 
@@ -1121,6 +1181,30 @@ class CustomListController extends Controller
         }
 
         return $finalTags;
+    }
+
+    public function getUniquehashtagLists($wantedTag)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        // get tag which was input id
+        $uniqueTag = Uniquehashtag::where("content", $wantedTag)->first();
+        if( !isset( $uniqueTag )) {
+            return null;
+        }
+        // get all hashtag foreign table rows
+        $foundRows = DB::table('hashtags')->where('uniquehashtag_id', $uniqueTag->id)
+            ->where('template_id', $objectTemplateId)->get();
+
+        $ids = [];
+        // get all lists with that tag id
+        foreach($foundRows as $listlink)
+        {
+            $ids[] = $listlink->real_object_id;
+        }
+        
+        $lists = CustomList::whereIn('id', $ids);
+
+        return $lists;
     }
 
     public function checkIfHashtagsAreUnique($tags)

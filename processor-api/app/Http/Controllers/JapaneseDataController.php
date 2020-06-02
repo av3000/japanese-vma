@@ -12,7 +12,12 @@ use App\Radical;
 class JapaneseDataController extends Controller
 {
     public function indexRadicals() {
-        return $radicals = Radical::all()->skip(0)->take(10);
+        $radicals = Radical::paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'radicals' => $radicals
+        ]);
     }
 
     public function showRadical($id){
@@ -68,6 +73,47 @@ class JapaneseDataController extends Controller
         $singleSentence->kanjis = $singleSentence->kanjis()->get();
         $singleSentence->words = $singleSentence->words()->get();
         return $singleSentence;
+    }
+
+    public function generateRadicalsQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $query = explode(' ',trim($request->title))[0];
+
+            $radicals = Radical::whereLike(['radical', 'meaning', 'hiragana'], $query);
+            $q .= $query;
+        } 
+
+        //if search has search fields, return radicals of requested fields
+        if(isset( $radicals )) {
+            $radicals = $radicals->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'radicals' => $radicals,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default radicals
+        if( $q == "")
+        {
+            $radicals = Radical::where('publicity', 1)->paginate(20);
+
+             return response()->json([
+                'success' => true,
+                'radicals' => $radicals,
+                'q' => $q
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero radicals',
+            'q' => $q
+        ]);
+    
     }
 
     public function generateQuery(Request $request) { // Not sure about encoding part if it work.

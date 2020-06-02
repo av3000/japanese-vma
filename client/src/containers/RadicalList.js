@@ -1,19 +1,17 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
-// import { fetchLists } from '../store/actions/lists';
-import ListItem from '../components/list/ListItem';
 import { apiCall } from '../services/api';
+import RadicalItem from '../components/radical/RadicalItem';
 import Spinner from '../assets/images/spinner.gif';
 import SearchBar from '../components/search/Searchbar';
 
 
-class ListsList extends Component {
+export class RadicalList extends Component {
     constructor(){
         super();
         this.state = {
-            url: '/api/lists',
+            url: '/api/radicals',
             pagination: [],
-            lists: [],
+            radicals: [],
             paginateObject: {},
             searchHeading: "",
             searchTotal: "",
@@ -27,22 +25,43 @@ class ListsList extends Component {
     };
 
     componentDidMount() {
-        this.fetchLists(this.state.url);
+        this.fetchRadicals(this.state.url);
+    };
+
+    fetchRadicals(givenUrl){
+        return apiCall("get", givenUrl)
+            .then(res => {
+                let newState = Object.assign({}, this.state);
+                newState.paginateObject = res.radicals;
+                newState.radicals = [...newState.radicals, ...res.radicals.data];
+                newState.url = res.radicals.next_page_url;
+
+                newState.searchTotal = "results total: " + res.radicals.total;
+
+                return newState;
+            })
+            .then(newState => {
+                newState.pagination = this.makePagination(newState.paginateObject);
+                this.setState( newState );
+            })
+            .catch(err => {
+                console.log(err);
+            })
     };
 
     fetchQuery(queryParams) {
         let newState = Object.assign({}, this.state);
         newState.filters = queryParams;
-        apiCall("post", "/api/lists/search", newState.filters)
+        apiCall("post", "/api/radicals/search", newState.filters)
         .then(res => {
             if(res.success === true)
             {
-                newState.paginateObject = res.lists;
-                newState.lists       = res.lists.data ? res.lists.data : newState.lists;
-                newState.url            = res.lists.next_page_url;
+                newState.paginateObject = res.radicals;
+                newState.radicals       = res.radicals.data ? res.radicals.data : newState.radicals;
+                newState.url            = res.radicals.next_page_url;
 
                 newState.searchHeading = "Requested query: " + newState.filters.title;
-                newState.searchTotal = "results total: " + res.lists.total;
+                newState.searchTotal = "results total: " + res.radicals.total;
                 return newState;
             }
 
@@ -59,40 +78,18 @@ class ListsList extends Component {
         })
     }
 
-    fetchLists(givenUrl){
-        return apiCall("get", givenUrl)
-            .then(res => {
-                let newState = Object.assign({}, this.state);
-                newState.paginateObject = res.lists;
-                newState.lists = [...newState.lists, ...res.lists.data];
-                newState.url = res.lists.next_page_url;
-
-                newState.searchTotal = "results total: " + res.lists.total;
-
-                return newState;
-            })
-            .then(newState => {
-                newState.pagination = this.makePagination(newState.paginateObject);
-                this.setState( newState );
-                console.log(this.state);
-            })
-            .catch(err => {
-                console.log(err);
-            })
-    };
-
     fetchMoreQuery(givenUrl) {
         let newState = Object.assign({}, this.state);
         apiCall("post", givenUrl, newState.filters)
         .then(res => {
             console.log(res);
 
-            newState.paginateObject = res.lists;
-            newState.lists       = [...newState.lists, ...res.lists.data];
-            newState.url            = res.lists.next_page_url;
+            newState.paginateObject = res.radicals;
+            newState.radicals       = [...newState.radicals, ...res.radicals.data];
+            newState.url            = res.radicals.next_page_url;
 
             newState.searchHeading = "Requested query: " + newState.filters.title;
-            newState.searchTotal = "results total: " + res.lists.total;
+            newState.searchTotal = "results total: " + res.radicals.total;
 
             return newState;
         })
@@ -101,7 +98,7 @@ class ListsList extends Component {
 
             this.setState( newState );
 
-            console.log(this.state.lists);
+            console.log(this.state.radicals);
         })
         .catch(err => {
             console.log(err);
@@ -109,7 +106,7 @@ class ListsList extends Component {
     }
 
     loadMore() {
-        this.fetchLists(this.state.pagination.next_page_url);
+        this.fetchRadicals(this.state.pagination.next_page_url);
     }
 
     loadSearchMore(){
@@ -127,43 +124,30 @@ class ListsList extends Component {
         return pagination;        
     };
 
+    addToList(id){
+        console.log("add to list: " + id);
+    }
+
 
     render() {
-        const listTypes = [
-            "knownradicals list",
-            'knownkanjis list',
-            'knownwords list',
-            'knownsentences list',
-            'Radicals List',
-            'Kanjis List',
-            'Words List',
-            'Sentences List',
-            'Articles List'
-        ];
-
-        let { lists } = this.state;
-        let customLists = lists ? (lists.map(l => (
-            <ListItem
-                key={l.id}
-                id={l.id}
-                listType={listTypes[l.type]}
-                created_at={l.created_at}
-                title={l.title}
-                commentsTotal={l.commentsTotal}
-                itemsTotal={l.listItems.length}
-                likesTotal={l.likesTotal}
-                viewsTotal={l.viewsTotal}
-                downloadsTotal={l.downloadsTotal}
-                hashtags={l.hashtags.slice(0, 3)}
-                listItems={l.listItems}
-            />
-        )) ) : (
-            <div className="container">
-                <div className="row justify-content-center">
-                    <img src={Spinner}/>
-                </div>
+        let { radicals } = this.state;
+        let radicalList = radicals ? ( radicals.map(r => (
+                <RadicalItem 
+                    key={r.id}
+                    id={r.id}
+                    radical={r.radical}
+                    strokes={r.strokes}
+                    meaning={r.meaning}
+                    hiragana={r.hiragana}
+                    addToList={this.addToList.bind(this, r.id)}
+                />
+        )) ): (
+        <div className="container mt-5">
+            <div className="row justify-content-center">
+                <img src={Spinner}/>
             </div>
-        )
+        </div>
+        );
 
         return (
             <div className="container mt-5">
@@ -190,10 +174,12 @@ class ListsList extends Component {
                         : ""
                     }
                     <div className="row">
-                     {customLists}
+                        <div className="col-lg-8 col-md-10 mx-auto">
+                            {radicalList}
+                        </div>
                     </div>
                 </div>
-                <div className="row justify-content-center ">
+                <div className="row justify-content-center">
                 { this.state.pagination.last_page === this.state.pagination.current_page ? 
                     "no more results..." 
                         : 
@@ -205,15 +191,8 @@ class ListsList extends Component {
                 }
                 </div>
             </div>
-        );
+        )
     }
 }
 
-// function mapStateToProps(state) {
-//     return {
-//         lists: state.lists
-//     };
-// };
-
-// export default connect(mapStateToProps, { fetchLists })(ListsList);
-export default ListsList;
+export default RadicalList;

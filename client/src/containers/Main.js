@@ -17,6 +17,9 @@ import ListTimeline from '../components/list/ListTimeline';
 import ListDetails from '../components/list/ListDetails';
 import ListForm from '../components/list/ListForm';
 import ListEdit from '../components/list/ListEdit';
+// Radicals
+import RadicalDetails from '../components/radical/RadicalDetails';
+import RadicalTimeline from '../components/radical/RadicalTimeline';
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -103,6 +106,22 @@ const Main = props => {
                 <Route exact path="/list/:list_id" render={props => {
                     return (
                         <ListDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
+                {/* Radicals */}
+                <Route exact path="/radicals" render={props =>{
+                    return (
+                        <RadicalTimeline
+
+                        />
+                    )
+                }}/>
+                <Route exact path="/radical/:radical_id" render={props => {
+                    return (
+                        <RadicalDetails 
                             currentUser={currentUser}
                             {...props}
                         />

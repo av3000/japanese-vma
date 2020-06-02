@@ -185,7 +185,7 @@ class ArticleList extends Component {
                      {articleList}
                     </div>
                 </div>
-                <div className="container ">
+                <div className="row justify-content-center ">
                 { this.state.pagination.last_page === this.state.pagination.current_page ? 
                     "no more results..." 
                         : 

@@ -110,6 +110,7 @@ Route::get('kanjis', 'JapaneseDataController@indexKanjis');
 Route::get('kanji/{kanji}', 'JapaneseDataController@showKanji');
 Route::get('radicals', 'JapaneseDataController@indexRadicals');
 Route::get('radical/{radical}', 'JapaneseDataController@showRadical');
+Route::post('radicals/search', 'JapaneseDataController@generateRadicalsQuery');
 Route::get('words', 'JapaneseDataController@indexWords');
 Route::get('word/{id}', 'JapaneseDataController@showWord');
 Route::get('word/{id}/kanjis', 'JapaneseDataController@wordKanjis');
@@ -117,7 +118,6 @@ Route::get('sentences', 'JapaneseDataController@indexSentences');
 Route::get('sentences/{id}', 'JapaneseDataController@showSentence');
 Route::get('sentences/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');
 Route::get('sentences/{id}/words', 'JapaneseDataController@sentenceWords');
-Route::get('material/search', 'JapaneseDataController@generateQuery');
 
 // Custom Lists
 Route::get('lists', 'CustomListController@index');
