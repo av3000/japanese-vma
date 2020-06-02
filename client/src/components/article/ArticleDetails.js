@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
+import Spinner from '../../assets/images/spinner.gif';
 import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
@@ -209,6 +210,9 @@ class ArticleDetails extends Component {
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
+                <span className="row mt-4">
+                  <Link to="/articles" className="tag-link">Back</Link>
+                </span>
                 <h1 className="mt-4">{article.title_jp}</h1>
                 <p className="text-muted"> 
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
@@ -253,16 +257,20 @@ class ArticleDetails extends Component {
               </div>
           </div>
       </div>
-    ) : (
-      <div className="center">Loading article...</div>
-    );
+    ) : "";
 
     return (
       <div className="container">
-        {singleArticle}
+        {singleArticle ? singleArticle : (
+          <div className="container">
+              <div className="row justify-content-center">
+                  <img src={Spinner}/>
+              </div>
+          </div>
+        )}
         <br/>
         <div className="row justify-content-center">
-              { currentUser.isAuthenticated && article ? (
+              { article ? (currentUser.isAuthenticated ?(
                 <div className="col-lg-8">
                 <hr/>
                   <h6>Share what's on your mind</h6>
@@ -273,14 +281,19 @@ class ArticleDetails extends Component {
                     objectType="article"
                     />
                 </div>
-              ) : ( 
-                <div className="col-lg-8">
-                <hr/>
-                  <h6>You need to 
-                  <Link to="/login"> login </Link>
-                  to comment</h6> 
-                </div>
-              )}
+                )
+                : (
+                  <div className="col-lg-8">
+                  <hr/>
+                    <h6>You need to 
+                    <Link to="/login"> login </Link>
+                    to comment</h6> 
+                  </div>
+                )
+              ) 
+              : ""
+              
+              }
               <div className="col-lg-8">
                 {comments ? (
                   <CommentList 
@@ -290,7 +303,13 @@ class ArticleDetails extends Component {
                     deleteComment={this.deleteComment}
                     likeComment={this.likeComment}
                     editComment={this.editComment}
-                    />) : ("Loading comments")}
+                    />) : (
+                      <div className="container">
+                        <div className="row justify-content-center">
+                            <img src={Spinner}/>
+                        </div>
+                    </div>
+                    )}
               </div>
         </div>
       </div>

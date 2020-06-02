@@ -150,7 +150,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->get();
+        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(6);
 
         if(!$lists)
         {

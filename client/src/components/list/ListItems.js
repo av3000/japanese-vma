@@ -15,35 +15,29 @@ class ListItems extends Component {
         switch(listType) {
             case 1:
             case 5:
-                console.log("1 or 5");
                 return (
                     <ListRadicalList objects={objects} heading="Radicals" />
                 )
             case 2:
             case 6:
-                console.log("2 or 6");
                 return (
                     <ListKanjisList objects={objects} heading="Kanjis" />
                 )
             case 3:
             case 7:
-                console.log("3 or 7");
                 return (
                     <ListWordsList objects={objects} heading="Words" />
                 )
             case 4:
             case 8:
-                console.log("4 or 8");
                 return (
                     <ListSentencesList objects={objects} heading="Sentences" />
                 )
             case 9:
-                console.log("9");
                 return (
                     <ListArticlesList objects={objects} heading="Articles" />
                 )
             default:
-                console.log("default");
                 return "Emptyness inside of me"
         }
     }

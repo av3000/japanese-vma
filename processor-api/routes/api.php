@@ -103,7 +103,7 @@ Route::get('articles', 'ArticleController@index');
 Route::get('article/{id}', 'ArticleController@show');
 Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
-Route::get('articles/search', 'ArticleController@generateQuery');
+Route::post('articles/search', 'ArticleController@generateQuery');
 
 // Japanese Resources
 Route::get('kanjis', 'JapaneseDataController@indexKanjis');

@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { authUser } from '../store/actions/auth';
 import { removeError} from '../store/actions/errors';
 import AuthForm from '../components/authform/AuthForm';
+import PageNotFound from '../components/errors/PageNotFound';
 // Landing
 import Homepage from '../components/homepage/Homepage';
 // Articles
@@ -107,6 +108,7 @@ const Main = props => {
                         />
                     )
                 }} />
+                <Route component={PageNotFound} />
             </Switch>
         </div>
     );

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { fetchLists } from '../store/actions/lists';
 import ExploreListItem from '../components/list/ExploreListItem';
+import Spinner from '../assets/images/spinner.gif';
 
 class ExploreCustomList extends Component {
     componentDidMount() {
@@ -23,8 +24,7 @@ class ExploreCustomList extends Component {
 
         let { lists } = this.props;
 
-        lists = lists.slice(0,3);
-        let customLists = lists.map(l => (
+        let customLists = lists.data ? (lists.data.slice(0, 3).map(l => (
             <ExploreListItem
                 key={l.id}
                 id={l.id}
@@ -43,7 +43,13 @@ class ExploreCustomList extends Component {
                 n4={l.n4}
                 n5={l.n5}
             />
-        ));
+        )) ) : (
+            <div className="container">
+                <div className="row justify-content-center">
+                    <img src={Spinner}/>
+                </div>
+            </div>
+        )
 
         return customLists;
     }

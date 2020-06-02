@@ -1,24 +1,8 @@
 import React from 'react';
 import ArticleList from '../../containers/ArticleList';
-import SearchBar from '../search/Searchbar';
 
 const ArticleTimeline = props => {
-    return (
-        <div className="container">
-            <div className="row mt-5">
-                <SearchBar/>
-                {/* by tag */}
-                {/* by title keyword */}
-                {/* by newest/popular */}
-            </div>
-            <div className="row mt-5">
-                <ArticleList/>
-            {/* sidebar */}
-            {/* ads bar */}
-            {/* etc.... */}
-            </div>
-        </div>
-    );
+    return <ArticleList/>
 };
 
 export default ArticleTimeline;

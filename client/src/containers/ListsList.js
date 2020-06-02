@@ -2,13 +2,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { fetchLists } from '../store/actions/lists';
 import ListItem from '../components/list/ListItem';
+import Spinner from '../assets/images/spinner.gif';
 
 class ListsList extends Component {
     componentDidMount() {
         this.props.fetchLists();
-    console.log("fetchLists compounent did mount")
-    console.log(this.props.lists);
-
     }
 
     render() {
@@ -25,7 +23,7 @@ class ListsList extends Component {
         ];
 
         let { lists } = this.props;
-        let customLists = lists.map(l => (
+        let customLists = lists.data ? (lists.data.map(l => (
             <ListItem
                 key={l.id}
                 id={l.id}
@@ -40,7 +38,13 @@ class ListsList extends Component {
                 hashtags={l.hashtags.slice(0, 3)}
                 listItems={l.listItems}
             />
-        ));
+        )) ) : (
+            <div className="container">
+                <div className="row justify-content-center">
+                    <img src={Spinner}/>
+                </div>
+            </div>
+        )
 
         return customLists;
     }

@@ -6,6 +6,7 @@ import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
+import Spinner from '../../assets/images/spinner.gif';
 import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
@@ -34,8 +35,6 @@ class ListDetails extends Component {
         this.setState({
           list: res.data.list
         });
-
-        console.log(res.data.list.listItems);
 
         return res.data.list;
       })
@@ -227,6 +226,9 @@ class ListDetails extends Component {
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 col-md-12 col-sm-12">
+                <span className="row mt-4">
+                  <Link to="/articles" className="tag-link">Back</Link>
+                </span>
                 <h1 className="mt-4">{list.title}</h1>
                 <p className="text-muted"> 
                   
@@ -272,23 +274,28 @@ class ListDetails extends Component {
                 </div>
               </div>
 
-              {/* List Items */}
-              {/* by type decide which component to load */}
-              
-
           </div>
       </div>
-    ) : (
-      <div className="center">Loading list...</div>
-    );
+    ) : "";
 
     return (
       <div className="container">
-        {singleList}
+        {singleList ? (singleList)
+        :
+        (
+          <div className="container">
+              <div className="row justify-content-center">
+                  <img src={Spinner}/>
+              </div>
+          </div>
+        )
+        }
         <br/>
         <div className="row justify-content-center">
           <div className="col-lg-8">
-          { list && list.listItems.length > 0 ? (<ListItems objects={this.state.list.listItems} listType={this.state.list.type}/>) : (<h4>List is empty.</h4>) }
+          { list && list.listItems.length > 0 ? 
+            (<ListItems objects={this.state.list.listItems} listType={this.state.list.type}/>)
+             : "" }
           {
             list && list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)
           : ("")
@@ -296,26 +303,31 @@ class ListDetails extends Component {
           </div>
         </div>
         <div className="row justify-content-center">
-              { currentUser.isAuthenticated && list ? ( 
+              { list ? (currentUser.isAuthenticated ?(
                 <div className="col-lg-8">
                 <hr/>
                   <h6>Share what's on your mind</h6>
                   <CommentForm 
                     addComment={this.addComment}
-                    currentUser={currentUser}
+                    currentUser={currentUser} 
                     objectId={this.state.list.id}
                     objectType="list"
-                  />
+                    />
                 </div>
-              ) : ( 
-                <div className="col-lg-8">
-                <hr/>
-                  <h6>You need to 
-                  <Link to="/login"> login </Link>
-                  to comment</h6> 
-                </div>
-              )}
-              <div className="col-lg-8 bg-white">
+                )
+                : (
+                  <div className="col-lg-8">
+                  <hr/>
+                    <h6>You need to 
+                    <Link to="/login"> login </Link>
+                    to comment</h6> 
+                  </div>
+                )
+              ) 
+              : ""
+              
+              }
+              <div className="col-lg-8">
                 {comments ? (
                   <CommentList 
                     objectId={this.state.list.id}
@@ -324,7 +336,13 @@ class ListDetails extends Component {
                     deleteComment={this.deleteComment}
                     likeComment={this.likeComment}
                     editComment={this.editComment}
-                    />) : ("Loading comments")}
+                    />) : (
+                      <div className="container">
+                        <div className="row justify-content-center">
+                            <img src={Spinner}/>
+                        </div>
+                    </div>
+                    )}
               </div>
         </div>
       </div>

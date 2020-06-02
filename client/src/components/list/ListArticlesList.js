@@ -12,14 +12,13 @@ class ListArticlesList extends Component {
         let { objects } = this.props;
         
         const objectList = objects.map(object => {
-            console.log(object);
             object.hashtags = object.hashtags.slice(0, 3);
           return (
             <tr key={object.id}>
               <th scope="row">{ 
                 <Link to={`/article/${object.id}`} target="_blank">
                     {/* {object.id}  */}
-                    <i class="fas fa-external-link-alt"></i>
+                    <i className="fas fa-external-link-alt"></i>
                 </Link> }</th>
               <td>{object.viewsTotal}</td>
               <td>{object.savesTotal}</td>

@@ -38,7 +38,7 @@ class ArticleController extends Controller
     }
 
     public function index() {
-        $articles = Article::orderBy('created_at', "DESC")->get();
+        $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $jp_month = "月";
@@ -392,19 +392,90 @@ class ArticleController extends Controller
          ]);
     }
 
-    public function generateQuery(Request $request) { // Not sure about encoding part if it work.
-        $q = $request->get("q");
-        $results = Article::where("title_en", "like", "%".$q."%")
-                        ->orWhere("title_jp", "like", "%".$q."%")->get();
-        if(!isset($results)) {
-            return response()->json([
-                'success' => false, 'message' => 'Requested query: '.$q. ' returned zero results'
-             ]);
+    public function getArticleImpressionsSearch($articles)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $jp_month = "月";
+        $jp_day = "日";
+        $jp_hour = "時";
+        $jp_minute = "分";
+        $jp_year = "年";
+        foreach($articles as $singleArticle)
+        {
+            
+            $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
+            $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
+            $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;
+            $singleArticle->jp_hour   = $singleArticle->created_at->hour   . $jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
+
+            $singleArticle->likesTotal = $this->getImpression("like", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->hashtags      = array_slice($this->getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
+
+        return $articles;
+    }
+
+    public function generateQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $request->title = trim($request->title);
+            $singleTag = explode(' ',trim($request->title))[0];
+
+            $search = '#';
+            if(preg_match("/{$search}/i", $singleTag)) {
+            // if( strpos($request->title, "#") === true){
+
+                $articles = $this->getUniquehashtagArticles($singleTag);
+                $q .= $singleTag;
+                if( isset($articles) )
+                {
+                    $articles = $articles->where('publicity', 1);
+                }
+            }
+            else {
+                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->title)->where('publicity', 1);
+                $q .= $request->title;
+            }
+        } 
+
+        //if search has search fields, return articles of requested fields
+        if(isset( $articles )) {
+            $articles = $articles->paginate(3);
+
+            // add impressions
+            $articles = $this->getArticleImpressionsSearch($articles);
+
+            return response()->json([
+                'success' => true,
+                'articles' => $articles,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default articles
+        if( $q == "")
+        {
+            $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+
+            // add impressions
+            $articles = $this->getArticleImpressionsSearch($articles);
+
+             return response()->json([
+                'success' => true,
+                'articles' => $articles,
+                'q' => $q
+            ]);
+        }
+        
         return response()->json([
-            'success' => true,
-            'message' => 'Requested query: '.$q. ' returned: '.count($results).' results',
-            'results' => $results
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero articles',
+            'q' => $q
         ]);
     }
 
@@ -1198,6 +1269,30 @@ class ArticleController extends Controller
     }
     
     #======================== Hashtags
+
+    public function getUniquehashtagArticles($wantedTag)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        // get tag which was input id
+        $uniqueTag = Uniquehashtag::where("content", $wantedTag)->first();
+        if( !isset( $uniqueTag )) {
+            return null;
+        }
+        // get all hashtag foreign table rows
+        $foundRows = DB::table('hashtags')->where('uniquehashtag_id', $uniqueTag->id)
+            ->where('template_id', $objectTemplateId)->get();
+
+        $ids = [];
+        // get all articles with that tag id
+        foreach($foundRows as $articlelink)
+        {
+            $ids[] = $articlelink->real_object_id;
+        }
+        
+        $articles = Article::whereIn('id', $ids);
+
+        return $articles;
+    }
 
     public function getUniquehashtags($id, $objectTemplateId)
     {  

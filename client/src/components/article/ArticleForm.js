@@ -137,9 +137,8 @@ class ArticleForm extends Component {
                 />
                 <label htmlFor="publicity" className="mt-3">Publicity</label>
                 <select name="publicity" value={this.state.publicity} className="form-control" onChange={this.handleChange}>
-                    <option value="2">Public</option>
-                    <option value="1">Private</option>
-                    <option value="0">Draft</option>
+                    <option value="1">Public</option>
+                    <option value="0">Private</option>
                 </select>
                 <button type="submit" className="btn btn-outline-primary col-md-3 brand-button mt-5">
                     Post the Article

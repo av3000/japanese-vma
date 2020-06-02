@@ -19,4 +19,5 @@ class Article extends Model
     public function words() {
         return $this->belongsToMany('App\Word', 'article_word');
     }
+
 }
