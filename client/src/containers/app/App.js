@@ -5,7 +5,7 @@ import './App.css';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { apiCall } from '../../services/api';
 import { setAuthorizationToken, setCurrentUser } from '../../store/actions/auth';
-import Navbar from '../navbar/Navbar';
+import TopNavigationBar from '../navbar/TopNavigationBar';
 import Footer from '../../components/footer/Footer';
 import Main from '../Main';
 import ScrollToTop from '../../components/util/scrolltotop/ScrollToTop';
@@ -31,7 +31,7 @@ const App = () => (
   <Provider store={store}>
       <Router>
       <ScrollToTop/>
-          <Navbar/>
+          <TopNavigationBar/>
           <Main/>
           <Footer/>
           <PageLoader />

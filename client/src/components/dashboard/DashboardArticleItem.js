@@ -17,7 +17,7 @@ const DashboardArticleItem = ({
     user
 }) => (
     <div className="row">
-            <div className="col-md-8 pb-3 mb-0 small  border-bottom border-gray">
+            <div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
                 <p>
                     {title}
                 </p>

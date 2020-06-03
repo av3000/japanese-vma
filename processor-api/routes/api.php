@@ -49,7 +49,10 @@ Route::group([
 		Route::put('list/{id}', 'CustomListController@update');
 		Route::delete('list/{id}', 'CustomListController@delete');
 		Route::get('user/lists', 'CustomListController@getUserLists');
+		Route::post('user/lists/contain', 'CustomListController@getUserListsForElementsToAdd');
 		Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
+		Route::post('user/list/removeitemwhileaway', 'CustomListController@removeFromListWhileAway');
+		Route::post('user/list/additemwhileaway', 'CustomListController@addToListWhileAway');
 		Route::post('list/{id}/additem', 'CustomListController@addToList');
 		Route::post('list/{id}/like', 'CustomListController@likeList');
 		Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
@@ -59,6 +62,7 @@ Route::group([
 		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
 		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
 		Route::post('list/{id}/togglepublicity', 'CustomListController@togglePublicity');
+
 		// List Comment
 		Route::post('list/{id}/comment', 'CustomListController@storeComment');
 		Route::delete('list/{id}/comment/{commentid}', 'CustomListController@deleteComment');
@@ -133,3 +137,4 @@ Route::get('user/{id}/lists', 'CustomListController@getUserLists');
 // Posts
 Route::get('posts', 'PostController@index');
 Route::get('post/{id}', 'PostController@show');
+Route::post('posts/search', 'PostController@generateQuery');

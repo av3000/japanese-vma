@@ -7,12 +7,15 @@ class ListRadicalList extends Component {
     }
 
     render() {
-        let { objects } = this.props;
+        let { objects, removeFromList, currentUser, listUserId  } = this.props;
         
         const objectList = objects.map(object => {
             return (
                 <tr key={object.id}>
-                    <th scope="row">{object.id}</th>
+                    <th scope="row">
+                        {object.id}
+                        {currentUser.user.id === listUserId ? (<button className="btn btn-sm btn-danger" onClick={removeFromList.bind(this, object.id)}>-</button>) : ""}    
+                    </th>
                     <td>{object.radical}</td>
                     <td>{object.strokes}</td>
                     <td>{object.meaning}</td>
@@ -26,7 +29,7 @@ class ListRadicalList extends Component {
             <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">Kanji</th>
+                <th scope="col">Radical</th>
                 <th scope="col">Strokes</th>
                 <th scope="col">Meaning</th>
                 <th scope="col">Hiragana</th>

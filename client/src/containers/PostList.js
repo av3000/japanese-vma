@@ -6,6 +6,7 @@ import SearchBar from '../components/search/Searchbar';
 
 
 export class PostList extends Component {
+    _isMounted = false;
     constructor(props){
         super(props);
         this.state = {
@@ -25,21 +26,28 @@ export class PostList extends Component {
     };
 
     componentDidMount() {
+        this._isMounted = true;
         this.fetchPosts(this.state.url);
+    };
+
+    componentWillUnmount() {
+        this._isMounted = false;
     };
 
     fetchPosts(givenUrl){
         return apiCall("get", givenUrl)
             .then(res => {
-                console.log(res);
-                let newState = Object.assign({}, this.state);
-                newState.paginateObject = res.posts;
-                newState.posts = [...newState.posts, ...res.posts.data];
-                newState.url = res.posts.next_page_url;
+                if (this._isMounted) {
+                    console.log(res);
+                    let newState = Object.assign({}, this.state);
+                    newState.paginateObject = res.posts;
+                    newState.posts = [...newState.posts, ...res.posts.data];
+                    newState.url = res.posts.next_page_url;
 
-                newState.searchTotal = "results total: '" + res.posts.total + "'";
+                    newState.searchTotal = "results total: '" + res.posts.total + "'";
 
-                return newState;
+                    return newState;
+                }
             })
             .then(newState => {
                 newState.pagination = this.makePagination(newState.paginateObject);
@@ -134,6 +142,7 @@ export class PostList extends Component {
                     key={w.id}
                     id={w.id}
                     title={w.title}
+                    date={w.created_at}
                     content={w.content}
                     type={w.type}
                     locked={w.locked}
@@ -182,9 +191,6 @@ export class PostList extends Component {
                         )
                         : ""
                     }
-                    </div>
-                    <div className="d-flex align-items-center p-3 my-3 bg-purple rounded box-shadow">
-                        <h3>Community</h3>
                     </div>
                     <div className="my-3 p-3 bg-white rounded box-shadow">
                         <h6 className="border-bottom border-gray pb-2 mb-0">Newest Topics</h6>

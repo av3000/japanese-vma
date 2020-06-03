@@ -14,10 +14,10 @@ const DashboardListItem = ({
     downloadsTotal,
     hashtags,
     currentUser,
-    postType
+    listType
 }) => (
     <div className="row">
-            <div className="col-md-8 pb-3 mb-0 small  border-bottom border-gray">
+            <div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
                 <p>
                     {title}
                 </p>
@@ -39,7 +39,14 @@ const DashboardListItem = ({
                         <span>
                          {likesTotal}&nbsp;Likes &nbsp;
                         </span>
+                        
                 </small>
+                <small className="d-flex justify-content-between align-items-center text-muted">
+                    <span>
+                       {listType}
+                    </span>
+                </small>
+                
             </div>
         {/* <div className="card mb-4 shadow-sm">
             <div className="card-body">

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import Spinner from '../../assets/images/spinner.gif';
 import { Link } from 'react-router-dom';
+import { Button, Modal } from 'react-bootstrap';
 
 class KanjiDetails extends Component {
     constructor(props) {
@@ -16,8 +17,16 @@ class KanjiDetails extends Component {
             paginateObject: {},
             searchHeading: "",
             searchTotal: "",
-            filters: []
+            filters: [],
+            lists: [],
+            show: false
         }
+
+        this.addToList = this.addToList.bind(this);
+        this.removeFromList = this.removeFromList.bind(this);
+        this.openModal = this.openModal.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+        this.getUserWordLists = this.getUserWordLists.bind(this);
 
         // this.addToList = this.addToList.bind(this);
     }
@@ -45,7 +54,70 @@ class KanjiDetails extends Component {
         .catch(err => {
             console.log(err);
         });
+
+        this.getUserWordLists();
     };
+
+    handleClose(){
+        this.setState({show: !this.state.show})
+    }
+
+    getUserWordLists(){
+        return axios.post(`/api/user/lists/contain`, {
+            elementId: this.props.match.params.word_id
+        })
+        .then(res => {
+            console.log(res);
+            let newState = Object.assign({}, this.state);
+            newState.lists = res.data.lists.filter(list => {
+                if(list.type === 3 || list.type === 7){
+                    return list;
+                }
+            })
+            console.log(newState.lists);
+
+            this.setState( newState );
+        })
+        .catch(err => {
+            console.log(err);
+        })
+      }
+
+      openModal(){
+          if(this.props.currentUser.isAuthenticated === false){
+              this.props.history.push('/login');
+          }
+          else {
+              this.setState({show: !this.state.show})
+              //   next decision to pick which list to add.
+          }
+      }
+
+      addToList(id){
+          console.log("addto ")
+            console.log(id);
+            this.setState({show: !this.state.show})
+            axios.post("/api/user/list/additemwhileaway", {
+                listId: id,
+                elementId: this.props.match.params.word_id
+            })
+            .then(res => console.log(res))
+            .catch(err => console.log(err))
+            window.location.reload(false);
+      }
+
+      removeFromList(id){
+          console.log("removefrom")
+          console.log(id);
+          this.setState({show: !this.state.show})
+          axios.post("/api/user/list/removeitemwhileaway", {
+            listId: id,
+            elementId: this.props.match.params.word_id
+          })
+          .then(res => console.log(res))
+          .catch(err => console.log(err))
+          window.location.reload(false);
+      }
 
     // fetchQuery(queryParams) {
     //     let newState = Object.assign({}, this.state);
@@ -167,7 +239,7 @@ class KanjiDetails extends Component {
                             jlpt: {word.jlpt}, <br/> meaning: {word.meaning}
                         </p>
                         <p className="float-right">
-                            <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
+                            <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
                             {/* <i className="fas fa-external-link-alt fa-lg"></i> */}
                         </p>
                     </div>
@@ -276,6 +348,21 @@ class KanjiDetails extends Component {
         })) : "";
                
 
+        // Model for radical addint to lists
+        let addModal = this.state.lists ? (this.state.lists.map(list => {
+            return (
+                <div key={list.id}>
+                    <div className="col-9"> <Link to={`/list/${list.id}`}>{list.title}</Link>
+                        {list.elementBelongsToList ? 
+                        (<button className="btn btn-sm btn-danger" onClick={this.removeFromList.bind(this, list.id)}>-</button>)
+                        :
+                        (<button className="btn btn-sm btn-light" onClick={this.addToList.bind(this, list.id)}>+</button>)
+                    }
+                    </div>
+                </div>
+                
+            ) })) : ("");
+        
         return (
             <div className="container">
                  <span className="mt-4">
@@ -303,6 +390,24 @@ class KanjiDetails extends Component {
                 <div className="container">
                 {articleList}
                 </div>
+
+                <Modal show={this.state.show} onHide={this.handleClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Choose List to add</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {addModal}
+                    <small> <Link to="/newlist">Want new list?</Link> </small>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={this.handleClose}>
+                        Close
+                    </Button>
+                    {/* <Button variant="primary" onClick={this.handleClose}>
+                        Save Changes
+                    </Button> */}
+                </Modal.Footer>
+                </Modal>
             </div>
         );
     }

@@ -120,6 +120,7 @@ class PostController extends Controller
         {
             $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
             $comment->likesTotal = count($comment->likes);
+            $comment->userName = User::find($comment->user_id)->name;
         }
 
         $user = User::find($post->user_id);
@@ -226,6 +227,87 @@ class PostController extends Controller
         return response()->json([
             'success' => true,
             'deleted_post' => $post,
+        ]);
+    }
+
+    public function getPostImpressionsSearch($posts)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
+        $jp_month = "月";
+        $jp_day = "日";
+        $jp_hour = "時";
+        $jp_minute = "分";
+        $jp_year = "年";
+        foreach($posts as $singlePost)
+        {
+            $singlePost->jp_year   = $singlePost->created_at->year   . $jp_year;
+            $singlePost->jp_month  = $singlePost->created_at->month  . $jp_month;
+            $singlePost->jp_day    = $singlePost->created_at->day    . $jp_day;
+            $singlePost->jp_hour   = $singlePost->created_at->hour   . $jp_hour;
+            $singlePost->jp_minute = $singlePost->created_at->minute . $jp_minute;
+
+            $singlePost->likesTotal = $this->getImpression("like", $objectTemplateId, $singlePost, "total");
+            $singlePost->viewsTotal = $this->getImpression("view", $objectTemplateId, $singlePost, "total");
+            $singlePost->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singlePost, 'total');
+            $singlePost->hashtags      = array_slice($this->getUniquehashtags($singlePost->id, $objectTemplateId), 0, 3);
+        }
+
+        return $posts;
+    }
+
+    public function generateQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $request->title = trim($request->title);
+            $singleTag = explode(' ',trim($request->title))[0];
+
+            $search = '#';
+            if(preg_match("/{$search}/i", $singleTag)) {
+            // if( strpos($request->title, "#") === true){
+
+                $posts = $this->getUniquehashtagPosts($singleTag);
+                $q .= $singleTag;
+            }
+            else {
+                $posts = Post::whereLike(['title', 'content'], $request->title);
+                $q .= $request->title;
+            }
+        } 
+
+        //if search has search fields, return posts of requested fields
+        if(isset( $posts )) {
+            $posts = $posts->paginate(3);
+
+            // add impressions
+            $posts = $this->getPostImpressionsSearch($posts);
+
+            return response()->json([
+                'success' => true,
+                'articles' => $posts,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default posts
+        if( $q == "")
+        {
+            $posts = Post::paginate(3);
+
+            // add impressions
+            $posts = $this->getPostImpressionsSearch($posts);
+
+             return response()->json([
+                'success' => true,
+                'posts' => $posts,
+                'q' => $q
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero posts',
+            'q' => $q
         ]);
     }
 
@@ -362,6 +444,8 @@ class PostController extends Controller
         $comment->real_object_id = $id;
         $comment->content = $request->get('content');
         $comment->save();
+        $comment->likesTotal = 0;
+        $comment->likes = [];
 
         return response()->json([
             'success' => true,
@@ -607,6 +691,30 @@ class PostController extends Controller
         }
 
         return $finalTags;
+    }
+
+    public function getUniquehashtagPosts($wantedTag)
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
+        // get tag which was input id
+        $uniqueTag = Uniquehashtag::where("content", $wantedTag)->first();
+        if( !isset( $uniqueTag )) {
+            return null;
+        }
+        // get all hashtag foreign table rows
+        $foundRows = DB::table('hashtags')->where('uniquehashtag_id', $uniqueTag->id)
+            ->where('template_id', $objectTemplateId)->get();
+
+        $ids = [];
+        // get all posts with that tag id
+        foreach($foundRows as $postlink)
+        {
+            $ids[] = $postlink->real_object_id;
+        }
+        
+        $posts = Post::whereIn('id', $ids);
+
+        return $posts;
     }
 
     public function checkIfHashtagsAreUnique($tags)

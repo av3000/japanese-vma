@@ -9,8 +9,9 @@ class ListArticlesList extends Component {
     }
 
     render() {
-        let { objects } = this.props;
-        
+        let { objects, removeFromList, currentUser, listUserId } = this.props;
+        console.log("cyrrentUser deepest");
+        console.log(currentUser);
         const objectList = objects.map(object => {
             object.hashtags = object.hashtags.slice(0, 3);
           return (
@@ -19,7 +20,9 @@ class ListArticlesList extends Component {
                 <Link to={`/article/${object.id}`} target="_blank">
                     {/* {object.id}  */}
                     <i className="fas fa-external-link-alt"></i>
-                </Link> }</th>
+                </Link> }
+                {currentUser.user.id === listUserId ? (<button className="btn btn-sm btn-danger" onClick={removeFromList.bind(this, object.id)}>-</button>) : ""}
+              </th>
               <td>{object.viewsTotal}</td>
               <td>{object.savesTotal}</td>
               <td>{object.downloadsTotal}</td>

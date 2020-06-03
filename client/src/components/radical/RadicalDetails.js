@@ -2,15 +2,26 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import Spinner from '../../assets/images/spinner.gif';
 import { Link } from 'react-router-dom';
+import { Button, Modal } from 'react-bootstrap';
 
 class RadicalDetails extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            radical: {}
+            radical: {},
+            lists: [],
+            show: false
         };
-
+        
         this.addToList = this.addToList.bind(this);
+        this.removeFromList = this.removeFromList.bind(this);
+        this.openModal = this.openModal.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+        this.getUserRadicalLists = this.getUserRadicalLists.bind(this);
+    }
+
+    handleClose(){
+        this.setState({show: !this.state.show})
     }
 
     componentDidMount(){
@@ -25,11 +36,65 @@ class RadicalDetails extends Component {
           .catch(err => {
               console.log(err);
           });
-    
+
+          this.getUserRadicalLists();
       };
 
-      addToList(){
-          console.log("radical: " + this.state.radical.id);
+      getUserRadicalLists(){
+        return axios.post(`/api/user/lists/contain`, {
+            elementId: this.props.match.params.radical_id
+        })
+        .then(res => {
+            console.log(res);
+            let newState = Object.assign({}, this.state);
+            newState.lists = res.data.lists.filter(list => {
+                if(list.type === 1 || list.type === 5){
+                    return list;
+                }
+            })
+            console.log(newState.lists);
+
+            this.setState( newState );
+        })
+        .catch(err => {
+            console.log(err);
+        })
+      }
+
+      openModal(){
+          if(this.props.currentUser.isAuthenticated === false){
+              this.props.history.push('/login');
+          }
+          else {
+              this.setState({show: !this.state.show})
+              //   next decision to pick which list to add.
+          }
+      }
+
+      addToList(id){
+          console.log("addto ")
+            console.log(id);
+            this.setState({show: !this.state.show})
+            axios.post("/api/user/list/additemwhileaway", {
+                listId: id,
+                elementId: this.props.match.params.radical_id
+            })
+            .then(res => console.log(res))
+            .catch(err => console.log(err))
+            window.location.reload(false);
+      }
+
+      removeFromList(id){
+          console.log("removefrom")
+          console.log(id);
+          this.setState({show: !this.state.show})
+          axios.post("/api/user/list/removeitemwhileaway", {
+            listId: id,
+            elementId: this.props.match.params.radical_id
+          })
+          .then(res => console.log(res))
+          .catch(err => console.log(err))
+          window.location.reload(false);
       }
 
     render() {
@@ -49,7 +114,7 @@ class RadicalDetails extends Component {
                             strokes: {radical.strokes} 
                         </p>
                         <p className="float-right">
-                            <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
+                            <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
                             {/* <i className="fas fa-external-link-alt fa-lg"></i> */}
                         </p>
                     </div>
@@ -62,7 +127,7 @@ class RadicalDetails extends Component {
             </div>
         );
 
-        
+        // Kanjis of radical
         const kanjis = radical.kanjis ? ( radical.kanjis.map(kanji => {
 
             kanji.meaning = kanji.meaning.split("|")
@@ -94,6 +159,21 @@ class RadicalDetails extends Component {
                 </div>
             )
         })) : "";
+
+        // Model for radical addint to lists
+        let addModal = this.state.lists ? (this.state.lists.map(list => {
+            return (
+                <div key={list.id}>
+                    <div className="col-9"> <Link to={`/list/${list.id}`}>{list.title}</Link>
+                        {list.elementBelongsToList ? 
+                        (<button className="btn btn-sm btn-danger" onClick={this.removeFromList.bind(this, list.id)}>-</button>)
+                        :
+                        (<button className="btn btn-sm btn-light" onClick={this.addToList.bind(this, list.id)}>+</button>)
+                    }
+                     </div>
+                </div>
+                
+            ) })) : ("");
                
 
         return (
@@ -107,6 +187,23 @@ class RadicalDetails extends Component {
                     <h4>kanjis ({radical.kanjis.length}) results</h4>
                 ) : ""}
                 {kanjis}
+                <Modal show={this.state.show} onHide={this.handleClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Choose List to add</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {addModal}
+                    <small> <Link to="/newlist">Want new list?</Link> </small>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={this.handleClose}>
+                        Close
+                    </Button>
+                    {/* <Button variant="primary" onClick={this.handleClose}>
+                        Save Changes
+                    </Button> */}
+                </Modal.Footer>
+                </Modal>
             </div>
         );
     }

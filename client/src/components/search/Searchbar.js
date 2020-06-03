@@ -13,6 +13,11 @@ class Searchbar extends Component {
 
     onSubmit(e){
         e.preventDefault();
+        
+        if(this.state.title === ""){
+            return;
+        }
+        
         let data = {
             title: this.state.title
         };

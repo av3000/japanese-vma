@@ -7,12 +7,14 @@ class ListKanjisList extends Component {
     }
 
     render() {
-        let { objects } = this.props;
+        let { objects, removeFromList, currentUser, listUserId  } = this.props;
         
         const objectList = objects.map(object => {
           return (
             <tr key={object.id}>
-              <th scope="row">{object.id}</th>
+              <th scope="row">{object.id}
+              {currentUser.user.id === listUserId ? (<button className="btn btn-sm btn-danger" onClick={removeFromList.bind(this, object.id)}>-</button>) : ""}    
+              </th>
               <td>{object.content}</td>
               <td>{object.tatoeba_entry ? 
               ( <a href={`https://tatoeba.org/eng/sentences/show/${object.tatoeba_entry}`} target="_blank">

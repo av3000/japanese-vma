@@ -293,6 +293,142 @@ class CustomListController extends Controller
         }
     }
 
+    public function checkIfBelongToList($itemId, $list)
+    {
+        $foundRows = DB::table('customlist_object')->where('list_id', $list->id)->get();
+        foreach($foundRows as $row)
+        {
+            if($row->real_object_id == $itemId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getUserListsForElementsToAdd(Request $request)
+    {
+        $lists = CustomList::where("user_id", auth()->user()->id)->get();
+        if( !isset($lists) || count($lists) == 0 )
+        {
+            return response()->json([
+                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists
+             ]);
+        }
+
+        foreach($lists as $list)
+        {
+            $list->elementBelongsToList = $this->checkIfBelongToList($request->get("elementId"), $list);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'returned: '.count($lists).' results',
+            'lists' => $lists
+        ]);
+    }
+
+    public function getUserLists()
+    {
+        $lists = CustomList::where("user_id", auth()->user()->id)->get();
+        if( !isset($lists) || count($lists) == 0 )
+        {
+            return response()->json([
+                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists
+             ]);
+        }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        foreach($lists as $singleList)
+        {
+            $singleList                 = $this->getListItems($singleList);
+            $singleList->itemsTotal     = count($singleList->listItems);
+            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
+            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
+            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
+            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
+            
+
+            if($singleList->type == 1) {
+                $singleList->typeTitle = "Known Radicals";
+            } else if($singleList->type == 2) {
+                $singleList->typeTitle = "Known Kanjis";
+            } else if($singleList->type == 3) {
+                $singleList->typeTitle = "Known Words";
+            } else if($singleList->type == 4) {
+                $singleList->typeTitle = "Known Sentences";
+            } else if($singleList->type == 5) {
+                $singleList->typeTitle = "Radicals";
+            } else if($singleList->type == 6) {
+                $singleList->typeTitle = "Kanjis";
+            } else if($singleList->type == 7) {
+                $singleList->typeTitle = "Words";
+            } else if($singleList->type == 8) {
+                $singleList->typeTitle = "Sentences";
+            } else if($singleList->type == 9) {
+                $singleList->typeTitle = "Articles";
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'returned: '.count($lists).' results',
+            'lists' => $lists
+        ]);
+    }
+
+    // TODO. 
+    // Question is, should user be able to save it? 
+    // Well, some kind of bookmarking is definitely necessary.
+    // You can save stuff into lists of other users
+    // But how about lists of other users? Duplicate vs create references?
+    public function saveOtherUserList(CustomList $list){
+       // 
+    }
+
+    public function addToListWhileAway(Request $request)
+    {
+        $list = CustomList::find($request->listId);
+
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+        else if($list->user_id != auth()->user()->id){
+            return response()->json([
+                'success' => false,
+                'message' => 'unauthorized access'
+            ]);
+        }
+
+        $newObjectId = $request->get("elementId");
+
+        $row = [
+            'real_object_id' => $newObjectId,
+            'listtype_id' => $list->type,
+            'list_id' => $list->id
+        ];
+
+        $x = DB::table('customlist_object')->insert($row);
+
+        if($list->type == self::KANJIS || $list->type == self::KNOWNKANJIS) { $this->handleListJlpt($list, $newObjectId, "add"); $list->update(); }
+
+        if($x) {
+            return response()->json([
+                'success' => true,
+                'newObjectId' => $newObjectId,
+                'idOfModifiedList' => $list->id
+            ]);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => "addToList failed."
+        ]);
+    }
+
     public function addToList(Request $request, $id)
     {
         $list = CustomList::find($id);
@@ -368,62 +504,34 @@ class CustomListController extends Controller
         ]);
     }
 
-    public function getUserLists()
+    public function removeFromListWhileAway(Request $request)
     {
-        $lists = CustomList::where("user_id", auth()->user()->id)->get();
-        if( !isset($lists) || count($lists) == 0 )
-        {
+        $list = CustomList::find($request->listId);
+
+        if(!auth()->user()){
             return response()->json([
-                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists
-             ]);
+                'message' => 'you are not a user'
+            ]);
+        }
+        else if($list->user_id != auth()->user()->id){
+            return response()->json([
+                'success' => false,
+                'message' => 'unauthorized access'
+            ]);
         }
 
-        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
-        foreach($lists as $singleList)
+        if(DB::table('customlist_object')->where('list_id', $request->listId)->where('real_object_id', $request->elementId)->delete())
         {
-            $singleList                 = $this->getListItems($singleList);
-            $singleList->itemsTotal     = count($singleList->listItems);
-            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
-            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
-            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
-            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
-            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
-
-            if($singleList->type == 1) {
-                $singleList->typeTitle = "Known Radicals";
-            } else if($singleList->type == 2) {
-                $singleList->typeTitle = "Known Kanjis";
-            } else if($singleList->type == 3) {
-                $singleList->typeTitle = "Known Words";
-            } else if($singleList->type == 4) {
-                $singleList->typeTitle = "Known Sentences";
-            } else if($singleList->type == 5) {
-                $singleList->typeTitle = "Radicals";
-            } else if($singleList->type == 6) {
-                $singleList->typeTitle = "Kanjis";
-            } else if($singleList->type == 7) {
-                $singleList->typeTitle = "Words";
-            } else if($singleList->type == 8) {
-                $singleList->typeTitle = "Sentences";
-            } else if($singleList->type == 9) {
-                $singleList->typeTitle = "Articles";
-            }
+            return response()->json([
+                "success" => true,
+                "message" => "element removed from the list"
+            ]);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'returned: '.count($lists).' results',
-            'lists' => $lists
+            "success" => false,
+            "message" => "API managed to fail to delete. Maybe item does not belong to list after all"
         ]);
-    }
-
-    // TODO. 
-    // Question is, should user be able to save it? 
-    // Well, some kind of bookmarking is definitely necessary.
-    // You can save stuff into lists of other users
-    // But how about lists of other users? Duplicate vs create references?
-    public function saveOtherUserList(CustomList $list){
-       // 
     }
 
     public function getListImpressionsSearch($lists)

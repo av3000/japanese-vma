@@ -7,7 +7,7 @@ class ListKanjisList extends Component {
     }
 
     render() {
-        let { objects } = this.props;
+        let { objects, removeFromList, currentUser, listUserId  } = this.props;
         
         const objectList = objects.map(object => {
           console.log(object);
@@ -28,7 +28,9 @@ class ListKanjisList extends Component {
 
           return (
             <tr key={object.id}>
-              <th scope="row">{object.id}</th>
+              <th scope="row">{object.id}
+              {currentUser.user.id === listUserId ? (<button className="btn btn-sm btn-danger" onClick={removeFromList.bind(this, object.id)}>-</button>) : ""}    
+              </th>
               <td>{object.word}</td>
               <td>{object.furigana}</td>
               <td>{object.meaning}</td>

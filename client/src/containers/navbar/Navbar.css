@@ -55,6 +55,15 @@ nav .dropdown-item:focus,
     text-shadow: 0.3px 0.3px var(--link-hover-color);
 }
 
+#my-toggler-btn:hover,
+#my-toggler-btn:active,
+#my-toggler-btn:focus,
+#my-toggler-btn:focus-within {
+    background-color: #fff;
+    border-color: #fff;
+    color: var(--link-hover-color);
+}
+
 .navbar .link-button:hover, 
 .navbar .nav-item a:hover {
     text-decoration: none;

@@ -43,21 +43,21 @@ class UserController extends Controller
         // kanjis
         $kanjiList = new CustomList;
         $kanjiList->user_id = $user->id;
-        $kanjiList->publicity = "default";
+        $kanjiList->publicity = 0;
         $kanjiList->type = self::KNOWNKANJIS;
         $kanjiList->title = "My Known Kanjis";
         $kanjiList->save();
         // words
         $wordList = new CustomList;
         $wordList->user_id = $user->id;
-        $wordList->publicity = "default";
+        $wordList->publicity = 0;
         $wordList->type = self::KNOWNWORDS;
         $wordList->title = "My Known Words";
         $wordList->save();
         // sentences
         $sentenceList = new CustomList;
         $sentenceList->user_id = $user->id;
-        $sentenceList->publicity = "default";
+        $sentenceList->publicity = 0;
         $sentenceList->type = self::KNOWNSENTENCES;
         $sentenceList->title = "My Known Sentences";
         $sentenceList->save();

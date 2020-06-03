@@ -8,15 +8,17 @@ class AuthForm extends Component {
             name: "",
             email: "",
             password: "",
-            password_confirmation: "",
-            checkTerms: false
+            password_confirmation: ""
         };
     }
 
     handleSubmit = e => {
         e.preventDefault();
+        
         const authType = this.props.signUp ? "register" : "login";
         this.props.onAuth(authType, this.state).then(() => {
+            console.log("its ok: ")
+
             this.props.history.push("/");
           })
           .catch(() => {
@@ -47,7 +49,7 @@ class AuthForm extends Component {
                             { signUp ? ( <h6 className="mb-5">Already have an account? <Link to="/login">Login.</Link> </h6> )
                             : (<h6 className="mb-5">Don't have an account yet? <Link to="/register">Create now.</Link> </h6>)
                             }
-                            {errors.message && ( <div className="alert alert-danger"> {errors.message} </div>
+                            {errors.message && ( <div className="alert alert-danger"> {errors.message} ERORAS </div>
                             )}
                             <label className="mt-3" htmlFor="email">Email:</label>
                             <input 

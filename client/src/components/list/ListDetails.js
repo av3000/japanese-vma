@@ -11,12 +11,14 @@ import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
 import ListItems from './ListItems';
+import { Button, Modal } from 'react-bootstrap';
 
 class ListDetails extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            list: null
+            list: null,
+            show: false
         };
 
         this.likeList = this.likeList.bind(this);
@@ -26,7 +28,38 @@ class ListDetails extends Component {
         this.editComment = this.editComment.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.downloadPdf = this.downloadPdf.bind(this);
+
+        this.openModal = this.openModal.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+        this.removeFromList = this.removeFromList.bind(this);
     };
+
+    removeFromList(id){
+      console.log("removefrom")
+      console.log(id);
+      this.setState({show: !this.state.show})
+      axios.post("/api/user/list/removeitemwhileaway", {
+        listId: this.props.match.params.list,
+        elementId: id
+      })
+      .then(res => console.log(res))
+      .catch(err => console.log(err))
+      window.location.reload(false);
+  }
+
+  handleClose(){
+    this.setState({showPdf: !this.state.showPdf})
+  }
+
+  openModal() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+        this.setState({show: !this.state.show})
+        //   next decision to pick which pdf to download.
+    }
+  }
   
   componentDidMount(){
     let id = this.props.match.params.list_id;
@@ -246,7 +279,7 @@ class ListDetails extends Component {
                           (<Link to={`/list/edit/${list.id}`}><i className="fas fa-pen-alt ml-3 fa-lg"></i></Link>) : ""
                         }
                         {
-                         list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)
+                         list.type !== 9 ? (<i onClick={this.openPdfModal} className="fas fa-print ml-3 fa-lg"></i>)
                         : ("")
                         }
                     </span>
@@ -255,7 +288,7 @@ class ListDetails extends Component {
                 <p className="lead">{list.content} </p>
                 <br/>
                 <p>
-                    {list.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
+                    {list.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
                     <span className="mr-1 float-right d-flex text-muted">
                     {list.likesTotal+24} likes &nbsp;
                        {list.isLiked ? (<i onClick={this.likeList} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
@@ -294,7 +327,13 @@ class ListDetails extends Component {
         <div className="row justify-content-center">
           <div className="col-lg-8">
           { list && list.listItems.length > 0 ? 
-            (<ListItems objects={this.state.list.listItems} listType={this.state.list.type}/>)
+            (<ListItems 
+                objects={this.state.list.listItems}
+                removeFromList={this.removeFromList} 
+                listType={this.state.list.type}
+                currentUser={this.props.currentUser}
+                listUserId={this.state.list.user_id}
+              />)
              : "" }
           {
             list && list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)

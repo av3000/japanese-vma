@@ -11,31 +11,33 @@ class ListItems extends Component {
     }
 
     render() {
-        let { objects, listType } = this.props; 
+        let { objects, listType, removeFromList, currentUser, listUserId } = this.props; 
+        console.log("cyrrentUser");
+        console.log(currentUser);
         switch(listType) {
             case 1:
             case 5:
                 return (
-                    <ListRadicalList objects={objects} heading="Radicals" />
+                    <ListRadicalList listUserId={listUserId} currentUser={currentUser} objects={objects} removeFromList={removeFromList}  heading="Radicals" />
                 )
             case 2:
             case 6:
                 return (
-                    <ListKanjisList objects={objects} heading="Kanjis" />
+                    <ListKanjisList listUserId={listUserId} currentUser={currentUser} objects={objects} removeFromList={removeFromList} heading="Kanjis" />
                 )
             case 3:
             case 7:
                 return (
-                    <ListWordsList objects={objects} heading="Words" />
+                    <ListWordsList listUserId={listUserId} currentUser={currentUser} objects={objects} removeFromList={removeFromList} heading="Words" />
                 )
             case 4:
             case 8:
                 return (
-                    <ListSentencesList objects={objects} heading="Sentences" />
+                    <ListSentencesList listUserId={listUserId} currentUser={currentUser} objects={objects} removeFromList={removeFromList} heading="Sentences" />
                 )
             case 9:
                 return (
-                    <ListArticlesList objects={objects} heading="Articles" />
+                    <ListArticlesList listUserId={listUserId} currentUser={currentUser} objects={objects} removeFromList={removeFromList} heading="Articles" />
                 )
             default:
                 return "Emptyness inside of me"

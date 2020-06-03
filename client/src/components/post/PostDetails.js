@@ -1,5 +1,6 @@
-import React, { Component } from 'react'
-import axios from 'axios'
+import React, { Component } from 'react';
+import axios from 'axios';
+import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
@@ -179,11 +180,11 @@ class PostDetails extends Component {
                 <span className="row mt-4">
                   <Link to="/community" className="tag-link">Back</Link>
                 </span>
-                <h1 className="mt-4">{post.title_jp}</h1>
+                <h1 className="mt-4">{post.title}</h1>
                 <p className="text-muted"> 
-                    Posted on {post.jp_year} {post.jp_month} {post.jp_day} {post.jp_hour}
-                    <br/><span>{post.viewsTotal + 40} views</span>
-                    {currentUser.user.id === post.user_id ? (post.publicity === 1 ? " | public" : " | private" ) : ""}
+                    <Moment className="text-muted" format="Do MMM YYYY">
+                      {post.created_at}
+                    </Moment>
                     <span className="mr-1 float-right d-flex">
                         {currentUser.user.id === post.user_id ? (
                           <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
@@ -191,35 +192,32 @@ class PostDetails extends Component {
                         {currentUser.user.id === post.user_id ?
                           (<Link to={`/post/edit/${post.id}`}><i className="far fa-edit ml-3 fa-lg"></i></Link>) : ""
                         }
-                        <i onClick={this.addToList} className="far fa-bookmark ml-3 fa-lg"></i>
-                        {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
-                        <i onClick={this.downloadPdf} className="fas fa-file-download ml-3 fa-lg"></i>
                     </span>
                 </p>
-                <img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img"/>
-                <p className="lead">{post.content_jp} </p>
+                <p className="lead mt-5">{post.content} </p>
                 <br/>
-                <p>
-                    {post.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
-                    <span className="mr-1 float-right d-flex text-muted">
-                    {post.likesTotal+24} likes &nbsp;
-                       {post.isLiked ? (<i onClick={this.likePost} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       : (<i onClick={this.likePost} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       }
-                    </span>
-                </p>
                 <hr/>
                 <div className="text-muted">
+                   <div>
+                   {post.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
+                   </div>
                     <div className="mr-1 float-left d-flex">
                         <img src={AvatarImg} alt="book-japanese"/>
                         <p className="ml-3 mt-3">
                             uploaded by {post.userName}
                         </p>
                     </div>
-                    <div className="mr-1 mt-3 float-right d-flex">
-                        <Link to={post.source_link}> original source</Link>
-                    </div>
                 </div>
+                <p>
+                    <span className="mr-1 float-right d-flex text-muted">
+                    {post.viewsTotal + 40} views &nbsp;
+                    {post.likesTotal + 24} likes &nbsp;
+                       {post.isLiked ? (<i onClick={this.likePost} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       : (<i onClick={this.likePost} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
+                       }
+                    </span>
+                </p>
+               
               </div>
           </div>
       </div>
