@@ -17,10 +17,37 @@ use DB;
 
 class PostController extends Controller
 {
+
+    public function getPostTypes($typeName)
+    {
+
+        $postTypes = [
+            'Content-related' => 1,
+            'Off-topic' => 2,
+            'FAQ' => 3,
+            'Technical' => 4,
+            'Bug' => 5,
+            'Feedback' => 6,
+            'Announcement' => 7
+        ];
+
+        return $postTypes[$typeName];
+    }
+
     public function index()
     {
-        $posts = Post::all();
-
+        $posts = Post::paginate(5);
+        
+        $postsByTopics = [
+            "Content-related" => [],
+            "Off-topic" => [],
+            "FAQ" => [],
+            "Technical" => [],
+            "Bug" => [],
+            "Feedback" => [],
+            "Announcement" => [],
+        ];
+        
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
         foreach($posts as $singlePost)
         {
@@ -28,13 +55,40 @@ class PostController extends Controller
             $singlePost->viewsTotal    = $this->getImpression("view", $objectTemplateId, $singlePost, "total");
             $singlePost->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singlePost, 'total');
             $singlePost->hashtags      = $this->getUniquehashtags($singlePost->id, $objectTemplateId);
+            $singlePost->user = User::find($singlePost->user_id);
+
+            if($singlePost->type == 1) {
+                $postsByTopics["Content-related"][] = $singlePost;
+                $singlePost->postType = "Content-related";
+            }
+            else if ($singlePost->type == 2) {
+                $postsByTopics["Off-topic"][] = $singlePost;
+                $singlePost->postType = "Off-topic";
+            }
+            else if ($singlePost->type == 3) {
+                $postsByTopics["FAQ"][] = $singlePost;
+                $singlePost->postType = "FAQ";
+            }
+            else if ($singlePost->type == 4) {
+                $postsByTopics["Technical"][] = $singlePost;
+                $singlePost->postType = "Technical";
+            }
+            else if ($singlePost->type == 5) {
+                $postsByTopics["Bug"][] = $singlePost;
+                $singlePost->postType = "Bug";
+            }
+            else if ($singlePost->type == 6) {
+                $postsByTopics["Announcement"][] = $singlePost;
+                $singlePost->postType = "Announcement";
+            }
         }
 
         if(isset($posts))
         {
             return response()->json([
                 'success' => true,
-                'posts' => $posts
+                'posts' => $posts,
+                'postsByTopic' => $postsByTopics
             ]);
         }
         return response()->json([
@@ -175,22 +229,6 @@ class PostController extends Controller
         ]);
     }
 
-    public function getPostTypes($typeName)
-    {
-
-        $postTypes = [
-            'Content-related' => 1,
-            'Off-topic' => 2,
-            'FAQ' => 3,
-            'Technical' => 4,
-            'Bug' => 5,
-            'Feedback' => 6,
-            'Annoucement' => 7
-        ];
-
-        return $postTypes[$typeName];
-    }
-
     #=================================== Impressions
 
     public function getImpression($impressionType, $objectTemplateId, $object, $amount)
@@ -251,8 +289,7 @@ class PostController extends Controller
         $checkView = View::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $post->id,
-            'user_id' => auth()->user()->id,
-            'user_ip' => request()->ip()
+            'user_id' => auth()->user()->id
         ])->first();
 
         if($checkView)
@@ -507,6 +544,54 @@ class PostController extends Controller
         ]);
     }
 
+    public function checkIfLikedPost($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'userId' => auth()->user()->id,
+                'isLiked' => true,
+                'message' => 'you already liked this post'
+            ]);
+        }
+
+        return response()->json([
+            'userId' => auth()->user()->id,
+            'isLiked' => false,
+            'message' => 'you havent liked the post yet'
+        ]);
+    }
+
+    public function checkIfLikedComment($id) {
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'userId' => auth()->user()->id,
+                'isLiked' => true,
+                'message' => 'you already liked this comment'
+            ]);
+        }
+
+        return response()->json([
+            'userId' => auth()->user()->id,
+            'isLiked' => false,
+            'message' => 'you havent liked the comment yet'
+        ]);
+    }
+
     #======================== Hashtags
 
     public function getUniquehashtags($id, $objectTemplateId)
@@ -594,4 +679,6 @@ class PostController extends Controller
         }
         return $hashtags;
     }
+
+
 }

@@ -368,35 +368,52 @@ class CustomListController extends Controller
         ]);
     }
 
-    public function getUserLists($userid)
+    public function getUserLists()
     {
-        $userLists = CustomList::where("user_id", $userid)->get();
-        if( !isset($userLists) || count($userLists) == 0 )
+        $lists = CustomList::where("user_id", auth()->user()->id)->get();
+        if( !isset($lists) || count($lists) == 0 )
         {
             return response()->json([
-                'success' => false, 'message' => 'user has zero lists'
+                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists
              ]);
         }
 
-        foreach($userLists as $singleList)
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        foreach($lists as $singleList)
         {
-            // return $this->show($singleList->id);
-            $singleList = $this->getListItems($singleList);
-            $singleList->itemsTotal = count($singleList->listItems);
-        }
+            $singleList                 = $this->getListItems($singleList);
+            $singleList->itemsTotal     = count($singleList->listItems);
+            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
+            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
+            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
+            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
 
-        # Need to test LIKES
-        // $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        // $article->likes = Like::where([
-        //     'template_id' => $objectTemplateId,
-        //     'real_object_id' => $article->id
-        // ])->get();
-        // $article->likesTotal = count($article->likes);
+            if($singleList->type == 1) {
+                $singleList->typeTitle = "Known Radicals";
+            } else if($singleList->type == 2) {
+                $singleList->typeTitle = "Known Kanjis";
+            } else if($singleList->type == 3) {
+                $singleList->typeTitle = "Known Words";
+            } else if($singleList->type == 4) {
+                $singleList->typeTitle = "Known Sentences";
+            } else if($singleList->type == 5) {
+                $singleList->typeTitle = "Radicals";
+            } else if($singleList->type == 6) {
+                $singleList->typeTitle = "Kanjis";
+            } else if($singleList->type == 7) {
+                $singleList->typeTitle = "Words";
+            } else if($singleList->type == 8) {
+                $singleList->typeTitle = "Sentences";
+            } else if($singleList->type == 9) {
+                $singleList->typeTitle = "Articles";
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'returned: '.count($userLists).' results',
-            'userLists' => $userLists
+            'message' => 'returned: '.count($lists).' results',
+            'lists' => $lists
         ]);
     }
 
@@ -405,7 +422,7 @@ class CustomListController extends Controller
     // Well, some kind of bookmarking is definitely necessary.
     // You can save stuff into lists of other users
     // But how about lists of other users? Duplicate vs create references?
-    public function saveUserList(CustomList $list){
+    public function saveOtherUserList(CustomList $list){
        // 
     }
 

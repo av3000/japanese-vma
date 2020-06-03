@@ -67,14 +67,33 @@ class JapaneseDataController extends Controller
     }
 
     public function indexWords() {
-        return $words = Word::all()->skip(200)->take(10);
+        $words = $this->extractWordsListAttributes(Word::paginate(10));
+
+        return response()->json([
+            'success' => true,
+            'words' => $words
+        ]);
     }
 
     public function showWord($id) {
         $singleWord = Word::find($id);
-        $singleWord->articles = $singleWord->articles()->get();
-        $singleWord->kanjis = $singleWord->kanjis()->get();
+        $singleWord = $this->extractSingleWordAttributes($singleWord);
+        $singleWord->articles = $singleWord->articles()->paginate(5);
+        $singleWord->kanjis = $singleWord->kanjis()->paginate(5);
         // $singleWord->sentences = $singleWord->sentences()->get(); not yet
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        foreach($singleWord->articles as $article)
+        {
+            $article->likes = $this->getImpression("like", $objectTemplateId, $article, "all");
+            $article->likesTotal = count($article->likes);
+            $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
+            $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
+            $article->commentsTotal = count($article->comments);
+            $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
+            // $article->hashtags = array_slice($article->hashtags, 0, 3);
+        }
+
         return $singleWord;
     }
 
@@ -101,6 +120,50 @@ class JapaneseDataController extends Controller
         $singleSentence->kanjis = $singleSentence->kanjis()->get();
         $singleSentence->words = $singleSentence->words()->get();
         return $singleSentence;
+    }
+
+    public function generateWordsQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $query = explode(' ',trim($request->title))[0];
+
+            $words = Word::whereLike(['word', 'furigana'], $query);
+            
+            $q .= $query;
+        } 
+
+        //if search has search fields, return words of requested fields
+        if(isset( $words )) {
+            $words = $words->paginate(20);
+            $words = $this->extractWordsListAttributes($words);
+
+            return response()->json([
+                'success' => true,
+                'words' => $words,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default words
+        if( $q == "")
+        {
+            $words = Word::paginate(20);
+            $words = $this->extractWordsListAttributes($words);
+
+             return response()->json([
+                'success' => true,
+                'words' => $words,
+                'q' => $q
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero words',
+            'q' => $q
+        ]);
+    
     }
 
     public function generateKanjisQuery(Request $request) {
@@ -595,6 +658,87 @@ class JapaneseDataController extends Controller
         }
 
         return $wordList;
+    }
+
+    public function extractSingleWordAttributes($word)
+    {
+        $differentTags = [];
+        
+        $posArr=[];
+        $miscArr=[];
+        $glossArr=[];
+        $fieldArr=[];
+
+        foreach(json_decode($word->sense) as $singleSense)
+        {
+            // if(count($singleSense) > $maxCount) { $maxCount = count($singleSense); }
+            $pos="";
+            $misc="";
+            $gloss="";
+            $field="";
+            
+            // echo "<h2> singleSense </h2>";
+            // echo "<pre>";
+            // print_r($singleSense);
+            // echo "</pre>";
+            foreach($singleSense as $singleTag)
+            {
+                // echo "<h3> singleTag </h3>";
+                // echo "<pre>";
+                // print_r($singleTag);
+                // echo "</pre>";
+                if( !in_array($singleTag[0], $differentTags) ) { array_push($differentTags, $singleTag[0]); }
+                if( isset( $singleTag[0] ) )
+                {
+                    // echo "<p>TagType: " .$singleTag[0]. "</p>";
+                    # Exceptions for empty or wrong values
+                    if( strcmp( $singleTag[0], "lsource" ) == 0 ) { continue; }
+                    # stdClass conversion to get string
+                    if( isset($singleTag[1]) && !is_string($singleTag[1]) )
+                    {
+                        $itemAsArr = json_decode(json_encode($singleTag[1]), true);
+                        // echo "<p>STR TagValue: " .$itemAsArr[0]. "</p>";
+                        # TagType assigning
+                        if( strcmp( $singleTag[0], "gloss" ) == 0) 
+                        {
+                            $gloss .= $itemAsArr[0] . "|";
+                        }
+                        // else if( strcmp( $singleTag[0], "pos" ) == 0) 
+                        // {
+                        //     $pos .= $itemAsArr[0] . "|";
+                        // }
+                        // else if( strcmp( $singleTag[0], "misc" ) == 0) 
+                        // {
+                        //     $misc .= $itemAsArr[0] . "|";
+                        // }
+                        // else if( strcmp( $singleTag[0], "field" ) == 0) 
+                        // {
+                        //     $field .= $itemAsArr[0] . "|";
+                        // }
+                    }
+                }
+            }
+            // echo "<h4> Assigning values: </h4>";
+            // echo "<p>pos: " .$pos. "</p>";
+            // echo "<p>misc: " .$misc. "</p>";
+            // echo "<p>gloss: " .$gloss. "</p>";
+            // echo "<p>field: " .$field. "</p>";
+            
+            array_push($posArr, $pos);
+            array_push($miscArr, $misc);
+            array_push($glossArr, $gloss);
+            array_push($fieldArr, $field);
+            
+        }
+        $word->pos = $posArr;
+        $word->gloss = $glossArr;
+        $word->misc = $miscArr;
+        $word->field = $fieldArr;
+
+        // $word->meaning = "000";
+        $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+
+        return $word;
     }
 
     public function getImpression($impressionType, $objectTemplateId, $object, $amount)

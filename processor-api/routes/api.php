@@ -29,6 +29,7 @@ Route::group([
 		Route::post('article', 'ArticleController@store');
 		Route::put('article/{id}', 'ArticleController@update');
 		Route::delete('article/{id}', 'ArticleController@delete');
+		Route::get('user/articles', 'ArticleController@getUserArticles');
 		Route::post('article/{id}/like', 'ArticleController@likeArticle');
 		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
 		Route::post('article/{id}/checklike', 'ArticleController@checkIfLikedArticle');
@@ -47,6 +48,7 @@ Route::group([
 		Route::post('list', 'CustomListController@store');
 		Route::put('list/{id}', 'CustomListController@update');
 		Route::delete('list/{id}', 'CustomListController@delete');
+		Route::get('user/lists', 'CustomListController@getUserLists');
 		Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
 		Route::post('list/{id}/additem', 'CustomListController@addToList');
 		Route::post('list/{id}/like', 'CustomListController@likeList');
@@ -75,6 +77,7 @@ Route::group([
 		Route::delete('post/{id}', 'PostController@delete');
 		Route::post('post/{id}/like', 'PostController@likePost');
 		Route::post('post/{id}/unlike', 'PostController@unlikePost');
+		Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
 		
 		// Posts Comment
 		Route::post('post/{id}/comment', 'PostController@storeComment');
@@ -115,6 +118,7 @@ Route::post('radicals/search', 'JapaneseDataController@generateRadicalsQuery');
 Route::get('words', 'JapaneseDataController@indexWords');
 Route::get('word/{id}', 'JapaneseDataController@showWord');
 Route::get('word/{id}/kanjis', 'JapaneseDataController@wordKanjis');
+Route::post('words/search', 'JapaneseDataController@generateWordsQuery');
 Route::get('sentences', 'JapaneseDataController@indexSentences');
 Route::get('sentences/{id}', 'JapaneseDataController@showSentence');
 Route::get('sentences/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');

@@ -23,6 +23,14 @@ import RadicalTimeline from '../components/radical/RadicalTimeline';
 // Kanjis
 import KanjiDetails from '../components/kanji/KanjiDetails';
 import KanjiTimeline from '../components/kanji/KanjiTimeline';
+// Words
+import WordDetails from '../components/word/WordDetails';
+import WordTimeline from '../components/word/WordTimeline';
+// Community
+import PostDetails from '../components/post/PostDetails';
+import PostTimeline from '../components/post/PostTimeline';
+// Dashboard
+import DashboardTimeline from '../components/dashboard/DashboardTimeline';
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -146,6 +154,51 @@ const Main = props => {
                         />
                     )
                 }} />
+                {/* Words */}
+                <Route exact path="/words" render={props =>{
+                    return (
+                        <WordTimeline
+
+                        />
+                    )
+                }}/>
+                <Route exact path="/word/:word_id" render={props => {
+                    return (
+                        <WordDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
+                {/* Sentences */}
+
+                {/* Posts Community */}
+                <Route exact path="/community" render={props =>{
+                    return (
+                        <PostTimeline
+
+                        />
+                    )
+                }}/>
+                <Route exact path="/community/:post_id" render={props => {
+                    return (
+                        <PostDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
+
+                {/* Dashboard */}
+                <Route exact path="/dashboard" render={props =>{
+                    return (
+                        <DashboardTimeline
+
+                        />
+                    )
+                }}/>
+
+                {/* Not found component */}
                 <Route component={PageNotFound} />
             </Switch>
         </div>

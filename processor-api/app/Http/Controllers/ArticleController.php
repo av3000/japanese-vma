@@ -339,18 +339,30 @@ class ArticleController extends Controller
             ->delete();
     }
 
-    public function getUserArticles($id) {
-        $articles = Article::where("user_id", $id)->get();
+    public function getUserArticles() {
+        $articles = Article::where("user_id", auth()->user()->id)->get();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $jp_month = "月";
+        $jp_day = "日";
+        $jp_hour = "時";
+        $jp_minute = "分";
+        $jp_year = "年";
         foreach($articles as $singleArticle)
         {
+            $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
+            $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
+            $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;
+            $singleArticle->jp_hour   = $singleArticle->created_at->hour   . $jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
+
             $singleArticle->likesTotal = $this->getImpression("like", $objectTemplateId, $singleArticle, "total");
             $singleArticle->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleArticle, "total");
             $singleArticle->viewsTotal = $this->getImpression("view", $objectTemplateId, $singleArticle, "total");
             $singleArticle->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            // hashtags
+            $singleArticle->hashtags      = array_slice($this->getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
 
          if(isset($articles))
