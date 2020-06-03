@@ -20,6 +20,9 @@ import ListEdit from '../components/list/ListEdit';
 // Radicals
 import RadicalDetails from '../components/radical/RadicalDetails';
 import RadicalTimeline from '../components/radical/RadicalTimeline';
+// Kanjis
+import KanjiDetails from '../components/kanji/KanjiDetails';
+import KanjiTimeline from '../components/kanji/KanjiTimeline';
 
 const Main = props => {
     const { authUser, errors, removeError, currentUser } = props;
@@ -122,6 +125,22 @@ const Main = props => {
                 <Route exact path="/radical/:radical_id" render={props => {
                     return (
                         <RadicalDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
+                {/* Kanjis */}
+                <Route exact path="/kanjis" render={props =>{
+                    return (
+                        <KanjiTimeline
+
+                        />
+                    )
+                }}/>
+                <Route exact path="/kanji/:kanji_id" render={props => {
+                    return (
+                        <KanjiDetails 
                             currentUser={currentUser}
                             {...props}
                         />

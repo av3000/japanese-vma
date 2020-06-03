@@ -749,8 +749,8 @@ class ArticleController extends Controller
         }
 
         foreach($wordList as $word) {
-            $word->meaning = "000";
-            // implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+            // $word->meaning = "000";
+            $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
         }
 
         return $wordList;
@@ -951,10 +951,9 @@ class ArticleController extends Controller
         $checkView = View::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $article->id,
-            'user_id' => auth()->user()->id,
-            'user_ip' => request()->ip()
+            'user_id' => auth()->user()->id
         ])->first();
-
+  
         if($checkView)
         {
             $checkView->updated_at = date('Y-m-d H:i:s');

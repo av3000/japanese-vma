@@ -8,6 +8,15 @@ use App\Kanji;
 use App\Word;
 use App\Sentence;
 use App\Radical;
+use App\Like;
+use App\Download;
+use App\View;
+use App\Comment;
+use App\ObjectTemplate;
+use App\Uniquehashtag;
+use App\Article;
+use DB;
+
 
 class JapaneseDataController extends Controller
 {
@@ -27,14 +36,33 @@ class JapaneseDataController extends Controller
     }
 
     public function indexKanjis() {
-        return $kanjis = Kanji::all()->skip(0)->take(10);
+        $kanjis = Kanji::paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'kanjis' => $kanjis
+        ]);
     }
 
     public function showKanji($id) {
         $singleKanji = Kanji::find($id);
-        $singleKanji->words = $singleKanji->words()->get();
-        $singleKanji->sentences = $singleKanji->sentences()->get();
-        $singleKanji->articles = $singleKanji->articles()->get();
+        $singleKanji->words = $this->extractWordsListAttributes($singleKanji->words()->paginate(5));
+        $singleKanji->sentences = $singleKanji->sentences()->paginate(5);
+
+        $singleKanji->articles = $singleKanji->articles()->paginate(5);
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        foreach($singleKanji->articles as $article)
+        {
+            $article->likes = $this->getImpression("like", $objectTemplateId, $article, "all");
+            $article->likesTotal = count($article->likes);
+            $article->viewsTotal = $this->getImpression("view", $objectTemplateId, $article, "total");
+            $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
+            $article->commentsTotal = count($article->comments);
+            $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
+            // $article->hashtags = array_slice($article->hashtags, 0, 3);
+        }
+        
         return $singleKanji;
     }
 
@@ -73,6 +101,47 @@ class JapaneseDataController extends Controller
         $singleSentence->kanjis = $singleSentence->kanjis()->get();
         $singleSentence->words = $singleSentence->words()->get();
         return $singleSentence;
+    }
+
+    public function generateKanjisQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $query = explode(' ',trim($request->title))[0];
+
+            $kanjis = Kanji::whereLike(['kanji', 'meaning'], $query);
+            $q .= $query;
+        } 
+
+        //if search has search fields, return kanjis of requested fields
+        if(isset( $kanjis )) {
+            $kanjis = $kanjis->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'kanjis' => $kanjis,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default kanjis
+        if( $q == "")
+        {
+            $kanjis = Kanji::paginate(20);
+
+             return response()->json([
+                'success' => true,
+                'kanjis' => $kanjis,
+                'q' => $q
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero kanjis',
+            'q' => $q
+        ]);
+    
     }
 
     public function generateRadicalsQuery(Request $request) {
@@ -442,5 +511,144 @@ class JapaneseDataController extends Controller
      */
     public function getWordsFuriganaFromText(Sentence $sentence){
 
+    }
+
+    public function extractWordsListAttributes($wordList)
+    {
+        $differentTags = [];
+        foreach($wordList as $word){
+            $posArr=[];
+            $miscArr=[];
+            $glossArr=[];
+            $fieldArr=[];
+
+            foreach(json_decode($word->sense) as $singleSense)
+            {
+                // if(count($singleSense) > $maxCount) { $maxCount = count($singleSense); }
+                $pos="";
+                $misc="";
+                $gloss="";
+                $field="";
+                
+                // echo "<h2> singleSense </h2>";
+                // echo "<pre>";
+                // print_r($singleSense);
+                // echo "</pre>";
+                foreach($singleSense as $singleTag)
+                {
+                    // echo "<h3> singleTag </h3>";
+                    // echo "<pre>";
+                    // print_r($singleTag);
+                    // echo "</pre>";
+                    if( !in_array($singleTag[0], $differentTags) ) { array_push($differentTags, $singleTag[0]); }
+                    if( isset( $singleTag[0] ) )
+                    {
+                        // echo "<p>TagType: " .$singleTag[0]. "</p>";
+                        # Exceptions for empty or wrong values
+                        if( strcmp( $singleTag[0], "lsource" ) == 0 ) { continue; }
+                        # stdClass conversion to get string
+                        if( isset($singleTag[1]) && !is_string($singleTag[1]) )
+                        {
+                            $itemAsArr = json_decode(json_encode($singleTag[1]), true);
+                            // echo "<p>STR TagValue: " .$itemAsArr[0]. "</p>";
+                            # TagType assigning
+                            if( strcmp( $singleTag[0], "gloss" ) == 0) 
+                            {
+                                $gloss .= $itemAsArr[0] . "|";
+                            }
+                            // else if( strcmp( $singleTag[0], "pos" ) == 0) 
+                            // {
+                            //     $pos .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "misc" ) == 0) 
+                            // {
+                            //     $misc .= $itemAsArr[0] . "|";
+                            // }
+                            // else if( strcmp( $singleTag[0], "field" ) == 0) 
+                            // {
+                            //     $field .= $itemAsArr[0] . "|";
+                            // }
+                        }
+                    }
+                }
+                // echo "<h4> Assigning values: </h4>";
+                // echo "<p>pos: " .$pos. "</p>";
+                // echo "<p>misc: " .$misc. "</p>";
+                // echo "<p>gloss: " .$gloss. "</p>";
+                // echo "<p>field: " .$field. "</p>";
+                
+                array_push($posArr, $pos);
+                array_push($miscArr, $misc);
+                array_push($glossArr, $gloss);
+                array_push($fieldArr, $field);
+                
+            }
+            $word->pos = $posArr;
+            $word->gloss = $glossArr;
+            $word->misc = $miscArr;
+            $word->field = $fieldArr;
+        }
+
+        foreach($wordList as $word) {
+            // $word->meaning = "000";
+            $word->meaning = implode(", ", array_slice(explode("|", $word->gloss[0]), 0, 3));
+        }
+
+        return $wordList;
+    }
+
+    public function getImpression($impressionType, $objectTemplateId, $object, $amount)
+    {
+        if($impressionType == 'like') 
+        {
+            $likes = Like::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);
+            if($amount == "total") { return $likes->count(); }        
+            else if($amount == "all") { return $likes->get(); }        
+        }
+        else if($impressionType == 'download') 
+        {
+            $downloads = Download::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);   
+            if($amount == "total") { return $downloads->count(); }        
+            else if($amount == "all") { return $downloads->get(); }        
+        }
+        else if($impressionType == 'view') 
+        {
+            $views = View::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);   
+            if($amount == "total") { return $views->count(); }        
+            else if($amount == "all") { return $views->get(); }        
+        }
+        else if($impressionType == 'comment') 
+        {
+            $comments = Comment::where([
+                'template_id' => $objectTemplateId,
+                'real_object_id' => $object->id
+                ]);   
+            if($amount == "total") { return $comments->count(); }        
+            else if($amount == "all") { return $comments->orderBy('created_at', "DESC")->get(); }        
+        }
+    }
+
+    public function getUniquehashtags($id, $objectTemplateId)
+    {  
+        $foundRows = DB::table('hashtags')->where('real_object_id', $id)
+        ->where('template_id', $objectTemplateId)->get();
+        $finalTags = [];
+
+        foreach($foundRows as $taglink)
+        {
+            $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+            $finalTags[] = $uniqueTag;
+        }
+
+        return $finalTags;
     }
 }

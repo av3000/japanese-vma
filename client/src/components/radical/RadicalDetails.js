@@ -71,7 +71,7 @@ class RadicalDetails extends Component {
 
             return (
                 <div className="row justify-content-center mt-5" key={kanji.id}>
-                    <div className="col-md-6">
+                    <div className="col-md-8">
                         <div className="container">
                         <div className="row justify-content-center">
                             <div className="col-md-6">

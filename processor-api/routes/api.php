@@ -108,6 +108,7 @@ Route::post('articles/search', 'ArticleController@generateQuery');
 // Japanese Resources
 Route::get('kanjis', 'JapaneseDataController@indexKanjis');
 Route::get('kanji/{kanji}', 'JapaneseDataController@showKanji');
+Route::post('kanjis/search', 'JapaneseDataController@generateKanjisQuery');
 Route::get('radicals', 'JapaneseDataController@indexRadicals');
 Route::get('radical/{radical}', 'JapaneseDataController@showRadical');
 Route::post('radicals/search', 'JapaneseDataController@generateRadicalsQuery');

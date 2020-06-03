@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 import { apiCall } from '../services/api';
-import RadicalItem from '../components/radical/RadicalItem';
+import KanjiItem from '../components/kanji/KanjiItem';
 import Spinner from '../assets/images/spinner.gif';
 import SearchBar from '../components/search/Searchbar';
 
 
-export class RadicalList extends Component {
+export class KanjiList extends Component {
     constructor(){
         super();
         this.state = {
-            url: '/api/radicals',
+            url: '/api/kanjis',
             pagination: [],
-            radicals: [],
+            kanjis: [],
             paginateObject: {},
             searchHeading: "",
             searchTotal: "",
@@ -25,18 +25,18 @@ export class RadicalList extends Component {
     };
 
     componentDidMount() {
-        this.fetchRadicals(this.state.url);
+        this.fetchKanjis(this.state.url);
     };
 
-    fetchRadicals(givenUrl){
+    fetchKanjis(givenUrl){
         return apiCall("get", givenUrl)
             .then(res => {
                 let newState = Object.assign({}, this.state);
-                newState.paginateObject = res.radicals;
-                newState.radicals = [...newState.radicals, ...res.radicals.data];
-                newState.url = res.radicals.next_page_url;
+                newState.paginateObject = res.kanjis;
+                newState.kanjis = [...newState.kanjis, ...res.kanjis.data];
+                newState.url = res.kanjis.next_page_url;
 
-                newState.searchTotal = "results total: '" + res.radicals.total + "'";
+                newState.searchTotal = "results total: '" + res.kanjis.total + "'";
 
                 return newState;
             })
@@ -52,16 +52,16 @@ export class RadicalList extends Component {
     fetchQuery(queryParams) {
         let newState = Object.assign({}, this.state);
         newState.filters = queryParams;
-        apiCall("post", "/api/radicals/search", newState.filters)
+        apiCall("post", "/api/kanjis/search", newState.filters)
         .then(res => {
             if(res.success === true)
             {
-                newState.paginateObject = res.radicals;
-                newState.radicals       = res.radicals.data ? res.radicals.data : newState.radicals;
-                newState.url            = res.radicals.next_page_url;
+                newState.paginateObject = res.kanjis;
+                newState.kanjis       = res.kanjis.data ? res.kanjis.data : newState.kanjis;
+                newState.url            = res.kanjis.next_page_url;
 
                 newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
-                newState.searchTotal = "Results total: '" + res.radicals.total +"'";
+                newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
                 return newState;
             }
 
@@ -84,12 +84,12 @@ export class RadicalList extends Component {
         .then(res => {
             console.log(res);
 
-            newState.paginateObject = res.radicals;
-            newState.radicals       = [...newState.radicals, ...res.radicals.data];
-            newState.url            = res.radicals.next_page_url;
+            newState.paginateObject = res.kanjis;
+            newState.kanjis         = [...newState.kanjis, ...res.kanjis.data];
+            newState.url            = res.kanjis.next_page_url;
 
             newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
-            newState.searchTotal = "Results total: '" + res.radicals.total +"'";
+            newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
 
             return newState;
         })
@@ -98,7 +98,7 @@ export class RadicalList extends Component {
 
             this.setState( newState );
 
-            console.log(this.state.radicals);
+            console.log(this.state.kanjis);
         })
         .catch(err => {
             console.log(err);
@@ -106,7 +106,7 @@ export class RadicalList extends Component {
     }
 
     loadMore() {
-        this.fetchRadicals(this.state.pagination.next_page_url);
+        this.fetchKanjis(this.state.pagination.next_page_url);
     }
 
     loadSearchMore(){
@@ -130,18 +130,38 @@ export class RadicalList extends Component {
 
 
     render() {
-        let { radicals } = this.state;
-        let radicalList = radicals ? ( radicals.map(r => (
-                <RadicalItem 
-                    key={r.id}
-                    id={r.id}
-                    radical={r.radical}
-                    strokes={r.strokes}
-                    meaning={r.meaning}
-                    hiragana={r.hiragana}
-                    addToList={this.addToList.bind(this, r.id)}
+        let { kanjis } = this.state;
+        let kanjiList = kanjis ? ( kanjis.map(k => {
+
+            k.meaning = k.meaning.split("|")
+            k.meaning = k.meaning.slice(0, 3)
+            k.meaning = k.meaning.join(", ")
+
+            k.onyomi = k.onyomi.split("|")
+            k.onyomi = k.onyomi.slice(0, 3)
+            k.onyomi = k.onyomi.join(", ")
+
+            k.kunyomi = k.kunyomi.split("|")
+            k.kunyomi = k.kunyomi.slice(0, 3)
+            k.kunyomi = k.kunyomi.join(", ")
+
+            return (
+                <KanjiItem 
+                    key={k.id}
+                    id={k.id}
+                    kanji={k.kanji}
+                    stroke_count={k.stroke_count}
+                    onyomi={k.onyomi}
+                    kunyomi={k.kunyomi}
+                    meaning={k.meaning}
+                    jlpt={k.jlpt}
+                    frequency={k.frequency}
+                    parts={k.radical_parts}
+                    addToList={this.addToList.bind(this, k.id)}
                 />
-        )) ): (
+            );
+                
+        }) ): (
         <div className="container mt-5">
             <div className="row justify-content-center">
                 <img src={Spinner}/>
@@ -177,7 +197,7 @@ export class RadicalList extends Component {
                     </div>
                     <div className="row">
                         <div className="col-lg-8 col-md-10 mx-auto">
-                            {radicalList}
+                            {kanjiList}
                         </div>
                     </div>
                 </div>
@@ -197,4 +217,4 @@ export class RadicalList extends Component {
     }
 }
 
-export default RadicalList;
+export default KanjiList;
