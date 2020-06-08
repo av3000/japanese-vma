@@ -1,30 +1,26 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
-import './ArticleForm.css';
 import { hideLoader, showLoader } from "../../store/actions/application";
 
-class ArticleForm extends Component {
+class PostForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-        title_jp: "",
-        title_en: "",
-        content_en: "",
-        content_jp: "",
-        source_link: "",
+        title: "",
+        content: "",
         tags: "",
-        publicity: false
+        type: 1
     };
 
     this.handleChange = this.handleChange.bind(this);
   }
 
 
-  handleNewArticle = e => {
+  handleNewPost = e => {
     e.preventDefault();
 
-    let body = this.state.content_jp + this.state.title_jp;
+    let body = this.state.content + this.state.title;
     if(body.length < 4) {
         this.props.dispatch( showLoader("Fields are not filled properly!") );
         setTimeout(() => {
@@ -34,50 +30,39 @@ class ArticleForm extends Component {
         return;
     }
 
-    let digit = Math.ceil(body.length / 100) // 100chars = 1min
-    let approxText = "It should take up to " + digit + " minutes."; 
-    this.props.dispatch( showLoader("Creating Article, please wait.", approxText) );
+    this.props.dispatch( showLoader("Creating Post, please wait.", " It may take a few seconds.") );
 
     let payload = {
-        title_jp: this.state.title_jp,
-        content_jp: this.state.content_jp,
-        source_link: this.state.source_link,
+        title: this.state.title,
+        content: this.state.content,
         tags: this.state.tags,
-        publicity: this.state.publicity,
-        attach: 1
+        type: this.state.type
     };
 
-    this.postNewArticle(payload);
+    this.postNewPost(payload);
   }
 
-  postNewArticle(payload) {
-    return apiCall('post', `/api/article`, payload)
+  postNewPost(payload) {
+    return apiCall('post', `/api/post`, payload)
     .then(res => {
-        console.log(res);
-        console.log( {success: true, article: res.article});
+        // console.log(res);
         this.props.dispatch( hideLoader() );
-        this.props.history.push("/article/"+res.article.id);
+        this.props.history.push("/community/"+res.post.id);
     })
     .catch(err => {
         // let err = error.response.data.error;
         this.props.dispatch( hideLoader() );
-        if(err.title_jp)
+        if(err.title)
         {
-            console.log(err.title_jp);
+            console.log(err);
             // return err.title_jp[0];
-            return {success: false, err: err.title_jp[0]};
+            return {success: false, err: err.title};
         }
-        else if(err.content_jp)
+        else if(err.content)
         {
-            console.log(err.content_jp);
+            console.log(err.content);
             // return err.content_jp[0];
-            return {success: false, err: err.content_jp[0]};
-        }
-        else if(err.source_link)
-        {
-            console.log(err.source_link);
-            // return err.source_link[0];
-            return {success: false, err: err.source_link[0]};
+            return {success: false, err: err.content[0]};
         }
         else {
             console.log(err);
@@ -94,54 +79,50 @@ class ArticleForm extends Component {
     return (
         <div className="container">
             <div className="row justify-content-lg-center text-center">
-                <form onSubmit={this.handleNewArticle} className="article-new-form">
+                <form onSubmit={this.handleNewPost} className="article-new-form">
                 {this.props.errors.message && (
                     <div className="alert alert-danger">{this.props.errors.message}</div>
                 )}
-                <label htmlFor="content_jp" className="mt-3"> <h4>Title</h4> </label>
+                <label htmlFor="title" className="mt-3"> <h4>Title</h4> </label>
                 <input
-                    placeholder="Article title text"
+                    placeholder="Post title text"
                     type="text"
                     className="form-control"
-                    value={this.state.title_jp}
-                    name="title_jp"
+                    value={this.state.title}
+                    name="title"
                     onChange={this.handleChange}
                 />
-                <label htmlFor="content_jp" className="mt-3"> <h4>Content</h4> </label>
+                <label htmlFor="content" className="mt-3"> <h4>Content</h4> </label>
                 <textarea 
-                    placeholder="Article body text"
+                    placeholder="Post body text"
                     type="text"
                     className="form-control resize-none"
-                    value={this.state.content_jp}
-                    name="content_jp"
+                    value={this.state.content}
+                    name="content"
                     onChange={this.handleChange}
                     rows="7"
                 ></textarea>
-                <label htmlFor="content_jp" className="mt-3"> <h4>Source Link</h4> </label>
-                <input
-                    placeholder="https://jplearning.online/article/title..."
-                    type="text"
-                    className="form-control"
-                    value={this.state.source_link}
-                    name="source_link"
-                    onChange={this.handleChange}
-                />
                 <label htmlFor="tags" className="mt-3"> <h4>Add Tags</h4> </label>
                 <input
-                    placeholder="#movie #booktitle #office"
+                    placeholder="#uimistake #suggestion #howto"
                     type="text"
                     className="form-control"
                     value={this.state.tags}
                     name="tags"
                     onChange={this.handleChange}
                 />
-                <label htmlFor="publicity" className="mt-3">Publicity</label>
-                <select name="publicity" value={this.state.publicity} className="form-control" onChange={this.handleChange}>
-                    <option value="1">Public</option>
-                    <option value="0">Private</option>
+                <label htmlFor="type" className="mt-3">Topic</label>
+                <select name="type" value={this.state.type} className="form-control" onChange={this.handleChange}>
+                    <option value="1">Content-related</option>
+                    <option value="2">Off-topic</option>
+                    <option value="3">FAQ</option>
+                    <option value="4">Technical</option>
+                    <option value="5">Bug</option>
+                    <option value="6">Feedback</option>
+                    <option value="7">Announcement</option>
                 </select>
                 <button type="submit" className="btn btn-outline-primary col-md-3 brand-button mt-5">
-                    Post the Article
+                    Create Post
                 </button>
                 </form>
             </div>
@@ -150,15 +131,6 @@ class ArticleForm extends Component {
   }
 }
 
-// function mapStateToProps(state) {
-//   return {
-//     errors: state.errors
-//   };
-// }
-
-// export default ArticleForm;
-
 const mapStateToProps = state => ({})
 
-export default connect(mapStateToProps)(ArticleForm);
-// export default connect(mapStateToProps, { postNewArticle })(ArticleForm);
+export default connect(mapStateToProps)(PostForm);

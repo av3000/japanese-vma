@@ -1,24 +1,27 @@
 :root {
     --main-text-color: #303030;
+    --main-background-color: #191e27;
     --alternative-text-color: #f9f9f9;
     --link-hover-color: #9099a7;
     --main-brand-color: #f79862;
     --secondary-brand-color: #3058A4;
 }
 
-i {
-    opacity: .7;
-    cursor: pointer;
-}
-i:hover {
-    opacity: .5;
-}
+/* Impressions action icons */
 
-.comment-like i {
+/* .comment-like i {
     opacity: .7;
 }
 
 .comment-like i:hover {
+    opacity: .5;
+} */
+
+/* i {
+    opacity: .7;
+    cursor: pointer;
+}
+i:hover {
     opacity: .5;
 }
 
@@ -29,4 +32,56 @@ a i {
 
 a i:hover {
     opacity: .5;
+} */
+
+.brand-icons {
+  list-style: none; 
+  padding-left: 0px;
 }
+
+.brand-icons li {
+    margin: 5px 5px;
+    padding: 5px 5px;
+    border: 1px solid var(--main-text-color);
+    border-radius: 50%;
+    transition: .2s;
+}
+
+.brand-icons li:hover {
+    /* color: var(--main-brand-color); */
+    border: 1px solid var(--main-brand-color);
+    background-color: var(--main-brand-color);
+    transition: .2s;
+    cursor: pointer;
+}
+
+.brand-icons li:hover i {
+    /* opacity: .9;
+    transition: .2s; */
+}
+
+
+.brand-icons li:hover button {
+    background-color: var(--main-brand-color);
+    transition: .2s;
+    margin: 3px;
+    cursor: pointer;
+}
+
+.brand-icons li button {
+    background-color: #fff;
+    border: none;
+    margin: 3px;
+    transition: .2s;
+}
+
+.brand-icons li button:focus {
+    transition: .2s;
+    margin: 3px;
+    background-color: #fff;
+}
+
+
+/* .brand-icons {
+
+} */

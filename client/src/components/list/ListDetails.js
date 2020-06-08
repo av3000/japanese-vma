@@ -18,48 +18,24 @@ class ListDetails extends Component {
         super(props);
         this.state = {
             list: null,
-            show: false
+            showDeleteModal: false,
+            editToggle: false,
+            editToggleHeading: "Edit"
         };
 
+        this.deleteList = this.deleteList.bind(this);
         this.likeList = this.likeList.bind(this);
         this.addComment = this.addComment.bind(this);
         this.deleteComment = this.deleteComment.bind(this);
         this.likeComment = this.likeComment.bind(this);
         this.editComment = this.editComment.bind(this);
-        this.handleDelete = this.handleDelete.bind(this);
         this.downloadPdf = this.downloadPdf.bind(this);
 
-        this.openModal = this.openModal.bind(this);
-        this.handleClose = this.handleClose.bind(this);
+        this.openDeleteModal = this.openDeleteModal.bind(this);
+        this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
         this.removeFromList = this.removeFromList.bind(this);
+        this.toggleListEdit = this.toggleListEdit.bind(this);
     };
-
-    removeFromList(id){
-      console.log("removefrom")
-      console.log(id);
-      this.setState({show: !this.state.show})
-      axios.post("/api/user/list/removeitemwhileaway", {
-        listId: this.props.match.params.list,
-        elementId: id
-      })
-      .then(res => console.log(res))
-      .catch(err => console.log(err))
-      window.location.reload(false);
-  }
-
-  handleClose(){
-    this.setState({showPdf: !this.state.showPdf})
-  }
-
-  openModal() {
-    if(this.props.currentUser.isAuthenticated === false){
-      this.props.history.push('/login');
-    }
-    else {
-        this.setState({show: !this.state.show})
-        //   next decision to pick which pdf to download.
-    }
-  }
   
   componentDidMount(){
     let id = this.props.match.params.list_id;
@@ -104,15 +80,33 @@ class ListDetails extends Component {
       });
   };
 
-  handleDelete(){
+  // List events
+  removeFromList(id){
+    console.log("removefrom")
+    console.log(id);
+    axios.post("/api/user/list/removeitemwhileaway", {
+      listId: this.state.list.id,
+      elementId: id
+    })
+    .then(res => {
+      console.log("remove res: ")
+      console.log(res)
+      // try to filter out deleted item "id" rather than refreshing whole page
+      let newState = Object.assign({}, this.state);
+      newState.list.listItems = newState.list.listItems.filter(item => item.id !== id);
+      this.setState( newState );
+    })
+    .catch(err => console.log(err))
+  }
+
+  deleteList(){
     return apiCall("delete", `/api/list/${this.state.list.id}`)
       .then(res => { 
         this.props.history.push('/lists');
       })
       .catch(err => {
         console.log(err);
-      });
-      
+      });   
   }
 
   downloadPdf() {
@@ -192,6 +186,40 @@ class ListDetails extends Component {
       })
   };
 
+  toggleListEdit() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+      console.log("toggleListEdit");
+      console.log(this.state.editToggle);
+        let heading = this.state.editToggle ? "Edit" : "End"        
+        this.setState({
+          editToggle: !this.state.editToggle,
+          editToggleHeading: heading
+        });
+    }
+  }
+
+  // Modals
+  handleDeleteModalClose(){
+    console.log("handleDeleteModalClose");
+      console.log(this.state.showDeleteModal);
+    this.setState({showDeleteModal: !this.state.showDeleteModal})
+  }
+
+  openDeleteModal() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+      console.log("openDeleteModal");
+      console.log(this.state.showDeleteModal);
+        this.setState({showDeleteModal: !this.state.showDeleteModal})
+    }
+  }
+
+  // Comments
   likeComment(commentId) {
 
     if(!this.props.currentUser.isAuthenticated)
@@ -232,11 +260,9 @@ class ListDetails extends Component {
   deleteComment(commentId) {
     return apiCall("delete", `/api/list/${this.state.list.id}/comment/${commentId}`)
       .then(res => { 
-        // console.log(res);
-        // let newState = Object.assign({}, this.state);
-        // newState.article.comments.filter(comment => comment.id !== commentId);
-        // this.setState( newState );
-        window.location.reload(false);
+        let newState = Object.assign({}, this.state);
+        newState.list.comments = newState.list.comments.filter(comment => comment.id !== commentId);
+        this.setState( newState );
       })
       .catch(err => {
         console.log(err);
@@ -260,49 +286,81 @@ class ListDetails extends Component {
           <div className="row justify-content-center">
               <div className="col-lg-8 col-md-12 col-sm-12">
                 <span className="row mt-4">
-                  <Link to="/articles" className="tag-link">Back</Link>
+                  <Link to="/lists" className="tag-link"> <i className="fas fa-arrow-left"></i> Back</Link>
                 </span>
                 <h1 className="mt-4">{list.title}</h1>
                 <p className="text-muted"> 
-                  
-                  Posted on {" "}
+                  {" "}
                   <Moment className="text-muted" format="Do MMM YYYY">
                    {list.created_at}
                     </Moment>
                     <br/><span>{list.viewsTotal + 40} views</span>
                     {currentUser.user.id === list.user_id ? (list.publicity === 1 ? " | public" : " | private" ) : ""}
-                    <span className="mr-1 float-right d-flex">
-                        {currentUser.user.id === list.user_id ? (
-                          <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
-                        ) : ""}
-                        {currentUser.user.id === list.user_id ?
-                          (<Link to={`/list/edit/${list.id}`}><i className="fas fa-pen-alt ml-3 fa-lg"></i></Link>) : ""
-                        }
-                        {
-                         list.type !== 9 ? (<i onClick={this.openPdfModal} className="fas fa-print ml-3 fa-lg"></i>)
-                        : ("")
-                        }
-                    </span>
                 </p>
+                {/* BEGIN Action icons */}
+                <ul className="brand-icons mr-1 float-right d-flex">
+                    {currentUser.user.id === list.user_id ?
+                      (
+                      <li onClick={this.openDeleteModal}>
+                        <button> 
+                          <i className="far fa-trash-alt fa-lg"></i>
+                        </button>
+                      </li>) : ""
+                    }
+                    {currentUser.user.id === list.user_id ?
+                      (<Link to={`/list/edit/${list.id}`}> 
+                      <li>
+                        <button> 
+                          <i className="fas fa-pen-alt fa-lg"></i>
+                        </button>
+                      </li>
+                      </Link>) : ("")
+                    }
+                </ul>
+                {/* END Action icons */}
                 <img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img"/>
-                <p className="lead">{list.content} </p>
+                <p className="lead">{list.content}Description </p>
                 <br/>
                 <p>
                     {list.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
-                    <span className="mr-1 float-right d-flex text-muted">
-                    {list.likesTotal+24} likes &nbsp;
-                       {list.isLiked ? (<i onClick={this.likeList} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       : (<i onClick={this.likeList} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       }
-                    </span>
                 </p>
                 <hr/>
-                <div className="text-muted">
+                <div className="">
                     <div className="mr-1 float-left d-flex">
                         <img src={AvatarImg} alt="book-japanese"/>
                         <p className="ml-3 mt-3">
                             created by {list.userName}
                         </p>
+                    </div>
+                    <div className="float-right d-flex">
+                        <p className="ml-3 mt-3">
+                            {list.likesTotal+24} likes &nbsp;
+                        </p>
+                        <ul className="brand-icons float-right d-flex">
+                      {list.isLiked ? (
+                          <li onClick={this.likeList}>
+                            <button> 
+                              <i className="fas fa-thumbs-up fa-lg"></i>
+                            </button>
+                          </li>
+                          )
+                          : (
+                          <li onClick={this.likeList}>
+                            <button> 
+                             <i className="far fa-thumbs-up fa-lg"></i>
+                            </button>
+                          </li>
+                          )
+                      }
+                      {
+                          list.type !== 9 ? (
+                          <li  onClick={this.downloadPdf}>
+                            <button> 
+                              <i className="fas fa-print fa-lg"></i>
+                            </button>
+                          </li>) : ("")
+                      }
+                    </ul>
                     </div>
                 </div>
               </div>
@@ -311,6 +369,7 @@ class ListDetails extends Component {
       </div>
     ) : "";
 
+    // Return to Document
     return (
       <div className="container">
         {singleList ? (singleList)
@@ -323,24 +382,42 @@ class ListDetails extends Component {
           </div>
         )
         }
-        <br/>
         <div className="row justify-content-center">
           <div className="col-lg-8">
           { list && list.listItems.length > 0 ? 
-            (<ListItems 
-                objects={this.state.list.listItems}
-                removeFromList={this.removeFromList} 
-                listType={this.state.list.type}
-                currentUser={this.props.currentUser}
-                listUserId={this.state.list.user_id}
-              />)
+            (
+              <React.Fragment>
+              <div className="mt-3 mb-2">
+              { this.state.editToggle ? 
+                ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-light"> {this.state.editToggleHeading} </button> )
+              : 
+                ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-success"> {this.state.editToggleHeading} </button>)
+              }
+              </div>
+                <ListItems 
+                  editToggle={this.state.editToggle}
+                  objects={this.state.list.listItems}
+                  removeFromList={this.removeFromList} 
+                  listType={this.state.list.type}
+                  currentUser={this.props.currentUser}
+                  listUserId={this.state.list.user_id}
+                />
+                {
+                  list && list.type !== 9 ? (
+                  <ul className="brand-icons mr-1 float-right d-flex">
+                  <li  onClick={this.downloadPdf}>
+                    <button> 
+                      <i className="fas fa-print fa-lg"></i>
+                    </button>
+                  </li>
+                  </ul>) : ("")
+                }
+              </React.Fragment>)
              : "" }
-          {
-            list && list.type !== 9 ? (<i onClick={this.downloadPdf} className="fas fa-print ml-3 fa-lg"></i>)
-          : ("")
-          }
+         
           </div>
         </div>
+        {/* Comments */}
         <div className="row justify-content-center">
               { list ? (currentUser.isAuthenticated ?(
                 <div className="col-lg-8">
@@ -371,7 +448,7 @@ class ListDetails extends Component {
                   <CommentList 
                     objectId={this.state.list.id}
                     currentUser={currentUser}
-                    comments={comments}
+                    comments={this.state.list.comments}
                     deleteComment={this.deleteComment}
                     likeComment={this.likeComment}
                     editComment={this.editComment}
@@ -383,6 +460,22 @@ class ListDetails extends Component {
                     </div>
                     )}
               </div>
+              {/* Modals */}
+              <Modal show={this.state.showDeleteModal} onHide={this.handleDeleteModalClose}>
+              <Modal.Header closeButton>
+                  <Modal.Title>Are You Sure?</Modal.Title>
+              </Modal.Header>
+              <Modal.Footer>
+                  <div className="col-12">
+                  <Button variant="secondary" className="float-left" onClick={this.handleDeleteModalClose}>
+                      Cancel
+                  </Button>
+                  <Button variant="danger" className="float-right" onClick={this.deleteList}>
+                      Yes, delete
+                  </Button>
+                  </div>
+              </Modal.Footer>
+            </Modal>
         </div>
       </div>
     )

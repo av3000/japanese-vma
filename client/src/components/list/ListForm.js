@@ -8,7 +8,7 @@ class ListForm extends Component {
     super(props);
     this.state = {
         title: "",
-        type: "",
+        type: 5,
         tags: "",
         publicity: 0
     };

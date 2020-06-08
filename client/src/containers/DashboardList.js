@@ -144,7 +144,6 @@ export class DashboardList extends Component {
             <div className="container mt-5">
                 <div className="row justify-content-center">
                     <SearchBar fetchQuery={this.fetchQuery} />
-                    
                 </div>
                 <div className="container mt-5">
                     <div className="ml-3 mt-2">

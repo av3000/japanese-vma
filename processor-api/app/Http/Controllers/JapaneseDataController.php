@@ -15,6 +15,7 @@ use App\Comment;
 use App\ObjectTemplate;
 use App\Uniquehashtag;
 use App\Article;
+use App\User;
 use DB;
 
 
@@ -60,7 +61,6 @@ class JapaneseDataController extends Controller
             $article->comments = $this->getImpression('comment', $objectTemplateId, $article, "all");
             $article->commentsTotal = count($article->comments);
             $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
-            // $article->hashtags = array_slice($article->hashtags, 0, 3);
         }
         
         return $singleKanji;
@@ -112,14 +112,233 @@ class JapaneseDataController extends Controller
     }
 
     public function indexSentences() {
-        return $sentences = Sentence::all()->skip(0)->take(10);
+        $sentences = Sentence::paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'sentences' => $sentences
+        ]);
     }
 
     public function showSentence($id) {
         $singleSentence = Sentence::find($id);
         $singleSentence->kanjis = $singleSentence->kanjis()->get();
-        $singleSentence->words = $singleSentence->words()->get();
+        // $singleSentence->words = $singleSentence->words()->get(); not yet
+        $objectTemplateId = ObjectTemplate::where('title', 'sentence')->first()->id;
+
+        $singleSentence->comments = $this->getImpression('comment', $objectTemplateId, $singleSentence, "all");
+        $singleSentence->commentsTotal = count($singleSentence->comments);
+
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        foreach($singleSentence->comments as $comment)
+        {
+            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
+            $comment->likesTotal = count($comment->likes);
+            $comment->userName = User::find($comment->user_id)->name;
+        }
+
         return $singleSentence;
+    }
+
+    public function storeComment(Request $request, $id, $parentCommentId = null)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|min:2|max:1000',
+        ]);
+
+        if($validator->fails()) {
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        $objectTemplateId = ObjectTemplate::where('title', 'sentence')->first()->id;
+        
+        $comment = new Comment;
+        $comment->user_id = auth()->user()->id;
+        $comment->template_id = $objectTemplateId;
+        $comment->real_object_id = $id;
+        $comment->parent_comment_id = null;
+        $comment->content = $request->get('content');
+        $comment->save();
+        $comment->likesTotal = 0;
+        $comment->likes = [];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You commented sentence of id: '.$id,
+            'comment' => $comment
+        ]);
+    }
+
+    public function deleteComment($id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $comment = Comment::where([
+            'id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+
+        if(isset($comment))
+        {
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted",
+            ]);
+        }
+        else {
+            return response()->json([
+                'success' => false,
+                'message' => "Comment does not belong to user or comment doesnt exist",
+            ]);
+        }
+    }
+
+    public function updateComment(Request $request, $id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|min:2|max:1000',
+        ]);
+
+        if($validator->fails()) {
+            return response()->json($validator->errors()->toJson(), 400);
+        }
+
+        $comment = Comment::where([
+            'id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+
+        if(isset($comment))
+        {
+            $comment->content = $request->get('content');
+            $comment->updated_at = date('Y-m-d H:i:s');
+            $comment->update();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was updated",
+            ]);
+        }
+        else {
+            return response()->json([
+                'success' => false,
+                'message' => "Comment does not belong to user or comment doesnt exist",
+            ]);
+        }
+    }
+
+    public function likeComment($id, $commentid)
+    {
+        if(!auth()->user()){
+            return response()->json([
+                'message' => 'you are not a user'
+            ]);
+        }
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+
+        $checkLike = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $commentid,
+            'user_id' => auth()->user()->id
+        ])->first();
+        
+        if($checkLike) {
+            return response()->json([
+                'message' => 'you cannot like the comment twice!'
+            ]);
+        }
+        
+        $like = new Like;
+        $like->user_id = auth()->user()->id;
+        $like->template_id = $objectTemplateId;
+        $like->real_object_id = $commentid;
+        $like->value=1;
+        $like->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You liked comment of id: '.$commentid,
+            'like' => $like
+        ]);
+    }
+
+    public function unlikeComment($id, $commentid) {
+        $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+        $like = Like::where([
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $commentid,
+            'user_id' => auth()->user()->id
+        ]);
+
+        $like->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "like was deleted",
+        ]);
+    }
+
+    public function generateSentencesQuery(Request $request) {
+        $q = "";
+        if(isset( $request->title )){
+            $query = explode(' ',trim($request->title))[0];
+
+            $sentences = Sentence::whereLike(['content'], $query);
+            
+            $q .= $query;
+        } 
+
+        //if search has search fields, return sentences of requested fields
+        if(isset( $sentences )) {
+            $sentences = $sentences->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'sentences' => $sentences,
+                'message' => 'Requested query: '.$q. ' returned some results',
+                'q' => $q
+            ]);
+        }
+
+        // if search is empty, return default words
+        if( $q == "")
+        {
+            $sentences = Sentence::paginate(20);
+
+             return response()->json([
+                'success' => true,
+                'sentences' => $sentences,
+                'q' => $q
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Requested query: '.$q. ' returned zero sentences',
+            'q' => $q
+        ]);
+    
     }
 
     public function generateWordsQuery(Request $request) {
@@ -248,24 +467,6 @@ class JapaneseDataController extends Controller
     
     }
 
-    public function generateQuery(Request $request) { // Not sure about encoding part if it work.
-        $q = $request->get("word");
-        $results = [];
-        $results['words'] = Word::where("word", "like", "%".$q."%")
-                        ->orWhere("furigana", "like", "%".$q."%")->get();
-
-        if(!isset($results['words'])) {
-            return response()->json([
-                'success' => false, 'message' => 'Requested query: '.$q. ' returned zero results'
-             ]);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'Requested words query: '.$q. ' returned: '.count($results["words"]).' results',
-            'results' => $results["words"]
-        ]);
-    }
-
     public function sentenceKanjis($id){
         $sentenceKanjis = Sentence::find($id)->kanjis()->get();
 
@@ -382,10 +583,10 @@ class JapaneseDataController extends Controller
                 'message' => 'you are not a user'
             ]);
         }   
-        $sentence = sentence::find($id);
+        $sentence = Sentence::find($id);
 
         $sentence->kanjis()->wherePivot('sentence_id', $sentence->id)->detach();
-        $sentence->words()->wherePivot('sentence_id', $sentence->id)->detach();
+        // $sentence->words()->wherePivot('sentence_id', $sentence->id)->detach();
 
         $sentence->delete();
 

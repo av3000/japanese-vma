@@ -1,18 +1,17 @@
 import React, { Component } from 'react';
 import { apiCall } from '../services/api';
-import PostItem from '../components/post/PostItem';
+import SentenceItem from '../components/sentence/SentenceItem';
 import Spinner from '../assets/images/spinner.gif';
 import SearchBar from '../components/search/Searchbar';
 
 
-export class PostList extends Component {
-    _isMounted = false;
-    constructor(props){
-        super(props);
+export class SentenceList extends Component {
+    constructor(){
+        super();
         this.state = {
-            url: '/api/posts',
+            url: '/api/sentences',
             pagination: [],
-            posts: [],
+            sentences: [],
             paginateObject: {},
             searchHeading: "",
             searchTotal: "",
@@ -26,28 +25,21 @@ export class PostList extends Component {
     };
 
     componentDidMount() {
-        this._isMounted = true;
-        this.fetchPosts(this.state.url);
+        this.fetchSentences(this.state.url);
     };
 
-    componentWillUnmount() {
-        this._isMounted = false;
-    };
-
-    fetchPosts(givenUrl){
+    fetchSentences(givenUrl){
         return apiCall("get", givenUrl)
             .then(res => {
-                if (this._isMounted) {
-                    console.log(res);
-                    let newState = Object.assign({}, this.state);
-                    newState.paginateObject = res.posts;
-                    newState.posts = [...newState.posts, ...res.posts.data];
-                    newState.url = res.posts.next_page_url;
+                console.log(res);
+                let newState = Object.assign({}, this.state);
+                newState.paginateObject = res.sentences;
+                newState.sentences = [...newState.sentences, ...res.sentences.data];
+                newState.url = res.sentences.next_page_url;
 
-                    newState.searchTotal = "results total: '" + res.posts.total + "'";
+                newState.searchTotal = "results total: '" + res.sentences.total + "'";
 
-                    return newState;
-                }
+                return newState;
             })
             .then(newState => {
                 newState.pagination = this.makePagination(newState.paginateObject);
@@ -61,16 +53,16 @@ export class PostList extends Component {
     fetchQuery(queryParams) {
         let newState = Object.assign({}, this.state);
         newState.filters = queryParams;
-        apiCall("post", "/api/posts/search", newState.filters)
+        apiCall("post", "/api/sentences/search", newState.filters)
         .then(res => {
             if(res.success === true)
             {
-                newState.paginateObject = res.posts;
-                newState.posts       = res.posts.data ? res.posts.data : newState.posts;
-                newState.url            = res.posts.next_page_url;
+                newState.paginateObject  = res.sentences;
+                newState.sentences       = res.sentences.data ? res.sentences.data : newState.sentences;
+                newState.url             = res.sentences.next_page_url;
 
                 newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
-                newState.searchTotal = "Results total: '" + res.posts.total +"'";
+                newState.searchTotal = "Results total: '" + res.sentences.total +"'";
                 return newState;
             }
 
@@ -93,12 +85,12 @@ export class PostList extends Component {
         .then(res => {
             console.log(res);
 
-            newState.paginateObject = res.posts;
-            newState.posts         = [...newState.posts, ...res.posts.data];
-            newState.url            = res.posts.next_page_url;
+            newState.paginateObject = res.sentences;
+            newState.sentences         = [...newState.sentences, ...res.sentences.data];
+            newState.url            = res.sentences.next_page_url;
 
             newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
-            newState.searchTotal = "Results total: '" + res.posts.total +"'";
+            newState.searchTotal = "Results total: '" + res.sentences.total +"'";
 
             return newState;
         })
@@ -107,7 +99,7 @@ export class PostList extends Component {
 
             this.setState( newState );
 
-            console.log(this.state.posts);
+            console.log(this.state.sentences);
         })
         .catch(err => {
             console.log(err);
@@ -115,7 +107,7 @@ export class PostList extends Component {
     }
 
     loadMore() {
-        this.fetchPosts(this.state.pagination.next_page_url);
+        this.fetchSentences(this.state.pagination.next_page_url);
     }
 
     loadSearchMore(){
@@ -133,31 +125,23 @@ export class PostList extends Component {
         return pagination;        
     };
 
-    render() {
-        let { posts } = this.state;
-        let postList = posts ? ( posts.map(w => {
+    addToList(id){
+        console.log("add to list: " + id);
+    }
 
+    render() {
+        let { sentences } = this.state;
+        let sentenceList = sentences ? ( sentences.map(s => {
             return (
-                <PostItem 
-                    key={w.id}
-                    id={w.id}
-                    title={w.title}
-                    date={w.created_at}
-                    content={w.content}
-                    type={w.type}
-                    locked={w.locked}
-                    userId={w.user_id}
-                    commentsTotal={w.commentsTotal}
-                    likesTotal={w.likesTotal}
-                    viewsTotal={w.viewsTotal}
-                    downloadsTotal={w.downloadsTotal}
-                    hashtags={w.hashtags.slice(0, 3)}
-                    user={w.user}
-                    postType={w.postType}
-                    // currentUser={this.props.currentUser}
+                <SentenceItem 
+                    key={s.id}
+                    id={s.id}
+                    tatoeba_entry={s.tatoeba_entry}
+                    userId={s.user_id}
+                    sentence={s.content}
+                    addToList={this.addToList.bind(this, s.id)}
                 />
             );
-                
         }) ): (
         <div className="container mt-5">
             <div className="row justify-content-center">
@@ -174,7 +158,7 @@ export class PostList extends Component {
                     {/* by title keyword */}
                     {/* by newest/popular */}
                 </div>
-                <div className="mt-5">
+                <div className="container mt-5">
                     <div className="row justify-content-center">
                     {this.state.searchHeading ? (
                         <h4>
@@ -192,10 +176,9 @@ export class PostList extends Component {
                         : ""
                     }
                     </div>
-                    <div className="my-3 p-3 bg-white rounded box-shadow">
-                        <h6 className="border-bottom border-gray pb-2 mb-0">Newest Topics</h6>
-                        <div className="col-lg-12 col-md-10 mx-auto">
-                            {postList}
+                    <div className="row">
+                        <div className="col-lg-8 col-md-10 mx-auto">
+                            {sentenceList}
                         </div>
                     </div>
                 </div>
@@ -215,4 +198,4 @@ export class PostList extends Component {
     }
 }
 
-export default PostList;
+export default SentenceList;

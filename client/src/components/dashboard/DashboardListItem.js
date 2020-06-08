@@ -29,7 +29,7 @@ const DashboardListItem = ({
                          <i className="fas fa-external-link-alt"></i>
                     </strong>
                 </Link>
-                <small className="d-flex justify-content-between align-items-center text-muted">
+                <small className="d-block text-muted">
                         <span>
                          {commentsTotal}&nbsp;Comments 
                         </span>
@@ -39,9 +39,8 @@ const DashboardListItem = ({
                         <span>
                          {likesTotal}&nbsp;Likes &nbsp;
                         </span>
-                        
                 </small>
-                <small className="d-flex justify-content-between align-items-center text-muted">
+                <small className="d-block text-muted">
                     <span>
                        {listType}
                     </span>

@@ -26,9 +26,14 @@ import KanjiTimeline from '../components/kanji/KanjiTimeline';
 // Words
 import WordDetails from '../components/word/WordDetails';
 import WordTimeline from '../components/word/WordTimeline';
+// Sentences
+import SentenceDetails from '../components/sentence/SentenceDetails';
+import SentenceTimeline from '../components/sentence/SentenceTimeline';
 // Community
 import PostDetails from '../components/post/PostDetails';
 import PostTimeline from '../components/post/PostTimeline';
+import PostForm from '../components/post/PostForm';
+import PostEdit from '../components/post/PostEdit';
 // Dashboard
 import DashboardTimeline from '../components/dashboard/DashboardTimeline';
 
@@ -171,7 +176,21 @@ const Main = props => {
                     )
                 }} />
                 {/* Sentences */}
+                <Route exact path="/sentences" render={props =>{
+                    return (
+                        <SentenceTimeline
 
+                        />
+                    )
+                }}/>
+                <Route exact path="/sentence/:sentence_id" render={props => {
+                    return (
+                        <SentenceDetails 
+                            currentUser={currentUser}
+                            {...props}
+                        />
+                    )
+                }} />
                 {/* Posts Community */}
                 <Route exact path="/community" render={props =>{
                     return (
@@ -188,7 +207,19 @@ const Main = props => {
                         />
                     )
                 }} />
-
+                <Route exact path="/community/edit/:post_id" component={PostEdit} />
+                <Route
+                    exact path="/newpost"
+                    render={ props => {
+                        return (
+                            <PostForm
+                                removeError={removeError}
+                                errors={errors}
+                                {...props} 
+                            />
+                        )
+                    }}
+                />
                 {/* Dashboard */}
                 <Route exact path="/dashboard" render={props =>{
                     return (

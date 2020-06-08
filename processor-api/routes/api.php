@@ -74,6 +74,12 @@ Route::group([
 		Route::post('sentence', 'JapaneseDataController@storeSentence');
 		Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
 		Route::delete('sentence/{id}', 'JapaneseDataController@deleteSentence');
+		// Sentences Comment
+		Route::post('sentence/{id}/comment', 'JapaneseDataController@storeComment');
+		Route::delete('sentence/{id}/comment/{commentid}', 'JapaneseDataController@deleteComment');
+		Route::put('sentence/{id}/comment/{commentid}', 'JapaneseDataController@updateComment');
+		Route::post('sentence/{id}/comment/{commentid}/like', 'JapaneseDataController@likeComment');
+		Route::post('sentence/{id}/comment/{commentid}/unlike', 'JapaneseDataController@unlikeComment');
 
 		// Posts
 		Route::post('post', 'PostController@store');
@@ -82,7 +88,6 @@ Route::group([
 		Route::post('post/{id}/like', 'PostController@likePost');
 		Route::post('post/{id}/unlike', 'PostController@unlikePost');
 		Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
-		
 		// Posts Comment
 		Route::post('post/{id}/comment', 'PostController@storeComment');
 		Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
@@ -124,9 +129,10 @@ Route::get('word/{id}', 'JapaneseDataController@showWord');
 Route::get('word/{id}/kanjis', 'JapaneseDataController@wordKanjis');
 Route::post('words/search', 'JapaneseDataController@generateWordsQuery');
 Route::get('sentences', 'JapaneseDataController@indexSentences');
-Route::get('sentences/{id}', 'JapaneseDataController@showSentence');
-Route::get('sentences/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');
-Route::get('sentences/{id}/words', 'JapaneseDataController@sentenceWords');
+Route::get('sentence/{id}', 'JapaneseDataController@showSentence');
+Route::get('sentence/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');
+Route::get('sentence/{id}/words', 'JapaneseDataController@sentenceWords');
+Route::post('sentences/search', 'JapaneseDataController@generateSentencesQuery');
 
 // Custom Lists
 Route::get('lists', 'CustomListController@index');

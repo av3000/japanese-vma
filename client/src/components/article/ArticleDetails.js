@@ -17,8 +17,9 @@ class ArticleDetails extends Component {
         this.state = {
             article: null,
             lists: [],
-            show: false,
-            showPdf: false
+            showBookmark: false,
+            showPdf: false,
+            showDelete: false
         };
 
         this.likeArticle = this.likeArticle.bind(this);
@@ -26,17 +27,18 @@ class ArticleDetails extends Component {
         this.deleteComment = this.deleteComment.bind(this);
         this.likeComment = this.likeComment.bind(this);
         this.editComment = this.editComment.bind(this);
-        this.handleDelete = this.handleDelete.bind(this);
+        this.deleteArticle = this.deleteArticle.bind(this);
         this.downloadKanjisPdf = this.downloadKanjisPdf.bind(this);
         this.downloadWordsPdf = this.downloadWordsPdf.bind(this);
 
-        this.addToList = this.addToList.bind(this);
-        this.removeFromList = this.removeFromList.bind(this);
-        this.openModal = this.openModal.bind(this);
+        this.openBookmarkModal = this.openBookmarkModal.bind(this);
         this.openPdfModal = this.openPdfModal.bind(this);
+        this.openDeleteModal = this.openDeleteModal.bind(this);
         
-        this.handleClose = this.handleClose.bind(this);
+        this.handleBookmarkClose = this.handleBookmarkClose.bind(this);
         this.handlePdfClose = this.handlePdfClose.bind(this);
+        this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
+
         this.getUserArticleLists = this.getUserArticleLists.bind(this);
     };
 
@@ -85,7 +87,7 @@ class ArticleDetails extends Component {
       this.getUserArticleLists();
   };
 
-  handleDelete(){
+  deleteArticle(){
     return apiCall("delete", `/api/article/${this.state.article.id}`)
       .then(res => { 
         this.props.history.push('/articles');
@@ -95,9 +97,8 @@ class ArticleDetails extends Component {
       });
   }
 
-
-  handleClose(){
-    this.setState({show: !this.state.show})
+  handleBookmarkClose(){
+    this.setState({showBookmark: !this.state.showBookmark})
   }
 
   handlePdfClose(){
@@ -125,27 +126,27 @@ class ArticleDetails extends Component {
     })
   }
 
-  openModal(){
+  openBookmarkModal(){
       if(this.props.currentUser.isAuthenticated === false){
           this.props.history.push('/login');
       }
       else {
-          this.setState({show: !this.state.show})
+          this.setState({showBookmark: !this.state.showBookmark})
           //   next decision to pick which list to add.
       }
   }
 
   addToList(id){
-      console.log("addto ")
-        console.log(id);
-        this.setState({show: !this.state.show})
-        axios.post("/api/user/list/additemwhileaway", {
-            listId: id,
-            elementId: this.props.match.params.article_id
-        })
-        .then(res => console.log(res))
-        .catch(err => console.log(err))
-        window.location.reload(false);
+    console.log("addto ")
+      console.log(id);
+      this.setState({show: !this.state.show})
+      axios.post("/api/user/list/additemwhileaway", {
+          listId: id,
+          elementId: this.props.match.params.article_id
+      })
+      .then(res => console.log(res))
+      .catch(err => console.log(err))
+      window.location.reload(false);
   }
 
   removeFromList(id){
@@ -232,6 +233,23 @@ class ArticleDetails extends Component {
     }
   }
 
+  handleDeleteModalClose(){
+    console.log("handleDeleteModalClose");
+      console.log(this.state.showDelete);
+    this.setState({showDelete: !this.state.showDelete})
+  }
+
+  openDeleteModal() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+      console.log("openDeleteModal");
+      console.log(this.state.showDelete);
+        this.setState({showDelete: !this.state.showDelete})
+    }
+  }
+
   likeArticle() {
     if(!this.props.currentUser.isAuthenticated)
     {
@@ -302,10 +320,10 @@ class ArticleDetails extends Component {
     return apiCall("delete", `/api/article/${this.state.article.id}/comment/${commentId}`)
       .then(res => { 
         // console.log(res);
-        // let newState = Object.assign({}, this.state);
-        // newState.article.comments.filter(comment => comment.id !== commentId);
-        // this.setState( newState );
-        window.location.reload(false);
+        let newState = Object.assign({}, this.state);
+        newState.article.comments = newState.article.comments.filter(comment => comment.id !== commentId);
+        this.setState( newState );
+        // window.location.reload(false);
       })
       .catch(err => {
         console.log(err);
@@ -329,49 +347,85 @@ class ArticleDetails extends Component {
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
                 <span className="row mt-4">
-                  <Link to="/articles" className="tag-link">Back</Link>
+                <Link to="/articles" className="tag-link"> <i className="fas fa-arrow-left"></i> Back</Link>
                 </span>
                 <h1 className="mt-4">{article.title_jp}</h1>
                 <p className="text-muted"> 
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
                     <br/><span>{article.viewsTotal + 40} views</span>
                     {currentUser.user.id === article.user_id ? (article.publicity === 1 ? " | public" : " | private" ) : ""}
-                    <span className="mr-1 float-right d-flex">
-                        {currentUser.user.id === article.user_id ? (
-                          <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
-                        ) : ""}
-                        {currentUser.user.id === article.user_id ?
-                          (<Link to={`/article/edit/${article.id}`}><i className="far fa-edit ml-3 fa-lg"></i></Link>) : ""
-                        }
-                        <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg"></i>
-                        {/* { isBookmarked ? (<i class="fas fa-bookmark"></i>) } */}
-                        <i onClick={this.openPdfModal} className="fas fa-file-download ml-3 fa-lg"></i>
-                    </span>
                 </p>
+                {/* BEGIN Action icons */}
+                <ul className="brand-icons mr-1 float-right d-flex">
+                    {currentUser.user.id === article.user_id ?
+                      (
+                      <li onClick={this.openDeleteModal}>
+                        <button> 
+                          <i className="far fa-trash-alt fa-lg"></i>
+                        </button>
+                      </li>) : ""
+                    }
+                    {currentUser.user.id === article.user_id ?
+                      (<Link to={`/article/edit/${article.id}`}> 
+                      <li>
+                        <button> 
+                          <i className="fas fa-pen-alt fa-lg"></i>
+                        </button>
+                      </li>
+                      </Link>) : ("")
+                    }
+                </ul>
+                {/* END action icons */}
                 <img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img"/>
                 <p className="lead">{article.content_jp} </p>
                 <br/>
                 <p>
-                    {article.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
-                    <span className="mr-1 float-right d-flex text-muted">
-                    {article.likesTotal+24} likes &nbsp;
-                       {article.isLiked ? (<i onClick={this.likeArticle} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       : (<i onClick={this.likeArticle} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       }
-                    </span>
+                  {article.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
+                    <br/> <Link to={article.source_link}> original source</Link>
                 </p>
                 <hr/>
-                <div className="text-muted">
+                <div className="">
                     <div className="mr-1 float-left d-flex">
                         <img src={AvatarImg} alt="book-japanese"/>
                         <p className="ml-3 mt-3">
-                            uploaded by {article.userName}
+                            created by {article.userName}
                         </p>
                     </div>
-                    <div className="mr-1 mt-3 float-right d-flex">
-                        <Link to={article.source_link}> original source</Link>
+                    <div className="float-right d-flex">
+                      <p className="ml-3 mt-3">
+                          {article.likesTotal+24} likes &nbsp;
+                      </p>
+                      <ul className="brand-icons float-right d-flex">
+                        {article.isLiked ? (
+                            <li onClick={this.likeArticle}>
+                              <button> 
+                                <i className="fas fa-thumbs-up fa-lg"></i>
+                              </button>
+                            </li>
+                            )
+                            : (
+                            <li onClick={this.likeArticle}>
+                              <button> 
+                                <i className="far fa-thumbs-up fa-lg"></i>
+                              </button>
+                            </li>
+                            )
+                        }
+                        <li onClick={this.openBookmarkModal}>
+                          <button>
+                            <i className="far fa-bookmark fa-lg"></i>
+                          </button>
+                        </li>
+                        <li onClick={this.openPdfModal}>
+                          <button>
+                            <i className="fas fa-file-download fa-lg"></i>
+                          </button>
+                        </li>
+                    </ul>
                     </div>
                 </div>
+
+
               </div>
           </div>
       </div>
@@ -446,7 +500,7 @@ class ArticleDetails extends Component {
               </div>
         </div>
 
-          <Modal show={this.state.show} onHide={this.handleClose}>
+          <Modal show={this.state.showBookmark} onHide={this.handleBookmarkClose}>
             <Modal.Header closeButton>
                 <Modal.Title>Choose List to add</Modal.Title>
             </Modal.Header>
@@ -455,10 +509,10 @@ class ArticleDetails extends Component {
                 <small> <Link to="/newlist">Want new list?</Link> </small>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={this.handleClose}>
+                <Button variant="secondary" onClick={this.handleBookmarkClose}>
                     Close
                 </Button>
-                {/* <Button variant="primary" onClick={this.handleClose}>
+                {/* <Button variant="primary" onClick={this.handleBookmarkClose}>
                     Save Changes
                 </Button> */}
             </Modal.Footer>
@@ -476,9 +530,25 @@ class ArticleDetails extends Component {
                 <Button variant="secondary" onClick={this.handlePdfClose}>
                     Close
                 </Button>
-                {/* <Button variant="primary" onClick={this.handleClose}>
+                {/* <Button variant="primary" onClick={this.handlePdfClose}>
                     Save Changes
                 </Button> */}
+            </Modal.Footer>
+          </Modal>
+
+          <Modal show={this.state.showDelete} onHide={this.handleDeleteModalClose}>
+            <Modal.Header closeButton>
+                <Modal.Title>Are You Sure?</Modal.Title>
+            </Modal.Header>
+            <Modal.Footer>
+                <div className="col-12">
+                <Button variant="secondary" className="float-left" onClick={this.handleDeleteModalClose}>
+                    Cancel
+                </Button>
+                <Button variant="danger" className="float-right" onClick={this.deleteArticle}>
+                    Yes, delete
+                </Button>
+                </div>
             </Modal.Footer>
           </Modal>
       </div>

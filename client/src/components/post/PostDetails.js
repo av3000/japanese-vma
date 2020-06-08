@@ -4,18 +4,18 @@ import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
-import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import AvatarImg from '../../assets/images/avatar-woman.svg';
 import Spinner from '../../assets/images/spinner.gif';
-import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
+import { Button, Modal } from 'react-bootstrap';
 
 class PostDetails extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            post: null
+            post: null,
+            showDelete: false
         };
 
         this.likePost = this.likePost.bind(this);
@@ -23,7 +23,10 @@ class PostDetails extends Component {
         this.deleteComment = this.deleteComment.bind(this);
         this.likeComment = this.likeComment.bind(this);
         this.editComment = this.editComment.bind(this);
-        this.handleDelete = this.handleDelete.bind(this);
+        this.deletePost = this.deletePost.bind(this);
+
+        this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
+        this.openDeleteModal = this.openDeleteModal.bind(this);
     };
 
   componentDidMount(){
@@ -70,7 +73,7 @@ class PostDetails extends Component {
 
   };
 
-  handleDelete(){
+  deletePost(){
     return apiCall("delete", `/api/post/${this.state.post.id}`)
       .then(res => { 
         this.props.history.push('/community');
@@ -79,7 +82,6 @@ class PostDetails extends Component {
         console.log(err);
       });
   }
-
 
   likePost() {
     if(!this.props.currentUser.isAuthenticated)
@@ -109,6 +111,26 @@ class PostDetails extends Component {
           console.log(err);
       })
   };
+
+// Modals
+  handleDeleteModalClose(){
+    console.log("handleDeleteModalClose");
+      console.log(this.state.showDelete);
+    this.setState({showDelete: !this.state.showDelete})
+  }
+
+  openDeleteModal() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+      console.log("openDeleteModal");
+      console.log(this.state.showDelete);
+        this.setState({showDelete: !this.state.showDelete})
+    }
+  }
+
+// Comments
 
   likeComment(commentId) {
     if(!this.props.currentUser.isAuthenticated)
@@ -151,10 +173,9 @@ class PostDetails extends Component {
     return apiCall("delete", `/api/post/${this.state.post.id}/comment/${commentId}`)
       .then(res => { 
         // console.log(res);
-        // let newState = Object.assign({}, this.state);
-        // newState.post.comments.filter(comment => comment.id !== commentId);
-        // this.setState( newState );
-        window.location.reload(false);
+        let newState = Object.assign({}, this.state);
+        newState.post.comments = newState.post.comments.filter(comment => comment.id !== commentId);
+        this.setState( newState );
       })
       .catch(err => {
         console.log(err);
@@ -185,39 +206,67 @@ class PostDetails extends Component {
                     <Moment className="text-muted" format="Do MMM YYYY">
                       {post.created_at}
                     </Moment>
-                    <span className="mr-1 float-right d-flex">
-                        {currentUser.user.id === post.user_id ? (
-                          <i className="far fa-trash-alt fa-lg" onClick={this.handleDelete}></i>
-                        ) : ""}
-                        {currentUser.user.id === post.user_id ?
-                          (<Link to={`/post/edit/${post.id}`}><i className="far fa-edit ml-3 fa-lg"></i></Link>) : ""
-                        }
-                    </span>
+                    <br/>{post.viewsTotal + 40} views &nbsp;
                 </p>
+                <ul className="brand-icons mr-1 float-right d-flex">
+                    {currentUser.user.id === post.user_id ?
+                      (
+                      <li onClick={this.openDeleteModal}>
+                        <button> 
+                          <i className="far fa-trash-alt fa-lg"></i>
+                        </button>
+                      </li>) : ""
+                    }
+                    {currentUser.user.id === post.user_id ?
+                      (<Link to={`/community/edit/${post.id}`}> 
+                      <li>
+                        <button> 
+                          <i className="fas fa-pen-alt fa-lg"></i>
+                        </button>
+                      </li>
+                      </Link>) : ("")
+                    }
+                </ul>
                 <p className="lead mt-5">{post.content} </p>
                 <br/>
+                <p>
+                  {post.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
+                </p>
                 <hr/>
-                <div className="text-muted">
-                   <div>
-                   {post.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
-                   </div>
+                <div className="">
                     <div className="mr-1 float-left d-flex">
                         <img src={AvatarImg} alt="book-japanese"/>
                         <p className="ml-3 mt-3">
                             uploaded by {post.userName}
                         </p>
                     </div>
+                    <div className="float-right d-flex">
+                      <p className="ml-3 mt-3">
+                          {post.likesTotal+24} likes &nbsp;
+                      </p>
+                        {
+                          post.isLiked ? (
+                        <ul className="brand-icons float-right d-flex">
+                          <li onClick={this.likePost}>
+                            <button> 
+                              <i className="fas fa-thumbs-up fa-lg"></i>
+                            </button>
+                          </li>
+                        </ul>
+                            )
+                            : (
+                        <ul className="brand-icons float-right d-flex">
+                          <li onClick={this.likePost}>
+                            <button> 
+                              <i className="far fa-thumbs-up fa-lg"></i>
+                            </button>
+                          </li>
+                        </ul>
+                            )
+                        }
+                    </div>
+
                 </div>
-                <p>
-                    <span className="mr-1 float-right d-flex text-muted">
-                    {post.viewsTotal + 40} views &nbsp;
-                    {post.likesTotal + 24} likes &nbsp;
-                       {post.isLiked ? (<i onClick={this.likePost} className="fas fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       : (<i onClick={this.likePost} className="far fa-thumbs-up ml-1 mr-1 fa-lg"></i>)
-                       }
-                    </span>
-                </p>
-               
               </div>
           </div>
       </div>
@@ -276,6 +325,21 @@ class PostDetails extends Component {
                     )}
               </div>
         </div>
+        <Modal show={this.state.showDelete} onHide={this.handleDeleteModalClose}>
+            <Modal.Header closeButton>
+                <Modal.Title>Are You Sure?</Modal.Title>
+            </Modal.Header>
+            <Modal.Footer>
+                <div className="col-12">
+                <Button variant="secondary" className="float-left" onClick={this.handleDeleteModalClose}>
+                    Cancel
+                </Button>
+                <Button variant="danger" className="float-right" onClick={this.deletePost}>
+                    Yes, delete
+                </Button>
+                </div>
+            </Modal.Footer>
+          </Modal>
       </div>
     )
   }

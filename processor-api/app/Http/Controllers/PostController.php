@@ -22,13 +22,13 @@ class PostController extends Controller
     {
 
         $postTypes = [
-            'Content-related' => 1,
-            'Off-topic' => 2,
-            'FAQ' => 3,
-            'Technical' => 4,
-            'Bug' => 5,
-            'Feedback' => 6,
-            'Announcement' => 7
+            'Content-related',
+            'Off-topic',
+            'FAQ',
+            'Technical',
+            'Bug',
+            'Feedback',
+            'Announcement'
         ];
 
         return $postTypes[$typeName];
@@ -147,7 +147,7 @@ class PostController extends Controller
         $post->user_id = auth()->user()->id;
         $post->title = $validated['title'];
         $post->content = $validated['content'];
-        $post->type = $this->getPostTypes( $validated['type']);
+        $post->type = $validated['type'];
         $post->save();
 
         $this->attachHashTags($request->tags, $post);
@@ -191,7 +191,7 @@ class PostController extends Controller
         }
         if( isset($request->type) )
         {
-            $post->type = $this->getPostTypes( $request->type);
+            $post->type = $request->type;
         }
 
         $post->update();
