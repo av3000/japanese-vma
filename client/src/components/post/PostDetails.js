@@ -19,6 +19,7 @@ class PostDetails extends Component {
         };
 
         this.likePost = this.likePost.bind(this);
+        this.toggleLock = this.toggleLock.bind(this);
         this.addComment = this.addComment.bind(this);
         this.deleteComment = this.deleteComment.bind(this);
         this.likeComment = this.likeComment.bind(this);
@@ -112,6 +113,23 @@ class PostDetails extends Component {
       })
   };
 
+  toggleLock(){
+    if(!this.props.currentUser.isAuthenticated){
+      this.props.history.push('/login');
+    } else if( this.props.currentUser.user.isAdmin ) {
+      let id = this.state.post.id;
+      axios.post("/api/post/"+id+"/toggleLock")
+        .then(res => {
+          let newState = Object.assign({}, this.state);
+          newState.post.locked = res.data.locked;
+          this.setState( newState );
+        })
+        .catch(err => {
+          console.log(err);
+        })
+    }
+  }
+
 // Modals
   handleDeleteModalClose(){
     console.log("handleDeleteModalClose");
@@ -193,8 +211,8 @@ class PostDetails extends Component {
     const { post } = this.state;
     const { currentUser } = this.props;
     let comments = post ? post.comments : "";
-
     const singlePost = post ? (
+
       <div className="container">
           <div className="row justify-content-center">
               <div className="col-lg-8 ">
@@ -208,7 +226,7 @@ class PostDetails extends Component {
                     </Moment>
                     <br/>{post.viewsTotal + 40} views &nbsp;
                 </p>
-                <ul className="brand-icons mr-1 float-right d-flex">
+                <ul className="brand-icons mr-1 d-flex">
                     {currentUser.user.id === post.user_id ?
                       (
                       <li onClick={this.openDeleteModal}>
@@ -225,6 +243,19 @@ class PostDetails extends Component {
                         </button>
                       </li>
                       </Link>) : ("")
+                    }
+                    {
+                      currentUser.user.isAdmin ? (
+                        <li onClick={this.toggleLock}>
+                          <button>
+                              { post.locked === 1 ? (
+                                <i className="fas fa-lock-open"></i>
+                              ) : (
+                                <i className="fas fa-lock"></i>
+                              )}
+                          </button>
+                        </li>
+                      ) : ""
                     }
                 </ul>
                 <p className="lead mt-5">{post.content} </p>
@@ -283,8 +314,10 @@ class PostDetails extends Component {
         )}
         <br/>
         <div className="row justify-content-center">
-              { post ? (currentUser.isAuthenticated ?(
-                <div className="col-lg-8">
+              
+              { this.state.post && post ? (currentUser.isAuthenticated ?(
+                ( this.state.post.locked === 0 ? (
+                  <div className="col-lg-8">
                 <hr/>
                   <h6>Share what's on your mind</h6>
                   <CommentForm 
@@ -294,6 +327,7 @@ class PostDetails extends Component {
                     objectType="post"
                     />
                 </div>
+                ) : ( <h3>Post was locked and new comments are not allowed.</h3> ) )
                 )
                 : (
                   <div className="col-lg-8">

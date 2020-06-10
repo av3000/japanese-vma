@@ -18,17 +18,17 @@ const Footer = () => (
         <div className="row">
             <div className="col-sm-6">
                 <p>
-                    This site uses the <a href="#">JMdict</a>, <a href="#">Kanjidic2</a>, <a href="#">JMnedict</a>, and <a href="#">Radkfile</a> dictionary files.
-                    These files are the property of the Electronic Dictionary Research and Development <a href="#">Group</a>, and are used in conformance with the Group's <a href="#">licence</a>.
+                    This site uses the <a href="http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project">JMdict</a>, <a href="http://www.edrdg.org/wiki/index.php/KANJIDIC_Project">Kanjidic2</a>, <a href="http://www.edrdg.org/enamdict/enamdict_doc.html">JMnedict</a>, and <a href="http://www.edrdg.org/krad/kradinf.html">Radkfile</a> dictionary files.
+                    These files are the property of the Electronic Dictionary Research and Development <a href="http://www.edrdg.org/">Group</a>, and are used in conformance with the Group's <a href="http://www.edrdg.org/edrdg/licence.html">licence</a>.
                 </p>
                 <br/>
             </div>
             <div className="col-sm-6">
                 <p>
-                    Example sentences come from the <a href="#">Tatoeba</a> project and are licensed under <a href="#">Creative Common CC-BY</a>.
+                    Example sentences come from the <a href="http://tatoeba.org/">Tatoeba</a> project and are licensed under <a href="http://creativecommons.org/licenses/by/2.0/fr/">Creative Common CC-BY</a>.
                 </p>
                 <p>
-                    JLPT data comes from Jonathan Waller's JLPT Resources <a href="#">page</a>.
+                    JLPT data comes from Jonathan Waller's JLPT Resources <a href="http://www.tanos.co.uk/jlpt/">page</a>.
                 </p>
                 Contact Us
                 <p>jplearning.online@gmail.com or directly find us on Socials</p>

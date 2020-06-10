@@ -83,7 +83,9 @@ class UserController extends Controller
         
     	$accessToken = auth()->user()->createToken('authToken');
 
-     	return response()->json(['user'=>auth()->user(), 'accessToken'=>$accessToken->accessToken]);
+        $user = auth()->user();
+
+     	return response()->json(['user'=> $user, 'accessToken'=>$accessToken->accessToken]);
     }
 
     /**
@@ -105,8 +107,12 @@ class UserController extends Controller
      * @return [json] user object
      */
     public function user(Request $request)
-    {
-        return response()->json($request->user());
+    {   
+        $user = $request->user();
+
+        $user->isAdmin = $user->role() == "admin" ? true : false;
+        
+        return response()->json($user);
     }
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
 

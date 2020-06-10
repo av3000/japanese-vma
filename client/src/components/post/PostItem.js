@@ -7,23 +7,22 @@ import Moment from 'react-moment';
 const PostItem = ({ 
     id,
     title,
-    content,
     type,
     locked,
     userId,
     commentsTotal,
     likesTotal,
     viewsTotal,
-    downloadsTotal,
     hashtags,
-    user,
+    userName,
     postType,
-    date
+    date,
+    isLocked
 }) => (
     <div className="row border-bottom border-gray">
         <div className="col-lg-10 col-md-12 col-12-sm pb-3 pt-3">
             <p>
-                <strong className="d-block text-gray-dark">{user.name}</strong>
+                <strong className="d-block text-gray-dark">{userName}</strong>
             </p>
             <h5>
                 <Link to={`/community/${id}`}>
@@ -50,6 +49,11 @@ const PostItem = ({
             <span>
                 {likesTotal}&nbsp;Likes &nbsp;
             </span> <br/>
+            <span>
+                { isLocked ? ( <strong>Locked </strong> ) : ""}
+            </span>
+            
+
             </small>
         </div>
     </div>

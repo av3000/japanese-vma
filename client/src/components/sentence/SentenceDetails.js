@@ -301,7 +301,7 @@ class SentenceDetails extends Component {
                             </p>
                         ) : 
                             <p>
-                                Tatoeba link: <Link to="/" href={`tatoeba.org/${sentence.tatoeba_entry}`}>{sentence.tatoeba_entry}</Link>
+                                Tatoeba link: <a href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}>{sentence.tatoeba_entry}</a>
                             </p>
                         }
                     </div>

@@ -224,7 +224,8 @@ const Main = props => {
                 <Route exact path="/dashboard" render={props =>{
                     return (
                         <DashboardTimeline
-
+                            currentUser={currentUser}
+                            {...props}
                         />
                     )
                 }}/>

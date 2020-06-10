@@ -20,7 +20,7 @@ const SentenceItem = ({
                     </p>
                 ) : (
                     <p>
-                        Tatoeba entry - <Link to={`tatoeba.org/entry/${tatoeba_entry}`}>{tatoeba_entry}</Link>
+                        Tatoeba entry - <a href={`https://tatoeba.org/eng/sentences/show/${tatoeba_entry}`}>{tatoeba_entry}</a>
                     </p>
                 )}
             </div>

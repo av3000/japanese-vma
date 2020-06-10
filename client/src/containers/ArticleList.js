@@ -90,7 +90,7 @@ class ArticleList extends Component {
             newState.url            = res.articles.next_page_url;
 
             newState.searchHeading = "Requested query: " + newState.filters.title;
-            newState.searchTotal = "results total: " + res.articles.total;
+            newState.searchTotal   = "results total: " + res.articles.total;
 
             return newState;
         })

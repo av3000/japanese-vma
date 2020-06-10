@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { connect } from "react-redux";
 import { apiCall } from '../../services/api';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -9,9 +9,11 @@ import Spinner from '../../assets/images/spinner.gif';
 import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
-import { Button, Modal } from 'react-bootstrap';
+import { Button, Modal, Dropdown, DropdownButton } from 'react-bootstrap';
 
 class ArticleDetails extends Component {
+   _isMounted = false;
+
     constructor(props) {
         super(props);
         this.state = {
@@ -19,7 +21,9 @@ class ArticleDetails extends Component {
             lists: [],
             showBookmark: false,
             showPdf: false,
-            showDelete: false
+            showDelete: false,
+            showStatus: false,
+            tempStatus: false
         };
 
         this.likeArticle = this.likeArticle.bind(this);
@@ -30,30 +34,43 @@ class ArticleDetails extends Component {
         this.deleteArticle = this.deleteArticle.bind(this);
         this.downloadKanjisPdf = this.downloadKanjisPdf.bind(this);
         this.downloadWordsPdf = this.downloadWordsPdf.bind(this);
+        this.toggleStatus = this.toggleStatus.bind(this);
+        this.handleStatusChange = this.handleStatusChange.bind(this);
 
         this.openBookmarkModal = this.openBookmarkModal.bind(this);
         this.openPdfModal = this.openPdfModal.bind(this);
         this.openDeleteModal = this.openDeleteModal.bind(this);
+        this.openStatusModal = this.openStatusModal.bind(this);
         
         this.handleBookmarkClose = this.handleBookmarkClose.bind(this);
         this.handlePdfClose = this.handlePdfClose.bind(this);
         this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
+        this.handleStatusModalClose = this.handleStatusModalClose.bind(this);
 
         this.getUserArticleLists = this.getUserArticleLists.bind(this);
     };
 
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
   componentDidMount(){
+    this._isMounted = true;
+    if (this._isMounted) {
     let id = this.props.match.params.article_id;
     axios.get('/api/article/' + id)
       .then(res => {
-        this.setState({
-          article: res.data.article
-        });
 
-        return res.data.article;
+          let newState = Object.assign({}, this.state);
+          newState.article = res.data.article;
+          newState.tempStatus = res.data.article.status;
+
+          // this.setState( newState );
+
+          return newState;
       })
-      .then(article => {
-        if(!article)
+      .then(newState => {
+        if(!newState.article)
         {
             this.props.history.push('/articles');
         }
@@ -61,7 +78,6 @@ class ArticleDetails extends Component {
         {
           return apiCall("post", `/api/article/${id}/checklike`)
             .then(res => { 
-              let newState = Object.assign({}, this.state);
               newState.article.isLiked = res.isLiked;
               this.setState(newState);
             });
@@ -81,11 +97,36 @@ class ArticleDetails extends Component {
           }
       })
       .catch(err => {
-          console.log(err);
+         return <Redirect to='/articles' />
       });
 
       this.getUserArticleLists();
+    }
+    
   };
+
+  // Actions
+
+  getUserArticleLists(){
+    return axios.post(`/api/user/lists/contain`, {
+        elementId: this.props.match.params.article_id
+    })
+    .then(res => {
+        // console.log(res);
+        let newState = Object.assign({}, this.state);
+        newState.lists = res.data.lists.filter(list => {
+            if(list.type === 9){
+                return list;
+            }
+        })
+        // console.log(newState.lists);
+
+        this.setState( newState );
+    })
+    .catch(err => {
+        console.log(err);
+    })
+  }
 
   deleteArticle(){
     return apiCall("delete", `/api/article/${this.state.article.id}`)
@@ -95,45 +136,6 @@ class ArticleDetails extends Component {
       .catch(err => {
         console.log(err);
       });
-  }
-
-  handleBookmarkClose(){
-    this.setState({showBookmark: !this.state.showBookmark})
-  }
-
-  handlePdfClose(){
-    this.setState({showPdf: !this.state.showPdf})
-  }
-
-  getUserArticleLists(){
-    return axios.post(`/api/user/lists/contain`, {
-        elementId: this.props.match.params.article_id
-    })
-    .then(res => {
-        console.log(res);
-        let newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter(list => {
-            if(list.type === 9){
-                return list;
-            }
-        })
-        console.log(newState.lists);
-
-        this.setState( newState );
-    })
-    .catch(err => {
-        console.log(err);
-    })
-  }
-
-  openBookmarkModal(){
-      if(this.props.currentUser.isAuthenticated === false){
-          this.props.history.push('/login');
-      }
-      else {
-          this.setState({showBookmark: !this.state.showBookmark})
-          //   next decision to pick which list to add.
-      }
   }
 
   addToList(id){
@@ -162,6 +164,34 @@ class ArticleDetails extends Component {
       window.location.reload(false);
   }
 
+  likeArticle() {
+    if(!this.props.currentUser.isAuthenticated)
+    {
+      this.props.history.push('/login');
+    }
+
+    let endpoint = this.state.article.isLiked === true ? "unlike" : "like";
+    let id = this.state.article.id;
+
+    axios.post('/api/article/'+id+'/'+endpoint)
+      .then(res => {
+        let newState = Object.assign({}, this.state);
+
+        if(endpoint === "unlike"){
+            newState.article.isLiked = !newState.article.isLiked;
+            newState.article.likesTotal -= 1;
+            this.setState(newState);
+        }
+        else if (endpoint === "like"){
+            newState.article.isLiked = !newState.article.isLiked;
+            newState.article.likesTotal += 1;
+            this.setState(newState);
+        }
+      })
+      .catch(err => {
+          console.log(err);
+      })
+  };
 
   downloadKanjisPdf() {
     if(!this.props.currentUser.isAuthenticated)
@@ -223,6 +253,58 @@ class ArticleDetails extends Component {
 
   };
 
+  toggleStatus(){
+    this.handleStatusModalClose();
+    console.log("tempStatus: " + this.state.tempStatus);
+    return apiCall("post", `/api/article/${this.state.article.id}/setstatus`, {
+      status: this.state.tempStatus
+    })
+      .then( res => {
+        let newState = Object.assign({}, this.state);
+        newState.article.status = res.newStatus;
+        newState.tempStatus = res.newStatus;
+        this.setState( newState );
+      })
+      .catch( err => {
+        console.log(err);
+      })
+  }
+
+  handleStatusChange(e){
+    let tempStatus = parseInt(e.target.value);
+    let newState = Object.assign({}, this.state);
+    newState.tempStatus = tempStatus;
+    this.setState( newState );
+  }
+
+  // Modals
+
+  openStatusModal() {
+    if(this.props.currentUser.isAuthenticated === false){
+      this.props.history.push('/login');
+    }
+    else {
+        this.setState({showStatus: !this.state.showStatus})
+        //   next decision to pick which list to add.
+    }
+  }
+
+  handleStatusModalClose(){
+    console.log("handleStatusModalClose");
+    console.log(this.state.showStatus);
+    this.setState({showStatus: !this.state.showStatus})
+  }
+
+  openBookmarkModal(){
+    if(this.props.currentUser.isAuthenticated === false){
+        this.props.history.push('/login');
+    }
+    else {
+        this.setState({showBookmark: !this.state.showBookmark})
+        //   next decision to pick which list to add.
+    }
+}
+
   openPdfModal() {
     if(this.props.currentUser.isAuthenticated === false){
       this.props.history.push('/login');
@@ -250,34 +332,15 @@ class ArticleDetails extends Component {
     }
   }
 
-  likeArticle() {
-    if(!this.props.currentUser.isAuthenticated)
-    {
-      this.props.history.push('/login');
-    }
+  handleBookmarkClose(){
+    this.setState({showBookmark: !this.state.showBookmark})
+  }
 
-    let endpoint = this.state.article.isLiked === true ? "unlike" : "like";
-    let id = this.state.article.id;
+  handlePdfClose(){
+    this.setState({showPdf: !this.state.showPdf})
+  }
 
-    axios.post('/api/article/'+id+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-
-        if(endpoint === "unlike"){
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal -= 1;
-            this.setState(newState);
-        }
-        else if (endpoint === "like"){
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal += 1;
-            this.setState(newState);
-        }
-      })
-      .catch(err => {
-          console.log(err);
-      })
-  };
+  // Comments
 
   likeComment(commentId) {
     if(!this.props.currentUser.isAuthenticated)
@@ -338,9 +401,22 @@ class ArticleDetails extends Component {
 
   render() {
     
-    const { article } = this.state;
+    const { article     } = this.state;
     const { currentUser } = this.props;
     let comments = article ? article.comments : "";
+
+    let articleStatus    = "";
+    let articlePublicity = "";
+
+    if(this.state.article){
+      if     (this.state.article.status === 0) { articleStatus = "pending";   }
+      else if(this.state.article.status === 1) { articleStatus = "reviewing"; }
+      else if(this.state.article.status === 2) { articleStatus = "rejected";  }
+      else if(this.state.article.status === 3) { articleStatus = "approved";  }
+
+      if(this.state.article.publicity === 1) { articlePublicity = "public | ";  }
+      else                        { articlePublicity = "private | "; }
+    }
 
     const singleArticle = article ? (
       <div className="container">
@@ -352,11 +428,21 @@ class ArticleDetails extends Component {
                 <h1 className="mt-4">{article.title_jp}</h1>
                 <p className="text-muted"> 
                     Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
-                    <br/><span>{article.viewsTotal + 40} views</span>
-                    {currentUser.user.id === article.user_id ? (article.publicity === 1 ? " | public" : " | private" ) : ""}
+                    <br/><span>{article.viewsTotal + 40} views</span> <br/>
+                    {currentUser.user.id === article.user_id || currentUser.user.isAdmin ? articlePublicity : ""}
+                    {currentUser.user.id === article.user_id || currentUser.user.isAdmin ? articleStatus : ""}
                 </p>
                 {/* BEGIN Action icons */}
                 <ul className="brand-icons mr-1 float-right d-flex">
+                    { currentUser.user.isAdmin ? 
+                    (
+                      <li onClick={this.openStatusModal}>
+                        <button>
+                          Review
+                        </button>
+                      </li>
+                    ) : ""
+                    }
                     {currentUser.user.id === article.user_id ?
                       (
                       <li onClick={this.openDeleteModal}>
@@ -381,7 +467,7 @@ class ArticleDetails extends Component {
                 <br/>
                 <p>
                   {article.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
-                    <br/> <Link to={article.source_link}> original source</Link>
+                    <br/> <a href={article.source_link}>original source</a>
                 </p>
                 <hr/>
                 <div className="">
@@ -448,7 +534,7 @@ class ArticleDetails extends Component {
       
     return (
       <div className="container">
-        {singleArticle ? singleArticle : (
+        {this.state.article ? singleArticle : (
           <div className="container">
               <div className="row justify-content-center">
                   <img src={Spinner}/>
@@ -512,9 +598,6 @@ class ArticleDetails extends Component {
                 <Button variant="secondary" onClick={this.handleBookmarkClose}>
                     Close
                 </Button>
-                {/* <Button variant="primary" onClick={this.handleBookmarkClose}>
-                    Save Changes
-                </Button> */}
             </Modal.Footer>
           </Modal>
 
@@ -523,16 +606,13 @@ class ArticleDetails extends Component {
                 <Modal.Title>Choose List to add</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                        <button className="btn btn-outline brand-button" onClick={this.downloadKanjisPdf}> Kanji PDF </button>
-                        <button className="btn btn-outline brand-button" onClick={this.downloadWordsPdf}> Words PDF </button>
+                <button className="btn btn-outline brand-button" onClick={this.downloadKanjisPdf}> Kanji PDF </button>
+                <button className="btn btn-outline brand-button" onClick={this.downloadWordsPdf}> Words PDF </button>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={this.handlePdfClose}>
                     Close
                 </Button>
-                {/* <Button variant="primary" onClick={this.handlePdfClose}>
-                    Save Changes
-                </Button> */}
             </Modal.Footer>
           </Modal>
 
@@ -551,6 +631,30 @@ class ArticleDetails extends Component {
                 </div>
             </Modal.Footer>
           </Modal>
+
+          {article ? (
+            <Modal show={this.state.showStatus} onHide={this.handleStatusModalClose}>
+            <Modal.Header closeButton>
+                <Modal.Title>Are You Sure?</Modal.Title>
+            </Modal.Header>
+            <Modal.Footer>
+                <div className="col-12">
+                <select name="tempStatus" value={this.state.tempStatus} className="form-control form-control-sm w-75 mb-2" onChange={this.handleStatusChange}>
+                    <option value="0">Pending</option>
+                    <option value="1">Review</option>
+                    <option value="2">Reject</option>
+                    <option value="3">Approve</option>
+                </select> 
+                <Button variant="secondary" className="float-left" onClick={this.handleStatusModalClose}>
+                    Cancel
+                </Button>
+                <Button variant="success" className="float-right" onClick={this.toggleStatus}>
+                    Submit
+                </Button>
+                </div>
+            </Modal.Footer>
+          </Modal>
+          ) : ""}
       </div>
     )
   }

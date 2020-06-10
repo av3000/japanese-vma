@@ -33,12 +33,20 @@ class ArticleController extends Controller
     const LYRICS    = 10;
     const ARTISTS   = 11;
 
+    const ARTICLE_STATUS_TYPES = 
+    [
+        "pending" => 0,
+        "reviewing" => 1,
+        "rejected" => 2,
+        "approved" => 3
+    ];
+
     public function __constructor(){
 
     }
 
     public function index() {
-        $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+        $articles = Article::where('publicity', 1)->where('status', "3")->orderBy('created_at', "DESC")->paginate(3);
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $jp_month = "月";
@@ -902,22 +910,6 @@ class ArticleController extends Controller
             ]);
         }
     }
-
-    public function setStatus(Request $request, $id)
-    {
-        $article = Article::find($id);
-        $article->status = $request->get('status');
-
-        if     ($request->get('status') == 2) $status = "approved";
-        else if($request->get('status') == 1) $status = "unapproved";
-        
-        $article->update();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Article of id: '.$id. ' set to ' .$status
-        ]);
-    }
     
     #========================= Impressions
 
@@ -1275,6 +1267,53 @@ class ArticleController extends Controller
             'userId' => auth()->user()->id,
             'isLiked' => false,
             'message' => 'you havent liked the comment yet'
+        ]);
+    }
+
+    #======================== Administration
+
+    public function getArticlesPending(){
+
+        $articlesPending = Article::where("status", "0")->orderBy("created_at", "desc")->get();
+
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        foreach ($articlesPending as $article){
+            $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
+        }
+
+        return response()->json([
+            'success' => true,
+            'articlesPending' => $articlesPending
+        ]);
+    }
+
+    public function getStatus($id)
+    {
+        $articleStatus = Article::find($id)->status;
+
+        return response()->json([
+            "success" => true,
+            'articleStatus' => $articleStatus
+        ]);
+    }
+
+    public function setStatus(Request $request, $id)
+    {
+        $article = Article::find($id);
+        $article->status = $request->get('status');
+
+        if     ($request->get('status') == 3) $status = "approved";
+        else if($request->get('status') == 2) $status = "rejected";
+        else if($request->get('status') == 1) $status = "reviewing";
+        else if($request->get('status') == 0) $status = "pending";
+        
+        $article->update();
+        
+        return response()->json([
+            'success' => true,
+            'newStatus' => $request->status,
+            'message' => 'Article of id: '.$id. ' set to ' .$status
         ]);
     }
     

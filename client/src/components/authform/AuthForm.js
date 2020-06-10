@@ -17,7 +17,6 @@ class AuthForm extends Component {
         
         const authType = this.props.signUp ? "register" : "login";
         this.props.onAuth(authType, this.state).then(() => {
-            console.log("its ok: ")
 
             this.props.history.push("/");
           })

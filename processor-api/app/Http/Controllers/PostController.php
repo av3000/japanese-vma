@@ -36,7 +36,7 @@ class PostController extends Controller
 
     public function index()
     {
-        $posts = Post::paginate(5);
+        $posts = Post::orderBy("created_at", "desc")->paginate(5);
         
         $postsByTopics = [
             "Content-related" => [],
@@ -55,7 +55,7 @@ class PostController extends Controller
             $singlePost->viewsTotal    = $this->getImpression("view", $objectTemplateId, $singlePost, "total");
             $singlePost->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singlePost, 'total');
             $singlePost->hashtags      = $this->getUniquehashtags($singlePost->id, $objectTemplateId);
-            $singlePost->user = User::find($singlePost->user_id);
+            $singlePost->userName = User::find($singlePost->user_id)->name;
 
             if($singlePost->type == 1) {
                 $postsByTopics["Content-related"][] = $singlePost;
@@ -240,6 +240,35 @@ class PostController extends Controller
         $jp_year = "年";
         foreach($posts as $singlePost)
         {
+            $user = User::find($singlePost->user_id);
+            $singlePost->userName = $user->name;
+            $singlePost->userId = $user->id;
+
+            if($singlePost->type == 1) {
+                $postsByTopics["Content-related"][] = $singlePost;
+                $singlePost->postType = "Content-related";
+            }
+            else if ($singlePost->type == 2) {
+                $postsByTopics["Off-topic"][] = $singlePost;
+                $singlePost->postType = "Off-topic";
+            }
+            else if ($singlePost->type == 3) {
+                $postsByTopics["FAQ"][] = $singlePost;
+                $singlePost->postType = "FAQ";
+            }
+            else if ($singlePost->type == 4) {
+                $postsByTopics["Technical"][] = $singlePost;
+                $singlePost->postType = "Technical";
+            }
+            else if ($singlePost->type == 5) {
+                $postsByTopics["Bug"][] = $singlePost;
+                $singlePost->postType = "Bug";
+            }
+            else if ($singlePost->type == 6) {
+                $postsByTopics["Announcement"][] = $singlePost;
+                $singlePost->postType = "Announcement";
+            }
+
             $singlePost->jp_year   = $singlePost->created_at->year   . $jp_year;
             $singlePost->jp_month  = $singlePost->created_at->month  . $jp_month;
             $singlePost->jp_day    = $singlePost->created_at->day    . $jp_day;
@@ -256,58 +285,27 @@ class PostController extends Controller
     }
 
     public function generateQuery(Request $request) {
-        $q = "";
-        if(isset( $request->title )){
-            $request->title = trim($request->title);
-            $singleTag = explode(' ',trim($request->title))[0];
+        $posts = new Post;
 
-            $search = '#';
-            if(preg_match("/{$search}/i", $singleTag)) {
-            // if( strpos($request->title, "#") === true){
-
-                $posts = $this->getUniquehashtagPosts($singleTag);
-                $q .= $singleTag;
-            }
-            else {
-                $posts = Post::whereLike(['title', 'content'], $request->title);
-                $q .= $request->title;
-            }
-        } 
-
-        //if search has search fields, return posts of requested fields
-        if(isset( $posts )) {
-            $posts = $posts->paginate(3);
-
-            // add impressions
-            $posts = $this->getPostImpressionsSearch($posts);
-
-            return response()->json([
-                'success' => true,
-                'articles' => $posts,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default posts
-        if( $q == "")
+        if(isset( $request->keyword ))
         {
-            $posts = Post::paginate(3);
-
-            // add impressions
-            $posts = $this->getPostImpressionsSearch($posts);
-
-             return response()->json([
-                'success' => true,
-                'posts' => $posts,
-                'q' => $q
-            ]);
+            $posts = Post::whereLike(['title', 'content'], $request->keyword);
         }
+        if(isset( $request->tags )){
+            $singleTag = explode(' ',trim($request->tags))[0];
+            $posts = $this->getUniquehashtagPosts($singleTag);
+        }
+        if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
+            $posts = $posts->where('type', $request->filterType);
+        }
+
+        $posts = $posts->paginate(4);
+
+        $posts = $this->getPostImpressionsSearch($posts);
         
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero posts',
-            'q' => $q
+            'success' => true,
+            'posts' => $posts
         ]);
     }
 
@@ -399,7 +397,8 @@ class PostController extends Controller
             $post->update();
             return response()->json([
                 'success' => true,
-                'message' => 'Post of id: '.$id. ' was unlocked'
+                'message' => 'Post of id: '.$id. ' was unlocked',
+                'locked' => $post->locked
             ]);
         }
         else {
@@ -407,7 +406,8 @@ class PostController extends Controller
             $post->update();
             return response()->json([
                 'success' => true,
-                'message' => 'Post of id: '.$id. ' was locked'
+                'message' => 'Post of id: '.$id. ' was locked',
+                'locked' => $post->locked
             ]);
         }
     }

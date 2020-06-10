@@ -23,12 +23,38 @@ export class PostList extends Component {
         this.loadSearchMore = this.loadSearchMore.bind(this);
         this.fetchQuery = this.fetchQuery.bind(this);
         this.fetchMoreQuery = this.fetchMoreQuery.bind(this);
+        this.clearSearch = this.clearSearch.bind(this);
     };
 
     componentDidMount() {
         this._isMounted = true;
         this.fetchPosts(this.state.url);
     };
+
+    clearSearch(){
+        return apiCall("get", "/api/posts")
+        .then(res => {
+            if (this._isMounted) {
+                // console.log(res);
+                let newState = Object.assign({}, this.state);
+                newState.paginateObject = res.posts;
+                newState.posts = res.posts.data;
+                newState.url = res.posts.next_page_url;
+
+                newState.searchHeading = "";
+                newState.searchTotal = "results total: '" + res.posts.total + "'";
+
+                return newState;
+            }
+        })
+        .then(newState => {
+            newState.pagination = this.makePagination(newState.paginateObject);
+            this.setState( newState );
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
 
     componentWillUnmount() {
         this._isMounted = false;
@@ -38,7 +64,7 @@ export class PostList extends Component {
         return apiCall("get", givenUrl)
             .then(res => {
                 if (this._isMounted) {
-                    console.log(res);
+                    // console.log(res);
                     let newState = Object.assign({}, this.state);
                     newState.paginateObject = res.posts;
                     newState.posts = [...newState.posts, ...res.posts.data];
@@ -65,11 +91,20 @@ export class PostList extends Component {
         .then(res => {
             if(res.success === true)
             {
+                console.log(res);
                 newState.paginateObject = res.posts;
-                newState.posts       = res.posts.data ? res.posts.data : newState.posts;
+                newState.posts          = res.posts.data ? res.posts.data : newState.posts;
                 newState.url            = res.posts.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+                if(queryParams.keyword){
+                    newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                } else if (queryParams.tags){
+                    newState.searchHeading = "Requested query: '" + newState.filters.tags +"'";
+                }
+                else {
+                    newState.searchHeading = "";
+                }
+
                 newState.searchTotal = "Results total: '" + res.posts.total +"'";
                 return newState;
             }
@@ -143,7 +178,6 @@ export class PostList extends Component {
                     id={w.id}
                     title={w.title}
                     date={w.created_at}
-                    content={w.content}
                     type={w.type}
                     locked={w.locked}
                     userId={w.user_id}
@@ -152,9 +186,9 @@ export class PostList extends Component {
                     viewsTotal={w.viewsTotal}
                     downloadsTotal={w.downloadsTotal}
                     hashtags={w.hashtags.slice(0, 3)}
-                    user={w.user}
+                    userName={w.userName}
                     postType={w.postType}
-                    // currentUser={this.props.currentUser}
+                    isLocked={w.locked}
                 />
             );
                 
@@ -167,7 +201,7 @@ export class PostList extends Component {
         );
 
         return (
-            <div className="container mt-5">
+            <div className="container mt-3">
                 <div className="row justify-content-center">
                     <SearchBar fetchQuery={this.fetchQuery} />
                     {/* by tag */}
@@ -175,13 +209,16 @@ export class PostList extends Component {
                     {/* by newest/popular */}
                 </div>
                 <div className="mt-5">
-                    <div className="row justify-content-center">
+                    <div className="col-10">
                     {this.state.searchHeading ? (
+                        <React.Fragment>
+                        <button onClick={this.clearSearch} className="btn btn-link"><i className="fas fa-eraser"></i> clear search</button><br/>
                         <h4>
                             {this.state.searchHeading}
                         </h4> 
+                        </React.Fragment>
                         )
-                        : ""
+                        : ("")
                     }  
                     &nbsp;
                     {this.state.searchTotal ? (
@@ -193,7 +230,7 @@ export class PostList extends Component {
                     }
                     </div>
                     <div className="my-3 p-3 bg-white rounded box-shadow">
-                        <h6 className="border-bottom border-gray pb-2 mb-0">Newest Topics</h6>
+                        <h5 className="border-bottom border-gray pb-2 mb-0">Newest Topics</h5>
                         <div className="col-lg-12 col-md-10 mx-auto">
                             {postList}
                         </div>

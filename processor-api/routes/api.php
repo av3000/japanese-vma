@@ -88,6 +88,7 @@ Route::group([
 		Route::post('post/{id}/like', 'PostController@likePost');
 		Route::post('post/{id}/unlike', 'PostController@unlikePost');
 		Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
+		Route::post('post/{id}/toggleLock', 'PostController@toggleLock');
 		// Posts Comment
 		Route::post('post/{id}/comment', 'PostController@storeComment');
 		Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
@@ -100,6 +101,8 @@ Route::group([
 			'middleware'=> 'checkRole:admin'
 			], function() {
 				Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
+				Route::get('article/{id}/getstatus', 'ArticleController@getStatus');
+				Route::get('articles/pendinglist', 'ArticleController@getArticlesPending');
 				Route::post('post/{id}/togglelock', 'PostController@toggleLock');
 			}
 		);
