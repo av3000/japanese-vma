@@ -1184,7 +1184,7 @@ class CustomListController extends Controller
 
         if(isset($comment))
         {
-            $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
             $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
  
             $comment->delete();
@@ -1192,6 +1192,21 @@ class CustomListController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "comment was deleted",
+            ]);
+        }
+        else if( !isset($comment) && auth()->user()->hasRole("admin") == true ){
+            $comment = Comment::where([
+                'id' => $commentid
+            ])->first();
+
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+ 
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted by admin",
             ]);
         }
         else {

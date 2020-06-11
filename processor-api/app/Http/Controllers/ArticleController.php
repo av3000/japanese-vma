@@ -316,7 +316,7 @@ class ArticleController extends Controller
         }   
         $article = Article::find($id);
 
-        if( !$article || $article->user_id != auth()->user()->id ){
+        if( !$article || $article->user_id != auth()->user()->id && auth()->user()->hasRole("admin") == false){
             return response()->json([
                 'success' => false,
                 'message' => 'article doesnt exist or does not belong to the user'
@@ -1071,6 +1071,21 @@ class ArticleController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "comment was deleted",
+            ]);
+        }
+        else if( !isset($comment) && auth()->user()->hasRole("admin") == true ){
+            $comment = Comment::where([
+                'id' => $commentid
+            ])->first();
+
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+ 
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted by admin",
             ]);
         }
         else {

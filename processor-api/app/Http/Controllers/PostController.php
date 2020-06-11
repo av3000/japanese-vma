@@ -211,7 +211,7 @@ class PostController extends Controller
         }   
         $post = Post::find($id);
 
-        if( !$post || $post->user_id != auth()->user()->id ){
+        if( !$post || $post->user_id != auth()->user()->id && auth()->user()->hasRole("admin") == false ){
             return response()->json([
                 'success' => false,
                 'message' => 'post doesnt exist or does not belong to the user'
@@ -469,7 +469,7 @@ class PostController extends Controller
 
         if(isset($comment))
         {
-            $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
             $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
  
             $comment->delete();
@@ -477,6 +477,21 @@ class PostController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "comment was deleted",
+            ]);
+        }
+        else if( !isset($comment) && auth()->user()->hasRole("admin") == true ){
+            $comment = Comment::where([
+                'id' => $commentid
+            ])->first();
+
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+ 
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted by admin",
             ]);
         }
         else {

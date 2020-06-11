@@ -200,6 +200,21 @@ class JapaneseDataController extends Controller
                 'message' => "comment was deleted",
             ]);
         }
+        else if( !isset($comment) && auth()->user()->hasRole("admin") == true ){
+            $comment = Comment::where([
+                'id' => $commentid
+            ])->first();
+
+            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
+            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+ 
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "comment was deleted by admin",
+            ]);
+        }
         else {
             return response()->json([
                 'success' => false,
@@ -301,8 +316,8 @@ class JapaneseDataController extends Controller
 
     public function generateSentencesQuery(Request $request) {
         $q = "";
-        if(isset( $request->title )){
-            $query = explode(' ',trim($request->title))[0];
+        if(isset( $request->keyword )){
+            $query = explode(' ',trim($request->keyword))[0];
 
             $sentences = Sentence::whereLike(['content'], $query);
             
@@ -341,15 +356,25 @@ class JapaneseDataController extends Controller
     
     }
 
+    public function contains($needle, $haystack)
+    {
+        return strpos($haystack, $needle) !== false;
+    }
+
     public function generateWordsQuery(Request $request) {
         $q = "";
-        if(isset( $request->title )){
-            $query = explode(' ',trim($request->title))[0];
+        $words = new Word;
+        if(isset( $request->keyword )){
+            $query = explode(' ',trim($request->keyword))[0];
 
             $words = Word::whereLike(['word', 'furigana'], $query);
             
             $q .= $query;
         } 
+
+        if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
+            $words = $words->where('word_type', 'LIKE', '%'.$request->filterType.'%');
+        }
 
         //if search has search fields, return words of requested fields
         if(isset( $words )) {
@@ -387,12 +412,17 @@ class JapaneseDataController extends Controller
 
     public function generateKanjisQuery(Request $request) {
         $q = "";
-        if(isset( $request->title )){
-            $query = explode(' ',trim($request->title))[0];
+        $kanjis = new Kanji;
+        if(isset( $request->keyword )){
+            $query = explode(' ',trim($request->keyword))[0];
 
             $kanjis = Kanji::whereLike(['kanji', 'meaning'], $query);
             $q .= $query;
         } 
+
+        if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
+            $kanjis = $kanjis->where('jlpt', $request->filterType);
+        }
 
         //if search has search fields, return kanjis of requested fields
         if(isset( $kanjis )) {
@@ -428,8 +458,8 @@ class JapaneseDataController extends Controller
 
     public function generateRadicalsQuery(Request $request) {
         $q = "";
-        if(isset( $request->title )){
-            $query = explode(' ',trim($request->title))[0];
+        if(isset( $request->keyword )){
+            $query = explode(' ',trim($request->keyword))[0];
 
             $radicals = Radical::whereLike(['radical', 'meaning', 'hiragana'], $query);
             $q .= $query;

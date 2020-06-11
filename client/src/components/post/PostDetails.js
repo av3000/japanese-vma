@@ -227,7 +227,7 @@ class PostDetails extends Component {
                     <br/>{post.viewsTotal + 40} views &nbsp;
                 </p>
                 <ul className="brand-icons mr-1 d-flex">
-                    {currentUser.user.id === post.user_id ?
+                    {currentUser.user.id === post.user_id || currentUser.user.isAdmin ?
                       (
                       <li onClick={this.openDeleteModal}>
                         <button> 

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { apiCall } from '../services/api';
 import RadicalItem from '../components/radical/RadicalItem';
 import Spinner from '../assets/images/spinner.gif';
-import SearchBar from '../components/search/Searchbar';
+import SearchBarRadicals from '../components/search/SearchBarRadicals';
 
 
 export class RadicalList extends Component {
@@ -60,7 +60,7 @@ export class RadicalList extends Component {
                 newState.radicals       = res.radicals.data ? res.radicals.data : newState.radicals;
                 newState.url            = res.radicals.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
                 newState.searchTotal = "Results total: '" + res.radicals.total +"'";
                 return newState;
             }
@@ -72,7 +72,7 @@ export class RadicalList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.title;
+            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -88,7 +88,7 @@ export class RadicalList extends Component {
             newState.radicals       = [...newState.radicals, ...res.radicals.data];
             newState.url            = res.radicals.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.radicals.total +"'";
 
             return newState;
@@ -152,9 +152,9 @@ export class RadicalList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    <SearchBarRadicals fetchQuery={this.fetchQuery} />
                     {/* by tag */}
-                    {/* by title keyword */}
+                    {/* by keyword keyword */}
                     {/* by newest/popular */}
                 </div>
                 <div className="container mt-5">

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { apiCall } from '../services/api';
 import KanjiItem from '../components/kanji/KanjiItem';
 import Spinner from '../assets/images/spinner.gif';
-import SearchBar from '../components/search/Searchbar';
+import SearchBarKanjis from '../components/search/SearchBarKanjis';
 
 
 export class KanjiList extends Component {
@@ -60,7 +60,7 @@ export class KanjiList extends Component {
                 newState.kanjis       = res.kanjis.data ? res.kanjis.data : newState.kanjis;
                 newState.url            = res.kanjis.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
                 newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
                 return newState;
             }
@@ -72,7 +72,7 @@ export class KanjiList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.title;
+            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -88,7 +88,7 @@ export class KanjiList extends Component {
             newState.kanjis         = [...newState.kanjis, ...res.kanjis.data];
             newState.url            = res.kanjis.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
 
             return newState;
@@ -172,7 +172,7 @@ export class KanjiList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    <SearchBarKanjis fetchQuery={this.fetchQuery} />
                     {/* by tag */}
                     {/* by title keyword */}
                     {/* by newest/popular */}

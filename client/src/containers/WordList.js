@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { apiCall } from '../services/api';
 import WordItem from '../components/word/WordItem';
 import Spinner from '../assets/images/spinner.gif';
-import SearchBar from '../components/search/Searchbar';
+import SearchBarWords from '../components/search/SearchBarWords';
 
 
 export class WordList extends Component {
@@ -61,7 +61,7 @@ export class WordList extends Component {
                 newState.words       = res.words.data ? res.words.data : newState.words;
                 newState.url            = res.words.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
                 newState.searchTotal = "Results total: '" + res.words.total +"'";
                 return newState;
             }
@@ -73,7 +73,7 @@ export class WordList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.title;
+            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -89,7 +89,7 @@ export class WordList extends Component {
             newState.words         = [...newState.words, ...res.words.data];
             newState.url            = res.words.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.words.total +"'";
 
             return newState;
@@ -162,9 +162,9 @@ export class WordList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    <SearchBarWords fetchQuery={this.fetchQuery} />
                     {/* by tag */}
-                    {/* by title keyword */}
+                    {/* by keyword keyword */}
                     {/* by newest/popular */}
                 </div>
                 <div className="container mt-5">

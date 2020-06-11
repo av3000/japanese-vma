@@ -10,7 +10,7 @@ const Comment = ({ comment, editComment, deleteComment, likeComment, currentUser
             <div>
                 <h5>@{comment.userName}</h5>
                 <span className="mr-1 float-right d-flex text-muted comment-like">
-                    {currentUser.user.id === comment.user_id ? (
+                    {currentUser.user.id === comment.user_id || currentUser.user.isAdmin ? (
                           <i className="far fa-trash-alt fa-lg" onClick={deleteComment}></i>
                         ) : ""}
                 </span>

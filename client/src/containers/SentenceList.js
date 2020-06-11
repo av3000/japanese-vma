@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { apiCall } from '../services/api';
 import SentenceItem from '../components/sentence/SentenceItem';
 import Spinner from '../assets/images/spinner.gif';
-import SearchBar from '../components/search/Searchbar';
+import SearchBarSentences from '../components/search/SearchBarSentences';
 
 
 export class SentenceList extends Component {
@@ -61,7 +61,7 @@ export class SentenceList extends Component {
                 newState.sentences       = res.sentences.data ? res.sentences.data : newState.sentences;
                 newState.url             = res.sentences.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
                 newState.searchTotal = "Results total: '" + res.sentences.total +"'";
                 return newState;
             }
@@ -73,7 +73,7 @@ export class SentenceList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.title;
+            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -89,7 +89,7 @@ export class SentenceList extends Component {
             newState.sentences         = [...newState.sentences, ...res.sentences.data];
             newState.url            = res.sentences.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.title +"'";
+            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.sentences.total +"'";
 
             return newState;
@@ -153,9 +153,9 @@ export class SentenceList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    <SearchBarSentences fetchQuery={this.fetchQuery} />
                     {/* by tag */}
-                    {/* by title keyword */}
+                    {/* by keyword keyword */}
                     {/* by newest/popular */}
                 </div>
                 <div className="container mt-5">
