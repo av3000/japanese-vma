@@ -26,14 +26,11 @@ class TopNavigationBar extends Component {
 
     render(){
         return(
-           
             <Navbar  expand="lg">
             <Navbar.Brand as={Link} to="/">JPLearning</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="nav navbar-nav navbar-right mx-auto">
-                <Nav.Link as={Link} to="/community">Community</Nav.Link>
-                <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                 <NavDropdown title="Readings" id="basic-nav-dropdown">
                     <Dropdown.Item as={Link} to="/articles">Articles</Dropdown.Item>
                     <Dropdown.Item as={Link} to="/lists">Lists</Dropdown.Item>
@@ -44,6 +41,8 @@ class TopNavigationBar extends Component {
                     <Dropdown.Item as={Link} to="/words">Words</Dropdown.Item>
                     <Dropdown.Item as={Link} to="/sentences">Sentences</Dropdown.Item>
                 </NavDropdown>
+                <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+                <Nav.Link as={Link} to="/community">Community</Nav.Link>
                 <NavDropdown title="New" id="basic-nav-dropdown">
                     <Dropdown.Item as={Link} to="/newarticle">Article</Dropdown.Item>
                     <Dropdown.Item as={Link} to="/newlist">List</Dropdown.Item>
@@ -52,6 +51,13 @@ class TopNavigationBar extends Component {
                 </NavDropdown>
                 </Nav>
                 { this.props.currentUser.isAuthenticated ? (
+                    <Nav>
+                        <NavLink className="nav-link mr-3" to="/dashboard">
+                            Logged as <strong> {this.props.currentUser.user.name} </strong>
+                        </NavLink>
+                    </Nav>
+                ) : ("") }
+                { this.props.currentUser.isAuthenticated ? ( 
                         <i onClick={this.logout} className="fas fa-sign-out-alt">Logout</i>
                     ) : (
                 <Nav>

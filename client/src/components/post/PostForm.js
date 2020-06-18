@@ -79,7 +79,7 @@ class PostForm extends Component {
     return (
         <div className="container">
             <div className="row justify-content-lg-center text-center">
-                <form onSubmit={this.handleNewPost} className="article-new-form">
+                <form onSubmit={this.handleNewPost} className="col-12">
                 {this.props.errors.message && (
                     <div className="alert alert-danger">{this.props.errors.message}</div>
                 )}

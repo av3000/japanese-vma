@@ -137,9 +137,36 @@ class CustomListController extends Controller
             $comment->userName = User::find($comment->user_id)->name;
         }
 
+        if($list->type == 1) {
+            $list->listType = "Known Radicals";
+        }
+        else if ($list->type == 2) {
+            $list->listType = "Known Kanjis";
+        }
+        else if ($list->type == 3) {
+            $list->listType = "Known Words";
+        }
+        else if ($list->type == 4) {
+            $list->listType = "Known Sentences";
+        }
+        else if ($list->type == 5) {
+            $list->listType = "Radicals";
+        }
+        else if ($list->type == 6) {
+            $list->listType = "Kanjis";
+        }
+        else if ($list->type == 7) {
+            $list->listType = "Words";
+        }
+        else if ($list->type == 8) {
+            $list->listType = "Sentences";
+        }
+        else if ($list->type == 9) {
+            $list->listType = "Articles";
+        }
+
         $list->commentsTotal  = count($list->comments);
         $list->userName = User::find($list->user_id)->name;
-
 
         return response()->json([
             'success' => true,
@@ -283,6 +310,7 @@ class CustomListController extends Controller
             else if($kanji->jlpt == "3") { $list->n3 = intval($list->n3) + 1; }
             else if($kanji->jlpt == "4") { $list->n4 = intval($list->n4) + 1; }
             else if($kanji->jlpt == "5") { $list->n5 = intval($list->n5) + 1; }
+            else { $kanji->uncommon = intval($kanji->uncommon) + 1; }
         }
         else if( $method == "remove"){
             if     ($kanji->jlpt == "1") { $list->n1 = intval($list->n1) - 1; }
@@ -290,6 +318,7 @@ class CustomListController extends Controller
             else if($kanji->jlpt == "3") { $list->n3 = intval($list->n3) - 1; }
             else if($kanji->jlpt == "4") { $list->n4 = intval($list->n4) - 1; }
             else if($kanji->jlpt == "5") { $list->n5 = intval($list->n5) - 1; }
+            else { $kanji->uncommon = intval($kanji->uncommon) - 1; }
         }
     }
 

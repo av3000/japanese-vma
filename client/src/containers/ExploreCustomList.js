@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 // import { fetchLists } from '../store/actions/lists';
 import { apiCall } from '../services/api';
 import ExploreListItem from '../components/list/ExploreListItem';
@@ -56,7 +56,8 @@ class ExploreCustomList extends Component {
             <ExploreListItem
                 key={l.id}
                 id={l.id}
-                listType={listTypes[l.type]}
+                type={l.type}
+                listType={listTypes[l.type-1]}
                 created_at={l.created_at}
                 title={l.title}
                 commentsTotal={l.commentsTotal}

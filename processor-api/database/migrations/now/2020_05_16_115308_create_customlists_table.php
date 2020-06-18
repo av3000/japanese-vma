@@ -24,6 +24,7 @@ class CreateCustomlistsTable extends Migration
             $table->integer("n3")->default(0);
             $table->integer("n4")->default(0);
             $table->integer("n5")->default(0);
+            $table->integer("uncommon")->default(0);
             $table->charset = 'utf8mb4';
             $table->collation = 'utf8mb4_general_ci';
             $table->timestamps();

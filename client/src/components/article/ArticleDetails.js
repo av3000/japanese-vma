@@ -9,7 +9,7 @@ import Spinner from '../../assets/images/spinner.gif';
 import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from '../comment/CommentList';
 import CommentForm from '../comment/CommentForm';
-import { Button, Modal, Dropdown, DropdownButton } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 
 class ArticleDetails extends Component {
    _isMounted = false;
@@ -57,14 +57,44 @@ class ArticleDetails extends Component {
   componentDidMount(){
     this._isMounted = true;
     if (this._isMounted) {
-    let id = this.props.match.params.article_id;
+      let id = this.props.match.params.article_id;
+      console.log(this.props);
+      if(this.props.currentUser && this.props.currentUser.isAuthenticated) 
+      {
+        console.log("yes");
+        this.getArticleWithAuth(id);
+      }
+      else {
+        console.log("no");
+        this.getArticleWithoutAuth(id);
+      }
+    }
+
+    console.log("mounted:");
+    // console.log(this.props);
+  };
+
+  componentWillReceiveProps(nextProps) {
+    // console.log("this.props");
+    // console.log(this.props);
+    // console.log("nextProps");
+    // console.log(nextProps);
+    // console.log("no")
+
+    if(nextProps.currentUser.isAuthenticated){
+        console.log("yes from props")
+        this.getUserArticleLists();
+    }
+}
+
+  getArticleWithAuth(id){
     axios.get('/api/article/' + id)
       .then(res => {
 
           let newState = Object.assign({}, this.state);
           newState.article = res.data.article;
           newState.tempStatus = res.data.article.status;
-
+          console.log(res.data);
           // this.setState( newState );
 
           return newState;
@@ -88,38 +118,50 @@ class ArticleDetails extends Component {
           if(this.props.currentUser.isAuthenticated)
           {
             newState.article.comments.map(comment => {
-              let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
-              if(temp) { comment.isLiked = true}
-              else { comment.isLiked = false}
-          })
+                let temp = comment.likes.find(like => like.user_id === this.props.currentUser.user.id)
+                if(temp) { comment.isLiked = true}
+                else { comment.isLiked = false}
+            })
 
-          this.setState(newState);
+           this.setState(newState);
           }
       })
       .catch(err => {
          return <Redirect to='/articles' />
       });
 
-      this.getUserArticleLists();
-    }
-    
-  };
+  }
+
+  getArticleWithoutAuth(id){
+    axios.get('/api/article/' + id)
+      .then(res => {
+          let newState = Object.assign({}, this.state);
+          newState.article = res.data.article;
+          newState.tempStatus = res.data.article.status;
+          console.log(res.data);
+          this.setState( newState );
+      })
+      .catch(err => {
+         return <Redirect to='/articles' />
+      });
+  }
 
   // Actions
 
   getUserArticleLists(){
+    console.log("getUserArticleLists");
     return axios.post(`/api/user/lists/contain`, {
         elementId: this.props.match.params.article_id
     })
     .then(res => {
-        // console.log(res);
+        console.log(res);
         let newState = Object.assign({}, this.state);
         newState.lists = res.data.lists.filter(list => {
             if(list.type === 9){
                 return list;
             }
         })
-        // console.log(newState.lists);
+        console.log(newState.lists);
 
         this.setState( newState );
     })
@@ -169,28 +211,30 @@ class ArticleDetails extends Component {
     {
       this.props.history.push('/login');
     }
+    else {
 
     let endpoint = this.state.article.isLiked === true ? "unlike" : "like";
     let id = this.state.article.id;
 
-    axios.post('/api/article/'+id+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
+      axios.post('/api/article/'+id+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
 
-        if(endpoint === "unlike"){
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal -= 1;
-            this.setState(newState);
-        }
-        else if (endpoint === "like"){
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal += 1;
-            this.setState(newState);
-        }
-      })
-      .catch(err => {
-          console.log(err);
-      })
+          if(endpoint === "unlike"){
+              newState.article.isLiked = !newState.article.isLiked;
+              newState.article.likesTotal -= 1;
+              this.setState(newState);
+          }
+          else if (endpoint === "like"){
+              newState.article.isLiked = !newState.article.isLiked;
+              newState.article.likesTotal += 1;
+              this.setState(newState);
+          }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
   };
 
   downloadKanjisPdf() {
@@ -347,29 +391,30 @@ class ArticleDetails extends Component {
     {
       this.props.history.push('/login');
     }
+    else {
+      let theComment = this.state.article.comments.find(comment => comment.id === commentId)
 
-    let theComment = this.state.article.comments.find(comment => comment.id === commentId)
+      let endpoint = theComment.isLiked === true ? "unlike" : "like";
 
-    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      axios.post('/api/article/'+this.state.article.id+'/comment/'+commentId+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
+          let index = this.state.article.comments.findIndex(comment => comment.id === commentId)
+          newState.article.comments[index].isLiked = !newState.article.comments[index].isLiked
+          
+          if(endpoint === "unlike"){
+              newState.article.comments[index].likesTotal -= 1;
+          }
+          else if (endpoint === "like"){
+            newState.article.comments[index].likesTotal += 1;
+          }
 
-    axios.post('/api/article/'+this.state.article.id+'/comment/'+commentId+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-        let index = this.state.article.comments.findIndex(comment => comment.id === commentId)
-        newState.article.comments[index].isLiked = !newState.article.comments[index].isLiked
-        
-        if(endpoint === "unlike"){
-            newState.article.comments[index].likesTotal -= 1;
-        }
-        else if (endpoint === "like"){
-          newState.article.comments[index].likesTotal += 1;
-        }
-
-        this.setState(newState);
-      })
-      .catch(err => {
-          console.log(err);
-      })
+          this.setState(newState);
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
 
   }
 
@@ -415,7 +460,7 @@ class ArticleDetails extends Component {
       else if(this.state.article.status === 3) { articleStatus = "approved";  }
 
       if(this.state.article.publicity === 1) { articlePublicity = "public | ";  }
-      else                        { articlePublicity = "private | "; }
+      else                                   { articlePublicity = "private | "; }
     }
 
     const singleArticle = article ? (
@@ -467,7 +512,7 @@ class ArticleDetails extends Component {
                 <br/>
                 <p>
                   {article.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
-                    <br/> <a href={article.source_link}>original source</a>
+                    <br/> <a href={article.source_link} target="_blank">original source</a>
                 </p>
                 <hr/>
                 <div className="">
@@ -517,8 +562,8 @@ class ArticleDetails extends Component {
       </div>
     ) : "";
 
-    // Model for radical addint to lists
-    let addModal = this.state.lists ? (this.state.lists.map(list => {
+    // Model for Bookmark adding to lists
+    let addModal = this.props.currentUser.isAuthenticated && this.state.lists ? (this.state.lists.map(list => {
       return (
           <div key={list.id}>
               <div className="col-9"> <Link to={`/list/${list.id}`}>{list.title}</Link>
@@ -537,7 +582,7 @@ class ArticleDetails extends Component {
         {this.state.article ? singleArticle : (
           <div className="container">
               <div className="row justify-content-center">
-                  <img src={Spinner}/>
+                  <img src={Spinner} alt="spinner"/>
               </div>
           </div>
         )}
@@ -579,7 +624,7 @@ class ArticleDetails extends Component {
                     />) : (
                       <div className="container">
                         <div className="row justify-content-center">
-                            <img src={Spinner}/>
+                            <img src={Spinner} alt="spinner"/>
                         </div>
                     </div>
                     )}

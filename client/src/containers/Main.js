@@ -3,6 +3,7 @@ import { Switch, Route, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { authUser } from '../store/actions/auth';
 import { removeError} from '../store/actions/errors';
+import PrivateRoute from '../helpers/PrivateRoute';
 import AuthForm from '../components/authform/AuthForm';
 import PageNotFound from '../components/errors/PageNotFound';
 // Landing
@@ -70,19 +71,12 @@ const Main = props => {
                     )
                 }}/>
                 {/* Articles */}
-                <Route
+                <PrivateRoute
                     exact path="/newarticle"
-                    render={ props => {
-                        return (
-                            <ArticleForm
-                                removeError={removeError}
-                                errors={errors}
-                                {...props} 
-                            />
-                        )
-                    }}
+                    currentUser={currentUser}
+                    component={ArticleForm}
                 />
-                <Route exact path="/article/edit/:article_id" component={ArticleEdit} />
+                <PrivateRoute exact path="/article/edit/:article_id" component={ArticleEdit} currentUser={currentUser}/>
                 <Route exact path="/articles" render={props =>{
                     return (
                         <ArticleTimeline
@@ -99,19 +93,16 @@ const Main = props => {
                     )
                 }} />
                 {/* Custom Lists */}
-                <Route
+                <PrivateRoute
                     exact path="/newlist"
-                    render={ props => {
-                        return (
-                            <ListForm
-                                removeError={removeError}
-                                errors={errors}
-                                {...props} 
-                            />
-                        )
+                    currentUser={currentUser}
+                    component={ListForm}
+                    componentProps={{
+                        removeError: removeError,
+                        errors: errors
                     }}
                 />
-                <Route exact path="/list/edit/:list_id" component={ListEdit} />
+                <PrivateRoute exact path="/list/edit/:list_id" component={ListEdit} currentUser={currentUser} />
                 <Route exact path="/lists" render={props =>{
                     return (
                         <ListTimeline
@@ -207,28 +198,18 @@ const Main = props => {
                         />
                     )
                 }} />
-                <Route exact path="/community/edit/:post_id" component={PostEdit} />
-                <Route
+                <PrivateRoute exact path="/community/edit/:post_id" component={PostEdit} currentUser={currentUser} />
+                <PrivateRoute
                     exact path="/newpost"
-                    render={ props => {
-                        return (
-                            <PostForm
-                                removeError={removeError}
-                                errors={errors}
-                                {...props} 
-                            />
-                        )
+                    currentUser={currentUser}
+                    component={PostForm}
+                    componentProps={{
+                        removeError: removeError,
+                        errors: errors
                     }}
                 />
                 {/* Dashboard */}
-                <Route exact path="/dashboard" render={props =>{
-                    return (
-                        <DashboardTimeline
-                            currentUser={currentUser}
-                            {...props}
-                        />
-                    )
-                }}/>
+                <PrivateRoute exact path="/dashboard" currentUser={currentUser} component={DashboardTimeline} />
 
                 {/* Not found component */}
                 <Route component={PageNotFound} />

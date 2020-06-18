@@ -6,7 +6,6 @@ import './ArticleItem.css';
 
 const ArticleItem = ({ 
     id,
-    created_at,
     jp_year,
     jp_month,
     jp_day,
@@ -15,14 +14,19 @@ const ArticleItem = ({
     commentsTotal, 
     viewsTotal, 
     likesTotal, 
-    downloadsTotal,
-    hashtags
+    hashtags,
+    n1,
+    n2,
+    n3,
+    n4,
+    n5,
+    uncommon
 }) => (
     <div className="col-lg-4 col-md-6 col-sm-8">
         <div className="card mb-4 shadow-sm">
             <Link to={'/article/' + id}>
             <img src={DefaultArticleImg}
-                alt="article-image"
+                alt="article-logo"
                 height="225" width="100%"
                 className="timelines-image hover"     
             />
@@ -39,27 +43,30 @@ const ArticleItem = ({
                     {jp_year} {jp_month} {jp_day} {jp_hour}
                 </p>
                 <p className="text-muted">
-                    {viewsTotal+30} views &nbsp;
+                    {viewsTotal} views &nbsp;
                     {commentsTotal} comments&nbsp;
                     {likesTotal} likes
                 </p>
                 <hr/>
                 <div className="d-flex justify-content-between align-items-center text-muted">
-                        <span>
-                         {commentsTotal}&nbsp;N1 
-                        </span>
-                        <span>
-                         {viewsTotal}&nbsp;N2
-                        </span>
-                        <span>
-                         {likesTotal}&nbsp;N3
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N4
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N5
-                        </span>
+                        <ruby className="h4 mr-2">
+                            {n1}<rp>(</rp><rt>N1</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n2}<rp>(</rp><rt>N2</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n3}<rp>(</rp><rt>N3</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n4}<rp>(</rp><rt>N4</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n5}<rp>(</rp><rt>N5</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {uncommon}<rp>(</rp><rt>NA</rt><rp>)</rp>
+                        </ruby>
                 </div>
                 
             </div>

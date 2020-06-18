@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React from 'react'
 import ListsList from '../../containers/ListsList';
 
 const ListTimeline = props => {

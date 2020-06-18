@@ -6,7 +6,7 @@
 
 @section("links")
     <div class="col-md-6">
-        <a class="text-primary float-left" href="{{ url('article/'.$article_id) }}">www.jplearning.online/article/{{$article_id}}</a>
+        <a class="text-primary float-left" href="{{ 'localhost:3000/article/'.$article_id }}" target="_blank">Read Article online</a>
     </div>
     <div class="col-md-6">
         <a class="text-primary float-right" href="{{ url($source_link) }}">original source</a>
@@ -40,7 +40,7 @@
             <tbody>
                 @foreach($kanjiList as $singleKanji)
                     <tr>
-                    <td lang="ja" id="kanjiTd"> <a href="{{ url('kanji/'. $singleKanji->id)}}" target="_blank"> {{ $singleKanji->kanji }} </a></td>
+                    <td lang="ja" id="kanjiTd"> <a href="{{ 'localhost:3000/kanji/'. $singleKanji->id}}" target="_blank"> {{ $singleKanji->kanji }} </a></td>
                     <td lang="ja"> {{ $singleKanji->onyomi }} </td>
                     <td lang="ja"> {{ $singleKanji->kunyomi }} </td>
                     <td> {{ $singleKanji->meaning }} </td>

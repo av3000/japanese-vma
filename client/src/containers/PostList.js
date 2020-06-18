@@ -96,14 +96,16 @@ export class PostList extends Component {
                 newState.posts          = res.posts.data ? res.posts.data : newState.posts;
                 newState.url            = res.posts.next_page_url;
 
-                if(queryParams.keyword){
-                    newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
-                } else if (queryParams.tags){
-                    newState.searchHeading = "Requested query: '" + newState.filters.tags +"'";
-                }
-                else {
-                    newState.searchHeading = "";
-                }
+                newState.searchHeading = res.requestedQuery;
+
+                // if(queryParams.keyword){
+                //     newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                // } else if (queryParams.filterType){
+                //     newState.searchHeading = "Requested query: '" + newState.filters.filterType +"'";
+                // }
+                // else {
+                //     newState.searchHeading = "";
+                // }
 
                 newState.searchTotal = "Results total: '" + res.posts.total +"'";
                 return newState;
@@ -195,7 +197,7 @@ export class PostList extends Component {
         }) ): (
         <div className="container mt-5">
             <div className="row justify-content-center">
-                <img src={Spinner}/>
+                <img src={Spinner} alt="spinner"/>
             </div>
         </div>
         );
@@ -203,10 +205,7 @@ export class PostList extends Component {
         return (
             <div className="container mt-3">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
-                    {/* by tag */}
-                    {/* by title keyword */}
-                    {/* by newest/popular */}
+                    <SearchBar fetchQuery={this.fetchQuery} searchType="posts" />
                 </div>
                 <div className="mt-5">
                     <div className="col-10">
@@ -230,7 +229,7 @@ export class PostList extends Component {
                     }
                     </div>
                     <div className="my-3 p-3 bg-white rounded box-shadow">
-                        <h5 className="border-bottom border-gray pb-2 mb-0">Newest Topics</h5>
+                        <hr/>
                         <div className="col-lg-12 col-md-10 mx-auto">
                             {postList}
                         </div>

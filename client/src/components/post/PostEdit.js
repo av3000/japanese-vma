@@ -67,11 +67,12 @@ class PostEdit extends Component{
       }
     
       postNewPost(payload) {
-        return apiCall('post', `/api/post`, payload)
+        let postId = this.props.match.params.post_id;
+        return apiCall("put", `/api/post/${postId}`, payload)
         .then(res => {
             console.log(res);
             this.props.dispatch( hideLoader() );
-            this.props.history.push("/community/"+res.post.id);
+            this.props.history.push("/community/"+res.updatedPost.id);
         })
         .catch(err => {
             // let err = error.response.data.error;
@@ -103,7 +104,7 @@ class PostEdit extends Component{
         return (
             <div className="container">
                 <div className="row justify-content-lg-center text-center">
-                    <form onSubmit={this.handleNewPost} className="article-new-form">
+                    <form onSubmit={this.handleNewPost} className="col-12">
                     {/* {this.props.errors.message && (
                         <div className="alert alert-danger">{this.props.errors.message}</div>
                     )} */}

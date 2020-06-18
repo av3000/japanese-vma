@@ -6,7 +6,7 @@
 
 @section("links")
     <div class="col-md-6">
-        <a class="text-primary float-left" href="{{ url('list/'.$list_id) }}">www.jplearning.online/list/{{$list_id}}</a>
+        <a class="text-primary float-left" href="{{ 'localhost:3000/list/'.$list_id) }}">Read List online</a>
     </div>
     <div class="col-md-6">
         <!-- <a class="text-primary float-right" href="{{ url('user/'.$user_id) }}">Author profile</a> -->
@@ -18,7 +18,7 @@
     <div class="card">
         <div class="card-header card-header-warning">
             <p class="card-category">Sentences list | {{ $title }} by 
-            <a class="text-primary float-right" href="{{ url('user/'.$user_id) }}"> {{ $author }} </a></p>
+           {{ $author }} </p>
         </div>
         <div class="card-body table-responsive kanjis-table">
             <table class="table table-hover">

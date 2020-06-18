@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 // import { fetchLists } from '../store/actions/lists';
 import ListItem from '../components/list/ListItem';
 import { apiCall } from '../services/api';
@@ -146,7 +146,8 @@ class ListsList extends Component {
             <ListItem
                 key={l.id}
                 id={l.id}
-                listType={listTypes[l.type]}
+                type={l.type}
+                listType={listTypes[l.type-1]}
                 created_at={l.created_at}
                 title={l.title}
                 commentsTotal={l.commentsTotal}
@@ -156,11 +157,17 @@ class ListsList extends Component {
                 downloadsTotal={l.downloadsTotal}
                 hashtags={l.hashtags.slice(0, 3)}
                 listItems={l.listItems}
+                n1={l.n1}
+                n2={l.n2}
+                n3={l.n3}
+                n4={l.n4}
+                n5={l.n5}
+                uncommon={l.uncommon}
             />
         )) ) : (
             <div className="container">
                 <div className="row justify-content-center">
-                    <img src={Spinner}/>
+                    <img src={Spinner} alt="spinner"/>
                 </div>
             </div>
         )
@@ -168,7 +175,7 @@ class ListsList extends Component {
         return (
             <div className="container mt-5">
                 <div className="">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    <SearchBar fetchQuery={this.fetchQuery} searchType="lists"/>
                     {/* by tag */}
                     {/* by title keyword */}
                     {/* by newest/popular */}

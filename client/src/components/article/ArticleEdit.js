@@ -13,7 +13,7 @@ class ArticleEdit extends Component{
         content_jp: "",
         source_link: "",
         tags: "",
-        publicity: false
+        publicity: ""
     }
 
     this.handleChange = this.handleChange.bind(this);
@@ -68,6 +68,7 @@ class ArticleEdit extends Component{
     let payload = {
         title_jp: this.state.title_jp,
         content_jp: this.state.content_jp,
+        publicity: this.state.publicity,
         source_link: this.state.source_link,
         tags: this.state.tags,
         reattach: 0
@@ -85,6 +86,7 @@ class ArticleEdit extends Component{
   }
 
   postNewArticle(payload) {
+      console.log(payload);
     let articleId = this.props.match.params.article_id;
     return apiCall('put', `/api/article/${articleId}`, payload)
     .then(res => {
@@ -130,7 +132,7 @@ class ArticleEdit extends Component{
 
         <div className="container">
         <div className="row justify-content-md-center text-center">
-            <form onSubmit={this.onSubmit} className="article-new-form col-md-10">
+            <form onSubmit={this.onSubmit} className="col-12">
             {/* {this.props.errors.message && (
                 <div className="alert alert-danger">{this.props.errors.message}</div>
             )} */}
@@ -173,9 +175,9 @@ class ArticleEdit extends Component{
             />
              <label htmlFor="publicity" className="mt-3">Publicity</label>
                 <select name="publicity" value={this.state.publicity} className="form-control" onChange={this.handleChange}>
-                    <option value="2">Public</option>
-                    <option value="1">Private</option>
-                    <option value="0">Draft</option>
+                    <option value="1">Public</option>
+                    <option value="0">Private</option>
+                    {/* <option value="0">Draft</option> */}
                 </select>
             <button type="submit" className="btn btn-outline-primary col-md-3 brand-button mt-5">
                 Update the Article

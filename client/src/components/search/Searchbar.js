@@ -5,7 +5,7 @@ class Searchbar extends Component {
         super(props);
         this.state = {
             keyword: "",
-            tags: "",
+            sortByWhat: "",
             filterType: 20
         };
         
@@ -18,52 +18,33 @@ class Searchbar extends Component {
         
         let data = {
             keyword: this.state.keyword,
-            tags: this.state.tags,
+            sortByWhat: this.state.sortByWhat,
             filterType: this.state.filterType
         };
-
-        this.setState({
-            keyword: "",
-            tags: ""
-        });
 
         this.props.fetchQuery(data);
     }
     
     handleChange(e){
-        
         this.setState({ [e.target.name]: e.target.value });
     }
     
     render() {
-
-    return (
-            <div className="col-lg-12">
+        return (
+            <div className="container">
                 <form onSubmit={this.onSubmit}>
                 <div className="row">
-                    <div className="col-md-4">
-                        <label>Keyword:</label>
+                    <div className="col-lg-4 col-md-6 col-sm-12 mt-3">
                         <input  onChange={this.handleChange}
-                                onClick={() => this.setState({ tags: "" })}
-                                className="form-control form-control-sm w-75"
-                                name="keyword" type="text" placeholder="Search"
+                                className="form-control form-control-sm"
+                                name="keyword" type="text" placeholder="Ex.: title, text, #tag"
                                 value={this.state.keyword}
                                 aria-label="Search"
                         />
                     </div>
-                    <div className="col-md-4">
-                        <label>Tags:</label>
-                        <input  onChange={this.handleChange}
-                                onClick={() => this.setState({ keyword: "" })}
-                                className="form-control form-control-sm w-75"
-                                name="tags" type="text" placeholder="#tagname"
-                                value={this.state.tags}
-                                aria-label="Search"
-                        />
-                        </div>
-                    <div className="col-md-4">
-                        <label>Filter:</label>
-                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm w-50" onChange={this.handleChange}>
+                    <div className="col-lg-4 col-md-4 col-sm-12 mt-3">
+                    {this.props.searchType === "posts" ? (
+                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm" onChange={this.handleChange}>
                             <option value="20">All</option>
                             <option value="1">Content-related</option>
                             <option value="2">Off-topic</option>
@@ -73,14 +54,42 @@ class Searchbar extends Component {
                             <option value="6">Feedback</option>
                             <option value="7">Announcement</option>
                         </select> 
+                    ): ""}
+                    {this.props.searchType === "articles" ? (
+                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm" onChange={this.handleChange}>
+                            <option value="20">All</option>
+                            <option value="1">N1</option>
+                            <option value="2">N2</option>
+                            <option value="3">N3</option>
+                            <option value="4">N4</option>
+                            <option value="5">N5</option>
+                            <option value="6">Uncommon</option>
+                        </select> 
+                    ): ""}
+                    {this.props.searchType === "lists" ? (
+                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm" onChange={this.handleChange}>
+                            <option value="20">All</option>
+                            <option value="1">Radicals</option>
+                            <option value="2">Kanjis</option>
+                            <option value="3">Words</option>
+                            <option value="4">Sentences</option>
+                            <option value="5">Articles</option>
+                        </select> 
+                    ): ""}
                     </div>
-                    <div className="col-md-4">
-                        <button className="btn btn-outline fas fa-search fa-lg brand-button mt-3" aria-hidden="true"></button>
+                    <div className="col-lg-2 col-md-2 col-sm-4 mt-3">
+                        <select name="sortByWhat" value={this.state.sortByWhat} className="form-control form-control-sm" onChange={this.handleChange}>
+                            <option value="new">Newest</option>
+                            <option value="pop">Popular</option>
+                        </select> 
+                    </div>
+                    <div className="col-lg-2">
+                        <button className="btn btn-outline fas fa-search brand-button mt-3" aria-hidden="true"> search</button>
                     </div>
                 </div>
                 </form>
             </div>
-    )};
+        )};
 }
 
 export default Searchbar;

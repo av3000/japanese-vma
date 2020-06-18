@@ -10,7 +10,7 @@ class ListEdit extends Component{
         title: "",
         type: "",
         tags: "",
-        publicity: 0
+        publicity: ""
     }
 
     this.handleChange = this.handleChange.bind(this);
@@ -101,7 +101,7 @@ class ListEdit extends Component{
 
         <div className="container">
         <div className="row justify-content-md-center text-center">
-            <form onSubmit={this.onSubmit} className="article-new-form col-md-10">
+            <form onSubmit={this.onSubmit}  className="col-12">
             {/* {this.props.errors.message && (
                 <div className="alert alert-danger">{this.props.errors.message}</div>
             )} */}

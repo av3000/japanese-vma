@@ -234,7 +234,6 @@ export class DashboardList extends Component {
         </div>
         );
         
-        
         let customList = this.state.lists ? 
             ( 
                 this.state.lists.map(w => {
@@ -272,7 +271,7 @@ export class DashboardList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    <SearchBar fetchQuery={this.fetchQuery} />
+                    {/* <SearchBar fetchQuery={this.fetchQuery} /> */}
                 </div>
                 <div className="container mt-5">
                     <div className="ml-3 mt-2">

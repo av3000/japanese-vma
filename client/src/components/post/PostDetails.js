@@ -225,6 +225,7 @@ class PostDetails extends Component {
                       {post.created_at}
                     </Moment>
                     <br/>{post.viewsTotal + 40} views &nbsp;
+                    <strong> {post.postType} </strong>
                 </p>
                 <ul className="brand-icons mr-1 d-flex">
                     {currentUser.user.id === post.user_id || currentUser.user.isAdmin ?
@@ -261,7 +262,7 @@ class PostDetails extends Component {
                 <p className="lead mt-5">{post.content} </p>
                 <br/>
                 <p>
-                  {post.hashtags.map(tag => <Link key={tag.id} className="tag-link" to="/">{tag.content} </Link>)}
+                  {post.hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)}
                 </p>
                 <hr/>
                 <div className="">

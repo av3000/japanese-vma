@@ -44,6 +44,22 @@ class ArticleController extends Controller
     public function __constructor(){
 
     }
+    
+    public function getArticleJlptTypes($index)
+    {
+        $articleJlptTypes = [
+            'N1',
+            'N2',
+            'N3',
+            'N4',
+            'N5',
+            'Uncommon'
+        ];
+
+        $articleJlptTypes[20] = "All";
+
+        return $articleJlptTypes[$index-1];
+    }
 
     public function index() {
         $articles = Article::where('publicity', 1)->where('status', "3")->orderBy('created_at', "DESC")->paginate(3);
@@ -203,13 +219,16 @@ class ArticleController extends Controller
             $kanjis = $article->kanjis()->get();
             foreach($kanjis as $kanji){
                 if     ($kanji->jlpt == "1") { $article->n1 = intval($article->n1) + 1; }
-                else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 2; }
-                else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 3; }
-                else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 4; }
-                else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 5; }
+                else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 1; }
+                else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 1; }
+                else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 1; }
+                else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 1; }
+                else { $article->uncommon = intval($article->uncommon) + 1; }
             }
 
             $article->update();
+
+            $this->incrementView($article);
 
             return response()->json([
                 'success' => true,
@@ -219,6 +238,8 @@ class ArticleController extends Controller
                 'words' => $wordResponse
             ]);
         }
+
+        $this->incrementView($article);
 
         return response()->json([
             'success' => true,
@@ -242,7 +263,6 @@ class ArticleController extends Controller
                 'message' => 'article doesnt exist or does not belong to the user'
             ]);
         }   
-
         if(isset($request->title_jp))
         {
             $article->title_jp = $request->title_jp;
@@ -271,7 +291,7 @@ class ArticleController extends Controller
             $article->publicity = $request->publicity;
         }
 
-        $article->update();
+        $article->save();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
@@ -438,64 +458,138 @@ class ArticleController extends Controller
         return $articles;
     }
 
-    public function generateQuery(Request $request) {
-        $q = "";
-        if(isset( $request->title )){
-            $request->title = trim($request->title);
-            $singleTag = explode(' ',trim($request->title))[0];
+    public function sortByViewsTotal($objectsCollection, $objectTemplateId)
+    {
+        // sort by popularity aka impressions / views
+        // PROBLEM: I need to count views totals and join those viewsTotals to each post as $post->viewsTotal
+        // to loop each post I need to make it to array, but when it becomes array->get(); I cannot use paginate
+        // To make results right, I need to get views before pagination to apply sort order for all results
+        // $rawStatement = "SELECT articles.*, (SELECT COUNT(*) FROM views WHERE template_id = 9 AND real_object_id = articles.id) AS viewsTotal FROM articles ORDER BY viewsTotal DESC";
+
+        $objectsCollection = $objectsCollection
+            ->select('articles.*')
+            ->leftJoin('views', 'articles.id', '=', 'views.real_object_id')
+            ->where('views.template_id', '=', $objectTemplateId)
+            ->addSelect(DB::raw('count(views.real_object_id) as viewsTotal'))
+            ->groupBy('articles.id')
+            ->orderBy('viewsTotal', 'desc');
+
+        return $objectsCollection;
+    }
+
+    public function generateQuery(Request $request) 
+    {
+        $articles = new Article;
+        $requestedQuery = "";
+        if(isset( $request->keyword ))
+        {
+            $request->keyword = trim($request->keyword);
+            $singleTag = explode(' ',trim($request->keyword))[0];
 
             $search = '#';
+
             if(preg_match("/{$search}/i", $singleTag)) {
-            // if( strpos($request->title, "#") === true){
-
                 $articles = $this->getUniquehashtagArticles($singleTag);
-                $q .= $singleTag;
-                if( isset($articles) )
-                {
-                    $articles = $articles->where('publicity', 1);
-                }
+                $requestedQuery .= $singleTag .". ";
             }
+
             else {
-                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->title)->where('publicity', 1);
-                $q .= $request->title;
+                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1);
+                $requestedQuery .= "keyword: ".$request->keyword. ". ";
             }
-        } 
-
-        //if search has search fields, return articles of requested fields
-        if(isset( $articles )) {
-            $articles = $articles->paginate(3);
-
-            // add impressions
-            $articles = $this->getArticleImpressionsSearch($articles);
-
-            return response()->json([
-                'success' => true,
-                'articles' => $articles,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
         }
 
-        // if search is empty, return default articles
-        if( $q == "")
+        if(isset( $request->sortByWhat ))
         {
-            $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+            if( $request->sortByWhat === "new" ){
+                $articles = $articles->orderBy('created_at', 'desc');
+                $requestedQuery .= " Sort by Newest. ";
+            }
 
-            // add impressions
-            $articles = $this->getArticleImpressionsSearch($articles);
+            else if ($request->sortByWhat === "pop") {
+                $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-             return response()->json([
-                'success' => true,
-                'articles' => $articles,
-                'q' => $q
-            ]);
+                $articles = $this->sortByViewsTotal($articles, $objectTemplateId);
+                $requestedQuery .= " Sort by Popular. ";
+            }
         }
         
+        if(isset( $request->filterType ) && $request->filterType != 20) // 20 = all
+        {   
+            $articles = $articles->where($this->getArticleJlptTypes($request->filterType), ">", 0)->where('publicity', 1); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
+            $requestedQuery .= "Filter by ". $this->getArticleJlptTypes($request->filterType). ".";
+        }
+        
+        $articles = $articles->paginate(3);
+
+        $articles = $this->getArticleImpressionsSearch($articles);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero articles',
-            'q' => $q
+            'success' => true,
+            'articles' => $articles,
+            'requestedQuery' => $requestedQuery
         ]);
+    }
+
+    public function generateQueryOld(Request $request)
+    {
+        // $q = "";
+        // if(isset( $request->title )){
+        //     $request->title = trim($request->title);
+        //     $singleTag = explode(' ',trim($request->title))[0];
+
+        //     $search = '#';
+        //     if(preg_match("/{$search}/i", $singleTag)) {
+        //     // if( strpos($request->title, "#") === true){
+
+        //         $articles = $this->getUniquehashtagArticles($singleTag);
+        //         $q .= $singleTag;
+        //         if( isset($articles) )
+        //         {
+        //             $articles = $articles->where('publicity', 1);
+        //         }
+        //     }
+        //     else {
+        //         $articles = Article::whereLike(['title_jp', 'content_jp'], $request->title)->where('publicity', 1);
+        //         $q .= $request->title;
+        //     }
+        // } 
+
+        // //if search has search fields, return articles of requested fields
+        // if(isset( $articles )) {
+        //     $articles = $articles->paginate(3);
+
+        //     // add impressions
+        //     $articles = $this->getArticleImpressionsSearch($articles);
+
+        //     return response()->json([
+        //         'success' => true,
+        //         'articles' => $articles,
+        //         'message' => 'Requested query: '.$q. ' returned some results',
+        //         'q' => $q
+        //     ]);
+        // }
+
+        // // if search is empty, return default articles
+        // if( $q == "")
+        // {
+        //     $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+
+        //     // add impressions
+        //     $articles = $this->getArticleImpressionsSearch($articles);
+
+        //      return response()->json([
+        //         'success' => true,
+        //         'articles' => $articles,
+        //         'q' => $q
+        //     ]);
+        // }
+        
+        // return response()->json([
+        //     'success' => false,
+        //     'message' => 'Requested query: '.$q. ' returned zero articles',
+        //     'q' => $q
+        // ]);
     }
 
     #====================================================== Japanese Text Handling

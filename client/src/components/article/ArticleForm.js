@@ -94,10 +94,10 @@ class ArticleForm extends Component {
     return (
         <div className="container">
             <div className="row justify-content-lg-center text-center">
-                <form onSubmit={this.handleNewArticle} className="article-new-form">
-                {this.props.errors.message && (
+                <form onSubmit={this.handleNewArticle}  className="col-12">
+                {/* {this.props.errors.message && (
                     <div className="alert alert-danger">{this.props.errors.message}</div>
-                )}
+                )} */}
                 <label htmlFor="content_jp" className="mt-3"> <h4>Title</h4> </label>
                 <input
                     placeholder="Article title text"

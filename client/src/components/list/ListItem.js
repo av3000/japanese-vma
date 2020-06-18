@@ -8,18 +8,26 @@ const ListItem = ({
     id,
     created_at,
     title, 
+    listType,
+    type,
     commentsTotal, 
     itemsTotal,
     viewsTotal, 
     likesTotal, 
     downloadsTotal,
-    hashtags
+    hashtags,
+    n1,
+    n2,
+    n3,
+    n4,
+    n5,
+    uncommon
 }) => (
     <div className="col-lg-4 col-md-6 col-sm-8">
         <div className="card mb-4 shadow-sm">
             <Link to={'/list/' + id}>
             <img src={DefaultArticleImg}
-                alt="article-image"
+                alt="article-logo"
                 height="225" width="100%"
                 className="timelines-image hover"     
             />
@@ -28,6 +36,7 @@ const ListItem = ({
                 <Link to={'/list/' + id} className="article-title-link">
                     <h4 className="card-text article-title"> {title}</h4> 
                 </Link>
+                <br/><strong>{listType}</strong>
                 <p> {hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)} </p>
                 <p className="text-muted">
                     <Moment className="text-muted" format="Do MMM YYYY">
@@ -39,24 +48,31 @@ const ListItem = ({
                     {commentsTotal} comments&nbsp;
                     {likesTotal} likes
                 </p>
-                <hr/>
-                <div className="d-flex justify-content-between align-items-center text-muted">
-                        <span>
-                         {commentsTotal}&nbsp;N1 
-                        </span>
-                        <span>
-                         {viewsTotal}&nbsp;N2
-                        </span>
-                        <span>
-                         {likesTotal}&nbsp;N3
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N4
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N5
-                        </span>
-                </div>
+                {type === 2 || type === 6 ? (
+                    <React.Fragment>
+                    <hr/>
+                    <div className="d-flex justify-content-between align-items-center text-muted">
+                    <ruby className="h4 mr-2">
+                            {n1}<rp>(</rp><rt>N1</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n2}<rp>(</rp><rt>N2</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n3}<rp>(</rp><rt>N3</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n4}<rp>(</rp><rt>N4</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {n5}<rp>(</rp><rt>N5</rt><rp>)</rp>
+                        </ruby>
+                        <ruby className="h4 mr-2">
+                            {uncommon}<rp>(</rp><rt>NA</rt><rp>)</rp>
+                        </ruby>
+                    </div>
+                    </React.Fragment>
+                ): ""}
                 
             </div>
         </div>

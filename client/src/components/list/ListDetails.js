@@ -296,6 +296,7 @@ class ListDetails extends Component {
                     </Moment>
                     <br/><span>{list.viewsTotal + 40} views</span>
                     {currentUser.user.id === list.user_id ? (list.publicity === 1 ? " | public" : " | private" ) : ""}
+                    <br/> <strong> {list.listType} List</strong>
                 </p>
                 {/* BEGIN Action icons */}
                 <ul className="brand-icons mr-1 float-right d-flex">

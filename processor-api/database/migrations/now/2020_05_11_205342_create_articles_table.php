@@ -28,6 +28,7 @@ class CreateArticlesTable extends Migration
             $table->string("n3")->default("0");
             $table->string("n4")->default("0");
             $table->string("n5")->default("0");
+            $table->string("uncommon")->default("0");
             $table->charset = 'utf8mb4';
             $table->collation = 'utf8mb4_general_ci';
             $table->timestamps();

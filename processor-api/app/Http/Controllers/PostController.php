@@ -18,7 +18,7 @@ use DB;
 class PostController extends Controller
 {
 
-    public function getPostTypes($typeName)
+    public function getPostTypes($index)
     {
 
         $postTypes = [
@@ -31,7 +31,9 @@ class PostController extends Controller
             'Announcement'
         ];
 
-        return $postTypes[$typeName];
+        $postTypes[20] = "All";
+
+        return $postTypes[$index-1];
     }
 
     public function index()
@@ -123,6 +125,25 @@ class PostController extends Controller
             $comment->userName = User::find($comment->user_id)->name;
         }
 
+        if($post->type == 1) {
+            $post->postType = "Content-related";
+        }
+        else if ($post->type == 2) {
+            $post->postType = "Off-topic";
+        }
+        else if ($post->type == 3) {
+            $post->postType = "FAQ";
+        }
+        else if ($post->type == 4) {
+            $post->postType = "Technical";
+        }
+        else if ($post->type == 5) {
+            $post->postType = "Bug";
+        }
+        else if ($post->type == 6) {
+            $post->postType = "Announcement";
+        }
+
         $user = User::find($post->user_id);
         $post->userName = $user->name;
         $post->userId = $user->id;
@@ -152,6 +173,8 @@ class PostController extends Controller
 
         $this->attachHashTags($request->tags, $post);
 
+        $this->incrementView($post);
+
         return response()->json([
             'success' => true,
             'post' => $post
@@ -165,7 +188,6 @@ class PostController extends Controller
                 'message' => 'you are not a user'
             ]);
         }   
-        
         $post = Post::find($id);
         
         if( !$post || $post->user_id != auth()->user()->id ){
@@ -194,7 +216,7 @@ class PostController extends Controller
             $post->type = $request->type;
         }
 
-        $post->update();
+        $post->save();
 
         return response()->json([
             'success' => true,
@@ -284,28 +306,77 @@ class PostController extends Controller
         return $posts;
     }
 
-    public function generateQuery(Request $request) {
-        $posts = new Post;
+    public function sortByViewsTotal($objectsCollection, $objectTemplateId)
+    {
+        // sort by popularity aka impressions / views
+        // PROBLEM: I need to count views totals and join those viewsTotals to each post as $post->viewsTotal
+        // to loop each post I need to make it to array, but when it becomes array->get(); I cannot use paginate
+        // To make results right, I need to get views before pagination to apply sort order for all results
+        // $rawStatement = "SELECT posts.*, (SELECT COUNT(*) FROM views WHERE template_id = 9 AND real_object_id = posts.id) AS viewsTotal FROM posts ORDER BY viewsTotal DESC";
 
+        $objectsCollection = $objectsCollection
+            ->select('posts.*')
+            ->leftJoin('views', 'posts.id', '=', 'views.real_object_id')
+            ->where('views.template_id', '=', $objectTemplateId)
+            ->addSelect(DB::raw('count(views.real_object_id) as viewsTotal'))
+            ->groupBy('posts.id')
+            ->orderBy('viewsTotal', 'desc');
+
+        return $objectsCollection;
+    }
+
+    public function generateQuery(Request $request) 
+    {
+        $posts = new Post;
+        $requestedQuery = "";
         if(isset( $request->keyword ))
         {
-            $posts = Post::whereLike(['title', 'content'], $request->keyword);
+            $request->keyword = trim($request->keyword);
+            $singleTag = explode(' ',trim($request->keyword))[0];
+
+            $search = '#';
+
+            if(preg_match("/{$search}/i", $singleTag)) {
+                $posts = $this->getUniquehashtagPosts($singleTag);
+                $requestedQuery .= $singleTag .". ";
+            }
+
+            else {
+                $posts = Post::whereLike(['title', 'content'], $request->keyword);
+                $requestedQuery .= "keyword: ".$request->keyword. ". ";
+            }
         }
-        if(isset( $request->tags )){
-            $singleTag = explode(' ',trim($request->tags))[0];
-            $posts = $this->getUniquehashtagPosts($singleTag);
-        }
-        if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
+        
+        if(isset( $request->filterType ) && $request->filterType != 20) // 20 = all
+        {
             $posts = $posts->where('type', $request->filterType);
+            $requestedQuery .= "Filter by ". $this->getPostTypes($request->filterType). ".";
         }
 
-        $posts = $posts->paginate(4);
+        if(isset( $request->sortByWhat ))
+        {
+
+            if( $request->sortByWhat === "new" ){
+                $posts = $posts->orderBy('created_at', 'desc');
+                $requestedQuery .= " Sort by Newest. ";
+            }
+
+            else if ($request->sortByWhat === "pop") {
+                $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
+
+                $posts = $this->sortByViewsTotal($posts, $objectTemplateId);
+                $requestedQuery .= " Sort by Popular. ";
+            }
+        }
+        
+        $posts = $posts->paginate(5);
 
         $posts = $this->getPostImpressionsSearch($posts);
-        
+
         return response()->json([
             'success' => true,
-            'posts' => $posts
+            'posts' => $posts,
+            'requestedQuery' => $requestedQuery
         ]);
     }
 
@@ -802,6 +873,5 @@ class PostController extends Controller
         }
         return $hashtags;
     }
-
 
 }

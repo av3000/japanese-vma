@@ -10,8 +10,6 @@ class ListArticlesList extends Component {
 
     render() {
         let { objects, removeFromList, currentUser, listUserId } = this.props;
-        console.log("cyrrentUser deepest");
-        console.log(currentUser);
         const objectList = objects.map(object => {
             object.hashtags = object.hashtags.slice(0, 3);
           return (

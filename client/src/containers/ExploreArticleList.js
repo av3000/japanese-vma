@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 // import { fetchArticles } from '../store/actions/articles';
 import { apiCall } from '../services/api';
 import ExploreArticleItem from '../components/article/ExploreArticleItem';
@@ -53,9 +53,12 @@ class ExploreArticleList extends Component {
                     viewsTotal={a.viewsTotal}
                     downloadsTotal={a.downloadsTotal}
                     hashtags={a.hashtags.slice(0, 3)}
-                    // bookmarkArticle={bookmarkArticle.bind(this, a.id)}
-                    // removeArticle={removeArticle.bind(this, a.id)}
-                    // isCorrectUser={currentUser === a.user_id}
+                    n1={a.n1}
+                    n2={a.n2}
+                    n3={a.n3}
+                    n4={a.n4}
+                    n5={a.n5}
+                    uncommon={a.uncommon}
                 />
         )) ) : (
         <div className="container">

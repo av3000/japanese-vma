@@ -1,9 +1,10 @@
 <footer class="text-muted">
      <div class="container">
+     <hr/>
        <p class="float-right">
-         <a href="#">Back to top</a>
+         <a href="http://www.edrdg.org/">Japanese Dictionary Authors</a>
        </p>
-       <p>Album example is &copy; Bootstrap, but please download and customize it for yourself!</p>
-       <p>New to Bootstrap? <a href="../../">Visit the homepage</a> or read our <a href="../../getting-started/">getting started guide</a>.</p>
+       <p>New to <a href="localhost:3000">JPLearning</a>? Visit for more learning opportunities!</p>
+       <p>Created using JPLearning &copy; </p>
      </div>
 </footer>

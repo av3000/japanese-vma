@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+// import { connect } from 'react-redux';
 // import { fetchArticles, removeArticle } from '../store/actions/articles';
 import { apiCall } from '../services/api';
 import ArticleItem from '../components/article/ArticleItem';
@@ -127,7 +127,6 @@ class ArticleList extends Component {
 
     render() {
 
-        const { currentUser } = this.props;
         let { articles } = this.state;
 
         let articleList = articles ? ( articles.map(a => (
@@ -145,14 +144,17 @@ class ArticleList extends Component {
                     viewsTotal={a.viewsTotal}
                     downloadsTotal={a.downloadsTotal}
                     hashtags={a.hashtags.slice(0, 3)}
-                    // bookmarkArticle={bookmarkArticle.bind(this, a.id)}
-                    // removeArticle={removeArticle.bind(this, a.id)}
-                    // isCorrectUser={currentUser === a.user_id}
+                    n1={a.n1}
+                    n2={a.n2}
+                    n3={a.n3}
+                    n4={a.n4}
+                    n5={a.n5}
+                    uncommon={a.uncommon}
                 />
         )) ) : (
         <div className="container">
             <div className="row justify-content-center">
-                <img src={Spinner}/>
+                <img src={Spinner} alt="spinner"/>
             </div>
         </div>
         );
@@ -160,10 +162,7 @@ class ArticleList extends Component {
         return (
             <div className="container mt-5">
                 <div className="">
-                    <SearchBar fetchQuery={this.fetchQuery} articles={this.state.articles}/>
-                    {/* by tag */}
-                    {/* by title keyword */}
-                    {/* by newest/popular */}
+                    <SearchBar fetchQuery={this.fetchQuery} searchType="articles" />
                 </div>
                 <div className="container mt-5">
                     {this.state.searchHeading ? (

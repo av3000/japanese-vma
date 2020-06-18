@@ -164,7 +164,7 @@ export class KanjiList extends Component {
         }) ): (
         <div className="container mt-5">
             <div className="row justify-content-center">
-                <img src={Spinner}/>
+                <img src={Spinner} alt="spinner"/>
             </div>
         </div>
         );

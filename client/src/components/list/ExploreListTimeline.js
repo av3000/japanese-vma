@@ -4,13 +4,11 @@ import SearchBar from '../search/Searchbar';
 
 const ExploreListTimeline = props => {
     return (
-        <div className="container">
-            <div className="row mt-5">
+        <div className="row">
                 <ExploreCustomList/>
                 {/* sidebar */}
                 {/* ads bar */}
                 {/* etc.... */}
-            </div>
         </div>
     );
 };
