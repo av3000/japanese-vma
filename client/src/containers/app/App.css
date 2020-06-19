@@ -85,3 +85,13 @@ a i:hover {
 /* .brand-icons {
 
 } */
+
+/* Scrollbar native */
+
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--main-brand-color);
+}

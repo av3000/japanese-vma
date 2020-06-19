@@ -494,7 +494,7 @@ class ArticleController extends Controller
             }
 
             else {
-                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1);
+                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1)->where('status', "3");
                 $requestedQuery .= "keyword: ".$request->keyword. ". ";
             }
         }
@@ -502,21 +502,21 @@ class ArticleController extends Controller
         if(isset( $request->sortByWhat ))
         {
             if( $request->sortByWhat === "new" ){
-                $articles = $articles->orderBy('created_at', 'desc');
+                $articles = $articles->orderBy('created_at', 'desc')->where('publicity', 1)->where('status', "3");
                 $requestedQuery .= " Sort by Newest. ";
             }
 
             else if ($request->sortByWhat === "pop") {
                 $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-                $articles = $this->sortByViewsTotal($articles, $objectTemplateId);
+                $articles = $this->sortByViewsTotal($articles, $objectTemplateId)->where('publicity', 1)->where('status', "3");
                 $requestedQuery .= " Sort by Popular. ";
             }
         }
         
         if(isset( $request->filterType ) && $request->filterType != 20) // 20 = all
         {   
-            $articles = $articles->where($this->getArticleJlptTypes($request->filterType), ">", 0)->where('publicity', 1); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
+            $articles = $articles->where($this->getArticleJlptTypes($request->filterType), ">", 0)->where('publicity', 1)->where('status', "3"); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
             $requestedQuery .= "Filter by ". $this->getArticleJlptTypes($request->filterType). ".";
         }
         
@@ -529,67 +529,6 @@ class ArticleController extends Controller
             'articles' => $articles,
             'requestedQuery' => $requestedQuery
         ]);
-    }
-
-    public function generateQueryOld(Request $request)
-    {
-        // $q = "";
-        // if(isset( $request->title )){
-        //     $request->title = trim($request->title);
-        //     $singleTag = explode(' ',trim($request->title))[0];
-
-        //     $search = '#';
-        //     if(preg_match("/{$search}/i", $singleTag)) {
-        //     // if( strpos($request->title, "#") === true){
-
-        //         $articles = $this->getUniquehashtagArticles($singleTag);
-        //         $q .= $singleTag;
-        //         if( isset($articles) )
-        //         {
-        //             $articles = $articles->where('publicity', 1);
-        //         }
-        //     }
-        //     else {
-        //         $articles = Article::whereLike(['title_jp', 'content_jp'], $request->title)->where('publicity', 1);
-        //         $q .= $request->title;
-        //     }
-        // } 
-
-        // //if search has search fields, return articles of requested fields
-        // if(isset( $articles )) {
-        //     $articles = $articles->paginate(3);
-
-        //     // add impressions
-        //     $articles = $this->getArticleImpressionsSearch($articles);
-
-        //     return response()->json([
-        //         'success' => true,
-        //         'articles' => $articles,
-        //         'message' => 'Requested query: '.$q. ' returned some results',
-        //         'q' => $q
-        //     ]);
-        // }
-
-        // // if search is empty, return default articles
-        // if( $q == "")
-        // {
-        //     $articles = Article::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
-
-        //     // add impressions
-        //     $articles = $this->getArticleImpressionsSearch($articles);
-
-        //      return response()->json([
-        //         'success' => true,
-        //         'articles' => $articles,
-        //         'q' => $q
-        //     ]);
-        // }
-        
-        // return response()->json([
-        //     'success' => false,
-        //     'message' => 'Requested query: '.$q. ' returned zero articles',
-        //     'q' => $q
-        // ]);
     }
 
     #====================================================== Japanese Text Handling

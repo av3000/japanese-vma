@@ -60,7 +60,7 @@ export class RadicalList extends Component {
                 newState.radicals       = res.radicals.data ? res.radicals.data : newState.radicals;
                 newState.url            = res.radicals.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                newState.searchHeading = res.requestedQuery;
                 newState.searchTotal = "Results total: '" + res.radicals.total +"'";
                 return newState;
             }
@@ -88,7 +88,6 @@ export class RadicalList extends Component {
             newState.radicals       = [...newState.radicals, ...res.radicals.data];
             newState.url            = res.radicals.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.radicals.total +"'";
 
             return newState;

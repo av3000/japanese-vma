@@ -61,7 +61,7 @@ export class SentenceList extends Component {
                 newState.sentences       = res.sentences.data ? res.sentences.data : newState.sentences;
                 newState.url             = res.sentences.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                newState.searchHeading = res.requestedQuery;
                 newState.searchTotal = "Results total: '" + res.sentences.total +"'";
                 return newState;
             }
@@ -73,7 +73,6 @@ export class SentenceList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -89,7 +88,6 @@ export class SentenceList extends Component {
             newState.sentences         = [...newState.sentences, ...res.sentences.data];
             newState.url            = res.sentences.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.sentences.total +"'";
 
             return newState;
@@ -98,8 +96,6 @@ export class SentenceList extends Component {
             newState.pagination = this.makePagination(newState.paginateObject);
 
             this.setState( newState );
-
-            console.log(this.state.sentences);
         })
         .catch(err => {
             console.log(err);

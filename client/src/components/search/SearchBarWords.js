@@ -20,15 +20,10 @@ class SearchBarWords extends Component {
             filterType: this.state.filterType
         };
 
-        this.setState({
-            keyword: ""
-        });
-
         this.props.fetchQuery(data);
     }
     
     handleChange(e){
-        
         this.setState({ [e.target.name]: e.target.value });
     }
     
@@ -37,30 +32,31 @@ class SearchBarWords extends Component {
     return (
             <div className="col-lg-12">
                 <form onSubmit={this.onSubmit}>
-                <div className="row">
-                    <div className="col-md-4">
+                <div className="row justify-content-center">
+                    <div className="col-lg-4 col-md-6 mb-2">
                         <label>Japanese Keyword:</label>
                         <input  onChange={this.handleChange}
-                                onClick={() => this.setState({ tags: "" })}
-                                className="form-control form-control-sm w-75"
+                                className="form-control form-control-sm"
                                 name="keyword" type="text" placeholder="Search"
                                 value={this.state.keyword}
                                 aria-label="Search"
                         />
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-lg-4 col-md-4 col-sm-12 mb-2">
                         <label>Word Type:</label>
-                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm w-50" onChange={this.handleChange}>
+                        <select name="filterType" value={this.state.filterType} className="form-control form-control-sm" onChange={this.handleChange}>
                             <option value="20">All</option>
-                            <option value="noun">Noun</option>
-                            <option value="verb">Verb</option>
-                            <option value="particle">Particle</option>
-                            <option value="adverb">Adverb</option>
-                            <option value="adjective">Adjective</option>
-                            <option value="expressions">Expressions</option>
+                            <option value="1">Noun</option>
+                            <option value="2">Verb</option>
+                            <option value="3">Particle</option>
+                            <option value="4">Adverb</option>
+                            <option value="5">Adjective</option>
+                            <option value="6">Expressions</option>
                         </select>
                     </div>
-                    <div className="col-md-4">
+                </div>
+                <div className="row  justify-content-center">
+                    <div className="col-lg-8 col-md-10 mx-auto">
                         <button className="btn btn-outline fas fa-search fa-lg brand-button mt-3" aria-hidden="true"></button>
                     </div>
                 </div>

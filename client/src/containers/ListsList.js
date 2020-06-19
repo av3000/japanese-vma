@@ -41,7 +41,7 @@ class ListsList extends Component {
                 newState.lists       = res.lists.data ? res.lists.data : newState.lists;
                 newState.url            = res.lists.next_page_url;
 
-                newState.searchHeading = "Requested query: " + newState.filters.title;
+                newState.searchHeading = res.requestedQuery;
                 newState.searchTotal = "results total: " + res.lists.total;
                 return newState;
             }
@@ -53,7 +53,6 @@ class ListsList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.title;
             this.setState( newState );
             console.log(err);
         })
@@ -74,7 +73,6 @@ class ListsList extends Component {
             .then(newState => {
                 newState.pagination = this.makePagination(newState.paginateObject);
                 this.setState( newState );
-                console.log(this.state);
             })
             .catch(err => {
                 console.log(err);
@@ -85,13 +83,10 @@ class ListsList extends Component {
         let newState = Object.assign({}, this.state);
         apiCall("post", givenUrl, newState.filters)
         .then(res => {
-            console.log(res);
-
             newState.paginateObject = res.lists;
             newState.lists       = [...newState.lists, ...res.lists.data];
             newState.url            = res.lists.next_page_url;
 
-            newState.searchHeading = "Requested query: " + newState.filters.title;
             newState.searchTotal = "results total: " + res.lists.total;
 
             return newState;
@@ -100,8 +95,6 @@ class ListsList extends Component {
             newState.pagination = this.makePagination(newState.paginateObject);
 
             this.setState( newState );
-
-            console.log(this.state.lists);
         })
         .catch(err => {
             console.log(err);

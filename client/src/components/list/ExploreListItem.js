@@ -44,9 +44,10 @@ const ExploreListItem = ({
                     </Moment>
                 </p>
                 <p className="text-muted">
-                    {itemsTotal} items &nbsp;
+                    {viewsTotal} views &nbsp;
                     {commentsTotal} comments&nbsp;
-                    {likesTotal} likes
+                    {likesTotal} likes &nbsp;
+                    <br/>{itemsTotal} items &nbsp;
                 </p>
                 {type !== 9 ? (
                     <React.Fragment>

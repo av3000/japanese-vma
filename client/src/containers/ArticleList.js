@@ -16,7 +16,7 @@ class ArticleList extends Component {
             paginateObject: {},
             searchHeading: "",
             searchTotal: "",
-            filters: []
+            filters: {}
         }
         
         this.loadMore = this.loadMore.bind(this);
@@ -40,7 +40,8 @@ class ArticleList extends Component {
                 newState.articles       = res.articles.data ? res.articles.data : newState.articles;
                 newState.url            = res.articles.next_page_url;
 
-                newState.searchHeading = "Requested query: " + newState.filters.title;
+                newState.searchHeading = res.requestedQuery;
+                // newState.searchHeading = "Requested query: " + newState.filters.title;
                 newState.searchTotal = "results total: " + res.articles.total;
                 return newState;
             }
@@ -83,13 +84,11 @@ class ArticleList extends Component {
         let newState = Object.assign({}, this.state);
         apiCall("post", givenUrl, newState.filters)
         .then(res => {
-            console.log(res);
-
             newState.paginateObject = res.articles;
             newState.articles       = [...newState.articles, ...res.articles.data];
             newState.url            = res.articles.next_page_url;
 
-            newState.searchHeading = "Requested query: " + newState.filters.title;
+            // newState.searchHeading = "Requested query: " + newState.filters.title;
             newState.searchTotal   = "results total: " + res.articles.total;
 
             return newState;
@@ -98,8 +97,6 @@ class ArticleList extends Component {
             newState.pagination = this.makePagination(newState.paginateObject);
 
             this.setState( newState );
-
-            console.log(this.state.articles);
         })
         .catch(err => {
             console.log(err);

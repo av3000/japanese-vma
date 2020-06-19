@@ -46,7 +46,10 @@ const Footer = () => (
                     </Link>
                 </div>
                 <p>
-                Terms and Conditions | Copyright &copy; JPLearning 2020 | Privacy policy 
+                    Alano Vaičiulio baigiamasis darbas. Vilniaus verslo kolegija &copy; 2020
+                </p>
+                <p className="text-muted">
+                    Terms and Conditions  | Copyright JPLearning &copy;  2020 | Privacy policy
                 </p>
             </div>
         </div>

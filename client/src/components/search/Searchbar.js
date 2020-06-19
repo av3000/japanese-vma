@@ -5,7 +5,7 @@ class Searchbar extends Component {
         super(props);
         this.state = {
             keyword: "",
-            sortByWhat: "",
+            sortByWhat: "new",
             filterType: 20
         };
         
@@ -69,11 +69,11 @@ class Searchbar extends Component {
                     {this.props.searchType === "lists" ? (
                         <select name="filterType" value={this.state.filterType} className="form-control form-control-sm" onChange={this.handleChange}>
                             <option value="20">All</option>
-                            <option value="1">Radicals</option>
-                            <option value="2">Kanjis</option>
-                            <option value="3">Words</option>
-                            <option value="4">Sentences</option>
-                            <option value="5">Articles</option>
+                            <option value="5">Radicals</option>
+                            <option value="6">Kanjis</option>
+                            <option value="7">Words</option>
+                            <option value="8">Sentences</option>
+                            <option value="9">Articles</option>
                         </select> 
                     ): ""}
                     </div>

@@ -21,6 +21,36 @@ use DB;
 
 class JapaneseDataController extends Controller
 {
+    public function getKanjiTypes($index){
+        $kanjiTypes = [
+            "N1",
+            "N2",
+            "N3",
+            "N4",
+            "N5",
+            "Uncommon"
+        ];
+
+        $kanjiTypes[20] = "All";
+
+        return $kanjiTypes[$index-1];
+    }
+
+    public function getWordTypes($index) {
+        $wordTypes = [
+            "noun",
+            "verb",
+            "particle",
+            "adverb",
+            "adjective",
+            "expressions"
+        ];
+
+        $wordTypes[20] = "All";
+
+        return $wordTypes[$index-1];
+    }
+
     public function indexRadicals() {
         $radicals = Radical::paginate(10);
 
@@ -315,184 +345,99 @@ class JapaneseDataController extends Controller
     }
 
     public function generateSentencesQuery(Request $request) {
-        $q = "";
+        $requestedQuery = "";
+        $sentences = new Sentence;
         if(isset( $request->keyword )){
-            $query = explode(' ',trim($request->keyword))[0];
-
-            $sentences = Sentence::whereLike(['content'], $query);
-            
-            $q .= $query;
+           
+            $sentences = Sentence::whereLike(['content'], $request->keyword);
+            $requestedQuery .= "Requested: ".$request->keyword. ". ";
         } 
 
-        //if search has search fields, return sentences of requested fields
-        if(isset( $sentences )) {
-            $sentences = $sentences->paginate(20);
+        $sentences = $sentences->paginate(20);
 
-            return response()->json([
-                'success' => true,
-                'sentences' => $sentences,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default words
-        if( $q == "")
-        {
-            $sentences = Sentence::paginate(20);
-
-             return response()->json([
-                'success' => true,
-                'sentences' => $sentences,
-                'q' => $q
-            ]);
-        }
-        
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero sentences',
-            'q' => $q
+            'success' => true,
+            'message' => 'Requested query: '.$requestedQuery,
+            'sentences' => $sentences,
+            'requestedQuery' => $requestedQuery
         ]);
-    
     }
 
     public function contains($needle, $haystack)
     {
         return strpos($haystack, $needle) !== false;
     }
-
     public function generateWordsQuery(Request $request) {
-        $q = "";
+        $requestedQuery = "";
         $words = new Word;
         if(isset( $request->keyword )){
             $query = explode(' ',trim($request->keyword))[0];
 
             $words = Word::whereLike(['word', 'furigana'], $query);
-            
-            $q .= $query;
+            $requestedQuery .= "Requested: ".$query. ". ";
         } 
 
         if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
-            $words = $words->where('word_type', 'LIKE', '%'.$request->filterType.'%');
+            $words = $words->where('word_type', 'LIKE', '%'.$this->getWordTypes($request->filterType).'%');
+            $requestedQuery .= "Filter by: ".$this->getWordTypes($request->filterType). ". ";
         }
 
-        //if search has search fields, return words of requested fields
-        if(isset( $words )) {
-            $words = $words->paginate(20);
-            $words = $this->extractWordsListAttributes($words);
-
-            return response()->json([
-                'success' => true,
-                'words' => $words,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default words
-        if( $q == "")
-        {
-            $words = Word::paginate(20);
-            $words = $this->extractWordsListAttributes($words);
-
-             return response()->json([
-                'success' => true,
-                'words' => $words,
-                'q' => $q
-            ]);
-        }
+        $words = $words->paginate(20);
         
+        $words = $this->extractWordsListAttributes($words);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero words',
-            'q' => $q
+            'success' => true,
+            'message' => 'Requested query: '.$requestedQuery,
+            'words' => $words,
+            'requestedQuery' => $requestedQuery
         ]);
-    
     }
 
     public function generateKanjisQuery(Request $request) {
-        $q = "";
+        $requestedQuery = "";
         $kanjis = new Kanji;
         if(isset( $request->keyword )){
             $query = explode(' ',trim($request->keyword))[0];
 
             $kanjis = Kanji::whereLike(['kanji', 'meaning'], $query);
-            $q .= $query;
+            $requestedQuery .= "Requested: ".$query. ". ";
         } 
 
         if(isset( $request->filterType ) && $request->filterType != 20){ // 20 = All, so no need to filter by type.
             $kanjis = $kanjis->where('jlpt', $request->filterType);
+            $requestedQuery .= "Filter by: ".$this->getKanjiTypes($request->filterType). ". ";
         }
 
-        //if search has search fields, return kanjis of requested fields
-        if(isset( $kanjis )) {
-            $kanjis = $kanjis->paginate(20);
-
-            return response()->json([
-                'success' => true,
-                'kanjis' => $kanjis,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default kanjis
-        if( $q == "")
-        {
-            $kanjis = Kanji::paginate(20);
-
-             return response()->json([
-                'success' => true,
-                'kanjis' => $kanjis,
-                'q' => $q
-            ]);
-        }
+        $kanjis = $kanjis->paginate(20);
         
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero kanjis',
-            'q' => $q
+            'success' => true,
+            'message' => 'Requested query: '.$requestedQuery,
+            'kanjis' => $kanjis,
+            'requestedQuery' => $requestedQuery
         ]);
     
     }
 
     public function generateRadicalsQuery(Request $request) {
-        $q = "";
+        $requestedQuery = "";
+        $radicals = new Radical;
         if(isset( $request->keyword )){
             $query = explode(' ',trim($request->keyword))[0];
 
             $radicals = Radical::whereLike(['radical', 'meaning', 'hiragana'], $query);
-            $q .= $query;
+            $requestedQuery .= "Requested: ".$query;
         } 
 
-        //if search has search fields, return radicals of requested fields
-        if(isset( $radicals )) {
-            $radicals = $radicals->paginate(20);
-
-            return response()->json([
-                'success' => true,
-                'radicals' => $radicals,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default radicals
-        if( $q == "")
-        {
-            $radicals = Radical::where('publicity', 1)->paginate(20);
-
-             return response()->json([
-                'success' => true,
-                'radicals' => $radicals,
-                'q' => $q
-            ]);
-        }
+        $radicals = $radicals->paginate(20);
         
         return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero radicals',
-            'q' => $q
+            'success' => true,
+            'message' => 'Requested query: '.$requestedQuery,
+            'requestFilter' => $request->filterType,
+            'radicals' => $radicals,
+            'requestedQuery' => $requestedQuery
         ]);
     
     }

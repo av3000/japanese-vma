@@ -11,12 +11,9 @@ const WordItem = ({
     addToList
 }) => (
     <div className="post-preview">
-        <div className="post-title">
-            <h1>{word}</h1>
-        </div>
-        <div className="post-subtitle">
-            <h3>{furigana}</h3>
-        </div>
+        <ruby className="h2 mr-2">
+            {word}<rp>(</rp><rt>{furigana}</rt><rp>)</rp>
+        </ruby>
         <div className="row">
             <div className="col-md-6">
             <p>

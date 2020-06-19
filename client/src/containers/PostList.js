@@ -97,16 +97,6 @@ export class PostList extends Component {
                 newState.url            = res.posts.next_page_url;
 
                 newState.searchHeading = res.requestedQuery;
-
-                // if(queryParams.keyword){
-                //     newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
-                // } else if (queryParams.filterType){
-                //     newState.searchHeading = "Requested query: '" + newState.filters.filterType +"'";
-                // }
-                // else {
-                //     newState.searchHeading = "";
-                // }
-
                 newState.searchTotal = "Results total: '" + res.posts.total +"'";
                 return newState;
             }

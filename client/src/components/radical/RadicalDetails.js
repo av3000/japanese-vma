@@ -28,7 +28,6 @@ class RadicalDetails extends Component {
         let id = this.props.match.params.radical_id;
         axios.get('/api/radical/' + id)
           .then(res => {
-            console.log(res);
             this.setState({
               radical: res.data
             });
@@ -37,22 +36,28 @@ class RadicalDetails extends Component {
               console.log(err);
           });
 
-          this.getUserRadicalLists();
+          if(this.props.currentUser.isAuthenticated){
+                this.getUserRadicalLists();
+          }
       };
+
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.currentUser.isAuthenticated){
+            this.getUserRadicalLists();
+        }
+    }
 
       getUserRadicalLists(){
         return axios.post(`/api/user/lists/contain`, {
             elementId: this.props.match.params.radical_id
         })
         .then(res => {
-            console.log(res);
             let newState = Object.assign({}, this.state);
             newState.lists = res.data.lists.filter(list => {
                 if(list.type === 1 || list.type === 5){
                     return list;
                 }
             })
-            console.log(newState.lists);
 
             this.setState( newState );
         })
@@ -72,29 +77,41 @@ class RadicalDetails extends Component {
       }
 
       addToList(id){
-          console.log("addto ")
-            console.log(id);
             this.setState({show: !this.state.show})
             axios.post("/api/user/list/additemwhileaway", {
                 listId: id,
                 elementId: this.props.match.params.radical_id
             })
-            .then(res => console.log(res))
+            .then(res => {
+                let newState = Object.assign({}, this.state);
+                newState.lists.find(list => {
+                    if(list.id === id){
+                        list.elementBelongsToList = true;
+                    }
+                });
+    
+                this.setState( newState );
+            })
             .catch(err => console.log(err))
-            window.location.reload(false);
       }
 
       removeFromList(id){
-          console.log("removefrom")
-          console.log(id);
           this.setState({show: !this.state.show})
           axios.post("/api/user/list/removeitemwhileaway", {
             listId: id,
             elementId: this.props.match.params.radical_id
           })
-          .then(res => console.log(res))
+          .then(res => {
+            let newState = Object.assign({}, this.state);
+            newState.lists.find(list => {
+                if(list.id === id){
+                    list.elementBelongsToList = false;
+                }
+            });
+
+            this.setState( newState );
+          })
           .catch(err => console.log(err))
-          window.location.reload(false);
       }
 
     render() {

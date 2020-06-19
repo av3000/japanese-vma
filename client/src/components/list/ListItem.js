@@ -44,9 +44,10 @@ const ListItem = ({
                     </Moment>
                 </p>
                 <p className="text-muted">
-                    {itemsTotal} items &nbsp;
+                    {viewsTotal} views &nbsp;
                     {commentsTotal} comments&nbsp;
-                    {likesTotal} likes
+                    {likesTotal} likes &nbsp;
+                    <br/>{itemsTotal} items &nbsp;
                 </p>
                 {type === 2 || type === 6 ? (
                     <React.Fragment>

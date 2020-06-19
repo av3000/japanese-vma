@@ -47,7 +47,7 @@ class ArticleDetails extends Component {
         this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
         this.handleStatusModalClose = this.handleStatusModalClose.bind(this);
 
-        this.getUserArticleLists = this.getUserArticleLists.bind(this);
+        // this.getUserArticleLists = this.getUserArticleLists.bind(this);
     };
 
   componentWillUnmount() {
@@ -58,31 +58,21 @@ class ArticleDetails extends Component {
     this._isMounted = true;
     if (this._isMounted) {
       let id = this.props.match.params.article_id;
-      console.log(this.props);
       if(this.props.currentUser && this.props.currentUser.isAuthenticated) 
       {
-        console.log("yes");
         this.getArticleWithAuth(id);
+        console.log("withAuth")
       }
       else {
-        console.log("no");
         this.getArticleWithoutAuth(id);
+        console.log("withNOAuth")
       }
     }
 
-    console.log("mounted:");
-    // console.log(this.props);
   };
 
   componentWillReceiveProps(nextProps) {
-    // console.log("this.props");
-    // console.log(this.props);
-    // console.log("nextProps");
-    // console.log(nextProps);
-    // console.log("no")
-
     if(nextProps.currentUser.isAuthenticated){
-        console.log("yes from props")
         this.getUserArticleLists();
     }
 }
@@ -94,8 +84,6 @@ class ArticleDetails extends Component {
           let newState = Object.assign({}, this.state);
           newState.article = res.data.article;
           newState.tempStatus = res.data.article.status;
-          console.log(res.data);
-          // this.setState( newState );
 
           return newState;
       })
@@ -130,6 +118,7 @@ class ArticleDetails extends Component {
          return <Redirect to='/articles' />
       });
 
+      this.getUserArticleLists();
   }
 
   getArticleWithoutAuth(id){
@@ -138,7 +127,6 @@ class ArticleDetails extends Component {
           let newState = Object.assign({}, this.state);
           newState.article = res.data.article;
           newState.tempStatus = res.data.article.status;
-          console.log(res.data);
           this.setState( newState );
       })
       .catch(err => {
@@ -154,16 +142,20 @@ class ArticleDetails extends Component {
         elementId: this.props.match.params.article_id
     })
     .then(res => {
-        console.log(res);
         let newState = Object.assign({}, this.state);
         newState.lists = res.data.lists.filter(list => {
             if(list.type === 9){
                 return list;
             }
         })
+
+        console.log("here are the new lists")
         console.log(newState.lists);
 
         this.setState( newState );
+        console.log("here are the updated lists")
+        console.log(this.state.lists);
+        
     })
     .catch(err => {
         console.log(err);
@@ -181,27 +173,21 @@ class ArticleDetails extends Component {
   }
 
   addToList(id){
-    console.log("addto ")
-      console.log(id);
       this.setState({show: !this.state.show})
       axios.post("/api/user/list/additemwhileaway", {
           listId: id,
           elementId: this.props.match.params.article_id
       })
-      .then(res => console.log(res))
       .catch(err => console.log(err))
       window.location.reload(false);
   }
 
   removeFromList(id){
-      console.log("removefrom")
-      console.log(id);
       this.setState({show: !this.state.show})
       axios.post("/api/user/list/removeitemwhileaway", {
         listId: id,
         elementId: this.props.match.params.article_id
       })
-      .then(res => console.log(res))
       .catch(err => console.log(err))
       window.location.reload(false);
   }
@@ -299,7 +285,6 @@ class ArticleDetails extends Component {
 
   toggleStatus(){
     this.handleStatusModalClose();
-    console.log("tempStatus: " + this.state.tempStatus);
     return apiCall("post", `/api/article/${this.state.article.id}/setstatus`, {
       status: this.state.tempStatus
     })
@@ -334,8 +319,6 @@ class ArticleDetails extends Component {
   }
 
   handleStatusModalClose(){
-    console.log("handleStatusModalClose");
-    console.log(this.state.showStatus);
     this.setState({showStatus: !this.state.showStatus})
   }
 
@@ -360,8 +343,6 @@ class ArticleDetails extends Component {
   }
 
   handleDeleteModalClose(){
-    console.log("handleDeleteModalClose");
-      console.log(this.state.showDelete);
     this.setState({showDelete: !this.state.showDelete})
   }
 
@@ -370,8 +351,6 @@ class ArticleDetails extends Component {
       this.props.history.push('/login');
     }
     else {
-      console.log("openDeleteModal");
-      console.log(this.state.showDelete);
         this.setState({showDelete: !this.state.showDelete})
     }
   }
@@ -427,11 +406,9 @@ class ArticleDetails extends Component {
   deleteComment(commentId) {
     return apiCall("delete", `/api/article/${this.state.article.id}/comment/${commentId}`)
       .then(res => { 
-        // console.log(res);
         let newState = Object.assign({}, this.state);
         newState.article.comments = newState.article.comments.filter(comment => comment.id !== commentId);
         this.setState( newState );
-        // window.location.reload(false);
       })
       .catch(err => {
         console.log(err);
@@ -440,7 +417,6 @@ class ArticleDetails extends Component {
   }
 
   editComment(commentId){
-    console.log("editComment");
     console.log(commentId);
   }
 
@@ -563,9 +539,10 @@ class ArticleDetails extends Component {
     ) : "";
 
     // Model for Bookmark adding to lists
-    let addModal = this.props.currentUser.isAuthenticated && this.state.lists ? (this.state.lists.map(list => {
+    let addModal = this.state.lists ? (this.state.lists.map(list => {
       return (
           <div key={list.id}>
+            xx
               <div className="col-9"> <Link to={`/list/${list.id}`}>{list.title}</Link>
                   {list.elementBelongsToList ? 
                   (<button className="btn btn-sm btn-danger" onClick={this.removeFromList.bind(this, list.id)}>-</button>)

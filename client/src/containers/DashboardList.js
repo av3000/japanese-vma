@@ -39,11 +39,21 @@ export class DashboardList extends Component {
         let newState = Object.assign({}, this.state);
         newState.dashboard = newState.dashboard === "user" ? "admin" : "user";
         this.setState(newState);
+
+        if(this.state.dashboard === "admin") {
+            this.fetchArticlesPending();
+        }
     }
 
     componentDidMount() {
-        this.fetchArticles();
-        this.fetchLists();
+        if(this.props.currentUser.isAuthenticated){
+            console.log("yes");
+            this.fetchArticles();
+            this.fetchLists();
+        }
+        else {
+            this.props.history.push("/login");
+        }
     };
 
     componentWillReceiveProps(nextProps) {
@@ -304,7 +314,7 @@ export class DashboardList extends Component {
                         (
                             <div className="my-3 p-3 bg-white rounded box-shadow">
                                 {
-                                    articleList ? 
+                                    this.state.articles ? 
                                     (
                                             this.state.dashboard === "admin" ? 
                                         (

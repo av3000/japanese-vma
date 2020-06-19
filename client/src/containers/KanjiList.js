@@ -60,7 +60,7 @@ export class KanjiList extends Component {
                 newState.kanjis       = res.kanjis.data ? res.kanjis.data : newState.kanjis;
                 newState.url            = res.kanjis.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                newState.searchHeading = res.requestedQuery;
                 newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
                 return newState;
             }
@@ -72,7 +72,6 @@ export class KanjiList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -82,13 +81,10 @@ export class KanjiList extends Component {
         let newState = Object.assign({}, this.state);
         apiCall("post", givenUrl, newState.filters)
         .then(res => {
-            console.log(res);
-
             newState.paginateObject = res.kanjis;
             newState.kanjis         = [...newState.kanjis, ...res.kanjis.data];
             newState.url            = res.kanjis.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.kanjis.total +"'";
 
             return newState;
@@ -97,8 +93,6 @@ export class KanjiList extends Component {
             newState.pagination = this.makePagination(newState.paginateObject);
 
             this.setState( newState );
-
-            console.log(this.state.kanjis);
         })
         .catch(err => {
             console.log(err);
@@ -125,9 +119,8 @@ export class KanjiList extends Component {
     };
 
     addToList(id){
-        console.log("add to list: " + id);
+        console.log("addtoList kanjiList: " + id);
     }
-
 
     render() {
         let { kanjis } = this.state;

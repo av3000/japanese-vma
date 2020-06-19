@@ -170,7 +170,7 @@ const Main = props => {
                 <Route exact path="/sentences" render={props =>{
                     return (
                         <SentenceTimeline
-
+                            
                         />
                     )
                 }}/>
@@ -209,8 +209,8 @@ const Main = props => {
                     }}
                 />
                 {/* Dashboard */}
-                <PrivateRoute exact path="/dashboard" currentUser={currentUser} component={DashboardTimeline} />
-
+                <Route exact path="/dashboard"  render={props => <DashboardTimeline currentUser={currentUser} {...props}/> }/>
+                
                 {/* Not found component */}
                 <Route component={PageNotFound} />
             </Switch>

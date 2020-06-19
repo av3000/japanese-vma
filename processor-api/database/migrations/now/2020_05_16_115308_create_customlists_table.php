@@ -19,6 +19,7 @@ class CreateCustomlistsTable extends Migration
             $table->boolean("publicity")->default(0);
             $table->integer("type");
             $table->string("title");
+            $table->text("description");
             $table->integer("n1")->default(0);
             $table->integer("n2")->default(0);
             $table->integer("n3")->default(0);

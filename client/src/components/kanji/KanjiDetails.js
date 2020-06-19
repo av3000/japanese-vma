@@ -54,9 +54,16 @@ class KanjiDetails extends Component {
             console.log(err);
         });
 
-
-        this.getUserKanjiLists();
+        if(this.props.currentUser.isAuthenticated){
+            this.getUserKanjiLists();
+        }
     };
+
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.currentUser.isAuthenticated){
+            this.getUserKanjiLists();
+        }
+    }
 
     handleClose(){
         this.setState({show: !this.state.show})
@@ -67,14 +74,12 @@ class KanjiDetails extends Component {
             elementId: this.props.match.params.kanji_id
         })
         .then(res => {
-            console.log(res);
             let newState = Object.assign({}, this.state);
             newState.lists = res.data.lists.filter(list => {
                 if(list.type === 2 || list.type === 6){
                     return list;
                 }
             })
-            console.log(newState.lists);
 
             this.setState( newState );
         })
@@ -94,29 +99,41 @@ class KanjiDetails extends Component {
       }
 
       addToList(id){
-          console.log("addto ")
-            console.log(id);
             this.setState({show: !this.state.show})
             axios.post("/api/user/list/additemwhileaway", {
                 listId: id,
                 elementId: this.props.match.params.kanji_id
             })
-            .then(res => console.log(res))
+            .then(res => {
+                let newState = Object.assign({}, this.state);
+                newState.lists.find(list => {
+                    if(list.id === id){
+                        list.elementBelongsToList = true;
+                    }
+                });
+    
+                this.setState( newState );
+            })
             .catch(err => console.log(err))
-            window.location.reload(false);
       }
 
       removeFromList(id){
-          console.log("removefrom")
-          console.log(id);
           this.setState({show: !this.state.show})
           axios.post("/api/user/list/removeitemwhileaway", {
             listId: id,
             elementId: this.props.match.params.kanji_id
           })
-          .then(res => console.log(res))
+          .then(res => {
+            let newState = Object.assign({}, this.state);
+            newState.lists.find(list => {
+                if(list.id === id){
+                    list.elementBelongsToList = false;
+                }
+            });
+
+            this.setState( newState );
+          })
           .catch(err => console.log(err))
-          window.location.reload(false);
       }
 
     // fetchQuery(queryParams) {

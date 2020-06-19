@@ -162,35 +162,33 @@ class ListDetails extends Component {
     {
       this.props.history.push('/login');
     }
+    else {
+      let endpoint = this.state.list.isLiked === true ? "unlike" : "like";
+      let id = this.state.list.id;
 
-    let endpoint = this.state.list.isLiked === true ? "unlike" : "like";
-    let id = this.state.list.id;
+      axios.post('/api/list/'+id+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
 
-    axios.post('/api/list/'+id+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-
-        if(endpoint === "unlike"){
-            newState.list.isLiked = !newState.list.isLiked;
-            newState.list.likesTotal -= 1;
-            this.setState(newState);
-        }
-        else if (endpoint === "like"){
-            newState.list.isLiked = !newState.list.isLiked;
-            newState.list.likesTotal += 1;
-            this.setState(newState);
-        }
-      })
-      .catch(err => {
-          console.log(err);
-      })
+          if(endpoint === "unlike"){
+              newState.list.isLiked = !newState.list.isLiked;
+              newState.list.likesTotal -= 1;
+              this.setState(newState);
+          }
+          else if (endpoint === "like"){
+              newState.list.isLiked = !newState.list.isLiked;
+              newState.list.likesTotal += 1;
+              this.setState(newState);
+          }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
   };
 
   toggleListEdit() {
-    if(this.props.currentUser.isAuthenticated === false){
-      this.props.history.push('/login');
-    }
-    else {
+    if(this.props.currentUser.user.id === this.state.list.user_id){
       console.log("toggleListEdit");
       console.log(this.state.editToggle);
         let heading = this.state.editToggle ? "Edit" : "End"        
@@ -198,6 +196,9 @@ class ListDetails extends Component {
           editToggle: !this.state.editToggle,
           editToggleHeading: heading
         });
+    }
+    else  {
+      this.props.history.push('/login');
     }
   }
 
@@ -226,29 +227,30 @@ class ListDetails extends Component {
     {
       this.props.history.push('/login');
     }
+    else {
+      let theComment = this.state.list.comments.find(comment => comment.id === commentId)
 
-    let theComment = this.state.list.comments.find(comment => comment.id === commentId)
+      let endpoint = theComment.isLiked === true ? "unlike" : "like";
 
-    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      axios.post('/api/list/'+this.state.list.id+'/comment/'+commentId+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
+          let index = this.state.list.comments.findIndex(comment => comment.id === commentId)
+          newState.list.comments[index].isLiked = !newState.list.comments[index].isLiked
+          
+          if(endpoint === "unlike"){
+              newState.list.comments[index].likesTotal -= 1;
+          }
+          else if (endpoint === "like"){
+            newState.list.comments[index].likesTotal += 1;
+          }
 
-    axios.post('/api/list/'+this.state.list.id+'/comment/'+commentId+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-        let index = this.state.list.comments.findIndex(comment => comment.id === commentId)
-        newState.list.comments[index].isLiked = !newState.list.comments[index].isLiked
-        
-        if(endpoint === "unlike"){
-            newState.list.comments[index].likesTotal -= 1;
-        }
-        else if (endpoint === "like"){
-          newState.list.comments[index].likesTotal += 1;
-        }
-
-        this.setState(newState);
-      })
-      .catch(err => {
-          console.log(err);
-      })
+          this.setState(newState);
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
   }
 
   addComment(comment) {
@@ -389,11 +391,13 @@ class ListDetails extends Component {
             (
               <React.Fragment>
               <div className="mt-3 mb-2">
-              { this.state.editToggle ? 
-                ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-light"> {this.state.editToggleHeading} </button> )
-              : 
-                ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-success"> {this.state.editToggleHeading} </button>)
-              }
+                {currentUser.isAuthenticated ? 
+                   this.state.editToggle ? 
+                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-light"> {this.state.editToggleHeading} </button> )
+                  : 
+                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-success"> {this.state.editToggleHeading} </button>)
+                 : ""}
+              
               </div>
                 <ListItems 
                   editToggle={this.state.editToggle}

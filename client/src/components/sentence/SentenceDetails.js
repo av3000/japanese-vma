@@ -66,8 +66,16 @@ class SentenceDetails extends Component {
             console.log(err);
         });
 
-        this.getUserSentenceLists();
+        if(this.props.currentUser.isAuthenticated){
+            this.getUserSentenceLists();
+        }
     };
+
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.currentUser.isAuthenticated){
+            this.getUserSentenceLists();
+        }
+    }
 
     handleClose(){
         this.setState({show: !this.state.show})
@@ -103,29 +111,41 @@ class SentenceDetails extends Component {
     }
 
     addToList(id){
-        console.log("addto ")
-        console.log(id);
         this.setState({show: !this.state.show})
         axios.post("/api/user/list/additemwhileaway", {
             listId: id,
             elementId: this.props.match.params.sentence_id
         })
-        .then(res => console.log(res))
+        .then(res => {
+            let newState = Object.assign({}, this.state);
+            newState.lists.find(list => {
+                if(list.id === id){
+                    list.elementBelongsToList = true;
+                }
+            });
+
+            this.setState( newState );
+        })
         .catch(err => console.log(err))
-        window.location.reload(false);
     }
 
     removeFromList(id){
-        console.log("removefrom")
-        console.log(id);
         this.setState({show: !this.state.show})
         axios.post("/api/user/list/removeitemwhileaway", {
         listId: id,
         elementId: this.props.match.params.sentence_id
         })
-        .then(res => console.log(res))
+        .then(res => {
+            let newState = Object.assign({}, this.state);
+            newState.lists.find(list => {
+                if(list.id === id){
+                    list.elementBelongsToList = false;
+                }
+            });
+
+            this.setState( newState );
+        })
         .catch(err => console.log(err))
-        window.location.reload(false);
     }
 
     likeComment(commentId) {
@@ -133,30 +153,30 @@ class SentenceDetails extends Component {
     {
         this.props.history.push('/login');
     }
+    else{
+        let theComment = this.state.sentence.comments.find(comment => comment.id === commentId)
 
-    let theComment = this.state.sentence.comments.find(comment => comment.id === commentId)
+        let endpoint = theComment.isLiked === true ? "unlike" : "like";
 
-    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+        axios.post('/api/sentence/'+this.state.sentence.id+'/comment/'+commentId+'/'+endpoint)
+            .then(res => {
+            let newState = Object.assign({}, this.state);
+            let index = this.state.sentence.comments.findIndex(comment => comment.id === commentId)
+            newState.sentence.comments[index].isLiked = !newState.sentence.comments[index].isLiked
+            
+            if(endpoint === "unlike"){
+                newState.sentence.comments[index].likesTotal -= 1;
+            }
+            else if (endpoint === "like"){
+                newState.sentence.comments[index].likesTotal += 1;
+            }
 
-    axios.post('/api/sentence/'+this.state.sentence.id+'/comment/'+commentId+'/'+endpoint)
-        .then(res => {
-        let newState = Object.assign({}, this.state);
-        let index = this.state.sentence.comments.findIndex(comment => comment.id === commentId)
-        newState.sentence.comments[index].isLiked = !newState.sentence.comments[index].isLiked
-        
-        if(endpoint === "unlike"){
-            newState.sentence.comments[index].likesTotal -= 1;
+            this.setState(newState);
+            })
+            .catch(err => {
+                console.log(err);
+            })
         }
-        else if (endpoint === "like"){
-            newState.sentence.comments[index].likesTotal += 1;
-        }
-
-        this.setState(newState);
-        })
-        .catch(err => {
-            console.log(err);
-        })
-
     }
 
     addComment(comment) {

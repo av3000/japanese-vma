@@ -61,7 +61,7 @@ export class WordList extends Component {
                 newState.words       = res.words.data ? res.words.data : newState.words;
                 newState.url            = res.words.next_page_url;
 
-                newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
+                newState.searchHeading = res.requestedQuery;
                 newState.searchTotal = "Results total: '" + res.words.total +"'";
                 return newState;
             }
@@ -73,7 +73,6 @@ export class WordList extends Component {
             this.setState( newState );
         })
         .catch(err => {
-            newState.searchHeading = "No results for tag: " + newState.filters.keyword;
             this.setState( newState );
             console.log(err);
         })
@@ -89,7 +88,6 @@ export class WordList extends Component {
             newState.words         = [...newState.words, ...res.words.data];
             newState.url            = res.words.next_page_url;
 
-            newState.searchHeading = "Requested query: '" + newState.filters.keyword +"'";
             newState.searchTotal = "Results total: '" + res.words.total +"'";
 
             return newState;
@@ -98,8 +96,6 @@ export class WordList extends Component {
             newState.pagination = this.makePagination(newState.paginateObject);
 
             this.setState( newState );
-
-            console.log(this.state.words);
         })
         .catch(err => {
             console.log(err);

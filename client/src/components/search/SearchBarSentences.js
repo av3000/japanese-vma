@@ -18,15 +18,10 @@ class SearchBarSentences extends Component {
             keyword: this.state.keyword,
         };
 
-        this.setState({
-            keyword: ""
-        });
-
         this.props.fetchQuery(data);
     }
     
     handleChange(e){
-        
         this.setState({ [e.target.name]: e.target.value });
     }
     
@@ -35,18 +30,19 @@ class SearchBarSentences extends Component {
     return (
             <div className="col-lg-12">
                 <form onSubmit={this.onSubmit}>
-                <div className="row">
-                    <div className="col-md-4">
+                <div className="row justify-content-center">
+                    <div className="col-lg-8 col-md-10 mx-auto">
                         <label>Japanese Keyword:</label>
                         <input  onChange={this.handleChange}
-                                onClick={() => this.setState({ tags: "" })}
-                                className="form-control form-control-sm w-75"
+                                className="form-control form-control-sm"
                                 name="keyword" type="text" placeholder="Search"
                                 value={this.state.keyword}
                                 aria-label="Search"
                         />
                     </div>
-                    <div className="col-md-4">
+                </div>
+                <div className="row  justify-content-center">
+                    <div className="col-lg-8 col-md-10 mx-auto">
                         <button className="btn btn-outline fas fa-search fa-lg brand-button mt-3" aria-hidden="true"></button>
                     </div>
                 </div>

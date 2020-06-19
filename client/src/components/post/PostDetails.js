@@ -89,28 +89,29 @@ class PostDetails extends Component {
     {
       this.props.history.push('/login');
     }
-
-    let endpoint = this.state.post.isLiked === true ? "unlike" : "like";
-    let id = this.state.post.id;
-
-    axios.post('/api/post/'+id+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-
-        if(endpoint === "unlike"){
-            newState.post.isLiked = !newState.post.isLiked;
-            newState.post.likesTotal -= 1;
-            this.setState(newState);
-        }
-        else if (endpoint === "like"){
-            newState.post.isLiked = !newState.post.isLiked;
-            newState.post.likesTotal += 1;
-            this.setState(newState);
-        }
-      })
-      .catch(err => {
-          console.log(err);
-      })
+    else {
+      let endpoint = this.state.post.isLiked === true ? "unlike" : "like";
+      let id = this.state.post.id;
+  
+      axios.post('/api/post/'+id+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
+  
+          if(endpoint === "unlike"){
+              newState.post.isLiked = !newState.post.isLiked;
+              newState.post.likesTotal -= 1;
+              this.setState(newState);
+          }
+          else if (endpoint === "like"){
+              newState.post.isLiked = !newState.post.isLiked;
+              newState.post.likesTotal += 1;
+              this.setState(newState);
+          }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
   };
 
   toggleLock(){
@@ -156,29 +157,30 @@ class PostDetails extends Component {
       this.props.history.push('/login');
     }
 
-    let theComment = this.state.post.comments.find(comment => comment.id === commentId)
+    else {
+      let theComment = this.state.post.comments.find(comment => comment.id === commentId)
 
-    let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      let endpoint = theComment.isLiked === true ? "unlike" : "like";
 
-    axios.post('/api/post/'+this.state.post.id+'/comment/'+commentId+'/'+endpoint)
-      .then(res => {
-        let newState = Object.assign({}, this.state);
-        let index = this.state.post.comments.findIndex(comment => comment.id === commentId)
-        newState.post.comments[index].isLiked = !newState.post.comments[index].isLiked
-        
-        if(endpoint === "unlike"){
-            newState.post.comments[index].likesTotal -= 1;
-        }
-        else if (endpoint === "like"){
-          newState.post.comments[index].likesTotal += 1;
-        }
+      axios.post('/api/post/'+this.state.post.id+'/comment/'+commentId+'/'+endpoint)
+        .then(res => {
+          let newState = Object.assign({}, this.state);
+          let index = this.state.post.comments.findIndex(comment => comment.id === commentId)
+          newState.post.comments[index].isLiked = !newState.post.comments[index].isLiked
+          
+          if(endpoint === "unlike"){
+              newState.post.comments[index].likesTotal -= 1;
+          }
+          else if (endpoint === "like"){
+            newState.post.comments[index].likesTotal += 1;
+          }
 
-        this.setState(newState);
-      })
-      .catch(err => {
-          console.log(err);
-      })
-
+          this.setState(newState);
+        })
+        .catch(err => {
+            console.log(err);
+        })
+    }
   }
 
   addComment(comment) {

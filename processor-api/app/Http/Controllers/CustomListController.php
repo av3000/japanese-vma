@@ -35,6 +35,20 @@ class CustomListController extends Controller
     const LYRICS    = 10;
     const ARTISTS   = 11;
 
+    public function getListTypes($index)
+    {
+        $listTypes = [];
+        
+        $listTypes[5] = "Radicals";
+        $listTypes[6] = "Kanjis";
+        $listTypes[7] = "Words";
+        $listTypes[8] = "Sentences";
+        $listTypes[9] = "Articles";
+        $listTypes[20] = "All";
+
+        return $listTypes[$index];
+    }
+
     public function getListItems(CustomList $list)
     {
         $objectsArray = [];
@@ -122,7 +136,7 @@ class CustomListController extends Controller
         }
 
         $list = $this->getListItems($list);
-        $this->incrementView($list);
+        
         $objectTemplateId     = ObjectTemplate::where('title', 'list')->first()->id;
         $list->hashtags       = $this->getUniquehashtags($list->id, $objectTemplateId);
         $list->likesTotal     = $this->getImpression("like", $objectTemplateId, $list, "total");
@@ -168,6 +182,8 @@ class CustomListController extends Controller
         $list->commentsTotal  = count($list->comments);
         $list->userName = User::find($list->user_id)->name;
 
+        $this->incrementView($list);
+
         return response()->json([
             'success' => true,
             'listItemsCount' => count($list->listItems),
@@ -177,7 +193,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
+        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', "DESC")->paginate(3);
 
         if(!$lists)
         {
@@ -223,6 +239,8 @@ class CustomListController extends Controller
         
         $this->attachHashTags($request->tags, $newList);
         
+        $this->incrementView($newList);
+
         return response()->json([
             'success' => true,
             'newList' => $newList
@@ -580,7 +598,85 @@ class CustomListController extends Controller
         return $lists;
     }
 
-    public function generateQuery(Request $request) {
+    public function sortByViewsTotal($objectsCollection, $objectTemplateId)
+    {
+        // sort by popularity aka impressions / views
+        // PROBLEM: I need to count views totals and join those viewsTotals to each post as $post->viewsTotal
+        // to loop each post I need to make it to array, but when it becomes array->get(); I cannot use paginate
+        // To make results right, I need to get views before pagination to apply sort order for all results
+        // $rawStatement = "SELECT customlists.*, (SELECT COUNT(*) FROM views WHERE template_id = 9 AND real_object_id = customlists.id) AS viewsTotal FROM customlists ORDER BY viewsTotal DESC";
+
+        $objectsCollection = $objectsCollection
+            ->select('customlists.*')
+            ->leftJoin('views', 'customlists.id', '=', 'views.real_object_id')
+            ->where('views.template_id', '=', $objectTemplateId)
+            ->addSelect(DB::raw('count(views.real_object_id) as viewsTotal'))
+            ->groupBy('customlists.id')
+            ->orderBy('viewsTotal', 'desc');
+
+        return $objectsCollection;
+    }
+
+    public function generateQuery(Request $request) 
+    {
+        $lists = new CustomList;
+        $requestedQuery = "";
+        if(isset( $request->keyword ))
+        {
+            $request->keyword = trim($request->keyword);
+            $singleTag = explode(' ',trim($request->keyword))[0];
+
+            $search = '#';
+
+            if(preg_match("/{$search}/i", $singleTag)) {
+                $lists = $this->getUniquehashtagLists($singleTag);
+                $requestedQuery .= $singleTag .". ";
+            }
+            else {
+                $lists = CustomList::whereLike(['title', 'description'], $request->keyword)
+                    ->where('publicity', 1)
+                    ->where('type', '>', 4);
+                $requestedQuery .= "keyword: ".$request->keyword. ". ";
+            }
+        }
+
+        if(isset( $request->sortByWhat ))
+        {
+            if( $request->sortByWhat === "new" ){
+                $lists = $lists->orderBy('created_at', 'desc')
+                    ->where('publicity', 1)
+                    ->where('type', '>', 4);
+                $requestedQuery .= " Sort by Newest. ";
+            }
+
+            else if ($request->sortByWhat === "pop") {
+                $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
+                $lists = $this->sortByViewsTotal($lists, $objectTemplateId)
+                    ->where('publicity', 1)
+                    ->where('type', '>', 4);
+                $requestedQuery .= " Sort by Popular. ";
+            }
+        }
+        
+        if(isset( $request->filterType ) && $request->filterType != 20) // 20 = all
+        {   
+            $lists = $lists->where('type', $request->filterType)->where('publicity', 1);
+            $requestedQuery .= "Filter by ". $this->getListTypes($request->filterType). ".";
+        }
+        
+        $lists = $lists->paginate(3);
+
+        $lists = $this->getListImpressionsSearch($lists);
+
+        return response()->json([
+            'success' => true,
+            'lists' => $lists,
+            'requestedQuery' => $requestedQuery
+        ]);
+    }
+
+    public function generateQueryOld(Request $request) {
         $q = "";
         if(isset( $request->title )){
             $request->title = trim($request->title);
