@@ -47,27 +47,13 @@ export class DashboardList extends Component {
 
     componentDidMount() {
         if(this.props.currentUser.isAuthenticated){
-            console.log("yes");
             this.fetchArticles();
             this.fetchLists();
         }
-        else {
-            this.props.history.push("/login");
-        }
-    };
-
-    componentWillReceiveProps(nextProps) {
-        // console.log("this.props");
-        // console.log(this.props);
-        // console.log("nextProps");
-        // console.log(nextProps);
-        // console.log("no")
-
-        if(nextProps.currentUser.user.isAdmin){
-            // console.log("yes")
+        if(this.props.currentUser.user.isAdmin){
             this.fetchArticlesPending();
         }
-    }
+    };
 
     fetchArticlesPending() {
         return apiCall("get", `/api/articles/pendinglist`)
@@ -281,7 +267,14 @@ export class DashboardList extends Component {
         return (
             <div className="container mt-5">
                 <div className="row justify-content-center">
-                    {/* <SearchBar fetchQuery={this.fetchQuery} /> */}
+                    <div className="col-lg-4 col-md-6 col-sm-12 mt-3">
+                        <input  onChange={this.handleChange}
+                                className="form-control form-control-sm"
+                                name="keyword" type="text" placeholder="Ex.: title, text, #tag"
+                                value={this.state.keyword}
+                                aria-label="Search"
+                        />
+                    </div>
                 </div>
                 <div className="container mt-5">
                     <div className="ml-3 mt-2">

@@ -47,7 +47,7 @@ class ArticleDetails extends Component {
         this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
         this.handleStatusModalClose = this.handleStatusModalClose.bind(this);
 
-        // this.getUserArticleLists = this.getUserArticleLists.bind(this);
+        this.getUserArticleLists = this.getUserArticleLists.bind(this);
     };
 
   componentWillUnmount() {
@@ -57,25 +57,10 @@ class ArticleDetails extends Component {
   componentDidMount(){
     this._isMounted = true;
     if (this._isMounted) {
-      let id = this.props.match.params.article_id;
-      if(this.props.currentUser && this.props.currentUser.isAuthenticated) 
-      {
+        let id = this.props.match.params.article_id;
         this.getArticleWithAuth(id);
-        console.log("withAuth")
-      }
-      else {
-        this.getArticleWithoutAuth(id);
-        console.log("withNOAuth")
-      }
     }
-
   };
-
-  componentWillReceiveProps(nextProps) {
-    if(nextProps.currentUser.isAuthenticated){
-        this.getUserArticleLists();
-    }
-}
 
   getArticleWithAuth(id){
     axios.get('/api/article/' + id)
@@ -84,6 +69,8 @@ class ArticleDetails extends Component {
           let newState = Object.assign({}, this.state);
           newState.article = res.data.article;
           newState.tempStatus = res.data.article.status;
+
+          this.setState(newState);
 
           return newState;
       })
@@ -114,30 +101,21 @@ class ArticleDetails extends Component {
            this.setState(newState);
           }
       })
-      .catch(err => {
-         return <Redirect to='/articles' />
-      });
-
-      this.getUserArticleLists();
-  }
-
-  getArticleWithoutAuth(id){
-    axios.get('/api/article/' + id)
       .then(res => {
-          let newState = Object.assign({}, this.state);
-          newState.article = res.data.article;
-          newState.tempStatus = res.data.article.status;
-          this.setState( newState );
+        if(this.props.currentUser.isAuthenticated)
+          {
+            this.getUserArticleLists();
+          }
       })
       .catch(err => {
-         return <Redirect to='/articles' />
+        this.props.history.push('/articles');
       });
+
   }
 
   // Actions
 
   getUserArticleLists(){
-    console.log("getUserArticleLists");
     return axios.post(`/api/user/lists/contain`, {
         elementId: this.props.match.params.article_id
     })
@@ -149,13 +127,7 @@ class ArticleDetails extends Component {
             }
         })
 
-        console.log("here are the new lists")
-        console.log(newState.lists);
-
         this.setState( newState );
-        console.log("here are the updated lists")
-        console.log(this.state.lists);
-        
     })
     .catch(err => {
         console.log(err);
@@ -178,8 +150,17 @@ class ArticleDetails extends Component {
           listId: id,
           elementId: this.props.match.params.article_id
       })
+      .then(res => {
+        let newState = Object.assign({}, this.state);
+        newState.lists.find(list => {
+            if(list.id === id){
+                list.elementBelongsToList = true;
+            }
+        });
+
+        this.setState( newState );
+       })
       .catch(err => console.log(err))
-      window.location.reload(false);
   }
 
   removeFromList(id){
@@ -188,8 +169,17 @@ class ArticleDetails extends Component {
         listId: id,
         elementId: this.props.match.params.article_id
       })
+      .then(res => {
+        let newState = Object.assign({}, this.state);
+        newState.lists.find(list => {
+            if(list.id === id){
+                list.elementBelongsToList = false;
+            }
+        });
+
+        this.setState( newState );
+       })
       .catch(err => console.log(err))
-      window.location.reload(false);
   }
 
   likeArticle() {
@@ -542,7 +532,6 @@ class ArticleDetails extends Component {
     let addModal = this.state.lists ? (this.state.lists.map(list => {
       return (
           <div key={list.id}>
-            xx
               <div className="col-9"> <Link to={`/list/${list.id}`}>{list.title}</Link>
                   {list.elementBelongsToList ? 
                   (<button className="btn btn-sm btn-danger" onClick={this.removeFromList.bind(this, list.id)}>-</button>)
@@ -608,7 +597,8 @@ class ArticleDetails extends Component {
               </div>
         </div>
 
-          <Modal show={this.state.showBookmark} onHide={this.handleBookmarkClose}>
+          {this.state.lists ? (
+            <Modal show={this.state.showBookmark} onHide={this.handleBookmarkClose}>
             <Modal.Header closeButton>
                 <Modal.Title>Choose List to add</Modal.Title>
             </Modal.Header>
@@ -622,10 +612,11 @@ class ArticleDetails extends Component {
                 </Button>
             </Modal.Footer>
           </Modal>
+          ): ""}
 
           <Modal show={this.state.showPdf} onHide={this.handlePdfClose}>
             <Modal.Header closeButton>
-                <Modal.Title>Choose List to add</Modal.Title>
+                <Modal.Title>Choose which data you want to download.</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <button className="btn btn-outline brand-button" onClick={this.downloadKanjisPdf}> Kanji PDF </button>

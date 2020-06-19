@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 // import { connect } from 'react-redux';
 // import { fetchArticles } from '../store/actions/articles';
+import { Link } from 'react-router-dom';
+import ArrowIcon from '../assets/icons/arrow-navigation-icon.svg';
 import { apiCall } from '../services/api';
 import ExploreArticleItem from '../components/article/ExploreArticleItem';
 import Spinner from '../assets/images/spinner.gif';
@@ -11,6 +13,7 @@ class ExploreArticleList extends Component {
         super(props);
         this.state = {
             articles: [],
+            totalArticles: ""
         }
     }
 
@@ -28,6 +31,7 @@ class ExploreArticleList extends Component {
             .then(res => {
                 if (this._isMounted) {
                     let newState = Object.assign({}, this.state);
+                    newState.totalArticles = res.articles.total;
                     newState.articles = [...newState.articles, ...res.articles.data];
                     this.setState( newState );
                 }
@@ -68,7 +72,16 @@ class ExploreArticleList extends Component {
         </div>
         );
 
-        return articleList;
+        return (
+            <React.Fragment>
+               <Link to="/articles" className="homepage-section-title" id="readings">
+                    <span>Readings ({this.state.totalArticles})<img src={ArrowIcon} alt="arrow icon" /> </span>
+                </Link>
+                <div className="row">
+                    {articleList}
+                </div>
+            </React.Fragment>
+        );
     }
 }
 

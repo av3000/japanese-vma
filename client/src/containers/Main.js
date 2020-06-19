@@ -209,7 +209,16 @@ const Main = props => {
                     }}
                 />
                 {/* Dashboard */}
-                <Route exact path="/dashboard"  render={props => <DashboardTimeline currentUser={currentUser} {...props}/> }/>
+                {/* <Route exact path="/dashboard"  render={props => { return ( <DashboardTimeline currentUser={currentUser} {...props} /> ) } }/> */}
+                <PrivateRoute
+                    exact path="/dashboard"
+                    currentUser={currentUser}
+                    component={DashboardTimeline}
+                    // componentProps={{
+                    //     removeError: removeError,
+                    //     errors: errors
+                    // }}
+                />
                 
                 {/* Not found component */}
                 <Route component={PageNotFound} />

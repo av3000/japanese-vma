@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 // import { connect } from 'react-redux';
 // import { fetchLists } from '../store/actions/lists';
+import { Link } from 'react-router-dom';
+import ArrowIcon from '../assets/icons/arrow-navigation-icon.svg';
 import { apiCall } from '../services/api';
 import ExploreListItem from '../components/list/ExploreListItem';
 import Spinner from '../assets/images/spinner.gif';
@@ -28,6 +30,7 @@ class ExploreCustomList extends Component {
             .then(res => {
                 if (this._isMounted) {
                     let newState = Object.assign({}, this.state);
+                    newState.totalLists = res.lists.total;
                     newState.lists = [...newState.lists, ...res.lists.data];
                     this.setState( newState );
                 }
@@ -80,7 +83,16 @@ class ExploreCustomList extends Component {
             </div>
         )
 
-        return customLists;
+        return (
+            <React.Fragment>
+               <Link to="/lists" className="homepage-section-title" id="lists">
+                    <span>Lists ({this.state.totalLists})<img src={ArrowIcon} alt="arrow icon" /> </span>
+                </Link>
+                <div className="row">
+                    {customLists}
+                </div>
+            </React.Fragment>
+        );
     }
 }
 
