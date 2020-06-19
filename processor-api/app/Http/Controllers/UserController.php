@@ -38,28 +38,28 @@ class UserController extends Controller
         $radsList->user_id = $user->id;
         $radsList->publicity = 0;
         $radsList->type = self::KNOWNRADICALS;
-        $radsList->title = "My Known Radicals";
+        $radsList->title = "Known Radicals";
         $radsList->save();
         // kanjis
         $kanjiList = new CustomList;
         $kanjiList->user_id = $user->id;
         $kanjiList->publicity = 0;
         $kanjiList->type = self::KNOWNKANJIS;
-        $kanjiList->title = "My Known Kanjis";
+        $kanjiList->title = "Known Kanjis";
         $kanjiList->save();
         // words
         $wordList = new CustomList;
         $wordList->user_id = $user->id;
         $wordList->publicity = 0;
         $wordList->type = self::KNOWNWORDS;
-        $wordList->title = "My Known Words";
+        $wordList->title = "Known Words";
         $wordList->save();
         // sentences
         $sentenceList = new CustomList;
         $sentenceList->user_id = $user->id;
         $sentenceList->publicity = 0;
         $sentenceList->type = self::KNOWNSENTENCES;
-        $sentenceList->title = "My Known Sentences";
+        $sentenceList->title = "Known Sentences";
         $sentenceList->save();
 
      	$accessToken = $user->createToken('authToken');

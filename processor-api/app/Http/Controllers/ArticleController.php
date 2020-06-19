@@ -1322,11 +1322,19 @@ class ArticleController extends Controller
 
     public function getArticlesPending(){
 
-        $articlesPending = Article::where("status", "0")->orderBy("created_at", "desc")->get();
+        $articlesPending = Article::where("status", "0")->orWhere("status", "1")->orderBy("created_at", "desc")->get();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
+        $statusTitles = [
+            "Pending",
+            "Reviewing",
+            "Rejected",
+            "Approved"
+        ];
+
         foreach ($articlesPending as $article){
+            $article->statusTitle   = $statusTitles[intval($article->status)];
             $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
         }
 

@@ -23,7 +23,7 @@ class RadicalDetails extends Component {
 
     handleClose(){
         this.setState({show: !this.state.show})
-    }
+    };
 
     componentDidMount(){
         let id = this.props.match.params.radical_id;
@@ -40,15 +40,15 @@ class RadicalDetails extends Component {
           if(this.props.currentUser.isAuthenticated){
                 this.getUserRadicalLists();
           }
-      };
+    };
 
     componentWillReceiveProps(nextProps) {
         if(nextProps.currentUser.isAuthenticated){
             this.getUserRadicalLists();
         }
-    }
+    };
 
-      getUserRadicalLists(){
+    getUserRadicalLists(){
         return axios.post(`/api/user/lists/contain`, {
             elementId: this.props.match.params.radical_id
         })
@@ -57,81 +57,82 @@ class RadicalDetails extends Component {
             newState.lists = res.data.lists.filter(list => {
                 if(list.type === 1 && list.elementBelongsToList){
                     newState.radicalIsKnown = true;
+                    console.log("getuserradicalslist. this radicalisknown " + newState.radicalIsKnown);
                 }
                 if(list.type === 1 || list.type === 5){
                     return list;
                 }
             })
 
+
             this.setState( newState );
         })
         .catch(err => {
             console.log(err);
         })
-      }
+    };
 
-      openModal(){
-          if(this.props.currentUser.isAuthenticated === false){
-              this.props.history.push('/login');
-          }
-          else {
-              this.setState({show: !this.state.show})
-              //   next decision to pick which list to add.
-          }
-      }
+    openModal(){
+        if(this.props.currentUser.isAuthenticated === false){
+            this.props.history.push('/login');
+        }
+        else {
+            this.setState({show: !this.state.show})
+            //   next decision to pick which list to add.
+        }
+    };
 
-      addToList(id){
-            // this.setState({show: !this.state.show})
-            axios.post("/api/user/list/additemwhileaway", {
-                listId: id,
-                elementId: this.props.match.params.radical_id
-            })
-            .then(res => {
-                let newState = Object.assign({}, this.state);
-                newState.lists.find(list => {
-                    if(list.id === id){
-                        list.elementBelongsToList = true;
-                        if(list.type === 1 ) {
-                            this.state.radicalIsKnown = true;
-                        }
-                    }
-                });
-    
-                this.setState( newState );
-            })
-            .catch(err => console.log(err))
-      }
-
-      removeFromList(id){
-        //   this.setState({show: !this.state.show})
-          axios.post("/api/user/list/removeitemwhileaway", {
+    addToList(id){
+        // this.setState({show: !this.state.show})
+        axios.post("/api/user/list/additemwhileaway", {
             listId: id,
             elementId: this.props.match.params.radical_id
-          })
-          .then(res => {
+        })
+        .then(res => {
             let newState = Object.assign({}, this.state);
             newState.lists.find(list => {
                 if(list.id === id){
-                    list.elementBelongsToList = false;
                     if(list.type === 1 ) {
-                        this.state.radicalIsKnown = false;
+                        newState.radicalIsKnown = true;
                     }
+                    return list.elementBelongsToList = true;
                 }
             });
 
             this.setState( newState );
-          })
-          .catch(err => console.log(err))
-      }
+        })
+        .catch(err => console.log(err))
+    };
+
+    removeFromList(id){
+    //   this.setState({show: !this.state.show})
+        axios.post("/api/user/list/removeitemwhileaway", {
+        listId: id,
+        elementId: this.props.match.params.radical_id
+        })
+        .then(res => {
+        let newState = Object.assign({}, this.state);
+        newState.lists.find(list => {
+            if(list.id === id){
+                if(list.type === 1 ) {
+                        newState.radicalIsKnown = false;
+                }
+               return list.elementBelongsToList = false;
+            }
+        });
+
+            this.setState( newState );
+        })
+        .catch(err => console.log(err))
+    };
 
     render() {
 
-        let { radical } = this.state;
-        let singleRadical = radical ? (
+        const { radical } = this.state;
+        const singleRadical = radical ? (
                <div className="row justify-content-center mt-5">
-                <div className="col-md-6">
-                            <h1>{radical.radical} <br/>
-                            {radical.hiragana}</h1>
+                    <div className="col-md-6">
+                        <h1>{radical.radical} <br/>{radical.hiragana}</h1>
                     </div>
                     <div className="col-md-6">
                         <p>
@@ -142,7 +143,7 @@ class RadicalDetails extends Component {
                         </p>
                         <p className="float-right">
                             {this.state.radicalIsKnown ? (
-                                <i className="text-success">Learned </i>
+                                <i className="fas fa-check-circle text-success"> Learned</i>
                             ): ""}
                             <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
                             {/* <i className="fas fa-external-link-alt fa-lg"></i> */}
@@ -150,7 +151,7 @@ class RadicalDetails extends Component {
                     </div>
                </div>
         ) : (
-            <div className="container mt-5">
+            <div className="container">
                 <div className="row justify-content-center">
                     <img src={Spinner} alt="spinner"/>
                 </div>
@@ -204,14 +205,19 @@ class RadicalDetails extends Component {
                 </div>
                 
             ) })) : ("");
-               
 
         return (
             <div className="container">
                  <span className="mt-5">
                   <Link to="/radicals" className="tag-link">Back</Link>
                 </span>
-                {singleRadical}
+                {this.state.radical ? singleRadical : (
+                    <div className="container">
+                        <div className="row justify-content-center">
+                            <img src={Spinner} alt="spinner"/>
+                        </div>
+                    </div>
+                )}
                 <hr/>
                 { this.state.radical.kanjis ? (
                     <h4>kanjis ({radical.kanjis.length}) results</h4>

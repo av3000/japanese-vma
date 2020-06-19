@@ -50,6 +50,7 @@ Route::group([
 		Route::delete('list/{id}', 'CustomListController@delete');
 		Route::get('user/lists', 'CustomListController@getUserLists');
 		Route::post('user/lists/contain', 'CustomListController@getUserListsForElementsToAdd');
+		Route::post('user/list/contain', 'JapaneseDataController@getUserListAndCheckIfListHasItem');
 		Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
 		Route::post('user/list/removeitemwhileaway', 'CustomListController@removeFromListWhileAway');
 		Route::post('user/list/additemwhileaway', 'CustomListController@addToListWhileAway');

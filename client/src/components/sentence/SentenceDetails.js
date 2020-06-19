@@ -21,7 +21,8 @@ class SentenceDetails extends Component {
             searchTotal: "",
             filters: [],
             lists: [],
-            show: false
+            show: false,
+            sentenceIsKnown: false
         }
 
         this.addToList = this.addToList.bind(this);
@@ -88,6 +89,10 @@ class SentenceDetails extends Component {
         .then(res => {
             let newState = Object.assign({}, this.state);
             newState.lists = res.data.lists.filter(list => {
+                if(list.type === 4 && list.elementBelongsToList){
+                    newState.sentenceIsKnown = true;
+                    console.log("getUserSentenceLists. this sentenceIsKnown " + newState.sentenceIsKnown);
+                }
                 if(list.type === 4 || list.type === 8){
                     return list;
                 }
@@ -111,7 +116,7 @@ class SentenceDetails extends Component {
     }
 
     addToList(id){
-        this.setState({show: !this.state.show})
+        // this.setState({show: !this.state.show})
         axios.post("/api/user/list/additemwhileaway", {
             listId: id,
             elementId: this.props.match.params.sentence_id
@@ -120,7 +125,10 @@ class SentenceDetails extends Component {
             let newState = Object.assign({}, this.state);
             newState.lists.find(list => {
                 if(list.id === id){
-                    list.elementBelongsToList = true;
+                    if(list.type === 4 ) {
+                        newState.sentenceIsKnown = true;
+                    }
+                    return list.elementBelongsToList = true;
                 }
             });
 
@@ -130,7 +138,7 @@ class SentenceDetails extends Component {
     }
 
     removeFromList(id){
-        this.setState({show: !this.state.show})
+        // this.setState({show: !this.state.show})
         axios.post("/api/user/list/removeitemwhileaway", {
         listId: id,
         elementId: this.props.match.params.sentence_id
@@ -139,7 +147,10 @@ class SentenceDetails extends Component {
             let newState = Object.assign({}, this.state);
             newState.lists.find(list => {
                 if(list.id === id){
-                    list.elementBelongsToList = false;
+                    if(list.type === 4 ) {
+                        newState.sentenceIsKnown = false;
+                    }
+                    return list.elementBelongsToList = false;
                 }
             });
 
@@ -204,7 +215,6 @@ class SentenceDetails extends Component {
     console.log("editComment");
     console.log(commentId);
     }
-    
 
     // fetchQuery(queryParams) {
     //     let newState = Object.assign({}, this.state);
@@ -327,6 +337,9 @@ class SentenceDetails extends Component {
                     </div>
                     <div className="col-md-4">
                         <p className="float-right">
+                        {this.state.sentenceIsKnown ? (
+                                <i className="fas fa-check-circle text-success"> Learned</i>
+                            ): ""}
                             <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
                             {/* <i className="fas fa-external-link-alt fa-lg"></i> */}
                         </p>

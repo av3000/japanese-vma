@@ -16,6 +16,7 @@ use App\ObjectTemplate;
 use App\Uniquehashtag;
 use App\Article;
 use App\User;
+use App\CustomList;
 use DB;
 
 
@@ -970,5 +971,45 @@ class JapaneseDataController extends Controller
         }
 
         return $finalTags;
+    }
+
+    public function checkIfBelongToList($itemId, $list)
+    {
+        $foundRows = DB::table('customlist_object')->where('list_id', $list->id)->get();
+        foreach($foundRows as $row)
+        {
+            if($row->real_object_id == $itemId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getUserListAndCheckIfListHasItem(Request $request){
+        $objects = $request->get("objects");
+        $listTypeId = $request->get("listTypeId");
+        
+        return response()->json([
+            "objects" => $objects
+        ]);
+
+        if(auth()->user() !== null) {
+            $list = CustomList::where("user_id", auth()->user()->id)->where("type", $listTypeId)->first();
+            if( !isset($list) )
+            {
+                return response()->json([
+                    'success' => false, 'message' => 'list not found',
+                ]);
+            }
+
+            foreach($objects as $object)
+            {
+                $object->isLearned = $this->checkIfBelongToList($object->id, $list);
+            }
+        }
+
+        return $objects;
     }
 }

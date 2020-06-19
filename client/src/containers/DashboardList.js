@@ -5,7 +5,7 @@ import { apiCall } from '../services/api';
 import DashboardArticleItem from '../components/dashboard/DashboardArticleItem';
 import DashboardListItem from '../components/dashboard/DashboardListItem';
 import Spinner from '../assets/images/spinner.gif';
-import SearchBar from '../components/search/Searchbar';
+import SearchBarDashboard from '../components/search/SearchBarDashboard';
 import { Button, Modal } from 'react-bootstrap';
 
 
@@ -18,15 +18,15 @@ export class DashboardList extends Component {
             articles: [],
             articlesPending: [],
             dashboard: "user",
-            filters:{}
-            // showReviewModal: 0
+            filters:{},
+            articlesFiltered: []
         }
 
         this.fetchQuery = this.fetchQuery.bind(this);
         this.clearQuery = this.clearQuery.bind(this);
         this.toggleDashboard = this.toggleDashboard.bind(this);
         this.toggleResource = this.toggleResource.bind(this);
-        // this.handleReviewModalClose = this.handleReviewModalClose.bind(this);
+        this.filterResults = this.filterResults.bind(this);
     };
 
     toggleResource(){
@@ -115,17 +115,6 @@ export class DashboardList extends Component {
         this.setState(newState);
     }
 
-    // Reviewing
-
-    // openReviewModal(articleId){
-    //     console.log("openReviewModal");
-    //     this.setState({showReviewModal: articleId});
-    // }
-
-    // handleReviewModalClose() {
-    //     this.setState({showReviewModal: 0})
-    // }
-
     toggleStatus(id, type){
         console.log("id article: " + id);
         console.log("type article: " + type);
@@ -139,31 +128,70 @@ export class DashboardList extends Component {
             .catch(err => {
                 console.log(err);
             })
+    }
 
+    filterResults(filters)
+    {
+        let newState = Object.assign({}, this.state);
+        if(this.state.whichResource === 0) {
+            if(newState.filters.sortByWhat !== filters.sortByWhat){
+                if(filters.sortByWhat === "new")
+                {
+                    newState.lists = newState.lists.sort((a,b) => {
+                        return b.created_at > a.created_at ? 1 : -1 ;
+                    })
+                }
+                else if(filters.sortByWhat === "pop")
+                {
+                    newState.lists = newState.lists.sort((a,b) => {
+                        return b.viewsTotal - a.viewsTotal;
+                    })
+                }
+                newState.filters.sortByWhat = filters.sortByWhat;
+            }
+        }
+        else {
+            if(newState.filters.sortByWhat !== filters.sortByWhat){
+                if(filters.sortByWhat === "new")
+                {
+                    newState.articles = newState.articles.sort((a,b) => {
+                        return b.created_at > a.created_at ? 1 : -1 ;
+                    })
+                }
+                else if(filters.sortByWhat === "pop")
+                {
+                    newState.articles = newState.articles.sort((a,b) => {
+                        return b.viewsTotal - a.viewsTotal;
+                    })
+                }
+                newState.filters.sortByWhat = filters.sortByWhat;
+            }
+        }
+
+        this.setState( newState );
     }
 
     render() {
-        let { articles, lists, filters, articlesPending } = this.state;
+        let { articles, articlesPending } = this.state;
 
         let { currentUser } = this.props;
 
         let articleList = articles ? ( articles.map(w => {
-
-            return (
-                <DashboardArticleItem 
-                    key={w.id}
-                    id={w.id}
-                    title={w.title_jp}
-                    publicity={w.publicity}
-                    commentsTotal={w.commentsTotal}
-                    likesTotal={w.likesTotal}
-                    viewsTotal={w.viewsTotal}
-                    downloadsTotal={w.downloadsTotal}
-                    hashtags={w.hashtags}
-                    currentUser={this.props.currentUser}
-                />
-            );
-                
+                return (
+                    <DashboardArticleItem 
+                        key={w.id}
+                        id={w.id}
+                        created_at={w.created_at}
+                        title={w.title_jp}
+                        publicity={w.publicity}
+                        commentsTotal={w.commentsTotal}
+                        likesTotal={w.likesTotal}
+                        viewsTotal={w.viewsTotal}
+                        downloadsTotal={w.downloadsTotal}
+                        hashtags={w.hashtags}
+                        currentUser={this.props.currentUser}
+                    />
+                );
         }) ): (
         <div className="container mt-5">
             <div className="row justify-content-center">
@@ -200,25 +228,11 @@ export class DashboardList extends Component {
                         </small>
                     </div>
                     <div className="col-lg-2">
-                        <button onClick={this.toggleStatus.bind(this, w.id, 1)} className="btn-sm btn-primary">
+                        <strong> {w.statusTitle} </strong>
+                        {/* <button onClick={this.toggleStatus.bind(this, w.id, 1)} className="btn-sm btn-primary">
                             Review
-                        </button>
+                        </button> */}
                     </div>
-                    {/* <Modal show={this.state.showReviewModal === w.id} onHide={this.handleReviewModalClose}>
-                        <Modal.Header closeButton>
-                            <Modal.Title>Are You Sure? </Modal.Title>
-                        </Modal.Header>
-                        <Modal.Footer>
-                            <div className="col-12">
-                            <Button variant="secondary" className="float-left" onClick={this.handleReviewModalClose}>
-                                Cancel
-                            </Button>
-                            <Button variant="danger" className="float-right" onClick={this.toggleStatus.bind(this, w.id, 1)}>
-                                Review
-                            </Button>
-                            </div>
-                        </Modal.Footer>
-                    </Modal> */}
                 </div>
             );
                 
@@ -237,6 +251,7 @@ export class DashboardList extends Component {
                         <DashboardListItem 
                             key={w.id}
                             id={w.id}
+                            created_at={w.created_at}
                             title={w.title}
                             publicity={w.publicity}
                             type={w.type}
@@ -266,26 +281,30 @@ export class DashboardList extends Component {
 
         return (
             <div className="container mt-5">
-                <div className="row justify-content-center">
-                    <div className="col-lg-4 col-md-6 col-sm-12 mt-3">
-                        <input  onChange={this.handleChange}
-                                className="form-control form-control-sm"
-                                name="keyword" type="text" placeholder="Ex.: title, text, #tag"
-                                value={this.state.keyword}
-                                aria-label="Search"
-                        />
-                    </div>
-                </div>
                 <div className="container mt-5">
                     <div className="ml-3 mt-2">
                         { 
                         this.state.whichResource === 0 ? 
                         (
-                            <button className="btn btn-sm btn-light brand-button" onClick={this.toggleResource}>Articles <i className="fas fa-arrow-right"></i></button>
+                            <React.Fragment>
+                                <div className="col-lg-12 mt-3">
+                                    <button className="btn btn-sm btn-light brand-button" onClick={this.toggleResource}>
+                                        Articles <i className="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                <SearchBarDashboard searchType="lists" filterResults={this.filterResults}/>
+                            </React.Fragment>
                         ) 
                         : 
                         (
-                            <button className="btn btn-light brand-button" onClick={this.toggleResource}>Lists <i className="fas fa-arrow-right"></i></button>
+                            <React.Fragment>
+                                <div className="col-lg-12 mt-3">
+                                <button className="btn btn-light brand-button" onClick={this.toggleResource}>
+                                    Lists <i className="fas fa-arrow-right"></i>
+                                </button>
+                                <SearchBarDashboard searchType="articles" filterResults={this.filterResults}/>
+                                </div>
+                            </React.Fragment>
                         )}
                     </div>
                     { this.state.whichResource === 0 ? 

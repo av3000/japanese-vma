@@ -28,6 +28,23 @@ export class RadicalList extends Component {
         this.fetchRadicals(this.state.url);
     };
 
+    fetchRadicalsAuthenticated(radicals) {
+        console.log("fetchRadicalsAuthenticated");
+        // console.log(radicals);
+        return apiCall("post", "/api/user/list/contain", {
+            objects: radicals,
+            listTypeId: 1
+        })
+        .then( res => {
+            // console.log("haltura promise: ")
+            // console.log(res);
+            return res;
+        })
+        .catch( err => {
+            console.log(err);
+        });
+    };
+
     fetchRadicals(givenUrl){
         return apiCall("get", givenUrl)
             .then(res => {

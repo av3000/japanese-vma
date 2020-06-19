@@ -1,11 +1,12 @@
 import React from 'react';
-// import Moment from 'react-moment';
+import Moment from 'react-moment';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 
 const DashboardArticleItem = ({ 
     
     id,
+    created_at,
     title,
     content,
     publicity,
@@ -31,14 +32,21 @@ const DashboardArticleItem = ({
                 </Link>
                 <small className="d-flex justify-content-between align-items-center text-muted">
                         <span>
-                         {commentsTotal}&nbsp;Comments 
+                         {commentsTotal}&nbsp;Comments&nbsp;
                         </span>
                         <span>
-                         {viewsTotal}&nbsp;Views
+                         {viewsTotal} &nbsp;Views&nbsp;
                         </span>
                         <span>
-                         {likesTotal}&nbsp;Likes &nbsp;
+                         {likesTotal} &nbsp;Likes &nbsp;
                         </span>
+                </small>
+                <small className="d-block text-muted">
+                    <span>
+                    <Moment className="text-muted" format="Do MMM YYYY">
+                      {created_at}
+                    </Moment>
+                    </span>
                 </small>
             </div>
     </div>

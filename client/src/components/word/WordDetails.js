@@ -19,7 +19,8 @@ class KanjiDetails extends Component {
             searchTotal: "",
             filters: [],
             lists: [],
-            show: false
+            show: false,
+            wordIsKnown: false
         }
 
         this.addToList = this.addToList.bind(this);
@@ -77,6 +78,10 @@ class KanjiDetails extends Component {
         .then(res => {
             let newState = Object.assign({}, this.state);
             newState.lists = res.data.lists.filter(list => {
+                if(list.type === 3 && list.elementBelongsToList){
+                    newState.wordIsKnown = true;
+                    console.log("getUserWordLists. this wordIsKnown " + newState.wordIsKnown);
+                }
                 if(list.type === 3 || list.type === 7){
                     return list;
                 }
@@ -100,7 +105,7 @@ class KanjiDetails extends Component {
       }
 
       addToList(id){
-            this.setState({show: !this.state.show})
+            // this.setState({show: !this.state.show})
             axios.post("/api/user/list/additemwhileaway", {
                 listId: id,
                 elementId: this.props.match.params.word_id
@@ -109,7 +114,10 @@ class KanjiDetails extends Component {
                 let newState = Object.assign({}, this.state);
                 newState.lists.find(list => {
                     if(list.id === id){
-                        list.elementBelongsToList = true;
+                        if(list.type === 3 ) {
+                            newState.wordIsKnown = true;
+                        }
+                        return list.elementBelongsToList = true;
                     }
                 });
     
@@ -119,7 +127,7 @@ class KanjiDetails extends Component {
       }
 
       removeFromList(id){
-          this.setState({show: !this.state.show})
+        //   this.setState({show: !this.state.show})
           axios.post("/api/user/list/removeitemwhileaway", {
             listId: id,
             elementId: this.props.match.params.word_id
@@ -128,7 +136,10 @@ class KanjiDetails extends Component {
             let newState = Object.assign({}, this.state);
             newState.lists.find(list => {
                 if(list.id === id){
-                    list.elementBelongsToList = false;
+                    if(list.type === 3 ) {
+                        newState.wordIsKnown = false;
+                    }
+                    return list.elementBelongsToList = false;
                 }
             });
 
@@ -257,6 +268,9 @@ class KanjiDetails extends Component {
                             jlpt: {word.jlpt}, <br/> meaning: {word.meaning}
                         </p>
                         <p className="float-right">
+                        {this.state.wordIsKnown ? (
+                                <i className="fas fa-check-circle text-success"> Learned</i>
+                            ): ""}
                             <i onClick={this.openModal} className="far fa-bookmark ml-3 fa-lg mr-2"></i>
                             {/* <i className="fas fa-external-link-alt fa-lg"></i> */}
                         </p>

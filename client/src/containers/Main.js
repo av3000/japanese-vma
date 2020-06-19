@@ -122,7 +122,7 @@ const Main = props => {
                 <Route exact path="/radicals" render={props =>{
                     return (
                         <RadicalTimeline
-
+                            currentUser={currentUser}
                         />
                     )
                 }}/>
