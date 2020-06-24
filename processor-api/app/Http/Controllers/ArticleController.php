@@ -978,7 +978,7 @@ class ArticleController extends Controller
 
         foreach ($articlesPending as $article){
             $article->statusTitle   = $statusTitles[intval($article->status)];
-            $article->hashtags      = $this->getUniquehashtags($article->id, $objectTemplateId);
+            $article->hashtags      = getUniquehashtags($article->id, $objectTemplateId);
         }
 
         return response()->json([

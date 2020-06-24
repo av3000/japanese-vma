@@ -26,7 +26,6 @@ export function authUser(type, userData){
         return new Promise((resolve, reject) => {
             return apiCall("POST", `/api/${type}`, userData)
             .then(({accessToken, ...user}) => {
-                console.log([accessToken, user.user]);
                 localStorage.setItem("token", accessToken);
                 setAuthorizationToken(accessToken);
                 dispatch(setCurrentUser(user.user))
