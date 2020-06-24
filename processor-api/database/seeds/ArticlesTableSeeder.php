@@ -147,7 +147,7 @@ class ArticlesTableSeeder extends Seeder
             attachHashTags($articlesArray[$i]['tags'], $article, $objectTemplateId);
 
             $kanjiResponse = getKanjiIdsFromText($article);
-            $wordResponse  = getWordIdsFromText($article);
+            // $wordResponse  = getWordIdsFromText($article);
 
             $kanjis = $article->kanjis()->get();
             foreach($kanjis as $kanji){
