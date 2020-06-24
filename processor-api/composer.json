@@ -37,6 +37,11 @@
         }
     },
     "autoload": {
+        "files": [
+            "app/Helpers/japanese-text-methods.php",
+            "app/Helpers/hashtags-methods.php",
+            "app/Helpers/impressions-methods.php"
+        ],
         "psr-4": {
             "App\\": "app/"
         },

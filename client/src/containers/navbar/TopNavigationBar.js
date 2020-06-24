@@ -26,7 +26,7 @@ class TopNavigationBar extends Component {
 
     render(){
         return(
-            <Navbar  expand="lg">
+            <Navbar expand="lg">
             <Navbar.Brand as={Link} to="/">JPLearning</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">

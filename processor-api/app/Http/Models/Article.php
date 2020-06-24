@@ -1,23 +1,26 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Http\Models\Kanji;
+use App\Http\Models\Word;
+use App\User;
 
 class Article extends Model
 {
     protected $fillable = ['title_en', 'title_jp', 'content_en', 'content_jp', 'source_link'];
 
     public function user() {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo(User::class);
     }
 
     public function kanjis() {
-        return $this->belongsToMany('App\Kanji', 'article_kanji');
+        return $this->belongsToMany(Kanji::class, 'article_kanji');
     }
 
     public function words() {
-        return $this->belongsToMany('App\Word', 'article_word');
+        return $this->belongsToMany(Word::class, 'article_word');
     }
 
 }

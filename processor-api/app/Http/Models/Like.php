@@ -1,6 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
+use App\Http\Models\ObjectTemplate;
+use App\User;
 
 use Illuminate\Database\Eloquent\Model;
 

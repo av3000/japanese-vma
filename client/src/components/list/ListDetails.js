@@ -391,11 +391,11 @@ class ListDetails extends Component {
             (
               <React.Fragment>
               <div className="mt-3 mb-2">
-                {currentUser.isAuthenticated ? 
+                {currentUser.isAuthenticated && currentUser.user.id === list.user_id ? 
                    this.state.editToggle ? 
-                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-light"> {this.state.editToggleHeading} </button> )
+                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-success"> {this.state.editToggleHeading} </button> )
                   : 
-                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-success"> {this.state.editToggleHeading} </button>)
+                    ( <button onClick={this.toggleListEdit} className="btn btn-sm btn-light"> {this.state.editToggleHeading} </button>)
                  : ""}
               
               </div>

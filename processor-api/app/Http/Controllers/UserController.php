@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
-use App\CustomList;
+use App\Http\Models\CustomList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -37,6 +37,7 @@ class UserController extends Controller
         $radsList = new CustomList;
         $radsList->user_id = $user->id;
         $radsList->publicity = 0;
+        $radsList->description = "Radicals which you marked as learned";
         $radsList->type = self::KNOWNRADICALS;
         $radsList->title = "Known Radicals";
         $radsList->save();
@@ -44,6 +45,7 @@ class UserController extends Controller
         $kanjiList = new CustomList;
         $kanjiList->user_id = $user->id;
         $kanjiList->publicity = 0;
+        $kanjiList->description = "Kanjis which you marked as learned";
         $kanjiList->type = self::KNOWNKANJIS;
         $kanjiList->title = "Known Kanjis";
         $kanjiList->save();
@@ -51,6 +53,7 @@ class UserController extends Controller
         $wordList = new CustomList;
         $wordList->user_id = $user->id;
         $wordList->publicity = 0;
+        $wordList->description = "Words which you marked as learned";
         $wordList->type = self::KNOWNWORDS;
         $wordList->title = "Known Words";
         $wordList->save();
@@ -58,6 +61,7 @@ class UserController extends Controller
         $sentenceList = new CustomList;
         $sentenceList->user_id = $user->id;
         $sentenceList->publicity = 0;
+        $sentenceList->description = "Sentences which you marked as learned";
         $sentenceList->type = self::KNOWNSENTENCES;
         $sentenceList->title = "Known Sentences";
         $sentenceList->save();

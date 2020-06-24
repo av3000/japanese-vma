@@ -1,10 +1,10 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Comment extends Model
+class Download extends Model
 {
     public function objecttemplate() 
     {
@@ -14,10 +14,5 @@ class Comment extends Model
     public function user() 
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function likes() 
-    {
-        return $this->hasMany(Like::class);
     }
 }

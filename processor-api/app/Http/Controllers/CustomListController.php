@@ -6,18 +6,18 @@ use Illuminate\Http\Request;
 use App\Http\Requests\ListStoreRequest;
 use Illuminate\Support\Facades\Validator;
 use App\User;
-use App\Article;
-use App\Radical;
-use App\Kanji;
-use App\Word;
-use App\Sentence;
-use App\CustomList;
-use App\Comment;
-use App\Like;
-use App\Download;
-use App\View;
-use App\ObjectTemplate;
-use App\Uniquehashtag;
+use App\Http\Models\Article;
+use App\Http\Models\Radical;
+use App\Http\Models\Kanji;
+use App\Http\Models\Word;
+use App\Http\Models\Sentence;
+use App\Http\Models\CustomList;
+use App\Http\Models\Comment;
+use App\Http\Models\Like;
+use App\Http\Models\Download;
+use App\Http\Models\View;
+use App\Http\Models\ObjectTemplate;
+use App\Http\Models\Uniquehashtag;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -84,7 +84,7 @@ class CustomListController extends Controller
                     ->where('listtype_id', $list->type)->count();
                 array_push( $objectsArray, $word );
             }
-            $objectsArray = $this->extractWordsListAttributes($objectsArray);
+            $objectsArray = extractWordsListAttributes($objectsArray);
         }
         else if( $list->type == self::KNOWNSENTENCES || $list->type == self::SENTENCES ){ // sentences
             foreach( $foundRows as $row )
@@ -103,12 +103,12 @@ class CustomListController extends Controller
             {   
                 $article = Article::where('id', $row->real_object_id)->first();
                 $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-                $article->likesTotal     = $this->getImpression("like", $objectTemplateId, $article, "total");
-                $article->downloadsTotal = $this->getImpression("download", $objectTemplateId, $article, "total");
+                $article->likesTotal     = getImpression("like", $objectTemplateId, $article, "total");
+                $article->downloadsTotal = getImpression("download", $objectTemplateId, $article, "total");
                 $downloadsTotal += $article->downloadsTotal;
-                $article->viewsTotal     = $this->getImpression("view", $objectTemplateId, $article, "total");
-                $article->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $article, "total");
-                $article->hashtags       = $this->getUniquehashtags($article->id, $objectTemplateId);
+                $article->viewsTotal     = getImpression("view", $objectTemplateId, $article, "total");
+                $article->commentsTotal  = getImpression("comment", $objectTemplateId, $article, "total");
+                $article->hashtags       = getUniquehashtags($article->id, $objectTemplateId);
 
                 $article->savesTotal = DB::table('customlist_object')
                     ->where('real_object_id', $row->real_object_id)
@@ -138,15 +138,17 @@ class CustomListController extends Controller
         $list = $this->getListItems($list);
         
         $objectTemplateId     = ObjectTemplate::where('title', 'list')->first()->id;
-        $list->hashtags       = $this->getUniquehashtags($list->id, $objectTemplateId);
-        $list->likesTotal     = $this->getImpression("like", $objectTemplateId, $list, "total");
-        $list->viewsTotal     = $this->getImpression("view", $objectTemplateId, $list, "total");
-        $list->comments       = $this->getImpression("comment", $objectTemplateId, $list, "all");
+        incrementView($list, $objectTemplateId);
+        
+        $list->hashtags       = getUniquehashtags($list->id, $objectTemplateId);
+        $list->likesTotal     = getImpression("like", $objectTemplateId, $list, "total");
+        $list->viewsTotal     = getImpression("view", $objectTemplateId, $list, "total");
+        $list->comments       = getImpression("comment", $objectTemplateId, $list, "all");
         
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach($list->comments as $comment)
         {
-            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
+            $comment->likes = getImpression('like', $objectTemplateId, $comment, "all");
             $comment->likesTotal = count($comment->likes);
             $comment->userName = User::find($comment->user_id)->name;
         }
@@ -182,7 +184,6 @@ class CustomListController extends Controller
         $list->commentsTotal  = count($list->comments);
         $list->userName = User::find($list->user_id)->name;
 
-        $this->incrementView($list);
 
         return response()->json([
             'success' => true,
@@ -193,7 +194,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', "DESC")->paginate(3);
+        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', "DESC")->paginate(4);
 
         if(!$lists)
         {
@@ -236,10 +237,12 @@ class CustomListController extends Controller
         $newList->title = $request->title;
         $newList->publicity = $request->publicity;
         $newList->save();
-        
+
         $this->attachHashTags($request->tags, $newList);
         
-        $this->incrementView($newList);
+        
+        $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+        incrementView($newList, $objectTemplateId);
 
         return response()->json([
             'success' => true,
@@ -391,11 +394,11 @@ class CustomListController extends Controller
         {
             $singleList                 = $this->getListItems($singleList);
             $singleList->itemsTotal     = count($singleList->listItems);
-            $singleList->likesTotal     = $this->getImpression("like", $objectTemplateId, $singleList, "total");
-            $singleList->downloadsTotal = $this->getImpression("download", $objectTemplateId, $singleList, "total");
-            $singleList->viewsTotal     = $this->getImpression("view", $objectTemplateId, $singleList, "total");
-            $singleList->commentsTotal  = $this->getImpression("comment", $objectTemplateId, $singleList, "total");
-            $singleList->hashtags       = $this->getUniquehashtags($singleList->id, $objectTemplateId);
+            $singleList->likesTotal     = getImpression("like", $objectTemplateId, $singleList, "total");
+            $singleList->downloadsTotal = getImpression("download", $objectTemplateId, $singleList, "total");
+            $singleList->viewsTotal     = getImpression("view", $objectTemplateId, $singleList, "total");
+            $singleList->commentsTotal  = getImpression("comment", $objectTemplateId, $singleList, "total");
+            $singleList->hashtags       = getUniquehashtags($singleList->id, $objectTemplateId);
             
 
             if($singleList->type == 1) {
@@ -665,7 +668,7 @@ class CustomListController extends Controller
             $requestedQuery .= "Filter by ". $this->getListTypes($request->filterType). ".";
         }
         
-        $lists = $lists->paginate(3);
+        $lists = $lists->paginate(4);
 
         $lists = $this->getListImpressionsSearch($lists);
 
@@ -673,66 +676,6 @@ class CustomListController extends Controller
             'success' => true,
             'lists' => $lists,
             'requestedQuery' => $requestedQuery
-        ]);
-    }
-
-    public function generateQueryOld(Request $request) {
-        $q = "";
-        if(isset( $request->title )){
-            $request->title = trim($request->title);
-            $singleTag = explode(' ',trim($request->title))[0];
-
-            $search = '#';
-            if(preg_match("/{$search}/i", $singleTag)) {
-            // if( strpos($request->title, "#") === true){
-
-                $lists = $this->getUniquehashtagLists($singleTag);
-                $q .= $singleTag;
-                if( isset($lists) )
-                {
-                    $lists = $lists->where('publicity', 1);
-                }
-            }
-            else {
-                $lists = CustomList::whereLike(['title'], $request->title)->where('publicity', 1);
-                $q .= $request->title;
-            }
-        } 
-
-        //if search has search fields, return lists of requested fields
-        if(isset( $lists )) {
-            $lists = $lists->paginate(3);
-
-            // add impressions
-            $lists = $this->getListImpressionsSearch($lists);
-
-            return response()->json([
-                'success' => true,
-                'lists' => $lists,
-                'message' => 'Requested query: '.$q. ' returned some results',
-                'q' => $q
-            ]);
-        }
-
-        // if search is empty, return default lists
-        if( $q == "")
-        {
-            $lists = CustomList::where('publicity', 1)->orderBy('created_at', "DESC")->paginate(3);
-
-            // add impressions
-            $lists = $this->getListImpressionsSearch($lists);
-
-             return response()->json([
-                'success' => true,
-                'lists' => $lists,
-                'q' => $q
-            ]);
-        }
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Requested query: '.$q. ' returned zero lists',
-            'q' => $q
         ]);
     }
 

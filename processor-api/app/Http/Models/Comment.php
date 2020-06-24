@@ -1,10 +1,13 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\User;
+use App\Http\Models\ObjectTemplate;
+use App\Http\Models\Like;
 
-class View extends Model
+class Comment extends Model
 {
     public function objecttemplate() 
     {
@@ -14,5 +17,10 @@ class View extends Model
     public function user() 
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function likes() 
+    {
+        return $this->hasMany(Like::class);
     }
 }

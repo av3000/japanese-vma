@@ -22,12 +22,12 @@ const ArticleItem = ({
     n5,
     uncommon
 }) => (
-    <div className="col-lg-4 col-md-6 col-sm-8">
+    <div className="col-lg-6 col-md-6 col-sm-8">
         <div className="card mb-4 shadow-sm">
             <Link to={'/article/' + id}>
             <img src={DefaultArticleImg}
                 alt="article-logo"
-                height="225" width="100%"
+                height="320" width="100%"
                 className="timelines-image hover"     
             />
             </Link>
@@ -37,9 +37,7 @@ const ArticleItem = ({
                 </Link>
                 <p> {hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)} </p>
                 <p className="text-muted">
-                    {/* <Moment className="text-muted" format="Do MMM YYYY">
-                        {created_at}
-                    </Moment> */}
+
                     {jp_year} {jp_month} {jp_day} {jp_hour}
                 </p>
                 <p className="text-muted">

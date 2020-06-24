@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\CustomList;
 
 class HomeController extends Controller
 {

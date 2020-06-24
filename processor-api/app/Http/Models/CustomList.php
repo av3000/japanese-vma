@@ -1,8 +1,9 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\User;
 
 class CustomList extends Model
 {

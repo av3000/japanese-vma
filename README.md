@@ -7,6 +7,11 @@ Japanese data comes from [Electronic Dictionary Research and Development Group](
 
 ## libraries
 
+### Prerequisite
+
+- Make sure you have composer installed.
+- Make sure you have latest stable version of node installed.
+
 ### Backend
 - [mpdf](https://mpdf.github.io/)
 - [jwt-auth](https://github.com/tymondesigns/jwt-auth)
@@ -15,6 +20,8 @@ Japanese data comes from [Electronic Dictionary Research and Development Group](
 - [react-moment](https://github.com/headzoo/react-moment)
 
 ## Setup
+
+### Laravel API
 
 ```bash
 git clone https://AVaiciulis3000@bitbucket.org/AVaiciulis3000/japanese-vma.git
@@ -34,6 +41,36 @@ cp .env.example .env
 Generate unique app key
 ```bash
 php artisan key:generate
+```
+
+Migrate DB tables
+```bash
+# Create common tables
+php artisan migrate --path=database/migrations/now
+
+# Create japanese material tables
+php artisan migrate --path=database/migrations/japanese-data
+```
+
+Add Passport clients
+```bash
+# Create new tables for Passport
+php artisan migrate
+
+# Install encryption keys and other necessary stuff for Passport
+php artisan passport:install
+```
+
+### React App
+
+Add all node modules used in the react app.
+```bash
+npm install
+```
+
+Start react app
+```bash
+npm start
 ```
 
 ### Common commands & Readings for future tasks

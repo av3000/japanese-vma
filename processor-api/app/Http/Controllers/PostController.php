@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\PostStoreRequest;
 use Illuminate\Support\Facades\Validator;
-use App\User;
-use App\Post;
-use App\Like;
-use App\Download;
-use App\Comment;
-use App\View;
-use App\Uniquehashtag;
-use App\ObjectTemplate;
+use App\Http\Models\User;
+use App\Http\Models\Post;
+use App\Http\Models\Like;
+use App\Http\Models\Download;
+use App\Http\Models\Comment;
+use App\Http\Models\View;
+use App\Http\Models\Uniquehashtag;
+use App\Http\Models\ObjectTemplate;
 use DB;
 
 class PostController extends Controller

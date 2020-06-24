@@ -620,7 +620,7 @@ class ArticleDetails extends Component {
             </Modal.Header>
             <Modal.Body>
                 <button className="btn btn-outline brand-button" onClick={this.downloadKanjisPdf}> Kanji PDF </button>
-                <button className="btn btn-outline brand-button" onClick={this.downloadWordsPdf}> Words PDF </button>
+                {/* <button className="btn btn-outline brand-button" onClick={this.downloadWordsPdf}> Words PDF </button> */}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={this.handlePdfClose}>

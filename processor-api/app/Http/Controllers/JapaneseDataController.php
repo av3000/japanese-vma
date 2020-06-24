@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Kanji;
-use App\Word;
-use App\Sentence;
-use App\Radical;
-use App\Like;
-use App\Download;
-use App\View;
-use App\Comment;
-use App\ObjectTemplate;
-use App\Uniquehashtag;
-use App\Article;
+use App\Http\Models\Kanji;
+use App\Http\Models\Word;
+use App\Http\Models\Sentence;
+use App\Http\Models\Radical;
+use App\Http\Models\Like;
+use App\Http\Models\Download;
+use App\Http\Models\View;
+use App\Http\Models\Comment;
+use App\Http\Models\ObjectTemplate;
+use App\Http\Models\Uniquehashtag;
+use App\Http\Models\Article;
 use App\User;
-use App\CustomList;
+use App\Http\Models\CustomList;
 use DB;
 
 

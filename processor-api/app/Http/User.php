@@ -6,6 +6,14 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use App\Http\Models\Role;
+use App\Http\Models\Article;
+use App\Http\Models\Like;
+use App\Http\Models\Download;
+use App\Http\Models\View;
+use App\Http\Models\Comment;
+use App\Http\Models\Post;
+use App\Http\Models\CustomList;
 
 class User extends Authenticatable
 {

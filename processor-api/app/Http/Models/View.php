@@ -1,10 +1,12 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Http\Models\ObjectTemplate;
+use App\User;
 
-class Download extends Model
+class View extends Model
 {
     public function objecttemplate() 
     {

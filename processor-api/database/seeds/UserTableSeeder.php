@@ -14,12 +14,23 @@ class UserTableSeeder extends Seeder
     {
         $adminUser = new App\User;
         $adminUser->name        = "mrAdmin";
-        $adminUser->email = "admin@admin.com";
+        $adminUser->email = "admin@me.com";
         $adminUser->password = Hash::make("secret123");
         $adminUser->save();
 
         $adminUser
             ->roles()
             ->attach(Role::where('name', 'admin')->first());
+
+        
+        $commonUser = new App\User;
+        $commonUser->name  = "JohnDoe";
+        $commonUser->email = "johndoe@me.com";
+        $commonUser->password = Hash::make("secret123");
+        $commonUser->save();
+
+        $commonUser
+            ->roles()
+            ->attach(Role::where('name', 'testuser')->first());
     }
 }

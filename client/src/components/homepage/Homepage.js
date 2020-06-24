@@ -56,14 +56,7 @@ const Homepage = ({ currentUser }) => {
         </div>
     </div>
     <div className="container mt-4" > 
-        <Link to="/articles" className="homepage-section-title" id="readings">
-            <span>Readings <img src={ArrowIcon} alt="arrow icon" /> </span>
-        </Link>
         <ExploreArticleTimeline/>
-
-        <Link to="/lists" className="homepage-section-title" id="lists">
-            <span>Lists <img src={ArrowIcon} alt="arrow icon" /> </span>
-        </Link>
         <ExploreListTimeline/>
     </div>
 </div>

@@ -54,7 +54,6 @@ class ArticleForm extends Component {
     return apiCall('post', `/api/article`, payload)
     .then(res => {
         console.log(res);
-        console.log( {success: true, article: res.article});
         this.props.dispatch( hideLoader() );
         this.props.history.push("/article/"+res.article.id);
     })
