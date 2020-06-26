@@ -6329,6 +6329,140 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/src/index.js?!./resources/js/assets/css/style.css":
+/*!***************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--6-1!./node_modules/postcss-loader/src??ref--6-2!./resources/js/assets/css/style.css ***!
+  \***************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var escape = __webpack_require__(/*! ../../../../node_modules/css-loader/lib/url/escape.js */ "./node_modules/css-loader/lib/url/escape.js");
+exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-loader/lib/css-base.js */ "./node_modules/css-loader/lib/css-base.js")(false);
+// imports
+
+
+// module
+exports.push([module.i, ":root {\n  --main-text-color: #303030;\n  --main-background-color: #191e27;\n  --alternative-text-color: #f9f9f9;\n  --link-hover-color: #9099a7;\n  --main-brand-color: #f79862;\n  --secondary-brand-color: #3058A4;\n  --main-green-color: #2dc997;\n}\n\n/*--------------------------------------------------------------\n# General\n--------------------------------------------------------------*/\nbody {\n  background: #fff;\n  color: #666666;\n  font-family: \"Open Sans\", sans-serif;\n}\n\na {\n  color: var(--main-brand-color);\n}\n\na:hover, a:active, a:focus {\n  color: var(--main-brand-color);\n  outline: none;\n  text-decoration: none;\n}\n\np {\n  padding: 0;\n  margin: 0 0 30px 0;\n}\n\nh1, h2, h3, h4, h5, h6 {\n  font-family: \"Poppins\", sans-serif;\n  font-weight: 400;\n  margin: 0 0 20px 0;\n  padding: 0;\n}\n\n/* Prelaoder */\n#preloader {\n  position: fixed;\n  left: 0;\n  top: 0;\n  z-index: 999;\n  width: 100%;\n  height: 100%;\n  overflow: visible;\n  background: #fff url(" + escape(__webpack_require__(/*! ../img/spinner.gif */ "./resources/js/assets/img/spinner.gif")) + ") no-repeat center center;\n}\n\n/* Back to top button */\n.back-to-top {\n  position: fixed;\n  display: none;\n  background: rgba(0, 0, 0, 0.2);\n  color: #fff;\n  padding: 6px 12px 9px 12px;\n  font-size: 16px;\n  border-radius: 2px;\n  right: 15px;\n  bottom: 15px;\n  transition: background 0.5s;\n}\n\n@media (max-width: 768px) {\n  .back-to-top {\n    bottom: 15px;\n  }\n}\n\n.back-to-top:focus {\n  background: rgba(0, 0, 0, 0.2);\n  color: #fff;\n  outline: none;\n}\n\n.back-to-top:hover {\n  background: var(--main-brand-color);\n  color: #fff;\n}\n\n/*--------------------------------------------------------------\n# Disable AOS delay on mobile\n--------------------------------------------------------------*/\n@media screen and (max-width: 768px) {\n  [data-aos-delay] {\n    transition-delay: 0 !important;\n  }\n}\n\n/*--------------------------------------------------------------\n# Header\n--------------------------------------------------------------*/\n#header {\n  padding: 30px 0;\n  height: 92px;\n  position: fixed;\n  left: 0;\n  top: 0;\n  right: 0;\n  transition: all 0.5s;\n  z-index: 997;\n  background: rgba(52, 59, 64, 0.9);\n}\n\n#header #logo {\n  float: left;\n}\n\n#header #logo h1 {\n  font-size: 36px;\n  margin: 0;\n  padding: 6px 0;\n  line-height: 1;\n  font-family: \"Poppins\", sans-serif;\n  font-weight: 700;\n  letter-spacing: 3px;\n  text-transform: uppercase;\n}\n\n#header #logo h1 a, #header #logo h1 a:hover {\n  color: #fff;\n}\n\n#header #logo img {\n  padding: 0;\n  margin: 0;\n}\n\n@media (max-width: 768px) {\n  #header #logo h1 {\n    font-size: 26px;\n  }\n  #header #logo img {\n    max-height: 40px;\n  }\n}\n\n#header.header-transparent {\n  background: transparent;\n}\n\n#header.header-fixed {\n  background: rgba(52, 59, 64, 0.9);\n  padding: 20px 0;\n  height: 72px;\n  transition: all 0.5s;\n}\n\n/*--------------------------------------------------------------\n# Hero Section\n--------------------------------------------------------------*/\n#hero {\n  width: 100%;\n  height: 100vh;\n  background: url(" + escape(__webpack_require__(/*! ../img/mt.jpg */ "./resources/js/assets/img/mt.jpg")) + ") top center;\n  background-size: cover;\n  position: relative;\n}\n\n@media (min-width: 1024px) {\n  #hero {\n    background-attachment: fixed;\n  }\n}\n\n#hero:before {\n  content: \"\";\n  background: rgba(0, 0, 0, 0.6);\n  position: absolute;\n  bottom: 0;\n  top: 0;\n  left: 0;\n  right: 0;\n}\n\n#hero .hero-container {\n  position: absolute;\n  bottom: 0;\n  top: 0;\n  left: 0;\n  right: 0;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  flex-direction: column;\n  text-align: center;\n}\n\n#hero h1 {\n  margin: 30px 0 10px 0;\n  font-size: 48px;\n  font-weight: 700;\n  line-height: 56px;\n  text-transform: uppercase;\n  color: #fff;\n}\n\n@media (max-width: 768px) {\n  #hero h1 {\n    font-size: 28px;\n    line-height: 36px;\n  }\n}\n\n#hero h2 {\n  color: #eee;\n  margin-bottom: 50px;\n  font-size: 24px;\n}\n\n@media (max-width: 768px) {\n  #hero h2 {\n    font-size: 18px;\n    line-height: 24px;\n    margin-bottom: 30px;\n  }\n}\n\n#hero .btn-get-started {\n  font-family: \"Poppins\", sans-serif;\n  text-transform: uppercase;\n  font-weight: 500;\n  font-size: 16px;\n  letter-spacing: 1px;\n  display: inline-block;\n  padding: 8px 28px;\n  border-radius: 50px;\n  transition: 0.5s;\n  margin: 10px;\n  border: 2px solid #fff;\n  color: #fff;\n}\n\n#hero .btn-get-started:hover {\n  background: var(--main-brand-color);\n  border: 2px solid var(--main-brand-color);\n}\n\n/*--------------------------------------------------------------\n# Navigation Menu\n--------------------------------------------------------------*/\n/* Nav Menu Essentials */\n.nav-menu, .nav-menu * {\n  margin: 0;\n  padding: 0;\n  list-style: none;\n}\n\n.nav-menu ul {\n  position: absolute;\n  display: none;\n  top: 100%;\n  left: 0;\n  z-index: 99;\n}\n\n.nav-menu li {\n  position: relative;\n  white-space: nowrap;\n}\n\n.nav-menu > li {\n  float: left;\n}\n\n.nav-menu li:hover > ul,\n.nav-menu li.sfHover > ul {\n  display: block;\n}\n\n.nav-menu ul ul {\n  top: 0;\n  left: 100%;\n}\n\n.nav-menu ul li {\n  min-width: 180px;\n}\n\n/* Nav Menu Arrows */\n.sf-arrows .sf-with-ul {\n  padding-right: 30px;\n}\n\n.sf-arrows .sf-with-ul:after {\n  content: \"\\F107\";\n  position: absolute;\n  right: 15px;\n  font-family: FontAwesome;\n  font-style: normal;\n  font-weight: normal;\n}\n\n.sf-arrows ul .sf-with-ul:after {\n  content: \"\\F105\";\n}\n\n/* Nav Meu Container */\n#nav-menu-container {\n  float: right;\n  margin: 0;\n}\n\n@media (max-width: 768px) {\n  #nav-menu-container {\n    display: none;\n  }\n}\n\n/* Nav Meu Styling */\n.nav-menu a {\n  padding: 0 8px 10px 8px;\n  text-decoration: none;\n  display: inline-block;\n  color: #fff;\n  font-family: \"Poppins\", sans-serif;\n  font-weight: 400;\n  text-transform: uppercase;\n  font-size: 13px;\n  outline: none;\n}\n\n.nav-menu > li {\n  margin-left: 10px;\n}\n\n.nav-menu > li > a:before {\n  content: \"\";\n  position: absolute;\n  width: 100%;\n  height: 2px;\n  bottom: 0;\n  left: 0;\n  background-color: var(--main-brand-color);\n  visibility: hidden;\n  transform: scaleX(0);\n  transition: all 0.3s ease-in-out 0s;\n}\n\n.nav-menu a:hover:before, .nav-menu li:hover > a:before, .nav-menu .menu-active > a:before {\n  visibility: visible;\n  transform: scaleX(1);\n}\n\n.nav-menu ul {\n  margin: 4px 0 0 0;\n  border: 1px solid #e7e7e7;\n}\n\n.nav-menu ul li {\n  background: #fff;\n}\n\n.nav-menu ul li:first-child {\n  border-top: 0;\n}\n\n.nav-menu ul li a {\n  padding: 10px;\n  color: #333;\n  transition: 0.3s;\n  display: block;\n  font-size: 13px;\n  text-transform: none;\n}\n\n.nav-menu ul li a:hover {\n  background: var(--main-brand-color);\n  color: #fff;\n}\n\n.nav-menu ul ul {\n  margin: 0;\n}\n\n/* Mobile Nav Toggle */\n#mobile-nav-toggle {\n  position: fixed;\n  right: 0;\n  top: 0;\n  z-index: 999;\n  margin: 20px 20px 0 0;\n  border: 0;\n  background: none;\n  font-size: 24px;\n  display: none;\n  transition: all 0.4s;\n  outline: none;\n  cursor: pointer;\n}\n\n#mobile-nav-toggle i {\n  color: #fff;\n}\n\n@media (max-width: 768px) {\n  #mobile-nav-toggle {\n    display: inline;\n  }\n}\n\n/* Mobile Nav Styling */\n#mobile-nav {\n  position: fixed;\n  top: 0;\n  padding-top: 18px;\n  bottom: 0;\n  z-index: 998;\n  background: rgba(52, 59, 64, 0.9);\n  left: -260px;\n  width: 260px;\n  overflow-y: auto;\n  transition: 0.4s;\n}\n\n#mobile-nav ul {\n  padding: 0;\n  margin: 0;\n  list-style: none;\n}\n\n#mobile-nav ul li {\n  position: relative;\n}\n\n#mobile-nav ul li a {\n  color: #fff;\n  font-size: 16px;\n  overflow: hidden;\n  padding: 10px 22px 10px 15px;\n  position: relative;\n  text-decoration: none;\n  width: 100%;\n  display: block;\n  outline: none;\n}\n\n#mobile-nav ul li a:hover {\n  color: #fff;\n}\n\n#mobile-nav ul li li {\n  padding-left: 30px;\n}\n\n#mobile-nav ul .menu-has-children i {\n  position: absolute;\n  right: 0;\n  z-index: 99;\n  padding: 15px;\n  cursor: pointer;\n  color: #fff;\n}\n\n#mobile-nav ul .menu-has-children i.fa-chevron-up {\n  color: var(--main-brand-color);\n}\n\n#mobile-nav ul .menu-item-active {\n  color: var(--main-brand-color);\n}\n\n#mobile-body-overly {\n  width: 100%;\n  height: 100%;\n  z-index: 997;\n  top: 0;\n  left: 0;\n  position: fixed;\n  background: rgba(52, 59, 64, 0.9);\n  display: none;\n}\n\n/* Mobile Nav body classes */\nbody.mobile-nav-active {\n  overflow: hidden;\n}\n\nbody.mobile-nav-active #mobile-nav {\n  left: 0;\n}\n\nbody.mobile-nav-active #mobile-nav-toggle {\n  color: #fff;\n}\n\n/*--------------------------------------------------------------\n# Sections\n--------------------------------------------------------------*/\nsection {\n  overflow: hidden;\n}\n\n/* Sections Header\n--------------------------------*/\n.section-header .section-title {\n  font-size: 32px;\n  color: #111;\n  text-transform: uppercase;\n  text-align: center;\n  font-weight: 700;\n  margin-bottom: 5px;\n}\n\n.section-header .section-description {\n  text-align: center;\n  padding-bottom: 40px;\n  color: #999;\n}\n\n/*--------------------------------------------------------------\n# Breadcrumbs\n--------------------------------------------------------------*/\n.breadcrumbs {\n  padding: 20px 0;\n  background-color: whitesmoke;\n  min-height: 40px;\n  margin-top: 92px;\n}\n\n.breadcrumbs h2 {\n  font-size: 24px;\n  font-weight: 300;\n  margin: 0;\n}\n\n@media (max-width: 992px) {\n  .breadcrumbs h2 {\n    margin: 0 0 10px 0;\n  }\n}\n\n.breadcrumbs ol {\n  display: flex;\n  flex-wrap: wrap;\n  list-style: none;\n  padding: 0;\n  margin: 0;\n  font-size: 14px;\n}\n\n.breadcrumbs ol li + li {\n  padding-left: 10px;\n}\n\n.breadcrumbs ol li + li::before {\n  display: inline-block;\n  padding-right: 10px;\n  color: #6c757d;\n  content: \"/\";\n}\n\n@media (max-width: 768px) {\n  .breadcrumbs .d-flex {\n    display: block !important;\n  }\n  .breadcrumbs ol {\n    display: block;\n  }\n  .breadcrumbs ol li {\n    display: inline-block;\n  }\n}\n\n/* About Us Section\n--------------------------------*/\n#about {\n  background: #fff;\n  padding: 80px 0;\n}\n\n#about .about-container .background {\n  min-height: 300px;\n  background: url(" + escape(__webpack_require__(/*! ../img/brand-logo.png */ "./resources/js/assets/img/brand-logo.png")) + ") center top no-repeat;\n  /* margin-bottom: 10px; */\n}\n\n#about .about-container .content {\n  background: #fff;\n}\n\n#about .about-container .title {\n  color: #333;\n  font-weight: 700;\n  font-size: 32px;\n}\n\n@media (max-width: 768px) {\n  #about .about-container .title {\n    padding-top: 15px;\n  }\n}\n\n#about .about-container p {\n  line-height: 26px;\n}\n\n#about .about-container p:last-child {\n  margin-bottom: 0;\n}\n\n#about .about-container .icon-box {\n  background: #fff;\n  background-size: cover;\n  padding: 0 0 30px 0;\n}\n\n#about .about-container .icon-box .icon {\n  float: left;\n  background: #fff;\n  width: 64px;\n  height: 64px;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  flex-direction: column;\n  text-align: center;\n  border-radius: 50%;\n  border: 2px solid var(--main-brand-color);\n}\n\n#about .about-container .icon-box .icon i {\n  color: var(--main-brand-color);\n  font-size: 24px;\n}\n\n#about .about-container .icon-box .title {\n  margin-left: 80px;\n  font-weight: 500;\n  margin-bottom: 5px;\n  font-size: 18px;\n  text-transform: uppercase;\n}\n\n#about .about-container .icon-box .title a {\n  color: #111;\n}\n\n#about .about-container .icon-box .description {\n  margin-left: 80px;\n  line-height: 24px;\n  font-size: 14px;\n}\n\n/* Credits Section\n--------------------------------*/\n#credits {\n  background: #f7f7f7;\n  padding: 80px 0 60px 0;\n}\n\n#credits .counters span {\n  font-size: 48px;\n  display: block;\n  color: var(--main-brand-color);\n}\n\n#credits .counters p {\n  padding: 0;\n  margin: 0 0 20px 0;\n  font-family: \"Poppins\", sans-serif;\n  font-size: 14px;\n}\n\n/* Documentation Section\n--------------------------------*/\n#documentation {\n  background: #fff;\n  background-size: cover;\n  padding: 80px 0 60px 0;\n}\n\n#documentation .box {\n  padding: 50px 20px;\n  margin-bottom: 50px;\n  text-align: center;\n  border: 1px solid #e6e6e6;\n  height: 200px;\n  position: relative;\n  background: #fafafa;\n}\n\n#documentation .icon {\n  position: absolute;\n  top: -36px;\n  left: calc(50% - 36px);\n  transition: 0.2s;\n  border-radius: 50%;\n  border: 6px solid #fff;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  flex-direction: column;\n  text-align: center;\n  width: 72px;\n  height: 72px;\n  background: var(--main-brand-color);\n}\n\n#documentation .icon a {\n  display: inline-block;\n}\n\n#documentation .icon i {\n  color: #fff;\n  font-size: 24px;\n}\n\n#documentation .box:hover .icon {\n  background: #fff;\n  border: 2px solid var(--main-brand-color);\n}\n\n#documentation .box:hover .icon i {\n  color: var(--main-brand-color);\n}\n\n#documentation .box:hover .icon a {\n  color: var(--main-brand-color);\n}\n\n#documentation .title {\n  font-weight: 700;\n  font-size: 18px;\n  margin-bottom: 15px;\n  text-transform: uppercase;\n}\n\n#documentation .title a {\n  color: #111;\n}\n\n#documentation .description {\n  font-size: 14px;\n  line-height: 24px;\n}\n\n/* Call To Action Section\n--------------------------------*/\n#call-to-action {\n  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(" + escape(__webpack_require__(/*! ../img/mtfuji.jpg */ "./resources/js/assets/img/mtfuji.jpg")) + ") fixed center center;\n  background-size: cover;\n  padding: 100px 0;\n}\n\n@media (max-width: 1024px) {\n  #call-to-action {\n    background-attachment: scroll;\n  }\n}\n\n#call-to-action .cta-title {\n  color: #fff;\n  font-size: 28px;\n  font-weight: 700;\n}\n\n#call-to-action .cta-text {\n  color: #fff;\n}\n\n@media (min-width: 769px) {\n  #call-to-action .cta-btn-container {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n  }\n}\n\n#call-to-action .cta-btn {\n  font-family: \"Poppins\", sans-serif;\n  text-transform: uppercase;\n  font-weight: 500;\n  font-size: 16px;\n  letter-spacing: 1px;\n  display: inline-block;\n  padding: 8px 30px;\n  border-radius: 50px;\n  transition: 0.5s;\n  margin: 10px;\n  border: 2px solid #fff;\n  color: #fff;\n}\n\n#call-to-action .cta-btn:hover {\n  background: var(--main-brand-color);\n  border: 2px solid var(--main-brand-color);\n}\n\n/* Portfolio Section\n--------------------------------*/\n#portfolio {\n  background: #f7f7f7;\n  padding: 80px 0;\n}\n\n#portfolio #portfolio-flters {\n  padding: 0;\n  margin: 0 auto 25px auto;\n  list-style: none;\n  text-align: center;\n  border-radius: 50px;\n}\n\n#portfolio #portfolio-flters li {\n  cursor: pointer;\n  display: inline-block;\n  padding: 12px 18px 14px 18px;\n  font-size: 14px;\n  font-weight: 500;\n  line-height: 1;\n  color: #666666;\n  margin: 0 5px 10px 5px;\n  transition: all ease-in-out 0.3s;\n  background: white;\n  border-radius: 4px;\n}\n\n#portfolio #portfolio-flters li:hover, #portfolio #portfolio-flters li.filter-active {\n  color: #fff;\n  background: var(--main-brand-color);\n}\n\n#portfolio #portfolio-flters li:last-child {\n  margin-right: 0;\n}\n\n#portfolio .portfolio-item {\n  margin-bottom: 30px;\n  overflow: hidden;\n}\n\n#portfolio .portfolio-item img {\n  position: relative;\n  top: 0;\n  transition: all 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);\n}\n\n#portfolio .portfolio-item .portfolio-info {\n  opacity: 0;\n  position: absolute;\n  left: 15px;\n  right: 15px;\n  bottom: -50px;\n  z-index: 3;\n  transition: all ease-in-out 0.3s;\n  background: var(--main-brand-color);\n  padding: 15px 20px;\n}\n\n#portfolio .portfolio-item .portfolio-info h4 {\n  font-size: 18px;\n  color: #fff;\n  font-weight: 600;\n}\n\n#portfolio .portfolio-item .portfolio-info p {\n  color: #fff;\n  font-size: 14px;\n  margin-bottom: 0;\n}\n\n#portfolio .portfolio-item .portfolio-info .preview-link, #portfolio .portfolio-item .portfolio-info .details-link {\n  position: absolute;\n  right: 50px;\n  font-size: 24px;\n  top: calc(50% - 18px);\n  color: white;\n  transition: ease-in-out 0.3s;\n}\n\n#portfolio .portfolio-item .portfolio-info .preview-link:hover, #portfolio .portfolio-item .portfolio-info .details-link:hover {\n  color: #a4ebd4;\n}\n\n#portfolio .portfolio-item .portfolio-info .details-link {\n  right: 15px;\n}\n\n#portfolio .portfolio-item:hover img {\n  top: -30px;\n}\n\n#portfolio .portfolio-item:hover .portfolio-info {\n  opacity: 1;\n  bottom: 0;\n}\n\n/*--------------------------------------------------------------\n# Portfolio Details\n--------------------------------------------------------------*/\n.portfolio-details {\n  padding-top: 30px;\n}\n\n.portfolio-details .portfolio-details-container {\n  position: relative;\n}\n\n.portfolio-details .portfolio-details-carousel {\n  position: relative;\n  z-index: 1;\n}\n\n.portfolio-details .portfolio-details-carousel .owl-nav, .portfolio-details .portfolio-details-carousel .owl-dots {\n  margin-top: 5px;\n  text-align: left;\n}\n\n.portfolio-details .portfolio-details-carousel .owl-dot {\n  display: inline-block;\n  margin: 0 10px 0 0;\n  width: 12px;\n  height: 12px;\n  border-radius: 50%;\n  background-color: #ddd !important;\n}\n\n.portfolio-details .portfolio-details-carousel .owl-dot.active {\n  background-color: var(--main-brand-color) !important;\n}\n\n.portfolio-details .portfolio-info {\n  padding: 30px;\n  position: absolute;\n  right: 0;\n  bottom: -70px;\n  background: #fff;\n  box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.1);\n  z-index: 2;\n}\n\n.portfolio-details .portfolio-info h3 {\n  font-size: 22px;\n  font-weight: 700;\n  margin-bottom: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #eee;\n}\n\n.portfolio-details .portfolio-info ul {\n  list-style: none;\n  padding: 0;\n  font-size: 15px;\n}\n\n.portfolio-details .portfolio-info ul li + li {\n  margin-top: 10px;\n}\n\n.portfolio-details .portfolio-description {\n  padding-top: 50px;\n}\n\n.portfolio-details .portfolio-description h2 {\n  width: 50%;\n  font-size: 26px;\n  font-weight: 700;\n  margin-bottom: 20px;\n}\n\n.portfolio-details .portfolio-description p {\n  padding: 0 0 0 0;\n}\n\n@media (max-width: 768px) {\n  .portfolio-details .portfolio-description h2 {\n    width: 100%;\n  }\n  .portfolio-details .portfolio-info {\n    position: static;\n    margin-top: 30px;\n  }\n}\n\n/* Team Section\n--------------------------------*/\n#team {\n  background: #fff;\n  padding: 80px 0 60px 0;\n}\n\n#team .member {\n  text-align: center;\n  margin-bottom: 20px;\n}\n\n#team .member .pic {\n  margin-bottom: 15px;\n  overflow: hidden;\n  height: 260px;\n}\n\n#team .member .pic img {\n  max-width: 100%;\n}\n\n#team .member h4 {\n  font-weight: 700;\n  margin-bottom: 2px;\n  font-size: 18px;\n}\n\n#team .member span {\n  font-style: italic;\n  display: block;\n  font-size: 13px;\n}\n\n#team .member .social {\n  margin-top: 15px;\n}\n\n#team .member .social a {\n  color: #b3b3b3;\n}\n\n#team .member .social a:hover {\n  color: var(--main-brand-color);\n}\n\n#team .member .social i {\n  font-size: 18px;\n  margin: 0 2px;\n}\n\n@-webkit-keyframes animate-loading {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n\n@keyframes animate-loading {\n  0% {\n    transform: rotate(0deg);\n  }\n  100% {\n    transform: rotate(360deg);\n  }\n}\n\n/*--------------------------------------------------------------\n# Footer\n--------------------------------------------------------------*/\n#footer {\n  background: #343b40;\n  padding: 30px 0;\n  color: #fff;\n  font-size: 14px;\n}\n\n#footer .copyright {\n  text-align: center;\n}\n\n#footer .credits {\n  padding-top: 10px;\n  text-align: center;\n  font-size: 13px;\n  color: #ccc;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/lib/css-base.js":
+/*!*************************************************!*\
+  !*** ./node_modules/css-loader/lib/css-base.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+// css base code, injected by the css-loader
+module.exports = function(useSourceMap) {
+	var list = [];
+
+	// return the list of modules as css string
+	list.toString = function toString() {
+		return this.map(function (item) {
+			var content = cssWithMappingToString(item, useSourceMap);
+			if(item[2]) {
+				return "@media " + item[2] + "{" + content + "}";
+			} else {
+				return content;
+			}
+		}).join("");
+	};
+
+	// import a list of modules into the list
+	list.i = function(modules, mediaQuery) {
+		if(typeof modules === "string")
+			modules = [[null, modules, ""]];
+		var alreadyImportedModules = {};
+		for(var i = 0; i < this.length; i++) {
+			var id = this[i][0];
+			if(typeof id === "number")
+				alreadyImportedModules[id] = true;
+		}
+		for(i = 0; i < modules.length; i++) {
+			var item = modules[i];
+			// skip already imported module
+			// this implementation is not 100% perfect for weird media query combinations
+			//  when a module is imported multiple times with different media queries.
+			//  I hope this will never occur (Hey this way we have smaller bundles)
+			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
+				if(mediaQuery && !item[2]) {
+					item[2] = mediaQuery;
+				} else if(mediaQuery) {
+					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
+				}
+				list.push(item);
+			}
+		}
+	};
+	return list;
+};
+
+function cssWithMappingToString(item, useSourceMap) {
+	var content = item[1] || '';
+	var cssMapping = item[3];
+	if (!cssMapping) {
+		return content;
+	}
+
+	if (useSourceMap && typeof btoa === 'function') {
+		var sourceMapping = toComment(cssMapping);
+		var sourceURLs = cssMapping.sources.map(function (source) {
+			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
+		});
+
+		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
+	}
+
+	return [content].join('\n');
+}
+
+// Adapted from convert-source-map (MIT)
+function toComment(sourceMap) {
+	// eslint-disable-next-line no-undef
+	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
+	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+
+	return '/*# ' + data + ' */';
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/lib/url/escape.js":
+/*!***************************************************!*\
+  !*** ./node_modules/css-loader/lib/url/escape.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = function escape(url) {
+    if (typeof url !== 'string') {
+        return url
+    }
+    // If url is already wrapped in quotes, remove them
+    if (/^['"].*['"]$/.test(url)) {
+        url = url.slice(1, -1);
+    }
+    // Should url be wrapped?
+    // See https://drafts.csswg.org/css-values-3/#urls
+    if (/["'() \t\n]/.test(url)) {
+        return '"' + url.replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"'
+    }
+
+    return url
+}
+
+
+/***/ }),
+
 /***/ "./node_modules/jquery/dist/jquery.js":
 /*!********************************************!*\
   !*** ./node_modules/jquery/dist/jquery.js ***!
@@ -65669,6 +65803,515 @@ if (false) {} else {
 
 /***/ }),
 
+/***/ "./node_modules/style-loader/lib/addStyles.js":
+/*!****************************************************!*\
+  !*** ./node_modules/style-loader/lib/addStyles.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+
+var stylesInDom = {};
+
+var	memoize = function (fn) {
+	var memo;
+
+	return function () {
+		if (typeof memo === "undefined") memo = fn.apply(this, arguments);
+		return memo;
+	};
+};
+
+var isOldIE = memoize(function () {
+	// Test for IE <= 9 as proposed by Browserhacks
+	// @see http://browserhacks.com/#hack-e71d8692f65334173fee715c222cb805
+	// Tests for existence of standard globals is to allow style-loader
+	// to operate correctly into non-standard environments
+	// @see https://github.com/webpack-contrib/style-loader/issues/177
+	return window && document && document.all && !window.atob;
+});
+
+var getTarget = function (target, parent) {
+  if (parent){
+    return parent.querySelector(target);
+  }
+  return document.querySelector(target);
+};
+
+var getElement = (function (fn) {
+	var memo = {};
+
+	return function(target, parent) {
+                // If passing function in options, then use it for resolve "head" element.
+                // Useful for Shadow Root style i.e
+                // {
+                //   insertInto: function () { return document.querySelector("#foo").shadowRoot }
+                // }
+                if (typeof target === 'function') {
+                        return target();
+                }
+                if (typeof memo[target] === "undefined") {
+			var styleTarget = getTarget.call(this, target, parent);
+			// Special case to return head of iframe instead of iframe itself
+			if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
+				try {
+					// This will throw an exception if access to iframe is blocked
+					// due to cross-origin restrictions
+					styleTarget = styleTarget.contentDocument.head;
+				} catch(e) {
+					styleTarget = null;
+				}
+			}
+			memo[target] = styleTarget;
+		}
+		return memo[target]
+	};
+})();
+
+var singleton = null;
+var	singletonCounter = 0;
+var	stylesInsertedAtTop = [];
+
+var	fixUrls = __webpack_require__(/*! ./urls */ "./node_modules/style-loader/lib/urls.js");
+
+module.exports = function(list, options) {
+	if (typeof DEBUG !== "undefined" && DEBUG) {
+		if (typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
+	}
+
+	options = options || {};
+
+	options.attrs = typeof options.attrs === "object" ? options.attrs : {};
+
+	// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+	// tags it will allow on a page
+	if (!options.singleton && typeof options.singleton !== "boolean") options.singleton = isOldIE();
+
+	// By default, add <style> tags to the <head> element
+        if (!options.insertInto) options.insertInto = "head";
+
+	// By default, add <style> tags to the bottom of the target
+	if (!options.insertAt) options.insertAt = "bottom";
+
+	var styles = listToStyles(list, options);
+
+	addStylesToDom(styles, options);
+
+	return function update (newList) {
+		var mayRemove = [];
+
+		for (var i = 0; i < styles.length; i++) {
+			var item = styles[i];
+			var domStyle = stylesInDom[item.id];
+
+			domStyle.refs--;
+			mayRemove.push(domStyle);
+		}
+
+		if(newList) {
+			var newStyles = listToStyles(newList, options);
+			addStylesToDom(newStyles, options);
+		}
+
+		for (var i = 0; i < mayRemove.length; i++) {
+			var domStyle = mayRemove[i];
+
+			if(domStyle.refs === 0) {
+				for (var j = 0; j < domStyle.parts.length; j++) domStyle.parts[j]();
+
+				delete stylesInDom[domStyle.id];
+			}
+		}
+	};
+};
+
+function addStylesToDom (styles, options) {
+	for (var i = 0; i < styles.length; i++) {
+		var item = styles[i];
+		var domStyle = stylesInDom[item.id];
+
+		if(domStyle) {
+			domStyle.refs++;
+
+			for(var j = 0; j < domStyle.parts.length; j++) {
+				domStyle.parts[j](item.parts[j]);
+			}
+
+			for(; j < item.parts.length; j++) {
+				domStyle.parts.push(addStyle(item.parts[j], options));
+			}
+		} else {
+			var parts = [];
+
+			for(var j = 0; j < item.parts.length; j++) {
+				parts.push(addStyle(item.parts[j], options));
+			}
+
+			stylesInDom[item.id] = {id: item.id, refs: 1, parts: parts};
+		}
+	}
+}
+
+function listToStyles (list, options) {
+	var styles = [];
+	var newStyles = {};
+
+	for (var i = 0; i < list.length; i++) {
+		var item = list[i];
+		var id = options.base ? item[0] + options.base : item[0];
+		var css = item[1];
+		var media = item[2];
+		var sourceMap = item[3];
+		var part = {css: css, media: media, sourceMap: sourceMap};
+
+		if(!newStyles[id]) styles.push(newStyles[id] = {id: id, parts: [part]});
+		else newStyles[id].parts.push(part);
+	}
+
+	return styles;
+}
+
+function insertStyleElement (options, style) {
+	var target = getElement(options.insertInto)
+
+	if (!target) {
+		throw new Error("Couldn't find a style target. This probably means that the value for the 'insertInto' parameter is invalid.");
+	}
+
+	var lastStyleElementInsertedAtTop = stylesInsertedAtTop[stylesInsertedAtTop.length - 1];
+
+	if (options.insertAt === "top") {
+		if (!lastStyleElementInsertedAtTop) {
+			target.insertBefore(style, target.firstChild);
+		} else if (lastStyleElementInsertedAtTop.nextSibling) {
+			target.insertBefore(style, lastStyleElementInsertedAtTop.nextSibling);
+		} else {
+			target.appendChild(style);
+		}
+		stylesInsertedAtTop.push(style);
+	} else if (options.insertAt === "bottom") {
+		target.appendChild(style);
+	} else if (typeof options.insertAt === "object" && options.insertAt.before) {
+		var nextSibling = getElement(options.insertAt.before, target);
+		target.insertBefore(style, nextSibling);
+	} else {
+		throw new Error("[Style Loader]\n\n Invalid value for parameter 'insertAt' ('options.insertAt') found.\n Must be 'top', 'bottom', or Object.\n (https://github.com/webpack-contrib/style-loader#insertat)\n");
+	}
+}
+
+function removeStyleElement (style) {
+	if (style.parentNode === null) return false;
+	style.parentNode.removeChild(style);
+
+	var idx = stylesInsertedAtTop.indexOf(style);
+	if(idx >= 0) {
+		stylesInsertedAtTop.splice(idx, 1);
+	}
+}
+
+function createStyleElement (options) {
+	var style = document.createElement("style");
+
+	if(options.attrs.type === undefined) {
+		options.attrs.type = "text/css";
+	}
+
+	if(options.attrs.nonce === undefined) {
+		var nonce = getNonce();
+		if (nonce) {
+			options.attrs.nonce = nonce;
+		}
+	}
+
+	addAttrs(style, options.attrs);
+	insertStyleElement(options, style);
+
+	return style;
+}
+
+function createLinkElement (options) {
+	var link = document.createElement("link");
+
+	if(options.attrs.type === undefined) {
+		options.attrs.type = "text/css";
+	}
+	options.attrs.rel = "stylesheet";
+
+	addAttrs(link, options.attrs);
+	insertStyleElement(options, link);
+
+	return link;
+}
+
+function addAttrs (el, attrs) {
+	Object.keys(attrs).forEach(function (key) {
+		el.setAttribute(key, attrs[key]);
+	});
+}
+
+function getNonce() {
+	if (false) {}
+
+	return __webpack_require__.nc;
+}
+
+function addStyle (obj, options) {
+	var style, update, remove, result;
+
+	// If a transform function was defined, run it on the css
+	if (options.transform && obj.css) {
+	    result = typeof options.transform === 'function'
+		 ? options.transform(obj.css) 
+		 : options.transform.default(obj.css);
+
+	    if (result) {
+	    	// If transform returns a value, use that instead of the original css.
+	    	// This allows running runtime transformations on the css.
+	    	obj.css = result;
+	    } else {
+	    	// If the transform function returns a falsy value, don't add this css.
+	    	// This allows conditional loading of css
+	    	return function() {
+	    		// noop
+	    	};
+	    }
+	}
+
+	if (options.singleton) {
+		var styleIndex = singletonCounter++;
+
+		style = singleton || (singleton = createStyleElement(options));
+
+		update = applyToSingletonTag.bind(null, style, styleIndex, false);
+		remove = applyToSingletonTag.bind(null, style, styleIndex, true);
+
+	} else if (
+		obj.sourceMap &&
+		typeof URL === "function" &&
+		typeof URL.createObjectURL === "function" &&
+		typeof URL.revokeObjectURL === "function" &&
+		typeof Blob === "function" &&
+		typeof btoa === "function"
+	) {
+		style = createLinkElement(options);
+		update = updateLink.bind(null, style, options);
+		remove = function () {
+			removeStyleElement(style);
+
+			if(style.href) URL.revokeObjectURL(style.href);
+		};
+	} else {
+		style = createStyleElement(options);
+		update = applyToTag.bind(null, style);
+		remove = function () {
+			removeStyleElement(style);
+		};
+	}
+
+	update(obj);
+
+	return function updateStyle (newObj) {
+		if (newObj) {
+			if (
+				newObj.css === obj.css &&
+				newObj.media === obj.media &&
+				newObj.sourceMap === obj.sourceMap
+			) {
+				return;
+			}
+
+			update(obj = newObj);
+		} else {
+			remove();
+		}
+	};
+}
+
+var replaceText = (function () {
+	var textStore = [];
+
+	return function (index, replacement) {
+		textStore[index] = replacement;
+
+		return textStore.filter(Boolean).join('\n');
+	};
+})();
+
+function applyToSingletonTag (style, index, remove, obj) {
+	var css = remove ? "" : obj.css;
+
+	if (style.styleSheet) {
+		style.styleSheet.cssText = replaceText(index, css);
+	} else {
+		var cssNode = document.createTextNode(css);
+		var childNodes = style.childNodes;
+
+		if (childNodes[index]) style.removeChild(childNodes[index]);
+
+		if (childNodes.length) {
+			style.insertBefore(cssNode, childNodes[index]);
+		} else {
+			style.appendChild(cssNode);
+		}
+	}
+}
+
+function applyToTag (style, obj) {
+	var css = obj.css;
+	var media = obj.media;
+
+	if(media) {
+		style.setAttribute("media", media)
+	}
+
+	if(style.styleSheet) {
+		style.styleSheet.cssText = css;
+	} else {
+		while(style.firstChild) {
+			style.removeChild(style.firstChild);
+		}
+
+		style.appendChild(document.createTextNode(css));
+	}
+}
+
+function updateLink (link, options, obj) {
+	var css = obj.css;
+	var sourceMap = obj.sourceMap;
+
+	/*
+		If convertToAbsoluteUrls isn't defined, but sourcemaps are enabled
+		and there is no publicPath defined then lets turn convertToAbsoluteUrls
+		on by default.  Otherwise default to the convertToAbsoluteUrls option
+		directly
+	*/
+	var autoFixUrls = options.convertToAbsoluteUrls === undefined && sourceMap;
+
+	if (options.convertToAbsoluteUrls || autoFixUrls) {
+		css = fixUrls(css);
+	}
+
+	if (sourceMap) {
+		// http://stackoverflow.com/a/26603875
+		css += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
+	}
+
+	var blob = new Blob([css], { type: "text/css" });
+
+	var oldSrc = link.href;
+
+	link.href = URL.createObjectURL(blob);
+
+	if(oldSrc) URL.revokeObjectURL(oldSrc);
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/style-loader/lib/urls.js":
+/*!***********************************************!*\
+  !*** ./node_modules/style-loader/lib/urls.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+
+/**
+ * When source maps are enabled, `style-loader` uses a link element with a data-uri to
+ * embed the css on the page. This breaks all relative urls because now they are relative to a
+ * bundle instead of the current page.
+ *
+ * One solution is to only use full urls, but that may be impossible.
+ *
+ * Instead, this function "fixes" the relative urls to be absolute according to the current page location.
+ *
+ * A rudimentary test suite is located at `test/fixUrls.js` and can be run via the `npm test` command.
+ *
+ */
+
+module.exports = function (css) {
+  // get current location
+  var location = typeof window !== "undefined" && window.location;
+
+  if (!location) {
+    throw new Error("fixUrls requires window.location");
+  }
+
+	// blank or null?
+	if (!css || typeof css !== "string") {
+	  return css;
+  }
+
+  var baseUrl = location.protocol + "//" + location.host;
+  var currentDir = baseUrl + location.pathname.replace(/\/[^\/]*$/, "/");
+
+	// convert each url(...)
+	/*
+	This regular expression is just a way to recursively match brackets within
+	a string.
+
+	 /url\s*\(  = Match on the word "url" with any whitespace after it and then a parens
+	   (  = Start a capturing group
+	     (?:  = Start a non-capturing group
+	         [^)(]  = Match anything that isn't a parentheses
+	         |  = OR
+	         \(  = Match a start parentheses
+	             (?:  = Start another non-capturing groups
+	                 [^)(]+  = Match anything that isn't a parentheses
+	                 |  = OR
+	                 \(  = Match a start parentheses
+	                     [^)(]*  = Match anything that isn't a parentheses
+	                 \)  = Match a end parentheses
+	             )  = End Group
+              *\) = Match anything and then a close parens
+          )  = Close non-capturing group
+          *  = Match anything
+       )  = Close capturing group
+	 \)  = Match a close parens
+
+	 /gi  = Get all matches, not the first.  Be case insensitive.
+	 */
+	var fixedCss = css.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(fullMatch, origUrl) {
+		// strip quotes (if they exist)
+		var unquotedOrigUrl = origUrl
+			.trim()
+			.replace(/^"(.*)"$/, function(o, $1){ return $1; })
+			.replace(/^'(.*)'$/, function(o, $1){ return $1; });
+
+		// already a full url? no change
+		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/|\s*$)/i.test(unquotedOrigUrl)) {
+		  return fullMatch;
+		}
+
+		// convert the url to a full url
+		var newUrl;
+
+		if (unquotedOrigUrl.indexOf("//") === 0) {
+		  	//TODO: should we add protocol?
+			newUrl = unquotedOrigUrl;
+		} else if (unquotedOrigUrl.indexOf("/") === 0) {
+			// path should be relative to the base url
+			newUrl = baseUrl + unquotedOrigUrl; // already starts with '/'
+		} else {
+			// path should be relative to current directory
+			newUrl = currentDir + unquotedOrigUrl.replace(/^\.\//, ""); // Strip leading './'
+		}
+
+		// send back the fixed url(...)
+		return "url(" + JSON.stringify(newUrl) + ")";
+	});
+
+	// send back the fixed css
+	return fixedCss;
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!
@@ -65753,7 +66396,81 @@ __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
  */
 
 
-__webpack_require__(/*! ./components/Example */ "./resources/js/components/Example.js");
+__webpack_require__(/*! ./index */ "./resources/js/index.js");
+
+/***/ }),
+
+/***/ "./resources/js/assets/css/style.css":
+/*!*******************************************!*\
+  !*** ./resources/js/assets/css/style.css ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+var content = __webpack_require__(/*! !../../../../node_modules/css-loader??ref--6-1!../../../../node_modules/postcss-loader/src??ref--6-2!./style.css */ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/src/index.js?!./resources/js/assets/css/style.css");
+
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
+options.transform = transform
+options.insertInto = undefined;
+
+var update = __webpack_require__(/*! ../../../../node_modules/style-loader/lib/addStyles.js */ "./node_modules/style-loader/lib/addStyles.js")(content, options);
+
+if(content.locals) module.exports = content.locals;
+
+if(false) {}
+
+/***/ }),
+
+/***/ "./resources/js/assets/img/brand-logo.png":
+/*!************************************************!*\
+  !*** ./resources/js/assets/img/brand-logo.png ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/brand-logo.png?8d7e046299ea3ea25c9e4796a47f6c1f";
+
+/***/ }),
+
+/***/ "./resources/js/assets/img/mt.jpg":
+/*!****************************************!*\
+  !*** ./resources/js/assets/img/mt.jpg ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/mt.jpg?f29c9c8ff0b60d04547ac540fedaaffe";
+
+/***/ }),
+
+/***/ "./resources/js/assets/img/mtfuji.jpg":
+/*!********************************************!*\
+  !*** ./resources/js/assets/img/mtfuji.jpg ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/mtfuji.jpg?a02e7815a0755523e513ae00e6968011";
+
+/***/ }),
+
+/***/ "./resources/js/assets/img/spinner.gif":
+/*!*********************************************!*\
+  !*** ./resources/js/assets/img/spinner.gif ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/spinner.gif?8a7630caadfb15dbd13cb469853ab004";
 
 /***/ }),
 
@@ -65802,11 +66519,293 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 /***/ }),
 
-/***/ "./resources/js/components/Example.js":
-/*!********************************************!*\
-  !*** ./resources/js/components/Example.js ***!
-  \********************************************/
+/***/ "./resources/js/components/App.js":
+/*!****************************************!*\
+  !*** ./resources/js/components/App.js ***!
+  \****************************************/
 /*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return App; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _assets_css_style_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../assets/css/style.css */ "./resources/js/assets/css/style.css");
+/* harmony import */ var _assets_css_style_css__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_assets_css_style_css__WEBPACK_IMPORTED_MODULE_2__);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function () { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+
+
+
+
+var App = /*#__PURE__*/function (_Component) {
+  _inherits(App, _Component);
+
+  var _super = _createSuper(App);
+
+  function App() {
+    _classCallCheck(this, App);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(App, [{
+    key: "render",
+    value: function render() {
+      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("header", {
+        id: "header",
+        className: "header-transparent"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        id: "logo",
+        className: "pull-left"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#hero"
+      }, "JPLearning"))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
+        id: "nav-menu-container"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", {
+        className: "nav-menu"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#about"
+      }, "Introduction")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#documentation"
+      }, "API")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#credits"
+      }, "Credits")))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        id: "hero"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "hero-container",
+        "data-aos": "zoom-in",
+        "data-aos-delay": "100"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", null, "Japanese virtual e-learning environment"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "https://jplearningonline.herokuapp.com",
+        className: "btn-get-started",
+        target: "_blank"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fas fa-globe"
+      }), " Visit JPLearning"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#about"
+      }, " Explore ", /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fas fa-angle-double-down"
+      }), " "))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("main", {
+        id: "main"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        id: "about"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container",
+        "data-aos": "fade-up"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row about-container"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-6 content order-lg-1 order-2"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+        className: "title"
+      }, "About JPLearning"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Internet is full of various learning resources and understanding, tracking the progress, sorting out the learning material. To find the clear and structured way of learning is quite the challenge. By joining the JPLearning virtual e-learning environment, japanese learners can find all radicals, kanji and words in one place by saving them into customized personal lists or just use lists of other people! Want to find a way to practice your knowledge? Go to the readings section and find articles of your interest and knowledge competence to read. Want to use it in various devices? Download the pdf documents to user everywhere you want or even print out worksheets to practice by writing."), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "100"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-shopping-bag"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Radicals")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Parts of kanji characters which help you write, read and understand the meaning easier.")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "200"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-photo"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Kanji")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Kanji characters are the main part of the japanese language. Without it - you are in a pretty bad situation! But it's ok, you can study them here.")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "300"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-bar-chart"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Words")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Result of adding up kanji characters and constructing meaningful sentences to have a discussions.")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "400"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-bar-chart"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Sentences")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Way of expressing your thoughts in japanese!")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "500"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-bar-chart"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Articles")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Readings which help find the context of using your knowledge.")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon-box",
+        "data-aos": "fade-up",
+        "data-aos-delay": "600"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "icon"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-bar-chart"
+      })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        className: "title"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: ""
+      }, "Lists")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "description"
+      }, "Comfortable and accessable way of storing your wanted studying material or articles which you are reading at the moment or want to save for the future reference."))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-6 background order-lg-2 order-1",
+        "data-aos": "fade-left",
+        "data-aos-delay": "100"
+      })))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        id: "documentation"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container",
+        "data-aos": "fade-up"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "section-header"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+        className: "section-title"
+      }, "API Documentation"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "section-description"
+      }, "JPLearning endpoints documentation. ")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "section-description"
+      }, " Root url: ", /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", null, "https://www.jplearning.online/api"), " "), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("table", {
+        className: "table"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("thead", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+        scope: "col"
+      }, "Endpoint"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+        scope: "col"
+      }, "Request type"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+        scope: "col"
+      }, "Parameters"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("th", {
+        scope: "col"
+      }, "Results"))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tbody", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "/articles"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "GET"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "-"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "Paginated Articles")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "/article"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "POST"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("u", null, "title_jp"), " - title", /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("u", null, "content_jp"), " - body text", /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("u", null, "source_link"), " - article original source"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "New article with status of 'pending'. After article is approved, the article will be accessable to the public")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("tr", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "/article/[id]/like"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "POST"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("u", null, "id"), " - article id", /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", null, "user_id"), " - id of the user"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("td", null, "Selected article gets +1 like.")))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("small", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("strong", null, "*documentation will be updated and relocated to separate pages with tables sections")))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        id: "credits"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container",
+        "data-aos": "fade-up"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "section-header"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+        className: "section-title"
+      }, "Credits")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row counters"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-3 col-6 text-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        "data-toggle": "counter-up"
+      }, "232"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Articles")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-3 col-6 text-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        "data-toggle": "counter-up"
+      }, "521"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Lists")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-3 col-6 text-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        "data-toggle": "counter-up"
+      }, "1,463"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Posts")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-3 col-6 text-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+        "data-toggle": "counter-up"
+      }, "1000"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", null, "Users"))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        id: "call-to-action"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row",
+        "data-aos": "zoom-in"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-9 text-center text-lg-left"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", {
+        className: "cta-title"
+      }, "Learn Japanese now!"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("p", {
+        className: "cta-text"
+      }, "We believe, that you will have the guidance you need to learn the japanese language with as less unnecessary waste of time as possible during this steep road of reaching the japanese language fluency. Like-minded people gathered as a strong community can achieve big things and we hope that You will become part of it.")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "col-lg-3 cta-btn-container text-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "https://jplearningonline.herokuapp.com",
+        className: "cta-btn align-middle",
+        target: "_blank"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fas fa-globe"
+      }), " Visit JPLearning")))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        href: "#",
+        className: "back-to-top"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("i", {
+        className: "fa fa-chevron-up"
+      })));
+    }
+  }]);
+
+  return App;
+}(react__WEBPACK_IMPORTED_MODULE_0__["Component"]);
+
+
+
+/***/ }),
+
+/***/ "./resources/js/index.js":
+/*!*******************************!*\
+  !*** ./resources/js/index.js ***!
+  \*******************************/
+/*! no exports provided */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -65815,29 +66814,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _components_App__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/App */ "./resources/js/components/App.js");
 
+ // import App component
 
+ // change the getElementId from example to app 
+// render App component instead of Example
 
-function Example() {
-  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "container"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "row justify-content-center"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "col-md-8"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "card-header"
-  }, "Example Component"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-    className: "card-body"
-  }, "I'm an example component!")))));
-}
-
-/* harmony default export */ __webpack_exports__["default"] = (Example);
-
-if (document.getElementById('example')) {
-  react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render( /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Example, null), document.getElementById('example'));
+if (document.getElementById('root')) {
+  react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render( /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_App__WEBPACK_IMPORTED_MODULE_2__["default"], null), document.getElementById('root'));
 }
 
 /***/ }),
@@ -65860,8 +66845,8 @@ if (document.getElementById('example')) {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /home/alan/Documents/backup-japanese-vma/japanese-vma/processor-api/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /home/alan/Documents/backup-japanese-vma/japanese-vma/processor-api/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /home/alan/Documents/abcDEVELOPMENT-Japanese-vma/japanese-vma/processor-api/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /home/alan/Documents/abcDEVELOPMENT-Japanese-vma/japanese-vma/processor-api/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

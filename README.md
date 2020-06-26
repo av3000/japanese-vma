@@ -1,4 +1,3 @@
-# Development branch
 # Japanese Learning Environment
 
 Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side.
@@ -13,11 +12,18 @@ Japanese data comes from [Electronic Dictionary Research and Development Group](
 - Make sure you have latest stable version of node installed.
 
 ### Backend
-- [mpdf](https://mpdf.github.io/)
-- [jwt-auth](https://github.com/tymondesigns/jwt-auth)
+- [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) is required in order for the library to work.
+- [passport](https://laravel.com/docs/7.x/passport)
+- [laravel helpers](https://github.com/laravel/helpers) - more comfortable customized version of the [original laravel helpers](https://laravel.com/docs/7.x/helpers)
+- [laravel/ui](https://laravel.com/docs/7.x/frontend) - scaffolding for the frontend. In this project [React](https://reactjs.org/docs/getting-started.html) was used.
 
 ### Frontend
-- [react-moment](https://github.com/headzoo/react-moment)
+- [react-moment](https://github.com/headzoo/react-moment) of [moment](https://www.npmjs.com/package/moment) for date formatting.
+- [axios](https://www.npmjs.com/package/axios) for HTTP requesting.
+- [react-bootstrap](https://react-bootstrap.github.io/) for navdropbars with links and [bootstrap](https://www.npmjs.com/package/bootstrap) for overall responsiveness.
+- [react-router-bootstrap](https://github.com/react-bootstrap/react-router-bootstrap) for [react-router](https://github.com/reactjs/react-router) and [react-bootstrap](https://react-bootstrap.github.io/) integration.
+- [redux](https://redux.js.org/introduction/getting-started), [redux-thunk](https://www.npmjs.com/package/redux-thunk) and [react-redux](https://www.npmjs.com/package/react-redux) for redux single-source state management.
+- [create-react-app](https://create-react-app.dev/docs/getting-started/).
 
 ## Setup
 
@@ -59,6 +65,23 @@ php artisan migrate
 
 # Install encryption keys and other necessary stuff for Passport
 php artisan passport:install
+```
+
+Seed initial data
+```bash
+# Necessary to fill-up the categories for the resources objects in "objecttemplates" table.
+# Creates common and admin users
+# Some custom lists
+# Some articles
+php artisan db:seed
+```
+
+API Documentation page
+```bash
+# to require needed modules
+npm install
+# to watch changes
+npm run watch
 ```
 
 ### React App
