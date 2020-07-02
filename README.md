@@ -6,10 +6,20 @@ Japanese data comes from [Electronic Dictionary Research and Development Group](
 
 ## libraries
 
-### Prerequisite
+### Installation pre-requisites
 
 - Make sure you have composer installed.
 - Make sure you have latest stable version of node installed.
+
+Documentation on how to install [composer](https://github.com/composer/composer).
+
+To run this project you need and npm installed on you machine. These are some tutorials to install node in different operating systems:
+
+*Its important to install the latest version of Node*
+
+- [Install Node and NPM on Windows](https://www.youtube.com/watch?v=8ODS6RM6x7g)
+- [Install Node and NPM on Linux](https://www.youtube.com/watch?v=yUdHk-Dk_BY)
+- [Install Node and NPM on Mac](https://www.youtube.com/watch?v=Imj8PgG3bZU)
 
 ### Backend
 - [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) is required in order for the library to work.
@@ -95,31 +105,3 @@ Start react app
 ```bash
 npm start
 ```
-
-### Common commands & Readings for future tasks
-
-https://devmarketer.io/learn/setup-laravel-project-cloned-github-com/
-
-https://riptutorial.com/laravel/example/17358/creating-a-seeder
-
-```bash
-php artisan db:seed --class=UserSeeder
-```
-
-https://github.com/fzaninotto/Faker#fakerproviderja_jpperson
-Faker\Provider\ja_JP\Person
-https://packagist.org/packages/xyyolab/faker-japanese
-
-Passport Authentication hero
-https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
-
-https://restfulapi.net/http-status-codes/
-
-https://stackoverflow.com/questions/32494545/where-to-save-the-jwt-token-in-laravel
-
-https://laracasts.com/discuss/channels/laravel/use-name-in-url-instead-of-id
-
-7.+ laravel Blog App example
-https://github.com/guillaumebriday/laravel-blog/blob/master/routes/api.php
-
-https://appdividend.com/2018/05/16/laravel-model-relationships-example/
