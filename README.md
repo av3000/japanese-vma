@@ -60,6 +60,17 @@ php artisan key:generate
 ```
 
 Migrate DB tables
+
+*NOTICE*
+
+BEFORE MIGRATING, NEED TO MAKE SURE THAT MYSQL CONFIG IN my.ini THE FOLLOWING LINE IS UPDATED TO IMPORT LARGE FILES
+
+```bash
+max_allowed_packet=128M
+```
+
+If mysql config is correct, proceed steps below
+
 ```bash
 # Create common tables
 php artisan migrate --path=database/migrations/now
