@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use App\Http\Models\Role;
 
 class RolesTableSeeder extends Seeder
 {
@@ -11,12 +12,12 @@ class RolesTableSeeder extends Seeder
      */
     public function run()
     {
-        $adminRole = new App\Role;
+        $adminRole = new Role;
         $adminRole->name        = "admin";
         $adminRole->description = "Administrator";
         $adminRole->save(); 
 
-        $testuserRole = new App\Role;
+        $testuserRole = new Role;
         $testuserRole->name        = "testuser";
         $testuserRole->description = "Test User";
         $testuserRole->save(); 

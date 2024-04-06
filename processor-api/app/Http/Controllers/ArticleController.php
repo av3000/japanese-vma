@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use App\User;
+use App\Http\User;
 use App\Http\Models\Article;
 use App\Http\Models\Kanji;
 use App\Http\Models\Word;

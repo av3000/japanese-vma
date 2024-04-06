@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
-use App\User;
+use App\Http\User;
 use App\Http\Models\CustomList;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Radical;

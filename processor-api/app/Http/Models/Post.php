@@ -4,7 +4,7 @@ namespace App\Http\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Models\ObjectTemplate;
-use App\User;
+use App\Http\User;
 
 class Post extends Model
 {

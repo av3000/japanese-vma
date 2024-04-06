@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\ListStoreRequest;
 use Illuminate\Support\Facades\Validator;
-use App\User;
+use App\Http\User;
 use App\Http\Models\Article;
 use App\Http\Models\Radical;
 use App\Http\Models\Kanji;

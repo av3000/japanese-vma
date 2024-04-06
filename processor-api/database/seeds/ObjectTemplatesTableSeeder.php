@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use App\Http\Models\ObjectTemplate;
 
 class ObjectTemplatesTableSeeder extends Seeder
 {
@@ -11,43 +12,43 @@ class ObjectTemplatesTableSeeder extends Seeder
      */
     public function run()
     {
-        $articleTemplate = new \App\ObjectTemplate;
+        $articleTemplate = new ObjectTemplate;
         $articleTemplate->title = "article";
         $articleTemplate->save();
 
-        $artistTemplate = new \App\ObjectTemplate;
+        $artistTemplate = new ObjectTemplate;
         $artistTemplate->title = "artist";
         $artistTemplate->save();
         
-        $lyricTemplate = new \App\ObjectTemplate;
+        $lyricTemplate = new ObjectTemplate;
         $lyricTemplate->title = "lyric";
         $lyricTemplate->save();
 
-        $radicalTemplate = new \App\ObjectTemplate;
+        $radicalTemplate = new ObjectTemplate;
         $radicalTemplate->title = "radical";
         $radicalTemplate->save();
 
-        $kanjiTemplate = new \App\ObjectTemplate;
+        $kanjiTemplate = new ObjectTemplate;
         $kanjiTemplate->title = "kanji";
         $kanjiTemplate->save();
         
-        $wordTemplate = new \App\ObjectTemplate;
+        $wordTemplate = new ObjectTemplate;
         $wordTemplate->title = "word";
         $wordTemplate->save();
 
-        $sentenceTemplate = new \App\ObjectTemplate;
+        $sentenceTemplate = new ObjectTemplate;
         $sentenceTemplate->title = "sentence";
         $sentenceTemplate->save();
 
-        $listTemplate = new \App\ObjectTemplate;
+        $listTemplate = new ObjectTemplate;
         $listTemplate->title = "list";
         $listTemplate->save();
 
-        $postTemplate = new \App\ObjectTemplate;
+        $postTemplate = new ObjectTemplate;
         $postTemplate->title = "post";
         $postTemplate->save();
 
-        $commentTemplate = new \App\ObjectTemplate;
+        $commentTemplate = new ObjectTemplate;
         $commentTemplate->title = "comment";
         $commentTemplate->save();
     }

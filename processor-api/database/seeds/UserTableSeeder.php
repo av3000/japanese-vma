@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Database\Seeder;
-use App\Role;
+use App\Http\Models\Role;
+use App\Http\User;
 
 class UserTableSeeder extends Seeder
 {
@@ -12,7 +13,7 @@ class UserTableSeeder extends Seeder
      */
     public function run()
     {
-        $adminUser = new App\User;
+        $adminUser = new User;
         $adminUser->name        = "mrAdmin";
         $adminUser->email = "admin@me.com";
         $adminUser->password = Hash::make("secret123");
@@ -23,7 +24,7 @@ class UserTableSeeder extends Seeder
             ->attach(Role::where('name', 'admin')->first());
 
         
-        $commonUser = new App\User;
+        $commonUser = new User;
         $commonUser->name  = "JohnDoe";
         $commonUser->email = "johndoe@me.com";
         $commonUser->password = Hash::make("secret123");
