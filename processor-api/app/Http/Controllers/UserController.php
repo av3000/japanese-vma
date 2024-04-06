@@ -114,7 +114,7 @@ class UserController extends Controller
     {   
         $user = $request->user();
 
-        $user->isAdmin = $user->role() == "admin" ? true : false;
+        $user->isAdmin = $user->role() == "admin";
         
         return response()->json($user);
     }
