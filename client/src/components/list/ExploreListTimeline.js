@@ -1,16 +1,12 @@
-import React from 'react';
-import ExploreCustomList from '../../containers/ExploreCustomList';
-import SearchBar from '../search/Searchbar';
+import React from "react";
+import ExploreCustomList from "../../containers/ExploreCustomList";
 
-const ExploreListTimeline = props => {
-    return (
-        <div className="row">
-                <ExploreCustomList/>
-                {/* sidebar */}
-                {/* ads bar */}
-                {/* etc.... */}
-        </div>
-    );
+const ExploreListTimeline = (props) => {
+  return (
+    <div className="row">
+      <ExploreCustomList />
+    </div>
+  );
 };
 
 export default ExploreListTimeline;
