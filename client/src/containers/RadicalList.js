@@ -28,15 +28,11 @@ export class RadicalList extends Component {
   }
 
   fetchRadicalsAuthenticated(radicals) {
-    console.log("fetchRadicalsAuthenticated");
-    // console.log(radicals);
     return apiCall("post", "/api/user/list/contain", {
       objects: radicals,
       listTypeId: 1,
     })
       .then((res) => {
-        // console.log("haltura promise: ")
-        // console.log(res);
         return res;
       })
       .catch((err) => {
@@ -99,8 +95,6 @@ export class RadicalList extends Component {
     let newState = Object.assign({}, this.state);
     apiCall("post", givenUrl, newState.filters)
       .then((res) => {
-        console.log(res);
-
         newState.paginateObject = res.radicals;
         newState.radicals = [...newState.radicals, ...res.radicals.data];
         newState.url = res.radicals.next_page_url;
@@ -113,8 +107,6 @@ export class RadicalList extends Component {
         newState.pagination = this.makePagination(newState.paginateObject);
 
         this.setState(newState);
-
-        console.log(this.state.radicals);
       })
       .catch((err) => {
         console.log(err);
@@ -170,9 +162,6 @@ export class RadicalList extends Component {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <SearchBarRadicals fetchQuery={this.fetchQuery} />
-          {/* by tag */}
-          {/* by keyword keyword */}
-          {/* by newest/popular */}
         </div>
         <div className="container mt-5">
           <div className="row justify-content-center">

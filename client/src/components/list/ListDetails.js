@@ -81,19 +81,13 @@ class ListDetails extends Component {
       });
   }
 
-  // List events
   removeFromList(id) {
-    console.log("removefrom");
-    console.log(id);
     axios
       .post("/api/user/list/removeitemwhileaway", {
         listId: this.state.list.id,
         elementId: id,
       })
       .then((res) => {
-        console.log("remove res: ");
-        console.log(res);
-        // try to filter out deleted item "id" rather than refreshing whole page
         let newState = Object.assign({}, this.state);
         newState.list.listItems = newState.list.listItems.filter(
           (item) => item.id !== id
@@ -133,8 +127,6 @@ class ListDetails extends Component {
       } else if (this.state.list.type === 4 || this.state.list.type === 8) {
         endpoint = "sentences-pdf";
       } else if (this.state.list.type === 9) {
-        // endpoint = 'modal';
-        console.log("pdf icon should not be displayed");
         return;
       }
 
@@ -145,11 +137,8 @@ class ListDetails extends Component {
         })
         .then((res) => {
           this.props.dispatch(hideLoader());
-          //Create a Blob from the PDF Stream
           const file = new Blob([res.data], { type: "application/pdf" });
-          //Build a URL from the file
           const fileURL = URL.createObjectURL(file);
-          //Open the URL on new Window
           window.open(fileURL);
         })
         .catch((err) => {
@@ -188,8 +177,6 @@ class ListDetails extends Component {
 
   toggleListEdit() {
     if (this.props.currentUser.user.id === this.state.list.user_id) {
-      console.log("toggleListEdit");
-      console.log(this.state.editToggle);
       let heading = this.state.editToggle ? "Edit" : "End";
       this.setState({
         editToggle: !this.state.editToggle,
@@ -200,10 +187,7 @@ class ListDetails extends Component {
     }
   }
 
-  // Modals
   handleDeleteModalClose() {
-    console.log("handleDeleteModalClose");
-    console.log(this.state.showDeleteModal);
     this.setState({ showDeleteModal: !this.state.showDeleteModal });
   }
 
@@ -211,13 +195,10 @@ class ListDetails extends Component {
     if (this.props.currentUser.isAuthenticated === false) {
       this.props.history.push("/login");
     } else {
-      console.log("openDeleteModal");
-      console.log(this.state.showDeleteModal);
       this.setState({ showDeleteModal: !this.state.showDeleteModal });
     }
   }
 
-  // Comments
   likeComment(commentId) {
     if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
@@ -317,7 +298,6 @@ class ListDetails extends Component {
                 : ""}
               <br /> <strong> {list.listType} List</strong>
             </p>
-            {/* BEGIN Action icons */}
             <ul className="brand-icons mr-1 float-right d-flex">
               {currentUser.user.id === list.user_id ? (
                 <li onClick={this.openDeleteModal}>

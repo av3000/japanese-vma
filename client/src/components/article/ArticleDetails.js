@@ -497,7 +497,7 @@ class ArticleDetails extends Component {
               </a>
             </p>
             <hr />
-            <div className="">
+            <div>
               <div className="mr-1 float-left d-flex">
                 <img src={AvatarImg} alt="book-japanese" />
                 <p className="ml-3 mt-3">created by {article.userName}</p>
@@ -510,13 +510,13 @@ class ArticleDetails extends Component {
                   {article.isLiked ? (
                     <li onClick={this.likeArticle}>
                       <button>
-                        <i className="fas fa-thumbs-up fa-lg"></i>
+                        <i className="fas fa-thumbs-up"></i>
                       </button>
                     </li>
                   ) : (
                     <li onClick={this.likeArticle}>
                       <button>
-                        <i className="far fa-thumbs-up fa-lg"></i>
+                        <i className="far fa-thumbs-up"></i>
                       </button>
                     </li>
                   )}
