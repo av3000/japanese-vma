@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\PostStoreRequest;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Models\User;
+use App\Http\User;
 use App\Http\Models\Post;
 use App\Http\Models\Like;
 use App\Http\Models\Download;

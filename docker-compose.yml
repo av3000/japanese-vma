@@ -1,0 +1,16 @@
+version: '3'
+services:
+  react-app:
+    build: 
+      context: ./
+      dockerfile: .docker/Dockerfile
+    command: npm run start:docker
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
+    tty: true
