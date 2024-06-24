@@ -8,7 +8,7 @@ export class KanjiList extends Component {
   constructor() {
     super();
     this.state = {
-      url: "/api/kanjis",
+      url: `${process.env.REACT_APP_API_HOS}/api/kanjis`,
       pagination: [],
       kanjis: [],
       paginateObject: {},
@@ -30,6 +30,7 @@ export class KanjiList extends Component {
   fetchKanjis(givenUrl) {
     return apiCall("get", givenUrl)
       .then((res) => {
+        console.log("res in fetchKanjis", res);
         let newState = Object.assign({}, this.state);
         newState.paginateObject = res.kanjis;
         newState.kanjis = [...newState.kanjis, ...res.kanjis.data];

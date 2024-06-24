@@ -8,22 +8,14 @@ Japanese data comes from [Electronic Dictionary Research and Development Group](
 
 ### Installation pre-requisites
 
-- Make sure you have composer installed.
-- Make sure you have latest stable version of node installed.
-
-Documentation on how to install [composer](https://github.com/composer/composer).
-
-To run this project you need and npm installed on you machine. These are some tutorials to install node in different operating systems:
-
-_Its important to install the latest version of Node_
-
-- [Install Node and NPM on Windows](https://www.youtube.com/watch?v=8ODS6RM6x7g)
-- [Install Node and NPM on Linux](https://www.youtube.com/watch?v=yUdHk-Dk_BY)
-- [Install Node and NPM on Mac](https://www.youtube.com/watch?v=Imj8PgG3bZU)
+- [Composer](https://github.com/composer/composer).
+- [Node](https://nodejs.org/en/download).
+- [Xampp](https://www.apachefriends.org/).
+- [Laravel Herd](https://herd.laravel.com/windows)
 
 ### Backend
 
-- [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) is required in order for the library to work.
+- [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) **wkhtmltopdf is required in order for the laravel-snappy library to work. **
 - [passport](https://laravel.com/docs/7.x/passport)
 - [laravel helpers](https://github.com/laravel/helpers) - more comfortable customized version of the [original laravel helpers](https://laravel.com/docs/7.x/helpers)
 - [laravel/ui](https://laravel.com/docs/7.x/frontend) - scaffolding for the frontend. In this project [React](https://reactjs.org/docs/getting-started.html) was used.
@@ -41,11 +33,8 @@ _Its important to install the latest version of Node_
 
 ### Laravel API
 
-```bash
-git clone https://AVaiciulis3000@bitbucket.org/AVaiciulis3000/japanese-vma.git
-```
-
-After cloning, cd into project and run:
+CD into 'processor-api' directory
+Install backend modules
 
 ```bash
 composer install
@@ -67,9 +56,9 @@ php artisan key:generate
 
 Migrate DB tables
 
-_NOTICE_
+\*\*_NOTICE_
 
-BEFORE MIGRATING, NEED TO MAKE SURE THAT MYSQL CONFIG IN my.ini THE FOLLOWING LINE IS UPDATED TO IMPORT LARGE FILES
+BEFORE MIGRATING, NEED TO MAKE SURE THAT MYSQL CONFIG IN my.ini THE FOLLOWING LINE IS UPDATED TO IMPORT LARGE FILES\*\*
 
 ```bash
 max_allowed_packet=128M
@@ -88,10 +77,8 @@ php artisan migrate --path=database/migrations/japanese-data
 Add Passport clients
 
 ```bash
-# Create new tables for Passport
-php artisan migrate
 
-# Install encryption keys and other necessary stuff for Passport
+# Create new tables, generate encryption keys and other necessary stuff for Passport
 php artisan passport:install
 ```
 
@@ -100,15 +87,14 @@ Seed initial data
 ```bash
 # Necessary to fill-up the categories for the resources objects in "objecttemplates" table.
 # Creates common and admin users
-# Some custom lists
-# Some articles
+# Example custom lists
+# Example articles
 php artisan db:seed
 ```
 
-API Documentation page
+API Documentation page is served on laravel side, to have it work install packages.
 
 ```bash
-# to require needed modules
 npm install
 # to watch changes
 npm run watch
@@ -116,6 +102,7 @@ npm run watch
 
 ### React App
 
+CD into 'client' directory
 Add all node modules used in the react app.
 
 ```bash

@@ -16,14 +16,26 @@ export function setTokenHeader(token) {
  */
 
 export function apiCall(method, path, data) {
+  console.log("apiCall method", { path, data, method });
   return new Promise((resolve, reject) => {
     return axios[method.toLowerCase()](path, data)
       .then((res) => {
+        console.log("res in apiCall", res);
         return resolve(res.data);
       })
       .catch((err) => {
         console.log(err);
-        return reject(err.response.data.error);
+        if (err.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          return reject(err.response.data.error);
+        } else if (err.request) {
+          // The request was made but no response was received
+          return reject("No response was received");
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          return reject(err.message);
+        }
       });
   });
 }
