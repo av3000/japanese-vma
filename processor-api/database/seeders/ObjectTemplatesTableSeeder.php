@@ -1,7 +1,9 @@
 <?php
 
-use Illuminate\Database\Seeder;
+namespace Database\Seeders;
+
 use App\Http\Models\ObjectTemplate;
+use Illuminate\Database\Seeder;
 
 class ObjectTemplatesTableSeeder extends Seeder
 {
@@ -13,43 +15,43 @@ class ObjectTemplatesTableSeeder extends Seeder
     public function run()
     {
         $articleTemplate = new ObjectTemplate;
-        $articleTemplate->title = "article";
+        $articleTemplate->title = 'article';
         $articleTemplate->save();
 
         $artistTemplate = new ObjectTemplate;
-        $artistTemplate->title = "artist";
+        $artistTemplate->title = 'artist';
         $artistTemplate->save();
-        
+
         $lyricTemplate = new ObjectTemplate;
-        $lyricTemplate->title = "lyric";
+        $lyricTemplate->title = 'lyric';
         $lyricTemplate->save();
 
         $radicalTemplate = new ObjectTemplate;
-        $radicalTemplate->title = "radical";
+        $radicalTemplate->title = 'radical';
         $radicalTemplate->save();
 
         $kanjiTemplate = new ObjectTemplate;
-        $kanjiTemplate->title = "kanji";
+        $kanjiTemplate->title = 'kanji';
         $kanjiTemplate->save();
-        
+
         $wordTemplate = new ObjectTemplate;
-        $wordTemplate->title = "word";
+        $wordTemplate->title = 'word';
         $wordTemplate->save();
 
         $sentenceTemplate = new ObjectTemplate;
-        $sentenceTemplate->title = "sentence";
+        $sentenceTemplate->title = 'sentence';
         $sentenceTemplate->save();
 
         $listTemplate = new ObjectTemplate;
-        $listTemplate->title = "list";
+        $listTemplate->title = 'list';
         $listTemplate->save();
 
         $postTemplate = new ObjectTemplate;
-        $postTemplate->title = "post";
+        $postTemplate->title = 'post';
         $postTemplate->save();
 
         $commentTemplate = new ObjectTemplate;
-        $commentTemplate->title = "comment";
+        $commentTemplate->title = 'comment';
         $commentTemplate->save();
     }
 }

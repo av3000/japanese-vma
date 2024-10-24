@@ -1,15 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Seeder;
+namespace Database\Seeders;
+
 use App\Http\Models\CustomList;
+use App\Http\Models\Kanji;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Radical;
-use App\Http\Models\Kanji;
-use App\Http\Models\Word;
 use App\Http\Models\Sentence;
-use App\Http\Models\Article;
 use App\Http\Models\View;
+use App\Http\Models\Word;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CustomListsTableSeeder extends Seeder
 {
@@ -31,8 +32,8 @@ class CustomListsTableSeeder extends Seeder
         // $customSentencesList = 8;
         // $customArticlesList  = 9;
 
-        # Seeds
-        // Known, lists for japanese learning material    
+        // Seeds
+        // Known, lists for japanese learning material
         // $knowRadicalsList = new CustomList;
         // $knowRadicalsList->type = 1;
         // $knowRadicalsList->user_id = 1;
@@ -88,46 +89,45 @@ class CustomListsTableSeeder extends Seeder
         // $customArticlesList->title = "My Custom Articles";
         // $customArticlesList->save();
 
+        // testuser Lists
 
-        # testuser Lists
-        
         $listsArray = [
             [
-                'title' => "Popular Radicals",
-                'description' => "Stored my Popular radicals from the latest period of time.",
+                'title' => 'Popular Radicals',
+                'description' => 'Stored my Popular radicals from the latest period of time.',
                 'publicity' => 1,
                 'type' => 5,
-                'tags' => "#tag1 #tag2 #Popularradicals",
+                'tags' => '#tag1 #tag2 #Popularradicals',
                 'user_id' => 2,
-                'listItemsAmount' => rand(10, 30)
+                'listItemsAmount' => rand(10, 30),
             ],
             [
-                'title' => "Popular Kanjis",
-                'description' => "Stored my Popular Kanjis from the latest period of time.",
+                'title' => 'Popular Kanjis',
+                'description' => 'Stored my Popular Kanjis from the latest period of time.',
                 'publicity' => 1,
                 'type' => 6,
-                'tags' => "#tag1 #tag2 #Popularkanjis",
+                'tags' => '#tag1 #tag2 #Popularkanjis',
                 'user_id' => 2,
-                'listItemsAmount' => rand(10, 30)
+                'listItemsAmount' => rand(10, 30),
             ],
             [
-                'title' => "Popular Words",
-                'description' => "Stored my Popular Words from the latest period of time.",
+                'title' => 'Popular Words',
+                'description' => 'Stored my Popular Words from the latest period of time.',
                 'publicity' => 1,
                 'type' => 7,
-                'tags' => "#tag1 #tag2 #Popularwords",
+                'tags' => '#tag1 #tag2 #Popularwords',
                 'user_id' => 2,
-                'listItemsAmount' => rand(10, 30)
+                'listItemsAmount' => rand(10, 30),
             ],
             [
-                'title' => "Popular Sentences",
-                'description' => "Stored my Popular Sentences from the latest period of time.",
+                'title' => 'Popular Sentences',
+                'description' => 'Stored my Popular Sentences from the latest period of time.',
                 'publicity' => 1,
                 'type' => 8,
-                'tags' => "#tag1 #tag2 #Popularsentences",
+                'tags' => '#tag1 #tag2 #Popularsentences',
                 'user_id' => 2,
-                'listItemsAmount' => rand(10, 30)
-            ]
+                'listItemsAmount' => rand(10, 30),
+            ],
             // [
             //     'title' => "Popular Articles",
             //     'description' => "Stored my Popular Articles from the latest period of time.",
@@ -142,8 +142,7 @@ class CustomListsTableSeeder extends Seeder
 
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
 
-        for($i=0; $i<count($listsArray); $i++)
-        {
+        for ($i = 0; $i < count($listsArray); $i++) {
             $list = new CustomList;
             $list->title = $listsArray[$i]['title'];
             $list->description = $listsArray[$i]['description'];
@@ -152,57 +151,54 @@ class CustomListsTableSeeder extends Seeder
             $list->type = $listsArray[$i]['type'];
             $list->save();
 
-            if($list->type === 5){
-                for($j=0; $j<$listsArray[$i]['listItemsAmount']; $j++){
+            if ($list->type === 5) {
+                for ($j = 0; $j < $listsArray[$i]['listItemsAmount']; $j++) {
                     $row = [
                         'real_object_id' => Radical::find(rand(1, 214))->id,
                         'listtype_id' => $list->type,
-                        'list_id' => $list->id
+                        'list_id' => $list->id,
                     ];
-            
+
                     $x = DB::table('customlist_object')->insert($row);
                 }
-            }
-            else if($list->type === 6){
-                for($j=0; $j<$listsArray[$i]['listItemsAmount']; $j++){
+            } elseif ($list->type === 6) {
+                for ($j = 0; $j < $listsArray[$i]['listItemsAmount']; $j++) {
                     $row = [
                         'real_object_id' => Kanji::find(rand(1, 13108))->id,
                         'listtype_id' => $list->type,
-                        'list_id' => $list->id
+                        'list_id' => $list->id,
                     ];
-            
+
                     $x = DB::table('customlist_object')->insert($row);
                 }
-            }
-            else if($list->type === 7){
-                for($j=0; $j<$listsArray[$i]['listItemsAmount']; $j++){
+            } elseif ($list->type === 7) {
+                for ($j = 0; $j < $listsArray[$i]['listItemsAmount']; $j++) {
                     $row = [
                         'real_object_id' => Word::find(rand(1, 184938))->id,
                         'listtype_id' => $list->type,
-                        'list_id' => $list->id
+                        'list_id' => $list->id,
                     ];
-            
+
                     $x = DB::table('customlist_object')->insert($row);
                 }
-            }
-            else if($list->type === 8){
-                for($j=0; $j<$listsArray[$i]['listItemsAmount']; $j++){
+            } elseif ($list->type === 8) {
+                for ($j = 0; $j < $listsArray[$i]['listItemsAmount']; $j++) {
                     $row = [
                         'real_object_id' => Sentence::find(rand(1, 192145))->id,
                         'listtype_id' => $list->type,
-                        'list_id' => $list->id
+                        'list_id' => $list->id,
                     ];
-            
+
                     $x = DB::table('customlist_object')->insert($row);
                 }
             }
-        
+
             $list->tags = attachHashTags($listsArray[$i]['tags'], $list, $objectTemplateId);
 
             // cant create helper of incrementView, the original func requires auth() method. For now, static provided
             $view = new View;
-            $view->user_id = $list->user_id; 
-            $view->user_ip = "127.0.0.1";
+            $view->user_id = $list->user_id;
+            $view->user_ip = '127.0.0.1';
             $view->template_id = $objectTemplateId;
             $view->real_object_id = $list->id;
             $view->save();
