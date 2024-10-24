@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import axios from "axios";
+import { Button, Modal } from "react-bootstrap";
+import { Link } from "react-router-dom";
+
 import { apiCall } from "../../services/api";
 import Spinner from "../../assets/images/spinner.gif";
-import { Link } from "react-router-dom";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
-import { Button, Modal } from "react-bootstrap";
+import { BASE_URL } from "../../shared/constants";
 
 class SentenceDetails extends Component {
   constructor(props) {
@@ -35,10 +37,27 @@ class SentenceDetails extends Component {
     this.editComment = this.editComment.bind(this);
   }
 
+  sentenceId = this.props.match.params.sentence_id;
+
   componentDidMount() {
-    let id = this.props.match.params.sentence_id;
+    this.getSentenceDetails();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.currentUser.isAuthenticated) {
+      this.getUserSentenceLists();
+    }
+  }
+
+  handleClose() {
+    this.setState({ show: !this.state.show });
+  }
+
+  getSentenceDetails() {
+    const url = BASE_URL + "/api/sentence/" + this.sentenceId;
+
     axios
-      .get("/api/sentence/" + id)
+      .get(url)
       .then((res) => {
         this.setState({
           sentence: res.data,
@@ -47,13 +66,13 @@ class SentenceDetails extends Component {
         });
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         if (this.props.currentUser.isAuthenticated) {
           newState.sentence.comments.map((comment) => {
-            let temp = comment.likes.find(
+            let hasUserLiked = comment.likes.find(
               (like) => like.user_id === this.props.currentUser.user.id
             );
-            if (temp) {
+            if (hasUserLiked) {
               comment.isLiked = true;
             } else {
               comment.isLiked = false;
@@ -72,30 +91,18 @@ class SentenceDetails extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserSentenceLists();
-    }
-  }
-
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
-
   getUserSentenceLists() {
+    const url = BASE_URL + "/api/user/lists/contain";
+
     return axios
-      .post(`/api/user/lists/contain`, {
-        elementId: this.props.match.params.sentence_id,
+      .post(url, {
+        elementId: this.sentenceId,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists = res.data.lists.filter((list) => {
           if (list.type === 4 && list.elementBelongsToList) {
             newState.sentenceIsKnown = true;
-            console.log(
-              "getUserSentenceLists. this sentenceIsKnown " +
-                newState.sentenceIsKnown
-            );
           }
           if (list.type === 4 || list.type === 8) {
             return list;
@@ -118,13 +125,15 @@ class SentenceDetails extends Component {
   }
 
   addToList(id) {
+    const url = BASE_URL + "/api/user/list/additemwhileaway";
+
     axios
-      .post("/api/user/list/additemwhileaway", {
+      .post(url, {
         listId: id,
-        elementId: this.props.match.params.sentence_id,
+        elementId: this.sentenceId,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists.find((list) => {
           if (list.id === id) {
             if (list.type === 4) {
@@ -140,13 +149,15 @@ class SentenceDetails extends Component {
   }
 
   removeFromList(id) {
+    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
+
     axios
-      .post("/api/user/list/removeitemwhileaway", {
+      .post(url, {
         listId: id,
-        elementId: this.props.match.params.sentence_id,
+        elementId: this.sentenceId,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists.find((list) => {
           if (list.id === id) {
             if (list.type === 4) {
@@ -165,24 +176,25 @@ class SentenceDetails extends Component {
     if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
     } else {
-      let theComment = this.state.sentence.comments.find(
+      const theComment = this.state.sentence.comments.find(
         (comment) => comment.id === commentId
       );
 
-      let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const url =
+        BASE_URL +
+        "/api/sentence/" +
+        this.sentenceId +
+        "/comment/" +
+        commentId +
+        "/" +
+        endpoint;
 
       axios
-        .post(
-          "/api/sentence/" +
-            this.state.sentence.id +
-            "/comment/" +
-            commentId +
-            "/" +
-            endpoint
-        )
+        .post(url)
         .then((res) => {
-          let newState = Object.assign({}, this.state);
-          let index = this.state.sentence.comments.findIndex(
+          const newState = Object.assign({}, this.state);
+          const index = this.state.sentence.comments.findIndex(
             (comment) => comment.id === commentId
           );
           newState.sentence.comments[index].isLiked =
@@ -203,7 +215,7 @@ class SentenceDetails extends Component {
   }
 
   addComment(comment) {
-    let newState = Object.assign({}, this.state);
+    const newState = Object.assign({}, this.state);
     newState.sentence.comments.unshift(comment);
     this.setState(newState);
   }
@@ -211,10 +223,10 @@ class SentenceDetails extends Component {
   deleteComment(commentId) {
     return apiCall(
       "delete",
-      `/api/sentence/${this.state.sentence.id}/comment/${commentId}`
+      `/api/sentence/${this.sentenceId}/comment/${commentId}`
     )
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.sentence.comments = newState.sentence.comments.filter(
           (comment) => comment.id !== commentId
         );
@@ -232,10 +244,10 @@ class SentenceDetails extends Component {
 
   render() {
     const { currentUser } = this.props;
-    let { kanjis, sentence } = this.state;
-    let comments = sentence ? sentence.comments : "";
+    const { kanjis, sentence } = this.state;
+    const comments = sentence ? sentence.comments : "";
 
-    let singleSentence = sentence ? (
+    const singleSentence = sentence ? (
       <div className="row justify-content-center mt-5">
         <div className="col-md-8">
           <h4>{sentence.content}</h4>
@@ -307,7 +319,7 @@ class SentenceDetails extends Component {
         })
       : "";
 
-    let addModal = this.state.lists
+    const addModal = this.state.lists
       ? this.state.lists.map((list) => {
           return (
             <div key={list.id}>

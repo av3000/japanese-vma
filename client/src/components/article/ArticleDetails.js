@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Button, Modal } from "react-bootstrap";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
@@ -9,7 +10,7 @@ import Spinner from "../../assets/images/spinner.gif";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
-import { Button, Modal } from "react-bootstrap";
+import { BASE_URL, HTTP_METHOD } from "../../shared/constants";
 
 class ArticleDetails extends Component {
   _isMounted = false;
@@ -18,7 +19,7 @@ class ArticleDetails extends Component {
     super(props);
     this.state = {
       article: null,
-      lists: [],
+      lists: null,
       showBookmark: false,
       showPdf: false,
       showDelete: false,
@@ -50,6 +51,9 @@ class ArticleDetails extends Component {
     this.getUserArticleLists = this.getUserArticleLists.bind(this);
   }
 
+  articleId = this.props.match.params.article_id;
+  isAuthenticated = this.props.currentUser.isAuthenticated;
+
   componentWillUnmount() {
     this._isMounted = false;
   }
@@ -57,233 +61,217 @@ class ArticleDetails extends Component {
   componentDidMount() {
     this._isMounted = true;
     if (this._isMounted) {
-      let id = this.props.match.params.article_id;
-      this.getArticleWithAuth(id);
+      this.getArticleDetails();
     }
   }
 
-  getArticleWithAuth(id) {
-    axios
-      .get("/api/article/" + id)
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.article = res.data.article;
-        newState.tempStatus = res.data.article.status;
+  async getArticleDetails() {
+    try {
+      const url = `${BASE_URL}/api/article/${this.articleId}`;
+      const { data } = await apiCall(HTTP_METHOD.GET, url);
+      const { article } = data;
 
-        this.setState(newState);
+      if (!article) {
+        return this.props.history.push("/articles");
+      }
 
-        return newState;
-      })
-      .then((newState) => {
-        if (!newState.article) {
-          this.props.history.push("/articles");
-        } else if (this.props.currentUser.isAuthenticated) {
-          return apiCall("post", `/api/article/${id}/checklike`).then((res) => {
-            newState.article.isLiked = res.isLiked;
-            this.setState(newState);
-          });
-        }
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        if (this.props.currentUser.isAuthenticated) {
-          newState.article.comments.map((comment) => {
-            let temp = comment.likes.find(
-              (like) => like.user_id === this.props.currentUser.user.id
-            );
-            if (temp) {
-              comment.isLiked = true;
-            } else {
-              comment.isLiked = false;
-            }
-          });
-
-          this.setState(newState);
-        }
-      })
-      .then((res) => {
-        if (this.props.currentUser.isAuthenticated) {
-          this.getUserArticleLists();
-        }
-      })
-      .catch((err) => {
-        this.props.history.push("/articles");
+      this.setState({
+        article,
+        tempStatus: article.status,
       });
+
+      if (this.isAuthenticated) {
+        const userLike = await apiCall(
+          HTTP_METHOD.POST,
+          `${BASE_URL}/api/article/${this.articleId}/checklike`
+        );
+
+        this.setState((prevState) => ({
+          article: {
+            ...prevState.article,
+            isLiked: userLike.isLiked,
+            comments: prevState.article.comments.map((comment) => ({
+              ...comment,
+              isLiked: comment.likes.some(
+                (like) => like.user_id === this.props.currentUser.user.id
+              ),
+            })),
+          },
+        }));
+
+        await this.getUserArticleLists();
+      }
+    } catch (error) {
+      this.props.history.push("/articles");
+    }
   }
 
-  getUserArticleLists() {
-    return axios
-      .post(`/api/user/lists/contain`, {
-        elementId: this.props.match.params.article_id,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter((list) => {
-          if (list.type === 9) {
-            return list;
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
+  async getUserArticleLists() {
+    try {
+      const url = `${BASE_URL}/api/user/lists/contain`;
+      const { data } = await apiCall(HTTP_METHOD.POST, url, {
+        elementId: this.articleId,
       });
+      this.setState({
+        lists: data.lists.filter((list) => list.type === 9),
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  deleteArticle() {
-    return apiCall("delete", `/api/article/${this.state.article.id}`)
-      .then((res) => {
-        this.props.history.push("/articles");
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  async deleteArticle() {
+    try {
+      await apiCall(
+        HTTP_METHOD.DELETE,
+        `/api/article/${this.state.article.id}`
+      );
+      this.props.history.push("/articles");
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  addToList(id) {
-    this.setState({ show: !this.state.show });
-    axios
-      .post("/api/user/list/additemwhileaway", {
+  async addToList(id) {
+    try {
+      this.setState({ show: !this.state.show });
+      const url = `${BASE_URL}/api/user/list/additemwhileaway`;
+      await apiCall(HTTP_METHOD.POST, url, {
         listId: id,
-        elementId: this.props.match.params.article_id,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
+        elementId: this.articleId,
+      });
+
+      this.setState((prevState) => ({
+        lists: prevState.lists.find((list) => {
           if (list.id === id) {
             list.elementBelongsToList = true;
           }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
+        }),
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  removeFromList(id) {
-    this.setState({ show: !this.state.show });
-    axios
-      .post("/api/user/list/removeitemwhileaway", {
+  async removeFromList(id) {
+    try {
+      this.setState({ show: !this.state.show });
+      const url = `${BASE_URL}/api/user/list/removeitemwhileaway`;
+      await apiCall(HTTP_METHOD.POST, url, {
         listId: id,
-        elementId: this.props.match.params.article_id,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
+        elementId: this.articleId,
+      });
+
+      this.setState((prevState) => ({
+        lists: prevState.lists.find((list) => {
           if (list.id === id) {
             list.elementBelongsToList = false;
           }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  likeArticle() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    } else {
-      let endpoint = this.state.article.isLiked === true ? "unlike" : "like";
-      let id = this.state.article.id;
-
-      axios
-        .post("/api/article/" + id + "/" + endpoint)
-        .then((res) => {
-          let newState = Object.assign({}, this.state);
-
-          if (endpoint === "unlike") {
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal -= 1;
-            this.setState(newState);
-          } else if (endpoint === "like") {
-            newState.article.isLiked = !newState.article.isLiked;
-            newState.article.likesTotal += 1;
-            this.setState(newState);
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+        }),
+      }));
+    } catch (error) {
+      console.log(error);
     }
   }
 
-  downloadKanjisPdf() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    } else {
+  async likeArticle(id) {
+    try {
+      if (!this.isAuthenticated) {
+        this.props.history.push("/login");
+      }
+
+      const endpoint = this.state.article.isLiked === true ? "unlike" : "like";
+      const url = `${BASE_URL}/api/article/${id}/${endpoint}`;
+      await apiCall(HTTP_METHOD.POST, url);
+
+      this.setState((prevState) => ({
+        article: {
+          ...prevState.article,
+          isLiked: !prevState.article.isLiked,
+          likesTotal: (prevState.article.likesTotal +=
+            endpoint === "like" ? 1 : -1),
+        },
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async downloadKanjisPdf() {
+    try {
+      if (!this.isAuthenticated) {
+        this.props.history.push("/login");
+      }
+
       this.props.dispatch(showLoader("Creating a PDF, please wait."));
-
-      let id = this.state.article.id;
-      axios
-        .get("/api/article/" + id + "/kanjis-pdf", {
-          responseType: "blob",
-        })
-        .then((res) => {
-          this.props.dispatch(hideLoader());
-          const file = new Blob([res.data], { type: "application/pdf" });
-          const fileURL = URL.createObjectURL(file);
-          window.open(fileURL);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }
-
-  downloadWordsPdf() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    } else {
-      this.props.dispatch(showLoader("Creating a PDF, please wait."));
-
-      let id = this.state.article.id;
-      axios
-        .get("/api/article/" + id + "/words-pdf", {
-          responseType: "blob",
-        })
-        .then((res) => {
-          this.props.dispatch(hideLoader());
-          const file = new Blob([res.data], { type: "application/pdf" });
-          const fileURL = URL.createObjectURL(file);
-          window.open(fileURL);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }
-
-  toggleStatus() {
-    this.handleStatusModalClose();
-    return apiCall("post", `/api/article/${this.state.article.id}/setstatus`, {
-      status: this.state.tempStatus,
-    })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.article.status = res.newStatus;
-        newState.tempStatus = res.newStatus;
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
+      const url = `${BASE_URL}/api/article/${this.articleId}/kanjis-pdf`;
+      const { res } = await apiCall(HTTP_METHOD.GET, url, {
+        responseType: "blob",
       });
+
+      this.props.dispatch(hideLoader());
+      const file = new Blob([res.data], { type: "application/pdf" });
+      const fileURL = URL.createObjectURL(file);
+      window.open(fileURL);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async downloadWordsPdf() {
+    try {
+      if (!this.isAuthenticated) {
+        this.props.history.push("/login");
+      }
+      this.props.dispatch(showLoader("Creating a PDF, please wait."));
+      const url = `${BASE_URL}/api/article/${this.articleId}/words-pdf`;
+      const { res } = await apiCall(HTTP_METHOD.GET, url, {
+        responseType: "blob",
+      });
+      this.props.dispatch(hideLoader());
+      const file = new Blob([res.data], { type: "application/pdf" });
+      const fileURL = URL.createObjectURL(file);
+      window.open(fileURL);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async toggleStatus() {
+    try {
+      this.handleStatusModalClose();
+      const { res } = await apiCall(
+        HTTP_METHOD.POST,
+        `/api/article/${this.articleId}/setstatus`,
+        {
+          status: this.state.tempStatus,
+        }
+      );
+
+      this.setState((prevState) => ({
+        article: {
+          status: res.newStatus,
+          tempStatus: res.newStatus,
+        },
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   handleStatusChange(e) {
-    let tempStatus = parseInt(e.target.value);
-    let newState = Object.assign({}, this.state);
+    const tempStatus = parseInt(e.target.value);
+    const newState = Object.assign({}, this.state);
     newState.tempStatus = tempStatus;
     this.setState(newState);
   }
 
   openStatusModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
+    if (!this.isAuthenticated) {
       this.props.history.push("/login");
-    } else {
-      this.setState({ showStatus: !this.state.showStatus });
     }
+
+    this.setState({ showStatus: !this.state.showStatus });
   }
 
   handleStatusModalClose() {
@@ -291,19 +279,19 @@ class ArticleDetails extends Component {
   }
 
   openBookmarkModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
+    if (!this.isAuthenticated) {
       this.props.history.push("/login");
-    } else {
-      this.setState({ showBookmark: !this.state.showBookmark });
     }
+
+    this.setState({ showBookmark: !this.state.showBookmark });
   }
 
   openPdfModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
+    if (!this.isAuthenticated) {
       this.props.history.push("/login");
-    } else {
-      this.setState({ showPdf: !this.state.showPdf });
     }
+
+    this.setState({ showPdf: !this.state.showPdf });
   }
 
   handleDeleteModalClose() {
@@ -311,11 +299,11 @@ class ArticleDetails extends Component {
   }
 
   openDeleteModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
+    if (!this.isAuthenticated) {
       this.props.history.push("/login");
-    } else {
-      this.setState({ showDelete: !this.state.showDelete });
     }
+
+    this.setState({ showDelete: !this.state.showDelete });
   }
 
   handleBookmarkClose() {
@@ -326,51 +314,51 @@ class ArticleDetails extends Component {
     this.setState({ showPdf: !this.state.showPdf });
   }
 
-  likeComment(commentId) {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    } else {
-      let theComment = this.state.article.comments.find(
+  async likeComment(commentId) {
+    try {
+      if (!this.isAuthenticated) {
+        this.props.history.push("/login");
+      }
+      const theComment = this.state.article.comments.find(
         (comment) => comment.id === commentId
       );
 
-      let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const url = `${BASE_URL}/api/article/${this.articleId}/comment/commentId/${endpoint}`;
 
-      axios
-        .post(
-          "/api/article/" +
-            this.state.article.id +
-            "/comment/" +
-            commentId +
-            "/" +
-            endpoint
-        )
-        .then((res) => {
-          let newState = Object.assign({}, this.state);
-          let index = this.state.article.comments.findIndex(
-            (comment) => comment.id === commentId
-          );
-          newState.article.comments[index].isLiked =
-            !newState.article.comments[index].isLiked;
+      await apiCall(HTTP_METHOD.POST, url);
 
-          if (endpoint === "unlike") {
-            newState.article.comments[index].likesTotal -= 1;
-          } else if (endpoint === "like") {
-            newState.article.comments[index].likesTotal += 1;
+      this.setState((prevState) => {
+        const updatedComments = prevState.article.comments.map((comment) => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              isLiked: !comment.isLiked,
+              likesTotal: comment.likesTotal + (endpoint === "like" ? 1 : -1),
+            };
           }
-
-          this.setState(newState);
-        })
-        .catch((err) => {
-          console.log(err);
+          return comment;
         });
+
+        return {
+          article: {
+            ...prevState.article,
+            comments: updatedComments,
+          },
+        };
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 
   addComment(comment) {
-    let newState = Object.assign({}, this.state);
-    newState.article.comments.unshift(comment);
-    this.setState(newState);
+    this.setState((prevState) => ({
+      article: {
+        ...prevState.article,
+        comments: [comment, ...prevState.article.comments],
+      },
+    }));
   }
 
   deleteComment(commentId) {
@@ -379,7 +367,7 @@ class ArticleDetails extends Component {
       `/api/article/${this.state.article.id}/comment/${commentId}`
     )
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.article.comments = newState.article.comments.filter(
           (comment) => comment.id !== commentId
         );
@@ -397,7 +385,7 @@ class ArticleDetails extends Component {
   render() {
     const { article } = this.state;
     const { currentUser } = this.props;
-    let comments = article ? article.comments : "";
+    const comments = article ? article.comments : "";
 
     let articleStatus = "";
     let articlePublicity = "";
@@ -508,13 +496,13 @@ class ArticleDetails extends Component {
                 </p>
                 <ul className="brand-icons float-right d-flex">
                   {article.isLiked ? (
-                    <li onClick={this.likeArticle}>
+                    <li onClick={() => this.likeArticle(article.id)}>
                       <button>
                         <i className="fas fa-thumbs-up"></i>
                       </button>
                     </li>
                   ) : (
-                    <li onClick={this.likeArticle}>
+                    <li onClick={() => this.likeArticle(article.id)}>
                       <button>
                         <i className="far fa-thumbs-up"></i>
                       </button>
@@ -540,7 +528,7 @@ class ArticleDetails extends Component {
       ""
     );
 
-    let addModal = this.state.lists
+    const addModal = this.state.lists
       ? this.state.lists.map((list) => {
           return (
             <div key={list.id}>

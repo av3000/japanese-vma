@@ -3,12 +3,12 @@ import axios from "axios";
 import Spinner from "../../assets/images/spinner.gif";
 import { Link } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
+import { BASE_URL } from "../../shared/constants";
 
 class KanjiDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      url: "/api/kanjis",
       pagination: [],
       kanji: {},
       words: {},
@@ -30,10 +30,27 @@ class KanjiDetails extends Component {
     this.getUserKanjiLists = this.getUserKanjiLists.bind(this);
   }
 
+  kanjiId = this.props.match.params.kanji_id;
+
   componentDidMount() {
-    let id = this.props.match.params.kanji_id;
+    this.getKanjiDetails();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.currentUser.isAuthenticated) {
+      this.getUserKanjiLists();
+    }
+  }
+
+  handleClose() {
+    this.setState({ show: !this.state.show });
+  }
+
+  getKanjiDetails() {
+    const url = BASE_URL + "/api/kanji/" + this.kanjiId;
+
     axios
-      .get("/api/kanji/" + id)
+      .get(url)
       .then((res) => {
         res.data.meaning = res.data.meaning.split("|");
         res.data.meaning = res.data.meaning.join(", ");
@@ -61,20 +78,12 @@ class KanjiDetails extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserKanjiLists();
-    }
-  }
-
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
-
   getUserKanjiLists() {
+    const url = BASE_URL + "/api/user/lists/contain";
+
     return axios
-      .post(`/api/user/lists/contain`, {
-        elementId: this.props.match.params.kanji_id,
+      .post(url, {
+        elementId: this.kanjiId,
       })
       .then((res) => {
         let newState = Object.assign({}, this.state);
@@ -103,10 +112,12 @@ class KanjiDetails extends Component {
   }
 
   addToList(id) {
+    const url = BASE_URL + "/api/user/list/additemwhileaway";
+
     axios
-      .post("/api/user/list/additemwhileaway", {
+      .post(url, {
         listId: id,
-        elementId: this.props.match.params.kanji_id,
+        elementId: this.kanjiId,
       })
       .then((res) => {
         let newState = Object.assign({}, this.state);
@@ -125,10 +136,12 @@ class KanjiDetails extends Component {
   }
 
   removeFromList(id) {
+    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
+
     axios
-      .post("/api/user/list/removeitemwhileaway", {
+      .post(url, {
         listId: id,
-        elementId: this.props.match.params.kanji_id,
+        elementId: this.kanjiId,
       })
       .then((res) => {
         let newState = Object.assign({}, this.state);
@@ -147,9 +160,9 @@ class KanjiDetails extends Component {
   }
 
   render() {
-    let { kanji, words, sentences, articles } = this.state;
+    const { kanji, words, sentences, articles } = this.state;
 
-    let singleKanji = kanji ? (
+    const singleKanji = kanji ? (
       <div className="row justify-content-center mt-5">
         <div className="col-md-4">
           <h1>
@@ -312,7 +325,7 @@ class KanjiDetails extends Component {
         })
       : "";
 
-    let addModal = this.state.lists
+    const addModal = this.state.lists
       ? this.state.lists.map((list) => {
           return (
             <div key={list.id}>

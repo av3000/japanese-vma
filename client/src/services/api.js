@@ -16,11 +16,11 @@ export function setTokenHeader(token) {
  */
 
 export function apiCall(method, path, data) {
-  console.log("apiCall method", { path, data, method });
+  const apiUrl = process.env.REACT_APP_API_URL + path;
+
   return new Promise((resolve, reject) => {
-    return axios[method.toLowerCase()](path, data)
+    return axios[method](apiUrl, data)
       .then((res) => {
-        console.log("res in apiCall", res);
         return resolve(res.data);
       })
       .catch((err) => {

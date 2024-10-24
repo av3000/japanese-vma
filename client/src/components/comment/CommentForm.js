@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import { BASE_URL } from "../../shared/constants";
 
 export default class CommentForm extends Component {
   constructor(props) {
@@ -35,12 +36,12 @@ export default class CommentForm extends Component {
 
     this.setState({ error: "", loading: true });
 
-    let { message } = this.state;
-    let id = this.props.objectId;
-    let objectType = this.props.objectType;
-
+    const { message } = this.state;
+    const id = this.props.objectId;
+    const objectType = this.props.objectType;
+    const url = BASE_URL + `/api/${objectType}/${id}/comment`;
     axios
-      .post(`/api/${objectType}/${id}/comment`, {
+      .post(url, {
         content: message,
       })
       .then((res) => {

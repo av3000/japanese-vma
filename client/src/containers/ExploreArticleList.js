@@ -10,8 +10,8 @@ class ExploreArticleList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      articles: [],
-      totalArticles: "",
+      articles: null,
+      totalArticles: null,
     };
   }
 
@@ -30,7 +30,7 @@ class ExploreArticleList extends Component {
         if (this._isMounted) {
           let newState = Object.assign({}, this.state);
           newState.totalArticles = res.articles.total;
-          newState.articles = [...newState.articles, ...res.articles.data];
+          newState.articles = [...res.articles.data];
           this.setState(newState);
         }
       })
@@ -76,7 +76,7 @@ class ExploreArticleList extends Component {
       <React.Fragment>
         <Link to="/articles" className="homepage-section-title" id="readings">
           <span>
-            Readings ({this.state.totalArticles})
+            Readings ({this.state.totalArticles | 0})
             <img src={ArrowIcon} alt="arrow icon" />{" "}
           </span>
         </Link>

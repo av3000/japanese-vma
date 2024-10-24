@@ -9,6 +9,7 @@ import Spinner from "../../assets/images/spinner.gif";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import { Button, Modal } from "react-bootstrap";
+import { BASE_URL } from "../../shared/constants";
 
 class PostDetails extends Component {
   constructor(props) {
@@ -30,10 +31,17 @@ class PostDetails extends Component {
     this.openDeleteModal = this.openDeleteModal.bind(this);
   }
 
+  postId = this.props.match.params.post_id;
+
   componentDidMount() {
-    let id = this.props.match.params.post_id;
+    this.getPostDetails();
+  }
+
+  getPostDetails() {
+    const url = BASE_URL + "/api/post/" + this.postId;
+
     axios
-      .get("/api/post/" + id)
+      .get(url)
       .then((res) => {
         this.setState({
           post: res.data.post,
@@ -45,21 +53,23 @@ class PostDetails extends Component {
         if (!post) {
           this.props.history.push("/community");
         } else if (this.props.currentUser.isAuthenticated) {
-          return apiCall("post", `/api/post/${id}/checklike`).then((res) => {
-            let newState = Object.assign({}, this.state);
-            newState.post.isLiked = res.isLiked;
-            this.setState(newState);
-          });
+          return apiCall("post", `/api/post/${this.postId}/checklike`).then(
+            (res) => {
+              let newState = Object.assign({}, this.state);
+              newState.post.isLiked = res.isLiked;
+              this.setState(newState);
+            }
+          );
         }
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         if (this.props.currentUser.isAuthenticated) {
           newState.post.comments.map((comment) => {
-            let temp = comment.likes.find(
+            const youLikedIt = comment.likes.find(
               (like) => like.user_id === this.props.currentUser.user.id
             );
-            if (temp) {
+            if (youLikedIt) {
               comment.isLiked = true;
             } else {
               comment.isLiked = false;
@@ -75,7 +85,7 @@ class PostDetails extends Component {
   }
 
   deletePost() {
-    return apiCall("delete", `/api/post/${this.state.post.id}`)
+    return apiCall("delete", `/api/post/${this.postId}`)
       .then((res) => {
         this.props.history.push("/community");
       })
@@ -88,13 +98,13 @@ class PostDetails extends Component {
     if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
     } else {
-      let endpoint = this.state.post.isLiked === true ? "unlike" : "like";
-      let id = this.state.post.id;
+      const endpoint = this.state.post.isLiked === true ? "unlike" : "like";
+      const url = BASE_URL + "/api/post/" + this.postId + "/" + endpoint;
 
       axios
-        .post("/api/post/" + id + "/" + endpoint)
+        .post(url)
         .then((res) => {
-          let newState = Object.assign({}, this.state);
+          const newState = Object.assign({}, this.state);
 
           if (endpoint === "unlike") {
             newState.post.isLiked = !newState.post.isLiked;
@@ -116,9 +126,9 @@ class PostDetails extends Component {
     if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
     } else if (this.props.currentUser.user.isAdmin) {
-      let id = this.state.post.id;
+      const url = BASE_URL + "/api/post/" + this.postId + "/toggleLock";
       axios
-        .post("/api/post/" + id + "/toggleLock")
+        .post(url)
         .then((res) => {
           let newState = Object.assign({}, this.state);
           newState.post.locked = res.data.locked;
@@ -150,20 +160,20 @@ class PostDetails extends Component {
         (comment) => comment.id === commentId
       );
 
-      let endpoint = theComment.isLiked === true ? "unlike" : "like";
-
+      const endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const url =
+        BASE_URL +
+        "/api/post/" +
+        this.state.post.id +
+        "/comment/" +
+        commentId +
+        "/" +
+        endpoint;
       axios
-        .post(
-          "/api/post/" +
-            this.state.post.id +
-            "/comment/" +
-            commentId +
-            "/" +
-            endpoint
-        )
+        .post(url)
         .then((res) => {
-          let newState = Object.assign({}, this.state);
-          let index = this.state.post.comments.findIndex(
+          const newState = Object.assign({}, this.state);
+          const index = this.state.post.comments.findIndex(
             (comment) => comment.id === commentId
           );
           newState.post.comments[index].isLiked =
@@ -184,18 +194,15 @@ class PostDetails extends Component {
   }
 
   addComment(comment) {
-    let newState = Object.assign({}, this.state);
+    const newState = Object.assign({}, this.state);
     newState.post.comments.unshift(comment);
     this.setState(newState);
   }
 
   deleteComment(commentId) {
-    return apiCall(
-      "delete",
-      `/api/post/${this.state.post.id}/comment/${commentId}`
-    )
+    return apiCall("delete", `/api/post/${this.postId}/comment/${commentId}`)
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.post.comments = newState.post.comments.filter(
           (comment) => comment.id !== commentId
         );
@@ -214,7 +221,7 @@ class PostDetails extends Component {
   render() {
     const { post } = this.state;
     const { currentUser } = this.props;
-    let comments = post ? post.comments : "";
+    const comments = post ? post.comments : "";
     const singlePost = post ? (
       <div className="container">
         <div className="row justify-content-center">

@@ -1,14 +1,15 @@
 import React, { Component } from "react";
 import axios from "axios";
-import Spinner from "../../assets/images/spinner.gif";
-import { Link } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
+import { Link } from "react-router-dom";
+
+import Spinner from "../../assets/images/spinner.gif";
+import { BASE_URL } from "../../shared/constants";
 
 class KanjiDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      url: "/api/words",
       pagination: [],
       word: {},
       kanjis: {},
@@ -30,10 +31,27 @@ class KanjiDetails extends Component {
     this.getUserWordLists = this.getUserWordLists.bind(this);
   }
 
+  wordId = this.props.match.params.word_id;
+
   componentDidMount() {
-    let id = this.props.match.params.word_id;
+    this.getWordDetails();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.currentUser.isAuthenticated) {
+      this.getUserWordLists();
+    }
+  }
+
+  handleClose() {
+    this.setState({ show: !this.state.show });
+  }
+
+  getWordDetails() {
+    const url = BASE_URL + "/api/word/" + this.wordId;
+
     axios
-      .get("/api/word/" + id)
+      .get(url)
       .then((res) => {
         res.data.meaning = res.data.meaning.split("|");
         res.data.meaning = res.data.meaning.join(", ");
@@ -55,23 +73,15 @@ class KanjiDetails extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserWordLists();
-    }
-  }
-
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
-
   getUserWordLists() {
+    const url = BASE_URL + "/api/user/lists/contain";
+
     return axios
-      .post(`/api/user/lists/contain`, {
-        elementId: this.props.match.params.word_id,
+      .post(url, {
+        elementId: this.wordId,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists = res.data.lists.filter((list) => {
           if (list.type === 3 && list.elementBelongsToList) {
             newState.wordIsKnown = true;
@@ -97,13 +107,15 @@ class KanjiDetails extends Component {
   }
 
   addToList(id) {
+    const url = BASE_URL + "/api/user/list/additemwhileaway";
+
     axios
-      .post("/api/user/list/additemwhileaway", {
+      .post(url, {
         listId: id,
         elementId: this.props.match.params.word_id,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists.find((list) => {
           if (list.id === id) {
             if (list.type === 3) {
@@ -119,13 +131,15 @@ class KanjiDetails extends Component {
   }
 
   removeFromList(id) {
+    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
+
     axios
-      .post("/api/user/list/removeitemwhileaway", {
+      .post(url, {
         listId: id,
-        elementId: this.props.match.params.word_id,
+        elementId: this.wordId,
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.lists.find((list) => {
           if (list.id === id) {
             if (list.type === 3) {
@@ -141,8 +155,8 @@ class KanjiDetails extends Component {
   }
 
   render() {
-    let { word, kanjis, articles } = this.state;
-    let singleWord = word ? (
+    const { word, kanjis, articles } = this.state;
+    const singleWord = word ? (
       <div className="row justify-content-center mt-5">
         <div className="col-md-4">
           <h1>
@@ -264,7 +278,7 @@ class KanjiDetails extends Component {
         })
       : "";
 
-    let addModal = this.state.lists
+    const addModal = this.state.lists
       ? this.state.lists.map((list) => {
           return (
             <div key={list.id}>

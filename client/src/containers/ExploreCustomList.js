@@ -10,7 +10,8 @@ class ExploreCustomList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      lists: [],
+      lists: null,
+      totalLists: null,
     };
   }
 
@@ -29,7 +30,7 @@ class ExploreCustomList extends Component {
         if (this._isMounted) {
           let newState = Object.assign({}, this.state);
           newState.totalLists = res.lists.total;
-          newState.lists = [...newState.lists, ...res.lists.data];
+          newState.lists = [...res.lists.data];
           this.setState(newState);
         }
       })
@@ -87,7 +88,7 @@ class ExploreCustomList extends Component {
       <React.Fragment>
         <Link to="/lists" className="homepage-section-title" id="lists">
           <span>
-            Lists ({this.state.totalLists})
+            Lists ({this.state.totalLists | 0})
             <img src={ArrowIcon} alt="arrow icon" />{" "}
           </span>
         </Link>

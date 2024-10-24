@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import axios from "axios";
 import Moment from "react-moment";
+import { Button, Modal } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
+
 import { apiCall } from "../../services/api";
 import DefaultArticleImg from "../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";
 import AvatarImg from "../../assets/images/avatar-woman.svg";
@@ -11,7 +13,7 @@ import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import ListItems from "./ListItems";
-import { Button, Modal } from "react-bootstrap";
+import { BASE_URL } from "../../shared/constants";
 
 class ListDetails extends Component {
   constructor(props) {
@@ -37,10 +39,17 @@ class ListDetails extends Component {
     this.toggleListEdit = this.toggleListEdit.bind(this);
   }
 
+  listId = this.props.match.params.list_id;
+
   componentDidMount() {
-    let id = this.props.match.params.list_id;
+    this.getListWithAuth();
+  }
+
+  getListWithAuth() {
+    const url = BASE_URL + "/api/list/" + this.listId;
+
     axios
-      .get("/api/list/" + id)
+      .get(url)
       .then((res) => {
         this.setState({
           list: res.data.list,
@@ -52,21 +61,23 @@ class ListDetails extends Component {
         if (!list) {
           this.props.history.push("/lists");
         } else if (this.props.currentUser.isAuthenticated) {
-          return apiCall("post", `/api/list/${id}/checklike`).then((res) => {
-            let newState = Object.assign({}, this.state);
-            newState.list.isLiked = res.isLiked;
-            this.setState(newState);
-          });
+          return apiCall("post", `/api/list/${this.listId}/checklike`).then(
+            (res) => {
+              const newState = Object.assign({}, this.state);
+              newState.list.isLiked = res.isLiked;
+              this.setState(newState);
+            }
+          );
         }
       })
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         if (this.props.currentUser.isAuthenticated) {
           newState.list.comments.map((comment) => {
-            let temp = comment.likes.find(
+            const youLikedIt = comment.likes.find(
               (like) => like.user_id === this.props.currentUser.user.id
             );
-            if (temp) {
+            if (youLikedIt) {
               comment.isLiked = true;
             } else {
               comment.isLiked = false;
@@ -82,9 +93,10 @@ class ListDetails extends Component {
   }
 
   removeFromList(id) {
+    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
     axios
-      .post("/api/user/list/removeitemwhileaway", {
-        listId: this.state.list.id,
+      .post(url, {
+        listId: this.ListId,
         elementId: id,
       })
       .then((res) => {
@@ -97,14 +109,13 @@ class ListDetails extends Component {
       .catch((err) => console.log(err));
   }
 
-  deleteList() {
-    return apiCall("delete", `/api/list/${this.state.list.id}`)
-      .then((res) => {
-        this.props.history.push("/lists");
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  async deleteList() {
+    try {
+      await apiCall("delete", `/api/list/${this.ListId}`);
+      this.props.history.push("/lists");
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   downloadPdf() {
@@ -130,9 +141,10 @@ class ListDetails extends Component {
         return;
       }
 
-      let id = this.state.list.id;
+      const url = BASE_URL + "/api/list/" + this.ListId + "/" + endpoint;
+
       axios
-        .get("/api/list/" + id + "/" + endpoint, {
+        .get(url, {
           responseType: "blob",
         })
         .then((res) => {
@@ -152,10 +164,10 @@ class ListDetails extends Component {
       this.props.history.push("/login");
     } else {
       let endpoint = this.state.list.isLiked === true ? "unlike" : "like";
-      let id = this.state.list.id;
+      const url = BASE_URL + "/api/list/" + this.ListId + "/" + endpoint;
 
       axios
-        .post("/api/list/" + id + "/" + endpoint)
+        .post(url)
         .then((res) => {
           let newState = Object.assign({}, this.state);
 
@@ -208,19 +220,20 @@ class ListDetails extends Component {
       );
 
       let endpoint = theComment.isLiked === true ? "unlike" : "like";
+      const url =
+        BASE_URL +
+        "/api/list/" +
+        this.ListId +
+        "/comment/" +
+        commentId +
+        "/" +
+        endpoint;
 
       axios
-        .post(
-          "/api/list/" +
-            this.state.list.id +
-            "/comment/" +
-            commentId +
-            "/" +
-            endpoint
-        )
+        .post(url)
         .then((res) => {
-          let newState = Object.assign({}, this.state);
-          let index = this.state.list.comments.findIndex(
+          const newState = Object.assign({}, this.state);
+          const index = this.state.list.comments.findIndex(
             (comment) => comment.id === commentId
           );
           newState.list.comments[index].isLiked =
@@ -241,7 +254,7 @@ class ListDetails extends Component {
   }
 
   addComment(comment) {
-    let newState = Object.assign({}, this.state);
+    const newState = Object.assign({}, this.state);
     newState.list.comments.unshift(comment);
     this.setState(newState);
   }
@@ -252,7 +265,7 @@ class ListDetails extends Component {
       `/api/list/${this.state.list.id}/comment/${commentId}`
     )
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.list.comments = newState.list.comments.filter(
           (comment) => comment.id !== commentId
         );
@@ -271,7 +284,7 @@ class ListDetails extends Component {
   render() {
     const { list } = this.state;
     const { currentUser } = this.props;
-    let comments = list ? list.comments : "";
+    const comments = list ? list.comments : "";
 
     const singleList = list ? (
       <div className="container">
