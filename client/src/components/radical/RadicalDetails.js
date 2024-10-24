@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 
 import Spinner from "../../assets/images/spinner.gif";
-import { BASE_URL } from "../../shared/constants";
+import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "../../shared/constants";
+import { apiCall } from "../../services/api";
 
 class RadicalDetails extends Component {
   constructor(props) {
@@ -58,37 +59,36 @@ class RadicalDetails extends Component {
       });
   }
 
-  getUserRadicalLists() {
-    const url = BASE_URL + "/api/user/lists/contain";
+  async getUserRadicalLists() {
+    try {
+      const url = `${BASE_URL}/api/user/lists/contain`;
 
-    return axios
-      .post(url, {
+      const { res } = await apiCall(HTTP_METHOD.POST, url, {
         elementId: this.radicalId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter((list) => {
-          if (list.type === 1 && list.elementBelongsToList) {
-            newState.radicalIsKnown = true;
-          }
-          if (list.type === 1 || list.type === 5) {
-            return list;
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
       });
+
+      this.setState((prevState) => ({
+        ...prevState,
+        radicalIsKnown: res.data.lists.some(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNRADICALS &&
+            list.elementBelongsToList
+        ),
+        lists: res.data.lists.filter(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNRADICALS ||
+            list.type === ObjectTemplates.RADICALS
+        ),
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   openModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
-      this.props.history.push("/login");
-    } else {
-      this.setState({ show: !this.state.show });
-    }
+    this.props.currentUser.isAuthenticated
+      ? this.setState({ show: !this.state.show })
+      : this.props.history.push("/login");
   }
 
   addToList(id) {

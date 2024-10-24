@@ -37,10 +37,10 @@ class PostDetails extends Component {
     this.getPostDetails();
   }
 
-  getPostDetails() {
+  async getPostDetails() {
     const url = BASE_URL + "/api/post/" + this.postId;
 
-    axios
+    await axios
       .get(url)
       .then((res) => {
         this.setState({
