@@ -1,0 +1,22 @@
+services:
+  react-app:
+    build: 
+      context: .
+      dockerfile: .docker/Dockerfile
+    command: npm run start:docker
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_HOST=http://laravel-app:80
+    networks:
+      - shared-network
+    stdin_open: true
+    tty: true
+
+networks:
+  shared-network:
+    driver: bridge

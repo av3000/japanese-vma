@@ -31,7 +31,6 @@
   "eslintConfig": {
     "extends": "react-app"
   },
-  "proxy": "http://host.docker.internal:80",
   "browserslist": {
     "production": [
       ">0.2%",
