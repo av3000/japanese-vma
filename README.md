@@ -1,24 +1,36 @@
 # Japanese Learning Environment
 
-Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side.
+Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/).
 
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
 
+## Project features
+
+- Laravel CRUD REST API endpoints for Articles, Lists, Roles, Users and Posts(forum).
+- Likes, hashtags and comments relationships for Articles, Lists and Posts.
+- Read, Search and save lists of Kanji(hierogliphs), Radicals(hierogpliphs formed parts of symbols), Words and sentences from [Tatoeba](tatoeba.org) community.
+- Japanese language data formatted by reading from XML and extracting to CSV using plain PHP and MySQL scripts. Exported and being imported to Laravel via Laravel migrations CLI.
+- MySQL with Laravel's Eloquent ORM.
+- Authentication with [Laravel/passport](https://github.com/laravel/passport).
+- Text scanning algorithm to find kanjis and words used in user provided article.
+- PDFs generation and downloading material with english meanings for Kanjis and Words based on saved Lists or Article content.
+- Frontend data access using redux.
+- Custom CSS stylings and boostrap with responsive templates.
+
 ### Backend
 
-- [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) **wkhtmltopdf is required in order for the laravel-snappy library to work.**
+- [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. PDFs generated using laravel's blade templates structure. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) **wkhtmltopdf is required in order for the laravel-snappy library to work.**
 - [passport](https://laravel.com/docs/7.x/passport)
 - [laravel helpers](https://github.com/laravel/helpers) - more comfortable customized version of the [original laravel helpers](https://laravel.com/docs/7.x/helpers)
-- [laravel/ui](https://laravel.com/docs/7.x/frontend) - scaffolding for the frontend. In this project [React](https://reactjs.org/docs/getting-started.html) was used.
+- [laravel/ui](https://laravel.com/docs/7.x/frontend) - scaffolding for the frontend of laravel API landing page. In this project [React](https://reactjs.org/docs/getting-started.html) was used.
 
 ### Frontend
 
 - [react-moment](https://github.com/headzoo/react-moment) of [moment](https://www.npmjs.com/package/moment) for date formatting.
 - [axios](https://www.npmjs.com/package/axios) for HTTP requesting.
-- [react-bootstrap](https://react-bootstrap.github.io/) for navdropbars with links and [bootstrap](https://www.npmjs.com/package/bootstrap) for overall responsiveness.
+- [react-bootstrap](https://react-bootstrap.github.io/) for components [bootstrap](https://www.npmjs.com/package/bootstrap) for overall styling.
 - [react-router-bootstrap](https://github.com/react-bootstrap/react-router-bootstrap) for [react-router](https://github.com/reactjs/react-router) and [react-bootstrap](https://react-bootstrap.github.io/) integration.
-- [redux](https://redux.js.org/introduction/getting-started), [redux-thunk](https://www.npmjs.com/package/redux-thunk) and [react-redux](https://www.npmjs.com/package/react-redux) for redux single-source state management.
-- [create-react-app](https://create-react-app.dev/docs/getting-started/).
+- [redux](https://redux.js.org/introduction/getting-started), [redux-thunk](https://www.npmjs.com/package/redux-thunk) and [react-redux](https://www.npmjs.com/package/react-redux) for data access.
 
 ## Setup Docker
 
@@ -107,7 +119,7 @@ Choices for local environment server:
 ### Laravel API
 
 In `processor-api` directory
-Install backend modules
+Install composer packages:
 
 ```bash
 composer install
@@ -125,19 +137,12 @@ Generate unique app key
 php artisan key:generate
 ```
 
-#### Database MySQL -
+### Database MySQL -
 
-Make sure your DB Collation is `utf8mb4_general_ci` for Japanese characters support
+Requirements:
 
-Migrate DB tables
-
-\*\*_NOTICE_
-
-BEFORE MIGRATING, NEED TO MAKE SURE THAT MYSQL CONFIG IN my.ini THE FOLLOWING LINE IS UPDATED TO IMPORT LARGE FILES\*\*
-
-```bash
-max_allowed_packet=128M
-```
+- Make sure your DB Collation is `utf8mb4_general_ci` for Japanese characters support.
+- Must assure that MySQL config in my.ini has packets size adjusted `max_allowed_packet=128M` in order for migrations to enable importing bigger sized japanese files into the database.
 
 If mysql config is correct, proceed steps below
 
@@ -176,8 +181,8 @@ npm run watch
 
 ### React App
 
-CD into 'client' directory
-Add all node modules used in the react app.
+In `client` directory
+Install node modules:
 
 ```bash
 npm install
