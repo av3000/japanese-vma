@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { Button, Modal } from "react-bootstrap";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 import { apiCall } from "../../services/api";
@@ -11,6 +10,7 @@ import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import { BASE_URL, HTTP_METHOD } from "../../shared/constants";
+import { setSelectedArticle } from "../../store/actions/articles";
 
 class ArticleDetails extends Component {
   _isMounted = false;
@@ -25,6 +25,7 @@ class ArticleDetails extends Component {
       showDelete: false,
       showStatus: false,
       tempStatus: false,
+      isLoading: true,
     };
 
     this.likeArticle = this.likeArticle.bind(this);
@@ -52,71 +53,97 @@ class ArticleDetails extends Component {
   }
 
   articleId = this.props.match.params.article_id;
-  isAuthenticated = this.props.currentUser.isAuthenticated;
 
   componentWillUnmount() {
     this._isMounted = false;
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this._isMounted = true;
+
     if (this._isMounted) {
-      this.getArticleDetails();
+      const { selectedArticle } = this.props;
+
+      if (!selectedArticle) {
+        await this.getArticleDetails();
+        if (this.props.currentUser.isAuthenticated) {
+          await this.getUserRelationsToArticle();
+          await this.getUserArticleLists();
+        }
+      } else {
+        this.setState({ article: selectedArticle });
+        if (this.props.currentUser.isAuthenticated) {
+          await this.getUserRelationsToArticle();
+          await this.getUserArticleLists();
+        }
+      }
     }
   }
 
   async getArticleDetails() {
     try {
       const url = `${BASE_URL}/api/article/${this.articleId}`;
-      const { data } = await apiCall(HTTP_METHOD.GET, url);
+      const data = await apiCall(HTTP_METHOD.GET, url);
       const { article } = data;
 
       if (!article) {
-        return this.props.history.push("/articles");
+        this.props.history.push("/articles");
+        return;
       }
+
+      this.props.setSelectedArticle(article);
 
       this.setState({
         article,
         tempStatus: article.status,
+        isLoading: true,
       });
-
-      if (this.isAuthenticated) {
-        const userLike = await apiCall(
-          HTTP_METHOD.POST,
-          `${BASE_URL}/api/article/${this.articleId}/checklike`
-        );
-
-        this.setState((prevState) => ({
-          article: {
-            ...prevState.article,
-            isLiked: userLike.isLiked,
-            comments: prevState.article.comments.map((comment) => ({
-              ...comment,
-              isLiked: comment.likes.some(
-                (like) => like.user_id === this.props.currentUser.user.id
-              ),
-            })),
-          },
-        }));
-
-        await this.getUserArticleLists();
-      }
     } catch (error) {
+      console.log(error);
+      this.setState({ isLoading: false });
       this.props.history.push("/articles");
+    }
+  }
+
+  async getUserRelationsToArticle() {
+    try {
+      const userLike = await apiCall(
+        HTTP_METHOD.POST,
+        `${BASE_URL}/api/article/${this.articleId}/checklike`
+      );
+
+      this.setState((prevState) => ({
+        article: {
+          ...prevState.article,
+          isLiked: userLike.isLiked,
+          comments: prevState.article.comments.map((comment) => ({
+            ...comment,
+            isLiked: comment.likes.some(
+              (like) => like.user_id === this.props.currentUser.user.id
+            ),
+          })),
+        },
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.log(error);
     }
   }
 
   async getUserArticleLists() {
     try {
+      this.setState({ isLoading: true });
       const url = `${BASE_URL}/api/user/lists/contain`;
-      const { data } = await apiCall(HTTP_METHOD.POST, url, {
+      const data = await apiCall(HTTP_METHOD.POST, url, {
         elementId: this.articleId,
       });
       this.setState({
         lists: data.lists.filter((list) => list.type === 9),
+        isLoading: false,
       });
     } catch (error) {
       console.log(error);
+      this.setState({ isLoading: false });
     }
   }
 
@@ -176,9 +203,12 @@ class ArticleDetails extends Component {
 
   async likeArticle(id) {
     try {
-      if (!this.isAuthenticated) {
+      if (!this.props.currentUser.isAuthenticated) {
         this.props.history.push("/login");
+        return;
       }
+
+      this.setState({ isLoading: true });
 
       const endpoint = this.state.article.isLiked === true ? "unlike" : "like";
       const url = `${BASE_URL}/api/article/${id}/${endpoint}`;
@@ -191,21 +221,24 @@ class ArticleDetails extends Component {
           likesTotal: (prevState.article.likesTotal +=
             endpoint === "like" ? 1 : -1),
         },
+        isLoading: false,
       }));
     } catch (error) {
       console.log(error);
+      this.setState({ isLoading: false });
     }
   }
 
   async downloadKanjisPdf() {
     try {
-      if (!this.isAuthenticated) {
+      if (!this.props.currentUser.isAuthenticated) {
         this.props.history.push("/login");
+        return;
       }
 
       this.props.dispatch(showLoader("Creating a PDF, please wait."));
       const url = `${BASE_URL}/api/article/${this.articleId}/kanjis-pdf`;
-      const { res } = await apiCall(HTTP_METHOD.GET, url, {
+      const res = await apiCall(HTTP_METHOD.GET, url, {
         responseType: "blob",
       });
 
@@ -220,12 +253,13 @@ class ArticleDetails extends Component {
 
   async downloadWordsPdf() {
     try {
-      if (!this.isAuthenticated) {
+      if (!this.props.currentUser.isAuthenticated) {
         this.props.history.push("/login");
+        return;
       }
       this.props.dispatch(showLoader("Creating a PDF, please wait."));
       const url = `${BASE_URL}/api/article/${this.articleId}/words-pdf`;
-      const { res } = await apiCall(HTTP_METHOD.GET, url, {
+      const res = await apiCall(HTTP_METHOD.GET, url, {
         responseType: "blob",
       });
       this.props.dispatch(hideLoader());
@@ -240,7 +274,7 @@ class ArticleDetails extends Component {
   async toggleStatus() {
     try {
       this.handleStatusModalClose();
-      const { res } = await apiCall(
+      const res = await apiCall(
         HTTP_METHOD.POST,
         `/api/article/${this.articleId}/setstatus`,
         {
@@ -267,8 +301,9 @@ class ArticleDetails extends Component {
   }
 
   openStatusModal() {
-    if (!this.isAuthenticated) {
+    if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
+      return;
     }
 
     this.setState({ showStatus: !this.state.showStatus });
@@ -279,16 +314,18 @@ class ArticleDetails extends Component {
   }
 
   openBookmarkModal() {
-    if (!this.isAuthenticated) {
+    if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
+      return;
     }
 
     this.setState({ showBookmark: !this.state.showBookmark });
   }
 
   openPdfModal() {
-    if (!this.isAuthenticated) {
+    if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
+      return;
     }
 
     this.setState({ showPdf: !this.state.showPdf });
@@ -299,8 +336,9 @@ class ArticleDetails extends Component {
   }
 
   openDeleteModal() {
-    if (!this.isAuthenticated) {
+    if (!this.props.currentUser.isAuthenticated) {
       this.props.history.push("/login");
+      return;
     }
 
     this.setState({ showDelete: !this.state.showDelete });
@@ -316,9 +354,13 @@ class ArticleDetails extends Component {
 
   async likeComment(commentId) {
     try {
-      if (!this.isAuthenticated) {
+      if (!this.props.currentUser.isAuthenticated) {
         this.props.history.push("/login");
+        return;
       }
+
+      this.setState({ isLoading: true });
+
       const theComment = this.state.article.comments.find(
         (comment) => comment.id === commentId
       );
@@ -345,10 +387,12 @@ class ArticleDetails extends Component {
             ...prevState.article,
             comments: updatedComments,
           },
+          isLoading: false,
         };
       });
     } catch (error) {
       console.log(error);
+      this.setState({ isLoading: false });
     }
   }
 
@@ -361,21 +405,25 @@ class ArticleDetails extends Component {
     }));
   }
 
-  deleteComment(commentId) {
-    return apiCall(
-      "delete",
-      `/api/article/${this.state.article.id}/comment/${commentId}`
-    )
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.article.comments = newState.article.comments.filter(
-          (comment) => comment.id !== commentId
-        );
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  async deleteComment(commentId) {
+    try {
+      this.setState({ isLoading: true });
+
+      await apiCall(
+        "delete",
+        `/api/article/${this.articleId}/comment/${commentId}`
+      );
+
+      this.setState((prevState) => ({
+        article: {
+          comments: prevState.article.comments.filter(
+            (comment) => comment.id !== commentId
+          ),
+        },
+      }));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   editComment(commentId) {
@@ -491,18 +539,22 @@ class ArticleDetails extends Component {
                 <p className="ml-3 mt-3">created by {article.userName}</p>
               </div>
               <div className="float-right d-flex">
-                <p className="ml-3 mt-3">
-                  {article.likesTotal + 24} likes &nbsp;
-                </p>
+                <p className="ml-3 mt-3">{article.likesTotal} likes &nbsp;</p>
                 <ul className="brand-icons float-right d-flex">
                   {article.isLiked ? (
-                    <li onClick={() => this.likeArticle(article.id)}>
+                    <li
+                      onClick={() => this.likeArticle(article.id)}
+                      disabled={this.state.loading}
+                    >
                       <button>
                         <i className="fas fa-thumbs-up"></i>
                       </button>
                     </li>
                   ) : (
-                    <li onClick={() => this.likeArticle(article.id)}>
+                    <li
+                      onClick={() => this.likeArticle(article.id)}
+                      disabled={this.state.loading}
+                    >
                       <button>
                         <i className="far fa-thumbs-up"></i>
                       </button>
@@ -731,6 +783,13 @@ class ArticleDetails extends Component {
     );
   }
 }
-const mapStateToProps = (state) => ({});
 
-export default connect(mapStateToProps)(ArticleDetails);
+const mapStateToProps = (state) => ({
+  selectedArticle: state.articles.selectedArticle,
+});
+
+const mapDispatchToProps = {
+  setSelectedArticle,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ArticleDetails);

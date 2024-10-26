@@ -23,7 +23,6 @@ export function logout() {
 }
 
 export function authUser(type, userData) {
-  console.log("authUSer, userData: ", userData);
   return (dispatch) => {
     return new Promise((resolve, reject) => {
       return apiCall(HTTP_METHOD.POST, `/api/${type}`, userData)
@@ -35,7 +34,6 @@ export function authUser(type, userData) {
           resolve();
         })
         .catch((error) => {
-          console.log("authUser catch error: ", error);
           if (error.email) {
             dispatch(addError(error.email));
           } else if (error.password) {

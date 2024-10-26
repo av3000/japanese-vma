@@ -1,9 +1,12 @@
-export const ADD_ERROR = 'ADD_ERROR';
-export const REMOVE_ERROR = 'REMOVE_ERROR';
-export const SET_CURRENT_USER = 'SET_CURRENT_USER';
+export const ADD_ERROR = "ADD_ERROR";
+export const REMOVE_ERROR = "REMOVE_ERROR";
+export const SET_CURRENT_USER = "SET_CURRENT_USER";
 
-export const LOAD_ARTICLES = 'LOAD_ARTICLES';
-export const REMOVE_ARTICLE = 'REMOVE_ARTICLE';
+export const LOAD_ARTICLES = "LOAD_ARTICLES";
+export const REMOVE_ARTICLE = "REMOVE_ARTICLE";
+export const SET_SELECTED_ARTICLE = "SET_SELECTED_ARTICLE";
+export const SET_LOADING = "SET_LOADING";
+export const SET_PAGINATION_INFO = "SET_PAGINATION_INFO";
 
-export const LOAD_LISTS = 'LOAD_LISTS';
-export const REMOVE_LIST = 'REMOVE_LIST';
+export const LOAD_LISTS = "LOAD_LISTS";
+export const REMOVE_LIST = "REMOVE_LIST";

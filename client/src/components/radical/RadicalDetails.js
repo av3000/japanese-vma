@@ -63,7 +63,7 @@ class RadicalDetails extends Component {
     try {
       const url = `${BASE_URL}/api/user/lists/contain`;
 
-      const { res } = await apiCall(HTTP_METHOD.POST, url, {
+      const res = await apiCall(HTTP_METHOD.POST, url, {
         elementId: this.radicalId,
       });
 
