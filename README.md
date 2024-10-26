@@ -197,10 +197,12 @@ npm start
 
 ### To Do List
 
+- [ ] Make demo gifs to showcase main features.
+- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
 - [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
 - [ ] Implement react-query for query-based approach of server-data facing for frontend
-- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
 - [ ] Create nhk easy news scrapper to get each days news.
+- [ ] Design a way to offload scanning algorithm from client to server.
 - [ ] Create service worker to build queues for scanning algorithm of user texts to find kanjis and words.
 - [ ] Create Github Actions for frontend.
 - [ ] Create Github Actions for backend.
