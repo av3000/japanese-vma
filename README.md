@@ -3,13 +3,14 @@
 Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/).
 
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
+This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project), [Kanjidic2](http://www.edrdg.org/wiki/index.php/KANJIDIC_Project), [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), and [Radkfile](http://www.edrdg.org/krad/kradinf.html) dictionary files. JLPT data comes from Jonathan Waller's JLPT Resources [page](http://www.tanos.co.uk/jlpt/).
 
 ## Project features
 
 - Laravel CRUD REST API endpoints for Articles, Lists, Roles, Users and Posts(forum).
 - Likes, hashtags and comments relationships for Articles, Lists and Posts.
 - Read, Search and save lists of Kanji(hierogliphs), Radicals(hierogpliphs formed parts of symbols), Words and sentences from [Tatoeba](tatoeba.org) community.
-- Japanese language data formatted by reading from XML and extracting to CSV using plain PHP and MySQL scripts. Exported and being imported to Laravel via Laravel migrations CLI.
+- Japanese language data formatted by reading from XML and extracting to CSV using plain PHP and MySQL scripts. Exported and being imported to Laravel via Laravel migrations CLI. Kanjis and words were matched against Jonathan Waller's JLPT Resources and assigned JLPT level accordingly.
 - MySQL with Laravel's Eloquent ORM.
 - Authentication with [Laravel/passport](https://github.com/laravel/passport).
 - Text scanning algorithm to find kanjis and words used in user provided article.
@@ -193,3 +194,14 @@ Start react app
 ```bash
 npm start
 ```
+
+### To Do List
+
+- [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
+- [ ] Implement react-query for query-based approach of server-data facing for frontend
+- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
+- [ ] Create nhk easy news scrapper to get each days news.
+- [ ] Create service worker to build queues for scanning algorithm of user texts to find kanjis and words.
+- [ ] Create Github Actions for frontend.
+- [ ] Create Github Actions for backend.
+- [ ] Write E2E tests for frontend.

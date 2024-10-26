@@ -78,9 +78,9 @@ class ArticleList extends Component {
           )}
         </div>
         <div className="row justify-content-center">
-          {(!isLoading &&
-            paginationInfo.current_page === paginationInfo.last_page) ||
-          !paginationInfo.next_page_url ? (
+          {!isLoading &&
+          (paginationInfo.current_page === paginationInfo.last_page ||
+            !paginationInfo.next_page_url) ? (
             "No more results..."
           ) : (
             <button

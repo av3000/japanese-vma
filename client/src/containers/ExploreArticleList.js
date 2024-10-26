@@ -41,29 +41,7 @@ class ExploreArticleList extends Component {
 
   render() {
     let articleList = this.state.articles ? (
-      this.state.articles.map((a) => (
-        <ExploreArticleItem
-          key={a.id}
-          id={a.id}
-          created_at={a.created_at}
-          jp_year={a.jp_year}
-          jp_month={a.jp_month}
-          jp_day={a.jp_day}
-          jp_hour={a.jp_hour}
-          title_jp={a.title_jp}
-          commentsTotal={a.commentsTotal}
-          likesTotal={a.likesTotal}
-          viewsTotal={a.viewsTotal}
-          downloadsTotal={a.downloadsTotal}
-          hashtags={a.hashtags.slice(0, 3)}
-          n1={a.n1}
-          n2={a.n2}
-          n3={a.n3}
-          n4={a.n4}
-          n5={a.n5}
-          uncommon={a.uncommon}
-        />
-      ))
+      this.state.articles.map((a) => <ExploreArticleItem key={a.id} {...a} />)
     ) : (
       <div className="container">
         <div className="row justify-content-center">

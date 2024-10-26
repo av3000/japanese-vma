@@ -52,24 +52,32 @@ class TopNavigationBar extends Component {
                 Sentences
               </Dropdown.Item>
             </NavDropdown>
-            <Nav.Link as={Link} to="/dashboard">
-              Dashboard
-            </Nav.Link>
+            {this.props.currentUser.isAuthenticated ? (
+              <Nav.Link as={Link} to="/dashboard">
+                Dashboard
+              </Nav.Link>
+            ) : (
+              ""
+            )}
             <Nav.Link as={Link} to="/community">
               Community
             </Nav.Link>
-            <NavDropdown title="New" id="basic-nav-dropdown">
-              <Dropdown.Item as={Link} to="/newarticle">
-                Article
-              </Dropdown.Item>
-              <Dropdown.Item as={Link} to="/newlist">
-                List
-              </Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item as={Link} to="/newpost">
-                Community Post
-              </Dropdown.Item>
-            </NavDropdown>
+            {this.props.currentUser.isAuthenticated ? (
+              <NavDropdown title="New" id="basic-nav-dropdown">
+                <Dropdown.Item as={Link} to="/newarticle">
+                  Article
+                </Dropdown.Item>
+                <Dropdown.Item as={Link} to="/newlist">
+                  List
+                </Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item as={Link} to="/newpost">
+                  Community Post
+                </Dropdown.Item>
+              </NavDropdown>
+            ) : (
+              ""
+            )}
           </Nav>
           {this.props.currentUser.isAuthenticated ? (
             <Nav>

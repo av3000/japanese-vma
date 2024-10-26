@@ -657,11 +657,7 @@ class ArticleDetails extends Component {
                 editComment={this.editComment}
               />
             ) : (
-              <div className="container">
-                <div className="row justify-content-center">
-                  <img src={Spinner} alt="spinner loading" />
-                </div>
-              </div>
+              ""
             )}
           </div>
         </div>
