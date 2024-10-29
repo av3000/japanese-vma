@@ -2,14 +2,15 @@ import React, { Component } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
+
 import { apiCall } from "../../services/api";
 import DefaultArticleImg from "../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
 import AvatarImg from "../../assets/images/avatar-woman.svg";
 import Spinner from "../../assets/images/spinner.gif";
-import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import { BASE_URL, HTTP_METHOD } from "../../shared/constants";
+import { hideLoader, showLoader } from "../../store/actions/application";
 import { setSelectedArticle } from "../../store/actions/articles";
 
 class ArticleDetails extends Component {
@@ -236,18 +237,19 @@ class ArticleDetails extends Component {
         return;
       }
 
-      this.props.dispatch(showLoader("Creating a PDF, please wait."));
+      this.props.showLoader("Creating a PDF, please wait.");
       const url = `${BASE_URL}/api/article/${this.articleId}/kanjis-pdf`;
       const res = await apiCall(HTTP_METHOD.GET, url, {
         responseType: "blob",
       });
 
-      this.props.dispatch(hideLoader());
-      const file = new Blob([res.data], { type: "application/pdf" });
+      this.props.hideLoader();
+      const file = new Blob([res], { type: "application/pdf" });
       const fileURL = URL.createObjectURL(file);
       window.open(fileURL);
     } catch (error) {
       console.log(error);
+      this.props.hideLoader();
     }
   }
 
@@ -257,17 +259,18 @@ class ArticleDetails extends Component {
         this.props.history.push("/login");
         return;
       }
-      this.props.dispatch(showLoader("Creating a PDF, please wait."));
+      this.props.showLoader("Creating a PDF, please wait.");
       const url = `${BASE_URL}/api/article/${this.articleId}/words-pdf`;
       const res = await apiCall(HTTP_METHOD.GET, url, {
         responseType: "blob",
       });
-      this.props.dispatch(hideLoader());
-      const file = new Blob([res.data], { type: "application/pdf" });
+      this.props.hideLoader();
+      const file = new Blob([res], { type: "application/pdf" });
       const fileURL = URL.createObjectURL(file);
       window.open(fileURL);
     } catch (error) {
       console.log(error);
+      this.props.hideLoader();
     }
   }
 
@@ -282,22 +285,20 @@ class ArticleDetails extends Component {
         }
       );
 
-      this.setState((prevState) => ({
+      this.setState({
         article: {
+          ...this.state.article,
           status: res.newStatus,
-          tempStatus: res.newStatus,
         },
-      }));
+        tempStatus: res.newStatus,
+      });
     } catch (error) {
       console.log(error);
     }
   }
 
   handleStatusChange(e) {
-    const tempStatus = parseInt(e.target.value);
-    const newState = Object.assign({}, this.state);
-    newState.tempStatus = tempStatus;
-    this.setState(newState);
+    this.setState({ tempStatus: parseInt(e.target.value) });
   }
 
   openStatusModal() {
@@ -518,11 +519,13 @@ class ArticleDetails extends Component {
             <p className="lead">{article.content_jp} </p>
             <br />
             <p>
-              {article.hashtags.map((tag) => (
-                <span key={tag.id} className="tag-link" to="/">
-                  {tag.content}{" "}
-                </span>
-              ))}
+              {article.hashtags
+                ? article.hashtags.map((tag) => (
+                    <span key={tag.id} className="tag-link" to="/">
+                      {tag.content}{" "}
+                    </span>
+                  ))
+                : "no hashtags yet"}
               <br />{" "}
               <a
                 href={article.source_link}
@@ -668,13 +671,13 @@ class ArticleDetails extends Component {
             onHide={this.handleBookmarkClose}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Choose List to add</Modal.Title>
+              <Modal.Title>Choose Article List to add</Modal.Title>
             </Modal.Header>
             <Modal.Body>
               {addModal}
               <small>
                 {" "}
-                <Link to="/newlist">Want new list?</Link>{" "}
+                <Link to="/newlist">Create a new list?</Link>{" "}
               </small>
             </Modal.Body>
             <Modal.Footer>
@@ -698,6 +701,13 @@ class ArticleDetails extends Component {
             >
               {" "}
               Kanji PDF{" "}
+            </button>
+            <button
+              className="btn btn-outline brand-button"
+              onClick={this.downloadWordsPdf}
+            >
+              {" "}
+              Words PDF{" "}
             </button>
           </Modal.Body>
           <Modal.Footer>
@@ -740,7 +750,7 @@ class ArticleDetails extends Component {
             onHide={this.handleStatusModalClose}
           >
             <Modal.Header closeButton>
-              <Modal.Title>Are You Sure?</Modal.Title>
+              <Modal.Title>Review of the article status</Modal.Title>
             </Modal.Header>
             <Modal.Footer>
               <div className="col-12">
@@ -784,8 +794,10 @@ const mapStateToProps = (state) => ({
   selectedArticle: state.articles.selectedArticle,
 });
 
-const mapDispatchToProps = {
-  setSelectedArticle,
-};
+const mapDispatchToProps = (dispatch) => ({
+  setSelectedArticle: (article) => dispatch(setSelectedArticle(article)),
+  showLoader: (message) => dispatch(showLoader(message)),
+  hideLoader: () => dispatch(hideLoader()),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(ArticleDetails);

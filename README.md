@@ -107,15 +107,59 @@ docker-compose up -d --build
 
 Remember after clean rebuild to run migrations and seed once again.
 
+### Test API
+
+Basic requests for testing purposes. Enter laravel api container and register/login:
+
+```bash
+curl -X POST http://nginx_webserver/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@test.me", "password": "test123"}'
+
+# or save as a variable:
+TOKEN=$(curl -s -X POST http://nginx_webserver/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@test.me", "password": "test123"}' \
+  | jq -r '.accessToken')
+```
+
+Use variable:
+
+```bash
+curl -X GET http://nginx_webserver/api/articles \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq
+
+# or single article:
+curl -X GET http://nginx_webserver/api/article/5 \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq
+```
+
+Test PDF file on a local machine:
+
+```bash
+curl -X GET http://nginx_webserver/api/article/5/kanjis-pdf \
+  -H "Authorization: Bearer $TOKEN" \
+  -o kanjis-test.pdf
+docker cp laravel_app:/var/www/html/kanjis-test.pdf C:\Users\USER-NAME\Downloads\
+```
+
 ## Setup Local
 
-Choices for local environment server:
+Required
 
+- Fonts supporting Japanese language, for example: `fonts-ipafont-gothic`.
 - [Composer](https://github.com/composer/composer) - PHP package manager
 - [Node](https://nodejs.org/en/download). - Node js runtime for frontend assets of laravel.
+- For PDF generating laravel-snappy to work requires [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation). Install it as a [composer dependency](https://github.com/KnpLabs/snappy#wkhtmltopdf-binary-as-composer-dependencies) or [manually here](http://wkhtmltopdf.org/downloads.html) into your machine.
+
+Also, possibly paths for wkhtmltopdf will not work, uncomment variables in .env to use needed ones or modify them according needs.
+
+Optional choices for faster setup:
+
 - [Xampp](https://www.apachefriends.org/) - web server Apache, PHP and MariaDB(MySQL).
 - [Laravel Herd](https://herd.laravel.com/windows) - dev environment with all you need for laravel development.
-- For PDF generating laravel-snappy to work requires [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation). Install it as a [composer dependency](https://github.com/KnpLabs/snappy#wkhtmltopdf-binary-as-composer-dependencies) or [manually here](http://wkhtmltopdf.org/downloads.html) into your machine.
 
 ### Laravel API
 
@@ -200,10 +244,14 @@ npm start
 - [ ] Make demo gifs to showcase main features.
 - [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
 - [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
+- [ ] Strengthen authorization with more persistant implementation..
 - [ ] Implement react-query for query-based approach of server-data facing for frontend
 - [ ] Create nhk easy news scrapper to get each days news.
+- [ ] re-vamp styling, especially for small UI elements like links, buttons with icons, screen spacings.
 - [ ] Design a way to offload scanning algorithm from client to server.
 - [ ] Create service worker to build queues for scanning algorithm of user texts to find kanjis and words.
 - [ ] Create Github Actions for frontend.
 - [ ] Create Github Actions for backend.
 - [ ] Write E2E tests for frontend.
+- [?] Client side PDF customization. Generate on Backend, customize on frontend.
+- [?] Cache or Store pre-generated materials like PDFs.
