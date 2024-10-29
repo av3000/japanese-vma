@@ -1,11 +1,12 @@
 import React from "react";
 import Moment from "react-moment";
+import { Button, ListGroup, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 const DashboardArticleItem = ({
   id,
   created_at,
-  title,
+  title_jp,
   commentsTotal,
   likesTotal,
   viewsTotal,
@@ -13,32 +14,38 @@ const DashboardArticleItem = ({
 }) => (
   <div className="row">
     <div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
-      <p>{title}</p>
-      tags:{" "}
-      {hashtags.map((tag) => (
-        <span key={tag.id} className="tag-link">
-          {tag.content}{" "}
-        </span>
-      ))}
+      <p>{title_jp}</p>
+      <div className="d-flex align-items-center">
+        <span className="mr-2 text-muted">Tags:</span>
+        <ListGroup horizontal className="flex-wrap">
+          {hashtags.map((tag) => (
+            <ListGroup.Item key={tag.id} className="p-1 border-0">
+              <Badge pill variant="secondary">
+                {tag.content}
+              </Badge>
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </div>
     </div>
     <div className="col-md-4">
-      <Link to={`/article/${id}`}>
-        <strong className="d-block text-gray-dark float-right">
-          <i className="fas fa-external-link-alt"></i>
-        </strong>
-      </Link>
-      <small className="d-flex justify-content-between align-items-center text-muted">
-        <span>{commentsTotal}&nbsp;Comments&nbsp;</span>
-        <span>{viewsTotal} &nbsp;Views&nbsp;</span>
-        <span>{likesTotal} &nbsp;Likes &nbsp;</span>
-      </small>
-      <small className="d-block text-muted">
-        <span>
-          <Moment className="text-muted" format="Do MMM YYYY">
-            {created_at}
-          </Moment>
-        </span>
-      </small>
+      <ListGroup variant="flush" className="text-muted">
+        <ListGroup.Item className="p-0 d-flex justify-content-between align-items-center">
+          <span>{commentsTotal} Comments</span>
+          <span>{viewsTotal} Views</span>
+          <span>{likesTotal} Likes</span>
+          <Link to={`/article/${id}`}>
+            <Button variant="outline-primary" size="sm" className="ml-2">
+              <i className="fas fa-external-link-alt"></i>
+            </Button>
+          </Link>
+        </ListGroup.Item>
+        <ListGroup.Item className="p-0">
+          <small>
+            <Moment format="Do MMM YYYY">{created_at}</Moment>
+          </small>
+        </ListGroup.Item>
+      </ListGroup>
     </div>
   </div>
 );
