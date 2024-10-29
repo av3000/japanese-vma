@@ -86,12 +86,15 @@ class ExploreCustomList extends Component {
 
     return (
       <React.Fragment>
-        <Link to="/lists" className="homepage-section-title" id="lists">
+        <h3>
           <span>
-            Lists ({this.state.totalLists | 0})
+            Latest Lists ({this.state.totalLists | 0})
             <img src={ArrowIcon} alt="arrow icon" />{" "}
           </span>
-        </Link>
+          <Link to="/lists" className="homepage-section-title" id="lists">
+            Read All
+          </Link>
+        </h3>
         <div className="row">{customLists}</div>
       </React.Fragment>
     );

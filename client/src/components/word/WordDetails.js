@@ -329,13 +329,13 @@ class KanjiDetails extends Component {
 
         <Modal show={this.state.show} onHide={this.handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Choose List to add</Modal.Title>
+            <Modal.Title>Choose Word List to add</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {addModal}
             <small>
               {" "}
-              <Link to="/newlist">Want new list?</Link>{" "}
+              <Link to="/newlist">Create a new list?</Link>{" "}
             </small>
           </Modal.Body>
           <Modal.Footer>

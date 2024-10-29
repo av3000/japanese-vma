@@ -355,7 +355,7 @@ class ListDetails extends Component {
                 <p className="ml-3 mt-3">created by {list.userName}</p>
               </div>
               <div className="float-right d-flex">
-                <p className="ml-3 mt-3">{list.likesTotal + 24} likes &nbsp;</p>
+                <p className="ml-3 mt-3">{list.likesTotal} likes &nbsp;</p>
                 <ul className="brand-icons float-right d-flex">
                   {list.isLiked ? (
                     <li onClick={this.likeList}>
@@ -491,11 +491,7 @@ class ListDetails extends Component {
                 editComment={this.editComment}
               />
             ) : (
-              <div className="container">
-                <div className="row justify-content-center">
-                  <img src={Spinner} alt="spinner loading" />
-                </div>
-              </div>
+              ""
             )}
           </div>
 

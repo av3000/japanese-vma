@@ -3,6 +3,7 @@ import { apiCall } from "../services/api";
 import KanjiItem from "../components/kanji/KanjiItem";
 import Spinner from "../assets/images/spinner.gif";
 import SearchBarKanjis from "../components/search/SearchBarKanjis";
+import { HTTP_METHOD } from "../shared/constants";
 
 export class KanjiList extends Component {
   constructor() {
@@ -15,6 +16,7 @@ export class KanjiList extends Component {
       searchHeading: "",
       searchTotal: "",
       filters: [],
+      isLoading: true,
     };
 
     this.loadMore = this.loadMore.bind(this);
@@ -27,10 +29,10 @@ export class KanjiList extends Component {
     this.fetchKanjis(this.state.url);
   }
 
-  fetchKanjis(givenUrl) {
-    return apiCall("get", givenUrl)
+  fetchKanjis() {
+    this.setState({ isLoading: true });
+    return apiCall(HTTP_METHOD.GET, "/api/kanjis")
       .then((res) => {
-        console.log("res in fetchKanjis", res);
         let newState = Object.assign({}, this.state);
         newState.paginateObject = res.kanjis;
         newState.kanjis = [...newState.kanjis, ...res.kanjis.data];
@@ -42,14 +44,17 @@ export class KanjiList extends Component {
       })
       .then((newState) => {
         newState.pagination = this.makePagination(newState.paginateObject);
+        newState.isLoading = false;
         this.setState(newState);
       })
       .catch((err) => {
         console.log(err);
+        this.setState({ isLoading: false });
       });
   }
 
   fetchQuery(queryParams) {
+    this.setState({ isLoading: true });
     let newState = Object.assign({}, this.state);
     newState.filters = queryParams;
     apiCall("post", "/api/kanjis/search", newState.filters)
@@ -66,18 +71,21 @@ export class KanjiList extends Component {
       })
       .then((newState) => {
         newState.pagination = this.makePagination(newState.paginateObject);
+        newState.isLoading = false;
 
         this.setState(newState);
       })
       .catch((err) => {
         this.setState(newState);
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
 
-  fetchMoreQuery(givenUrl) {
+  fetchMoreQuery() {
     let newState = Object.assign({}, this.state);
-    apiCall("post", givenUrl, newState.filters)
+    this.setState({ isLoading: true });
+    apiCall(HTTP_METHOD.POST, "/api/kanjis", newState.filters)
       .then((res) => {
         newState.paginateObject = res.kanjis;
         newState.kanjis = [...newState.kanjis, ...res.kanjis.data];
@@ -89,10 +97,12 @@ export class KanjiList extends Component {
       })
       .then((newState) => {
         newState.pagination = this.makePagination(newState.paginateObject);
+        newState.isLoading = false;
 
         this.setState(newState);
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -121,7 +131,7 @@ export class KanjiList extends Component {
   }
 
   render() {
-    let { kanjis } = this.state;
+    let { kanjis, isLoading } = this.state;
     let kanjiList = kanjis ? (
       kanjis.map((k) => {
         k.meaning = k.meaning.split("|");
@@ -180,8 +190,18 @@ export class KanjiList extends Component {
           </div>
         </div>
         <div className="row justify-content-center">
-          {this.state.pagination.last_page ===
-          this.state.pagination.current_page ? (
+          {isLoading ? (
+            <div className="container mt-5">
+              <div className="row justify-content-center">
+                <img src={Spinner} alt="spinner" />
+              </div>
+            </div>
+          ) : (
+            ""
+          )}
+          {!isLoading &&
+          this.state.pagination.last_page ===
+            this.state.pagination.current_page ? (
             "no more results..."
           ) : this.state.url.includes("search") ? (
             <button

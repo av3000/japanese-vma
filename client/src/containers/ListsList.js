@@ -186,7 +186,6 @@ class ListsList extends Component {
           <div className="row">{customLists}</div>
         </div>
         <div className="row justify-content-center ">
-          isLoading: {this.state.isLoading}
           {this.state.isLoading ? (
             <div className="container">
               <div className="row justify-content-center">

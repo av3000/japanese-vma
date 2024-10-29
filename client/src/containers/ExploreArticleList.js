@@ -1,67 +1,58 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import ArrowIcon from "../assets/icons/arrow-navigation-icon.svg";
-import { apiCall } from "../services/api";
+import { fetchArticles } from "../store/actions/articles";
 import ExploreArticleItem from "../components/article/ExploreArticleItem";
 import Spinner from "../assets/images/spinner.gif";
 
 class ExploreArticleList extends Component {
-  _isMounted = false;
-  constructor(props) {
-    super(props);
-    this.state = {
-      articles: null,
-      totalArticles: null,
-    };
-  }
-
   componentDidMount() {
-    this._isMounted = true;
-    this.fetchArticles();
-  }
-
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
-
-  fetchArticles() {
-    return apiCall("get", "/api/articles")
-      .then((res) => {
-        if (this._isMounted) {
-          let newState = Object.assign({}, this.state);
-          newState.totalArticles = res.articles.total;
-          newState.articles = [...res.articles.data];
-          this.setState(newState);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (!this.props.articles.length) {
+      this.props.fetchArticles();
+    }
   }
 
   render() {
-    let articleList = this.state.articles ? (
-      this.state.articles.map((a) => <ExploreArticleItem key={a.id} {...a} />)
-    ) : (
-      <div className="container">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner loading" />
-        </div>
-      </div>
-    );
+    const { articles, isLoading, paginationInfo } = this.props;
+
+    const featuredArticles = articles.slice(0, 3);
 
     return (
       <React.Fragment>
-        <Link to="/articles" className="homepage-section-title" id="readings">
-          <span>
-            Readings ({this.state.totalArticles | 0})
-            <img src={ArrowIcon} alt="arrow icon" />{" "}
-          </span>
-        </Link>
-        <div className="row">{articleList}</div>
+        <h3>
+          <span>Latest Articles ({paginationInfo.total || 0})</span>
+          <Link to="/articles" className="homepage-section-title">
+            Read All
+          </Link>
+        </h3>
+        <div className="row">
+          {isLoading ? (
+            <div className="container">
+              <div className="row justify-content-center">
+                <img src={Spinner} alt="Loading..." />
+              </div>
+            </div>
+          ) : featuredArticles.length ? (
+            featuredArticles.map((a) => (
+              <ExploreArticleItem key={a.id} {...a} />
+            ))
+          ) : (
+            <p className="text-center">No Featured Articles available.</p>
+          )}
+        </div>
       </React.Fragment>
     );
   }
 }
 
-export default ExploreArticleList;
+const mapStateToProps = (state) => ({
+  articles: state.articles.articles,
+  isLoading: state.articles.isLoading,
+  paginationInfo: state.articles.paginationInfo,
+});
+
+const mapDispatchToProps = {
+  fetchArticles,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ExploreArticleList);

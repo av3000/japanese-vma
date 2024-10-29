@@ -21,6 +21,7 @@ class KanjiDetails extends Component {
       lists: [],
       show: false,
       kanjiIsKnown: false,
+      isLoading: true,
     };
 
     this.addToList = this.addToList.bind(this);
@@ -47,7 +48,8 @@ class KanjiDetails extends Component {
   }
 
   getKanjiDetails() {
-    const url = BASE_URL + "/api/kanji/" + this.kanjiId;
+    const url = `${BASE_URL}/api/kanji/${this.kanjiId}`;
+    this.setState({ isLoading: true });
 
     axios
       .get(url)
@@ -67,9 +69,11 @@ class KanjiDetails extends Component {
           words: res.data.words,
           articles: res.data.articles,
           sentences: res.data.sentences,
+          isLoading: false,
         });
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
 
@@ -79,7 +83,8 @@ class KanjiDetails extends Component {
   }
 
   getUserKanjiLists() {
-    const url = BASE_URL + "/api/user/lists/contain";
+    const url = `${BASE_URL}/api/user/lists/contain`;
+    this.setState({ isLoading: true });
 
     return axios
       .post(url, {
@@ -96,9 +101,11 @@ class KanjiDetails extends Component {
           }
         });
 
+        newState.isLoading = false;
         this.setState(newState);
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -112,7 +119,7 @@ class KanjiDetails extends Component {
   }
 
   addToList(id) {
-    const url = BASE_URL + "/api/user/list/additemwhileaway";
+    const url = `${BASE_URL}/api/user/list/additemwhileaway`;
 
     axios
       .post(url, {
@@ -136,7 +143,7 @@ class KanjiDetails extends Component {
   }
 
   removeFromList(id) {
-    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
+    const url = `${BASE_URL}/api/user/list/removeitemwhileaway`;
 
     axios
       .post(url, {
@@ -160,48 +167,51 @@ class KanjiDetails extends Component {
   }
 
   render() {
-    const { kanji, words, sentences, articles } = this.state;
+    const { kanji, words, sentences, articles, isLoading } = this.state;
 
-    const singleKanji = kanji ? (
-      <div className="row justify-content-center mt-5">
-        <div className="col-md-4">
-          <h1>
-            {kanji.kanji} <br />
-            {kanji.hiragana}
-          </h1>
-          <p>meaning: {kanji.meaning},</p>
+    const singleKanji =
+      !isLoading && kanji ? (
+        <div className="row justify-content-center mt-5">
+          <div className="col-md-4">
+            <h1>
+              {kanji.kanji} <br />
+              {kanji.hiragana}
+            </h1>
+            <p>meaning: {kanji.meaning},</p>
+          </div>
+          <div className="col-md-4">
+            <p>onyomi: {kanji.onyomi},</p>
+            <p>kunyomi: {kanji.kunyomi}</p>
+          </div>
+          <div className="col-md-2">
+            <p>parts : {kanji.radical_parts}</p>
+            <p>strokes: {kanji.stroke_count}</p>
+          </div>
+          <div className="col-md-2">
+            <p>jlpt: {kanji.jlpt},</p>
+            <p>frequency: {kanji.frequency}</p>
+            <p className="float-right">
+              {this.state.kanjiIsKnown ? (
+                <i className="fas fa-check-circle text-success"> Learned</i>
+              ) : (
+                ""
+              )}
+              <i
+                onClick={this.openModal}
+                className="far fa-bookmark ml-3 fa-lg mr-2"
+              ></i>
+            </p>
+          </div>
         </div>
-        <div className="col-md-4">
-          <p>onyomi: {kanji.onyomi},</p>
-          <p>kunyomi: {kanji.kunyomi}</p>
+      ) : isLoading ? (
+        <div className="container mt-5">
+          <div className="row justify-content-center">
+            <img src={Spinner} alt="spinner loading" />
+          </div>
         </div>
-        <div className="col-md-2">
-          <p>parts : {kanji.radical_parts}</p>
-          <p>strokes: {kanji.stroke_count}</p>
-        </div>
-        <div className="col-md-2">
-          <p>jlpt: {kanji.jlpt},</p>
-          <p>frequency: {kanji.frequency}</p>
-          <p className="float-right">
-            {this.state.kanjiIsKnown ? (
-              <i className="fas fa-check-circle text-success"> Learned</i>
-            ) : (
-              ""
-            )}
-            <i
-              onClick={this.openModal}
-              className="far fa-bookmark ml-3 fa-lg mr-2"
-            ></i>
-          </p>
-        </div>
-      </div>
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner loading" />
-        </div>
-      </div>
-    );
+      ) : (
+        ""
+      );
 
     const wordsList = words.data
       ? words.data.map((word) => {
@@ -362,18 +372,17 @@ class KanjiDetails extends Component {
         </span>
         {singleKanji}
         <hr />
-        {words.data ? <h4>words ({words.data.length}) results</h4> : ""}
+        {words.data ? <h4>Found in ({words.data.length}) words</h4> : ""}
         <div className="container">{wordsList}</div>
-        <hr />
         {sentences.data ? (
-          <h4>sentences ({sentences.data.length}) results</h4>
+          <h4>Found in ({sentences.data.length}) sentences</h4>
         ) : (
           ""
         )}
         <div className="container">{sentenceList}</div>
-        <hr />
+        {/* <hr /> */}
         {articles.data ? (
-          <h4>articles ({articles.data.length}) results</h4>
+          <h4>Found in ({articles.data.length}) articles</h4>
         ) : (
           ""
         )}
@@ -381,13 +390,13 @@ class KanjiDetails extends Component {
 
         <Modal show={this.state.show} onHide={this.handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Choose List to add</Modal.Title>
+            <Modal.Title>Choose Kanji List to add</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {addModal}
             <small>
               {" "}
-              <Link to="/newlist">Want new list?</Link>{" "}
+              <Link to="/newlist">Create a new list?</Link>{" "}
             </small>
           </Modal.Body>
           <Modal.Footer>
