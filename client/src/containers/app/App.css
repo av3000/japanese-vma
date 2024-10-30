@@ -1,97 +1,50 @@
 :root {
-    --main-text-color: #303030;
-    --main-background-color: #191e27;
-    --alternative-text-color: #f9f9f9;
-    --link-hover-color: #9099a7;
-    --main-brand-color: #f79862;
-    --secondary-brand-color: #3058A4;
+  --main-text-color: #303030;
+  --main-background-color: #191e27;
+  --alternative-text-color: #f9f9f9;
+  --link-hover-color: #9099a7;
+  --main-brand-color: #f79862;
+  --secondary-brand-color: #3058a4;
 }
 
-/* Impressions action icons */
-
-/* .comment-like i {
-    opacity: .7;
+/* Brand icons styling */
+.brand-icons .btn {
+  color: var(--main-text-color);
+  background-color: rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  padding: 8px;
 }
 
-.comment-like i:hover {
-    opacity: .5;
-} */
-
-/* i {
-    opacity: .7;
-    cursor: pointer;
-}
-i:hover {
-    opacity: .5;
+.brand-icons .btn i {
+  opacity: 0.9;
+  font-size: 1.1rem;
+  transition: color 0.3s ease, transform 0.3s ease;
 }
 
-a i {
-    color: var(--main-text-color);
-    opacity: .7;
+.brand-icons .btn:hover {
+  background-color: var(--main-brand-color);
+  color: #fff;
+  transform: scale(1.1);
 }
 
-a i:hover {
-    opacity: .5;
-} */
-
-.brand-icons {
-  list-style: none; 
-  padding-left: 0px;
+.brand-icons .btn:hover i {
+  opacity: 1;
 }
 
-.brand-icons li {
-    margin: 5px 5px;
-    padding: 5px 5px;
-    border: 1px solid var(--main-text-color);
-    border-radius: 50%;
-    transition: .2s;
+.brand-icons .liked-button {
+  color: var(--main-brand-color);
+  background-color: rgba(0, 0, 0, 0.2);
+  opacity: 1;
 }
-
-.brand-icons li:hover {
-    /* color: var(--main-brand-color); */
-    border: 1px solid var(--main-brand-color);
-    background-color: var(--main-brand-color);
-    transition: .2s;
-    cursor: pointer;
-}
-
-.brand-icons li:hover i {
-    /* opacity: .9;
-    transition: .2s; */
-}
-
-
-.brand-icons li:hover button {
-    background-color: var(--main-brand-color);
-    transition: .2s;
-    margin: 3px;
-    cursor: pointer;
-}
-
-.brand-icons li button {
-    background-color: #fff;
-    border: none;
-    margin: 3px;
-    transition: .2s;
-}
-
-.brand-icons li button:focus {
-    transition: .2s;
-    margin: 3px;
-    background-color: #fff;
-}
-
-
-/* .brand-icons {
-
-} */
 
 /* Scrollbar native */
 
 ::-webkit-scrollbar {
-    width: 5px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--main-brand-color);
+  background: var(--main-brand-color);
 }

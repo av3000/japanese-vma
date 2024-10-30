@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import { Button, Modal } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { connect } from "react-redux";
+import React, { useState, useEffect, useCallback } from "react";
+import { Button, ButtonGroup, Modal } from "react-bootstrap";
+import { Link, useParams, useHistory } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 import { apiCall } from "../../services/api";
 import DefaultArticleImg from "../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
@@ -9,497 +9,495 @@ import AvatarImg from "../../assets/images/avatar-woman.svg";
 import Spinner from "../../assets/images/spinner.gif";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
-import { BASE_URL, HTTP_METHOD } from "../../shared/constants";
+import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "../../shared/constants";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import { setSelectedArticle } from "../../store/actions/articles";
 
-class ArticleDetails extends Component {
-  _isMounted = false;
+const LIST_ACTIONS = {
+  ADD_ITEM: "add",
+  REMOVE_ITEM: "remove",
+};
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      article: null,
-      lists: null,
-      showBookmark: false,
-      showPdf: false,
-      showDelete: false,
-      showStatus: false,
-      tempStatus: false,
-      isLoading: true,
+const ArticleModalTypes = {
+  SHOW_STATUS: "showStatus",
+  SHOW_DELETE: "showDelete",
+  SHOW_PDF: "showPdf",
+  SHOW_BOOKMARK: "showBookmark",
+};
+
+const ArticleDetails = () => {
+  const [article, setArticle] = useState(null);
+  const [userLists, setUserLists] = useState([]);
+  const [modals, setModals] = useState({
+    showBookmark: false,
+    showPdf: false,
+    showDelete: false,
+    showStatus: false,
+  });
+  const [articleTempStatus, setArticleTempStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { article_id } = useParams();
+  const history = useHistory();
+  const dispatch = useDispatch();
+
+  const currentUser = useSelector((state) => state.currentUser);
+  const selectedArticle = useSelector(
+    (state) => state.articles.selectedArticle
+  );
+
+  useEffect(() => {
+    const fetchArticleDetails = async () => {
+      try {
+        const url = `${BASE_URL}/api/article/${article_id}`;
+        const data = await apiCall(HTTP_METHOD.GET, url);
+        const { article } = data;
+        if (!article) {
+          history.push("/articles");
+          return;
+        }
+        dispatch(setSelectedArticle(article));
+        setArticle(article);
+        setArticleTempStatus(article.status);
+      } catch (error) {
+        console.error(error);
+        history.push("/articles");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    this.likeArticle = this.likeArticle.bind(this);
-    this.addComment = this.addComment.bind(this);
-    this.deleteComment = this.deleteComment.bind(this);
-    this.likeComment = this.likeComment.bind(this);
-    this.editComment = this.editComment.bind(this);
-    this.deleteArticle = this.deleteArticle.bind(this);
-    this.downloadKanjisPdf = this.downloadKanjisPdf.bind(this);
-    this.downloadWordsPdf = this.downloadWordsPdf.bind(this);
-    this.toggleStatus = this.toggleStatus.bind(this);
-    this.handleStatusChange = this.handleStatusChange.bind(this);
-
-    this.openBookmarkModal = this.openBookmarkModal.bind(this);
-    this.openPdfModal = this.openPdfModal.bind(this);
-    this.openDeleteModal = this.openDeleteModal.bind(this);
-    this.openStatusModal = this.openStatusModal.bind(this);
-
-    this.handleBookmarkClose = this.handleBookmarkClose.bind(this);
-    this.handlePdfClose = this.handlePdfClose.bind(this);
-    this.handleDeleteModalClose = this.handleDeleteModalClose.bind(this);
-    this.handleStatusModalClose = this.handleStatusModalClose.bind(this);
-
-    this.getUserArticleLists = this.getUserArticleLists.bind(this);
-  }
-
-  articleId = this.props.match.params.article_id;
-
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
-
-  async componentDidMount() {
-    this._isMounted = true;
-
-    if (this._isMounted) {
-      const { selectedArticle } = this.props;
-
-      if (!selectedArticle) {
-        await this.getArticleDetails();
-        if (this.props.currentUser.isAuthenticated) {
-          await this.getUserRelationsToArticle();
-          await this.getUserArticleLists();
-        }
-      } else {
-        this.setState({ article: selectedArticle });
-        if (this.props.currentUser.isAuthenticated) {
-          await this.getUserRelationsToArticle();
-          await this.getUserArticleLists();
-        }
+    if (!selectedArticle) {
+      fetchArticleDetails();
+      if (currentUser.isAuthenticated) {
+        fetchUserRelationsToArticle();
+        fetchUserArticleLists();
+      }
+    } else {
+      setArticle(selectedArticle);
+      if (currentUser.isAuthenticated) {
+        fetchUserRelationsToArticle();
+        fetchUserArticleLists();
       }
     }
-  }
+  }, [
+    article_id,
+    currentUser.isAuthenticated,
+    dispatch,
+    history,
+    selectedArticle,
+  ]);
 
-  async getArticleDetails() {
-    try {
-      const url = `${BASE_URL}/api/article/${this.articleId}`;
-      const data = await apiCall(HTTP_METHOD.GET, url);
-      const { article } = data;
-
-      if (!article) {
-        this.props.history.push("/articles");
-        return;
-      }
-
-      this.props.setSelectedArticle(article);
-
-      this.setState({
-        article,
-        tempStatus: article.status,
-        isLoading: true,
-      });
-    } catch (error) {
-      console.log(error);
-      this.setState({ isLoading: false });
-      this.props.history.push("/articles");
-    }
-  }
-
-  async getUserRelationsToArticle() {
+  const fetchUserRelationsToArticle = async () => {
     try {
       const userLike = await apiCall(
         HTTP_METHOD.POST,
-        `${BASE_URL}/api/article/${this.articleId}/checklike`
+        `${BASE_URL}/api/article/${article_id}/checklike`
       );
 
-      this.setState((prevState) => ({
-        article: {
-          ...prevState.article,
-          isLiked: userLike.isLiked,
-          comments: prevState.article.comments.map((comment) => ({
-            ...comment,
-            isLiked: comment.likes.some(
-              (like) => like.user_id === this.props.currentUser.user.id
-            ),
-          })),
-        },
-        isLoading: false,
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        isLiked: userLike.isLiked,
+        comments: prevArticle.comments.map((comment) => ({
+          ...comment,
+          isLiked: comment.likes.some(
+            (like) => like.user_id === currentUser.user.id
+          ),
+        })),
       }));
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
-  async getUserArticleLists() {
+  const fetchUserArticleLists = async () => {
     try {
-      this.setState({ isLoading: true });
+      setIsLoading(true);
       const url = `${BASE_URL}/api/user/lists/contain`;
       const data = await apiCall(HTTP_METHOD.POST, url, {
-        elementId: this.articleId,
+        elementId: article_id,
       });
-      this.setState({
-        lists: data.lists.filter((list) => list.type === 9),
-        isLoading: false,
-      });
+
+      const articleListsContainingArticle = data.lists.filter(
+        (list) => list.type === ObjectTemplates.ARTICLES
+      );
+
+      setUserLists(articleListsContainingArticle);
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        isBookmarked: articleListsContainingArticle.length > 0,
+      }));
+      setIsLoading(false);
     } catch (error) {
       console.log(error);
-      this.setState({ isLoading: false });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  async deleteArticle() {
+  const addToOrRemoveFromList = async (id, action) => {
+    try {
+      const endpoint =
+        action === LIST_ACTIONS.ADD_ITEM
+          ? "additemwhileaway"
+          : "removeitemwhileaway";
+      const url = `${BASE_URL}/api/user/list/${endpoint}`;
+
+      await apiCall(HTTP_METHOD.POST, url, {
+        listId: id,
+        elementId: article_id,
+      });
+
+      setUserLists((prevUserLists) =>
+        prevUserLists.map((userList) =>
+          userList.id === id
+            ? {
+                ...userList,
+                elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
+              }
+            : userList
+        )
+      );
+
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        isBookmarked: action === LIST_ACTIONS.ADD_ITEM,
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const downloadPdf = async (type) => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
+      return;
+    }
+    const pdfType = type === "kanji" ? "kanjis-pdf" : "words-pdf";
+    const loaderMessage = `Creating a ${type} PDF, please wait.`;
+    dispatch(showLoader(loaderMessage));
+    try {
+      const url = `${BASE_URL}/api/article/${article_id}/${pdfType}`;
+      const res = await apiCall(HTTP_METHOD.GET, url, { responseType: "blob" });
+      const file = new Blob([res], { type: "application/pdf" });
+      const fileURL = URL.createObjectURL(file);
+      window.open(fileURL);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      dispatch(hideLoader());
+    }
+  };
+
+  const toggleModal = (modalName) => {
+    setModals((prevModals) => ({
+      ...prevModals,
+      [modalName]: !prevModals[modalName],
+    }));
+  };
+
+  const handleStatusChange = async () => {
+    try {
+      toggleModal(ArticleModalTypes.SHOW_STATUS);
+      const res = await apiCall(
+        HTTP_METHOD.POST,
+        `/api/article/${article_id}/setstatus`,
+        {
+          status: articleTempStatus,
+        }
+      );
+      setArticle((prevArticle) => ({ ...prevArticle, status: res.newStatus }));
+      setArticleTempStatus(res.newStatus);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleLikeArticle = async () => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
+      return;
+    }
+    try {
+      const endpoint = article.isLiked ? "unlike" : "like";
+      const url = `${BASE_URL}/api/article/${article.id}/${endpoint}`;
+      await apiCall(HTTP_METHOD.POST, url);
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        isLiked: !prevArticle.isLiked,
+        likesTotal: prevArticle.likesTotal + (endpoint === "like" ? 1 : -1),
+      }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+    }
+  };
+
+  const handleAddComment = useCallback(
+    (comment) => {
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        comments: [comment, ...prevArticle.comments],
+      }));
+    },
+    [setArticle]
+  );
+
+  const handleDeleteComment = async (commentId) => {
     try {
       await apiCall(
         HTTP_METHOD.DELETE,
-        `/api/article/${this.state.article.id}`
+        `/api/article/${article_id}/comment/${commentId}`
       );
-      this.props.history.push("/articles");
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async addToList(id) {
-    try {
-      this.setState({ show: !this.state.show });
-      const url = `${BASE_URL}/api/user/list/additemwhileaway`;
-      await apiCall(HTTP_METHOD.POST, url, {
-        listId: id,
-        elementId: this.articleId,
-      });
-
-      this.setState((prevState) => ({
-        lists: prevState.lists.find((list) => {
-          if (list.id === id) {
-            list.elementBelongsToList = true;
-          }
-        }),
+      setArticle((prevArticle) => ({
+        ...prevArticle,
+        comments: prevArticle.comments.filter(
+          (comment) => comment.id !== commentId
+        ),
       }));
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
-  }
+  };
 
-  async removeFromList(id) {
-    try {
-      this.setState({ show: !this.state.show });
-      const url = `${BASE_URL}/api/user/list/removeitemwhileaway`;
-      await apiCall(HTTP_METHOD.POST, url, {
-        listId: id,
-        elementId: this.articleId,
-      });
-
-      this.setState((prevState) => ({
-        lists: prevState.lists.find((list) => {
-          if (list.id === id) {
-            list.elementBelongsToList = false;
-          }
-        }),
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async likeArticle(id) {
-    try {
-      if (!this.props.currentUser.isAuthenticated) {
-        this.props.history.push("/login");
-        return;
-      }
-
-      this.setState({ isLoading: true });
-
-      const endpoint = this.state.article.isLiked === true ? "unlike" : "like";
-      const url = `${BASE_URL}/api/article/${id}/${endpoint}`;
-      await apiCall(HTTP_METHOD.POST, url);
-
-      this.setState((prevState) => ({
-        article: {
-          ...prevState.article,
-          isLiked: !prevState.article.isLiked,
-          likesTotal: (prevState.article.likesTotal +=
-            endpoint === "like" ? 1 : -1),
-        },
-        isLoading: false,
-      }));
-    } catch (error) {
-      console.log(error);
-      this.setState({ isLoading: false });
-    }
-  }
-
-  async downloadKanjisPdf() {
-    try {
-      if (!this.props.currentUser.isAuthenticated) {
-        this.props.history.push("/login");
-        return;
-      }
-
-      this.props.showLoader("Creating a PDF, please wait.");
-      const url = `${BASE_URL}/api/article/${this.articleId}/kanjis-pdf`;
-      const res = await apiCall(HTTP_METHOD.GET, url, {
-        responseType: "blob",
-      });
-
-      this.props.hideLoader();
-      const file = new Blob([res], { type: "application/pdf" });
-      const fileURL = URL.createObjectURL(file);
-      window.open(fileURL);
-    } catch (error) {
-      console.log(error);
-      this.props.hideLoader();
-    }
-  }
-
-  async downloadWordsPdf() {
-    try {
-      if (!this.props.currentUser.isAuthenticated) {
-        this.props.history.push("/login");
-        return;
-      }
-      this.props.showLoader("Creating a PDF, please wait.");
-      const url = `${BASE_URL}/api/article/${this.articleId}/words-pdf`;
-      const res = await apiCall(HTTP_METHOD.GET, url, {
-        responseType: "blob",
-      });
-      this.props.hideLoader();
-      const file = new Blob([res], { type: "application/pdf" });
-      const fileURL = URL.createObjectURL(file);
-      window.open(fileURL);
-    } catch (error) {
-      console.log(error);
-      this.props.hideLoader();
-    }
-  }
-
-  async toggleStatus() {
-    try {
-      this.handleStatusModalClose();
-      const res = await apiCall(
-        HTTP_METHOD.POST,
-        `/api/article/${this.articleId}/setstatus`,
-        {
-          status: this.state.tempStatus,
-        }
-      );
-
-      this.setState({
-        article: {
-          ...this.state.article,
-          status: res.newStatus,
-        },
-        tempStatus: res.newStatus,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  handleStatusChange(e) {
-    this.setState({ tempStatus: parseInt(e.target.value) });
-  }
-
-  openStatusModal() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
+  const handleLikeComment = async (commentId) => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
       return;
     }
-
-    this.setState({ showStatus: !this.state.showStatus });
-  }
-
-  handleStatusModalClose() {
-    this.setState({ showStatus: !this.state.showStatus });
-  }
-
-  openBookmarkModal() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-      return;
-    }
-
-    this.setState({ showBookmark: !this.state.showBookmark });
-  }
-
-  openPdfModal() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-      return;
-    }
-
-    this.setState({ showPdf: !this.state.showPdf });
-  }
-
-  handleDeleteModalClose() {
-    this.setState({ showDelete: !this.state.showDelete });
-  }
-
-  openDeleteModal() {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-      return;
-    }
-
-    this.setState({ showDelete: !this.state.showDelete });
-  }
-
-  handleBookmarkClose() {
-    this.setState({ showBookmark: !this.state.showBookmark });
-  }
-
-  handlePdfClose() {
-    this.setState({ showPdf: !this.state.showPdf });
-  }
-
-  async likeComment(commentId) {
     try {
-      if (!this.props.currentUser.isAuthenticated) {
-        this.props.history.push("/login");
-        return;
-      }
-
-      this.setState({ isLoading: true });
-
-      const theComment = this.state.article.comments.find(
+      const theComment = article.comments.find(
         (comment) => comment.id === commentId
       );
-
-      const endpoint = theComment.isLiked === true ? "unlike" : "like";
-      const url = `${BASE_URL}/api/article/${this.articleId}/comment/commentId/${endpoint}`;
-
+      const endpoint = theComment.isLiked ? "unlike" : "like";
+      const url = `${BASE_URL}/api/article/${article_id}/comment/${commentId}/${endpoint}`;
       await apiCall(HTTP_METHOD.POST, url);
 
-      this.setState((prevState) => {
-        const updatedComments = prevState.article.comments.map((comment) => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likesTotal: comment.likesTotal + (endpoint === "like" ? 1 : -1),
-            };
-          }
-          return comment;
-        });
-
-        return {
-          article: {
-            ...prevState.article,
-            comments: updatedComments,
-          },
-          isLoading: false,
-        };
+      setArticle((prevArticle) => {
+        const updatedComments = prevArticle.comments.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                isLiked: !comment.isLiked,
+                likesTotal: comment.likesTotal + (endpoint === "like" ? 1 : -1),
+              }
+            : comment
+        );
+        return { ...prevArticle, comments: updatedComments };
       });
     } catch (error) {
-      console.log(error);
-      this.setState({ isLoading: false });
+      console.error(error);
     }
-  }
+  };
 
-  addComment(comment) {
-    this.setState((prevState) => ({
-      article: {
-        ...prevState.article,
-        comments: [comment, ...prevState.article.comments],
-      },
-    }));
-  }
-
-  async deleteComment(commentId) {
-    try {
-      this.setState({ isLoading: true });
-
-      await apiCall(
-        "delete",
-        `/api/article/${this.articleId}/comment/${commentId}`
-      );
-
-      this.setState((prevState) => ({
-        article: {
-          comments: prevState.article.comments.filter(
-            (comment) => comment.id !== commentId
-          ),
-        },
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  editComment(commentId) {
+  const editComment = (commentId) => {
     console.log(commentId);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container text-center">
+        <img src={Spinner} alt="Loading..." />
+      </div>
+    );
   }
 
-  render() {
-    const { article } = this.state;
-    const { currentUser } = this.props;
-    const comments = article ? article.comments : "";
-
-    let articleStatus = "";
-    let articlePublicity = "";
-
-    if (this.state.article) {
-      if (this.state.article.status === 0) {
-        articleStatus = "pending";
-      } else if (this.state.article.status === 1) {
-        articleStatus = "reviewing";
-      } else if (this.state.article.status === 2) {
-        articleStatus = "rejected";
-      } else if (this.state.article.status === 3) {
-        articleStatus = "approved";
-      }
-
-      if (this.state.article.publicity === 1) {
-        articlePublicity = "public | ";
-      } else {
-        articlePublicity = "private | ";
-      }
-    }
-
-    const singleArticle = article ? (
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-lg-8 ">
-            <span className="row mt-4">
-              <Link to="/articles" className="tag-link">
-                {" "}
-                <i className="fas fa-arrow-left"></i> Back
-              </Link>
-            </span>
-            <h1 className="mt-4">{article.title_jp}</h1>
-            <p className="text-muted">
-              Posted on {article.jp_year} {article.jp_month} {article.jp_day}{" "}
-              {article.jp_hour}
-              <br />
-              <span>{article.viewsTotal + 40} views</span> <br />
-              {currentUser.user.id === article.user_id ||
-              currentUser.user.isAdmin
-                ? articlePublicity
-                : ""}
-              {currentUser.user.id === article.user_id ||
-              currentUser.user.isAdmin
-                ? articleStatus
-                : ""}
-            </p>
-            <ul className="brand-icons mr-1 float-right d-flex">
-              {currentUser.user.isAdmin ? (
-                <li onClick={this.openStatusModal}>
-                  <button>Review</button>
-                </li>
+  const renderAddModal = () => {
+    return (
+      <Modal
+        show={modals.showBookmark}
+        onHide={() => toggleModal(ArticleModalTypes.SHOW_BOOKMARK)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Choose Article List to add</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {userLists.map((list) => (
+            <div key={list.id} className="d-flex justify-content-between">
+              <Link to={`/list/${list.id}`}>{list.title}</Link>
+              {list.elementBelongsToList ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() =>
+                    addToOrRemoveFromList(list.id, LIST_ACTIONS.REMOVE_ITEM)
+                  }
+                >
+                  Remove
+                </Button>
               ) : (
-                ""
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() =>
+                    addToOrRemoveFromList(list.id, LIST_ACTIONS.ADD_ITEM)
+                  }
+                >
+                  Add
+                </Button>
               )}
-              {currentUser.user.id === article.user_id ? (
-                <li onClick={this.openDeleteModal}>
+            </div>
+          ))}
+          <small>
+            {" "}
+            <Link to="/newlist">Create a new list?</Link>{" "}
+          </small>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => toggleModal(ArticleModalTypes.SHOW_BOOKMARK)}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  const renderPdfModal = () => {
+    return (
+      <Modal
+        show={modals.showPdf}
+        onHide={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Choose which data you want to download.</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex justify-content-center">
+          <Button
+            variant="outline-primary"
+            className="btn btn-outline brand-button mx-2"
+            onClick={() => downloadPdf("kanji")}
+          >
+            Kanji PDF
+          </Button>
+          <Button
+            variant="outline-primary"
+            className="btn btn-outline brand-button mx-2"
+            onClick={() => downloadPdf("words")}
+          >
+            Words PDF
+          </Button>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  const renderDeleteModal = () => {
+    const handleDeleteArticle = async () => {
+      try {
+        await apiCall(HTTP_METHOD.DELETE, `/api/article/${article.id}`);
+        history.push("/articles");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    return (
+      <Modal
+        show={modals.showDelete}
+        onHide={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Are You Sure?</Modal.Title>
+        </Modal.Header>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
+          >
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteArticle}>
+            Yes, delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  const renderStatusModal = () => {
+    return (
+      <Modal
+        show={modals.showStatus}
+        onHide={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Review Article Status</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <select
+            value={articleTempStatus}
+            onChange={(e) => setArticleTempStatus(parseInt(e.target.value))}
+            className="form-control"
+          >
+            <option value={0}>Pending</option>
+            <option value={1}>Review</option>
+            <option value={2}>Reject</option>
+            <option value={3}>Approve</option>
+          </select>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
+          >
+            Cancel
+          </Button>
+          <Button variant="success" onClick={handleStatusChange}>
+            Submit
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  return (
+    <div className="container">
+      {/* Article Content */}
+      <div className="row justify-content-center">
+        <div className="col-lg-8 ">
+          <span className="row mt-4">
+            <Link to="/articles" className="tag-link">
+              {" "}
+              <i className="fas fa-arrow-left"></i> Back
+            </Link>
+          </span>
+          <h1 className="mt-4">{article.title_jp}</h1>
+          <p className="text-muted">
+            Posted on {article.jp_year} {article.jp_month} {article.jp_day}{" "}
+            {article.jp_hour}
+            <br />
+            <span>{article.viewsTotal} views</span> <br />
+            {(currentUser.user.id === article.user_id ||
+              currentUser.user.isAdmin) &&
+              (article.publicity === 1 ? "public | " : "private | ")}
+            {(currentUser.user.id === article.user_id ||
+              currentUser.user.isAdmin) &&
+              ["pending", "reviewing", "rejected", "approved"][article.status]}
+          </p>
+          {/* Action Buttons */}
+          <ul className="brand-icons mr-1 float-right d-flex">
+            {currentUser.user.isAdmin && (
+              <li onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}>
+                <button>Review</button>
+              </li>
+            )}
+            {currentUser.user.id === article.user_id && (
+              <>
+                <li onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}>
                   <button>
                     <i className="far fa-trash-alt fa-lg"></i>
                   </button>
                 </li>
-              ) : (
-                ""
-              )}
-              {currentUser.user.id === article.user_id ? (
                 <Link to={`/article/edit/${article.id}`}>
                   <li>
                     <button>
@@ -507,297 +505,115 @@ class ArticleDetails extends Component {
                     </button>
                   </li>
                 </Link>
-              ) : (
-                ""
-              )}
-            </ul>
-            <img
-              className="img-fluid rounded mb-3"
-              src={DefaultArticleImg}
-              alt="default-article-img"
-            />
-            <p className="lead">{article.content_jp} </p>
-            <br />
-            <p>
-              {article.hashtags
-                ? article.hashtags.map((tag) => (
-                    <span key={tag.id} className="tag-link" to="/">
-                      {tag.content}{" "}
-                    </span>
-                  ))
-                : "no hashtags yet"}
-              <br />{" "}
-              <a
-                href={article.source_link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                original source
-              </a>
-            </p>
-            <hr />
-            <div>
-              <div className="mr-1 float-left d-flex">
-                <img src={AvatarImg} alt="book-japanese" />
-                <p className="ml-3 mt-3">created by {article.userName}</p>
-              </div>
-              <div className="float-right d-flex">
-                <p className="ml-3 mt-3">{article.likesTotal} likes &nbsp;</p>
-                <ul className="brand-icons float-right d-flex">
-                  {article.isLiked ? (
-                    <li
-                      onClick={() => this.likeArticle(article.id)}
-                      disabled={this.state.loading}
-                    >
-                      <button>
-                        <i className="fas fa-thumbs-up"></i>
-                      </button>
-                    </li>
-                  ) : (
-                    <li
-                      onClick={() => this.likeArticle(article.id)}
-                      disabled={this.state.loading}
-                    >
-                      <button>
-                        <i className="far fa-thumbs-up"></i>
-                      </button>
-                    </li>
-                  )}
-                  <li onClick={this.openBookmarkModal}>
-                    <button>
-                      <i className="far fa-bookmark fa-lg"></i>
-                    </button>
-                  </li>
-                  <li onClick={this.openPdfModal}>
-                    <button>
-                      <i className="fas fa-file-download fa-lg"></i>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    ) : (
-      ""
-    );
-
-    const addModal = this.state.lists
-      ? this.state.lists.map((list) => {
-          return (
-            <div key={list.id}>
-              <div className="col-9">
-                {" "}
-                <Link to={`/list/${list.id}`}>{list.title}</Link>
-                {list.elementBelongsToList ? (
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={this.removeFromList.bind(this, list.id)}
-                  >
-                    -
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm btn-light"
-                    onClick={this.addToList.bind(this, list.id)}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      : "";
-
-    return (
-      <div className="container">
-        {this.state.article ? (
-          singleArticle
-        ) : (
-          <div className="container">
-            <div className="row justify-content-center">
-              <img src={Spinner} alt="spinner loading" />
-            </div>
-          </div>
-        )}
-        <br />
-        <div className="row justify-content-center">
-          {article ? (
-            currentUser.isAuthenticated ? (
-              <div className="col-lg-8">
-                <hr />
-                <h6>Share what's on your mind</h6>
-                <CommentForm
-                  addComment={this.addComment}
-                  currentUser={currentUser}
-                  objectId={this.state.article.id}
-                  objectType="article"
-                />
-              </div>
-            ) : (
-              <div className="col-lg-8">
-                <hr />
-                <h6>
-                  You need to
-                  <Link to="/login"> login </Link>
-                  to comment
-                </h6>
-              </div>
-            )
-          ) : (
-            ""
-          )}
-          <div className="col-lg-8">
-            {comments ? (
-              <CommentList
-                objectId={this.state.article.id}
-                currentUser={currentUser}
-                comments={comments}
-                deleteComment={this.deleteComment}
-                likeComment={this.likeComment}
-                editComment={this.editComment}
-              />
-            ) : (
-              ""
+              </>
             )}
+          </ul>
+          <img
+            className="img-fluid rounded mb-3"
+            src={DefaultArticleImg}
+            alt="default-article-img"
+          />
+          <p className="lead">{article.content_jp}</p>
+          <p>
+            {article.hashtags
+              ? article.hashtags.map((tag) => (
+                  <span key={tag.id} className="tag-link">
+                    {tag.content}{" "}
+                  </span>
+                ))
+              : "no hashtags yet"}
+            <br />
+            <a
+              href={article.source_link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              original source
+            </a>
+          </p>
+          <hr />
+          <div>
+            <div className="mr-1 float-left d-flex">
+              <img src={AvatarImg} alt="book-japanese" />
+              <p className="ml-3 mt-3">created by {article.userName}</p>
+            </div>
+            <div className="float-right d-flex align-items-center">
+              <p className="ml-3 mt-3">{article.likesTotal} likes &nbsp;</p>
+              <ButtonGroup aria-label="Article actions" className="brand-icons">
+                <Button
+                  onClick={handleLikeArticle}
+                  variant="outline-primary"
+                  className={
+                    article.isLiked
+                      ? "btn btn-outline brand-button liked-button"
+                      : "btn btn-outline brand-button"
+                  }
+                  disabled={isLoading}
+                >
+                  <i
+                    className={
+                      article.isLiked ? "fas fa-thumbs-up" : "far fa-thumbs-up"
+                    }
+                  ></i>
+                </Button>
+                <Button
+                  onClick={() => toggleModal(ArticleModalTypes.SHOW_BOOKMARK)}
+                  className="btn btn-outline brand-button"
+                  variant="outline-primary"
+                >
+                  <i
+                    className={
+                      article.isBookmarked
+                        ? "fas fa-bookmark"
+                        : "far fa-bookmark"
+                    }
+                  ></i>
+                </Button>
+                <Button
+                  onClick={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
+                  className="btn btn-outline brand-button"
+                  variant="outline-primary"
+                >
+                  <i className="fas fa-file-download fa-lg"></i>
+                </Button>
+              </ButtonGroup>
+            </div>
           </div>
         </div>
-
-        {this.state.lists ? (
-          <Modal
-            show={this.state.showBookmark}
-            onHide={this.handleBookmarkClose}
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Choose Article List to add</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {addModal}
-              <small>
-                {" "}
-                <Link to="/newlist">Create a new list?</Link>{" "}
-              </small>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={this.handleBookmarkClose}>
-                Close
-              </Button>
-            </Modal.Footer>
-          </Modal>
-        ) : (
-          ""
-        )}
-
-        <Modal show={this.state.showPdf} onHide={this.handlePdfClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Choose which data you want to download.</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <button
-              className="btn btn-outline brand-button"
-              onClick={this.downloadKanjisPdf}
-            >
-              {" "}
-              Kanji PDF{" "}
-            </button>
-            <button
-              className="btn btn-outline brand-button"
-              onClick={this.downloadWordsPdf}
-            >
-              {" "}
-              Words PDF{" "}
-            </button>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handlePdfClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
-
-        <Modal
-          show={this.state.showDelete}
-          onHide={this.handleDeleteModalClose}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Are You Sure?</Modal.Title>
-          </Modal.Header>
-          <Modal.Footer>
-            <div className="col-12">
-              <Button
-                variant="secondary"
-                className="float-left"
-                onClick={this.handleDeleteModalClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                className="float-right"
-                onClick={this.deleteArticle}
-              >
-                Yes, delete
-              </Button>
-            </div>
-          </Modal.Footer>
-        </Modal>
-
-        {article ? (
-          <Modal
-            show={this.state.showStatus}
-            onHide={this.handleStatusModalClose}
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Review of the article status</Modal.Title>
-            </Modal.Header>
-            <Modal.Footer>
-              <div className="col-12">
-                <select
-                  name="tempStatus"
-                  value={this.state.tempStatus}
-                  className="form-control form-control-sm w-75 mb-2"
-                  onChange={this.handleStatusChange}
-                >
-                  <option value="0">Pending</option>
-                  <option value="1">Review</option>
-                  <option value="2">Reject</option>
-                  <option value="3">Approve</option>
-                </select>
-                <Button
-                  variant="secondary"
-                  className="float-left"
-                  onClick={this.handleStatusModalClose}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="success"
-                  className="float-right"
-                  onClick={this.toggleStatus}
-                >
-                  Submit
-                </Button>
-              </div>
-            </Modal.Footer>
-          </Modal>
-        ) : (
-          ""
-        )}
       </div>
-    );
-  }
-}
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <hr />
+          {currentUser.isAuthenticated ? (
+            <>
+              <h6>Share what's on your mind</h6>
+              <CommentForm
+                addComment={handleAddComment}
+                currentUser={currentUser}
+                objectId={article.id}
+                objectType="article"
+              />
+            </>
+          ) : (
+            <h6>
+              You need to <Link to="/login">login</Link> to comment
+            </h6>
+          )}
+          <CommentList
+            objectId={article.id}
+            currentUser={currentUser}
+            comments={article.comments}
+            likeComment={handleLikeComment}
+            deleteComment={handleDeleteComment}
+          />
+        </div>
+      </div>
+      {renderAddModal()}
+      {renderPdfModal()}
+      {renderDeleteModal()}
+      {renderStatusModal()}
+    </div>
+  );
+};
 
-const mapStateToProps = (state) => ({
-  selectedArticle: state.articles.selectedArticle,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  setSelectedArticle: (article) => dispatch(setSelectedArticle(article)),
-  showLoader: (message) => dispatch(showLoader(message)),
-  hideLoader: () => dispatch(hideLoader()),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ArticleDetails);
+export default ArticleDetails;
