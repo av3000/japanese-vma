@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import "./Homepage.css";
 import ExploreArticleTimeline from "../article/ExploreArticleTimeline";
 import ExploreListTimeline from "../list/ExploreListTimeline";
@@ -7,8 +9,12 @@ import InstagramIcon from "../../assets/icons/ig-icon.svg";
 import FacebookIcon from "../../assets/icons/fb-icon.svg";
 import LearnmoreIcon from "../../assets/icons/expand-more-icon.svg";
 
-const Homepage = ({ currentUser }) => {
-  if (!currentUser.isAuthenticated) {
+const Homepage = () => {
+  const isAuthenticated = useSelector(
+    (state) => state.currentUser.isAuthenticated
+  );
+
+  if (!isAuthenticated) {
     return (
       <div className="fullpage">
         <div className="homepage">

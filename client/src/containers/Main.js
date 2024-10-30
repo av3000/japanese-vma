@@ -43,11 +43,7 @@ const Main = (props) => {
   return (
     <div className="">
       <Switch>
-        <Route
-          exact
-          path="/"
-          render={(props) => <Homepage currentUser={currentUser} {...props} />}
-        />
+        <Route exact path="/" render={(props) => <Homepage {...props} />} />
         <Route
           exact
           path="/register"
@@ -82,22 +78,16 @@ const Main = (props) => {
           }}
         />
         {/* Articles */}
-        <PrivateRoute
-          exact
-          path="/newarticle"
-          currentUser={currentUser}
-          component={ArticleForm}
-        />
+        <PrivateRoute exact path="/newarticle" component={ArticleForm} />
         <PrivateRoute
           exact
           path="/article/edit/:article_id"
           component={ArticleEdit}
-          currentUser={currentUser}
         />
         <Route
           exact
           path="/articles"
-          render={(props) => {
+          render={() => {
             return <ArticleTimeline />;
           }}
         />
@@ -105,30 +95,24 @@ const Main = (props) => {
           exact
           path="/article/:article_id"
           render={(props) => {
-            return <ArticleDetails currentUser={currentUser} {...props} />;
+            return <ArticleDetails {...props} />;
           }}
         />
         {/* Custom Lists */}
         <PrivateRoute
           exact
           path="/newlist"
-          currentUser={currentUser}
           component={ListForm}
           componentProps={{
             removeError: removeError,
             errors: errors,
           }}
         />
-        <PrivateRoute
-          exact
-          path="/list/edit/:list_id"
-          component={ListEdit}
-          currentUser={currentUser}
-        />
+        <PrivateRoute exact path="/list/edit/:list_id" component={ListEdit} />
         <Route
           exact
           path="/lists"
-          render={(props) => {
+          render={() => {
             return <ListTimeline />;
           }}
         />
@@ -143,7 +127,7 @@ const Main = (props) => {
         <Route
           exact
           path="/radicals"
-          render={(props) => {
+          render={() => {
             return <RadicalTimeline currentUser={currentUser} />;
           }}
         />
@@ -158,7 +142,7 @@ const Main = (props) => {
         <Route
           exact
           path="/kanjis"
-          render={(props) => {
+          render={() => {
             return <KanjiTimeline />;
           }}
         />
@@ -173,7 +157,7 @@ const Main = (props) => {
         <Route
           exact
           path="/words"
-          render={(props) => {
+          render={() => {
             return <WordTimeline />;
           }}
         />
@@ -188,7 +172,7 @@ const Main = (props) => {
         <Route
           exact
           path="/sentences"
-          render={(props) => {
+          render={() => {
             return <SentenceTimeline />;
           }}
         />
@@ -203,7 +187,7 @@ const Main = (props) => {
         <Route
           exact
           path="/community"
-          render={(props) => {
+          render={() => {
             return <PostTimeline />;
           }}
         />
@@ -218,12 +202,10 @@ const Main = (props) => {
           exact
           path="/community/edit/:post_id"
           component={PostEdit}
-          currentUser={currentUser}
         />
         <PrivateRoute
           exact
           path="/newpost"
-          currentUser={currentUser}
           component={PostForm}
           componentProps={{
             removeError: removeError,
@@ -231,12 +213,7 @@ const Main = (props) => {
           }}
         />
         {/* Dashboard */}
-        <PrivateRoute
-          exact
-          path="/dashboard"
-          currentUser={currentUser}
-          component={DashboardTimeline}
-        />
+        <PrivateRoute exact path="/dashboard" component={DashboardTimeline} />
 
         {/* Not found component */}
         <Route component={PageNotFound} />

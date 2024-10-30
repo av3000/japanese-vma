@@ -1,8 +1,8 @@
-import React from 'react';
-import DashboardList from '../../containers/DashboardList';
+import React from "react";
+import DashboardList from "../../containers/DashboardList";
 
-const DashboardTimeline = ( {currentUser, props} ) => {
-    return <DashboardList currentUser={currentUser} {...props} />
+const DashboardTimeline = () => {
+  return <DashboardList />;
 };
 
 export default DashboardTimeline;

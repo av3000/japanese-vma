@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Moment from "react-moment";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import { apiCall } from "../services/api";
 import DashboardArticleItem from "../components/dashboard/DashboardArticleItem";
@@ -19,7 +20,8 @@ const DASHBOARD_TYPES = {
   COMMON_USER: "COMMON_USER",
 };
 
-const DashboardList = ({ currentUser }) => {
+const DashboardList = () => {
+  const currentUser = useSelector((state) => state.currentUser);
   const [currentResource, setCurrentResource] = useState(RESOURCE_TYPES.LISTS);
   const [lists, setLists] = useState([]);
   const [articles, setArticles] = useState([]);
