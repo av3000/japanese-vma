@@ -245,7 +245,7 @@ npm start
 - [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
 - [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
 - [ ] Strengthen authorization with more persistant implementation..
-- [ ] Implement react-query for query-based approach of server-data facing for frontend
+- [ ] Implement react-query for query-based approach of managing server-data facing for frontend and fixing issues like cache, refetch, cancel requests after unmount.
 - [ ] Create nhk easy news scrapper to get each days news.
 - [ ] re-vamp styling, especially for small UI elements like links, buttons with icons, screen spacings.
 - [ ] Design a way to offload scanning algorithm from client to server.

@@ -4,10 +4,11 @@ import ListKanjisList from "./ListKanjisList";
 import ListWordsList from "./ListWordsList";
 import ListSentencesList from "./ListSentencesList";
 import ListArticlesList from "./ListArticlesList";
+import ObjectTemplates from "../../shared/constants";
 
 class ListItems extends Component {
   render() {
-    let {
+    const {
       objects,
       listType,
       removeFromList,
@@ -17,8 +18,8 @@ class ListItems extends Component {
     } = this.props;
 
     switch (listType) {
-      case 1:
-      case 5:
+      case ObjectTemplates.KNOWNRADICALS:
+      case ObjectTemplates.RADICALS:
         return (
           <ListRadicalList
             editToggle={editToggle}
@@ -29,8 +30,8 @@ class ListItems extends Component {
             heading="Radicals"
           />
         );
-      case 2:
-      case 6:
+      case ObjectTemplates.KNOWNKANJIS:
+      case ObjectTemplates.KANJIS:
         return (
           <ListKanjisList
             editToggle={editToggle}
@@ -41,8 +42,8 @@ class ListItems extends Component {
             heading="Kanjis"
           />
         );
-      case 3:
-      case 7:
+      case ObjectTemplates.KNOWNWORDS:
+      case ObjectTemplates.WORDS:
         return (
           <ListWordsList
             editToggle={editToggle}
@@ -53,8 +54,8 @@ class ListItems extends Component {
             heading="Words"
           />
         );
-      case 4:
-      case 8:
+      case ObjectTemplates.KNOWNSENTENCES:
+      case ObjectTemplates.SENTENCES:
         return (
           <ListSentencesList
             editToggle={editToggle}
@@ -65,7 +66,7 @@ class ListItems extends Component {
             heading="Sentences"
           />
         );
-      case 9:
+      case ObjectTemplates.ARTICLES:
         return (
           <ListArticlesList
             editToggle={editToggle}
@@ -77,7 +78,7 @@ class ListItems extends Component {
           />
         );
       default:
-        return "Emptyness inside of me";
+        return "Unknown list type";
     }
   }
 }

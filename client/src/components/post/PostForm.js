@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { apiCall } from "../../services/api";
 import { hideLoader, showLoader } from "../../store/actions/application";
+import { HTTP_METHOD } from "../../shared/constants";
 
 class PostForm extends Component {
   constructor(props) {
@@ -44,7 +45,7 @@ class PostForm extends Component {
   };
 
   postNewPost(payload) {
-    return apiCall("post", `/api/post`, payload)
+    return apiCall(HTTP_METHOD.POST, `/api/post`, payload)
       .then((res) => {
         this.props.dispatch(hideLoader());
         this.props.history.push("/community/" + res.post.id);
