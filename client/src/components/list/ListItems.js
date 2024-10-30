@@ -4,7 +4,7 @@ import ListKanjisList from "./ListKanjisList";
 import ListWordsList from "./ListWordsList";
 import ListSentencesList from "./ListSentencesList";
 import ListArticlesList from "./ListArticlesList";
-import ObjectTemplates from "../../shared/constants";
+import { ObjectTemplates } from "../../shared/constants";
 
 class ListItems extends Component {
   render() {
