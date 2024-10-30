@@ -5,7 +5,7 @@ namespace App\Http\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Models\Kanji;
 use App\Http\Models\Word;
-use App\User;
+use App\Http\User;
 
 class Article extends Model
 {

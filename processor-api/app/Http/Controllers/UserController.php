@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\User;
+use App\Http\User;
 use App\Http\Models\CustomList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -114,7 +114,7 @@ class UserController extends Controller
     {   
         $user = $request->user();
 
-        $user->isAdmin = $user->role() == "admin" ? true : false;
+        $user->isAdmin = $user->role() == "admin";
         
         return response()->json($user);
     }

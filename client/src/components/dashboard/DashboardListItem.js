@@ -1,98 +1,55 @@
-import React from 'react';
-import Moment from 'react-moment';
-import { Link } from 'react-router-dom';
-import DefaultArticleImg from '../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import React from "react";
+import Moment from "react-moment";
+import { Link } from "react-router-dom";
+import { Button, ListGroup, Badge } from "react-bootstrap";
 
-const DashboardListItem = ({ 
-    
-    id,
-    created_at,
-    title,
-    publicity,
-    commentsTotal,
-    likesTotal,
-    viewsTotal,
-    downloadsTotal,
-    hashtags,
-    currentUser,
-    listType
+const DashboardListItem = ({
+  id,
+  created_at,
+  title,
+  commentsTotal,
+  likesTotal,
+  viewsTotal,
+  hashtags,
+  typeTitle,
 }) => (
-    <div className="row">
-            <div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
-                <p>
-                    {title}
-                </p>
-                tags: {hashtags.map(tag => <span key={tag.id} className="tag-link">{tag.content} </span>)}
-            </div>
-            <div className="col-md-4">
-                <Link to={`/list/${id}`}>
-                    <strong className="d-block text-gray-dark float-right">
-                         <i className="fas fa-external-link-alt"></i>
-                    </strong>
-                </Link>
-                <small className="d-block text-muted">
-                        <span>
-                         {commentsTotal}&nbsp;Comments&nbsp;
-                        </span>
-                        <span>
-                         {viewsTotal} &nbsp;Views&nbsp;
-                        </span>
-                        <span>
-                         {likesTotal} &nbsp;Likes &nbsp;
-                        </span>
-                </small>
-                <small className="d-block text-muted">
-                    <span>
-                       {listType}
-                    </span>
-                </small>
-                <small className="d-block text-muted">
-                    <span>
-                    <Moment className="text-muted" format="Do MMM YYYY">
-                      {created_at}
-                    </Moment>
-                    </span>
-                </small>
-                
-            </div>
-        {/* <div className="card mb-4 shadow-sm">
-            <div className="card-body">
-                <Link to={'/post/' + id} className="article-title-link">
-                    <h4 className="card-text article-title"> {title_jp}</h4> 
-                </Link>
-                <p> {hashtags.map(tag => <span key={tag.id} className="tag-link" to="/">{tag.content} </span>)} </p>
-                <p className="text-muted">
-                    <Moment className="text-muted" format="Do MMM YYYY">
-                        {created_at}
-                    </Moment> 
-                    {jp_year} {jp_month} {jp_day} {jp_hour}
-                </p>
-                <p className="text-muted">
-                    {viewsTotal+30} views &nbsp;
-                    {commentsTotal} comments&nbsp;
-                    {likesTotal} likes
-                </p>
-                <hr/>
-                <div className="d-flex justify-content-between align-items-center text-muted">
-                        <span>
-                         {commentsTotal}&nbsp;N1 
-                        </span>
-                        <span>
-                         {viewsTotal}&nbsp;N2
-                        </span>
-                        <span>
-                         {likesTotal}&nbsp;N3
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N4
-                        </span>
-                        <span>
-                         {downloadsTotal}&nbsp;N5
-                        </span>
-                </div>
-            </div>
-        </div> */}
+  <div className="row border-bottom border-gray">
+    <div className="col-md-8 ">
+      <p className="text-muted">{title}</p>
+      <div className="d-flex align-items-center mt-3">
+        <span className="text-muted">Tags:</span>
+        <ListGroup horizontal className="flex-wrap">
+          {hashtags.map((tag) => (
+            <ListGroup.Item key={tag.id} className="p-2 border-0">
+              <Badge pill variant="secondary">
+                {tag.content}
+              </Badge>
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </div>
     </div>
+    <div className="col-md-4">
+      <ListGroup variant="flush" className="text-muted">
+        <ListGroup.Item className="p-0 d-flex justify-content-between align-items-center">
+          <span>{commentsTotal} Comments</span>
+          <span>{viewsTotal} Views</span>
+          <span>{likesTotal} Likes</span>
+          <Link to={`/list/${id}`}>
+            <Button variant="outline-primary" size="sm" className="m-2">
+              <i className="fas fa-external-link-alt"></i>
+            </Button>
+          </Link>
+        </ListGroup.Item>
+        <small>ListType: {typeTitle}</small>
+        <ListGroup.Item className="p-0">
+          <small>
+            <Moment format="Do MMM YYYY">{created_at}</Moment>
+          </small>
+        </ListGroup.Item>
+      </ListGroup>
+    </div>
+  </div>
 );
 
 export default DashboardListItem;

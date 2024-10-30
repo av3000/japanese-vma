@@ -15,7 +15,7 @@ use App\Http\Models\Comment;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
 use App\Http\Models\Article;
-use App\User;
+use App\Http\User;
 use App\Http\Models\CustomList;
 use DB;
 

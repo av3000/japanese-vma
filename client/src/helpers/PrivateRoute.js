@@ -1,28 +1,32 @@
-import React from 'react';
-import { Redirect, Route } from 'react-router-dom';
+import React from "react";
+import { Redirect, Route } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const PrivateRoute = ({component: Component, componentProps, currentUser, ...rest}) => (
-    <Route {...rest} render={props => (
-      currentUser.isAuthenticated ?
-        <Component {...props} {...componentProps} currentUser={currentUser} /> :
-        <Redirect to={{
-          pathname: '/login',
-          state: { from: props.location }
-        }}/>
-    )}/>
+const PrivateRoute = ({ component: Component, componentProps, ...rest }) => {
+  const isAuthenticated = useSelector(
+    (state) => state.currentUser.isAuthenticated
   );
-  
-  export default PrivateRoute;
+  const loading = useSelector((state) => state.application.loading);
 
-//   const PrivateRoute = ({component: Component, componentProps, currentUser, ...rest}) => (
-//     <Route {...rest} render={props => (
-//       currentUser ?
-//         <Component {...props} {...componentProps} currentUser={currentUser} /> :
-//         <Redirect to={{
-//           pathname: '/signin',
-//           state: { from: props.location }
-//         }}/>
-//     )}/>
-//   );
-  
-//   export default PrivateRoute;
+  if (loading) return null;
+
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        isAuthenticated ? (
+          <Component {...props} {...componentProps} />
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/login",
+              state: { from: props.location },
+            }}
+          />
+        )
+      }
+    />
+  );
+};
+
+export default PrivateRoute;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Models;
 use App\Http\Models\ObjectTemplate;
-use App\User;
+use App\Http\User;
 
 use Illuminate\Database\Eloquent\Model;
 

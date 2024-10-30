@@ -2,49 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use App\User;
 use App\Http\Models\Article;
-use App\Http\Models\Kanji;
-use App\Http\Models\Word;
-use App\Http\Models\Like;
-use App\Http\Models\Download;
-use App\Http\Models\View;
 use App\Http\Models\Comment;
+use App\Http\Models\Download;
+use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
-use App\Http\Requests\ArticleStoreRequest;
-use PDF;
+use App\Http\Models\Word;
+use App\Http\User;
 use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use PDF;
 
 class ArticleController extends Controller
 {
     const KNOWNRADICALS = 1;
+
     const KNOWNKANJIS = 2;
+
     const KNOWNWORDS = 3;
+
     const KNOWNSENTENCES = 4;
-    const RADICALS  = 5;
-    const KANJIS    = 6;
-    const WORDS     = 7;
+
+    const RADICALS = 5;
+
+    const KANJIS = 6;
+
+    const WORDS = 7;
+
     const SENTENCES = 8;
-    const ARTICLES  = 9;
-    const LYRICS    = 10;
-    const ARTISTS   = 11;
 
-    const ARTICLE_STATUS_TYPES = 
-    [
-        "pending" => 0,
-        "reviewing" => 1,
-        "rejected" => 2,
-        "approved" => 3
-    ];
+    const ARTICLES = 9;
 
-    public function __constructor(){
+    const LYRICS = 10;
+
+    const ARTISTS = 11;
+
+    const ARTICLE_STATUS_TYPES =
+        [
+            'pending' => 0,
+            'reviewing' => 1,
+            'rejected' => 2,
+            'approved' => 3,
+        ];
+
+    public function __constructor()
+    {
 
     }
-    
+
     public function getArticleJlptTypes($index)
     {
         $articleJlptTypes = [
@@ -53,95 +61,98 @@ class ArticleController extends Controller
             'N3',
             'N4',
             'N5',
-            'Uncommon'
+            'Uncommon',
         ];
 
-        $articleJlptTypes[20] = "All";
+        $articleJlptTypes[20] = 'All';
 
-        return $articleJlptTypes[$index-1];
+        return $articleJlptTypes[$index - 1];
     }
 
-    public function index() {
-        $articles = Article::where('publicity', 1)->where('status', "3")->orderBy('created_at', "DESC")->paginate(4);
+    public function index()
+    {
+        $articles = Article::where('publicity', 1)->orderBy('created_at', 'DESC')->paginate(4);
+        // where('status', $this->ARTICLE_STATUS_TYPES['approved'])->
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $jp_month = "月";
-        $jp_day = "日";
-        $jp_hour = "時";
-        $jp_minute = "分";
-        $jp_year = "年";
-        foreach($articles as $singleArticle)
-        {
-            $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
-            $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
-            $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;
-            $singleArticle->jp_hour   = $singleArticle->created_at->hour   . $jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
+        $jp_month = '月';
+        $jp_day = '日';
+        $jp_hour = '時';
+        $jp_minute = '分';
+        $jp_year = '年';
+        foreach ($articles as $singleArticle) {
+            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
+            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
+            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
+            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
 
-            $singleArticle->likesTotal = getImpression("like", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->downloadsTotal = getImpression("download", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->viewsTotal = getImpression("view", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->viewsTotal = getImpression('view', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->commentsTotal = getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            $singleArticle->hashtags      = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
+            $singleArticle->hashtags = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
 
-        if(isset($articles))
-         {
+        if (isset($articles)) {
             return response()->json([
-                'success' => true, 'articles' => $articles, 'message'=> 'articles fetched', 'imagePath' => getArticleImageFromImages('testing-image.jpg')
-             ]);
-         }
-         return response()->json([
-            'success' => false, 'message' => 'There are no articles...'
-         ]);
-    }
-
-    public function show($id) {
-        $article = Article::find($id);
-
-        if(!isset($article)){
-            return response()->json([
-                'success' => false, 'message' => 'Requested article does not exist'
+                'success' => true, 'articles' => $articles, 'message' => 'articles fetched', 'imagePath' => getArticleImageFromImages('testing-image.jpg'),
             ]);
         }
 
-        $jp_month = "月";
-        $jp_day = "日";
-        $jp_hour = "時";
-        $jp_minute = "分";
-        $jp_year = "年";
+        return response()->json([
+            'success' => false, 'message' => 'There are no articles...',
+        ]);
+    }
 
-        $article->jp_year   = $article->created_at->year   . $jp_year;
-        $article->jp_month  = $article->created_at->month  . $jp_month;
-        $article->jp_day    = $article->created_at->day    . $jp_day;
-        $article->jp_hour   = $article->created_at->hour   . $jp_hour;
-        $article->jp_minute = $article->created_at->minute . $jp_minute;
+    public function show($id)
+    {
+        $article = Article::find($id);
+
+        if (! isset($article)) {
+            return response()->json([
+                'success' => false, 'message' => 'Requested article does not exist',
+            ]);
+        }
+
+        $jp_month = '月';
+        $jp_day = '日';
+        $jp_hour = '時';
+        $jp_minute = '分';
+        $jp_year = '年';
+
+        $article->jp_year = $article->created_at->year.$jp_year;
+        $article->jp_month = $article->created_at->month.$jp_month;
+        $article->jp_day = $article->created_at->day.$jp_day;
+        $article->jp_hour = $article->created_at->hour.$jp_hour;
+        $article->jp_minute = $article->created_at->minute.$jp_minute;
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         incrementView($article, $objectTemplateId);
 
-        $article->likes = getImpression("like", $objectTemplateId, $article, "all");
+        $article->likes = getImpression('like', $objectTemplateId, $article, 'all');
         $article->likesTotal = count($article->likes);
-        $article->downloadsTotal = getImpression("download", $objectTemplateId, $article, "total");
-        $article->viewsTotal = getImpression("view", $objectTemplateId, $article, "total");
-        $article->comments = getImpression('comment', $objectTemplateId, $article, "all");
+        $article->downloadsTotal = getImpression('download', $objectTemplateId, $article, 'total');
+        $article->viewsTotal = getImpression('view', $objectTemplateId, $article, 'total');
+        $article->comments = getImpression('comment', $objectTemplateId, $article, 'all');
         $article->commentsTotal = count($article->comments);
-        $article->hashtags      = getUniquehashtags($article->id, $objectTemplateId);
+        $article->hashtags = getUniquehashtags($article->id, $objectTemplateId);
 
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-        foreach($article->comments as $comment)
-        {
-            $comment->likes = getImpression('like', $objectTemplateId, $comment, "all");
+        foreach ($article->comments as $comment) {
+            $comment->likes = getImpression('like', $objectTemplateId, $comment, 'all');
             $comment->likesTotal = count($comment->likes);
             $comment->userName = User::find($comment->user_id)->name;
         }
-        
+
         $article->jlptcommon = 0;
 
         $article->words = extractWordsListAttributes($article->words()->get());
         $article->kanjis = $article->kanjis()->get();
-        foreach($article->kanjis as $kanji){
-            if($kanji->jlpt == "-") { $article->jlptcommon++; }
+        foreach ($article->kanjis as $kanji) {
+            if ($kanji->jlpt == '-') {
+                $article->jlptcommon++;
+            }
         }
         $article->kanjiTotal = intval($article->n1) + intval($article->n2) + intval($article->n3) + intval($article->n4) + intval($article->n5) + $article->jlptcommon;
 
@@ -149,7 +160,7 @@ class ArticleController extends Controller
         $article->userName = $user->name;
         $article->userId = $user->id;
 
-        #           Method 1:
+        //           Method 1:
         // Furigana battle. Display furigana above text functionality
         // $article->wordsWithFurigana = [
         //     array($recognizedWordFromContentJp, $wordFromArticleWords)
@@ -157,53 +168,51 @@ class ArticleController extends Controller
         //     array($recognizedWordFromContentJp, $wordFromArticleWords)
         //     ...
         // ]
-        #  Seems like we will need to save straight after WordsExtracting
-        # into DB table "articles.content_furi"
-        #           Method 2:
-        # display ONLY furigana, without trying to find each of content_jp word place in text.
+        //  Seems like we will need to save straight after WordsExtracting
+        // into DB table "articles.content_furi"
+        //           Method 2:
+        // display ONLY furigana, without trying to find each of content_jp word place in text.
         return response()->json([
             'success' => true,
-            'article' => $article
+            'article' => $article,
         ]);
     }
 
-    public function store(Request $request) 
+    public function store(Request $request)
     {
-        if(!auth()->user()){
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         // $validated = $request->validated();
 
         $validator = Validator::make($request->all(), [
             // 'title_en'    => 'max:255',
-            'title_jp'    => 'required|min:2|max:255',
+            'title_jp' => 'required|min:2|max:255',
             // 'content_en'  => 'max:3000',
-            'content_jp'  => 'required|min:2|max:3000',
-            'source_link' => 'required'
+            'content_jp' => 'required|min:2|max:3000',
+            'source_link' => 'required',
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
 
         $article = new Article;
         $article->user_id = auth()->user()->id;
         $article->title_jp = $request->get('title_jp');
-        if(isset( $request->title_en ))
-        {
+        if (isset($request->title_en)) {
             $article->title_en = $request->get('title_en');
         } else {
-            $article->title_en = "";
+            $article->title_en = '';
         }
-        if(isset( $request->content_en ))
-        {
+        if (isset($request->content_en)) {
             $article->content_en = $request->get('content_en');
         } else {
-            $article->content_en = "";
+            $article->content_en = '';
         }
-        if(isset( $request->publicity )) {
+        if (isset($request->publicity)) {
             $article->publicity = $request->get('publicity');
         }
         $article->content_jp = $request->get('content_jp');
@@ -215,18 +224,24 @@ class ArticleController extends Controller
         attachHashTags($request->tags, $article, $objectTemplateId);
         // $this->attachHashTags($request->tags, $article);
 
-        if(isset($request->attach) && $request->attach == 1)
-        {
+        if (isset($request->attach) && $request->attach == 1) {
             $kanjiResponse = getKanjiIdsFromText($article);
             // $wordResponse  = getWordIdsFromText($article);
             $kanjis = $article->kanjis()->get();
-            foreach($kanjis as $kanji){
-                if     ($kanji->jlpt == "1") { $article->n1 = intval($article->n1) + 1; }
-                else if($kanji->jlpt == "2") { $article->n2 = intval($article->n2) + 1; }
-                else if($kanji->jlpt == "3") { $article->n3 = intval($article->n3) + 1; }
-                else if($kanji->jlpt == "4") { $article->n4 = intval($article->n4) + 1; }
-                else if($kanji->jlpt == "5") { $article->n5 = intval($article->n5) + 1; }
-                else { $article->uncommon = intval($article->uncommon) + 1; }
+            foreach ($kanjis as $kanji) {
+                if ($kanji->jlpt == '1') {
+                    $article->n1 = intval($article->n1) + 1;
+                } elseif ($kanji->jlpt == '2') {
+                    $article->n2 = intval($article->n2) + 1;
+                } elseif ($kanji->jlpt == '3') {
+                    $article->n3 = intval($article->n3) + 1;
+                } elseif ($kanji->jlpt == '4') {
+                    $article->n4 = intval($article->n4) + 1;
+                } elseif ($kanji->jlpt == '5') {
+                    $article->n5 = intval($article->n5) + 1;
+                } else {
+                    $article->uncommon = intval($article->uncommon) + 1;
+                }
             }
 
             $article->update();
@@ -237,7 +252,7 @@ class ArticleController extends Controller
                 'success' => true,
                 'attach' => $request->attach,
                 'article' => $article,
-                'kanjis' => $kanjiResponse
+                'kanjis' => $kanjiResponse,
                 // 'words' => $wordResponse
             ]);
         }
@@ -247,50 +262,45 @@ class ArticleController extends Controller
         return response()->json([
             'success' => true,
             'attach' => $request->attach,
-            'article' => $article
+            'article' => $article,
         ]);
     }
 
-    public function update(Request $request, $id) {
-        if(!auth()->user()){
+    public function update(Request $request, $id)
+    {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
-        }   
-        
+        }
+
         $article = Article::find($id);
 
-        if( !$article || $article->user_id != auth()->user()->id ){
+        if (! $article || $article->user_id != auth()->user()->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'article doesnt exist or does not belong to the user'
+                'message' => 'article doesnt exist or does not belong to the user',
             ]);
-        }   
-        if(isset($request->title_jp))
-        {
+        }
+        if (isset($request->title_jp)) {
             $article->title_jp = $request->title_jp;
         }
-        if(isset($request->title_en))
-        {
+        if (isset($request->title_en)) {
             $article->title_en = $request->title_en;
         }
-        if(isset($request->content_en))
-        {
+        if (isset($request->content_en)) {
             $article->content_en = $request->content_en;
-        } 
-        if(isset($request->content_jp))
-        {
+        }
+        if (isset($request->content_jp)) {
             $article->content_jp = $request->content_jp;
-        } 
-        if(isset($request->source_link))
-        {
+        }
+        if (isset($request->source_link)) {
             $article->source_link = $request->source_link;
-        } 
-        if(isset($request->status))
-        {
+        }
+        if (isset($request->status)) {
             $article->status = $request->status;
-        } 
-        if(isset( $request->publicity )) {
+        }
+        if (isset($request->publicity)) {
             $article->publicity = $request->publicity;
         }
 
@@ -298,27 +308,25 @@ class ArticleController extends Controller
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-        if(isset($request->tags))
-        {
+        if (isset($request->tags)) {
             removeHashtags($article->id, $objectTemplateId, $request->tags);
             attachHashTags($request->tags, $article, $objectTemplateId);
         }
 
-        if( $request->reattach == 1)
-        {
+        if ($request->reattach == 1) {
             // die("I should not have been here"); debugging
             $article->kanjis()->wherePivot('article_id', $article->id)->detach();
             $article->words()->wherePivot('article_id', $article->id)->detach();
-        
+
             $kanjiResponse = getKanjiIdsFromText($article);
-            $wordResponse  = getWordIdsFromText($article);
+            $wordResponse = getWordIdsFromText($article);
 
             return response()->json([
                 'success' => true,
                 'reattach' => $request->reattach,
                 'updated_article' => $article,
                 'reattached_kanjis' => $kanjiResponse,
-                'reattached_words' => $wordResponse
+                'reattached_words' => $wordResponse,
             ]);
         }
 
@@ -326,25 +334,26 @@ class ArticleController extends Controller
             'success' => true,
             'reattach' => $request->reattach,
             'updated_article' => $article,
-            'reattached_kanjis' => "none",
-            'reattached_words' => "none"
+            'reattached_kanjis' => 'none',
+            'reattached_words' => 'none',
         ]);
     }
 
-    public function delete(Request $request, $id) {
-        if(!auth()->user()){
+    public function delete(Request $request, $id)
+    {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
-        }   
+        }
         $article = Article::find($id);
 
-        if( !$article || $article->user_id != auth()->user()->id && auth()->user()->hasRole("admin") == false){
+        if (! $article || $article->user_id != auth()->user()->id && auth()->user()->hasRole('admin') == false) {
             return response()->json([
                 'success' => false,
-                'message' => 'article doesnt exist or does not belong to the user'
+                'message' => 'article doesnt exist or does not belong to the user',
             ]);
-        }  
+        }
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
@@ -371,92 +380,93 @@ class ArticleController extends Controller
             ->delete();
     }
 
-    public function getUserArticles() {
-        $articles = Article::where("user_id", auth()->user()->id)->get();
+    public function getUserArticles()
+    {
+        $articles = Article::where('user_id', auth()->user()->id)->get();
 
         // $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $jp_month = "月";
-        $jp_day = "日";
-        $jp_hour = "時";
-        $jp_minute = "分";
-        $jp_year = "年";
-        foreach($articles as $singleArticle)
-        {
-            $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
-            $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
-            $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;
-            $singleArticle->jp_hour   = $singleArticle->created_at->hour   . $jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
+        $jp_month = '月';
+        $jp_day = '日';
+        $jp_hour = '時';
+        $jp_minute = '分';
+        $jp_year = '年';
+        foreach ($articles as $singleArticle) {
+            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
+            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
+            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
+            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
 
-            $singleArticle->likesTotal = getImpression("like", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->downloadsTotal = getImpression("download", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->viewsTotal = getImpression("view", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->viewsTotal = getImpression('view', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->commentsTotal = getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            $singleArticle->hashtags      = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
+            $singleArticle->hashtags = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
 
-         if(isset($articles))
-         {
+        if (isset($articles)) {
             return response()->json([
-                'success' => true, 'articles' => $articles
-             ]);
-         }
-         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not exist or User has no articles'
-         ]);
+                'success' => true, 'articles' => $articles,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false, 'message' => 'Requested Article does not exist or User has no articles',
+        ]);
     }
 
-    public function articleKanjis($id){
+    public function articleKanjis($id)
+    {
         $articleKanjis = Article::find($id)->kanjis()->get();
 
-        if(isset($articleKanjis))
-         {
+        if (isset($articleKanjis)) {
             return response()->json([
-                'success' => true, 'articleKanjis' => $articleKanjis
-             ]);
-         }
-         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not have kanjis'
-         ]);
+                'success' => true, 'articleKanjis' => $articleKanjis,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false, 'message' => 'Requested Article does not have kanjis',
+        ]);
     }
 
-    public function articleWords($id){
+    public function articleWords($id)
+    {
         $articleWords = Article::find($id)->words()->get();
 
-        if(isset($articleWords))
-         {
+        if (isset($articleWords)) {
             return response()->json([
-                'success' => true, 'articleWords' => $articleWords
-             ]);
-         }
-         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not have words'
-         ]);
+                'success' => true, 'articleWords' => $articleWords,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false, 'message' => 'Requested Article does not have words',
+        ]);
     }
 
     public function getArticleImpressionsSearch($articles)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $jp_month = "月";
-        $jp_day = "日";
-        $jp_hour = "時";
-        $jp_minute = "分";
-        $jp_year = "年";
-        foreach($articles as $singleArticle)
-        {
-            $singleArticle->jp_year   = $singleArticle->created_at->year   . $jp_year;
-            $singleArticle->jp_month  = $singleArticle->created_at->month  . $jp_month;
-            $singleArticle->jp_day    = $singleArticle->created_at->day    . $jp_day;
-            $singleArticle->jp_hour   = $singleArticle->created_at->hour   . $jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
+        $jp_month = '月';
+        $jp_day = '日';
+        $jp_hour = '時';
+        $jp_minute = '分';
+        $jp_year = '年';
+        foreach ($articles as $singleArticle) {
+            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
+            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
+            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
+            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
 
-            $singleArticle->likesTotal = getImpression("like", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->downloadsTotal = getImpression("download", $objectTemplateId, $singleArticle, "total");
-            $singleArticle->viewsTotal = getImpression("view", $objectTemplateId, $singleArticle, "total");
+            $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
+            $singleArticle->viewsTotal = getImpression('view', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->commentsTotal = getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            $singleArticle->hashtags      = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
+            $singleArticle->hashtags = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
         }
 
         return $articles;
@@ -481,49 +491,42 @@ class ArticleController extends Controller
         return $objectsCollection;
     }
 
-    public function generateQuery(Request $request) 
+    public function generateQuery(Request $request)
     {
         $articles = new Article;
-        $requestedQuery = "";
-        if(isset( $request->keyword ))
-        {
+        $requestedQuery = '';
+        if (isset($request->keyword)) {
             $request->keyword = trim($request->keyword);
-            $singleTag = explode(' ',trim($request->keyword))[0];
+            $singleTag = explode(' ', trim($request->keyword))[0];
 
             $search = '#';
 
-            if(preg_match("/{$search}/i", $singleTag)) {
+            if (preg_match("/{$search}/i", $singleTag)) {
                 $articles = $this->getUniquehashtagArticles($singleTag);
-                $requestedQuery .= $singleTag .". ";
-            }
-
-            else {
-                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1)->where('status', "3");
-                $requestedQuery .= "keyword: ".$request->keyword. ". ";
+                $requestedQuery .= $singleTag.'. ';
+            } else {
+                $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1)->where('status', '3');
+                $requestedQuery .= 'keyword: '.$request->keyword.'. ';
             }
         }
 
-        if(isset( $request->sortByWhat ))
-        {
-            if( $request->sortByWhat === "new" ){
-                $articles = $articles->orderBy('created_at', 'desc')->where('publicity', 1)->where('status', "3");
-                $requestedQuery .= " Sort by Newest. ";
-            }
-
-            else if ($request->sortByWhat === "pop") {
+        if (isset($request->sortByWhat)) {
+            if ($request->sortByWhat === 'new') {
+                $articles = $articles->orderBy('created_at', 'desc')->where('publicity', 1)->where('status', '3');
+                $requestedQuery .= ' Sort by Newest. ';
+            } elseif ($request->sortByWhat === 'pop') {
                 $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-                $articles = $this->sortByViewsTotal($articles, $objectTemplateId)->where('publicity', 1)->where('status', "3");
-                $requestedQuery .= " Sort by Popular. ";
+                $articles = $this->sortByViewsTotal($articles, $objectTemplateId)->where('publicity', 1)->where('status', '3');
+                $requestedQuery .= ' Sort by Popular. ';
             }
         }
-        
-        if(isset( $request->filterType ) && $request->filterType != 20) // 20 = all
-        {   
-            $articles = $articles->where($this->getArticleJlptTypes($request->filterType), ">", 0)->where('publicity', 1)->where('status', "3"); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
-            $requestedQuery .= "Filter by ". $this->getArticleJlptTypes($request->filterType). ".";
+
+        if (isset($request->filterType) && $request->filterType != 20) { // 20 = all
+            $articles = $articles->where($this->getArticleJlptTypes($request->filterType), '>', 0)->where('publicity', 1)->where('status', '3'); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
+            $requestedQuery .= 'Filter by '.$this->getArticleJlptTypes($request->filterType).'.';
         }
-        
+
         $articles = $articles->paginate(4);
 
         $articles = $this->getArticleImpressionsSearch($articles);
@@ -531,25 +534,24 @@ class ArticleController extends Controller
         return response()->json([
             'success' => true,
             'articles' => $articles,
-            'requestedQuery' => $requestedQuery
+            'requestedQuery' => $requestedQuery,
         ]);
     }
 
-    public function generateWordsPdf($id) 
-	{
-        if( !auth()->user() ){
+    public function generateWordsPdf($id)
+    {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
         $article = Article::find($id);
 
-        if( !$article )
-        {
+        if (! $article) {
             return response()->json([
                 'success' => false,
-                'message' => 'requested article does not exist'
+                'message' => 'requested article does not exist',
             ]);
         }
         $this->incrementDownload($article);
@@ -568,49 +570,41 @@ class ArticleController extends Controller
             'user_id' => $user->id,
             'date' => $article->created_at,
             'source_link' => $article->source_link,
-            'wordList' => $wordList
+            'wordList' => $wordList,
         ];
-        // return $data;
-        // return view("pdf.words.article-pdf", $data);
-        $pdf = PDF::loadView("pdf.kanjis.article-words", $data);
+
+        $pdf = PDF::loadView('pdf.kanjis.article-words', $data);
         $pdf->setOptions([
-            // 'footer-html' => view('pdf.words._footer')
             'footer-center' => '[page]',
-            // 'header-left' => 'header-left',
-            // 'header-right' => 'header-right',
-            'page-size'=> 'a4'
+            'page-size' => 'a4',
         ]);
-        
+
         // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
-        return $pdf->stream("article-words.pdf");
+        return $pdf->inline('article-words.pdf');
     }
-    
-    public function generateKanjisPdf($id) 
-	{
-        if( !auth()->user() ){
+
+    public function generateKanjisPdf($id)
+    {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
         $article = Article::find($id);
 
-        if( !$article )
-        {
+        if (! $article) {
             return response()->json([
                 'success' => false,
-                'message' => 'requested article does not exist'
+                'message' => 'requested article does not exist',
             ]);
         }
-        $this->incrementDownload($article);
-        $user = User::find($article->user_id);
-        $kanjiList = $article->kanjis()->get();
 
-        foreach($kanjiList as $kanji) {
-            $kanji->onyomi = implode(", ", array_slice(explode("|", $kanji->onyomi), 0, 3));
-            $kanji->kunyomi = implode(", ", array_slice(explode("|", $kanji->kunyomi), 0, 3));
-            $kanji->meaning = implode(", ", array_slice(explode("|", $kanji->meaning), 0, 3));
-        }
+        $this->incrementDownload($article);
+
+        $user = User::find($article->user_id);
+
+        $kanjiList = $article->kanjis()->get();
 
         $data = [
             'article_id' => $article->id,
@@ -622,55 +616,49 @@ class ArticleController extends Controller
             'user_id' => $user->id,
             'date' => $article->created_at,
             'source_link' => $article->source_link,
-            'kanjiList' => $kanjiList
+            'kanjiList' => $kanjiList,
         ];
-        // return $data;
-        // return view("pdf.kanjis.article-pdf", $data);
-        $pdf = PDF::loadView("pdf.kanjis.article-kanjis", $data);
+
+        $pdf = PDF::loadView('pdf.kanjis.article-kanjis', $data);
         $pdf->setOptions([
-            // 'footer-html' => view('pdf.kanjis._footer')
             'footer-center' => '[page]',
-            // 'header-left' => 'header-left',
-            // 'header-right' => 'header-right',
-            'page-size'=> 'a4'
+            'page-size' => 'a4',
         ]);
-        
-        // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
-        return $pdf->stream("article-kanjis.pdf");
+
+        return $pdf->inline('article-kanjis.pdf');
     }
 
     public function togglePublicity($id)
     {
         $article = Article::find($id);
 
-        if( !$article || $article->user_id != auth()->user()->id || auth()->user()->role() != "admin" )
-        {
+        if (! $article || $article->user_id != auth()->user()->id || auth()->user()->role() != 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'requested article does not exist or user is unauthorized'
+                'message' => 'requested article does not exist or user is unauthorized',
             ]);
         }
 
-        if($article->publicity == 1)
-        {
+        if ($article->publicity == 1) {
             $article->publicity = 0;
             $article->update();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Article of id: '.$id. ' is now private'
+                'message' => 'Article of id: '.$id.' is now private',
             ]);
-        }
-        else {
+        } else {
             $article->publicity = 1;
             $article->update();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Article of id: '.$id. ' is now public'
+                'message' => 'Article of id: '.$id.' is now public',
             ]);
         }
     }
-    
-    #========================= Article Impressions
+
+    //========================= Article Impressions
 
     public function incrementDownload(Article $article)
     {
@@ -687,13 +675,11 @@ class ArticleController extends Controller
         $download->save();
     }
 
-    
-
     public function storeComment(Request $request, $id, $parentCommentId = null)
     {
-        if(!auth()->user()){
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
@@ -701,12 +687,12 @@ class ArticleController extends Controller
             'content' => 'required|string|min:2|max:1000',
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json($validator->errors()->toJson(), 400);
         }
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        
+
         $comment = new Comment;
         $comment->user_id = auth()->user()->id;
         $comment->template_id = $objectTemplateId;
@@ -720,63 +706,60 @@ class ArticleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'You commented article of id: '.$id,
-            'comment' => $comment
+            'comment' => $comment,
         ]);
     }
 
     public function deleteComment($id, $commentid)
     {
-        if(!auth()->user()){
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
         $comment = Comment::where([
             'id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
-        if(isset($comment))
-        {
+        if (isset($comment)) {
             $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
 
             $comment->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was deleted",
+                'message' => 'comment was deleted',
             ]);
-        }
-        else if( !isset($comment) && auth()->user()->hasRole("admin") == true ){
+        } elseif (! isset($comment) && auth()->user()->hasRole('admin') == true) {
             $comment = Comment::where([
-                'id' => $commentid
+                'id' => $commentid,
             ])->first();
 
             $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
- 
+            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
+
             $comment->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was deleted by admin",
+                'message' => 'comment was deleted by admin',
             ]);
-        }
-        else {
+        } else {
             return response()->json([
                 'success' => false,
-                'message' => "Comment does not belong to user or comment doesnt exist",
+                'message' => 'Comment does not belong to user or comment doesnt exist',
             ]);
         }
     }
 
     public function updateComment(Request $request, $id, $commentid)
     {
-        if(!auth()->user()){
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
@@ -784,39 +767,37 @@ class ArticleController extends Controller
             'content' => 'required|string|min:2|max:1000',
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json($validator->errors()->toJson(), 400);
         }
 
         $comment = Comment::where([
             'id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
-        if(isset($comment))
-        {
+        if (isset($comment)) {
             $comment->content = $request->get('content');
             $comment->updated_at = date('Y-m-d H:i:s');
             $comment->update();
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was updated",
+                'message' => 'comment was updated',
             ]);
-        }
-        else {
+        } else {
             return response()->json([
                 'success' => false,
-                'message' => "Comment does not belong to user or comment doesnt exist",
+                'message' => 'Comment does not belong to user or comment doesnt exist',
             ]);
         }
     }
 
     public function likeComment($id, $commentid)
     {
-        if(!auth()->user()){
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
@@ -824,65 +805,68 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
-        
-        if($checkLike) {
+
+        if ($checkLike) {
             return response()->json([
-                'message' => 'you cannot like the comment twice!'
+                'message' => 'you cannot like the comment twice!',
             ]);
         }
-        
+
         $like = new Like;
         $like->user_id = auth()->user()->id;
         $like->template_id = $objectTemplateId;
         $like->real_object_id = $commentid;
-        $like->value=1;
+        $like->value = 1;
         $like->save();
 
         return response()->json([
             'success' => true,
             'message' => 'You liked comment of id: '.$commentid,
-            'like' => $like
+            'like' => $like,
         ]);
     }
 
-    public function unlikeComment($id, $commentid) {
+    public function unlikeComment($id, $commentid)
+    {
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ]);
 
         $like->delete();
 
         return response()->json([
             'success' => true,
-            'message' => "like was deleted",
+            'message' => 'like was deleted',
         ]);
     }
 
-    public function unlikeArticle($id) {
+    public function unlikeArticle($id)
+    {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ]);
 
         $like->delete();
 
         return response()->json([
             'success' => true,
-            'message' => "like was deleted",
+            'message' => 'like was deleted',
         ]);
     }
 
-    public function likeArticle($id) {
-        if(!auth()->user()){
+    public function likeArticle($id)
+    {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
@@ -890,100 +874,103 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
-        
-        if($checkLike) {
+
+        if ($checkLike) {
             return response()->json([
-                'message' => 'you cannot like it twice!'
+                'message' => 'you cannot like it twice!',
             ]);
         }
-        
+
         $like = new Like;
         $like->user_id = auth()->user()->id;
         $like->template_id = $objectTemplateId;
         $like->real_object_id = $id;
-        $like->value=1;
+        $like->value = 1;
         $like->save();
 
         return response()->json([
             'success' => true,
             'message' => 'You liked list of id: '.$id,
-            'like' => $like
+            'like' => $like,
         ]);
     }
 
-    public function checkIfLikedArticle($id) {
+    public function checkIfLikedArticle($id)
+    {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
-        
-        if($checkLike) {
+
+        if ($checkLike) {
             return response()->json([
                 'userId' => auth()->user()->id,
                 'isLiked' => true,
-                'message' => 'you already liked this article'
+                'message' => 'you already liked this article',
             ]);
         }
 
         return response()->json([
             'userId' => auth()->user()->id,
             'isLiked' => false,
-            'message' => 'you havent liked the article yet'
+            'message' => 'you havent liked the article yet',
         ]);
     }
 
-    public function checkIfLikedComment($id) {
+    public function checkIfLikedComment($id)
+    {
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
 
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
-        
-        if($checkLike) {
+
+        if ($checkLike) {
             return response()->json([
                 'userId' => auth()->user()->id,
                 'isLiked' => true,
-                'message' => 'you already liked this comment'
+                'message' => 'you already liked this comment',
             ]);
         }
 
         return response()->json([
             'userId' => auth()->user()->id,
             'isLiked' => false,
-            'message' => 'you havent liked the comment yet'
+            'message' => 'you havent liked the comment yet',
         ]);
     }
 
-    #======================== Administration
+    //======================== Administration
 
-    public function getArticlesPending(){
+    public function getArticlesPending()
+    {
 
-        $articlesPending = Article::where("status", "0")->orWhere("status", "1")->orderBy("created_at", "desc")->get();
+        $articlesPending = Article::where('status', '0')->orWhere('status', '1')->orderBy('created_at', 'desc')->get();
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
         $statusTitles = [
-            "Pending",
-            "Reviewing",
-            "Rejected",
-            "Approved"
+            'Pending',
+            'Reviewing',
+            'Rejected',
+            'Approved',
         ];
 
-        foreach ($articlesPending as $article){
-            $article->statusTitle   = $statusTitles[intval($article->status)];
-            $article->hashtags      = getUniquehashtags($article->id, $objectTemplateId);
+        foreach ($articlesPending as $article) {
+            $article->statusTitle = $statusTitles[intval($article->status)];
+            $article->hashtags = getUniquehashtags($article->id, $objectTemplateId);
         }
 
         return response()->json([
             'success' => true,
-            'articlesPending' => $articlesPending
+            'articlesPending' => $articlesPending,
         ]);
     }
 
@@ -992,8 +979,8 @@ class ArticleController extends Controller
         $articleStatus = Article::find($id)->status;
 
         return response()->json([
-            "success" => true,
-            'articleStatus' => $articleStatus
+            'success' => true,
+            'articleStatus' => $articleStatus,
         ]);
     }
 
@@ -1002,28 +989,33 @@ class ArticleController extends Controller
         $article = Article::find($id);
         $article->status = $request->get('status');
 
-        if     ($request->get('status') == 3) $status = "approved";
-        else if($request->get('status') == 2) $status = "rejected";
-        else if($request->get('status') == 1) $status = "reviewing";
-        else if($request->get('status') == 0) $status = "pending";
-        
+        if ($request->get('status') == 3) {
+            $status = 'approved';
+        } elseif ($request->get('status') == 2) {
+            $status = 'rejected';
+        } elseif ($request->get('status') == 1) {
+            $status = 'reviewing';
+        } elseif ($request->get('status') == 0) {
+            $status = 'pending';
+        }
+
         $article->update();
-        
+
         return response()->json([
             'success' => true,
             'newStatus' => $request->status,
-            'message' => 'Article of id: '.$id. ' set to ' .$status
+            'message' => 'Article of id: '.$id.' set to '.$status,
         ]);
     }
-    
-    #======================== Hashtags
+
+    //======================== Hashtags
 
     public function getUniquehashtagArticles($wantedTag)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         // get tag which was input id
-        $uniqueTag = Uniquehashtag::where("content", $wantedTag)->first();
-        if( !isset( $uniqueTag )) {
+        $uniqueTag = Uniquehashtag::where('content', $wantedTag)->first();
+        if (! isset($uniqueTag)) {
             return null;
         }
         // get all hashtag foreign table rows
@@ -1032,18 +1024,17 @@ class ArticleController extends Controller
 
         $ids = [];
         // get all articles with that tag id
-        foreach($foundRows as $articlelink)
-        {
+        foreach ($foundRows as $articlelink) {
             $ids[] = $articlelink->real_object_id;
         }
-        
+
         $articles = Article::whereIn('id', $ids);
 
         return $articles;
     }
 
     // public function getUniquehashtags($id, $objectTemplateId)
-    // {  
+    // {
     //     $foundRows = DB::table('hashtags')->where('real_object_id', $id)
     //     ->where('template_id', $objectTemplateId)->get();
     //     $finalTags = [];
@@ -1066,7 +1057,7 @@ class ArticleController extends Controller
     //     {
     //         $uniqueTag = Uniquehashtag::where("content", $tag)->first();
     //         if($uniqueTag)
-    //         {   
+    //         {
     //             // tag is not unique
     //             $finalTags[] = $uniqueTag;
     //             $same++;
@@ -1108,8 +1099,8 @@ class ArticleController extends Controller
     //             'created_at' => date('Y-m-d H:i:s'),
     //             'updated_at' => date('Y-m-d H:i:s')
     //         ];
-            
-    //         $x = DB::table('hashtags')->insert($row);            
+
+    //         $x = DB::table('hashtags')->insert($row);
     //     }
 
     //     return response()->json([
@@ -1118,9 +1109,9 @@ class ArticleController extends Controller
     //     ]);
     // }
 
-    // public function getHashtags($string) {  
-    //     $hashtags= FALSE;  
-    //     preg_match_all("/(#\w+)/u", $string, $matches);  
+    // public function getHashtags($string) {
+    //     $hashtags= FALSE;
+    //     preg_match_all("/(#\w+)/u", $string, $matches);
     //     if ($matches) {
     //         $hashtagsArray = array_count_values($matches[0]);
     //         $hashtags = array_keys($hashtagsArray);

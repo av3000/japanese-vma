@@ -1,370 +1,246 @@
-import React, { Component } from 'react';
-import Moment from 'react-moment';
+import React, { useState, useEffect } from "react";
+import Moment from "react-moment";
 import { Link } from "react-router-dom";
-import { apiCall } from '../services/api';
-import DashboardArticleItem from '../components/dashboard/DashboardArticleItem';
-import DashboardListItem from '../components/dashboard/DashboardListItem';
-import Spinner from '../assets/images/spinner.gif';
-import SearchBarDashboard from '../components/search/SearchBarDashboard';
-import { Button, Modal } from 'react-bootstrap';
+import { useSelector } from "react-redux";
 
+import { apiCall } from "../services/api";
+import DashboardArticleItem from "../components/dashboard/DashboardArticleItem";
+import DashboardListItem from "../components/dashboard/DashboardListItem";
+import Spinner from "../assets/images/spinner.gif";
+import SearchBarDashboard from "../components/search/SearchBarDashboard";
+import { HTTP_METHOD } from "../shared/constants";
 
-export class DashboardList extends Component {
-    constructor(props){
-        super(props);
-        this.state = {
-            whichResource: 0,
-            lists: [],
-            articles: [],
-            articlesPending: [],
-            dashboard: "user",
-            filters:{},
-            articlesFiltered: []
-        }
+const RESOURCE_TYPES = {
+  ARTICLES: "ARTICLES",
+  LISTS: "LISTS",
+};
 
-        this.fetchQuery = this.fetchQuery.bind(this);
-        this.clearQuery = this.clearQuery.bind(this);
-        this.toggleDashboard = this.toggleDashboard.bind(this);
-        this.toggleResource = this.toggleResource.bind(this);
-        this.filterResults = this.filterResults.bind(this);
-    };
+const DASHBOARD_TYPES = {
+  ADMIN: "ADMIN",
+  COMMON_USER: "COMMON_USER",
+};
 
-    toggleResource(){
-        let newState = Object.assign({}, this.state);
-        newState.whichResource = newState.whichResource === 0 ? 1 : 0
-        this.setState(newState);
+const DashboardList = () => {
+  const currentUser = useSelector((state) => state.currentUser);
+  const [currentResource, setCurrentResource] = useState(RESOURCE_TYPES.LISTS);
+  const [lists, setLists] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [articlesPending, setArticlesPending] = useState([]);
+  const [dashboard, setDashboard] = useState(DASHBOARD_TYPES.COMMON_USER);
+  const [filters, setFilters] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const { isAuthenticated, user } = currentUser;
+    if (isAuthenticated) {
+      fetchArticles();
+      fetchLists();
+
+      if (user.isAdmin) {
+        fetchArticlesPending();
+      }
     }
+  }, [currentUser]);
 
-    toggleDashboard(){
-        let newState = Object.assign({}, this.state);
-        newState.dashboard = newState.dashboard === "user" ? "admin" : "user";
-        this.setState(newState);
+  const toggleResource = () => {
+    setCurrentResource((prev) =>
+      prev === RESOURCE_TYPES.LISTS
+        ? RESOURCE_TYPES.ARTICLES
+        : RESOURCE_TYPES.LISTS
+    );
+  };
 
-        if(this.state.dashboard === "admin") {
-            this.fetchArticlesPending();
-        }
+  const toggleDashboard = () => {
+    setDashboard((prev) =>
+      prev === DASHBOARD_TYPES.COMMON_USER
+        ? DASHBOARD_TYPES.ADMIN
+        : DASHBOARD_TYPES.COMMON_USER
+    );
+    if (dashboard === DASHBOARD_TYPES.ADMIN) {
+      fetchArticlesPending();
     }
+  };
 
-    componentDidMount() {
-        if(this.props.currentUser.isAuthenticated){
-            this.fetchArticles();
-            this.fetchLists();
-        }
-        if(this.props.currentUser.user.isAdmin){
-            this.fetchArticlesPending();
-        }
-    };
-
-    fetchArticlesPending() {
-        return apiCall("get", `/api/articles/pendinglist`)
-            .then(res => {
-                // console.log(res);
-                let newState = Object.assign({}, this.state);
-                newState.articlesPending = res.articlesPending;
-
-                this.setState( newState );
-            })
-            .catch(err => {
-                console.log(err);
-            })
+  const fetchArticlesPending = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(HTTP_METHOD.GET, "/api/articles/pendinglist");
+      setArticlesPending(res.articlesPending);
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
     }
+  };
 
-    fetchArticles(){
-        return apiCall("get", `/api/user/articles`)
-            .then(res => {
-                // console.log(res);
-                let newState = Object.assign({}, this.state);
-                newState.articles = [...newState.articles, ...res.articles];
-
-                this.setState( newState );
-                return newState;
-            })
-            .catch(err => {
-                console.log(err);
-            })
-    };
-
-    fetchLists(){
-        return apiCall("get", `/api/user/lists`)
-            .then(res => {
-                // console.log(res);
-                let newState = Object.assign({}, this.state);
-                newState.lists = [...newState.lists, ...res.lists];
-                this.setState( newState );
-            })
-            .catch(err => {
-                console.log(err);
-            })
-    };
-
-    fetchQuery(queryParams){   
-        let newState = Object.assign({}, this.state);
-
-        newState.filters.text = queryParams.title;
-
-        // let filteredLists = lists.filter(
-        //     (list) => { return list.title.indexOf(filters.text) !== -1; }
-        // );
-
-        this.setState(newState);
+  const fetchArticles = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(HTTP_METHOD.GET, "/api/user/articles");
+      setArticles(res.articles);
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
     }
+  };
 
-    clearQuery(){
-        let newState = Object.assign({}, this.setState);
-        newState.filters = {};
-        this.setState(newState);
+  const fetchLists = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(HTTP_METHOD.GET, "/api/user/lists");
+      setLists(res.lists);
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
     }
+  };
 
-    toggleStatus(id, type){
-        console.log("id article: " + id);
-        console.log("type article: " + type);
-        // console.log(this);
-        return apiCall("post", `/api/article/${id}/setstatus`, {
-                status: type
-            })
-            .then(() => {
-                this.props.history.push(`/article/${id}`);
-            })
-            .catch(err => {
-                console.log(err);
-            })
-    }
+  const loadingSpinner = () => (
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <img src={Spinner} alt="Loading..." />
+      </div>
+    </div>
+  );
 
-    filterResults(filters)
-    {
-        let newState = Object.assign({}, this.state);
-        if(this.state.whichResource === 0) {
-            if(newState.filters.sortByWhat !== filters.sortByWhat){
-                if(filters.sortByWhat === "new")
-                {
-                    newState.lists = newState.lists.sort((a,b) => {
-                        return b.created_at > a.created_at ? 1 : -1 ;
-                    })
-                }
-                else if(filters.sortByWhat === "pop")
-                {
-                    newState.lists = newState.lists.sort((a,b) => {
-                        return b.viewsTotal - a.viewsTotal;
-                    })
-                }
-                newState.filters.sortByWhat = filters.sortByWhat;
-            }
-        }
-        else {
-            if(newState.filters.sortByWhat !== filters.sortByWhat){
-                if(filters.sortByWhat === "new")
-                {
-                    newState.articles = newState.articles.sort((a,b) => {
-                        return b.created_at > a.created_at ? 1 : -1 ;
-                    })
-                }
-                else if(filters.sortByWhat === "pop")
-                {
-                    newState.articles = newState.articles.sort((a,b) => {
-                        return b.viewsTotal - a.viewsTotal;
-                    })
-                }
-                newState.filters.sortByWhat = filters.sortByWhat;
-            }
-        }
+  const mainContent = isLoading ? (
+    loadingSpinner()
+  ) : currentResource === RESOURCE_TYPES.LISTS ? (
+    <div className="my-3 p-3 bg-white rounded box-shadow">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="border-bottom border-gray pb-2 mb-0">My Lists</h4>
+        {/* <button className="btn btn-sm btn-light" onClick={toggleDashboard}>
+          {dashboard === DASHBOARD_TYPES.ADMIN ? "User" : "Admin"}{" "}
+          <i className="fas fa-arrow-right"></i>
+        </button> */}
+      </div>
+      <div className="col-lg-12 col-md-10 mx-auto">
+        {lists.map((list) => (
+          <DashboardListItem
+            key={list.id}
+            {...list}
+            currentUser={currentUser}
+          />
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="my-3 p-3 bg-white rounded box-shadow">
+      {dashboard === DASHBOARD_TYPES.ADMIN ? (
+        <>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>Pending Articles - Admin view</h4>
+            <button className="btn btn-sm btn-light" onClick={toggleDashboard}>
+              User View <i className="fas fa-arrow-right"></i>
+            </button>
+          </div>
+          <div className="col-lg-12 col-md-12 mx-auto">
+            {articlesPending.length ? (
+              articlesPending.map((article) => (
+                <div
+                  className="row pb-3 mb-0 mt-3 border-bottom border-gray"
+                  key={article.id}
+                >
+                  <div className="col-lg-6">
+                    {JSON.stringify(article, null, 2)}
+                    <h4>
+                      <Link to={`/article/${article.id}`}>
+                        {article.title_jp}
+                      </Link>
+                    </h4>
+                    <p>
+                      tags:{" "}
+                      {article.hashtags.map((tag) => (
+                        <span key={tag.id} className="tag-link">
+                          {tag.content}{" "}
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                  <div className="col-lg-4 col-12-sm pt-3">
+                    <small className="text-muted">
+                      <Moment className="text-muted" format="Do MMM YYYY">
+                        {article.created_at}
+                      </Moment>
+                      <br />
+                      <Moment
+                        className="text-muted"
+                        date={article.created_at}
+                        durationFromNow
+                      />
+                    </small>
+                  </div>
+                  <div className="col-lg-2">
+                    <strong>{article.statusTitle}</strong>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="alert text-center alert-info">
+                There are no articles to review.
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>My Articles - User view</h4>
+            <button className="btn btn-sm btn-light" onClick={toggleDashboard}>
+              Admin View <i className="fas fa-arrow-right"></i>
+            </button>
+          </div>
+          <div className="col-lg-12 col-md-10 mx-auto">
+            {articles.map((article) => (
+              <DashboardArticleItem
+                key={article.id}
+                {...article}
+                currentUser={currentUser}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
-        this.setState( newState );
-    }
-
-    render() {
-        let { articles, articlesPending } = this.state;
-
-        let { currentUser } = this.props;
-
-        let articleList = articles ? ( articles.map(w => {
-                return (
-                    <DashboardArticleItem 
-                        key={w.id}
-                        id={w.id}
-                        created_at={w.created_at}
-                        title={w.title_jp}
-                        publicity={w.publicity}
-                        commentsTotal={w.commentsTotal}
-                        likesTotal={w.likesTotal}
-                        viewsTotal={w.viewsTotal}
-                        downloadsTotal={w.downloadsTotal}
-                        hashtags={w.hashtags}
-                        currentUser={this.props.currentUser}
-                    />
-                );
-        }) ): (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
-                <img src={Spinner}/>
+  return (
+    <div className="container mt-5">
+      <div className="container mt-5">
+        <div className="ml-3 mt-2">
+          <div className="row align-items-center">
+            <div className="col-auto">
+              <button
+                className="btn btn-light brand-button"
+                onClick={toggleResource}
+              >
+                {currentResource === RESOURCE_TYPES.LISTS
+                  ? "Articles"
+                  : "Lists"}{" "}
+                <i className="fas fa-arrow-right"></i>
+              </button>
             </div>
+
+            <div className="col">
+              <SearchBarDashboard
+                searchType={
+                  currentResource === RESOURCE_TYPES.LISTS
+                    ? "lists"
+                    : "articles"
+                }
+                filterResults={(newFilters) => {
+                  setFilters(newFilters);
+                }}
+              />
+            </div>
+          </div>
         </div>
-        );
-
-        let articleListPending = articlesPending ? ( articlesPending.map(w => {
-
-            return (
-                <div className="row pb-3 mb-0 mt-3 border-bottom border-gray" key={w.id}>
-                    <div className="col-lg-6">
-                        <h4>
-                            <Link to={`/article/${w.id}`}> {w.title_jp} </Link>
-                        </h4>
-                        <p>
-                        tags: {w.hashtags.map(tag => <span key={tag.id} className="tag-link">{tag.content} </span>)}
-                        </p>
-                    </div>
-                    <div className="col-lg-4 col-12-sm pt-3">
-                        <small className="text-muted">
-                                <span>
-                                <Moment className="text-muted" format="Do MMM YYYY">
-                                    {w.created_at}
-                                </Moment>    
-                                </span>
-                                <br/>
-                                <span> 
-                                <Moment className="text-muted" date={w.created_at}
-                                    durationFromNow
-                                />
-                                </span>
-                        </small>
-                    </div>
-                    <div className="col-lg-2">
-                        <strong> {w.statusTitle} </strong>
-                        {/* <button onClick={this.toggleStatus.bind(this, w.id, 1)} className="btn-sm btn-primary">
-                            Review
-                        </button> */}
-                    </div>
-                </div>
-            );
-                
-        }) ): (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
-                <img src={Spinner}/>
-            </div>
-        </div>
-        );
-        
-        let customList = this.state.lists ? 
-            ( 
-                this.state.lists.map(w => {
-                    return (
-                        <DashboardListItem 
-                            key={w.id}
-                            id={w.id}
-                            created_at={w.created_at}
-                            title={w.title}
-                            publicity={w.publicity}
-                            type={w.type}
-                            listType={w.typeTitle}
-                            commentsTotal={w.commentsTotal}
-                            likesTotal={w.likesTotal}
-                            viewsTotal={w.viewsTotal}
-                            downloadsTotal={w.downloadsTotal}
-                            hashtags={w.hashtags.slice(0, 3)}
-                            user={w.user}
-                            postType={w.postType}
-                            currentUser={this.props.currentUser}
-                            deleteList={this.deleteList}
-                            editList={this.editList}
-                        />
-                    );
-                })
-            )
-            : 
-            (
-            <div className="container mt-5">
-                <div className="row justify-content-center">
-                    <img src={Spinner}/>
-                </div>
-            </div>
-            );
-
-        return (
-            <div className="container mt-5">
-                <div className="container mt-5">
-                    <div className="ml-3 mt-2">
-                        { 
-                        this.state.whichResource === 0 ? 
-                        (
-                            <React.Fragment>
-                                <div className="col-lg-12 mt-3">
-                                    <button className="btn btn-sm btn-light brand-button" onClick={this.toggleResource}>
-                                        Articles <i className="fas fa-arrow-right"></i>
-                                    </button>
-                                </div>
-                                <SearchBarDashboard searchType="lists" filterResults={this.filterResults}/>
-                            </React.Fragment>
-                        ) 
-                        : 
-                        (
-                            <React.Fragment>
-                                <div className="col-lg-12 mt-3">
-                                <button className="btn btn-light brand-button" onClick={this.toggleResource}>
-                                    Lists <i className="fas fa-arrow-right"></i>
-                                </button>
-                                <SearchBarDashboard searchType="articles" filterResults={this.filterResults}/>
-                                </div>
-                            </React.Fragment>
-                        )}
-                    </div>
-                    { this.state.whichResource === 0 ? 
-                        (
-                            <div className="my-3 p-3 bg-white rounded box-shadow">
-                                <h4 className="border-bottom border-gray pb-2 mb-0">Your Lists</h4>
-                                <div className="col-lg-12 col-md-10 mx-auto">
-                                    { this.state.lists && customList ? customList : (
-                                        <div className="container mt-5">
-                                            <div className="row justify-content-center">
-                                                <img src={Spinner}/>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    :   
-                        (
-                            <div className="my-3 p-3 bg-white rounded box-shadow">
-                                {
-                                    this.state.articles ? 
-                                    (
-                                            this.state.dashboard === "admin" ? 
-                                        (
-                                            <React.Fragment>
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <h4>Admin view</h4>
-                                                        <button className="btn btn-sm btn-light" onClick={this.toggleDashboard}>
-                                                            User <i className="fas fa-arrow-right"></i>
-                                                        </button>
-                                                    </div>
-                                                
-                                                <div className="col-lg-12 col-md-10 mx-auto">
-                                                    {articleListPending}
-                                                </div>
-                                            </React.Fragment>
-                                            
-                                        ) : (
-                                            <React.Fragment>
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <h4>User view</h4>
-                                                    <button className="btn btn-sm btn-light" onClick={this.toggleDashboard}>
-                                                        Admin <i className="fas fa-arrow-right"></i>
-                                                    </button>
-                                                </div>
-                                                <div className="col-lg-12 col-md-10 mx-auto">
-                                                    {articleList}
-                                                </div>
-                                            </React.Fragment>
-                                        )
-                                    ) : ""
-                                }
-                            </div>
-                        )
-                    }
-                </div>
-            </div>
-        )
-    }
-}
+        {mainContent}
+      </div>
+    </div>
+  );
+};
 
 export default DashboardList;
