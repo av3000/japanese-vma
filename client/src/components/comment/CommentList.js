@@ -1,53 +1,41 @@
-import React, { Component } from "react";
+import React from "react";
 import Comment from "./Comment";
 
-class CommentList extends Component {
-  onDeleteComment(id) {
-    this.props.deleteComment(id);
-  }
+const CommentList = ({
+  comments = [],
+  currentUser,
+  objectId,
+  deleteComment,
+  editComment,
+  likeComment,
+}) => {
+  return (
+    <div>
+      <h5 className="text-muted mb-4 mt-4">
+        <span className="badge badge-secondary">{comments.length}</span>
+        {"  "}
+        Comment{comments.length !== 1 ? "s" : ""}
+      </h5>
 
-  onEditComment(id) {
-    this.props.editComment(id);
-  }
-
-  onLikeComment(id) {
-    this.props.likeComment(id);
-  }
-
-  render() {
-    return (
-      <div className="">
-        <h5 className="text-mute mb-4 mt-4">
-          <span className="badge badge-secondary">
-            {" "}
-            {this.props.comments.length}
-          </span>
-          {"  "}
-          Comment{this.props.comments.length > 0 ? "s" : ""}
-        </h5>
-
-        {this.props.comments.length === 0 ? (
-          <div className="alert text-center alert-info">
-            Be the first to comment
-          </div>
-        ) : null}
-
-        <div className="">
-          {this.props.comments.map((comment, index) => (
-            <Comment
-              key={index}
-              currentUser={this.props.currentUser}
-              comment={comment}
-              objectId={this.props.objectId}
-              deleteComment={this.onDeleteComment.bind(this, comment.id)}
-              editComment={this.onEditComment.bind(this, comment.id)}
-              likeComment={this.onLikeComment.bind(this, comment.id)}
-            />
-          ))}
+      {comments.length === 0 ? (
+        <div className="alert text-center alert-info">
+          Be the first to comment
         </div>
-      </div>
-    );
-  }
-}
+      ) : (
+        comments.map((comment, index) => (
+          <Comment
+            key={index}
+            currentUser={currentUser}
+            comment={comment}
+            objectId={objectId}
+            deleteComment={() => deleteComment(comment.id)}
+            editComment={() => editComment(comment.id)}
+            likeComment={() => likeComment(comment.id)}
+          />
+        ))
+      )}
+    </div>
+  );
+};
 
 export default CommentList;
