@@ -59,7 +59,7 @@ class CustomListController extends Controller
         return $listTypes[$index];
     }
 
-    public function getListItems(CustomList $list)
+    public function getListWithItems(CustomList $list)
     {
         $objectsArray = [];
         $foundRows = [];
@@ -136,7 +136,7 @@ class CustomListController extends Controller
             ]);
         }
 
-        $list = $this->getListItems($list);
+        $list = $this->getListWithItems($list);
 
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         incrementView($list, $objectTemplateId);
@@ -185,7 +185,7 @@ class CustomListController extends Controller
 
     public function index()
     {
-        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', 'DESC')->paginate(4);
+        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', 'DESC')->paginate(3);
 
         if (! $lists) {
             return response()->json([
@@ -196,7 +196,7 @@ class CustomListController extends Controller
 
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         foreach ($lists as $singleList) {
-            $singleList = $this->getListItems($singleList);
+            $singleList = $this->getListWithItems($singleList);
             $singleList->itemsTotal = count($singleList->listItems);
             $singleList->likesTotal = $this->getImpression('like', $objectTemplateId, $singleList, 'total');
             $singleList->downloadsTotal = $this->getImpression('download', $objectTemplateId, $singleList, 'total');
@@ -372,7 +372,7 @@ class CustomListController extends Controller
 
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         foreach ($lists as $singleList) {
-            $singleList = $this->getListItems($singleList);
+            $singleList = $this->getListWithItems($singleList);
             $singleList->itemsTotal = count($singleList->listItems);
             $singleList->likesTotal = getImpression('like', $objectTemplateId, $singleList, 'total');
             $singleList->downloadsTotal = getImpression('download', $objectTemplateId, $singleList, 'total');
@@ -562,7 +562,7 @@ class CustomListController extends Controller
     {
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
         foreach ($lists as $singleList) {
-            $singleList = $this->getListItems($singleList);
+            $singleList = $this->getListWithItems($singleList);
             $singleList->itemsTotal = count($singleList->listItems);
             $singleList->likesTotal = $this->getImpression('like', $objectTemplateId, $singleList, 'total');
             $singleList->downloadsTotal = $this->getImpression('download', $objectTemplateId, $singleList, 'total');
@@ -669,7 +669,7 @@ class CustomListController extends Controller
 
         $this->incrementDownload($list);
         $user = User::find($list->user_id);
-        $list = $this->getListItems($list);
+        $list = $this->getListWithItems($list);
 
         $data = [
             'list_id' => $list->id,
@@ -686,7 +686,7 @@ class CustomListController extends Controller
             'page-size' => 'a4',
         ]);
 
-        return $pdf->stream('list-radicals.pdf');
+        return $pdf->inline('list-radicals.pdf');
     }
 
     public function generateKanjisPdf($id)
@@ -711,7 +711,7 @@ class CustomListController extends Controller
 
         $this->incrementDownload($list);
         $user = User::find($list->user_id);
-        $list = $this->getListItems($list);
+        $list = $this->getListWithItems($list);
 
         $kanjiList = $list->listItems;
         foreach ($kanjiList as $kanji) {
@@ -735,7 +735,7 @@ class CustomListController extends Controller
             'page-size' => 'a4',
         ]);
 
-        return $pdf->stream('list-kanjis.pdf');
+        return $pdf->inline('list-kanjis.pdf');
     }
 
     public function extractWordsListAttributes($wordList)
@@ -838,9 +838,10 @@ class CustomListController extends Controller
 
         $this->incrementDownload($list);
         $user = User::find($list->user_id);
-        $list = $this->getListItems($list);
+        $list = $this->getListWithItems($list);
 
-        $wordList = $this->extractWordsListAttributes($list->listItems);
+        // TODO: Revisit algorithm principles for generating PDF and how japanese material is being saved and which data needs to be decoded
+        // $wordList = $this->extractWordsListAttributes($list->listItems);
 
         $data = [
             'list_id' => $list->id,
@@ -857,7 +858,7 @@ class CustomListController extends Controller
             'page-size' => 'a4',
         ]);
 
-        return $pdf->stream('list-words.pdf');
+        return $pdf->inline('list-words.pdf');
     }
 
     public function generateSentencesPdf($id)
@@ -882,7 +883,7 @@ class CustomListController extends Controller
 
         $this->incrementDownload($list);
         $user = User::find($list->user_id);
-        $list = $this->getListItems($list);
+        $list = $this->getListWithItems($list);
 
         $data = [
             'list_id' => $list->id,

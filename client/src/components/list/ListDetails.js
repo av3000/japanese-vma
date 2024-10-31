@@ -40,14 +40,12 @@ class ListDetails extends Component {
     this.toggleListEdit = this.toggleListEdit.bind(this);
   }
 
-  listId = this.props.match.params.list_id;
-
   componentDidMount() {
     this.getListWithAuth();
   }
 
   getListWithAuth() {
-    const url = BASE_URL + "/api/list/" + this.listId;
+    const url = BASE_URL + "/api/list/" + this.props.match.params.list_id;
 
     axios
       .get(url)
@@ -62,13 +60,14 @@ class ListDetails extends Component {
         if (!list) {
           this.props.history.push("/lists");
         } else if (this.props.currentUser.isAuthenticated) {
-          return apiCall("post", `/api/list/${this.listId}/checklike`).then(
-            (res) => {
-              const newState = Object.assign({}, this.state);
-              newState.list.isLiked = res.isLiked;
-              this.setState(newState);
-            }
-          );
+          return apiCall(
+            "post",
+            `/api/list/${this.props.match.params.list_id}/checklike`
+          ).then((res) => {
+            const newState = Object.assign({}, this.state);
+            newState.list.isLiked = res.isLiked;
+            this.setState(newState);
+          });
         }
       })
       .then((res) => {
@@ -97,7 +96,7 @@ class ListDetails extends Component {
     const url = BASE_URL + "/api/user/list/removeitemwhileaway";
     axios
       .post(url, {
-        listId: this.ListId,
+        listId: this.props.match.params.list_id,
         elementId: id,
       })
       .then((res) => {
@@ -112,7 +111,7 @@ class ListDetails extends Component {
 
   async deleteList() {
     try {
-      await apiCall("delete", `/api/list/${this.ListId}`);
+      await apiCall("delete", `/api/list/${this.props.match.params.list_id}`);
       this.props.history.push("/lists");
     } catch (err) {
       console.log(err);
@@ -130,25 +129,38 @@ class ListDetails extends Component {
     } else {
       this.props.dispatch(showLoader("Creating a PDF, please wait."));
       let endpoint = "";
-      if (this.state.list.type === 1 || this.state.list.type === 5) {
+      if (
+        this.state.list.type === ObjectTemplates.KNOWNRADICALS ||
+        this.state.list.type === ObjectTemplates.RADICALS
+      ) {
         endpoint = "radicals-pdf";
-      } else if (this.state.list.type === 2 || this.state.list.type === 6) {
+      } else if (
+        this.state.list.type === ObjectTemplates.KNOWNKANJIS ||
+        this.state.list.type === ObjectTemplates.KANJIS
+      ) {
         endpoint = "kanjis-pdf";
-      } else if (this.state.list.type === 3 || this.state.list.type === 7) {
+      } else if (
+        this.state.list.type === ObjectTemplates.KNOWNWORDS ||
+        this.state.list.type === ObjectTemplates.WORDS
+      ) {
         endpoint = "words-pdf";
-      } else if (this.state.list.type === 4 || this.state.list.type === 8) {
+      } else if (
+        this.state.list.type === ObjectTemplates.KNOWNSENTENCES ||
+        this.state.list.type === ObjectTemplates.SENTENCES
+      ) {
         endpoint = "sentences-pdf";
-      } else if (this.state.list.type === 9) {
+      } else if (this.state.list.type === ObjectTemplates.ARTICLES) {
         return;
       }
 
-      const url = BASE_URL + "/api/list/" + this.ListId + "/" + endpoint;
+      const url = `${BASE_URL}/api/list/${this.props.match.params.list_id}/${endpoint}`;
 
       axios
         .get(url, {
           responseType: "blob",
         })
         .then((res) => {
+          console.log("pdf grizo", res);
           this.props.dispatch(hideLoader());
           const file = new Blob([res.data], { type: "application/pdf" });
           const fileURL = URL.createObjectURL(file);
@@ -165,7 +177,12 @@ class ListDetails extends Component {
       this.props.history.push("/login");
     } else {
       let endpoint = this.state.list.isLiked === true ? "unlike" : "like";
-      const url = BASE_URL + "/api/list/" + this.ListId + "/" + endpoint;
+      const url =
+        BASE_URL +
+        "/api/list/" +
+        this.props.match.params.list_id +
+        "/" +
+        endpoint;
 
       axios
         .post(url)
@@ -224,7 +241,7 @@ class ListDetails extends Component {
       const url =
         BASE_URL +
         "/api/list/" +
-        this.ListId +
+        this.props.match.params.list_id +
         "/comment/" +
         commentId +
         "/" +

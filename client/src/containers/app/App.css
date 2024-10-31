@@ -17,6 +17,14 @@
   padding: 8px;
 }
 
+/* .brand-icons .btn:focus,
+.brand-icons .btn:active {
+  background-color: var(--main-brand-color);
+  color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(247, 152, 98, 0.5);
+} */
+
 .brand-icons .btn i {
   opacity: 0.9;
   font-size: 1.1rem;
