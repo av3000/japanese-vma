@@ -108,7 +108,9 @@ html {
   color: var(--link-hover-color);
 }
 
+.btn-outline-primary:disabled,
 .brand-button {
+  cursor: pointer;
   border-radius: 15px;
   border: 2px solid var(--main-brand-color);
   color: var(--main-brand-color);
