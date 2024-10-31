@@ -9,6 +9,7 @@ import DashboardListItem from "../components/dashboard/DashboardListItem";
 import Spinner from "../assets/images/spinner.gif";
 import SearchBarDashboard from "../components/search/SearchBarDashboard";
 import { HTTP_METHOD } from "../shared/constants";
+import Hashtags from "../components/ui/hashtags";
 
 const RESOURCE_TYPES = {
   ARTICLES: "ARTICLES",
@@ -150,14 +151,7 @@ const DashboardList = () => {
                         {article.title_jp}
                       </Link>
                     </h4>
-                    <p>
-                      tags:{" "}
-                      {article.hashtags.map((tag) => (
-                        <span key={tag.id} className="tag-link">
-                          {tag.content}{" "}
-                        </span>
-                      ))}
-                    </p>
+                    tags: <Hashtags hashtags={article.hashtags} />
                   </div>
                   <div className="col-lg-4 col-12-sm pt-3">
                     <small className="text-muted">

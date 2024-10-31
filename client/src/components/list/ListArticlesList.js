@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
+import Hashtags from "../ui/hashtags";
 
 class ListArticlesList extends Component {
   render() {
@@ -31,12 +32,7 @@ class ListArticlesList extends Component {
           <td>{object.commentsTotal}</td>
           <td>{object.likesTotal}</td>
           <td>
-            {" "}
-            {object.hashtags.map((tag) => (
-              <Link key={tag.id} className="tag-link" to="/">
-                {tag.content}{" "}
-              </Link>
-            ))}{" "}
+            <Hashtags hashtags={object.hashtags} />
           </td>
         </tr>
       );

@@ -4,6 +4,7 @@ import Spinner from "../../assets/images/spinner.gif";
 import { Link } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 import { BASE_URL } from "../../shared/constants";
+import Hashtags from "../ui/hashtags";
 
 class KanjiDetails extends Component {
   constructor(props) {
@@ -284,7 +285,7 @@ class KanjiDetails extends Component {
 
     const articleList = articles.data
       ? articles.data.map((article) => {
-          article.hashtags = article.hashtags.slice(0, 3);
+          // article.hashtags = article.hashtags.slice(0, 3);
           return (
             <div className="row justify-content-center mt-5" key={article.id}>
               <div className="col-md-12">
@@ -292,13 +293,7 @@ class KanjiDetails extends Component {
                   <div className="row justify-content-center">
                     <div className="col-md-8">
                       <h3>{article.title_jp}</h3>
-                      <p>
-                        {article.hashtags.map((tag) => (
-                          <span key={tag.id} className="tag-link" to="/">
-                            {tag.content}{" "}
-                          </span>
-                        ))}
-                      </p>
+                      <Hashtags hashtags={article.hashtags} />
                     </div>
                     <div className="col-md-2">
                       <p>

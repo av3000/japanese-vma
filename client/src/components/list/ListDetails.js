@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
 import Moment from "react-moment";
-import { Button, Modal } from "react-bootstrap";
+import { Button, ButtonGroup, Modal } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 
@@ -13,7 +13,8 @@ import { hideLoader, showLoader } from "../../store/actions/application";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import ListItems from "./ListItems";
-import { BASE_URL } from "../../shared/constants";
+import { BASE_URL, ObjectTemplates } from "../../shared/constants";
+import Hashtags from "../ui/hashtags";
 
 class ListDetails extends Component {
   constructor(props) {
@@ -341,45 +342,43 @@ class ListDetails extends Component {
             />
             <p className="lead">{list.content}Description </p>
             <br />
-            <p>
-              {list.hashtags.map((tag) => (
-                <span key={tag.id} className="tag-link" to="/">
-                  {tag.content}{" "}
-                </span>
-              ))}
-            </p>
+            <Hashtags hashtags={list.hashtags} />
             <hr />
-            <div className="">
+            <div>
               <div className="mr-1 float-left d-flex">
                 <img src={AvatarImg} alt="book-japanese" />
                 <p className="ml-3 mt-3">created by {list.userName}</p>
               </div>
-              <div className="float-right d-flex">
+              <div className="float-right d-flex align-items-center">
                 <p className="ml-3 mt-3">{list.likesTotal} likes &nbsp;</p>
-                <ul className="brand-icons float-right d-flex">
-                  {list.isLiked ? (
-                    <li onClick={this.likeList}>
-                      <button>
-                        <i className="fas fa-thumbs-up fa-lg"></i>
-                      </button>
-                    </li>
-                  ) : (
-                    <li onClick={this.likeList}>
-                      <button>
-                        <i className="far fa-thumbs-up fa-lg"></i>
-                      </button>
-                    </li>
-                  )}
-                  {list.type !== 9 ? (
-                    <li onClick={this.downloadPdf}>
-                      <button>
-                        <i className="fas fa-print fa-lg"></i>
-                      </button>
-                    </li>
+                <ButtonGroup aria-label="List actions" className="brand-icons">
+                  <Button
+                    onClick={this.likeList}
+                    variant="outline-primary"
+                    className={
+                      list.isLiked
+                        ? "btn btn-outline brand-button liked-button"
+                        : "btn btn-outline brand-button"
+                    }
+                  >
+                    <i
+                      className={
+                        list.isLiked ? "fas fa-thumbs-up" : "far fa-thumbs-up"
+                      }
+                    ></i>
+                  </Button>
+                  {list.type !== ObjectTemplates.ARTICLES ? (
+                    <Button
+                      onClick={this.downloadPdf}
+                      className="btn btn-outline brand-button"
+                      variant="outline-primary"
+                    >
+                      <i className="fas fa-file-download fa-lg"></i>
+                    </Button>
                   ) : (
                     ""
                   )}
-                </ul>
+                </ButtonGroup>
               </div>
             </div>
           </div>
@@ -436,17 +435,6 @@ class ListDetails extends Component {
                   currentUser={this.props.currentUser}
                   listUserId={this.state.list.user_id}
                 />
-                {list && list.type !== 9 ? (
-                  <ul className="brand-icons mr-1 float-right d-flex">
-                    <li onClick={this.downloadPdf}>
-                      <button>
-                        <i className="fas fa-print fa-lg"></i>
-                      </button>
-                    </li>
-                  </ul>
-                ) : (
-                  ""
-                )}
               </React.Fragment>
             ) : (
               ""

@@ -10,6 +10,7 @@ import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
 import { Button, Modal } from "react-bootstrap";
 import { BASE_URL } from "../../shared/constants";
+import Hashtags from "../ui/hashtags";
 
 class PostDetails extends Component {
   constructor(props) {
@@ -278,13 +279,7 @@ class PostDetails extends Component {
             </ul>
             <p className="lead mt-5">{post.content} </p>
             <br />
-            <p>
-              {post.hashtags.map((tag) => (
-                <span key={tag.id} className="tag-link" to="/">
-                  {tag.content}{" "}
-                </span>
-              ))}
-            </p>
+            <Hashtags hashtags={post.hashtags} />
             <hr />
             <div className="">
               <div className="mr-1 float-left d-flex">

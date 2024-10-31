@@ -1,7 +1,8 @@
 import React from "react";
 import Moment from "react-moment";
-import { Button, ListGroup, Badge } from "react-bootstrap";
+import { Button, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import Hashtags from "../ui/hashtags";
 
 const DashboardArticleItem = ({
   id,
@@ -17,15 +18,7 @@ const DashboardArticleItem = ({
       <p>{title_jp}</p>
       <div className="d-flex align-items-center">
         <span className="mr-2 text-muted">Tags:</span>
-        <ListGroup horizontal className="flex-wrap">
-          {hashtags.map((tag) => (
-            <ListGroup.Item key={tag.id} className="p-1 border-0">
-              <Badge pill variant="secondary">
-                {tag.content}
-              </Badge>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+        <Hashtags hashtags={hashtags} />
       </div>
     </div>
     <div className="col-md-4">

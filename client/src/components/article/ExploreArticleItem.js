@@ -1,8 +1,8 @@
 import React from "react";
-// import Moment from 'react-moment';
 import { Link } from "react-router-dom";
 import DefaultArticleImg from "../../assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
 import "./ArticleItem.css";
+import Hashtags from "../ui/hashtags";
 
 const ArticleItem = ({
   id,
@@ -37,19 +37,12 @@ const ArticleItem = ({
         <Link to={"/article/" + id} className="article-title-link">
           <h4 className="card-text article-title"> {title_jp}</h4>
         </Link>
-        <p>
-          {" "}
-          {hashtags.map((tag) => (
-            <span key={tag.id} className="tag-link" to="/">
-              {tag.content}{" "}
-            </span>
-          ))}{" "}
-        </p>
+        <Hashtags hashtags={hashtags} />
         <p className="text-muted">
           {jp_year} {jp_month} {jp_day} {jp_hour}
         </p>
         <p className="text-muted">
-          {viewsTotal + 30} views &nbsp;
+          {viewsTotal} views &nbsp;
           {commentsTotal} comments&nbsp;
           {likesTotal} likes
         </p>

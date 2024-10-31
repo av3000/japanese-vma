@@ -15,6 +15,7 @@ class ArticleForm extends Component {
       source_link: "",
       tags: "",
       publicity: false,
+      isLoading: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -52,13 +53,17 @@ class ArticleForm extends Component {
   };
 
   postNewArticle(payload) {
+    this.setState({ isLoading: true });
+
     return apiCall("post", `/api/article`, payload)
       .then((res) => {
         this.props.dispatch(hideLoader());
+        this.setState({ isLoading: false });
         this.props.history.push("/article/" + res.article.id);
       })
       .catch((err) => {
         this.props.dispatch(hideLoader());
+        this.setState({ isLoading: false });
         if (err.title_jp) {
           return { success: false, err: err.title_jp[0] };
         } else if (err.content_jp) {
@@ -146,7 +151,15 @@ class ArticleForm extends Component {
               type="submit"
               className="btn btn-outline-primary col-md-3 brand-button mt-5"
             >
-              Post the Article
+              {this.state.isLoading ? (
+                <span
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                <span>Create</span>
+              )}
             </button>
           </form>
         </div>

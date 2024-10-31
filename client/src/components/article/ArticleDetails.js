@@ -12,6 +12,7 @@ import CommentForm from "../comment/CommentForm";
 import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "../../shared/constants";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import { setSelectedArticle } from "../../store/actions/articles";
+import Hashtags from "../ui/hashtags";
 
 const LIST_ACTIONS = {
   ADD_ITEM: "add",
@@ -46,26 +47,6 @@ const ArticleDetails = () => {
   );
 
   useEffect(() => {
-    const fetchArticleDetails = async () => {
-      try {
-        const url = `${BASE_URL}/api/article/${article_id}`;
-        const data = await apiCall(HTTP_METHOD.GET, url);
-        const { article } = data;
-        if (!article) {
-          history.push("/articles");
-          return;
-        }
-        dispatch(setSelectedArticle(article));
-        setArticle(article);
-        setArticleTempStatus(article.status);
-      } catch (error) {
-        console.error(error);
-        history.push("/articles");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (!selectedArticle) {
       fetchArticleDetails();
       if (currentUser.isAuthenticated) {
@@ -87,6 +68,26 @@ const ArticleDetails = () => {
     selectedArticle,
   ]);
 
+  const fetchArticleDetails = async () => {
+    try {
+      const url = `${BASE_URL}/api/article/${article_id}`;
+      const data = await apiCall(HTTP_METHOD.GET, url);
+      const { article } = data;
+      if (!article) {
+        history.push("/articles");
+        return;
+      }
+      dispatch(setSelectedArticle(article));
+      setArticle(article);
+      setArticleTempStatus(article.status);
+    } catch (error) {
+      console.error(error);
+      history.push("/articles");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const fetchUserRelationsToArticle = async () => {
     try {
       const userLike = await apiCall(
@@ -97,12 +98,14 @@ const ArticleDetails = () => {
       setArticle((prevArticle) => ({
         ...prevArticle,
         isLiked: userLike.isLiked,
-        comments: prevArticle.comments.map((comment) => ({
-          ...comment,
-          isLiked: comment.likes.some(
-            (like) => like.user_id === currentUser.user.id
-          ),
-        })),
+        comments: prevArticle.comments
+          ? prevArticle.comments.map((comment) => ({
+              ...comment,
+              isLiked: comment.likes.some(
+                (like) => like.user_id === currentUser.user.id
+              ),
+            }))
+          : [],
       }));
     } catch (error) {
       console.log(error);
@@ -462,7 +465,6 @@ const ArticleDetails = () => {
 
   return (
     <div className="container">
-      {/* Article Content */}
       <div className="row justify-content-center">
         <div className="col-lg-8 ">
           <span className="row mt-4">
@@ -484,7 +486,6 @@ const ArticleDetails = () => {
               currentUser.user.isAdmin) &&
               ["pending", "reviewing", "rejected", "approved"][article.status]}
           </p>
-          {/* Action Buttons */}
           <ul className="brand-icons mr-1 float-right d-flex">
             {currentUser.user.isAdmin && (
               <li onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}>
@@ -514,23 +515,15 @@ const ArticleDetails = () => {
             alt="default-article-img"
           />
           <p className="lead">{article.content_jp}</p>
-          <p>
-            {article.hashtags
-              ? article.hashtags.map((tag) => (
-                  <span key={tag.id} className="tag-link">
-                    {tag.content}{" "}
-                  </span>
-                ))
-              : "no hashtags yet"}
-            <br />
-            <a
-              href={article.source_link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              original source
-            </a>
-          </p>
+          <Hashtags hashtags={article.hashtags} />
+          <br />
+          <a
+            href={article.source_link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            original source
+          </a>
           <hr />
           <div>
             <div className="mr-1 float-left d-flex">

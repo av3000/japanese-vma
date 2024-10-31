@@ -6,7 +6,7 @@ export default class CommentForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: false,
+      isLoading: false,
       error: "",
       message: "",
     };
@@ -30,16 +30,16 @@ export default class CommentForm extends Component {
     }
 
     if (!this.isFormValid()) {
-      this.setState({ error: "All fields are required." });
+      this.setState({ error: "Message is empty." });
       return;
     }
 
-    this.setState({ error: "", loading: true });
+    this.setState({ error: "", isLoading: true });
 
     const { message } = this.state;
     const id = this.props.objectId;
     const objectType = this.props.objectType;
-    const url = BASE_URL + `/api/${objectType}/${id}/comment`;
+    const url = `${BASE_URL}/api/${objectType}/${id}/comment`;
     axios
       .post(url, {
         content: message,
@@ -48,11 +48,12 @@ export default class CommentForm extends Component {
         res.data.comment.userName = this.props.currentUser.user.name;
         this.props.addComment(res.data.comment);
         this.setState({
-          loading: false,
+          isLoading: false,
           message: "",
         });
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -68,6 +69,7 @@ export default class CommentForm extends Component {
   }
 
   render() {
+    const { isLoading } = this.state;
     return (
       <React.Fragment>
         <form method="post" onSubmit={this.onSubmit}>
@@ -86,10 +88,21 @@ export default class CommentForm extends Component {
 
           <div className="form-group">
             <button
-              disabled={this.state.loading}
+              disabled={isLoading}
               className="btn btn-outline-primary col-md-3 brand-button"
             >
-              Comment &#10148;
+              {isLoading ? (
+                <span
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                <span>
+                  Comment
+                  <i className="ml-2 fa-regular fa-paper-plane"></i>
+                </span>
+              )}
             </button>
           </div>
         </form>

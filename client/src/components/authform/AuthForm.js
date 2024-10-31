@@ -9,19 +9,23 @@ class AuthForm extends Component {
       email: "",
       password: "",
       password_confirmation: "",
+      isLoading: false,
     };
   }
 
   handleSubmit = (e) => {
     e.preventDefault();
-
+    this.setState({ isLoading: true });
     const authType = this.props.signUp ? "register" : "login";
     this.props
       .onAuth(authType, this.state)
       .then(() => {
+        this.setState({ isLoading: false });
         this.props.history.push("/");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log(error);
+        this.setState({ isLoading: false });
         return;
       });
   };
@@ -33,7 +37,7 @@ class AuthForm extends Component {
   };
 
   render() {
-    const { email, name } = this.state;
+    const { email, name, isLoading } = this.state;
     const { heading, buttonText, signUp, errors, history, removeError } =
       this.props;
 
@@ -112,8 +116,17 @@ class AuthForm extends Component {
               <button
                 type="submit"
                 className="btn btn-outline-primary col-md-3 brand-button mt-5"
+                disabled={isLoading}
               >
-                {buttonText}
+                {isLoading ? (
+                  <span
+                    className="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                ) : (
+                  buttonText
+                )}
               </button>
             </form>
           </div>

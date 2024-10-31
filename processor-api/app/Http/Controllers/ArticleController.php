@@ -71,7 +71,7 @@ class ArticleController extends Controller
 
     public function index()
     {
-        $articles = Article::where('publicity', 1)->orderBy('created_at', 'DESC')->paginate(4);
+        $articles = Article::where('publicity', 1)->orderBy('created_at', 'DESC')->paginate(3);
         // where('status', $this->ARTICLE_STATUS_TYPES['approved'])->
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
