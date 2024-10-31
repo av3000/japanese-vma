@@ -12,7 +12,7 @@
   color: var(--main-text-color);
   background-color: rgba(0, 0, 0, 0.15);
   border: none;
-  border-radius: 50%;
+  /* border-radius: 50%; */
   transition: all 0.3s ease;
   padding: 8px;
 }

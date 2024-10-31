@@ -3,11 +3,13 @@ import Moment from "react-moment";
 import { Button, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Hashtags from "../ui/hashtags";
+import ArticleStatus from "../ui/article-status";
 
 const DashboardArticleItem = ({
   id,
   created_at,
   title_jp,
+  status,
   commentsTotal,
   likesTotal,
   viewsTotal,
@@ -19,6 +21,8 @@ const DashboardArticleItem = ({
       <div className="d-flex align-items-center">
         <span className="mr-2 text-muted">Tags:</span>
         <Hashtags hashtags={hashtags} />
+        <span className="mr-2 text-muted">Status:</span>
+        <ArticleStatus status={status} />
       </div>
     </div>
     <div className="col-md-4">

@@ -13,6 +13,7 @@ import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "../../shared/constants";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import { setSelectedArticle } from "../../store/actions/articles";
 import Hashtags from "../ui/hashtags";
+import ArticleStatus from "../ui/article-status";
 
 const LIST_ACTIONS = {
   ADD_ITEM: "add",
@@ -35,6 +36,7 @@ const ArticleDetails = () => {
     showDelete: false,
     showStatus: false,
   });
+  const [loadingListIds, setLoadingListIds] = useState([]);
   const [articleTempStatus, setArticleTempStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { article_id } = useParams();
@@ -139,6 +141,8 @@ const ArticleDetails = () => {
 
   const addToOrRemoveFromList = async (id, action) => {
     try {
+      setLoadingListIds((prev) => [...prev, id]);
+
       const endpoint =
         action === LIST_ACTIONS.ADD_ITEM
           ? "additemwhileaway"
@@ -161,12 +165,20 @@ const ArticleDetails = () => {
         )
       );
 
-      setArticle((prevArticle) => ({
-        ...prevArticle,
-        isBookmarked: action === LIST_ACTIONS.ADD_ITEM,
-      }));
+      // TODO: refactor to check if atleast one article is saved to use isBookmarked icon, and check after each add/remove if still have any bookmarked.
+      // setArticle((prevArticle) => ({
+      //   ...prevArticle,
+      //   isBookmarked: action === LIST_ACTIONS.ADD_ITEM,
+      // }));
     } catch (error) {
       console.error(error);
+      setLoadingListIds((prev) =>
+        prev.filter((prevListId) => prevListId !== id)
+      );
+    } finally {
+      setLoadingListIds((prev) =>
+        prev.filter((prevListId) => prevListId !== id)
+      );
     }
   };
 
@@ -314,32 +326,45 @@ const ArticleDetails = () => {
           <Modal.Title>Choose Article List to add</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {userLists.map((list) => (
-            <div key={list.id} className="d-flex justify-content-between">
-              <Link to={`/list/${list.id}`}>{list.title}</Link>
-              {list.elementBelongsToList ? (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() =>
-                    addToOrRemoveFromList(list.id, LIST_ACTIONS.REMOVE_ITEM)
-                  }
-                >
-                  Remove
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    addToOrRemoveFromList(list.id, LIST_ACTIONS.ADD_ITEM)
-                  }
-                >
-                  Add
-                </Button>
-              )}
-            </div>
-          ))}
+          {userLists.map((list) => {
+            const isLoading = loadingListIds.includes(list.id);
+            return (
+              <div key={list.id} className="d-flex justify-content-between">
+                <Link to={`/list/${list.id}`}>{list.title}</Link>
+                {list.elementBelongsToList ? (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      addToOrRemoveFromList(list.id, LIST_ACTIONS.REMOVE_ITEM)
+                    }
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    ) : (
+                      "Remove"
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() =>
+                      addToOrRemoveFromList(list.id, LIST_ACTIONS.ADD_ITEM)
+                    }
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    ) : (
+                      "Add"
+                    )}
+                  </Button>
+                )}
+              </div>
+            );
+          })}
           <small>
             {" "}
             <Link to="/newlist">Create a new list?</Link>{" "}
@@ -474,41 +499,63 @@ const ArticleDetails = () => {
             </Link>
           </span>
           <h1 className="mt-4">{article.title_jp}</h1>
-          <p className="text-muted">
-            Posted on {article.jp_year} {article.jp_month} {article.jp_day}{" "}
-            {article.jp_hour}
-            <br />
-            <span>{article.viewsTotal} views</span> <br />
-            {(currentUser.user.id === article.user_id ||
-              currentUser.user.isAdmin) &&
-              (article.publicity === 1 ? "public | " : "private | ")}
-            {(currentUser.user.id === article.user_id ||
-              currentUser.user.isAdmin) &&
-              ["pending", "reviewing", "rejected", "approved"][article.status]}
-          </p>
-          <ul className="brand-icons mr-1 float-right d-flex">
-            {currentUser.user.isAdmin && (
-              <li onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}>
-                <button>Review</button>
-              </li>
-            )}
-            {currentUser.user.id === article.user_id && (
-              <>
-                <li onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}>
-                  <button>
-                    <i className="far fa-trash-alt fa-lg"></i>
-                  </button>
-                </li>
-                <Link to={`/article/edit/${article.id}`}>
-                  <li>
-                    <button>
-                      <i className="fas fa-pen-alt fa-lg"></i>
-                    </button>
-                  </li>
-                </Link>
-              </>
-            )}
-          </ul>
+          <div className="row text-muted w-100 mb-3 justify-content-between">
+            <div className="col">
+              Posted on {article.jp_year} {article.jp_month} {article.jp_day}{" "}
+              {article.jp_hour}
+              <br />
+              <span>{article.viewsTotal} views | </span>
+              {(currentUser.user.id === article.user_id ||
+                currentUser.user.isAdmin) &&
+                (article.publicity === 1 ? "public | " : "private | ")}
+              {(currentUser.user.id === article.user_id ||
+                currentUser.user.isAdmin) && (
+                <ArticleStatus status={article.status} />
+              )}
+            </div>
+            <div>
+              <ButtonGroup
+                aria-label="Admin actions"
+                className="brand-icons mb-2"
+              >
+                {currentUser.user.isAdmin && (
+                  <Button
+                    onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
+                    variant="outline-primary"
+                    className="btn btn-outline brand-button"
+                    size="sm"
+                  >
+                    Review
+                  </Button>
+                )}
+
+                {currentUser.user.id === article.user_id && (
+                  <>
+                    {/* Delete Button */}
+                    <Button
+                      onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
+                      variant="outline-primary"
+                      className="btn btn-outline brand-button"
+                      size="sm"
+                    >
+                      <i className="far fa-trash-alt"></i>
+                    </Button>
+
+                    <Button
+                      as={Link}
+                      to={`/article/edit/${article.id}`}
+                      variant="outline-primary"
+                      className="btn btn-outline brand-button"
+                      size="sm"
+                    >
+                      <i className="fas fa-pen-alt"></i>
+                    </Button>
+                  </>
+                )}
+              </ButtonGroup>
+            </div>
+          </div>
+
           <img
             className="img-fluid rounded mb-3"
             src={DefaultArticleImg}
