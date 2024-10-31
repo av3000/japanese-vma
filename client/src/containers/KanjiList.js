@@ -16,7 +16,7 @@ export class KanjiList extends Component {
       searchHeading: "",
       searchTotal: "",
       filters: [],
-      isLoading: true,
+      isLoading: false,
     };
 
     this.loadMore = this.loadMore.bind(this);
@@ -150,13 +150,7 @@ export class KanjiList extends Component {
           <KanjiItem
             key={k.id}
             id={k.id}
-            kanji={k.kanji}
-            stroke_count={k.stroke_count}
-            onyomi={k.onyomi}
-            kunyomi={k.kunyomi}
-            meaning={k.meaning}
-            jlpt={k.jlpt}
-            frequency={k.frequency}
+            {...k}
             parts={k.radical_parts}
             addToList={this.addToList.bind(this, k.id)}
           />

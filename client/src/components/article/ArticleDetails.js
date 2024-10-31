@@ -9,16 +9,16 @@ import AvatarImg from "../../assets/images/avatar-woman.svg";
 import Spinner from "../../assets/images/spinner.gif";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
-import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "../../shared/constants";
+import {
+  BASE_URL,
+  HTTP_METHOD,
+  ObjectTemplates,
+  LIST_ACTIONS,
+} from "../../shared/constants";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import { setSelectedArticle } from "../../store/actions/articles";
 import Hashtags from "../ui/hashtags";
 import ArticleStatus from "../ui/article-status";
-
-const LIST_ACTIONS = {
-  ADD_ITEM: "add",
-  REMOVE_ITEM: "remove",
-};
 
 const ArticleModalTypes = {
   SHOW_STATUS: "showStatus",
@@ -308,14 +308,6 @@ const ArticleDetails = () => {
     console.log(commentId);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container text-center">
-        <img src={Spinner} alt="Loading..." />
-      </div>
-    );
-  }
-
   const renderAddModal = () => {
     return (
       <Modal
@@ -487,6 +479,14 @@ const ArticleDetails = () => {
       </Modal>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="container text-center">
+        <img src={Spinner} alt="Loading..." />
+      </div>
+    );
+  }
 
   return (
     <div className="container">

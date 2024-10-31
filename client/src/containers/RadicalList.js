@@ -3,6 +3,7 @@ import { apiCall } from "../services/api";
 import RadicalItem from "../components/radical/RadicalItem";
 import Spinner from "../assets/images/spinner.gif";
 import SearchBarRadicals from "../components/search/SearchBarRadicals";
+import { HTTP_METHOD } from "../shared/constants";
 
 export class RadicalList extends Component {
   constructor() {
@@ -15,6 +16,7 @@ export class RadicalList extends Component {
       searchHeading: "",
       searchTotal: "",
       filters: [],
+      isLoading: false,
     };
 
     this.loadMore = this.loadMore.bind(this);
@@ -27,23 +29,11 @@ export class RadicalList extends Component {
     this.fetchRadicals(this.state.url);
   }
 
-  fetchRadicalsAuthenticated(radicals) {
-    return apiCall("post", "/api/user/list/contain", {
-      objects: radicals,
-      listTypeId: 1,
-    })
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
-
   fetchRadicals(givenUrl) {
-    return apiCall("get", givenUrl)
+    this.setState({ isLoading: true });
+    return apiCall(HTTP_METHOD.GET, givenUrl)
       .then((res) => {
-        let newState = Object.assign({}, this.state);
+        const newState = Object.assign({}, this.state);
         newState.paginateObject = res.radicals;
         newState.radicals = [...newState.radicals, ...res.radicals.data];
         newState.url = res.radicals.next_page_url;
@@ -53,15 +43,21 @@ export class RadicalList extends Component {
         return newState;
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
 
   fetchQuery(queryParams) {
+    this.setState({ isLoading: true });
     let newState = Object.assign({}, this.state);
     newState.filters = queryParams;
     apiCall("post", "/api/radicals/search", newState.filters)
@@ -79,19 +75,25 @@ export class RadicalList extends Component {
         }
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
-        newState.searchHeading =
-          "No results for tag: " + newState.filters.keyword;
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          searchHeading: "No results for tag: " + newState.filters.keyword,
+          isLoading: false,
+        }));
         console.log(err);
       });
   }
 
   fetchMoreQuery(givenUrl) {
+    this.setState({ isLoading: true });
     let newState = Object.assign({}, this.state);
     apiCall("post", givenUrl, newState.filters)
       .then((res) => {
@@ -104,11 +106,15 @@ export class RadicalList extends Component {
         return newState;
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -122,14 +128,12 @@ export class RadicalList extends Component {
   }
 
   makePagination(data) {
-    let pagination = {
+    return {
       current_page: data.current_page,
       last_page: data.last_page,
       next_page_url: data.next_page_url,
       prev_page_url: data.prev_page_url,
     };
-
-    return pagination;
   }
 
   addToList(id) {
@@ -137,26 +141,24 @@ export class RadicalList extends Component {
   }
 
   render() {
-    let { radicals } = this.state;
-    let radicalList = radicals ? (
-      radicals.map((r) => (
-        <RadicalItem
-          key={r.id}
-          id={r.id}
-          radical={r.radical}
-          strokes={r.strokes}
-          meaning={r.meaning}
-          hiragana={r.hiragana}
-          addToList={this.addToList.bind(this, r.id)}
-        />
-      ))
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner" />
+    const { radicals, isLoading } = this.state;
+
+    if (isLoading) {
+      return (
+        <div className="container text-center">
+          <img src={Spinner} alt="Loading..." />
         </div>
-      </div>
-    );
+      );
+    }
+
+    const radicalList = radicals.map((r) => (
+      <RadicalItem
+        key={r.id}
+        id={r.id}
+        {...r}
+        addToList={this.addToList.bind(this, r.id)}
+      />
+    ));
 
     return (
       <div className="container mt-5">

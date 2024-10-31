@@ -18,3 +18,8 @@ export const ObjectTemplates = {
   LYRICS: 10,
   ARTISTS: 11,
 };
+
+export const LIST_ACTIONS = {
+  ADD_ITEM: "add",
+  REMOVE_ITEM: "remove",
+};
