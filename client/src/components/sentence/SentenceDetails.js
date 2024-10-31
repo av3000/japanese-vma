@@ -1,263 +1,218 @@
-import React, { Component } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { Link, useHistory, useParams } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
-import { Link } from "react-router-dom";
 
 import { apiCall } from "../../services/api";
 import Spinner from "../../assets/images/spinner.gif";
 import CommentList from "../comment/CommentList";
 import CommentForm from "../comment/CommentForm";
-import { BASE_URL } from "../../shared/constants";
+import {
+  BASE_URL,
+  HTTP_METHOD,
+  ObjectTemplates,
+  LIST_ACTIONS,
+} from "../../shared/constants";
 
-class SentenceDetails extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      pagination: [],
-      sentence: {},
-      kanjis: [],
-      paginateObject: {},
-      searchHeading: "",
-      searchTotal: "",
-      filters: [],
-      lists: [],
-      show: false,
-      sentenceIsKnown: false,
-    };
+const SentenceDetails = ({ currentUser }) => {
+  const [sentence, setSentence] = useState({});
+  const [kanjis, setKanjis] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [sentenceIsKnown, setSentenceIsKnown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingListIds, setLoadingListIds] = useState([]);
+  const [comments, setComments] = useState([]);
 
-    this.addToList = this.addToList.bind(this);
-    this.removeFromList = this.removeFromList.bind(this);
-    this.openModal = this.openModal.bind(this);
-    this.handleClose = this.handleClose.bind(this);
-    this.getUserSentenceLists = this.getUserSentenceLists.bind(this);
+  const { sentence_id } = useParams();
+  const history = useHistory();
 
-    this.addComment = this.addComment.bind(this);
-    this.deleteComment = this.deleteComment.bind(this);
-    this.likeComment = this.likeComment.bind(this);
-    this.editComment = this.editComment.bind(this);
-  }
-
-  sentenceId = this.props.match.params.sentence_id;
-
-  componentDidMount() {
-    this.getSentenceDetails();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserSentenceLists();
+  useEffect(() => {
+    getSentenceDetails();
+    if (currentUser.isAuthenticated) {
+      getUserSentenceLists();
     }
-  }
+  }, [currentUser.isAuthenticated]);
 
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
+  const getSentenceDetails = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiCall(
+        HTTP_METHOD.GET,
+        `${BASE_URL}/api/sentence/${sentence_id}`
+      );
+      setSentence(res);
+      setKanjis(res.kanjis || []);
+      const sentenceComments = res.comments || [];
 
-  getSentenceDetails() {
-    const url = BASE_URL + "/api/sentence/" + this.sentenceId;
-
-    axios
-      .get(url)
-      .then((res) => {
-        this.setState({
-          sentence: res.data,
-          paginateObject: res,
-          kanjis: res.data.kanjis,
+      if (currentUser.isAuthenticated) {
+        sentenceComments.forEach((comment) => {
+          comment.isLiked = comment.likes.some(
+            (like) => like.user_id === currentUser.user.id
+          );
         });
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        if (this.props.currentUser.isAuthenticated) {
-          newState.sentence.comments.map((comment) => {
-            let hasUserLiked = comment.likes.find(
-              (like) => like.user_id === this.props.currentUser.user.id
-            );
-            if (hasUserLiked) {
-              comment.isLiked = true;
-            } else {
-              comment.isLiked = false;
-            }
-          });
+      }
+      setComments(sentenceComments);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-          this.setState(newState);
+  const getUserSentenceLists = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiCall(
+        HTTP_METHOD.POST,
+        `${BASE_URL}/api/user/lists/contain`,
+        {
+          elementId: sentence_id,
         }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
-    if (this.props.currentUser.isAuthenticated) {
-      this.getUserSentenceLists();
-    }
-  }
-
-  getUserSentenceLists() {
-    const url = BASE_URL + "/api/user/lists/contain";
-
-    return axios
-      .post(url, {
-        elementId: this.sentenceId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter((list) => {
-          if (list.type === 4 && list.elementBelongsToList) {
-            newState.sentenceIsKnown = true;
-          }
-          if (list.type === 4 || list.type === 8) {
-            return list;
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
-
-  openModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
-      this.props.history.push("/login");
-    } else {
-      this.setState({ show: !this.state.show });
-    }
-  }
-
-  addToList(id) {
-    const url = BASE_URL + "/api/user/list/additemwhileaway";
-
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.sentenceId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 4) {
-              newState.sentenceIsKnown = true;
-            }
-            return (list.elementBelongsToList = true);
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  removeFromList(id) {
-    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
-
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.sentenceId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 4) {
-              newState.sentenceIsKnown = false;
-            }
-            return (list.elementBelongsToList = false);
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  likeComment(commentId) {
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    } else {
-      const theComment = this.state.sentence.comments.find(
-        (comment) => comment.id === commentId
       );
 
-      const endpoint = theComment.isLiked === true ? "unlike" : "like";
-      const url =
-        BASE_URL +
-        "/api/sentence/" +
-        this.sentenceId +
-        "/comment/" +
-        commentId +
-        "/" +
-        endpoint;
+      const knownLists = res.lists.filter(
+        (list) =>
+          list.type === ObjectTemplates.KNOWNSENTENCES &&
+          list.elementBelongsToList
+      );
+      setSentenceIsKnown(knownLists.length > 0);
 
-      axios
-        .post(url)
-        .then((res) => {
-          const newState = Object.assign({}, this.state);
-          const index = this.state.sentence.comments.findIndex(
-            (comment) => comment.id === commentId
-          );
-          newState.sentence.comments[index].isLiked =
-            !newState.sentence.comments[index].isLiked;
-
-          if (endpoint === "unlike") {
-            newState.sentence.comments[index].likesTotal -= 1;
-          } else if (endpoint === "like") {
-            newState.sentence.comments[index].likesTotal += 1;
-          }
-
-          this.setState(newState);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      setLists(
+        res.lists.filter(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNSENTENCES ||
+            list.type === ObjectTemplates.SENTENCES
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  addComment(comment) {
-    const newState = Object.assign({}, this.state);
-    newState.sentence.comments.unshift(comment);
-    this.setState(newState);
-  }
+  const toggleModal = () => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
+    } else {
+      setShowModal(!showModal);
+    }
+  };
 
-  deleteComment(commentId) {
-    return apiCall(
-      "delete",
-      `/api/sentence/${this.sentenceId}/comment/${commentId}`
-    )
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.sentence.comments = newState.sentence.comments.filter(
-          (comment) => comment.id !== commentId
-        );
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
+  const addToOrRemoveFromList = async (listId, action) => {
+    setLoadingListIds((prev) => [...prev, listId]);
+    try {
+      const endpoint =
+        action === LIST_ACTIONS.ADD_ITEM
+          ? "additemwhileaway"
+          : "removeitemwhileaway";
+      const url = `${BASE_URL}/api/user/list/${endpoint}`;
+
+      await apiCall(HTTP_METHOD.POST, url, {
+        listId,
+        elementId: sentence_id,
       });
-  }
 
-  editComment(commentId) {
-    console.log("editComment");
-    console.log(commentId);
-  }
+      setLists((prevLists) =>
+        prevLists.map((list) =>
+          list.id === listId
+            ? {
+                ...list,
+                elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
+              }
+            : list
+        )
+      );
 
-  render() {
-    const { currentUser } = this.props;
-    const { kanjis, sentence } = this.state;
-    const comments = sentence ? sentence.comments : "";
+      if (action === LIST_ACTIONS.ADD_ITEM) {
+        if (
+          lists.find(
+            (list) =>
+              list.id === listId && list.type === ObjectTemplates.KNOWNSENTENCES
+          )
+        ) {
+          setSentenceIsKnown(true);
+        }
+      } else {
+        const stillKnown = lists.some(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNSENTENCES &&
+            list.elementBelongsToList &&
+            list.id !== listId
+        );
+        setSentenceIsKnown(stillKnown);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+    }
+  };
 
-    const singleSentence = sentence ? (
+  const likeComment = async (commentId) => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
+      return;
+    }
+    try {
+      const comment = comments.find((comment) => comment.id === commentId);
+      const endpoint = comment.isLiked ? "unlike" : "like";
+      const url = `${BASE_URL}/api/sentence/${sentence_id}/comment/${commentId}/${endpoint}`;
+
+      await apiCall(HTTP_METHOD.POST, url);
+
+      setComments((prevComments) =>
+        prevComments.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                isLiked: !c.isLiked,
+                likesTotal: c.isLiked ? c.likesTotal - 1 : c.likesTotal + 1,
+              }
+            : c
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addComment = (comment) => {
+    setComments((prevComments) => [comment, ...prevComments]);
+  };
+
+  const deleteComment = async (commentId) => {
+    try {
+      await apiCall(
+        HTTP_METHOD.DELETE,
+        `/api/sentence/${sentence_id}/comment/${commentId}`
+      );
+      setComments((prevComments) =>
+        prevComments.filter((comment) => comment.id !== commentId)
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const editComment = (commentId) => {
+    // Implement edit functionality if needed
+  };
+
+  const renderSentenceDetails = () => {
+    return (
       <div className="row justify-content-center mt-5">
         <div className="col-md-8">
           <h4>{sentence.content}</h4>
           {sentence.user_id ? (
-            <p>UserAuthor - {sentence.user_id}</p>
+            <p>User Author - {sentence.user_id}</p>
           ) : (
             <p>
               Tatoeba link:{" "}
               <a
                 href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {sentence.tatoeba_entry}
               </a>
@@ -265,42 +220,36 @@ class SentenceDetails extends Component {
           )}
         </div>
         <div className="col-md-4">
-          <p className="float-right">
-            {this.state.sentenceIsKnown ? (
-              <i className="fas fa-check-circle text-success"> Learned</i>
-            ) : (
-              ""
-            )}
-            <i
-              onClick={this.openModal}
-              className="far fa-bookmark ml-3 fa-lg mr-2"
-            ></i>
-          </p>
-        </div>
-      </div>
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner loading" />
+          {sentenceIsKnown && (
+            <i className="fas fa-check-circle text-success"> Learned</i>
+          )}
+          <button
+            onClick={toggleModal}
+            className="btn btn-outline brand-button float-right"
+            variant="outline-primary"
+          >
+            <i className="far fa-bookmark fa-lg"></i>
+          </button>
         </div>
       </div>
     );
+  };
 
-    const kanjiList = kanjis
-      ? kanjis.map((kanji) => {
-          kanji.meaning = kanji.meaning.split("|");
-          kanji.meaning = kanji.meaning.slice(0, 3);
-          kanji.meaning = kanji.meaning.join(", ");
-
-          return (
-            <div className="row justify-content-center mt-5" key={kanji.id}>
-              <div className="col-md-10">
-                <div className="container">
-                  <div className="row justify-content-center">
+  const renderKanjiList = () => {
+    return (
+      <>
+        <h4>Kanjis ({kanjis.length}) results</h4>
+        <div className="container">
+          {kanjis.map((kanji) => {
+            const meanings = kanji.meaning.split("|").slice(0, 3).join(", ");
+            return (
+              <div className="row justify-content-center mt-5" key={kanji.id}>
+                <div className="col-md-10">
+                  <div className="row">
                     <div className="col-md-6">
                       <h3>{kanji.kanji}</h3>
                     </div>
-                    <div className="col-md-4">{kanji.meaning}</div>
+                    <div className="col-md-4">{meanings}</div>
                     <div className="col-md-2">
                       <Link
                         to={`/api/kanji/${kanji.id}`}
@@ -310,121 +259,134 @@ class SentenceDetails extends Component {
                       </Link>
                     </div>
                   </div>
-                </div>
-                <hr />
-              </div>
-              <hr />
-            </div>
-          );
-        })
-      : "";
-
-    const addModal = this.state.lists
-      ? this.state.lists.map((list) => {
-          return (
-            <div key={list.id}>
-              <div className="col-9">
-                {" "}
-                <Link to={`/list/${list.id}`}>{list.title}</Link>
-                {list.elementBelongsToList ? (
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={this.removeFromList.bind(this, list.id)}
-                  >
-                    -
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm btn-light"
-                    onClick={this.addToList.bind(this, list.id)}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      : "";
-
-    return (
-      <div className="container">
-        <span className="mt-4">
-          <Link to="/sentences" className="tag-link">
-            Back
-          </Link>
-        </span>
-        {singleSentence}
-        <hr />
-        {kanjis.data ? <h4>kanjis ({kanjis.data.length}) results</h4> : ""}
-        <div className="container">{kanjiList}</div>
-        <hr />
-        <br />
-        <div className="row justify-content-center">
-          {sentence ? (
-            currentUser.isAuthenticated ? (
-              <div className="col-lg-8">
-                <hr />
-                <h6>Share what's on your mind</h6>
-                <CommentForm
-                  addComment={this.addComment}
-                  currentUser={currentUser}
-                  objectId={this.state.sentence.id}
-                  objectType="sentence"
-                />
-              </div>
-            ) : (
-              <div className="col-lg-8">
-                <hr />
-                <h6>
-                  You need to
-                  <Link to="/login"> login </Link>
-                  to comment
-                </h6>
-              </div>
-            )
-          ) : (
-            ""
-          )}
-          <div className="col-lg-8">
-            {comments ? (
-              <CommentList
-                objectId={this.state.sentence.id}
-                currentUser={currentUser}
-                comments={comments}
-                deleteComment={this.deleteComment}
-                likeComment={this.likeComment}
-                editComment={this.editComment}
-              />
-            ) : (
-              <div className="container">
-                <div className="row justify-content-center">
-                  <img src={Spinner} alt="spinner loading" />
+                  <hr />
                 </div>
               </div>
-            )}
-          </div>
+            );
+          })}
         </div>
-        <Modal show={this.state.show} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Choose Sentence List to add</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {addModal}
-            <small>
-              {" "}
-              <Link to="/newlist">Create a new list?</Link>{" "}
-            </small>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+      </>
+    );
+  };
+
+  const renderAddModal = () => {
+    return (
+      <Modal show={showModal} onHide={toggleModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Choose Sentence List to add</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {lists.map((list) => {
+            const isLoadingList = loadingListIds.includes(list.id);
+            return (
+              <div
+                key={list.id}
+                className="d-flex justify-content-between mb-2"
+              >
+                <Link to={`/list/${list.id}`}>{list.title}</Link>
+                <Button
+                  variant={list.elementBelongsToList ? "danger" : "primary"}
+                  size="sm"
+                  onClick={() =>
+                    addToOrRemoveFromList(
+                      list.id,
+                      list.elementBelongsToList
+                        ? LIST_ACTIONS.REMOVE_ITEM
+                        : LIST_ACTIONS.ADD_ITEM
+                    )
+                  }
+                  disabled={isLoadingList}
+                >
+                  {isLoadingList ? (
+                    <span className="spinner-border spinner-border-sm"></span>
+                  ) : list.elementBelongsToList ? (
+                    "Remove"
+                  ) : (
+                    "Add"
+                  )}
+                </Button>
+              </div>
+            );
+          })}
+          <small>
+            <Link to="/newlist">Create a new list?</Link>
+          </small>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={toggleModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <img src={Spinner} alt="Loading..." />
+        </div>
       </div>
     );
   }
-}
+
+  return (
+    <div className="container">
+      <span className="mt-4">
+        <Link to="/sentences" className="tag-link">
+          Back
+        </Link>
+      </span>
+      {renderSentenceDetails()}
+      <hr />
+      {renderKanjiList()}
+      <hr />
+      <br />
+      <div className="row justify-content-center">
+        {currentUser.isAuthenticated ? (
+          <div className="col-lg-8">
+            <hr />
+            <h6>Share what's on your mind</h6>
+            <CommentForm
+              addComment={addComment}
+              currentUser={currentUser}
+              objectId={sentence.id}
+              objectType="sentence"
+            />
+          </div>
+        ) : (
+          <div className="col-lg-8">
+            <hr />
+            <h6>
+              You need to
+              <Link to="/login"> login </Link>
+              to comment
+            </h6>
+          </div>
+        )}
+        <div className="col-lg-8">
+          {comments.length ? (
+            <CommentList
+              objectId={sentence.id}
+              currentUser={currentUser}
+              comments={comments}
+              deleteComment={deleteComment}
+              likeComment={likeComment}
+              editComment={editComment}
+            />
+          ) : (
+            <div className="container">
+              <div className="row justify-content-center">
+                <p>No comments yet.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {renderAddModal()}
+    </div>
+  );
+};
 
 export default SentenceDetails;

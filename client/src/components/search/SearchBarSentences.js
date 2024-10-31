@@ -1,58 +1,45 @@
-import React, { Component } from 'react';
+import React, { useState } from "react";
+import { Form, Button, InputGroup } from "react-bootstrap";
 
-class SearchBarSentences extends Component {
-    constructor(props){
-        super(props);
-        this.state = {
-            keyword: ""
-        };
-        
-        this.onSubmit = this.onSubmit.bind(this);
-        this.handleChange = this.handleChange.bind(this);
-    };
+const SearchBarSentences = ({ fetchQuery }) => {
+  const [keyword, setKeyword] = useState("");
 
-    onSubmit(e){
-        e.preventDefault();
-        
-        let data = {
-            keyword: this.state.keyword,
-        };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    fetchQuery({ keyword });
+  };
 
-        this.props.fetchQuery(data);
-    }
-    
-    handleChange(e){
-        this.setState({ [e.target.name]: e.target.value });
-    }
-    
-    render() {
-
-    return (
-            <div className="col-lg-12">
-                <form onSubmit={this.onSubmit}>
-                <div className="row justify-content-center">
-                    <div className="col-lg-8 col-md-10 mx-auto">
-                        <label>Japanese Keyword:</label>
-                        <input  onChange={this.handleChange}
-                                className="form-control form-control-sm"
-                                name="keyword" type="text" placeholder="Search"
-                                value={this.state.keyword}
-                                aria-label="Search"
-                        />
-                    </div>
-                </div>
-                <div className="row  justify-content-center">
-                    <div className="col-lg-8 col-md-10 mx-auto">
-                        <button className="btn btn-outline fas fa-search fa-lg brand-button mt-3" aria-hidden="true"></button>
-                    </div>
-                </div>
-                </form>
-            </div>
-    )};
-}
+  return (
+    <Form onSubmit={handleSubmit} className="col-lg-12">
+      <div className="row justify-content-center">
+        <div lg={8} md={10} className="col mx-auto">
+          <Form.Group controlId="formKeyword">
+            <Form.Label>Japanese Keyword:</Form.Label>
+            <InputGroup size="sm">
+              <Form.Control
+                type="text"
+                placeholder="Search"
+                aria-label="Search"
+                name="keyword"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+              <InputGroup.Append>
+                <Button
+                  variant="outline-primary"
+                  type="submit"
+                  className="brand-button"
+                >
+                  <i className="fas fa-search"></i>
+                  <span className="ml-2">Search</span>
+                </Button>
+              </InputGroup.Append>
+            </InputGroup>
+          </Form.Group>
+        </div>
+      </div>
+    </Form>
+  );
+};
 
 export default SearchBarSentences;
-
-
-
-

@@ -116,14 +116,12 @@ export class KanjiList extends Component {
   }
 
   makePagination(data) {
-    let pagination = {
+    return {
       current_page: data.current_page,
       last_page: data.last_page,
       next_page_url: data.next_page_url,
       prev_page_url: data.prev_page_url,
     };
-
-    return pagination;
   }
 
   addToList(id) {
@@ -131,38 +129,39 @@ export class KanjiList extends Component {
   }
 
   render() {
-    let { kanjis, isLoading } = this.state;
-    let kanjiList = kanjis ? (
-      kanjis.map((k) => {
-        k.meaning = k.meaning.split("|");
-        k.meaning = k.meaning.slice(0, 3);
-        k.meaning = k.meaning.join(", ");
+    const { kanjis, isLoading } = this.state;
 
-        k.onyomi = k.onyomi.split("|");
-        k.onyomi = k.onyomi.slice(0, 3);
-        k.onyomi = k.onyomi.join(", ");
-
-        k.kunyomi = k.kunyomi.split("|");
-        k.kunyomi = k.kunyomi.slice(0, 3);
-        k.kunyomi = k.kunyomi.join(", ");
-
-        return (
-          <KanjiItem
-            key={k.id}
-            id={k.id}
-            {...k}
-            parts={k.radical_parts}
-            addToList={this.addToList.bind(this, k.id)}
-          />
-        );
-      })
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner" />
+    if (isLoading) {
+      return (
+        <div className="container text-center">
+          <img src={Spinner} alt="Loading..." />
         </div>
-      </div>
-    );
+      );
+    }
+
+    const kanjiList = kanjis.map((k) => {
+      k.meaning = k.meaning.split("|");
+      k.meaning = k.meaning.slice(0, 3);
+      k.meaning = k.meaning.join(", ");
+
+      k.onyomi = k.onyomi.split("|");
+      k.onyomi = k.onyomi.slice(0, 3);
+      k.onyomi = k.onyomi.join(", ");
+
+      k.kunyomi = k.kunyomi.split("|");
+      k.kunyomi = k.kunyomi.slice(0, 3);
+      k.kunyomi = k.kunyomi.join(", ");
+
+      return (
+        <KanjiItem
+          key={k.id}
+          id={k.id}
+          {...k}
+          parts={k.radical_parts}
+          addToList={this.addToList.bind(this, k.id)}
+        />
+      );
+    });
 
     return (
       <div className="container mt-5">

@@ -1,347 +1,325 @@
-import React, { Component } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { Link, useHistory, useParams } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
-import { Link } from "react-router-dom";
 
 import Spinner from "../../assets/images/spinner.gif";
-import { BASE_URL } from "../../shared/constants";
+import {
+  BASE_URL,
+  HTTP_METHOD,
+  ObjectTemplates,
+  LIST_ACTIONS,
+} from "../../shared/constants";
+import { apiCall } from "../../services/api";
 import Hashtags from "../ui/hashtags";
 
-class KanjiDetails extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      pagination: [],
-      word: {},
-      kanjis: {},
-      sentences: {},
-      articles: {},
-      paginateObject: {},
-      searchHeading: "",
-      searchTotal: "",
-      filters: [],
-      lists: [],
-      show: false,
-      wordIsKnown: false,
-    };
+const WordDetails = ({ currentUser }) => {
+  const [word, setWord] = useState({});
+  const [kanjis, setKanjis] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [wordIsKnown, setWordIsKnown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingListIds, setLoadingListIds] = useState([]);
 
-    this.addToList = this.addToList.bind(this);
-    this.removeFromList = this.removeFromList.bind(this);
-    this.openModal = this.openModal.bind(this);
-    this.handleClose = this.handleClose.bind(this);
-    this.getUserWordLists = this.getUserWordLists.bind(this);
-  }
+  const { word_id } = useParams();
+  const history = useHistory();
 
-  wordId = this.props.match.params.word_id;
-
-  componentDidMount() {
-    this.getWordDetails();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserWordLists();
+  useEffect(() => {
+    getWordDetails();
+    if (currentUser.isAuthenticated) {
+      getUserWordLists();
     }
-  }
+  }, [currentUser.isAuthenticated]);
 
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
+  const getWordDetails = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(
+        HTTP_METHOD.GET,
+        `${BASE_URL}/api/word/${word_id}`
+      );
 
-  getWordDetails() {
-    const url = BASE_URL + "/api/word/" + this.wordId;
+      const processedWord = {
+        ...res,
+        meaning: res.meaning.split("|").join(", "),
+      };
 
-    axios
-      .get(url)
-      .then((res) => {
-        res.data.meaning = res.data.meaning.split("|");
-        res.data.meaning = res.data.meaning.join(", ");
-
-        this.setState({
-          word: res.data,
-          paginateObject: res,
-          kanjis: res.data.kanjis,
-          articles: res.data.articles,
-          sentences: res.data.sentences,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
-    if (this.props.currentUser.isAuthenticated) {
-      this.getUserWordLists();
+      setWord(processedWord);
+      setKanjis(res.kanjis.data || []);
+      setArticles(res.articles.data || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  getUserWordLists() {
-    const url = BASE_URL + "/api/user/lists/contain";
+  const getUserWordLists = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(
+        HTTP_METHOD.POST,
+        `${BASE_URL}/api/user/lists/contain`,
+        {
+          elementId: word_id,
+        }
+      );
 
-    return axios
-      .post(url, {
-        elementId: this.wordId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter((list) => {
-          if (list.type === 3 && list.elementBelongsToList) {
-            newState.wordIsKnown = true;
-          }
-          if (list.type === 3 || list.type === 7) {
-            return list;
-          }
-        });
+      const knownLists = res.lists.filter(
+        (list) =>
+          list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList
+      );
+      setWordIsKnown(knownLists.length > 0);
 
-        this.setState(newState);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
+      setLists(
+        res.lists.filter(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNWORDS ||
+            list.type === ObjectTemplates.WORDS
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  openModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
-      this.props.history.push("/login");
+  const toggleModal = () => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
     } else {
-      this.setState({ show: !this.state.show });
+      setShowModal((prevShow) => !prevShow);
     }
-  }
+  };
 
-  addToList(id) {
-    const url = BASE_URL + "/api/user/list/additemwhileaway";
+  const addToOrRemoveFromList = async (listId, action) => {
+    try {
+      setLoadingListIds((prev) => [...prev, listId]);
+      const endpoint =
+        action === LIST_ACTIONS.ADD_ITEM
+          ? "additemwhileaway"
+          : "removeitemwhileaway";
+      const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.props.match.params.word_id,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 3) {
-              newState.wordIsKnown = true;
-            }
-            return (list.elementBelongsToList = true);
-          }
-        });
+      await apiCall(HTTP_METHOD.POST, url, {
+        listId,
+        elementId: word_id,
+      });
 
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
+      setLists((prevLists) =>
+        prevLists.map((list) =>
+          list.id === listId
+            ? {
+                ...list,
+                elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
+              }
+            : list
+        )
+      );
 
-  removeFromList(id) {
-    const url = BASE_URL + "/api/user/list/removeitemwhileaway";
+      if (action === LIST_ACTIONS.ADD_ITEM) {
+        if (
+          lists.find(
+            (list) =>
+              list.id === listId && list.type === ObjectTemplates.KNOWNWORDS
+          )
+        ) {
+          setWordIsKnown(true);
+        }
+      } else {
+        const stillKnown = lists.some(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNWORDS &&
+            list.elementBelongsToList &&
+            list.id !== listId
+        );
+        setWordIsKnown(stillKnown);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+    }
+  };
 
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.wordId,
-      })
-      .then((res) => {
-        const newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 3) {
-              newState.wordIsKnown = false;
-            }
-            return (list.elementBelongsToList = false);
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  render() {
-    const { word, kanjis, articles } = this.state;
-    const singleWord = word ? (
+  const renderWordDetails = () => {
+    return (
       <div className="row justify-content-center mt-5">
         <div className="col-md-4">
-          <h1>
-            {word.word} <br />
-          </h1>
-          <p>furigana: {word.furigana},</p>
+          <h1>{word.word}</h1>
+          <p>Furigana: {word.furigana}</p>
         </div>
         <div className="col-md-4">
-          <p>type: {word.word_type},</p>
+          <p>Type: {word.word_type}</p>
         </div>
         <div className="col-md-4">
           <p>
-            jlpt: {word.jlpt}, <br /> meaning: {word.meaning}
+            JLPT: {word.jlpt} <br /> Meaning: {word.meaning}
           </p>
-          <p className="float-right">
-            {this.state.wordIsKnown ? (
-              <i className="fas fa-check-circle text-success"> Learned</i>
-            ) : (
-              ""
-            )}
-            <i
-              onClick={this.openModal}
-              className="far fa-bookmark ml-3 fa-lg mr-2"
-            ></i>
-          </p>
-        </div>
-      </div>
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner loading" />
+          {wordIsKnown && (
+            <i className="fas fa-check-circle text-success"> Learned</i>
+          )}
+          <button
+            onClick={toggleModal}
+            className="btn btn-outline brand-button float-right"
+            variant="outline-primary"
+          >
+            <i className="far fa-bookmark fa-lg"></i>
+          </button>
         </div>
       </div>
     );
+  };
 
-    const kanjiList = kanjis.data
-      ? kanjis.data.map((kanji) => {
-          kanji.meaning = kanji.meaning.split("|");
-          kanji.meaning = kanji.meaning.slice(0, 3);
-          kanji.meaning = kanji.meaning.join(", ");
-
-          return (
-            <div className="row justify-content-center mt-5" key={kanji.id}>
-              <div className="col-md-10">
-                <div className="container">
-                  <div className="row justify-content-center">
+  const renderKanjiList = () => {
+    return (
+      <>
+        <h4>Kanjis ({kanjis.length}) results</h4>
+        <div className="container">
+          {kanjis.map((kanji) => {
+            const meanings = kanji.meaning.split("|").slice(0, 3).join(", ");
+            return (
+              <div className="row justify-content-center mt-5" key={kanji.id}>
+                <div className="col-md-10">
+                  <div className="row">
                     <div className="col-md-6">
                       <h3>{kanji.kanji}</h3>
                     </div>
-                    <div className="col-md-4">{kanji.meaning}</div>
+                    <div className="col-md-4">{meanings}</div>
                     <div className="col-md-2">
-                      <Link
-                        to={`/api/kanji/${kanji.id}`}
-                        className="float-right"
-                      >
-                        <i className="fas fa-external-link-alt fa-lg"></i>
+                      <Link to={`/kanji/${kanji.id}`} className="float-right">
+                        Open
                       </Link>
                     </div>
                   </div>
+                  <hr />
                 </div>
-                <hr />
               </div>
-              <hr />
-            </div>
-          );
-        })
-      : "";
+            );
+          })}
+        </div>
+      </>
+    );
+  };
 
-    const articleList = articles.data
-      ? articles.data.map((article) => {
-          // article.hashtags = article.hashtags.slice(0, 3);
-          return (
+  const renderArticleList = () => {
+    return (
+      <>
+        <h4>Articles ({articles.length}) results</h4>
+        <div className="container">
+          {articles.map((article) => (
             <div className="row justify-content-center mt-5" key={article.id}>
               <div className="col-md-12">
-                <div className="container">
-                  <div className="row justify-content-center">
-                    <div className="col-md-8">
-                      <h3>{article.title_jp}</h3>
-                      <Hashtags hashtags={article.hashtags} />
-                    </div>
-                    <div className="col-md-2">
-                      <p>
-                        Views:{" "}
-                        {article.viewsTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                        Likes:{" "}
-                        {article.likesTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                        Comments:{" "}
-                        {article.commentsTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                      </p>
-                    </div>
-                    <div className="col-md-2">
-                      <Link
-                        to={`/article/${article.id}`}
-                        className="float-right"
-                        target="_blank"
-                      >
-                        details...{" "}
-                      </Link>
-                    </div>
+                <div className="row">
+                  <div className="col-md-8">
+                    <h3>{article.title_jp}</h3>
+                    <Hashtags hashtags={article.hashtags} />
+                  </div>
+                  <div className="col-md-2">
+                    <p>
+                      Views: {article.viewsTotal} <br />
+                      Likes: {article.likesTotal} <br />
+                      Comments: {article.commentsTotal}
+                    </p>
+                  </div>
+                  <div className="col-md-2">
+                    <Link
+                      to={`/article/${article.id}`}
+                      className="float-right"
+                      target="_blank"
+                    >
+                      Open
+                    </Link>
                   </div>
                 </div>
                 <hr />
               </div>
-              <hr />
             </div>
-          );
-        })
-      : "";
+          ))}
+        </div>
+      </>
+    );
+  };
 
-    const addModal = this.state.lists
-      ? this.state.lists.map((list) => {
-          return (
-            <div key={list.id}>
-              <div className="col-9">
-                {" "}
-                <Link to={`/list/${list.id}`}>{list.title}</Link>
-                {list.elementBelongsToList ? (
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={this.removeFromList.bind(this, list.id)}
-                  >
-                    -
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm btn-light"
-                    onClick={this.addToList.bind(this, list.id)}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      : "";
-
+  const renderAddModal = () => {
     return (
-      <div className="container">
-        <span className="mt-4">
-          <Link to="/words" className="tag-link">
-            Back
-          </Link>
-        </span>
-        {singleWord}
-        <hr />
-        {kanjis.data ? <h4>kanjis ({kanjis.data.length}) results</h4> : ""}
-        <div className="container">{kanjiList}</div>
-        <hr />
-        <div className="container">sentences (0) results</div>
-        <hr />
-        {articles.data ? (
-          <h4>articles ({articles.data.length}) results</h4>
-        ) : (
-          ""
-        )}
-        <div className="container">{articleList}</div>
+      <Modal show={showModal} onHide={toggleModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Choose Word List to add</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {lists.map((list) => {
+            const isLoadingList = loadingListIds.includes(list.id);
+            return (
+              <div
+                key={list.id}
+                className="d-flex justify-content-between mb-2"
+              >
+                <Link to={`/list/${list.id}`}>{list.title}</Link>
+                <Button
+                  variant={list.elementBelongsToList ? "danger" : "primary"}
+                  size="sm"
+                  onClick={() =>
+                    addToOrRemoveFromList(
+                      list.id,
+                      list.elementBelongsToList
+                        ? LIST_ACTIONS.REMOVE_ITEM
+                        : LIST_ACTIONS.ADD_ITEM
+                    )
+                  }
+                  disabled={isLoadingList}
+                >
+                  {isLoadingList ? (
+                    <span className="spinner-border spinner-border-sm"></span>
+                  ) : list.elementBelongsToList ? (
+                    "Remove"
+                  ) : (
+                    "Add"
+                  )}
+                </Button>
+              </div>
+            );
+          })}
+          <small>
+            <Link to="/newlist">Create a new list?</Link>
+          </small>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={toggleModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
 
-        <Modal show={this.state.show} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Choose Word List to add</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {addModal}
-            <small>
-              {" "}
-              <Link to="/newlist">Create a new list?</Link>{" "}
-            </small>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+  if (isLoading) {
+    return (
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <img src={Spinner} alt="Loading..." />
+        </div>
       </div>
     );
   }
-}
 
-export default KanjiDetails;
+  return (
+    <div className="container">
+      <span className="mt-4">
+        <Link to="/words" className="tag-link">
+          Back
+        </Link>
+      </span>
+      {renderWordDetails()}
+      <hr />
+      {renderKanjiList()}
+      <hr />
+      {renderArticleList()}
+      {renderAddModal()}
+    </div>
+  );
+};
+
+export default WordDetails;
