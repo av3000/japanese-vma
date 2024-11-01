@@ -8,19 +8,19 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 ## Table of Contents
 
 - [Features](#features)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
 - [Setup](#setup)
   - [Docker Setup](#docker-setup)
+  - [Test API](#test-api)
   - [Local Setup](#local-setup)
-    - [Laravel API Setup](#laravel-api-setup)
-    - [MySQL Database Setup](#mysql-database-setup)
-    - [React App Setup](#react-app-setup)
-- [Backend Dependencies](#backend-dependencies)
-- [Frontend Dependencies](#frontend-dependencies)
-- [API Testing](#api-testing)
-- [To-Do List](#to-do-list)
+    - [Laravel API Setup](#laravel-api)
+    - [MySQL Database Setup](#database-mySQL)
+    - [React App Setup](#react-app)
+  - [To Do List](#to-do-list)
 - [Ongoing Development](#ongoing-development)
 
-## Project features
+## Features
 
 - Laravel CRUD REST API endpoints for Articles, Lists, Roles, Users and Posts(forum).
 - Like, hashtag, and comment functionalities for articles, lists, and posts.
@@ -46,7 +46,9 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 - [react-router-bootstrap](https://github.com/react-bootstrap/react-router-bootstrap) for [react-router](https://github.com/reactjs/react-router) and [react-bootstrap](https://react-bootstrap.github.io/) integration.
 - [redux](https://redux.js.org/introduction/getting-started), [redux-thunk](https://www.npmjs.com/package/redux-thunk) and [react-redux](https://www.npmjs.com/package/react-redux) for data access.
 
-## Setup Docker
+## Setup
+
+### Docker Setup
 
 In `/processor-api` repository root run:
 
@@ -170,7 +172,7 @@ curl -X GET http://nginx_webserver/api/article/5/kanjis-pdf \
 docker cp laravel_app:/var/www/html/kanjis-test.pdf C:\Users\USER-NAME\Downloads\
 ```
 
-## Setup Local
+### Local Setup
 
 Required
 
@@ -186,7 +188,7 @@ Optional choices for faster setup:
 - [Xampp](https://www.apachefriends.org/) - web server Apache, PHP and MariaDB(MySQL).
 - [Laravel Herd](https://herd.laravel.com/windows) - dev environment with all you need for laravel development.
 
-### Laravel API
+#### Laravel API
 
 In `processor-api` directory
 Install composer packages:
@@ -207,7 +209,7 @@ Generate unique app key
 php artisan key:generate
 ```
 
-### Database MySQL -
+#### Database MySQL
 
 Requirements:
 
@@ -249,7 +251,7 @@ npm install
 npm run watch
 ```
 
-### React App
+#### React App
 
 In `client` directory
 Install node modules:
