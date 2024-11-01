@@ -16,6 +16,7 @@ export class PostList extends Component {
       searchHeading: "",
       searchTotal: "",
       filters: [],
+      isLoading: false,
     };
 
     this.loadMore = this.loadMore.bind(this);
@@ -31,6 +32,7 @@ export class PostList extends Component {
   }
 
   clearSearch() {
+    this.setState({ isLoading: true });
     return apiCall("get", "/api/posts")
       .then((res) => {
         if (this._isMounted) {
@@ -41,15 +43,20 @@ export class PostList extends Component {
 
           newState.searchHeading = "";
           newState.searchTotal = "results total: '" + res.posts.total + "'";
-
+          newState.isLoading = false;
           return newState;
         }
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -59,6 +66,7 @@ export class PostList extends Component {
   }
 
   fetchPosts(givenUrl) {
+    this.setState({ isLoading: true });
     return apiCall("get", givenUrl)
       .then((res) => {
         if (this._isMounted) {
@@ -68,20 +76,26 @@ export class PostList extends Component {
           newState.url = res.posts.next_page_url;
 
           newState.searchTotal = "results total: '" + res.posts.total + "'";
-
+          newState.isLoading = false;
           return newState;
         }
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
 
   fetchQuery(queryParams) {
+    this.setState({ isLoading: true });
     let newState = Object.assign({}, this.state);
     newState.filters = queryParams;
     apiCall("post", "/api/posts/search", newState.filters)
@@ -93,23 +107,30 @@ export class PostList extends Component {
 
           newState.searchHeading = res.requestedQuery;
           newState.searchTotal = "Results total: '" + res.posts.total + "'";
+
+          newState.isLoading = false;
           return newState;
         }
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
         newState.searchHeading =
           "No results for tag: " + newState.filters.title;
+        newState.isLoading = false;
         this.setState(newState);
         console.log(err);
       });
   }
 
   fetchMoreQuery(givenUrl) {
+    this.setState({ isLoading: true });
     let newState = Object.assign({}, this.state);
     apiCall("post", givenUrl, newState.filters)
       .then((res) => {
@@ -120,15 +141,19 @@ export class PostList extends Component {
         newState.searchHeading =
           "Requested query: '" + newState.filters.title + "'";
         newState.searchTotal = "Results total: '" + res.posts.total + "'";
-
+        newState.isLoading = false;
         return newState;
       })
       .then((newState) => {
-        newState.pagination = this.makePagination(newState.paginateObject);
-
-        this.setState(newState);
+        this.setState((prevState) => ({
+          ...prevState,
+          ...newState,
+          pagination: this.makePagination(newState.paginateObject),
+          isLoading: false,
+        }));
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -142,47 +167,38 @@ export class PostList extends Component {
   }
 
   makePagination(data) {
-    let pagination = {
+    return {
       current_page: data.current_page,
       last_page: data.last_page,
       next_page_url: data.next_page_url,
       prev_page_url: data.prev_page_url,
     };
-
-    return pagination;
   }
 
   render() {
-    let { posts } = this.state;
-    let postList = posts ? (
-      posts.map((w) => {
-        return (
-          <PostItem
-            key={w.id}
-            id={w.id}
-            title={w.title}
-            date={w.created_at}
-            type={w.type}
-            locked={w.locked}
-            userId={w.user_id}
-            commentsTotal={w.commentsTotal}
-            likesTotal={w.likesTotal}
-            viewsTotal={w.viewsTotal}
-            downloadsTotal={w.downloadsTotal}
-            hashtags={w.hashtags.slice(0, 3)}
-            userName={w.userName}
-            postType={w.postType}
-            isLocked={w.locked}
-          />
-        );
-      })
-    ) : (
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <img src={Spinner} alt="spinner" />
+    const { posts, isLoading } = this.state;
+
+    if (isLoading) {
+      return (
+        <div className="container text-center">
+          <img src={Spinner} alt="Loading..." />
         </div>
-      </div>
-    );
+      );
+    }
+
+    const postList = posts.map((w) => {
+      return (
+        <PostItem
+          key={w.id}
+          id={w.id}
+          {...w}
+          date={w.created_at}
+          userId={w.user_id}
+          hashtags={w.hashtags.slice(0, 3)}
+          isLocked={w.locked}
+        />
+      );
+    });
 
     return (
       <div className="container mt-3">

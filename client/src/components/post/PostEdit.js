@@ -1,7 +1,8 @@
 import React, { Component } from "react";
-import { apiCall } from "../../services/api";
 import { connect } from "react-redux";
+import { apiCall } from "../../services/api";
 import { hideLoader, showLoader } from "../../store/actions/application";
+import Spinner from "../../assets/images/spinner.gif";
 
 class PostEdit extends Component {
   constructor(props) {
@@ -11,6 +12,7 @@ class PostEdit extends Component {
       content: "",
       tags: "",
       type: 1,
+      isLoading: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -21,19 +23,22 @@ class PostEdit extends Component {
   }
 
   getPostDetails() {
-    let postId = this.props.match.params.post_id;
+    this.setState({ isLoading: true });
+    const postId = this.props.match.params.post_id;
     return apiCall("get", `/api/post/${postId}`)
       .then((res) => {
-        let tags = "";
+        const tags = "";
         res.post.hashtags.map((tag) => (tags += tag.content + " "));
         this.setState({
           title: res.post.title,
           content: res.post.content,
           type: res.post.type,
           tags: tags,
+          isLoading: false,
         });
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
@@ -41,7 +46,7 @@ class PostEdit extends Component {
   handleNewPost = (e) => {
     e.preventDefault();
 
-    let body = this.state.content + this.state.title;
+    const body = this.state.content + this.state.title;
     if (body.length < 4) {
       this.props.dispatch(showLoader("Fields are not filled properly!"));
       setTimeout(() => {
@@ -55,7 +60,7 @@ class PostEdit extends Component {
       showLoader("Creating Post, please wait.", " It may take a few seconds.")
     );
 
-    let payload = {
+    const payload = {
       title: this.state.title,
       content: this.state.content,
       tags: this.state.tags,
@@ -66,7 +71,7 @@ class PostEdit extends Component {
   };
 
   postNewPost(payload) {
-    let postId = this.props.match.params.post_id;
+    const postId = this.props.match.params.post_id;
     return apiCall("put", `/api/post/${postId}`, payload)
       .then((res) => {
         this.props.dispatch(hideLoader());
@@ -90,6 +95,16 @@ class PostEdit extends Component {
   }
 
   render() {
+    const { isLoading } = this.state;
+
+    if (isLoading) {
+      return (
+        <div className="d-flex justify-content-center w-100">
+          <img src={Spinner} alt="spinner loading" />
+        </div>
+      );
+    }
+
     return (
       <div className="container">
         <div className="row justify-content-lg-center text-center">

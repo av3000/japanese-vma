@@ -531,7 +531,6 @@ const ArticleDetails = () => {
 
                 {currentUser.user.id === article.user_id && (
                   <>
-                    {/* Delete Button */}
                     <Button
                       onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
                       variant="outline-primary"
