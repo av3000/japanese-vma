@@ -5,18 +5,31 @@ Built using [Laravel](https://laravel.com/docs) for Server API and [React](https
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
 This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project), [Kanjidic2](http://www.edrdg.org/wiki/index.php/KANJIDIC_Project), [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), and [Radkfile](http://www.edrdg.org/krad/kradinf.html) dictionary files. JLPT data comes from Jonathan Waller's JLPT Resources [page](http://www.tanos.co.uk/jlpt/).
 
+## Table of Contents
+
+- [Features](#features)
+- [Setup](#setup)
+  - [Docker Setup](#docker-setup)
+  - [Local Setup](#local-setup)
+    - [Laravel API Setup](#laravel-api-setup)
+    - [MySQL Database Setup](#mysql-database-setup)
+    - [React App Setup](#react-app-setup)
+- [Backend Dependencies](#backend-dependencies)
+- [Frontend Dependencies](#frontend-dependencies)
+- [API Testing](#api-testing)
+- [To-Do List](#to-do-list)
+- [Ongoing Development](#ongoing-development)
+
 ## Project features
 
 - Laravel CRUD REST API endpoints for Articles, Lists, Roles, Users and Posts(forum).
-- Likes, hashtags and comments relationships for Articles, Lists and Posts.
-- Read, Search and save lists of Kanji(hierogliphs), Radicals(hierogpliphs formed parts of symbols), Words and sentences from [Tatoeba](tatoeba.org) community.
-- Japanese language data formatted by reading from XML and extracting to CSV using plain PHP and MySQL scripts. Exported and being imported to Laravel via Laravel migrations CLI. Kanjis and words were matched against Jonathan Waller's JLPT Resources and assigned JLPT level accordingly.
-- MySQL with Laravel's Eloquent ORM.
-- Authentication with [Laravel/passport](https://github.com/laravel/passport).
+- Like, hashtag, and comment functionalities for articles, lists, and posts.
+- Full CRUD and search functionality for lists of kanji, radicals, words, and sentences (sentences sourced and linked from the [Tatoeba](https://tatoeba.org) community).
+- Japanese language data extracted from XML to CSV using plain PHP and MySQL script, formatted and imported to Laravel via Laravel migrations CLI. Kanjis and words were matched against JLPT levels assigned from [Jonathan Waller's JLPT Resources](http://www.tanos.co.uk/jlpt/).
+- Authentication with [Laravel/passport](https://github.com/laravel/passport) and Laravel's Eloquent ORM.
 - Text scanning algorithm to find kanjis and words used in user provided article.
-- PDFs generation and downloading material with english meanings for Kanjis and Words based on saved Lists or Article content.
-- Frontend data access using redux.
-- Custom CSS stylings and boostrap with responsive templates.
+- PDFs generation with english meanings for Kanjis and Words based on saved Lists or Article content.
+- State management via Redux and custom styling with Bootstrap and CSS.
 
 ### Backend
 
@@ -134,6 +147,18 @@ curl -X GET http://nginx_webserver/api/articles \
 curl -X GET http://nginx_webserver/api/article/5 \
   -H "Authorization: Bearer $TOKEN" \
   | jq
+# or single list
+curl -X GET http://nginx_webserver/api/list/3 \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq
+# or regular response
+curl -X GET http://nginx_webserver/api/list/3/words-pdf \
+  -H "Authorization: Bearer $TOKEN"
+# or generate pdf and move localy tp test result
+curl -X GET http://nginx_webserver/api/list/3/words-pdf \
+  -H "Authorization: Bearer $TOKEN" \
+  -o words-test.pdf
+docker cp laravel_app:/var/www/html/words-test.pdf C:\Users\USER-NAME\Downloads\
 ```
 
 Test PDF file on a local machine:
@@ -255,3 +280,8 @@ npm start
 - [ ] Write E2E tests for frontend.
 - [?] Client side PDF customization. Generate on Backend, customize on frontend.
 - [?] Cache or Store pre-generated materials like PDFs.
+
+### Ongoing
+
+- couple /search endpoints doesnt work
+  Write a scenario for gifs
