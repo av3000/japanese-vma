@@ -52,7 +52,6 @@ const Homepage = () => {
           </div>
         </div>
         <div className="container mt-4">
-          <h1>Welcome to your feed!</h1>
           <ExploreArticleTimeline />
           <ExploreListTimeline />
         </div>

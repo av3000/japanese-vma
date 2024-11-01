@@ -71,11 +71,6 @@ html {
   color: var(--link-hover-color);
 }
 
-.home-hero-social-links {
-  margin-right: 5%;
-  margin-top: 5%;
-}
-
 .home-hero-social-links a:hover {
   opacity: 0.7;
 }

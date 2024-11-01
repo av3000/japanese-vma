@@ -15,6 +15,7 @@ import Footer from "../../components/footer/Footer";
 import ScrollToTop from "../../components/util/scrolltotop/ScrollToTop";
 import PageLoader from "../../components/PageLoader/PageLoader";
 import Main from "../Main";
+import "./App.css";
 
 const store = configureStore();
 
@@ -49,12 +50,12 @@ const AppContent = () => {
   }
 
   return (
-    <>
+    <div className="app-wrapper">
       <ScrollToTop />
       <TopNavigationBar />
       <Main />
       <Footer />
-    </>
+    </div>
   );
 };
 

@@ -41,7 +41,7 @@ import DashboardTimeline from "../components/dashboard/DashboardTimeline";
 const Main = (props) => {
   const { authUser, errors, removeError, currentUser } = props;
   return (
-    <div className="">
+    <div>
       <Switch>
         <Route exact path="/" render={(props) => <Homepage {...props} />} />
         <Route

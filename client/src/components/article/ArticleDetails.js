@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Button, ButtonGroup, Modal } from "react-bootstrap";
+import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -39,6 +39,7 @@ const ArticleDetails = () => {
   const [loadingListIds, setLoadingListIds] = useState([]);
   const [articleTempStatus, setArticleTempStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
   const { article_id } = useParams();
   const history = useHistory();
   const dispatch = useDispatch();
@@ -213,6 +214,7 @@ const ArticleDetails = () => {
   const handleStatusChange = async () => {
     try {
       toggleModal(ArticleModalTypes.SHOW_STATUS);
+      setIsReviewLoading(true);
       const res = await apiCall(
         HTTP_METHOD.POST,
         `/api/article/${article_id}/setstatus`,
@@ -222,8 +224,10 @@ const ArticleDetails = () => {
       );
       setArticle((prevArticle) => ({ ...prevArticle, status: res.newStatus }));
       setArticleTempStatus(res.newStatus);
+      setIsReviewLoading(false);
     } catch (error) {
       console.error(error);
+      setIsReviewLoading(false);
     }
   };
 
@@ -507,11 +511,18 @@ const ArticleDetails = () => {
               <span>{article.viewsTotal} views | </span>
               {(currentUser.user.id === article.user_id ||
                 currentUser.user.isAdmin) &&
-                (article.publicity === 1 ? "public | " : "private | ")}
+                (article.publicity === 1 ? (
+                  <Badge variant="primary">Public</Badge>
+                ) : (
+                  <Badge variant="secondary">Private</Badge>
+                ))}
               {(currentUser.user.id === article.user_id ||
-                currentUser.user.isAdmin) && (
-                <ArticleStatus status={article.status} />
-              )}
+                currentUser.user.isAdmin) &&
+                (isReviewLoading ? (
+                  <span className="spinner-border spinner-border-sm"></span>
+                ) : (
+                  <ArticleStatus status={article.status} />
+                ))}
             </div>
             <div>
               <ButtonGroup
@@ -525,7 +536,11 @@ const ArticleDetails = () => {
                     className="btn btn-outline brand-button"
                     size="sm"
                   >
-                    Review
+                    {isReviewLoading ? (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    ) : (
+                      "Review"
+                    )}
                   </Button>
                 )}
 
