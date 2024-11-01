@@ -15,31 +15,29 @@ class ExploreArticleList extends Component {
   render() {
     const { articles, isLoading, paginationInfo } = this.props;
 
-    const featuredArticles = articles.slice(0, 3);
+    const featuredArticles = articles
+      .slice(0, 3)
+      .map((a) => <ExploreArticleItem key={a.id} {...a} />);
+
+    if (isLoading) {
+      return (
+        <div className="d-flex justify-content-center w-100">
+          <img src={Spinner} alt="spinner loading" />
+        </div>
+      );
+    }
 
     return (
       <React.Fragment>
-        <h3>
-          <span>Latest Articles ({paginationInfo.total || 0})</span>
-          <Link to="/articles" className="homepage-section-title">
-            Read All
-          </Link>
-        </h3>
-        <div className="row">
-          {isLoading ? (
-            <div className="container">
-              <div className="row justify-content-center">
-                <img src={Spinner} alt="Loading..." />
-              </div>
-            </div>
-          ) : featuredArticles.length ? (
-            featuredArticles.map((a) => (
-              <ExploreArticleItem key={a.id} {...a} />
-            ))
-          ) : (
-            <p className="text-center">No Featured Articles available.</p>
-          )}
+        <div className="d-flex justify-content-between align-items-center w-100 my-3">
+          <h3>Latest Articles ({paginationInfo.total || 0})</h3>
+          <div>
+            <Link to="/articles" className="homepage-section-title">
+              Read All Articles
+            </Link>
+          </div>
         </div>
+        <div className="row">{featuredArticles}</div>
       </React.Fragment>
     );
   }

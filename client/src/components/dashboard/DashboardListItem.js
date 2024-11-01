@@ -30,7 +30,7 @@ const DashboardListItem = ({
           <span>{likesTotal} Likes</span>
           <Link to={`/list/${id}`}>
             <Button variant="outline-primary" size="sm" className="m-2">
-              <i className="fas fa-external-link-alt"></i>
+              Open
             </Button>
           </Link>
         </ListGroup.Item>

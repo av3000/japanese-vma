@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Button, Modal } from "react-bootstrap";
 
-class ListKanjisList extends Component {
+class ListSentencesList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -103,4 +103,4 @@ class ListKanjisList extends Component {
   }
 }
 
-export default ListKanjisList;
+export default ListSentencesList;

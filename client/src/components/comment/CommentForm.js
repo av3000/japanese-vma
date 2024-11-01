@@ -1,112 +1,95 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../../shared/constants";
 
-export default class CommentForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isLoading: false,
-      error: "",
-      message: "",
-    };
+const MAX_CHAR_LIMIT = 1000;
 
-    this.handleChange = this.handleChange.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-  }
+const CommentForm = ({
+  currentUser,
+  history,
+  objectId,
+  objectType,
+  addComment,
+}) => {
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  handleChange(e) {
-    if (e.target.value.length > 1000) {
-      e.target.value = e.target.value.substring(0, 1000);
-    }
-    this.setState({ [e.target.name]: e.target.value });
-  }
+  const handleChange = (e) => {
+    const newMessage = e.target.value.slice(0, MAX_CHAR_LIMIT);
+    setMessage(newMessage);
+    setError(newMessage.trim() ? "" : "Message is empty.");
+  };
 
-  onSubmit(e) {
+  const onSubmit = async (e) => {
     e.preventDefault();
 
-    if (!this.props.currentUser.isAuthenticated) {
-      this.props.history.push("/login");
-    }
-
-    if (!this.isFormValid()) {
-      this.setState({ error: "Message is empty." });
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
       return;
     }
 
-    this.setState({ error: "", isLoading: true });
+    if (!message.trim()) {
+      setError("Message is empty.");
+      return;
+    }
 
-    const { message } = this.state;
-    const id = this.props.objectId;
-    const objectType = this.props.objectType;
-    const url = `${BASE_URL}/api/${objectType}/${id}/comment`;
-    axios
-      .post(url, {
-        content: message,
-      })
-      .then((res) => {
-        res.data.comment.userName = this.props.currentUser.user.name;
-        this.props.addComment(res.data.comment);
-        this.setState({
-          isLoading: false,
-          message: "",
-        });
-      })
-      .catch((err) => {
-        this.setState({ isLoading: false });
-        console.log(err);
-      });
-  }
+    setIsLoading(true);
+    const url = `${BASE_URL}/api/${objectType}/${objectId}/comment`;
 
-  isFormValid() {
-    return this.state.message !== "";
-  }
+    try {
+      const res = await axios.post(url, { content: message });
+      res.data.comment.userName = currentUser.user.name;
+      addComment(res.data.comment);
+      setMessage("");
+    } catch (err) {
+      console.error("Error adding comment:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  renderError() {
-    return this.state.error ? (
-      <div className="alert alert-danger">{this.state.error}</div>
-    ) : null;
-  }
+  return (
+    <form onSubmit={onSubmit}>
+      <div className="form-group">
+        <textarea
+          onChange={handleChange}
+          value={message}
+          className="form-control"
+          placeholder="Your Comment"
+          name="message"
+          rows="5"
+          maxLength={MAX_CHAR_LIMIT}
+        />
+        <small className="form-text text-muted">
+          {MAX_CHAR_LIMIT - message.length} characters remaining
+        </small>
+      </div>
 
-  render() {
-    const { isLoading } = this.state;
-    return (
-      <React.Fragment>
-        <form method="post" onSubmit={this.onSubmit}>
-          <div className="form-group">
-            <textarea
-              onChange={this.handleChange}
-              value={this.state.message}
-              className="form-control"
-              placeholder="Your Comment"
-              name="message"
-              rows="5"
-            />
-          </div>
+      {error && <div className="alert alert-danger">{error}</div>}
 
-          {this.renderError()}
+      <div className="form-group">
+        <button
+          type="submit"
+          disabled={isLoading || !message.trim()}
+          className="btn btn-outline-primary col-md-3 brand-button"
+        >
+          {isLoading ? (
+            <span
+              className="spinner-border spinner-border-sm"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          ) : (
+            <span>
+              Comment
+              <i className="ml-2 fa-regular fa-paper-plane"></i>
+            </span>
+          )}
+        </button>
+      </div>
+    </form>
+  );
+};
 
-          <div className="form-group">
-            <button
-              disabled={isLoading}
-              className="btn btn-outline-primary col-md-3 brand-button"
-            >
-              {isLoading ? (
-                <span
-                  className="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-              ) : (
-                <span>
-                  Comment
-                  <i className="ml-2 fa-regular fa-paper-plane"></i>
-                </span>
-              )}
-            </button>
-          </div>
-        </form>
-      </React.Fragment>
-    );
-  }
-}
+export default CommentForm;

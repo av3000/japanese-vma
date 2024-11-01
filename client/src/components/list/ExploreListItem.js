@@ -30,7 +30,7 @@ const ExploreListItem = ({
         <img
           src={DefaultArticleImg}
           alt="article-logo"
-          height="225"
+          height="320"
           width="100%"
           className="timelines-image hover"
         />

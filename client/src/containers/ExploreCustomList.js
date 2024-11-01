@@ -1,17 +1,18 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import ArrowIcon from "../assets/icons/arrow-navigation-icon.svg";
 import { apiCall } from "../services/api";
 import ExploreListItem from "../components/list/ExploreListItem";
 import Spinner from "../assets/images/spinner.gif";
+import { HTTP_METHOD } from "../shared/constants";
 
 class ExploreCustomList extends Component {
   _isMounted = false;
   constructor(props) {
     super(props);
     this.state = {
-      lists: null,
+      lists: [],
       totalLists: null,
+      isLoading: false,
     };
   }
 
@@ -25,21 +26,25 @@ class ExploreCustomList extends Component {
   }
 
   fetchLists() {
-    return apiCall("get", "/api/lists")
+    this.setState({ isLoading: true });
+    return apiCall(HTTP_METHOD.GET, "/api/lists")
       .then((res) => {
         if (this._isMounted) {
-          let newState = Object.assign({}, this.state);
-          newState.totalLists = res.lists.total;
-          newState.lists = [...res.lists.data];
-          this.setState(newState);
+          this.setState({
+            totalLists: res.lists.total,
+            lists: [...res.lists.data],
+            isLoading: false,
+          });
         }
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
 
   render() {
+    const { isLoading, lists } = this.state;
     const listTypes = [
       "knownradicals list",
       "knownkanjis list",
@@ -52,49 +57,48 @@ class ExploreCustomList extends Component {
       "Articles List",
     ];
 
-    let customLists = this.state.lists ? (
-      this.state.lists
-        .slice(0, 3)
-        .map((l) => (
-          <ExploreListItem
-            key={l.id}
-            id={l.id}
-            type={l.type}
-            listType={listTypes[l.type - 1]}
-            created_at={l.created_at}
-            title={l.title}
-            commentsTotal={l.commentsTotal}
-            likesTotal={l.likesTotal}
-            viewsTotal={l.viewsTotal}
-            downloadsTotal={l.downloadsTotal}
-            hashtags={l.hashtags.slice(0, 3)}
-            itemsTotal={l.listItems.length}
-            n1={l.n1}
-            n2={l.n2}
-            n3={l.n3}
-            n4={l.n4}
-            n5={l.n5}
-          />
-        ))
-    ) : (
-      <div className="container">
-        <div className="row justify-content-center">
+    if (isLoading) {
+      return (
+        <div className="d-flex justify-content-center w-100">
           <img src={Spinner} alt="spinner loading" />
         </div>
-      </div>
-    );
+      );
+    }
+
+    const customLists = lists
+      .slice(0, 3)
+      .map((l) => (
+        <ExploreListItem
+          key={l.id}
+          id={l.id}
+          type={l.type}
+          listType={listTypes[l.type - 1]}
+          created_at={l.created_at}
+          title={l.title}
+          commentsTotal={l.commentsTotal}
+          likesTotal={l.likesTotal}
+          viewsTotal={l.viewsTotal}
+          downloadsTotal={l.downloadsTotal}
+          hashtags={l.hashtags.slice(0, 3)}
+          itemsTotal={l.listItems.length}
+          n1={l.n1}
+          n2={l.n2}
+          n3={l.n3}
+          n4={l.n4}
+          n5={l.n5}
+        />
+      ));
 
     return (
       <React.Fragment>
-        <h3>
-          <span>
-            Latest Lists ({this.state.totalLists | 0})
-            <img src={ArrowIcon} alt="arrow icon" />{" "}
-          </span>
-          <Link to="/lists" className="homepage-section-title" id="lists">
-            Read All
-          </Link>
-        </h3>
+        <div className="d-flex justify-content-between align-items-center w-100 my-3">
+          <h3>Latest Lists ({this.state.totalLists || 0})</h3>
+          <div>
+            <Link to="/lists" className="homepage-section-title">
+              Read All Lists
+            </Link>
+          </div>
+        </div>
         <div className="row">{customLists}</div>
       </React.Fragment>
     );

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import ListRadicalList from "./ListRadicalList";
 import ListKanjisList from "./ListKanjisList";
 import ListWordsList from "./ListWordsList";
@@ -6,17 +6,15 @@ import ListSentencesList from "./ListSentencesList";
 import ListArticlesList from "./ListArticlesList";
 import { ObjectTemplates } from "../../shared/constants";
 
-class ListItems extends Component {
-  render() {
-    const {
-      objects,
-      listType,
-      removeFromList,
-      currentUser,
-      listUserId,
-      editToggle,
-    } = this.props;
-
+const ListItems = ({
+  objects,
+  listType,
+  removeFromList,
+  currentUser,
+  listUserId,
+  editToggle,
+}) => {
+  const renderListComponent = () => {
     switch (listType) {
       case ObjectTemplates.KNOWNRADICALS:
       case ObjectTemplates.RADICALS:
@@ -78,9 +76,11 @@ class ListItems extends Component {
           />
         );
       default:
-        return "Unknown list type";
+        return <p>Unknown list type</p>;
     }
-  }
-}
+  };
+
+  return <div>{renderListComponent()}</div>;
+};
 
 export default ListItems;

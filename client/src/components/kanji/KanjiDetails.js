@@ -1,408 +1,382 @@
-import React, { Component } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { Link, useHistory, useParams } from "react-router-dom";
+import { Button, ButtonGroup, Modal } from "react-bootstrap";
 import Spinner from "../../assets/images/spinner.gif";
-import { Link } from "react-router-dom";
-import { Button, Modal } from "react-bootstrap";
-import { BASE_URL } from "../../shared/constants";
+import {
+  BASE_URL,
+  HTTP_METHOD,
+  ObjectTemplates,
+  LIST_ACTIONS,
+} from "../../shared/constants";
+import { apiCall } from "../../services/api";
 import Hashtags from "../ui/hashtags";
 
-class KanjiDetails extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      pagination: [],
-      kanji: {},
-      words: {},
-      sentences: {},
-      articles: {},
-      paginateObject: {},
-      searchHeading: "",
-      searchTotal: "",
-      filters: [],
-      lists: [],
-      show: false,
-      kanjiIsKnown: false,
-      isLoading: true,
-    };
+const KanjiOpen = ({ currentUser }) => {
+  const [kanji, setKanji] = useState({});
+  const [words, setWords] = useState([]);
+  const [sentences, setSentences] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [kanjiIsKnown, setKanjiIsKnown] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingListIds, setLoadingListIds] = useState([]);
 
-    this.addToList = this.addToList.bind(this);
-    this.removeFromList = this.removeFromList.bind(this);
-    this.openModal = this.openModal.bind(this);
-    this.handleClose = this.handleClose.bind(this);
-    this.getUserKanjiLists = this.getUserKanjiLists.bind(this);
-  }
+  const { kanji_id } = useParams();
+  const history = useHistory();
 
-  kanjiId = this.props.match.params.kanji_id;
-
-  componentDidMount() {
-    this.getKanjiDetails();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.currentUser.isAuthenticated) {
-      this.getUserKanjiLists();
+  useEffect(() => {
+    getKanjiOpen();
+    if (currentUser.isAuthenticated) {
+      getUserKanjiLists();
     }
-  }
+  }, [currentUser.isAuthenticated]);
 
-  handleClose() {
-    this.setState({ show: !this.state.show });
-  }
-
-  getKanjiDetails() {
-    const url = `${BASE_URL}/api/kanji/${this.kanjiId}`;
-    this.setState({ isLoading: true });
-
-    axios
-      .get(url)
-      .then((res) => {
-        res.data.meaning = res.data.meaning.split("|");
-        res.data.meaning = res.data.meaning.join(", ");
-
-        res.data.onyomi = res.data.onyomi.split("|");
-        res.data.onyomi = res.data.onyomi.join(", ");
-
-        res.data.kunyomi = res.data.kunyomi.split("|");
-        res.data.kunyomi = res.data.kunyomi.join(", ");
-
-        this.setState({
-          kanji: res.data,
-          paginateObject: res,
-          words: res.data.words,
-          articles: res.data.articles,
-          sentences: res.data.sentences,
-          isLoading: false,
-        });
-      })
-      .catch((err) => {
-        this.setState({ isLoading: false });
-        console.log(err);
-      });
-
-    if (this.props.currentUser.isAuthenticated) {
-      this.getUserKanjiLists();
-    }
-  }
-
-  getUserKanjiLists() {
-    const url = `${BASE_URL}/api/user/lists/contain`;
-    this.setState({ isLoading: true });
-
-    return axios
-      .post(url, {
-        elementId: this.kanjiId,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists = res.data.lists.filter((list) => {
-          if (list.type === 2 && list.elementBelongsToList) {
-            newState.kanjiIsKnown = true;
-          }
-          if (list.type === 2 || list.type === 6) {
-            return list;
-          }
-        });
-
-        newState.isLoading = false;
-        this.setState(newState);
-      })
-      .catch((err) => {
-        this.setState({ isLoading: false });
-        console.log(err);
-      });
-  }
-
-  openModal() {
-    if (this.props.currentUser.isAuthenticated === false) {
-      this.props.history.push("/login");
-    } else {
-      this.setState({ show: !this.state.show });
-    }
-  }
-
-  addToList(id) {
-    const url = `${BASE_URL}/api/user/list/additemwhileaway`;
-
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.kanjiId,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 2) {
-              newState.kanjiIsKnown = true;
-            }
-            return (list.elementBelongsToList = true);
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  removeFromList(id) {
-    const url = `${BASE_URL}/api/user/list/removeitemwhileaway`;
-
-    axios
-      .post(url, {
-        listId: id,
-        elementId: this.kanjiId,
-      })
-      .then((res) => {
-        let newState = Object.assign({}, this.state);
-        newState.lists.find((list) => {
-          if (list.id === id) {
-            if (list.type === 2) {
-              newState.kanjiIsKnown = false;
-            }
-            return (list.elementBelongsToList = false);
-          }
-        });
-
-        this.setState(newState);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  render() {
-    const { kanji, words, sentences, articles, isLoading } = this.state;
-
-    const singleKanji =
-      !isLoading && kanji ? (
-        <div className="row justify-content-center mt-5">
-          <div className="col-md-4">
-            <h1>
-              {kanji.kanji} <br />
-              {kanji.hiragana}
-            </h1>
-            <p>meaning: {kanji.meaning},</p>
-          </div>
-          <div className="col-md-4">
-            <p>onyomi: {kanji.onyomi},</p>
-            <p>kunyomi: {kanji.kunyomi}</p>
-          </div>
-          <div className="col-md-2">
-            <p>parts : {kanji.radical_parts}</p>
-            <p>strokes: {kanji.stroke_count}</p>
-          </div>
-          <div className="col-md-2">
-            <p>jlpt: {kanji.jlpt},</p>
-            <p>frequency: {kanji.frequency}</p>
-            <p className="float-right">
-              {this.state.kanjiIsKnown ? (
-                <i className="fas fa-check-circle text-success"> Learned</i>
-              ) : (
-                ""
-              )}
-              <i
-                onClick={this.openModal}
-                className="far fa-bookmark ml-3 fa-lg mr-2"
-              ></i>
-            </p>
-          </div>
-        </div>
-      ) : isLoading ? (
-        <div className="container mt-5">
-          <div className="row justify-content-center">
-            <img src={Spinner} alt="spinner loading" />
-          </div>
-        </div>
-      ) : (
-        ""
+  const getKanjiOpen = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(
+        HTTP_METHOD.GET,
+        `${BASE_URL}/api/kanji/${kanji_id}`
       );
 
-    const wordsList = words.data
-      ? words.data.map((word) => {
-          word.meaning = word.meaning.split("|");
-          word.meaning = word.meaning.slice(0, 3);
-          word.meaning = word.meaning.join(", ");
+      // Process the kanji data
+      const processedKanji = {
+        ...res,
+        meaning: res.meaning.split("|").join(", "),
+        onyomi: res.onyomi.split("|").join(", "),
+        kunyomi: res.kunyomi.split("|").join(", "),
+      };
 
-          return (
-            <div className="row justify-content-center mt-5" key={word.id}>
-              <div className="col-md-10">
-                <div className="container">
-                  <div className="row justify-content-center">
-                    <div className="col-md-6">
-                      <h3>{word.word}</h3>
-                    </div>
-                    <div className="col-md-4">{word.meaning}</div>
-                    <div className="col-md-2">
-                      <Link to={`/word/${word.id}`} className="float-right">
-                        <i className="fas fa-external-link-alt fa-lg"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <hr />
-              </div>
-              <hr />
-            </div>
-          );
-        })
-      : "";
+      setKanji(processedKanji);
+      setWords(res.words.data || []);
+      setSentences(res.sentences.data || []);
+      setArticles(res.articles.data || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const sentenceList = sentences.data
-      ? sentences.data.map((sentence) => {
-          return (
-            <div className="row justify-content-center mt-5" key={sentence.id}>
-              <div className="col-md-12">
-                <div className="container">
-                  <div className="row justify-content-center">
-                    <div className="col-md-10">
-                      <h3>{sentence.content}</h3>
-                    </div>
-                    <div className="col-md-2">
-                      {sentence.tatoeba_entry ? (
-                        <a
-                          href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Tatoeba <i className="fas fa-external-link-alt"></i>
-                        </a>
-                      ) : (
-                        "Local"
-                      )}
-                      <Link
-                        to={`/api/sentence/${sentence.id}`}
-                        className="float-right"
-                      >
-                        details...{" "}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <hr />
-              </div>
-              <hr />
-            </div>
-          );
-        })
-      : "";
+  const getUserKanjiLists = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiCall(
+        HTTP_METHOD.POST,
+        `${BASE_URL}/api/user/lists/contain`,
+        {
+          elementId: kanji_id,
+        }
+      );
 
-    const articleList = articles.data
-      ? articles.data.map((article) => {
-          // article.hashtags = article.hashtags.slice(0, 3);
-          return (
-            <div className="row justify-content-center mt-5" key={article.id}>
-              <div className="col-md-12">
-                <div className="container">
-                  <div className="row justify-content-center">
-                    <div className="col-md-8">
-                      <h3>{article.title_jp}</h3>
-                      <Hashtags hashtags={article.hashtags} />
-                    </div>
-                    <div className="col-md-2">
-                      <p>
-                        Views:{" "}
-                        {article.viewsTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                        Likes:{" "}
-                        {article.likesTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                        Comments:{" "}
-                        {article.commentsTotal +
-                          Math.floor(Math.random() * Math.floor(20))}{" "}
-                        <br />
-                      </p>
-                    </div>
-                    <div className="col-md-2">
-                      <Link
-                        to={`/article/${article.id}`}
-                        className="float-right"
-                        target="_blank"
-                      >
-                        details...{" "}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <hr />
-              </div>
-              <hr />
-            </div>
-          );
-        })
-      : "";
+      const knownLists = res.lists.filter(
+        (list) =>
+          list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList
+      );
+      setKanjiIsKnown(knownLists.length > 0);
 
-    const addModal = this.state.lists
-      ? this.state.lists.map((list) => {
-          return (
-            <div key={list.id}>
-              <div className="col-9">
-                {" "}
-                <Link to={`/list/${list.id}`}>{list.title}</Link>
-                {list.elementBelongsToList ? (
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={this.removeFromList.bind(this, list.id)}
-                  >
-                    -
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm btn-light"
-                    onClick={this.addToList.bind(this, list.id)}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      : "";
+      setLists(
+        res.lists.filter(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNKANJIS ||
+            list.type === ObjectTemplates.KANJIS
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const toggleModal = () => {
+    if (!currentUser.isAuthenticated) {
+      history.push("/login");
+    } else {
+      setShowModal((prevShow) => !prevShow);
+    }
+  };
+
+  const addToOrRemoveFromList = async (listId, action) => {
+    try {
+      setLoadingListIds((prev) => [...prev, listId]);
+
+      const endpoint =
+        action === LIST_ACTIONS.ADD_ITEM
+          ? "additemwhileaway"
+          : "removeitemwhileaway";
+      const url = `${BASE_URL}/api/user/list/${endpoint}`;
+
+      await apiCall(HTTP_METHOD.POST, url, {
+        listId,
+        elementId: kanji_id,
+      });
+
+      setLists((prevLists) =>
+        prevLists.map((list) =>
+          list.id === listId
+            ? {
+                ...list,
+                elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
+              }
+            : list
+        )
+      );
+
+      // Update kanjiIsKnown if the known kanji list is modified
+      if (action === LIST_ACTIONS.ADD_ITEM) {
+        if (
+          lists.find(
+            (list) =>
+              list.id === listId && list.type === ObjectTemplates.KNOWNKANJIS
+          )
+        ) {
+          setKanjiIsKnown(true);
+        }
+      } else {
+        const stillKnown = lists.some(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNKANJIS &&
+            list.elementBelongsToList &&
+            list.id !== listId
+        );
+        setKanjiIsKnown(stillKnown);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="container">
-        <span className="mt-4">
-          <Link to="/kanjis" className="tag-link">
-            Back
-          </Link>
-        </span>
-        {singleKanji}
-        <hr />
-        {words.data ? <h4>Found in ({words.data.length}) words</h4> : ""}
-        <div className="container">{wordsList}</div>
-        {sentences.data ? (
-          <h4>Found in ({sentences.data.length}) sentences</h4>
-        ) : (
-          ""
-        )}
-        <div className="container">{sentenceList}</div>
-        {/* <hr /> */}
-        {articles.data ? (
-          <h4>Found in ({articles.data.length}) articles</h4>
-        ) : (
-          ""
-        )}
-        <div className="container">{articleList}</div>
-
-        <Modal show={this.state.show} onHide={this.handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Choose Kanji List to add</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {addModal}
-            <small>
-              {" "}
-              <Link to="/newlist">Create a new list?</Link>{" "}
-            </small>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <img src={Spinner} alt="Loading..." />
+        </div>
       </div>
     );
   }
-}
 
-export default KanjiDetails;
+  const renderKanjiOpen = () => {
+    return (
+      <div className="row justify-content-center mt-5">
+        <div className="col-md-4">
+          <h1>
+            {kanji.kanji} <br />
+            {kanji.hiragana}
+          </h1>
+          <p>Meaning: {kanji.meaning}</p>
+        </div>
+        <div className="col-md-4">
+          <p>Onyomi: {kanji.onyomi}</p>
+          <p>Kunyomi: {kanji.kunyomi}</p>
+        </div>
+        <div className="col-md-2">
+          <p>Parts: {kanji.radical_parts}</p>
+          <p>Strokes: {kanji.stroke_count}</p>
+        </div>
+        <div className="col-md-2">
+          <p>JLPT: {kanji.jlpt}</p>
+          <p>Frequency: {kanji.frequency}</p>
+          {kanjiIsKnown && (
+            <i className="fas fa-check-circle text-success"> Learned</i>
+          )}
+          <button
+            onClick={toggleModal}
+            className="btn btn-outline brand-button float-right"
+            variant="outline-primary"
+          >
+            <i className="far fa-bookmark fa-lg"></i>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderWordsList = () => {
+    return (
+      <>
+        <h4>Found in ({words.length}) words</h4>
+        <div className="container">
+          {words.map((word) => {
+            const meanings = word.meaning.split("|").slice(0, 3).join(", ");
+            return (
+              <div className="row justify-content-center mt-5" key={word.id}>
+                <div className="col-md-10">
+                  <div className="row">
+                    <div className="col-md-6">
+                      <h3>{word.word}</h3>
+                    </div>
+                    <div className="col-md-4">{meanings}</div>
+                    <div className="col-md-2">
+                      <Link to={`/word/${word.id}`} className="float-right">
+                        Open
+                      </Link>
+                    </div>
+                  </div>
+                  <hr />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  };
+
+  const renderSentenceList = () => {
+    return (
+      <>
+        <h4>Found in ({sentences.length}) sentences</h4>
+        <div className="container">
+          {sentences.map((sentence) => (
+            <div className="row justify-content-center mt-5" key={sentence.id}>
+              <div className="col-md-12">
+                <div className="row">
+                  <div className="col-md-12">
+                    <h3>{sentence.content}</h3>
+                  </div>
+                  {/* <div className="col-md-2"> */}
+                  <ButtonGroup className="mt-3 align-items-center">
+                    <Link to={`/sentence/${sentence.id}`}>
+                      <Button variant="outline-primary">Open</Button>
+                    </Link>
+                    {sentence.tatoeba_entry ? (
+                      <Button
+                        variant="link"
+                        href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Tatoeba{" "}
+                        <i className="fas fa-external-link-alt ml-1"></i>
+                      </Button>
+                    ) : (
+                      <Button variant="outline-secondary" disabled>
+                        Local
+                      </Button>
+                    )}
+                  </ButtonGroup>
+                </div>
+                {/* </div> */}
+                <hr />
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
+
+  const renderArticleList = () => {
+    return (
+      <>
+        <h4>Found in ({articles.length}) articles</h4>
+        <div className="container">
+          {articles.map((article) => (
+            <div className="row justify-content-center mt-5" key={article.id}>
+              <div className="col-md-12">
+                <div className="row">
+                  <div className="col-md-8">
+                    <h3>{article.title_jp}</h3>
+                    <Hashtags hashtags={article.hashtags} />
+                  </div>
+                  <div className="col-md-2">
+                    <p>
+                      Views: {article.viewsTotal} <br />
+                      Likes: {article.likesTotal} <br />
+                      Comments: {article.commentsTotal} <br />
+                    </p>
+                  </div>
+                  <div className="col-md-2">
+                    <Link
+                      to={`/article/${article.id}`}
+                      className="float-right"
+                      target="_blank"
+                    >
+                      <Button variant="outline-primary">Open</Button>
+                    </Link>
+                  </div>
+                </div>
+                <hr />
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
+
+  const renderAddModal = () => {
+    return (
+      <Modal show={showModal} onHide={toggleModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Choose Kanji List to add</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {lists.map((list) => {
+            const isLoadingList = loadingListIds.includes(list.id);
+            return (
+              <div
+                key={list.id}
+                className="d-flex justify-content-between mb-2"
+              >
+                <Link to={`/list/${list.id}`}>{list.title}</Link>
+                <Button
+                  variant={list.elementBelongsToList ? "danger" : "primary"}
+                  size="sm"
+                  onClick={() =>
+                    addToOrRemoveFromList(
+                      list.id,
+                      list.elementBelongsToList
+                        ? LIST_ACTIONS.REMOVE_ITEM
+                        : LIST_ACTIONS.ADD_ITEM
+                    )
+                  }
+                  disabled={isLoadingList}
+                >
+                  {isLoadingList ? (
+                    <span className="spinner-border spinner-border-sm"></span>
+                  ) : list.elementBelongsToList ? (
+                    "Remove"
+                  ) : (
+                    "Add"
+                  )}
+                </Button>
+              </div>
+            );
+          })}
+          <small>
+            <Link to="/newlist">Create a new list?</Link>
+          </small>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={toggleModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  return (
+    <div className="container">
+      <div className="mt-4">
+        <Link to="/kanjis" className="tag-link">
+          Back
+        </Link>
+      </div>
+      {renderKanjiOpen()}
+      <hr />
+      {renderWordsList()}
+      {renderSentenceList()}
+      {renderArticleList()}
+      {renderAddModal()}
+    </div>
+  );
+};
+
+export default KanjiOpen;

@@ -7,7 +7,6 @@ const PostItem = ({
   id,
   title,
   type,
-  locked,
   userId,
   commentsTotal,
   likesTotal,
@@ -31,7 +30,7 @@ const PostItem = ({
         {date}
       </Moment>
       <br />
-      Tags: (<Hashtags hashtags={hashtags} />)
+      Tags: <Hashtags hashtags={hashtags} />
     </div>
     <div className="col-lg-2 col-12-sm pt-3">
       <small>

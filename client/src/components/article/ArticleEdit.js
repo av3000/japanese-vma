@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { apiCall } from "../../services/api";
 import { connect } from "react-redux";
 import { hideLoader, showLoader } from "../../store/actions/application";
+import Spinner from "../../assets/images/spinner.gif";
 
 class ArticleEdit extends Component {
   constructor(props) {
@@ -14,6 +15,7 @@ class ArticleEdit extends Component {
       source_link: "",
       tags: "",
       publicity: "",
+      isLoading: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -25,7 +27,8 @@ class ArticleEdit extends Component {
   }
 
   getArticleDetails() {
-    let articleId = this.props.match.params.article_id;
+    this.setState({ isLoading: true });
+    const articleId = this.props.match.params.article_id;
     return apiCall("get", `/api/article/${articleId}`)
       .then((res) => {
         let tags = "";
@@ -38,16 +41,18 @@ class ArticleEdit extends Component {
           publicity: res.article.publicity,
           old_title_jp: res.article.title_jp,
           old_content_jp: res.article.content_jp,
+          isLoading: false,
         });
       })
       .catch((err) => {
+        this.setState({ isLoading: false });
         console.log(err);
       });
   }
 
   onSubmit(e) {
     e.preventDefault();
-    let body = this.state.content_jp + this.state.title_jp;
+    const body = this.state.content_jp + this.state.title_jp;
     if (body.length < 4) {
       this.props.dispatch(showLoader("Fields are not filled properly!"));
       setTimeout(() => {
@@ -57,13 +62,13 @@ class ArticleEdit extends Component {
       return;
     }
 
-    let digit = Math.ceil(body.length / 100); // 100chars = 1min
-    let approxText = "It may take up to " + digit + " minutes.";
+    const digit = Math.ceil(body.length / 100); // 100chars = 1min
+    const approxText = "It may take up to " + digit + " minutes.";
     this.props.dispatch(
       showLoader("Creating Article, please wait.", approxText)
     );
 
-    let payload = {
+    const payload = {
       title_jp: this.state.title_jp,
       content_jp: this.state.content_jp,
       publicity: this.state.publicity,
@@ -72,8 +77,8 @@ class ArticleEdit extends Component {
       reattach: 0,
     };
 
-    let oldBody = this.state.old_content_jp + this.state.old_title_jp;
-    let newBody = this.state.content_jp + this.state.title_jp;
+    const oldBody = this.state.old_content_jp + this.state.old_title_jp;
+    const newBody = this.state.content_jp + this.state.title_jp;
 
     if (oldBody.length !== newBody.length) {
       payload.reattach = 1;
@@ -83,7 +88,7 @@ class ArticleEdit extends Component {
   }
 
   postNewArticle(payload) {
-    let articleId = this.props.match.params.article_id;
+    const articleId = this.props.match.params.article_id;
     return apiCall("put", `/api/article/${articleId}`, payload)
       .then((res) => {
         this.props.dispatch(hideLoader());
@@ -109,6 +114,16 @@ class ArticleEdit extends Component {
   }
 
   render() {
+    const { isLoading } = this.state;
+
+    if (isLoading) {
+      return (
+        <div className="d-flex justify-content-center w-100">
+          <img src={Spinner} alt="spinner loading" />
+        </div>
+      );
+    }
+
     return (
       <div className="container">
         <div className="row justify-content-md-center text-center">
