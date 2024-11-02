@@ -1,4 +1,10 @@
-/* .list-new-form {
-    margin-top: auto;
-    margin-bottom: auto;
-} */
+.table thead th:first-child,
+.table tbody th[scope="row"] {
+  width: 40%;
+  white-space: normal;
+}
+
+.table thead th:not(:first-child),
+.table tbody td {
+  width: auto;
+}

@@ -26,65 +26,66 @@ const WordDetails = ({ currentUser }) => {
   const history = useHistory();
 
   useEffect(() => {
+    const getWordDetails = async () => {
+      try {
+        setIsLoading(true);
+        const res = await apiCall(
+          HTTP_METHOD.GET,
+          `${BASE_URL}/api/word/${word_id}`
+        );
+
+        const processedWord = {
+          ...res,
+          meaning: res.meaning.split("|").join(", "),
+        };
+
+        setWord(processedWord);
+        setKanjis(res.kanjis.data || []);
+        setArticles(res.articles.data || []);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const getUserWordLists = async () => {
+      try {
+        setIsLoading(true);
+        const res = await apiCall(
+          HTTP_METHOD.POST,
+          `${BASE_URL}/api/user/lists/contain`,
+          {
+            elementId: word_id,
+          }
+        );
+
+        const knownLists = res.lists.filter(
+          (list) =>
+            list.type === ObjectTemplates.KNOWNWORDS &&
+            list.elementBelongsToList
+        );
+        setWordIsKnown(knownLists.length > 0);
+
+        setLists(
+          res.lists.filter(
+            (list) =>
+              list.type === ObjectTemplates.KNOWNWORDS ||
+              list.type === ObjectTemplates.WORDS
+          )
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     getWordDetails();
     if (currentUser.isAuthenticated) {
       getUserWordLists();
     }
-  });
-
-  const getWordDetails = async () => {
-    try {
-      setIsLoading(true);
-      const res = await apiCall(
-        HTTP_METHOD.GET,
-        `${BASE_URL}/api/word/${word_id}`
-      );
-
-      const processedWord = {
-        ...res,
-        meaning: res.meaning.split("|").join(", "),
-      };
-
-      setWord(processedWord);
-      setKanjis(res.kanjis.data || []);
-      setArticles(res.articles.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getUserWordLists = async () => {
-    try {
-      setIsLoading(true);
-      const res = await apiCall(
-        HTTP_METHOD.POST,
-        `${BASE_URL}/api/user/lists/contain`,
-        {
-          elementId: word_id,
-        }
-      );
-
-      const knownLists = res.lists.filter(
-        (list) =>
-          list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList
-      );
-      setWordIsKnown(knownLists.length > 0);
-
-      setLists(
-        res.lists.filter(
-          (list) =>
-            list.type === ObjectTemplates.KNOWNWORDS ||
-            list.type === ObjectTemplates.WORDS
-        )
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [currentUser.isAuthenticated]);
 
   const toggleModal = () => {
     if (!currentUser.isAuthenticated) {

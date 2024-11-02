@@ -30,7 +30,7 @@ const KanjiOpen = ({ currentUser }) => {
     if (currentUser.isAuthenticated) {
       getUserKanjiLists();
     }
-  });
+  }, [currentUser.isAuthenticated]);
 
   const getKanjiOpen = async () => {
     try {

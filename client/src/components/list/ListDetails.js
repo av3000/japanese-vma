@@ -28,7 +28,7 @@ const ListDetails = () => {
 
   useEffect(() => {
     getListWithAuth();
-  });
+  }, [currentUser.isAuthenticated]);
 
   const getListWithAuth = async () => {
     try {

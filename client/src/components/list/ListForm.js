@@ -10,7 +10,7 @@ class ListForm extends Component {
       title: "",
       type: 5,
       tags: "",
-      publicity: 0,
+      publicity: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
