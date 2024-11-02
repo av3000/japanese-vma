@@ -26,7 +26,7 @@ const RadicalDetails = ({ currentUser }) => {
     if (currentUser.isAuthenticated) {
       getUserRadicalLists();
     }
-  }, [currentUser.isAuthenticated]);
+  });
 
   const getRadicalDetails = async () => {
     try {

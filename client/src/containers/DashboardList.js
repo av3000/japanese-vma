@@ -28,7 +28,7 @@ const DashboardList = () => {
   const [articles, setArticles] = useState([]);
   const [articlesPending, setArticlesPending] = useState([]);
   const [dashboard, setDashboard] = useState(DASHBOARD_TYPES.COMMON_USER);
-  const [filters, setFilters] = useState({});
+  const [setFilters] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

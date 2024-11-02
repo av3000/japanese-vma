@@ -27,7 +27,7 @@ class PostEdit extends Component {
     const postId = this.props.match.params.post_id;
     return apiCall("get", `/api/post/${postId}`)
       .then((res) => {
-        const tags = "";
+        let tags = "";
         res.post.hashtags.map((tag) => (tags += tag.content + " "));
         this.setState({
           title: res.post.title,

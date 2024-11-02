@@ -30,7 +30,7 @@ const WordDetails = ({ currentUser }) => {
     if (currentUser.isAuthenticated) {
       getUserWordLists();
     }
-  }, [currentUser.isAuthenticated]);
+  });
 
   const getWordDetails = async () => {
     try {

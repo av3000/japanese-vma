@@ -23,7 +23,7 @@ const PostDetails = () => {
 
   useEffect(() => {
     getPostDetails();
-  }, [currentUser.isAuthenticated]);
+  });
 
   const getPostDetails = async () => {
     setIsLoading(true);

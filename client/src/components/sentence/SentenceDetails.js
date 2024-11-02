@@ -31,7 +31,7 @@ const SentenceDetails = ({ currentUser }) => {
     if (currentUser.isAuthenticated) {
       getUserSentenceLists();
     }
-  }, [currentUser.isAuthenticated]);
+  });
 
   const getSentenceDetails = async () => {
     setIsLoading(true);
