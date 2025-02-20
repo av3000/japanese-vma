@@ -2,9 +2,9 @@
 
 Browse lists of Japanese texts, including simplified articles and news. Upload your own content to generate PDFs featuring Japanese radicals, kanji, vocabulary, and sentences for learning. Create or explore lists with articles, radicals, kanji, and vocabulary items, track your progress, and chat with other learners.
 
-![Application demo1](./docs/assets/images/jpl-short-1.gif);
+![Application demo1](./docs/assets/images/jpl-short-1.gif)
 
-![Application demo2](./docs/assets/images/jpl-short-2.gif);
+![Application demo2](./docs/assets/images/jpl-short-2.gif)
 
 Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/).
 
