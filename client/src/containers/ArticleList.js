@@ -64,19 +64,20 @@ class ArticleList extends Component {
     );
 
     return (
-      <div className="container mt-5">
+      <div className="container">
         <SearchBar fetchQuery={this.applyFilters} searchType="articles" />
-        <div className="container mt-5">
-          {searchHeading && <h4>{searchHeading}</h4>}
-          {searchTotal && <h4>{searchTotal}</h4>}
-          {isLoading ? (
-            <div className="row justify-content-center">
-              <img src={Spinner} alt="Loading..." />
-            </div>
-          ) : (
+        {searchHeading && <h4>{searchHeading}</h4>}
+        {searchTotal && <h4>{searchTotal}</h4>}
+        {isLoading ? (
+          <div className="row justify-content-center">
+            <img src={Spinner} alt="Loading..." />
+          </div>
+        ) : (
+          <div>
+            <div>Total Articles: {paginationInfo.total}</div>
             <div className="row">{articleList}</div>
-          )}
-        </div>
+          </div>
+        )}
         <div className="row justify-content-center">
           {!isLoading &&
           (paginationInfo.current_page === paginationInfo.last_page ||

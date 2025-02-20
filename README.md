@@ -1,22 +1,41 @@
 # Japanese Learning Environment
 
+Browse lists of Japanese texts, including simplified articles and news. Upload your own content to generate PDFs featuring Japanese radicals, kanji, vocabulary, and sentences for learning. Create or explore lists with articles, radicals, kanji, and vocabulary items, track your progress, and chat with other learners.
+
+![Application demo1](./docs/assets/images/jpl-short-1.gif)
+
+![Application demo2](./docs/assets/images/jpl-short-2.gif)
+
 Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/).
 
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
 This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project), [Kanjidic2](http://www.edrdg.org/wiki/index.php/KANJIDIC_Project), [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), and [Radkfile](http://www.edrdg.org/krad/kradinf.html) dictionary files. JLPT data comes from Jonathan Waller's JLPT Resources [page](http://www.tanos.co.uk/jlpt/).
 
-## Project features
+## Table of Contents
+
+- [Features](#features)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Setup](#setup)
+  - [Docker Setup](#docker-setup)
+  - [Test API](#test-api)
+  - [Local Setup](#local-setup)
+    - [Laravel API Setup](#laravel-api)
+    - [MySQL Database Setup](#database-mySQL)
+    - [React App Setup](#react-app)
+  - [To Do List](#to-do-list)
+- [Ongoing Development](#ongoing-development)
+
+## Features
 
 - Laravel CRUD REST API endpoints for Articles, Lists, Roles, Users and Posts(forum).
-- Likes, hashtags and comments relationships for Articles, Lists and Posts.
-- Read, Search and save lists of Kanji(hierogliphs), Radicals(hierogpliphs formed parts of symbols), Words and sentences from [Tatoeba](tatoeba.org) community.
-- Japanese language data formatted by reading from XML and extracting to CSV using plain PHP and MySQL scripts. Exported and being imported to Laravel via Laravel migrations CLI. Kanjis and words were matched against Jonathan Waller's JLPT Resources and assigned JLPT level accordingly.
-- MySQL with Laravel's Eloquent ORM.
-- Authentication with [Laravel/passport](https://github.com/laravel/passport).
+- Like, hashtag, and comment functionalities for articles, lists, and posts.
+- Full CRUD and search functionality for lists of kanji, radicals, words, and sentences (sentences sourced and linked from the [Tatoeba](https://tatoeba.org) community).
+- Japanese language data extracted from XML to CSV using plain PHP and MySQL script, formatted and imported to Laravel via Laravel migrations CLI. Kanjis and words were matched against JLPT levels assigned from [Jonathan Waller's JLPT Resources](http://www.tanos.co.uk/jlpt/).
+- Authentication with [Laravel/passport](https://github.com/laravel/passport) and Laravel's Eloquent ORM.
 - Text scanning algorithm to find kanjis and words used in user provided article.
-- PDFs generation and downloading material with english meanings for Kanjis and Words based on saved Lists or Article content.
-- Frontend data access using redux.
-- Custom CSS stylings and boostrap with responsive templates.
+- PDFs generation with english meanings for Kanjis and Words based on saved Lists or Article content.
+- State management via Redux and custom styling with Bootstrap and CSS.
 
 ### Backend
 
@@ -33,9 +52,13 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 - [react-router-bootstrap](https://github.com/react-bootstrap/react-router-bootstrap) for [react-router](https://github.com/reactjs/react-router) and [react-bootstrap](https://react-bootstrap.github.io/) integration.
 - [redux](https://redux.js.org/introduction/getting-started), [redux-thunk](https://www.npmjs.com/package/redux-thunk) and [react-redux](https://www.npmjs.com/package/react-redux) for data access.
 
-## Setup Docker
+## Setup
 
-In `/processor-api` repository root run:
+### Docker Setup
+
+Laravel API served with PHP-FPM for php scripts execution, NGINX handles browser requests, static data as CSS, JS, images and routes PHP requests to PHP-FPM.
+
+Now, in `/processor-api` repository root run:
 
 ```bash
 chmod +x .docker/entrypoint.sh
@@ -134,6 +157,18 @@ curl -X GET http://nginx_webserver/api/articles \
 curl -X GET http://nginx_webserver/api/article/5 \
   -H "Authorization: Bearer $TOKEN" \
   | jq
+# or single list
+curl -X GET http://nginx_webserver/api/list/3 \
+  -H "Authorization: Bearer $TOKEN" \
+  | jq
+# or regular response
+curl -X GET http://nginx_webserver/api/list/3/words-pdf \
+  -H "Authorization: Bearer $TOKEN"
+# or generate pdf and move localy tp test result
+curl -X GET http://nginx_webserver/api/list/3/words-pdf \
+  -H "Authorization: Bearer $TOKEN" \
+  -o words-test.pdf
+docker cp laravel_app:/var/www/html/words-test.pdf C:\Users\USER-NAME\Downloads\
 ```
 
 Test PDF file on a local machine:
@@ -145,7 +180,7 @@ curl -X GET http://nginx_webserver/api/article/5/kanjis-pdf \
 docker cp laravel_app:/var/www/html/kanjis-test.pdf C:\Users\USER-NAME\Downloads\
 ```
 
-## Setup Local
+### Local Setup
 
 Required
 
@@ -161,7 +196,7 @@ Optional choices for faster setup:
 - [Xampp](https://www.apachefriends.org/) - web server Apache, PHP and MariaDB(MySQL).
 - [Laravel Herd](https://herd.laravel.com/windows) - dev environment with all you need for laravel development.
 
-### Laravel API
+#### Laravel API
 
 In `processor-api` directory
 Install composer packages:
@@ -182,7 +217,7 @@ Generate unique app key
 php artisan key:generate
 ```
 
-### Database MySQL -
+#### Database MySQL
 
 Requirements:
 
@@ -224,7 +259,7 @@ npm install
 npm run watch
 ```
 
-### React App
+#### React App
 
 In `client` directory
 Install node modules:
@@ -255,3 +290,7 @@ npm start
 - [ ] Write E2E tests for frontend.
 - [?] Client side PDF customization. Generate on Backend, customize on frontend.
 - [?] Cache or Store pre-generated materials like PDFs.
+
+### Ongoing
+
+- couple /search endpoints doesnt work

@@ -22,44 +22,44 @@ const PostDetails = () => {
   const currentUser = useSelector((state) => state.currentUser);
 
   useEffect(() => {
+    const getPostDetails = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axios.get(`${BASE_URL}/api/post/${post_id}`);
+        const postData = res.data.post;
+
+        if (!postData) {
+          history.push("/community");
+          return;
+        }
+
+        if (currentUser.isAuthenticated) {
+          const likeRes = await apiCall(
+            HTTP_METHOD.POST,
+            `/api/post/${post_id}/checklike`
+          );
+          postData.isLiked = likeRes.isLiked;
+        }
+
+        if (currentUser.isAuthenticated && postData.comments) {
+          postData.comments = postData.comments.map((comment) => {
+            const youLikedIt = comment.likes.some(
+              (like) => like.user_id === currentUser.user.id
+            );
+            return { ...comment, isLiked: youLikedIt };
+          });
+        }
+
+        setPost(postData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     getPostDetails();
   }, [currentUser.isAuthenticated]);
-
-  const getPostDetails = async () => {
-    setIsLoading(true);
-    try {
-      const res = await axios.get(`${BASE_URL}/api/post/${post_id}`);
-      const postData = res.data.post;
-
-      if (!postData) {
-        history.push("/community");
-        return;
-      }
-
-      if (currentUser.isAuthenticated) {
-        const likeRes = await apiCall(
-          HTTP_METHOD.POST,
-          `/api/post/${post_id}/checklike`
-        );
-        postData.isLiked = likeRes.isLiked;
-      }
-
-      if (currentUser.isAuthenticated && postData.comments) {
-        postData.comments = postData.comments.map((comment) => {
-          const youLikedIt = comment.likes.some(
-            (like) => like.user_id === currentUser.user.id
-          );
-          return { ...comment, isLiked: youLikedIt };
-        });
-      }
-
-      setPost(postData);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const likePost = async () => {
     if (!currentUser.isAuthenticated) {

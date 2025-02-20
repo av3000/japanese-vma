@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Button, ButtonGroup, Modal } from "react-bootstrap";
+import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -39,6 +39,7 @@ const ArticleDetails = () => {
   const [loadingListIds, setLoadingListIds] = useState([]);
   const [articleTempStatus, setArticleTempStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
   const { article_id } = useParams();
   const history = useHistory();
   const dispatch = useDispatch();
@@ -49,6 +50,75 @@ const ArticleDetails = () => {
   );
 
   useEffect(() => {
+    const fetchArticleDetails = async () => {
+      try {
+        const url = `${BASE_URL}/api/article/${article_id}`;
+        const data = await apiCall(HTTP_METHOD.GET, url);
+        const { article } = data;
+        if (!article) {
+          history.push("/articles");
+          return;
+        }
+        dispatch(setSelectedArticle(article));
+        setArticle(article);
+        setArticleTempStatus(article.status);
+      } catch (error) {
+        console.error(error);
+        history.push("/articles");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchUserRelationsToArticle = async () => {
+      try {
+        const userLike = await apiCall(
+          HTTP_METHOD.POST,
+          `${BASE_URL}/api/article/${article_id}/checklike`
+        );
+
+        setArticle((prevArticle) => ({
+          ...prevArticle,
+          isLiked: userLike.isLiked,
+          comments: prevArticle.comments
+            ? prevArticle.comments.map((comment) => ({
+                ...comment,
+                isLiked: comment.likes.some(
+                  (like) => like.user_id === currentUser.user.id
+                ),
+              }))
+            : [],
+        }));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const fetchUserArticleLists = async () => {
+      try {
+        setIsLoading(true);
+        const url = `${BASE_URL}/api/user/lists/contain`;
+        const data = await apiCall(HTTP_METHOD.POST, url, {
+          elementId: article_id,
+        });
+
+        const articleListsContainingArticle = data.lists.filter(
+          (list) => list.type === ObjectTemplates.ARTICLES
+        );
+
+        setUserLists(articleListsContainingArticle);
+        setArticle((prevArticle) => ({
+          ...prevArticle,
+          isBookmarked: articleListsContainingArticle.length > 0,
+        }));
+        setIsLoading(false);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (!selectedArticle) {
       fetchArticleDetails();
       if (currentUser.isAuthenticated) {
@@ -62,82 +132,7 @@ const ArticleDetails = () => {
         fetchUserArticleLists();
       }
     }
-  }, [
-    article_id,
-    currentUser.isAuthenticated,
-    dispatch,
-    history,
-    selectedArticle,
-  ]);
-
-  const fetchArticleDetails = async () => {
-    try {
-      const url = `${BASE_URL}/api/article/${article_id}`;
-      const data = await apiCall(HTTP_METHOD.GET, url);
-      const { article } = data;
-      if (!article) {
-        history.push("/articles");
-        return;
-      }
-      dispatch(setSelectedArticle(article));
-      setArticle(article);
-      setArticleTempStatus(article.status);
-    } catch (error) {
-      console.error(error);
-      history.push("/articles");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchUserRelationsToArticle = async () => {
-    try {
-      const userLike = await apiCall(
-        HTTP_METHOD.POST,
-        `${BASE_URL}/api/article/${article_id}/checklike`
-      );
-
-      setArticle((prevArticle) => ({
-        ...prevArticle,
-        isLiked: userLike.isLiked,
-        comments: prevArticle.comments
-          ? prevArticle.comments.map((comment) => ({
-              ...comment,
-              isLiked: comment.likes.some(
-                (like) => like.user_id === currentUser.user.id
-              ),
-            }))
-          : [],
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const fetchUserArticleLists = async () => {
-    try {
-      setIsLoading(true);
-      const url = `${BASE_URL}/api/user/lists/contain`;
-      const data = await apiCall(HTTP_METHOD.POST, url, {
-        elementId: article_id,
-      });
-
-      const articleListsContainingArticle = data.lists.filter(
-        (list) => list.type === ObjectTemplates.ARTICLES
-      );
-
-      setUserLists(articleListsContainingArticle);
-      setArticle((prevArticle) => ({
-        ...prevArticle,
-        isBookmarked: articleListsContainingArticle.length > 0,
-      }));
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [article_id, currentUser, dispatch, history, selectedArticle]);
 
   const addToOrRemoveFromList = async (id, action) => {
     try {
@@ -213,6 +208,7 @@ const ArticleDetails = () => {
   const handleStatusChange = async () => {
     try {
       toggleModal(ArticleModalTypes.SHOW_STATUS);
+      setIsReviewLoading(true);
       const res = await apiCall(
         HTTP_METHOD.POST,
         `/api/article/${article_id}/setstatus`,
@@ -222,8 +218,10 @@ const ArticleDetails = () => {
       );
       setArticle((prevArticle) => ({ ...prevArticle, status: res.newStatus }));
       setArticleTempStatus(res.newStatus);
+      setIsReviewLoading(false);
     } catch (error) {
       console.error(error);
+      setIsReviewLoading(false);
     }
   };
 
@@ -302,10 +300,6 @@ const ArticleDetails = () => {
     } catch (error) {
       console.error(error);
     }
-  };
-
-  const editComment = (commentId) => {
-    console.log(commentId);
   };
 
   const renderAddModal = () => {
@@ -507,11 +501,18 @@ const ArticleDetails = () => {
               <span>{article.viewsTotal} views | </span>
               {(currentUser.user.id === article.user_id ||
                 currentUser.user.isAdmin) &&
-                (article.publicity === 1 ? "public | " : "private | ")}
+                (article.publicity === 1 ? (
+                  <Badge variant="primary">Public</Badge>
+                ) : (
+                  <Badge variant="secondary">Private</Badge>
+                ))}
               {(currentUser.user.id === article.user_id ||
-                currentUser.user.isAdmin) && (
-                <ArticleStatus status={article.status} />
-              )}
+                currentUser.user.isAdmin) &&
+                (isReviewLoading ? (
+                  <span className="spinner-border spinner-border-sm"></span>
+                ) : (
+                  <ArticleStatus status={article.status} />
+                ))}
             </div>
             <div>
               <ButtonGroup
@@ -525,7 +526,11 @@ const ArticleDetails = () => {
                     className="btn btn-outline brand-button"
                     size="sm"
                   >
-                    Review
+                    {isReviewLoading ? (
+                      <span className="spinner-border spinner-border-sm"></span>
+                    ) : (
+                      "Review"
+                    )}
                   </Button>
                 )}
 

@@ -1,6 +1,4 @@
 import React, { Component } from "react";
-// import { connect } from 'react-redux';
-// import { fetchLists } from '../store/actions/lists';
 import ListItem from "../components/list/ListItem";
 import { apiCall } from "../services/api";
 import Spinner from "../assets/images/spinner.gif";
@@ -144,23 +142,10 @@ class ListsList extends Component {
         <ListItem
           key={l.id}
           id={l.id}
-          type={l.type}
           listType={listTypes[l.type - 1]}
-          created_at={l.created_at}
-          title={l.title}
-          commentsTotal={l.commentsTotal}
           itemsTotal={l.listItems.length}
-          likesTotal={l.likesTotal}
-          viewsTotal={l.viewsTotal}
-          downloadsTotal={l.downloadsTotal}
           hashtags={l.hashtags.slice(0, 3)}
-          listItems={l.listItems}
-          n1={l.n1}
-          n2={l.n2}
-          n3={l.n3}
-          n4={l.n4}
-          n5={l.n5}
-          uncommon={l.uncommon}
+          {...l}
         />
       ))
     ) : (
@@ -172,20 +157,12 @@ class ListsList extends Component {
     );
 
     return (
-      <div className="container mt-5">
-        <div className="">
-          <SearchBar fetchQuery={this.fetchQuery} searchType="lists" />
-          {/* by tag */}
-          {/* by title keyword */}
-          {/* by newest/popular */}
-        </div>
-        <div className="container mt-5">
-          {this.state.searchHeading ? <h4>{this.state.searchHeading}</h4> : ""}
-
-          {this.state.searchTotal ? <h4>{this.state.searchTotal}</h4> : ""}
-          <div className="row">{customLists}</div>
-        </div>
-        <div className="row justify-content-center ">
+      <div className="container">
+        <SearchBar fetchQuery={this.fetchQuery} searchType="lists" />
+        {this.state.searchHeading && <h4>{this.state.searchHeading}</h4>}
+        {this.state.searchTotal && <h4>{this.state.searchTotal}</h4>}
+        <div className="row">{customLists}</div>
+        <div className="row justify-content-center">
           {this.state.isLoading ? (
             <div className="container">
               <div className="row justify-content-center">
@@ -193,26 +170,19 @@ class ListsList extends Component {
               </div>
             </div>
           ) : (
-            ""
-          )}
-          {!this.state.isLoading &&
-          this.state.pagination.last_page ===
-            this.state.pagination.current_page ? (
-            "no more results..."
-          ) : this.state.url.includes("search") ? (
-            <button
-              className="btn btn-outline-primary brand-button col-6"
-              onClick={this.loadSearchMore}
-            >
-              Load More
-            </button>
-          ) : (
-            <button
-              className="btn btn-outline-primary brand-button col-6"
-              onClick={this.loadMore}
-            >
-              Load More
-            </button>
+            this.state.pagination.last_page !==
+              this.state.pagination.current_page && (
+              <button
+                className="btn btn-outline-primary brand-button col-6"
+                onClick={
+                  this.state.url.includes("search")
+                    ? this.loadSearchMore
+                    : this.loadMore
+                }
+              >
+                Load More
+              </button>
+            )
           )}
         </div>
       </div>

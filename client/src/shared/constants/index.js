@@ -3,6 +3,7 @@ export const HTTP_METHOD = {
   GET: "get",
   POST: "post",
   DELETE: "delete",
+  PUT: "put",
 };
 
 export const ObjectTemplates = {

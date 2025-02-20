@@ -7,7 +7,6 @@ import ExploreArticleTimeline from "../article/ExploreArticleTimeline";
 import ExploreListTimeline from "../list/ExploreListTimeline";
 import InstagramIcon from "../../assets/icons/ig-icon.svg";
 import FacebookIcon from "../../assets/icons/fb-icon.svg";
-import LearnmoreIcon from "../../assets/icons/expand-more-icon.svg";
 
 const Homepage = () => {
   const isAuthenticated = useSelector(
@@ -32,15 +31,15 @@ const Homepage = () => {
                     find &amp; share readings and material of your interest
                   </p>
                 </div>
-                <div className="home-hero-learnmore">
-                  <a href="#readings" className="home-hero-learnmore-link">
-                    Explore <img src={LearnmoreIcon} alt="expand-more-icon" />
+                <div className="home-hero-explore">
+                  <a href="#readings" className="home-hero-explore-link">
+                    Explore <i className="fa-solid fa-angles-down"></i>
                   </a>
                 </div>
               </div>
             </div>
             <div className="homepage-right">
-              <div className="home-hero-social-links float-right">
+              <div className="home-hero-social-links float-right m-2">
                 <Link to="https://www.facebook.com/" className="mr-2">
                   <img src={FacebookIcon} alt="facebook-social-icon" />
                 </Link>
@@ -51,8 +50,7 @@ const Homepage = () => {
             </div>
           </div>
         </div>
-        <div className="container mt-4">
-          <h1>Welcome to your feed!</h1>
+        <div className="container mt-4" id="readings">
           <ExploreArticleTimeline />
           <ExploreListTimeline />
         </div>

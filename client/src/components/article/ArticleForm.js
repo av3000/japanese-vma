@@ -14,7 +14,7 @@ class ArticleForm extends Component {
       content_jp: "",
       source_link: "",
       tags: "",
-      publicity: false,
+      publicity: true,
       isLoading: false,
     };
 

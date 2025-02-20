@@ -28,7 +28,7 @@ const DashboardList = () => {
   const [articles, setArticles] = useState([]);
   const [articlesPending, setArticlesPending] = useState([]);
   const [dashboard, setDashboard] = useState(DASHBOARD_TYPES.COMMON_USER);
-  const [filters, setFilters] = useState({});
+  const [setFilters] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -118,13 +118,19 @@ const DashboardList = () => {
         </button> */}
       </div>
       <div className="col-lg-12 col-md-10 mx-auto">
-        {lists.map((list) => (
-          <DashboardListItem
-            key={list.id}
-            {...list}
-            currentUser={currentUser}
-          />
-        ))}
+        {lists.length > 0 ? (
+          lists.map((list) => (
+            <DashboardListItem
+              key={list.id}
+              {...list}
+              currentUser={currentUser}
+            />
+          ))
+        ) : (
+          <div className="alert text-center alert-info">
+            You have no Lists yet.
+          </div>
+        )}
       </div>
     </div>
   ) : (
@@ -145,7 +151,6 @@ const DashboardList = () => {
                   key={article.id}
                 >
                   <div className="col-lg-6">
-                    {JSON.stringify(article, null, 2)}
                     <h4>
                       <Link to={`/article/${article.id}`}>
                         {article.title_jp}

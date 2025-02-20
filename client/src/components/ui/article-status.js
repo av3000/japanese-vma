@@ -19,7 +19,7 @@ const ArticleStatus = ({ status }) => {
     case ArticleStatusTypes.APPROVED:
       return <Badge variant="success">Approved</Badge>;
     default:
-      return "default";
+      return <Badge variant="warning">Pending</Badge>;
   }
 };
 

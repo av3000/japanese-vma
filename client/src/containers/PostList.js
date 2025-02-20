@@ -205,7 +205,7 @@ export class PostList extends Component {
         <div className="row justify-content-center">
           <SearchBar fetchQuery={this.fetchQuery} searchType="posts" />
         </div>
-        <div className="mt-5">
+        <div className="mt-2">
           <div className="col-10">
             {this.state.searchHeading ? (
               <React.Fragment>

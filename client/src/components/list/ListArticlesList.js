@@ -12,6 +12,7 @@ class ListArticlesList extends Component {
           <th scope="row">
             {
               <Link to={`/article/${object.id}`} target="_blank">
+                {object.title_jp}
                 <i className="fas fa-external-link-alt"></i>
               </Link>
             }

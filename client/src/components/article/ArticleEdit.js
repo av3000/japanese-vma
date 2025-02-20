@@ -3,6 +3,7 @@ import { apiCall } from "../../services/api";
 import { connect } from "react-redux";
 import { hideLoader, showLoader } from "../../store/actions/application";
 import Spinner from "../../assets/images/spinner.gif";
+import { HTTP_METHOD } from "../../shared/constants";
 
 class ArticleEdit extends Component {
   constructor(props) {
@@ -65,7 +66,7 @@ class ArticleEdit extends Component {
     const digit = Math.ceil(body.length / 100); // 100chars = 1min
     const approxText = "It may take up to " + digit + " minutes.";
     this.props.dispatch(
-      showLoader("Creating Article, please wait.", approxText)
+      showLoader("Updating Article, please wait.", approxText)
     );
 
     const payload = {
@@ -89,7 +90,7 @@ class ArticleEdit extends Component {
 
   postNewArticle(payload) {
     const articleId = this.props.match.params.article_id;
-    return apiCall("put", `/api/article/${articleId}`, payload)
+    return apiCall(HTTP_METHOD.PUT, `/api/article/${articleId}`, payload)
       .then((res) => {
         this.props.dispatch(hideLoader());
         this.props.history.push("/article/" + articleId);
