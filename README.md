@@ -56,7 +56,9 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 
 ### Docker Setup
 
-In `/processor-api` repository root run:
+Laravel API served with PHP-FPM for php scripts execution, NGINX handles browser requests, static data as CSS, JS, images and routes PHP requests to PHP-FPM.
+
+Now, in `/processor-api` repository root run:
 
 ```bash
 chmod +x .docker/entrypoint.sh
