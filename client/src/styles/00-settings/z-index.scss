@@ -1,0 +1,26 @@
+// Use the previous constants to make the next constant.
+// That way we also make components' relationship to each other more apparent.
+//
+// More info:
+// https://www.smashingmagazine.com/2021/02/css-z-index-large-projects/
+
+:root {
+	--z-index-base: 0;
+	--z-index-above: 1; // for all values above the base
+	--z-index-below: -1; // for all values below the base
+
+	--z-index-select: calc(var(--z-index-above) + var(--z-index-base));
+
+	--z-index-dropdown: calc(var(--z-index-above) + var(--z-index-select));
+
+	--z-index-overlay-content: calc(var(--z-index-above) + var(--z-index-dropdown));
+
+	--z-index-header: calc(var(--z-index-above) + var(--z-index-overlay-content));
+
+	--z-index-overlay-full: calc(var(--z-index-above) + var(--z-index-header));
+
+	--z-index-modal: calc(var(--z-index-above) + var(--z-index-overlay-full));
+	--z-index-quick-search: calc(var(--z-index-above) + var(--z-index-overlay-full));
+
+	--z-index-notifications: calc(var(--z-index-above) + var(--z-index-modal));
+}

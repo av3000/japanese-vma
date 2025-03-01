@@ -1,0 +1,102 @@
+@use "hyphen";
+@use "media";
+
+// Heading mixins
+// Use these to add specific heading styles to elements
+
+@mixin heading() {
+  min-height: calc(var(--font-size) * var(--line-height-md)); // to avoid CLS
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  line-height: var(--line-height-md);
+  font-weight: var(--font-weight-semibold);
+
+  &:not(.no-hyphen) {
+    @include hyphen.hyphen;
+  }
+}
+
+@mixin h1() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    8.5vw,
+    var(--font-size-heading-1)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}
+
+@mixin h2() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    7.5vw,
+    var(--font-size-heading-2)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}
+
+@mixin h3() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    6.5vw,
+    var(--font-size-heading-3)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}
+
+@mixin h4() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    5.5vw,
+    var(--font-size-heading-4)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}
+
+@mixin h5() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    5vw,
+    var(--font-size-heading-5)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}
+
+@mixin h6() {
+  --font-size: clamp(
+    var(--font-size-heading-6),
+    4.5vw,
+    var(--font-size-heading-6)
+  );
+
+  @include heading();
+
+  & {
+    font-size: var(--font-size);
+  }
+}

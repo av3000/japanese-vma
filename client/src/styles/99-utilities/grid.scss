@@ -1,0 +1,146 @@
+@use "../00-settings/spacing";
+
+/* =================================
+   #GRID
+
+   Utility classes to create a grid layout
+
+   Inspired by tailwindcss -
+   https://tailwindcss.com/docs/grid-template-columns
+   ================================= */
+
+$gridCols: 24;
+
+/**
+ * An example of how to create a 3 column layout:
+ *
+ *	<div class="u-grid u-grid-cols-3 u-grid-gap-lg">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ *
+ * An example of how to create a layout of auto columns with auto width:
+ *
+ *  <div class="u-grid u-grid-gap-y-xl u-grid-flow-col u-grid-auto-cols-max">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ */
+
+.u-grid {
+  display: grid;
+  grid-gap: var(--spacing-xs);
+}
+
+/**
+ * Utility classes to use custom gap in the grid (which is different than the default). The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-gap-none {}
+ *   .u-grid-gap-lg {}
+ *   .u-grid-gap-x-sm {}
+ *   .u-grid-gap-y-xl {}
+ */
+
+$gap-sizes: (
+  "-3xs": spacing.$spacing2Xs,
+  "-2xs": spacing.$spacing2Xs,
+  "-xs": spacing.$spacingXs,
+  "-sm": spacing.$spacingSm,
+  "-md": spacing.$spacingMd,
+  "-lg": spacing.$spacingLg,
+  "-xl": spacing.$spacingXl,
+  "-2xl": spacing.$spacing2Xl,
+  "-3xl": spacing.$spacing3Xl,
+  "-4xl": spacing.$spacing4Xl,
+  "-none": 0,
+) !default;
+
+@each $size-namespace, $size in $gap-sizes {
+  .u-grid-gap#{$size-namespace} {
+    gap: $size !important;
+  }
+
+  .u-grid-gap-x#{$size-namespace} {
+    column-gap: $size !important;
+  }
+
+  .u-grid-gap-y#{$size-namespace} {
+    row-gap: $size !important;
+  }
+}
+
+/**
+ * Utility classes to create number of columns in a grid. The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-cols-3 {}
+ *   .u-grid-cols-8 {}
+ */
+
+@for $i from 1 through $gridCols {
+  .u-grid-cols-#{$i} {
+    grid-template-columns: repeat(#{$i}, minmax(0, 1fr));
+  }
+}
+
+/**
+ * Define custom columns in a grid with a min-width,
+ * where number of columns depends on the container width.
+ * Usage example:
+ *
+ * To create responsive columns, with a min-width of 240px:
+ *
+ *	<div class="u-grid u-grid-cols-custom" style="-cols-min: 240px">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ */
+
+.u-grid-cols-custom {
+  --cols-min: 240px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--cols-min), 1fr));
+}
+
+/**
+ * Utility classes to create custom span (width) for a specific column. The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-col-span-3 {}
+ *
+ * Example use:
+ *	<div class="u-grid u-grid-cols-3">
+ *	  <div class="...">1</div>
+ *	  <div class="...">2</div>
+ *	  <div class="...">3</div>
+ *	  <div class="u-grid-col-span-2 ...">4</div>
+ *	  <div class="...">5</div>
+ *	  <div class="...">6</div>
+ *	  <div class="u-grid-col-span-2 ...">7</div>
+ *	</div>
+ */
+
+@for $i from 1 through $gridCols {
+  .u-grid-col-span-#{$i} {
+    grid-column: span #{$i} / span #{$i};
+  }
+}
+
+/**
+ * Utility class to display children as columns
+ * without having to define nr of columns
+ */
+.u-grid-flow-col {
+  grid-auto-flow: column;
+}
+
+/**
+ * Utility class to give columns auto width
+ */
+.u-grid-auto-cols-max {
+  grid-auto-columns: -webkit-max-content;
+  grid-auto-columns: max-content;
+}

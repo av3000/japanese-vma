@@ -1,0 +1,13 @@
+@mixin hyphen {
+  word-break: break-all;
+  word-break: break-word;
+  hyphens: auto;
+  hyphenate-limit-chars: 10 4 3;
+  hyphenate-limit-lines: 2;
+  hyphenate-limit-last: always;
+  hyphenate-limit-zone: 10%;
+
+  @supports (hyphens: auto) {
+    word-break: normal;
+  }
+}

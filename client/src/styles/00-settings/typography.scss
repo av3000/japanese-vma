@@ -1,0 +1,27 @@
+:root {
+	--font-size-body-xs: 12px;
+	--font-size-body-sm: 14px;
+	--font-size-body-md: 16px;
+	--font-size-body-lg: 18px;
+
+	--font-size-heading-6: 18px;
+	--font-size-heading-5: 20px;
+	--font-size-heading-4: 24px;
+	--font-size-heading-3: 32px;
+	--font-size-heading-2: 40px;
+	--font-size-heading-1: 48px;
+}
+
+:root {
+	// Font families
+	--font-family: 'Inter', Arial, sans-serif;
+
+	// Font weights
+	--font-weight-regular: 400;
+	--font-weight-semibold: 600;
+
+	// Line heights
+	--line-height-sm: 1;
+	--line-height-md: 1.2;
+	--line-height-lg: 1.4;
+}

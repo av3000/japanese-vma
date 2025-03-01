@@ -9,7 +9,7 @@ const currentYear = new Date().getFullYear();
 const Footer = () => (
   <footer className="footer">
     <hr />
-    <div className="container-fluid">
+    <div className="u-container">
       <div className="navbar-header">
         <Link to="/" className="navbar-brand">
           <h4>JPLearning</h4>

@@ -1,0 +1,23 @@
+@use "../01-tools/ellipsis";
+
+/* =================================
+   #ELLIPSIS
+   ================================= */
+
+/**
+ * Utility classes for setting single- and multi-line text ellipsis
+ */
+
+.u-ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.u-ellipsis-2-lines {
+  @include ellipsis.multi-line-ellipsis(2);
+}
+
+.u-ellipsis-3-lines {
+  @include ellipsis.multi-line-ellipsis(3);
+}

@@ -1,0 +1,26 @@
+@use "../01-tools/container";
+
+/* =================================
+   #CONTAINER
+   ================================= */
+
+/**
+ * Utility classes for constraining widths of elements and centering them
+ */
+
+.u-container-xs {
+  @include container.container("xs");
+}
+
+.u-container-sm {
+  @include container.container("sm");
+}
+
+.u-container,
+.u-container-md {
+  @include container.container();
+}
+
+.u-container-lg {
+  @include container.container("lg");
+}

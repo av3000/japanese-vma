@@ -1,0 +1,24 @@
+:root {
+  --spacing-3xs: 2px;
+  --spacing-2xs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 128px;
+}
+
+// Global spacing units
+$spacing3Xs: 2px !default;
+$spacing2Xs: 4px !default;
+$spacingXs: 8px !default;
+$spacingSm: 12px !default;
+$spacingMd: 16px !default;
+$spacingLg: 24px !default;
+$spacingXl: 32px !default;
+$spacing2Xl: 40px !default;
+$spacing3Xl: 64px !default;
+$spacing4Xl: 128px !default;

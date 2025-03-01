@@ -1,0 +1,25 @@
+/* =================================
+   #SCROLL-WRAPPER
+
+   Utility classes to create a wrapper with scrolling enabled inside
+   ================================= */
+
+/**
+ * Example use:
+ *
+ * In markup:
+ * <div className="my-wrapper u-scroll-wrapper-y">
+ *   <ul> Some list ... </ul>
+ * </div>
+ *
+ * In styles:
+ * .my-wrapper {
+ *   height: 100%;
+ * }
+ */
+
+.u-scroll-wrapper-y {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}

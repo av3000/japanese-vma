@@ -1,0 +1,115 @@
+@use "sass:map";
+@use "../00-settings/breakpoints";
+
+// Media query mixins
+// Min-width is default. For max-width, pass 'max' as second param.
+
+/* Example use:
+
+1. With min-width
+  .foo {
+      padding: 20px;
+
+      @include media.mq('sm') {
+          padding-top: 40px;
+      }
+  }
+
+2. With max-width
+  .foo {
+      padding: 20px;
+
+      @include media.mq('md', 'max') {
+          padding-top: 10px;
+      }
+  }
+*/
+@mixin mq($width, $type: "min") {
+  @if map.has-key(breakpoints.$breakpoints, $width) {
+    $width: map.get(breakpoints.$breakpoints, $width);
+    @if $type == "max" {
+      $width: $width - 1px;
+    }
+    @media only screen and (#{$type}-width: $width) {
+      @content;
+    }
+  }
+}
+
+@mixin mqHeight($height, $type: "min") {
+  @if map.has-key(breakpoints.$breakpoints, $height) {
+    $height: map.get(breakpoints.$breakpoints, $height);
+    @if $type == "max" {
+      $height: $height - 1px;
+    }
+    @media only screen and (#{$type}-height: $height) {
+      @content;
+    }
+  }
+}
+
+// Touch screen
+// The primary input mechanism of the device includes a pointing device of limited accuracy.
+
+/* Example use:
+
+.foo {
+	@include media.mqTouch {
+		padding: 20px;
+	}
+}
+*/
+@mixin mqTouch {
+  @media (pointer: coarse) {
+    @content;
+  }
+}
+
+// Hover device screen
+// The primary input mechanism system of the device can hover over elements with ease.
+
+/* Example use:
+
+.foo {
+	@include media.mqHover {
+		padding: 20px;
+	}
+}
+*/
+@mixin mqHover {
+  @media (hover: hover) {
+    @content;
+  }
+}
+
+// Retina screen
+
+/* Example use:
+
+.foo {
+	@include media.mqRetina {
+		padding: 20px;
+	}
+}
+*/
+@mixin mqRetina {
+  @media (-webkit-min-device-pixel-ratio: 2) {
+    @content;
+  }
+}
+
+// Print screen
+
+/* Example use:
+
+.foo {
+	@include media.mqPrint {
+		display: none;
+	}
+}
+*/
+@mixin mqPrint {
+  @media print {
+    @content;
+  }
+}

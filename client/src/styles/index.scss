@@ -1,0 +1,57 @@
+@use "sass:meta";
+/* =================================
+   index.scss
+   https://github.com/inuitcss/inuitcss/blob/develop/example.main.scss
+
+   Imports layers that generate "global" styles
+   and that gets compiled to css
+   (except for component styles,
+   which reside with components)
+   ================================= */
+
+// Adjust font-size for fallback font to decrease layout shift
+@font-face {
+  font-family: Arial;
+  src: local("Arial");
+  size-adjust: 107%;
+}
+
+/**
+ * # 00 - SETTINGS
+ */
+@include meta.load-css("00-settings/box-shadow");
+@include meta.load-css("00-settings/colors");
+@include meta.load-css("00-settings/opacity");
+@include meta.load-css("00-settings/sizes");
+@include meta.load-css("00-settings/spacing");
+@include meta.load-css("00-settings/typography");
+@include meta.load-css("00-settings/z-index");
+
+/**
+ * #2 - GENERIC
+ */
+@include meta.load-css("02-generic/box-sizing");
+@include meta.load-css("02-generic/normalize");
+@include meta.load-css("02-generic/outline");
+@include meta.load-css("02-generic/reset");
+
+/**
+ * #3 - ELEMENTS
+ */
+@include meta.load-css("03-elements/form-field");
+@include meta.load-css("03-elements/headings");
+@include meta.load-css("03-elements/image");
+@include meta.load-css("03-elements/list");
+@include meta.load-css("03-elements/page");
+
+/**
+ * #99 - UTILITIES
+ */
+@include meta.load-css("99-utilities/container");
+@include meta.load-css("99-utilities/ellipsis");
+@include meta.load-css("99-utilities/grid");
+@include meta.load-css("99-utilities/hide");
+@include meta.load-css("99-utilities/scroll-wrapper");
+@include meta.load-css("99-utilities/spacings");
+@include meta.load-css("99-utilities/spinner");
+@include meta.load-css("99-utilities/titles");
