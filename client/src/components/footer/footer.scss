@@ -1,0 +1,26 @@
+@use "../../styles/00-settings/colors";
+
+.footer {
+  background-color: var(--color-background-neutral-default);
+  color: var(--color-text-neutral-default);
+  text-align: center;
+  margin-top: auto;
+  width: 100%;
+  padding: 1rem;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+
+  hr {
+    border: 1px solid var(--color-border-default);
+  }
+
+  .text-muted {
+    color: var(--color-text-neutral-active);
+  }
+
+  a {
+    color: var(--color-text-primary-default);
+    &:hover {
+      color: var(--color-text-neutral-hover);
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { Link, NavLink, withRouter } from "react-router-dom";
 import { connect } from "react-redux";
 import { Navbar, Nav, NavDropdown, Dropdown, Button } from "react-bootstrap";
 import { logout } from "../../store/actions/auth";
-import "./Navbar.css";
+import "./header.scss";
 
 const TopNavigationBar = ({ currentUser, logout, history }) => {
   const handleLogout = () => {

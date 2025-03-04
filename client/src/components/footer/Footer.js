@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import InstagramIcon from "../../assets/icons/ig-icon.svg";
 import FacebookIcon from "../../assets/icons/fb-icon.svg";
-import "./Footer.css";
+import "./footer.scss";
 
 const currentYear = new Date().getFullYear();
 
