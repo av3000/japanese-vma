@@ -7,11 +7,3 @@ $breakpoints: (
 ) !default;
 
 // Used in 01-tools/media.scss
-
-// See implementation of these in 01-tools/media.scss
-
-// Global component breakpoints
-// (Need to be defined in SCSS as they're used in SCSS mixins)
-$layoutSwitchThumbs: "md";
-$layoutSwitchPDP: "sm";
-$headerLayoutSwitch: "sm";

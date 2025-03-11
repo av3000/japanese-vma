@@ -59,34 +59,3 @@ $spacing-sizes: (
     }
   }
 }
-
-/**
- * Utility class to add consistent, responsive spacing between sections
- */
-.u-section-spacer {
-  margin-top: var(--spacing-2xl);
-
-  @include media.mq("sm") {
-    margin-top: var(--spacing-3xl);
-  }
-}
-
-/**
- * Utility class to add consistent, responsive spacing
- * from top link elements to page content.
- * E.g. to breadcrumbs, top links (like back links) etc.
- */
-.u-top-content-spacer {
-  min-height: var(--button-height-md) !important;
-  margin-bottom: var(--content-spacing-top) !important;
-
-  @include media.mq(breakpoints.$headerLayoutSwitch) {
-    min-height: var(--size-5xl) !important;
-    margin-bottom: var(--content-spacing-top-desktop) !important;
-  }
-}
-.u-top-content-spacer-no-mobile {
-  @include media.mq(breakpoints.$headerLayoutSwitch, "max") {
-    margin-bottom: 0 !important;
-  }
-}
