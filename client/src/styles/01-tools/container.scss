@@ -1,0 +1,26 @@
+@use "sass:map";
+@use "../00-settings/sizes";
+@use "media";
+
+// Container mixins
+// Used for constraining widths of elements and centering them
+//
+// Use mixins only, if utility classes are not an option
+// (e.g. due to need for media queries)
+
+$containerSizes: (
+  "xs": sizes.$containerXs,
+  "sm": sizes.$containerSm,
+  "md": sizes.$containerMd,
+  "lg": sizes.$containerLg,
+) !default;
+
+@mixin container($size: "md") {
+  width: calc(100% - calc(var(--spacing-md) * 2));
+  max-width: map.get($containerSizes, $size);
+  margin-inline: auto;
+
+  @include media.mq("md") {
+    width: calc(100% - calc(var(--spacing-lg) * 2));
+  }
+}

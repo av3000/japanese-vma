@@ -1,0 +1,62 @@
+:root {
+  --border-radius-none: 0px;
+  --border-radius-xs: 4px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 24px;
+  --border-radius-full: 9999px;
+
+  --border-size-sm: 1px;
+  --border-size-md: 2px;
+
+  --container-xs: 400px;
+  --container-sm: 800px;
+  --container-md: 1200px;
+  --container-lg: 1440px;
+
+  --icon-size-sm: 16px;
+  --icon-size-md: 24px;
+  --icon-size-lg: 32px;
+  --icon-size-xl: 48px;
+
+  --size-xs: 4px;
+  --size-sm: 8px;
+  --size-md: 16px;
+  --size-lg: 20px;
+  --size-xl: 24px;
+  --size-2xl: 32px;
+  --size-3xl: 40px;
+  --size-4xl: 48px;
+  --size-5xl: 56px;
+  --size-6xl: 80px;
+  --size-7xl: 96px;
+}
+
+:root {
+  --aspect-ratio-tall: 4/5;
+  --aspect-ratio-square: 1;
+  --aspect-ratio-wide: 16/10;
+
+  // Focus outline size
+  --outline-size: var(--border-size-md);
+
+  // Global component settings
+  --mobile-header-height: var(--size-5xl);
+  --mobile-footer-height: var(--size-5xl);
+
+  --button-height-sm: var(--size-3xl);
+  --button-height-md: var(--size-4xl);
+  --button-padding-x: var(--spacing-md);
+
+  --input-height-sm: var(--size-3xl);
+  --input-height-md: var(--size-4xl);
+
+  --slider-dot-button-height: var(--button-height-sm);
+}
+
+// Containers
+$containerXs: 400px;
+$containerSm: 800px;
+$containerMd: 1200px;
+$containerLg: 1440px;

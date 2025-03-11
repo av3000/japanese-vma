@@ -1,0 +1,86 @@
+@use "../01-tools/media";
+
+/* =================================
+   #HIDE-SHOW
+
+   Utility class to hide and show content in various
+   cases (depending on device type and size)
+   ================================= */
+
+/**
+ * Hide content visually, yet provide it to screen readers
+ */
+.u-hide-visually {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/**
+ * Display: none, display: block or display: flex content on from and to specific breakpoints.
+ * The below loop will generate us a suite of classes e.g.:
+ *
+ *   .u-hide {}
+ *   .u-hide-sm-max {}
+ *   .u-hide-lg-min {}
+ *
+ *   .u-block {}
+ *   .u-block-sm-max {}
+ *   .u-block-lg-min {}
+ *
+ *   .u-flex {}
+ *   .u-flex-sm-max {}
+ *   .u-flex-lg-min {}
+ *
+ *   .u-inl-flex {}
+ *   .u-inl-flex-sm-max {}
+ *   .u-inl-flex-lg-min {}
+ */
+
+.u-hide {
+  display: none !important;
+}
+.u-block {
+  display: block !important;
+}
+.u-flex {
+  display: flex !important;
+}
+.u-inl-flex {
+  display: inline-flex !important;
+}
+
+$util-types: (
+  "-hide": "none",
+  "-block": "block",
+  "-flex": "flex",
+  "-inl-flex": "inline-flex",
+) !default;
+
+$media-directions: (
+  "-min": "min",
+  "-max": "max",
+) !default;
+
+$media-sizes: (
+  "-xs": "xs",
+  "-sm": "sm",
+  "-md": "md",
+  "-lg": "lg",
+  "-xl": "xl",
+) !default;
+
+@each $util-namespace, $util in $util-types {
+  @each $direction-namespace, $direction in $media-directions {
+    @each $size-namespace, $size in $media-sizes {
+      .u#{$util-namespace}#{$size-namespace}#{$direction-namespace} {
+        @include media.mq(#{$size}, #{$direction}) {
+          display: #{$util} !important;
+        }
+      }
+    }
+  }
+}

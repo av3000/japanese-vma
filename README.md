@@ -276,7 +276,7 @@ npm start
 
 ### To Do List
 
-- [ ] Make demo gifs to showcase main features.
+- [x] Make demo gifs to showcase main features.
 - [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
 - [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
 - [ ] Strengthen authorization with more persistant implementation..
@@ -290,6 +290,35 @@ npm start
 - [ ] Write E2E tests for frontend.
 - [?] Client side PDF customization. Generate on Backend, customize on frontend.
 - [?] Cache or Store pre-generated materials like PDFs.
+
+<!-- Tasks -->
+
+- [ ] Migrate from CRA to Vite
+- [ ] Add Typescript and start using .tsx
+- [ ] Create storybook for components
+
+- UI Components:
+  - Button
+  - Product card
+  - Dropdown
+  - Select
+  - Input Text
+  - Input Checkbox
+  - Tabgroup (articles/lists in dashboard)
+  - Badge
+  - Icon
+  - Image
+  - Spinner
+  - Info message
+  - Toast Message
+  - Tooltip
+  - Drawer
+  - Modal
+  - Table ( tanstack query table?)
+  - Layout components Mobile-first approach:
+    - Header
+    - Footer
+    - Main
 
 ### Ongoing
 

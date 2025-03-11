@@ -1,0 +1,45 @@
+@use "../01-tools/headings";
+
+/* =================================
+   #TITLES
+
+   Utility classes to set titles on elements based on the way
+   they are used semantically instead of the html element
+   in the markup.
+   ================================= */
+
+/**
+ * Utility classes to set titles on elements based on the way
+ * they are used semantically instead of the html element
+ * in the markup.
+ *
+ * Examples use:
+ *
+ * <h2 className="u-page-title">Some title</h3>
+ * or
+ * <h4 className="u-group-title">Some title</h4>
+ */
+
+.u-page-title {
+  @include headings.h1;
+}
+
+.u-main-section-title {
+  @include headings.h2;
+}
+
+.u-section-title {
+  @include headings.h3;
+}
+
+.u-sub-section-title {
+  @include headings.h4;
+}
+
+.u-group-title {
+  @include headings.h6;
+
+  & {
+    font-weight: var(--font-weight-regular);
+  }
+}

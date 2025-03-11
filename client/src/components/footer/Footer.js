@@ -2,14 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import InstagramIcon from "../../assets/icons/ig-icon.svg";
 import FacebookIcon from "../../assets/icons/fb-icon.svg";
-import "./Footer.css";
+import "./footer.scss";
 
 const currentYear = new Date().getFullYear();
 
 const Footer = () => (
   <footer className="footer">
     <hr />
-    <div className="container-fluid">
+    <div className="u-container">
       <div className="navbar-header">
         <Link to="/" className="navbar-brand">
           <h4>JPLearning</h4>

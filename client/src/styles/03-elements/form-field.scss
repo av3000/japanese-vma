@@ -1,0 +1,11 @@
+@use "../01-tools/media";
+
+select,
+textarea,
+input {
+  // Font-size should always be (at least) 16px on form elements on mobile
+
+  @include media.mq("sm", "max") {
+    font-size: 16px;
+  }
+}

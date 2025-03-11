@@ -29,7 +29,8 @@
     "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
-    "redux-devtools-extension": "^2.13.9"
+    "redux-devtools-extension": "^2.13.9",
+    "sass": "^1.85.1"
   },
   "eslintConfig": {
     "extends": "react-app"
