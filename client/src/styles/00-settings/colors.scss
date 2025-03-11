@@ -1,65 +1,84 @@
-:root {
-	--color-neutral-0: #ffffff;
-	--color-neutral-100: #f5f5f5;
-	--color-neutral-100-alpha: #1717170d;
-	--color-neutral-200-alpha: #1717171a;
-	--color-neutral-300: #d4d4d4;
-	--color-neutral-500: #737373;
-	--color-neutral-700: #404040;
-	--color-neutral-900: #171717;
-	--color-primary-100: #cce4e3;
-	--color-primary-200: #99c9c7;
-	--color-primary-300: #66adab;
-	--color-primary-400: #33928f;
-	--color-primary-500: #007773;
-	--color-secondary-100: #f2f4f2;
-	--color-secondary-200: #e5e8e5;
-	--color-secondary-300: #d8ddd8;
-	--color-secondary-400: #cbd1cb;
-	--color-secondary-500: #bec6be;
-	--color-system-danger-300: #fecaca;
-	--color-system-danger-500: #991d2e;
-	--color-system-success-300: #bbf7d0;
-	--color-system-success-500: #278737;
-	--color-system-warning-300: #fbcf8d;
-	--color-system-warning-500: #f79e1b;
+// Semantic Colors
+$color-success: #28a745;
+$color-success-hover: #1e7e34;
+$color-success-disabled: #94d7a1;
 
-	--color-background-neutral-default: var(--color-neutral-0, #ffffff);
-	--color-background-neutral-focus: var(--color-neutral-100-alpha, #1717170d);
-	--color-background-neutral-hover: var(--color-neutral-200-alpha, #1717171a);
-	--color-background-neutral-inverse: var(--color-neutral-900, #171717);
-	--color-background-neutral-stronger: var(--color-neutral-700, #404040);
-	--color-background-neutral-weak: var(--color-neutral-300, #d4d4d4);
-	--color-background-neutral-weaker: var(--color-neutral-100, #f5f5f5);
-	--color-background-primary-active: var(--color-primary-300, #66adab);
-	--color-background-primary-default: var(--color-primary-500, #007773);
-	--color-background-primary-hover: var(--color-primary-400, #33928f);
-	--color-background-secondary-active: var(--color-secondary-100, #f2f4f2);
-	--color-background-secondary-default: var(--color-secondary-300, #d8ddd8);
-	--color-background-secondary-hover: var(--color-secondary-200, #e5e8e5);
-	--color-background-system-danger: var(--color-system-danger-500, #991d2e);
-	--color-background-system-danger-weaker: var(--color-system-danger-300, #fecaca);
-	--color-background-system-success: var(--color-system-success-500, #278737);
-	--color-background-system-success-weaker: var(--color-system-success-300, #bbf7d0);
-	--color-background-system-warning: var(--color-system-warning-500, #f79e1b);
-	--color-background-system-warning-weaker: var(--color-system-warning-300, #fbcf8d);
-	--color-border-active: var(--color-neutral-900, #171717);
-	--color-border-danger: var(--color-system-danger-500, #991d2e);
-	--color-border-default: var(--color-neutral-300, #d4d4d4);
-	--color-border-hover: var(--color-neutral-700, #404040);
-	--color-border-inverse: var(--color-neutral-0, #ffffff);
-	--color-border-primary: var(--color-primary-500, #007773);
-	--color-text-neutral-active: var(--color-neutral-500, #737373);
-	--color-text-neutral-default: var(--color-neutral-900, #171717);
-	--color-text-neutral-hover: var(--color-neutral-700, #404040);
-	--color-text-neutral-inverse: var(--color-neutral-0, #ffffff);
-	--color-text-neutral-strong: var(--color-neutral-500, #737373);
-	--color-text-neutral-stronger: var(--color-neutral-700, #404040);
-	--color-text-primary-default: var(--color-primary-500, #007773);
-	--color-text-system-danger: var(--color-system-danger-500, #991d2e);
-}
+$color-warning: #ffc107;
+$color-warning-hover: #c69500;
+$color-warning-disabled: #ffe08a;
 
+$color-error: #dc3545;
+$color-error-hover: #a71d2a;
+$color-error-disabled: #f29ba5;
+
+// Primary Colors (Orange)
+$color-primary-100: #f9d7b5;
+$color-primary-200: #f4b87d;
+$color-primary-300: #ef9845;
+$color-primary-400: #ea7d22;
+$color-primary: #e67e22;
+$color-primary-hover: #c4661b;
+$color-primary-disabled: #f4c6a0;
+
+// Secondary Colors
+$color-secondary-100: #f2f4f2; // Light secondary background
+$color-secondary-200: #e5e8e5;
+$color-secondary-300: #d8ddd8;
+$color-secondary-400: #cbd1cb;
+$color-secondary: #6c757d; // Main Secondary Gray
+$color-secondary-hover: #494f54;
+$color-secondary-disabled: #b5bcc2;
+
+// Neutral Colors
+$color-neutral-0: #ffffff;
+$color-neutral-100: #f8f9fa;
+$color-neutral-100-alpha: #1717170d; // Transparent overlay
+$color-neutral-200-alpha: #1717171a; // Subtle hover effect
+$color-neutral-200: #e9ecef; // Borders, subtle dividers
+$color-neutral-300: #dee2e6; // Input backgrounds, inactive elements
+$color-neutral-400: #ced4da; // Placeholder text
+$color-neutral-500: #adb5bd; // Muted text
+$color-neutral-600: #6c757d; // Secondary text (light mode)
+$color-neutral-700: #495057; // Default text (light mode)
+$color-neutral-800: #343a40; // Card backgrounds (dark mode)
+$color-neutral-900: #212529; // Default text (dark mode)
+
+// CSS Variables (for usage in raw CSS)
 :root {
-	// Global element settings
-	--page-background-color: var(--color-background-neutral-default);
+  --color-success: #{$color-success};
+  --color-success-hover: #{$color-success-hover};
+  --color-success-disabled: #{$color-success-disabled};
+  --color-warning: #{$color-warning};
+  --color-warning-hover: #{$color-warning-hover};
+  --color-warning-disabled: #{$color-warning-disabled};
+  --color-error: #{$color-error};
+  --color-error-hover: #{$color-error-hover};
+  --color-error-disabled: #{$color-error-disabled};
+  --color-primary-100: #{$color-primary-100};
+  --color-primary-200: #{$color-primary-200};
+  --color-primary-300: #{$color-primary-300};
+  --color-primary-400: #{$color-primary-400};
+  --color-primary: #{$color-primary};
+  --color-primary-hover: #{$color-primary-hover};
+  --color-primary-disabled: #{$color-primary-disabled};
+  --color-secondary-100: #{$color-secondary-100};
+  --color-secondary-200: #{$color-secondary-200};
+  --color-secondary-300: #{$color-secondary-300};
+  --color-secondary-400: #{$color-secondary-400};
+  --color-secondary: #{$color-secondary};
+  --color-secondary-hover: #{$color-secondary-hover};
+  --color-secondary-disabled: #{$color-secondary-disabled};
+  --color-neutral-0: #{$color-neutral-0};
+  --color-neutral-100: #{$color-neutral-100};
+  --color-neutral-100-alpha: #{$color-neutral-100-alpha};
+  --color-neutral-200-alpha: #{$color-neutral-200-alpha};
+  --color-neutral-200: #{$color-neutral-200};
+  --color-neutral-300: #{$color-neutral-300};
+  --color-neutral-400: #{$color-neutral-400};
+  --color-neutral-500: #{$color-neutral-500};
+  --color-neutral-600: #{$color-neutral-600};
+  --color-neutral-700: #{$color-neutral-700};
+  --color-neutral-800: #{$color-neutral-800};
+  --color-neutral-900: #{$color-neutral-900};
+  --color-text-primary: #{#ffffff};
 }
