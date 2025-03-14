@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Moment from "react-moment";
+
 import Hashtags from "../ui/hashtags";
 
 const PostItem = ({
@@ -26,9 +26,10 @@ const PostItem = ({
         <Link to={`/community/${id}`}>{title}</Link>
       </h5>
       Date:{" "}
-      <Moment className="text-muted" format="Do MMM YYYY">
-        {date}
-      </Moment>
+      {date}
+      {/* <Moment className="text-muted" format="Do MMM YYYY">
+        moment(date).format()
+      </Moment> */}
       <br />
       Tags: <Hashtags hashtags={hashtags} />
     </div>

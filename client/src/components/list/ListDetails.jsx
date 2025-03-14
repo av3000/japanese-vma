@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useHistory, useParams } from "react-router-dom";
 import { Button, ButtonGroup, Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import Moment from "react-moment";
+
 
 import { apiCall } from "../../services/api";
 import DefaultArticleImg from "../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";
@@ -258,9 +258,10 @@ const ListDetails = () => {
             <h1 className="mt-4">{list.title}</h1>
             <div className="row text-muted w-100 mb-3 justify-content-between">
               <div className="text-muted">
-                <Moment className="text-muted" format="Do MMM YYYY">
-                  {list.created_at}
-                </Moment>
+                {/* <Moment className="text-muted" format="Do MMM YYYY">
+                  {moment(list.created_at).format()}
+                </Moment> */}
+                {list.created_at}
                 <br />
                 <span>{list.viewsTotal} views</span>
                 {currentUser.user.id === list.user_id

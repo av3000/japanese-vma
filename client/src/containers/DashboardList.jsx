@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Moment from "react-moment";
+
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -160,9 +160,10 @@ const DashboardList = () => {
                   </div>
                   <div className="col-lg-4 col-12-sm pt-3">
                     <small className="text-muted">
-                      <Moment className="text-muted" format="Do MMM YYYY">
-                        {article.created_at}
-                      </Moment>
+                      {/* <Moment className="text-muted" format="Do MMM YYYY">
+                        {moment(article.created_at).format()}
+                      </Moment> */}
+                      {article.created_at}
                       <br />
                       <Moment
                         className="text-muted"

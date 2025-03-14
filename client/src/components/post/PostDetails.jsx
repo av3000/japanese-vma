@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Moment from "react-moment";
 import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
 import { Link, useHistory, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -198,9 +197,10 @@ const PostDetails = () => {
             <div className="row text-muted w-100 mb-3 justify-content-between">
               <div className="col">
                 <p className="text-muted">
-                  <Moment className="text-muted" format="Do MMM YYYY">
-                    {post.created_at}
-                  </Moment>
+                  {/* <Moment className="text-muted" format="Do MMM YYYY">
+                    moment(post.created_at).format()
+                  </Moment> */}
+                  {post.created_at}
                   <br />
                   {post.viewsTotal} views &nbsp;
                   <Badge variant="primary">{post.postType}</Badge>

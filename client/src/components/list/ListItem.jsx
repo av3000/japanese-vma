@@ -1,5 +1,4 @@
 import React from "react";
-import Moment from "react-moment";
 import { Link } from "react-router-dom";
 import DefaultArticleImg from "../../assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";
 import "../article/ArticleItem.css";
@@ -43,9 +42,10 @@ const ListItem = ({
         <strong>{listType}</strong>
         <Hashtags hashtags={hashtags} />
         <p className="text-muted">
-          <Moment className="text-muted" format="Do MMM YYYY">
-            {created_at}
-          </Moment>
+          {created_at}
+          {/* <Moment className="text-muted" format="Do MMM YYYY">
+            {moment(created_at).format()}
+          </Moment> */}
         </p>
         <p className="text-muted">
           {viewsTotal} views &nbsp;

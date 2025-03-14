@@ -1,5 +1,5 @@
 import React from "react";
-import Moment from "react-moment";
+
 import { Button } from "react-bootstrap";
 import DefaultAvatar from "../../assets/images/avatar-man.svg";
 
@@ -47,9 +47,9 @@ const Comment = ({ comment, deleteComment, likeComment, currentUser }) => (
           ></i>
         </Button>
         <p className="ml-auto mb-0">
-          <Moment className="text-muted" format="Do MMM YYYY">
-            {comment.created_at}
-          </Moment>
+          {/* <Moment className="text-muted" format="Do MMM YYYY">
+            {moment(comment.created_at).format()}
+          </Moment> */}
         </p>
       </div>
       <hr />
