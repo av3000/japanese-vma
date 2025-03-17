@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Spinner from "../../assets/images/spinner.gif";
 import CommentList from "../comment/CommentList";
@@ -17,7 +17,7 @@ const PostDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { post_id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.currentUser);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const PostDetails = () => {
         const postData = res.data.post;
 
         if (!postData) {
-          history.push("/community");
+          navigate("/community");
           return;
         }
 
@@ -62,7 +62,7 @@ const PostDetails = () => {
 
   const likePost = async () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
 
@@ -85,7 +85,7 @@ const PostDetails = () => {
 
   const toggleLock = async () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
 
@@ -110,7 +110,7 @@ const PostDetails = () => {
 
   const openDeleteModal = () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       setShowDelete(true);
     }
@@ -119,7 +119,7 @@ const PostDetails = () => {
   const deletePost = async () => {
     try {
       await apiCall(HTTP_METHOD.DELETE, `/api/post/${post_id}`);
-      history.push("/community");
+      navigate("/community");
     } catch (error) {
       console.error(error);
     }
@@ -127,7 +127,7 @@ const PostDetails = () => {
 
   const likeComment = async (commentId) => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
 

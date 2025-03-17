@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
-import { Link, useParams, useHistory } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { apiCall } from "../../services/api";
@@ -41,7 +41,8 @@ const ArticleDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
   const { article_id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
+  
   const dispatch = useDispatch();
 
   const currentUser = useSelector((state) => state.currentUser);
@@ -56,7 +57,7 @@ const ArticleDetails = () => {
         const data = await apiCall(HTTP_METHOD.GET, url);
         const { article } = data;
         if (!article) {
-          history.push("/articles");
+          navigate("/articles");
           return;
         }
         dispatch(setSelectedArticle(article));
@@ -64,7 +65,7 @@ const ArticleDetails = () => {
         setArticleTempStatus(article.status);
       } catch (error) {
         console.error(error);
-        history.push("/articles");
+        navigate("/articles");
       } finally {
         setIsLoading(false);
       }
@@ -179,7 +180,7 @@ const ArticleDetails = () => {
 
   const downloadPdf = async (type) => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
     const pdfType = type === "kanji" ? "kanjis-pdf" : "words-pdf";
@@ -227,7 +228,7 @@ const ArticleDetails = () => {
 
   const handleLikeArticle = async () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
     try {
@@ -274,7 +275,7 @@ const ArticleDetails = () => {
 
   const handleLikeComment = async (commentId) => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
     try {
@@ -409,7 +410,7 @@ const ArticleDetails = () => {
     const handleDeleteArticle = async () => {
       try {
         await apiCall(HTTP_METHOD.DELETE, `/api/article/${article.id}`);
-        history.push("/articles");
+        navigate("/articles");
       } catch (error) {
         console.error(error);
       }

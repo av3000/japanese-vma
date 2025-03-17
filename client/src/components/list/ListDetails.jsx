@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { Button, ButtonGroup, Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -23,7 +23,7 @@ const ListDetails = () => {
 
   const currentUser = useSelector((state) => state.currentUser);
   const dispatch = useDispatch();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { list_id } = useParams();
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const ListDetails = () => {
       setList(listData);
 
       if (!listData) {
-        history.push("/lists");
+        navigate("/lists");
       } else if (currentUser.isAuthenticated) {
         const likeRes = await apiCall(
           HTTP_METHOD.POST,
@@ -82,7 +82,7 @@ const ListDetails = () => {
   const deleteList = async () => {
     try {
       await apiCall(HTTP_METHOD.DELETE, `/api/list/${list_id}`);
-      history.push("/lists");
+      navigate("/lists");
     } catch (err) {
       console.error(err);
     }
@@ -90,7 +90,7 @@ const ListDetails = () => {
 
   const downloadPdf = async () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else if (list.listItems.length === 0) {
       dispatch(showLoader("There are no items in the list!"));
       setTimeout(() => {
@@ -142,7 +142,7 @@ const ListDetails = () => {
 
   const likeList = async () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       const endpoint = list.isLiked ? "unlike" : "like";
       const url = `${BASE_URL}/api/list/${list_id}/${endpoint}`;
@@ -167,7 +167,7 @@ const ListDetails = () => {
       setEditToggle(!editToggle);
       setEditToggleHeading(newHeading);
     } else {
-      history.push("/login");
+      navigate("/login");
     }
   };
 
@@ -177,7 +177,7 @@ const ListDetails = () => {
 
   const openDeleteModal = () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       setShowDeleteModal(true);
     }
@@ -185,7 +185,7 @@ const ListDetails = () => {
 
   const likeComment = async (commentId) => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       const comment = list.comments.find((c) => c.id === commentId);
       const endpoint = comment.isLiked ? "unlike" : "like";

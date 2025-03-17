@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 
 import { apiCall } from "../../services/api";
@@ -24,7 +24,7 @@ const SentenceDetails = ({ currentUser }) => {
   const [comments, setComments] = useState([]);
 
   const { sentence_id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getSentenceDetails();
@@ -93,7 +93,7 @@ const SentenceDetails = ({ currentUser }) => {
 
   const toggleModal = () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       setShowModal(!showModal);
     }
@@ -151,7 +151,7 @@ const SentenceDetails = ({ currentUser }) => {
 
   const likeComment = async (commentId) => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
       return;
     }
     try {

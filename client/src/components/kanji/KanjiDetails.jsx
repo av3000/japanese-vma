@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, ButtonGroup, Modal } from "react-bootstrap";
 import Spinner from "../../assets/images/spinner.gif";
 import {
@@ -23,7 +23,7 @@ const KanjiOpen = ({ currentUser }) => {
   const [loadingListIds, setLoadingListIds] = useState([]);
 
   const { kanji_id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getKanjiOpen();
@@ -92,7 +92,7 @@ const KanjiOpen = ({ currentUser }) => {
 
   const toggleModal = () => {
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      navigate("/login");
     } else {
       setShowModal((prevShow) => !prevShow);
     }

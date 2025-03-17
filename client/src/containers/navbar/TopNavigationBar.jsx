@@ -1,14 +1,18 @@
 import React from "react";
-import { Link, NavLink, withRouter } from "react-router-dom";
-import { connect } from "react-redux";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { Navbar, Nav, NavDropdown, Dropdown, Button } from "react-bootstrap";
 import { logout } from "../../store/actions/auth";
 import "./header.scss";
 
-const TopNavigationBar = ({ currentUser, logout, history }) => {
+const TopNavigationBar = () => {
+  const currentUser = useSelector(state => state.currentUser);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const handleLogout = () => {
-    logout();
-    history.push("/");
+    dispatch(logout());
+    navigate("/");
   };
 
   return (
@@ -27,7 +31,6 @@ const TopNavigationBar = ({ currentUser, logout, history }) => {
               Lists
             </Dropdown.Item>
           </NavDropdown>
-
           <NavDropdown title="Material" id="material-nav-dropdown">
             <Dropdown.Item as={Link} to="/radicals">
               Radicals
@@ -42,11 +45,9 @@ const TopNavigationBar = ({ currentUser, logout, history }) => {
               Sentences
             </Dropdown.Item>
           </NavDropdown>
-
           <Nav.Link as={Link} to="/community">
             Community
           </Nav.Link>
-
           {currentUser.isAuthenticated && (
             <>
               <Nav.Link as={Link} to="/dashboard">
@@ -67,7 +68,6 @@ const TopNavigationBar = ({ currentUser, logout, history }) => {
             </>
           )}
         </Nav>
-
         {currentUser.isAuthenticated ? (
           <Nav>
             <Nav.Link as={Link} to="/dashboard">
@@ -96,10 +96,4 @@ const TopNavigationBar = ({ currentUser, logout, history }) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  currentUser: state.currentUser,
-});
-
-export default withRouter(
-  connect(mapStateToProps, { logout })(TopNavigationBar)
-);
+export default TopNavigationBar;
