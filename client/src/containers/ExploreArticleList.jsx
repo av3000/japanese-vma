@@ -1,56 +1,47 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
-import { fetchArticles } from "../store/actions/articles";
+import { fetchArticles } from "@store/slices/articlesSlice";
 import ExploreArticleItem from "../components/article/ExploreArticleItem";
 import Spinner from "../assets/images/spinner.gif";
 
-class ExploreArticleList extends Component {
-  componentDidMount() {
-    if (!this.props.articles.length) {
-      this.props.fetchArticles();
+const ExploreArticleList = () => {
+  const dispatch = useDispatch();
+  const articles = useSelector(state => state.articles.all);
+  const isLoading = useSelector(state => state.articles.loading);
+  const paginationInfo = useSelector(state => state.articles.paginationInfo);
+
+  useEffect(() => {
+    if (!articles.length) {
+      dispatch(fetchArticles());
     }
-  }
+  }, [dispatch, articles.length]);
 
-  render() {
-    const { articles, isLoading, paginationInfo } = this.props;
-
-    const featuredArticles = articles
-      .slice(0, 3)
-      .map((a) => <ExploreArticleItem key={a.id} {...a} />);
-
-    if (isLoading) {
-      return (
-        <div className="d-flex justify-content-center w-100">
-          <img src={Spinner} alt="spinner loading" />
-        </div>
-      );
-    }
-
+  if (isLoading) {
     return (
-      <React.Fragment>
-        <div className="d-flex justify-content-between align-items-center w-100 my-3">
-          <h3>Latest Articles ({paginationInfo.total || 0})</h3>
-          <div>
-            <Link to="/articles" className="homepage-section-title">
-              Read All Articles
-            </Link>
-          </div>
-        </div>
-        <div className="row">{featuredArticles}</div>
-      </React.Fragment>
+      <div className="d-flex justify-content-center w-100">
+        <img src={Spinner} alt="spinner loading" />
+      </div>
     );
   }
-}
 
-const mapStateToProps = (state) => ({
-  articles: state.articles.articles,
-  isLoading: state.articles.isLoading,
-  paginationInfo: state.articles.paginationInfo,
-});
+  const featuredArticles = articles
+    .slice(0, 3)
+    .map((a) => <ExploreArticleItem key={a.id} {...a} />);
 
-const mapDispatchToProps = {
-  fetchArticles,
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center w-100 my-3">
+        <h3>Latest Articles ({paginationInfo.total || 0})</h3>
+        <div>
+          <Link to="/articles" className="homepage-section-title">
+            Read All Articles
+          </Link>
+        </div>
+      </div>
+      <div className="row">{featuredArticles}</div>
+    </>
+  );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ExploreArticleList);
+export default ExploreArticleList;
