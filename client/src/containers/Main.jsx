@@ -1,9 +1,9 @@
 import React from "react";
-import { Switch, Route, withRouter } from "react-router-dom";
-import { connect } from "react-redux";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { authUser } from "../store/actions/auth";
 import { removeError } from "../store/actions/errors";
-import PrivateRoute from "../helpers/PrivateRoute";
+import ProtectedRoute from "../helpers/PrivateRoute";
 import AuthForm from "../components/authform/AuthForm";
 import PageNotFound from "../components/errors/PageNotFound";
 // Landing
@@ -38,197 +38,126 @@ import PostEdit from "../components/post/PostEdit";
 // Dashboard
 import DashboardTimeline from "../components/dashboard/DashboardTimeline";
 
-const Main = (props) => {
-  const { authUser, errors, removeError, currentUser } = props;
+const Main = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const currentUser = useSelector(state => state.currentUser);
+  const errors = useSelector(state => state.errors);
+
+  const handleAuthUser = (userData) => {
+    return dispatch(authUser(userData));
+  };
+
+  const handleRemoveError = () => {
+    dispatch(removeError());
+  };
+
   return (
     <div>
-      <Switch>
-        <Route exact path="/" render={(props) => <Homepage {...props} />} />
-        <Route
-          exact
-          path="/register"
-          render={(props) => {
-            return (
-              <AuthForm
-                onAuth={authUser}
-                removeError={removeError}
-                signUp
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        
+        <Route 
+          path="/register" 
+          element={
+            <AuthForm
+              onAuth={handleAuthUser}
+              removeError={handleRemoveError}
+              signUp
+              errors={errors}
+              buttonText="Sign up"
+              heading="Join community today."
+              navigate={navigate}
+              location={location}
+            />
+          } 
+        />
+        
+        <Route 
+          path="/login" 
+          element={
+            <AuthForm
+              onAuth={handleAuthUser}
+              removeError={handleRemoveError}
+              errors={errors}
+              buttonText="Log in"
+              heading="Welcome back."
+              navigate={navigate}
+              location={location}
+            />
+          } 
+        />
+
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/newarticle" element={<ArticleForm />} />
+          <Route path="/article/edit/:article_id" element={<ArticleEdit />} />
+          <Route 
+            path="/newlist" 
+            element={
+              <ListForm 
+                removeError={handleRemoveError}
                 errors={errors}
-                buttonText="Sign up"
-                heading="Join community today."
-                {...props}
               />
-            );
-          }}
-        />
-        <Route
-          exact
-          path="/login"
-          render={(props) => {
-            return (
-              <AuthForm
-                onAuth={authUser}
-                removeError={removeError}
+            } 
+          />
+          <Route path="/list/edit/:list_id" element={<ListEdit />} />
+          <Route path="/community/edit/:post_id" element={<PostEdit />} />
+          <Route 
+            path="/newpost" 
+            element={
+              <PostForm
+                removeError={handleRemoveError}
                 errors={errors}
-                buttonText="Log in"
-                heading="Welcome back."
-                {...props}
               />
-            );
-          }}
+            } 
+          />
+          <Route path="/dashboard" element={<DashboardTimeline />} />
+        </Route>
+
+        {/* Public Routes */}
+        <Route path="/articles" element={<ArticleTimeline />} />
+        <Route path="/article/:article_id" element={<ArticleDetails />} />
+        <Route path="/lists" element={<ListTimeline />} />
+        <Route 
+          path="/list/:list_id" 
+          element={<ListDetails currentUser={currentUser} />} 
         />
-        {/* Articles */}
-        <PrivateRoute exact path="/newarticle" component={ArticleForm} />
-        <PrivateRoute
-          exact
-          path="/article/edit/:article_id"
-          component={ArticleEdit}
+        <Route 
+          path="/radicals" 
+          element={<RadicalTimeline currentUser={currentUser} />} 
         />
-        <Route
-          exact
-          path="/articles"
-          render={() => {
-            return <ArticleTimeline />;
-          }}
+        <Route 
+          path="/radical/:radical_id" 
+          element={<RadicalDetails currentUser={currentUser} />} 
         />
-        <Route
-          exact
-          path="/article/:article_id"
-          render={(props) => {
-            return <ArticleDetails {...props} />;
-          }}
+        <Route path="/kanjis" element={<KanjiTimeline />} />
+        <Route 
+          path="/kanji/:kanji_id" 
+          element={<KanjiDetails currentUser={currentUser} />} 
         />
-        {/* Custom Lists */}
-        <PrivateRoute
-          exact
-          path="/newlist"
-          component={ListForm}
-          componentProps={{
-            removeError: removeError,
-            errors: errors,
-          }}
+        <Route path="/words" element={<WordTimeline />} />
+        <Route 
+          path="/word/:word_id" 
+          element={<WordDetails currentUser={currentUser} />} 
         />
-        <PrivateRoute exact path="/list/edit/:list_id" component={ListEdit} />
-        <Route
-          exact
-          path="/lists"
-          render={() => {
-            return <ListTimeline />;
-          }}
+        <Route path="/sentences" element={<SentenceTimeline />} />
+        <Route 
+          path="/sentence/:sentence_id" 
+          element={<SentenceDetails currentUser={currentUser} />} 
         />
-        <Route
-          exact
-          path="/list/:list_id"
-          render={(props) => {
-            return <ListDetails currentUser={currentUser} {...props} />;
-          }}
+        <Route path="/community" element={<PostTimeline />} />
+        <Route 
+          path="/community/:post_id" 
+          element={<PostDetails currentUser={currentUser} />} 
         />
-        {/* Radicals */}
-        <Route
-          exact
-          path="/radicals"
-          render={() => {
-            return <RadicalTimeline currentUser={currentUser} />;
-          }}
-        />
-        <Route
-          exact
-          path="/radical/:radical_id"
-          render={(props) => {
-            return <RadicalDetails currentUser={currentUser} {...props} />;
-          }}
-        />
-        {/* Kanjis */}
-        <Route
-          exact
-          path="/kanjis"
-          render={() => {
-            return <KanjiTimeline />;
-          }}
-        />
-        <Route
-          exact
-          path="/kanji/:kanji_id"
-          render={(props) => {
-            return <KanjiDetails currentUser={currentUser} {...props} />;
-          }}
-        />
-        {/* Words */}
-        <Route
-          exact
-          path="/words"
-          render={() => {
-            return <WordTimeline />;
-          }}
-        />
-        <Route
-          exact
-          path="/word/:word_id"
-          render={(props) => {
-            return <WordDetails currentUser={currentUser} {...props} />;
-          }}
-        />
-        {/* Sentences */}
-        <Route
-          exact
-          path="/sentences"
-          render={() => {
-            return <SentenceTimeline />;
-          }}
-        />
-        <Route
-          exact
-          path="/sentence/:sentence_id"
-          render={(props) => {
-            return <SentenceDetails currentUser={currentUser} {...props} />;
-          }}
-        />
-        {/* Posts Community */}
-        <Route
-          exact
-          path="/community"
-          render={() => {
-            return <PostTimeline />;
-          }}
-        />
-        <Route
-          exact
-          path="/community/:post_id"
-          render={(props) => {
-            return <PostDetails currentUser={currentUser} {...props} />;
-          }}
-        />
-        <PrivateRoute
-          exact
-          path="/community/edit/:post_id"
-          component={PostEdit}
-        />
-        <PrivateRoute
-          exact
-          path="/newpost"
-          component={PostForm}
-          componentProps={{
-            removeError: removeError,
-            errors: errors,
-          }}
-        />
-        {/* Dashboard */}
-        <PrivateRoute exact path="/dashboard" component={DashboardTimeline} />
 
         {/* Not found component */}
-        <Route component={PageNotFound} />
-      </Switch>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
     </div>
   );
 };
 
-function mapStateToProps(state) {
-  return {
-    currentUser: state.currentUser,
-    errors: state.errors,
-  };
-}
-
-export default withRouter(
-  connect(mapStateToProps, { authUser, removeError })(Main)
-);
+export default Main;

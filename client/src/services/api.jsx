@@ -9,35 +9,54 @@ export function setTokenHeader(token) {
 }
 
 /**
- *
+ * Make an API call
  * @param {string} method the HTTP verb you want to use
  * @param {string} path the route path / endpoint
  * @param {object} data (optional) data in JSON form for POST requests
  */
-
 export function apiCall(method, path, data) {
-  const apiUrl = !path.includes("localhost:8080")
-    ? process.env.REACT_APP_API_URL + path
-    : path;
+  // With Vite proxy, we can just use the path directly
+  // The proxy will forward all /api requests to your backend
+  const axiosMethod = method.toLowerCase();
+  
+  console.log(`Making ${axiosMethod} request to ${path}`, data);
 
+  // For GET requests, pass data as params
+  const config = axiosMethod === 'get' && data ? { params: data } : {};
+  
   return new Promise((resolve, reject) => {
-    return axios[method](apiUrl, data)
-      .then((res) => {
-        return resolve(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-        if (err.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          return reject(err.response.data.error);
-        } else if (err.request) {
-          // The request was made but no response was received
-          return reject("No response was received");
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          return reject(err.message);
-        }
-      });
+    // For GET and DELETE requests
+    if (axiosMethod === 'get' || axiosMethod === 'delete') {
+      return axios[axiosMethod](path, config)
+        .then(res => {
+          console.log(`Response from ${path}:`, res.data);
+          resolve(res.data);
+        })
+        .catch(err => handleError(err, reject));
+    } 
+    // For POST, PUT, PATCH requests
+    else {
+      return axios[axiosMethod](path, data, config)
+        .then(res => {
+          console.log(`Response from ${path}:`, res.data);
+          resolve(res.data);
+        })
+        .catch(err => handleError(err, reject));
+    }
   });
+}
+
+function handleError(err, reject) {
+  console.error("API Call Error:", err);
+  
+  if (err.response) {
+    const errorMsg = err.response.data.error || 
+                    (typeof err.response.data === 'string' ? err.response.data : 
+                    JSON.stringify(err.response.data));
+    return reject(errorMsg);
+  } else if (err.request) {
+    return reject("No response received from server");
+  } else {
+    return reject(err.message || "Error making request");
+  }
 }
