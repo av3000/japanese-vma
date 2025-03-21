@@ -47,9 +47,7 @@ const Comment = ({ comment, deleteComment, likeComment, currentUser }) => (
           ></i>
         </Button>
         <p className="ml-auto mb-0">
-          {/* <Moment className="text-muted" format="Do MMM YYYY">
-            {moment(comment.created_at).format()}
-          </Moment> */}
+          {comment.created_at}
         </p>
       </div>
       <hr />

@@ -197,9 +197,6 @@ const PostDetails = () => {
             <div className="row text-muted w-100 mb-3 justify-content-between">
               <div className="col">
                 <p className="text-muted">
-                  {/* <Moment className="text-muted" format="Do MMM YYYY">
-                    moment(post.created_at).format()
-                  </Moment> */}
                   {post.created_at}
                   <br />
                   {post.viewsTotal} views &nbsp;

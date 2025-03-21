@@ -43,10 +43,7 @@ const ExploreListItem = ({
         <strong>{listType}</strong>
         <Hashtags hashtags={hashtags} />
         <p className="text-muted">
-          {/* <Moment className="text-muted" format="Do MMM YYYY"> */}
-            {/* moment().format() */}
             {created_at}
-          {/* </Moment> */}
         </p>
         <p className="text-muted">
           {viewsTotal} views &nbsp;

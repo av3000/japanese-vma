@@ -27,9 +27,6 @@ const PostItem = ({
       </h5>
       Date:{" "}
       {date}
-      {/* <Moment className="text-muted" format="Do MMM YYYY">
-        moment(date).format()
-      </Moment> */}
       <br />
       Tags: <Hashtags hashtags={hashtags} />
     </div>

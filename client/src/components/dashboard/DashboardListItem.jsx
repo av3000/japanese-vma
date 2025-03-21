@@ -38,8 +38,6 @@ const DashboardListItem = ({
         <ListGroup.Item className="p-0">
           <small>
               {created_at}
-            {/* <Moment format="Do MMM YYYY">{moment(
-               ).format()}</Moment> */}
           </small>
         </ListGroup.Item>
       </ListGroup>

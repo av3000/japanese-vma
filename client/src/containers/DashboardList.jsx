@@ -160,16 +160,9 @@ const DashboardList = () => {
                   </div>
                   <div className="col-lg-4 col-12-sm pt-3">
                     <small className="text-muted">
-                      {/* <Moment className="text-muted" format="Do MMM YYYY">
-                        {moment(article.created_at).format()}
-                      </Moment> */}
                       {article.created_at}
                       <br />
-                      <Moment
-                        className="text-muted"
-                        date={article.created_at}
-                        durationFromNow
-                      />
+                      duration from now(?) {article.created_at}
                     </small>
                   </div>
                   <div className="col-lg-2">

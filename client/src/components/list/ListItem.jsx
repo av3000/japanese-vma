@@ -43,9 +43,6 @@ const ListItem = ({
         <Hashtags hashtags={hashtags} />
         <p className="text-muted">
           {created_at}
-          {/* <Moment className="text-muted" format="Do MMM YYYY">
-            {moment(created_at).format()}
-          </Moment> */}
         </p>
         <p className="text-muted">
           {viewsTotal} views &nbsp;

@@ -258,9 +258,6 @@ const ListDetails = () => {
             <h1 className="mt-4">{list.title}</h1>
             <div className="row text-muted w-100 mb-3 justify-content-between">
               <div className="text-muted">
-                {/* <Moment className="text-muted" format="Do MMM YYYY">
-                  {moment(list.created_at).format()}
-                </Moment> */}
                 {list.created_at}
                 <br />
                 <span>{list.viewsTotal} views</span>
