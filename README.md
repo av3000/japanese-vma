@@ -277,10 +277,10 @@ npm start
 ### To Do List
 
 - [x] Make demo gifs to showcase main features.
-- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick API usage
+- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick and documented API usage
 - [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
 - [ ] Strengthen authorization with more persistant implementation..
-- [ ] Implement react-query for query-based approach of managing server-data facing for frontend and fixing issues like cache, refetch, cancel requests after unmount.
+- [ ] Implement react-query for query-based approach of managing server-data facing for frontend cache, refetch, cancel requests after unmount and have control.
 - [ ] Create nhk easy news scrapper to get each days news.
 - [ ] re-vamp styling, especially for small UI elements like links, buttons with icons, screen spacings.
 - [ ] Design a way to offload scanning algorithm from client to server.
@@ -290,6 +290,8 @@ npm start
 - [ ] Write E2E tests for frontend.
 - [?] Client side PDF customization. Generate on Backend, customize on frontend.
 - [?] Cache or Store pre-generated materials like PDFs.
+- [ ] Translations manager.
+- [ ] API types schema generation with Orvel.
 
 <!-- Tasks -->
 
