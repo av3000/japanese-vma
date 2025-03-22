@@ -1,0 +1,85 @@
+@use "@/styles/01-tools/media";
+@use "@/styles/00-settings/spacing";
+@use "@/styles/00-settings/sizes";
+@use "@/styles/00-settings/typography";
+
+/* =================================
+   #NAVBAR STYLES
+   ================================= */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--size-sm) var(--size-md);
+  background-color: var(--alternative-text-color);
+  box-shadow: 0 var(--border-size-sm) 0 0 #666;
+
+  @include media.mq("md") {
+    padding: var(--size-md) var(--size-lg);
+  }
+
+  &-brand {
+    font-size: var(--font-size-heading-4);
+    font-weight: var(--font-weight-semibold);
+    color: var(--main-brand-color);
+    text-decoration: none;
+  }
+
+  &-links {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+
+    .nav-item {
+      font-size: var(--font-size-body-md);
+      font-weight: var(--font-weight-regular);
+      color: var(--main-text-color);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--link-hover-color);
+        text-decoration: none;
+      }
+    }
+  }
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  padding: 0;
+  box-shadow: 0 var(--border-size-sm) 0 0 #666;
+}
+
+/* Authenticated User Section */
+.navbar-right-auth {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Spacing utilities for buttons */
+.navbar .link-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-body-md);
+  text-decoration: none;
+  color: var(--main-text-color);
+
+  &:hover {
+    color: var(--link-hover-color);
+  }
+}
+
+/* Toggler Button */
+#my-toggler-btn {
+  background-color: var(--alternative-text-color);
+  border-color: transparent;
+  color: var(--main-text-color);
+
+  &:hover,
+  &:focus {
+    color: var(--link-hover-color);
+  }
+}
