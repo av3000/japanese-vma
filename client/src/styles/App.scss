@@ -10,11 +10,7 @@
 /* Scrollbar native */
 
 ::-webkit-scrollbar {
-  width: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--main-brand-color);
+  width: 50px;
 }
 
 /* Main layout */

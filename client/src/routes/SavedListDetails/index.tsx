@@ -11,7 +11,7 @@ import Spinner from "@/assets/images/spinner.gif";
 import { hideLoader, showLoader } from "@/store/actions/application";
 import CommentList from "@/components/comment/CommentList";
 import CommentForm from "@/components/comment/CommentForm";
-import ListItems from "@/components/feaures/SavedList/SavedListItems";
+import ListItems from "@/components/features/SavedList/SavedListItems";
 import { BASE_URL, HTTP_METHOD, ObjectTemplates } from "@/shared/constants";
 import Hashtags from "@/components/ui/hashtags";
 

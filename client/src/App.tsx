@@ -5,12 +5,11 @@ import { BrowserRouter as Router, useNavigate } from "react-router-dom";
 import { configureAppStore } from "@/store/store";
 import { apiCall, setTokenHeader } from "@/services/api";
 import { HTTP_METHOD } from "@/shared/constants";
-import TopNavigationBar from "./containers/navbar/TopNavigationBar";
-import Footer from "@/components/footer/Footer";
-import ScrollToTop from "/@omponents/util/scrolltotop/ScrollToTop";
+import Footer from "@/components/features/Footer";
+import Header from "@/components/features/Header";
+import ScrollToTop from "@/helpers/ScrollToTop";
 import PageLoader from "@/components/PageLoader";
 import AppRoutes from "@/routes/routes";
-import "./App.scss";
 
 // Import actions from slices
 import { setCurrentUser } from "@store/slices/authSlice";
@@ -50,7 +49,7 @@ const AppContent = () => {
   return (
     <div className="app-wrapper">
       <ScrollToTop />
-      <TopNavigationBar />
+      <Header />
       <main className="main-content">
         <AppRoutes />
       </main>
