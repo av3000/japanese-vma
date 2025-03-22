@@ -1,15 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import checker from "vite-plugin-checker";
 import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
   return {
-    plugins: [react()],
+    plugins: [
+      checker({
+        typescript: true,
+      }),
+      react(),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        "@routes": path.resolve(__dirname, "./src/routes"),
         "@components": path.resolve(__dirname, "./src/components"),
         "@containers": path.resolve(__dirname, "./src/containers"),
         "@store": path.resolve(__dirname, "./src/store"),
@@ -19,6 +26,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      cssCodeSplit: false,
       sourcemap: !isProduction,
       rollupOptions: {
         output: {
@@ -37,6 +45,13 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+      },
+    },
+    css: {
+      modules: {
+        scopeBehaviour: "local",
+        localsConvention: "camelCase",
+        generateScopedName: "[name]__[local]___[hash:base64:5]",
       },
     },
     define: {

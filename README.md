@@ -293,8 +293,8 @@ npm start
 
 <!-- Tasks -->
 
-- [ ] Migrate from CRA to Vite
-- [ ] Add Typescript and start using .tsx
+- [x] Migrate from CRA to Vite
+- [x] Add Typescript and start using .tsx
 - [ ] Create storybook for components
 
 - UI Components:

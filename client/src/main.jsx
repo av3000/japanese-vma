@@ -4,7 +4,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import "./assets/font-awesome/css/all.min.css";
 import "./styles/index.scss";
-import App from "./containers/app/App";
+import App from "./App";
 
 const root = createRoot(document.getElementById("root"));
 root.render(<App />);
