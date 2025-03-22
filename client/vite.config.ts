@@ -16,13 +16,14 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        "@routes": path.resolve(__dirname, "./src/routes"),
-        "@components": path.resolve(__dirname, "./src/components"),
-        "@containers": path.resolve(__dirname, "./src/containers"),
-        "@store": path.resolve(__dirname, "./src/store"),
-        "@services": path.resolve(__dirname, "./src/services"),
-        "@shared": path.resolve(__dirname, "./src/shared"),
-        "@assets": path.resolve(__dirname, "./src/assets"),
+        "@/routes": path.resolve(__dirname, "./src/routes"),
+        "@/components": path.resolve(__dirname, "./src/components"),
+        "@/containers": path.resolve(__dirname, "./src/containers"),
+        "@/store": path.resolve(__dirname, "./src/store"),
+        "@/services": path.resolve(__dirname, "./src/services"),
+        "@/shared": path.resolve(__dirname, "./src/shared"),
+        "@/assets": path.resolve(__dirname, "./src/assets"),
+        "@/helpers": path.resolve(__dirname, "./src/helpers"),
       },
     },
     build: {
