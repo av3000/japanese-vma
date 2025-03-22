@@ -195,6 +195,7 @@ const DashboardList: React.FC = () => {
                 currentUser={currentUser}
               />
             ))}
+            {articles.length === 0 && <div>No articles yet.</div>}
           </div>
         </>
       )}

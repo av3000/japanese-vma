@@ -13,7 +13,8 @@ const Header: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/");
+    navigate("/", { replace: true });
+    window.location.reload();
   };
 
   return (

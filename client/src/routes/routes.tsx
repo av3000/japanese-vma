@@ -52,7 +52,6 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
 );
 
-// Main routes component that combines all routes
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
