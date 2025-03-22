@@ -1,110 +1,293 @@
-// Button.module.scss
+@use "@/styles/01-tools/media";
 
 .button {
-  border: none;
-  border-radius: var(--border-radius-md);
-  font-weight: 600;
-  color: var(--color-text-primary);
+  // Typography
+  --button-font-size: var(--font-size-body-md);
+
+  // Layout
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: var(--button-height-md);
+  padding: 0 var(--button-padding-x);
+  position: relative;
+
+  // Visual styling
   cursor: pointer;
-  transition: background-color 0.3s;
+  background-color: var(--color-primary);
+  border: var(--border-size-sm) solid transparent;
+  border-radius: var(--border-radius-md);
+  color: var(--color-neutral-0);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: var(--line-height-sm, 1.5);
 
-  &--success {
-    background-color: var(--color-success);
+  // Transitions
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
+  // Interactive states
+  @include media.mqHover {
     &:hover {
-      background-color: var(--color-success-hover);
-    }
-
-    &:disabled {
-      background-color: var(--color-success-disabled);
-      cursor: not-allowed;
+      background: var(--color-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
   }
 
-  &--warning {
-    background-color: var(--color-warning);
+  &:active {
+    background: var(--color-primary-hover);
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
+  &:focus,
+  &:focus-visible {
+    outline-width: var(--border-size-md);
+    outline-color: var(--color-primary-100);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+    background-color: var(--color-primary-disabled);
+    opacity: 0.65;
+  }
+}
+
+.content {
+  display: contents;
+
+  .spinner ~ & {
+    visibility: hidden;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-right: var(--size-xs);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modifiers */
+.fullWidth {
+  width: 100%;
+  justify-content: center;
+}
+
+.hasOnlyIcon {
+  flex-shrink: 0;
+  justify-content: center;
+  width: var(--button-height-md);
+  padding: 0;
+
+  &.sizeSm {
+    width: var(--button-height-sm);
+    padding: 0;
+  }
+
+  &.sizeLg {
+    width: calc(var(--button-height-md) * 1.25);
+    padding: 0;
+  }
+}
+
+.hasNoPaddingX {
+  &,
+  &.sizeSm {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+// Sizes
+.sizeSm {
+  min-height: var(--button-height-sm);
+  padding: 0 var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+}
+
+.sizeLg {
+  min-height: calc(var(--button-height-md) * 1.25);
+  padding: 0 calc(var(--button-padding-x) * 1.25);
+  border-radius: var(--border-radius-md);
+  font-size: 1.125rem;
+}
+
+// Variants
+.variantPrimary {
+  background-color: var(--color-primary);
+  color: var(--color-neutral-0);
+
+  @include media.mqHover {
     &:hover {
-      background-color: var(--color-warning-hover);
-    }
-
-    &:disabled {
-      background-color: var(--color-warning-disabled);
-      cursor: not-allowed;
+      background: var(--color-primary-hover);
     }
   }
 
-  &--error {
-    background-color: var(--color-error);
+  &:active {
+    background: var(--color-primary-hover);
+  }
 
+  &:disabled,
+  &.disabled {
+    background-color: var(--color-primary-disabled);
+  }
+}
+
+.variantSecondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-neutral-0);
+
+  @include media.mqHover {
     &:hover {
-      background-color: var(--color-error-hover);
-    }
-
-    &:disabled {
-      background-color: var(--color-error-disabled);
-      cursor: not-allowed;
+      background: var(--color-secondary-hover);
+      border-color: var(--color-secondary-hover);
     }
   }
 
-  &--primary {
-    background-color: var(--color-primary);
+  &:active {
+    background: var(--color-secondary-hover);
+    border-color: var(--color-secondary);
+  }
 
+  &:focus,
+  &:focus-visible {
+    outline-color: var(--color-secondary-200);
+  }
+
+  &:disabled,
+  &.disabled {
+    background-color: var(--color-secondary-disabled);
+  }
+}
+
+.variantSuccess {
+  background-color: var(--color-success);
+  color: var(--color-neutral-0);
+
+  @include media.mqHover {
     &:hover {
-      background-color: var(--color-primary-hover);
-    }
-
-    &:disabled {
-      background-color: var(--color-primary-disabled);
-      cursor: not-allowed;
+      background: var(--color-success-hover);
     }
   }
 
-  &--secondary {
-    background-color: var(--color-secondary);
+  &:active {
+    background: var(--color-success-hover);
+  }
 
+  &:disabled,
+  &.disabled {
+    background-color: var(--color-success-disabled);
+  }
+}
+
+.variantGhost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-neutral-700);
+
+  @include media.mqHover {
     &:hover {
-      background-color: var(--color-secondary-hover);
-    }
-
-    &:disabled {
-      background-color: var(--color-secondary-disabled);
-      cursor: not-allowed;
+      background: var(--color-neutral-200-alpha);
+      color: var(--color-neutral-900);
     }
   }
 
-  &--primary-outline {
+  &:active {
+    background: var(--color-neutral-200);
+    color: var(--color-neutral-900);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline-color: var(--color-neutral-400);
+  }
+}
+
+.variantOutline {
+  background-color: transparent;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+
+  @include media.mqHover {
+    &:hover {
+      background-color: var(--color-primary);
+      color: var(--color-neutral-0);
+    }
+  }
+
+  &:active {
+    background-color: var(--color-primary-hover);
+    color: var(--color-neutral-0);
+  }
+
+  &:disabled,
+  &.disabled {
+    border-color: var(--color-primary-disabled);
+    color: var(--color-primary-disabled);
     background-color: transparent;
-    border: 2px solid var(--color-primary);
-    color: var(--color-primary);
+  }
+}
 
+.variantLinkButton {
+  padding-left: 0;
+  padding-right: 0;
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-primary);
+
+  &::after {
+    content: "";
+    width: 100%;
+    height: var(--border-size-sm);
+    position: absolute;
+    top: calc(50% + calc(var(--button-font-size) - 6px));
+    left: 0;
+    background-color: currentColor;
+  }
+
+  @include media.mqHover {
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: transparent;
+      border-color: transparent;
+      color: var(--color-primary-hover);
+      text-decoration: none;
     }
   }
 
-  &--secondary-outline {
+  &:active {
     background-color: transparent;
-    border: 2px solid var(--color-secondary);
-    color: var(--color-secondary);
+    border-color: transparent;
+    color: var(--color-primary-hover);
+  }
 
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+  &:focus,
+  &:focus-visible {
+    outline-color: var(--color-primary-100);
+  }
+
+  &:disabled,
+  &.disabled {
+    color: var(--color-primary-disabled);
+
+    &::after {
+      opacity: 0.5;
     }
-  }
-
-  &--sm {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-
-  &--md {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-
-  &--lg {
-    padding: 12px 20px;
-    font-size: 16px;
   }
 }

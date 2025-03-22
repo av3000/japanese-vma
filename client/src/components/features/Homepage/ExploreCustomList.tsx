@@ -1,10 +1,10 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { apiCall } from "@services/api";
+import { apiCall } from "@/services/api";
 import ExploreListItem from "./ExploreListItem";
 import Spinner from "@/assets/images/spinner.gif";
-import { HTTP_METHOD } from "@shared/constants";
+import { HTTP_METHOD } from "@/shared/constants";
 
 const ExploreCustomList: React.FC = () => {
   const [lists, setLists] = useState([]);
