@@ -1,0 +1,52 @@
+@use "@/styles/01-tools/media";
+
+.icon {
+  display: block;
+  fill: currentColor;
+
+  & > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform: rotate(var(--rotate, 0deg));
+  }
+}
+
+/* Modifiers */
+// Sizes
+.sizeSm {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.sizeMd {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+.sizeLg {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+}
+
+// Mobile sizes
+.mobileSizeSm {
+  @include media.mq("sm", "max") {
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
+  }
+}
+
+.mobileSizeMd {
+  @include media.mq("sm", "max") {
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
+  }
+}
+
+.mobileSizeLg {
+  @include media.mq("sm", "max") {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+  }
+}
