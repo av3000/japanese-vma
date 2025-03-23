@@ -1,0 +1,12 @@
+// Managed locally
+:root {
+  // Duration
+  --duration-sm: 150ms;
+  --duration-md: 250ms;
+  --duration-lg: 400ms;
+
+  // Easing
+  --ease-base: cubic-bezier(0.73, 0.09, 0.21, 0.96);
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-elastic-subtle: cubic-bezier(0.53, -0.38, 0.285, 1.33);
+}

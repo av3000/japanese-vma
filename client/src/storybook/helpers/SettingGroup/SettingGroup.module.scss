@@ -1,0 +1,49 @@
+.wrapper {
+	&:not(:first-child) {
+		margin-top: var(--spacing-lg);
+	}
+}
+
+.itemRow {
+	height: var(--button-height-sm); // works as min-height on table row
+
+	td {
+		padding-bottom: var(--spacing-2xs);
+		padding-right: var(--spacing-md);
+
+		&:last-child {
+			padding-right: 0;
+		}
+	}
+}
+
+.extraCell {
+	--size: 50px;
+
+	width: var(--size);
+	height: var(--size);
+
+	/* Modifiers */
+	// Variants
+	.variantColor &,
+	.variantRadius & {
+		border: var(--border-size-sm) solid var(--color-border-default);
+		border-radius: var(--radius);
+		background-color: var(--bg-color);
+	}
+
+	.variantSpacing & {
+		background: var(--color-background-primary-default);
+	}
+
+	.variantTypography & {
+		width: auto;
+		height: auto;
+
+		font-size: var(--font-size);
+	}
+}
+
+.errorText {
+	color: var(--color-text-system-danger);
+}

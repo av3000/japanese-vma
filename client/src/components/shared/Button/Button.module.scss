@@ -28,7 +28,7 @@
 
   // Interactive states
   @include media.mqHover {
-    &:hover {
+    &:hover(:not(.variantLinkButton)) {
       background: var(--color-primary-hover);
       transform: translateY(-1px);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

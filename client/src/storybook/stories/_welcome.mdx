@@ -1,0 +1,93 @@
+import { Meta, Unstyled } from "@storybook/blocks";
+import { Button } from "./Button";
+
+<Meta title="Welcome" />
+
+# Welcome to JPLearning Component Library
+
+This is the beginning of our React component library. We're starting small with just a few core components, but we're building with extensibility and consistency in mind.
+
+## Good reads
+
+<a href="https://storybook.js.org/tutorials/design-systems-for-developers/react/en/introduction/">
+  Introduction to design systems
+</a>
+
+<a href="https://storybook.js.org/showcase">
+  https://storybook.js.org/showcase
+</a>
+
+<a href="https://medium.com/@mujs.dev/building-a-design-system-with-storybook-react-typescript-scss-tailwind-part-1-buttons-71864ac8f230">
+  Build design system with React Part 1
+</a>
+<a href="https://medium.com/@mujs.dev/building-a-design-system-with-storybook-react-typescript-scss-tailwind-part-2-style-guide-f0089fa1162d">
+  Build design system with React Part 2
+</a>
+
+## Available Components
+
+Currently, our library includes:
+
+- **Button**: A versatile button component that can render as a regular button, an anchor tag, or a router link depending on the props provided.
+- **ButtonAnchor**: A button that renders as an anchor (`<a>`) element for external links.
+- **ButtonRouterLink**: A button that renders as a router link for internal navigation.
+
+## Getting Started
+
+To use these components in your project, simply import them:
+
+```jsx
+import { Button } from "./components";
+
+function MyComponent() {
+  return (
+    <Button
+      variant="primary"
+      size="medium"
+      onClick={() => console.log("Button clicked!")}
+    >
+      Click Me
+    </Button>
+  );
+}
+```
+
+## Component Variants
+
+Our Button component supports different variants:
+
+```jsx
+// Standard button
+<Button>Default Button</Button>
+
+// Link-style button
+<Button href="https://example.com">External Link</Button>
+
+// Router link button
+<Button to="/dashboard">Internal Navigation</Button>
+```
+
+## Using This Storybook
+
+Storybook helps us develop and showcase our components:
+
+- Use the sidebar to navigate between components
+- Each component has several examples showing different props and states
+- The Controls tab lets you modify props in real-time
+- The Actions tab shows event handlers in action
+- The Docs tab provides detailed API documentation
+
+## Future Development
+
+We're actively working on expanding this component library. Future components will include:
+
+- Form inputs and controls
+- Layout components
+- Feedback mechanisms (modals, toasts, etc.)
+- Data display components
+
+## Feedback and Contributions
+
+Although we don't have formal contribution guidelines yet, we welcome feedback and ideas. Feel free to reach out to the development team with any suggestions or issues you encounter while using these components.
+
+Enjoy exploring our component library!
