@@ -12,8 +12,8 @@ import PageLoader from "@/components/PageLoader";
 import AppRoutes from "@/routes/routes";
 
 // Import actions from slices
-import { setCurrentUser } from "@store/slices/authSlice";
-import { showLoader, hideLoader } from "@store/slices/applicationSlice";
+import { setCurrentUser } from "@/store/slices/authSlice";
+import { showLoader, hideLoader } from "@/store/slices/applicationSlice";
 
 const store = configureAppStore();
 

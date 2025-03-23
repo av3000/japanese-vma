@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { apiCall } from "@services/api";
+import { apiCall } from "@/services/api";
 import { addError } from "./errorsSlice";
-import { HTTP_METHOD } from "@shared/constants";
+import { HTTP_METHOD } from "@/shared/constants";
 
 // Async thunks
 export const fetchArticles = createAsyncThunk(

@@ -1,0 +1,97 @@
+import { Meta, Unstyled } from "@storybook/blocks";
+import { SettingGroup } from "@/storybook/helpers/SettingGroup";
+import "./sharedStyles.scss";
+
+<Meta title="Styleguide/Colors" />
+
+<Unstyled>
+  <h1>Colors</h1>
+  <div className="richTextWrapper">
+    <p>
+      Our color system is designed with flexibility and consistency in mind. The colors are organized into semantic categories and follow a tiered structure to support theming capabilities for different applications, brands, or modes.
+    </p>
+    
+    <p>
+      The color system follows a three-tier architecture:
+    </p>
+    
+    <ul>
+      <li>
+        <strong>Tier 1 - Color definitions:</strong> These represent the raw color values that serve as the foundation of our design language. They include our primary orange palette, secondary grays, neutral tones, and system colors.
+      </li>
+      <li>
+        <strong>Tier 2 - Color applications:</strong> These map the Tier 1 colors to semantic uses within the UI, such as backgrounds, borders, and text colors.
+      </li>
+      <li>
+        <strong>Tier 3 - Component-specific:</strong> These colors are tailored for specific components and inherit from Tier 2 tokens.
+      </li>
+    </ul>
+  </div>
+
+  <h2 className={"u-mt-xl"}>Tier 1 - Color definitions</h2>
+  
+  <h3 className={"u-mt-lg"}>Primary Colors (Orange)</h3>
+  <p>Our primary color palette features a warm orange that conveys energy, creativity, and approachability.</p>
+  <SettingGroup variables="color-primary" variant={"color"} />
+  
+  <h3 className={"u-mt-lg"}>Secondary Colors (Gray)</h3>
+  <p>Our secondary palette provides subtlety and balance to complement the primary colors.</p>
+  <SettingGroup variables="color-secondary" variant={"color"} />
+  
+  <h3 className={"u-mt-lg"}>Neutral Colors</h3>
+  <p>Neutral colors form the backbone of our UI, providing a range from white to deep charcoal for text, backgrounds, and interfaces.</p>
+  <SettingGroup variables="color-neutral" variant={"color"} />
+  
+  <h3 className={"u-mt-lg"}>System Colors</h3>
+  <p>System colors communicate feedback and status information to users.</p>
+  <SettingGroup variables="color-success" variant={"color"} />
+  <SettingGroup variables="color-warning" variant={"color"} />
+  <SettingGroup variables="color-error" variant={"color"} />
+  
+  <hr className={"u-mt-xl"} />
+  
+  <h2 className={"u-mt-xl"}>Tier 2 - Color applications</h2>
+  
+  <h3 className={"u-mt-lg"}>Text Colors</h3>
+  <p>Semantic colors used for various text elements throughout the interface.</p>
+  <SettingGroup variables="color-text" variant={"color"} />
+  
+  <h3 className={"u-mt-lg"}>Background Colors</h3>
+  <p>Colors used for different background contexts, from pages to cards and containers.</p>
+  <SettingGroup variables="page-background-color" variant={"color"} />
+  
+  <hr className={"u-mt-xl"} />
+  
+  <h2 className={"u-mt-xl"}>Usage Guidelines</h2>
+  
+  <h3 className={"u-mt-lg"}>Accessibility</h3>
+  <p>
+    When using our color system, ensure that text has sufficient contrast against its background according to WCAG 2.1 AA standards:
+  </p>
+  <ul>
+    <li>Normal text (under 18pt): minimum contrast ratio of 4.5:1</li>
+    <li>Large text (18pt and above): minimum contrast ratio of 3:1</li>
+  </ul>
+  
+  <h3 className={"u-mt-lg"}>State Management</h3>
+  <p>
+    For interactive elements, use the appropriate color variants:
+  </p>
+  <ul>
+    <li>Default state: Base color (e.g., $color-primary)</li>
+    <li>Hover state: Hover variant (e.g., $color-primary-hover)</li>
+    <li>Disabled state: Disabled variant (e.g., $color-primary-disabled)</li>
+  </ul>
+  
+  <h3 className={"u-mt-lg"}>CSS Variables</h3>
+  <p>
+    All colors are available as CSS custom properties (variables) for use in component styles:
+  </p>
+  <pre>
+    {`.my-component {
+  background-color: var(--color-primary);
+  color: var(--color-neutral-0);
+  border: 1px solid var(--color-primary-hover);
+}`}
+  </pre>
+</Unstyled>

@@ -2,6 +2,8 @@
 
 Browse lists of Japanese texts, including simplified articles and news. Upload your own content to generate PDFs featuring Japanese radicals, kanji, vocabulary, and sentences for learning. Create or explore lists with articles, radicals, kanji, and vocabulary items, track your progress, and chat with other learners.
 
+Component library on [Storybook](https://67e03024743f7597d5a20906-ioduyxshby.chromatic.com/?path=/docs/components-shared-button--docs)
+
 ![Application demo1](./docs/assets/images/jpl-short-1.gif)
 
 ![Application demo2](./docs/assets/images/jpl-short-2.gif)
@@ -297,7 +299,7 @@ npm start
 
 - [x] Migrate from CRA to Vite
 - [x] Add Typescript and start using .tsx
-- [ ] Create storybook for components
+- [x] Create storybook for components
 
 - UI Components:
   - Button

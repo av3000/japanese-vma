@@ -1,0 +1,63 @@
+@use "@/styles/01-tools/richtext-elements";
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  transition: var(--ease-base) var(--duration-sm) color;
+
+  &:focus-visible {
+    border-radius: var(--border-radius-xs);
+  }
+}
+
+/* Modifiers */
+.textLink {
+  min-height: var(--button-height-sm);
+  font-weight: var(--font-weight-semibold);
+
+  &.link:not(span) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.richTextLink {
+  @include richtext-elements.richtext-link;
+}
+
+.hasMinHeight {
+  // It's good UX to increase click area, where there is space for it
+  min-height: var(--button-height-md);
+}
+
+// Colors
+.colorDefault {
+  color: var(--color-text-neutral-default);
+
+  &.link:not(span):hover {
+    color: var(--color-text-neutral-hover);
+  }
+}
+
+// Sizes
+.sizeSm {
+  font-size: var(--font-size-body-sm);
+}
+
+.sizeMd {
+  font-size: var(--font-size-body-md);
+}
+
+.sizeLg {
+  font-size: var(--font-size-body-lg);
+}
+
+// Weights
+.weightRegular {
+  font-weight: var(--font-weight-regular);
+}
+
+.weightBold {
+  font-weight: var(--font-weight-semibold);
+}

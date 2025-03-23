@@ -1,0 +1,22 @@
+html:not(.is-component) .sbdocs-wrapper {
+	// Override styles from SB
+	background: transparent !important;
+}
+
+// Let component story previews in Docs inherit bg-color from site
+.is-component .docs-story {
+	background-color: var(--page-background-color);
+}
+
+ul:not([class]) {
+	padding-inline-start: calc(1em + var(--spacing-2xs));
+
+	li {
+		margin-top: var(--spacing-2xs);
+		list-style-type: disc;
+	}
+}
+
+.richTextWrapper {
+	font-size: var(--font-size-body-md);
+}

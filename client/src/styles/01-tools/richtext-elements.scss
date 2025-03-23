@@ -1,0 +1,38 @@
+// Richtext element mixins
+// Style richtext elements the same way in cms-context vs on the site
+
+// Richtext link
+// Use this to add richtext link styles to elements
+// (e.g. Link and cms links)
+@mixin richtext-link() {
+  color: var(--color-text-primary-default);
+  text-decoration: underline;
+  transition: color var(--ease-base) var(--duration-sm);
+
+  &:hover {
+    color: var(--color-text-primary-hover);
+  }
+
+  &:focus {
+    color: var(--color-text-primary-focus);
+  }
+
+  &:active {
+    color: var(--color-text-primary-active);
+  }
+}
+
+// Richtext list
+// Use this to add richtext list styles to elements
+// (e.g. Link and cms lists)
+@mixin richtext-list($withDisk: false) {
+  padding-inline-start: calc(1em + var(--spacing-2xs));
+
+  @if $withDisk {
+    list-style-type: disc;
+  }
+
+  li {
+    margin-top: var(--spacing-2xs);
+  }
+}

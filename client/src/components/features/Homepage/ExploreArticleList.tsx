@@ -3,10 +3,10 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
-import { fetchArticles } from "@store/slices/articlesSlice";
+import { fetchArticles } from "@/store/slices/articlesSlice";
 import ExploreArticleItem from "./ExploreArticleItem";
 import Spinner from "@/assets/images/spinner.gif";
-import Button from "@/components/shared/Button";
+import { Button } from "@/components/shared/Button";
 
 const ExploreArticleList: React.FC = () => {
   const dispatch = useDispatch();
