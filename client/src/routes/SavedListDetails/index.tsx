@@ -1,8 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Button, ButtonGroup, Modal } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
+
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
 
 import { apiCall } from "@/services/api";
 import DefaultArticleImg from "@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";
@@ -269,33 +272,28 @@ const SavedListDetails: React.FC = () => {
                 <br /> <strong>{list.listType} List</strong>
               </div>
               <div>
-                <ButtonGroup
-                  aria-label="Admin actions"
-                  className="brand-icons mb-2"
-                >
-                  {currentUser.user.id === list.user_id && (
-                    <>
-                      <Button
-                        onClick={openDeleteModal}
-                        variant="outline-primary"
-                        className="btn btn-outline brand-button"
-                        size="sm"
-                      >
-                        <i className="far fa-trash-alt"></i>
-                      </Button>
+                {currentUser.user.id === list.user_id && (
+                  <>
+                    <Button
+                      onClick={openDeleteModal}
+                      variant="ghost"
+                      size="md"
+                      hasOnlyIcon
+                    >
+                      <Icon name="trashbinSolid" size="md" />
+                    </Button>
 
-                      <Button
-                        as={Link}
-                        to={`/list/edit/${list.id}`}
-                        variant="outline-primary"
-                        className="btn btn-outline brand-button"
-                        size="sm"
-                      >
-                        <i className="fas fa-pen-alt"></i>
-                      </Button>
-                    </>
-                  )}
-                </ButtonGroup>
+                    <Button
+                      as={Link}
+                      to={`/list/edit/${list.id}`}
+                      variant="ghost"
+                      size="md"
+                      hasOnlyIcon
+                    >
+                      <Icon name="penSolid" size="md" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -314,33 +312,26 @@ const SavedListDetails: React.FC = () => {
                 <p className="ml-3 mt-3">created by {list.userName}</p>
               </div>
               <div className="float-right d-flex align-items-center">
-                <p className="ml-3 mt-3">{list.likesTotal} likes &nbsp;</p>
-                <ButtonGroup aria-label="List actions" className="brand-icons">
+                <p>{list.likesTotal} likes &nbsp;</p>
+                <Button
+                  onClick={likeList}
+                  variant="ghost"
+                  size="md"
+                  hasOnlyIcon
+                >
+                  <Icon size="md" name="thumbsUpSolid" />
+                </Button>
+
+                {list.type !== ObjectTemplates.ARTICLES && (
                   <Button
-                    onClick={likeList}
-                    variant="outline-primary"
-                    className={
-                      list.isLiked
-                        ? "btn btn-outline brand-button liked-button"
-                        : "btn btn-outline brand-button"
-                    }
+                    size="md"
+                    variant="ghost"
+                    hasOnlyIcon
+                    onClick={downloadPdf}
                   >
-                    <i
-                      className={
-                        list.isLiked ? "fas fa-thumbs-up" : "far fa-thumbs-up"
-                      }
-                    ></i>
+                    <Icon size="md" name="filePdfSolid" />
                   </Button>
-                  {list.type !== ObjectTemplates.ARTICLES && (
-                    <Button
-                      onClick={downloadPdf}
-                      className="btn btn-outline brand-button"
-                      variant="outline-primary"
-                    >
-                      <i className="fas fa-file-download fa-lg"></i>
-                    </Button>
-                  )}
-                </ButtonGroup>
+                )}
               </div>
             </div>
           </div>
@@ -353,14 +344,13 @@ const SavedListDetails: React.FC = () => {
                 <div className="mt-3 mb-2">
                   {currentUser.isAuthenticated &&
                     currentUser.user.id === list.user_id && (
-                      <button
+                      <Button
                         onClick={toggleListEdit}
-                        className={`btn btn-sm ${
-                          editToggle ? "btn-success" : "btn-light"
-                        }`}
+                        size="sm"
+                        variant={editToggle ? "success" : "ghost"}
                       >
                         {editToggleHeading}
-                      </button>
+                      </Button>
                     )}
                 </div>
                 <ListItems

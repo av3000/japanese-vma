@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { apiCall } from "../../services/api";
 import "./ArticleForm.css";
 import { hideLoader, showLoader } from "../../store/actions/application";
+import { Button } from "@/components/shared/Button";
 
 class ArticleForm extends Component {
   constructor(props) {
@@ -147,10 +148,7 @@ class ArticleForm extends Component {
               <option value="1">Public</option>
               <option value="0">Private</option>
             </select>
-            <button
-              type="submit"
-              className="btn btn-outline-primary col-md-3 brand-button mt-5"
-            >
+            <Button type="submit" variant="outline">
               {this.state.isLoading ? (
                 <span
                   className="spinner-border spinner-border-sm"
@@ -160,7 +158,7 @@ class ArticleForm extends Component {
               ) : (
                 <span>Create</span>
               )}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

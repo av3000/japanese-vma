@@ -291,3 +291,28 @@
     }
   }
 }
+
+.variantDanger {
+  background-color: var(--color-error);
+  color: var(--color-neutral-0);
+
+  @include media.mqHover {
+    &:hover {
+      background: var(--color-error-hover);
+    }
+  }
+
+  &:active {
+    background: var(--color-error-hover);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline-color: var(--color-error-hover);
+  }
+
+  &:disabled,
+  &.disabled {
+    background-color: var(--color-danger-disabled);
+  }
+}

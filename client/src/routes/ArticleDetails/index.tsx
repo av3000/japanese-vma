@@ -1,10 +1,13 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
-import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
+import { Badge, Modal } from "react-bootstrap";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-import { apiCall } from "@services/api";
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
+
+import { apiCall } from "@/services/api";
 import DefaultArticleImg from "@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
 import AvatarImg from "@/assets/images/avatar-woman.svg";
 import Spinner from "@/assets/images/spinner.gif";
@@ -15,9 +18,9 @@ import {
   HTTP_METHOD,
   ObjectTemplates,
   LIST_ACTIONS,
-} from "../../shared/constants";
-import { hideLoader, showLoader } from "../../store/actions/application";
-import { setSelectedArticle } from "../../store/actions/articles";
+} from "@/shared/constants";
+import { hideLoader, showLoader } from "@/store/actions/application";
+import { setSelectedArticle } from "@/store/actions/articles";
 import Hashtags from "@/components/ui/hashtags";
 import ArticleStatus from "@/components/ui/article-status";
 
@@ -390,24 +393,16 @@ const ArticleDetails: React.FC = () => {
           <Modal.Title>Choose which data you want to download.</Modal.Title>
         </Modal.Header>
         <Modal.Body className="d-flex justify-content-center">
-          <Button
-            variant="outline-primary"
-            className="btn btn-outline brand-button mx-2"
-            onClick={() => downloadPdf("kanji")}
-          >
-            Kanji PDF
+          <Button variant="ghost" onClick={() => downloadPdf("kanji")}>
+            Kanji <Icon size="md" name="filePdfSolid" />
           </Button>
-          <Button
-            variant="outline-primary"
-            className="btn btn-outline brand-button mx-2"
-            onClick={() => downloadPdf("words")}
-          >
-            Words PDF
+          <Button variant="ghost" onClick={() => downloadPdf("words")}>
+            Words <Icon size="md" name="filePdfSolid" />
           </Button>
         </Modal.Body>
         <Modal.Footer>
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
           >
             Close
@@ -527,48 +522,42 @@ const ArticleDetails: React.FC = () => {
                 ))}
             </div>
             <div>
-              <ButtonGroup
-                aria-label="Admin actions"
-                className="brand-icons mb-2"
-              >
-                {currentUser.user.isAdmin && (
+              {currentUser.user.isAdmin && (
+                <Button
+                  onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
+                  variant="ghost"
+                  size="md"
+                >
+                  {isReviewLoading ? (
+                    <span className="spinner-border spinner-border-md"></span>
+                  ) : (
+                    "Review"
+                  )}
+                </Button>
+              )}
+
+              {currentUser.user.id === article.user_id && (
+                <>
                   <Button
-                    onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
-                    variant="outline-primary"
-                    className="btn btn-outline brand-button"
-                    size="sm"
+                    onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
+                    variant="ghost"
+                    size="md"
+                    hasOnlyIcon
                   >
-                    {isReviewLoading ? (
-                      <span className="spinner-border spinner-border-sm"></span>
-                    ) : (
-                      "Review"
-                    )}
+                    <Icon name="trashbinSolid" size="md" />
                   </Button>
-                )}
 
-                {currentUser.user.id === article.user_id && (
-                  <>
-                    <Button
-                      onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
-                      variant="outline-primary"
-                      className="btn btn-outline brand-button"
-                      size="sm"
-                    >
-                      <i className="far fa-trash-alt"></i>
-                    </Button>
-
-                    <Button
-                      as={Link}
-                      to={`/article/edit/${article.id}`}
-                      variant="outline-primary"
-                      className="btn btn-outline brand-button"
-                      size="sm"
-                    >
-                      <i className="fas fa-pen-alt"></i>
-                    </Button>
-                  </>
-                )}
-              </ButtonGroup>
+                  <Button
+                    as={Link}
+                    to={`/article/edit/${article.id}`}
+                    variant="ghost"
+                    size="md"
+                    hasOnlyIcon
+                  >
+                    <Icon size="md" name="penSolid" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -594,45 +583,31 @@ const ArticleDetails: React.FC = () => {
               <p className="ml-3 mt-3">created by {article.userName}</p>
             </div>
             <div className="float-right d-flex align-items-center">
-              <p className="ml-3 mt-3">{article.likesTotal} likes &nbsp;</p>
-              <ButtonGroup aria-label="Article actions" className="brand-icons">
-                <Button
-                  onClick={handleLikeArticle}
-                  variant="outline-primary"
-                  className={
-                    article.isLiked
-                      ? "btn btn-outline brand-button liked-button"
-                      : "btn btn-outline brand-button"
-                  }
-                  disabled={isLoading}
-                >
-                  <i
-                    className={
-                      article.isLiked ? "fas fa-thumbs-up" : "far fa-thumbs-up"
-                    }
-                  ></i>
-                </Button>
-                <Button
-                  onClick={() => toggleModal(ArticleModalTypes.SHOW_BOOKMARK)}
-                  className="btn btn-outline brand-button"
-                  variant="outline-primary"
-                >
-                  <i
-                    className={
-                      article.isBookmarked
-                        ? "fas fa-bookmark"
-                        : "far fa-bookmark"
-                    }
-                  ></i>
-                </Button>
-                <Button
-                  onClick={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
-                  className="btn btn-outline brand-button"
-                  variant="outline-primary"
-                >
-                  <i className="fas fa-file-download fa-lg"></i>
-                </Button>
-              </ButtonGroup>
+              <p>{article.likesTotal} likes &nbsp;</p>
+              <Button
+                size="md"
+                variant="ghost"
+                hasOnlyIcon
+                onClick={handleLikeArticle}
+              >
+                <Icon size="md" name="thumbsUpSolid" />
+              </Button>
+              <Button
+                size="md"
+                variant="ghost"
+                hasOnlyIcon
+                onClick={() => toggleModal(ArticleModalTypes.SHOW_BOOKMARK)}
+              >
+                <Icon size="md" name="bookmarkRegular" />
+              </Button>
+              <Button
+                size="md"
+                variant="ghost"
+                hasOnlyIcon
+                onClick={() => toggleModal(ArticleModalTypes.SHOW_PDF)}
+              >
+                <Icon size="md" name="filePdfSolid" />
+              </Button>
             </div>
           </div>
         </div>

@@ -4,6 +4,8 @@ import { apiCall } from "@/services/api";
 import PostItem from "@/components/post/PostItem";
 import Spinner from "@/assets/images/spinner.gif";
 import SearchBar from "@/components/search/Searchbar";
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
 
 export class PostsList extends Component {
   _isMounted = false;
@@ -209,13 +211,13 @@ export class PostsList extends Component {
         <div className="mt-2">
           <div className="col-10">
             {this.state.searchHeading ? (
-              <React.Fragment>
-                <button onClick={this.clearSearch} className="btn btn-link">
-                  <i className="fas fa-eraser"></i> clear search
-                </button>
+              <>
+                <Button variant="ghost" onClick={this.clearSearch}>
+                  <Icon name="broomSolid" /> Clear search
+                </Button>
                 <br />
                 <h4>{this.state.searchHeading}</h4>
-              </React.Fragment>
+              </>
             ) : (
               ""
             )}
@@ -232,19 +234,17 @@ export class PostsList extends Component {
           this.state.pagination.current_page ? (
             "no more results..."
           ) : this.state.url.includes("search") ? (
-            <button
-              className="btn btn-outline-primary brand-button col-6"
+            <Button
+              variant="outline"
+              className="col-6"
               onClick={this.loadSearchMore}
             >
               Load More
-            </button>
+            </Button>
           ) : (
-            <button
-              className="btn btn-outline-primary brand-button col-6"
-              onClick={this.loadMore}
-            >
+            <Button variant="outline" className="col-6" onClick={this.loadMore}>
               Load More
-            </button>
+            </Button>
           )}
         </div>
       </div>
