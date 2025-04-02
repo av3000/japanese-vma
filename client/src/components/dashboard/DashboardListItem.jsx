@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button, ListGroup } from "react-bootstrap";
 import Hashtags from "../ui/hashtags";
+import { Button } from "../shared/Button";
 
 const DashboardListItem = ({
   id,
@@ -28,17 +29,13 @@ const DashboardListItem = ({
           <span>{commentsTotal} Comments</span>
           <span>{viewsTotal} Views</span>
           <span>{likesTotal} Likes</span>
-          <Link to={`/list/${id}`}>
-            <Button variant="outline-primary" size="sm" className="m-2">
-              Open
-            </Button>
-          </Link>
+          <Button to={`/list/${id}`} variant="outline" size="sm" type="button">
+            <Icon name="externalLink" size="sm" />
+          </Button>
         </ListGroup.Item>
         <small>ListType: {typeTitle}</small>
         <ListGroup.Item className="p-0">
-          <small>
-              {created_at}
-          </small>
+          <small>{created_at}</small>
         </ListGroup.Item>
       </ListGroup>
     </div>

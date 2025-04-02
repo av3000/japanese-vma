@@ -1,9 +1,10 @@
 import React from "react";
 
-import { Button, ListGroup } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Hashtags from "../ui/hashtags";
 import ArticleStatus from "../ui/article-status";
+import { Button } from "../shared/Button";
 
 const DashboardArticleItem = ({
   id,
@@ -31,16 +32,17 @@ const DashboardArticleItem = ({
           <span>{commentsTotal} Comments</span>
           <span>{viewsTotal} Views</span>
           <span>{likesTotal} Likes</span>
-          <Link to={`/article/${id}`}>
-            <Button variant="outline-primary" size="sm" className="ml-2">
-              <i className="fas fa-external-link-alt"></i>
-            </Button>
-          </Link>
+          <Button
+            to={`/article/${id}`}
+            variant="outline"
+            size="sm"
+            type="button"
+          >
+            <Icon name="externalLink" size="sm" />
+          </Button>
         </ListGroup.Item>
         <ListGroup.Item className="p-0">
-          <small>
-                {created_at}
-          </small>
+          <small>{created_at}</small>
         </ListGroup.Item>
       </ListGroup>
     </div>

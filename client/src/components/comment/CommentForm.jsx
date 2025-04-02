@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../../shared/constants";
+import { Button } from "../shared/Button";
+import { Icon } from "../shared/Icon";
 
 const MAX_CHAR_LIMIT = 1000;
 
@@ -69,24 +71,16 @@ const CommentForm = ({
       {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="form-group">
-        <button
+        <Button
           type="submit"
           disabled={isLoading || !message.trim()}
-          className="btn btn-outline-primary col-md-3 brand-button"
+          variant="outline"
+          isLoading={isLoading}
+          size="sm"
         >
-          {isLoading ? (
-            <span
-              className="spinner-border spinner-border-sm"
-              role="status"
-              aria-hidden="true"
-            ></span>
-          ) : (
-            <span>
-              Comment
-              <i className="ml-2 fa-regular fa-paper-plane"></i>
-            </span>
-          )}
-        </button>
+          Comment
+          <Icon name="paperPlane" size="sm" />
+        </Button>
       </div>
     </form>
   );
