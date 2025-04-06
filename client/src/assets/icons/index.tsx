@@ -13,6 +13,10 @@ import lockSolid from "./lock-solid.svg?raw";
 import broomSolid from "./broom-solid.svg?raw";
 import paperPlane from "./paper-plane-regular.svg?raw";
 import externalLink from "./arrow-up-right-from-square-solid.svg?raw";
+import eyeRegular from "./eye-regular.svg?raw";
+import downloadSolid from "./download-solid.svg?raw";
+import commentSolid from "./comment-solid.svg?raw";
+import minusSolid from "./minus-solid.svg?raw";
 
 export const icons = {
   plus,
@@ -30,4 +34,8 @@ export const icons = {
   broomSolid,
   paperPlane,
   externalLink,
+  eyeRegular,
+  downloadSolid,
+  commentSolid,
+  minusSolid,
 } as const;

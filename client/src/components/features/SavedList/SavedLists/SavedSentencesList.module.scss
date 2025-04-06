@@ -1,0 +1,91 @@
+// SavedSentencesList.module.scss
+@use "@/styles/01-tools/media" as media;
+@use "@/styles/01-tools/richtext-elements";
+
+.savedSentencesContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--size-md);
+  width: 100%;
+
+  @include media.mq("sm", "max") {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sentenceCard {
+  border: var(--border-size-sm) solid var(--color-neutral-200);
+  border-radius: var(--border-radius-md);
+  padding: var(--size-md);
+  box-shadow: 0 2px 4px var(--color-neutral-100-alpha);
+  transition: box-shadow var(--duration-sm) var(--ease-base);
+  background-color: var(--color-neutral-0);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 4px 8px var(--color-neutral-200-alpha);
+  }
+}
+
+.sentenceHeader {
+  position: relative;
+  margin-bottom: var(--size-md);
+  padding-right: var(--size-3xl);
+}
+
+.sentenceContent {
+  font-size: var(--font-size-body-md);
+  line-height: 1.6;
+  color: var(--color-neutral-900);
+}
+
+.removeButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.sentenceFooter {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: auto;
+  padding-top: var(--size-sm);
+  border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.tatoebaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-xs);
+  color: var(--color-primary);
+  font-size: var(--font-size-body-sm);
+  text-decoration: none;
+  transition: color var(--duration-sm) var(--ease-base);
+
+  &:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+  }
+}
+
+.localTag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--size-xs) var(--size-sm);
+  font-size: var(--font-size-body-xs);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-secondary-100);
+  border-radius: var(--border-radius-xs);
+  color: var(--color-secondary);
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  padding: var(--size-xl);
+  text-align: center;
+  color: var(--color-neutral-600);
+  background-color: var(--color-secondary-100);
+  border-radius: var(--border-radius-md);
+}

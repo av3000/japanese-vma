@@ -5,8 +5,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
 import { apiCall } from "@/services/api";
-import DashboardArticleItem from "@/components/dashboard/DashboardArticleItem";
-import DashboardListItem from "@/components/dashboard/DashboardListItem";
+import DashboardArticleItem from "@/components/features/dashboard/DashboardArticleItem";
+import DashboardListItem from "@/components/features/dashboard/DashboardListItem";
 import Spinner from "@/assets/images/spinner.gif";
 import SearchBarDashboard from "@/components/search/SearchBarDashboard";
 import { HTTP_METHOD } from "@/shared/constants";

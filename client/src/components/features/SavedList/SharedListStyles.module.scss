@@ -1,0 +1,183 @@
+// SharedListStyles.module.scss
+@use "@/styles/01-tools/media" as media;
+@use "@/styles/01-tools/richtext-elements";
+
+.listContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--size-md);
+  width: 100%;
+
+  @include media.mq("sm", "max") {
+    grid-template-columns: 1fr;
+  }
+
+  &.sentencesContainer {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+
+  &.radicalsContainer {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+.itemCard {
+  border: var(--border-size-sm) solid var(--color-neutral-200);
+  border-radius: var(--border-radius-md);
+  padding: var(--size-md);
+  box-shadow: 0 2px 4px var(--color-neutral-100-alpha);
+  transition: box-shadow var(--duration-sm) var(--ease-base);
+  background-color: var(--color-neutral-0);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 4px 8px var(--color-neutral-200-alpha);
+  }
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--size-md);
+  position: relative;
+}
+
+// Remove button that appears in edit mode
+.removeButton {
+  flex-shrink: 0;
+
+  // Positioned variant
+  &.absolute {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+// Common detail sections
+.itemDetails {
+  flex-grow: 1;
+  margin-bottom: var(--size-md);
+}
+
+.detailItem {
+  margin-bottom: var(--size-sm);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.detailLabel {
+  font-weight: var(--font-weight-semibold);
+  margin-right: var(--size-xs);
+  color: var(--color-neutral-700);
+  display: block;
+  margin-bottom: var(--size-xs);
+}
+
+.detailValue {
+  color: var(--color-neutral-900);
+  line-height: 1.5;
+}
+
+// Common metadata section at bottom of cards
+.metaInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-sm);
+  margin-top: auto;
+  padding-top: var(--size-sm);
+  border-top: var(--border-size-sm) solid var(--color-neutral-200);
+
+  // Center variant
+  &.centered {
+    justify-content: center;
+  }
+}
+
+// Common badge styling
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--size-xs) var(--size-sm);
+  font-size: var(--font-size-body-xs);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-secondary-100);
+  border-radius: var(--border-radius-xs);
+  color: var(--color-secondary);
+
+  // Primary color variant
+  &.primary {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-hover);
+  }
+}
+
+// Common empty state
+.emptyState {
+  grid-column: 1 / -1;
+  padding: var(--size-xl);
+  text-align: center;
+  color: var(--color-neutral-600);
+  background-color: var(--color-secondary-100);
+  border-radius: var(--border-radius-md);
+}
+
+// Character display styles (for kanji/radical)
+.characterDisplay {
+  text-align: center;
+
+  a {
+    font-size: 2.5rem;
+    color: var(--color-text-neutral-default);
+    text-decoration: none;
+    transition: color var(--duration-sm) var(--ease-base);
+    display: inline-block;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      border-radius: var(--border-radius-xs);
+    }
+  }
+
+  // Large variant for kanji
+  &.large a {
+    font-size: 3rem;
+  }
+}
+
+// Link styles
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-xs);
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--duration-sm) var(--ease-base);
+
+  &:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+  }
+}
+
+// Stat items for articles
+.statItem {
+  display: flex;
+  align-items: center;
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-body-sm);
+}
+
+.statIcon {
+  margin-right: var(--size-xs);
+  width: var(--icon-size-sm);
+  text-align: center;
+}

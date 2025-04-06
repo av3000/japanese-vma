@@ -1,11 +1,12 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 
 import { Button } from "@/components/shared/Button";
 import { Icon } from "@/components/shared/Icon";
+import { Link } from "@/components/shared/Link";
 
 import { apiCall } from "@/services/api";
 import DefaultArticleImg from "@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";

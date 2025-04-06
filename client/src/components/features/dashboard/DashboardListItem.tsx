@@ -1,29 +1,28 @@
+// @ts-nocheck
+
 import React from "react";
 
 import { ListGroup } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import Hashtags from "../ui/hashtags";
-import ArticleStatus from "../ui/article-status";
-import { Button } from "../shared/Button";
+import Hashtags from "../../ui/hashtags";
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
 
-const DashboardArticleItem = ({
+const DashboardListItem: React.FC = ({
   id,
   created_at,
-  title_jp,
-  status,
+  title,
   commentsTotal,
   likesTotal,
   viewsTotal,
   hashtags,
+  typeTitle,
 }) => (
-  <div className="row">
-    <div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
-      <p>{title_jp}</p>
-      <div className="d-flex align-items-center">
-        <span className="mr-2 text-muted">Tags:</span>
+  <div className="row border-bottom border-gray">
+    <div className="col-md-8 ">
+      <p className="text-muted">{title}</p>
+      <div className="d-flex align-items-center mt-3">
+        <span className="text-muted">Tags:</span>
         <Hashtags hashtags={hashtags} />
-        <span className="mr-2 text-muted">Status:</span>
-        <ArticleStatus status={status} />
       </div>
     </div>
     <div className="col-md-4">
@@ -32,15 +31,11 @@ const DashboardArticleItem = ({
           <span>{commentsTotal} Comments</span>
           <span>{viewsTotal} Views</span>
           <span>{likesTotal} Likes</span>
-          <Button
-            to={`/article/${id}`}
-            variant="outline"
-            size="sm"
-            type="button"
-          >
+          <Button to={`/list/${id}`} variant="ghost" size="sm" type="button">
             <Icon name="externalLink" size="sm" />
           </Button>
         </ListGroup.Item>
+        <small>ListType: {typeTitle}</small>
         <ListGroup.Item className="p-0">
           <small>{created_at}</small>
         </ListGroup.Item>
@@ -49,4 +44,4 @@ const DashboardArticleItem = ({
   </div>
 );
 
-export default DashboardArticleItem;
+export default DashboardListItem;

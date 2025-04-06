@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "../shared/Link";
 
 const KanjiItem = ({
   id,
@@ -35,10 +35,7 @@ const KanjiItem = ({
         <p>
           parts: {parts}, <br /> stroke_count: {stroke_count}
           <span className="float-right">
-            {/* <i onClick={addToList} className="far fa-bookmark ml-3 fa-lg mr-2"></i> */}
-            <Link className="tag-link" to={`/kanji/${id}`}>
-              Open
-            </Link>
+            <Link to={`/kanji/${id}`}>Open</Link>
           </span>
         </p>
       </div>

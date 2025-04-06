@@ -1,9 +1,9 @@
 import React from "react";
-import ListRadicalList from "./ListRadicalList";
-import ListKanjisList from "./ListKanjisList";
-import ListWordsList from "./ListWordsList";
-import ListSentencesList from "./ListSentencesList";
-import ListArticlesList from "./ListArticlesList";
+import ListRadicalList from "../features/SavedList/SavedLists/ListRadicalList";
+import ListKanjisList from "../features/SavedList/SavedLists/ListKanjisList";
+import ListWordsList from "../features/SavedList/SavedLists/SavedWordsList";
+import ListSentencesList from "../features/SavedList/SavedLists/SavedSentencesList";
+import ListArticlesList from "../features/SavedList/SavedLists/SavedArticlesList";
 import { ObjectTemplates } from "../../shared/constants";
 
 const ListItems = ({
