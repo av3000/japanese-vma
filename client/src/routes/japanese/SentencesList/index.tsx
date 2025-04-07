@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React, { Component } from "react";
 import { apiCall } from "@/services/api";
-import SentenceItem from "@/components/sentence/SentenceItem";
+import SentenceItem from "@/components/features/japanese/sentence/SentenceItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarSentences from "@/components/search/SearchBarSentences";
+import SearchBarSentences from "./SearchBarSentences";
 import { HTTP_METHOD } from "@/shared/constants";
 
 export class SentencesList extends Component {

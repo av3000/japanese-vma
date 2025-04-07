@@ -8,7 +8,7 @@ import { apiCall } from "@/services/api";
 import DashboardArticleItem from "@/components/features/dashboard/DashboardArticleItem";
 import DashboardListItem from "@/components/features/dashboard/DashboardListItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarDashboard from "@/components/search/SearchBarDashboard";
+import SearchBarDashboard from "./SearchBarDashboard";
 import { HTTP_METHOD } from "@/shared/constants";
 import Hashtags from "@/components/ui/hashtags";
 import { Button } from "@/components/shared/Button";

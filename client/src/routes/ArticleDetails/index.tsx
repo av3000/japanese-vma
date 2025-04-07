@@ -11,8 +11,8 @@ import { apiCall } from "@/services/api";
 import DefaultArticleImg from "@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
 import AvatarImg from "@/assets/images/avatar-woman.svg";
 import Spinner from "@/assets/images/spinner.gif";
-import CommentList from "@/components/comment/CommentList";
-import CommentForm from "@/components/comment/CommentForm";
+import CommentList from "@/components/features/comment/CommentList";
+import CommentForm from "@/components/features/comment/CommentForm";
 import {
   BASE_URL,
   HTTP_METHOD,

@@ -17,6 +17,7 @@ import eyeRegular from "./eye-regular.svg?raw";
 import downloadSolid from "./download-solid.svg?raw";
 import commentSolid from "./comment-solid.svg?raw";
 import minusSolid from "./minus-solid.svg?raw";
+import searchSolid from "./magnifying-glass-solid.svg?raw";
 
 export const icons = {
   plus,
@@ -38,4 +39,5 @@ export const icons = {
   downloadSolid,
   commentSolid,
   minusSolid,
+  searchSolid,
 } as const;

@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import { apiCall } from "@/services/api";
 import PostItem from "@/components/post/PostItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBar from "@/components/search/Searchbar";
+import SearchBar from "@/components/SearchBar";
 import { Button } from "@/components/shared/Button";
 import { Icon } from "@/components/shared/Icon";
 

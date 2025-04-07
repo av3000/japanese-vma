@@ -5,8 +5,8 @@ import { Button, Modal } from "react-bootstrap";
 
 import { apiCall } from "@/services/api";
 import Spinner from "@/assets/images/spinner.gif";
-import CommentList from "@/components/comment/CommentList";
-import CommentForm from "@/components/comment/CommentForm";
+import CommentList from "@/components/features/comment/CommentList";
+import CommentForm from "@/components/features/comment/CommentForm";
 import {
   BASE_URL,
   HTTP_METHOD,
