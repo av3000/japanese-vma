@@ -1,11 +1,11 @@
 // @ts-nocheck
 
 import React from "react";
-import ListRadicalList from "../../list/ListRadicalList";
-import ListKanjisList from "../../list/ListKanjisList";
-import ListWordsList from "../../list/ListWordsList";
-import ListSentencesList from "../../list/ListSentencesList";
-import ListArticlesList from "../../list/ListArticlesList";
+import ListRadicalList from "./SavedLists/ListRadicalList";
+import ListKanjisList from "./SavedLists/ListKanjisList";
+import ListWordsList from "./SavedLists/SavedWordsList";
+import ListSentencesList from "./SavedLists/SavedSentencesList";
+import ListArticlesList from "./SavedLists/SavedArticlesList";
 import { ObjectTemplates } from "@/shared/constants";
 
 const SavedListItems: React.FC = ({

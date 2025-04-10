@@ -300,9 +300,12 @@ npm start
 - [x] Migrate from CRA to Vite
 - [x] Add Typescript and start using .tsx
 - [x] Create storybook for components
+- [ ] Add ESlint
+- [ ] Add Husky for hooks
+-
 
 - UI Components:
-  - Button
+  - [x] Button
   - Product card
   - Dropdown
   - Select
@@ -310,7 +313,8 @@ npm start
   - Input Checkbox
   - Tabgroup (articles/lists in dashboard)
   - Badge
-  - Icon
+  - [x] Icon
+  - [x] Link
   - Image
   - Spinner
   - Info message

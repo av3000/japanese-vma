@@ -2,9 +2,9 @@
 
 import React, { Component } from "react";
 import { apiCall } from "@/services/api";
-import WordItem from "@/components/word/WordItem";
+import WordItem from "@/components/features/japanese/word/WordItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarWords from "@/components/search/SearchBarWords";
+import SearchBarWords from "./SearchBarWords";
 import { HTTP_METHOD } from "@/shared/constants";
 
 export class WordList extends Component {

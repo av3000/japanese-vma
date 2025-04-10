@@ -1,8 +1,9 @@
 // @ts-nocheck
+
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, ButtonGroup, Modal } from "react-bootstrap";
-import Spinner from "@/assets/images/spinner.gif";
+import { useNavigate, useParams } from "react-router-dom";
+import { Modal } from "react-bootstrap";
+import Spinner from "../../assets/images/spinner.gif";
 import {
   BASE_URL,
   HTTP_METHOD,
@@ -10,9 +11,11 @@ import {
   LIST_ACTIONS,
 } from "@/shared/constants";
 import { apiCall } from "@/services/api";
-import Hashtags from "@/components/ui/hashtags";
+import Hashtags from "../ui/hashtags";
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
 
-const KanjiDetails: React.FC = ({ currentUser }) => {
+const KanjiOpen: React.FC = ({ currentUser }) => {
   const [kanji, setKanji] = useState({});
   const [words, setWords] = useState([]);
   const [sentences, setSentences] = useState([]);
@@ -185,13 +188,9 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
           {kanjiIsKnown && (
             <i className="fas fa-check-circle text-success"> Learned</i>
           )}
-          <button
-            onClick={toggleModal}
-            className="btn btn-outline brand-button float-right"
-            variant="outline-primary"
-          >
-            <i className="far fa-bookmark fa-lg"></i>
-          </button>
+          <Button size="md" onClick={toggleModal} variant="outline">
+            <Icon size="sm" name="bookmarkRegular" />
+          </Button>
         </div>
       </div>
     );
@@ -240,29 +239,34 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
                   <div className="col-md-12">
                     <h3>{sentence.content}</h3>
                   </div>
-                  {/* <div className="col-md-2"> */}
-                  <ButtonGroup className="mt-3 align-items-center">
-                    <Link to={`/sentence/${sentence.id}`}>
-                      <Button variant="outline-primary">Open</Button>
-                    </Link>
-                    {sentence.tatoeba_entry ? (
-                      <Button
-                        variant="link"
-                        href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Tatoeba{" "}
-                        <i className="fas fa-external-link-alt ml-1"></i>
-                      </Button>
-                    ) : (
-                      <Button variant="outline-secondary" disabled>
-                        Local
-                      </Button>
-                    )}
-                  </ButtonGroup>
+                  <Button
+                    to={`/sentence/${sentence.id}`}
+                    size="md"
+                    variant="outline"
+                  >
+                    Open
+                  </Button>
+                  {sentence.tatoeba_entry ? (
+                    <Button
+                      variant="link"
+                      size="md"
+                      href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Tatoeba <Icon name="externalLink" size="sm" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled
+                    >
+                      Local
+                    </Button>
+                  )}
                 </div>
-                {/* </div> */}
                 <hr />
               </div>
             </div>
@@ -293,13 +297,15 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
                     </p>
                   </div>
                   <div className="col-md-2">
-                    <Link
+                    <Button
+                      variant="link"
+                      size="md"
                       to={`/article/${article.id}`}
-                      className="float-right"
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <Button variant="outline-primary">Open</Button>
-                    </Link>
+                      Tatoeba <Icon name="externalLink" size="sm" />
+                    </Button>
                   </div>
                 </div>
                 <hr />
@@ -329,6 +335,7 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
                 <Button
                   variant={list.elementBelongsToList ? "danger" : "primary"}
                   size="sm"
+                  isLoading={isLoadingList}
                   onClick={() =>
                     addToOrRemoveFromList(
                       list.id,
@@ -339,13 +346,7 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
                   }
                   disabled={isLoadingList}
                 >
-                  {isLoadingList ? (
-                    <span className="spinner-border spinner-border-sm"></span>
-                  ) : list.elementBelongsToList ? (
-                    "Remove"
-                  ) : (
-                    "Add"
-                  )}
+                  {list.elementBelongsToList ? "Remove" : "Add"}
                 </Button>
               </div>
             );
@@ -355,7 +356,12 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
           </small>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={toggleModal}>
+          <Button
+            type="button"
+            size="md"
+            variant="secondary"
+            onClick={toggleModal}
+          >
             Close
           </Button>
         </Modal.Footer>
@@ -380,4 +386,4 @@ const KanjiDetails: React.FC = ({ currentUser }) => {
   );
 };
 
-export default KanjiDetails;
+export default KanjiOpen;

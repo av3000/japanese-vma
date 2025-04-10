@@ -4,6 +4,7 @@ import { apiCall } from "@/services/api";
 import { hideLoader, showLoader } from "@/store/actions/application";
 import Spinner from "@/assets/images/spinner.gif";
 import { HTTP_METHOD } from "@/shared/constants";
+import { Button } from "@/components/shared/Button";
 
 class ArticleEdit extends Component {
   constructor(props) {
@@ -190,12 +191,9 @@ class ArticleEdit extends Component {
               <option value="1">Public</option>
               <option value="0">Private</option>
             </select>
-            <button
-              type="submit"
-              className="btn btn-outline-primary col-md-3 brand-button mt-5"
-            >
+            <Button type="submit" variant="outline">
               Update the Article
-            </button>
+            </Button>
           </form>
         </div>
       </div>

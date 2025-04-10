@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import { apiCall } from "@/services/api";
 import { hideLoader, showLoader } from "@/store/actions/application";
+import { Button } from "@/components/shared/Button";
 
 class SavedListForm extends Component {
   constructor(props) {
@@ -128,12 +129,9 @@ class SavedListForm extends Component {
               <option value="1">Public</option>
               <option value="0">Private</option>
             </select>
-            <button
-              type="submit"
-              className="btn btn-outline-primary col-md-3 brand-button mt-5"
-            >
+            <Button type="submit" variant="outline">
               Create the List
-            </button>
+            </Button>
           </form>
         </div>
       </div>

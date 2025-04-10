@@ -1,0 +1,38 @@
+.pageLoaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-neutral-0);
+  z-index: 9999;
+}
+
+.pageLoader {
+  text-align: center;
+  color: var(--color-text-neutral-default);
+  animation: fadeIn 0.5s ease-in-out;
+
+  h2 {
+    font-size: var(--font-size-heading-md);
+    margin-bottom: var(--size-md);
+  }
+
+  h5 {
+    font-size: var(--font-size-body-md);
+    color: var(--color-neutral-600);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

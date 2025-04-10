@@ -1,9 +1,10 @@
 //@ts-nocheck
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Badge, Button, ButtonGroup, Modal } from "react-bootstrap";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Badge, Modal } from "react-bootstrap";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import classNames from "classNames";
 import Spinner from "@/assets/images/spinner.gif";
 import CommentList from "@/components/comment/CommentList";
 import CommentForm from "@/components/comment/CommentForm";
@@ -11,6 +12,10 @@ import { BASE_URL, HTTP_METHOD } from "@/shared/constants";
 import Hashtags from "@/components/ui/hashtags";
 import AvatarImg from "@/assets/images/avatar-woman.svg";
 import { apiCall } from "@/services/api";
+import { Icon } from "@/components/shared/Icon";
+import { Button } from "@/components/shared/Button";
+import { Link } from "@/components/shared/Link";
+import styles from "./PostDetails.module.scss";
 
 const PostDetails: React.FC = () => {
   const [post, setPost] = useState(null);
@@ -190,9 +195,7 @@ const PostDetails: React.FC = () => {
         <div className="row justify-content-center">
           <div className="col-lg-8">
             <span className="row mt-4">
-              <Link to="/community" className="tag-link">
-                Back
-              </Link>
+              <Link to="/community">Back</Link>
             </span>
             <h1 className="mt-4">{post.title}</h1>
             <div className="row text-muted w-100 mb-3 justify-content-between">
@@ -205,48 +208,38 @@ const PostDetails: React.FC = () => {
                 </p>
               </div>
               <div>
-                <ButtonGroup
-                  aria-label="Admin actions"
-                  className="brand-icons mb-2"
-                >
-                  {currentUser.user.isAdmin && (
+                {currentUser.user.isAdmin && (
+                  <Button
+                    onClick={() => toggleLock}
+                    variant="outline"
+                    size="md"
+                  >
+                    <Icon name={post.locked ? "lockSolid" : "lockOpenSolid"} />
+                  </Button>
+                )}
+
+                {currentUser.user.id === post.user_id && (
+                  <>
                     <Button
-                      onClick={() => toggleLock}
-                      variant="outline-primary"
-                      className="btn btn-outline brand-button"
-                      size="sm"
+                      onClick={openDeleteModal}
+                      variant="ghost"
+                      size="md"
+                      hasOnlyIcon
                     >
-                      {post.locked === 1 ? (
-                        <i className="fas fa-lock-open"></i>
-                      ) : (
-                        <i className="fas fa-lock"></i>
-                      )}
+                      <Icon name="trashbinSolid" size="md" />
                     </Button>
-                  )}
 
-                  {currentUser.user.id === post.user_id && (
-                    <>
-                      <Button
-                        onClick={openDeleteModal}
-                        variant="outline-primary"
-                        className="btn btn-outline brand-button"
-                        size="sm"
-                      >
-                        <i className="far fa-trash-alt"></i>
-                      </Button>
-
-                      <Button
-                        as={Link}
-                        to={`/community/edit/${post.id}`}
-                        variant="outline-primary"
-                        className="btn btn-outline brand-button"
-                        size="sm"
-                      >
-                        <i className="fas fa-pen-alt"></i>
-                      </Button>
-                    </>
-                  )}
-                </ButtonGroup>
+                    <Button
+                      as={Link}
+                      to={`/community/edit/${post.id}`}
+                      variant="ghost"
+                      size="md"
+                      hasOnlyIcon
+                    >
+                      <Icon name="penSolid" size="md" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -260,25 +253,23 @@ const PostDetails: React.FC = () => {
                 <p className="ml-3 mt-3">uploaded by {post.userName}</p>
               </div>
               <div className="d-flex align-items-center">
-                <p className="ml-3 mt-3">{post.likesTotal} likes &nbsp;</p>
-                <ButtonGroup>
-                  <Button
-                    onClick={likePost}
-                    variant="outline-primary"
-                    className={
-                      post.isLiked
-                        ? "btn btn-outline brand-button liked-button"
-                        : "btn btn-outline brand-button"
-                    }
-                    disabled={isLoading}
-                  >
-                    <i
-                      className={
-                        post.isLiked ? "fas fa-thumbs-up" : "far fa-thumbs-up"
-                      }
-                    ></i>
-                  </Button>
-                </ButtonGroup>
+                <p
+                  className={classNames({
+                    [styles.isLiked]: post.isLiked,
+                  })}
+                >
+                  {post.likesTotal} likes &nbsp;
+                </p>
+                <Button
+                  onClick={likePost}
+                  variant="ghost"
+                  className={classNames({
+                    [styles.isLiked]: post.isLiked,
+                  })}
+                  disabled={isLoading}
+                >
+                  <Icon name="thumbsUpSolid" />
+                </Button>
               </div>
             </div>
           </div>

@@ -1,9 +1,10 @@
 // @ts-nocheck
 import React, { Component } from "react";
-import ListItem from "../components/list/ListItem";
-import { apiCall } from "../services/api";
-import Spinner from "../assets/images/spinner.gif";
-import SearchBar from "../components/search/Searchbar";
+import { apiCall } from "@/services/api";
+import Spinner from "@/assets/images/spinner.gif";
+import SearchBar from "@/components/SearchBar";
+import { Button } from "@/components/shared/Button";
+import { SavedListItem } from "@/components/features/SavedList/SavedListItem";
 
 class SavedLists extends Component {
   constructor() {
@@ -140,7 +141,7 @@ class SavedLists extends Component {
     let { lists } = this.state;
     let customLists = lists ? (
       lists.map((l) => (
-        <ListItem
+        <SavedListItem
           key={l.id}
           id={l.id}
           listType={listTypes[l.type - 1]}
@@ -173,8 +174,10 @@ class SavedLists extends Component {
           ) : (
             this.state.pagination.last_page !==
               this.state.pagination.current_page && (
-              <button
-                className="btn btn-outline-primary brand-button col-6"
+              <Button
+                variant="outline"
+                size="md"
+                type="button"
                 onClick={
                   this.state.url.includes("search")
                     ? this.loadSearchMore
@@ -182,7 +185,7 @@ class SavedLists extends Component {
                 }
               >
                 Load More
-              </button>
+              </Button>
             )
           )}
         </div>

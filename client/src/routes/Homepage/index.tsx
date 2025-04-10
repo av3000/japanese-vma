@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import "./Homepage.scss";
@@ -9,6 +8,9 @@ import {
   ExploreArticleList,
   ExploreCustomList,
 } from "@/components/features/Homepage";
+
+import { Link } from "@/components/shared/Link";
+import { Icon } from "@/components/shared/Icon";
 
 const Homepage: React.FC = () => {
   const isAuthenticated = useSelector(
@@ -35,7 +37,7 @@ const Homepage: React.FC = () => {
                 </div>
                 <div className="home-hero-explore">
                   <a href="#readings" className="home-hero-explore-link">
-                    Explore <i className="fa-solid fa-angles-down"></i>
+                    Explore <Icon size="md" name="chevron" />
                   </a>
                 </div>
               </div>

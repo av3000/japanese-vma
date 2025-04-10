@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React, { Component } from "react";
 import { apiCall } from "@/services/api";
-import KanjiItem from "@/components/kanji/KanjiItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarKanjis from "@/components/search/SearchBarKanjis";
+import KanjiItem from "@/components/features/japanese/Kanji/KanjiItem";
+import SearchBarKanjis from "./SearchBarKanjis";
 import { HTTP_METHOD } from "@/shared/constants";
 
 export class KanjiList extends Component {
@@ -159,7 +159,7 @@ export class KanjiList extends Component {
           id={k.id}
           {...k}
           parts={k.radical_parts}
-          addToList={this.addToList.bind(this, k.id)}
+          addToList={addToList}
         />
       );
     });

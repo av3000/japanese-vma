@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { apiCall } from "@/services/api";
 import { hideLoader, showLoader } from "@/store/actions/application";
 import Spinner from "@/assets/images/spinner.gif";
+import { Button } from "@/components/shared/Button";
 
 class PostEdit extends Component {
   constructor(props) {
@@ -163,12 +164,9 @@ class PostEdit extends Component {
               <option value="6">Feedback</option>
               <option value="7">Announcement</option>
             </select>
-            <button
-              type="submit"
-              className="btn btn-outline-primary col-md-3 brand-button mt-5"
-            >
+            <Button type="submit" variant="primary">
               Update Post
-            </button>
+            </Button>
           </form>
         </div>
       </div>

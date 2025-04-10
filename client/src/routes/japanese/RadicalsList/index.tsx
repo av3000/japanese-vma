@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React, { Component } from "react";
 import { apiCall } from "@/services/api";
-import RadicalItem from "@/components/radical/RadicalItem";
+import RadicalItem from "@/components/features/japanese/radical/RadicalItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarRadicals from "@/components/search/SearchBarRadicals";
+import SearchBarRadicals from "./SearchBarRadicals";
 import { HTTP_METHOD } from "@/shared/constants";
 
 export class RadicalList extends Component {

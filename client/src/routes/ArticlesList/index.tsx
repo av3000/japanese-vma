@@ -1,10 +1,14 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchArticles, setSelectedArticle } from "@store/slices/articlesSlice";
-import ArticleItem from "@/components/article/ArticleItem";
+import {
+  fetchArticles,
+  setSelectedArticle,
+} from "@/store/slices/articlesSlice";
+import ArticleItem from "@/components/features/article/ArticleItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBar from "@/components/search/Searchbar";
+import SearchBar from "@/components/features/SearchBar";
+import { Button } from "@/components/shared/Button";
 
 const ArticleList: React.FC = () => {
   const dispatch = useDispatch();
@@ -94,12 +98,9 @@ const ArticleList: React.FC = () => {
           !paginationInfo.next_page_url) ? (
           "No more results..."
         ) : (
-          <button
-            className="btn btn-outline-primary brand-button col-6"
-            onClick={loadMore}
-          >
+          <Button variant="outline" className="col-6" onClick={loadMore}>
             Load More
-          </button>
+          </Button>
         )}
       </div>
     </div>

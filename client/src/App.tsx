@@ -8,7 +8,7 @@ import { HTTP_METHOD } from "@/shared/constants";
 import Footer from "@/components/features/Footer";
 import Header from "@/components/features/Header";
 import ScrollToTop from "@/helpers/ScrollToTop";
-import PageLoader from "@/components/PageLoader";
+import PageLoader from "@/components/features/PageLoader";
 import AppRoutes from "@/routes/routes";
 
 // Import actions from slices

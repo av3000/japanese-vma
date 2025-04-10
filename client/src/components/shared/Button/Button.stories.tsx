@@ -79,6 +79,16 @@ export const IsGhostVariant: Story = {
   },
 };
 
+export const IsDangerVariant: Story = {
+  render: (args) => <Button {...args}>Some button</Button>,
+  args: {
+    variant: "danger",
+    onClick: (): void => {
+      console.log("button clicked");
+    },
+  },
+};
+
 export const IsLinkButtonVariant: Story = {
   render: (args) => <Button {...args}>Some button</Button>,
   args: {

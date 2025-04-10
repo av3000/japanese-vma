@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import { apiCall } from "@/services/api";
-import DashboardArticleItem from "@/components/dashboard/DashboardArticleItem";
-import DashboardListItem from "@/components/dashboard/DashboardListItem";
+import DashboardArticleItem from "@/components/features/dashboard/DashboardArticleItem";
+import DashboardListItem from "@/components/features/dashboard/DashboardListItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBarDashboard from "@/components/search/SearchBarDashboard";
+import SearchBarDashboard from "./SearchBarDashboard";
 import { HTTP_METHOD } from "@/shared/constants";
 import Hashtags from "@/components/ui/hashtags";
+import { Button } from "@/components/shared/Button";
+import { Icon } from "@/components/shared/Icon";
+import { Link } from "@/components/shared/Link";
 
 const RESOURCE_TYPES = {
   ARTICLES: "ARTICLES",
@@ -141,9 +143,9 @@ const DashboardList: React.FC = () => {
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4>Pending Articles - Admin view</h4>
-            <button className="btn btn-sm btn-light" onClick={toggleDashboard}>
-              User View <i className="fas fa-arrow-right"></i>
-            </button>
+            <Button variant="ghost" onClick={toggleDashboard}>
+              User View <Icon name="chevron" rotate="270" />
+            </Button>
           </div>
           <div className="col-lg-12 col-md-12 mx-auto">
             {articlesPending.length ? (
@@ -183,9 +185,9 @@ const DashboardList: React.FC = () => {
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4>My Articles - User view</h4>
-            <button className="btn btn-sm btn-light" onClick={toggleDashboard}>
-              Admin View <i className="fas fa-arrow-right"></i>
-            </button>
+            <Button variant="ghost" onClick={toggleDashboard}>
+              Admin View <Icon name="chevron" rotate="270" />
+            </Button>
           </div>
           <div className="col-lg-12 col-md-10 mx-auto">
             {articles.map((article) => (
@@ -208,15 +210,12 @@ const DashboardList: React.FC = () => {
         <div className="ml-3 mt-2">
           <div className="row align-items-center">
             <div className="col-auto">
-              <button
-                className="btn btn-light brand-button"
-                onClick={toggleResource}
-              >
+              <Button variant="ghost" onClick={toggleResource}>
                 {currentResource === RESOURCE_TYPES.LISTS
                   ? "Articles"
                   : "Lists"}{" "}
-                <i className="fas fa-arrow-right"></i>
-              </button>
+                <Icon name="chevron" rotate="270" />
+              </Button>
             </div>
 
             <div className="col">
