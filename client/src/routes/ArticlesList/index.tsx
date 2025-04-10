@@ -5,9 +5,9 @@ import {
   fetchArticles,
   setSelectedArticle,
 } from "@/store/slices/articlesSlice";
-import ArticleItem from "@/components/article/ArticleItem";
+import ArticleItem from "@/components/features/article/ArticleItem";
 import Spinner from "@/assets/images/spinner.gif";
-import SearchBar from "@/components/SearchBar";
+import SearchBar from "@/components/features/SearchBar";
 import { Button } from "@/components/shared/Button";
 
 const ArticleList: React.FC = () => {

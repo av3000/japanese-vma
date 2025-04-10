@@ -1,12 +1,4 @@
-:root {
-  --main-text-color: #303030;
-  --alternative-text-color: #f9f9f9;
-  --link-hover-color: #9099a7;
-  --main-brand-color: #f79862;
-  --secondary-brand-color: #3058a4;
-}
-
-.page-loader-container {
+.pageLoaderContainer {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,14 +8,24 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--alternative-text-color);
+  background-color: var(--color-neutral-0);
   z-index: 9999;
 }
 
-.page-loader {
+.pageLoader {
   text-align: center;
-  color: var(--main-text-color);
+  color: var(--color-text-neutral-default);
   animation: fadeIn 0.5s ease-in-out;
+
+  h2 {
+    font-size: var(--font-size-heading-md);
+    margin-bottom: var(--size-md);
+  }
+
+  h5 {
+    font-size: var(--font-size-body-md);
+    color: var(--color-neutral-600);
+  }
 }
 
 @keyframes fadeIn {
