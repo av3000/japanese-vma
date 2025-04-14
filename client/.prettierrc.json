@@ -1,0 +1,17 @@
+{
+  "printWidth": 120,
+  "trailingComma": "all",
+  "endOfLine": "auto",
+  "importOrder": ["^react.*$", "^@[^/].*$", "<THIRD_PARTY_MODULES>", "^@/(.*)", "[.]/(.*)"],
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
+  "overrides": [
+    {
+      "files": ["**/*.js", "**/*.cjs", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.scss"],
+      "options": {
+        "singleQuote": true,
+        "tabWidth": 4,
+        "useTabs": true
+      }
+    }
+  ]
+}

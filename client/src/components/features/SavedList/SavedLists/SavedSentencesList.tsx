@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import { Modal } from "react-bootstrap";
-import sharedStyles from "../SharedListStyles.module.scss";
-import classNames from "classnames";
+import React, { useState } from 'react';
+import { Modal } from 'react-bootstrap';
+
+import classNames from 'classnames';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+
+import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Sentence {
   id: string | number;
@@ -32,9 +35,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
   listUserId,
   editToggle = false,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState<
-    number | string | null
-  >(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
   const handleDeleteModalClose = () => {
     setShowDeleteModal(null);
@@ -50,12 +51,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
   };
 
   return (
-    <div
-      className={classNames(
-        sharedStyles.listContainer,
-        sharedStyles.sentencesContainer
-      )}
-    >
+    <div className={classNames(sharedStyles.listContainer, sharedStyles.sentencesContainer)}>
       {objects.map((sentence) => {
         return (
           <div key={sentence.id} className={sharedStyles.itemCard}>
@@ -68,10 +64,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
                   size="md"
                   variant="danger"
                   onClick={() => openModal(sentence.id)}
-                  className={classNames(
-                    sharedStyles.removeButton,
-                    sharedStyles.absolute
-                  )}
+                  className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
                 >
                   <Icon size="sm" name="minusSolid" />
                 </Button>
@@ -103,10 +96,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
                   <Button variant="secondary" onClick={handleDeleteModalClose}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDeleteConfirm(sentence.id)}
-                  >
+                  <Button variant="danger" onClick={() => handleDeleteConfirm(sentence.id)}>
                     Yes, delete
                   </Button>
                 </>

@@ -1,6 +1,7 @@
-import { Link } from "@/components/shared/Link";
-import Hashtags from "@/components/ui/hashtags";
-import React from "react";
+import React from 'react';
+
+import { Link } from '@/components/shared/Link';
+import Hashtags from '@/components/ui/hashtags';
 
 interface Hashtag {
   id: string | number;

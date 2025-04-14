@@ -1,7 +1,8 @@
-import React, { useState, FormEvent } from "react";
-import { Form, InputGroup } from "react-bootstrap";
-import { Icon } from "@/components/shared/Icon";
-import { Button } from "@/components/shared/Button";
+import React, { FormEvent, useState } from 'react';
+import { Form, InputGroup } from 'react-bootstrap';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
 
 interface SearchQuery {
   keyword: string;
@@ -11,10 +12,8 @@ interface SearchBarRadicalsProps {
   fetchQuery: (query: SearchQuery) => void;
 }
 
-const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({
-  fetchQuery,
-}) => {
-  const [keyword, setKeyword] = useState<string>("");
+const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({ fetchQuery }) => {
+  const [keyword, setKeyword] = useState<string>('');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

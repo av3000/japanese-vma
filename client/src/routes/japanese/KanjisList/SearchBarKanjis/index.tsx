@@ -1,7 +1,8 @@
-import React, { FormEvent } from "react";
-import { Form, InputGroup } from "react-bootstrap";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
+import React, { FormEvent } from 'react';
+import { Form, InputGroup } from 'react-bootstrap';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
 
 interface SearchQuery {
   keyword: string;
@@ -13,8 +14,8 @@ interface SearchBarKanjisProps {
 }
 
 const SearchBarKanjis: React.FC<SearchBarKanjisProps> = ({ fetchQuery }) => {
-  const [keyword, setKeyword] = React.useState<string>("");
-  const [filterType, setFilterType] = React.useState<string>("20");
+  const [keyword, setKeyword] = React.useState<string>('');
+  const [filterType, setFilterType] = React.useState<string>('20');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -1,7 +1,8 @@
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import React, { FormEvent } from "react";
-import { Form, Row, Col } from "react-bootstrap";
+import React, { FormEvent } from 'react';
+import { Col, Form, Row } from 'react-bootstrap';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
 
 interface SearchQuery {
   keyword: string;
@@ -11,13 +12,13 @@ interface SearchQuery {
 
 interface SearchbarProps {
   fetchQuery: (data: SearchQuery) => void;
-  searchType: "posts" | "articles" | "lists" | string;
+  searchType: 'posts' | 'articles' | 'lists' | string;
 }
 
 const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
-  const [keyword, setKeyword] = React.useState<string>("");
-  const [sortByWhat, setSortByWhat] = React.useState<string>("new");
-  const [filterType, setFilterType] = React.useState<string>("20");
+  const [keyword, setKeyword] = React.useState<string>('');
+  const [sortByWhat, setSortByWhat] = React.useState<string>('new');
+  const [filterType, setFilterType] = React.useState<string>('20');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,7 +58,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
           />
         </Col>
         <Col lg={4} md={4} sm={12} className="mt-3">
-          {searchType === "posts" && (
+          {searchType === 'posts' && (
             <Form.Control
               as="select"
               name="filterType"
@@ -74,7 +75,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
               <option value="7">Announcement</option>
             </Form.Control>
           )}
-          {searchType === "articles" && (
+          {searchType === 'articles' && (
             <Form.Control
               as="select"
               name="filterType"
@@ -90,7 +91,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
               <option value="6">Uncommon</option>
             </Form.Control>
           )}
-          {searchType === "lists" && (
+          {searchType === 'lists' && (
             <Form.Control
               as="select"
               name="filterType"
