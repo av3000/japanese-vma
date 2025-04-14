@@ -1,10 +1,13 @@
-import React, { useState } from "react";
-import { Link } from "@/components/shared/Link";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import { Modal } from "react-bootstrap";
-import sharedStyles from "../SharedListStyles.module.scss";
-import classNames from "classnames";
+import React, { useState } from 'react';
+import { Modal } from 'react-bootstrap';
+
+import classNames from 'classnames';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
+
+import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Kanji {
   id: string | number;
@@ -37,9 +40,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
   listUserId,
   editToggle = false,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState<
-    number | string | null
-  >(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
   const handleDeleteModalClose = () => {
     setShowDeleteModal(null);
@@ -58,19 +59,14 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
     <div className={sharedStyles.listContainer}>
       {objects.map((kanji) => {
         // Process readings and meanings properly
-        const onyomiList = kanji.onyomi.split("|").slice(0, 3).join(", ");
-        const kunyomiList = kanji.kunyomi.split("|").slice(0, 3).join(", ");
-        const meaningsList = kanji.meaning.split("|").slice(0, 3).join(", ");
+        const onyomiList = kanji.onyomi.split('|').slice(0, 3).join(', ');
+        const kunyomiList = kanji.kunyomi.split('|').slice(0, 3).join(', ');
+        const meaningsList = kanji.meaning.split('|').slice(0, 3).join(', ');
 
         return (
           <div key={kanji.id} className={sharedStyles.itemCard}>
             <div className={sharedStyles.itemHeader}>
-              <div
-                className={classNames(
-                  sharedStyles.characterDisplay,
-                  sharedStyles.large
-                )}
-              >
+              <div className={classNames(sharedStyles.characterDisplay, sharedStyles.large)}>
                 <Link to={`/kanji/${kanji.id}`}>{kanji.kanji}</Link>
               </div>
 
@@ -80,10 +76,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
                   size="md"
                   variant="danger"
                   onClick={() => openModal(kanji.id)}
-                  className={classNames(
-                    sharedStyles.removeButton,
-                    sharedStyles.absolute
-                  )}
+                  className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
                 >
                   <Icon size="sm" name="minusSolid" />
                 </Button>
@@ -98,16 +91,12 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 
               <div className={sharedStyles.detailItem}>
                 <span className={sharedStyles.detailLabel}>Onyomi:</span>
-                <span className={sharedStyles.detailValue}>
-                  {onyomiList || "—"}
-                </span>
+                <span className={sharedStyles.detailValue}>{onyomiList || '—'}</span>
               </div>
 
               <div className={sharedStyles.detailItem}>
                 <span className={sharedStyles.detailLabel}>Kunyomi:</span>
-                <span className={sharedStyles.detailValue}>
-                  {kunyomiList || "—"}
-                </span>
+                <span className={sharedStyles.detailValue}>{kunyomiList || '—'}</span>
               </div>
             </div>
 
@@ -119,12 +108,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
               )}
 
               {kanji.frequency && (
-                <div
-                  className={classNames(
-                    sharedStyles.badge,
-                    sharedStyles.primary
-                  )}
-                >
+                <div className={classNames(sharedStyles.badge, sharedStyles.primary)}>
                   <span>Frequency: {kanji.frequency}</span>
                 </div>
               )}
@@ -139,10 +123,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
                   <Button variant="secondary" onClick={handleDeleteModalClose}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDeleteConfirm(kanji.id)}
-                  >
+                  <Button variant="danger" onClick={() => handleDeleteConfirm(kanji.id)}>
                     Yes, delete
                   </Button>
                 </>

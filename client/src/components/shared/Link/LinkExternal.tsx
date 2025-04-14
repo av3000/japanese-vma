@@ -1,7 +1,8 @@
-import * as React from "react";
-import { Icon } from "../Icon";
-import { useLinkClassNames } from "./hooks";
-import { LinkBaseProps, LinkColor } from "./types";
+import * as React from 'react';
+
+import { Icon } from '../Icon';
+import { useLinkClassNames } from './hooks';
+import { LinkBaseProps, LinkColor } from './types';
 
 export interface LinkExternalProps
   extends LinkBaseProps,
@@ -14,22 +15,15 @@ export interface LinkExternalProps
 }
 
 const DefaultExternalIcon: React.FC<LinkExternalProps> = ({ size }) => (
-  <Icon
-    className="u-ml-3xs"
-    name="chevron"
-    rotate="90"
-    size={size === "sm" ? "sm" : "md"}
-  />
+  <Icon className="u-ml-3xs" name="chevron" rotate="90" size={size === 'sm' ? 'sm' : 'md'} />
 );
 
-export const LinkExternal: React.FunctionComponent<LinkExternalProps> = (
-  props
-) => {
+export const LinkExternal: React.FunctionComponent<LinkExternalProps> = (props) => {
   const {
     children,
     className,
     linkUrl,
-    target = "_blank",
+    target = '_blank',
     title,
     mailTo,
     textLink,
@@ -51,12 +45,12 @@ export const LinkExternal: React.FunctionComponent<LinkExternalProps> = (
       textLink,
       weight,
     },
-    className
+    className,
   );
 
   if (linkUrl !== undefined || mailTo !== undefined) {
     const showExternalIcon =
-      target === "_blank" && typeof children === "string" && !hideExternalIcon;
+      target === '_blank' && typeof children === 'string' && !hideExternalIcon;
 
     return (
       <a

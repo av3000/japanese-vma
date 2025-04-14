@@ -1,9 +1,11 @@
-import React from "react";
-import Hashtags from "../../../ui/hashtags";
-import { Link } from "@/components/shared/Link";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import sharedStyles from "../SharedListStyles.module.scss";
+import React from 'react';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
+
+import Hashtags from '../../../ui/hashtags';
+import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Article {
   id: string | number;
@@ -67,43 +69,23 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 
             <div className={sharedStyles.metaInfo}>
               <div className={sharedStyles.statItem}>
-                <Icon
-                  size="sm"
-                  name="eyeRegular"
-                  className={sharedStyles.statIcon}
-                />
+                <Icon size="sm" name="eyeRegular" className={sharedStyles.statIcon} />
                 <span>{article.viewsTotal}</span>
               </div>
               <div className={sharedStyles.statItem}>
-                <Icon
-                  size="sm"
-                  name="bookmarkRegular"
-                  className={sharedStyles.statIcon}
-                />
+                <Icon size="sm" name="bookmarkRegular" className={sharedStyles.statIcon} />
                 <span>{article.savesTotal}</span>
               </div>
               <div className={sharedStyles.statItem}>
-                <Icon
-                  size="sm"
-                  name="downloadSolid"
-                  className={sharedStyles.statIcon}
-                />
+                <Icon size="sm" name="downloadSolid" className={sharedStyles.statIcon} />
                 <span>{article.downloadsTotal}</span>
               </div>
               <div className={sharedStyles.statItem}>
-                <Icon
-                  size="sm"
-                  name="commentSolid"
-                  className={sharedStyles.statIcon}
-                />
+                <Icon size="sm" name="commentSolid" className={sharedStyles.statIcon} />
                 <span>{article.commentsTotal}</span>
               </div>
               <div className={sharedStyles.statItem}>
-                <Icon
-                  size="sm"
-                  name="thumbsUpSolid"
-                  className={sharedStyles.statIcon}
-                />
+                <Icon size="sm" name="thumbsUpSolid" className={sharedStyles.statIcon} />
                 <span>{article.likesTotal}</span>
               </div>
             </div>

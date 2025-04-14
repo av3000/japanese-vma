@@ -1,16 +1,19 @@
-import * as React from "react";
-import classNames from "classnames";
-import { icons } from "@/assets/icons";
-import { capitalize } from "@/helpers";
-import styles from "./Icon.module.scss";
+import * as React from 'react';
+
+import classNames from 'classnames';
+
+import { icons } from '@/assets/icons';
+import { capitalize } from '@/helpers';
+
+import styles from './Icon.module.scss';
 
 export const iconNames = Object.keys(icons);
 export type IconName = keyof typeof icons;
 
-export const iconSizes = ["sm", "md", "lg"] as const;
+export const iconSizes = ['sm', 'md', 'lg'] as const;
 export type IconSize = (typeof iconSizes)[number];
 
-export const iconRotations = ["90", "180", "270"] as const;
+export const iconRotations = ['90', '180', '270'] as const;
 export type IconRotation = (typeof iconRotations)[number];
 
 export interface IconProps {
@@ -35,9 +38,9 @@ export const Icon: React.FunctionComponent<IconProps> = ({
 
   const iconClassNames = classNames(
     styles.icon,
-    styles[`size${capitalize(size ?? "md")}`],
+    styles[`size${capitalize(size ?? 'md')}`],
     mobileSize && styles[`mobileSize${capitalize(mobileSize)}`],
-    className
+    className,
   );
 
   return (
@@ -49,7 +52,7 @@ export const Icon: React.FunctionComponent<IconProps> = ({
       }}
       style={
         {
-          "--rotate": rotate !== undefined ? `${rotate}deg` : undefined,
+          '--rotate': rotate !== undefined ? `${rotate}deg` : undefined,
         } as React.CSSProperties
       }
     />

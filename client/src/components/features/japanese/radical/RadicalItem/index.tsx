@@ -1,7 +1,8 @@
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import { Link } from "@/components/shared/Link";
-import React from "react";
+import React from 'react';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
 
 interface RadicalItemProps {
   id: string | number;

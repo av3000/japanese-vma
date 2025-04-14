@@ -1,6 +1,6 @@
 const getAllCssVars = (
   prefix: string | undefined = undefined,
-  styleSheets = document.styleSheets
+  styleSheets = document.styleSheets,
 ): string[] => {
   const cssVars: string[] = [];
 
@@ -19,10 +19,7 @@ const getAllCssVars = (
           for (let k = 0; k < cssRule.style.length; k++) {
             const name = cssRule.style[k];
             // test name for css variable signature, optional prefix and uniqueness
-            if (
-              name.startsWith(`--${prefix || ""}`) &&
-              !cssVars.includes(name)
-            ) {
+            if (name.startsWith(`--${prefix || ''}`) && !cssVars.includes(name)) {
               cssVars.push(name);
             }
           }
@@ -41,7 +38,7 @@ const getAllCssVars = (
 export const getElemCSSVars = (
   prefix: string | undefined = undefined,
   element = document.documentElement,
-  pseudo = undefined
+  pseudo = undefined,
 ): Record<string, string> => {
   const allCSSVars = getAllCssVars(prefix);
   const elStyles = window.getComputedStyle(element, pseudo);

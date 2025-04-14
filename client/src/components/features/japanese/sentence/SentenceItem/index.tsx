@@ -1,7 +1,8 @@
-import React from "react";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import { Link } from "@/components/shared/Link";
+import React from 'react';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
 
 interface SentenceItemProps {
   id: string | number;
@@ -33,7 +34,7 @@ const SentenceItem: React.FC<SentenceItemProps> = ({
             <p>UserAuthor - {userId}</p>
           ) : (
             <p>
-              Tatoeba entry -{" "}
+              Tatoeba entry -{' '}
               <a
                 href={`https://tatoeba.org/eng/sentences/show/${tatoeba_entry}`}
                 target="_blank"

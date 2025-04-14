@@ -1,6 +1,7 @@
-import React from "react";
-import styles from "./PageLoader.module.scss";
-import { useSelector } from "react-redux";
+import React from 'react';
+import { useSelector } from 'react-redux';
+
+import styles from './PageLoader.module.scss';
 
 interface ApplicationState {
   loading: boolean;
@@ -14,7 +15,7 @@ interface RootState {
 
 const PageLoader: React.FC = () => {
   const { loading, loadingText, approximateLoad } = useSelector(
-    (state: RootState) => state.application
+    (state: RootState) => state.application,
   );
 
   if (!loading) return null;

@@ -1,11 +1,12 @@
-import * as React from "react";
-import classNames from "classnames";
-import styles from "./Button.module.scss";
-import { useButtonClassNames } from "./hooks";
-import { ButtonBaseProps } from "./types";
+import * as React from 'react';
 
-export type ButtonRegularProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-  ButtonBaseProps;
+import classNames from 'classnames';
+
+import styles from './Button.module.scss';
+import { useButtonClassNames } from './hooks';
+import { ButtonBaseProps } from './types';
+
+export type ButtonRegularProps = React.ButtonHTMLAttributes<HTMLButtonElement> & ButtonBaseProps;
 
 /**
  * Button that is rendered as a regular HTML button
@@ -18,7 +19,7 @@ export const ButtonRegular: React.FunctionComponent<ButtonRegularProps> = ({
   hasOnlyIcon,
   ctaGroupPos,
   children,
-  type = "button",
+  type = 'button',
   hasNoPaddingX,
   disabled,
   isLoading,
@@ -35,19 +36,12 @@ export const ButtonRegular: React.FunctionComponent<ButtonRegularProps> = ({
       disabled,
       isLoading,
     },
-    className
+    className,
   );
 
   return (
-    <button
-      className={classes}
-      type={type}
-      disabled={disabled || isLoading}
-      {...buttonProps}
-    >
-      {isLoading && (
-        <span className={classNames(styles.spinner, "u-spinner")} />
-      )}
+    <button className={classes} type={type} disabled={disabled || isLoading} {...buttonProps}>
+      {isLoading && <span className={classNames(styles.spinner, 'u-spinner')} />}
       {isLoading === undefined ? (
         <>{children}</>
       ) : (

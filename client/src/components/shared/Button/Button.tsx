@@ -1,11 +1,10 @@
-import React from "react";
-import { ButtonAnchor, ButtonAnchorProps } from "./ButtonAnchor";
-import { ButtonRegular, ButtonRegularProps } from "./ButtonRegular";
-import { ButtonRouterLink, ButtonRouterLinkProps } from "./ButtonRouterLink";
+import React from 'react';
 
-export type ButtonProps = ButtonAnchorProps &
-  ButtonRegularProps &
-  ButtonRouterLinkProps;
+import { ButtonAnchor, ButtonAnchorProps } from './ButtonAnchor';
+import { ButtonRegular, ButtonRegularProps } from './ButtonRegular';
+import { ButtonRouterLink, ButtonRouterLinkProps } from './ButtonRouterLink';
+
+export type ButtonProps = ButtonAnchorProps & ButtonRegularProps & ButtonRouterLinkProps;
 
 /**
  * Generic Button component, can be rendered as button or anchor, depending on props passed to it.

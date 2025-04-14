@@ -1,51 +1,48 @@
 // src/routes/routes.tsx
-import React, { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
-import ProtectedRoute from "@/helpers/PrivateRoute";
-import PageLoader from "@/components/features/PageLoader";
+import React, { Suspense, lazy } from 'react';
+import { Route, Routes } from 'react-router-dom';
+
+import PageLoader from '@/components/features/PageLoader';
+import ProtectedRoute from '@/helpers/PrivateRoute';
 
 // Lazy-loaded page components
-const HomePage = lazy(() => import("@/routes/Homepage"));
-const PageNotFound = lazy(() => import("@/routes/NotFound"));
+const HomePage = lazy(() => import('@/routes/Homepage'));
+const PageNotFound = lazy(() => import('@/routes/NotFound'));
 
 // Auth routes
-const LoginPage = lazy(() => import("@/routes/Login"));
-const RegisterPage = lazy(() => import("@/routes/Register"));
+const LoginPage = lazy(() => import('@/routes/Login'));
+const RegisterPage = lazy(() => import('@/routes/Register'));
 
 // Article routes
-const ArticlesListPage = lazy(() => import("@/routes/ArticlesList"));
-const ArticleDetailsPage = lazy(() => import("@/routes/ArticleDetails"));
-const ArticleFormPage = lazy(() => import("@/routes/ArticleForm"));
-const ArticleEditPage = lazy(() => import("@/routes/ArticleEdit"));
+const ArticlesListPage = lazy(() => import('@/routes/ArticlesList'));
+const ArticleDetailsPage = lazy(() => import('@/routes/ArticleDetails'));
+const ArticleFormPage = lazy(() => import('@/routes/ArticleForm'));
+const ArticleEditPage = lazy(() => import('@/routes/ArticleEdit'));
 
 // List routes
-const ListsPage = lazy(() => import("@/routes/SavedLists"));
-const ListDetailsPage = lazy(() => import("@/routes/SavedListDetails"));
-const ListFormPage = lazy(() => import("@/routes/SavedListForm"));
-const ListEditPage = lazy(() => import("@/routes/SavedListEdit"));
+const ListsPage = lazy(() => import('@/routes/SavedLists'));
+const ListDetailsPage = lazy(() => import('@/routes/SavedListDetails'));
+const ListFormPage = lazy(() => import('@/routes/SavedListForm'));
+const ListEditPage = lazy(() => import('@/routes/SavedListEdit'));
 
 // Japanese learning routes
-const RadicalsPage = lazy(() => import("@/routes/japanese/RadicalsList"));
-const RadicalDetailsPage = lazy(
-  () => import("@/routes/japanese/RadicalDetails")
-);
-const KanjisPage = lazy(() => import("@/routes/japanese/KanjisList"));
-const KanjiDetailsPage = lazy(() => import("@/routes/japanese/KanjiDetails"));
-const WordsPage = lazy(() => import("@/routes/japanese/WordsList"));
-const WordDetailsPage = lazy(() => import("@/routes/japanese/WordDetails"));
-const SentencesPage = lazy(() => import("@/routes/japanese/SentencesList"));
-const SentenceDetailsPage = lazy(
-  () => import("@/routes/japanese/SentenceDetails")
-);
+const RadicalsPage = lazy(() => import('@/routes/japanese/RadicalsList'));
+const RadicalDetailsPage = lazy(() => import('@/routes/japanese/RadicalDetails'));
+const KanjisPage = lazy(() => import('@/routes/japanese/KanjisList'));
+const KanjiDetailsPage = lazy(() => import('@/routes/japanese/KanjiDetails'));
+const WordsPage = lazy(() => import('@/routes/japanese/WordsList'));
+const WordDetailsPage = lazy(() => import('@/routes/japanese/WordDetails'));
+const SentencesPage = lazy(() => import('@/routes/japanese/SentencesList'));
+const SentenceDetailsPage = lazy(() => import('@/routes/japanese/SentenceDetails'));
 
 // Community routes
-const CommunityPage = lazy(() => import("@/routes/community/PostsList"));
-const PostDetailsPage = lazy(() => import("@/routes/community/PostDetails"));
-const PostFormPage = lazy(() => import("@/routes/community/PostForm"));
-const PostEditPage = lazy(() => import("@/routes/community/PostEdit"));
+const CommunityPage = lazy(() => import('@/routes/community/PostsList'));
+const PostDetailsPage = lazy(() => import('@/routes/community/PostDetails'));
+const PostFormPage = lazy(() => import('@/routes/community/PostForm'));
+const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 
 // Dashboard routes
-const DashboardPage = lazy(() => import("@/routes/Dashboard"));
+const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
 // Wrap all lazy-loaded components with the suspense boundary
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (

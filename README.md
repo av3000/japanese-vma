@@ -294,17 +294,23 @@ npm start
 - [?] Cache or Store pre-generated materials like PDFs.
 - [ ] Translations manager.
 - [ ] API types schema generation with Orvel.
+- [ ] PostHog / Sentry (?)
+- [ ] Matomo (?)
 
 <!-- Tasks -->
 
 - [x] Migrate from CRA to Vite
 - [x] Add Typescript and start using .tsx
 - [x] Create storybook for components
-- [ ] Add ESlint
+- [x] Add ESlint
 - [ ] Add Husky for hooks
 -
 
 - UI Components:
+  - dependency tree:
+    - ex: (article->words->kanjis->radicals)
+    - ex: in material details page word->kanjis->radicals
+    - ex: in lists
   - [x] Button
   - Product card
   - Dropdown

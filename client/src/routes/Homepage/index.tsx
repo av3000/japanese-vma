@@ -1,21 +1,16 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React from 'react';
+import { useSelector } from 'react-redux';
 
-import "./Homepage.scss";
-import InstagramIcon from "@/assets/icons/ig-icon.svg";
-import FacebookIcon from "@/assets/icons/fb-icon.svg";
-import {
-  ExploreArticleList,
-  ExploreCustomList,
-} from "@/components/features/Homepage";
+import FacebookIcon from '@/assets/icons/fb-icon.svg';
+import InstagramIcon from '@/assets/icons/ig-icon.svg';
+import { ExploreArticleList, ExploreCustomList } from '@/components/features/Homepage';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
 
-import { Link } from "@/components/shared/Link";
-import { Icon } from "@/components/shared/Icon";
+import './Homepage.scss';
 
 const Homepage: React.FC = () => {
-  const isAuthenticated = useSelector(
-    (state: any) => state.currentUser.isAuthenticated
-  );
+  const isAuthenticated = useSelector((state: any) => state.currentUser.isAuthenticated);
 
   if (!isAuthenticated) {
     return (
@@ -26,13 +21,12 @@ const Homepage: React.FC = () => {
               <div className="homepage-left-column">
                 <div className="home-hero-header">
                   <h1>
-                    Learn <span className="text-brand">japanese</span> in the
-                    natural context{" "}
+                    Learn <span className="text-brand">japanese</span> in the natural context{' '}
                   </h1>
                   <p>
-                    JPLearning is the unique community and language learning
-                    environment <span className="text-brand">for you</span> to
-                    find &amp; share readings and material of your interest
+                    JPLearning is the unique community and language learning environment{' '}
+                    <span className="text-brand">for you</span> to find &amp; share readings and
+                    material of your interest
                   </p>
                 </div>
                 <div className="home-hero-explore">

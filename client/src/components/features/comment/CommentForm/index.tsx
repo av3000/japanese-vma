@@ -1,8 +1,10 @@
-import React, { useState, FormEvent, ChangeEvent } from "react";
-import axios from "axios";
-import { BASE_URL } from "@/shared/constants";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
+import React, { ChangeEvent, FormEvent, useState } from 'react';
+
+import axios from 'axios';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { BASE_URL } from '@/shared/constants';
 
 const MAX_CHAR_LIMIT = 1000;
 
@@ -45,25 +47,25 @@ const CommentForm: React.FC<CommentFormProps> = ({
   objectType,
   addComment,
 }) => {
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newMessage = e.target.value.slice(0, MAX_CHAR_LIMIT);
     setMessage(newMessage);
-    setError(newMessage.trim() ? "" : "Message is empty.");
+    setError(newMessage.trim() ? '' : 'Message is empty.');
   };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentUser.isAuthenticated) {
-      history.push("/login");
+      history.push('/login');
       return;
     }
 
     if (!message.trim()) {
-      setError("Message is empty.");
+      setError('Message is empty.');
       return;
     }
 
@@ -75,9 +77,9 @@ const CommentForm: React.FC<CommentFormProps> = ({
       const newComment = res.data.comment as Comment;
       newComment.userName = currentUser.user.name;
       addComment(newComment);
-      setMessage("");
+      setMessage('');
     } catch (err) {
-      console.error("Error adding comment:", err);
+      console.error('Error adding comment:', err);
     } finally {
       setIsLoading(false);
     }
