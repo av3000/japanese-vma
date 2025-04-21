@@ -1,9 +1,11 @@
-import React, { useState } from "react";
-import { Link } from "@/components/shared/Link";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import { Modal } from "react-bootstrap";
-import sharedStyles from "../SharedListStyles.module.scss";
+import React, { useState } from 'react';
+import { Modal } from 'react-bootstrap';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
+
+import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Word {
   id: string | number;
@@ -35,9 +37,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
   listUserId,
   editToggle = false,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState<
-    number | string | null
-  >(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
   const handleDeleteModalClose = () => {
     setShowDeleteModal(null);
@@ -56,7 +56,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
     <div className={sharedStyles.listContainer}>
       {objects.map((word) => {
         // Process meaning properly
-        const meanings = word.meaning.split(",").slice(0, 3).join(", ");
+        const meanings = word.meaning.split(',').slice(0, 3).join(', ');
 
         return (
           <div key={word.id} className={sharedStyles.itemCard}>
@@ -112,10 +112,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
                   <Button variant="secondary" onClick={handleDeleteModalClose}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDeleteConfirm(word.id)}
-                  >
+                  <Button variant="danger" onClick={() => handleDeleteConfirm(word.id)}>
                     Yes, delete
                   </Button>
                 </>

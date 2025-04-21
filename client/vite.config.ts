@@ -10,6 +10,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       checker({
         typescript: true,
+        eslint: {
+          useFlatConfig: true,
+          lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
+        },
       }),
       react(),
     ],
@@ -28,6 +32,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      outDir: "build",
       cssCodeSplit: false,
       sourcemap: !isProduction,
       rollupOptions: {

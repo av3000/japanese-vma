@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+.storybook/
+storybook-static/
+eslint.config.mjs
+*.d.ts
+*.config.js
+*.config.mjs
+vite.config.ts
+vitest.workspace.ts

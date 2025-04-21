@@ -1,4 +1,4 @@
-import React, { useEffect, ChangeEvent } from "react";
+import React, { ChangeEvent, useEffect } from 'react';
 
 interface SearchFilters {
   keyword: string;
@@ -8,13 +8,13 @@ interface SearchFilters {
 
 interface SearchbarProps {
   filterResults: (data: SearchFilters) => void;
-  searchType?: "articles" | "lists" | string;
+  searchType?: 'articles' | 'lists' | string;
 }
 
 const Searchbar: React.FC<SearchbarProps> = ({ filterResults, searchType }) => {
   const [filters, setFilters] = React.useState<SearchFilters>({
-    keyword: "",
-    sortByWhat: "new",
+    keyword: '',
+    sortByWhat: 'new',
     filterType: 20,
   });
 
@@ -34,9 +34,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ filterResults, searchType }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLSelectElement | HTMLInputElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -60,7 +58,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ filterResults, searchType }) => {
             />
           </div>
           <div className="col-lg-4 col-md-4 col-sm-12 mt-3">
-            {searchType === "articles" && (
+            {searchType === 'articles' && (
               <select
                 name="filterType"
                 value={filters.filterType}
@@ -76,7 +74,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ filterResults, searchType }) => {
                 <option value="6">Uncommon</option>
               </select>
             )}
-            {searchType === "lists" && (
+            {searchType === 'lists' && (
               <select
                 name="filterType"
                 value={filters.filterType}

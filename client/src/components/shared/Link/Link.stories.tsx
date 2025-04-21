@@ -1,9 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Link } from "../Link";
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { Link } from '../Link';
 
 const meta: Meta<typeof Link> = {
   component: Link,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -13,25 +14,25 @@ export const SetUrlViaRoute: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
     route: {
-      externalRoute: "/en/some-category",
+      externalRoute: '/en/some-category',
     },
-    linkUrl: "/en/some-category",
+    linkUrl: '/en/some-category',
   },
 };
 
 export const SetUrlViaToSimple: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
+    to: '/en/cms-demo',
   },
 };
 
 export const SetUrlViaToWithState: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/some-category",
+    to: '/en/some-category',
     state: {
-      externalRoute: "/en/some-category",
+      externalRoute: '/en/some-category',
     },
   },
 };
@@ -39,30 +40,30 @@ export const SetUrlViaToWithState: Story = {
 export const SetUrlViaLinkUrl: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    linkUrl: "https://google.com",
+    linkUrl: 'https://google.com',
   },
 };
 
 export const HasTarget: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    linkUrl: "https://google.com",
-    target: "_blank",
+    linkUrl: 'https://google.com',
+    target: '_blank',
   },
 };
 
 export const HasTitle: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    title: "Links title shown on hover",
+    to: '/en/cms-demo',
+    title: 'Links title shown on hover',
   },
 };
 
 export const HasTextLinkStyles: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
+    to: '/en/cms-demo',
     textLink: true,
   },
 };
@@ -70,7 +71,7 @@ export const HasTextLinkStyles: Story = {
 export const HasRichTextLinkStyles: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
+    to: '/en/cms-demo',
     richTextLink: true,
   },
 };
@@ -78,7 +79,7 @@ export const HasRichTextLinkStyles: Story = {
 export const HasMinHeightStyles: Story = {
   render: (args) => <Link {...args}>Min height to increase click area</Link>,
   args: {
-    to: "/en/cms-demo",
+    to: '/en/cms-demo',
     hasMinHeight: true,
   },
 };
@@ -86,47 +87,47 @@ export const HasMinHeightStyles: Story = {
 export const IsColorDefault: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    color: "default",
+    to: '/en/cms-demo',
+    color: 'default',
   },
 };
 
 export const IsSizeSm: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    size: "sm",
+    to: '/en/cms-demo',
+    size: 'sm',
   },
 };
 
 export const IsSizeMd: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    size: "md",
+    to: '/en/cms-demo',
+    size: 'md',
   },
 };
 
 export const IsSizeLg: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    size: "lg",
+    to: '/en/cms-demo',
+    size: 'lg',
   },
 };
 
 export const IsWeightRegular: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    weight: "regular",
+    to: '/en/cms-demo',
+    weight: 'regular',
   },
 };
 
 export const IsWeightBold: Story = {
   render: (args) => <Link {...args}>Some link</Link>,
   args: {
-    to: "/en/cms-demo",
-    weight: "bold",
+    to: '/en/cms-demo',
+    weight: 'bold',
   },
 };

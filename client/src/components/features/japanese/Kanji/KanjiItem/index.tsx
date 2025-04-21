@@ -1,6 +1,7 @@
-import { Button } from "@/components/shared/Button";
-import { Link } from "@/components/shared/Link";
-import React from "react";
+import React from 'react';
+
+import { Button } from '@/components/shared/Button';
+import { Link } from '@/components/shared/Link';
 
 interface KanjiItemProps {
   id: string | number;

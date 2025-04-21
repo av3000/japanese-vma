@@ -1,10 +1,13 @@
-import React, { useState } from "react";
-import { Modal } from "react-bootstrap";
-import { Link } from "@/components/shared/Link";
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import sharedStyles from "../SharedListStyles.module.scss";
-import classNames from "classnames";
+import React, { useState } from 'react';
+import { Modal } from 'react-bootstrap';
+
+import classNames from 'classnames';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
+
+import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Radical {
   id: string | number;
@@ -35,9 +38,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
   listUserId,
   editToggle = false,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState<
-    number | string | null
-  >(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
   const handleDeleteModalClose = () => {
     setShowDeleteModal(null);
@@ -53,12 +54,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
   };
 
   return (
-    <div
-      className={classNames(
-        sharedStyles.listContainer,
-        sharedStyles.radicalsContainer
-      )}
-    >
+    <div className={classNames(sharedStyles.listContainer, sharedStyles.radicalsContainer)}>
       {objects.map((radical) => {
         return (
           <div key={radical.id} className={sharedStyles.itemCard}>
@@ -73,10 +69,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
                   size="md"
                   variant="danger"
                   onClick={() => openModal(radical.id)}
-                  className={classNames(
-                    sharedStyles.removeButton,
-                    sharedStyles.absolute
-                  )}
+                  className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
                 >
                   <Icon size="sm" name="minusSolid" />
                 </Button>
@@ -86,29 +79,19 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
             <div className={sharedStyles.itemDetails}>
               <div className={sharedStyles.detailItem}>
                 <span className={sharedStyles.detailLabel}>Meaning:</span>
-                <span className={sharedStyles.detailValue}>
-                  {radical.meaning}
-                </span>
+                <span className={sharedStyles.detailValue}>{radical.meaning}</span>
               </div>
 
               <div className={sharedStyles.detailItem}>
                 <span className={sharedStyles.detailLabel}>Hiragana:</span>
-                <span className={sharedStyles.detailValue}>
-                  {radical.hiragana || "—"}
-                </span>
+                <span className={sharedStyles.detailValue}>{radical.hiragana || '—'}</span>
               </div>
             </div>
 
-            <div
-              className={classNames(
-                sharedStyles.metaInfo,
-                sharedStyles.centered
-              )}
-            >
+            <div className={classNames(sharedStyles.metaInfo, sharedStyles.centered)}>
               <div className={sharedStyles.badge}>
                 <span>
-                  {radical.strokes}{" "}
-                  {radical.strokes === 1 ? "stroke" : "strokes"}
+                  {radical.strokes} {radical.strokes === 1 ? 'stroke' : 'strokes'}
                 </span>
               </div>
             </div>
@@ -122,10 +105,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
                   <Button variant="secondary" onClick={handleDeleteModalClose}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDeleteConfirm(radical.id)}
-                  >
+                  <Button variant="danger" onClick={() => handleDeleteConfirm(radical.id)}>
                     Yes, delete
                   </Button>
                 </>

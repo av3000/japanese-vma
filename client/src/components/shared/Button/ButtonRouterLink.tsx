@@ -1,17 +1,15 @@
-import React from "react";
-import { Link, LinkProps } from "../Link";
-import { useButtonClassNames } from "./hooks";
-import { ButtonBaseProps } from "./types";
+import React from 'react';
 
-export type ButtonRouterLinkProps = Partial<Omit<LinkProps, "size">> &
-  ButtonBaseProps;
+import { Link, LinkProps } from '../Link';
+import { useButtonClassNames } from './hooks';
+import { ButtonBaseProps } from './types';
+
+export type ButtonRouterLinkProps = Partial<Omit<LinkProps, 'size'>> & ButtonBaseProps;
 
 /**
  * Button used for navigating router links
  */
-export const ButtonRouterLink: React.FunctionComponent<
-  ButtonRouterLinkProps
-> = ({
+export const ButtonRouterLink: React.FunctionComponent<ButtonRouterLinkProps> = ({
   className,
   variant,
   size,
@@ -37,16 +35,11 @@ export const ButtonRouterLink: React.FunctionComponent<
       disabled,
       isLoading,
     },
-    className
+    className,
   );
 
   return (
-    <Link
-      className={classes}
-      to={to ?? route?.externalRoute}
-      state={route}
-      {...routerLinkProps}
-    >
+    <Link className={classes} to={to ?? route?.externalRoute} state={route} {...routerLinkProps}>
       {children}
     </Link>
   );

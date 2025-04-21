@@ -1,7 +1,8 @@
-import React from "react";
-import DefaultArticleImg from "@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg";
-import Hashtags from "@/components/ui/hashtags";
-import { Link } from "@/components/shared/Link";
+import React from 'react';
+
+import DefaultArticleImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
+import { Link } from '@/components/shared/Link';
+import Hashtags from '@/components/ui/hashtags';
 
 interface Hashtag {
   id: string | number;

@@ -1,7 +1,8 @@
-import { Button } from "@/components/shared/Button";
-import { Icon } from "@/components/shared/Icon";
-import React, { FormEvent } from "react";
-import { Form, InputGroup } from "react-bootstrap";
+import React, { FormEvent } from 'react';
+import { Form, InputGroup } from 'react-bootstrap';
+
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
 
 interface SearchQuery {
   keyword: string;
@@ -11,10 +12,8 @@ interface SearchBarSentencesProps {
   fetchQuery: (query: SearchQuery) => void;
 }
 
-const SearchBarSentences: React.FC<SearchBarSentencesProps> = ({
-  fetchQuery,
-}) => {
-  const [keyword, setKeyword] = React.useState<string>("");
+const SearchBarSentences: React.FC<SearchBarSentencesProps> = ({ fetchQuery }) => {
+  const [keyword, setKeyword] = React.useState<string>('');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -1,9 +1,9 @@
-import * as React from "react";
-import { useButtonClassNames } from "./hooks";
-import { ButtonBaseProps } from "./types";
+import * as React from 'react';
 
-export type ButtonAnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> &
-  ButtonBaseProps;
+import { useButtonClassNames } from './hooks';
+import { ButtonBaseProps } from './types';
+
+export type ButtonAnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & ButtonBaseProps;
 
 /**
  * Button that is rendered as a HTML anchor
@@ -32,7 +32,7 @@ export const ButtonAnchor: React.FunctionComponent<ButtonAnchorProps> = ({
       disabled,
       isLoading,
     },
-    className
+    className,
   );
 
   return (

@@ -1,6 +1,7 @@
-import classNames from "classnames";
-import styles from "./Button.module.scss";
-import { ButtonBaseProps } from "./types";
+import classNames from 'classnames';
+
+import styles from './Button.module.scss';
+import { ButtonBaseProps } from './types';
 
 const capitalize = (word: string): string =>
   word.length > 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word;
@@ -15,8 +16,8 @@ export const useButtonClassNames = (
     isLoading,
     size,
     variant,
-  }: Omit<ButtonBaseProps, "aria-label">,
-  className?: string
+  }: Omit<ButtonBaseProps, 'aria-label'>,
+  className?: string,
 ): string => {
   return classNames(
     {
@@ -29,6 +30,6 @@ export const useButtonClassNames = (
     },
     variant !== undefined && styles[`variant${capitalize(variant)}`],
     size !== undefined && styles[`size${capitalize(size)}`],
-    className
+    className,
   );
 };

@@ -1,14 +1,10 @@
-import * as React from "react";
-import {
-  Link as RouterLink,
-  LinkProps as RouterLinkProps,
-} from "react-router-dom";
-import { useLinkClassNames } from "./hooks";
-import { LinkBaseProps, LinkColor } from "./types";
+import * as React from 'react';
+import { Link as RouterLink, LinkProps as RouterLinkProps } from 'react-router-dom';
 
-export interface LinkRouterProps
-  extends LinkBaseProps,
-    Partial<RouterLinkProps> {
+import { useLinkClassNames } from './hooks';
+import { LinkBaseProps, LinkColor } from './types';
+
+export interface LinkRouterProps extends LinkBaseProps, Partial<RouterLinkProps> {
   readonly color?: LinkColor;
   readonly route?: any;
 }
@@ -39,13 +35,13 @@ export const LinkRouter: React.FunctionComponent<LinkRouterProps> = ({
       textLink,
       weight,
     },
-    className
+    className,
   );
 
   return (
     <RouterLink
       className={cssClasses}
-      to={to ?? route?.externalRoute ?? ""}
+      to={to ?? route?.externalRoute ?? ''}
       state={route}
       target={target}
       title={title}

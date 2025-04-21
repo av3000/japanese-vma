@@ -1,8 +1,10 @@
-import React from "react";
-import { Link } from "@/components/shared/Link";
-import DefaultArticleImg from "@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg";
-import "./ArticleItem.css";
-import Hashtags from "@/components/ui/hashtags";
+import React from 'react';
+
+import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import { Link } from '@/components/shared/Link';
+import Hashtags from '@/components/ui/hashtags';
+
+import './ArticleItem.css';
 
 interface Hashtag {
   id: string | number;
