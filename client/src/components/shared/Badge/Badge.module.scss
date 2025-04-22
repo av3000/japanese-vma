@@ -1,0 +1,50 @@
+@use '@/styles/01-tools/media';
+
+.badge {
+	// Visual styling
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--color-neutral-0, white);
+
+	// Sizing and shape
+	min-width: var(--size-md);
+	height: var(--size-md);
+	padding: 0 var(--size-xs);
+	border-radius: var(--size-md);
+
+	// Typography
+	font-size: var(--font-size-body-xs, 0.75rem);
+	font-weight: var(--font-weight-medium, 500);
+	line-height: 1;
+
+	// Empty badge (dot style)
+	&:empty {
+		min-width: var(--size-xs);
+		width: var(--size-xs);
+		height: var(--size-xs);
+		padding: 0;
+	}
+}
+
+// Color variants
+.neutral {
+	background-color: var(--color-neutral-500, #6c757d);
+}
+
+.danger {
+	background-color: var(--color-danger, #f44336);
+}
+
+// For positioning on other elements
+.wrapper {
+	position: relative;
+	display: inline-flex;
+}
+
+.positioned {
+	position: absolute;
+	top: calc(-1 * var(--size-xs));
+	right: calc(-1 * var(--size-xs));
+	z-index: 1;
+}
