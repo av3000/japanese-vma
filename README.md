@@ -328,10 +328,11 @@ npm run storybook
   - Input Text
   - Input Checkbox
   - Tabgroup (articles/lists in dashboard)
-  - Badge
+  - [x] Avatar
+  - [x] Badge
   - [x] Icon
   - [x] Link
-  - Image
+  - [x]Image
   - Spinner
   - Info message
   - Toast Message

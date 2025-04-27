@@ -1,17 +1,54 @@
+// Badge.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '../Button/Button';
-import Badge, { BadgeWrapper } from './';
+import { Button } from '@/components/shared/Button';
+import AvatarWithStatus from '../AvatarWithStatus';
+import { Badge } from './Badge';
+import AnimatedBadgeDemo from './BadgeAnimatedDemo';
 
 const meta: Meta<typeof Badge> = {
 	component: Badge,
+	title: 'Components/Badge',
 	tags: ['autodocs'],
 	argTypes: {
-		variant: {
-			options: ['neutral', 'danger'],
+		color: {
+			options: ['primary', 'secondary', 'error', 'success', 'warning'],
 			control: { type: 'radio' },
+			description: 'The color of the badge',
+			defaultValue: 'primary',
 		},
-		isPositioned: {
+		anchorOrigin: {
+			description: 'The anchor of the badge',
+			defaultValue: { vertical: 'top', horizontal: 'right' },
+		},
+		invisible: {
 			control: { type: 'boolean' },
+			description: 'If true, the badge is invisible',
+			defaultValue: false,
+		},
+		max: {
+			control: { type: 'number' },
+			description: 'Max count to show',
+		},
+		showZero: {
+			control: { type: 'boolean' },
+			description: 'Controls whether the badge is hidden when badgeContent is zero',
+			defaultValue: false,
+		},
+		variant: {
+			options: ['standard', 'dot'],
+			control: { type: 'radio' },
+			description: 'The variant to use',
+			defaultValue: 'standard',
+		},
+		standalone: {
+			control: { type: 'boolean' },
+			description: 'If true, the badge is standalone without children',
+			defaultValue: false,
+		},
+		animated: {
+			control: { type: 'boolean' },
+			description: 'If true, the badge will animate when content changes',
+			defaultValue: false,
 		},
 	},
 };
@@ -19,148 +56,336 @@ const meta: Meta<typeof Badge> = {
 export default meta;
 type Story = StoryObj<typeof Badge>;
 
-// Basic badge examples
 export const Default: Story = {
-	render: (args) => <Badge {...args}>42</Badge>,
-};
-
-export const Neutral: Story = {
-	render: (args) => <Badge {...args}>42</Badge>,
 	args: {
-		variant: 'neutral',
+		badgeContent: 4,
+		children: <Button variant="secondary-outline">Notifications</Button>,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Basic Badge Usage
+
+The Badge component displays a small badge to the top-right corner of its child component.
+
+\`\`\`tsx
+import { Badge } from '@/components/shared/Badge';
+import { Button } from '@/components/shared/Button';
+
+// Basic usage
+<Badge badgeContent={4}>
+  <Button variant="secondary-outline">Notifications</Button>
+</Badge>
+\`\`\`
+        `,
+			},
+		},
 	},
 };
 
-export const Danger: Story = {
-	render: (args) => <Badge {...args}>42</Badge>,
-	args: {
-		variant: 'danger',
+export const Colors: Story = {
+	render: () => (
+		<div style={{ display: 'flex', gap: '16px' }}>
+			<Badge badgeContent={4} color="primary">
+				<Button variant="secondary-outline">Primary</Button>
+			</Badge>
+
+			<Badge badgeContent={4} color="secondary">
+				<Button variant="secondary-outline">Secondary</Button>
+			</Badge>
+
+			<Badge badgeContent={4} color="error">
+				<Button variant="secondary-outline">Error</Button>
+			</Badge>
+
+			<Badge badgeContent={4} color="success">
+				<Button variant="secondary-outline">Success</Button>
+			</Badge>
+
+			<Badge badgeContent={4} color="warning">
+				<Button variant="secondary-outline">Warning</Button>
+			</Badge>
+		</div>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Color Variants
+
+The Badge component supports different color variants:
+
+- \`primary\` - For general notifications
+- \`secondary\` - For lesser importance notifications
+- \`error\` - For error notifications
+- \`warning\` - For warning notifications
+- \`success\` - For success notifications
+        `,
+			},
+		},
 	},
 };
 
-export const EmptyDot: Story = {
-	render: (args) => <Badge {...args} />,
+export const Dot: Story = {
+	args: {
+		variant: 'dot',
+		children: <Button variant="secondary-outline">Notifications</Button>,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Dot Badge
+
+For simple status indicators, you can use the dot variant.
+
+\`\`\`tsx
+<Badge variant="dot">
+  <Button variant="secondary-outline">Notifications</Button>
+</Badge>
+\`\`\`
+        `,
+			},
+		},
+	},
 };
 
-// Usage examples
-export const NotificationExamples: Story = {
-	render: () => (
-		<div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-			<BadgeWrapper badgeContent={3}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path
-						d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-						fill="currentColor"
-					/>
-				</svg>
-			</BadgeWrapper>
+export const MaxValue: Story = {
+	args: {
+		badgeContent: 142,
+		max: 99,
+		children: <Button variant="secondary-outline">Messages</Button>,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Maximum Value
 
-			<BadgeWrapper badgeContent={''} badgeProps={{ variant: 'danger' }}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path
-						d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
-						fill="currentColor"
-					/>
-				</svg>
-			</BadgeWrapper>
+When you need to cap the displayed value, use the max prop.
+
+\`\`\`tsx
+// Will display "99+" instead of 142
+<Badge badgeContent={142} max={99}>
+  <Button variant="secondary-outline">Messages</Button>
+</Badge>
+\`\`\`
+        `,
+			},
+		},
+	},
+};
+
+export const BadgeContent: Story = {
+	render: () => (
+		<div style={{ display: 'flex', gap: '16px' }}>
+			<Badge badgeContent={1}>
+				<Button variant="secondary-outline">Single Digit</Button>
+			</Badge>
+
+			<Badge badgeContent={10}>
+				<Button variant="secondary-outline">Double Digit</Button>
+			</Badge>
+
+			<Badge badgeContent={100}>
+				<Button variant="secondary-outline">Triple Digit</Button>
+			</Badge>
 		</div>
 	),
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Badge Content Size
+
+The badge adapts its shape based on content:
+- Always circular/pill-shaped with rounded ends
+- Expands horizontally to fit longer content
+        `,
+			},
+		},
+	},
 };
 
-export const InlineExamples: Story = {
+export const PositionExamples: Story = {
 	render: () => (
-		<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-			<span>Messages</span>
-			<Badge variant="danger">5</Badge>
-			<span style={{ marginLeft: '16px' }}>Updates</span>
-			<Badge variant="neutral">12</Badge>
-		</div>
-	),
-};
-
-export const StatusExamples: Story = {
-	render: () => (
-		<div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-				<span>Status indicators:</span>
-				<div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-						<Badge variant="danger"></Badge>
-						<span>Urgent</span>
+		<div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+			<div>
+				<h3>Badge Positioning</h3>
+				<div style={{ display: 'flex', gap: '24px', marginTop: '16px', flexWrap: 'wrap' }}>
+					<div>
+						<h4>Top Right (Default)</h4>
+						<div style={{ position: 'relative' }}>
+							<Badge
+								badgeContent={1}
+								color="error"
+								anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+							>
+								<Button variant="secondary-outline">Notifications</Button>
+							</Badge>
+						</div>
 					</div>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-						<Badge variant="neutral"></Badge>
-						<span>Normal</span>
+
+					<div>
+						<h4>Top Left</h4>
+						<div style={{ position: 'relative' }}>
+							<Badge
+								badgeContent={2}
+								color="error"
+								anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+							>
+								<Button variant="secondary-outline">Notifications</Button>
+							</Badge>
+						</div>
+					</div>
+
+					<div>
+						<h4>Bottom Right</h4>
+						<div style={{ position: 'relative' }}>
+							<Badge
+								badgeContent={3}
+								color="error"
+								anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+							>
+								<Button variant="secondary-outline">Notifications</Button>
+							</Badge>
+						</div>
+					</div>
+
+					<div>
+						<h4>Bottom Left</h4>
+						<div style={{ position: 'relative' }}>
+							<Badge
+								badgeContent={4}
+								color="error"
+								anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+							>
+								<Button variant="secondary-outline">Notifications</Button>
+							</Badge>
+						</div>
 					</div>
 				</div>
 			</div>
+		</div>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Badge Positioning
 
-			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-				<div
-					style={{
-						width: '32px',
-						height: '32px',
-						borderRadius: '50%',
-						backgroundColor: '#ccc',
-						position: 'relative',
-					}}
-				>
-					<Badge
-						isPositioned
-						variant="neutral"
+The badge can be positioned at any of the four corners of its child component.
+
+\`\`\`tsx
+// Top-left position
+<Badge 
+  badgeContent={4} 
+  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+>
+  <Button variant="secondary-outline">Notifications</Button>
+</Badge>
+
+// Bottom-right position
+<Badge 
+  badgeContent={4} 
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+>
+  <Button variant="secondary-outline">Notifications</Button>
+</Badge>
+\`\`\`
+        `,
+			},
+		},
+	},
+};
+
+export const StatusIndicators: Story = {
+	render: () => (
+		<div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+			<div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+				<AvatarWithStatus userId="1" linkTitle="JD" status="success" image={{ size180: null }} />
+
+				<div style={{ position: 'relative', display: 'inline-block' }}>
+					<div
 						style={{
-							border: '2px solid white',
-							bottom: '0',
-							top: 'auto',
+							width: '40px',
+							height: '40px',
+							borderRadius: '50%',
+							backgroundColor: '#e0e0e0',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							fontSize: '16px',
+							fontWeight: 'bold',
+						}}
+					>
+						AB
+					</div>
+					<Badge
+						variant="dot"
+						color="error"
+						anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+						style={{
+							position: 'absolute',
+							bottom: 0,
+							right: 0,
+							transform: 'translate(25%, 25%)',
 						}}
 					/>
 				</div>
-				<span>John Doe (online)</span>
 			</div>
 		</div>
 	),
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Status Indicators
+
+Badges can be used as status indicators for avatars and other components.
+
+\`\`\`tsx
+// Online status indicator
+<div style={{ position: 'relative' }}>
+  <Avatar>JD</Avatar>
+  <Badge
+    variant="dot"
+    color="success"
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    standalone={true}
+  />
+</div>
+\`\`\`
+        `,
+			},
+		},
+	},
 };
 
-export const WithGhostButton: Story = {
-	render: () => (
-		<div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-			<div>
-				<h3>Badge with Ghost Button</h3>
-				<div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-					<BadgeWrapper badgeContent={3} badgeProps={{ variant: 'danger' }}>
-						<Button
-							variant="ghost"
-							onClick={(): void => {
-								console.log('notifications button clicked');
-							}}
-						>
-							Notifications
-						</Button>
-					</BadgeWrapper>
+export const AnimatedDemo: Story = {
+	render: () => <AnimatedBadgeDemo />,
+	parameters: {
+		docs: {
+			description: {
+				story: `
+## Animated Badge
 
-					<BadgeWrapper badgeContent={5} badgeProps={{ variant: 'neutral' }}>
-						<Button
-							variant="ghost"
-							onClick={(): void => {
-								console.log('messages button clicked');
-							}}
-						>
-							Messages
-						</Button>
-					</BadgeWrapper>
+The animated badge provides a "pop" animation when the badge value increases above 1.
 
-					<BadgeWrapper badgeContent={''} badgeProps={{ variant: 'danger' }}>
-						<Button
-							variant="ghost"
-							onClick={(): void => {
-								console.log('updates button clicked');
-							}}
-						>
-							Updates
-						</Button>
-					</BadgeWrapper>
-				</div>
-			</div>
-		</div>
-	),
+\`\`\`tsx
+// For an animated badge, add the animated prop
+<Badge badgeContent={count} animated>
+  <Button variant="secondary-outline">Notifications</Button>
+</Badge>
+\`\`\`
+
+### Animation Behavior
+- Badge appears with a scale animation when it first gets a value
+- When the value increases to 2 or higher, a "pop" animation draws attention to the change
+- Only animates when the value is meaningful (2 or higher)
+        `,
+			},
+		},
+	},
 };
