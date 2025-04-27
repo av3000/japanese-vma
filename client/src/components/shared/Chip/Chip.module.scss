@@ -1,0 +1,9 @@
+.wrapper {
+	padding: 0 var(--spacing-xs);
+	min-height: var(--size-xl);
+}
+
+.chipTitle {
+	max-width: 120px;
+	font-size: var(--font-size-body-sm);
+}
