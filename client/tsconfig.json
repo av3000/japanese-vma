@@ -18,6 +18,7 @@
       "@/shared/*": ["src/shared/*"],
       "@/assets/*": ["src/assets/*"],
       "@/helpers/*": ["src/helpers/*"],
+      "@/types/*": ["src/types/*"],
       "@/storybook/*": ["./storybook/*"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     "allowImportingTsExtensions": true,               /* Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set. */

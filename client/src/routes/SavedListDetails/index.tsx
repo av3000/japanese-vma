@@ -11,9 +11,9 @@ import ListItems from '@/components/features/SavedList/SavedListItems';
 import CommentForm from '@/components/features/comment/CommentForm';
 import CommentList from '@/components/features/comment/CommentList';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
-import Hashtags from '@/components/ui/hashtags';
 import { apiCall } from '@/services/api';
 import { BASE_URL, HTTP_METHOD, ObjectTemplates } from '@/shared/constants';
 import { hideLoader, showLoader } from '@/store/actions/application';
@@ -273,7 +273,19 @@ const SavedListDetails: React.FC = () => {
 						<img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img" />
 						<p className="lead">{list.content}</p>
 						<br />
-						<Hashtags hashtags={list.hashtags} />
+						<section className="mt-2 mb-2 d-flex align-items-center flex-wrap">
+							{list.hashtags.map((tag) => (
+								<Chip
+									className="mr-1"
+									readonly
+									key={tag.id + tag.content}
+									title={tag.content}
+									name={tag.content}
+								>
+									{tag.content}
+								</Chip>
+							))}
+						</section>
 						<hr />
 						<div>
 							<div className="mr-1 float-left d-flex">

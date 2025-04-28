@@ -1,0 +1,14 @@
+.wrapper {
+	padding: 0 var(--spacing-xs);
+	min-height: var(--size-xl);
+
+	&.readonly {
+		padding-right: var(--spacing-xs);
+		cursor: default;
+	}
+}
+
+.chipTitle {
+	max-width: 150px;
+	font-size: var(--font-size-body-sm);
+}

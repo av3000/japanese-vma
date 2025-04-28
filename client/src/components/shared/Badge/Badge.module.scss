@@ -1,0 +1,195 @@
+// Badge.module.scss
+
+.root {
+	--badge-size: var(--size-lg);
+	position: relative;
+	display: inline-flex;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+.badge {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	font-family: var(--font-family);
+	font-weight: var(--font-weight-semibold);
+	font-size: var(--font-size-body-xs);
+	min-width: var(--badge-size);
+	height: var(--badge-size);
+	line-height: var(--line-height-sm);
+	padding: 0 var(--size-xs);
+	border-radius: 999px;
+	z-index: 1;
+	pointer-events: none;
+	user-select: none;
+	text-align: center;
+
+	// Hide by default
+	transform: scale(0);
+	transition: transform 0.3s var(--ease-elastic, cubic-bezier(0.25, 0.1, 0.25, 1));
+
+	// Scale in, when has value
+	&.has-value {
+		transform: scale(1);
+	}
+
+	// Pop animation on change
+	&.do-animate {
+		animation: pop 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) 1;
+	}
+
+	// When standalone, it's statically positioned
+	&.standalone {
+		position: static;
+		pointer-events: auto;
+	}
+
+	// Dot variant
+	&.dot {
+		height: var(--size-sm);
+		min-width: var(--size-sm);
+		padding: 0;
+
+		// Dot variant should always be visible if not explicitly invisible
+		&.has-value {
+			transform: scale(1);
+		}
+
+		&.anchor-top-right.has-value {
+			transform: translate(50%, -50%) scale(1);
+		}
+
+		&.anchor-top-left.has-value {
+			transform: translate(-50%, -50%) scale(1);
+		}
+
+		&.anchor-bottom-right.has-value {
+			transform: translate(50%, 50%) scale(1);
+		}
+
+		&.anchor-bottom-left.has-value {
+			transform: translate(-50%, 50%) scale(1);
+		}
+	}
+
+	// Colors
+	&.color-primary {
+		background-color: var(--color-primary);
+		color: var(--color-neutral-0);
+	}
+
+	&.color-secondary {
+		background-color: var(--color-secondary);
+		color: var(--color-neutral-0);
+	}
+
+	&.color-error {
+		background-color: var(--color-error);
+		color: var(--color-neutral-0);
+	}
+
+	&.color-success {
+		background-color: var(--color-success);
+		color: var(--color-neutral-0);
+	}
+
+	&.color-warning {
+		background-color: var(--color-warning);
+		color: var(--color-neutral-900);
+	}
+
+	// Position and anchor origin
+	&.anchor-top-right {
+		top: 5px;
+		right: 5px;
+		transform-origin: 100% 0%;
+		transform: translate(50%, -50%) scale(0);
+
+		&.has-value {
+			transform: translate(50%, -50%) scale(1);
+		}
+
+		&.do-animate {
+			animation: pop-top-right 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) 1;
+		}
+	}
+
+	&.anchor-top-left {
+		top: 5px;
+		left: 5px;
+		transform-origin: 0% 0%;
+		transform: translate(-50%, -50%) scale(0);
+
+		&.has-value {
+			transform: translate(-50%, -50%) scale(1);
+		}
+
+		&.do-animate {
+			animation: pop-top-left 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) 1;
+		}
+	}
+
+	&.anchor-bottom-right {
+		bottom: 5px;
+		right: 5px;
+		transform-origin: 100% 100%;
+		transform: translate(50%, 50%) scale(0);
+
+		&.has-value {
+			transform: translate(50%, 50%) scale(1);
+		}
+
+		&.do-animate {
+			animation: pop-bottom-right 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) 1;
+		}
+	}
+
+	&.anchor-bottom-left {
+		bottom: 5px;
+		left: 5px;
+		transform-origin: 0% 100%;
+		transform: translate(-50%, 50%) scale(0);
+
+		&.has-value {
+			transform: translate(-50%, 50%) scale(1);
+		}
+
+		&.do-animate {
+			animation: pop-bottom-left 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) 1;
+		}
+	}
+
+	// Invisible state
+	&.invisible {
+		transform: scale(0) !important;
+		visibility: hidden;
+	}
+}
+
+// Animations
+@keyframes pop-top-right {
+	40% {
+		transform: scale(1.15) translate(50%, -50%);
+	}
+}
+
+@keyframes pop-top-left {
+	40% {
+		transform: scale(1.15) translate(-50%, -50%);
+	}
+}
+
+@keyframes pop-bottom-right {
+	40% {
+		transform: scale(1.15) translate(50%, 50%);
+	}
+}
+
+@keyframes pop-bottom-left {
+	40% {
+		transform: scale(1.15) translate(-50%, 50%);
+	}
+}

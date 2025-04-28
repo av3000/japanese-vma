@@ -1,318 +1,345 @@
-@use "@/styles/01-tools/media";
+@use '@/styles/01-tools/media';
 
 .button {
-  // Typography
-  --button-font-size: var(--font-size-body-md);
+	// Typography
+	--button-font-size: var(--font-size-body-md);
 
-  // Layout
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-xs);
-  min-height: var(--button-height-md);
-  padding: 0 var(--button-padding-x);
-  position: relative;
+	// Layout
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-xs);
+	min-height: var(--button-height-md);
+	padding: 0 var(--button-padding-x);
+	position: relative;
 
-  // Visual styling
-  cursor: pointer;
-  background-color: var(--color-primary);
-  border: var(--border-size-sm) solid transparent;
-  border-radius: var(--border-radius-md);
-  color: var(--color-neutral-0);
-  font-weight: var(--font-weight-semibold, 600);
-  line-height: var(--line-height-sm, 1.5);
+	// Visual styling
+	cursor: pointer;
+	background-color: var(--color-primary);
+	border: var(--border-size-sm) solid transparent;
+	border-radius: var(--border-radius-md);
+	color: var(--color-neutral-0);
+	font-weight: var(--font-weight-semibold, 600);
+	line-height: var(--line-height-sm, 1.5);
 
-  // Transitions
-  transition: background-color 0.2s ease, border-color 0.2s ease,
-    color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	// Transitions
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease,
+		box-shadow 0.2s ease;
 
-  // Interactive states
-  @include media.mqHover {
-    &:hover(:not(.variantLinkButton)) {
-      background: var(--color-primary-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-  }
+	// Interactive states
+	@include media.mqHover {
+		&:hover(:not(.variantLinkButton)) {
+			background: var(--color-primary-hover);
+			transform: translateY(-1px);
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		}
+	}
 
-  &:active {
-    background: var(--color-primary-hover);
-    transform: translateY(0);
-    box-shadow: none;
-  }
+	&:active {
+		background: var(--color-primary-hover);
+		transform: translateY(0);
+		box-shadow: none;
+	}
 
-  &:focus,
-  &:focus-visible {
-    outline-width: var(--border-size-md);
-    outline-color: var(--color-primary-100);
-    outline-offset: 2px;
-  }
+	&:focus,
+	&:focus-visible {
+		outline-width: var(--border-size-md);
+		outline-color: var(--color-primary-100);
+		outline-offset: 2px;
+	}
 
-  &:disabled,
-  &.disabled {
-    pointer-events: none;
-    cursor: not-allowed;
-    background-color: var(--color-primary-disabled);
-    opacity: 0.65;
-  }
+	&:disabled,
+	&.disabled {
+		pointer-events: none;
+		cursor: not-allowed;
+		background-color: var(--color-primary-disabled);
+		opacity: 0.65;
+	}
 }
 
 .content {
-  display: contents;
+	display: contents;
 
-  .spinner ~ & {
-    visibility: hidden;
-  }
+	.spinner ~ & {
+		visibility: hidden;
+	}
 }
 
 .spinner {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-  margin-right: var(--size-xs);
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-radius: 50%;
+	border-top-color: white;
+	animation: spin 0.8s linear infinite;
+	margin-right: var(--size-xs);
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 /* Modifiers */
 .fullWidth {
-  width: 100%;
-  justify-content: center;
+	width: 100%;
+	justify-content: center;
 }
 
 .hasOnlyIcon {
-  flex-shrink: 0;
-  justify-content: center;
-  width: var(--button-height-md);
-  padding: 0;
+	flex-shrink: 0;
+	justify-content: center;
+	width: var(--button-height-md);
+	padding: 0;
 
-  &.sizeSm {
-    width: var(--button-height-sm);
-    padding: 0;
-  }
+	&.sizeSm {
+		width: var(--button-height-sm);
+		padding: 0;
+	}
 
-  &.sizeLg {
-    width: calc(var(--button-height-md) * 1.25);
-    padding: 0;
-  }
+	&.sizeLg {
+		width: calc(var(--button-height-md) * 1.25);
+		padding: 0;
+	}
 }
 
 .hasNoPaddingX {
-  &,
-  &.sizeSm {
-    padding-left: 0;
-    padding-right: 0;
-  }
+	&,
+	&.sizeSm {
+		padding-left: 0;
+		padding-right: 0;
+	}
 }
 
 // Sizes
 .sizeSm {
-  min-height: var(--button-height-sm);
-  padding: 0 var(--spacing-xs);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.875rem;
+	min-height: var(--button-height-sm);
+	padding: 0 var(--spacing-xs);
+	border-radius: var(--border-radius-sm);
+	font-size: 0.875rem;
 }
 
 .sizeLg {
-  min-height: calc(var(--button-height-md) * 1.25);
-  padding: 0 calc(var(--button-padding-x) * 1.25);
-  border-radius: var(--border-radius-md);
-  font-size: 1.125rem;
+	min-height: calc(var(--button-height-md) * 1.25);
+	padding: 0 calc(var(--button-padding-x) * 1.25);
+	border-radius: var(--border-radius-md);
+	font-size: 1.125rem;
 }
 
 // Variants
 .variantPrimary {
-  background-color: var(--color-primary);
-  color: var(--color-neutral-0);
+	background-color: var(--color-primary);
+	color: var(--color-neutral-0);
 
-  @include media.mqHover {
-    &:hover {
-      background: var(--color-primary-hover);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background: var(--color-primary-hover);
+		}
+	}
 
-  &:active {
-    background: var(--color-primary-hover);
-  }
+	&:active {
+		background: var(--color-primary-hover);
+	}
 
-  &:disabled,
-  &.disabled {
-    background-color: var(--color-primary-disabled);
-  }
+	&:disabled,
+	&.disabled {
+		background-color: var(--color-primary-disabled);
+	}
 }
 
 .variantSecondary {
-  background-color: var(--color-secondary);
-  border-color: var(--color-secondary);
-  color: var(--color-neutral-0);
+	background-color: var(--color-secondary);
+	border-color: var(--color-secondary);
+	color: var(--color-neutral-0);
 
-  @include media.mqHover {
-    &:hover {
-      background: var(--color-secondary-hover);
-      border-color: var(--color-secondary-hover);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background: var(--color-secondary-hover);
+			border-color: var(--color-secondary-hover);
+		}
+	}
 
-  &:active {
-    background: var(--color-secondary-hover);
-    border-color: var(--color-secondary);
-  }
+	&:active {
+		background: var(--color-secondary-hover);
+		border-color: var(--color-secondary);
+	}
 
-  &:focus,
-  &:focus-visible {
-    outline-color: var(--color-secondary-200);
-  }
+	&:focus,
+	&:focus-visible {
+		outline-color: var(--color-secondary-200);
+	}
 
-  &:disabled,
-  &.disabled {
-    background-color: var(--color-secondary-disabled);
-  }
+	&:disabled,
+	&.disabled {
+		background-color: var(--color-secondary-disabled);
+	}
 }
 
 .variantSuccess {
-  background-color: var(--color-success);
-  color: var(--color-neutral-0);
+	background-color: var(--color-success);
+	color: var(--color-neutral-0);
 
-  @include media.mqHover {
-    &:hover {
-      background: var(--color-success-hover);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background: var(--color-success-hover);
+		}
+	}
 
-  &:active {
-    background: var(--color-success-hover);
-  }
+	&:active {
+		background: var(--color-success-hover);
+	}
 
-  &:disabled,
-  &.disabled {
-    background-color: var(--color-success-disabled);
-  }
+	&:disabled,
+	&.disabled {
+		background-color: var(--color-success-disabled);
+	}
 }
 
 .variantGhost {
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--color-neutral-700);
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-neutral-700);
 
-  @include media.mqHover {
-    &:hover {
-      background: var(--color-neutral-200-alpha);
-      color: var(--color-neutral-900);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background: var(--color-neutral-200-alpha);
+			color: var(--color-neutral-900);
+		}
+	}
 
-  &:active {
-    background: var(--color-neutral-200);
-    color: var(--color-neutral-900);
-  }
+	&:active {
+		background: var(--color-neutral-200);
+		color: var(--color-neutral-900);
+	}
 
-  &:focus,
-  &:focus-visible {
-    outline-color: var(--color-neutral-400);
-  }
+	&:focus,
+	&:focus-visible {
+		outline-color: var(--color-neutral-400);
+	}
 }
 
 .variantOutline {
-  background-color: transparent;
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+	background-color: transparent;
+	border-color: var(--color-primary);
+	color: var(--color-primary);
 
-  @include media.mqHover {
-    &:hover {
-      background-color: var(--color-primary);
-      color: var(--color-neutral-0);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background-color: var(--color-primary);
+			color: var(--color-neutral-0);
+		}
+	}
 
-  &:active {
-    background-color: var(--color-primary-hover);
-    color: var(--color-neutral-0);
-  }
+	&:active {
+		background-color: var(--color-primary-hover);
+		color: var(--color-neutral-0);
+	}
 
-  &:disabled,
-  &.disabled {
-    border-color: var(--color-primary-disabled);
-    color: var(--color-primary-disabled);
-    background-color: transparent;
-  }
+	&:disabled,
+	&.disabled {
+		border-color: var(--color-primary-disabled);
+		color: var(--color-primary-disabled);
+		background-color: transparent;
+	}
+}
+
+.variantSecondaryOutline {
+	background-color: transparent;
+	border-color: var(--color-secondary-black);
+	color: var(--color-secondary-black);
+
+	@include media.mqHover {
+		&:hover {
+			background-color: var(--color-neutral-200-alpha);
+		}
+	}
+
+	&:active {
+		background: var(--color-secondary-black-hover);
+	}
+
+	&:disabled,
+	&.disabled {
+		border-color: var(--color-secondary-black-disabled);
+		color: var(--color-secondary-black-disabled);
+		background-color: transparent;
+	}
 }
 
 .variantLinkButton {
-  padding-left: 0;
-  padding-right: 0;
-  background-color: transparent;
-  border-color: transparent;
-  color: var(--color-primary);
+	padding-left: 0;
+	padding-right: 0;
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-primary);
 
-  &::after {
-    content: "";
-    width: 100%;
-    height: var(--border-size-sm);
-    position: absolute;
-    top: calc(50% + calc(var(--button-font-size) - 6px));
-    left: 0;
-    background-color: currentColor;
-  }
+	&::after {
+		content: '';
+		width: 100%;
+		height: var(--border-size-sm);
+		position: absolute;
+		top: calc(50% + calc(var(--button-font-size) - 6px));
+		left: 0;
+		background-color: currentColor;
+	}
 
-  @include media.mqHover {
-    &:hover {
-      background-color: transparent;
-      border-color: transparent;
-      color: var(--color-primary-hover);
-      text-decoration: none;
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background-color: transparent;
+			border-color: transparent;
+			color: var(--color-primary-hover);
+			text-decoration: none;
+		}
+	}
 
-  &:active {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--color-primary-hover);
-  }
+	&:active {
+		background-color: transparent;
+		border-color: transparent;
+		color: var(--color-primary-hover);
+	}
 
-  &:focus,
-  &:focus-visible {
-    outline-color: var(--color-primary-100);
-  }
+	&:focus,
+	&:focus-visible {
+		outline-color: var(--color-primary-100);
+	}
 
-  &:disabled,
-  &.disabled {
-    color: var(--color-primary-disabled);
+	&:disabled,
+	&.disabled {
+		color: var(--color-primary-disabled);
 
-    &::after {
-      opacity: 0.5;
-    }
-  }
+		&::after {
+			opacity: 0.5;
+		}
+	}
 }
 
 .variantDanger {
-  background-color: var(--color-error);
-  color: var(--color-neutral-0);
+	background-color: var(--color-error);
+	color: var(--color-neutral-0);
 
-  @include media.mqHover {
-    &:hover {
-      background: var(--color-error-hover);
-    }
-  }
+	@include media.mqHover {
+		&:hover {
+			background: var(--color-error-hover);
+		}
+	}
 
-  &:active {
-    background: var(--color-error-hover);
-  }
+	&:active {
+		background: var(--color-error-hover);
+	}
 
-  &:focus,
-  &:focus-visible {
-    outline-color: var(--color-error-hover);
-  }
+	&:focus,
+	&:focus-visible {
+		outline-color: var(--color-error-hover);
+	}
 
-  &:disabled,
-  &.disabled {
-    background-color: var(--color-danger-disabled);
-  }
+	&:disabled,
+	&.disabled {
+		background-color: var(--color-danger-disabled);
+	}
 }

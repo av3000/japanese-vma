@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
-import { Button } from '@/components/shared/Button';
 import { fetchArticles } from '@/store/slices/articlesSlice';
 import ExploreArticleItem from './ExploreArticleItem';
 
@@ -33,7 +32,6 @@ const ExploreArticleList: React.FC = () => {
 	return (
 		<>
 			<div className="d-flex justify-content-between align-items-center w-100 my-3">
-				<Button>New Button</Button>
 				<h3>Latest Articles ({paginationInfo.total || 0})</h3>
 				<div>
 					<Link to="/articles" className="homepage-section-title">

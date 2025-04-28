@@ -2,7 +2,7 @@
 
 Browse lists of Japanese texts, including simplified articles and news. Upload your own content to generate PDFs featuring Japanese radicals, kanji, vocabulary, and sentences for learning. Create or explore lists with articles, radicals, kanji, and vocabulary items, track your progress, and chat with other learners.
 
-Component library on [Storybook](https://67e03024743f7597d5a20906-ioduyxshby.chromatic.com/?path=/docs/components-shared-button--docs)
+Component library on [Storybook](https://67e03024743f7597d5a20906-ioduyxshby.chromatic.com/?path=/docs/components-shared-button--docs) or run it locally.
 
 ![Application demo1](./docs/assets/images/jpl-short-1.gif)
 
@@ -25,6 +25,7 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
     - [Laravel API Setup](#laravel-api)
     - [MySQL Database Setup](#database-mySQL)
     - [React App Setup](#react-app)
+  - [Storybook](#storybook)
   - [To Do List](#to-do-list)
 - [Ongoing Development](#ongoing-development)
 
@@ -276,6 +277,15 @@ Start react app
 npm start
 ```
 
+### Storybook
+
+To build with latest changes and start storybook:
+
+```bash
+npm run build-storybook
+npm run storybook
+```
+
 ### To Do List
 
 - [x] Make demo gifs to showcase main features.
@@ -312,16 +322,18 @@ npm start
     - ex: in material details page word->kanjis->radicals
     - ex: in lists
   - [x] Button
+  - [x] Chip
   - Product card
   - Dropdown
   - Select
   - Input Text
   - Input Checkbox
   - Tabgroup (articles/lists in dashboard)
-  - Badge
+  - [x] Avatar
+  - [x] Badge
   - [x] Icon
   - [x] Link
-  - Image
+  - [x] Image
   - Spinner
   - Info message
   - Toast Message

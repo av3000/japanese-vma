@@ -3,8 +3,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
-import Hashtags from '@/components/ui/hashtags';
-import '../../article/ArticleItem.css';
+import { Chip } from '@/components/shared/Chip';
+import '../article/ArticleItem/ArticleItem.css';
 
 const ExploreListItem = ({
 	id,
@@ -42,7 +42,19 @@ const ExploreListItem = ({
 				</Link>
 				<br />
 				<strong>{listType}</strong>
-				<Hashtags hashtags={hashtags} />
+				<section className="mt-2 d-flex align-items-center flex-wrap">
+					{hashtags.map((tag) => (
+						<Chip
+							className="mr-1"
+							readonly
+							key={tag.id + tag.content}
+							title={tag.content}
+							name={tag.content}
+						>
+							{tag.content}
+						</Chip>
+					))}
+				</section>
 				<p className="text-muted">{created_at}</p>
 				<p className="text-muted">
 					{viewsTotal} views &nbsp;

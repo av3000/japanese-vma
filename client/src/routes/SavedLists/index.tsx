@@ -2,8 +2,8 @@
 /* eslint-disable */
 import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
-import SearchBar from '@/components/SearchBar';
-import { SavedListItem } from '@/components/features/SavedList/SavedListItem';
+import SavedListItem from '@/components/features/SavedList/SavedListItem';
+import SearchBar from '@/components/features/SearchBar';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
 
@@ -175,6 +175,7 @@ class SavedLists extends Component {
 					) : (
 						this.state.pagination.last_page !== this.state.pagination.current_page && (
 							<Button
+								className="w-50"
 								variant="outline"
 								size="md"
 								type="button"

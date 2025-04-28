@@ -3,8 +3,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
-import Hashtags from '@/components/ui/hashtags';
-import '../../article/ArticleItem.css';
+import { Chip } from '@/components/shared/Chip';
+import '../article/ArticleItem/ArticleItem.css';
 
 const ArticleItem: React.FC = ({
 	id,
@@ -39,7 +39,19 @@ const ArticleItem: React.FC = ({
 				<Link to={'/article/' + id} className="article-title-link">
 					<h4 className="card-text article-title"> {title_jp}</h4>
 				</Link>
-				<Hashtags hashtags={hashtags} />
+				<section className="mt-2 d-flex align-items-center flex-wrap">
+					{hashtags.map((tag) => (
+						<Chip
+							className="mr-1"
+							readonly
+							key={tag.id + tag.content}
+							title={tag.content}
+							name={tag.content}
+						>
+							{tag.content}
+						</Chip>
+					))}
+				</section>
 				<p className="text-muted">
 					{jp_year} {jp_month} {jp_day} {jp_hour}
 				</p>

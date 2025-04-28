@@ -232,11 +232,11 @@ export class PostsList extends Component {
 					{this.state.pagination.last_page === this.state.pagination.current_page ? (
 						'no more results...'
 					) : this.state.url.includes('search') ? (
-						<Button variant="outline" className="col-6" onClick={this.loadSearchMore}>
+						<Button variant="outline" className="w-50" onClick={this.loadSearchMore}>
 							Load More
 						</Button>
 					) : (
-						<Button variant="outline" className="col-6" onClick={this.loadMore}>
+						<Button variant="outline" className="w-50" onClick={this.loadMore}>
 							Load More
 						</Button>
 					)}
