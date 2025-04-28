@@ -2,9 +2,9 @@
 /* eslint-disable */
 import React from 'react';
 import { ObjectTemplates } from '@/shared/constants';
-import ListKanjisList from './SavedLists/ListKanjisList';
-import ListRadicalList from './SavedLists/ListRadicalList';
 import ListArticlesList from './SavedLists/SavedArticlesList';
+import ListKanjisList from './SavedLists/SavedKanjisList';
+import ListRadicalList from './SavedLists/SavedRadicalList';
 import ListSentencesList from './SavedLists/SavedSentencesList';
 import ListWordsList from './SavedLists/SavedWordsList';
 

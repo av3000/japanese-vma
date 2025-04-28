@@ -326,6 +326,7 @@ export const StatusIndicators: Story = {
 						variant="dot"
 						color="error"
 						anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+						// @ts-ignore
 						style={{
 							position: 'absolute',
 							bottom: 0,

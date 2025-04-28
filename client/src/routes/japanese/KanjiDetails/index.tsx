@@ -252,7 +252,19 @@ const KanjiOpen: React.FC = ({ currentUser }) => {
 								<div className="row">
 									<div className="col-md-8">
 										<h3>{article.title_jp}</h3>
-										<Hashtags hashtags={article.hashtags} />
+										<section className="mt-2 d-flex align-items-center flex-wrap">
+											{hashtags.map((tag) => (
+												<Chip
+													className="mr-1"
+													readonly
+													key={tag.id + tag.content}
+													title={tag.content}
+													name={tag.content}
+												>
+													{tag.content}
+												</Chip>
+											))}
+										</section>
 									</div>
 									<div className="col-md-2">
 										<p>

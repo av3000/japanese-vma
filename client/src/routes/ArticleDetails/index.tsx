@@ -10,9 +10,9 @@ import Spinner from '@/assets/images/spinner.gif';
 import CommentForm from '@/components/features/comment/CommentForm';
 import CommentList from '@/components/features/comment/CommentList';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
-import Hashtags from '@/components/ui/hashtags';
 import { apiCall } from '@/services/api';
 import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
 import { hideLoader, showLoader } from '@/store/actions/application';
@@ -496,7 +496,19 @@ const ArticleDetails: React.FC = () => {
 
 					<img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img" />
 					<p className="lead">{article.content_jp}</p>
-					<Hashtags hashtags={article.hashtags} />
+					<section className="mt-2 d-flex align-items-center flex-wrap">
+						{hashtags.map((tag) => (
+							<Chip
+								className="mr-1"
+								readonly
+								key={tag.id + tag.content}
+								title={tag.content}
+								name={tag.content}
+							>
+								{tag.content}
+							</Chip>
+						))}
+					</section>
 					<br />
 					<a href={article.source_link} target="_blank" rel="noopener noreferrer">
 						original source

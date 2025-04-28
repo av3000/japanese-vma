@@ -7,6 +7,7 @@ const AvatarWithStatus = ({
 	status,
 	...avatarProps
 }: { userId: string; status: BadgeColorType } & AvatarProps) => {
+	// @ts-ignore
 	const fetchStatus = (userId): void => {
 		// call or poll for status of health
 	};

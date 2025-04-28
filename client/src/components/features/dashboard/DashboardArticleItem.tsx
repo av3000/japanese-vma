@@ -3,8 +3,8 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import ArticleStatus from '../../ui/article-status';
-import Hashtags from '../../ui/hashtags';
 
 const DashboardArticleItem: React.FC = ({
 	id,
@@ -21,7 +21,19 @@ const DashboardArticleItem: React.FC = ({
 			<p>{title_jp}</p>
 			<div className="d-flex align-items-center">
 				<span className="mr-2 text-muted">Tags:</span>
-				<Hashtags hashtags={hashtags} />
+				<section className="mt-2 d-flex align-items-center flex-wrap">
+					{hashtags.map((tag) => (
+						<Chip
+							className="mr-1"
+							readonly
+							key={tag.id + tag.content}
+							title={tag.content}
+							name={tag.content}
+						>
+							{tag.content}
+						</Chip>
+					))}
+				</section>
 				<span className="mr-2 text-muted">Status:</span>
 				<ArticleStatus status={status} />
 			</div>

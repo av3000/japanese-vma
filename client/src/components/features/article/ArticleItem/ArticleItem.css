@@ -6,6 +6,14 @@
   --secondary-brand-color: #3058a4;
 }
 
+.chip-list-wrapper {
+  margin-top: 8px;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .card-body .article-title {
   /* font-weight: bold; */
 }
@@ -16,8 +24,8 @@ body {
 
 h2,
 .homepage-section-title span {
-  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+  font-family:
+    "Lucida Sans", "Lucida Sans Regular", "Lucida Grande", "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
 }
 .homepage-section-title span:hover {
   color: var(--link-hover-color);
@@ -29,8 +37,8 @@ h2,
 
 a,
 .link-button {
-  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+  font-family:
+    "Lucida Sans", "Lucida Sans Regular", "Lucida Grande", "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
 }
 
 .article-title-link {

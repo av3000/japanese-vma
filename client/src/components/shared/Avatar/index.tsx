@@ -4,6 +4,7 @@ import Image from '../Image';
 import styles from './Avatar.module.scss';
 
 export interface AvatarProps {
+	/* eslint-disable */
 	image: Partial<any>;
 	linkTitle: string;
 	linkUrl?: string;

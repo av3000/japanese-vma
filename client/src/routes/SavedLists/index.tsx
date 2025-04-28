@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/SearchBar';
-import { SavedListItem } from '@/components/features/SavedList/SavedListItem';
+import SavedListItem from '@/components/features/SavedList/SavedListItem';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
 

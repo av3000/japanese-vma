@@ -6,9 +6,9 @@ import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
-import Hashtags from '@/components/ui/hashtags';
 import { apiCall } from '@/services/api';
 import { HTTP_METHOD } from '@/shared/constants';
 import SearchBarDashboard from './SearchBarDashboard';
@@ -139,7 +139,20 @@ const DashboardList: React.FC = () => {
 										<h4>
 											<Link to={`/article/${article.id}`}>{article.title_jp}</Link>
 										</h4>
-										tags: <Hashtags hashtags={article.hashtags} />
+										tags:{' '}
+										<section className="mt-2 d-flex align-items-center flex-wrap">
+											{hashtags.map((tag) => (
+												<Chip
+													className="mr-1"
+													readonly
+													key={tag.id + tag.content}
+													title={tag.content}
+													name={tag.content}
+												>
+													{tag.content}
+												</Chip>
+											))}
+										</section>
 									</div>
 									<div className="col-lg-4 col-12-sm pt-3">
 										<small className="text-muted">
