@@ -184,11 +184,11 @@ export class SentencesList extends Component {
 					{this.state.pagination.last_page === this.state.pagination.current_page ? (
 						'no more results...'
 					) : this.state.url.includes('search') ? (
-						<button className="btn btn-outline-primary brand-button col-6" onClick={this.loadSearchMore}>
+						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadSearchMore}>
 							Load More
 						</button>
 					) : (
-						<button className="btn btn-outline-primary brand-button col-6" onClick={this.loadMore}>
+						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadMore}>
 							Load More
 						</button>
 					)}
