@@ -322,6 +322,7 @@ npm run storybook
     - ex: in material details page word->kanjis->radicals
     - ex: in lists
   - [x] Button
+  - [x] Chip
   - Product card
   - Dropdown
   - Select
@@ -332,7 +333,7 @@ npm run storybook
   - [x] Badge
   - [x] Icon
   - [x] Link
-  - [x]Image
+  - [x] Image
   - Spinner
   - Info message
   - Toast Message
