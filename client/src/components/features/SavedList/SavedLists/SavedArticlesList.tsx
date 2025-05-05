@@ -42,16 +42,17 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({ objects, removeFr
 				return (
 					<div key={article.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
-							<h3 className={sharedStyles.articleTitle}>
+							<h5 className={sharedStyles.articleTitle}>
 								<Link to={`/article/${article.id}`} target="_blank">
 									{article.title_jp}
 									<Icon size="sm" name="externalLink" />
 								</Link>
-							</h3>
+							</h5>
 							{currentUser.user.id === listUserId && (
 								<Button
 									type="button"
 									size="md"
+									hasOnlyIcon
 									variant="danger"
 									onClick={() => removeFromList(article.id)}
 									className={sharedStyles.removeButton}
