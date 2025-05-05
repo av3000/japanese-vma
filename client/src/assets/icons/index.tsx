@@ -8,6 +8,7 @@ import eyeRegular from './eye-regular.svg?raw';
 import fbIcon from './fb-icon.svg?raw';
 import filePdfSolid from './file-pdf-solid.svg?raw';
 import igIcon from './ig-icon.svg?raw';
+import layerGroupSolid from './layer-group-solid.svg?raw';
 import lockOpenSolid from './lock-open-solid.svg?raw';
 import lockSolid from './lock-solid.svg?raw';
 import searchSolid from './magnifying-glass-solid.svg?raw';
@@ -42,4 +43,5 @@ export const icons = {
 	minusSolid,
 	searchSolid,
 	removeSolid,
+	layerGroupSolid,
 } as const;

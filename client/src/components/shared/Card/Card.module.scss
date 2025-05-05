@@ -1,0 +1,154 @@
+@use '@/styles/01-tools/media';
+
+.wrapper.wrapper {
+	// Double selector to increase specificity
+	--card-radius: var(--border-radius-md);
+	--ease: var(--ease-base);
+	--duration: var(--duration-sm);
+	--card-padding: var(--spacing-2xs);
+
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	border-radius: var(--card-radius);
+
+	@include media.mq('md') {
+		--card-padding: var(--spacing-xs);
+	}
+}
+
+.imgWrapper {
+	width: 100%;
+	overflow: hidden;
+	aspect-ratio: var(--aspect-ratio-square);
+	position: relative;
+	background-color: var(--color-background-neutral-weaker);
+	border-radius: inherit;
+	transition: background-color var(--ease) var(--duration);
+}
+
+.img {
+	width: 100%;
+	object-fit: cover;
+	transition: transform var(--ease) var(--duration);
+}
+
+.date {
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+
+	@include media.mq('sm') {
+		font-size: var(--font-size-body-md);
+	}
+}
+
+.title {
+	font-weight: var(--font-weight-semibold);
+	flex-shrink: 0;
+	margin: var(--spacing-3xs) 0;
+	font-size: var(--font-size-heading-5);
+
+	@include media.mq('sm') {
+		margin: var(--spacing-2xs) 0;
+	}
+
+	@include media.mq('md') {
+		font-size: var(--font-size-heading-4);
+	}
+
+	.wrapper:hover & {
+		text-decoration: underline;
+	}
+}
+
+.primaryCardAction.primaryCardAction {
+	// Double selector to increase specificity
+	--text-content-padding: var(--spacing-xs);
+	--text-height: calc(var(--font-size-body-sm) * var(--line-height-lg));
+	--text-spacing: var(--spacing-2xs);
+
+	text-decoration: none;
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: unset;
+	width: 100%;
+	min-height: calc(var(--text-height) * 2 + var(--text-spacing));
+	padding-top: var(--card-padding);
+
+	// Get primary action to cover whole card
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		border-radius: var(--card-radius);
+	}
+
+	// Get primary action to set focus area
+	&:focus,
+	&:focus-visible {
+		outline: none;
+		&::after {
+			outline: var(--outline-size) solid currentColor;
+			outline-offset: var(--outline-size);
+		}
+	}
+
+	&:focus:not(:focus-visible) {
+		&::after {
+			outline: none;
+		}
+	}
+
+	// Tablet
+	@include media.mq('sm') {
+		--text-height: calc(var(--font-size-body-md) * var(--line-height-lg));
+		--text-spacing: calc(var(--spacing-2xs) * 2);
+		--price-text-height: calc(var(--font-size-body-md) * var(--line-height-lg));
+
+		min-height: calc(
+			var(--text-content-padding) + calc(var(--text-height) * 2) + var(--price-text-height) + var(--text-spacing)
+		);
+	}
+
+	// Desktop
+	@include media.mq('lg') {
+		--text-content-padding: var(--spacing-sm);
+		padding-top: var(--spacing-xs);
+	}
+}
+
+.chipList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-3xs);
+	margin-top: var(--spacing-3xs);
+
+	& * {
+		.wrapper:hover & {
+			color: inherit;
+			text-decoration: none;
+		}
+	}
+
+	@include media.mq('sm') {
+		margin-top: var(--spacing-2xs);
+		gap: var(--spacing-2xs);
+	}
+}
+
+.childrenWrapper {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: end;
+
+	margin-top: var(--spacing-2xs);
+
+	@include media.mq('sm') {
+		margin-top: var(--spacing-xs);
+	}
+}

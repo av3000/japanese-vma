@@ -5,7 +5,7 @@ import { Badge, Modal } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import classNames from 'classNames';
+import classNames from 'classnames';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import Spinner from '@/assets/images/spinner.gif';
 import CommentForm from '@/components/comment/CommentForm';

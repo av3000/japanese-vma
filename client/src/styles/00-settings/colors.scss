@@ -85,7 +85,7 @@ $color-neutral-900: #212121; // Default text (dark mode)
 	--color-neutral-900: #{$color-neutral-900};
 	--color-text-neutral-hover: var(--color-neutral-700);
 	--color-text-neutral-default: var(--color-neutral-900);
-	--color-text-primary: var(--color-text-primary);
+	--color-text-primary: #{$color-neutral-900};
 	--color-text-primary-default: var(--color-primary-500);
 	--color-text-primary-hover: var(--color-primary-400);
 	--color-text-primary-focus: var(--color-primary-300);

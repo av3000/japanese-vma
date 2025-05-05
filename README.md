@@ -327,6 +327,7 @@ npm run storybook
   - Dropdown
   - Select
   - Input Text
+  - Input Chips
   - Input Checkbox
   - Tabgroup (articles/lists in dashboard)
   - [x] Avatar
@@ -340,6 +341,7 @@ npm run storybook
   - Tooltip
   - Drawer
   - Modal
+  - Paginator / Pagination upgrade
   - Table ( tanstack query table?)
   - Layout components Mobile-first approach:
     - Header
