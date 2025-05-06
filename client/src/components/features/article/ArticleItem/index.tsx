@@ -11,10 +11,7 @@ interface Hashtag {
 
 interface ArticleItemProps {
 	id: string | number;
-	jp_year: string | number;
-	jp_month: string | number;
-	jp_day: string | number;
-	jp_hour: string | number;
+	created_at: string;
 	title_jp: string;
 	commentsTotal: number;
 	viewsTotal: number;
@@ -30,10 +27,7 @@ interface ArticleItemProps {
 
 const ArticleItem: React.FC<ArticleItemProps> = ({
 	id,
-	jp_year,
-	jp_month,
-	jp_day,
-	jp_hour,
+	created_at,
 	title_jp,
 	commentsTotal,
 	viewsTotal,
@@ -52,7 +46,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 				title={title_jp}
 				image={{ url: DefaultArticleImg, title: title_jp, alt: title_jp }}
 				url={`/article/${id}`}
-				date={`${jp_year} ${jp_month} ${jp_day} ${jp_hour}`} // TODO: use primary date and create date transformations on frontend
+				date={created_at} // TODO: use primary date and create date transformations on frontend
 				tags={hashtags}
 			>
 				<div className="d-flex justify-content-between align-items-center">

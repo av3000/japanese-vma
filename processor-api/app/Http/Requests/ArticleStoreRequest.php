@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,7 +12,7 @@ class ArticleStoreRequest extends FormRequest
      */
     public function authorize()
     {
-        return true; // What authorized means? is simple user is already authorized?
+        return auth()->check();
     }
 
     /**
@@ -24,35 +23,49 @@ class ArticleStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'title_en'    => 'max:255',
-            'title_jp'    => 'required|min:2|max:255',
-            'content_en'  => 'max:3000',
-            'content_jp'  => 'required|min:2|max:3000',
-            'source_link' => 'required'
+            'title_jp' => 'required|min:2|max:255',
+            'title_en' => 'nullable|max:255',
+            'content_jp' => 'required|min:2|max:3000',
+            'content_en' => 'nullable|max:3000',
+            'source_link' => 'required|url',
+            'publicity' => 'nullable|boolean',
+            'tags' => 'nullable|string',
+            'attach' => 'nullable|boolean'
         ];
     }
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
     public function messages()
     {
         return [
-            'title_jp.required' => 'An Article Japanese Title is Required',
-            'content_jp.required'  => 'An Article Japanese Text Body is Required',
-            'source_link.required' => 'The source link needs be provided or approved its ownership.',
-            'status.required' => 'An Article needs to have a Status'
+            'title_jp.required' => 'A Japanese title is required',
+            'title_jp.min' => 'The Japanese title must be at least 2 characters',
+            'content_jp.required' => 'Japanese content is required',
+            'content_jp.min' => 'The Japanese content must be at least 2 characters',
+            'source_link.required' => 'The source link is required',
+            'source_link.url' => 'The source link must be a valid URL',
         ];
     }
 
-
-    // /**
-    //  *  Filters to be applied to the input.
-    //  *
-    //  * @return array
-    //  */
-    // public function filters()
+    /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    // protected function prepareForValidation()
     // {
-    //     return [
-    //         'email' => 'trim|lowercase',
-    //         'name' => 'trim|capitalize|escape'
-    //     ];
+    //     // Trim whitespace from inputs
+    //     $this->merge([
+    //         'title_jp' => trim($this->title_jp),
+    //         'title_en' => $this->title_en ? trim($this->title_en) : null,
+    //         'content_jp' => trim($this->content_jp),
+    //         'content_en' => $this->content_en ? trim($this->content_en) : null,
+    //         'publicity' => $this->publicity ?? 0,
+    //         'attach' => $this->attach ?? 0,
+    //     ]);
     // }
 }

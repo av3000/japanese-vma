@@ -14,6 +14,7 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { formatDate } from '@/helpers';
 import { apiCall } from '@/services/api';
 import { BASE_URL, HTTP_METHOD, ObjectTemplates } from '@/shared/constants';
 import { hideLoader, showLoader } from '@/store/actions/application';
@@ -239,7 +240,7 @@ const SavedListDetails: React.FC = () => {
 						<h1 className="mt-4">{list.title}</h1>
 						<div className="row text-muted w-100 mb-3 justify-content-between">
 							<div className="text-muted">
-								{list.created_at}
+								{formatDate(list.created_at, 'ja')}
 								<br />
 								<span>{list.viewsTotal} views</span>
 								{currentUser.user.id === list.user_id

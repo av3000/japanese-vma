@@ -18,6 +18,7 @@ use PDF;
 
 class ArticleController extends Controller
 {
+    // TODO: Move const enums to proper location
     const KNOWNRADICALS = 1;
 
     const KNOWNKANJIS = 2;
@@ -69,39 +70,59 @@ class ArticleController extends Controller
         return $articleJlptTypes[$index - 1];
     }
 
-    public function index()
+    /**
+     * GET /api/articles
+     * Returns paginated list of published articles
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request)
     {
-        $articles = Article::where('publicity', 1)->orderBy('created_at', 'DESC')->paginate(3);
+        $query = Article::query()->where('publicity', 1);
+
+        // Add filters conditionally
+        if ($request->has('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        if ($request->has('search')) {
+            $query->where('title', 'LIKE', '%' . $request->search . '%');
+        }
+
+        $sortDir = $request->has('sort_dir') ? $request->sort_dir : 'DESC';
+
+        $sortBy = $request->has('sort_by') ? $request->sort_by : 'created_at';
+
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 4;
+
+        $articles = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
+
+        // $articles = Article::where('publicity', 1)->orderBy('created_at', 'DESC')->paginate(3);
         // where('status', $this->ARTICLE_STATUS_TYPES['approved'])->
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-        $jp_month = '月';
-        $jp_day = '日';
-        $jp_hour = '時';
-        $jp_minute = '分';
-        $jp_year = '年';
-        foreach ($articles as $singleArticle) {
-            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
-            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
-            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
-            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
 
+        foreach ($articles as $singleArticle) {
             $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->viewsTotal = getImpression('view', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->commentsTotal = getImpression('comment', $objectTemplateId, $singleArticle, 'total');
-            $singleArticle->hashtags = array_slice(getUniquehashtags($singleArticle->id, $objectTemplateId), 0, 3);
+            $singleArticle->hashtags = getUniquehashtags($singleArticle->id, $objectTemplateId);
         }
 
-        if (isset($articles)) {
+        if (!isset($articles)) {
             return response()->json([
-                'success' => true, 'articles' => $articles, 'message' => 'articles fetched', 'imagePath' => getArticleImageFromImages('testing-image.jpg'),
+                'success' => false,
+                'message' => 'There are no articles...',
             ]);
         }
 
         return response()->json([
-            'success' => false, 'message' => 'There are no articles...',
+            'test' => true,
+            'success' => true,
+            'articles' => $articles,
+            'message' => 'articles fetched',
+            'imagePath' => getArticleImageFromImages('testing-image.jpg'),
         ]);
     }
 
@@ -114,18 +135,6 @@ class ArticleController extends Controller
                 'success' => false, 'message' => 'Requested article does not exist',
             ]);
         }
-
-        $jp_month = '月';
-        $jp_day = '日';
-        $jp_hour = '時';
-        $jp_minute = '分';
-        $jp_year = '年';
-
-        $article->jp_year = $article->created_at->year.$jp_year;
-        $article->jp_month = $article->created_at->month.$jp_month;
-        $article->jp_day = $article->created_at->day.$jp_day;
-        $article->jp_hour = $article->created_at->hour.$jp_hour;
-        $article->jp_minute = $article->created_at->minute.$jp_minute;
 
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
         incrementView($article, $objectTemplateId);
@@ -147,6 +156,7 @@ class ArticleController extends Controller
 
         $article->jlptcommon = 0;
 
+        // TODO: Move kanjis and words extraction for PDF click action to separate endpoint.
         $article->words = extractWordsListAttributes($article->words()->get());
         $article->kanjis = $article->kanjis()->get();
         foreach ($article->kanjis as $kanji) {
@@ -178,94 +188,78 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    /**
+     * POST /api/article
+     * Creates a new article
+     * @param ArticleStoreRequest $request
+     * @return JsonResponse
+     */
+    public function store(ArticleStoreRequest $request)
     {
-        if (! auth()->user()) {
-            return response()->json([
-                'message' => 'you are not a user',
-            ]);
-        }
-        // $validated = $request->validated();
+        // Get validated data
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            // 'title_en'    => 'max:255',
-            'title_jp' => 'required|min:2|max:255',
-            // 'content_en'  => 'max:3000',
-            'content_jp' => 'required|min:2|max:3000',
-            'source_link' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
+        // Create article and fill basic properties
         $article = new Article;
-        $article->user_id = auth()->user()->id;
-        $article->title_jp = $request->get('title_jp');
-        if (isset($request->title_en)) {
-            $article->title_en = $request->get('title_en');
-        } else {
-            $article->title_en = '';
-        }
-        if (isset($request->content_en)) {
-            $article->content_en = $request->get('content_en');
-        } else {
-            $article->content_en = '';
-        }
-        if (isset($request->publicity)) {
-            $article->publicity = $request->get('publicity');
-        }
-        $article->content_jp = $request->get('content_jp');
-        $article->source_link = $request->get('source_link');
+        $article->user_id = auth()->id();
+        $article->title_jp = $validated['title_jp'];
+        $article->title_en = $validated['title_en'] ?? '';
+        $article->content_jp = $validated['content_jp'];
+        $article->content_en = $validated['content_en'] ?? '';
+        $article->source_link = $validated['source_link'];
+        $article->publicity = $validated['publicity'] ?? 0;
         $article->save();
 
+        // Get object template ID
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-        attachHashTags($request->tags, $article, $objectTemplateId);
-        // $this->attachHashTags($request->tags, $article);
+        // Attach hashtags
+        if (isset($validated['tags'])) {
+            attachHashTags($validated['tags'], $article, $objectTemplateId);
+        }
 
-        if (isset($request->attach) && $request->attach == 1) {
+        // Process kanji attachments if requested
+        $attachData = [];
+        if (isset($validated['attach']) && $validated['attach'] == 1) {
             $kanjiResponse = getKanjiIdsFromText($article);
-            // $wordResponse  = getWordIdsFromText($article);
             $kanjis = $article->kanjis()->get();
+
+            // Count and update JLPT levels
             foreach ($kanjis as $kanji) {
-                if ($kanji->jlpt == '1') {
-                    $article->n1 = intval($article->n1) + 1;
-                } elseif ($kanji->jlpt == '2') {
-                    $article->n2 = intval($article->n2) + 1;
-                } elseif ($kanji->jlpt == '3') {
-                    $article->n3 = intval($article->n3) + 1;
-                } elseif ($kanji->jlpt == '4') {
-                    $article->n4 = intval($article->n4) + 1;
-                } elseif ($kanji->jlpt == '5') {
-                    $article->n5 = intval($article->n5) + 1;
+                $jlptLevel = $kanji->jlpt;
+                if (in_array($jlptLevel, ['1', '2', '3', '4', '5'])) {
+                    $field = 'n' . $jlptLevel;
+                    $article->$field = intval($article->$field) + 1;
                 } else {
                     $article->uncommon = intval($article->uncommon) + 1;
                 }
             }
 
             $article->update();
-
-            incrementView($article, $objectTemplateId);
-
-            return response()->json([
-                'success' => true,
-                'attach' => $request->attach,
-                'article' => $article,
+            $attachData = [
+                'attach' => $validated['attach'],
                 'kanjis' => $kanjiResponse,
-                // 'words' => $wordResponse
-            ]);
+            ];
         }
 
+        // Increment view counter
         incrementView($article, $objectTemplateId);
 
+        // Return response
         return response()->json([
             'success' => true,
-            'attach' => $request->attach,
             'article' => $article,
-        ]);
+            'message' => 'Article created successfully',
+        ] + $attachData, 201);
     }
 
+    /**
+     * PUT /api/article/{id}
+     * Updates an existing article
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function update(Request $request, $id)
     {
         if (! auth()->user()) {
@@ -339,6 +333,12 @@ class ArticleController extends Controller
         ]);
     }
 
+    /**
+     * DELETE /api/article/{id}
+     * Deletes an article
+     * @param int $id
+     * @return JsonResponse
+     */
     public function delete(Request $request, $id)
     {
         if (! auth()->user()) {
@@ -380,6 +380,11 @@ class ArticleController extends Controller
             ->delete();
     }
 
+    /**
+     * GET /api/user/articles
+     * Returns current user's articles
+     * @return JsonResponse
+     */
     public function getUserArticles()
     {
         $articles = Article::where('user_id', auth()->user()->id)->get();
@@ -556,6 +561,7 @@ class ArticleController extends Controller
         }
         $this->incrementDownload($article);
         $user = User::find($article->user_id);
+
         $wordList = $article->words()->get();
 
         $wordList = extractWordsListAttributes($wordList);
@@ -628,6 +634,12 @@ class ArticleController extends Controller
         return $pdf->inline('article-kanjis.pdf');
     }
 
+    /**
+     * POST /api/article/{id}/togglepublicity
+     * Toggles article's public visibility
+     * @param int $id
+     * @return JsonResponse
+     */
     public function togglePublicity($id)
     {
         $article = Article::find($id);
@@ -675,6 +687,13 @@ class ArticleController extends Controller
         $download->save();
     }
 
+    /**
+     * POST /api/article/{id}/comment
+     * Adds a comment to an article
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function storeComment(Request $request, $id, $parentCommentId = null)
     {
         if (! auth()->user()) {
@@ -845,6 +864,12 @@ class ArticleController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/article/{id}/like
+     * Likes an article
+     * @param int $id
+     * @return JsonResponse
+     */
     public function unlikeArticle($id)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;

@@ -85,7 +85,7 @@ const ArticleList: React.FC = () => {
 				(paginationInfo.current_page === paginationInfo.last_page || !paginationInfo.next_page_url) ? (
 					'No more results...'
 				) : (
-					<Button variant="outline" className="w-50" onClick={loadMore}>
+					<Button variant="secondary-outline" className="w-50" onClick={loadMore}>
 						Load More
 					</Button>
 				)}

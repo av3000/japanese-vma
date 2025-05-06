@@ -1,4 +1,4 @@
-// Chip.stories.tsx
+// TODO: Revisit chip style https://smart-interface-design-patterns.com/articles/badges-chips-tags-pills/ and make clear usage examples, restyle if needed.
 import type { Meta, StoryObj } from '@storybook/react';
 import { Chip } from './';
 

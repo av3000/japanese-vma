@@ -48,7 +48,7 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 					</div>
 				)}
 
-				{date && <div className={styles.date}>{formatDate(date, 'ja', true)}</div>}
+				{date && <div className={classNames(styles.date, 'mt-2')}>{formatDate(date, 'ja', true)}</div>}
 
 				{title && <p className={classNames(styles.title, 'u-ellipsis-2-lines')}>{title}</p>}
 
