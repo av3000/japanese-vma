@@ -2,12 +2,14 @@
 /* eslint-disable */
 import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
+import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import { apiCall } from '@/services/api';
 import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
 
-const RadicalDetails: React.FC = ({ currentUser }) => {
+const RadicalDetails: React.FC = () => {
+	const currentUser = useSelector((state) => state.currentUser);
 	const [radical, setRadical] = useState({});
 	const [lists, setLists] = useState([]);
 	const [showModal, setShowModal] = useState(false);

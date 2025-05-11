@@ -1,137 +1,126 @@
 // @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
-import { hideLoader, showLoader } from '@/store/actions/application';
 
-class SavedListForm extends Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			title: '',
-			type: 5,
-			tags: '',
-			publicity: false,
-		};
+const SavedListForm = () => {
+	const [formData, setFormData] = useState({
+		title: '',
+		type: '5',
+		tags: '',
+		publicity: '0',
+	});
+	const [errors, setErrors] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 
-		this.handleChange = this.handleChange.bind(this);
-	}
+	const navigate = useNavigate();
 
-	handleNewList = (e) => {
+	const handleChange = (e) => {
+		setFormData({
+			...formData,
+			[e.target.name]: e.target.value,
+		});
+	};
+
+	const handleNewList = (e) => {
 		e.preventDefault();
+		setErrors(null);
 
-		const body = this.state.title;
-		if (body.length < 3) {
-			this.props.dispatch(showLoader('Title requires to be at least 3char long!'));
-			setTimeout(() => {
-				this.props.dispatch(hideLoader());
-			}, 2500);
-
+		const { title } = formData;
+		if (title.length < 3) {
+			setErrors('Title requires to be at least 3char long!');
 			return;
 		}
 
-		this.props.dispatch(showLoader('Creating List, please wait.', 'It will take a few seconds'));
+		setIsLoading(true);
 
 		const payload = {
-			title: this.state.title,
-			type: this.state.type,
-			tags: this.state.tags,
-			publicity: this.state.publicity,
+			title: formData.title,
+			type: parseInt(formData.type),
+			tags: formData.tags,
+			publicity: formData.publicity === '1',
 		};
 
-		this.postNewList(payload);
+		postNewList(payload);
 	};
 
-	postNewList(payload) {
-		return apiCall('post', `/api/list`, payload)
-			.then((res) => {
-				this.props.dispatch(hideLoader());
-				this.props.history.push('/list/' + res.newList.id);
-			})
-			.catch((err) => {
-				this.props.dispatch(hideLoader());
-				console.log(err);
-				if (err.title) {
-					return { success: false, err: err.title[0] };
-				} else {
-					console.log(err);
-					return { success: false, err };
-				}
-			});
-	}
+	const postNewList = async (payload) => {
+		try {
+			const res = await apiCall('post', `/api/list`, payload);
+			setIsLoading(false);
+			navigate('/list/' + res.newList.id);
+		} catch (err) {
+			setIsLoading(false);
 
-	handleChange(e) {
-		this.setState({ [e.target.name]: e.target.value });
-	}
+			let errorMessage = 'Something went wrong.';
 
-	render() {
-		return (
-			<div className="container">
-				<div className="row justify-content-lg-center text-center">
-					<form onSubmit={this.handleNewList} className="col-12">
-						{this.props.errors.message && (
-							<div className="alert alert-danger">{this.props.errors.message}</div>
-						)}
-						<label htmlFor="title" className="mt-3">
-							{' '}
-							<h4>Title</h4>{' '}
-						</label>
-						<input
-							placeholder="List title"
-							type="text"
-							className="form-control"
-							value={this.state.title}
-							name="title"
-							onChange={this.handleChange}
-						/>
-						<label htmlFor="tags" className="mt-3">
-							{' '}
-							<h4>Add Tags</h4>{' '}
-						</label>
-						<input
-							placeholder="#movie #booktitle #office"
-							type="text"
-							className="form-control"
-							value={this.state.tags}
-							name="tags"
-							onChange={this.handleChange}
-						/>
-						<label htmlFor="type" className="mt-3">
-							List Type
-						</label>
-						<select
-							name="type"
-							value={this.state.type}
-							className="form-control"
-							onChange={this.handleChange}
-						>
-							<option value="5">Radicals</option>
-							<option value="6">Kanjis</option>
-							<option value="7">Words</option>
-							<option value="8">Sentences</option>
-							<option value="9">Articles</option>
-						</select>
-						<label htmlFor="publicity" className="mt-3">
-							Publicity
-						</label>
-						<select
-							name="publicity"
-							value={this.state.publicity}
-							className="form-control"
-							onChange={this.handleChange}
-						>
-							<option value="1">Public</option>
-							<option value="0">Private</option>
-						</select>
-						<Button type="submit" variant="outline">
-							Create the List
-						</Button>
-					</form>
-				</div>
+			if (err?.title) {
+				errorMessage = err.title[0];
+			} else if (typeof err === 'string') {
+				errorMessage = err;
+			}
+
+			setErrors(errorMessage);
+		}
+	};
+
+	return (
+		<div className="container">
+			<div className="row justify-content-lg-center text-center">
+				<form onSubmit={handleNewList} className="col-12">
+					{errors && <div className="alert alert-danger">{errors}</div>}
+					<label htmlFor="title" className="mt-3">
+						<h4>Title</h4>
+					</label>
+					<input
+						placeholder="List title"
+						type="text"
+						className="form-control"
+						value={formData.title}
+						name="title"
+						onChange={handleChange}
+					/>
+					<label htmlFor="tags" className="mt-3">
+						<h4>Add Tags</h4>
+					</label>
+					<input
+						placeholder="#movie #booktitle #office"
+						type="text"
+						className="form-control"
+						value={formData.tags}
+						name="tags"
+						onChange={handleChange}
+					/>
+					<label htmlFor="type" className="mt-3">
+						List Type
+					</label>
+					<select name="type" value={formData.type} className="form-control" onChange={handleChange}>
+						<option value="5">Radicals</option>
+						<option value="6">Kanjis</option>
+						<option value="7">Words</option>
+						<option value="8">Sentences</option>
+						<option value="9">Articles</option>
+					</select>
+					<label htmlFor="publicity" className="mt-3">
+						Publicity
+					</label>
+					<select
+						name="publicity"
+						value={formData.publicity}
+						className="form-control"
+						onChange={handleChange}
+					>
+						<option value="1">Public</option>
+						<option value="0">Private</option>
+					</select>
+					<Button type="submit" variant="outline" isLoading={isLoading}>
+						Create the List
+					</Button>
+				</form>
 			</div>
-		);
-	}
-}
+		</div>
+	);
+};
 
 export default SavedListForm;

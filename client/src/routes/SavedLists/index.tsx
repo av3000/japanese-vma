@@ -160,7 +160,7 @@ class SavedLists extends Component {
 		);
 
 		return (
-			<div className="container">
+			<div className="u-container">
 				<SearchBar fetchQuery={this.fetchQuery} searchType="lists" />
 				{this.state.searchHeading && <h4>{this.state.searchHeading}</h4>}
 				{this.state.searchTotal && <h4>{this.state.searchTotal}</h4>}

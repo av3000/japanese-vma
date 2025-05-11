@@ -48,8 +48,8 @@
 	&:focus,
 	&:focus-visible {
 		outline-width: var(--border-size-md);
-		outline-color: var(--color-primary-100);
-		outline-offset: 2px;
+		outline-color: var(--color-neutral-900);
+		outline-offset: var(--border-size-sm);
 	}
 
 	&:disabled,

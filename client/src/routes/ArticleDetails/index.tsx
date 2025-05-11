@@ -438,6 +438,7 @@ const ArticleDetails: React.FC = () => {
 					<h1 className="mt-4">{article.title_jp}</h1>
 					<div className="row text-muted w-100 mb-3 justify-content-between">
 						<div className="col">
+							{/* TODO: use general date, transform format on frontend based on global configs */}
 							Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
 							<br />
 							<span>{article.viewsTotal} views | </span>
@@ -497,7 +498,7 @@ const ArticleDetails: React.FC = () => {
 					<img className="img-fluid rounded mb-3" src={DefaultArticleImg} alt="default-article-img" />
 					<p className="lead">{article.content_jp}</p>
 					<section className="mt-2 d-flex align-items-center flex-wrap">
-						{hashtags.map((tag) => (
+						{article.hashtags.map((tag) => (
 							<Chip
 								className="mr-1"
 								readonly

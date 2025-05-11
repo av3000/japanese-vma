@@ -18,7 +18,7 @@ export const LinkRouter: React.FunctionComponent<LinkRouterProps> = ({
 	title,
 	textLink,
 	richTextLink,
-	color,
+	color = 'default',
 	size,
 	weight,
 	hideExternalIcon,

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import { fetchArticles } from '@/store/slices/articlesSlice';
-import ExploreArticleItem from './ExploreArticleItem';
+import ArticleItem from '../article/ArticleItem';
 
 const ExploreArticleList: React.FC = () => {
 	const dispatch = useDispatch();
@@ -15,6 +15,7 @@ const ExploreArticleList: React.FC = () => {
 
 	useEffect(() => {
 		if (!articles.length) {
+			// TODO: Either create loader on the route, or pass pagination parameters.
 			dispatch(fetchArticles());
 		}
 	}, [dispatch, articles.length]);
@@ -27,8 +28,6 @@ const ExploreArticleList: React.FC = () => {
 		);
 	}
 
-	const featuredArticles = articles.slice(0, 3).map((a) => <ExploreArticleItem key={a.id} {...a} />);
-
 	return (
 		<>
 			<div className="d-flex justify-content-between align-items-center w-100 my-3">
@@ -39,7 +38,11 @@ const ExploreArticleList: React.FC = () => {
 					</Link>
 				</div>
 			</div>
-			<div className="row">{featuredArticles}</div>
+			<div className="row">
+				{articles.map((a) => (
+					<ArticleItem key={a.id} {...a} />
+				))}
+			</div>
 		</>
 	);
 };

@@ -2,8 +2,8 @@
 /* eslint-disable */
 import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
-import SearchBar from '@/components/SearchBar';
-import PostItem from '@/components/post/PostItem';
+import SearchBar from '@/components/features/SearchBar';
+import PostItem from '@/components/features/community/PostItem';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { apiCall } from '@/services/api';
