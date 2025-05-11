@@ -314,7 +314,29 @@ npm run storybook
 - [x] Create storybook for components
 - [x] Add ESlint
 - [ ] Add Husky for hooks
--
+
+- Features:
+
+  - Search refactor:
+    - [] Articles search:
+      - [] backend search
+      - [] frontend search
+    - [] Saved lists search:
+      - [] backend search
+      - [] frontend search
+    - [] Japanese material search:
+      - [] Radicals:
+        - [] backend search
+        - [] frontend search
+      - [] Kanjis:
+        - [] backend search
+        - [] frontend search
+      - [] Words:
+        - [] backend search
+        - [] frontend search
+      - [] Sentences:
+        - [] backend search
+        - [] frontend search
 
 - UI Components:
   - dependency tree:
@@ -323,7 +345,8 @@ npm run storybook
     - ex: in lists
   - [x] Button
   - [x] Chip
-  - Product card
+  - [x] Card:
+    - [] extend card to have optional params of sections for card.header, card.content, card.footer
   - Dropdown
   - Select
   - Input Text
@@ -341,7 +364,7 @@ npm run storybook
   - Tooltip
   - Drawer
   - Modal
-  - Paginator / Pagination upgrade
+  - Paginator
   - Table ( tanstack query table?)
   - Layout components Mobile-first approach:
     - Header
