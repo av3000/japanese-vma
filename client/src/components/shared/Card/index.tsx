@@ -50,7 +50,7 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 
 				{date && <div className={classNames(styles.date, 'mt-2')}>{formatDate(date, 'ja', true)}</div>}
 
-				{title && <p className={classNames(styles.title, 'u-ellipsis-2-lines')}>{title}</p>}
+				{title && <p className={classNames(styles.title)}>{title}</p>}
 
 				{tags && tags.length > 0 && (
 					<div className={classNames(styles.chipList, 'mt-2 d-flex align-items-center flex-wrap')}>
@@ -64,7 +64,7 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 			</div>
 
 			{url ? (
-				<Link className={styles.primaryCardAction} to={url ?? ''}>
+				<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
 					{renderContent()}
 				</Link>
 			) : (

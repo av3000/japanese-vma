@@ -41,7 +41,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 	uncommon,
 }) => {
 	return (
-		<div className="col-lg-4 col-md-6 col-sm-8 mb-4">
+		<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 			<Card
 				title={title_jp}
 				image={{ url: DefaultArticleImg, title: title_jp, alt: title_jp }}

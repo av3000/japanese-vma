@@ -44,7 +44,7 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 	};
 
 	return (
-		<Form onSubmit={handleSubmit} className="container">
+		<Form onSubmit={handleSubmit} className="u-container">
 			<Row>
 				<Col lg={4} md={6} sm={12} className="mt-3">
 					<Form.Control

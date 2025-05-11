@@ -26,15 +26,13 @@ const Header: React.FC = () => {
 			<Navbar.Toggle aria-controls="basic-navbar-nav" />
 			<Navbar.Collapse id="basic-navbar-nav">
 				<Nav className="mx-auto">
-					<NavDropdown title="Readings" id="readings-nav-dropdown">
-						<Dropdown.Item as={Link} to="/articles">
-							Articles
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/lists">
-							Lists
-						</Dropdown.Item>
-					</NavDropdown>
-					<NavDropdown title="Material" id="material-nav-dropdown">
+					<Nav.Link as={Link} to="/articles">
+						Articles
+					</Nav.Link>
+					<Nav.Link as={Link} to="/lists">
+						Lists
+					</Nav.Link>
+					<NavDropdown title="Japanese Material" id="material-nav-dropdown">
 						<Dropdown.Item as={Link} to="/radicals">
 							Radicals
 						</Dropdown.Item>

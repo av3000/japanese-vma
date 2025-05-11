@@ -55,7 +55,7 @@ const SavedListItem: React.FC<ListItemProps> = ({
 	const isJlptList = type === 2 || type === 6;
 
 	return (
-		<div className="col-lg-4 col-md-6 col-sm-8 mb-4">
+		<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 			<Card
 				title={title}
 				image={{ url: DefaultListImg, title: title, alt: title }}

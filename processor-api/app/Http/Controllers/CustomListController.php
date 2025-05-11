@@ -183,18 +183,30 @@ class CustomListController extends Controller
         ]);
     }
 
-    public function index()
+    /**
+     * GET /api/lists
+     * Returns paginated list of public custom lists
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request)
     {
-        $lists = CustomList::where('publicity', 1)->where('type', '>', 4)->orderBy('created_at', 'DESC')->paginate(3);
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 4;
 
-        if (! $lists) {
+        $lists = CustomList::where('publicity', 1)
+            ->where('type', '>', 4)
+            ->orderBy('created_at', 'DESC')
+            ->paginate($perPage);
+
+        if ($lists->count() === 0) {
             return response()->json([
                 'success' => false,
                 'message' => 'Lists not found...',
-            ]);
+            ], 404);
         }
 
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
         foreach ($lists as $singleList) {
             $singleList = $this->getListWithItems($singleList);
             $singleList->itemsTotal = count($singleList->listItems);
@@ -207,31 +219,43 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'returned: '.count($lists).' results',
+            'message' => 'Returned: ' . $lists->count() . ' results',
             'lists' => $lists,
         ]);
     }
 
-    public function store(ListStoreRequest $request)
+    /**
+     * POST /api/list
+     * Creates a new custom list
+     * @param CustomListStoreRequest $request
+     * @return JsonResponse
+     */
+    public function store(CustomListStoreRequest $request)
     {
-        $this->isGuest();
+        $validated = $request->validated();
 
         $newList = new CustomList;
-        $newList->user_id = auth()->user()->id;
-        $newList->type = $request->type;
-        $newList->title = $request->title;
-        $newList->publicity = $request->publicity;
+        $newList->user_id = auth()->id();
+        $newList->type = $validated['type'];
+        $newList->title = $validated['title'];
+        $newList->description = $validated['description'] ?? '';
+        $newList->publicity = $validated['publicity'] ?? 0;
         $newList->save();
 
-        $this->attachHashTags($request->tags, $newList);
-
         $objectTemplateId = ObjectTemplate::where('title', 'list')->first()->id;
+
+        // Attach hashtags
+        if (isset($validated['tags'])) {
+            $this->attachHashTags($validated['tags'], $newList);
+        }
+
         incrementView($newList, $objectTemplateId);
 
         return response()->json([
             'success' => true,
-            'newList' => $newList,
-        ]);
+            'message' => 'List created successfully',
+            'list' => $newList,
+        ], 201);
     }
 
     public function update(Request $request, $id)

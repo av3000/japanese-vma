@@ -154,7 +154,7 @@ export class KanjiList extends Component {
 			k.kunyomi = k.kunyomi.slice(0, 3);
 			k.kunyomi = k.kunyomi.join(', ');
 
-			return <KanjiItem key={k.id} id={k.id} {...k} parts={k.radical_parts} addToList={addToList} />;
+			return <KanjiItem key={k.id} id={k.id} {...k} parts={k.radical_parts} addToList={this.addToList} />;
 		});
 
 		return (
