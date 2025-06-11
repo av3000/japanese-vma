@@ -22,6 +22,7 @@ const ArticleList: React.FC = () => {
 
 	const { searchHeading, searchTotal, filters } = searchState as any;
 
+	// TODO: Analyse useEffect and data fetching methods for exploring ways to changing Architecture without useEffect for data fetching.
 	useEffect(() => {
 		if (!articles.length) {
 			dispatch(fetchArticles() as any);

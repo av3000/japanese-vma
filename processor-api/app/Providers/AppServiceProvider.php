@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // TODO: analyse macro purpose and how to refactor it.
         Builder::macro('whereLike', function ($attributes, string $searchTerm) {
             $this->where(function (Builder $query) use ($attributes, $searchTerm) {
                 foreach (array_wrap($attributes) as $attribute) {
@@ -32,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
                         str_contains($attribute, '.'),
                         function (Builder $query) use ($attribute, $searchTerm) {
                             [$relationName, $relationAttribute] = explode('.', $attribute);
-        
+
                             $query->orWhereHas($relationName, function (Builder $query) use ($relationAttribute, $searchTerm) {
                                 $query->where($relationAttribute, 'LIKE', "%{$searchTerm}%");
                             });
@@ -43,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
                     );
                 }
             });
-        
+
             return $this;
         });
     }

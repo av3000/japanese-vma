@@ -24,7 +24,9 @@ Route::group([
     ], function() {
         Route::get('logout', 'UserController@logout');
 		Route::get('user', 'UserController@user');
-		
+		// Articles V2 CRUD
+        Route::get('v2/articles', 'ArticleController@index');
+
 		// Articles CUD
 		Route::post('article', 'ArticleController@store');
 		Route::put('article/{id}', 'ArticleController@update');
@@ -43,7 +45,7 @@ Route::group([
 		Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
 		Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
 		// Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
-		
+
 		// Lists CUD
 		Route::post('list', 'CustomListController@store');
 		Route::put('list/{id}', 'CustomListController@update');
@@ -108,7 +110,7 @@ Route::group([
 			}
 		);
 	});
-	
+
 // Authentication routes
 Route::post('/register', 'UserController@register');
 Route::post('/login', 'UserController@login');
@@ -148,3 +150,34 @@ Route::get('user/{id}/lists', 'CustomListController@getUserLists');
 Route::get('posts', 'PostController@index');
 Route::get('post/{id}', 'PostController@show');
 Route::post('posts/search', 'PostController@generateQuery');
+
+// V2 Endpoints - Domain Architecture
+Route::prefix('v2')->group(function () {
+
+    // Public routes
+    Route::get('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@index');
+    Route::get('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@show');
+
+    // Authenticated routes
+    Route::middleware('auth:api')->group(function () {
+
+        // Articles CRUD
+        Route::post('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@store');
+        Route::put('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@update');
+        Route::delete('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@destroy');
+
+        // Article actions
+        Route::post('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@like');
+        Route::delete('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@unlike');
+        Route::post('articles/{id}/toggle-publicity', '\App\Domain\Articles\Http\Controllers\ArticleController@togglePublicity');
+
+        // User's articles
+        Route::get('user/articles', '\App\Domain\Articles\Http\Controllers\ArticleController@userArticles');
+
+        // Admin routes
+        Route::middleware('checkRole:admin')->group(function () {
+            Route::post('articles/{id}/status', '\App\Domain\Articles\Http\Controllers\ArticleController@setStatus');
+            Route::get('articles/pending', '\App\Domain\Articles\Http\Controllers\ArticleController@pending');
+        });
+    });
+});

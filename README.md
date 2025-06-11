@@ -42,6 +42,18 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 
 ### Backend
 
+Domain-Driven Design Lite or Modular Monolith
+Patterns used:
+
+- Domain-Driven Design (domain organization)
+- Service Layer Pattern
+- DTO Pattern
+- Action Pattern (single responsibility)
+- MVC (Laravel's base)
+
+Store example flow:
+Controller → Request → DTO → Service → Actions → Model → Resource
+
 - [laravel-snappy](https://github.com/barryvdh/laravel-snappy) - for PDF generating. PDFs generated using laravel's blade templates structure. [wkhtmltopdf](https://github.com/barryvdh/laravel-snappy#wkhtmltopdf-installation) **wkhtmltopdf is required in order for the laravel-snappy library to work.**
 - [passport](https://laravel.com/docs/7.x/passport)
 - [laravel helpers](https://github.com/laravel/helpers) - more comfortable customized version of the [original laravel helpers](https://laravel.com/docs/7.x/helpers)
