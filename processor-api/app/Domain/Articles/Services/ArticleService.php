@@ -3,6 +3,7 @@ namespace App\Domain\Articles\Services;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\DTOs\ArticleData;
+use App\Domain\Articles\DTOs\ArticleUpdateData;
 use App\Domain\Articles\Actions\ExtractKanjis;
 use App\Domain\Articles\Actions\CalculateJLPTLevels;
 use App\Domain\Articles\Actions\IncrementView;
@@ -74,4 +75,75 @@ class ArticleService
 
         return $article;
     }
+
+    public function updateArticle(int $id, ArticleUpdateData $data, int $userId): ?Article
+    {
+        $article = Article::where('id', $id)->where('user_id', $userId)->first();
+
+        if (!$article) {
+            return null;
+        }
+
+        // Track what changed for reprocessing logic
+        $shouldReprocess = $data->reattach || $data->hasContentChanges();
+        \Log::info('Update start for article: ' . $id);
+        \Log::info('Should reprocess: ' . ($shouldReprocess ? 'yes' : 'no'));
+
+        // Update fields
+        $this->updateFields($article, $data);
+
+        // Handle tags
+        if ($data->tags !== null) {
+            $this->updateTags($article, $data->tags);
+        }
+
+        // Reprocess kanjis/JLPT if needed
+        // if ($shouldReprocess) {
+        //     $this->reprocessKanjisAndLevels($article);
+        // }
+
+        return $article->fresh(['kanjis', 'user']);
+    }
+
+    private function updateFields(Article $article, ArticleUpdateData $data): void
+    {
+        $fields = ['title_jp', 'title_en', 'content_jp', 'content_en', 'source_link', 'publicity', 'status'];
+
+        foreach ($fields as $field) {
+            if ($data->$field !== null) {
+                $article->$field = $data->$field;
+            }
+        }
+
+        $article->save();
+    }
+
+    private function updateTags(Article $article, array $tags): void
+    {
+        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+        removeHashtags($article->id, $objectTemplateId);
+
+        if (!empty($tags)) {
+            $tagsString = implode(' ', $tags);
+            attachHashTags($tagsString, $article, $objectTemplateId);
+        }
+    }
+
+    private function reprocessKanjisAndLevels(Article $article): void
+    {
+        // Detach existing kanjis
+        $article->kanjis()->detach();
+        $article->words()->detach();
+
+        // Re-extract and attach
+        $kanjiIds = $this->extractKanjis->execute($article->content_jp);
+        $article->kanjis()->attach($kanjiIds);
+
+        // Recalculate JLPT levels
+        $levels = $this->calculateLevels->execute($article);
+        $article->update($levels);
+    }
+
+
 }

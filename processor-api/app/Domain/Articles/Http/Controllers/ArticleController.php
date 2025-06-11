@@ -5,10 +5,14 @@ namespace App\Domain\Articles\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Articles\Http\Requests\StoreArticleRequest;
+use App\Domain\Articles\Http\Requests\UpdateArticleRequest;
+
+
 use App\Domain\Articles\Http\Resources\ArticleResource;
 use App\Domain\Articles\Http\Resources\ArticleDetailResource;
 use App\Domain\Articles\Services\ArticleService;
 use App\Domain\Articles\DTOs\ArticleData;
+use App\Domain\Articles\DTOs\ArticleUpdateData;
 
 class ArticleController extends Controller
 {
@@ -40,5 +44,21 @@ class ArticleController extends Controller
         }
 
         return new ArticleDetailResource($article);
+    }
+
+    public function update(UpdateArticleRequest $request, int $id)
+    {
+        $updateData = ArticleUpdateData::fromRequest($request->validated());
+
+        $article = $this->service->updateArticle($id, $updateData, auth()->id());
+
+        if (!$article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found or unauthorized'
+            ], 404);
+        }
+
+        return new ArticleResource($article);
     }
 }

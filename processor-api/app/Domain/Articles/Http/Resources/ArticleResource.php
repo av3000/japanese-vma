@@ -16,6 +16,8 @@ class ArticleResource extends JsonResource
             'content_jp' => $this->content_jp,
             'content_en' => $this->content_en,
             'source_link' => $this->source_link,
+            'publicity' => $this->publicity,
+            'status' => $this->status,
             'jlpt_levels' => [
                 'n1' => $this->n1,
                 'n2' => $this->n2,
@@ -29,6 +31,7 @@ class ArticleResource extends JsonResource
                 'name' => $this->user->name,
             ],
             'created_at' => $this->created_at->toDateTimeString(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
         ];
     }
 }
