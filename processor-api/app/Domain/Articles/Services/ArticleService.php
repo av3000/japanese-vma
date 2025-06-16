@@ -6,11 +6,16 @@ use App\Domain\Articles\DTOs\ArticleData;
 use App\Domain\Articles\DTOs\ArticleUpdateData;
 use App\Domain\Articles\Actions\ExtractKanjis;
 use App\Domain\Articles\Actions\CalculateJLPTLevels;
+use App\Domain\Articles\Actions\CleanupArticleData;
 use App\Domain\Articles\Actions\IncrementView;
 use App\Domain\Articles\Actions\LoadArticleStats;
+use App\Domain\Articles\Actions\LoadArticleListStats;
 use App\Domain\Articles\Actions\ProcessWordMeanings;
 use App\Domain\Articles\Actions\LoadComments;
 use App\Http\Models\ObjectTemplate;
+use App\Domain\Articles\DTOs\ArticleIndexData;
+use Illuminate\Pagination\LengthAwarePaginator;
+
 
 class ArticleService
 {
@@ -19,9 +24,37 @@ class ArticleService
         private CalculateJLPTLevels $calculateLevels,
         private IncrementView $incrementView,
         private LoadArticleStats $loadStats,
+        private LoadArticleListStats $loadListStats,
         private ProcessWordMeanings $processWords,
-        private LoadComments $loadComments
+        private LoadComments $loadComments,
+        private CleanupArticleData $cleanupArticleData,
     ) {}
+
+    public function getArticles(ArticleIndexData $data): LengthAwarePaginator
+    {
+        $query = Article::query()
+            ->where('publicity', 1)
+            ->with('user');
+
+        if ($data->category !== null) {
+            $query->where('category_id', $data->category);
+        }
+
+        if ($data->search !== null) {
+            $query->where(function($q) use ($data) {
+                $q->where('title_jp', 'LIKE', '%' . $data->search . '%')
+                ->orWhere('title_en', 'LIKE', '%' . $data->search . '%');
+            });
+        }
+
+        $articles = $query
+            ->orderBy($data->sortBy, $data->sortDir)
+            ->paginate($data->perPage);
+
+        $this->loadListStats->execute($articles);
+
+        return $articles;
+    }
 
     public function createArticle(ArticleData $data, int $userId): Article
     {
@@ -35,7 +68,6 @@ class ArticleService
             'publicity' => $data->publicity,
         ]);
 
-        // Extract and attach kanjis
         $kanjiIds = $this->extractKanjis->execute($data->content_jp);
         $article->kanjis()->attach($kanjiIds);
 
@@ -43,11 +75,9 @@ class ArticleService
         // $wordIds = $this->extractWords->execute($data->content_jp);
         // $article->words()->attach($wordIds);
 
-        // Calculate JLPT levels
         $levels = $this->calculateLevels->execute($article);
         $article->update($levels);
 
-        // Handle tags
         if (!empty($data->tags)) {
             $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
             $tagsString = implode(' ', $data->tags);
@@ -65,10 +95,8 @@ class ArticleService
             return null;
         }
 
-        // Increment view
         $this->incrementView->execute($article);
 
-        // Load stats and additional data
         $this->loadStats->execute($article);
         $this->processWords->execute($article);
         $this->loadComments->execute($article);
@@ -97,7 +125,7 @@ class ArticleService
             $this->updateTags($article, $data->tags);
         }
 
-        // Reprocess kanjis/JLPT if needed
+        // TODO: Reprocess kanjis/JLPT if needed
         // if ($shouldReprocess) {
         //     $this->reprocessKanjisAndLevels($article);
         // }
@@ -140,7 +168,6 @@ class ArticleService
         $kanjiIds = $this->extractKanjis->execute($article->content_jp);
         $article->kanjis()->attach($kanjiIds);
 
-        // Recalculate JLPT levels
         $levels = $this->calculateLevels->execute($article);
         $article->update($levels);
     }
@@ -153,41 +180,20 @@ class ArticleService
             return false;
         }
 
-        // Authorization check
         if ($article->user_id !== $userId && !$isAdmin) {
             return false;
         }
 
-        // Clean up all related data
-        $this->cleanupArticleData($article);
+        $this->cleanupArticleData->execute($article);
 
-        // Delete the article
         $article->delete();
 
         return true;
     }
-    // TODO: Figure if should be an action
-    // private function cleanupArticleData(Article $article): void
-    // {
-    //     $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
-
-    //     // Detach relationships
-    //     $article->kanjis()->detach();
-    //     $article->words()->detach();
-
-    //     // Remove impressions (likes, views, comments)
-    //     removeImpressions($article, $objectTemplateId);
-
-    //     // Remove hashtags
-    //     removeHashtags($article->id, $objectTemplateId);
-
-    //     // Remove from custom lists
-    //     $this->removeFromLists($article->id);
-    // }
 
     private function removeFromLists(int $articleId): void
     {
-        // Remove article from custom lists (type 9 based on your seeder)
+        // Remove article from custom lists (type 9 for custom list entity)
         \DB::table('customlist_object')
             ->where('real_object_id', $articleId)
             ->where('listtype_id', 9)
