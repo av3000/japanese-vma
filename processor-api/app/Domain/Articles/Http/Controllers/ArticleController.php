@@ -30,10 +30,9 @@ class ArticleController extends Controller
 
     public function show(int $id)
     {
-        // In controller before calling service
-        \Log::info('Article ID: ' . $id);
+
         $wordCount = \DB::table('article_word')->where('article_id', $id)->count();
-        \Log::info('Word count in pivot: ' . $wordCount);
+
         $article = $this->service->getArticleWithDetails($id);
 
         if (!$article) {
@@ -60,5 +59,22 @@ class ArticleController extends Controller
         }
 
         return new ArticleResource($article);
+    }
+
+    public function destroy(int $id)
+    {
+        $result = $this->service->deleteArticle($id, auth()->id(), auth()->user()->hasRole('admin'));
+
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article not found or unauthorized'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article deleted successfully'
+        ]);
     }
 }

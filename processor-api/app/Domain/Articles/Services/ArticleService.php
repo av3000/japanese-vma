@@ -145,5 +145,53 @@ class ArticleService
         $article->update($levels);
     }
 
+    public function deleteArticle(int $id, int $userId, bool $isAdmin = false): bool
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return false;
+        }
+
+        // Authorization check
+        if ($article->user_id !== $userId && !$isAdmin) {
+            return false;
+        }
+
+        // Clean up all related data
+        $this->cleanupArticleData($article);
+
+        // Delete the article
+        $article->delete();
+
+        return true;
+    }
+    // TODO: Figure if should be an action
+    // private function cleanupArticleData(Article $article): void
+    // {
+    //     $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+
+    //     // Detach relationships
+    //     $article->kanjis()->detach();
+    //     $article->words()->detach();
+
+    //     // Remove impressions (likes, views, comments)
+    //     removeImpressions($article, $objectTemplateId);
+
+    //     // Remove hashtags
+    //     removeHashtags($article->id, $objectTemplateId);
+
+    //     // Remove from custom lists
+    //     $this->removeFromLists($article->id);
+    // }
+
+    private function removeFromLists(int $articleId): void
+    {
+        // Remove article from custom lists (type 9 based on your seeder)
+        \DB::table('customlist_object')
+            ->where('real_object_id', $articleId)
+            ->where('listtype_id', 9)
+            ->delete();
+    }
 
 }
