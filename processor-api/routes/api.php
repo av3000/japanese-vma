@@ -153,6 +153,7 @@ Route::post('posts/search', 'PostController@generateQuery');
 
 // V2 Endpoints - Domain Architecture
 Route::prefix('v2')->group(function () {
+    // TODO: use namespace for v2 routes
 
     // Public routes
     Route::get('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@index');
