@@ -320,6 +320,7 @@ npm run storybook
 - [ ] API types schema generation with Orvel.
 - [ ] PostHog / Sentry (?)
 - [ ] Matomo (?)
+- [ ] Analytics board(?) for visual friendly stats like total users, total articles, total lists, etc..
 
 <!-- Tasks -->
 
@@ -335,7 +336,15 @@ npm run storybook
   - [ ] Japanese Data
   - [ ] Posts
 
+- [ ] Consume new endpoints with cleaner pattern on frontend
+
+  - [ ] Articles
+  - [ ] Japanese Data
+  - [ ] Posts
+
 - Features:
+
+  - Feature toggle on/off for admin
 
   - Search refactor:
     - [] Articles search:
