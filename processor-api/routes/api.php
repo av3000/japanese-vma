@@ -24,8 +24,6 @@ Route::group([
     ], function() {
         Route::get('logout', 'UserController@logout');
 		Route::get('user', 'UserController@user');
-		// Articles V2 CRUD
-        Route::get('v2/articles', 'ArticleController@index');
 
 		// Articles CUD
 		Route::post('article', 'ArticleController@store');
@@ -156,28 +154,44 @@ Route::prefix('v2')->group(function () {
     // TODO: use namespace for v2 routes
 
     // Public routes
+    Route::get('articles/{id}/kanjis', '\App\Domain\Articles\Http\Controllers\ArticleController@kanjis');
+    Route::get('articles/{id}/words', '\App\Domain\Articles\Http\Controllers\ArticleController@words');
+
     Route::get('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@index');
     Route::get('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@show');
 
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
 
+        // Saved Lists
+
+
+        // Articles
         // Articles CRUD
         Route::post('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@store');
         Route::put('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@update');
         Route::delete('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@destroy');
 
         // Article actions
+        // TODO: implement in v2
         Route::post('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@like');
+        // TODO: implement in v2
         Route::delete('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@unlike');
+        // TODO: implement in v2
         Route::post('articles/{id}/toggle-publicity', '\App\Domain\Articles\Http\Controllers\ArticleController@togglePublicity');
 
+        // Route::get('articles/{id}/kanjis', '\App\Domain\Articles\Http\Controllers\ArticleController@kanjis');
+        // Route::get('articles/{id}/words', '\App\Domain\Articles\Http\Controllers\ArticleController@words');
+
         // User's articles
+        // TODO: implement in v2
         Route::get('user/articles', '\App\Domain\Articles\Http\Controllers\ArticleController@userArticles');
 
         // Admin routes
         Route::middleware('checkRole:admin')->group(function () {
+            // TODO: implement in v2
             Route::post('articles/{id}/status', '\App\Domain\Articles\Http\Controllers\ArticleController@setStatus');
+            // TODO: implement in v2
             Route::get('articles/pending', '\App\Domain\Articles\Http\Controllers\ArticleController@pending');
         });
     });

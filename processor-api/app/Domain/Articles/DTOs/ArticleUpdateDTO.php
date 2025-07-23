@@ -1,8 +1,7 @@
 <?php
-
 namespace App\Domain\Articles\DTOs;
 
-class ArticleUpdateData
+readonly class ArticleUpdateDTO
 {
     public function __construct(
         public ?string $title_jp = null,

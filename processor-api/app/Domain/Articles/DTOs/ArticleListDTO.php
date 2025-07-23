@@ -2,7 +2,7 @@
 
 namespace App\Domain\Articles\DTOs;
 
-class ArticleIndexData
+class ArticleListDTO
 {
     public function __construct(
         public ?int $category = null,

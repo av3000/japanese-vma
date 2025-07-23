@@ -14,6 +14,8 @@ return [
         'api/v2/test'
     ],
 
+    'debug' => true, // Add this to enable debug mode.
+
     /*
      * Your API domain. By default, app domain is used. This is also a part of the default API routes
      * matcher, so when implementing your own, make sure you use this config if needed.

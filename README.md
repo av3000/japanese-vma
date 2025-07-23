@@ -321,6 +321,7 @@ npm run storybook
 - [ ] PostHog / Sentry (?)
 - [ ] Matomo (?)
 - [ ] Analytics board(?) for visual friendly stats like total users, total articles, total lists, etc..
+- [ ] Handle return status codes for endpoints and responses for different codes fx: 404 vs 401
 
 <!-- Tasks -->
 
@@ -333,7 +334,9 @@ npm run storybook
 - [ ] Refactor Architecture to follow cleaner pattern
 
   - [x] Articles
+    - [ ] Add 'fields' filter to return only wanted fields. (graphQL vs 'fields')
   - [ ] Japanese Data
+    - [ ] Add graphQL implementation of japanese data for FE.
   - [ ] Posts
 
 - [ ] Consume new endpoints with cleaner pattern on frontend
