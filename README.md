@@ -46,42 +46,44 @@ This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dic
 
 Architecture follows Domain-Driven Modular Monolith design.
 
+```
 Domain/
-├── Articles/ # Core article domain
-│ ├── Actions/
-│ │ ├── Creation/ # Article creation operations
-│ │ ├── Retrieval/ # Article fetching operations
-│ │ ├── Updates/ # Article modification operations
-│ │ ├── Deletion/ # Article removal operations
-│ │ └── Processing/ # Data processing operations
-│ ├── DTOs/ # Data transfer objects
-│ ├── Http/
-│ │ ├── Controllers/
-│ │ ├── Requests/
-│ │ └── Resources/
-│ └── Models/
-├── Engagement/ # User interaction domain
-│ └── Actions/
-│ ├── IncrementViewAction.php
-│ ├── LoadArticleListStatsAction.php
-│ └── LoadArticleCommentsAction.php
-├── Hashtags/ # Tagging domain
-│ └── Actions/
-└── Shared/ # Cross-domain utilities
-├── Actions/
-└── DTOs/
+├── Articles/                      # Core article domain
+│   ├── Actions/
+│   │   ├── Creation/             # Article creation operations
+│   │   ├── Retrieval/            # Article fetching operations
+│   │   ├── Updates/              # Article modification operations
+│   │   ├── Deletion/             # Article removal operations
+│   │   └── Processing/           # Data processing operations
+│   ├── DTOs/                     # Data transfer objects
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   ├── Requests/
+│   │   └── Resources/
+│   └── Models/
+├── Engagement/                   # User interaction domain
+│   └── Actions/
+│       ├── IncrementViewAction.php
+│       ├── LoadArticleListStatsAction.php
+│       └── LoadArticleCommentsAction.php
+├── Hashtags/                     # Tagging domain
+│   └── Actions/
+└── Shared/                       # Cross-domain utilities
+    ├── Actions/
+    └── DTOs/
+```
 
-Logic breakdown:
+## Logic Breakdown
 
--> HTTP Request arrives at a route
-Controller (thin coordinator) receives the request
--> Request Validation ensures data integrity
--> DTO (Data Transfer Object) provides typed data contracts
--> Main Action orchestrates the business operation
--> Composed Actions handle individual responsibilities
--> Model interacts with the database
--> Resource formats the HTTP response
--> HTTP Response sent back to client
+→ **HTTP Request** arrives at a route  
+→ **Controller** (thin coordinator) receives the request  
+→ **Request Validation** ensures data integrity  
+→ **DTO** (Data Transfer Object) provides typed data contracts  
+→ **Main Action** orchestrates the business operation  
+→ **Composed Actions** handle individual responsibilities  
+→ **Model** interacts with the database  
+→ **Resource** formats the HTTP response  
+→ **HTTP Response** sent back to client
 
 ## Libraries
 
