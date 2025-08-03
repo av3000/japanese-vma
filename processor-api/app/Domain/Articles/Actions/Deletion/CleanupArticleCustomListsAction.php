@@ -9,7 +9,7 @@ class CleanupArticleCustomListsAction
     public function execute(Article $article): void
     {
         // Remove from custom lists
-        // TODO: Replace magic number 9 with a constant or lookup
+        // TODO: Create well defined enums for static uids
         DB::table('customlist_object')
             ->where('real_object_id', $article->id)
             ->where('listtype_id', 9)

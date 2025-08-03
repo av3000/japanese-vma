@@ -36,11 +36,10 @@ class GetArticleDetailAction
         $this->incrementView->execute($article);
 
         // Load engagement statistics (likes, downloads, views, comments counts)
-        // This reuses your efficient batch loading logic adapted for single articles
         $this->loadStats->execute($article);
 
         // Process word meanings (currently disabled due to performance issues)
-        // This is a placeholder that will be replaced once optimization is complete
+        // This is a placeholder that will be replaced once ACtion is implemented optimization is complete
         $this->processWords->execute($article);
 
         // Load comments with associated user data and like counts

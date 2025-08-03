@@ -36,7 +36,6 @@ class CleanupArticleEngagementAction
                 ->where('real_object_id', $comment->id)
                 ->delete();
 
-            // Delete the comment
             $comment->delete();
         }
     }

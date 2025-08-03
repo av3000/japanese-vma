@@ -21,18 +21,15 @@ class DeleteArticleAction
                 return false;
             }
 
-            // Check authorization
             if ($article->user_id !== $userId && !$isAdmin) {
                 return false;
             }
 
-            // Clean up all related data before deletion
             $this->cleanupRelationships->execute($article);
             $this->cleanupEngagement->execute($article);
             $this->cleanupHashtags->execute($article);
             $this->cleanupCustomLists->execute($article);
 
-            // Delete the article
             $article->delete();
 
             return true;

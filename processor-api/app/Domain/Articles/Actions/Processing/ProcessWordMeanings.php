@@ -1,3 +1,5 @@
+<!-- TODO: Use only ProcessWordMeaningsAction and remove this redundant old implementation-->
+
 <?php
 
 namespace App\Domain\Articles\Actions\Processing;

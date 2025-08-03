@@ -180,9 +180,6 @@ Route::prefix('v2')->group(function () {
         // TODO: implement in v2
         Route::post('articles/{id}/toggle-publicity', '\App\Domain\Articles\Http\Controllers\ArticleController@togglePublicity');
 
-        // Route::get('articles/{id}/kanjis', '\App\Domain\Articles\Http\Controllers\ArticleController@kanjis');
-        // Route::get('articles/{id}/words', '\App\Domain\Articles\Http\Controllers\ArticleController@words');
-
         // User's articles
         // TODO: implement in v2
         Route::get('user/articles', '\App\Domain\Articles\Http\Controllers\ArticleController@userArticles');

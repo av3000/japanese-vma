@@ -11,10 +11,8 @@ class UpdateArticleHashtagsAction
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-        // Remove existing hashtags
         $this->removeHashtags($article->id, $objectTemplateId);
 
-        // Attach new hashtags if any
         if (!empty($tags)) {
             $this->attachHashtags($article, $tags, $objectTemplateId);
         }

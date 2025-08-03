@@ -47,12 +47,10 @@ class GetArticlesAction
             ->where('publicity', 1)
             ->with('user'); // Always load user to avoid N+1 queries
 
-        // Apply optional category filter
         if ($articleListDTO->category !== null) {
             $query->where('category_id', $articleListDTO->category);
         }
 
-        // Apply optional search filter across both language fields
         if ($articleListDTO->search !== null) {
             $query->where(function($q) use ($articleListDTO) {
                 $q->where('title_jp', 'LIKE', '%' . $articleListDTO->search . '%')

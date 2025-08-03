@@ -118,6 +118,7 @@ class ArticleController extends Controller
     ): ArticleKanjiCollection {
         $pagination = PaginationData::fromRequest($request->all());
         $kanjis = $getArticleKanjis->execute($id, $pagination);
+        // TODO: figure if shouldnt JSON be returned here instead of ResourceCollection
         return new ArticleKanjiCollection($kanjis);
     }
 
@@ -128,6 +129,7 @@ class ArticleController extends Controller
     ): ArticleWordCollection {
         $pagination = PaginationData::fromRequest($request->all());
         $words = $getArticleWords->execute($id, $pagination);
+        // TODO: figure if shouldnt JSON be returned here instead of ResourceCollection
         return new ArticleWordCollection($words);
     }
 
