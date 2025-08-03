@@ -76,13 +76,13 @@ Domain/
 ## Logic Breakdown
 
 → **HTTP Request** arrives at a route  
-→ **Controller** (thin coordinator) receives the request  
+→ **Controller** receives request and coordinates further
 → **Request Validation** ensures data integrity  
 → **DTO** (Data Transfer Object) provides typed data contracts  
-→ **Main Action** orchestrates the business operation  
-→ **Composed Actions** handle individual responsibilities  
-→ **Model** interacts with the database  
-→ **Resource** formats the HTTP response  
+→ **Main Action** orchestrates the business operation
+→ **Composed Actions** handle individual responsibilities
+→ **Model** interacts with the database
+→ **Resource** formats the HTTP response
 → **HTTP Response** sent back to client
 
 ## Libraries
