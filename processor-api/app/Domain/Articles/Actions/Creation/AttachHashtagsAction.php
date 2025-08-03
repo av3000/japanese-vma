@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Creation;
 
 use App\Domain\Articles\Models\Article;
 use App\Http\Models\ObjectTemplate;

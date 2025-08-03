@@ -1,5 +1,10 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Retrieval;
+
+use App\Domain\Engagement\Actions\IncrementViewAction;
+use App\Domain\Articles\Actions\Retrieval\LoadArticleDetailStatsAction;
+use App\Domain\Articles\Actions\Processing\ProcessWordMeaningsAction;
+use App\Domain\Engagement\Actions\LoadArticleCommentsAction;
 
 use App\Domain\Articles\Models\Article;
 

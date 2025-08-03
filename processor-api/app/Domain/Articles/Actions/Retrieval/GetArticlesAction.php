@@ -1,11 +1,11 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Retrieval;
 
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\Models\Article;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Domain\Articles\Actions\LoadArticleListStatsAction;
-use App\Domain\Articles\Actions\LoadArticleListHashtagsAction;
+use App\Domain\Engagement\Actions\LoadArticleListStatsAction;
+use App\Domain\Articles\Actions\Retrieval\LoadArticleListHashtagsAction;
 
 class GetArticlesAction
 {

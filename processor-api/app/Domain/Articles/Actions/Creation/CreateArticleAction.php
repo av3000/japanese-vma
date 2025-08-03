@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Creation;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\Models\Article;

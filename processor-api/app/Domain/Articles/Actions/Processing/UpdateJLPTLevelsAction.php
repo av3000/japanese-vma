@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Processing;
 
 use App\Domain\Articles\Models\Article;
 

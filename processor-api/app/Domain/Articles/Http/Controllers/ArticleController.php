@@ -13,9 +13,9 @@ use App\Domain\Articles\Http\Resources\ArticleDetailResource;
 use App\Domain\Articles\Http\Resources\ArticleKanjiCollection;
 use App\Domain\Articles\Http\Resources\ArticleWordCollection;
 
-use App\Domain\Articles\Actions\GetArticlesAction;
-use App\Domain\Articles\Actions\GetArticleDetailAction;
-use App\Domain\Articles\Actions\CreateArticleAction;
+use App\Domain\Articles\Actions\Retrieval\GetArticlesAction;
+use App\Domain\Articles\Actions\Retrieval\GetArticleDetailAction;
+use App\Domain\Articles\Actions\Creation\CreateArticleAction;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\Http\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;

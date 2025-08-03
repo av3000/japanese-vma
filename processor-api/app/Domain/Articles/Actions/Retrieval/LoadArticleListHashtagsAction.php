@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Retrieval;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Models\ObjectTemplate;

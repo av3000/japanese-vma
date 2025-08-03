@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Articles\Actions\Retrieval;
 
 use App\Domain\Articles\Models\Article;
 use App\Http\Models\{Like, Download, View, Comment, ObjectTemplate};

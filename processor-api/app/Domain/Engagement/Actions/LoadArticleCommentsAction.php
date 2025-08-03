@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Domain\Engagement\Actions;
 
 use App\Domain\Articles\Models\Article;
 use App\Http\Models\{Comment, Like, ObjectTemplate};
