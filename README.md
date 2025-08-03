@@ -334,8 +334,8 @@ npm run storybook
 ### To Do List
 
 - [x] Make demo gifs to showcase main features.
-- [ ] Add swagger for Laravel API, add models for swagger to use swagger UI for quick and documented API usage
-- [ ] Refactor single component to functional component using latest react hooks in a composition way to have example component.
+- [x] Add swagger for Laravel API, add models for swagger to use swagger UI for quick and documented API usage
+- [x] Refactor single component to functional component using latest react hooks in a composition way to have example component.
 - [ ] Strengthen authorization with more persistant implementation..
 - [ ] Implement react-query for query-based approach of managing server-data facing for frontend cache, refetch, cancel requests after unmount and have control.
 - [ ] Create nhk easy news scrapper to get each days news.
@@ -353,6 +353,7 @@ npm run storybook
 - [ ] Matomo (?)
 - [ ] Analytics board(?) for visual friendly stats like total users, total articles, total lists, etc..
 - [ ] Handle return status codes for endpoints and responses for different codes fx: 404 vs 401
+- [ ] Refactor architecture to use **value objects** for business rules unification and **behavior contracts(interfaces)** to loosen coupling, improve testability and add more flexibility.
 
 <!-- Tasks -->
 
