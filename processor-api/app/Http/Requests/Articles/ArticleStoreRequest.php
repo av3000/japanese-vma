@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Requests;
+namespace App\Http\Requests\Articles;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -29,7 +29,10 @@ class ArticleStoreRequest extends FormRequest
             'content_en' => 'nullable|max:3000',
             'source_link' => 'required|url',
             'publicity' => 'nullable|boolean',
-            'tags' => 'nullable|string',
+            'tags' => 'nullable|string|500',
+            // TODO: Refactor into proper strings array:
+            // 'tags' => 'nullable|array',
+            // 'tags.*' => 'string|max:50',
             'attach' => 'nullable|boolean'
         ];
     }

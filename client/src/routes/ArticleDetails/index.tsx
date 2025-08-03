@@ -234,6 +234,7 @@ const ArticleDetails: React.FC = () => {
 		}
 	};
 
+	// TODO: Explore useEffect logic to potentially avoid using 'useCallback' for less complexity
 	const handleAddComment = useCallback(
 		(comment: any) => {
 			setArticle((prevArticle: any) => ({

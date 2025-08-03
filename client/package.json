@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:docker": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "vite preview",
+    "storybook:docker": "storybook dev -p 6006 --host 0.0.0.0 --no-open",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "chromatic": "npx chromatic",
