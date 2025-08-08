@@ -13,7 +13,6 @@ class GetArticlesAction
         private LoadArticleListStatsAction $loadStats,
         private LoadArticleListHashtagsAction $loadHashtags
     ) {
-        // Inject both actions so we can use them independently
     }
 
     /**
@@ -26,7 +25,7 @@ class GetArticlesAction
         bool $includeStats = false,
     ): LengthAwarePaginator {
         // Step 1: Get the basic article data with relationships
-        $articles = $this->buildQuery($articleListDTO)->paginate($articleListDTO->perPage);
+        $articles = $this->buildQuery($articleListDTO)->paginate($articleListDTO->perPage->value);
 
         $this->loadHashtags->execute($articles);
 
@@ -51,13 +50,17 @@ class GetArticlesAction
             $query->where('category_id', $articleListDTO->category);
         }
 
-        if ($articleListDTO->search !== null) {
-            $query->where(function($q) use ($articleListDTO) {
-                $q->where('title_jp', 'LIKE', '%' . $articleListDTO->search . '%')
-                  ->orWhere('title_en', 'LIKE', '%' . $articleListDTO->search . '%');
+        if ($articleListDTO->hasSearch()) {
+            $searchValue = $articleListDTO->getSearchValue();
+            $query->where(function($q) use ($searchValue) {
+                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
+                  ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
         }
 
-        return $query->orderBy($articleListDTO->sortBy, $articleListDTO->sortDir);
+        return $query->orderBy(
+            $articleListDTO->sort->field,
+            $articleListDTO->sort->direction
+        );
     }
 }

@@ -27,7 +27,15 @@ class ArticleController extends Controller
         IndexArticleRequest $request,
         GetArticlesAction $getArticlesAction
     ): JsonResponse|ArticleListResource {
-        $indexDTO = ArticleListDTO::fromRequest($request->validated());
+        try {
+            $indexDTO = ArticleListDTO::fromRequest($request->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'articles' => []
+            ], 422);
+        }
 
         $includeStats = $request->boolean('include_stats', false);
 
