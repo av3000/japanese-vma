@@ -11,10 +11,9 @@ class GetArticlesAction
 {
     public function __construct(
         private LoadArticleListStatsAction $loadStats,
-        private LoadArticleListHashtagsAction $loadHashtags
-    ) {
-        // Inject both actions so we can use them independently
-    }
+        private LoadArticleListHashtagsAction $loadHashtags,
+        private ArticleViewPolicy $viewPolicy
+    ) {}
 
     /**
      * Get articles with optional data enhancement.
@@ -22,15 +21,13 @@ class GetArticlesAction
      * from focused, single-purpose actions.
      */
     public function execute(
-        ArticleListDTO $articleListDTO,
-        bool $includeStats = false,
+        ArticleListDTO $articleListDTO, ?User $user = null
     ): LengthAwarePaginator {
-        // Step 1: Get the basic article data with relationships
-        $articles = $this->buildQuery($articleListDTO)->paginate($articleListDTO->perPage);
+        $articles = $this->buildQuery($articleListDTO, $user)->paginate($articleListDTO->perPage->value);
 
         $this->loadHashtags->execute($articles);
 
-        if ($includeStats) {
+        if ($articleListDTO->shouldIncludeStats()) {
             $this->loadStats->execute($articles);
         }
 
@@ -41,23 +38,27 @@ class GetArticlesAction
      * Build the base query with filters and sorting.
      * This method encapsulates the core article retrieval logic.
      */
-    private function buildQuery(ArticleListDTO $articleListDTO)
+    private function buildQuery(ArticleListDTO $articleListDTO, ?User $user)
     {
-        $query = Article::query()
-            ->where('publicity', 1)
-            ->with('user'); // Always load user to avoid N+1 queries
+        $query = Article::query()->with('user');
+
+        $query = $this->viewPolicy->applyVisibilityFilter($query, $user);
 
         if ($articleListDTO->category !== null) {
             $query->where('category_id', $articleListDTO->category);
         }
 
-        if ($articleListDTO->search !== null) {
-            $query->where(function($q) use ($articleListDTO) {
-                $q->where('title_jp', 'LIKE', '%' . $articleListDTO->search . '%')
-                  ->orWhere('title_en', 'LIKE', '%' . $articleListDTO->search . '%');
+        if ($articleListDTO->hasSearch()) {
+            $searchValue = $articleListDTO->getSearchValue();
+            $query->where(function($q) use ($searchValue) {
+                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
+                  ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
         }
 
-        return $query->orderBy($articleListDTO->sortBy, $articleListDTO->sortDir);
+        return $query->orderBy(
+            $articleListDTO->sort->field,
+            $articleListDTO->sort->direction
+        );
     }
 }

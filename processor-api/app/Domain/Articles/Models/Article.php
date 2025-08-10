@@ -2,6 +2,8 @@
 
 namespace App\Domain\Articles\Models;
 
+use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\ArticleStatus;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Models\Kanji;
 use App\Http\Models\Word;
@@ -58,8 +60,8 @@ class Article extends Model
      * @var array
      */
     protected $casts = [
-        'publicity' => 'boolean',
-        'status' => 'integer',
+        'publicity' => PublicityStatus::class,
+        'status' => ArticleStatus::class,
         'n1' => 'integer',
         'n2' => 'integer',
         'n3' => 'integer',
@@ -76,8 +78,8 @@ class Article extends Model
      * @var array
      */
     protected $attributes = [
-        'publicity' => 0,
-        'status' => 1,
+        'publicity' => PublicityStatus::PRIVATE,
+        'status' => ArticleSTatus::PENDING,
         'n1' => 0,
         'n2' => 0,
         'n3' => 0,

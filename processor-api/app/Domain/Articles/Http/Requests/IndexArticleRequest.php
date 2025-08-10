@@ -11,15 +11,26 @@ class IndexArticleRequest extends FormRequest
         return true; // Public endpoint
     }
 
-    public function rules(): array
+   public function rules(): array
     {
         return [
             'category' => 'sometimes|integer',
-            'search' => 'sometimes|string|max:255',
-            'sort_by' => 'sometimes|string|in:created_at,updated_at,title_jp,title_en',
-            'sort_dir' => 'sometimes|string|in:asc,desc,ASC,DESC',
-            'per_page' => 'sometimes|integer|min:1|max:50',
-            'include_stats' => 'sometimes|in:true,false,1,0',
+            'search' => 'sometimes|string',
+            'sort_by' => 'sometimes|string',
+            'sort_dir' => 'sometimes|string',
+            'per_page' => 'sometimes|integer',
+            'include_stats' => 'sometimes|boolean',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'search.string' => 'Search term must be a string',
+            'sort_by.string' => 'Sort field must be a string',
+            'sort_dir.string' => 'Sort direction must be a string',
+            'per_page.integer' => 'Per page must be a number',
+            'include_stats.boolean' => 'Include stats must be a boolean value',
         ];
     }
 
