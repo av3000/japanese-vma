@@ -19,7 +19,7 @@ class IndexArticleRequest extends FormRequest
             'sort_by' => 'sometimes|string',
             'sort_dir' => 'sometimes|string',
             'per_page' => 'sometimes|integer',
-            'include_stats' => 'sometimes|in:true,false,1,0',
+            'include_stats' => 'sometimes|boolean',
         ];
     }
 
@@ -30,6 +30,7 @@ class IndexArticleRequest extends FormRequest
             'sort_by.string' => 'Sort field must be a string',
             'sort_dir.string' => 'Sort direction must be a string',
             'per_page.integer' => 'Per page must be a number',
+            'include_stats.boolean' => 'Include stats must be a boolean value',
         ];
     }
 

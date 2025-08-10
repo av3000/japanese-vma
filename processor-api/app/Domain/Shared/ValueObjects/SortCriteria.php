@@ -23,15 +23,15 @@ readonly class SortCriteria
     public static function default(): self
     {
         return new self(
-            ArticleSortField::CREATED_AT,  // Business rule: default field
-            SortDirection::DESC            // Business rule: default direction
+            ArticleSortField::CREATED_AT,
+            SortDirection::DESC
         );
     }
 
     private static function parseField(?string $field): ArticleSortField
     {
         if ($field === null) {
-            return ArticleSortField::CREATED_AT; // Business rule: fallback
+            return ArticleSortField::CREATED_AT;
         }
 
         return ArticleSortField::tryFrom($field)
@@ -41,7 +41,7 @@ readonly class SortCriteria
     private static function parseDirection(?string $direction): SortDirection
     {
         if ($direction === null) {
-            return SortDirection::DESC; // Business rule: fallback
+            return SortDirection::DESC;
         }
 
         // Business rule: handle common variations

@@ -11,9 +11,9 @@ class GetArticlesAction
 {
     public function __construct(
         private LoadArticleListStatsAction $loadStats,
-        private LoadArticleListHashtagsAction $loadHashtags
-    ) {
-    }
+        private LoadArticleListHashtagsAction $loadHashtags,
+        private ArticleViewPolicy $viewPolicy
+    ) {}
 
     /**
      * Get articles with optional data enhancement.
@@ -21,15 +21,13 @@ class GetArticlesAction
      * from focused, single-purpose actions.
      */
     public function execute(
-        ArticleListDTO $articleListDTO,
-        bool $includeStats = false,
+        ArticleListDTO $articleListDTO, ?User $user = null
     ): LengthAwarePaginator {
-        // Step 1: Get the basic article data with relationships
-        $articles = $this->buildQuery($articleListDTO)->paginate($articleListDTO->perPage->value);
+        $articles = $this->buildQuery($articleListDTO, $user)->paginate($articleListDTO->perPage->value);
 
         $this->loadHashtags->execute($articles);
 
-        if ($includeStats) {
+        if ($articleListDTO->shouldIncludeStats()) {
             $this->loadStats->execute($articles);
         }
 
@@ -40,11 +38,11 @@ class GetArticlesAction
      * Build the base query with filters and sorting.
      * This method encapsulates the core article retrieval logic.
      */
-    private function buildQuery(ArticleListDTO $articleListDTO)
+    private function buildQuery(ArticleListDTO $articleListDTO, ?User $user)
     {
-        $query = Article::query()
-            ->where('publicity', 1)
-            ->with('user'); // Always load user to avoid N+1 queries
+        $query = Article::query()->with('user');
+
+        $query = $this->viewPolicy->applyVisibilityFilter($query, $user);
 
         if ($articleListDTO->category !== null) {
             $query->where('category_id', $articleListDTO->category);

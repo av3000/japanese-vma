@@ -11,7 +11,8 @@ class ArticleListDTO
         public ?int $category,
         public ?SearchTerm $search,
         public SortCriteria $sort,
-        public PerPageLimit $perPage
+        public PerPageLimit $perPage,
+        public bool $includeStats = false
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -25,8 +26,8 @@ class ArticleListDTO
                 $validated['sort_by'] ?? null,
                 $validated['sort_dir'] ?? null
             ),
-            perPage: PerPageLimit::fromInputOrDefault($validated['per_page'] ?? null)
-        );
+            perPage: PerPageLimit::fromInputOrDefault($validated['per_page'] ?? null),
+            includeStats: $validated['include_stats'] ?? false);
     }
 
     public function hasSearch(): bool

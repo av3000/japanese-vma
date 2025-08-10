@@ -37,9 +37,7 @@ class ArticleController extends Controller
             ], 422);
         }
 
-        $includeStats = $request->boolean('include_stats', false);
-
-        $articles = $getArticlesAction->execute($indexDTO, $includeStats);
+        $articles = $getArticlesAction->execute($indexDTO, $request->user());
 
         if ($articles->isEmpty()) {
             return response()->json([
