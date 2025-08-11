@@ -20,7 +20,6 @@ class UpdateArticleAction implements UpdateArticleActionInterface
     public function execute(int $id, ArticleUpdateDTO $data, int $userId): ?Article
     {
         return DB::transaction(function () use ($id, $data, $userId) {
-            // Find the article and verify ownership
             $article = Article::where('id', $id)->where('user_id', $userId)->first();
             if (!$article) {
                 return null;
@@ -29,20 +28,16 @@ class UpdateArticleAction implements UpdateArticleActionInterface
             \Log::info('Update start for article: ' . $id);
             \Log::info('Should reprocess: ' . ($data->hasContentChanges() ? 'yes' : 'no'));
 
-            // Update basic fields
             $this->updateFields->execute($article, $data);
 
-            // Update hashtags if provided
             if ($data->tags !== null) {
                 $this->updateHashtags->execute($article, $data->tags);
             }
 
-            // Reprocess article data if content has changed
             if ($data->hasContentChanges()) {
                 $this->reprocessData->execute($article);
             }
 
-            // Return the refreshed article with relationships
             return $article->fresh(['kanjis', 'user']);
         });
     }
