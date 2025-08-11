@@ -3,16 +3,21 @@ namespace App\Domain\Articles\Actions\Retrieval;
 
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\Models\Article;
+use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Domain\Engagement\Actions\LoadArticleListStatsAction;
 use App\Domain\Articles\Actions\Retrieval\LoadArticleListHashtagsAction;
+use App\Domain\Articles\Interfaces\Policies\ArticleViewPolicyInterface;
+use App\Domain\Articles\Interfaces\Actions\ArticleListActionInterface;
+use App\Domain\Articles\Actions\Retrieval\LoadStatsAction;
+use App\Domain\Articles\Actions\Retrieval\LoadHashtagsAction;
 
-class GetArticlesAction
+class GetArticlesAction implements ArticleListActionInterface
 {
     public function __construct(
-        private LoadArticleListStatsAction $loadStats,
-        private LoadArticleListHashtagsAction $loadHashtags,
-        private ArticleViewPolicy $viewPolicy
+        private LoadStatsAction $loadStats,
+        private LoadHashtagsAction $loadHashtags,
+        private ArticleViewPolicyInterface $viewPolicy
     ) {}
 
     /**

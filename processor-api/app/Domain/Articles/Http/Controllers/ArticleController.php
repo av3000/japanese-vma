@@ -8,6 +8,12 @@ use App\Domain\Articles\Http\Requests\IndexArticleRequest;
 use App\Domain\Articles\Http\Requests\StoreArticleRequest;
 use App\Domain\Articles\Http\Requests\UpdateArticleRequest;
 
+use App\Domain\Articles\Interfaces\Actions\ArticleListActionInterface;
+use App\Domain\Articles\Interfaces\Actions\GetArticleDetailActionInterface;
+use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
+use App\Domain\Articles\Interfaces\Actions\UpdateArticleActionInterface;
+use App\Domain\Articles\Interfaces\Actions\DeleteArticleActionInterface;
+
 use App\Domain\Articles\Http\Resources\ArticleResource;
 use App\Domain\Articles\Http\Resources\ArticleDetailResource;
 use App\Domain\Articles\Http\Resources\ArticleKanjiCollection;
@@ -21,11 +27,12 @@ use App\Domain\Articles\Http\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;
 use App\Shared\DTOs\PaginationData;
 
+
 class ArticleController extends Controller
 {
      public function index(
         IndexArticleRequest $request,
-        GetArticlesAction $getArticlesAction
+        ArticleListActionInterface $articleListAction
     ): JsonResponse|ArticleListResource {
         try {
             $indexDTO = ArticleListDTO::fromRequest($request->validated());
@@ -37,7 +44,7 @@ class ArticleController extends Controller
             ], 422);
         }
 
-        $articles = $getArticlesAction->execute($indexDTO, $request->user());
+        $articles = $articleListAction->execute($indexDTO, $request->user());
 
         if ($articles->isEmpty()) {
             return response()->json([
@@ -57,7 +64,7 @@ class ArticleController extends Controller
 
     public function store(
         StoreArticleRequest $request,
-        CreateArticleAction $createArticleAction
+        CreateArticleActionInterface $createArticleAction
     ): ArticleResource {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
         $article = $createArticleAction->execute($createDTO, auth()->id());
@@ -66,7 +73,7 @@ class ArticleController extends Controller
 
     public function show(
     int $id,
-        GetArticleDetailAction $getArticleDetailAction
+        GetArticleDetailActionInterface $getArticleDetailAction
     ): JsonResponse|ArticleDetailResource {
         $article = $getArticleDetailAction->execute($id);
 
@@ -83,7 +90,7 @@ class ArticleController extends Controller
     public function update(
         UpdateArticleRequest $request,
         int $id,
-        UpdateArticleAction $updateArticleAction
+        UpdateArticleActionInterface $updateArticleAction
     ): JsonResponse|ArticleResource {
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
         $article = $updateArticleAction->execute($id, $updateDTO, auth()->id());
@@ -100,7 +107,7 @@ class ArticleController extends Controller
 
     public function destroy(
         int $id,
-        DeleteArticleAction $deleteArticleAction
+        DeleteArticleActionInterface $deleteArticleAction
     ): JsonResponse {
         $result = $deleteArticleAction->execute($id, auth()->id(), auth()->user()->hasRole('admin'));
 

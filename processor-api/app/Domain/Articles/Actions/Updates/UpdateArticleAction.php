@@ -2,10 +2,14 @@
 namespace App\Domain\Articles\Actions;
 
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\Interfaces\Actions\UpdateArticleActionInterface;
 use App\Domain\Articles\Models\Article;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Articles\Actions\Updates\UpdateArticleFieldsAction;
+use App\Domain\Articles\Actions\Updates\UpdateArticleHashtagsAction;
+use App\Domain\Articles\Actions\Updates\ReprocessArticleDataAction;
 
-class UpdateArticleAction
+class UpdateArticleAction implements UpdateArticleActionInterface
 {
     public function __construct(
         private UpdateArticleFieldsAction $updateFields,

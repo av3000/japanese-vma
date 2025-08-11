@@ -3,10 +3,11 @@ namespace App\Domain\Articles\Policies;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Articles\Interfaces\ArticleViewPolicyInterface;
 use App\Http\User;
 use Illuminate\Database\Eloquent\Builder;
 
-class ArticleViewPolicy
+class ArticleViewPolicy implements ArticleViewPolicyInterface
 {
     public function applyVisibilityFilter(Builder $query, ?User $user): Builder
     {

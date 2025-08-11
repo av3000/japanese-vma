@@ -3,8 +3,13 @@ namespace App\Domain\Articles\Actions\Deletion;
 
 use App\Domain\Articles\Models\Article;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Articles\Actions\Deletion\CleanupArticleRelationshipsAction;
+use App\Domain\Articles\Actions\Deletion\CleanupArticleEngagementAction;
+use App\Domain\Articles\Actions\Deletion\CleanupArticleHashtagsAction;
+use App\Domain\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Domain\Articles\Interfaces\Actions\DeleteArticleActionInterface;
 
-class DeleteArticleAction
+class DeleteArticleAction implements DeleteArticleActionInterface
 {
     public function __construct(
         private CleanupArticleRelationshipsAction $cleanupRelationships,

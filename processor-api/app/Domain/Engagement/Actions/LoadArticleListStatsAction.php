@@ -4,8 +4,9 @@ namespace App\Domain\Engagement\Actions;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Models\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Engagement\Interfaces\IStatsLoader;
 
-class LoadArticleListStatsAction
+class LoadArticleListStatsAction implements IStatsLoader
 {
     /**
      * Load statistical data (likes, downloads, views, comments) for a collection of articles.

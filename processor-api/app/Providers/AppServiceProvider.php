@@ -15,7 +15,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+         $this->app->bind(
+            \App\Domain\Articles\Interfaces\Actions\ArticleListActionInterface::class,
+            \App\Domain\Articles\Actions\Retrieval\GetArticlesAction::class
+        );
+
+          $this->app->bind(
+            \App\Domain\Articles\Interfaces\Policies\ArticleViewPolicyInterface::class,
+            \App\Domain\Articles\Policies\ArticleViewPolicy::class
+        );
     }
 
     /**
