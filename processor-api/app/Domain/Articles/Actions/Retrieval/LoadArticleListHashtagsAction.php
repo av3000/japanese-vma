@@ -4,8 +4,9 @@ namespace App\Domain\Articles\Actions\Retrieval;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Models\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Articles\Interfaces\IHashtagLoader;
 
-class LoadArticleListHashtagsAction
+class LoadArticleListHashtagsAction implements IHashtagLoader
 {
     /**
      * Load hashtags for a collection of articles.

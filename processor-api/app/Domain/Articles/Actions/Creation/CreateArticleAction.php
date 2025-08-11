@@ -3,9 +3,13 @@ namespace App\Domain\Articles\Actions\Creation;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Articles\Actions\Creation\AttachKanjisAction;
+use App\Domain\Articles\Actions\Creation\UpdateJLPTLevelsAction;
+use App\Domain\Articles\Actions\Creation\AttachHashtagsAction;
 
-class CreateArticleAction
+class CreateArticleAction implements CreateArticleActionInterface
 {
     public function __construct(
         private AttachKanjisAction $attachKanjis,
@@ -38,14 +42,12 @@ class CreateArticleAction
 
             $this->updateLevels->execute($article);
 
-            // Step 4: Process and attach hashtags if provided
-            // This handles the tagging system integration
+            // Process and attach hashtags if provided
             if (!empty($data->tags)) {
                 $this->attachHashtags->execute($article, $data->tags);
             }
 
             // Return the complete article with all relationships loaded
-            // Using fresh() ensures we get the updated data from the database
             return $article->fresh(['kanjis', 'user']);
         });
     }
