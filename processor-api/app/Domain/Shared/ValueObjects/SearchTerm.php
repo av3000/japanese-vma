@@ -34,4 +34,14 @@ readonly class SearchTerm
     {
         return str_contains(strtolower($text), strtolower($this->value));
     }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
+    public function isEmpty(): bool
+    {
+        return empty($this->value);
+    }
 }

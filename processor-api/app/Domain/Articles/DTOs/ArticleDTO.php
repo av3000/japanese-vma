@@ -66,18 +66,18 @@ readonly class ArticleDTO
     {
         $data = [
             'id' => $this->id,
-            'title_jp' => (string)$this->title_jp,
-            'title_en' => $this->title_en ? (string)$this->title_en : '',
-            'content_jp' => (string)$this->content_jp,
-            'content_en' => $this->content_en ? (string)$this->content_en : '',
-            'source_link' => (string)$this->source_link,
+            'title_jp' => $this->title_jp, // Let __toString() handle conversion
+            'title_en' => $this->title_en ?? '',
+            'content_jp' => $this->content_jp,
+            'content_en' => $this->content_en ?? '',
+            'source_link' => $this->source_link,
             'publicity' => $this->publicity->value,
             'status' => $this->status->value,
             'jlpt_levels' => $this->jlpt_levels,
             'author' => $this->author->toArray(),
             'hashtags' => $this->hashtags ? $this->hashtags->getTagsArray() : [],
-            'created_at' => (string)$this->created_at,
-            'updated_at' => (string)$this->updated_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
 
         if ($includeStats) {
