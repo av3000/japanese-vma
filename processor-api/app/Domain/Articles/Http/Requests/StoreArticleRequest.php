@@ -16,8 +16,8 @@ class StoreArticleRequest extends FormRequest
         return [
             'title_jp' => 'required|string|min:2|max:255',
             'title_en' => 'nullable|string|max:255',
-            'content_jp' => 'required|string|min:10|max:10000',
-            'content_en' => 'nullable|string|max:10000',
+            'content_jp' => 'required|string|min:10|max:2000',
+            'content_en' => 'nullable|string|max:2000',
             'source_link' => 'required|url|max:500',
             'publicity' => 'nullable|boolean',
             'tags' => 'nullable|string|max:255',
