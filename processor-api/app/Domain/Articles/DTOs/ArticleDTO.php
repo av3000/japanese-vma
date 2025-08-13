@@ -1,27 +1,31 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Articles\DTOs\JlptLevelsDTO;
-use App\Domain\Articles\DTOs\StatsDTO;
-use App\Domain\Articles\DTOs\AuthorDTO;
+use App\Domain\Shared\ValueObjects\ArticleTitle;
+use App\Domain\Shared\ValueObjects\ArticleContent;
+use App\Domain\Shared\ValueObjects\SourceUrl;
+use App\Domain\Shared\ValueObjects\Tags;
+use App\Domain\Shared\ValueObjects\ArticleTimestamp;
+use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\ArticleStatus;
 
 readonly class ArticleDTO
 {
     public function __construct(
         public int $id,
-        public string $title_jp,
-        public string $title_en,
-        public string $content_jp,
-        public string $content_en,
-        public ?string $source_link,
-        public string $publicity,
-        public string $status,
+        public ArticleTitle $title_jp,
+        public ?ArticleTitle $title_en,
+        public ArticleContent $content_jp,
+        public ?ArticleContent $content_en,
+        public SourceUrl $source_link,
+        public PublicityStatus $publicity,
+        public ArticleStatus $status,
         public array $jlpt_levels,
         public array $stats,
         public AuthorDTO $author,
-        public array $hashtags,
-        public string $created_at,
-        public string $updated_at,
+        public ?Tags $hashtags,
+        public ArticleTimestamp $created_at,
+        public ArticleTimestamp $updated_at,
         public ?int $jlptcommon = null,
         public array $comments = [],
         public array $kanjis = [],
@@ -30,21 +34,27 @@ readonly class ArticleDTO
 
     public static function fromModel($article): self
     {
+        $tagsRaw = '';
+        if (!empty($article->hashtags)) {
+            // Assuming hashtags contains objects with 'content' property
+            $tagsRaw = implode(' ', array_map(fn($tag) => $tag->content ?? '', $article->hashtags));
+        }
+
         return new self(
             id: $article->id,
-            title_jp: $article->title_jp,
-            title_en: $article->title_en,
-            content_jp: $article->content_jp,
-            content_en: $article->content_en,
-            source_link: $article->source_link,
+            title_jp: new ArticleTitle($article->title_jp),
+            title_en: $article->title_en ? new ArticleTitle($article->title_en) : null,
+            content_jp: new ArticleContent($article->content_jp),
+            content_en: $article->content_en ? new ArticleContent($article->content_en) : null,
+            source_link: new SourceUrl($article->source_link),
             publicity: $article->publicity,
             status: $article->status,
             jlpt_levels: JlptLevelsDTO::fromModel($article)->toArray(),
             stats: StatsDTO::fromModel($article)->toArray(),
             author: AuthorDTO::fromModel($article->user),
-            hashtags: $article->hashtags ?? [],
-            created_at: $article->created_at->toDateTimeString(),
-            updated_at: $article->updated_at->toDateTimeString(),
+            hashtags: $tagsRaw ? new Tags($tagsRaw) : null,
+            created_at: new ArticleTimestamp($article->created_at->toDateTimeString()),
+            updated_at: new ArticleTimestamp($article->updated_at->toDateTimeString()),
             jlptcommon: $article->jlptcommon ?? null,
             comments: $article->comments?->toArray() ?? [],
             kanjis: $article->kanjis?->toArray() ?? [],
@@ -52,20 +62,20 @@ readonly class ArticleDTO
         );
     }
 
-   public function toListArray(bool $includeStats = true): array
+    public function toListArray(bool $includeStats = true): array
     {
         $data = [
             'id' => $this->id,
-            'title_jp' => $this->title_jp,
-            'title_en' => $this->title_en,
+            'title_jp' => $this->title_jp, // Let __toString() handle conversion
+            'title_en' => $this->title_en ?? '',
             'content_jp' => $this->content_jp,
-            'content_en' => $this->content_en,
+            'content_en' => $this->content_en ?? '',
             'source_link' => $this->source_link,
-            'publicity' => $this->publicity,
-            'status' => $this->status,
+            'publicity' => $this->publicity->value,
+            'status' => $this->status->value,
             'jlpt_levels' => $this->jlpt_levels,
             'author' => $this->author->toArray(),
-            'hashtags' => $this->hashtags,
+            'hashtags' => $this->hashtags ? $this->hashtags->getTagsArray() : [],
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

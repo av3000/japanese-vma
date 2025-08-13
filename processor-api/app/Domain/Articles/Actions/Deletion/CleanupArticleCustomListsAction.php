@@ -12,7 +12,7 @@ class CleanupArticleCustomListsAction
         // TODO: Create well defined enums for static uids
         DB::table('customlist_object')
             ->where('real_object_id', $article->id)
-            ->where('listtype_id', 9)
+            ->where('listtype_id', ObjectTemplateType::ARTICLES->value)
             ->delete();
     }
 }
