@@ -1,9 +1,9 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Shared\ValueObjects\ArticleTitle;
-use App\Domain\Shared\ValueObjects\ArticleContent;
-use App\Domain\Shared\ValueObjects\SourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Shared\ValueObjects\Tags;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -15,7 +15,7 @@ readonly class ArticleUpdateDTO
         public ?ArticleTitle $title_en = null,
         public ?ArticleContent $content_jp = null,
         public ?ArticleContent $content_en = null,
-        public ?SourceUrl $source_link = null,
+        public ?ArticleSourceUrl $source_link = null,
         public ?PublicityStatus $publicity = null,
         public ?ArticleStatus $status = null,
         public ?Tags $tags = null,
@@ -42,7 +42,7 @@ readonly class ArticleUpdateDTO
                 ? ($validated['content_en'] ? new ArticleContent($validated['content_en']) : null)
                 : null,
             source_link: isset($validated['source_link'])
-                ? new SourceUrl($validated['source_link'])
+                ? new ArticleSourceUrl($validated['source_link'])
                 : null,
             publicity: isset($validated['publicity'])
                 ? PublicityStatus::from((int)$validated['publicity'])

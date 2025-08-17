@@ -5,7 +5,7 @@ use App\Domain\Shared\Enums\ArticleSortField;
 use App\Domain\Shared\Enums\SortDirection;
 use InvalidArgumentException;
 
-readonly class SortCriteria
+readonly class ArticleSortCriteria
 {
     public function __construct(
         public ArticleSortField $field,

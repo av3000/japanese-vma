@@ -3,7 +3,7 @@ namespace App\Domain\Shared\ValueObjects;
 
 use InvalidArgumentException;
 
-readonly class SearchTerm
+readonly class ArticleSearchTerm
 {
     private const MIN_LENGTH = 2;
     private const MAX_LENGTH = 255;

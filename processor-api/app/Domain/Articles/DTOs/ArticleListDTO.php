@@ -1,16 +1,16 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\SortCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSearchTerm;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\PerPageLimit;
 
 class ArticleListDTO
 {
     public function __construct(
         public ?int $category,
-        public ?SearchTerm $search,
-        public SortCriteria $sort,
+        public ?ArticleSearchTerm $search,
+        public ArticleSortCriteria $sort,
         public PerPageLimit $perPage,
         public bool $includeStats = false
     ) {}
@@ -20,9 +20,9 @@ class ArticleListDTO
         return new self(
             category: $validated['category'] ?? null,
             search: isset($validated['search'])
-                ? SearchTerm::fromInput($validated['search'])
+                ? ArticleSearchTerm::fromInput($validated['search'])
                 : null,
-            sort: SortCriteria::fromInputOrDefault(
+            sort: ArticleSortCriteria::fromInputOrDefault(
                 $validated['sort_by'] ?? null,
                 $validated['sort_dir'] ?? null
             ),

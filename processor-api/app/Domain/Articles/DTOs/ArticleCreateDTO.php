@@ -1,9 +1,9 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Shared\ValueObjects\ArticleTitle;
-use App\Domain\Shared\ValueObjects\ArticleContent;
-use App\Domain\Shared\ValueObjects\SourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Shared\ValueObjects\Tags;
 use App\Domain\Shared\Enums\PublicityStatus;
 use InvalidArgumentException;
@@ -15,7 +15,7 @@ readonly class ArticleCreateDTO
         public ?ArticleTitle $title_en,
         public ArticleContent $content_jp,
         public ?ArticleContent $content_en,
-        public SourceUrl $source_link,
+        public ArticleSourceUrl $source_link,
         public PublicityStatus $publicity,
         public ?Tags $tags = null
     ) {}
@@ -38,7 +38,7 @@ readonly class ArticleCreateDTO
                 content_en: isset($data['content_en']) && !empty($data['content_en'])
                     ? new ArticleContent($data['content_en'])
                     : null,
-                source_link: new SourceUrl($data['source_link']),
+                source_link: new ArticleSourceUrl($data['source_link']),
                 publicity: isset($data['publicity'])
                     ? PublicityStatus::from((int)$data['publicity'])
                     : PublicityStatus::PRIVATE,

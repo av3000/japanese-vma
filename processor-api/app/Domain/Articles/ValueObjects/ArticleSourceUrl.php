@@ -3,7 +3,7 @@ namespace App\Domain\Shared\ValueObjects;
 
 use InvalidArgumentException;
 
-readonly class SourceUrl
+readonly class ArticleSourceUrl
 {
     private const MAX_LENGTH = 500;
 
