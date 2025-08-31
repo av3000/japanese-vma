@@ -5,14 +5,12 @@ use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\Interfaces\Actions\UpdateArticleActionInterface;
 use App\Domain\Articles\Models\Article;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Articles\Actions\Updates\UpdateArticleFieldsAction;
 use App\Domain\Articles\Actions\Updates\UpdateArticleHashtagsAction;
 use App\Domain\Articles\Actions\Updates\ReprocessArticleDataAction;
 
 class UpdateArticleAction implements UpdateArticleActionInterface
 {
     public function __construct(
-        private UpdateArticleFieldsAction $updateFields,
         private UpdateArticleHashtagsAction $updateHashtags,
         private ReprocessArticleDataAction $reprocessData
     ) {}
@@ -26,17 +24,19 @@ class UpdateArticleAction implements UpdateArticleActionInterface
             }
 
             \Log::info('Update start for article: ' . $id);
-            \Log::info('Should reprocess: ' . ($data->hasContentChanges() ? 'yes' : 'no'));
 
-            $this->updateFields->execute($article, $data);
+            $article->updateFromDTO($data);
 
             if ($data->tags !== null) {
                 $this->updateHashtags->execute($article, $data->tags);
             }
 
-            if ($data->hasContentChanges()) {
+            if ($article->shouldReprocessContent($data)) {
+                \Log::info('Reprocessing content for article: ' . $id);
                 $this->reprocessData->execute($article);
             }
+
+            $article->save();
 
             return $article->fresh(['kanjis', 'user']);
         });

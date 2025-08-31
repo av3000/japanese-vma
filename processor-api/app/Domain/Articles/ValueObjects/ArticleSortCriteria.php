@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Shared\ValueObjects;
+namespace App\Domain\Articles\ValueObjects;
 
 use App\Domain\Shared\Enums\ArticleSortField;
 use App\Domain\Shared\Enums\SortDirection;

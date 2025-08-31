@@ -150,7 +150,7 @@ Route::get('post/{id}', 'PostController@show');
 Route::post('posts/search', 'PostController@generateQuery');
 
 // V2 Endpoints - Domain Architecture
-Route::prefix('v2')->group(function () {
+Route::prefix('v1')->group(function () {
     // TODO: use namespace for v2 routes
 
     // Public routes

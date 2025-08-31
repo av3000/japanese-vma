@@ -30,32 +30,25 @@ use App\Shared\DTOs\PaginationData;
 
 class ArticleController extends Controller
 {
-     public function index(
-        IndexArticleRequest $request,
-        ArticleListActionInterface $articleListAction
-    ): JsonResponse|ArticleListResource {
-        try {
-            $indexDTO = ArticleListDTO::fromRequest($request->validated());
-        } catch (InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'articles' => []
-            ], 422);
-        }
+   public function index(
+    IndexArticleRequest $request,
+    ArticleListActionInterface $articleListAction
+): JsonResponse|ArticleListResource {
+    // No try-catch needed since DTO is now simple HTTP mapping
+    $indexDTO = ArticleListDTO::fromRequest($request->validated());
 
-        $articles = $articleListAction->execute($indexDTO, $request->user());
+    $articles = $articleListAction->execute($indexDTO, $request->user());
 
-        if ($articles->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No articles found matching your criteria',
-                'articles' => []
-            ], 404);
-        }
-
-        return new ArticleListResource($articles, $includeStats);
+    if ($articles->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No articles found matching your criteria',
+            'articles' => []
+        ], 404);
     }
+
+    return new ArticleListResource($articles, $indexDTO->includeStats);
+}
 
     private function getImagePath(): string
     {
@@ -66,9 +59,16 @@ class ArticleController extends Controller
         StoreArticleRequest $request,
         CreateArticleActionInterface $createArticleAction
     ): ArticleResource {
-        $createDTO = ArticleCreateDTO::fromRequest($request->validated());
-        $article = $createArticleAction->execute($createDTO, auth()->id());
-        return new ArticleResource($article);
+        try {
+            $createDTO = ArticleCreateDTO::fromRequest($request->validated());
+            $article = $createArticleAction->execute($createDTO, auth()->id());
+            return response()->json(new ArticleResource($article), Http::HTTP_CREATED);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     public function show(
@@ -92,6 +92,9 @@ class ArticleController extends Controller
         int $id,
         UpdateArticleActionInterface $updateArticleAction
     ): JsonResponse|ArticleResource {
+        // For scalability, this can be moved to background job, meaning, we dispatch a job to update article
+        // and return a response that the update request was accepted.
+        // Then the client can poll for status.
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
         $article = $updateArticleAction->execute($id, $updateDTO, auth()->id());
 
@@ -102,7 +105,7 @@ class ArticleController extends Controller
             ], 404);
         }
 
-        return new ArticleResource($article);
+        return response()->json(new ArticleResource($article), Http::HTTP_ACCEPTED);
     }
 
     public function destroy(

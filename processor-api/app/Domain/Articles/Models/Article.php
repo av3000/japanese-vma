@@ -1,42 +1,20 @@
 <?php
-
 namespace App\Domain\Articles\Models;
 
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
+use App\Domain\Shared\ValueObjects\Tags;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Models\Kanji;
 use App\Http\Models\Word;
 use App\Http\User;
 
-/**
- * Article Model
- *
- * @property int $id
- * @property string $title_jp
- * @property string|null $title_en
- * @property string $content_jp
- * @property string|null $content_en
- * @property string $source_link
- * @property bool $publicity
- * @property int $status
- * @property int $user_id
- * @property int $n1
- * @property int $n2
- * @property int $n3
- * @property int $n4
- * @property int $n5
- * @property int $uncommon
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class Article extends Model
 {
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'title_jp',
         'title_en',
@@ -54,11 +32,6 @@ class Article extends Model
         'uncommon'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'publicity' => PublicityStatus::class,
         'status' => ArticleStatus::class,
@@ -72,14 +45,9 @@ class Article extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * The attributes that should have default values.
-     *
-     * @var array
-     */
     protected $attributes = [
         'publicity' => PublicityStatus::PRIVATE,
-        'status' => ArticleSTatus::PENDING,
+        'status' => ArticleStatus::PENDING,
         'n1' => 0,
         'n2' => 0,
         'n3' => 0,
@@ -89,24 +57,84 @@ class Article extends Model
     ];
 
     /**
-     * Get the user that owns the article.
+     * Create article from DTO with Value Object validation
      */
+    public static function createFromDTO(ArticleCreateDTO $dto, int $userId): self
+    {
+        // Value Objects handle validation and business rules here
+        $titleJp = new ArticleTitle($dto->title_jp);
+        $titleEn = $dto->title_en ? new ArticleTitle($dto->title_en) : null;
+        $contentJp = new ArticleContent($dto->content_jp);
+        $contentEn = $dto->content_en ? new ArticleContent($dto->content_en) : null;
+        $sourceUrl = new ArticleSourceUrl($dto->source_link);
+
+        $article = new self();
+        $article->title_jp = (string)$titleJp;
+        $article->title_en = $titleEn ? (string)$titleEn : null;
+        $article->content_jp = (string)$contentJp;
+        $article->content_en = $contentEn ? (string)$contentEn : null;
+        $article->source_link = (string)$sourceUrl;
+        $article->publicity = PublicityStatus::from((int)$dto->publicity);
+        $article->user_id = $userId;
+
+        return $article;
+    }
+
+    /**
+     * Update the article from DTO using Value Objects for validation
+     */
+    public function updateFromDTO(ArticleUpdateDTO $dto): void
+    {
+        if ($dto->title_jp !== null) {
+            $titleJp = new ArticleTitle($dto->title_jp);
+            $this->title_jp = (string)$titleJp;
+        }
+
+        if ($dto->title_en !== null) {
+            $this->title_en = $dto->title_en ? (string)new ArticleTitle($dto->title_en) : null;
+        }
+
+        if ($dto->content_jp !== null) {
+            $contentJp = new ArticleContent($dto->content_jp);
+            $this->content_jp = (string)$contentJp;
+        }
+
+        if ($dto->content_en !== null) {
+            $this->content_en = $dto->content_en ? (string)new ArticleContent($dto->content_en) : null;
+        }
+
+        if ($dto->source_link !== null) {
+            $sourceUrl = new ArticleSourceUrl($dto->source_link);
+            $this->source_link = (string)$sourceUrl;
+        }
+
+        if ($dto->publicity !== null) {
+            $this->publicity = PublicityStatus::from((int)$dto->publicity);
+        }
+
+        if ($dto->status !== null) {
+            $this->status = ArticleStatus::from((int)$dto->status);
+        }
+    }
+
+    /**
+     * Check if content changes require kanji reprocessing
+     */
+    public function shouldReprocessContent(ArticleUpdateDTO $dto): bool
+    {
+        return $dto->reattach || $dto->content_jp !== null;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the kanjis for the article.
-     */
     public function kanjis()
     {
         return $this->belongsToMany(Kanji::class, 'article_kanji');
     }
 
-    /**
-     * Get the words for the article.
-     */
     public function words()
     {
         return $this->belongsToMany(Word::class, 'article_word');

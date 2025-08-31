@@ -22,29 +22,23 @@ class CreateArticleAction implements CreateArticleActionInterface
      * This method demonstrates transaction handling - ensuring all steps
      * complete successfully or none at all, maintaining data consistency.
      */
-    public function execute(ArticleCreateDTO $data, int $userId): Article
-    {
-        return DB::transaction(function () use ($data, $userId) {
-            $article = Article::create([
-                'user_id' => $userId,
-                'title_jp' => $data->title_jp,
-                'title_en' => $data->title_en,
-                'content_jp' => $data->content_jp,
-                'content_en' => $data->content_en,
-                'source_link' => $data->source_link,
-                'publicity' => $data->publicity,
-            ]);
 
-            $this->attachKanjis->execute($article, $data->content_jp);
+    public function execute(ArticleCreateDTO $articleCreateDTO, int $userId): Article
+    {
+        return DB::transaction(function () use ($articleCreateDTO, $userId) {
+            // creating rich domain object with validation
+            $article = Article::createFromDTO($articleCreateDTO, $userId);
+
+            $this->attachKanjis->execute($article, $articleCreateDTO->content_jp);
 
             // TODO: implement attachWords
-            // $this->attachWords->execute($article, $data->content_jp);
+            // $this->attachWords->execute($article, $articleCreateDTO->content_jp);
 
             $this->updateLevels->execute($article);
 
             // Process and attach hashtags if provided
-            if (!empty($data->tags)) {
-                $this->attachHashtags->execute($article, $data->tags);
+            if (!empty($articleCreateDTO->tags)) {
+                $this->attachHashtags->execute($article, $articleCreateDTO->tags);
             }
 
             // Return the complete article with all relationships loaded
