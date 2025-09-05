@@ -2,7 +2,7 @@
 namespace App\Domain\Articles\Actions\Creation;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Domain\Articles\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Articles\Actions\Creation\AttachKanjisAction;

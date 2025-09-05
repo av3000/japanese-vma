@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Domain\Articles\Http\Controllers;
+namespace App\Http\v1\Article\Controllers;
+
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
-use App\Domain\Articles\Http\Requests\IndexArticleRequest;
-use App\Domain\Articles\Http\Requests\StoreArticleRequest;
-use App\Domain\Articles\Http\Requests\UpdateArticleRequest;
+use App\Http\v1\Article\Requests\IndexArticleRequest;
+use App\Http\v1\Article\Requests\StoreArticleRequest;
+use App\Http\v1\Article\Requests\UpdateArticleRequest;
 
 use App\Domain\Articles\Interfaces\Actions\ArticleListActionInterface;
 use App\Domain\Articles\Interfaces\Actions\GetArticleDetailActionInterface;
@@ -14,41 +15,42 @@ use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
 use App\Domain\Articles\Interfaces\Actions\UpdateArticleActionInterface;
 use App\Domain\Articles\Interfaces\Actions\DeleteArticleActionInterface;
 
-use App\Domain\Articles\Http\Resources\ArticleResource;
-use App\Domain\Articles\Http\Resources\ArticleDetailResource;
-use App\Domain\Articles\Http\Resources\ArticleKanjiCollection;
-use App\Domain\Articles\Http\Resources\ArticleWordCollection;
+use App\Http\v1\Article\Resources\ArticleResource;
+use App\Http\v1\Article\Resources\ArticleDetailResource;
+use App\Http\v1\Article\Resources\ArticleKanjiCollection;
+use App\Http\v1\Article\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\Actions\Retrieval\GetArticlesAction;
 use App\Domain\Articles\Actions\Retrieval\GetArticleDetailAction;
 use App\Domain\Articles\Actions\Creation\CreateArticleAction;
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\Http\Resources\ArticleListResource;
+use App\Http\v1\Article\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;
 use App\Shared\DTOs\PaginationData;
 
 
 class ArticleController extends Controller
 {
-   public function index(
-    IndexArticleRequest $request,
-    ArticleListActionInterface $articleListAction
-): JsonResponse|ArticleListResource {
-    // No try-catch needed since DTO is now simple HTTP mapping
-    $indexDTO = ArticleListDTO::fromRequest($request->validated());
+    public function index(
+        IndexArticleRequest $request,
+        ArticleListActionInterface $articleListAction
+    ): JsonResponse|ArticleListResource {
+        // No try-catch needed since DTO is now simple HTTP mapping
+        // TODO: figure gracefull error handling pattern
+        $indexDTO = ArticleListDTO::fromRequest($request->validated());
 
-    $articles = $articleListAction->execute($indexDTO, $request->user());
+        $articles = $articleListAction->execute($indexDTO, $request->user());
 
-    if ($articles->isEmpty()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'No articles found matching your criteria',
-            'articles' => []
-        ], 404);
+        if ($articles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No articles found matching your criteria',
+                'articles' => []
+            ], 404);
+        }
+
+        return new ArticleListResource($articles, $indexDTO->includeStats);
     }
-
-    return new ArticleListResource($articles, $indexDTO->includeStats);
-}
 
     private function getImagePath(): string
     {
@@ -72,7 +74,7 @@ class ArticleController extends Controller
     }
 
     public function show(
-    int $id,
+        int $id,
         GetArticleDetailActionInterface $getArticleDetailAction
     ): JsonResponse|ArticleDetailResource {
         $article = $getArticleDetailAction->execute($id);

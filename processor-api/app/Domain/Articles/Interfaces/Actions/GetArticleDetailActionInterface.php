@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Interfaces\Actions;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 
 interface GetArticleDetailActionInterface
 {

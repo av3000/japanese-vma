@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Models;
+namespace App\Infrastructure\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Models\ObjectTemplate;

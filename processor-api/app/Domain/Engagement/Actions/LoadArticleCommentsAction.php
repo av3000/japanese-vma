@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Engagement\Actions;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\{Comment, Like, ObjectTemplate};
 use App\Http\User;
 use Illuminate\Support\Facades\DB;

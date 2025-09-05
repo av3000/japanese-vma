@@ -23,13 +23,13 @@ readonly class ArticleCreateDTO
     public static function fromRequest(array $data): self
     {
          return new self(
-            title_jp: $validated['title_jp'],
-            title_en: $validated['title_en'] ?? null,
-            content_jp: $validated['content_jp'],
-            content_en: $validated['content_en'] ?? null,
-            source_link: $validated['source_link'],
-            publicity: (bool)($validated['publicity'] ?? false),
-            tags: $validated['tags'] ?? null
+            title_jp: $data['title_jp'],
+            title_en: $data['title_en'] ?? null,
+            content_jp: $data['content_jp'],
+            content_en: $data['content_en'] ?? null,
+            source_link: $data['source_link'],
+            publicity: (bool)($data['publicity'] ?? false),
+            tags: $data['tags'] ?? null
         );
     }
 }

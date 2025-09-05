@@ -2,7 +2,7 @@
 
 namespace App\Domain\Articles\Interfaces;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Http\User;
 use Illuminate\Database\Eloquent\Builder;
 

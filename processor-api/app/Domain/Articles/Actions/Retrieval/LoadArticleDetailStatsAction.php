@@ -3,7 +3,7 @@ namespace App\Domain\Articles\Actions\Retrieval;
 
 use App\Domain\Engagement\Actions\LoadArticleListStatsAction;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 

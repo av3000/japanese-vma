@@ -4,7 +4,7 @@
 
 namespace App\Domain\Articles\Actions\Processing;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 
 class ProcessWordMeanings
 {

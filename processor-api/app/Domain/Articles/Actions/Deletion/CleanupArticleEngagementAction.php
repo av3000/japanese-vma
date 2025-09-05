@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Actions\Deletion;
 
-use App\Domain\Articles\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;
 use App\Http\Models\{Like, View, Comment, Download, ObjectTemplate};
 
 class CleanupArticleEngagementAction

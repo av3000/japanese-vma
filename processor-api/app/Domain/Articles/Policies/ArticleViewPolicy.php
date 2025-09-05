@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Policies;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Articles\Interfaces\ArticleViewPolicyInterface;
 use App\Http\User;

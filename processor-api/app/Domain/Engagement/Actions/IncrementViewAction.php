@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Engagement\Actions;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\ObjectTemplate;
 use App\Domain\Articles\Models\View;
 

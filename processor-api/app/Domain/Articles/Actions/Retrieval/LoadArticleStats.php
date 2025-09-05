@@ -2,7 +2,7 @@
 
 namespace App\Domain\Articles\Actions\Retrieval;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\{Like, Download, View, Comment, ObjectTemplate};
 
 class LoadArticleStats

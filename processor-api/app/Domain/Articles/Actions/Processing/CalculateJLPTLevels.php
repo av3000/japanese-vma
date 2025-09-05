@@ -2,7 +2,7 @@
 
 namespace App\Domain\Articles\Actions\Processing;
 
-use App\Domain\Articles\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;
 
 class CalculateJLPTLevels
 {

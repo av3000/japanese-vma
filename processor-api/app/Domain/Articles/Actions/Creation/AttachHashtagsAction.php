@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Actions\Creation;
 
-use App\Domain\Articles\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;
 use App\Http\Models\ObjectTemplate;
 
 class AttachHashtagsAction

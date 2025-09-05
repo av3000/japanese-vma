@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Actions;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\{ObjectTemplate, Uniquehashtag};
 use Illuminate\Support\Facades\DB;
 

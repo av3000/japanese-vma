@@ -2,7 +2,7 @@
 namespace App\Domain\Articles\Actions;
 
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 
 class UpdateArticleFieldsAction
 {

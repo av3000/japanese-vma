@@ -1,7 +1,7 @@
 <?php
 namespace App\Domain\Articles\Actions\Deletion;
 
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Support\Facades\DB;
 
 class CleanupArticleCustomListsAction

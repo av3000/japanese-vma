@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Models;
+namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;

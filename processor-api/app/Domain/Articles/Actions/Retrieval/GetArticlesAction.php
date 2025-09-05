@@ -2,7 +2,7 @@
 namespace App\Domain\Articles\Actions\Retrieval;
 
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;;
 use App\Domain\Articles\ValueObjects\ArticleSearchTerm;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\PerPageLimit;

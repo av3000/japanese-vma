@@ -6,7 +6,7 @@ use App\Domain\Engagement\Actions\IncrementViewAction;
 use App\Domain\Articles\Actions\Retrieval\LoadArticleDetailStatsAction;
 use App\Domain\Articles\Actions\Processing\ProcessWordMeaningsAction;
 use App\Domain\Engagement\Actions\LoadArticleCommentsAction;
-use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Http\Models\Article;
 
 class GetArticleDetailAction implements GetArticleDetailActionInterface
 {
