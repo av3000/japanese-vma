@@ -2,47 +2,32 @@
 namespace App\Domain\Articles\Actions\Creation;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Infrastructure\Persistence\Models\Article;
-use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
-use Illuminate\Support\Facades\DB;
-use App\Domain\Articles\Actions\Creation\AttachKanjisAction;
-use App\Domain\Articles\Actions\Creation\UpdateJLPTLevelsAction;
-use App\Domain\Articles\Actions\Creation\AttachHashtagsAction;
+use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Repositories\ArticleRepositoryInterface;
+use App\Domain\Shared\ValueObjects\UserId;
 
 class CreateArticleAction implements CreateArticleActionInterface
 {
     public function __construct(
-        private AttachKanjisAction $attachKanjis,
-        private UpdateJLPTLevelsAction $updateLevels,
-        private AttachHashtagsAction $attachHashtags
+        private ArticleRepositoryInterface $articleRepository
     ) {}
 
-    /**
-     * Create a complete article with all associated data.
-     * This method demonstrates transaction handling - ensuring all steps
-     * complete successfully or none at all, maintaining data consistency.
-     */
-
-    public function execute(ArticleCreateDTO $articleCreateDTO, int $userId): Article
+    public function execute(ArticleCreateDTO $dto, int $userId): DomainArticle
     {
-        return DB::transaction(function () use ($articleCreateDTO, $userId) {
-            // creating rich domain object with validation
-            $article = Article::createFromDTO($articleCreateDTO, $userId);
+        // Step 1: Create rich domain object with all business rules applied
+        $domainArticle = new DomainArticle($dto, new UserId($userId));
 
-            $this->attachKanjis->execute($article, $articleCreateDTO->content_jp);
+        // Step 2: Convert domain model to persistence format
+        $persistenceData = $domainArticle->toPersistenceData();
 
-            // TODO: implement attachWords
-            // $this->attachWords->execute($article, $articleCreateDTO->content_jp);
+        // Step 3: Repository handles pure data persistence
+        $persistedArticle = $this->articleRepository->save(
+            $persistenceData,
+            $domainArticle->kanjiIds(),
+            $dto->tags
+        );
 
-            $this->updateLevels->execute($article);
-
-            // Process and attach hashtags if provided
-            if (!empty($articleCreateDTO->tags)) {
-                $this->attachHashtags->execute($article, $articleCreateDTO->tags);
-            }
-
-            // Return the complete article with all relationships loaded
-            return $article->fresh(['kanjis', 'user']);
-        });
+        // Step 4: Return the domain model (not the persistence model)
+        return $domainArticle;
     }
 }

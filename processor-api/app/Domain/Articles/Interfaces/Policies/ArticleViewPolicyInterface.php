@@ -1,28 +1,20 @@
 <?php
+namespace App\Domain\Articles\Interfaces\Policies;
 
-namespace App\Domain\Articles\Interfaces;
-
-use App\Domain\Articles\Http\Models\Article;
+use App\Infrastructure\Persistence\Models\Article;
 use App\Http\User;
-use Illuminate\Database\Eloquent\Builder;
 
 interface ArticleViewPolicyInterface
 {
     /**
-     * Apply visibility filters to query based on user permissions
-     *
-     * @param Builder $query
-     * @param User|null $user
-     * @return Builder
+     * Get domain-based visibility criteria for a user
+     * Returns business rules as data, not database operations
      */
-    public function applyVisibilityFilter(Builder $query, ?User $user): Builder;
+    public function getVisibilityCriteria(?User $user): array;
 
     /**
      * Check if user can view specific article
-     *
-     * @param User|null $user
-     * @param Article $article
-     * @return bool
+     * Works with domain objects, not database queries
      */
     public function canView(?User $user, Article $article): bool;
 }

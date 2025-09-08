@@ -1,8 +1,6 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use InvalidArgumentException;
-
 readonly class ArticleCreateDTO
 {
     public function __construct(
