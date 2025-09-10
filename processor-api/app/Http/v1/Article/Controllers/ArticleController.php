@@ -9,20 +9,13 @@ use App\Http\v1\Article\Requests\IndexArticleRequest;
 use App\Http\v1\Article\Requests\StoreArticleRequest;
 use App\Http\v1\Article\Requests\UpdateArticleRequest;
 
-use App\Domain\Articles\Interfaces\Actions\ArticleListActionInterface;
-use App\Domain\Articles\Interfaces\Actions\GetArticleDetailActionInterface;
-use App\Domain\Articles\Interfaces\Actions\CreateArticleActionInterface;
-use App\Domain\Articles\Interfaces\Actions\UpdateArticleActionInterface;
-use App\Domain\Articles\Interfaces\Actions\DeleteArticleActionInterface;
+use App\Application\Articles\Services\ArticleServiceInterface;
 
 use App\Http\v1\Article\Resources\ArticleResource;
 use App\Http\v1\Article\Resources\ArticleDetailResource;
 use App\Http\v1\Article\Resources\ArticleKanjiCollection;
 use App\Http\v1\Article\Resources\ArticleWordCollection;
 
-use App\Domain\Articles\Actions\Retrieval\GetArticlesAction;
-use App\Domain\Articles\Actions\Retrieval\GetArticleDetailAction;
-use App\Domain\Articles\Actions\Creation\CreateArticleAction;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Http\v1\Article\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;
@@ -31,25 +24,35 @@ use App\Shared\DTOs\PaginationData;
 
 class ArticleController extends Controller
 {
+    public function __construct(
+        private ArticleServiceInterface $articleService
+    ) {}
+
     public function index(
         IndexArticleRequest $request,
-        ArticleListActionInterface $articleListAction
-    ): JsonResponse|ArticleListResource {
+    ): JsonResponse {
         // No try-catch needed since DTO is now simple HTTP mapping
         // TODO: figure gracefull error handling pattern
-        $indexDTO = ArticleListDTO::fromRequest($request->validated());
+       try {
+            $listDTO = ArticleListDTO::fromRequest($request->validated());
+            $articles = $this->articleService->getArticles($listDTO, $request->user());
 
-        $articles = $articleListAction->execute($indexDTO, $request->user());
+            if ($articles->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No articles found matching your criteria',
+                    'articles' => []
+                ], 404);
+            }
 
-        if ($articles->isEmpty()) {
+            return response()->json(new ArticleListResource($articles, $listDTO->includeStats));
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'No articles found matching your criteria',
+                'message' => $e->getMessage(),
                 'articles' => []
-            ], 404);
+            ], 422);
         }
-
-        return new ArticleListResource($articles, $indexDTO->includeStats);
     }
 
     private function getImagePath(): string
@@ -57,15 +60,15 @@ class ArticleController extends Controller
         return '/var/www/html/public/images/articles/user/testing-image.jpg';
     }
 
-    public function store(
-        StoreArticleRequest $request,
-        CreateArticleActionInterface $createArticleAction
-    ): ArticleResource {
+    public function store(StoreArticleRequest $request): JsonResponse
+    {
         try {
             $createDTO = ArticleCreateDTO::fromRequest($request->validated());
-            $article = $createArticleAction->execute($createDTO, auth()->id());
-            return response()->json(new ArticleResource($article), Http::HTTP_CREATED);
-        } catch (DomainException $e) {
+            // TODO: shoould we access auth() object here directly?
+            $article = $this->articleService->createArticle($createDTO, auth()->id());
+
+            return response()->json(new ArticleResource($article), 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -73,82 +76,119 @@ class ArticleController extends Controller
         }
     }
 
-    public function show(
-        int $id,
-        GetArticleDetailActionInterface $getArticleDetailAction
-    ): JsonResponse|ArticleDetailResource {
-        $article = $getArticleDetailAction->execute($id);
+    public function show(int $id): JsonResponse
+    {
+       try {
+            $article = $this->articleService->getArticle(
+                $id,
+                auth()->id()
+            );
 
-        if (!$article) {
+            return response()->json(new ArticleDetailResource($article));
+        } catch (ArticleNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Article not found'
             ], 404);
+        } catch (ArticleAccessDeniedException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
         }
-
-        return new ArticleDetailResource($article);
     }
 
-    public function update(
-        UpdateArticleRequest $request,
-        int $id,
-        UpdateArticleActionInterface $updateArticleAction
-    ): JsonResponse|ArticleResource {
+    public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {
         // For scalability, this can be moved to background job, meaning, we dispatch a job to update article
         // and return a response that the update request was accepted.
         // Then the client can poll for status.
-        $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
-        $article = $updateArticleAction->execute($id, $updateDTO, auth()->id());
+        try {
+            $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
+            $article = $this->articleService->updateArticle(
+                $id,
+                $updateDTO,
+                auth()->id()
+            );
 
-        if (!$article) {
+            if (!$article) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article not found or unauthorized'
+                ], 404);
+            }
+
+            return response()->json(new ArticleResource($article));
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Article not found or unauthorized'
-            ], 404);
+                'message' => $e->getMessage()
+            ], 422);
         }
-
-        return response()->json(new ArticleResource($article), Http::HTTP_ACCEPTED);
     }
 
     public function destroy(
-        int $id,
-        DeleteArticleActionInterface $deleteArticleAction
+        int $id
     ): JsonResponse {
-        $result = $deleteArticleAction->execute($id, auth()->id(), auth()->user()->hasRole('admin'));
+        try {
+            $deleted = $this->articleService->deleteArticle(
+                $id,
+                auth()->id(),
+                auth()->user()->hasRole('admin')
+            );
 
-        if (!$result) {
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article not found or unauthorized'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article deleted successfully'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Article not found or unauthorized'
-            ], 404);
+                'message' => $e->getMessage()
+            ], 422);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Article deleted successfully'
-        ]);
     }
 
-    public function kanjis(
-        Request $request,
-        int $id,
-        GetArticleKanjis $getArticleKanjis
-    ): ArticleKanjiCollection {
-        $pagination = PaginationData::fromRequest($request->all());
-        $kanjis = $getArticleKanjis->execute($id, $pagination);
-        // TODO: figure if shouldnt JSON be returned here instead of ResourceCollection
-        return new ArticleKanjiCollection($kanjis);
+    public function kanjis(Request $request, int $id): JsonResponse
+    {
+        try {
+            $kanjis = $this->articleService->getArticleKanjis(
+                $id,
+                $request->get('page'),
+                $request->get('per_page')
+            );
+
+            return response()->json(new ArticleKanjiCollection($kanjis));
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
-    public function words(
-        Request $request,
-        int $id,
-        GetArticleWords $getArticleWords
-    ): ArticleWordCollection {
-        $pagination = PaginationData::fromRequest($request->all());
-        $words = $getArticleWords->execute($id, $pagination);
-        // TODO: figure if shouldnt JSON be returned here instead of ResourceCollection
-        return new ArticleWordCollection($words);
+    public function words(Request $request, int $id): JsonResponse
+    {
+        try {
+            $words = $this->articleService->getArticleWords(
+                $id,
+                $request->get('page'),
+                $request->get('per_page')
+            );
+
+            return response()->json(new ArticleWordCollection($words));
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
 }
