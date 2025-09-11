@@ -19,7 +19,6 @@ use App\Http\v1\Article\Resources\ArticleWordCollection;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Http\v1\Article\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;
-use App\Shared\DTOs\PaginationData;
 
 
 class ArticleController extends Controller

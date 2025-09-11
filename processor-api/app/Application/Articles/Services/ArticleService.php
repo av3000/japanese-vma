@@ -3,10 +3,10 @@ namespace App\Application\Articles\Services;
 
 use App\Application\Articles\DTOs\{CreateArticleRequest, UpdateArticleRequest, ArticleListRequest};
 use App\Application\Articles\Interfaces\ArticleRepositoryInterface;
-use App\Application\Articles\Interfaces\ArticleAccessPolicyInterface;
+use App\Application\Articles\Interfaces\ArticleViewPolicyInterface;
 use App\Domain\Articles\Entities\Article;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
-use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit};
+use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, PaginationData};
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,7 +16,7 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private ArticleAccessPolicyInterface $accessPolicy,
+        private ArticleViewPolicyInterface $viewPolicy,
         // Engagement and stats dependencies
         private IncrementViewAction $incrementView,
         private LoadArticleDetailStatsAction $loadStats,
@@ -61,20 +61,17 @@ class ArticleService implements ArticleServiceInterface
         $articleId = ArticleId::from($id);
         $userIdVO = $userId ? UserId::from($userId) : null;
 
-        // Get persistence model from repository
         $persistenceArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id->value());
 
         if (!$persistenceArticle) {
             throw new ArticleNotFoundException("Article {$id} not found");
         }
 
-        // Check access permissions using policy
         $user = $userIdVO ? User::find($userIdVO->value()) : null;
-        if (!$this->accessPolicy->canView($user, $persistenceArticle)) {
+        if (!$this->viewPolicy->canView($user, $persistenceArticle)) {
             throw new ArticleAccessDeniedException("Access denied to article {$id}");
         }
 
-        // Load engagement data
         $this->incrementView->execute($persistenceArticle);
         $this->loadStats->execute($persistenceArticle);
         // $this->processWords->execute($persistenceArticle);
@@ -88,16 +85,13 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticles(ArticleListDTO $dto, ?User $user = null): LengthAwarePaginator
     {
-        // Convert dto data to value objects
         $search = $dto->search ? ArticleSearchTerm::fromInput($dto->search) : null;
         $sort = ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir);
         $perPage = PerPageLimit::fromInputOrDefault($dto->per_page);
 
-        // Build query with business rules
         $query = $this->buildArticlesQuery($dto, $search, $sort, $user);
         $articles = $query->paginate($perPage->value);
 
-        // Load additional data based on dto
         $this->loadHashtags->execute($articles);
 
         if ($dto->includeStats) {
@@ -178,7 +172,7 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
-        $pagination = new PaginationData($page ?? 1, $perPage ?? 20);
+        $pagination = new PaginationData($page, $perPage);
 
         $article = PersistenceArticle::findOrFail($articleId);
 
@@ -191,7 +185,7 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
-        $pagination = new PaginationData($page ?? 1, $perPage ?? 20);
+        $pagination = new PaginationData($page, $perPage);
 
         $article = PersistenceArticle::findOrFail($articleId);
 
