@@ -7,6 +7,17 @@ enum ObjectTemplateType: int
     // TODO: there is some inconsistency with these from old ArticleController and database records
     // Although it was never issue because ObjectTemplate was always queried by title string
     // but it is confusing and should be solved.
+    // | ID | title
+    // |  1 | article
+    // |  2 | artist
+    // |  3 | lyric
+    // |  4 | radical
+    // |  5 | kanji
+    // |  6 | word
+    // |  7 | sentence
+    // |  8 | list
+    // |  9 | post
+    // | 10 | comment
     case KNOWNRADICALS = 1;
     case KNOWNKANJIS = 2;
     case KNOWNWORDS = 3;
