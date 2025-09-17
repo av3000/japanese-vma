@@ -1,12 +1,11 @@
 <?php
-namespace App\Domain\Engagement\Actions;
+namespace App\Application\Articles\Actions\Retrieval;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Models\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Engagement\Interfaces\IStatsLoader;
 
-class LoadArticleListStatsAction implements IStatsLoader
+class LoadArticleListStatsAction
 {
     /**
      * Load statistical data (likes, downloads, views, comments) for a collection of articles.

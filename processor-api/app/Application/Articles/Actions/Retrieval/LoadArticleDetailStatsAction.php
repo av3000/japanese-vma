@@ -1,7 +1,7 @@
 <?php
-namespace App\Domain\Articles\Actions\Retrieval;
+namespace App\Application\Articles\Actions\Retrieval;
 
-use App\Domain\Engagement\Actions\LoadArticleListStatsAction;
+use App\Application\Articles\Actions\Retrieval\{LoadArticleListStatsAction, LoadArticleListHashtagsAction};
 
 use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Pagination\LengthAwarePaginator;

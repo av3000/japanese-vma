@@ -36,4 +36,9 @@ class StoreArticleRequest extends FormRequest
             'source_link.url' => 'Source link must be a valid URL',
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+
+    }
 }

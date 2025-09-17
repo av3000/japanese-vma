@@ -4,6 +4,9 @@ namespace App\Domain\Shared\Enums;
 
 enum ObjectTemplateType: int
 {
+    // TODO: there is some inconsistency with these from old ArticleController and database records
+    // Although it was never issue because ObjectTemplate was always queried by title string
+    // but it is confusing and should be solved.
     case KNOWNRADICALS = 1;
     case KNOWNKANJIS = 2;
     case KNOWNWORDS = 3;

@@ -1,35 +1,34 @@
 <?php
 
-namespace App\Http\v1\Article\Controllers;
+namespace App\Http\v1\Articles\Controllers;
 
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
-use App\Http\v1\Article\Requests\IndexArticleRequest;
-use App\Http\v1\Article\Requests\StoreArticleRequest;
-use App\Http\v1\Article\Requests\UpdateArticleRequest;
+use App\Http\v1\Articles\Requests\IndexArticleRequest;
+use App\Http\v1\Articles\Requests\StoreArticleRequest;
+use App\Http\v1\Articles\Requests\UpdateArticleRequest;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
 
-use App\Http\v1\Article\Resources\ArticleResource;
-use App\Http\v1\Article\Resources\ArticleDetailResource;
-use App\Http\v1\Article\Resources\ArticleKanjiCollection;
-use App\Http\v1\Article\Resources\ArticleWordCollection;
+use App\Http\v1\Articles\Resources\ArticleResource;
+use App\Http\v1\Articles\Resources\ArticleDetailResource;
+use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
+use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Http\v1\Article\Resources\ArticleListResource;
+use App\Http\v1\Articles\Resources\ArticleListResource;
 use Illuminate\Http\JsonResponse;
 
 
 class ArticleController extends Controller
 {
     public function __construct(
-        private ArticleServiceInterface $articleService
+        private ArticleServiceInterface $articleService,
+        private ArticleKanjiProcessingService $articleKanjiProcessingService
     ) {}
 
-    public function index(
-        IndexArticleRequest $request,
-    ): JsonResponse {
+    public function index(IndexArticleRequest $request): JsonResponse {
         // No try-catch needed since DTO is now simple HTTP mapping
         // TODO: figure gracefull error handling pattern
        try {
@@ -61,12 +60,14 @@ class ArticleController extends Controller
 
     public function store(StoreArticleRequest $request): JsonResponse
     {
+        $createDTO = ArticleCreateDTO::fromRequest($request->validated());
+        // TODO: shoould we access auth() object here directly?
+        $article = $this->articleService->createArticle($createDTO, auth()->id());
+        dd($article);
         try {
-            $createDTO = ArticleCreateDTO::fromRequest($request->validated());
-            // TODO: shoould we access auth() object here directly?
-            $article = $this->articleService->createArticle($createDTO, auth()->id());
+            $processedArticle = $this->articleKanjiProcessingService->processArticleKanjis($article->getUid());
 
-            return response()->json(new ArticleResource($article), 201);
+            return response()->json(new ArticleResource($processedArticle), 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -75,26 +76,15 @@ class ArticleController extends Controller
         }
     }
 
-    public function show(int $id): JsonResponse
+    public function show(string $uid): JsonResponse
     {
-       try {
-            $article = $this->articleService->getArticle(
-                $id,
-                auth()->id()
-            );
+        $articleUid = EntityId::from($uid);
+        $article = $this->articleService->getArticle(
+            $articleUid,
+            auth()->id()
+        );
 
-            return response()->json(new ArticleDetailResource($article));
-        } catch (ArticleNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Article not found'
-            ], 404);
-        } catch (ArticleAccessDeniedException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Access denied'
-            ], 403);
-        }
+        return response()->json(new ArticleDetailResource($article));
     }
 
     public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {
@@ -125,9 +115,7 @@ class ArticleController extends Controller
         }
     }
 
-    public function destroy(
-        int $id
-    ): JsonResponse {
+    public function destroy(int $id): JsonResponse {
         try {
             $deleted = $this->articleService->deleteArticle(
                 $id,
@@ -189,5 +177,4 @@ class ArticleController extends Controller
             ], 422);
         }
     }
-
 }

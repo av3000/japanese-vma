@@ -1,12 +1,19 @@
 <?php
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\DTOs\{CreateArticleRequest, UpdateArticleRequest, ArticleListRequest};
-use App\Application\Articles\Interfaces\ArticleRepositoryInterface;
-use App\Application\Articles\Interfaces\ArticleViewPolicyInterface;
-use App\Domain\Articles\Entities\Article;
+use App\Application\Engagement\Actions\{IncrementViewAction, LoadArticleCommentsAction};
+use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
+// use App\Application\Articles\Actions\Processing\{ExtractKanjisAction};
+use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
+use App\Application\Articles\Policies\ArticleViewPolicy;
+
+use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleUpdateDTO, ArticleListDTO};
+use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
 use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, PaginationData};
+use App\Domain\Articles\Exceptions\ArticleNotFoundException;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+// TODO: gradually replace these with repository pattern and remove the import of direct persistence model
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,12 +23,13 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private ArticleViewPolicyInterface $viewPolicy,
+        private ArticleViewPolicy $viewPolicy,
         // Engagement and stats dependencies
+        // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementView,
         private LoadArticleDetailStatsAction $loadStats,
-        private ProcessWordMeaningsAction $processWords,
-        private LoadArticleCommentsAction $loadComments,
+        // private ProcessWordMeaningsAction $processWords,
+        private LoadCommentsAction $loadComments,
         // List operations dependencies
         private LoadStatsAction $loadListStats,
         private LoadHashtagsAction $loadHashtags,
@@ -35,52 +43,55 @@ class ArticleService implements ArticleServiceInterface
         private CleanupArticleCustomListsAction $cleanupCustomLists
     ) {}
 
-    public function createArticle(ArticleCreateDTO $dto, int $userId): Article
+    public function createArticle(ArticleCreateDTO $dto, int $userId): DomainArticle
     {
         // Create rich domain object with all business rules applied
         $authorId = UserId::from($userId);
 
-        $domainArticle = new Article($request->toDTO(), $authorId);
+        $domainArticle = new DomainArticle($dto, $authorId);
 
+        // $extractedKanjis = $this->extractKanjis->execute($dto->contentJp);
         // Convert domain model to persistence format
-        $persistenceData = $domainArticle->toPersistenceData();
+        // $persistenceData = $domainArticle->toPersistenceData();
 
         // Repository handles pure data persistence
         $this->articleRepository->save(
-            $persistenceData,
-            $domainArticle->kanjiIds(),
-            $request->tags
+            $domainArticle,
         );
 
         return $domainArticle;
     }
 
-    public function getArticle(int $id, ?int $userId = null): ?Article
+    public function getArticle(int $uid, ?int $userId = null): ?PersistenceArticle
     {
 
-        $articleId = ArticleId::from($id);
+        $articleUid = ArticleId::from($uid);
+        // TODO: figure if should be used here for access control after fetching article
         $userIdVO = $userId ? UserId::from($userId) : null;
 
-        $persistenceArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id->value());
+        // $persistenceArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id->value());
 
-        if (!$persistenceArticle) {
-            throw new ArticleNotFoundException("Article {$id} not found");
+        $article = $this->articleRepository->findById($articleUid->getId()->value());
+
+        if (!$article) {
+            throw new ArticleNotFoundException($articleUid->getId()->value());
         }
 
-        $user = $userIdVO ? User::find($userIdVO->value()) : null;
-        if (!$this->viewPolicy->canView($user, $persistenceArticle)) {
-            throw new ArticleAccessDeniedException("Access denied to article {$id}");
+        try {
+            $this->incrementView->execute($article->getId()->value, ObjectTemplateType::Article);
+        } catch (\Exception $e) {
+            // Log and continue, view increment failure should not block main flow
+            \Log::error("Failed to increment view for article {$article->getId()->value()}: " . $e->getMessage());
         }
 
-        $this->incrementView->execute($persistenceArticle);
-        $this->loadStats->execute($persistenceArticle);
+        return $article;
+
+        // $this->loadStats->execute($persistenceArticle);
         // $this->processWords->execute($persistenceArticle);
-        $this->loadComments->execute($persistenceArticle);
+        // $this->loadComments->execute($persistenceArticle);
 
         // Convert to domain model (placeholder - needs implementation)
         // return $this->toDomainModel($persistenceArticle);
-
-        return $persistenceArticle;
     }
 
     public function getArticles(ArticleListDTO $dto, ?User $user = null): LengthAwarePaginator
@@ -137,7 +148,7 @@ class ArticleService implements ArticleServiceInterface
         });
     }
 
-    public function deleteArticle(int $id, UserId $userId, bool $isAdmin = false): bool
+    public function deleteArticle(int $id, int $userId, bool $isAdmin = false): bool
     {
         $articleId = ArticleId::from($id);
         $userIdVO = UserId::from($userId);

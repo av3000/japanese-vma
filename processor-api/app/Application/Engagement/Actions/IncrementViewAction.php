@@ -1,28 +1,29 @@
 <?php
-namespace App\Domain\Engagement\Actions;
+namespace App\Application\Engagement\Actions;
 
-use App\Domain\Articles\Http\Models\Article;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\Models\ObjectTemplate;
-use App\Domain\Articles\Models\View;
+use App\Infrastructure\Persistence\Models\View;
 
 class IncrementViewAction
 {
     /**
-     * Track article views for all users - authenticated and anonymous.
+     * Track entity views for all users - authenticated and anonymous.
      * For authenticated users, we use their user_id as the primary identifier.
      * For anonymous users, we rely on IP address, though this isn't perfect
      * due to shared networks and changing IPs.
      */
-    public function execute(Article $article): void
+    public function execute(int $id, ObjectTemplateType $objectTemplateType): void
     {
-        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $objectTemplateTypeValue = $objectTemplateType->value;
+        $objectTemplateId = ObjectTemplate::where('title', $objectTemplateTypeValue)->first()->id;
         $userId = auth()->id();
         $userIp = request()->ip();
 
         // For authenticated users, check by user_id
         // For anonymous users, check by IP address
         $existingView = View::where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)
+            ->where('real_object_id', $id)
             ->when($userId, function ($query) use ($userId) {
                 return $query->where('user_id', $userId);
             }, function ($query) use ($userIp) {
@@ -38,7 +39,7 @@ class IncrementViewAction
                 'user_id' => $userId, // Will be null for anonymous users
                 'user_ip' => $userIp,
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $article->id,
+                'real_object_id' => $id,
             ]);
         }
     }

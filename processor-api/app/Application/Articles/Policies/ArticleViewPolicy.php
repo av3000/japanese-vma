@@ -1,12 +1,11 @@
 <?php
-namespace App\Domain\Articles\Policies;
+namespace App\Application\Articles\Policies;
 
 use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Shared\Enums\PublicityStatus;
-use App\Domain\Articles\Interfaces\Policies\ArticleViewPolicyInterface;
 use App\Http\User;
 
-class ArticleViewPolicy implements ArticleViewPolicyInterface
+class ArticleViewPolicy
 {
     /**
      * Business rule: Determine what visibility criteria apply to a user
@@ -39,8 +38,10 @@ class ArticleViewPolicy implements ArticleViewPolicyInterface
     }
 
     /**
-     * Business rule: Can specific user view specific article
-     * This method works with domain objects, not database concerns
+     * TODO:
+     * As a business logic this method should work with domain objects, not database concerns.
+     * But as a HTTP/authorisation policy maybe it does make sense to be in this layer with database concerns?
+     * Figure out how to refactor this to domain logic.
      */
     public function canView(?User $user, Article $article): bool
     {

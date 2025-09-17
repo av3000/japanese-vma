@@ -63,7 +63,7 @@ class Handler extends ExceptionHandler
                 ];
                 return response()->view('errors.' . '404', $data, 404);
             }
-             
+
             if ($exception->getStatusCode() == 500) {
                 $data = [
                     'success' => false,
@@ -74,5 +74,15 @@ class Handler extends ExceptionHandler
         }
 
         return parent::render($request, $exception);
+    }
+
+    public function register()
+    {
+        $this->renderable(function (ArticleNotFoundException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 404);
+            }
+            return response()->view('errors.404', [], 404);
+        });
     }
 }

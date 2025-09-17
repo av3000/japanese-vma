@@ -7,6 +7,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ArticleDetailResource extends JsonResource
 {
     public function toArray($request)
+    // TODO: now im passing the domain object that I got from service via repository.
+    // Should there we a mapper into request? because resource shouldnt know about domain right?
     {
         return [
             'success' => true,

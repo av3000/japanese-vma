@@ -1,9 +1,15 @@
 <?php
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Articles\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Models\Article;
+use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
+use App\Application\Articles\Policies\ArticleViewPolicy;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Mappers\ArticleMapper;
 use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\ValueObjects\ArticleId;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -11,33 +17,65 @@ use Illuminate\Support\Facades\DB;
 class ArticleRepository implements ArticleRepositoryInterface
 {
     public function __construct(
-        private ArticleViewPolicyInterface $viewPolicy
+        private ArticleViewPolicy $viewPolicy
     ) {}
 
-
-    public function save(array $articleData, array $kanjiIds = [], ?string $tags = null): Article
+    public function save(DomainArticle $article): DomainArticle
     {
-        return DB::transaction(function () use ($articleData, $kanjiIds, $tags) {
-            $article = Article::updateOrCreate(
-                ['id' => $articleData['id']],
-                $articleData
+        return DB::transaction(function () use ($article, $tags) {
+            $mappedArticle = ArticleMapper::mapToEntity($article);
+
+            $entityArticle = PersistenceArticle::updateOrCreate(
+                ['unique_id' => $mappedArticle['unique_id']],
+                $mappedArticle
             );
 
-            if (!empty($kanjiIds)) {
-                $article->kanjis()->sync($kanjiIds);
+            // Questionable implementation, not sure what is the exact outcome
+            if (!$entityArticle->kanjis()->isEmpty()) {
+                $entityArticle->kanjis()->sync($article['kanjis']);
             }
 
+            // Should be handled with a separate service/repository and probably in the service layer.
+            // wonder how tags look like before attaching
             if ($tags) {
-                $this->attachHashtags($article, $tags, $articleData['user_id']);
+                $this->attachHashtags($entityArticle, $article['tags'], $article['user_id']);
             }
 
-            return $article;
+            return ArticleMapper::mapToDomain(
+                $entityArticle->fresh(['user', 'kanjis', 'hashtags'])
+            );
         });
     }
 
-    public function findById(int $id): ?Article
+    public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle
     {
-        return Article::with(['user', 'kanjis', 'words'])->find($id);
+        return DB::transaction(function () use ($article, $kanjiIds) {
+            $persistenceData = ArticleMapper::mapToEntity($article);
+
+            $persistenceArticle = PersistenceArticle::updateOrCreate(
+                ['unique_id' => $persistenceData['unique_id']],
+                $persistenceData
+            );
+
+            if (!empty($kanjiIds)) {
+                $persistenceArticle->kanjis()->sync($kanjiIds);
+            }
+
+            return ArticleMapper::mapToDomain(
+                $persistenceArticle->fresh(['user', 'kanjis', 'hashtags'])
+            );
+        });
+    }
+
+    public function findById(ArticleId $id): DomainArticle
+    {
+        $entityArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id);
+        // TODO: use mapper to convert persistence model to domain model
+        if (!$entityArticle) {
+            return null;
+        }
+
+        return ArticleMapper::mapToDomain($entityArticle);
     }
 
     public function getPaginated(ArticleListDTO $filters, ?User $user = null): LengthAwarePaginator
@@ -97,7 +135,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         return $query->where('publicity', PublicityStatus::PUBLIC->value);
     }
 
-    public function deleteById(int $id): bool
+    public function deleteById(ArticleId $id): bool
     {
         return DB::transaction(function () use ($id) {
             $article = Article::find($id);
@@ -116,7 +154,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         });
     }
 
-    public function findByUserId(int $userId, int $limit = 10): array
+    public function findByUserId(UserId $userId, int $limit = 10): array
     {
         return Article::where('user_id', $userId)
             ->with(['user', 'kanjis'])

@@ -1,12 +1,11 @@
 <?php
-namespace App\Domain\Articles\Actions\Retrieval;
+namespace App\Application\Articles\Actions\Retrieval;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Models\ObjectTemplate;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Articles\Interfaces\IHashtagLoader;
 
-class LoadArticleListHashtagsAction implements IHashtagLoader
+class LoadArticleListHashtagsAction
 {
     /**
      * Load hashtags for a collection of articles.

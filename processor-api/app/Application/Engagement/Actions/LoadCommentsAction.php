@@ -1,27 +1,28 @@
 <?php
-namespace App\Domain\Engagement\Actions;
+namespace App\Application\Engagement\Actions;
 
-use App\Domain\Articles\Http\Models\Article;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\Models\{Comment, Like, ObjectTemplate};
 use App\Http\User;
 use Illuminate\Support\Facades\DB;
 
-class LoadArticleCommentsAction
+class LoadCommentsAction
 {
     /**
-     * Load comments for an article with efficient batch loading to avoid N+1 queries.
+     * Load comments for an entity with efficient batch loading to avoid N+1 queries.
      * This demonstrates the same pattern as your stats loading - batch the related data
      * instead of loading it individually for each comment.
      */
-    public function execute(Article $article): void
+    public function execute(int $id, ObjectTemplateType $objectTemplateType): void
     {
-        $articleTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $objectTemplateTypeValue = $objectTemplateType->value;
+        $objectTemplateId = ObjectTemplate::where('title', $objectTemplateTypeValue)->first()->id;
         $commentTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
 
-        // Load all comments for this article
+        // Load all comments for this entity
         $comments = Comment::where([
-            'template_id' => $articleTemplateId,
-            'real_object_id' => $article->id
+            'template_id' => $objectTemplateId,
+            'real_object_id' => $id
         ])->orderBy('created_at', 'DESC')->get();
 
         if ($comments->isEmpty()) {
