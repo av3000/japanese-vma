@@ -10,14 +10,17 @@ use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 
 use App\Http\v1\Articles\Resources\ArticleResource;
+use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Http\v1\Articles\Resources\ArticleListResource;
+use App\Domain\Shared\ValueObjects\EntityId;
+
 use Illuminate\Http\JsonResponse;
 
 
@@ -25,32 +28,31 @@ class ArticleController extends Controller
 {
     public function __construct(
         private ArticleServiceInterface $articleService,
-        private ArticleKanjiProcessingService $articleKanjiProcessingService
+        private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
     public function index(IndexArticleRequest $request): JsonResponse {
-        // No try-catch needed since DTO is now simple HTTP mapping
         // TODO: figure gracefull error handling pattern
-       try {
-            $listDTO = ArticleListDTO::fromRequest($request->validated());
-            $articles = $this->articleService->getArticles($listDTO, $request->user());
+        $listDTO = ArticleListDTO::fromRequest($request->validated());
+        $articles = $this->articleService->getArticlesList($listDTO, $request->user());
 
-            if ($articles->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No articles found matching your criteria',
-                    'articles' => []
-                ], 404);
-            }
+        return response()->json([
+            'success' => true,
+            'data' => ArticleListResource::collection($articles->getItems()),
+            'pagination' => [
+                'current_page' => $articles->getPaginator()->currentPage(),
+                'per_page' => $articles->getPaginator()->perPage(),
+                'total' => $articles->getPaginator()->total(),
+                'last_page' => $articles->getPaginator()->lastPage(),
+                'has_more' => $articles->getPaginator()->hasMorePages(),
+            ],
+            'message' => $articles->isEmpty()
+                ? 'No articles match your criteria'
+                : 'Articles retrieved successfully'
+        ]);
 
-            return response()->json(new ArticleListResource($articles, $listDTO->includeStats));
-        } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'articles' => []
-            ], 422);
-        }
+        // return response()->json(new ArticleListResource($articles, $listDTO->includeStats));
+
     }
 
     private function getImagePath(): string
@@ -63,7 +65,6 @@ class ArticleController extends Controller
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
         // TODO: shoould we access auth() object here directly?
         $article = $this->articleService->createArticle($createDTO, auth()->id());
-        dd($article);
         try {
             $processedArticle = $this->articleKanjiProcessingService->processArticleKanjis($article->getUid());
 

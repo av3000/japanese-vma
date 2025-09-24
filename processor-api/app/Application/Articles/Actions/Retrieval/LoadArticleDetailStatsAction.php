@@ -23,7 +23,7 @@ class LoadArticleDetailStatsAction
     {
         // Create a temporary paginator with just our single article
         // This allows us to reuse the efficient batch loading logic
-        $singleArticleCollection = new LengthAwarePaginator(
+        $singleArticles = new LengthAwarePaginator(
             items: collect([$article]),
             total: 1,
             perPage: 1,
@@ -31,8 +31,8 @@ class LoadArticleDetailStatsAction
         );
 
         // Use existing batch loading actions
-        $this->loadListStats->execute($singleArticleCollection);
-        $this->loadListHashtags->execute($singleArticleCollection);
+        $this->loadListStats->execute($singleArticles);
+        $this->loadListHashtags->execute($singleArticles);
 
         // Calculate kanji-specific stats (this logic was in the deprecated action)
         $article->jlptcommon = $article->kanjis->where('jlpt', '-')->count();

@@ -9,7 +9,8 @@ readonly class ArticleListDTO
         public ?string $sort_by,
         public ?string $sort_dir,
         public ?int $per_page,
-        public bool $includeStats = false
+        public bool $includeStats = false,
+        public bool $includeHashtags = true
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -20,7 +21,8 @@ readonly class ArticleListDTO
             sort_by: $validated['sort_by'] ?? null,
             sort_dir: $validated['sort_dir'] ?? null,
             per_page: $validated['per_page'] ?? null,
-            includeStats: $validated['include_stats'] ?? false
+            includeStats: $validated['include_stats'] ?? false,
+            includeHashtags: $validated['include_hashtags'] ?? true
         );
     }
 }

@@ -6,8 +6,10 @@ use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\Articles\Actions\Processing\ExtractKanjisAction;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\{JlptLevels};
+use App\Domain\Articles\Enums\ArticleStatus;
+use App\Domain\Shared\ValueObjects\EntityId;
 
-class ArticleKanjiProcessingService
+class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,

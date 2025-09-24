@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions\Deletion;
+namespace App\Application\Articles\Actions\Deletion;
 
 use App\Infrastructure\Persistence\Models\Article;
 use App\Http\Models\{Like, View, Comment, Download, ObjectTemplate};

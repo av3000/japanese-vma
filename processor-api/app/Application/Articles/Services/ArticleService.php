@@ -2,13 +2,27 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Engagement\Actions\{IncrementViewAction, LoadArticleCommentsAction};
+use App\Application\Engagement\Services\EntityEnhancementServiceInterface;
 use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
 // use App\Application\Articles\Actions\Processing\{ExtractKanjisAction};
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Policies\ArticleViewPolicy;
 
+use App\Application\Articles\Actions\Updates\{
+    ReprocessArticleDataAction,
+    // UpdateArticleHashtagsAction
+};
+
+use App\Application\Articles\Actions\Deletion\{
+    CleanupArticleRelationshipsAction,
+    CleanupArticleEngagementAction,
+    CleanupArticleHashtagsAction,
+    CleanupArticleCustomListsAction
+};
+
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleUpdateDTO, ArticleListDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
 use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, PaginationData};
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
@@ -23,18 +37,19 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
+        private EntityEnhancementServiceInterface $entityEnhancementService,
         private ArticleViewPolicy $viewPolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementView,
         private LoadArticleDetailStatsAction $loadStats,
         // private ProcessWordMeaningsAction $processWords,
-        private LoadCommentsAction $loadComments,
+        // private LoadCommentsAction $loadComments,
         // List operations dependencies
-        private LoadStatsAction $loadListStats,
-        private LoadHashtagsAction $loadHashtags,
+        // private LoadStatsAction $loadListStats,
+        // private LoadHashtagsAction $loadHashtags,
         // Update dependencies
-        private UpdateArticleHashtagsAction $updateHashtags,
+        // private UpdateArticleHashtagsAction $updateHashtags,
         private ReprocessArticleDataAction $reprocessData,
         // Delete dependencies
         private CleanupArticleRelationshipsAction $cleanupRelationships,
@@ -78,7 +93,7 @@ class ArticleService implements ArticleServiceInterface
         }
 
         try {
-            $this->incrementView->execute($article->getId()->value, ObjectTemplateType::Article);
+            $this->incrementView->execute($article->getId()->value, ObjectTemplateType::ARTICLE);
         } catch (\Exception $e) {
             // Log and continue, view increment failure should not block main flow
             \Log::error("Failed to increment view for article {$article->getId()->value()}: " . $e->getMessage());
@@ -94,25 +109,86 @@ class ArticleService implements ArticleServiceInterface
         // return $this->toDomainModel($persistenceArticle);
     }
 
-    public function getArticles(ArticleListDTO $dto, ?User $user = null): LengthAwarePaginator
+    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
     {
-        $search = $dto->search ? ArticleSearchTerm::fromInput($dto->search) : null;
-        $sort = ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir);
-        $perPage = PerPageLimit::fromInputOrDefault($dto->per_page);
+        $articles = $this->articleRepository->findWithFilters($dto, $user);
 
-        $query = $this->buildArticlesQuery($dto, $search, $sort, $user);
-        $articles = $query->paginate($perPage->value);
+        if (!empty(trim($dto->search ?? ''))) {
+            // Handle search-specific logic here if needed
+        }
 
-        $this->loadHashtags->execute($articles);
+        // if ($dto->includeHashtags) {
+        //     $this->entityEnhancementService->enhanceWithHashtags(
+        //         $articles->toEloquentPaginator(),
+        //         'article'
+        //     );
+        // }
 
         if ($dto->includeStats) {
-            $this->loadListStats->execute($articles);
+            $articles = $this->enhancementService->enhanceArticlesWithStats($articles);
         }
 
         return $articles;
     }
 
-    public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?Article
+    // public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
+    // {
+    //     // Build and execute query
+    //     $articles = $this->articleRepository->findWithFilters($dto, $user);
+
+    //     // Apply enhancements based on DTO requirements
+    //     $this->entityEnhancementService->enhanceWithOptions(
+    //         $articles->toEloquentPaginator(),
+    //         'article',
+    //         $dto->shouldIncludeStats(),
+    //         $dto->shouldIncludeHashtags()
+    //     );
+
+    //     return $articles;
+    // }
+
+    // public function getArticlesList(ArticleListRequest $request, ?User $user = null): Articles
+    // {
+    //     // Apply business rules for article access
+    //     // This is where we make decisions about what articles a user can see
+    //     $searchCriteria = $this->buildSearchCriteria($request, $user);
+
+    //     // Delegate to repository for data retrieval
+    //     // The repository handles the technical complexity of querying
+    //     $articles = $this->articleRepository->findWithCriteria($searchCriteria);
+
+    //     // Apply business-driven enhancements based on request
+    //     // We only load expensive data like stats when explicitly requested
+    //     if ($request->shouldIncludeStats()) {
+    //         $articles = $this->enhancementService->enhanceWithStats($articles);
+    //     }
+
+    //     if ($request->shouldIncludeHashtags()) {
+    //         $articles = $this->enhancementService->enhanceWithHashtags($articles);
+    //     }
+
+    //     return $articles;
+    // }
+
+    // public function getArticles(ArticleListDTO $dto, ?User $user = null): LengthAwarePaginator
+    // {
+    //     $search = $dto->search ? ArticleSearchTerm::fromInput($dto->search) : null;
+    //     $sort = ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir);
+    //     $perPage = PerPageLimit::fromInputOrDefault($dto->per_page);
+
+    //     $query = $this->buildArticlesQuery($dto, $search, $sort, $user);
+    //     $articles = $query->paginate($perPage->value);
+
+    //     $this->loadHashtags->execute($articles);
+
+    //     if ($dto->includeStats) {
+    //         $this->loadListStats->execute($articles);
+    //     }
+
+    //     return $articles;
+    // }
+
+    public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle
     {
         $articleId = ArticleId::from($id);
         $userIdVO = UserId::from($userId);
@@ -233,16 +309,5 @@ class ArticleService implements ArticleServiceInterface
         }
 
         return $query->orderBy($sort->field->value, $sort->direction->value);
-    }
-
-    /**
-     * Convert persistence model to domain model
-     * TODO: figure if needed, and if so Implement proper conversion logic
-     */
-    private function toDomainModel(PersistenceArticle $persistenceArticle): Article
-    {
-        // This needs to be implemented based on your domain model constructor
-        // For now, placeholder
-        throw new \Exception('Domain model conversion not implemented yet');
     }
 }

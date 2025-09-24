@@ -3,6 +3,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\ValueObjects\ArticleId;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -30,9 +31,10 @@ interface ArticleRepositoryInterface
     public function findById(ArticleId $id): ?DomainArticle;
 
     /**
-     * Get paginated articles with domain filtering
+     * Find articles by unique domain ID (EntityId) and convert to domain model
+     * Returns null if not found, throws exception if access denied
      */
-    public function getPaginated(ArticleListDTO $filters, ?User $user = null): LengthAwarePaginator;
+    public function findWithFilters(ArticleListDTO $dto, ?User $user = null): Articles;
 
     /**
      * Delete article by ID with proper authorization

@@ -4,8 +4,8 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
 
-use App\Domain\Shared\ValueObjects\{EntityId, UserId};
-use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl, JlptLevels, ArticleTags};
+use App\Domain\Shared\ValueObjects\{EntityId, UserId, JlptLevels};
+use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl, ArticleTags};
 use App\Domain\Shared\Enums\{PublicityStatus, ArticleStatus};
 
 class ArticleMapper
@@ -15,13 +15,14 @@ class ArticleMapper
         return new DomainArticle(
             new EntityId($entity->unique_id),
             new UserId($entity->user_id),
+            new UserName($entity->user->name),
             new ArticleTitle($entity->title_jp),
             $entity->title_en ? new ArticleTitle($entity->title_en) : null,
             new ArticleContent($entity->content_jp),
             $entity->content_en ? new ArticleContent($entity->content_en) : null,
             new ArticleSourceUrl($entity->source_link),
-            PublicityStatus::from($entity->publicity),
-            ArticleStatus::from($entity->status),
+            $entity->publicity,
+            $entity->status,
             new JlptLevels(
                 (int)$entity->n1,
                 (int)$entity->n2,
@@ -31,8 +32,13 @@ class ArticleMapper
                 (int)$entity->uncommon
             ),
             ArticleTags::fromHashtagsCollection($entity->hashtags ?? collect()),
+            // TODO: create ArticleTags proper domain object
             $entity->created_at->toDateTimeImmutable(),
-            $entity->updated_at->toDateTimeImmutable()
+            $entity->updated_at->toDateTimeImmutable(),
+             $entity->likesTotal ?? null,
+            $entity->downloadsTotal ?? null,
+            $entity->viewsTotal ?? null,
+            $entity->commentsTotal ?? null,
         );
     }
 

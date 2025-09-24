@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions;
+namespace App\Application\Articles\Actions\Updates;
 
 use App\Domain\Articles\Http\Models\Article;
 

@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\v1\Article\Resources;
+namespace App\Http\v1\Articles\Resources;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -15,47 +15,44 @@ class ArticleListResource extends ResourceCollection
 
     public function toArray($request)
     {
-        return [
-            'success' => true,
-            'articles' => $this->collection->map(function ($article) {
-                $data = [
-                    'id' => $article->id,
-                    'title_jp' => $article->title_jp,
-                    'title_en' => $article->title_en,
-                    'content_jp' => $article->content_jp,
-                    'content_en' => $article->content_en,
-                    'source_link' => $article->source_link,
-                    'publicity' => $article->publicity->value,
-                    'status' => $article->status->value,
-                    'jlpt_levels' => [
-                        'n1' => $article->n1,
-                        'n2' => $article->n2,
-                        'n3' => $article->n3,
-                        'n4' => $article->n4,
-                        'n5' => $article->n5,
-                        'uncommon' => $article->uncommon,
-                    ],
-                    'author' => [
-                        'id' => $article->user->id,
-                        'name' => $article->user->name,
-                    ],
-                    'hashtags' => $article->hashtags ?? [],
-                    'created_at' => $article->created_at->toDateTimeString(),
-                    'updated_at' => $article->updated_at->toDateTimeString(),
+        return $this->collection->map(function ($article) {
+            $data = [
+                'id' => $article->getUid()->value(),
+                'title_jp' => $article->getTitleJp()->value(),
+                'title_en' => $article->getTitleEn()?->value(),
+                'content_preview' => $this->getContentPreview($article->getContentJp()->value()),
+                'source_link' => $article->getSourceUrl()->value(),
+                'publicity' => $article->getPublicity()->value,
+                'status' => $article->getStatus()->value,
+                'jlpt_levels' => $article->getJlptLevels()->toArray(),
+                'author' => [
+                    'id' => $article->getAuthorId()->value(),
+                    'name' => $article->getAuthorName()->value(),
+                ],
+                'hashtags' => $article->getTags()->toArray(),
+                'created_at' => $article->getCreatedAt()->format('c'),
+                'updated_at' => $article->getUpdatedAt()->format('c'),
+            ];
+
+            if ($this->includeStats && $article->hasStats()) {
+                $data['engagement'] = [
+                    'likes_count' => $article->getLikesCount(),
+                    'downloads_count' => $article->getDownloadsCount(),
+                    'views_count' => $article->getViewsCount(),
+                    'comments_count' => $article->getCommentsCount(),
                 ];
+            }
 
-                if ($this->includeStats) {
-                    $data['stats'] = [
-                        'likesTotal' => $article->likesTotal ?? 0,
-                        'downloadsTotal' => $article->downloadsTotal ?? 0,
-                        'viewsTotal' => $article->viewsTotal ?? 0,
-                        'commentsTotal' => $article->commentsTotal ?? 0,
-                    ];
-                }
+            return $data;
+        });
+    }
 
-                return $data;
-            }),
-            'message' => 'Articles fetched'
-        ];
+    private function getContentPreview(string $content, int $maxLength = 200): string
+    {
+        if (strlen($content) <= $maxLength) {
+            return $content;
+        }
+
+        return substr($content, 0, $maxLength) . '...';
     }
 }

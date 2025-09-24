@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions\Deletion;
+namespace App\Application\Articles\Actions\Deletion;
 
 use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\ObjectTemplate;

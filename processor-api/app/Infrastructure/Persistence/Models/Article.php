@@ -3,7 +3,6 @@ namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;

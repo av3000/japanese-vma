@@ -1,5 +1,5 @@
 <?php
-namespace App\Domain\Articles\Actions\Deletion;
+namespace App\Application\Articles\Actions\Deletion;
 
 use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +12,7 @@ class CleanupArticleCustomListsAction
         // TODO: Create well defined enums for static uids
         DB::table('customlist_object')
             ->where('real_object_id', $article->id)
-            ->where('listtype_id', ObjectTemplateType::ARTICLES->value)
+            ->where('listtype_id', ObjectTemplateType::ARTICLE->value)
             ->delete();
     }
 }
