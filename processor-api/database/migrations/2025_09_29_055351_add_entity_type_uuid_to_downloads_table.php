@@ -12,10 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('downloads', function (Blueprint $table) {
-            $table->string('real_object_uuid')->nullable()->after('real_object_id');
-            $table->string('object_template_uuid')->nullable()->after('template_id');
-
-            $table->index(['object_template_uuid', 'real_object_uuid'], 'likes_uuid_lookup');
+            $table->uuid('entity_type_uuid')->nullable()->after('id');
+            $table->index('entity_type_uuid');
         });
     }
 
@@ -25,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('downloads', function (Blueprint $table) {
-            $table->dropIndex('likes_uuid_lookup');
-            $table->dropColumn(['real_object_uuid', 'object_template_uuid']);
+            $table->dropIndex(['entity_type_uuid']);
+            $table->dropColumn('entity_type_uuid');
         });
     }
 };
