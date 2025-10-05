@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class PopulateLikesUuids extends Command
+class PopulateImpressionsUuids extends Command
 {
-    protected $signature = 'migration:populate-likes-uuids
+    protected $signature = 'migration:populate-impressions-uuids
                            {--dry-run : Show what would be updated without making changes}';
 
     protected $description = 'Populate UUID columns in likes table (one-time migration)';

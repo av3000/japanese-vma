@@ -46,4 +46,30 @@ enum ObjectTemplateType: string
                 self::COMMENT => 'comment',
             };
         }
+
+        public function getLegacyValue(): int
+        {
+            return match($this) {
+                self::ARTICLE => 1,
+                self::ARTIST => 2,
+                self::LYRIC => 3,
+                self::RADICAL => 4,
+                self::KANJI => 5,
+                self::WORD => 6,
+                self::SENTENCE => 7,
+                self::LIST => 8,
+                self::POST => 9,
+                self::COMMENT => 10,
+            };
+        }
+
+        public static function tryFromLegacyValue(int $legacyValue): ?static
+        {
+            foreach (self::cases() as $case) {
+                if ($case->getLegacyValue() === $legacyValue) {
+                    return $case;
+                }
+            }
+            return null;
+        }
 }

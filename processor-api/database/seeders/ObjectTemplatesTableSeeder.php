@@ -19,7 +19,7 @@ class ObjectTemplatesTableSeeder extends Seeder
 
         foreach (ObjectTemplateType::cases() as $case) {
             DB::table('objecttemplates')->updateOrInsert(
-                ['uuid' => $case->value],
+                ['entity_type_uuid' => $case->value],
                 ['title' => $case->getTitle()]
             );
         }
