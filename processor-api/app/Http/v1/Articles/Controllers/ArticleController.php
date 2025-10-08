@@ -34,24 +34,32 @@ class ArticleController extends Controller
     public function index(IndexArticleRequest $request): JsonResponse {
         // TODO: figure gracefull error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $articles = $this->articleService->getArticlesList($listDTO, $request->user());
+        $paginatedArticles = $this->articleService->getArticlesList($listDTO, $request->user());
 
-        return response()->json([
+        $resources = [];
+        foreach ($paginatedArticles->getItems() as $article) {
+            $resource = new ArticleResource($article);
+            $resource->include_stats = $listDTO->include_stats;
+            $resource->include_hashtags = $listDTO->include_hashtags;
+            $resources[] = $resource;
+        }
+
+        $data = [
             'success' => true,
-            'data' => ArticleListResource::collection($articles->getItems()),
+            'items' => $resources,
             'pagination' => [
-                'current_page' => $articles->getPaginator()->currentPage(),
-                'per_page' => $articles->getPaginator()->perPage(),
-                'total' => $articles->getPaginator()->total(),
-                'last_page' => $articles->getPaginator()->lastPage(),
-                'has_more' => $articles->getPaginator()->hasMorePages(),
+                'page' => $paginatedArticles->getPaginator()->currentPage(),
+                'per_page' => $paginatedArticles->getPaginator()->perPage(),
+                'total' => $paginatedArticles->getPaginator()->total(),
+                'last_page' => $paginatedArticles->getPaginator()->lastPage(),
+                'has_more' => $paginatedArticles->getPaginator()->hasMorePages(),
             ],
-            'message' => $articles->isEmpty()
+            'message' => $paginatedArticles->isEmpty()
                 ? 'No articles match your criteria'
                 : 'Articles retrieved successfully'
-        ]);
+        ];
 
-        // return response()->json(new ArticleListResource($articles, $listDTO->includeStats));
+        return new JsonResponse($data, 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
 
     }
 

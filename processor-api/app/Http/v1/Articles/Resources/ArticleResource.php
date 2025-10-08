@@ -1,36 +1,47 @@
 <?php
 
-namespace App\Htpp\v1\Articles\Resources;
+namespace App\Http\v1\Articles\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Domain\Articles\Models\Article;
 
 class ArticleResource extends JsonResource
 {
+    /**
+     * Transform the article domain model into an API representation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
     public function toArray($request): array
     {
+        /** @var Article $this->resource */
         return [
-            'id' => $this->id,
-            'title_jp' => $this->title_jp,
-            'title_en' => $this->title_en,
-            'content_jp' => $this->content_jp,
-            'content_en' => $this->content_en,
-            'source_link' => $this->source_link,
-            'publicity' => $this->publicity,
-            'status' => $this->status,
-            'jlpt_levels' => [
-                'n1' => $this->n1,
-                'n2' => $this->n2,
-                'n3' => $this->n3,
-                'n4' => $this->n4,
-                'n5' => $this->n5,
-                'uncommon' => $this->uncommon,
-            ],
+            'uid' => (string) $this->resource->getUid(),
+            'title_jp' => (string) $this->resource->getTitleJp(),
+            'title_en' => (string) $this->resource->getTitleEn(),
+            'content_preview' => $this->resource->getContentJp()->excerpt(),
+            'source_link' => (string) $this->resource->getSourceUrl(),
+            'publicity' => $this->resource->getPublicity()->value,
+            'status' => $this->resource->getStatus()->value,
+            'jlpt_levels' => $this->resource->getJlptLevels()->toArray(),
             'author' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
+                'id' => $this->resource->getAuthorId()->value(),
+                'name' => $this->resource->getAuthorName()->value(),
             ],
-            'created_at' => $this->created_at->toDateTimeString(),
-            'updated_at' => $this->updated_at->toDateTimeString(),
+            'hashtags' => $this->when($this->include_hashtags, [$this->resource->getTags()]),
+            'created_at' => $this->resource->getCreatedAt()->format('c'),
+            'updated_at' => $this->resource->getUpdatedAt()->format('c'),
+            'engagement' => $this->when(
+                $this->include_stats,
+                [
+                    'likes_count' => $this->resource->getLikesCount(),
+                    'downloads_count' => $this->resource->getDownloadsCount(),
+                    'views_count' => $this->resource->getViewsCount(),
+                    'comments_count' => $this->resource->getCommentsCount(),
+                ]
+            ),
         ];
+
     }
 }

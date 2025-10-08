@@ -2,10 +2,9 @@
 namespace App\Domain\Articles\Models;
 
 use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl};
-use App\Domain\Articles\ValueObjects\JlptLevels;
-use App\Domain\Articles\ValueObjects\ArticleTags;
+// use App\Domain\Articles\ValueObjects\ArticleTags;
 use App\Domain\Shared\Enums\{PublicityStatus, ArticleStatus};
-use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId};
+use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, JlptLevels};
 
 class Article
 {
@@ -21,7 +20,7 @@ class Article
         private PublicityStatus $publicity,
         private ArticleStatus $status,
         private JlptLevels $jlptLevels,
-        private ArticleTags $tags,
+        private array $tags,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
         // Optionals
@@ -41,7 +40,7 @@ class Article
         ?ArticleContent $contentEn,
         ArticleSourceUrl $sourceUrl,
         PublicityStatus $publicity,
-        ArticleTags $tags
+        array $tags
     ): self {
         return new self(
             $uid,
@@ -87,7 +86,7 @@ class Article
 
     public function getUid(): EntityId { return $this->uid; }
     public function getAuthorId(): UserId { return $this->authorId; }
-    public function getAuthorName(): UserId { return $this->authorName; }
+    public function getAuthorName(): UserName { return $this->authorName; }
     public function getTitleJp(): ArticleTitle { return $this->titleJp; }
     public function getTitleEn(): ?ArticleTitle { return $this->titleEn; }
     public function getContentJp(): ArticleContent { return $this->contentJp; }
@@ -96,7 +95,7 @@ class Article
     public function getPublicity(): PublicityStatus { return $this->publicity; }
     public function getStatus(): ArticleStatus { return $this->status; }
     public function getJlptLevels(): JlptLevels { return $this->jlptLevels; }
-    public function getTags(): ArticleTags { return $this->tags; }
+    public function getTags(): array { return $this->tags; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): \DateTimeImmutable { return $this->updatedAt; }
 

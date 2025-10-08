@@ -4,16 +4,19 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
 
-use App\Domain\Shared\ValueObjects\{EntityId, UserId, JlptLevels};
-use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl, ArticleTags};
+use App\Domain\Shared\ValueObjects\{EntityId, UserId, UserName, JlptLevels};
+use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl};
 use App\Domain\Shared\Enums\{PublicityStatus, ArticleStatus};
 
 class ArticleMapper
 {
     public static function mapToDomain(PersistenceArticle $entity): DomainArticle
     {
+        // if( !$entity->user->name ) {
+            // dd($entity->hashtags);
+        // }
         return new DomainArticle(
-            new EntityId($entity->unique_id),
+            new EntityId($entity->uuid),
             new UserId($entity->user_id),
             new UserName($entity->user->name),
             new ArticleTitle($entity->title_jp),
@@ -31,11 +34,11 @@ class ArticleMapper
                 (int)$entity->n5,
                 (int)$entity->uncommon
             ),
-            ArticleTags::fromHashtagsCollection($entity->hashtags ?? collect()),
             // TODO: create ArticleTags proper domain object
+            $entity->hashtags ? $entity->hashtags->pluck('tag')->toArray() : [],
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
-             $entity->likesTotal ?? null,
+            $entity->likesTotal ?? null,
             $entity->downloadsTotal ?? null,
             $entity->viewsTotal ?? null,
             $entity->commentsTotal ?? null,
@@ -45,7 +48,7 @@ class ArticleMapper
     public static function mapToEntity(DomainArticle $article): array
     {
         return [
-            'unique_id' => $article->getUid()->value(),
+            'uuid' => $article->getUid()->value(),
             'user_id' => $article->getAuthorId()->value(),
             'title_jp' => $article->getTitleJp()->value(),
             'title_en' => $article->getTitleEn()?->value(),

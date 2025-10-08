@@ -3,57 +3,49 @@ namespace App\Application\Engagement\Services;
 
 use App\Application\Engagement\Actions\LoadEntityHashtagsAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Articles\Models\Articles;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class EntityEnhancementService implements EntityEnhancementServiceInterface
 {
-    public function __construct(
-        private LoadEntityHashtagsAction $loadHashtags,
+   public function __construct(
         private LoadEntityStatsAction $loadStats
     ) {}
 
-    /**
-     * Enhance any entity list with statistical data
-     *
-     * This generic method works with articles, lists, posts, or any other
-     * entity that uses your template-based engagement system.
-     */
-    public function enhanceWithStats(LengthAwarePaginator $entities, string $entityType): LengthAwarePaginator
+    public function enhanceArticlesWithStats(Articles $articles): Articles
     {
-        $this->loadStats->execute($entities, $entityType);
-        return $entities;
-    }
-
-    /**
-     * Enhance any entity list with hashtag data
-     */
-    public function enhanceWithHashtags(LengthAwarePaginator $entities, string $entityType): LengthAwarePaginator
-    {
-        $this->loadHashtags->execute($entities, $entityType);
-        return $entities;
-    }
-
-    /**
-     * Apply multiple enhancements based on configuration
-     *
-     * This method provides a convenient way to apply multiple enhancements
-     * based on what's requested, reducing the number of method calls needed.
-     */
-    public function enhanceWithOptions(
-        LengthAwarePaginator $entities,
-        string $entityType,
-        bool $includeStats = false,
-        bool $includeHashtags = false
-    ): LengthAwarePaginator {
-        if ($includeHashtags) {
-            $this->enhanceWithHashtags($entities, $entityType);
+        if ($articles->isEmpty()) {
+            return $articles;
         }
 
-        if ($includeStats) {
-            $this->enhanceWithStats($entities, $entityType);
-        }
+        $articleUuids = array_map(function($article) {
+            return $article->getUid()->value();
+        }, $articles->getItems());
 
-        return $entities;
+        $statsData = $this->loadStats->batchLoadStatsByUuid(
+            ObjectTemplateType::ARTICLE->value,
+            $articleUuids
+        );
+
+        return $articles->transform(function($article) use ($statsData) {
+            $articleUuid = $article->getUid()->value();
+            $stats = $statsData[$articleUuid] ?? [
+                'likes' => 0,
+                'downloads' => 0,
+                'views' => 0,
+                'comments' => 0
+            ];
+
+            return $article->withStats(
+                $stats['likes'],
+                $stats['downloads'],
+                $stats['views'],
+                $stats['comments']
+            );
+        });
     }
+
+
 }

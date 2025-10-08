@@ -4,7 +4,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\ValueObjects\ArticleId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Http\User;
@@ -34,7 +34,7 @@ interface ArticleRepositoryInterface
      * Find articles by unique domain ID (EntityId) and convert to domain model
      * Returns null if not found, throws exception if access denied
      */
-    public function findWithFilters(ArticleListDTO $dto, ?User $user = null): Articles;
+    public function findByCriteria(ArticleCriteriaDTO $dto): Articles;
 
     /**
      * Delete article by ID with proper authorization

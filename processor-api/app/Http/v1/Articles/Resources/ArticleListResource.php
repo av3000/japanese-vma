@@ -5,19 +5,18 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ArticleListResource extends ResourceCollection
 {
-    protected $includeStats;
+    protected $include_stats;
 
-    public function __construct($resource, $includeStats = false)
+    public function __construct($resource, $include_stats = false)
     {
-        parent::__construct($resource);
-        $this->includeStats = $includeStats;
+        $this->include_stats = $include_stats;
     }
 
     public function toArray($request)
     {
         return $this->collection->map(function ($article) {
             $data = [
-                'id' => $article->getUid()->value(),
+                'id' => $article->value(),
                 'title_jp' => $article->getTitleJp()->value(),
                 'title_en' => $article->getTitleEn()?->value(),
                 'content_preview' => $this->getContentPreview($article->getContentJp()->value()),
@@ -34,7 +33,7 @@ class ArticleListResource extends ResourceCollection
                 'updated_at' => $article->getUpdatedAt()->format('c'),
             ];
 
-            if ($this->includeStats && $article->hasStats()) {
+            if ($this->include_stats && $article->hasStats()) {
                 $data['engagement'] = [
                     'likes_count' => $article->getLikesCount(),
                     'downloads_count' => $article->getDownloadsCount(),

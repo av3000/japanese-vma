@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Domain\Shared\ValueObjects;
+
+use InvalidArgumentException;
+
 readonly class UserName
 {
     public function __construct(
@@ -7,12 +11,11 @@ readonly class UserName
     ) {
         $trimmed = trim($this->value);
         if (empty($trimmed)) {
-            throw new InvalidArgumentException('User name cannot be empty');
+            throw new InvalidArgumentException('User name cannot be empty: ');
         }
         if (mb_strlen($trimmed) > 255) {
             throw new InvalidArgumentException('User name cannot exceed 255 characters');
         }
-        $this->value = $trimmed;
     }
 
     public static function from(string $value): self

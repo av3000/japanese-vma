@@ -168,8 +168,8 @@ Route::prefix('v1')->group(function () {
 
         // Articles
         // Articles CRUD
-        Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
-        Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
+        // Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
+        // Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
 
         Route::post('articles', '\App\Http\v1\Articles\Controllers\ArticleController@store');
         Route::put('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@update');

@@ -63,7 +63,7 @@ class FixEntityUuids extends Command
                 $uuid = DB::table('articles')->where('id', $d->real_object_id)->value('uuid');
                 DB::table('downloads')->where('id', $d->id)->update([
                     'real_object_uuid' => $uuid,
-                    'object_template_uuid' => ObjectTemplateType::ARTICLE->value,
+                    'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
                 ]);
             }
         }
@@ -99,7 +99,7 @@ class FixEntityUuids extends Command
                 $uuid = DB::table('customlists')->where('id', $d->real_object_id)->value('uuid');
                 DB::table('downloads')->where('id', $d->id)->update([
                     'real_object_uuid' => $uuid,
-                    'object_template_uuid' => ObjectTemplateType::LIST->value,
+                    'entity_type_uuid' => ObjectTemplateType::LIST->value,
                 ]);
             }
         }

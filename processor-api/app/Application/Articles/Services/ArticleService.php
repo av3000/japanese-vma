@@ -20,11 +20,11 @@ use App\Application\Articles\Actions\Deletion\{
     CleanupArticleCustomListsAction
 };
 
-use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleUpdateDTO, ArticleListDTO};
+use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
-use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, PaginationData};
+use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, Pagination};
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 // TODO: gradually replace these with repository pattern and remove the import of direct persistence model
@@ -111,82 +111,22 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
     {
-        $articles = $this->articleRepository->findWithFilters($dto, $user);
+        $criteriaDTO = new ArticleCriteriaDTO(
+            search: $dto->search !== null ? ArticleSearchTerm::fromInputOrNull($dto->search) : null,
+            sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
+            categoryId: $dto->category !== null ? $dto->category : null,
+            visibilityRules: $this->viewPolicy->getVisibilityCriteria($user),
+            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
+        );
 
-        if (!empty(trim($dto->search ?? ''))) {
-            // Handle search-specific logic here if needed
-        }
+        $articles = $this->articleRepository->findByCriteria($criteriaDTO);
 
-        // if ($dto->includeHashtags) {
-        //     $this->entityEnhancementService->enhanceWithHashtags(
-        //         $articles->toEloquentPaginator(),
-        //         'article'
-        //     );
-        // }
-
-        if ($dto->includeStats) {
-            $articles = $this->enhancementService->enhanceArticlesWithStats($articles);
+        if ($dto->include_stats) {
+            $articles = $this->entityEnhancementService->enhanceArticlesWithStats($articles);
         }
 
         return $articles;
     }
-
-    // public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
-    // {
-    //     // Build and execute query
-    //     $articles = $this->articleRepository->findWithFilters($dto, $user);
-
-    //     // Apply enhancements based on DTO requirements
-    //     $this->entityEnhancementService->enhanceWithOptions(
-    //         $articles->toEloquentPaginator(),
-    //         'article',
-    //         $dto->shouldIncludeStats(),
-    //         $dto->shouldIncludeHashtags()
-    //     );
-
-    //     return $articles;
-    // }
-
-    // public function getArticlesList(ArticleListRequest $request, ?User $user = null): Articles
-    // {
-    //     // Apply business rules for article access
-    //     // This is where we make decisions about what articles a user can see
-    //     $searchCriteria = $this->buildSearchCriteria($request, $user);
-
-    //     // Delegate to repository for data retrieval
-    //     // The repository handles the technical complexity of querying
-    //     $articles = $this->articleRepository->findWithCriteria($searchCriteria);
-
-    //     // Apply business-driven enhancements based on request
-    //     // We only load expensive data like stats when explicitly requested
-    //     if ($request->shouldIncludeStats()) {
-    //         $articles = $this->enhancementService->enhanceWithStats($articles);
-    //     }
-
-    //     if ($request->shouldIncludeHashtags()) {
-    //         $articles = $this->enhancementService->enhanceWithHashtags($articles);
-    //     }
-
-    //     return $articles;
-    // }
-
-    // public function getArticles(ArticleListDTO $dto, ?User $user = null): LengthAwarePaginator
-    // {
-    //     $search = $dto->search ? ArticleSearchTerm::fromInput($dto->search) : null;
-    //     $sort = ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir);
-    //     $perPage = PerPageLimit::fromInputOrDefault($dto->per_page);
-
-    //     $query = $this->buildArticlesQuery($dto, $search, $sort, $user);
-    //     $articles = $query->paginate($perPage->value);
-
-    //     $this->loadHashtags->execute($articles);
-
-    //     if ($dto->includeStats) {
-    //         $this->loadListStats->execute($articles);
-    //     }
-
-    //     return $articles;
-    // }
 
     public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle
     {
@@ -259,7 +199,7 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
-        $pagination = new PaginationData($page, $perPage);
+        $pagination = new Pagination($page, $perPage);
 
         $article = PersistenceArticle::findOrFail($articleId);
 
@@ -272,7 +212,7 @@ class ArticleService implements ArticleServiceInterface
 
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
-        $pagination = new PaginationData($page, $perPage);
+        $pagination = new Pagination($page, $perPage);
 
         $article = PersistenceArticle::findOrFail($articleId);
 

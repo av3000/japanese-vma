@@ -33,6 +33,7 @@ class ArticleViewPolicy
         return [
             'publicity' => [PublicityStatus::PUBLIC, PublicityStatus::PRIVATE],
             'user_id' => $user->id,
+             // TODO: rules should be defined as const or enums or some other form than raw string array.
             'access_own_private' => true
         ];
     }

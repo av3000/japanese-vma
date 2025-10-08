@@ -19,15 +19,20 @@ readonly class ArticleSearchTerm
         }
     }
 
-    public static function fromInput(string $input): self
+    public static function fromInput(?string $input): ?self
     {
-        $trimmed = trim($input);
-
-        if (empty($trimmed)) {
-            throw new InvalidArgumentException('Search term cannot be empty');
+        if($input === null)
+        {
+            return null;
         }
 
+        $trimmed = trim($input);
         return new self($trimmed);
+    }
+
+    public static function fromInputOrNull(?string $input): ?self
+    {
+        return $input !== null ? self::fromInput($input) : null;
     }
 
     public function matches(string $text): bool

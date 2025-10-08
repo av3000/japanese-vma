@@ -66,7 +66,7 @@ class PopulateImpressionsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = likes.template_id
             SET
                 likes.real_object_uuid = articles.unique_id,
-                likes.object_template_uuid = objecttemplates.uuid
+                likes.entity_type_uuid = objecttemplates.uuid
             WHERE
                 likes.template_id = 1
                 AND likes.real_object_uuid IS NULL
@@ -99,7 +99,7 @@ class PopulateImpressionsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = likes.template_id
             SET
                 likes.real_object_uuid = customlists.uuid,
-                likes.object_template_uuid = objecttemplates.uuid
+                likes.entity_type_uuid = objecttemplates.uuid
             WHERE
                 likes.template_id = 8
                 AND likes.real_object_uuid IS NULL
@@ -132,7 +132,7 @@ class PopulateImpressionsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = likes.template_id
             SET
                 likes.real_object_uuid = posts.uuid,
-                likes.object_template_uuid = objecttemplates.uuid
+                likes.entity_type_uuid = objecttemplates.uuid
             WHERE
                 likes.template_id = 9
                 AND likes.real_object_uuid IS NULL
@@ -165,7 +165,7 @@ class PopulateImpressionsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = likes.template_id
             SET
                 likes.real_object_uuid = comments.uuid,
-                likes.object_template_uuid = objecttemplates.uuid
+                likes.entity_type_uuid = objecttemplates.uuid
             WHERE
                 likes.template_id = 10
                 AND likes.real_object_uuid IS NULL
@@ -183,7 +183,7 @@ class PopulateImpressionsUuids extends Command
         $total = DB::table('likes')->count();
         $populated = DB::table('likes')
             ->whereNotNull('real_object_uuid')
-            ->whereNotNull('object_template_uuid')
+            ->whereNotNull('entity_type_uuid')
             ->count();
 
         $this->info("📊 Total likes: {$total}");

@@ -2,13 +2,12 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Policies\ArticleViewPolicy;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\ValueObjects\ArticleId;
+use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSortCriteria};
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
@@ -17,9 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
-    public function __construct(
-        private ArticleViewPolicy $viewPolicy
-    ) {}
+    public function __construct() {}
 
     public function save(DomainArticle $article): DomainArticle
     {
@@ -27,7 +24,7 @@ class ArticleRepository implements ArticleRepositoryInterface
             $mappedArticle = ArticleMapper::mapToEntity($article);
 
             $entityArticle = PersistenceArticle::updateOrCreate(
-                ['unique_id' => $mappedArticle['unique_id']],
+                ['uuid' => $mappedArticle['uuid']],
                 $mappedArticle
             );
 
@@ -54,7 +51,7 @@ class ArticleRepository implements ArticleRepositoryInterface
             $persistenceData = ArticleMapper::mapToEntity($article);
 
             $persistenceArticle = PersistenceArticle::updateOrCreate(
-                ['unique_id' => $persistenceData['unique_id']],
+                ['uuid' => $persistenceData['uuid']],
                 $persistenceData
             );
 
@@ -138,18 +135,20 @@ class ArticleRepository implements ArticleRepositoryInterface
      * This method encapsulates all query building logic while keeping the
      * service layer focused on business orchestration
      */
-    public function findWithFilters(ArticleListDTO $dto, ?User $user = null): Articles
+    public function findByCriteria(ArticleCriteriaDTO $criteria): Articles
     {
         $query = PersistenceArticle::query()->with(['user']);
-        $query = $this->applyPermissionFilters($query, $user);
-        $query = $this->applyContentFilters($query, $dto);
-        $query = $this->applySorting($query, $dto);
+
+        $this->applyVisibilityFilters($query, $criteria->visibilityRules);
+        // dd($query, $criteria);
+        $this->applyContentFilters($query, $criteria);
+        $this->applySorting($query, $criteria->sort);
 
         $paginatedResults = $query->paginate(
-            $dto->per_page ?? 10,
+            $criteria->pagination->per_page,
             ['*'],
             'page',
-            request()->get('page', 1)
+            $criteria->pagination->page
         );
 
         $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) {
@@ -165,25 +164,27 @@ class ArticleRepository implements ArticleRepositoryInterface
      * Apply permission-based filtering based on user role and article publicity
      * This method encapsulates the complex business rules around article visibility
      */
-    private function applyPermissionFilters($query, ?User $user)
+    private function applyVisibilityFilters($query, array $rules): void
     {
-        if (!$user) {
-            // Anonymous users see only public articles
-            return $query->where('publicity', PublicityStatus::PUBLIC);
+        if (empty($rules)) {
+            return;
         }
 
-        if ($user->hasRole('admin')) {
-            // Administrators can see all articles
-            return $query;
+        if ($rules['publicity'] === 'all') {
+            return;
         }
 
-        // Regular authenticated users see public articles plus their own private articles
-        return $query->where(function($q) use ($user) {
-            $q->where('publicity', PublicityStatus::PUBLIC)
-              ->orWhere(function($subQ) use ($user) {
-                  $subQ->where('publicity', PublicityStatus::PRIVATE)
-                       ->where('user_id', $user->id);
-              });
+        // TODO: rules should be defined as const or enums or some other form than raw string array.
+        $query->where(function($q) use ($rules) {
+            if(isset($rules['access_own_private']) && $rules['access_own_private']) {
+                $q->where('publicity', PublicityStatus::PUBLIC)
+                  ->orWhere(function($subQ) use ($rules) {
+                      $subQ->where('publicity', PublicityStatus::PRIVATE)
+                           ->where('user_id', $rules['user_id']);
+                  });
+            } else {
+                $q->whereIn('publicity', $rules['publicity']);
+            }
         });
     }
 
@@ -191,40 +192,23 @@ class ArticleRepository implements ArticleRepositoryInterface
      * Apply content-based filters from the DTO
      * This method handles search terms and category filtering
      */
-    private function applyContentFilters($query, ArticleListDTO $dto)
+    private function applyContentFilters($query, ArticleCriteriaDTO $criteria): void
     {
-        // Apply category filter if specified
-        if ($dto->category !== null) {
-            $query->where('category_id', $dto->category);
+        if ($criteria->categoryId !== null) {
+            $query->where('category_id', $criteria->category);
         }
 
-        // Apply search filter if specified and not empty
-        if (!empty(trim($dto->search ?? ''))) {
-            $searchTerm = trim($dto->search);
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('title_jp', 'LIKE', '%' . $searchTerm . '%')
-                  ->orWhere('title_en', 'LIKE', '%' . $searchTerm . '%');
+        if ($criteria->search !== null) {
+            $searchValue = $criteria->search->value;
+            $query->where(function($q) use ($searchValue) {
+                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
+                  ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
         }
-
-        return $query;
     }
 
-    /**
-     * Apply sorting based on DTO parameters with sensible defaults
-     * This method handles the complexity of field validation and direction normalization
-     */
-    private function applySorting($query, ArticleListDTO $dto)
+    private function applySorting($query, ArticleSortCriteria $sort): void
     {
-        $sortField = $dto->sort_by ?? 'created_at';
-        $sortDirection = in_array($dto->sort_dir, ['asc', 'desc']) ? $dto->sort_dir : 'desc';
-
-        // Validate sort field against allowed columns to prevent SQL injection
-        $allowedSortFields = ['created_at', 'updated_at', 'title_jp', 'title_en'];
-        if (!in_array($sortField, $allowedSortFields)) {
-            $sortField = 'created_at';
-        }
-
-        return $query->orderBy($sortField, $sortDirection);
+        $query->orderBy($sort->field->value, $sort->direction->value);
     }
 }

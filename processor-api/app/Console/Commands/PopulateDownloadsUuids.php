@@ -64,7 +64,7 @@ class PopulateDownloadsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = downloads.template_id
             SET
                 downloads.real_object_uuid = articles.uuid,
-                downloads.object_template_uuid = objecttemplates.uuid
+                downloads.entity_type_uuid = objecttemplates.uuid
             WHERE
                 downloads.template_id = 1
                 AND downloads.real_object_uuid IS NULL
@@ -97,7 +97,7 @@ class PopulateDownloadsUuids extends Command
             INNER JOIN objecttemplates ON objecttemplates.id = downloads.template_id
             SET
                 downloads.real_object_uuid = customlists.uuid,
-                downloads.object_template_uuid = objecttemplates.uuid
+                downloads.entity_type_uuid = objecttemplates.uuid
             WHERE
                 downloads.template_id = 8
                 AND downloads.real_object_uuid IS NULL
@@ -115,7 +115,7 @@ class PopulateDownloadsUuids extends Command
         $total = DB::table('downloads')->count();
         $populated = DB::table('downloads')
             ->whereNotNull('real_object_uuid')
-            ->whereNotNull('object_template_uuid')
+            ->whereNotNull('entity_type_uuid')
             ->count();
 
         $this->info("📊 Total downloads: {$total}");

@@ -62,7 +62,7 @@ readonly class ArticleDTO
         );
     }
 
-    public function toListArray(bool $includeStats = true): array
+    public function toListArray(bool $include_stats = true): array
     {
         $data = [
             'id' => $this->id,
@@ -80,7 +80,7 @@ readonly class ArticleDTO
             'updated_at' => $this->updated_at,
         ];
 
-        if ($includeStats) {
+        if ($include_stats) {
             $data['stats'] = $this->stats;
         }
 
