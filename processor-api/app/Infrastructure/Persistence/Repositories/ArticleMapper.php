@@ -16,6 +16,7 @@ class ArticleMapper
             // dd($entity->hashtags);
         // }
         return new DomainArticle(
+            $entity->id,
             new EntityId($entity->uuid),
             new UserId($entity->user_id),
             new UserName($entity->user->name),
@@ -45,6 +46,7 @@ class ArticleMapper
         );
     }
 
+    // TODO: shouldnt retun type be persistence article?
     public static function mapToEntity(DomainArticle $article): array
     {
         return [

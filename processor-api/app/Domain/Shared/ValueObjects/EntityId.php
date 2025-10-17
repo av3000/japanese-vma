@@ -11,6 +11,19 @@ readonly class EntityId
         if (empty($this->value)) {
             throw new \InvalidArgumentException('Entity ID cannot be empty');
         }
+
+        if (!Str::isUuid($this->value)) {
+            throw new InvalidArgumentException('Entity ID must be a valid UUID');
+        }
+    }
+
+    /**
+     * Create from user input (HTTP requests, forms, etc.)
+     * This is your main factory method for external data
+     */
+    public static function from(string $value): self
+    {
+        return new self(trim($value));
     }
 
     public static function generate(): self

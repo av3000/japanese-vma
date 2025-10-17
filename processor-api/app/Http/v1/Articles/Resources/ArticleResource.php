@@ -42,6 +42,5 @@ class ArticleResource extends JsonResource
                 ]
             ),
         ];
-
     }
 }

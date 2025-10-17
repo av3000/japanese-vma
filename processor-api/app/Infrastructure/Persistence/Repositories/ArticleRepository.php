@@ -4,11 +4,11 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleCriteriaDTO};
+use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSortCriteria};
-use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -18,7 +18,7 @@ class ArticleRepository implements ArticleRepositoryInterface
 {
     public function __construct() {}
 
-    public function save(DomainArticle $article): DomainArticle
+    public function save(DomainArticle $article): ?DomainArticle
     {
         return DB::transaction(function () use ($article, $tags) {
             $mappedArticle = ArticleMapper::mapToEntity($article);
@@ -65,15 +65,24 @@ class ArticleRepository implements ArticleRepositoryInterface
         });
     }
 
-    public function findById(ArticleId $id): DomainArticle
+    public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle
     {
-        $entityArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id);
-        // TODO: use mapper to convert persistence model to domain model
-        if (!$entityArticle) {
-            return null;
-        }
+        // TODO: fetch by UUID instead of primary ID
+        $query = PersistenceArticle::query();
 
-        return ArticleMapper::mapToDomain($entityArticle);
+        $with = [];
+        if ($dto->include_user) $with[] = 'user';
+        if ($dto->include_kanjis) $with[] = 'kanjis';
+        if ($dto->include_words) $with[] = 'words';
+
+        $persistenceArticle = $query->with($with)
+            ->where('uuid', $uid->value())
+            ->first();
+
+         return $persistenceArticle ? ArticleMapper::mapToDomain($persistenceArticle) : null;
+        // TODO: use mapper to convert persistence model to domain model
+
+        // return ArticleMapper::mapToDomain($entityArticle);
     }
 
     public function deleteById(ArticleId $id): bool
@@ -174,8 +183,8 @@ class ArticleRepository implements ArticleRepositoryInterface
             return;
         }
 
-        // TODO: rules should be defined as const or enums or some other form than raw string array.
         $query->where(function($q) use ($rules) {
+            // TODO: rules should be defined as const or enums or some other form than raw string array.
             if(isset($rules['access_own_private']) && $rules['access_own_private']) {
                 $q->where('publicity', PublicityStatus::PUBLIC)
                   ->orWhere(function($subQ) use ($rules) {

@@ -2,45 +2,46 @@
 namespace App\Application\Engagement\Actions;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\ValueObjects\{Viewer};
 use App\Http\Models\ObjectTemplate;
 use App\Infrastructure\Persistence\Models\View;
+use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Domain\Engagement\DTOs\{ViewCreateDTO, ViewFilterDTO};
 
 class IncrementViewAction
 {
+    public function __construct(
+        private ViewRepositoryInterface $viewRepository
+    ) {}
     /**
      * Track entity views for all users - authenticated and anonymous.
      * For authenticated users, we use their user_id as the primary identifier.
      * For anonymous users, we rely on IP address, though this isn't perfect
      * due to shared networks and changing IPs.
      */
-    public function execute(int $id, ObjectTemplateType $objectTemplateType): void
-    {
-        $objectTemplateTypeValue = $objectTemplateType->value;
-        $objectTemplateId = ObjectTemplate::where('title', $objectTemplateTypeValue)->first()->id;
-        $userId = auth()->id();
-        $userIp = request()->ip();
+    public function execute(
+        int $id,
+        ObjectTemplateType $objectType,
+        Viewer $viewer
+    ): void {
+        $existingViewId = $this->viewRepository->findByFilter(new ViewFilterDTO(
+            entityId: $id,
+            objectType: $objectType,
+            userId: $viewer->userId(),
+            ipAddress: $viewer->ipAddress()
+        ));
 
-        // For authenticated users, check by user_id
-        // For anonymous users, check by IP address
-        $existingView = View::where('template_id', $objectTemplateId)
-            ->where('real_object_id', $id)
-            ->when($userId, function ($query) use ($userId) {
-                return $query->where('user_id', $userId);
-            }, function ($query) use ($userIp) {
-                return $query->where('user_ip', $userIp)->whereNull('user_id');
-            })
-            ->first();
-
-        if ($existingView) {
-            // Update the timestamp to track the latest view
-            $existingView->touch();
+        if ($existingViewId) {
+            $this->viewRepository->updateTimestampById($existingViewId);
         } else {
-            View::create([
-                'user_id' => $userId, // Will be null for anonymous users
-                'user_ip' => $userIp,
-                'template_id' => $objectTemplateId,
-                'real_object_id' => $id,
-            ]);
+            // TODO: Consider adding a check to prevent multiple views from the same IP within a short timeframe to avoid inflation. We check if view exists, but we update timestamp if it does all the time.
+             // TODO: Consider using a job/queue for this to reduce request time impact.
+            $this->viewRepository->create(new ViewCreateDTO(
+                userId: $viewer->userId(),
+                userIp: $viewer->ipAddress(),
+                templateId: $objectType->getLegacyId(),
+                realObjectId: $id,
+            ));
         }
     }
 }

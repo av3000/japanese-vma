@@ -8,50 +8,50 @@ class LoadEntityStatsAction
     /**
      * Load stats using UUIDs directly - no more complex ID mapping!
      */
-    public function batchLoadStatsByUuid(string $entityTypeUuid, array $entityUuids): array
+    public function batchLoadStatsById(string $templateId, array $entityIds): array
     {
-        if (empty($entityUuids)) {
+        if (empty($entityIds)) {
             return [];
         }
 
         // TODO: use Repository pattern for stats
         // Simple, direct queries using UUIDs
         $likes = DB::table('likes')
-            ->where('entity_type_uuid', $entityTypeUuid)
-            ->whereIn('real_object_uuid', $entityUuids)
-            ->groupBy('real_object_uuid')
-            ->pluck(DB::raw('count(*)'), 'real_object_uuid')
+            ->where('template_id', $templateId)
+            ->whereIn('real_object_id', $entityIds)
+            ->groupBy('real_object_id')
+            ->pluck(DB::raw('count(*)'), 'real_object_id')
             ->toArray();
 
         $downloads = DB::table('downloads')
-            ->where('entity_type_uuid', $entityTypeUuid)
-            ->whereIn('real_object_uuid', $entityUuids)
-            ->groupBy('real_object_uuid')
-            ->pluck(DB::raw('count(*)'), 'real_object_uuid')
+            ->where('template_id', $templateId)
+            ->whereIn('real_object_id', $entityIds)
+            ->groupBy('real_object_id')
+            ->pluck(DB::raw('count(*)'), 'real_object_id')
             ->toArray();
 
         $views = DB::table('views')
-            ->where('entity_type_uuid', $entityTypeUuid)
-            ->whereIn('real_object_uuid', $entityUuids)
-            ->groupBy('real_object_uuid')
-            ->pluck(DB::raw('count(*)'), 'real_object_uuid')
+            ->where('template_id', $templateId)
+            ->whereIn('real_object_id', $entityIds)
+            ->groupBy('real_object_id')
+            ->pluck(DB::raw('count(*)'), 'real_object_id')
             ->toArray();
 
         $comments = DB::table('comments')
-            ->where('entity_type_uuid', $entityTypeUuid)
-            ->whereIn('real_object_uuid', $entityUuids)
-            ->groupBy('real_object_uuid')
-            ->pluck(DB::raw('count(*)'), 'real_object_uuid')
+            ->where('template_id', $templateId)
+            ->whereIn('real_object_id', $entityIds)
+            ->groupBy('real_object_id')
+            ->pluck(DB::raw('count(*)'), 'real_object_id')
             ->toArray();
 
         // Build result array indexed by entity UUID
         $result = [];
-        foreach ($entityUuids as $uuid) {
-            $result[$uuid] = [
-                'likes' => $likes[$uuid] ?? 0,
-                'downloads' => $downloads[$uuid] ?? 0,
-                'views' => $views[$uuid] ?? 0,
-                'comments' => $comments[$uuid] ?? 0,
+        foreach ($entityIds as $id) {
+            $result[$id] = [
+                'likes' => $likes[$id] ?? 0,
+                'downloads' => $downloads[$id] ?? 0,
+                'views' => $views[$id] ?? 0,
+                'comments' => $comments[$id] ?? 0,
             ];
         }
 

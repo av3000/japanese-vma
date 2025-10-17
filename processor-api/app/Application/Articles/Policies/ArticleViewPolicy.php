@@ -1,7 +1,7 @@
 <?php
 namespace App\Application\Articles\Policies;
 
-use App\Infrastructure\Persistence\Models\Article;
+use App\Domain\Articles\Models\Article;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
 
@@ -46,17 +46,14 @@ class ArticleViewPolicy
      */
     public function canView(?User $user, Article $article): bool
     {
-        // Public articles are viewable by everyone
-        if ($article->publicity === PublicityStatus::PUBLIC) {
+        if ($article->getPublicity() === PublicityStatus::PUBLIC) {
             return true;
         }
 
-        // Private articles require authentication
         if ($user === null) {
             return false;
         }
 
-        // Admins can view everything, authors can view their own articles
         return $user->isAdmin() || $user->id === $article->user_id;
     }
 }

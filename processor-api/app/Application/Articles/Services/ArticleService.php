@@ -2,7 +2,7 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Engagement\Actions\{IncrementViewAction, LoadArticleCommentsAction};
-use App\Application\Engagement\Services\EntityEnhancementServiceInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
 // use App\Application\Articles\Actions\Processing\{ExtractKanjisAction};
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
@@ -20,12 +20,12 @@ use App\Application\Articles\Actions\Deletion\{
     CleanupArticleCustomListsAction
 };
 
-use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
+use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
-use App\Domain\Shared\ValueObjects\{UserId, PerPageLimit, Pagination};
-use App\Domain\Articles\Exceptions\ArticleNotFoundException;
+use App\Domain\Shared\ValueObjects\{UserId, EntityId, Viewer, PerPageLimit, Pagination};
+use App\Domain\Articles\Exceptions\{ArticleNotFoundException, ArticleAccessDeniedException};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 // TODO: gradually replace these with repository pattern and remove the import of direct persistence model
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
@@ -37,7 +37,7 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private EntityEnhancementServiceInterface $entityEnhancementService,
+        private EngagementServiceInterface $engagementService,
         private ArticleViewPolicy $viewPolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
@@ -77,40 +77,37 @@ class ArticleService implements ArticleServiceInterface
         return $domainArticle;
     }
 
-    public function getArticle(int $uid, ?int $userId = null): ?PersistenceArticle
+    public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): ?DomainArticle
     {
-
-        $articleUid = ArticleId::from($uid);
-        // TODO: figure if should be used here for access control after fetching article
-        $userIdVO = $userId ? UserId::from($userId) : null;
-
-        // $persistenceArticle = PersistenceArticle::with(['user', 'kanjis', 'words'])->find($id->value());
-
-        $article = $this->articleRepository->findById($articleUid->getId()->value());
+        $article = $this->articleRepository->findByPublicUid($articleUid, $dto);
 
         if (!$article) {
-            throw new ArticleNotFoundException($articleUid->getId()->value());
+            throw new ArticleNotFoundException($articleUid->value());
         }
 
-        try {
-            $this->incrementView->execute($article->getId()->value, ObjectTemplateType::ARTICLE);
-        } catch (\Exception $e) {
-            // Log and continue, view increment failure should not block main flow
-            \Log::error("Failed to increment view for article {$article->getId()->value()}: " . $e->getMessage());
+        if(!$this->viewPolicy->canView($user, $article)) {
+            throw new ArticleAccessDeniedException($articleUid->value());
         }
+
+        $viewer = Viewer::fromRequest();
+        $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
         return $article;
+    }
 
-        // $this->loadStats->execute($persistenceArticle);
-        // $this->processWords->execute($persistenceArticle);
-        // $this->loadComments->execute($persistenceArticle);
-
-        // Convert to domain model (placeholder - needs implementation)
-        // return $this->toDomainModel($persistenceArticle);
+    // TODO: make purely separate service method with no implementation details spilling here
+    private function trackView(int $id, ObjectTemplateType $objectTemplateType, Viewer $viewer): void
+    {
+        try {
+            $this->incrementView->execute($id, $objectTemplateType, $viewer);
+        } catch (\Exception $e) {
+            \Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
+        }
     }
 
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
     {
+        // TODO: figure if this could be refactored to some query builder pattern, which then would use mapper to communicate with repository
         $criteriaDTO = new ArticleCriteriaDTO(
             search: $dto->search !== null ? ArticleSearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
@@ -122,7 +119,7 @@ class ArticleService implements ArticleServiceInterface
         $articles = $this->articleRepository->findByCriteria($criteriaDTO);
 
         if ($dto->include_stats) {
-            $articles = $this->entityEnhancementService->enhanceArticlesWithStats($articles);
+            $articles = $this->engagementService->enhanceArticlesWithStats($articles);
         }
 
         return $articles;
@@ -130,7 +127,7 @@ class ArticleService implements ArticleServiceInterface
 
     public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle
     {
-        $articleId = ArticleId::from($id);
+        $articleId = EntityId::from($id);
         $userIdVO = UserId::from($userId);
 
         return DB::transaction(function () use ($articleId, $dto, $userIdVO) {
@@ -221,33 +218,5 @@ class ArticleService implements ArticleServiceInterface
                 perPage: $pagination->perPage,
                 page: $pagination->page
             );
-    }
-
-    /**
-     * Build query for articles list with filters and permissions
-     */
-    private function buildArticlesQuery(
-        ArticleListDTO $dto,
-        ?ArticleSearchTerm $search,
-        ArticleSortCriteria $sort,
-        ?User $user
-    ) {
-        $query = PersistenceArticle::query()->with('user');
-
-        $query = $this->accessPolicy->applyVisibilityFilter($query, $user);
-
-        if ($dto->category !== null) {
-            $query->where('category_id', $dto->category);
-        }
-
-        if ($search !== null) {
-            $query->where(function($q) use ($search) {
-                $searchValue = $search->value;
-                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
-                  ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
-            });
-        }
-
-        return $query->orderBy($sort->field->value, $sort->direction->value);
     }
 }

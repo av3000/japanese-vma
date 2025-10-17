@@ -8,9 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
+use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
+
 
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
@@ -18,7 +21,7 @@ use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO};
 use App\Domain\Shared\ValueObjects\EntityId;
 
 use Illuminate\Http\JsonResponse;
@@ -28,6 +31,7 @@ class ArticleController extends Controller
 {
     public function __construct(
         private ArticleServiceInterface $articleService,
+        private EngagementServiceInterface $engagementService,
         private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
@@ -85,14 +89,20 @@ class ArticleController extends Controller
         }
     }
 
-    public function show(string $uid): JsonResponse
+    public function show(string $uid, ArticleDetailRequest $request): JsonResponse
     {
         $articleUid = EntityId::from($uid);
-        $article = $this->articleService->getArticle(
-            $articleUid,
-            auth()->id()
-        );
+        $detailDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
+        $article = $this->articleService->getArticle($articleUid, $detailDTO, auth()->id());
+        $engagementData = $this->engagementService->
 
+                if($dto->include_views){
+            $views = $this->engagementService->enhanceWithViews($article->getIdValue(),  ObjectTemplateType::ARTICLE);
+        }
+
+        if($dto->include_comments) {
+            $article = $this->engagementService->enhanceWithComments($article); // not implemented yet
+        }
         return response()->json(new ArticleDetailResource($article));
     }
 

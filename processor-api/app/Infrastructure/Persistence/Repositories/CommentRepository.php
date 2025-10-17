@@ -19,7 +19,7 @@ class CommentRepository implements CommentRepositoryInterface
         // Get paginated comments with user data
         $offset = ($page - 1) * $perPage;
         $comments = PersistenceComment::with('user')
-            ->forEntity($articleTemplateId, $articleId->value())
+            ->forEntity($entityTemplateId, $entityUid->value())
             ->whereNull('parent_comment_id') // Only top-level comments for now
             ->orderBy('created_at', 'DESC')
             ->offset($offset)

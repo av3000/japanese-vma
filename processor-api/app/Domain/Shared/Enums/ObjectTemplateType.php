@@ -2,6 +2,7 @@
 
 namespace App\Domain\Shared\Enums;
 
+// TODO: its probably not an enum anymore...
 enum ObjectTemplateType: string
 {
     case ARTICLE = 'ad69baf6-1a1f-42bd-8176-74ab5fbd69bd';
@@ -47,7 +48,7 @@ enum ObjectTemplateType: string
             };
         }
 
-        public function getLegacyValue(): int
+        public function getLegacyId(): int
         {
             return match($this) {
                 self::ARTICLE => 1,
@@ -66,7 +67,7 @@ enum ObjectTemplateType: string
         public static function tryFromLegacyValue(int $legacyValue): ?static
         {
             foreach (self::cases() as $case) {
-                if ($case->getLegacyValue() === $legacyValue) {
+                if ($case->getLegacyId() === $legacyValue) {
                     return $case;
                 }
             }

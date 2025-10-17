@@ -9,6 +9,7 @@ use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, JlptLevels};
 class Article
 {
      public function __construct(
+        private int $id,
         private EntityId $uid,
         private UserId $authorId,
         private UserName $authorName,
@@ -23,14 +24,10 @@ class Article
         private array $tags,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
-        // Optionals
-        private ?int $likesCount = null,
-        private ?int $downloadsCount = null,
-        private ?int $viewsCount = null,
-        private ?int $commentsCount = null,
     ) {}
 
     public static function create(
+        int $id,
         EntityId $uid,
         UserId $authorId,
         UserName $authorName,
@@ -43,6 +40,7 @@ class Article
         array $tags
     ): self {
         return new self(
+            $id,
             $uid,
             $authorId,
             $authorName,
@@ -60,30 +58,7 @@ class Article
         );
     }
 
-    public function withStats(int $likes, int $downloads, int $views, int $comments): self
-    {
-        return new self(
-            $this->uid,
-            $this->authorId,
-            $this->authorName,
-            $this->titleJp,
-            $this->titleEn,
-            $this->contentJp,
-            $this->contentEn,
-            $this->sourceUrl,
-            $this->publicity,
-            $this->status,
-            $this->jlptLevels,
-            $this->tags,
-            $this->createdAt,
-            $this->updatedAt,
-            $likes,
-            $downloads,
-            $views,
-            $comments,
-        );
-    }
-
+    public function getIdValue(): int { return $this->id; }
     public function getUid(): EntityId { return $this->uid; }
     public function getAuthorId(): UserId { return $this->authorId; }
     public function getAuthorName(): UserName { return $this->authorName; }
@@ -98,9 +73,4 @@ class Article
     public function getTags(): array { return $this->tags; }
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): \DateTimeImmutable { return $this->updatedAt; }
-
-    public function getLikesCount(): ?int { return $this->likesCount; }
-    public function getDownloadsCount(): ?int { return $this->downloadsCount; }
-    public function getViewsCount(): ?int { return $this->viewsCount; }
-    public function getCommentsCount(): ?int { return $this->commentsCount; }
 }

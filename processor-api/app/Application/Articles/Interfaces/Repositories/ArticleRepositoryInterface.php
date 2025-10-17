@@ -4,9 +4,9 @@ namespace App\Application\Articles\Interfaces\Repositories;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsDTO};
 use App\Domain\Articles\ValueObjects\ArticleId;
-use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -16,7 +16,7 @@ interface ArticleRepositoryInterface
      * Save a domain article (create or update)
      * This method handles the complexity of converting domain model to persistence
      */
-    public function save(DomainArticle $article): DomainArticle;
+    public function save(DomainArticle $article): ?DomainArticle;
 
     /**
      * Save article along with associated kanji IDs
@@ -28,7 +28,7 @@ interface ArticleRepositoryInterface
      * Find article by domain ID and convert to domain model
      * Returns null if not found, throws exception if access denied
      */
-    public function findById(ArticleId $id): ?DomainArticle;
+    public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle;
 
     /**
      * Find articles by unique domain ID (EntityId) and convert to domain model

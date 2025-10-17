@@ -4,11 +4,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\ArticleRepository;
+use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository};
 use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\KanjiRepository;
 use App\Application\Articles\Interfaces\Repositories\CommentRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\CommentRepository;
+use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -27,6 +26,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             CommentRepositoryInterface::class,
             CommentRepository::class
+        );
+
+        $this->app->singleton(
+            ViewRepositoryInterface::class,
+            ViewRepository::class
         );
     }
 }
