@@ -4,10 +4,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository};
+use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository, LikeRepository, DownloadRepository, HashtagRepository};
 use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
-use App\Application\Articles\Interfaces\Repositories\CommentRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, CommentRepositoryInterface, DownloadRepositoryInterface, HashtagRepositoryInterface};
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -31,6 +30,21 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             ViewRepositoryInterface::class,
             ViewRepository::class
+        );
+
+        $this->app->singleton(
+            LikeRepositoryInterface::class,
+            LikeRepository::class
+        );
+
+        $this->app->singleton(
+            DownloadRepositoryInterface::class,
+            DownloadRepository::class
+        );
+
+        $this->app->singleton(
+            HashtagRepositoryInterface::class,
+            HashtagRepository::class
         );
     }
 }

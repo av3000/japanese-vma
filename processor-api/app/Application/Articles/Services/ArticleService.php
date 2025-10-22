@@ -41,7 +41,7 @@ class ArticleService implements ArticleServiceInterface
         private ArticleViewPolicy $viewPolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
-        private IncrementViewAction $incrementView,
+        private IncrementViewAction $incrementViewAction,
         private LoadArticleDetailStatsAction $loadStats,
         // private ProcessWordMeaningsAction $processWords,
         // private LoadCommentsAction $loadComments,
@@ -99,7 +99,7 @@ class ArticleService implements ArticleServiceInterface
     private function trackView(int $id, ObjectTemplateType $objectTemplateType, Viewer $viewer): void
     {
         try {
-            $this->incrementView->execute($id, $objectTemplateType, $viewer);
+            $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
             \Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
         }
@@ -116,13 +116,7 @@ class ArticleService implements ArticleServiceInterface
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
         );
 
-        $articles = $this->articleRepository->findByCriteria($criteriaDTO);
-
-        if ($dto->include_stats) {
-            $articles = $this->engagementService->enhanceArticlesWithStats($articles);
-        }
-
-        return $articles;
+        return $this->articleRepository->findByCriteria($criteriaDTO);
     }
 
     public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle

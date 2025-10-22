@@ -37,6 +37,7 @@ class LoadEntityStatsAction
             ->pluck(DB::raw('count(*)'), 'real_object_id')
             ->toArray();
 
+
         $comments = DB::table('comments')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)

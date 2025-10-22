@@ -2,21 +2,21 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Engagement\DTOs\{LikeCreateDTO, LikeFilterDTO};
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
+use App\Domain\Engagement\DTOs\{DownloadCreateDTO, DownloadFilterDTO};
+use App\Infrastructure\Persistence\Models\Download;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Infrastructure\Persistence\Models\Like;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-class LikeRepository implements LikeRepositoryInterface
+class DownloadRepository implements DownloadRepositoryInterface
 {
-    public function create(LikeCreateDTO $data): void
+    public function create(DownloadCreateDTO $data): void
     {
-        Like::create($data); // just providing DTO works because it implements Arrayable
+        Download::create($data); // just providing DTO works because it implements Arrayable
     }
 
-    public function findByFilter(LikeFilterDTO $filter): ?int
+    public function findByFilter(DownloadFilterDTO $filter): ?int
     {
         $query = $this->buildBaseQuery($filter);
 
@@ -29,7 +29,7 @@ class LikeRepository implements LikeRepositoryInterface
 
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
     {
-        $results = Like::where('template_id', $objectType->getLegacyId())
+        $results = Download::where('template_id', $objectType->getLegacyId())
             ->whereIn('real_object_id', $entityIds)
             ->get()
             ->groupBy('real_object_id')
@@ -39,12 +39,12 @@ class LikeRepository implements LikeRepositoryInterface
         return $results;
     }
 
-    public function findAllByFilter(LikeFilterDTO $filter): array
+    public function findAllByFilter(DownloadFilterDTO $filter): array
     {
          return $this->buildBaseQuery($filter)->get()->toArray();
     }
 
-    private function buildBaseQuery(LikeFilterDTO $filter): Builder
+    private function buildBaseQuery(DownloadFilterDTO $filter): Builder
     {
         return Like::where('template_id', $filter->objectType->getLegacyId())
             ->where('real_object_id', $filter->entityId);

@@ -1,17 +1,19 @@
 <?php
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Mappers\CommentMapper;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Engagement\DTOs\CommentFilterDTO;
+use App\Application\Engagement\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Http\Models\{ObjectTemplate, User};
 use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
-    public function findByArticleWithPagination(EntityId $entityUid, string $entityType, int $page, int $perPage): array
+    public function findByEntityWithPagination(EntityId $entityUid, string $entityType, int $page, int $perPage): array
     {
         $entityTemplateId = $this->getTemplateIdForEntityType($entityType);
         $commentTemplateId = $this->getTemplateIdForEntityType('comment');
@@ -145,5 +147,28 @@ class CommentRepository implements CommentRepositoryInterface
         $entity = PersistenceComment::with('user')->find($commentId->value());
 
         return $entity ? CommentMapper::mapToDomain($entity) : null;
+    }
+
+    public function findAllByFilter(CommentFilterDTO $filter): array
+    {
+        return Comment::where('template_id', $filter->objectType->getLegacyId())
+            ->where('real_object_id', $filter->entityId)
+            ->get()
+            ->map(function ($item) {
+                return CommentMapper::mapToDomain($item);
+            })
+            ->toArray();
+    }
+
+    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
+    {
+        $results = Comment::where('template_id', $objectType->getLegacyId())
+            ->whereIn('real_object_id', $entityIds)
+            ->get()
+            ->groupBy('real_object_id')
+            ->map->toArray() // Convert each group to array
+            ->toArray();
+
+        return $results;
     }
 }

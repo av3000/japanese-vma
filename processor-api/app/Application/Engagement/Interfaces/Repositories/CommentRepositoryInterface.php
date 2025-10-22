@@ -1,8 +1,10 @@
 <?php
-namespace App\Application\Comments\Interfaces\Repositories;
+namespace App\Application\Engagement\Interfaces\Repositories;
 
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Engagement\DTOs\CommentFilterDTO;
 
 interface CommentRepositoryInterface
 {
@@ -22,5 +24,7 @@ interface CommentRepositoryInterface
 
     public function save(DomainComment $commentData): DomainComment;
     public function findById(EntityId $commentId): ?DomainComment;
+    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
+    public function findAllByFilter(CommentFilterDTO $filter): array;
     // public function deleteById(EntityId $commentId): bool;
 }

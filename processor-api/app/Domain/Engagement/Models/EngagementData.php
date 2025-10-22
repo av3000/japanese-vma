@@ -1,67 +1,38 @@
 <?php
 namespace App\Domain\Engagement\Models;
 
-use Illuminate\Support\Collection;
-
 readonly class EngagementData
 {
     public function __construct(
-        private ?Collection $views = null,
-        private ?Collection $likes = null,
-        private ?Collection $downloads = null,
-        private ?Collection $comments = null
+        private ?array $views = [],
+        private ?array $likes = [],
+        private ?array $downloads = [],
+        private ?array $comments = []
     ) {}
 
-    public static function empty(): self
-    {
-        return new self();
-    }
-
-    public function getViews(): ?Collection
+    public function getViews(): ?array
     {
         return $this->views;
     }
 
-    public function getLikes(): ?Collection
+    public function getLikes(): ?array
     {
         return $this->likes;
     }
-
-    public function getDownloads(): ?Collection
+    public function getDownloads(): ?array
     {
         return $this->downloads;
     }
-
-    public function getComments(): ?Collection
+    public function getComments(): ?array
     {
         return $this->comments;
     }
 
-    public function getViewsCount(): int
-    {
-        return $this->views?->count() ?? 0;
-    }
-
-    public function getLikesCount(): int
-    {
-        return $this->likes?->count() ?? 0;
-    }
-
-    public function getDownloadsCount(): int
-    {
-        return $this->downloads?->count() ?? 0;
-    }
-
-    public function getCommentsCount(): int
-    {
-        return $this->comments?->count() ?? 0;
-    }
-
     public function hasAnyData(): bool
     {
-        return $this->views !== null ||
-               $this->likes !== null ||
-               $this->downloads !== null ||
-               $this->comments !== null;
+        return $this->views ||
+               $this->likes ||
+               $this->downloads ||
+               $this->comments;
     }
 }

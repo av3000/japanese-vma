@@ -4,6 +4,8 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Domain\Engagement\DTOs\{ViewCreateDTO, ViewFilterDTO};
+use App\Domain\Shared\Enums\ObjectTemplateType;
+
 use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -29,9 +31,21 @@ class ViewRepository implements ViewRepositoryInterface
         return $query->first()?->id;
     }
 
-    public function findAllByFilter(ViewFilterDTO $filter): Collection
+    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
     {
-        return $this->buildBaseQuery($filter)->get();
+        $results = View::where('template_id', $objectType->getLegacyId())
+            ->whereIn('real_object_id', $entityIds)
+            ->get()
+            ->groupBy('real_object_id')
+            ->map->toArray() // Convert each group to array
+            ->toArray();
+
+        return $results;
+    }
+
+    public function findAllByFilter(ViewFilterDTO $filter): array
+    {
+        return $this->buildBaseQuery($filter)->get()->toArray();
     }
 
     private function buildBaseQuery(ViewFilterDTO $filter): Builder

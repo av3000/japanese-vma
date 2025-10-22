@@ -26,38 +26,6 @@ class Article
         private \DateTimeImmutable $updatedAt,
     ) {}
 
-    public static function create(
-        int $id,
-        EntityId $uid,
-        UserId $authorId,
-        UserName $authorName,
-        ArticleTitle $titleJp,
-        ?ArticleTitle $titleEn,
-        ArticleContent $contentJp,
-        ?ArticleContent $contentEn,
-        ArticleSourceUrl $sourceUrl,
-        PublicityStatus $publicity,
-        array $tags
-    ): self {
-        return new self(
-            $id,
-            $uid,
-            $authorId,
-            $authorName,
-            $titleJp,
-            $titleEn,
-            $contentJp,
-            $contentEn,
-            $sourceUrl,
-            $publicity,
-            ArticleStatus::PENDING,
-            JlptLevels::empty(),
-            $tags,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable()
-        );
-    }
-
     public function getIdValue(): int { return $this->id; }
     public function getUid(): EntityId { return $this->uid; }
     public function getAuthorId(): UserId { return $this->authorId; }

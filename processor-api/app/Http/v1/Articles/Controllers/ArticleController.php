@@ -12,8 +12,7 @@ use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-
+use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
 
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
@@ -22,34 +21,59 @@ use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO};
+use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 
 use Illuminate\Http\JsonResponse;
-
 
 class ArticleController extends Controller
 {
     public function __construct(
         private ArticleServiceInterface $articleService,
         private EngagementServiceInterface $engagementService,
+        private HashtagServiceInterface $hashtagService,
         private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
     public function index(IndexArticleRequest $request): JsonResponse {
-        // TODO: figure gracefull error handling pattern
+        // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $paginatedArticles = $this->articleService->getArticlesList($listDTO, $request->user());
+        $entityIds = array_map(fn($article) => $article->getIdValue(), $paginatedArticles->getItems());
+
+        $statsMap = [];
+        $engagementMap = [];
+        $hashtagsMap = [];
+
+        if ($listDTO->include_stats_counts) {
+            $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
+        }
+
+        if ($listDTO->include_engagement_data) {
+            $engagementMap = $this->engagementService->getArticlesBatchEngagementData(
+                $entityIds,
+                ObjectTemplateType::ARTICLE,
+            );
+        }
+
+        if($listDTO->include_hashtags) {
+            $hashtagsMap = $this->hashtagService->getBatchHashtags(
+                $entityIds,
+                ObjectTemplateType::ARTICLE
+            );
+        }
 
         $resources = [];
         foreach ($paginatedArticles->getItems() as $article) {
-            $resource = new ArticleResource($article);
-            $resource->include_stats = $listDTO->include_stats;
-            $resource->include_hashtags = $listDTO->include_hashtags;
-            $resources[] = $resource;
+            $stats = $statsMap[$article->getIdValue()] ?? null;
+            $engagement = $engagementMap[$article->getIdValue()] ?? null;
+            $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
+
+            $resources[] = new ArticleResource($article, $listDTO, $stats, $engagement, $hashtags);
         }
 
         $data = [
-            'success' => true,
             'items' => $resources,
             'pagination' => [
                 'page' => $paginatedArticles->getPaginator()->currentPage(),
@@ -58,13 +82,9 @@ class ArticleController extends Controller
                 'last_page' => $paginatedArticles->getPaginator()->lastPage(),
                 'has_more' => $paginatedArticles->getPaginator()->hasMorePages(),
             ],
-            'message' => $paginatedArticles->isEmpty()
-                ? 'No articles match your criteria'
-                : 'Articles retrieved successfully'
         ];
 
         return new JsonResponse($data, 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
-
     }
 
     private function getImagePath(): string
@@ -92,18 +112,14 @@ class ArticleController extends Controller
     public function show(string $uid, ArticleDetailRequest $request): JsonResponse
     {
         $articleUid = EntityId::from($uid);
-        $detailDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $article = $this->articleService->getArticle($articleUid, $detailDTO, auth()->id());
-        $engagementData = $this->engagementService->
+        $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
+        $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth()->id());
+        $engagementData = $this->engagementService->getArticleEngagementData($article->getIdValue(), ObjectTemplateType::ARTICLE, $includeFilterOptionsDTO);
 
-                if($dto->include_views){
-            $views = $this->engagementService->enhanceWithViews($article->getIdValue(),  ObjectTemplateType::ARTICLE);
-        }
+        $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
+        $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
-        if($dto->include_comments) {
-            $article = $this->engagementService->enhanceWithComments($article); // not implemented yet
-        }
-        return response()->json(new ArticleDetailResource($article));
+        return response()->json(new ArticleDetailResource($article, $engagementData, $kanjis, $words));
     }
 
     public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {

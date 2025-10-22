@@ -6,7 +6,7 @@ use App\Domain\Shared\ValueObjects\{EntityId, UserId};
 class Comment
 {
     public function __construct(
-        private EntityId $id,
+        private $id,
         private EntityId $entityId,        // The entity this comment belongs to
         private string $entityType,       // 'article', 'list', etc.
         private UserId $authorId,
@@ -37,7 +37,7 @@ class Comment
     }
 
     // Getters
-    public function getId(): EntityId { return $this->id; }
+    public function getId(): int { return $this->id; }
     public function getEntityId(): EntityId { return $this->entityId; }
     public function getEntityType(): string { return $this->entityType; }
     public function getAuthorId(): UserId { return $this->authorId; }

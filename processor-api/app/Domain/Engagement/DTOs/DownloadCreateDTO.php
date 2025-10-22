@@ -4,7 +4,7 @@ namespace App\Domain\Engagement\DTOs;
 
 use Illuminate\Contracts\Support\Arrayable;
 
-readonly class LikeCreateDTO implements Arrayable
+readonly class DownloadCreateDTO implements Arrayable
 {
     public function __construct(
         public int $userId,
