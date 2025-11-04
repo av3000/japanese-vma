@@ -176,7 +176,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ArticlesServiceProvider::class,
-
+        App\Providers\RepositoryServiceProvider::class,
     ],
 
     /*

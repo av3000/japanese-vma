@@ -1,47 +1,30 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\SortCriteria;
-use App\Domain\Shared\ValueObjects\PerPageLimit;
-
-class ArticleListDTO
+readonly class ArticleListDTO
 {
     public function __construct(
         public ?int $category,
-        public ?SearchTerm $search,
-        public SortCriteria $sort,
-        public PerPageLimit $perPage,
-        public bool $includeStats = false
+        public ?string $search,
+        public ?string $sort_by,
+        public ?string $sort_dir,
+        public ?int $per_page,
+        public ?int $page,
+        public bool $include_stats_counts = true,
+        public bool $include_hashtags = true
     ) {}
 
     public static function fromRequest(array $validated): self
     {
         return new self(
             category: $validated['category'] ?? null,
-            search: isset($validated['search'])
-                ? SearchTerm::fromInput($validated['search'])
-                : null,
-            sort: SortCriteria::fromInputOrDefault(
-                $validated['sort_by'] ?? null,
-                $validated['sort_dir'] ?? null
-            ),
-            perPage: PerPageLimit::fromInputOrDefault($validated['per_page'] ?? null),
-            includeStats: $validated['include_stats'] ?? false);
-    }
-
-    public function hasSearch(): bool
-    {
-        return $this->search !== null;
-    }
-
-    public function getSearchValue(): ?string
-    {
-        return $this->search?->value;
-    }
-
-    public function hasCategory(): bool
-    {
-        return $this->category !== null;
+            search: $validated['search'] ?? null,
+            sort_by: $validated['sort_by'] ?? null,
+            sort_dir: $validated['sort_dir'] ?? null,
+            per_page: $validated['per_page'] ?? null,
+            page: $validated['page'] ?? null,
+            include_stats_counts: $validated['include_stats_counts'] ?? true,
+            include_hashtags: $validated['include_hashtags'] ?? true
+        );
     }
 }

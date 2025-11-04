@@ -1,11 +1,11 @@
 <?php
 namespace App\Domain\Articles\DTOs;
 
-use App\Domain\Shared\ValueObjects\ArticleTitle;
-use App\Domain\Shared\ValueObjects\ArticleContent;
-use App\Domain\Shared\ValueObjects\SourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTimestamp;
 use App\Domain\Shared\ValueObjects\Tags;
-use App\Domain\Shared\ValueObjects\ArticleTimestamp;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
 
@@ -17,7 +17,7 @@ readonly class ArticleDTO
         public ?ArticleTitle $title_en,
         public ArticleContent $content_jp,
         public ?ArticleContent $content_en,
-        public SourceUrl $source_link,
+        public ArticleSourceUrl $source_link,
         public PublicityStatus $publicity,
         public ArticleStatus $status,
         public array $jlpt_levels,
@@ -46,7 +46,7 @@ readonly class ArticleDTO
             title_en: $article->title_en ? new ArticleTitle($article->title_en) : null,
             content_jp: new ArticleContent($article->content_jp),
             content_en: $article->content_en ? new ArticleContent($article->content_en) : null,
-            source_link: new SourceUrl($article->source_link),
+            source_link: new ArticleSourceUrl($article->source_link),
             publicity: $article->publicity,
             status: $article->status,
             jlpt_levels: JlptLevelsDTO::fromModel($article)->toArray(),
@@ -62,7 +62,7 @@ readonly class ArticleDTO
         );
     }
 
-    public function toListArray(bool $includeStats = true): array
+    public function toListArray(bool $include_stats = true): array
     {
         $data = [
             'id' => $this->id,
@@ -80,7 +80,7 @@ readonly class ArticleDTO
             'updated_at' => $this->updated_at,
         ];
 
-        if ($includeStats) {
+        if ($include_stats) {
             $data['stats'] = $this->stats;
         }
 

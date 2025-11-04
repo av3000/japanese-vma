@@ -71,7 +71,7 @@ class UserController extends Controller
      	return response()->json(['user'=>$user, 'accessToken'=>$accessToken->accessToken]);
     }
 
-    public function login(Request $request) 
+    public function login(Request $request)
     {
     	$loginData = $request->validate([
             'email' => 'required|email',
@@ -79,12 +79,11 @@ class UserController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->get()->first();
-
-        if(!auth()->attempt($loginData)) 
+        if(!auth()->attempt($loginData))
         {
         	return response()->json(['error' => ['login' => 'Invalid email/password']], 400);
         }
-        
+
     	$accessToken = auth()->user()->createToken('authToken');
 
         $user = auth()->user();
@@ -104,18 +103,18 @@ class UserController extends Controller
             'message' => 'Successfully logged out'
         ]);
     }
-  
+
     /**
      * Get the authenticated User
      *
      * @return [json] user object
      */
     public function user(Request $request)
-    {   
+    {
         $user = $request->user();
 
         $user->isAdmin = $user->role() == "admin";
-        
+
         return response()->json($user);
     }
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f

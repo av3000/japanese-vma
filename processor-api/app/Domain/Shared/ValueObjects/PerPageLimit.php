@@ -3,6 +3,7 @@ namespace App\Domain\Shared\ValueObjects;
 
 use InvalidArgumentException;
 
+// TODO: probably to delete as duplicate of Pagination
 readonly class PerPageLimit
 {
     private const MIN_PER_PAGE = 1;

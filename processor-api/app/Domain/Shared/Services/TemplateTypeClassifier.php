@@ -1,38 +1,38 @@
 <?php
 namespace App\Domain\Shared\Services;
 
-use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\SavedListType;
 
 class TemplateTypeClassifier
 {
-    public function isKnownType(ObjectTemplateType $type): bool
+    public function isKnownType(SavedListType $type): bool
     {
         return in_array($type, [
-            ObjectTemplateType::KNOWNRADICALS,
-            ObjectTemplateType::KNOWNKANJIS,
-            ObjectTemplateType::KNOWNWORDS,
-            ObjectTemplateType::KNOWNSENTENCES,
+            SavedListType::KNOWNRADICALS,
+            SavedListType::KNOWNKANJIS,
+            SavedListType::KNOWNWORDS,
+            SavedListType::KNOWNSENTENCES,
         ]);
     }
 
-    public function isCustomListType(ObjectTemplateType $type): bool
+    public function isCustomListType(SavedListType $type): bool
     {
         return in_array($type, [
-            ObjectTemplateType::RADICALS,
-            ObjectTemplateType::KANJIS,
-            ObjectTemplateType::WORDS,
-            ObjectTemplateType::SENTENCES,
-            ObjectTemplateType::ARTICLES,
+            SavedListType::RADICALS,
+            SavedListType::KANJIS,
+            SavedListType::WORDS,
+            SavedListType::SENTENCES,
+            SavedListType::ARTICLES,
         ]);
     }
 
-    public function getBaseType(ObjectTemplateType $type): ?ObjectTemplateType
+    public function getBaseType(SavedListType $type): ?SavedListType
     {
         return match($type) {
-            ObjectTemplateType::KNOWNRADICALS => ObjectTemplateType::RADICALS,
-            ObjectTemplateType::KNOWNKANJIS => ObjectTemplateType::KANJIS,
-            ObjectTemplateType::KNOWNWORDS => ObjectTemplateType::WORDS,
-            ObjectTemplateType::KNOWNSENTENCES => ObjectTemplateType::SENTENCES,
+            SavedListType::KNOWNRADICALS => SavedListType::RADICALS,
+            SavedListType::KNOWNKANJIS => SavedListType::KANJIS,
+            SavedListType::KNOWNWORDS => SavedListType::WORDS,
+            SavedListType::KNOWNSENTENCES => SavedListType::SENTENCES,
             default => null,
         };
     }

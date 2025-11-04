@@ -150,15 +150,21 @@ Route::get('post/{id}', 'PostController@show');
 Route::post('posts/search', 'PostController@generateQuery');
 
 // V2 Endpoints - Domain Architecture
-Route::prefix('v2')->group(function () {
+Route::prefix('v1')->group(function () {
     // TODO: use namespace for v2 routes
 
     // Public routes
-    Route::get('articles/{id}/kanjis', '\App\Domain\Articles\Http\Controllers\ArticleController@kanjis');
-    Route::get('articles/{id}/words', '\App\Domain\Articles\Http\Controllers\ArticleController@words');
+    Route::get('articles/{id}/kanjis', '\App\Http\v1\Articles\Controllers\ArticleController@kanjis');
+    Route::get('articles/{id}/words', '\App\Http\v1\Articles\Controllers\ArticleController@words');
 
-    Route::get('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@index');
-    Route::get('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@show');
+    Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
+
+    Route::prefix('articles/{uuid}')->group(function () {
+        Route::get('comments', '\App\Http\v1\Comments\Controllers\CommentController@getArticleComments');
+        Route::post('comments', '\App\Http\v1\Comments\Controllers\CommentController@store')->middleware('auth:api');
+    });
+
+    Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
 
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
@@ -168,28 +174,31 @@ Route::prefix('v2')->group(function () {
 
         // Articles
         // Articles CRUD
-        Route::post('articles', '\App\Domain\Articles\Http\Controllers\ArticleController@store');
-        Route::put('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@update');
-        Route::delete('articles/{id}', '\App\Domain\Articles\Http\Controllers\ArticleController@destroy');
+        // Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
+        // Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
+
+        Route::post('articles', '\App\Http\v1\Articles\Controllers\ArticleController@store');
+        Route::put('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@update');
+        Route::delete('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@destroy');
 
         // Article actions
         // TODO: implement in v2
-        Route::post('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@like');
+        Route::post('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@like');
         // TODO: implement in v2
-        Route::delete('articles/{id}/like', '\App\Domain\Articles\Http\Controllers\ArticleController@unlike');
+        Route::delete('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@unlike');
         // TODO: implement in v2
-        Route::post('articles/{id}/toggle-publicity', '\App\Domain\Articles\Http\Controllers\ArticleController@togglePublicity');
+        Route::post('articles/{id}/toggle-publicity', '\App\Http\v1\Articles\Controllers\ArticleController@togglePublicity');
 
         // User's articles
         // TODO: implement in v2
-        Route::get('user/articles', '\App\Domain\Articles\Http\Controllers\ArticleController@userArticles');
+        Route::get('user/articles', '\App\Http\v1\Articles\Controllers\ArticleController@userArticles');
 
         // Admin routes
         Route::middleware('checkRole:admin')->group(function () {
             // TODO: implement in v2
-            Route::post('articles/{id}/status', '\App\Domain\Articles\Http\Controllers\ArticleController@setStatus');
+            Route::post('articles/{id}/status', '\App\Http\v1\Articles\Controllers\ArticleController@setStatus');
             // TODO: implement in v2
-            Route::get('articles/pending', '\App\Domain\Articles\Http\Controllers\ArticleController@pending');
+            Route::get('articles/pending', '\App\Http\v1\Articles\Controllers\ArticleController@pending');
         });
     });
 });
