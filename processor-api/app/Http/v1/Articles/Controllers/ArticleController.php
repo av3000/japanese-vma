@@ -124,6 +124,9 @@ class ArticleController extends Controller
         $articleUid = EntityId::from($uid);
         $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
         $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth()->id());
+        // TODO: Have 4 separate calls rather than single multi-responsible service.
+        // Create findCountByFilter method for each repository
+        // return counts here. For richer data, separate filters should be used.
         $engagementData = $this->engagementService->getSingleArticleEngagementData($article->getIdValue(), ObjectTemplateType::ARTICLE, $includeFilterOptionsDTO);
         $hashtags = $this->hashtagService->getHashtags(
             $article->getIdValue(),

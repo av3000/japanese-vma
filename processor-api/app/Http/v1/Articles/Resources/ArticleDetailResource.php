@@ -3,6 +3,7 @@
 namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Engagement\Models\EngagementData;
+use App\Http\v1\Comments\Resources\CommentResource;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -59,7 +60,14 @@ class ArticleDetailResource extends JsonResource
                             'likes' => $this->engagementData?->getLikes(),
                             'views' => $this->engagementData?->getViews(),
                             'downloads' => $this->engagementData?->getDownloads(),
-                            'comments' => $this->engagementData?->getComments(),
+                            'comments' => $this->engagementData?->getComments() ? array_map(function($comment) {
+                                    return (new CommentResource(
+                                        comment: $comment,
+                                        include_likes: false,
+                                        include_replies: false
+                                    ))->toArray(request());
+                                }, $this->engagementData->getComments())
+                                : [],
                     ] : null,
                 'kanjis' => $this->kanjis,
                 'words' => $this->words,
