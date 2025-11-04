@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ViewRepository implements ViewRepositoryInterface
 {
-    public function create(ViewCreateDTO $data): void
+    public function create(ViewCreateDTO $createDto): void
     {
-        View::create($data); // just providing DTO works because it implements Arrayable
+        View::create($createDto->toArray());
     }
 
     public function findByFilter(ViewFilterDTO $filter): ?int

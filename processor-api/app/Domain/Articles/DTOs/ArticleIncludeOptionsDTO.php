@@ -7,10 +7,10 @@ readonly class ArticleIncludeOptionsDTO
         public bool $include_user = true,
         public bool $include_kanjis = true,
         public bool $include_words = true,
-        public bool $include_comments = false,
-        public bool $include_views = false,
-        public bool $include_downloads = false,
-        public bool $include_likes = false,
+        public bool $include_comments = true,
+        public bool $include_views = true,
+        public bool $include_downloads = true,
+        public bool $include_likes = true,
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -19,10 +19,10 @@ readonly class ArticleIncludeOptionsDTO
             include_user: $validated['include_user'] ?? true,
             include_kanjis: $validated['include_kanjis'] ?? true,
             include_words: $validated['include_words'] ?? true,
-            include_comments: $validated['include_comments'] ?? false,
-            include_views: $validated['include_views'] ?? false,
-            include_downloads: $validated['include_downloads'] ?? false,
-            include_likes: $validated['include_likes'] ?? false,
+            include_comments: $validated['include_comments'] ?? true,
+            include_views: $validated['include_views'] ?? true,
+            include_downloads: $validated['include_downloads'] ?? true,
+            include_likes: $validated['include_likes'] ?? true,
         );
     }
 

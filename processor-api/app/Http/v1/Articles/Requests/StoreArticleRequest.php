@@ -20,7 +20,8 @@ class StoreArticleRequest extends FormRequest
             'content_en' => 'nullable|string|max:2000',
             'source_link' => 'required|url|max:500',
             'publicity' => 'nullable|boolean',
-            'tags' => 'nullable|string|max:255',
+            'tags' => 'nullable|array|max:10', // TODO: Also handle tags logic in business layer
+            'tags.*' => 'string|max:50|distinct',
         ];
     }
 

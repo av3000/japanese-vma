@@ -23,8 +23,9 @@ use App\Application\Articles\Actions\Deletion\{
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSearchTerm, ArticleSortCriteria};
-use App\Domain\Shared\ValueObjects\{UserId, EntityId, Viewer, PerPageLimit, Pagination};
+use App\Domain\Articles\Factories\ArticleFactory;
+use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSortCriteria};
+use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, Viewer, PerPageLimit, Pagination, SearchTerm};
 use App\Domain\Articles\Exceptions\{ArticleNotFoundException, ArticleAccessDeniedException};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 // TODO: gradually replace these with repository pattern and remove the import of direct persistence model
@@ -60,21 +61,15 @@ class ArticleService implements ArticleServiceInterface
 
     public function createArticle(ArticleCreateDTO $dto, int $userId): DomainArticle
     {
-        // Create rich domain object with all business rules applied
-        $authorId = UserId::from($userId);
+        return DB::transaction(function () use ($dto, $userId) {
+            $authorId = UserId::from($userId);
+            // TODO: move to user repository, or potentially get a name from auth context to avoid calling the DB here
+            $user = User::findOrFail($userId);
+            $authorName = new UserName($user->name);
+            $domainArticle = ArticleFactory::createFromDTO($dto, $authorId, $authorName);
 
-        $domainArticle = new DomainArticle($dto, $authorId);
-
-        // $extractedKanjis = $this->extractKanjis->execute($dto->contentJp);
-        // Convert domain model to persistence format
-        // $persistenceData = $domainArticle->toPersistenceData();
-
-        // Repository handles pure data persistence
-        $this->articleRepository->save(
-            $domainArticle,
-        );
-
-        return $domainArticle;
+            return $this->articleRepository->save($domainArticle);
+        });
     }
 
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): ?DomainArticle
@@ -90,6 +85,7 @@ class ArticleService implements ArticleServiceInterface
         }
 
         $viewer = Viewer::fromRequest();
+
         $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
         return $article;
@@ -109,7 +105,7 @@ class ArticleService implements ArticleServiceInterface
     {
         // TODO: figure if this could be refactored to some query builder pattern, which then would use mapper to communicate with repository
         $criteriaDTO = new ArticleCriteriaDTO(
-            search: $dto->search !== null ? ArticleSearchTerm::fromInputOrNull($dto->search) : null,
+            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category !== null ? $dto->category : null,
             visibilityRules: $this->viewPolicy->getVisibilityCriteria($user),
@@ -119,6 +115,12 @@ class ArticleService implements ArticleServiceInterface
         return $this->articleRepository->findByCriteria($criteriaDTO);
     }
 
+    public function getArticleIdByUuid(string $articleUuid): int | null
+    {
+        return $this->articleRepository->getIdByUuid(new EntityId($articleUuid));
+    }
+
+    // TODO: refactor to purely clean architecture with repository without leaking persistence data
     public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle
     {
         $articleId = EntityId::from($id);

@@ -22,7 +22,7 @@ interface ArticleRepositoryInterface
      * Save article along with associated kanji IDs
      * Ensure kanji relationships are properly managed
      */
-    public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle;
+    // public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle;
 
     /**
      * Find article by domain ID and convert to domain model
@@ -48,4 +48,10 @@ interface ArticleRepositoryInterface
      */
     // TODO: potentially not needed, as getPaginated can be sufficient
     public function findByUserId(UserId $authorId, int $limit = 10): array;
+
+    /**
+     * Find article ID by Article UUID
+     */
+    public function getIdByUuid(EntityId $entityUuid): int | null;
+
 }

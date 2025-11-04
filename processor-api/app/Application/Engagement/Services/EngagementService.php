@@ -4,9 +4,11 @@ namespace App\Application\Engagement\Services;
 use App\Application\Engagement\Actions\LoadEntityHashtagsAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, CommentRepositoryInterface, DownloadRepositoryInterface};
+use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
+use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Domain\Engagement\Models\EngagementData;
-use App\Domain\Engagement\DTOs\{ViewFilterDTO, EngagementFilterDTO, LikeFilterDTO};
+use App\Domain\Engagement\DTOs\{ViewFilterDTO, EngagementFilterDTO, LikeFilterDTO, DownloadFilterDTO};
+use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\Models\{Articles, Article, ArticleWithEnhancements, ArticleStats};
 
@@ -29,6 +31,7 @@ class EngagementService implements EngagementServiceInterface
         ObjectTemplateType $objectType,
         ArticleIncludeOptionsDTO $includeOptions
     ) : EngagementData {
+
         $views = [];
         $likes = [];
         $downloads = [];
@@ -49,20 +52,45 @@ class EngagementService implements EngagementServiceInterface
         }
 
         if ($includeOptions->include_downloads) {
-            $downloads = $this->downloadRepository->findAllByFilter(new EngagementFilterDTO(
+            $downloads = $this->downloadRepository->findAllByFilter(new DownloadFilterDTO(
                 entityId: $entityId,
                 objectType: $objectType
             ));
         }
 
         if ($includeOptions->include_comments) {
-            $comments = $this->commentRepository->findAllByFilter(new EngagementFilterDTO(
+            $comments = $this->commentRepository->findAllByFilter(new CommentFilterDTO(
                 entityId: $entityId,
                 objectType: $objectType
             ));
         }
 
         return new EngagementData($views, $likes, $downloads, $comments);
+    }
+
+    // TODO: create generic paginated list model with generic item object of following properties
+    // Is paginated list
+    // has isEmpty();
+    // has getItems();
+    // has getIdValue();
+    // has getEntityType();
+    // has IncludeOptionsDTO created to pass optional booleans of which stats should be included: likes, views, downloads, comments.
+    public function getLikesCount(array $entitiesList, string $entityId, IncludeOptionsDTO $dto): array
+    {
+        if ($entitiesList->isEmpty()) {
+            return $entitiesList;
+        }
+
+        $entityIds = array_map(fn($entity) => $entity->getIdValue(), $entitiesList);
+
+        $statsData = $this->loadStats->batchLoadStatsById($entityId, $entityIds);
+
+        $likesMap = [];
+        foreach ($entityIds as $id) {
+            $likesMap[$id] = $statsData[$id]['likes'] ?? 0;
+        }
+
+        return $likesMap;
     }
 
     public function enhanceArticlesWithStatsCounts(Articles $articles): array
@@ -110,56 +138,5 @@ class EngagementService implements EngagementServiceInterface
             $stats['views'],
             $stats['comments']
         );
-    }
-
-    public function enhanceWithComments($article): void
-    {
-        dd('Not implemented yet', $article);
-    }
-
-    public function getArticleListBatchEngagementData(
-        array $entityIds,
-        ObjectTemplateType $objectType,
-    ): array {
-        $batchData = [];
-
-        foreach ($entityIds as $entityId) {
-            $batchData[$entityId] = [
-                'views' => [],
-                'likes' => [],
-                'downloads' => [],
-                'comments' => []
-            ];
-        }
-
-        $viewsData = $this->viewRepository->findAllByEntityIds($entityIds, $objectType);
-        $likesData = $this->likeRepository->findAllByEntityIds($entityIds, $objectType);
-        $downloadsData = $this->downloadRepository->findAllByEntityIds($entityIds, $objectType);
-        $commentsData = $this->commentRepository->findAllByEntityIds($entityIds, $objectType);
-
-        foreach ($viewsData as $entityId => $views) {
-            $batchData[$entityId]['views'] = $views;
-        }
-        foreach ($likesData as $entityId => $likes) {
-            $batchData[$entityId]['likes'] = $likes;
-        }
-        foreach ($downloadsData as $entityId => $downloads) {
-            $batchData[$entityId]['downloads'] = $downloads;
-        }
-        foreach ($commentsData as $entityId => $comments) {
-            $batchData[$entityId]['comments'] = $comments;
-        }
-
-        $result = [];
-        foreach ($batchData as $entityId => $data) {
-            $result[$entityId] = new EngagementData(
-                $data['views'],
-                $data['likes'],
-                $data['downloads'],
-                $data['comments']
-            );
-        }
-
-        return $result;
     }
 }

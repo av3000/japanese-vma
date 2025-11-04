@@ -3,37 +3,48 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Application\Engagement\DTOs\HashtagFilterDTO;
-use App\Infrastructure\Persistence\Models\Hashtag;
-use Illuminate\Database\Eloquent\Builder;
+use App\Domain\Engagement\DTOs\HashtagFilterDTO;
+use App\Infrastructure\Persistence\Models\{HashtagEntity, Uniquehashtag};
 
 class HashtagRepository implements HashtagRepositoryInterface
 {
     public function create($data): void
     {
-        // TODO: Implementation for creating a hashtag, before that run job to add 'tag' column for 'hashtags' from 'uniquehashtags'
+        $uniquehashtag = Uniquehashtag::firstOrCreate(['content' => $data['content']]);
+
+        HashtagEntity::create([
+            'hashtag_id' => $uniquehashtag->id,
+            'entity_type_id' => $data['entity_type_id'],
+            'entity_id' => $data['entity_id'],
+            'user_id' => $data['user_id'],
+            'name' => $data['content'], // In theory redundant but have it for now
+        ]);
     }
 
     public function findAllByFilter(HashtagFilterDTO $filter): array
     {
-        return $this->buildBaseQuery($filter)->get()->toArray();
+        return HashtagEntity::with('uniquehashtag')
+            ->where('entity_type_id', $filter->entityType->getLegacyId())
+            ->where('entity_id', $filter->entityId)
+            ->get()
+            ->map(fn($link) => $link->uniquehashtag)
+            ->toArray();
     }
 
     private function buildBaseQuery(HashtagFilterDTO $filter): Builder
     {
-        return Hashtag::where('template_id', $filter->objectType->getLegacyId())
-            ->where('real_object_id', $filter->entityId);
+        return HashtagEntity::where('entity_type_id', $filter->entityType->getLegacyId())
+            ->where('entity_id', $filter->entityId);
     }
 
-    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
+    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $entityType): array
     {
-        $results = Hashtag::where('template_id', $objectType->getLegacyId())
-            ->whereIn('real_object_id', $entityIds)
+        return HashtagEntity::with('uniquehashtag')
+            ->where('entity_type_id', $entityType->getLegacyId())
+            ->whereIn('entity_id', $entityIds)
             ->get()
-            ->groupBy('real_object_id')
-            ->map->toArray()
+            ->groupBy('entity_id')
+            ->map(fn($links) => $links->map(fn($link) => $link->uniquehashtag))
             ->toArray();
-
-        return $results;
     }
 }

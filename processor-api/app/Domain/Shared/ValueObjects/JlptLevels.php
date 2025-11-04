@@ -18,6 +18,11 @@ readonly class JlptLevels
         }
     }
 
+    public static function empty(): self
+    {
+        return new self(0, 0, 0, 0, 0, 0);
+    }
+
     public function toArray(): array
     {
         return [

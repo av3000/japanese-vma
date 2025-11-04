@@ -1,9 +1,9 @@
 <?php
-namespace App\Domain\Articles\ValueObjects;
+namespace App\Domain\Shared\ValueObjects;
 
 use InvalidArgumentException;
 
-readonly class ArticleSearchTerm
+readonly class SearchTerm
 {
     private const MIN_LENGTH = 2;
     private const MAX_LENGTH = 255;

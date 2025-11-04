@@ -17,6 +17,11 @@ class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInte
         private ExtractKanjisAction $extractKanjis
     ) {}
 
+    public function queueKanjiProcessing(EntityId $articleUid): void
+    {
+        ProcessArticleKanjis::dispatch($articleUid->value());
+    }
+
     public function processArticleKanjis(EntityId $articleUid): DomainArticle
     {
         $article = $this->articleRepository->findByUid($articleUid);

@@ -41,7 +41,7 @@ class LikeRepository implements LikeRepositoryInterface
 
     public function findAllByFilter(LikeFilterDTO $filter): array
     {
-         return $this->buildBaseQuery($filter)->get()->toArray();
+        return $this->buildBaseQuery($filter)->get()->toArray();
     }
 
     private function buildBaseQuery(LikeFilterDTO $filter): Builder

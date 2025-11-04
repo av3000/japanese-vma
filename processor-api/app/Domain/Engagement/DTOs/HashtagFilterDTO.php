@@ -7,6 +7,6 @@ readonly class HashtagFilterDTO
 {
     public function __construct(
         public int $entityId,
-        public ObjectTemplateType $objectType,
+        public ObjectTemplateType $entityType,
     ) {}
 }

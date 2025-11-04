@@ -7,7 +7,7 @@ use App\Domain\Shared\ValueObjects\EntityId;
 readonly class CommentFilterDTO
 {
     public function __construct(
-        public EntityId $entityId,
+        public string $entityId,
         public ObjectTemplateType $objectType,
         // public ?int $parentCommentId = null, TODO: see if could be useful later.
     ) {}

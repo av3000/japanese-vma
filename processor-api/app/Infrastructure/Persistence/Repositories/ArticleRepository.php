@@ -20,50 +20,34 @@ class ArticleRepository implements ArticleRepositoryInterface
 
     public function save(DomainArticle $article): ?DomainArticle
     {
-        return DB::transaction(function () use ($article, $tags) {
+        return DB::transaction(function () use ($article) {
             $mappedArticle = ArticleMapper::mapToEntity($article);
+            $entityArticle = PersistenceArticle::create($mappedArticle);
+            $entityArticle->load('user');
 
-            $entityArticle = PersistenceArticle::updateOrCreate(
-                ['uuid' => $mappedArticle['uuid']],
-                $mappedArticle
-            );
-
-            // Questionable implementation, not sure what is the exact outcome
-            if (!$entityArticle->kanjis()->isEmpty()) {
-                $entityArticle->kanjis()->sync($article['kanjis']);
-            }
-
-            // Should be handled with a separate service/repository and probably in the service layer.
-            // wonder how tags look like before attaching
-            if ($tags) {
-                $this->attachHashtags($entityArticle, $article['tags'], $article['user_id']);
-            }
-
-            return ArticleMapper::mapToDomain(
-                $entityArticle->fresh(['user', 'kanjis', 'hashtags'])
-            );
+            return ArticleMapper::mapToDomain($entityArticle);
         });
     }
 
-    public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle
-    {
-        return DB::transaction(function () use ($article, $kanjiIds) {
-            $persistenceData = ArticleMapper::mapToEntity($article);
+    // public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle
+    // {
+    //     return DB::transaction(function () use ($article, $kanjiIds) {
+    //         $persistenceData = ArticleMapper::mapToEntity($article);
 
-            $persistenceArticle = PersistenceArticle::updateOrCreate(
-                ['uuid' => $persistenceData['uuid']],
-                $persistenceData
-            );
+    //         $persistenceArticle = PersistenceArticle::updateOrCreate(
+    //             ['uuid' => $persistenceData['uuid']],
+    //             $persistenceData
+    //         );
 
-            if (!empty($kanjiIds)) {
-                $persistenceArticle->kanjis()->sync($kanjiIds);
-            }
+    //         if (!empty($kanjiIds)) {
+    //             $persistenceArticle->kanjis()->sync($kanjiIds);
+    //         }
 
-            return ArticleMapper::mapToDomain(
-                $persistenceArticle->fresh(['user', 'kanjis', 'hashtags'])
-            );
-        });
-    }
+    //         return ArticleMapper::mapToDomain(
+    //             $persistenceArticle->fresh(['user', 'kanjis', 'hashtags'])
+    //         );
+    //     });
+    // }
 
     public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle
     {
@@ -137,6 +121,11 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         DB::table('hashtags')->where('template_id', $objectTemplateId)
             ->where('real_object_id', $article->id)->delete();
+    }
+
+    public function getIdByUuid(EntityId $entityUuid): int | null
+    {
+        return PersistenceArticle::where('uuid', $entityUuid)->value('id');
     }
 
     /**

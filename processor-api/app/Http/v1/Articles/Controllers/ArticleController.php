@@ -20,8 +20,9 @@ use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
-use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO};
+use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO};
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 
@@ -43,18 +44,10 @@ class ArticleController extends Controller
         $entityIds = array_map(fn($article) => $article->getIdValue(), $paginatedArticles->getItems());
 
         $statsMap = [];
-        $engagementMap = [];
         $hashtagsMap = [];
 
         if ($listDTO->include_stats_counts) {
             $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
-        }
-
-        if ($listDTO->include_engagement_data) {
-            $engagementMap = $this->engagementService->getArticlesBatchEngagementData(
-                $entityIds,
-                ObjectTemplateType::ARTICLE,
-            );
         }
 
         if($listDTO->include_hashtags) {
@@ -65,12 +58,12 @@ class ArticleController extends Controller
         }
 
         $resources = [];
+        // TODO: This supposed to be hidden somehow and not handled in controller, especially engagement data...
         foreach ($paginatedArticles->getItems() as $article) {
             $stats = $statsMap[$article->getIdValue()] ?? null;
-            $engagement = $engagementMap[$article->getIdValue()] ?? null;
             $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
 
-            $resources[] = new ArticleResource($article, $listDTO, $stats, $engagement, $hashtags);
+            $resources[] = new ArticleResource($article, $listDTO, $stats, $hashtags);
         }
 
         $data = [
@@ -94,13 +87,30 @@ class ArticleController extends Controller
 
     public function store(StoreArticleRequest $request): JsonResponse
     {
-        $createDTO = ArticleCreateDTO::fromRequest($request->validated());
-        // TODO: shoould we access auth() object here directly?
-        $article = $this->articleService->createArticle($createDTO, auth()->id());
         try {
-            $processedArticle = $this->articleKanjiProcessingService->processArticleKanjis($article->getUid());
+            $createDTO = ArticleCreateDTO::fromRequest($request->validated());
+            $article = $this->articleService->createArticle($createDTO, auth()->id());
 
-            return response()->json(new ArticleResource($processedArticle), 201);
+            $hashtags = [];
+
+            // TODO: run the job to create 'tag' column for 'hashtags' from 'uniquehashtags' table first
+            if($createDTO->tags && !empty($createDTO->tags)) {
+                $this->hashtagService->createTagsForEntity(
+                    $article->getIdValue(),
+                    ObjectTemplateType::ARTICLE,
+                    $createDTO->tags,
+                    auth()->id()
+                );
+            }
+
+            $hashtags = $this->hashtagService->getHashtags(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE
+            );
+            // TODO: implement kanji processing queueing.
+            // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
+
+            return response()->json(new ArticleResource(article: $article, hashtags: $hashtags), 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -114,12 +124,24 @@ class ArticleController extends Controller
         $articleUid = EntityId::from($uid);
         $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
         $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth()->id());
-        $engagementData = $this->engagementService->getArticleEngagementData($article->getIdValue(), ObjectTemplateType::ARTICLE, $includeFilterOptionsDTO);
+        $engagementData = $this->engagementService->getSingleArticleEngagementData($article->getIdValue(), ObjectTemplateType::ARTICLE, $includeFilterOptionsDTO);
+        $hashtags = $this->hashtagService->getHashtags(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE
+        );
 
         $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
         $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
-        return response()->json(new ArticleDetailResource($article, $engagementData, $kanjis, $words));
+        return response()->json(
+            new ArticleDetailResource(
+                article: $article,
+                engagementData: $engagementData,
+                kanjis: $kanjis,
+                words: $words,
+                hashtags: $hashtags
+            )
+        );
     }
 
     public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {

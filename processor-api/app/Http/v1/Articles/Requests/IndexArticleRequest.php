@@ -21,7 +21,7 @@ class IndexArticleRequest extends FormRequest
             'sort_dir' => 'sometimes|string',
             'per_page' => 'sometimes|integer',
             'page' => 'sometimes|integer',
-            'include_stats' => 'sometimes|boolean',
+            'include_stats_counts' => 'sometimes|boolean',
         ];
     }
 
@@ -34,7 +34,7 @@ class IndexArticleRequest extends FormRequest
             'sort_dir.string' => 'Sort direction must be a string',
             'per_page.integer' => 'Per page must be a number',
             'page.integer' => 'Page must be a number',
-            'include_stats.boolean' => 'Include stats must be a boolean value',
+            'include_stats_counts.boolean' => 'Include stats must be a boolean value',
         ];
     }
 
@@ -44,7 +44,7 @@ class IndexArticleRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'include_stats' => 'include statistics',
+            'include_stats_counts' => 'include statistics',
         ];
     }
 }

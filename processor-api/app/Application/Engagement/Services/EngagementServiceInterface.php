@@ -10,7 +10,6 @@ use App\Domain\Articles\Models\{Articles, Article};
 interface EngagementServiceInterface
 {
     public function enhanceArticlesWithStatsCounts(Articles $articles): array;
-    public function enhanceWithComments($article): void;
     public function getSingleArticleEngagementData(int $entityId, ObjectTemplateType $objectType, ArticleIncludeOptionsDTO $includeOptions): EngagementData;
-    public function getArticleListBatchEngagementData(array $entityIds, ObjectTemplateType $objectType): array;
+    // public function getArticleListBatchEngagementData(array $entityIds, ObjectTemplateType $objectType): array;
 }

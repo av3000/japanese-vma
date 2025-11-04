@@ -1,5 +1,5 @@
 <?php
-namespace App\Infrastructure\Persistence\Mappers;
+namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Domain\Comments\Models\Comment as DomainComment;
@@ -10,12 +10,12 @@ class CommentMapper
 {
     public static function mapToDomain(PersistenceComment $entity): DomainComment
     {
-        // Get the entity type from template_id
         $entityType = self::getEntityTypeFromTemplateId($entity->template_id);
 
         return new DomainComment(
-            new EntityId($entity->id),
-            new EntityId($entity->real_object_id),
+            $entity->id,
+            $entity->real_object_id,
+            new EntityId($entity->uuid),
             $entityType,
             new UserId($entity->user_id),
             $entity->content,
@@ -28,7 +28,7 @@ class CommentMapper
     public static function mapToEntity(DomainComment $comment): array
     {
         return [
-            'id' => $comment->getId()->value(),
+            'id' => $comment->getIdValue(),
             'template_id' => self::getTemplateIdFromEntityType($comment->getEntityType()),
             'real_object_id' => $comment->getEntityId()->value(),
             'user_id' => $comment->getAuthorId()->value(),

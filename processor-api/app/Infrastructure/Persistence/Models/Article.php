@@ -23,6 +23,8 @@ class Article extends Model
         'publicity',
         'status',
         'user_id',
+        'uuid',
+        'entity_type_uuid',
         'n1',
         'n2',
         'n3',

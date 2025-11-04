@@ -1,7 +1,7 @@
 <?php
 namespace App\Application\Engagement\Interfaces\Repositories;
 
-use App\Application\Engagement\DTOs\HashtagFilterDTO;
+use App\Domain\Engagement\DTOs\HashtagFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 
 interface HashtagRepositoryInterface

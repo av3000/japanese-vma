@@ -158,6 +158,12 @@ Route::prefix('v1')->group(function () {
     Route::get('articles/{id}/words', '\App\Http\v1\Articles\Controllers\ArticleController@words');
 
     Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
+
+    Route::prefix('articles/{uuid}')->group(function () {
+        Route::get('comments', '\App\Http\v1\Comments\Controllers\CommentController@getArticleComments');
+        Route::post('comments', '\App\Http\v1\Comments\Controllers\CommentController@store')->middleware('auth:api');
+    });
+
     Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
 
     // Authenticated routes

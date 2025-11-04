@@ -2,9 +2,7 @@
 
 namespace App\Domain\Engagement\DTOs;
 
-use Illuminate\Contracts\Support\Arrayable;
-
-readonly class ViewCreateDTO implements Arrayable
+readonly class ViewCreateDTO
 {
     public function __construct(
         public ?int $userId,

@@ -41,12 +41,12 @@ class DownloadRepository implements DownloadRepositoryInterface
 
     public function findAllByFilter(DownloadFilterDTO $filter): array
     {
-         return $this->buildBaseQuery($filter)->get()->toArray();
+        return $this->buildBaseQuery($filter)->get()->toArray();
     }
 
     private function buildBaseQuery(DownloadFilterDTO $filter): Builder
     {
-        return Like::where('template_id', $filter->objectType->getLegacyId())
+        return Download::where('template_id', $filter->objectType->getLegacyId())
             ->where('real_object_id', $filter->entityId);
     }
 }

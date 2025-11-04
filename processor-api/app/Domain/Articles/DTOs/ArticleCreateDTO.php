@@ -10,7 +10,7 @@ readonly class ArticleCreateDTO
         public ?string $content_en,
         public string $source_link,
         public bool $publicity,
-        public ?string $tags = null
+        public ?array $tags = null
     ) {}
     /**
      * Create an instance from request data.

@@ -1,5 +1,5 @@
 <?php
-namespace App\Application\Engagement\Interfaces\Repositories;
+namespace App\Application\Comments\Interfaces\Repositories;
 
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Shared\ValueObjects\EntityId;

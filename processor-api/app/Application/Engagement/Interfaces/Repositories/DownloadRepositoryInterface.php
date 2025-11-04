@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 interface DownloadRepositoryInterface
 {
     public function create(DownloadCreateDTO $data): void;
-    public function findByFilter(DownloadFilterDTO $filters): ?int;
+    public function findByFilter(DownloadFilterDTO $filter): ?int;
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
-    public function findAllByFilter(DownloadFilterDTO $filters): array;
+    public function findAllByFilter(DownloadFilterDTO $filter): array;
 }

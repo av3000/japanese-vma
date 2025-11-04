@@ -10,8 +10,7 @@ readonly class ArticleListDTO
         public ?string $sort_dir,
         public ?int $per_page,
         public ?int $page,
-        public bool $include_stats_counts = false,
-        public bool $include_engagement_data = false,
+        public bool $include_stats_counts = true,
         public bool $include_hashtags = true
     ) {}
 
@@ -24,8 +23,7 @@ readonly class ArticleListDTO
             sort_dir: $validated['sort_dir'] ?? null,
             per_page: $validated['per_page'] ?? null,
             page: $validated['page'] ?? null,
-            include_stats_counts: $validated['include_stats'] ?? true,
-            include_engagement_data: $validated['include_stats_counts'] ?? false,
+            include_stats_counts: $validated['include_stats_counts'] ?? true,
             include_hashtags: $validated['include_hashtags'] ?? true
         );
     }

@@ -14,12 +14,14 @@ class ArticleDetailResource extends JsonResource
         $article,
         ?EngagementData $engagementData = null,
         private array $kanjis = [],
-        private array $words = [])
-    {
+        private array $words = [],
+        array $hashtags = []
+    ) {
         parent::__construct($article);
         $this->engagementData = $engagementData;
         $this->kanjis = $kanjis;
         $this->words = $words;
+        $this->hashtags = $hashtags;
     }
 
     /**
@@ -35,6 +37,8 @@ class ArticleDetailResource extends JsonResource
         return [
             'article' => [
                 'id' => $this->getIdValue(),
+                'uid' => (string) $this->getUid(),
+                'entity_type_uid' => (string) $this->getEntityTypeUid(),
                 'title_jp' => $this->getTitleJp()->value,
                 'title_en' => $this->getTitleEn()?->value,
                 'content_jp' => $this->getContentJp()->value,
@@ -47,13 +51,16 @@ class ArticleDetailResource extends JsonResource
                     'id' => $this->getAuthorId()->value(),
                     'name' => $this->getAuthorName()->value(),
                 ],
-                'hashtags' => $this->getTags(),
+                'hashtags' => $this->hashtags,
                 'created_at' => $this->getCreatedAt()->format('c'),
                 'updated_at' => $this->getUpdatedAt()->format('c'),
-                'likes' => $this->engagementData?->getLikes(),
-                'comments' => $this->engagementData?->getComments(),
-                'views' => $this->engagementData?->getViews(),
-                'downloads' => $this->engagementData?->getDownloads(),
+                'engagement' =>
+                    $this->engagementData ? [
+                            'likes' => $this->engagementData?->getLikes(),
+                            'views' => $this->engagementData?->getViews(),
+                            'downloads' => $this->engagementData?->getDownloads(),
+                            'comments' => $this->engagementData?->getComments(),
+                    ] : null,
                 'kanjis' => $this->kanjis,
                 'words' => $this->words,
             ],
