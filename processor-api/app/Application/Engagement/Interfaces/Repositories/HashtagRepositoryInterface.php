@@ -7,6 +7,7 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
 interface HashtagRepositoryInterface
 {
     public function create($data): void; // TODO: create createHashtagDTO
+    public function deleteByEntity(int $entityId, int $entityTypeId): void;
     public function findAllByFilter(HashtagFilterDTO $filter): array;
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
 }

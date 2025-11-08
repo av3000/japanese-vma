@@ -17,7 +17,6 @@ class HashtagRepository implements HashtagRepositoryInterface
             'entity_type_id' => $data['entity_type_id'],
             'entity_id' => $data['entity_id'],
             'user_id' => $data['user_id'],
-            'name' => $data['content'], // In theory redundant but have it for now
         ]);
     }
 
@@ -29,6 +28,13 @@ class HashtagRepository implements HashtagRepositoryInterface
             ->get()
             ->map(fn($link) => $link->uniquehashtag)
             ->toArray();
+    }
+
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+        HashtagEntity::where('entity_id', $entityId)
+            ->where('entity_type_id', $entityTypeId)
+            ->delete();
     }
 
     private function buildBaseQuery(HashtagFilterDTO $filter): Builder
