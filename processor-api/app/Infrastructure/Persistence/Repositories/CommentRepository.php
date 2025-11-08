@@ -62,6 +62,18 @@ class CommentRepository implements CommentRepositoryInterface
         return $query->paginate($pagination->perPage, ['*'], 'page', $pagination->page);
     }
 
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+        $comments = PersistenceComment::where('real_object_id', $entityId)->get();
+
+        foreach ($comments as $comment) {
+            Like::where('real_object_id', $comment->id)
+                ->delete();
+
+            $comment->delete();
+        }
+    }
+
     public function findByEntityWithPagination(EntityId $entityUid, string $entityType, int $page, int $perPage): array
     {
         $entityTemplateId = $this->getTemplateIdForEntityType($entityType);

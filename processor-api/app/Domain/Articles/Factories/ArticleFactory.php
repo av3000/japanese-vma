@@ -14,7 +14,7 @@ class ArticleFactory
     {
         return new Article(
             id: null,
-            uid: EntityId::generate(),
+            uuid: EntityId::generate(),
             entityTypeUid: new EntityId(ObjectTemplateType::ARTICLE->value),
             authorId: $authorId,
             authorName: $authorName,
@@ -26,7 +26,6 @@ class ArticleFactory
             publicity: $dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE,
             status: ArticleStatus::PENDING,
             jlptLevels: JlptLevels::empty(),
-            tags: [],
             createdAt: new \DateTimeImmutable(),
             updatedAt: new \DateTimeImmutable(),
         );

@@ -6,6 +6,8 @@ use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
 // use App\Application\Articles\Actions\Processing\{ExtractKanjisAction};
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\{HashtagRepositoryInterface, ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
+use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Articles\Policies\ArticleViewPolicy;
 
 use App\Application\Articles\Actions\Updates\{
@@ -14,8 +16,6 @@ use App\Application\Articles\Actions\Updates\{
 };
 
 use App\Application\Articles\Actions\Deletion\{
-    CleanupArticleRelationshipsAction,
-    CleanupArticleEngagementAction,
     CleanupArticleHashtagsAction,
     CleanupArticleCustomListsAction
 };
@@ -39,7 +39,7 @@ class ArticleService implements ArticleServiceInterface
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private EngagementServiceInterface $engagementService,
-        private ArticleViewPolicy $viewPolicy,
+        private ArticleViewPolicy $articleViewPolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementViewAction,
@@ -53,10 +53,13 @@ class ArticleService implements ArticleServiceInterface
         // private UpdateArticleHashtagsAction $updateHashtags,
         private ReprocessArticleDataAction $reprocessData,
         // Delete dependencies
-        private CleanupArticleRelationshipsAction $cleanupRelationships,
-        private CleanupArticleEngagementAction $cleanupEngagement,
         private CleanupArticleHashtagsAction $cleanupHashtags,
-        private CleanupArticleCustomListsAction $cleanupCustomLists
+        private CleanupArticleCustomListsAction $cleanupCustomLists,
+        private HashtagRepositoryInterface $hashtagRepository,
+        private ViewRepositoryInterface $viewRepository,
+        private LikeRepositoryInterface $likeRepository,
+        private DownloadRepositoryInterface $downloadRepository,
+        private CommentRepositoryInterface $commentRepository,
     ) {}
 
     public function createArticle(ArticleCreateDTO $dto, int $userId): DomainArticle
@@ -80,11 +83,11 @@ class ArticleService implements ArticleServiceInterface
             throw new ArticleNotFoundException($articleUid->value());
         }
 
-        if(!$this->viewPolicy->canView($user, $article)) {
+        if(!$this->articleViewPolicy->canView($user, $article)) {
             throw new ArticleAccessDeniedException($articleUid->value());
         }
 
-        $viewer = Viewer::fromRequest();
+        $viewer = new Viewer($user->id, request()->ip());
 
         $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
@@ -108,7 +111,7 @@ class ArticleService implements ArticleServiceInterface
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category !== null ? $dto->category : null,
-            visibilityRules: $this->viewPolicy->getVisibilityCriteria($user),
+            visibilityRules: $this->articleViewPolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
         );
 
@@ -157,34 +160,49 @@ class ArticleService implements ArticleServiceInterface
         });
     }
 
-    public function deleteArticle(int $id, int $userId, bool $isAdmin = false): bool
+    public function deleteArticle(EntityId $articleUuid, User $user): bool
     {
-        $articleId = ArticleId::from($id);
-        $userIdVO = UserId::from($userId);
-
-        return DB::transaction(function () use ($articleId, $userIdVO, $isAdmin) {
-            // TODO: repository pattern
-            // $article = $this->articleRepository->findById($id);
-            $article = PersistenceArticle::find($articleId->value());
+        return DB::transaction(function () use ($articleUuid, $user){
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
 
             if (!$article) {
-                return false;
+                throw new ArticleNotFoundException($articleUuid);
             }
 
-            // Check authorization
-            if ($article->user_id !== $userIdVO->value() && !$isAdmin) {
-                return false;
+            if (!$this->articleViewPolicy->canDelete($user, $article)) {
+                throw new ArticleAccessDeniedException($articleUuid);
             }
 
-            // Perform cleanup operations
-            $this->cleanupRelationships->execute($article);
-            $this->cleanupEngagement->execute($article);
-            $this->cleanupHashtags->execute($article);
-            $this->cleanupCustomLists->execute($article);
+            $this->articleRepository->deleteById($article->getIdValue());
 
-            // TODO: repository pattern
-            // $this->articleRepository->delete($article);
-            $article->delete();
+            $this->viewRepository->deleteByEntity(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE->getLegacyId()
+            );
+
+            $this->downloadRepository->deleteByEntity(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE->getLegacyId()
+            );
+
+            $this->likeRepository->deleteByEntity(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE->getLegacyId()
+            );
+
+            $this->commentRepository->deleteByEntity(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE->getLegacyId()
+            );
+
+            $this->hashtagRepository->deleteByEntity(
+                $article->getIdValue(),
+                ObjectTemplateType::ARTICLE->getLegacyId()
+            );
+
+            // TODO: move to repository
+            $this->cleanupCustomLists->execute($article->getIdValue());
+
             // TODO: eloquent delete returns true if successful, false otherwise, but need to test if thats correct.
             return true;
         });

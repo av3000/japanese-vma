@@ -16,7 +16,7 @@ interface ArticleServiceInterface
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): ?Article;
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles;
     public function updateArticle(int $id, ArticleUpdateDTO $dto, int $userId): ?PersistenceArticle;
-    public function deleteArticle(int $id, int $userId, bool $isAdmin = false): bool;
+    public function deleteArticle(EntityId $articleUuid, User $user): bool;
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
 }

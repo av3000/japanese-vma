@@ -24,7 +24,7 @@ use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleC
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\{ObjectTemplateType, UserRole};
 
 use Illuminate\Http\JsonResponse;
 
@@ -40,7 +40,7 @@ class ArticleController extends Controller
     public function index(IndexArticleRequest $request): JsonResponse {
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $paginatedArticles = $this->articleService->getArticlesList($listDTO, $request->user());
+        $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
         $entityIds = array_map(fn($article) => $article->getIdValue(), $paginatedArticles->getItems());
 
         $statsMap = [];
@@ -89,7 +89,8 @@ class ArticleController extends Controller
     {
         try {
             $createDTO = ArticleCreateDTO::fromRequest($request->validated());
-            $article = $this->articleService->createArticle($createDTO, auth()->id());
+
+            $article = $this->articleService->createArticle($createDTO, auth('api')->id());
 
             $hashtags = [];
 
@@ -99,7 +100,7 @@ class ArticleController extends Controller
                     $article->getIdValue(),
                     ObjectTemplateType::ARTICLE,
                     $createDTO->tags,
-                    auth()->id()
+                    auth('api')->id()
                 );
             }
 
@@ -107,7 +108,7 @@ class ArticleController extends Controller
                 $article->getIdValue(),
                 ObjectTemplateType::ARTICLE
             );
-            // TODO: implement kanji processing queueing.
+            // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
             // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
 
             return response()->json(new ArticleResource(article: $article, hashtags: $hashtags), 201);
@@ -123,7 +124,7 @@ class ArticleController extends Controller
     {
         $articleUid = EntityId::from($uid);
         $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth()->id());
+        $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
         // TODO: Have 4 separate calls rather than single multi-responsible service.
         // Create findCountByFilter method for each repository
         // return counts here. For richer data, separate filters should be used.
@@ -156,7 +157,7 @@ class ArticleController extends Controller
             $article = $this->articleService->updateArticle(
                 $id,
                 $updateDTO,
-                auth()->id()
+                auth('api')->id()
             );
 
             if (!$article) {
@@ -175,12 +176,13 @@ class ArticleController extends Controller
         }
     }
 
-    public function destroy(int $id): JsonResponse {
+    public function destroy(string $uuid): JsonResponse {
         try {
+            $articleUuid = EntityId::from($uuid);
+
             $deleted = $this->articleService->deleteArticle(
-                $id,
-                auth()->id(),
-                auth()->user()->hasRole('admin')
+                $articleUuid,
+                auth('api')->user()
             );
 
             if (!$deleted) {

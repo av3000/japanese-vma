@@ -151,6 +151,7 @@ Route::post('posts/search', 'PostController@generateQuery');
 
 // V2 Endpoints - Domain Architecture
 Route::prefix('v1')->group(function () {
+    // TODO: look into throttling of requests for rate limiting
     // TODO: use namespace for v2 routes
 
     // Public routes
@@ -178,8 +179,8 @@ Route::prefix('v1')->group(function () {
         // Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
 
         Route::post('articles', '\App\Http\v1\Articles\Controllers\ArticleController@store');
-        Route::put('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@update');
-        Route::delete('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@destroy');
+        Route::put('articles/{uuid}', '\App\Http\v1\Articles\Controllers\ArticleController@update');
+        Route::delete('articles/{uuid}', '\App\Http\v1\Articles\Controllers\ArticleController@destroy');
 
         // Article actions
         // TODO: implement in v2

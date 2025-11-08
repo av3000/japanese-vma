@@ -1,9 +1,9 @@
 <?php
-namespace App\Domain\Shared\ValueObjects;
+namespace App\Domain\Catalogues\ValueObjects;
 
 use InvalidArgumentException;
 
-readonly class ListDescription
+readonly class CatalogueDescription
 {
     private const MAX_LENGTH = 500;
 
@@ -36,7 +36,7 @@ readonly class ListDescription
     {
         if ($this->value !== null && strlen($this->value) > self::MAX_LENGTH) {
             throw new InvalidArgumentException(
-                'List description cannot exceed ' . self::MAX_LENGTH . ' characters'
+                'Catalogue description cannot exceed ' . self::MAX_LENGTH . ' characters'
             );
         }
     }
@@ -46,7 +46,7 @@ readonly class ListDescription
         return $this->value === null;
     }
 
-    public function equals(ListDescription $other): bool
+    public function equals(CatalogueDescription $other): bool
     {
         return $this->value === $other->value;
     }

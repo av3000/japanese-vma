@@ -1,9 +1,9 @@
 <?php
-namespace App\Domain\Shared\ValueObjects;
+namespace App\Domain\Catalogues\ValueObjects;
 
 use InvalidArgumentException;
 
-readonly class ListTitle
+readonly class CatalogueTitle
 {
     private const MIN_LENGTH = 2;
     private const MAX_LENGTH = 255;
@@ -39,7 +39,7 @@ readonly class ListTitle
         }
     }
 
-    public function equals(ListTitle $other): bool
+    public function equals(CatalogueTitle $other): bool
     {
         return $this->value === $other->value;
     }

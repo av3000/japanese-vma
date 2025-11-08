@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Auth\AuthenticationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -51,11 +52,14 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // if ($exception instanceof NotFoundHttpException) {
-        //     return redirect('/');
-        // }
-
         if ($this->isHttpException($exception)) {
+            if($request->is('api/*')) {
+                return response()->json([
+                    'error' => [
+                        'message' => 'Not found.',
+                    ],
+                ], 404);
+            }
             if ($exception->getStatusCode() == 404) {
                 $data = [
                     'success' => false,
@@ -78,11 +82,17 @@ class Handler extends ExceptionHandler
 
     public function register()
     {
-        $this->renderable(function (ArticleNotFoundException $e, $request) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => $e->getMessage()], 404);
+        $this->renderable(function (AuthenticationException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'UNAUTHENTICATED',
+                        'message' => 'Authentication required.',
+                    ],
+                ], 401);
             }
-            return response()->view('errors.404', [], 404);
+            return parent::render($request, $e);
         });
     }
 }

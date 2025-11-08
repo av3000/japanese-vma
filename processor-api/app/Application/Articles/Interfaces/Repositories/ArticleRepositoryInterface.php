@@ -28,7 +28,7 @@ interface ArticleRepositoryInterface
      * Find article by domain ID and convert to domain model
      * Returns null if not found, throws exception if access denied
      */
-    public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle;
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle;
 
     /**
      * Find articles by unique domain ID (EntityId) and convert to domain model
@@ -40,7 +40,7 @@ interface ArticleRepositoryInterface
      * Delete article by ID with proper authorization
      * Returns true if deleted, false if not found or unauthorized
      */
-    public function deleteById(ArticleId $id): bool;
+    public function deleteById(int $id): bool;
 
     /**
      * Find articles by author ID
@@ -53,5 +53,4 @@ interface ArticleRepositoryInterface
      * Find article ID by Article UUID
      */
     public function getIdByUuid(EntityId $entityUuid): int | null;
-
 }

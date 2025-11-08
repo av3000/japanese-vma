@@ -12,6 +12,7 @@ interface LikeRepositoryInterface
 {
     public function create(LikeCreateDTO $data): void;
     public function findByFilter(LikeFilterDTO $filter): ?int;
+    public function deleteByEntity(int $entityId, int $entityTypeId): void;
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
     public function findAllByFilter(LikeFilterDTO $filter): array;
 }

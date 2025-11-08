@@ -20,13 +20,13 @@ class ArticleRepository implements ArticleRepositoryInterface
 
     public function save(DomainArticle $article): ?DomainArticle
     {
-        return DB::transaction(function () use ($article) {
-            $mappedArticle = ArticleMapper::mapToEntity($article);
-            $entityArticle = PersistenceArticle::create($mappedArticle);
-            $entityArticle->load('user');
+        $mappedArticle = ArticleMapper::mapToEntity($article);
+        $start = microtime(true);
+        $entityArticle = PersistenceArticle::create($mappedArticle);
+        \Log::info('Article creation: ' . (microtime(true) - $start) . 's');
+        $entityArticle->load('user');
 
-            return ArticleMapper::mapToDomain($entityArticle);
-        });
+        return ArticleMapper::mapToDomain($entityArticle);
     }
 
     // public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle
@@ -49,43 +49,36 @@ class ArticleRepository implements ArticleRepositoryInterface
     //     });
     // }
 
-    public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle
     {
-        // TODO: fetch by UUID instead of primary ID
         $query = PersistenceArticle::query();
 
         $with = [];
-        if ($dto->include_user) $with[] = 'user';
-        if ($dto->include_kanjis) $with[] = 'kanjis';
-        if ($dto->include_words) $with[] = 'words';
+        if($dto != null) {
+            if ($dto->include_user) $with[] = 'user';
+            if ($dto->include_kanjis) $with[] = 'kanjis';
+            if ($dto->include_words) $with[] = 'words';
+        }
 
         $persistenceArticle = $query->with($with)
-            ->where('uuid', $uid->value())
+            ->where('uuid', $articleUuid->value())
             ->first();
 
          return $persistenceArticle ? ArticleMapper::mapToDomain($persistenceArticle) : null;
-        // TODO: use mapper to convert persistence model to domain model
-
-        // return ArticleMapper::mapToDomain($entityArticle);
     }
 
-    public function deleteById(ArticleId $id): bool
+    public function deleteById(int $id): bool
     {
-        return DB::transaction(function () use ($id) {
-            $article = Article::find($id);
+        $persistenceArticle = PersistenceArticle::findOrFail($id);
 
-            if (!$article) {
-                return false;
-            }
+        if (!$persistenceArticle) {
+            throw new ArticleNotFoundException("Article with ID {$id} not found");
+        }
 
-            $article->kanjis()->detach();
-            $article->words()->detach();
+        $persistenceArticle->kanjis()->detach();
+        $persistenceArticle->words()->detach();
 
-            // Clean up related data (could move to separate repositories)
-            $this->cleanupRelatedData($article);
-
-            return $article->delete();
-        });
+        return $persistenceArticle->delete();
     }
 
     public function findByUserId(UserId $userId, int $limit = 10): array
@@ -106,23 +99,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         attachHashTags($tags, $article, $objectTemplateId);
     }
 
-    private function cleanupRelatedData(Article $article): void
-    {
-        $objectTemplateId = \App\Http\Models\ObjectTemplate::where('title', 'article')->first()->id;
-
-        DB::table('likes')->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)->delete();
-
-        DB::table('views')->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)->delete();
-
-        DB::table('comments')->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)->delete();
-
-        DB::table('hashtags')->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)->delete();
-    }
-
     public function getIdByUuid(EntityId $entityUuid): int | null
     {
         return PersistenceArticle::where('uuid', $entityUuid)->value('id');
@@ -138,7 +114,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         $query = PersistenceArticle::query()->with(['user']);
 
         $this->applyVisibilityFilters($query, $criteria->visibilityRules);
-        // dd($query, $criteria);
         $this->applyContentFilters($query, $criteria);
         $this->applySorting($query, $criteria->sort);
 

@@ -27,6 +27,13 @@ class DownloadRepository implements DownloadRepositoryInterface
         return $query->first()?->id;
     }
 
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+        Download::where('real_object_id', $entityId)
+            ->where('template_id', $entityTypeId)
+            ->delete();
+    }
+
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
     {
         $results = Download::where('template_id', $objectType->getLegacyId())
