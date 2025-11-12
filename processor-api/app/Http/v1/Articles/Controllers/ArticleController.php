@@ -20,11 +20,14 @@ use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
-use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO};
+use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType, UserRole};
+use App\Domain\Articles\Errors\ArticleErrors;
+use App\Shared\Results\Result;
+use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
 
@@ -87,44 +90,40 @@ class ArticleController extends Controller
 
     public function store(StoreArticleRequest $request): JsonResponse
     {
-        try {
-            $createDTO = ArticleCreateDTO::fromRequest($request->validated());
+        $createDTO = ArticleCreateDTO::fromRequest($request->validated());
 
-            $article = $this->articleService->createArticle($createDTO, auth('api')->id());
+        $result = $this->articleService->createArticle($createDTO, auth('api')->user());
 
-            $hashtags = [];
+        $article = $result->data;
 
-            // TODO: run the job to create 'tag' column for 'hashtags' from 'uniquehashtags' table first
-            if($createDTO->tags && !empty($createDTO->tags)) {
-                $this->hashtagService->createTagsForEntity(
-                    $article->getIdValue(),
-                    ObjectTemplateType::ARTICLE,
-                    $createDTO->tags,
-                    auth('api')->id()
-                );
-            }
-
-            $hashtags = $this->hashtagService->getHashtags(
-                $article->getIdValue(),
-                ObjectTemplateType::ARTICLE
-            );
-            // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-            // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
-
-            return response()->json(new ArticleResource(article: $article, hashtags: $hashtags), 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->error);
         }
+
+        $hashtags = $this->hashtagService->getHashtags(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE
+        );
+
+        // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
+        // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
+
+        return TypedResults::created(
+            new ArticleResource(article: $article, isNew: true, hashtags: $hashtags)
+        );
     }
 
     public function show(string $uid, ArticleDetailRequest $request): JsonResponse
     {
         $articleUid = EntityId::from($uid);
         $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $article = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
+        $result = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->error);
+        }
+
+        $article = $result->data;
         // TODO: Have 4 separate calls rather than single multi-responsible service.
         // Create findCountByFilter method for each repository
         // return counts here. For richer data, separate filters should be used.
@@ -148,33 +147,61 @@ class ArticleController extends Controller
         );
     }
 
-    public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {
-        // For scalability, this can be moved to background job, meaning, we dispatch a job to update article
-        // and return a response that the update request was accepted.
-        // Then the client can poll for status.
-        try {
-            $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
-            $article = $this->articleService->updateArticle(
-                $id,
-                $updateDTO,
-                auth('api')->id()
-            );
+    public function update(string $uid, UpdateArticleRequest $request): JsonResponse
+    {
+        $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
+        $result = $this->articleService->updateArticle(
+            $uid,
+            $updateDTO,
+            auth('api')->user()
+        );
 
-            if (!$article) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Article not found or unauthorized'
-                ], 404);
-            }
-
-            return response()->json(new ArticleResource($article));
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->error);
         }
+
+        $article = $result->data;
+
+        $hashtags = $this->hashtagService->getHashtags(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE
+        );
+
+        // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
+        // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
+
+        return TypedResults::ok(
+            new ArticleResource(article: $article, isNew: false, hashtags: $hashtags)
+        );
     }
+
+    // public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {
+    //     // For scalability, this can be moved to background job, meaning, we dispatch a job to update article
+    //     // and return a response that the update request was accepted.
+    //     // Then the client can poll for status.
+    //     try {
+    //         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
+    //         $article = $this->articleService->updateArticle(
+    //             $id,
+    //             $updateDTO,
+    //             auth('api')->id()
+    //         );
+
+    //         if (!$article) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Article not found or unauthorized'
+    //             ], 404);
+    //         }
+
+    //         return response()->json(new ArticleResource($article));
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $e->getMessage()
+    //         ], 422);
+    //     }
+    // }
 
     public function destroy(string $uuid): JsonResponse {
         try {

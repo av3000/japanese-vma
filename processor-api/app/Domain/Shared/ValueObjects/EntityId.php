@@ -13,7 +13,7 @@ readonly class EntityId
         }
 
         if (!Str::isUuid($this->value)) {
-            throw new InvalidArgumentException('Entity ID must be a valid UUID');
+            throw new \InvalidArgumentException('Entity ID must be a valid UUID');
         }
     }
 
