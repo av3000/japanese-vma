@@ -94,5 +94,32 @@ class Handler extends ExceptionHandler
             }
             return parent::render($request, $e);
         });
+
+        // Handle database exceptions globally
+        $this->renderable(function (QueryException $e, Request $request) {
+            // Log the actual DB error
+            Log::error('Database query failed', [
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'request_url' => $request->fullUrl(),
+                'user_id' => auth()->id(),
+            ]);
+
+            // Return user-friendly response
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'type' => 'https://tools.ietf.org/html/rfc7231#section-6.6.1',
+                    'title' => 'Database error',
+                    'status' => 500,
+                    'detail' => 'A database error occurred. Please try again later.',
+                    'instance' => $request->getRequestUri(),
+                    'timestamp' => now()->toISOString()
+                ], 500);
+            }
+
+            return parent::render($request, $e);
+        });
     }
 }
