@@ -1,57 +1,86 @@
 <?php
 namespace App\Application\Articles\Interfaces\Repositories;
 
-use App\Infrastructure\Persistence\Models\Article;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsDTO};
-use App\Domain\Articles\ValueObjects\ArticleId;
 use App\Domain\Shared\ValueObjects\{UserId, EntityId};
-use App\Http\User;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleRepositoryInterface
 {
     /**
-     * Save a domain article (create or update)
-     * This method handles the complexity of converting domain model to persistence
+     * Create a new article in persistence.
+     *
+     * @param DomainArticle $article The domain article to create
+     * @return DomainArticle The created article with generated ID and relationships
+     * @throws \Illuminate\Database\QueryException On database constraint violation
      */
-    public function save(DomainArticle $article): ?DomainArticle;
+    public function create(DomainArticle $article): DomainArticle;
 
     /**
-     * Save article along with associated kanji IDs
-     * Ensure kanji relationships are properly managed
+     * Update an existing article in persistence.
+     *
+     * @param DomainArticle $article The domain article with updated state
+     * @return void
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article doesn't exist
      */
-    // public function saveWithKanjis(DomainArticle $article, array $kanjiIds): DomainArticle;
+    public function update(DomainArticle $article): void;
 
     /**
-     * Find article by domain ID and convert to domain model
-     * Returns null if not found, throws exception if access denied
+     * Find article by public UUID with optional selective eager loading.
+     *
+     *
+     * @param EntityId $articleUuid The article's public UUID
+     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
+     * @return DomainArticle|null The domain article if found, null if not found
+     * @throws \Illuminate\Database\QueryException On database failure
      */
-    public function findByPublicUid(EntityId $uid, ArticleIncludeOptionsDTO $dto): ?DomainArticle;
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle;
+
+     /**
+     * Find articles matching complex criteria with filters, search, sorting, and pagination.
+     * @param ArticleCriteriaDTO
+     * $criteria Complete filter criteria including:
+     * @return Articles
+     * Domain collection containing:
+     * @throws \Illuminate\Database\QueryException On database failure
+     */
+    public function findByCriteria(ArticleCriteriaDTO $criteria): Articles;
 
     /**
-     * Find articles by unique domain ID (EntityId) and convert to domain model
-     * Returns null if not found, throws exception if access denied
+     * Delete article by integer ID with proper relationship cleanup.
+     * Note: Engagement data (likes, views, comments) should be cleaned up
+     * by the service layer before calling this method.
+     *
+     * @param int $id The article's integer ID (not UUID)
+     * @return bool True if deleted successfully
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article with ID not found
+     * @throws \Illuminate\Database\QueryException On database failure
      */
-    public function findByCriteria(ArticleCriteriaDTO $dto): Articles;
+    public function deleteById(int $id): bool;
 
     /**
-     * Delete article by ID with proper authorization
-     * Returns true if deleted, false if not found or unauthorized
+     * Find articles by author user ID with limit.
+     *
+     * Returns most recent articles by a specific user, ordered by creation date.
+     * Eager loads user and kanjis relationships.
+     *
+     * @param UserId $authorId The author's user ID
+     * @param int $limit Maximum number of articles to return (default: 10)
+     * @return array<array> Array of article arrays (not domain models, raw Eloquent arrays)
+     * @throws \Illuminate\Database\QueryException On database failure
+     * @todo Potentially not needed, as findByCriteria can be sufficient
      */
-    public function deleteById(ArticleId $id): bool;
-
-    /**
-     * Find articles by author ID
-     * Returns paginated array of articles or empty array if none found
-     */
-    // TODO: potentially not needed, as getPaginated can be sufficient
     public function findByUserId(UserId $authorId, int $limit = 10): array;
 
     /**
-     * Find article ID by Article UUID
+     * Get integer ID from article UUID.
+     *
+     * Useful for operations that require the integer ID but only have the public UUID.
+     *
+     * @param EntityId $entityUuid The article's public UUID
+     * @return int|null The article's integer ID, or null if not found
+     * @throws \Illuminate\Database\QueryException On database failure
      */
-    public function getIdByUuid(EntityId $entityUuid): int | null;
-
+    public function getIdByUuid(EntityId $entityUuid): int|null;
 }

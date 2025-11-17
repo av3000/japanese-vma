@@ -11,7 +11,7 @@ readonly class Viewer
 
     public static function fromRequest(): self
     {
-        return new self(auth()->id(), request()->ip());
+        return new self(auth('api')->id(), request()->ip());
     }
 
     public function isAuthenticated(): bool

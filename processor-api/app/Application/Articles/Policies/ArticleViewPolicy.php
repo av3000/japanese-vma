@@ -2,9 +2,11 @@
 namespace App\Application\Articles\Policies;
 
 use App\Domain\Articles\Models\Article;
-use App\Domain\Shared\Enums\PublicityStatus;
+
+use App\Domain\Shared\Enums\{PublicityStatus, UserRole};
 use App\Http\User;
 
+// TODO: rename to ArticlePolicy
 class ArticleViewPolicy
 {
     /**
@@ -21,8 +23,7 @@ class ArticleViewPolicy
             ];
         }
 
-        if ($user->isAdmin()) {
-            // Admins can see everything - no restrictions
+        if ($user->hasRole(UserRole::ADMIN->value)) {
             return [
                 'publicity' => 'all',
                 'user_id' => 'all'
@@ -54,6 +55,37 @@ class ArticleViewPolicy
             return false;
         }
 
-        return $user->isAdmin() || $user->id === $article->user_id;
+        return $user->hasRole(UserRole::ADMIN->value) || $user->id === $article->getAuthorId()->value();
+    }
+
+    // TODO: should use Article domain instead of persistence article when refactored
+    public function canDelete(?User $user, Article $article): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->id === $article->getIdValue()) {
+            return true;
+        }
+
+        return $user->hasRole(UserRole::ADMIN->value);
+    }
+
+     /**
+     * Determine if user can update an article.
+     * Business rule: Only the owner or admin can update articles.
+     */
+    public function canUpdate(?User $user, Article $article): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->id === $article->getAuthorId()->value()) {
+            return true;
+        }
+
+        return $user->hasRole(UserRole::ADMIN->value);
     }
 }

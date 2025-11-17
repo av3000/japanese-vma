@@ -13,5 +13,6 @@ interface ViewRepositoryInterface
     public function findByFilter(ViewFilterDTO $filters): ?int;
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
     public function findAllByFilter(ViewFilterDTO $filters): array;
+    public function deleteByEntity(int $entityId, int $entityTypeId): void;
     public function updateTimestampById(int $viewId): void;
 }

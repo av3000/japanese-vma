@@ -8,7 +8,7 @@ class StoreArticleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth('api')->check();
     }
 
     public function rules(): array
@@ -19,7 +19,7 @@ class StoreArticleRequest extends FormRequest
             'content_jp' => 'required|string|min:10|max:2000',
             'content_en' => 'nullable|string|max:2000',
             'source_link' => 'required|url|max:500',
-            'publicity' => 'nullable|boolean',
+            'publicity' => 'required|boolean',
             'tags' => 'nullable|array|max:10', // TODO: Also handle tags logic in business layer
             'tags.*' => 'string|max:50|distinct',
         ];

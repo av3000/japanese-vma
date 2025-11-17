@@ -27,6 +27,12 @@ class LikeRepository implements LikeRepositoryInterface
         return $query->first()?->id;
     }
 
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+        Like::where('real_object_id', $entityId)
+            ->where('template_id', $entityTypeId)
+            ->delete();
+    }
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
     {
         $results = Like::where('template_id', $objectType->getLegacyId())

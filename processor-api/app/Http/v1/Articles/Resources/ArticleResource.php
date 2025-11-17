@@ -14,12 +14,14 @@ class ArticleResource extends JsonResource
         $article,
         ?ArticleListDTO $options = null,
         ?ArticleStats $stats = null,
-        array $hashtags = []
+        array $hashtags = [],
+        bool $isNew = false
     ) {
         parent::__construct($article);
         $this->options = $options;
         $this->stats = $stats;
         $this->hashtags = $hashtags;
+        $this->isNew = $isNew;
     }
     /**
      * Transform the article domain model into an API representation.
@@ -36,7 +38,8 @@ class ArticleResource extends JsonResource
             'entity_type_uid' => (string) $this->resource->getEntityTypeUid(),
             'title_jp' => (string) $this->resource->getTitleJp(),
             'title_en' => (string) $this->resource->getTitleEn(),
-            'content_preview' => $this->resource->getContentJp()->excerpt(),
+            'content_preview_jp' => $this->resource->getContentJp()->excerpt(),
+            'content_preview_en' => $this->resource->getContentEn()->excerpt(),
             'source_link' => (string) $this->resource->getSourceUrl(),
             'publicity' => $this->resource->getPublicity()->value,
             'status' => $this->resource->getStatus()->value,
@@ -45,7 +48,7 @@ class ArticleResource extends JsonResource
                 'id' => $this->resource->getAuthorId()->value(),
                 'name' => $this->resource->getAuthorName()->value(),
             ],
-            'hashtags' => $this->options && $this->options->include_hashtags ? $this->hashtags : [],
+            'hashtags' => ($this->options && $this->options->include_hashtags) || $this->isNew ? $this->hashtags : [],
             'created_at' => $this->resource->getCreatedAt()->format('c'),
             'updated_at' => $this->resource->getUpdatedAt()->format('c'),
             'engagement' => [

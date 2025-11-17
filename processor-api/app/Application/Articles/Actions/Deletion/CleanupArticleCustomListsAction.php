@@ -1,17 +1,15 @@
 <?php
 namespace App\Application\Articles\Actions\Deletion;
 
-use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 
 class CleanupArticleCustomListsAction
 {
-    public function execute(Article $article): void
+    public function execute(int $id): void
     {
-        // Remove from custom lists
-        // TODO: Create well defined enums for static uids
         DB::table('customlist_object')
-            ->where('real_object_id', $article->id)
+            ->where('real_object_id', $id)
             ->where('listtype_id', ObjectTemplateType::ARTICLE->value)
             ->delete();
     }

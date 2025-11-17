@@ -48,6 +48,13 @@ class ViewRepository implements ViewRepositoryInterface
         return $this->buildBaseQuery($filter)->get()->toArray();
     }
 
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+        View::where('real_object_id', $entityId)
+            ->where('template_id', $entityTypeId)
+            ->delete();
+    }
+
     private function buildBaseQuery(ViewFilterDTO $filter): Builder
     {
         return View::where('template_id', $filter->objectType->getLegacyId())

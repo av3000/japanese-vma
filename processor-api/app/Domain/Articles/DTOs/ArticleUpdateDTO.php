@@ -11,7 +11,7 @@ readonly class ArticleUpdateDTO
         public ?string $source_link = null,
         public ?bool $publicity = null,
         public ?int $status = null,
-        public ?string $tags = null,
+        public ?array $tags = null,
         public bool $reattach = false
     ) {}
     public static function fromRequest(array $validated): self
