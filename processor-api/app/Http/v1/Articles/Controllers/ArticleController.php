@@ -108,6 +108,7 @@ class ArticleController extends Controller
         // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
         // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
 
+        // TODO: returning only Id might be enough for frontend.
         return TypedResults::created(
             new ArticleResource(article: $article, isNew: true, hashtags: $hashtags)
         );
@@ -149,7 +150,16 @@ class ArticleController extends Controller
 
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse
     {
+        // TODO: could find better way to handle this, perhaps in service? or does it belong here as Http consern?
+        if (!$request->hasAnyUpdateableFields()) {
+            return TypedResults::validationProblem(
+                ['fields' => ['At least one field must be provided for update operation']],
+                'No fields to update'
+            );
+        }
+
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
+
         $result = $this->articleService->updateArticle(
             $uid,
             $updateDTO,
@@ -170,38 +180,11 @@ class ArticleController extends Controller
         // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
         // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
 
+        // TODO: returning only Id might be enough for frontend.
         return TypedResults::ok(
             new ArticleResource(article: $article, isNew: false, hashtags: $hashtags)
         );
     }
-
-    // public function update(UpdateArticleRequest $request, int $id): JsonResponse|ArticleResource {
-    //     // For scalability, this can be moved to background job, meaning, we dispatch a job to update article
-    //     // and return a response that the update request was accepted.
-    //     // Then the client can poll for status.
-    //     try {
-    //         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
-    //         $article = $this->articleService->updateArticle(
-    //             $id,
-    //             $updateDTO,
-    //             auth('api')->id()
-    //         );
-
-    //         if (!$article) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Article not found or unauthorized'
-    //             ], 404);
-    //         }
-
-    //         return response()->json(new ArticleResource($article));
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => $e->getMessage()
-    //         ], 422);
-    //     }
-    // }
 
     public function destroy(string $uuid): JsonResponse {
         try {

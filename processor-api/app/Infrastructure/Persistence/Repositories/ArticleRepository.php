@@ -17,19 +17,13 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function __construct() {}
 
     /**
-     * Save a domain article to persistence (create or update).
+     * Create a new article in persistence.
      *
-     * Flow:
-     * 1. Convert domain model to persistence entity array
-     * 2. Create persistence record in database
-     * 3. Eager load user relationship to avoid N+1 query
-     * 4. Convert back to domain model with all relationships
-     *
-     * @param DomainArticle $article The domain article to save
-     * @return DomainArticle|null The saved article with generated ID and relationships, or null on failure
-     * @throws \Illuminate\Database\QueryException On database constraint violation or connection failure
+     * @param DomainArticle $article The domain article to create
+     * @return DomainArticle The created article with generated ID and relationships
+     * @throws \Illuminate\Database\QueryException On database constraint violation
      */
-    public function save(DomainArticle $article): ?DomainArticle
+    public function create(DomainArticle $article): DomainArticle
     {
         $mappedArticle = ArticleMapper::mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
@@ -39,16 +33,28 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
+     * Update an existing article in persistence.
+     *
+     * @param DomainArticle $article The domain article with updated state
+     * @return void
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article doesn't exist
+     */
+    public function update(DomainArticle $article): void
+    {
+        $entityArticle = PersistenceArticle::with('user')
+            ->where('uuid', $article->getUid()->value())
+            ->firstOrFail();
+
+        ArticleMapper::mapToExistingEntity($article, $entityArticle);
+        $entityArticle->save();
+    }
+
+    /**
      * Find article by public UUID with optional selective eager loading.
      *
-     * Allows fine-grained control over which relationships to load,
-     * preventing unnecessary queries while avoiding N+1 when relationships are needed.
      *
      * @param EntityId $articleUuid The article's public UUID
      * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
-     *                                           - include_user: Load author relationship
-     *                                           - include_kanjis: Load kanji relationships (many-to-many)
-     *                                           - include_words: Load word relationships (many-to-many)
      * @return DomainArticle|null The domain article if found, null if not found
      * @throws \Illuminate\Database\QueryException On database failure
      */
@@ -72,12 +78,6 @@ class ArticleRepository implements ArticleRepositoryInterface
 
     /**
      * Delete article by integer ID with proper relationship cleanup.
-     *
-     * Handles cascade deletion by:
-     * 1. Detaching many-to-many kanji relationships
-     * 2. Detaching many-to-many word relationships
-     * 3. Deleting the article record
-     *
      * Note: Engagement data (likes, views, comments) should be cleaned up
      * by the service layer before calling this method.
      *
@@ -138,29 +138,13 @@ class ArticleRepository implements ArticleRepositoryInterface
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
-     * This is the primary query method for article listing, handling:
-     * - Permission-based visibility (public/private based on user role and ownership)
-     * - Content filtering (category, search terms)
-     * - Sorting (any field, any direction)
-     * - Pagination
-     *
      * Returns a domain collection (Articles) that wraps the paginated results
      * with type-safe domain models instead of Eloquent models.
      *
      * @param ArticleCriteriaDTO
      * $criteria Complete filter criteria including:
-     *                                     - visibilityRules: Permission-based access rules
-     *                                     - categoryId: Optional category filter
-     *                                     - search: Optional search term (searches title_jp, title_en)
-     *                                     - sort: Sort field and direction
-     *                                     - pagination: Page number and items per page
      * @return Articles
      * Domain collection containing:
-     *                  - items: Array of DomainArticle objects
-     *                  - total: Total count of matching articles
-     *                  - per_page: Items per page
-     *                  - current_page: Current page number
-     *                  - last_page: Total number of pages
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles

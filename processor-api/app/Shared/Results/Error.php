@@ -1,24 +1,25 @@
 <?php
 namespace App\Shared\Results;
 
-use App\Shared\Enums\ErrorType;
+use App\Shared\Enums\HttpStatus;
 
 readonly class Error
 {
     public function __construct(
         public string $code,
-        public ErrorType $type,
+        public HttpStatus $status,
         public string $description,
-        public ?string $detail = null
+        public ?string $detail = null,
+        public ?string $errorMessage = null
     ) {}
 
     public static function none(): self
     {
-        return new self('', ErrorType::FAILURE, '');
+        return new self('', HttpStatus::INTERNAL_SERVER_ERROR, '');
     }
 
-    public function toHttpStatus(): int
+    public function toHttpStatus(): HttpStatus
     {
-        return $this->type->toHttpStatus();
+        return $this->status;
     }
 }

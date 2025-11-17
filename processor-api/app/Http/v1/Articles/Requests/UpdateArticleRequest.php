@@ -38,4 +38,31 @@ class UpdateArticleRequest extends FormRequest
             'tags.*.distinct' => 'Duplicate tags are not allowed',
         ];
     }
+
+    /**
+     * Get the list of updateable fields.
+     */
+    private function getUpdateableFields(): array
+    {
+        return [
+            'title_jp',
+            'title_en',
+            'content_jp',
+            'content_en',
+            'source_link',
+            'publicity',
+            'status',
+            'tags',
+            'reattach'
+        ];
+    }
+
+    /**
+     * Check if request contains at least one updateable field.
+     */
+    public function hasAnyUpdateableFields(): bool
+    {
+        return collect($this->getUpdateableFields())
+            ->some(fn($field) => $this->has($field));
+    }
 }
