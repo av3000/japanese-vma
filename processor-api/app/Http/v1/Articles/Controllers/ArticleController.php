@@ -150,7 +150,7 @@ class ArticleController extends Controller
 
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse
     {
-        // TODO: could find better way to handle this, perhaps in service? or does it belong here as Http consern?
+        // TODO: could find better way to handle this, perhaps generic validator accepting $request as param.
         if (!$request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
                 ['fields' => ['At least one field must be provided for update operation']],
@@ -159,6 +159,9 @@ class ArticleController extends Controller
         }
 
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
+
+        // TODO: Always Check if user at given time exists
+        // $user = $this->userService->getUserById(auth('auth')->user()->id)
 
         $result = $this->articleService->updateArticle(
             $uid,
