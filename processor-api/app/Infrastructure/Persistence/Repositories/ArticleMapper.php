@@ -63,4 +63,31 @@ class ArticleMapper
             'updated_at' => $article->getUpdatedAt(),
         ];
     }
+
+     /**
+     * Map domain model onto EXISTING persistence entity (Domain → Entity).
+     * Mutates the entity with updated values. Used for updates.
+     *
+     * @param DomainArticle $article Domain article with updated state
+     * @param PersistenceArticle $entity Existing tracked entity to update
+     * @return void
+     */
+    public static function mapToExistingEntity(DomainArticle $article, PersistenceArticle $entity): void
+    {
+        $entity->title_jp = $article->getTitleJp()->value;
+        $entity->title_en = $article->getTitleEn()?->value;
+        $entity->content_jp = $article->getContentJp()->value;
+        $entity->content_en = $article->getContentEn()?->value;
+        $entity->source_link = $article->getSourceUrl()->value;
+        $entity->publicity = $article->getPublicity()->value;
+        $entity->status = $article->getStatus()->value;
+
+        $jlptLevels = $article->getJlptLevels();
+        $entity->n1 = (string)$jlptLevels->n1;
+        $entity->n2 = (string)$jlptLevels->n2;
+        $entity->n3 = (string)$jlptLevels->n3;
+        $entity->n4 = (string)$jlptLevels->n4;
+        $entity->n5 = (string)$jlptLevels->n5;
+        $entity->uncommon = (string)$jlptLevels->uncommon;
+    }
 }

@@ -48,7 +48,7 @@ interface ArticleServiceInterface
      * @return Result Success data: Article, Failure data: Error (notFound, unauthorized)
      * @todo Refactor to use EntityId and return domain model instead of persistence model
      */
-    public function updateArticle(EntityId $articleUid, ArticleUpdateDTO $dto, User $user): Result;
+    public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result;
 
     /**
      * Delete article with full cleanup (relationships, engagement, hashtags).

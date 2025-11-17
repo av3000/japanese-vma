@@ -6,6 +6,7 @@ use App\Domain\Articles\Models\Article;
 use App\Domain\Shared\Enums\{PublicityStatus, UserRole};
 use App\Http\User;
 
+// TODO: rename to ArticlePolicy
 class ArticleViewPolicy
 {
     /**
@@ -65,6 +66,23 @@ class ArticleViewPolicy
         }
 
         if ($user->id === $article->getIdValue()) {
+            return true;
+        }
+
+        return $user->hasRole(UserRole::ADMIN->value);
+    }
+
+     /**
+     * Determine if user can update an article.
+     * Business rule: Only the owner or admin can update articles.
+     */
+    public function canUpdate(?User $user, Article $article): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->id === $article->getAuthorId()->value()) {
             return true;
         }
 

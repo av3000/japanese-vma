@@ -57,14 +57,6 @@ class Article extends Model
         'uncommon' => 0
     ];
 
-    /**
-     * Check if content changes require kanji reprocessing
-     */
-    public function shouldReprocessContent(ArticleUpdateDTO $dto): bool
-    {
-        return $dto->reattach || $dto->content_jp !== null;
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -9,52 +9,48 @@ use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 interface ArticleRepositoryInterface
 {
     /**
-     * Save a domain article to persistence (create or update).
+     * Create a new article in persistence.
      *
-     * Converts domain model to persistence entity, saves to database,
-     * reloads with user relationship, and converts back to domain model.
-     *
-     * @param DomainArticle $article The domain article to save
-     * @return DomainArticle|null The saved article with generated ID, or null on failure
-     * @throws \Illuminate\Database\QueryException On database constraint violation or connection failure
+     * @param DomainArticle $article The domain article to create
+     * @return DomainArticle The created article with generated ID and relationships
+     * @throws \Illuminate\Database\QueryException On database constraint violation
      */
-    public function save(DomainArticle $article): ?DomainArticle;
+    public function create(DomainArticle $article): DomainArticle;
 
     /**
-     * Find article by public UUID with optional eager loading.
+     * Update an existing article in persistence.
      *
-     * Allows selective loading of relationships (user, kanjis, words) to avoid N+1 queries
-     * when needed and reduce query overhead when not needed.
+     * @param DomainArticle $article The domain article with updated state
+     * @return void
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article doesn't exist
+     */
+    public function update(DomainArticle $article): void;
+
+    /**
+     * Find article by public UUID with optional selective eager loading.
+     *
      *
      * @param EntityId $articleUuid The article's public UUID
-     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading relationships (user, kanjis, words)
-     * @return DomainArticle|null The domain article if found, null otherwise
+     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
+     * @return DomainArticle|null The domain article if found, null if not found
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle;
 
-    /**
+     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
-     *
-     * Handles permission-based filtering, content search, sorting, and pagination
-     * in a single optimized query. Converts persistence models to domain collection.
-     *
-     * @param ArticleCriteriaDTO $dto Filter criteria including:
-     *                                - visibility rules (public/private based on user permissions)
-     *                                - search term (title_jp, title_en)
-     *                                - category filter
-     *                                - sorting (field + direction)
-     *                                - pagination (page, per_page)
-     * @return Articles Domain collection with paginated articles and metadata
+     * @param ArticleCriteriaDTO
+     * $criteria Complete filter criteria including:
+     * @return Articles
+     * Domain collection containing:
      * @throws \Illuminate\Database\QueryException On database failure
      */
-    public function findByCriteria(ArticleCriteriaDTO $dto): Articles;
+    public function findByCriteria(ArticleCriteriaDTO $criteria): Articles;
 
     /**
-     * Delete article by integer ID with relationship cleanup.
-     *
-     * Detaches all many-to-many relationships (kanjis, words) before deletion
-     * to maintain referential integrity.
+     * Delete article by integer ID with proper relationship cleanup.
+     * Note: Engagement data (likes, views, comments) should be cleaned up
+     * by the service layer before calling this method.
      *
      * @param int $id The article's integer ID (not UUID)
      * @return bool True if deleted successfully
