@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Shared\Results;
 
 use App\Shared\Enums\HttpStatus;

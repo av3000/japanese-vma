@@ -6,7 +6,7 @@ namespace App\Domain\Shared\ValueObjects;
 
 use InvalidArgumentException;
 
-final readonly class UserName
+final readonly class Email
 {
     public function __construct(
         private string $value
@@ -14,15 +14,15 @@ final readonly class UserName
         $trimmed = trim($this->value);
 
         if (empty($trimmed)) {
-            throw new InvalidArgumentException('User name cannot be empty');
+            throw new InvalidArgumentException('Email cannot be empty');
         }
 
-        if (mb_strlen($trimmed) < 2) {
-            throw new InvalidArgumentException('User name must be at least 2 characters');
+        if (!filter_var($trimmed, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Invalid email format');
         }
 
         if (mb_strlen($trimmed) > 255) {
-            throw new InvalidArgumentException('User name cannot exceed 255 characters');
+            throw new InvalidArgumentException('Email cannot exceed 255 characters');
         }
     }
 
@@ -36,7 +36,7 @@ final readonly class UserName
         return $this->value;
     }
 
-    public function equals(UserName $other): bool
+    public function equals(Email $other): bool
     {
         return $this->value === $other->value;
     }

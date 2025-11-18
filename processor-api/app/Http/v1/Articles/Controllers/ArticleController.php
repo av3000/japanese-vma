@@ -26,7 +26,6 @@ use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType, UserRole};
 use App\Domain\Articles\Errors\ArticleErrors;
-use App\Shared\Results\Result;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
@@ -40,7 +39,8 @@ class ArticleController extends Controller
         private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
-    public function index(IndexArticleRequest $request): JsonResponse {
+    public function index(IndexArticleRequest $request): JsonResponse
+    {
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
@@ -53,7 +53,7 @@ class ArticleController extends Controller
             $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
         }
 
-        if($listDTO->include_hashtags) {
+        if ($listDTO->include_hashtags) {
             $hashtagsMap = $this->hashtagService->getBatchHashtags(
                 $entityIds,
                 ObjectTemplateType::ARTICLE
@@ -66,7 +66,11 @@ class ArticleController extends Controller
             $stats = $statsMap[$article->getIdValue()] ?? null;
             $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
 
-            $resources[] = new ArticleResource($article, $listDTO, $stats, $hashtags);
+            // TODO: make options in article resource type agnostic, best accept array and check individual values inside, rather than specifying exact DTO like ArticleListDTO
+            $resources[] = new ArticleResource($article, [
+                'include_hashtags' => $listDTO->include_hashtags,
+                'include_stats' => $listDTO->include_stats_counts,
+            ], $stats, $hashtags);
         }
 
         $data = [
@@ -94,10 +98,10 @@ class ArticleController extends Controller
 
         $result = $this->articleService->createArticle($createDTO, auth('api')->user());
 
-        $article = $result->data;
+        $article = $result->getData();
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
         $hashtags = $this->hashtagService->getHashtags(
@@ -110,7 +114,7 @@ class ArticleController extends Controller
 
         // TODO: returning only Id might be enough for frontend.
         return TypedResults::created(
-            new ArticleResource(article: $article, isNew: true, hashtags: $hashtags)
+            new ArticleResource(article: $article, hashtags: $hashtags)
         );
     }
 
@@ -121,10 +125,10 @@ class ArticleController extends Controller
         $result = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->data;
+        $article = $result->getData();
         // TODO: Have 4 separate calls rather than single multi-responsible service.
         // Create findCountByFilter method for each repository
         // return counts here. For richer data, separate filters should be used.
@@ -160,7 +164,7 @@ class ArticleController extends Controller
 
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
 
-        // TODO: Always Check if user at given time exists
+        // TODO: Always Check if user at given time exists, but each request is checked for authentication, so additional check is redundant??
         // $user = $this->userService->getUserById(auth('auth')->user()->id)
 
         $result = $this->articleService->updateArticle(
@@ -170,10 +174,10 @@ class ArticleController extends Controller
         );
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->data;
+        $article = $result->getData();
 
         $hashtags = $this->hashtagService->getHashtags(
             $article->getIdValue(),
@@ -185,11 +189,12 @@ class ArticleController extends Controller
 
         // TODO: returning only Id might be enough for frontend.
         return TypedResults::ok(
-            new ArticleResource(article: $article, isNew: false, hashtags: $hashtags)
+            new ArticleResource(article: $article, hashtags: $hashtags)
         );
     }
 
-    public function destroy(string $uuid): JsonResponse {
+    public function destroy(string $uuid): JsonResponse
+    {
         try {
             $articleUuid = EntityId::from($uuid);
 

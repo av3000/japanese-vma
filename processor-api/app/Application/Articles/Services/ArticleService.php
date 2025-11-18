@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Articles\Services;
 
 use App\Application\Engagement\Actions\{IncrementViewAction, LoadArticleCommentsAction};
@@ -95,7 +96,7 @@ class ArticleService implements ArticleServiceInterface
                     );
 
                     if ($hashtagResult->isFailure()) {
-                        throw new \Exception($hashtagResult->error->description);
+                        throw new \Exception($hashtagResult->getError()->description);
                     }
                 }
 
@@ -103,7 +104,6 @@ class ArticleService implements ArticleServiceInterface
             });
 
             return Result::success($article);
-
         } catch (\Exception $e) {
             \Log::error('Article creation failed', [
                 'user_id' => $user->id,
@@ -226,7 +226,6 @@ class ArticleService implements ArticleServiceInterface
                 }
 
                 return $updatedDomainArticle;
-
             });
 
             return Result::success($result);
@@ -329,7 +328,6 @@ class ArticleService implements ArticleServiceInterface
             });
 
             return Result::success();
-
         } catch (ArticleNotFoundException $e) {
             return Result::failure(ArticleErrors::notFound($articleUuid->value()));
         } catch (ArticleAccessDeniedException $e) {

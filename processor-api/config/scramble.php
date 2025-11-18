@@ -7,11 +7,11 @@ return [
      * Your API path. By default, all routes starting with this path will be added to the docs.
      * If you need to change this behavior, you can add your custom routes resolver using `Scramble::routes()`.
      */
-    'api_path' => 'api/v2',
+    'api_path' => 'api/v1',
     // 'api_path' => 'api/v2/test-only',  // Only match your test route
 
     'only' => [
-        'api/v2/test'
+        'api/v1/users/*',
     ],
 
     'debug' => true, // Add this to enable debug mode.
@@ -37,7 +37,8 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'API for Japanese learning application with articles, kanjis, and lists',    ],
+        'description' => 'API for Japanese learning application with articles, kanjis, and lists',
+    ],
 
     /*
      * Customize Stoplight Elements UI

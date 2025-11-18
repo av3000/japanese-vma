@@ -25,12 +25,4 @@ readonly class ArticleIncludeOptionsDTO
             include_likes: $validated['include_likes'] ?? true,
         );
     }
-
-    public function hasEngagementFlags(): bool
-    {
-        return $this->include_views ||
-            $this->include_likes ||
-            $this->include_downloads ||
-            $this->include_comments;
-    }
 }

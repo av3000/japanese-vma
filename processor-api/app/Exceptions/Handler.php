@@ -2,13 +2,14 @@
 
 namespace App\Exceptions;
 
-use App\Shared\Enums\HttpStatus;
-
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
+
+use App\Shared\Enums\HttpStatus;
 
 class Handler extends ExceptionHandler
 {
@@ -79,7 +80,7 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof QueryException && ($request->expectsJson() || $request->is('api/*'))) {
-            Log::error('Database query failed', [
+            \Log::error('Database query failed', [
                 'sql' => $exception->getSql(),
                 'bindings' => $exception->getBindings(),
                 'error' => $exception->getMessage(),
@@ -100,16 +101,17 @@ class Handler extends ExceptionHandler
 
         if ($this->isHttpException($exception)) {
             if ($request->is('api/*')) {
-                $httpStatus = HttpStatus::tryFrom($exception->getStatusCode());
+                $httpStatusEnum = HttpStatus::tryFrom($exception->getStatusCode());
+                $httpStatus = $httpStatusEnum?->getHttpExceptionTitle() ?? 'Error';
 
                 return response()->json([
-                    'type' => $httpStatus->getTypeUri() ?? 'about:blank',
-                    'title' => $httpStatus->getHttpExceptionTitle($status) ?? 'Error',
+                    'type' => $httpStatusEnum->getTypeUri() ?? 'about:blank',
+                    'title' => $httpStatus,
                     'status' => $exception->getStatusCode(),
                     'detail' => $exception->getMessage(),
                     'instance' => $request->path(),
                     'timestamp' => now()->toIso8601String()
-                ], $status);
+                ], $httpStatusEnum->value);
             }
 
             // Web routes - return views

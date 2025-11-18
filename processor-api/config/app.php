@@ -162,6 +162,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Barryvdh\Snappy\ServiceProvider::class,
+        Dedoc\Scramble\ScrambleServiceProvider::class,
 
         /*
          * Package Service Providers...
