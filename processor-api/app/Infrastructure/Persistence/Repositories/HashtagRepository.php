@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;

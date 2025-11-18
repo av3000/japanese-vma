@@ -66,7 +66,11 @@ class ArticleController extends Controller
             $stats = $statsMap[$article->getIdValue()] ?? null;
             $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
 
-            $resources[] = new ArticleResource($article, $listDTO, $stats, $hashtags);
+            // TODO: make options in article resource type agnostic, best accept array and check individual values inside, rather than specifying exact DTO like ArticleListDTO
+            $resources[] = new ArticleResource($article, [
+                'include_hashtags' => $listDTO->include_hashtags,
+                'include_stats' => $listDTO->include_stats_counts,
+            ], $stats, $hashtags);
         }
 
         $data = [
@@ -110,7 +114,7 @@ class ArticleController extends Controller
 
         // TODO: returning only Id might be enough for frontend.
         return TypedResults::created(
-            new ArticleResource(article: $article, isNew: true, hashtags: $hashtags)
+            new ArticleResource(article: $article, hashtags: $hashtags)
         );
     }
 
@@ -160,7 +164,7 @@ class ArticleController extends Controller
 
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
 
-        // TODO: Always Check if user at given time exists
+        // TODO: Always Check if user at given time exists, but each request is checked for authentication, so additional check is redundant??
         // $user = $this->userService->getUserById(auth('auth')->user()->id)
 
         $result = $this->articleService->updateArticle(
@@ -185,7 +189,7 @@ class ArticleController extends Controller
 
         // TODO: returning only Id might be enough for frontend.
         return TypedResults::ok(
-            new ArticleResource(article: $article, isNew: false, hashtags: $hashtags)
+            new ArticleResource(article: $article, hashtags: $hashtags)
         );
     }
 

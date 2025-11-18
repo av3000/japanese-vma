@@ -14,14 +14,20 @@ use Illuminate\Http\Request;
  */
 class ArticleResource extends JsonResource
 {
+    private ?array $options;
+    private ?ArticleStats $stats;
+    private array $hashtags;
+
     public function __construct(
         Article $article,
-        ?ArticleListDTO $options = null,
+        ?array $options = null,
         ?ArticleStats $stats = null,
         array $hashtags = [],
-        bool $isNew = false
     ) {
         parent::__construct($article);
+        $this->options = $options;
+        $this->stats = $stats;
+        $this->hashtags = $hashtags;
     }
     /**
      * Transform the article domain model into an API representation.
@@ -31,31 +37,38 @@ class ArticleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+         // ✅ Use $this->resource, not $this->article
+        /** @var Article $article */
+        $article = $this->resource;
+
+        $includeHashtags = $this->options['include_hashtags'] ?? true;
+        $includeStats = $this->options['include_stats'] ?? true;
+
         return [
-            'id' => $this->article->getIdValue(),
-            'uuid' => (string) $this->article->getUid(),
-            'entity_type_uid' => (string) $this->article->getEntityTypeUid(),
-            'title_jp' => (string) $this->article->getTitleJp(),
-            'title_en' => (string) $this->article->getTitleEn(),
-            'content_preview_jp' => $this->article->getContentJp()->excerpt(),
-            'content_preview_en' => $this->article->getContentEn()->excerpt(),
-            'source_link' => (string) $this->article->getSourceUrl(),
-            'publicity' => $this->article->getPublicity()->value,
-            'status' => $this->article->getStatus()->value,
-            'jlpt_levels' => $this->article->getJlptLevels()->toArray(),
+            'id' => $article->getIdValue(),
+            'uuid' => (string) $article->getUid(),
+            'entity_type_uid' => (string) $article->getEntityTypeUid(),
+            'title_jp' => (string) $article->getTitleJp(),
+            'title_en' => (string) $article->getTitleEn(),
+            'content_preview_jp' => $article->getContentJp()->excerpt(),
+            'content_preview_en' => $article->getContentEn()?->excerpt(),
+            'source_link' => (string) $article->getSourceUrl(),
+            'publicity' => $article->getPublicity()->value,
+            'status' => $article->getStatus()->value,
+            'jlpt_levels' => $article->getJlptLevels()->toArray(),
             'author' => [
-                'id' => $this->article->getAuthorId()->value(),
-                'name' => $this->article->getAuthorName()->value(),
+                'id' => $article->getAuthorId()->value(),
+                'name' => $article->getAuthorName()->value(),
             ],
-            'hashtags' => ($this->options && $this->options->include_hashtags) || $this->isNew ? $this->hashtags : [],
-            'created_at' => $this->article->getCreatedAt()->format('c'),
-            'updated_at' => $this->article->getUpdatedAt()->format('c'),
+            'hashtags' => $includeHashtags ? $this->hashtags : [],
+            'created_at' => $article->getCreatedAt()->format('c'),
+            'updated_at' => $article->getUpdatedAt()->format('c'),
             'engagement' => [
-                'stats' => $this->stats ? [
-                    'likes_count' => $this->stats?->getLikesCount(),
-                    'views_count' => $this->stats?->getViewsCount(),
-                    'downloads_count' => $this->stats?->getDownloadsCount(),
-                    'comments_count' => $this->stats?->getCommentsCount(),
+                'stats' => $includeStats && $this->stats ? [
+                    'likes_count' => $this->stats->getLikesCount(),
+                    'views_count' => $this->stats->getViewsCount(),
+                    'downloads_count' => $this->stats->getDownloadsCount(),
+                    'comments_count' => $this->stats->getCommentsCount(),
                 ] : null,
             ]
         ];

@@ -168,10 +168,10 @@ Route::prefix('v1')->group(function () {
 
     Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
 
+    Route::get('/users/{uuid}', ['\App\Http\v1\Users\Controllers\UserController', 'show']);
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
 
-        Route::get('/users/{uuid}', ['\App\Http\v1\Users\Controllers\UserController', 'show']);
 
         // Articles
         // Articles CRUD

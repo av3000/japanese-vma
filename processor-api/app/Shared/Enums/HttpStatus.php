@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Shared\Enums;
 
 enum HttpStatus: int
@@ -7,14 +8,12 @@ enum HttpStatus: int
     case CREATED = 201;
     case ACCEPTED = 202;
     case NO_CONTENT = 204;
-
     case BAD_REQUEST = 400;
     case UNAUTHORIZED = 401;
     case FORBIDDEN = 403;
     case NOT_FOUND = 404;
     case CONFLICT = 409;
     case UNPROCESSABLE_ENTITY = 422;
-
     case INTERNAL_SERVER_ERROR = 500;
 
     public function isSuccess(): bool
@@ -34,7 +33,7 @@ enum HttpStatus: int
 
     public function getTypeUri(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BAD_REQUEST => 'https://tools.ietf.org/html/rfc7231#section-6.5.1',
             self::UNAUTHORIZED => 'https://tools.ietf.org/html/rfc7231#section-6.5.2',
             self::FORBIDDEN => 'https://tools.ietf.org/html/rfc7231#section-6.5.3',
@@ -46,16 +45,16 @@ enum HttpStatus: int
         };
     }
 
-    private function getHttpExceptionTitle(int $status): string
+    public function getHttpExceptionTitle(): string
     {
-        return match($status) {
-            400 => 'Bad Request',
-            401 => 'Unauthorized',
-            403 => 'Forbidden',
-            404 => 'Not Found',
-            409 => 'Conflict',
-            422 => 'Validation Failed',
-            500 => 'Internal Server Error',
+        return match ($this) {
+            self::BAD_REQUEST => 'Bad Request',
+            self::UNAUTHORIZED => 'Unauthorized',
+            self::FORBIDDEN => 'Forbidden',
+            self::NOT_FOUND => 'Not Found',
+            self::CONFLICT => 'Conflict',
+            self::UNPROCESSABLE_ENTITY => 'Validation Failed',
+            self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
             default => 'Error',
         };
     }
