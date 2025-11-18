@@ -19,95 +19,97 @@ use Illuminate\Support\Facades\Route;
 // });
 
 Route::group([
-	// https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
-      'middleware' => 'auth:api'
-    ], function() {
-        Route::get('logout', 'UserController@logout');
-		Route::get('user', 'UserController@user');
+    // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
+    'middleware' => 'auth:api'
+], function () {
+    Route::get('logout', 'UserController@logout');
+    Route::get('user', 'UserController@user');
 
-		// Articles CUD
-		Route::post('article', 'ArticleController@store');
-		Route::put('article/{id}', 'ArticleController@update');
-		Route::delete('article/{id}', 'ArticleController@delete');
-		Route::get('user/articles', 'ArticleController@getUserArticles');
-		Route::post('article/{id}/like', 'ArticleController@likeArticle');
-		Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
-		Route::post('article/{id}/checklike', 'ArticleController@checkIfLikedArticle');
-		Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
-		Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
-		Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
-		// Article Comment
-		Route::post('article/{id}/comment', 'ArticleController@storeComment');
-		Route::delete('article/{id}/comment/{commentid}', 'ArticleController@deleteComment');
-		Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
-		Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
-		Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
-		// Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
+    // Articles CUD
+    Route::post('article', 'ArticleController@store');
+    Route::put('article/{id}', 'ArticleController@update');
+    Route::delete('article/{id}', 'ArticleController@delete');
+    Route::get('user/articles', 'ArticleController@getUserArticles');
+    Route::post('article/{id}/like', 'ArticleController@likeArticle');
+    Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
+    Route::post('article/{id}/checklike', 'ArticleController@checkIfLikedArticle');
+    Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
+    Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
+    Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
+    // Article Comment
+    Route::post('article/{id}/comment', 'ArticleController@storeComment');
+    Route::delete('article/{id}/comment/{commentid}', 'ArticleController@deleteComment');
+    Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
+    Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
+    Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
+    // Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
 
-		// Lists CUD
-		Route::post('list', 'CustomListController@store');
-		Route::put('list/{id}', 'CustomListController@update');
-		Route::delete('list/{id}', 'CustomListController@delete');
-		Route::get('user/lists', 'CustomListController@getUserLists');
-		Route::post('user/lists/contain', 'CustomListController@getUserListsForElementsToAdd');
-		Route::post('user/list/contain', 'JapaneseDataController@getUserListAndCheckIfListHasItem');
-		Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
-		Route::post('user/list/removeitemwhileaway', 'CustomListController@removeFromListWhileAway');
-		Route::post('user/list/additemwhileaway', 'CustomListController@addToListWhileAway');
-		Route::post('list/{id}/additem', 'CustomListController@addToList');
-		Route::post('list/{id}/like', 'CustomListController@likeList');
-		Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
-		Route::post('list/{id}/checklike', 'CustomListController@checkIfLikedList');
-		Route::get('list/{id}/radicals-pdf', 'CustomListController@generateRadicalsPdf');
-		Route::get('list/{id}/kanjis-pdf', 'CustomListController@generateKanjisPdf');
-		Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
-		Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
-		Route::post('list/{id}/togglepublicity', 'CustomListController@togglePublicity');
+    // Lists CUD
+    Route::post('list', 'CustomListController@store');
+    Route::put('list/{id}', 'CustomListController@update');
+    Route::delete('list/{id}', 'CustomListController@delete');
+    Route::get('user/lists', 'CustomListController@getUserLists');
+    Route::post('user/lists/contain', 'CustomListController@getUserListsForElementsToAdd');
+    Route::post('user/list/contain', 'JapaneseDataController@getUserListAndCheckIfListHasItem');
+    Route::post('list/{id}/removeitem', 'CustomListController@removeFromList');
+    Route::post('user/list/removeitemwhileaway', 'CustomListController@removeFromListWhileAway');
+    Route::post('user/list/additemwhileaway', 'CustomListController@addToListWhileAway');
+    Route::post('list/{id}/additem', 'CustomListController@addToList');
+    Route::post('list/{id}/like', 'CustomListController@likeList');
+    Route::post('list/{id}/unlike', 'CustomListController@unlikeList');
+    Route::post('list/{id}/checklike', 'CustomListController@checkIfLikedList');
+    Route::get('list/{id}/radicals-pdf', 'CustomListController@generateRadicalsPdf');
+    Route::get('list/{id}/kanjis-pdf', 'CustomListController@generateKanjisPdf');
+    Route::get('list/{id}/words-pdf', 'CustomListController@generateWordsPdf');
+    Route::get('list/{id}/sentences-pdf', 'CustomListController@generateSentencesPdf');
+    Route::post('list/{id}/togglepublicity', 'CustomListController@togglePublicity');
 
-		// List Comment
-		Route::post('list/{id}/comment', 'CustomListController@storeComment');
-		Route::delete('list/{id}/comment/{commentid}', 'CustomListController@deleteComment');
-		Route::put('list/{id}/comment/{commentid}', 'CustomListController@updateComment');
-		Route::post('list/{id}/comment/{commentid}/like', 'CustomListController@likeComment');
-		Route::post('list/{id}/comment/{commentid}/unlike', 'CustomListController@unlikeComment');
+    // List Comment
+    Route::post('list/{id}/comment', 'CustomListController@storeComment');
+    Route::delete('list/{id}/comment/{commentid}', 'CustomListController@deleteComment');
+    Route::put('list/{id}/comment/{commentid}', 'CustomListController@updateComment');
+    Route::post('list/{id}/comment/{commentid}/like', 'CustomListController@likeComment');
+    Route::post('list/{id}/comment/{commentid}/unlike', 'CustomListController@unlikeComment');
 
-		// Sentences CUD
-		Route::post('sentence', 'JapaneseDataController@storeSentence');
-		Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
-		Route::delete('sentence/{id}', 'JapaneseDataController@deleteSentence');
-		// Sentences Comment
-		Route::post('sentence/{id}/comment', 'JapaneseDataController@storeComment');
-		Route::delete('sentence/{id}/comment/{commentid}', 'JapaneseDataController@deleteComment');
-		Route::put('sentence/{id}/comment/{commentid}', 'JapaneseDataController@updateComment');
-		Route::post('sentence/{id}/comment/{commentid}/like', 'JapaneseDataController@likeComment');
-		Route::post('sentence/{id}/comment/{commentid}/unlike', 'JapaneseDataController@unlikeComment');
+    // Sentences CUD
+    Route::post('sentence', 'JapaneseDataController@storeSentence');
+    Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
+    Route::delete('sentence/{id}', 'JapaneseDataController@deleteSentence');
+    // Sentences Comment
+    Route::post('sentence/{id}/comment', 'JapaneseDataController@storeComment');
+    Route::delete('sentence/{id}/comment/{commentid}', 'JapaneseDataController@deleteComment');
+    Route::put('sentence/{id}/comment/{commentid}', 'JapaneseDataController@updateComment');
+    Route::post('sentence/{id}/comment/{commentid}/like', 'JapaneseDataController@likeComment');
+    Route::post('sentence/{id}/comment/{commentid}/unlike', 'JapaneseDataController@unlikeComment');
 
-		// Posts
-		Route::post('post', 'PostController@store');
-		Route::put('post/{id}', 'PostController@update');
-		Route::delete('post/{id}', 'PostController@delete');
-		Route::post('post/{id}/like', 'PostController@likePost');
-		Route::post('post/{id}/unlike', 'PostController@unlikePost');
-		Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
-		Route::post('post/{id}/toggleLock', 'PostController@toggleLock');
-		// Posts Comment
-		Route::post('post/{id}/comment', 'PostController@storeComment');
-		Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
-		Route::put('post/{id}/comment/{commentid}', 'PostController@updateComment');
-		Route::post('post/{id}/comment/{commentid}/like', 'PostController@likeComment');
-		Route::post('post/{id}/comment/{commentid}/unlike', 'PostController@unlikeComment');
+    // Posts
+    Route::post('post', 'PostController@store');
+    Route::put('post/{id}', 'PostController@update');
+    Route::delete('post/{id}', 'PostController@delete');
+    Route::post('post/{id}/like', 'PostController@likePost');
+    Route::post('post/{id}/unlike', 'PostController@unlikePost');
+    Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
+    Route::post('post/{id}/toggleLock', 'PostController@toggleLock');
+    // Posts Comment
+    Route::post('post/{id}/comment', 'PostController@storeComment');
+    Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
+    Route::put('post/{id}/comment/{commentid}', 'PostController@updateComment');
+    Route::post('post/{id}/comment/{commentid}/like', 'PostController@likeComment');
+    Route::post('post/{id}/comment/{commentid}/unlike', 'PostController@unlikeComment');
 
-		// Admin example route
-		Route::group([
-			'middleware'=> 'checkRole:admin'
-			], function() {
-				Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
-				Route::get('article/{id}/getstatus', 'ArticleController@getStatus');
-				Route::get('articles/pendinglist', 'ArticleController@getArticlesPending');
-				Route::post('post/{id}/togglelock', 'PostController@toggleLock');
-			}
-		);
-	});
+    // Admin example route
+    Route::group(
+        [
+            'middleware' => 'checkRole:admin'
+        ],
+        function () {
+            Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
+            Route::get('article/{id}/getstatus', 'ArticleController@getStatus');
+            Route::get('articles/pendinglist', 'ArticleController@getArticlesPending');
+            Route::post('post/{id}/togglelock', 'PostController@toggleLock');
+        }
+    );
+});
 
 // Authentication routes
 Route::post('/register', 'UserController@register');
@@ -152,7 +154,6 @@ Route::post('posts/search', 'PostController@generateQuery');
 // V2 Endpoints - Domain Architecture
 Route::prefix('v1')->group(function () {
     // TODO: look into throttling of requests for rate limiting
-    // TODO: use namespace for v2 routes
 
     // Public routes
     Route::get('articles/{id}/kanjis', '\App\Http\v1\Articles\Controllers\ArticleController@kanjis');
@@ -170,8 +171,7 @@ Route::prefix('v1')->group(function () {
     // Authenticated routes
     Route::middleware('auth:api')->group(function () {
 
-        // Saved Lists
-
+        Route::get('/users/{uuid}', ['\App\Http\v1\Users\Controllers\UserController', 'show']);
 
         // Articles
         // Articles CRUD
@@ -183,22 +183,22 @@ Route::prefix('v1')->group(function () {
         Route::delete('articles/{uuid}', '\App\Http\v1\Articles\Controllers\ArticleController@destroy');
 
         // Article actions
-        // TODO: implement in v2
+        // TODO: implement in v1
         Route::post('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@like');
-        // TODO: implement in v2
+        // TODO: implement in v1
         Route::delete('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@unlike');
-        // TODO: implement in v2
+        // TODO: implement in v1
         Route::post('articles/{id}/toggle-publicity', '\App\Http\v1\Articles\Controllers\ArticleController@togglePublicity');
 
         // User's articles
-        // TODO: implement in v2
+        // TODO: implement in v1
         Route::get('user/articles', '\App\Http\v1\Articles\Controllers\ArticleController@userArticles');
 
         // Admin routes
         Route::middleware('checkRole:admin')->group(function () {
-            // TODO: implement in v2
+            // TODO: implement in v1
             Route::post('articles/{id}/status', '\App\Http\v1\Articles\Controllers\ArticleController@setStatus');
-            // TODO: implement in v2
+            // TODO: implement in v1
             Route::get('articles/pending', '\App\Http\v1\Articles\Controllers\ArticleController@pending');
         });
     });

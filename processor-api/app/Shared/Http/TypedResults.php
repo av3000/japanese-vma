@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Shared\Http;
 
 use Illuminate\Http\JsonResponse;
 use App\Shared\Results\Error;
-use App\Shared\Enums\{ErrorType, HttpStatus};
+use App\Shared\Enums\{HttpStatus};
 
 class TypedResults
 {
@@ -56,7 +57,7 @@ class TypedResults
     }
 
     // ========================================
-    // Specific Error Responses (Direct Use)
+    // Specific Error Responses (Direct Use) - not sure if needed if individuals errors for each entity is provided.
     // ========================================
 
     public static function notFound(

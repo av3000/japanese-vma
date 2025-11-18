@@ -1,12 +1,14 @@
 <?php
+
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository, LikeRepository, DownloadRepository, HashtagRepository};
+use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository, LikeRepository, DownloadRepository, HashtagRepository, UserRepository};
 use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface, HashtagRepositoryInterface};
+use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -46,6 +48,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             HashtagRepositoryInterface::class,
             HashtagRepository::class
+        );
+
+        $this->app->singleton(
+            UserRepositoryInterface::class,
+            UserRepository::class
         );
     }
 }

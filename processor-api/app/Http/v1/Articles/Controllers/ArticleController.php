@@ -26,7 +26,6 @@ use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType, UserRole};
 use App\Domain\Articles\Errors\ArticleErrors;
-use App\Shared\Results\Result;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
@@ -40,7 +39,8 @@ class ArticleController extends Controller
         private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
-    public function index(IndexArticleRequest $request): JsonResponse {
+    public function index(IndexArticleRequest $request): JsonResponse
+    {
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
@@ -53,7 +53,7 @@ class ArticleController extends Controller
             $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
         }
 
-        if($listDTO->include_hashtags) {
+        if ($listDTO->include_hashtags) {
             $hashtagsMap = $this->hashtagService->getBatchHashtags(
                 $entityIds,
                 ObjectTemplateType::ARTICLE
@@ -94,10 +94,10 @@ class ArticleController extends Controller
 
         $result = $this->articleService->createArticle($createDTO, auth('api')->user());
 
-        $article = $result->data;
+        $article = $result->getData();
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
         $hashtags = $this->hashtagService->getHashtags(
@@ -121,10 +121,10 @@ class ArticleController extends Controller
         $result = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->data;
+        $article = $result->getData();
         // TODO: Have 4 separate calls rather than single multi-responsible service.
         // Create findCountByFilter method for each repository
         // return counts here. For richer data, separate filters should be used.
@@ -170,10 +170,10 @@ class ArticleController extends Controller
         );
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->error);
+            return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->data;
+        $article = $result->getData();
 
         $hashtags = $this->hashtagService->getHashtags(
             $article->getIdValue(),
@@ -189,7 +189,8 @@ class ArticleController extends Controller
         );
     }
 
-    public function destroy(string $uuid): JsonResponse {
+    public function destroy(string $uuid): JsonResponse
+    {
         try {
             $articleUuid = EntityId::from($uuid);
 
