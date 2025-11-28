@@ -92,6 +92,8 @@ Domain/
 - [laravel helpers](https://github.com/laravel/helpers) - more comfortable customized version of the [original laravel helpers](https://laravel.com/docs/7.x/helpers)
 - [laravel/ui](https://laravel.com/docs/7.x/frontend) - scaffolding for the frontend of laravel API landing page. In this project [React](https://reactjs.org/docs/getting-started.html) was used.
 
+- [laravel-telescope](https://laravel.com/docs/10.x/telescope#introduction) - Local development debugging tool enabling tracking exceptions, logs, requests, database queries, queued jobs, mail, notifications, cache operations, scheduled tasks, variable dumps, and more. At [localhost/telescope](http://localhost:8080/telescope)
+
 ### Frontend
 
 - [react-moment](https://github.com/headzoo/react-moment) of [moment](https://www.npmjs.com/package/moment) for date formatting.
@@ -380,6 +382,8 @@ npm run storybook
 - Features:
 
   - Feature toggle on/off for admin
+
+  - Give access as owner of private Article or List to other user
 
   - Search refactor:
     - [] Articles search:

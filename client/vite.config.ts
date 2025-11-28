@@ -23,11 +23,13 @@ export default defineConfig(({ mode }) => {
 				'@/routes': path.resolve(__dirname, './src/routes'),
 				'@/components': path.resolve(__dirname, './src/components'),
 				'@/containers': path.resolve(__dirname, './src/containers'),
+				'@/contexts': path.resolve(__dirname, './src/contexts'),
 				'@/store': path.resolve(__dirname, './src/store'),
 				'@/services': path.resolve(__dirname, './src/services'),
 				'@/shared': path.resolve(__dirname, './src/shared'),
 				'@/assets': path.resolve(__dirname, './src/assets'),
 				'@/helpers': path.resolve(__dirname, './src/helpers'),
+				'@/hooks': path.resolve(__dirname, './src/hooks'),
 				'@/types/*': path.resolve(__dirname, './src/types'),
 				'@/storybook': path.resolve(__dirname, './storybook'),
 			},
@@ -49,7 +51,7 @@ export default defineConfig(({ mode }) => {
 		server: {
 			proxy: {
 				'/api': {
-					target: 'http://localhost:8080',
+					target: 'http://host.docker.internal:8080',
 					changeOrigin: true,
 					secure: false,
 				},

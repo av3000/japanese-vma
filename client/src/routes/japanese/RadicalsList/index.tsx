@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
 import RadicalItem from '@/components/features/japanese/radical/RadicalItem';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import SearchBarRadicals from './SearchBarRadicals';
 
 export class RadicalList extends Component {
@@ -33,7 +33,7 @@ export class RadicalList extends Component {
 
 	fetchRadicals(givenUrl) {
 		this.setState({ isLoading: true });
-		return apiCall(HTTP_METHOD.GET, givenUrl)
+		return apiCall(HttpMethod.GET, givenUrl)
 			.then((res) => {
 				const newState = Object.assign({}, this.state);
 				newState.paginateObject = res.radicals;

@@ -1,73 +1,78 @@
 // @ts-nocheck
-/* eslint-disable */
+/*eslint-disable */
 import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import Spinner from '@/assets/images/spinner.gif';
 import ListItems from '@/components/features/SavedList/SavedListItems';
-import CommentForm from '@/components/features/comment/CommentForm';
-import CommentList from '@/components/features/comment/CommentList';
+import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { formatDate } from '@/helpers';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { hideLoader, showLoader } from '@/store/actions/application';
 
 const SavedListDetails: React.FC = () => {
-	const [list, setList] = useState(null);
+	const [list, setList] = useState({ listItems: [], comments: [] as any, type: null, isLiked: false, likesTotal: 0 });
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [editToggle, setEditToggle] = useState(false);
 	const [editToggleHeading, setEditToggleHeading] = useState('Edit');
 
-	const currentUser = useSelector((state) => state.currentUser);
+	const { user: currentUser, isAuthenticated } = useAuth();
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const { list_id } = useParams();
 
 	useEffect(() => {
+		const getListWithAuth = async () => {
+			try {
+				const url = `${BASE_URL}/api/list/${list_id}`;
+				const res = await apiCall({ method: HttpMethod.GET, path: url });
+				const listData = res.list;
+				setList(listData);
+
+				if (!listData) {
+					navigate('/lists');
+				} else if (isAuthenticated) {
+					const likeRes = await apiCall({ method: HttpMethod.POST, path: `/api/list/${list_id}/checklike` });
+					setList((prevList) => ({ ...prevList, isLiked: likeRes.isLiked }));
+				}
+
+				if (isAuthenticated) {
+					setList((prevList) => ({
+						...prevList,
+						comments: prevList.comments.map((comment) => {
+							const youLikedIt = comment.likes.some((like) => like.user_id === currentUser?.id);
+							return { ...comment, isLiked: youLikedIt };
+						}),
+					}));
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
+
 		getListWithAuth();
-	}, [currentUser.isAuthenticated]);
-
-	const getListWithAuth = async () => {
-		try {
-			const url = `${BASE_URL}/api/list/${list_id}`;
-			const res = await apiCall(HTTP_METHOD.GET, url);
-			const listData = res.list;
-			setList(listData);
-
-			if (!listData) {
-				navigate('/lists');
-			} else if (currentUser.isAuthenticated) {
-				const likeRes = await apiCall(HTTP_METHOD.POST, `/api/list/${list_id}/checklike`);
-				setList((prevList) => ({ ...prevList, isLiked: likeRes.isLiked }));
-			}
-
-			if (currentUser.isAuthenticated) {
-				setList((prevList) => ({
-					...prevList,
-					comments: prevList.comments.map((comment) => {
-						const youLikedIt = comment.likes.some((like) => like.user_id === currentUser.user.id);
-						return { ...comment, isLiked: youLikedIt };
-					}),
-				}));
-			}
-		} catch (err) {
-			console.error(err);
-		}
-	};
+	}, [navigate, currentUser, list_id, isAuthenticated]);
 
 	const removeFromList = async (id) => {
 		const url = `${BASE_URL}/api/user/list/removeitemwhileaway`;
 		try {
-			await apiCall(HTTP_METHOD.POST, url, {
-				listId: list_id,
-				elementId: id,
+			await apiCall({
+				method: HttpMethod.POST,
+				path: url,
+				data: {
+					listId: list_id,
+					elementId: id,
+				},
 			});
 			setList((prevList) => ({
 				...prevList,
@@ -80,7 +85,7 @@ const SavedListDetails: React.FC = () => {
 
 	const deleteList = async () => {
 		try {
-			await apiCall(HTTP_METHOD.DELETE, `/api/list/${list_id}`);
+			await apiCall({ method: HttpMethod.DELETE, path: `/api/list/${list_id}` });
 			navigate('/lists');
 		} catch (err) {
 			console.error(err);
@@ -88,7 +93,7 @@ const SavedListDetails: React.FC = () => {
 	};
 
 	const downloadPdf = async () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else if (list.listItems.length === 0) {
 			dispatch(showLoader('There are no items in the list!'));
@@ -114,8 +119,12 @@ const SavedListDetails: React.FC = () => {
 			const url = `${BASE_URL}/api/list/${list_id}/${endpoint}`;
 
 			try {
-				const res = await apiCall(HTTP_METHOD.GET, url, {
-					responseType: 'blob',
+				const res = await apiCall({
+					method: HttpMethod.GET,
+					path: url,
+					data: {
+						responseType: 'blob',
+					},
 				});
 				dispatch(hideLoader());
 				const file = new Blob([res], { type: 'application/pdf' });
@@ -128,13 +137,13 @@ const SavedListDetails: React.FC = () => {
 	};
 
 	const likeList = async () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			const endpoint = list.isLiked ? 'unlike' : 'like';
 			const url = `${BASE_URL}/api/list/${list_id}/${endpoint}`;
 			try {
-				await apiCall(HTTP_METHOD.POST, url);
+				await apiCall({ method: HttpMethod.POST, path: url });
 				setList((prevList) => ({
 					...prevList,
 					isLiked: !prevList.isLiked,
@@ -147,7 +156,7 @@ const SavedListDetails: React.FC = () => {
 	};
 
 	const toggleListEdit = () => {
-		if (currentUser.user.id === list.user_id) {
+		if (currentUser?.id === list.user_id) {
 			const newHeading = !editToggle ? 'End' : 'Edit';
 			setEditToggle(!editToggle);
 			setEditToggleHeading(newHeading);
@@ -161,60 +170,12 @@ const SavedListDetails: React.FC = () => {
 	};
 
 	const openDeleteModal = () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			setShowDeleteModal(true);
 		}
 	};
-
-	const likeComment = async (commentId) => {
-		if (!currentUser.isAuthenticated) {
-			navigate('/login');
-		} else {
-			const comment = list.comments.find((c) => c.id === commentId);
-			const endpoint = comment.isLiked ? 'unlike' : 'like';
-			const url = `${BASE_URL}/api/list/${list_id}/comment/${commentId}/${endpoint}`;
-			try {
-				await apiCall(HTTP_METHOD.POST, url);
-				setList((prevList) => {
-					const updatedComments = prevList.comments.map((c) =>
-						c.id === commentId
-							? {
-									...c,
-									isLiked: !c.isLiked,
-									likesTotal: c.isLiked ? c.likesTotal - 1 : c.likesTotal + 1,
-								}
-							: c,
-					);
-					return { ...prevList, comments: updatedComments };
-				});
-			} catch (err) {
-				console.error(err);
-			}
-		}
-	};
-
-	const addComment = (comment) => {
-		setList((prevList) => ({
-			...prevList,
-			comments: [comment, ...prevList.comments],
-		}));
-	};
-
-	const deleteComment = async (commentId) => {
-		try {
-			await apiCall(HTTP_METHOD.DELETE, `/api/list/${list.id}/comment/${commentId}`);
-			setList((prevList) => ({
-				...prevList,
-				comments: prevList.comments.filter((c) => c.id !== commentId),
-			}));
-		} catch (err) {
-			console.error(err);
-		}
-	};
-
-	const editComment = (commentId) => {};
 
 	if (!list) {
 		return (
@@ -243,7 +204,7 @@ const SavedListDetails: React.FC = () => {
 								{formatDate(list.created_at, 'ja')}
 								<br />
 								<span>{list.viewsTotal} views</span>
-								{currentUser.user.id === list.user_id
+								{currentUser?.id === list.user_id
 									? list.publicity === 1
 										? ' | public'
 										: ' | private'
@@ -251,7 +212,7 @@ const SavedListDetails: React.FC = () => {
 								<br /> <strong>{list.listType} List</strong>
 							</div>
 							<div>
-								{currentUser.user.id === list.user_id && (
+								{currentUser?.id === list.user_id && (
 									<>
 										<Button onClick={openDeleteModal} variant="ghost" size="md" hasOnlyIcon>
 											<Icon name="trashbinSolid" size="md" />
@@ -314,7 +275,7 @@ const SavedListDetails: React.FC = () => {
 						{list.listItems.length > 0 && (
 							<>
 								<div className="mt-3 mb-2">
-									{currentUser.isAuthenticated && currentUser.user.id === list.user_id && (
+									{isAuthenticated && currentUser?.id === list.user_id && (
 										<Button
 											onClick={toggleListEdit}
 											size="sm"
@@ -337,40 +298,11 @@ const SavedListDetails: React.FC = () => {
 					</div>
 				</div>
 				<div className="row justify-content-center">
-					{currentUser.isAuthenticated ? (
-						<div className="col-lg-8">
-							<hr />
-							<h6>Share what's on your mind</h6>
-							<CommentForm
-								addComment={addComment}
-								currentUser={currentUser}
-								objectId={list.id}
-								objectType="list"
-							/>
-						</div>
-					) : (
-						<div className="col-lg-8">
-							<hr />
-							<h6>
-								You need to
-								<Link to="/login"> login </Link>
-								to comment
-							</h6>
-						</div>
-					)}
 					<div className="col-lg-8">
-						{list.comments && (
-							<CommentList
-								objectId={list.id}
-								currentUser={currentUser}
-								comments={list.comments}
-								deleteComment={deleteComment}
-								likeComment={likeComment}
-								editComment={editComment}
-							/>
-						)}
+						<CommentsBlock objectId={list.id} objectType="article" initialComments={list.comments || []} />
 					</div>
 				</div>
+
 				<Modal show={showDeleteModal} onHide={handleDeleteModalClose}>
 					<Modal.Header closeButton>
 						<Modal.Title>Are You Sure?</Modal.Title>

@@ -23,7 +23,7 @@ class UserProfileResource extends JsonResource
         return [
             'uuid' => $this->user->getUuid()->value(),
             'name' => $this->user->getName()->value(),
-            'role' => $this->user->getRoleName(),
+            'roles' => $this->user->getRoles(),
             'created_at' => $this->user->getCreatedAt()->format('Y-m-d H:i:s'),
             'email' => $this->when($this->isOwnProfile, $this->user->getEmail()->value()),
         ];

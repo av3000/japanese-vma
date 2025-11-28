@@ -1,16 +1,14 @@
-import { combineReducers } from "redux";
-import currentUser from "./currentUser";
-import errors from "./errors";
-import lists from "./lists";
-import application from "./application";
-import articleReducer from "./articles";
+import { combineReducers } from 'redux';
+import application from './application';
+import articleReducer from './articles';
+import errors from './errors';
+import lists from './lists';
 
 const rootReducer = combineReducers({
-  currentUser,
-  errors,
-  lists,
-  application,
-  articles: articleReducer,
+	errors,
+	lists,
+	application,
+	articles: articleReducer,
 });
 
 export default rootReducer;

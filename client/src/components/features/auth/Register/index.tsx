@@ -1,43 +1,46 @@
-// @ts-nocheck
-/* eslint-disable */
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
-const RegisterForm: React.FC = ({ onAuth, heading, buttonText, errors, removeError }) => {
-	const [formData, setFormData] = useState({
-		name: '',
-		email: '',
-		password: '',
-		password_confirmation: '',
-	});
+interface RegisterFormProps {
+	heading: string;
+	buttonText: string;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ heading, buttonText }) => {
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const navigate = useNavigate();
+	const { register, isAuthenticated } = useAuth();
 
 	useEffect(() => {
-		return () => {
-			removeError();
-		};
-	}, [removeError]);
+		if (isAuthenticated) {
+			navigate('/');
+		}
+	}, [isAuthenticated, navigate]);
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+
+		const formData = new FormData(event.currentTarget);
+
 		setIsLoading(true);
+		setError(null);
 
 		try {
-			await onAuth('register', formData);
-			setIsLoading(false);
+			await register({
+				name: formData.get('name') as string,
+				email: formData.get('email') as string,
+				password: formData.get('password') as string,
+				passwordConfirmation: formData.get('password_confirmation') as string,
+			});
 			navigate('/');
-		} catch (error) {
-			console.log(error);
+		} catch (err: any) {
+			console.error('Register error:', err);
+			setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
+		} finally {
 			setIsLoading(false);
 		}
-	};
-
-	const handleChange = (e) => {
-		setFormData({
-			...formData,
-			[e.target.name]: e.target.value,
-		});
 	};
 
 	return (
@@ -47,44 +50,11 @@ const RegisterForm: React.FC = ({ onAuth, heading, buttonText, errors, removeErr
 					<form onSubmit={handleSubmit}>
 						<h2>{heading}</h2>
 						<h6 className="mb-5">
-							Already have an account? <Link to="/login">Login.</Link>{' '}
+							Already have an account? <Link to="/login">Login.</Link>
 						</h6>
-						{errors.message && (
-							<div className="alert alert-danger">
-								{errors.message} <pre>{JSON.stringify(errors, null, 2)}</pre>
-							</div>
-						)}
-						<label className="mt-3" htmlFor="email">
-							Email:
-						</label>
-						<input
-							className="form-control"
-							id="email"
-							name="email"
-							onChange={handleChange}
-							value={formData.email}
-							type="text"
-						/>
-						<label className="mt-3" htmlFor="password">
-							Password:
-						</label>
-						<input
-							className="form-control"
-							id="password"
-							name="password"
-							onChange={handleChange}
-							type="password"
-						/>
-						<label className="mt-3" htmlFor="password_confirmation">
-							Confirm password:
-						</label>
-						<input
-							className="form-control"
-							id="password_confirmation"
-							name="password_confirmation"
-							onChange={handleChange}
-							type="password"
-						/>
+
+						{error && <div className="alert alert-danger">{error}</div>}
+
 						<label className="mt-3" htmlFor="name">
 							Username:
 						</label>
@@ -92,21 +62,54 @@ const RegisterForm: React.FC = ({ onAuth, heading, buttonText, errors, removeErr
 							className="form-control"
 							id="name"
 							name="name"
-							onChange={handleChange}
-							value={formData.name}
 							type="text"
+							required
+							autoComplete="username"
 						/>
+
+						<label className="mt-3" htmlFor="email">
+							Email:
+						</label>
+						<input
+							className="form-control"
+							id="email"
+							name="email"
+							type="email"
+							required
+							autoComplete="email"
+						/>
+
+						<label className="mt-3" htmlFor="password">
+							Password:
+						</label>
+						<input
+							className="form-control"
+							id="password"
+							name="password"
+							type="password"
+							required
+							autoComplete="new-password"
+						/>
+
+						<label className="mt-3" htmlFor="password_confirmation">
+							Confirm password:
+						</label>
+						<input
+							className="form-control"
+							id="password_confirmation"
+							name="password_confirmation"
+							type="password"
+							required
+							autoComplete="new-password"
+						/>
+
 						<button
 							type="submit"
 							className="btn btn-outline-primary col-md-3 brand-button mt-5"
 							disabled={isLoading}
 						>
 							{isLoading ? (
-								<span
-									className="spinner-border spinner-border-sm"
-									role="status"
-									aria-hidden="true"
-								></span>
+								<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
 							) : (
 								buttonText
 							)}

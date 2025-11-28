@@ -1,9 +1,8 @@
 // src/routes/routes.tsx
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
-
 import PageLoader from '@/components/features/PageLoader';
-import ProtectedRoute from '@/helpers/PrivateRoute';
+import PrivateRoute from '@/helpers/PrivateRoute';
 
 // Lazy-loaded page components
 const HomePage = lazy(() => import('@/routes/Homepage'));
@@ -46,229 +45,229 @@ const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
 // Wrap all lazy-loaded components with the suspense boundary
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+	<Suspense fallback={<PageLoader />}>{children}</Suspense>
 );
 
 const AppRoutes: React.FC = () => {
-  return (
-    <Routes>
-      {/* Public routes */}
-      <Route
-        path="/"
-        element={
-          <SuspenseWrapper>
-            <HomePage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <SuspenseWrapper>
-            <LoginPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <SuspenseWrapper>
-            <RegisterPage />
-          </SuspenseWrapper>
-        }
-      />
+	return (
+		<Routes>
+			{/* Public routes */}
+			<Route
+				path="/"
+				element={
+					<SuspenseWrapper>
+						<HomePage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/login"
+				element={
+					<SuspenseWrapper>
+						<LoginPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/register"
+				element={
+					<SuspenseWrapper>
+						<RegisterPage />
+					</SuspenseWrapper>
+				}
+			/>
 
-      {/* Articles */}
-      <Route
-        path="/articles"
-        element={
-          <SuspenseWrapper>
-            <ArticlesListPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/article/:article_id"
-        element={
-          <SuspenseWrapper>
-            <ArticleDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
+			{/* Articles */}
+			<Route
+				path="/articles"
+				element={
+					<SuspenseWrapper>
+						<ArticlesListPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/article/:article_id"
+				element={
+					<SuspenseWrapper>
+						<ArticleDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
 
-      {/* Lists */}
-      <Route
-        path="/lists"
-        element={
-          <SuspenseWrapper>
-            <ListsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/list/:list_id"
-        element={
-          <SuspenseWrapper>
-            <ListDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
+			{/* Lists */}
+			<Route
+				path="/lists"
+				element={
+					<SuspenseWrapper>
+						<ListsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/list/:list_id"
+				element={
+					<SuspenseWrapper>
+						<ListDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
 
-      {/* Japanese learning resources */}
-      <Route
-        path="/radicals"
-        element={
-          <SuspenseWrapper>
-            <RadicalsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/radical/:radical_id"
-        element={
-          <SuspenseWrapper>
-            <RadicalDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/kanjis"
-        element={
-          <SuspenseWrapper>
-            <KanjisPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/kanji/:kanji_id"
-        element={
-          <SuspenseWrapper>
-            <KanjiDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/words"
-        element={
-          <SuspenseWrapper>
-            <WordsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/word/:word_id"
-        element={
-          <SuspenseWrapper>
-            <WordDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/sentences"
-        element={
-          <SuspenseWrapper>
-            <SentencesPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/sentence/:sentence_id"
-        element={
-          <SuspenseWrapper>
-            <SentenceDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
+			{/* Japanese learning resources */}
+			<Route
+				path="/radicals"
+				element={
+					<SuspenseWrapper>
+						<RadicalsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/radical/:radical_id"
+				element={
+					<SuspenseWrapper>
+						<RadicalDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/kanjis"
+				element={
+					<SuspenseWrapper>
+						<KanjisPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/kanji/:kanji_id"
+				element={
+					<SuspenseWrapper>
+						<KanjiDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/words"
+				element={
+					<SuspenseWrapper>
+						<WordsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/word/:word_id"
+				element={
+					<SuspenseWrapper>
+						<WordDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/sentences"
+				element={
+					<SuspenseWrapper>
+						<SentencesPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/sentence/:sentence_id"
+				element={
+					<SuspenseWrapper>
+						<SentenceDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
 
-      {/* Community */}
-      <Route
-        path="/community"
-        element={
-          <SuspenseWrapper>
-            <CommunityPage />
-          </SuspenseWrapper>
-        }
-      />
-      <Route
-        path="/community/:post_id"
-        element={
-          <SuspenseWrapper>
-            <PostDetailsPage />
-          </SuspenseWrapper>
-        }
-      />
+			{/* Community */}
+			<Route
+				path="/community"
+				element={
+					<SuspenseWrapper>
+						<CommunityPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/community/:post_id"
+				element={
+					<SuspenseWrapper>
+						<PostDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
 
-      {/* Protected routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route
-          path="/newarticle"
-          element={
-            <SuspenseWrapper>
-              <ArticleFormPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/article/edit/:article_id"
-          element={
-            <SuspenseWrapper>
-              <ArticleEditPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/newlist"
-          element={
-            <SuspenseWrapper>
-              <ListFormPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/list/edit/:list_id"
-          element={
-            <SuspenseWrapper>
-              <ListEditPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/newpost"
-          element={
-            <SuspenseWrapper>
-              <PostFormPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/community/edit/:post_id"
-          element={
-            <SuspenseWrapper>
-              <PostEditPage />
-            </SuspenseWrapper>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <SuspenseWrapper>
-              <DashboardPage />
-            </SuspenseWrapper>
-          }
-        />
-      </Route>
+			{/* Protected routes */}
+			<Route element={<PrivateRoute />}>
+				<Route
+					path="/newarticle"
+					element={
+						<SuspenseWrapper>
+							<ArticleFormPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/article/edit/:article_id"
+					element={
+						<SuspenseWrapper>
+							<ArticleEditPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/newlist"
+					element={
+						<SuspenseWrapper>
+							<ListFormPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/list/edit/:list_id"
+					element={
+						<SuspenseWrapper>
+							<ListEditPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/newpost"
+					element={
+						<SuspenseWrapper>
+							<PostFormPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/community/edit/:post_id"
+					element={
+						<SuspenseWrapper>
+							<PostEditPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/dashboard"
+					element={
+						<SuspenseWrapper>
+							<DashboardPage />
+						</SuspenseWrapper>
+					}
+				/>
+			</Route>
 
-      {/* Catch-all for 404 */}
-      <Route
-        path="*"
-        element={
-          <SuspenseWrapper>
-            <PageNotFound />
-          </SuspenseWrapper>
-        }
-      />
-    </Routes>
-  );
+			{/* Catch-all for 404 */}
+			<Route
+				path="*"
+				element={
+					<SuspenseWrapper>
+						<PageNotFound />
+					</SuspenseWrapper>
+				}
+			/>
+		</Routes>
+	);
 };
 
 export default AppRoutes;

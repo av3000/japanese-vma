@@ -8,6 +8,7 @@ use App\Shared\Results\Result;
 use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Application\Users\Services\UserServiceInterface;
 
 class UserService implements UserServiceInterface
 {

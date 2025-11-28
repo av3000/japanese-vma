@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { addError } from './errorsSlice';
 
 // Async thunks
@@ -24,7 +24,7 @@ export const fetchArticles = createAsyncThunk(
 
 			const queryParams = new URLSearchParams(cleanFilters).toString();
 			const url = `/api/articles${queryParams ? `?${queryParams}` : ''}`;
-			const res = await apiCall(HTTP_METHOD.GET, url);
+			const res = await apiCall(HttpMethod.GET, url);
 
 			// The response structure is:
 			// { success: true, articles: { data: [...], total, ... }, message: "..." }
@@ -49,7 +49,7 @@ export const removeArticle = createAsyncThunk(
 	'articles/removeArticle',
 	async (article_id, { dispatch, rejectWithValue }) => {
 		try {
-			await apiCall(HTTP_METHOD.DELETE, `/api/article/${article_id}`);
+			await apiCall(HttpMethod.DELETE, `/api/article/${article_id}`);
 			return article_id;
 		} catch (err) {
 			dispatch(addError(err.message));

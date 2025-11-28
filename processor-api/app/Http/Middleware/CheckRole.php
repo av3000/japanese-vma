@@ -1,25 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
+use App\Application\Users\Services\RoleServiceInterface;
+use App\Domain\Shared\ValueObjects\EntityId;
 use Closure;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
+    public function __construct(
+        private readonly RoleServiceInterface $roleService
+    ) {}
+
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return mixed
+     * @param string ...$roles One or more role names to check
      */
-    public function handle($request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if(Auth::check() == false || Auth::user()->hasRole($role) == false){
-            return redirect('/');
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'error' => 'Unauthenticated',
+                'message' => 'Authentication required'
+            ], 401);
         }
 
-        return $next($request);
+        $userUuid = new EntityId($user->uuid);
+
+        foreach ($roles as $role) {
+            if ($this->roleService->userHasRole($userUuid, $role)) {
+                return $next($request);
+            }
+        }
+
+        return response()->json([
+            'error' => 'Forbidden',
+            'message' => 'Insufficient permissions. Required roles: ' . implode(', ', $roles)
+        ], 403);
     }
 }

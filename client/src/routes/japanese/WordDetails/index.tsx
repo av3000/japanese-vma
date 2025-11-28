@@ -5,10 +5,12 @@ import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import { Chip } from '@/components/shared/Chip';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 
-const WordDetails: React.FC = ({ currentUser }) => {
+const WordDetails: React.FC = () => {
 	const [word, setWord] = useState({});
 	const [kanjis, setKanjis] = useState([]);
 	const [articles, setArticles] = useState([]);
@@ -21,11 +23,13 @@ const WordDetails: React.FC = ({ currentUser }) => {
 	const { word_id } = useParams();
 	const navigate = useNavigate();
 
+	const { isAuthenticated } = useAuth();
+
 	useEffect(() => {
 		const getWordDetails = async () => {
 			try {
 				setIsLoading(true);
-				const res = await apiCall(HTTP_METHOD.GET, `${BASE_URL}/api/word/${word_id}`);
+				const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/word/${word_id}`);
 
 				const processedWord = {
 					...res,
@@ -45,7 +49,7 @@ const WordDetails: React.FC = ({ currentUser }) => {
 		const getUserWordLists = async () => {
 			try {
 				setIsLoading(true);
-				const res = await apiCall(HTTP_METHOD.POST, `${BASE_URL}/api/user/lists/contain`, {
+				const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
 					elementId: word_id,
 				});
 
@@ -67,13 +71,13 @@ const WordDetails: React.FC = ({ currentUser }) => {
 		};
 
 		getWordDetails();
-		if (currentUser.isAuthenticated) {
+		if (isAuthenticated) {
 			getUserWordLists();
 		}
-	}, [currentUser.isAuthenticated]);
+	}, [isAuthenticated]);
 
 	const toggleModal = () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			setShowModal((prevShow) => !prevShow);
@@ -86,7 +90,7 @@ const WordDetails: React.FC = ({ currentUser }) => {
 			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
 			const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-			await apiCall(HTTP_METHOD.POST, url, {
+			await apiCall(HttpMethod.POST, url, {
 				listId,
 				elementId: word_id,
 			});

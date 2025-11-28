@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Throwable;
 
 use App\Shared\Enums\HttpStatus;
+use Illuminate\Support\Facades\Log;
 
 class Handler extends ExceptionHandler
 {
@@ -80,7 +81,7 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof QueryException && ($request->expectsJson() || $request->is('api/*'))) {
-            \Log::error('Database query failed', [
+            Log::error('Database query failed', [
                 'sql' => $exception->getSql(),
                 'bindings' => $exception->getBindings(),
                 'error' => $exception->getMessage(),
@@ -91,9 +92,9 @@ class Handler extends ExceptionHandler
 
             return response()->json([
                 'type' => HttpStatus::INTERNAL_SERVER_ERROR->getTypeUri(),
-                'title' => 'Database error',
+                'title' => 'Server error',
                 'status' => HttpStatus::INTERNAL_SERVER_ERROR->value,
-                'detail' => 'A database error occurred. Please try again later.',
+                'detail' => 'A Server error occurred. Please try again later.',
                 'instance' => $request->path(),
                 'timestamp' => now()->toIso8601String()
             ], HttpStatus::INTERNAL_SERVER_ERROR->value);

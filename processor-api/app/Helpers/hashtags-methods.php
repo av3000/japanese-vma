@@ -1,12 +1,13 @@
-<?php 
+<?php
 
 use Illuminate\Support\Facades\DB;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
 
-function getHashtags($string) {  
-    $hashtags= FALSE;  
-    preg_match_all("/(#\w+)/u", $string, $matches);  
+function getHashtags($string)
+{
+    $hashtags = FALSE;
+    preg_match_all("/(#\w+)/u", $string, $matches);
     if ($matches) {
         $hashtagsArray = array_count_values($matches[0]);
         $hashtags = array_keys($hashtagsArray);
@@ -16,9 +17,9 @@ function getHashtags($string) {
 
 function removeHashtags($id, $objectTemplateId)
 {
-    $oldTags = DB::table('hashtags')
-        ->where('template_id', $objectTemplateId)
-        ->where('real_object_id', $id)
+    $oldTags = DB::table('hashtag_entity')
+        ->where('entity_type_id', $objectTemplateId)
+        ->where('entity_id', $id)
         ->delete();
 }
 
@@ -28,18 +29,17 @@ function attachHashTags($tags, $object, $objectTemplateId)
     $tags = checkIfHashtagsAreUnique($tags);
     // $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-    foreach($tags as $tag)
-    {
+    foreach ($tags as $tag) {
         $row = [
-            'template_id' => $objectTemplateId,
-            'uniquehashtag_id' => $tag->id,
-            'real_object_id' => $object->id,
+            'entity_type_id' => $objectTemplateId,
+            'hashtag_id' => $tag->id,
+            'entity_id' => $object->id,
             'user_id' => $object->user_id,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
-        
-        $x = DB::table('hashtags')->insert($row);            
+
+        $x = DB::table('hashtag_entity')->insert($row);
     }
 
     return response()->json([
@@ -49,14 +49,13 @@ function attachHashTags($tags, $object, $objectTemplateId)
 }
 
 function getUniquehashtags($id, $objectTemplateId)
-{  
-    $foundRows = DB::table('hashtags')->where('real_object_id', $id)
-    ->where('template_id', $objectTemplateId)->get();
+{
+    $foundRows = DB::table('hashtag_entity')->where('entity_id', $id)
+        ->where('entity_type_id', $objectTemplateId)->get();
     $finalTags = [];
 
-    foreach($foundRows as $taglink)
-    {
-        $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+    foreach ($foundRows as $taglink) {
+        $uniqueTag = Uniquehashtag::find($taglink->hashtag_id);
         $finalTags[] = $uniqueTag;
     }
 
@@ -68,16 +67,13 @@ function checkIfHashtagsAreUnique($tags)
     $finalTags = [];
     $same = 0;
     $unique = 0;
-    foreach($tags as $tag)
-    {
+    foreach ($tags as $tag) {
         $uniqueTag = Uniquehashtag::where("content", $tag)->first();
-        if($uniqueTag)
-        {   
+        if ($uniqueTag) {
             // tag is not unique
             $finalTags[] = $uniqueTag;
             $same++;
-        }
-        else {
+        } else {
             // tag is unique
             $uniqueTag = new Uniquehashtag;
             $uniqueTag->content = $tag;
@@ -89,5 +85,3 @@ function checkIfHashtagsAreUnique($tags)
 
     return $finalTags;
 }
-
-?>

@@ -6,12 +6,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import Spinner from '../../assets/images/spinner.gif';
 import Hashtags from '../ui/hashtags';
 
-const KanjiOpen: React.FC = ({ currentUser }) => {
+const KanjiOpen: React.FC = () => {
 	const [kanji, setKanji] = useState({});
 	const [words, setWords] = useState([]);
 	const [sentences, setSentences] = useState([]);
@@ -24,18 +26,19 @@ const KanjiOpen: React.FC = ({ currentUser }) => {
 
 	const { kanji_id } = useParams();
 	const navigate = useNavigate();
+	const { isAuthenticated } = useAuth();
 
 	useEffect(() => {
 		getKanjiOpen();
-		if (currentUser.isAuthenticated) {
+		if (isAuthenticated) {
 			getUserKanjiLists();
 		}
-	}, [currentUser.isAuthenticated]);
+	}, [isAuthenticated]);
 
 	const getKanjiOpen = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.GET, `${BASE_URL}/api/kanji/${kanji_id}`);
+			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/kanji/${kanji_id}`);
 
 			// Process the kanji data
 			const processedKanji = {
@@ -59,7 +62,7 @@ const KanjiOpen: React.FC = ({ currentUser }) => {
 	const getUserKanjiLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.POST, `${BASE_URL}/api/user/lists/contain`, {
+			const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
 				elementId: kanji_id,
 			});
 
@@ -81,7 +84,7 @@ const KanjiOpen: React.FC = ({ currentUser }) => {
 	};
 
 	const toggleModal = () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			setShowModal((prevShow) => !prevShow);
@@ -95,7 +98,7 @@ const KanjiOpen: React.FC = ({ currentUser }) => {
 			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
 			const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-			await apiCall(HTTP_METHOD.POST, url, {
+			await apiCall(HttpMethod.POST, url, {
 				listId,
 				elementId: kanji_id,
 			});

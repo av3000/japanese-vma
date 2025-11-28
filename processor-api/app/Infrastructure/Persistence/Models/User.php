@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Domain\Shared\Enums\UserRole;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
-// TODO: use proper role system when implementing Spatie roles package
-use App\Http\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 use App\Http\Models\Article;
 use App\Http\Models\Like;
 use App\Http\Models\Download;
@@ -19,7 +19,11 @@ use App\Http\Models\CustomList;
 
 class User extends Authenticatable
 {
-    use Notifiable, HasApiTokens;
+    use Notifiable, HasApiTokens, HasRoles;
+
+    protected $guard_name = 'api';
+
+    protected $table = 'users';
 
     protected $fillable = [
         'name',
@@ -38,21 +42,6 @@ class User extends Authenticatable
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'user_role');
-    }
-
-    public function hasRole(string $role): bool
-    {
-        return null !== $this->roles()->where('name', $role)->first();
-    }
-
-    public function role(): string
-    {
-        return $this->roles()->first()?->name ?? 'user';
-    }
 
     public function articles()
     {
@@ -87,5 +76,19 @@ class User extends Authenticatable
     public function lists()
     {
         return $this->hasMany(CustomList::class);
+    }
+
+    /**
+     * Boot method - assign default role on creation
+     */
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            // Assign default 'common' role to new users
+            // TODO: Test if it works as intended
+            if (!$user->hasAnyRole(UserRole::values())) {
+                $user->assignRole(UserRole::COMMON->value);
+            }
+        });
     }
 }

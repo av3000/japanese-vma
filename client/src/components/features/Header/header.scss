@@ -44,18 +44,6 @@
 	}
 }
 
-/* Dropdown Menu */
-.dropdown-menu {
-	padding: 0;
-	box-shadow: 0 var(--border-size-sm) 0 0 #666;
-}
-
-/* Authenticated User Section */
-.navbar-right-auth {
-	display: flex;
-	gap: var(--spacing-sm);
-}
-
 /* Spacing utilities for buttons */
 .navbar .link-button {
 	background-color: transparent;
@@ -67,18 +55,6 @@
 	color: var(--main-text-color);
 
 	&:hover {
-		color: var(--link-hover-color);
-	}
-}
-
-/* Toggler Button */
-#my-toggler-btn {
-	background-color: var(--alternative-text-color);
-	border-color: transparent;
-	color: var(--main-text-color);
-
-	&:hover,
-	&:focus {
 		color: var(--link-hover-color);
 	}
 }

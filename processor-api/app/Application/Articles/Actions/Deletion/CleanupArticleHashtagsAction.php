@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Articles\Actions\Deletion;
 
 use App\Domain\Articles\Http\Models\Article;
@@ -11,9 +12,9 @@ class CleanupArticleHashtagsAction
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
-        DB::table('hashtags')
-            ->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $article->id)
+        DB::table('hashtag_entity')
+            ->where('entity_type_id', $objectTemplateId)
+            ->where('entity_id', $article->id)
             ->delete();
     }
 }

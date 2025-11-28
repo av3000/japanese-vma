@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Articles\Actions\Retrieval;
 
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -32,9 +33,9 @@ class LoadArticleListHashtagsAction
      */
     private function batchLoadHashtags(int $templateId, array $articleIds): array
     {
-        $hashtagLinks = DB::table('hashtags')
-            ->where('template_id', $templateId)
-            ->whereIn('real_object_id', $articleIds)
+        $hashtagLinks = DB::table('hashtag_entity')
+            ->where('entity_type_id', $templateId)
+            ->whereIn('entity_id', $articleIds)
             ->get();
 
         if ($hashtagLinks->isEmpty()) {
@@ -42,7 +43,7 @@ class LoadArticleListHashtagsAction
         }
 
         // Get the actual hashtag data
-        $uniqueTagIds = $hashtagLinks->pluck('uniquehashtag_id')->unique();
+        $uniqueTagIds = $hashtagLinks->pluck('hashtag_id')->unique();
         $uniqueTags = DB::table('uniquehashtags')
             ->whereIn('id', $uniqueTagIds)
             ->get()
@@ -52,13 +53,13 @@ class LoadArticleListHashtagsAction
         $result = [];
         foreach ($hashtagLinks as $link) {
             // Initialize array for this article if not exists
-            if (!isset($result[$link->real_object_id])) {
-                $result[$link->real_object_id] = [];
+            if (!isset($result[$link->entity_id])) {
+                $result[$link->entity_id] = [];
             }
 
             // Add the hashtag data if it exists
-            if (isset($uniqueTags[$link->uniquehashtag_id])) {
-                $result[$link->real_object_id][] = $uniqueTags[$link->uniquehashtag_id];
+            if (isset($uniqueTags[$link->hashtag_id])) {
+                $result[$link->entity_id][] = $uniqueTags[$link->hashtag_id];
             }
         }
 

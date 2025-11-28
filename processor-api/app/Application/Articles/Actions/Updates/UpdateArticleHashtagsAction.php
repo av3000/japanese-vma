@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Articles\Actions;
 
 use App\Domain\Articles\Http\Models\Article;
@@ -20,9 +21,9 @@ class UpdateArticleHashtagsAction
 
     private function removeHashtags(int $articleId, int $objectTemplateId): void
     {
-        DB::table('hashtags')
-            ->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $articleId)
+        DB::table('hashtag_entity')
+            ->where('entity_type_id', $objectTemplateId)
+            ->where('entity_id', $articleId)
             ->delete();
     }
 
@@ -33,10 +34,10 @@ class UpdateArticleHashtagsAction
         $uniqueHashtags = $this->ensureHashtagsExist($hashtags);
 
         foreach ($uniqueHashtags as $hashtag) {
-            DB::table('hashtags')->insert([
-                'template_id' => $objectTemplateId,
-                'uniquehashtag_id' => $hashtag->id,
-                'real_object_id' => $article->id,
+            DB::table('hashtag_entity')->insert([
+                'entity_type_id' => $objectTemplateId,
+                'hashtag_id' => $hashtag->id,
+                'entity_id' => $article->id,
                 'user_id' => $article->user_id,
                 'created_at' => now(),
                 'updated_at' => now()

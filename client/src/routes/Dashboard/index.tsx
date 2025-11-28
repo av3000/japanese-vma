@@ -9,8 +9,9 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import SearchBarDashboard from './SearchBarDashboard';
 
 const RESOURCE_TYPES = {
@@ -24,7 +25,6 @@ const DASHBOARD_TYPES = {
 };
 
 const DashboardList: React.FC = () => {
-	const currentUser = useSelector((state) => state.currentUser);
 	const [currentResource, setCurrentResource] = useState(RESOURCE_TYPES.LISTS);
 	const [lists, setLists] = useState([]);
 	const [articles, setArticles] = useState([]);
@@ -32,6 +32,8 @@ const DashboardList: React.FC = () => {
 	const [dashboard, setDashboard] = useState(DASHBOARD_TYPES.COMMON_USER);
 	const [setFilters] = useState({});
 	const [isLoading, setIsLoading] = useState(true);
+
+	const { isAuthenticated, user: currentUser } = useAuth();
 
 	useEffect(() => {
 		const { isAuthenticated, user } = currentUser;
@@ -61,7 +63,7 @@ const DashboardList: React.FC = () => {
 	const fetchArticlesPending = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.GET, '/api/articles/pendinglist');
+			const res = await apiCall(HttpMethod.GET, '/api/articles/pendinglist');
 			setArticlesPending(res.articlesPending);
 			setIsLoading(false);
 		} catch (err) {
@@ -73,7 +75,7 @@ const DashboardList: React.FC = () => {
 	const fetchArticles = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.GET, '/api/user/articles');
+			const res = await apiCall(HttpMethod.GET, '/api/user/articles');
 			setArticles(res.articles);
 			setIsLoading(false);
 		} catch (err) {
@@ -85,7 +87,7 @@ const DashboardList: React.FC = () => {
 	const fetchLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.GET, '/api/user/lists');
+			const res = await apiCall(HttpMethod.GET, '/api/user/lists');
 			setLists(res.lists);
 			setIsLoading(false);
 		} catch (err) {
@@ -115,7 +117,7 @@ const DashboardList: React.FC = () => {
 			</div>
 			<div className="col-lg-12 col-md-10 mx-auto">
 				{lists.length > 0 ? (
-					lists.map((list) => <DashboardListItem key={list.id} {...list} currentUser={currentUser} />)
+					lists.map((list) => <DashboardListItem key={list.id} {...list} />)
 				) : (
 					<div className="alert text-center alert-info">You have no Lists yet.</div>
 				)}
@@ -181,7 +183,7 @@ const DashboardList: React.FC = () => {
 					</div>
 					<div className="col-lg-12 col-md-10 mx-auto">
 						{articles.map((article) => (
-							<DashboardArticleItem key={article.id} {...article} currentUser={currentUser} />
+							<DashboardArticleItem key={article.id} {...article} />
 						))}
 						{articles.length === 0 && <div>No articles yet.</div>}
 					</div>

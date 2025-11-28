@@ -42,17 +42,14 @@ class ArticleController extends Controller
     const ARTISTS = 11;
 
     const ARTICLE_STATUS_TYPES =
-        [
-            'pending' => 0,
-            'reviewing' => 1,
-            'rejected' => 2,
-            'approved' => 3,
-        ];
+    [
+        'pending' => 0,
+        'reviewing' => 1,
+        'rejected' => 2,
+        'approved' => 3,
+    ];
 
-    public function __constructor()
-    {
-
-    }
+    public function __constructor() {}
 
     public function getArticleJlptTypes($index)
     {
@@ -132,7 +129,8 @@ class ArticleController extends Controller
 
         if (! isset($article)) {
             return response()->json([
-                'success' => false, 'message' => 'Requested article does not exist',
+                'success' => false,
+                'message' => 'Requested article does not exist',
             ]);
         }
 
@@ -398,11 +396,11 @@ class ArticleController extends Controller
         $jp_minute = '分';
         $jp_year = '年';
         foreach ($articles as $singleArticle) {
-            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
-            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
-            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
-            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
+            $singleArticle->jp_year = $singleArticle->created_at->year . $jp_year;
+            $singleArticle->jp_month = $singleArticle->created_at->month . $jp_month;
+            $singleArticle->jp_day = $singleArticle->created_at->day . $jp_day;
+            $singleArticle->jp_hour = $singleArticle->created_at->hour . $jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
 
             $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
@@ -413,12 +411,14 @@ class ArticleController extends Controller
 
         if (isset($articles)) {
             return response()->json([
-                'success' => true, 'articles' => $articles,
+                'success' => true,
+                'articles' => $articles,
             ]);
         }
 
         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not exist or User has no articles',
+            'success' => false,
+            'message' => 'Requested Article does not exist or User has no articles',
         ]);
     }
 
@@ -428,12 +428,14 @@ class ArticleController extends Controller
 
         if (isset($articleKanjis)) {
             return response()->json([
-                'success' => true, 'articleKanjis' => $articleKanjis,
+                'success' => true,
+                'articleKanjis' => $articleKanjis,
             ]);
         }
 
         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not have kanjis',
+            'success' => false,
+            'message' => 'Requested Article does not have kanjis',
         ]);
     }
 
@@ -443,12 +445,14 @@ class ArticleController extends Controller
 
         if (isset($articleWords)) {
             return response()->json([
-                'success' => true, 'articleWords' => $articleWords,
+                'success' => true,
+                'articleWords' => $articleWords,
             ]);
         }
 
         return response()->json([
-            'success' => false, 'message' => 'Requested Article does not have words',
+            'success' => false,
+            'message' => 'Requested Article does not have words',
         ]);
     }
 
@@ -461,11 +465,11 @@ class ArticleController extends Controller
         $jp_minute = '分';
         $jp_year = '年';
         foreach ($articles as $singleArticle) {
-            $singleArticle->jp_year = $singleArticle->created_at->year.$jp_year;
-            $singleArticle->jp_month = $singleArticle->created_at->month.$jp_month;
-            $singleArticle->jp_day = $singleArticle->created_at->day.$jp_day;
-            $singleArticle->jp_hour = $singleArticle->created_at->hour.$jp_hour;
-            $singleArticle->jp_minute = $singleArticle->created_at->minute.$jp_minute;
+            $singleArticle->jp_year = $singleArticle->created_at->year . $jp_year;
+            $singleArticle->jp_month = $singleArticle->created_at->month . $jp_month;
+            $singleArticle->jp_day = $singleArticle->created_at->day . $jp_day;
+            $singleArticle->jp_hour = $singleArticle->created_at->hour . $jp_hour;
+            $singleArticle->jp_minute = $singleArticle->created_at->minute . $jp_minute;
 
             $singleArticle->likesTotal = getImpression('like', $objectTemplateId, $singleArticle, 'total');
             $singleArticle->downloadsTotal = getImpression('download', $objectTemplateId, $singleArticle, 'total');
@@ -508,10 +512,10 @@ class ArticleController extends Controller
 
             if (preg_match("/{$search}/i", $singleTag)) {
                 $articles = $this->getUniquehashtagArticles($singleTag);
-                $requestedQuery .= $singleTag.'. ';
+                $requestedQuery .= $singleTag . '. ';
             } else {
                 $articles = Article::whereLike(['title_jp', 'content_jp'], $request->keyword)->where('publicity', 1)->where('status', '3');
-                $requestedQuery .= 'keyword: '.$request->keyword.'. ';
+                $requestedQuery .= 'keyword: ' . $request->keyword . '. ';
             }
         }
 
@@ -529,7 +533,7 @@ class ArticleController extends Controller
 
         if (isset($request->filterType) && $request->filterType != 20) { // 20 = all
             $articles = $articles->where($this->getArticleJlptTypes($request->filterType), '>', 0)->where('publicity', 1)->where('status', '3'); //->orderBy($this->getArticleJlptTypes($request->filterType), 'desc')
-            $requestedQuery .= 'Filter by '.$this->getArticleJlptTypes($request->filterType).'.';
+            $requestedQuery .= 'Filter by ' . $this->getArticleJlptTypes($request->filterType) . '.';
         }
 
         $articles = $articles->paginate(4);
@@ -657,7 +661,7 @@ class ArticleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Article of id: '.$id.' is now private',
+                'message' => 'Article of id: ' . $id . ' is now private',
             ]);
         } else {
             $article->publicity = 1;
@@ -665,7 +669,7 @@ class ArticleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Article of id: '.$id.' is now public',
+                'message' => 'Article of id: ' . $id . ' is now public',
             ]);
         }
     }
@@ -724,7 +728,7 @@ class ArticleController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You commented article of id: '.$id,
+            'message' => 'You commented article of id: ' . $id,
             'comment' => $comment,
         ]);
     }
@@ -842,7 +846,7 @@ class ArticleController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked comment of id: '.$commentid,
+            'message' => 'You liked comment of id: ' . $commentid,
             'like' => $like,
         ]);
     }
@@ -917,7 +921,7 @@ class ArticleController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked list of id: '.$id,
+            'message' => 'You liked list of id: ' . $id,
             'like' => $like,
         ]);
     }
@@ -1029,7 +1033,7 @@ class ArticleController extends Controller
         return response()->json([
             'success' => true,
             'newStatus' => $request->status,
-            'message' => 'Article of id: '.$id.' set to '.$status,
+            'message' => 'Article of id: ' . $id . ' set to ' . $status,
         ]);
     }
 
@@ -1044,13 +1048,13 @@ class ArticleController extends Controller
             return null;
         }
         // get all hashtag foreign table rows
-        $foundRows = DB::table('hashtags')->where('uniquehashtag_id', $uniqueTag->id)
-            ->where('template_id', $objectTemplateId)->get();
+        $foundRows = DB::table('hashtag_entity')->where('hashtag_id', $uniqueTag->id)
+            ->where('entity_type_id', $objectTemplateId)->get();
 
         $ids = [];
         // get all articles with that tag id
         foreach ($foundRows as $articlelink) {
-            $ids[] = $articlelink->real_object_id;
+            $ids[] = $articlelink->entity_id;
         }
 
         $articles = Article::whereIn('id', $ids);

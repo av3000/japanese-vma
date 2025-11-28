@@ -370,7 +370,9 @@ class CustomListController extends Controller
         $lists = CustomList::where('user_id', auth()->user()->id)->get();
         if (! isset($lists) || count($lists) == 0) {
             return response()->json([
-                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists,
+                'success' => false,
+                'message' => 'user has zero lists',
+                'lists' => $lists,
             ]);
         }
 
@@ -380,7 +382,7 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'returned: '.count($lists).' results',
+            'message' => 'returned: ' . count($lists) . ' results',
             'lists' => $lists,
         ]);
     }
@@ -390,7 +392,9 @@ class CustomListController extends Controller
         $lists = CustomList::where('user_id', auth()->user()->id)->get();
         if (! isset($lists) || count($lists) == 0) {
             return response()->json([
-                'success' => false, 'message' => 'user has zero lists', 'lists' => $lists,
+                'success' => false,
+                'message' => 'user has zero lists',
+                'lists' => $lists,
             ]);
         }
 
@@ -427,7 +431,7 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'returned: '.count($lists).' results',
+            'message' => 'returned: ' . count($lists) . ' results',
             'lists' => $lists,
         ]);
     }
@@ -629,12 +633,12 @@ class CustomListController extends Controller
 
             if (preg_match("/{$search}/i", $singleTag)) {
                 $lists = $this->getUniquehashtagLists($singleTag);
-                $requestedQuery .= $singleTag.'. ';
+                $requestedQuery .= $singleTag . '. ';
             } else {
                 $lists = CustomList::whereLike(['title', 'description'], $request->keyword)
                     ->where('publicity', 1)
                     ->where('type', '>', 4);
-                $requestedQuery .= 'keyword: '.$request->keyword.'. ';
+                $requestedQuery .= 'keyword: ' . $request->keyword . '. ';
             }
         }
 
@@ -656,7 +660,7 @@ class CustomListController extends Controller
 
         if (isset($request->filterType) && $request->filterType != 20) { // 20 = all
             $lists = $lists->where('type', $request->filterType)->where('publicity', 1);
-            $requestedQuery .= 'Filter by '.$this->getListTypes($request->filterType).'.';
+            $requestedQuery .= 'Filter by ' . $this->getListTypes($request->filterType) . '.';
         }
 
         $lists = $lists->paginate(4);
@@ -799,7 +803,7 @@ class CustomListController extends Controller
                             // echo "<p>STR TagValue: " .$itemAsArr[0]. "</p>";
                             // TagType assigning
                             if (strcmp($singleTag[0], 'gloss') == 0) {
-                                $gloss .= $itemAsArr[0].'|';
+                                $gloss .= $itemAsArr[0] . '|';
                             }
                             // else if( strcmp( $singleTag[0], "pos" ) == 0)
                             // {
@@ -826,7 +830,6 @@ class CustomListController extends Controller
                 array_push($miscArr, $misc);
                 array_push($glossArr, $gloss);
                 array_push($fieldArr, $field);
-
             }
             $word->pos = $posArr;
             $word->gloss = $glossArr;
@@ -944,7 +947,7 @@ class CustomListController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'list of id: '.$id.' is now private',
+                'message' => 'list of id: ' . $id . ' is now private',
             ]);
         } else {
             $list->publicity = 1;
@@ -952,7 +955,7 @@ class CustomListController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'list of id: '.$id.' is now public',
+                'message' => 'list of id: ' . $id . ' is now public',
             ]);
         }
     }
@@ -1025,7 +1028,7 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked list of id: '.$id,
+            'message' => 'You liked list of id: ' . $id,
             'like' => $like,
         ]);
     }
@@ -1200,7 +1203,7 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You commented list of id: '.$id,
+            'message' => 'You commented list of id: ' . $id,
             'comment' => $comment,
         ]);
     }
@@ -1307,7 +1310,7 @@ class CustomListController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked comment of id: '.$commentid,
+            'message' => 'You liked comment of id: ' . $commentid,
             'like' => $like,
         ]);
     }
@@ -1331,12 +1334,12 @@ class CustomListController extends Controller
 
     public function getUniquehashtags($id, $objectTemplateId)
     {
-        $foundRows = DB::table('hashtags')->where('real_object_id', $id)
-            ->where('template_id', $objectTemplateId)->get();
+        $foundRows = DB::table('hashtag_entity')->where('entity_id', $id)
+            ->where('entity_type_id', $objectTemplateId)->get();
         $finalTags = [];
 
         foreach ($foundRows as $taglink) {
-            $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+            $uniqueTag = Uniquehashtag::find($taglink->hashtag_id);
             $finalTags[] = $uniqueTag;
         }
 
@@ -1352,13 +1355,13 @@ class CustomListController extends Controller
             return null;
         }
         // get all hashtag foreign table rows
-        $foundRows = DB::table('hashtags')->where('uniquehashtag_id', $uniqueTag->id)
-            ->where('template_id', $objectTemplateId)->get();
+        $foundRows = DB::table('hashtag_entity')->where('hashtag_id', $uniqueTag->id)
+            ->where('entity_type_id', $objectTemplateId)->get();
 
         $ids = [];
         // get all lists with that tag id
         foreach ($foundRows as $listlink) {
-            $ids[] = $listlink->real_object_id;
+            $ids[] = $listlink->entity_id;
         }
 
         $lists = CustomList::whereIn('id', $ids);
@@ -1408,9 +1411,9 @@ class CustomListController extends Controller
 
     public function removeHashtags($id, $objectTemplateId)
     {
-        $oldTags = DB::table('hashtags')
-            ->where('template_id', $objectTemplateId)
-            ->where('real_object_id', $id)
+        $oldTags = DB::table('hashtag_entity')
+            ->where('entity_type_id', $objectTemplateId)
+            ->where('entity_id', $id)
             ->delete();
     }
 
@@ -1422,15 +1425,15 @@ class CustomListController extends Controller
 
         foreach ($tags as $tag) {
             $row = [
-                'template_id' => $objectTemplateId,
-                'uniquehashtag_id' => $tag->id,
-                'real_object_id' => $object->id,
+                'entity_type_id' => $objectTemplateId,
+                'hashtag_id' => $tag->id,
+                'entity_id' => $object->id,
                 'user_id' => $object->user_id,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
 
-            $x = DB::table('hashtags')->insert($row);
+            $x = DB::table('hashtag_entity')->insert($row);
         }
 
         return response()->json([

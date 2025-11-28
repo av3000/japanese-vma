@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import SavedListItem from '../SavedList/SavedListItem';
 import ExploreListItem from './ExploreListItem';
 
@@ -27,7 +27,7 @@ const ExploreCustomList: React.FC = () => {
 	const fetchLists = async () => {
 		setIsLoading(true);
 		try {
-			const res = await apiCall(HTTP_METHOD.GET, '/api/lists');
+			const res = await apiCall({ method: HttpMethod.GET, path: '/lists' });
 			if (isMounted.current) {
 				setTotalLists(res.lists.total);
 				setLists(res.lists.data);
