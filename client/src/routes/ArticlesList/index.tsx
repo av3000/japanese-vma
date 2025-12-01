@@ -10,7 +10,8 @@ import { fetchArticles, setSelectedArticle } from '@/store/slices/articlesSlice'
 
 const ArticleList: React.FC = () => {
 	const dispatch = useDispatch();
-	const articles = useSelector((state: any) => state.articles.all);
+	const articles = useSelector((state) => state.articles.all);
+	const [displayArticles, setDisplayArticles] = useState([]);
 	const isLoading = useSelector((state: any) => state.articles.loading);
 	const paginationInfo = useSelector((state: any) => state.articles.paginationInfo);
 
@@ -55,7 +56,11 @@ const ArticleList: React.FC = () => {
 	};
 
 	const articleList = articles.length ? (
-		articles.map((a) => <ArticleItem key={a.id} {...a} onClick={() => handleSetSelectedArticle(a)} />)
+		<>
+			{articles.map((a) => (
+				<ArticleItem key={a.id} {...a} onClick={() => handleSetSelectedArticle(a)} />
+			))}
+		</>
 	) : (
 		<div className="container">
 			<div className="row justify-content-center">
@@ -70,27 +75,31 @@ const ArticleList: React.FC = () => {
 			{searchHeading && <h4>{searchHeading}</h4>}
 			{searchTotal && <h4>{searchTotal}</h4>}
 
+			<div>
+				<div>
+					{articles.length} of total {paginationInfo.total}
+				</div>
+				<div className="row">{articleList}</div>
+			</div>
+
 			{isLoading ? (
 				<div className="row justify-content-center">
 					<img src={Spinner} alt="Loading..." />
 				</div>
 			) : (
-				<div>
-					<div>Total Articles: {paginationInfo.total}</div>
-					<div className="row">{articleList}</div>
+				<div className="container">
+					<div className="row justify-content-center">
+						{paginationInfo.current_page === paginationInfo.last_page || !paginationInfo.next_page_url ? (
+							'No more results...'
+						) : (
+							<Button variant="secondary-outline" className="w-50" onClick={loadMore}>
+								{articles.length}
+								Load More
+							</Button>
+						)}
+					</div>
 				</div>
 			)}
-
-			<div className="row justify-content-center">
-				{!isLoading &&
-				(paginationInfo.current_page === paginationInfo.last_page || !paginationInfo.next_page_url) ? (
-					'No more results...'
-				) : (
-					<Button variant="secondary-outline" className="w-50" onClick={loadMore}>
-						Load More
-					</Button>
-				)}
-			</div>
 		</div>
 	);
 };
