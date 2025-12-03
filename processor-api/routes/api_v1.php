@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:api')->group(function () {
         // Users - Public Profile
         Route::get('users/{uuid}', [UserController::class, 'show']);
+        Route::get('users', [UserController::class, 'index']);
 
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
