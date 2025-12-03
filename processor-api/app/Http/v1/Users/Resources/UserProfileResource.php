@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\v1\Users\Resources;
 
 use App\Domain\Users\Models\User as DomainUser;
+use App\Http\V1\Admin\Resources\RoleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,7 +24,7 @@ class UserProfileResource extends JsonResource
         return [
             'uuid' => $this->user->getUuid()->value(),
             'name' => $this->user->getName()->value(),
-            'roles' => $this->user->getRoles(),
+            'roles' => RoleResource::collection($this->user->getRoles()),
             'created_at' => $this->user->getCreatedAt()->format('Y-m-d H:i:s'),
             'email' => $this->when($this->isOwnProfile, $this->user->getEmail()->value()),
         ];

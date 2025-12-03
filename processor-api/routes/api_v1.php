@@ -5,6 +5,7 @@ use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Users\Controllers\{UserController, UserRoleController};
+use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController};
 
 /*
 |--------------------------------------------------------------------------
@@ -27,8 +28,6 @@ Route::prefix('v1')->group(function () {
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
 
-    // Users - Public Profile
-    Route::get('users/{uuid}', [UserController::class, 'show']);
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 
@@ -37,9 +36,8 @@ Route::prefix('v1')->group(function () {
     // ============================================
 
     Route::middleware('auth:api')->group(function () {
-
-        // Current User Info
-        Route::get('me/roles', [UserRoleController::class, 'getMyRoles']);
+        // Users - Public Profile
+        Route::get('users/{uuid}', [UserController::class, 'show']);
 
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
@@ -66,9 +64,13 @@ Route::prefix('v1')->group(function () {
         Route::middleware('checkRole:admin')->group(function () {
 
             // User Role Management
-            Route::get('users/{uuid}/roles', [UserRoleController::class, 'getUserRoles']);
-            Route::post('users/{uuid}/roles', [UserRoleController::class, 'assignRole']);
-            Route::delete('users/{uuid}/roles/{role}', [UserRoleController::class, 'removeRole']);
+            Route::get('./admin/roles', [AdminUserRoleController::class, 'getAllRoles']);
+            Route::get('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'getUserRoles']);
+            Route::post('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'assignRole']);
+            Route::delete('/admin/users/{uuid}/roles/{role}', [AdminUserRoleController::class, 'removeRole']);
+
+            // User Management
+            Route::get('./admin/users', [AdminUserController::class, 'getAllUsers']);
 
             // Article Moderation
             Route::post('articles/{id}/status', [ArticleController::class, 'setStatus']); // TODO: implement

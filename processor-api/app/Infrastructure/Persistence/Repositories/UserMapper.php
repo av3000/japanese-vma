@@ -6,8 +6,8 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
 use App\Domain\Users\Models\User as DomainUser;
+use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Shared\ValueObjects\{EntityId, UserId, Email, UserName};
-use App\Domain\Users\DTOs\RoleDTO;
 
 class UserMapper
 {
@@ -17,9 +17,9 @@ class UserMapper
      */
     public static function mapToDomain(PersistenceUser $persistenceUser): DomainUser
     {
-        $roles = $persistenceUser->getRoleNames()
-            ->map(fn(string $roleName) => RoleDTO::fromName($roleName))
-            ->toArray();
+        $roles = $persistenceUser->roles->map(function (\Spatie\Permission\Models\Role $spatieRole) {
+            return DomainRole::fromSpatieRole($spatieRole);
+        })->toArray();
 
         return new DomainUser(
             id: new UserId($persistenceUser->id),

@@ -9,6 +9,7 @@ use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Users\Services\UserServiceInterface;
+use App\Domain\Users\Queries\UserQueryCriteria;
 
 class UserService implements UserServiceInterface
 {
@@ -22,14 +23,25 @@ class UserService implements UserServiceInterface
      * @param EntityId $userUuid User public UUID
      * @return Result Success data: DomainUser, Failure data: Error
      */
-    public function getUserProfile(EntityId $userUuid): Result
+    public function findByUuid(EntityId $userUuid): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
         if (!$user) {
-            return Result::failure(UserErrors::notFound());
+            return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
         return Result::success($user);
+    }
+
+    /**
+     * Finds users based on the given criteria.
+     *
+     * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
+     * @return DomainUser[]
+     */
+    public function findUsers(?UserQueryCriteria $criteria = null): array
+    {
+        return $this->userRepository->find($criteria);
     }
 }

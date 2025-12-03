@@ -4,30 +4,44 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Interfaces\Repositories;
 
-use App\Domain\Users\DTOs\RoleDTO;
+use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Users\Queries\RoleQueryCriteria;
 
 interface RoleRepositoryInterface
 {
     /**
-     * Get all roles for a user
+     * Find roles based on specified criteria.
      *
-     * @return RoleDTO[]
+     * @param RoleQueryCriteria|null $criteria Optional criteria for filtering roles.
+     * @return DomainRole[]
      */
-    public function getRolesForUser(UserId $userId): array;
+    public function find(?RoleQueryCriteria $criteria = null): array;
 
     /**
-     * Check if user has specific role
+     * Check if a user has a specific role.
+     *
+     * @param UserId $userId The internal ID of the user.
+     * @param string $roleName The name of the role to check.
+     * @return bool
      */
     public function userHasRole(UserId $userId, string $roleName): bool;
 
     /**
-     * Assign role to user
+     * Assign a role to a user.
+     *
+     * @param UserId $userId The internal ID (e.g., primary key) of the user.
+     * @param string $roleName The name of the role to assign.
+     * @return bool True on success, false otherwise.
      */
-    public function assignRole(UserId $userId, string $roleName): void;
+    public function assignRole(UserId $userId, string $roleName): bool;
 
     /**
-     * Remove role from user
+     * Remove a role from a user.
+     *
+     * @param UserId $userId The internal ID (e.g., primary key) of the user.
+     * @param string $roleName The name of the role to remove.
+     * @return bool True on success, false otherwise.
      */
-    public function removeRole(UserId $userId, string $roleName): void;
+    public function removeRole(UserId $userId, string $roleName): bool;
 }

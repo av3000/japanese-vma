@@ -25,6 +25,7 @@ final class GetCurrentUserAction
      */
     public function execute(): Result
     {
+        // TODO: Not sure how this works with route middleware which checks if user is authorized
         if (!$this->authSession->isAuthenticated()) {
             return Result::failure(UserErrors::notAuthenticated());
         }

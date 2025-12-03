@@ -22,15 +22,29 @@ class SpatieRoleRepository implements RoleRepositoryInterface
         return $user->hasRole($roleName);
     }
 
-    public function assignRole(UserId $userId, string $roleName): void
+    public function assignRole(UserId $userId, string $roleName): bool
     {
-        $user = User::where('id', $userId->value())->firstOrFail();
+        $user = User::findOrFail($userId->value());
+
+        if (!$user) {
+            return false;
+        }
+
         $user->assignRole($roleName);
+
+        return true;
     }
 
-    public function removeRole(UserId $userId, string $roleName): void
+    public function removeRole(UserId $userId, string $roleName): bool
     {
-        $user = User::where('id', $userId->value())->firstOrFail();
+        $user = User::findOrFail($userId->value());
+
+        if (!$user) {
+            return false;
+        }
+
         $user->removeRole($roleName);
+
+        return true;
     }
 }

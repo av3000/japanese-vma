@@ -5,6 +5,7 @@ namespace App\Application\Users\Interfaces\Repositories;
 use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Users\Queries\UserQueryCriteria;
 
 interface UserRepositoryInterface
 {
@@ -17,6 +18,14 @@ interface UserRepositoryInterface
     public function findByUuid(EntityId $userUuid): ?DomainUser;
 
     /**
+     * Finds users based on the given criteria.
+     *
+     * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
+     * @return DomainUser[]
+     */
+    public function find(?UserQueryCriteria $criteria = null): array;
+
+    /**
      * Create a new user
      *
      * @return array{userId: UserId, uuid: EntityId, user: \App\Infrastructure\Persistence\Models\User}
@@ -27,7 +36,6 @@ interface UserRepositoryInterface
         string $email,
         string $hashedPassword
     ): array;
-
 
     /**
      * Generate API access token for user

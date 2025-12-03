@@ -14,14 +14,16 @@ class RoleSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create roles
+        // Create roles from your UserRole enum
         foreach (UserRole::cases() as $role) {
             Role::firstOrCreate([
                 'name' => $role->value,
                 'guard_name' => 'api'
             ]);
         }
-        // Future: Create permissions and assign to roles
+
+        Role::firstOrCreate(['name' => 'testuser', 'guard_name' => 'api']);
+        // TODO: Create permissions and assign to roles
         // $editArticles = Permission::create(['name' => 'edit articles', 'guard_name' => 'api']);
         // $adminRole->givePermissionTo($editArticles);
 

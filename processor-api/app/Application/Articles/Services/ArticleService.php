@@ -99,6 +99,7 @@ class ArticleService implements ArticleServiceInterface
                     );
 
                     if ($hashtagResult->isFailure()) {
+                        // TODO: consider result pattern, as all system errors/exceptions should be matched and caught in global handler with standard response
                         throw new \Exception($hashtagResult->getError()->description);
                     }
                 }

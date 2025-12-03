@@ -6,6 +6,7 @@ namespace App\Http\v1\Auth\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Domain\Users\Models\User as DomainUser;
+use App\Http\V1\Admin\Resources\RoleResource;
 
 class AuthUserResource extends JsonResource
 {
@@ -26,7 +27,7 @@ class AuthUserResource extends JsonResource
             'uuid' => $user->getUuid()->value(),
             'name' => $user->getName()->value(),
             'email' => $user->getEmail()->value(),
-            'roles' => array_map(fn($role) => $role->getName(), $user->getRoles()),
+            'roles' => RoleResource::collection($user->getRoles()),
             'is_admin' => $user->isAdmin(),
             'created_at' => $user->getCreatedAt()->format('c'),
         ];

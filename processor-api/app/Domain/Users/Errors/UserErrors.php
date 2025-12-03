@@ -98,6 +98,17 @@ class UserErrors
         );
     }
 
+    public static function notAuthorized(): Error
+    {
+        return new Error(
+            code: 'Users.NotAuthorized',
+            status: HttpStatus::UNAUTHORIZED,
+            description: 'Not authorized',
+            detail: 'User is not authorized',
+            errorMessage: 'User is not authorized',
+        );
+    }
+
     public static function logoutFailed(): Error
     {
         return new Error(
