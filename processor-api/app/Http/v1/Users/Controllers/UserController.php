@@ -7,38 +7,57 @@ namespace App\Http\v1\Users\Controllers;
 use App\Http\Controllers\Controller;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Application\Users\Policies\UserViewPolicy;
+use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\v1\Users\Resources\UserProfileResource;
 use App\Shared\Http\TypedResults;
 use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Users\Queries\UserQueryCriteria;
+use App\Http\V1\Admin\Requests\UserIndexRequest;
+use App\Http\v1\Users\Builders\UserResponseBuilder;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends Controller
 {
     public function __construct(
-        private UserServiceInterface $userService,
-        private UserViewPolicy $userViewPolicy
+        private readonly UserServiceInterface $userService,
+        private readonly UserViewPolicy $userViewPolicy,
+        private readonly UserResponseBuilder $userResponseBuilder
     ) {}
 
     /**
      * Get a list of publicly visible users.
      *
-     * @param Request $request
+     * @param UserIndexRequest $request Custom validation request
      * @return JsonResponse
      */
-    public function index(Request $request): JsonResponse
+    public function index(UserIndexRequest $request): JsonResponse
     {
-        $limit = $request->query('limit', 10);
-        $offset = $request->query('offset', 0);
+        $validatedData = $request->validated();
 
-        $criteria = UserQueryCriteria::forPublicListing($limit, $offset);
-        $users = $this->userService->findUsers($criteria);
+        $criteria = UserQueryCriteria::forPublicListing(
+            page: $validatedData['page'],
+            perPage: $validatedData['per_page'],
+            sort: $validatedData['sort'],
+            offset: $validatedData['offset'],
+            limit: $validatedData['limit']
+        );
 
-        return response()->json([
-            'data' => UserProfileResource::collection($users),
-        ]);
+        // TODO: Potentially should come via authSession
+        $authenticatedUser = auth('api')->user();
+
+        $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
+
+        if ($paginatedUsersContextResult->isFailure()) {
+            return TypedResults::fromError($paginatedUsersContextResult->getError());
+        }
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedUsersContext */
+        $paginatedUsersContext = $paginatedUsersContextResult->getData();
+
+        $usersCollectionResponse = $this->userResponseBuilder->buildCollectionResponse($paginatedUsersContext);
+
+        return TypedResults::ok($usersCollectionResponse);
     }
 
     /**
@@ -52,22 +71,25 @@ class UserController extends Controller
         $userUuid = EntityId::from($uuid);
 
         // TODO: I think AuthSession service should be used here to access authorized user, not sure how userViewPolicy integrates with it, I might introduced them both for the same goal mistakenly
-        $isOwnProfile = $this->userViewPolicy->isOwnProfile(auth('api')->user(), $userUuid);
+        $authenticatedUser = auth('api')->user();
 
-        $result = $this->userService->findByUuid($userUuid);
+        $userResult = $this->userService->findByUuid($userUuid, $authenticatedUser);
 
-        if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
+        if ($userResult->isFailure()) {
+            return TypedResults::fromError($userResult->getError());
         }
 
-        $user = $result->getData();
+        /** @var \App\Application\Users\DTOs\UserWithProfileContext $userContext */
+        $userContext = $userResult->getData();
+        $user = $userContext->user;
 
-        if (!$this->userViewPolicy->view(auth('api')->user(), $user)) {
-            TypedResults::fromError(UserErrors::notAuthorized());
+        if (!$this->userViewPolicy->view($authenticatedUser, $user)) {
+            return TypedResults::fromError(UserErrors::notAuthorized());
         }
 
         return TypedResults::ok(
-            new UserProfileResource(user: $user, isOwnProfile: $isOwnProfile)
+            // TODO: expand on userResponseBuilder for building single user response
+            new UserProfileResource($userContext)
         );
     }
 }

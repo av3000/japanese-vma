@@ -15,17 +15,13 @@ use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
 
 use App\Http\v1\Articles\Resources\ArticleResource;
-use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
-use App\Domain\Articles\Models\ArticleStats;
-use App\Domain\Engagement\Models\EngagementData;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\{ObjectTemplateType, UserRole};
-use App\Domain\Articles\Errors\ArticleErrors;
+use App\Domain\Shared\Enums\{ObjectTemplateType};
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;

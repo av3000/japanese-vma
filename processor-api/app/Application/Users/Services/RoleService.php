@@ -19,15 +19,19 @@ class RoleService implements RoleServiceInterface
         private readonly RoleRepositoryInterface $roleRepository
     ) {}
 
+    /**
+     * Checks if a user has a specific role.
+     * Delegates directly to RoleRepository, passing the public UUID.
+     *
+     * @param EntityId $userUuid The public UUID of the user.
+     * @param string|UserRole $role The role name or UserRole enum.
+     * @return bool
+     */
     public function userHasRole(EntityId $userUuid, string|UserRole $role): bool
     {
-        $user = $this->userRepository->findByUuid($userUuid);
-
-        if (!$user) {
-            return false;
-        }
-
-        return $user->hasRole($role);
+        // TODO: probably one way should be expected and accepted rather than both
+        $roleName = $role instanceof UserRole ? $role->value : $role;
+        return $this->roleRepository->userHasRole($userUuid, $roleName);
     }
 
     public function isAdmin(EntityId $userUuid): bool
@@ -103,12 +107,11 @@ class RoleService implements RoleServiceInterface
      */
     public function getUserRoles(EntityId $userUuid): array
     {
-        $userResult = $this->userRepository->findByUuid($userUuid);
+        $userId = $this->userRepository->getIdByUuid($userUuid);
 
-        if (!$userResult) {
+        if (!$userId) {
             return []; // Or throw an exception, or return a Result<DomainRole[]>
         }
-        $userId = $userResult->getId();
 
         $criteria = RoleQueryCriteria::forUser($userId);
         return $this->findRoles($criteria);
@@ -122,5 +125,10 @@ class RoleService implements RoleServiceInterface
     public function getAllRoles(): array
     {
         return $this->findRoles();
+    }
+
+    public function roleExists(string $roleName): bool
+    {
+        return $this->roleRepository->exists($roleName);
     }
 }

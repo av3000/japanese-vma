@@ -8,15 +8,17 @@ use App\Http\Controllers\Controller;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Domain\Users\Queries\UserQueryCriteria;
 use App\Http\V1\Admin\Requests\UserIndexRequest;
+use App\Http\v1\Users\Builders\UserResponseBuilder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Shared\Http\TypedResults;
 use App\Http\v1\Users\Resources\UserProfileResource;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function __construct(
-        private readonly UserServiceInterface $userService
+        private readonly UserServiceInterface $userService,
+        private readonly UserResponseBuilder $userResponseBuilder
     ) {}
 
     /**
@@ -29,7 +31,11 @@ class UserController extends Controller
     {
         $validatedData = $request->validated();
 
+        // TODO: I think AuthSession service should be used here to access authorized user, not sure how userViewPolicy integrates with it, I might introduced them both for the same goal mistakenly
+        $authenticatedUser = auth('api')->user();
+
         $criteria = UserQueryCriteria::forAdminListing(
+            uuid: $validatedData['uuid'] ?? null,
             name: $validatedData['name'] ?? null,
             email: $validatedData['email'] ?? null,
             role: $validatedData['role'] ?? null,
@@ -37,10 +43,26 @@ class UserController extends Controller
             limit: $validatedData['limit'] ?? 20,
             offset: $validatedData['offset'] ?? 0,
         );
-        $users = $this->userService->findUsers($criteria);
+
+        $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
+
+        if ($paginatedUsersContextResult->isFailure()) {
+            return TypedResults::fromError($paginatedUsersContextResult->getError());
+        }
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedUsersContext */
+        $paginatedUsersContext = $paginatedUsersContextResult->getData();
+        $usersCollectionResponse = $this->userResponseBuilder->buildCollectionResponse($paginatedUsersContext);
+
+        return TypedResults::ok($usersCollectionResponse);
+    }
+
+    public function delete(Request $request): JsonResponse
+    {
+        $validatedData = $request->validated();
 
         return TypedResults::ok([
-            'users' => UserProfileResource::collection($users),
+            'message' => 'deleted successfully'
         ]);
     }
 }

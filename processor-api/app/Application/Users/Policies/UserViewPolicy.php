@@ -6,8 +6,8 @@ namespace App\Application\Users\Policies;
 
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Models\User as DomainUser;
-use App\Http\User as AuthUser; // TODO: use new model when refactoring will be done for dependent entities.
-// use App\Infrastructure\Persistence\Models\User as AuthUser;
+// use App\Http\User as AuthUser; // TODO: use new model when refactoring will be done for dependent entities.
+use App\Infrastructure\Persistence\Models\User as AuthUser;
 
 class UserViewPolicy
 {

@@ -16,6 +16,7 @@ use App\Http\Models\View;
 use App\Http\Models\Comment;
 use App\Http\Models\Post;
 use App\Http\Models\CustomList;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -41,6 +42,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        // 'deleted_at' => 'datetime',
     ];
 
     public function articles()

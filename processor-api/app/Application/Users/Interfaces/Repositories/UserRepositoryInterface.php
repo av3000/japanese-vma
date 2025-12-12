@@ -5,10 +5,16 @@ namespace App\Application\Users\Interfaces\Repositories;
 use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Users\Models\Users;
 use App\Domain\Users\Queries\UserQueryCriteria;
 
 interface UserRepositoryInterface
 {
+    /**
+     * Find user ID by user UUID
+     */
+    public function getIdByUuid(EntityId $entityUuid): ?UserId;
+
     /**
      * Find user by UUID with role relationship.
      *
@@ -21,9 +27,9 @@ interface UserRepositoryInterface
      * Finds users based on the given criteria.
      *
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
-     * @return DomainUser[]
+     * @return Users
      */
-    public function find(?UserQueryCriteria $criteria = null): array;
+    public function find(?UserQueryCriteria $criteria = null): Users;
 
     /**
      * Create a new user

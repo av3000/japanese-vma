@@ -25,7 +25,15 @@ return [
          */
 
         'role' => Spatie\Permission\Models\Role::class,
-
+        /*
+         * You need to explicitly tell Spatie which Eloquent model represents your "user"
+         * for the polymorphic relationships (model_has_roles, model_has_permissions).
+         * This is typically your default user model or the one that uses the HasRoles trait.
+         *
+         * The model you want to use as a User model needs to implement the
+         * `Illuminate\Contracts\Auth\Authenticatable` interface and use the `HasRoles` trait.
+         */
+        'user' => App\Infrastructure\Persistence\Models\User::class,
     ],
 
     'table_names' => [

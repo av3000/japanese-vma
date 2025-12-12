@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Comments\Controllers\CommentController;
-use App\Http\v1\Users\Controllers\{UserController, UserRoleController};
-use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController};
+use App\Http\v1\Users\Controllers\{UserController};
+use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
 
 /*
 |--------------------------------------------------------------------------
@@ -65,13 +65,13 @@ Route::prefix('v1')->group(function () {
         Route::middleware('checkRole:admin')->group(function () {
 
             // User Role Management
-            Route::get('./admin/roles', [AdminUserRoleController::class, 'getAllRoles']);
+            Route::get('/admin/roles', [AdminUserRoleController::class, 'getAllRoles']);
             Route::get('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'getUserRoles']);
             Route::post('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'assignRole']);
             Route::delete('/admin/users/{uuid}/roles/{role}', [AdminUserRoleController::class, 'removeRole']);
 
             // User Management
-            Route::get('./admin/users', [AdminUserController::class, 'getAllUsers']);
+            Route::get('/admin/users', [AdminUserController::class, 'index']);
 
             // Article Moderation
             Route::post('articles/{id}/status', [ArticleController::class, 'setStatus']); // TODO: implement

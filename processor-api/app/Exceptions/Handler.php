@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Domain\Shared\Exceptions\ValueObjectValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -66,6 +67,21 @@ class Handler extends ExceptionHandler
                 'instance' => $request->path(),
                 'timestamp' => now()->toIso8601String(),
                 'errors' => $exception->errors()
+            ], HttpStatus::UNPROCESSABLE_ENTITY->value);
+        }
+
+        if ($exception instanceof ValueObjectValidationException && ($request->expectsJson() || $request->is('api/*'))) {
+            // Log the exception if it indicates a severe issue, otherwise just return 422
+            Log::warning("Value Object validation failed: {$exception->getMessage()}", ['errors' => $exception->getErrors(), 'request_url' => $request->fullUrl()]);
+
+            return response()->json([
+                'type' => HttpStatus::UNPROCESSABLE_ENTITY->getTypeUri(),
+                'title' => 'Invalid Request Parameter',
+                'status' => HttpStatus::UNPROCESSABLE_ENTITY->value,
+                'detail' => $exception->getMessage(),
+                'instance' => $request->path(),
+                'timestamp' => now()->toIso8601String(),
+                'errors' => $exception->getErrors() // Include specific errors from your VO exception
             ], HttpStatus::UNPROCESSABLE_ENTITY->value);
         }
 

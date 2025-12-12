@@ -8,9 +8,11 @@ use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
 use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Users\Queries\UserQueryCriteria;
-use App\Domain\Users\ValueObjects\UserSortCriteria;
+use App\Domain\Shared\ValueObjects\UserSortCriteria;
+use App\Domain\Users\Models\Users;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 
@@ -21,7 +23,16 @@ class UserRepository implements UserRepositoryInterface
     ) {}
 
     /**
-     * Find user by UUID with role relationship.
+     * Find user ID by user UUID
+     */
+    public function getIdByUuid(EntityId $entityUuid): ?UserId
+    {
+        $userId = PersistenceUser::where('uuid', $entityUuid->value())->value('id');
+        return UserId::from($userId);
+    }
+
+    /**
+     * Find user by UUID
      *
      * @param EntityId $userUuid The user's public UUID
      * @return DomainUser|null The domain user if found, null if not found
@@ -39,9 +50,9 @@ class UserRepository implements UserRepositoryInterface
      * Finds users based on the given criteria.
      *
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
-     * @return DomainUser[]
+     * @return Users
      */
-    public function find(?UserQueryCriteria $criteria = null): array
+    public function find(?UserQueryCriteria $criteria = null): Users
     {
         $query = PersistenceUser::query()->with('roles');
 
@@ -52,14 +63,21 @@ class UserRepository implements UserRepositoryInterface
             $query->orderBy('created_at', 'desc');
         }
 
-        $perPage = $criteria?->pagination?->per_page ?? 20;
-        $page = $criteria?->pagination?->page ?? 1;
+        $perPage = $criteria?->pagination?->per_page ?? Pagination::DEFAULT_PER_PAGE;
+        $page = $criteria?->pagination?->page ?? Pagination::MIN_PAGE;
 
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedResults */
         $paginatedResults = $query->paginate($perPage, ['*'], 'page', $page);
 
-        return $paginatedResults->getCollection()
-            ->map(fn(PersistenceUser $persistenceUser) => $this->userMapper->mapToDomain($persistenceUser))
-            ->toArray();
+        $domainUsers = $paginatedResults->getCollection()
+            ->map(fn(PersistenceUser $persistenceUser) => $this->userMapper->mapToDomain($persistenceUser));
+
+        // Set the transformed collection back onto the paginator
+        $paginatedResults->setCollection($domainUsers);
+
+        // Return the wrapped domain collection
+        return Users::fromEloquentPaginator($paginatedResults);
     }
 
     /**
@@ -94,9 +112,8 @@ class UserRepository implements UserRepositoryInterface
         }
 
         if ($criteria->publicOnly) {
-            // Apply rules for publicly visible users (e.g., email_verified, not banned)
-            $query->whereNotNull('email_verified_at');
-            // $query->where('is_banned', false);
+            // TODO: apply if needed later
+            // $query->where('is_private', true);
         }
     }
 

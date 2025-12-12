@@ -34,4 +34,6 @@ interface RoleServiceInterface
      * @return DomainRole[]
      */
     public function getUserRoles(EntityId $userUuid): array;
+
+    public function roleExists(string $roleName): bool;
 }

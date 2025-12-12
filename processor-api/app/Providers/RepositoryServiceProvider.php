@@ -5,7 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Repositories\{SpatieRoleRepository, ArticleRepository, CommentRepository, KanjiRepository, ViewRepository, LikeRepository, DownloadRepository, HashtagRepository, RoleRepository, UserRepository, CustomListRepository};
+use App\Infrastructure\Persistence\Repositories\{ArticleRepository, CommentRepository, KanjiRepository, ViewRepository, LikeRepository, DownloadRepository, HashtagRepository, RoleRepository, UserRepository, CustomListRepository};
 use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface, HashtagRepositoryInterface};
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
@@ -58,18 +58,13 @@ class RepositoryServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(
-            RoleRepository::class,
-            RoleRepositoryInterface::class
+            RoleRepositoryInterface::class,
+            RoleRepository::class
         );
 
         $this->app->singleton(
             CustomListRepositoryInterface::class,
             CustomListRepository::class
-        );
-
-        $this->app->singleton(
-            RoleRepositoryInterface::class,
-            SpatieRoleRepository::class
         );
     }
 }

@@ -2,18 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Users\ValueObjects;
+namespace App\Domain\Shared\ValueObjects;
 
 use App\Domain\Shared\Enums\SortDirection;
-use App\Domain\Shared\Enums\SortField;
-
-// Define specific sort fields for users, extending SortField if needed
-enum UserSortField: string implements SortField
-{
-    case CREATED_AT = 'created_at';
-    case NAME = 'name';
-    case EMAIL = 'email';
-}
+use App\Domain\Shared\Enums\UserSortField;
 
 final readonly class UserSortCriteria
 {
