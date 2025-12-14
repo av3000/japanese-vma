@@ -21,7 +21,6 @@ class RoleService implements RoleServiceInterface
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly RoleRepositoryInterface $roleRepository,
-        private readonly UserViewPolicy $userViewPolicy
     ) {}
 
     /**
@@ -107,7 +106,6 @@ class RoleService implements RoleServiceInterface
 
         $this->roleRepository->removeRole($user->getId(), $roleName);
 
-        // Return the UUID of the affected user
         return Result::success($userUuid->value());
     }
 
@@ -165,7 +163,7 @@ class RoleService implements RoleServiceInterface
         $userId = $this->userRepository->getIdByUuid($userUuid);
 
         if (!$userId) {
-            return []; // Or throw an exception, or return a Result<DomainRole[]>
+            return [];
         }
 
         $criteria = RoleQueryCriteria::forUser($userId);
@@ -207,7 +205,7 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
         }
 
-        $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName); // Call repository
+        $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
         return Result::success($newDomainRole);
     }
 }

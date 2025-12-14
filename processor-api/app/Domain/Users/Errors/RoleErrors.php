@@ -91,7 +91,7 @@ class RoleErrors
         );
     }
 
-    public static function roleHasActiveAssignments(string $roleName): Error // Reusing this
+    public static function roleHasActiveAssignments(string $roleName): Error
     {
         return new Error(
             code: 'Roles.RoleHasActiveAssignments',
