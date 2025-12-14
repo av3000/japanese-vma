@@ -1,15 +1,15 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import FacebookIcon from '@/assets/icons/fb-icon.svg';
 import InstagramIcon from '@/assets/icons/ig-icon.svg';
 import { ExploreArticleList, ExploreCustomList } from '@/components/features/Homepage';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { useAuth } from '@/hooks/useAuth';
 import './Homepage.scss';
 
 const Homepage: React.FC = () => {
 	/* eslint-disable */
-	const isAuthenticated = useSelector((state: any) => state.currentUser.isAuthenticated);
+	const { isAuthenticated } = useAuth();
 
 	if (!isAuthenticated) {
 		return (

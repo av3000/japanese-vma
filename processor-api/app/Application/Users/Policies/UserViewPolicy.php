@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Policies;
 
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Models\User as DomainUser;
-use App\Http\User as AuthUser; // TODO: use new model when refactoring will be done for dependent entities.
+// use App\Http\User as AuthUser; // TODO: use new model when refactoring will be done for dependent entities.
+use App\Infrastructure\Persistence\Models\User as AuthUser;
 
 class UserViewPolicy
 {
@@ -20,7 +22,7 @@ class UserViewPolicy
      */
     public function view(?AuthUser $authUser, DomainUser $user): bool
     {
-        // Future: Add logic for private profiles, blocked users, etc.
+        // TODO: In future could add logic for private profiles, blocked users, etc.
         return true;
     }
 
@@ -28,16 +30,16 @@ class UserViewPolicy
      * Check if authenticated user is viewing their own profile.
      * Used by Resource to determine email visibility.
      *
-     * @param AuthUser|null $authUser The authenticated user
-     * @param DomainUser $user The user profile being viewed
+     * @param DomainUser|null $domainUser The authenticated domain user
+     * @param EntityId $uuid The user profile being viewed
      * @return bool
      */
-    public function isOwnProfile(?AuthUser $authUser, DomainUser $user): bool
+    public function isOwnProfile(?DomainUser $domainUser, EntityId $uuid): bool
     {
-        if (!$authUser) {
+        if (!$domainUser) {
             return false;
         }
 
-        return $authUser->id === $user->getId()->value();
+        return $domainUser->getUuid()->value() === $uuid->value();
     }
 }

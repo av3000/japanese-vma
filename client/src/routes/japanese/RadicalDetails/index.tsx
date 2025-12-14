@@ -5,11 +5,12 @@ import { Button, Modal } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 
 const RadicalDetails: React.FC = () => {
-	const currentUser = useSelector((state) => state.currentUser);
 	const [radical, setRadical] = useState({});
 	const [lists, setLists] = useState([]);
 	const [showModal, setShowModal] = useState(false);
@@ -19,18 +20,19 @@ const RadicalDetails: React.FC = () => {
 
 	const { radical_id } = useParams();
 	const navigate = useNavigate();
+	const { user: currentUser, isAuthenticated } = useAuth;
 
 	useEffect(() => {
 		getRadicalDetails();
-		if (currentUser.isAuthenticated) {
+		if (isAuthenticated) {
 			getUserRadicalLists();
 		}
-	}, [currentUser.isAuthenticated]);
+	}, [isAuthenticated]);
 
 	const getRadicalDetails = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.GET, `${BASE_URL}/api/radical/${radical_id}`);
+			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/radical/${radical_id}`);
 			setRadical(res);
 		} catch (error) {
 			console.error(error);
@@ -42,7 +44,7 @@ const RadicalDetails: React.FC = () => {
 	const getUserRadicalLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HTTP_METHOD.POST, `${BASE_URL}/api/user/lists/contain`, {
+			const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
 				elementId: radical_id,
 			});
 			const knownLists = res.lists.filter(
@@ -62,7 +64,7 @@ const RadicalDetails: React.FC = () => {
 	};
 
 	const toggleModal = () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			setShowModal((prevShow) => !prevShow);
@@ -75,7 +77,7 @@ const RadicalDetails: React.FC = () => {
 			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
 			const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-			await apiCall(HTTP_METHOD.POST, url, {
+			await apiCall(HttpMethod.POST, url, {
 				listId: id,
 				elementId: radical_id,
 			});

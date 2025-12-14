@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import SearchBarKanjis from './SearchBarKanjis';
 
 export class KanjiList extends Component {
@@ -33,7 +33,7 @@ export class KanjiList extends Component {
 
 	fetchKanjis() {
 		this.setState({ isLoading: true });
-		return apiCall(HTTP_METHOD.GET, '/api/kanjis')
+		return apiCall(HttpMethod.GET, '/api/kanjis')
 			.then((res) => {
 				const newState = Object.assign({}, this.state);
 				newState.paginateObject = res.kanjis;
@@ -87,7 +87,7 @@ export class KanjiList extends Component {
 	fetchMoreQuery() {
 		const newState = Object.assign({}, this.state);
 		this.setState({ isLoading: true });
-		apiCall(HTTP_METHOD.POST, '/api/kanjis', newState.filters)
+		apiCall(HttpMethod.POST, '/api/kanjis', newState.filters)
 			.then((res) => {
 				newState.paginateObject = res.kanjis;
 				newState.kanjis = [...newState.kanjis, ...res.kanjis.data];

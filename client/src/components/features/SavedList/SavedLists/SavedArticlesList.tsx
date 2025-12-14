@@ -3,6 +3,7 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { User } from '@/types';
 import sharedStyles from '../SharedListStyles.module.scss';
 
 interface Hashtag {
@@ -19,12 +20,6 @@ interface Article {
 	downloadsTotal: number;
 	commentsTotal: number;
 	likesTotal: number;
-}
-
-interface User {
-	user: {
-		id: string | number;
-	};
 }
 
 interface SavedArticlesListProps {
@@ -48,7 +43,7 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({ objects, removeFr
 									<Icon size="sm" name="externalLink" />
 								</Link>
 							</h5>
-							{currentUser.user.id === listUserId && (
+							{currentUser?.id === listUserId && (
 								<Button
 									type="button"
 									size="md"

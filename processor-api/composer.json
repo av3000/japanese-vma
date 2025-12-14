@@ -15,12 +15,14 @@
         "guzzlehttp/guzzle": "7.2",
         "laravel/framework": "10.48.9",
         "laravel/passport": "12.0.0",
-        "laravel/tinker": "2.8"
+        "laravel/tinker": "2.8",
+        "spatie/laravel-permission": "^6.23"
     },
     "require-dev": {
         "fakerphp/faker": "1.23.1",
         "laravel/pint": "1.15.2",
         "laravel/sail": "1.29.1",
+        "laravel/telescope": "^5.15",
         "mockery/mockery": "1.6.11",
         "nunomaduro/collision": "7.0",
         "phpunit/phpunit": "10.0.7",

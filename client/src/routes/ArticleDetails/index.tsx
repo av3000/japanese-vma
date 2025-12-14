@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* eslint-disable */
+/*eslint-disable */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Modal } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,14 +7,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import Spinner from '@/assets/images/spinner.gif';
-import CommentForm from '@/components/features/comment/CommentForm';
-import CommentList from '@/components/features/comment/CommentList';
+import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { hideLoader, showLoader } from '@/store/actions/application';
 import { setSelectedArticle } from '@/store/actions/articles';
 
@@ -43,7 +44,7 @@ const ArticleDetails: React.FC = () => {
 
 	const dispatch = useDispatch();
 
-	const currentUser = useSelector((state: any) => state.currentUser);
+	const { user: currentUser, isAuthenticated } = useAuth();
 	const selectedArticle = useSelector((state: any) => state.articles.selectedArticle);
 
 	useEffect(() => {
@@ -51,7 +52,7 @@ const ArticleDetails: React.FC = () => {
 			try {
 				const url = `${BASE_URL}/api/article/${article_id}`;
 				// @ts-ignore
-				const data = await apiCall(HTTP_METHOD.GET, url);
+				const data = await apiCall(HttpMethod.GET, url);
 				const { article } = data;
 				if (!article) {
 					navigate('/articles');
@@ -71,7 +72,7 @@ const ArticleDetails: React.FC = () => {
 		const fetchUserRelationsToArticle = async () => {
 			try {
 				// @ts-ignore
-				const userLike = await apiCall(HTTP_METHOD.POST, `${BASE_URL}/api/article/${article_id}/checklike`);
+				const userLike = await apiCall(HttpMethod.POST, `${BASE_URL}/api/article/${article_id}/checklike`);
 
 				setArticle((prevArticle: any) => ({
 					...prevArticle,
@@ -79,7 +80,7 @@ const ArticleDetails: React.FC = () => {
 					comments: prevArticle.comments
 						? prevArticle.comments.map((comment: any) => ({
 								...comment,
-								isLiked: comment.likes.some((like: any) => like.user_id === currentUser.user.id),
+								isLiked: comment.likes.some((like: any) => like.user_id === currentUser?.id),
 							}))
 						: [],
 				}));
@@ -92,7 +93,7 @@ const ArticleDetails: React.FC = () => {
 			try {
 				setIsLoading(true);
 				const url = `${BASE_URL}/api/user/lists/contain`;
-				const data = await apiCall(HTTP_METHOD.POST, url, {
+				const data = await apiCall(HttpMethod.POST, url, {
 					elementId: article_id,
 				});
 
@@ -115,13 +116,13 @@ const ArticleDetails: React.FC = () => {
 
 		if (!selectedArticle) {
 			fetchArticleDetails();
-			if (currentUser.isAuthenticated) {
+			if (isAuthenticated) {
 				fetchUserRelationsToArticle();
 				fetchUserArticleLists();
 			}
 		} else {
 			setArticle(selectedArticle);
-			if (currentUser.isAuthenticated) {
+			if (isAuthenticated) {
 				fetchUserRelationsToArticle();
 				fetchUserArticleLists();
 			}
@@ -136,7 +137,7 @@ const ArticleDetails: React.FC = () => {
 			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
 			const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-			await apiCall(HTTP_METHOD.POST, url, {
+			await apiCall(HttpMethod.POST, url, {
 				listId: id,
 				elementId: article_id,
 			});
@@ -167,7 +168,7 @@ const ArticleDetails: React.FC = () => {
 	};
 
 	const downloadPdf = async (type) => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 			return;
 		}
@@ -176,7 +177,7 @@ const ArticleDetails: React.FC = () => {
 		dispatch(showLoader(loaderMessage) as any);
 		try {
 			const url = `${BASE_URL}/api/article/${article_id}/${pdfType}`;
-			const res = await apiCall(HTTP_METHOD.GET, url, { responseType: 'blob' });
+			const res = await apiCall(HttpMethod.GET, url, { responseType: 'blob' });
 			const file = new Blob([res], { type: 'application/pdf' });
 			const fileURL = URL.createObjectURL(file);
 			window.open(fileURL);
@@ -199,7 +200,7 @@ const ArticleDetails: React.FC = () => {
 		try {
 			toggleModal(ArticleModalTypes.SHOW_STATUS);
 			setIsReviewLoading(true);
-			const res = await apiCall(HTTP_METHOD.POST, `/api/article/${article_id}/setstatus`, {
+			const res = await apiCall(HttpMethod.POST, `/api/article/${article_id}/setstatus`, {
 				status: articleTempStatus,
 			});
 			setArticle((prevArticle: any) => ({
@@ -215,7 +216,7 @@ const ArticleDetails: React.FC = () => {
 	};
 
 	const handleLikeArticle = async () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 			return;
 		}
@@ -223,64 +224,12 @@ const ArticleDetails: React.FC = () => {
 			const endpoint = article.isLiked ? 'unlike' : 'like';
 			const url = `${BASE_URL}/api/article/${article.id}/${endpoint}`;
 			// @ts-ignore
-			await apiCall(HTTP_METHOD.POST, url);
+			await apiCall(HttpMethod.POST, url);
 			setArticle((prevArticle) => ({
 				...prevArticle,
 				isLiked: !prevArticle.isLiked,
 				likesTotal: prevArticle.likesTotal + (endpoint === 'like' ? 1 : -1),
 			}));
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	// TODO: Explore useEffect logic to potentially avoid using 'useCallback' for less complexity
-	const handleAddComment = useCallback(
-		(comment: any) => {
-			setArticle((prevArticle: any) => ({
-				...prevArticle,
-				comments: [comment, ...prevArticle.comments],
-			}));
-		},
-		[setArticle],
-	);
-
-	const handleDeleteComment = async (commentId: any) => {
-		try {
-			// @ts-ignore
-			await apiCall(HTTP_METHOD.DELETE, `/api/article/${article_id}/comment/${commentId}`);
-			setArticle((prevArticle: any) => ({
-				...prevArticle,
-				comments: prevArticle.comments.filter((comment: any) => comment.id !== commentId),
-			}));
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	const handleLikeComment = async (commentId: any) => {
-		if (!currentUser.isAuthenticated) {
-			navigate('/login');
-			return;
-		}
-		try {
-			const theComment = article.comments.find((comment: any) => comment.id === commentId);
-			const endpoint = theComment.isLiked ? 'unlike' : 'like';
-			const url = `${BASE_URL}/api/article/${article_id}/comment/${commentId}/${endpoint}`;
-			await apiCall(HTTP_METHOD.POST, url);
-
-			setArticle((prevArticle) => {
-				const updatedComments = prevArticle.comments.map((comment: any) =>
-					comment.id === commentId
-						? {
-								...comment,
-								isLiked: !comment.isLiked,
-								likesTotal: comment.likesTotal + (endpoint === 'like' ? 1 : -1),
-							}
-						: comment,
-				);
-				return { ...prevArticle, comments: updatedComments };
-			});
 		} catch (error) {
 			console.error(error);
 		}
@@ -364,7 +313,7 @@ const ArticleDetails: React.FC = () => {
 	const renderDeleteModal = () => {
 		const handleDeleteArticle = async () => {
 			try {
-				await apiCall(HTTP_METHOD.DELETE, `/api/article/${article.id}`);
+				await apiCall(HttpMethod.DELETE, `/api/article/${article.id}`);
 				navigate('/articles');
 			} catch (error) {
 				console.error(error);
@@ -443,13 +392,13 @@ const ArticleDetails: React.FC = () => {
 							Posted on {article.jp_year} {article.jp_month} {article.jp_day} {article.jp_hour}
 							<br />
 							<span>{article.viewsTotal} views | </span>
-							{(currentUser.user.id === article.user_id || currentUser.user.isAdmin) &&
+							{(currentUser?.id === article.user_id || currentUser?.isAdmin) &&
 								(article.publicity === 1 ? (
 									<Badge variant="primary">Public</Badge>
 								) : (
 									<Badge variant="secondary">Private</Badge>
 								))}
-							{(currentUser.user.id === article.user_id || currentUser.user.isAdmin) &&
+							{(currentUser?.id === article.user_id || currentUser?.isAdmin) &&
 								(isReviewLoading ? (
 									<span className="spinner-border spinner-border-sm"></span>
 								) : (
@@ -457,7 +406,7 @@ const ArticleDetails: React.FC = () => {
 								))}
 						</div>
 						<div>
-							{currentUser.user.isAdmin && (
+							{currentUser?.isAdmin && (
 								<Button
 									onClick={() => toggleModal(ArticleModalTypes.SHOW_STATUS)}
 									variant="ghost"
@@ -471,7 +420,7 @@ const ArticleDetails: React.FC = () => {
 								</Button>
 							)}
 
-							{currentUser.user.id === article.user_id && (
+							{currentUser?.id === article.user_id && (
 								<>
 									<Button
 										onClick={() => toggleModal(ArticleModalTypes.SHOW_DELETE)}
@@ -548,28 +497,10 @@ const ArticleDetails: React.FC = () => {
 			</div>
 			<div className="row justify-content-center">
 				<div className="col-lg-8">
-					<hr />
-					{currentUser.isAuthenticated ? (
-						<>
-							<h6>Share what's on your mind</h6>
-							<CommentForm
-								addComment={handleAddComment}
-								currentUser={currentUser}
-								objectId={article.id}
-								objectType="article"
-							/>
-						</>
-					) : (
-						<h6>
-							You need to <Link to="/login">login</Link> to comment
-						</h6>
-					)}
-					<CommentList
+					<CommentsBlock
 						objectId={article.id}
-						currentUser={currentUser}
-						comments={article.comments}
-						likeComment={handleLikeComment}
-						deleteComment={handleDeleteComment}
+						objectType="article"
+						initialComments={article.comments || []}
 					/>
 				</div>
 			</div>

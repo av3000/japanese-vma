@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Engagement\Actions;
 
 use App\Http\Models\ObjectTemplate;
@@ -18,14 +19,11 @@ class LoadEntityHashtagsAction
             return;
         }
 
-        // Get template ID for the specific entity type
         $entityTemplateId = ObjectTemplate::where('title', $entityType)->first()->id;
         $entityIds = $entities->pluck('id')->toArray();
 
-        // Use the same efficient batch loading logic from your original action
         $hashtags = $this->batchLoadHashtags($entityTemplateId, $entityIds);
 
-        // Attach hashtags to each entity
         foreach ($entities as $entity) {
             $entity->hashtags = $hashtags[$entity->id] ?? [];
         }
@@ -38,32 +36,29 @@ class LoadEntityHashtagsAction
      */
     private function batchLoadHashtags(int $templateId, array $entityIds): array
     {
-        // First query: get hashtag relationships
-        $hashtagLinks = DB::table('hashtags')
-            ->where('template_id', $templateId)
-            ->whereIn('real_object_id', $entityIds)
+        $hashtagLinks = DB::table('hashtag_entity')
+            ->where('entity_type_id', $templateId)
+            ->whereIn('entity_id', $entityIds)
             ->get();
 
         if ($hashtagLinks->isEmpty()) {
             return [];
         }
 
-        // Second query: get actual hashtag data
-        $uniqueTagIds = $hashtagLinks->pluck('uniquehashtag_id')->unique();
+        $uniqueTagIds = $hashtagLinks->pluck('hashtag_id')->unique();
         $uniqueTags = DB::table('uniquehashtags')
             ->whereIn('id', $uniqueTagIds)
             ->get()
             ->keyBy('id');
 
-        // Build result array grouped by entity ID
         $result = [];
         foreach ($hashtagLinks as $link) {
-            if (!isset($result[$link->real_object_id])) {
-                $result[$link->real_object_id] = [];
+            if (!isset($result[$link->entity_id])) {
+                $result[$link->entity_id] = [];
             }
 
-            if (isset($uniqueTags[$link->uniquehashtag_id])) {
-                $result[$link->real_object_id][] = $uniqueTags[$link->uniquehashtag_id];
+            if (isset($uniqueTags[$link->hashtag_id])) {
+                $result[$link->entity_id][] = $uniqueTags[$link->hashtag_id];
             }
         }
 

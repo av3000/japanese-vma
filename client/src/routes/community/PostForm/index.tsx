@@ -4,7 +4,7 @@
 import React, { Component } from 'react';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { hideLoader, showLoader } from '@/store/actions/application';
 
 class PostForm extends Component {
@@ -46,7 +46,7 @@ class PostForm extends Component {
 	};
 
 	postNewPost(payload) {
-		return apiCall(HTTP_METHOD.POST, `/api/post`, payload)
+		return apiCall(HttpMethod.POST, `/api/post`, payload)
 			.then((res) => {
 				this.props.dispatch(hideLoader());
 				this.props.history.push('/community/' + res.post.id);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
@@ -6,7 +7,6 @@ use App\Domain\Articles\Models\Article as DomainArticle;
 
 use App\Domain\Shared\ValueObjects\{EntityId, UserId, UserName, JlptLevels};
 use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl};
-use App\Domain\Shared\Enums\{PublicityStatus, ArticleStatus};
 
 class ArticleMapper
 {
@@ -33,7 +33,6 @@ class ArticleMapper
                 (int)$entity->n5,
                 (int)$entity->uncommon
             ),
-            // TODO: create ArticleTags proper domain object
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
         );
@@ -64,7 +63,7 @@ class ArticleMapper
         ];
     }
 
-     /**
+    /**
      * Map domain model onto EXISTING persistence entity (Domain → Entity).
      * Mutates the entity with updated values. Used for updates.
      *

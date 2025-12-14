@@ -5,7 +5,7 @@ import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
 import WordItem from '@/components/features/japanese/word/WordItem';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import SearchBarWords from './SearchBarWords';
 
 export class WordList extends Component {
@@ -34,7 +34,7 @@ export class WordList extends Component {
 
 	fetchWords(givenUrl) {
 		this.setState({ isLoading: true });
-		return apiCall(HTTP_METHOD.GET, givenUrl)
+		return apiCall(HttpMethod.GET, givenUrl)
 			.then((res) => {
 				const newState = Object.assign({}, this.state);
 				newState.paginateObject = res.words;

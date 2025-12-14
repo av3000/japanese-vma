@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// V1 Routes (Domain Architecture)
+require __DIR__ . '/api_v1.php';
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -150,56 +153,3 @@ Route::get('user/{id}/lists', 'CustomListController@getUserLists');
 Route::get('posts', 'PostController@index');
 Route::get('post/{id}', 'PostController@show');
 Route::post('posts/search', 'PostController@generateQuery');
-
-// V2 Endpoints - Domain Architecture
-Route::prefix('v1')->group(function () {
-    // TODO: look into throttling of requests for rate limiting
-
-    // Public routes
-    Route::get('articles/{id}/kanjis', '\App\Http\v1\Articles\Controllers\ArticleController@kanjis');
-    Route::get('articles/{id}/words', '\App\Http\v1\Articles\Controllers\ArticleController@words');
-
-    Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
-
-    Route::prefix('articles/{uuid}')->group(function () {
-        Route::get('comments', '\App\Http\v1\Comments\Controllers\CommentController@getArticleComments');
-        Route::post('comments', '\App\Http\v1\Comments\Controllers\CommentController@store')->middleware('auth:api');
-    });
-
-    Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
-
-    Route::get('/users/{uuid}', ['\App\Http\v1\Users\Controllers\UserController', 'show']);
-    // Authenticated routes
-    Route::middleware('auth:api')->group(function () {
-
-
-        // Articles
-        // Articles CRUD
-        // Route::get('articles', '\App\Http\v1\Articles\Controllers\ArticleController@index');
-        // Route::get('articles/{id}', '\App\Http\v1\Articles\Controllers\ArticleController@show');
-
-        Route::post('articles', '\App\Http\v1\Articles\Controllers\ArticleController@store');
-        Route::put('articles/{uuid}', '\App\Http\v1\Articles\Controllers\ArticleController@update');
-        Route::delete('articles/{uuid}', '\App\Http\v1\Articles\Controllers\ArticleController@destroy');
-
-        // Article actions
-        // TODO: implement in v1
-        Route::post('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@like');
-        // TODO: implement in v1
-        Route::delete('articles/{id}/like', '\App\Http\v1\Articles\Controllers\ArticleController@unlike');
-        // TODO: implement in v1
-        Route::post('articles/{id}/toggle-publicity', '\App\Http\v1\Articles\Controllers\ArticleController@togglePublicity');
-
-        // User's articles
-        // TODO: implement in v1
-        Route::get('user/articles', '\App\Http\v1\Articles\Controllers\ArticleController@userArticles');
-
-        // Admin routes
-        Route::middleware('checkRole:admin')->group(function () {
-            // TODO: implement in v1
-            Route::post('articles/{id}/status', '\App\Http\v1\Articles\Controllers\ArticleController@setStatus');
-            // TODO: implement in v1
-            Route::get('articles/pending', '\App\Http\v1\Articles\Controllers\ArticleController@pending');
-        });
-    });
-});

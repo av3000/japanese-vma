@@ -13,11 +13,13 @@
       "@/routes/*": ["src/routes/*"],
       "@/components/*": ["src/components/*"],
       "@/containers/*": ["src/containers/*"],
+      "@/contexts/*": ["src/contexts/*"],
       "@/store/*": ["src/store/*"],
       "@/services/*": ["src/services/*"],
       "@/shared/*": ["src/shared/*"],
       "@/assets/*": ["src/assets/*"],
       "@/helpers/*": ["src/helpers/*"],
+      "@/hooks/*": ["src/hooks/*"],
       "@/types/*": ["src/types/*"],
       "@/storybook/*": ["./storybook/*"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */

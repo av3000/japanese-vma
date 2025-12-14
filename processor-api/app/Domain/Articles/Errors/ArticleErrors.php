@@ -33,7 +33,7 @@ class ArticleErrors
     {
         return new Error(
             code: 'Articles.UpdateFailed',
-            status: HttpStatus::CONFLICT,
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Article update failed',
             detail: 'An unexpected error occurred during article updating',
             errorMessage: $errorMessage
@@ -48,6 +48,17 @@ class ArticleErrors
             description: 'Article creation failed',
             detail: 'An unexpected error occurred during article creation',
             errorMessage: 'An unexpected error occurred during article creation',
+        );
+    }
+
+    public static function deletionFailed(): Error
+    {
+        return new Error(
+            code: 'Articles.DeletionFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article deletion failed',
+            detail: 'An unexpected error occurred during article deletion',
+            errorMessage: 'An unexpected error occurred during article deletion',
         );
     }
 

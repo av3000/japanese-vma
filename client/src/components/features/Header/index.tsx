@@ -1,21 +1,14 @@
-// @ts-nocheck
-/* eslint-disable */
 import React from 'react';
 import { Button, Dropdown, Nav, NavDropdown, Navbar } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { logout } from '@/store/actions/auth';
+import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import './header.scss';
 
 const Header: React.FC = () => {
-	const currentUser = useSelector((state) => state.currentUser);
-	const dispatch = useDispatch();
-	const navigate = useNavigate();
+	const { user, isAuthenticated, logout } = useAuth();
 
 	const handleLogout = () => {
-		dispatch(logout());
-		navigate('/', { replace: true });
-		window.location.reload();
+		logout();
 	};
 
 	return (
@@ -49,7 +42,7 @@ const Header: React.FC = () => {
 					<Nav.Link as={Link} to="/community">
 						Community
 					</Nav.Link>
-					{currentUser.isAuthenticated && (
+					{isAuthenticated && (
 						<>
 							<Nav.Link as={Link} to="/dashboard">
 								Dashboard
@@ -69,10 +62,10 @@ const Header: React.FC = () => {
 						</>
 					)}
 				</Nav>
-				{currentUser.isAuthenticated ? (
+				{isAuthenticated && user ? (
 					<Nav>
 						<Nav.Link as={Link} to="/dashboard">
-							Logged in as <strong>{currentUser.user.name}</strong>
+							Logged in as <strong>{user.name}</strong>
 						</Nav.Link>
 						<Button variant="outline-danger" onClick={handleLogout} className="ml-2">
 							Logout

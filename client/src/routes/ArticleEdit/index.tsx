@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import Spinner from '@/assets/images/spinner.gif';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { hideLoader, showLoader } from '@/store/actions/application';
 
 class ArticleEdit extends Component {
@@ -90,7 +90,7 @@ class ArticleEdit extends Component {
 
 	postNewArticle(payload) {
 		const articleId = this.props.match.params.article_id;
-		return apiCall(HTTP_METHOD.PUT, `/api/article/${articleId}`, payload)
+		return apiCall(HttpMethod.PUT, `/api/article/${articleId}`, payload)
 			.then((res) => {
 				this.props.dispatch(hideLoader());
 				this.props.history.push('/article/' + articleId);

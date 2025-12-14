@@ -6,12 +6,13 @@ import SavedListItem from '@/components/features/SavedList/SavedListItem';
 import SearchBar from '@/components/features/SearchBar';
 import { Button } from '@/components/shared/Button';
 import { apiCall } from '@/services/api';
+import { HttpMethod } from '@/shared/types';
 
 class SavedLists extends Component {
 	constructor() {
 		super();
 		this.state = {
-			url: '/api/lists',
+			url: '/lists',
 			pagination: [],
 			lists: [],
 			paginateObject: {},
@@ -35,7 +36,7 @@ class SavedLists extends Component {
 		this.setState({ isLoading: true });
 		const newState = Object.assign({}, this.state);
 		newState.filters = queryParams;
-		apiCall('post', '/api/lists/search', newState.filters)
+		apiCall({ method: HttpMethod.POST, path: '/lists/search', data: newState.filters })
 			.then((res) => {
 				if (res.success === true) {
 					newState.paginateObject = res.lists;
@@ -61,7 +62,7 @@ class SavedLists extends Component {
 
 	fetchLists(givenUrl) {
 		this.setState({ isLoading: true });
-		return apiCall('get', givenUrl)
+		return apiCall({ method: HttpMethod.GET, path: givenUrl })
 			.then((res) => {
 				const newState = Object.assign({}, this.state);
 				newState.paginateObject = res.lists;
@@ -86,7 +87,7 @@ class SavedLists extends Component {
 	fetchMoreQuery(givenUrl) {
 		this.setState({ isLoading: true });
 		const newState = Object.assign({}, this.state);
-		apiCall('post', givenUrl, newState.filters)
+		apiCall({ method: HttpMethod.POST, path: givenUrl, data: newState.filters })
 			.then((res) => {
 				newState.paginateObject = res.lists;
 				newState.lists = [...newState.lists, ...res.lists.data];

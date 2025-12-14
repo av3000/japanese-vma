@@ -9,7 +9,7 @@ use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{HashtagRepositoryInterface, ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
-use App\Application\Articles\Policies\ArticleViewPolicy;
+use App\Application\Articles\Policies\ArticlePolicy;
 
 use App\Application\Articles\Actions\Updates\{
     ReprocessArticleDataAction,
@@ -30,7 +30,8 @@ use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, Viewer, PerPageL
 use App\Domain\Articles\Exceptions\{ArticleNotFoundException, ArticleAccessDeniedException};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Articles\Errors\ArticleErrors;
-
+use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Shared\Results\Result;
 
 // TODO: gradually replace these with repository pattern and remove the import of direct persistence model
@@ -38,6 +39,7 @@ use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Http\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ArticleService implements ArticleServiceInterface
 {
@@ -45,7 +47,7 @@ class ArticleService implements ArticleServiceInterface
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
         private EngagementServiceInterface $engagementService,
-        private ArticleViewPolicy $articleViewPolicy,
+        private ArticlePolicy $ArticlePolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementViewAction,
@@ -80,6 +82,7 @@ class ArticleService implements ArticleServiceInterface
     {
         try {
             $article = DB::transaction(function () use ($dto, $user) {
+                // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
                     new UserId($user->id),
@@ -96,6 +99,7 @@ class ArticleService implements ArticleServiceInterface
                     );
 
                     if ($hashtagResult->isFailure()) {
+                        // TODO: consider result pattern, as all system errors/exceptions should be matched and caught in global handler with standard response
                         throw new \Exception($hashtagResult->getError()->description);
                     }
                 }
@@ -105,7 +109,7 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::success($article);
         } catch (\Exception $e) {
-            \Log::error('Article creation failed', [
+            Log::error('Article creation failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
@@ -130,7 +134,7 @@ class ArticleService implements ArticleServiceInterface
             return Result::failure(ArticleErrors::notFound($articleUid->value()));
         }
 
-        if (!$this->articleViewPolicy->canView($user, $article)) {
+        if (!$this->ArticlePolicy->canView($user, $article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
         }
 
@@ -153,7 +157,7 @@ class ArticleService implements ArticleServiceInterface
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            \Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
+            Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
         }
     }
 
@@ -170,7 +174,7 @@ class ArticleService implements ArticleServiceInterface
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
-            visibilityRules: $this->articleViewPolicy->getVisibilityCriteria($user),
+            visibilityRules: $this->ArticlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
         );
 
@@ -198,7 +202,7 @@ class ArticleService implements ArticleServiceInterface
                     return Result::failure(ArticleErrors::notFound($articleUid->value()));
                 }
 
-                if (!$this->articleViewPolicy->canView($user, $domainArticle)) {
+                if (!$this->ArticlePolicy->canView($user, $domainArticle)) {
                     return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
                 }
 
@@ -230,7 +234,7 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::success($result);
         } catch (\Exception $e) {
-            \Log::error('Article update failed', [
+            Log::error('Article update failed', [
                 'user_id' => $user->id,
                 'article_uuid' => $articleUid,
                 'error' => $e->getMessage(),
@@ -313,7 +317,7 @@ class ArticleService implements ArticleServiceInterface
                     throw new ArticleNotFoundException($articleUuid->value());
                 }
 
-                if (!$this->articleViewPolicy->canDelete($user, $article)) {
+                if (!$this->ArticlePolicy->canDelete($user, $article)) {
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 
@@ -333,7 +337,7 @@ class ArticleService implements ArticleServiceInterface
         } catch (ArticleAccessDeniedException $e) {
             return Result::failure(ArticleErrors::accessDenied($articleUuid->value()));
         } catch (\Exception $e) {
-            \Log::error('Article deletion failed', [
+            Log::error('Article deletion failed', [
                 'article_uuid' => $articleUuid->value(),
                 'error' => $e->getMessage(),
             ]);

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiCall } from '@/services/api';
-import { HTTP_METHOD } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 import { addError } from './errorsSlice';
 
 // Async thunks
@@ -23,11 +23,9 @@ export const fetchArticles = createAsyncThunk(
 				.reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
 
 			const queryParams = new URLSearchParams(cleanFilters).toString();
-			const url = `/api/articles${queryParams ? `?${queryParams}` : ''}`;
-			const res = await apiCall(HTTP_METHOD.GET, url);
+			const url = `/articles${queryParams ? `?${queryParams}` : ''}`;
+			const res = await apiCall({ method: HttpMethod.GET, path: url });
 
-			// The response structure is:
-			// { success: true, articles: { data: [...], total, ... }, message: "..." }
 			return {
 				articles: res.articles.data || [],
 				paginationInfo: {
@@ -49,7 +47,7 @@ export const removeArticle = createAsyncThunk(
 	'articles/removeArticle',
 	async (article_id, { dispatch, rejectWithValue }) => {
 		try {
-			await apiCall(HTTP_METHOD.DELETE, `/api/article/${article_id}`);
+			await apiCall(HttpMethod.DELETE, `/api/article/${article_id}`);
 			return article_id;
 		} catch (err) {
 			dispatch(addError(err.message));
@@ -58,7 +56,6 @@ export const removeArticle = createAsyncThunk(
 	},
 );
 
-// Slice
 const articlesSlice = createSlice({
 	name: 'articles',
 	initialState: {
@@ -80,19 +77,23 @@ const articlesSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			// Handle fetchArticles
 			.addCase(fetchArticles.pending, (state) => {
 				state.loading = true;
 			})
 			.addCase(fetchArticles.fulfilled, (state, action) => {
-				state.all = action.payload.articles;
+				const { articles, paginationInfo } = action.payload;
+
+				if (paginationInfo.current_page === 1) {
+					state.all = articles;
+				} else {
+					state.all.push(...articles);
+				}
 				state.paginationInfo = action.payload.paginationInfo;
 				state.loading = false;
 			})
 			.addCase(fetchArticles.rejected, (state) => {
 				state.loading = false;
 			})
-			// Handle removeArticle
 			.addCase(removeArticle.fulfilled, (state, action) => {
 				state.all = state.all.filter((article) => article.id !== action.payload);
 			});

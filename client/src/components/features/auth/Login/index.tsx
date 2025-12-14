@@ -1,41 +1,41 @@
-// @ts-nocheck
-/* eslint-disable */
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
-const LoginForm: React.FC = ({ onAuth, heading, buttonText, errors, removeError }) => {
-	const [formData, setFormData] = useState({
-		email: '',
-		password: '',
-	});
+interface LoginFormProps {
+	heading: string;
+	buttonText: string;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ heading, buttonText }) => {
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const navigate = useNavigate();
+	const { login, sessionExpired, clearSessionExpired, isAuthenticated } = useAuth();
 
 	useEffect(() => {
-		return () => {
-			removeError();
-		};
-	}, [removeError]);
+		if (isAuthenticated) {
+			navigate('/');
+		}
+	}, [isAuthenticated, navigate]);
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+
+		const formData = new FormData(event.target);
 		setIsLoading(true);
+		setError(null);
+		clearSessionExpired();
 
 		try {
-			await onAuth('login', formData);
-			setIsLoading(false);
+			await login({ email: formData.get('email') as string, password: formData.get('password') as string });
 			navigate('/');
-		} catch (error) {
-			console.log(error);
+		} catch (err: any) {
+			console.error('Login error:', err);
+			setError(err.response?.data?.message || err.message || 'Login failed. Please try again.');
+		} finally {
 			setIsLoading(false);
 		}
-	};
-
-	const handleChange = (e) => {
-		setFormData({
-			...formData,
-			[e.target.name]: e.target.value,
-		});
 	};
 
 	return (
@@ -45,13 +45,15 @@ const LoginForm: React.FC = ({ onAuth, heading, buttonText, errors, removeError 
 					<form onSubmit={handleSubmit}>
 						<h2>{heading}</h2>
 						<h6 className="mb-5">
-							Don't have an account yet? <Link to="/register">Create now.</Link>{' '}
+							Don't have an account yet? <Link to="/register">Create now.</Link>
 						</h6>
-						{errors.message && (
-							<div className="alert alert-danger">
-								{errors.message} <pre>{JSON.stringify(errors, null, 2)}</pre>
-							</div>
+
+						{sessionExpired && (
+							<div className="alert alert-warning">Session expired, please login again</div>
 						)}
+
+						{error && <div className="alert alert-danger">{error}</div>}
+
 						<label className="mt-3" htmlFor="email">
 							Email:
 						</label>
@@ -59,10 +61,11 @@ const LoginForm: React.FC = ({ onAuth, heading, buttonText, errors, removeError 
 							className="form-control"
 							id="email"
 							name="email"
-							onChange={handleChange}
-							value={formData.email}
-							type="text"
+							type="email"
+							required
+							autoComplete="email"
 						/>
+
 						<label className="mt-3" htmlFor="password">
 							Password:
 						</label>
@@ -70,20 +73,18 @@ const LoginForm: React.FC = ({ onAuth, heading, buttonText, errors, removeError 
 							className="form-control"
 							id="password"
 							name="password"
-							onChange={handleChange}
 							type="password"
+							required
+							autoComplete="current-password"
 						/>
+
 						<button
 							type="submit"
 							className="btn btn-outline-primary col-md-3 brand-button mt-5"
 							disabled={isLoading}
 						>
 							{isLoading ? (
-								<span
-									className="spinner-border spinner-border-sm"
-									role="status"
-									aria-hidden="true"
-								></span>
+								<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
 							) : (
 								buttonText
 							)}

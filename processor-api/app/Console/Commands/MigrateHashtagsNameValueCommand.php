@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class MigrateHashtagsNameValueCommand extends Command
 {
-     protected $signature = 'hashtags:migrate
+    protected $signature = 'hashtags:migrate
                             {--dry-run : Simulate the operation without making changes}';
 
     protected $description = 'Update hashtags with cleaned hashtag names from uniquehashtags';
@@ -24,8 +24,8 @@ class MigrateHashtagsNameValueCommand extends Command
         }
 
         // Fetch existing hashtags to update
-        $hashtagsToUpdate = DB::table('hashtags')
-            ->join('uniquehashtags', 'hashtags.uniquehashtag_id', '=', 'uniquehashtags.id')
+        $hashtagsToUpdate = DB::table('hashtag_entity')
+            ->join('uniquehashtags', 'hashtag_entity.hashtag_id', '=', 'uniquehashtags.id')
             ->select('hashtags.id', 'uniquehashtags.content')
             ->get();
 
@@ -49,7 +49,7 @@ class MigrateHashtagsNameValueCommand extends Command
                 $this->line("  Original: {$hashtag->content}");
                 $this->line("  Cleaned:  {$cleanName}");
             } else {
-                DB::table('hashtags')
+                DB::table('hashtag_entity')
                     ->where('id', $hashtag->id)
                     ->update([
                         'name' => $cleanName,

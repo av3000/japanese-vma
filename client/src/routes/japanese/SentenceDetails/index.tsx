@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
-import CommentForm from '@/components/features/comment/CommentForm';
-import CommentList from '@/components/features/comment/CommentList';
+import CommentForm from '@/components/features/comment/CommentsBlock/CommentForm/CommentForm';
+import CommentList from '@/components/features/comment/CommentsBlock/CommentList/CommentList';
+import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, HTTP_METHOD, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { HttpMethod } from '@/shared/types';
 
-const SentenceDetails: React.FC = ({ currentUser }) => {
+const SentenceDetails: React.FC = () => {
 	const [sentence, setSentence] = useState({});
 	const [kanjis, setKanjis] = useState([]);
 	const [lists, setLists] = useState([]);
@@ -21,25 +23,26 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 
 	const { sentence_id } = useParams();
 	const navigate = useNavigate();
+	const { user: currentUser, isAuthenticated } = useAuth();
 
 	useEffect(() => {
 		getSentenceDetails();
-		if (currentUser.isAuthenticated) {
+		if (isAuthenticated) {
 			getUserSentenceLists();
 		}
-	}, [currentUser.isAuthenticated]);
+	}, [isAuthenticated]);
 
 	const getSentenceDetails = async () => {
 		setIsLoading(true);
 		try {
-			const res = await apiCall(HTTP_METHOD.GET, `${BASE_URL}/api/sentence/${sentence_id}`);
+			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/sentence/${sentence_id}`);
 			setSentence(res);
 			setKanjis(res.kanjis || []);
 			const sentenceComments = res.comments || [];
 
-			if (currentUser.isAuthenticated) {
+			if (isAuthenticated) {
 				sentenceComments.forEach((comment) => {
-					comment.isLiked = comment.likes.some((like) => like.user_id === currentUser.user.id);
+					comment.isLiked = comment.likes.some((like) => like.user_id === currentUser.id);
 				});
 			}
 			setComments(sentenceComments);
@@ -53,7 +56,7 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 	const getUserSentenceLists = async () => {
 		setIsLoading(true);
 		try {
-			const res = await apiCall(HTTP_METHOD.POST, `${BASE_URL}/api/user/lists/contain`, {
+			const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
 				elementId: sentence_id,
 			});
 
@@ -75,7 +78,7 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 	};
 
 	const toggleModal = () => {
-		if (!currentUser.isAuthenticated) {
+		if (!isAuthenticated) {
 			navigate('/login');
 		} else {
 			setShowModal(!showModal);
@@ -88,7 +91,7 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
 			const url = `${BASE_URL}/api/user/list/${endpoint}`;
 
-			await apiCall(HTTP_METHOD.POST, url, {
+			await apiCall(HttpMethod.POST, url, {
 				listId,
 				elementId: sentence_id,
 			});
@@ -120,51 +123,6 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 		} finally {
 			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
 		}
-	};
-
-	const likeComment = async (commentId) => {
-		if (!currentUser.isAuthenticated) {
-			navigate('/login');
-			return;
-		}
-		try {
-			const comment = comments.find((comment) => comment.id === commentId);
-			const endpoint = comment.isLiked ? 'unlike' : 'like';
-			const url = `${BASE_URL}/api/sentence/${sentence_id}/comment/${commentId}/${endpoint}`;
-
-			await apiCall(HTTP_METHOD.POST, url);
-
-			setComments((prevComments) =>
-				prevComments.map((c) =>
-					c.id === commentId
-						? {
-								...c,
-								isLiked: !c.isLiked,
-								likesTotal: c.isLiked ? c.likesTotal - 1 : c.likesTotal + 1,
-							}
-						: c,
-				),
-			);
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	const addComment = (comment) => {
-		setComments((prevComments) => [comment, ...prevComments]);
-	};
-
-	const deleteComment = async (commentId) => {
-		try {
-			await apiCall(HTTP_METHOD.DELETE, `/api/sentence/${sentence_id}/comment/${commentId}`);
-			setComments((prevComments) => prevComments.filter((comment) => comment.id !== commentId));
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	const editComment = (commentId) => {
-		// Implement edit functionality if needed
 	};
 
 	const renderSentenceDetails = () => {
@@ -304,44 +262,12 @@ const SentenceDetails: React.FC = ({ currentUser }) => {
 			<hr />
 			<br />
 			<div className="row justify-content-center">
-				{currentUser.isAuthenticated ? (
-					<div className="col-lg-8">
-						<hr />
-						<h6>Share what's on your mind</h6>
-						<CommentForm
-							addComment={addComment}
-							currentUser={currentUser}
-							objectId={sentence.id}
-							objectType="sentence"
-						/>
-					</div>
-				) : (
-					<div className="col-lg-8">
-						<hr />
-						<h6>
-							You need to
-							<Link to="/login"> login </Link>
-							to comment
-						</h6>
-					</div>
-				)}
 				<div className="col-lg-8">
-					{comments.length ? (
-						<CommentList
-							objectId={sentence.id}
-							currentUser={currentUser}
-							comments={comments}
-							deleteComment={deleteComment}
-							likeComment={likeComment}
-							editComment={editComment}
-						/>
-					) : (
-						<div className="container">
-							<div className="row justify-content-center">
-								<p>No comments yet.</p>
-							</div>
-						</div>
-					)}
+					<CommentsBlock
+						objectId={sentence.id}
+						objectType="sentence"
+						initialComments={sentence.comments || []}
+					/>
 				</div>
 			</div>
 			{renderAddModal()}

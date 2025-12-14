@@ -2,12 +2,10 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\Models\{Article, ArticleStats};
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
-
 
 /**
  * @property Article $resource
@@ -37,7 +35,6 @@ class ArticleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-         // ✅ Use $this->resource, not $this->article
         /** @var Article $article */
         $article = $this->resource;
 
