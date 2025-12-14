@@ -12,6 +12,7 @@ use Throwable;
 
 use App\Shared\Enums\HttpStatus;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 
 class Handler extends ExceptionHandler
 {

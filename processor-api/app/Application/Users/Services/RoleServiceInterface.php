@@ -36,5 +36,13 @@ interface RoleServiceInterface
      */
     public function getUserRoles(EntityId $userUuid): array;
 
+    /**
+     * Permanently deletes a role.
+     *
+     * @param string $id
+     * @return Result<string> Success: Id of deleted role, Failure: Error
+     */
+    public function deleteRole(string $id): Result;
+
     public function roleExists(string $roleName): bool;
 }

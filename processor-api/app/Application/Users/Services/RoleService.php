@@ -112,6 +112,37 @@ class RoleService implements RoleServiceInterface
     }
 
     /**
+     * Permanently deletes a role, with guardrails.
+     *
+     * @param string $name The name of the role to delete.
+     * @return Result<string> Success: Name of deleted role, Failure: Error
+     */
+    public function deleteRole(string $name): Result
+    {
+        $role = $this->roleRepository->findByName($name);
+
+        if (!$role) {
+            return Result::failure(RoleErrors::notFound($name));
+        }
+
+        if ($role->getName() === UserRole::ADMIN->value || $role->getName() === UserRole::COMMON) {
+            return Result::failure(RoleErrors::protectedRoleCannotBeDeleted($role->getName()));
+        }
+
+        if ($this->roleRepository->hasActiveAssignments($name)) {
+            return Result::failure(RoleErrors::roleHasActiveAssignments($name));
+        }
+
+        $success = $this->roleRepository->deleteRole($name);
+
+        if (!$success) {
+            return Result::failure(RoleErrors::failed());
+        }
+
+        return Result::success($name);
+    }
+
+    /**
      * Find roles based on specified criteria.
      * This method replaces both getRolesForUser and getRoles.
      *

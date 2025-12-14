@@ -20,6 +20,8 @@ interface RoleRepositoryInterface
      */
     public function find(?RoleQueryCriteria $criteria = null): array;
 
+    public function findByName(string $name): ?DomainRole;
+
     /**
      * Check if a user has a specific role.
      *
@@ -55,6 +57,22 @@ interface RoleRepositoryInterface
      * @return bool True on success, false otherwise.
      */
     public function removeRole(UserId $userId, string $roleName): bool;
+
+    /**
+     * Permanently deletes a role by its UUID.
+     *
+     * @param string $id
+     * @return bool True if role was deleted, false otherwise.
+     */
+    public function deleteRole(string $id): bool;
+
+    /**
+     * Checks if a role has any active user assignments.
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function hasActiveAssignments(string $id): bool;
 
     /**
      * Checks if a role with the given name exists in the persistence layer.

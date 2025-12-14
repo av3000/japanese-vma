@@ -72,7 +72,6 @@ class UserRoleController extends Controller
         return TypedResults::ok(['message' => 'Role removed successfully', 'userUuid' => $affectedUserUuid]);
     }
 
-
     /**
      * Create a new role in the system.
      *
@@ -94,6 +93,25 @@ class UserRoleController extends Controller
         $newRole = $result->getData();
 
         return TypedResults::ok(new RoleResource($newRole));
+    }
+
+    /**
+     * Permanently deletes a role.
+     *
+     * @param string $name
+     * @return JsonResponse
+     */
+    public function deleteRole(string $name): JsonResponse
+    {
+        $result = $this->roleService->deleteRole($name);
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        $affectedRoleName = $result->getData();
+
+        return TypedResults::ok(['message' => 'Role deleted successfully', 'roleName' => $affectedRoleName]);
     }
 
     /**

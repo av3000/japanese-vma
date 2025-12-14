@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Users\Queries;
 
-use App\Domain\Shared\ValueObjects\UserId; // Or UserId, depending on what identifies a user internally
+use App\Domain\Shared\ValueObjects\UserId;
 
 /**
  * Data Transfer Object for querying roles.
@@ -15,7 +15,7 @@ final readonly class RoleQueryCriteria
     /**
      * @param UserId|null $userId Filter roles assigned to this user ID.
      * @param string|null $roleName Filter by specific role name.
-     * @param string|null $guardName Filter by specific guard name.
+     * @param string|null $roleId Filter by specific role id.
      * // Add other potential filters here (e.g., hasPermission: string|null)
      */
     public function __construct(

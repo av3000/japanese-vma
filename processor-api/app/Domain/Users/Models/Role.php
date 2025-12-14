@@ -11,6 +11,8 @@ final readonly class Role
     private function __construct(
         private string $name,
         private string $guardName,
+        private readonly ?\DateTimeImmutable $createdAt = null,
+        private readonly ?\DateTimeImmutable $updatedAt = null,
         private array $permissions = []
     ) {}
 
@@ -39,6 +41,8 @@ final readonly class Role
         return new self(
             name: $spatieRole->name,
             guardName: $spatieRole->guard_name,
+            createdAt: $spatieRole->created_at?->toImmutable(),
+            updatedAt: $spatieRole->updated_at?->toImmutable()
             // permissions: $spatieRole->permissions->map(fn($p) => $p->name)->toArray() // Example if you want permissions
         );
     }
@@ -52,6 +56,16 @@ final readonly class Role
     public function getGuardName(): string
     {
         return $this->guardName;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): \DateTimeImmutable
+    {
+        return $this->updatedAt;
     }
 
     /**

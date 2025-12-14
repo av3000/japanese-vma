@@ -10,7 +10,7 @@ use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Users\Queries\RoleQueryCriteria;
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
-
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Models\Role as SpatieRole;
 
 final class RoleRepository implements RoleRepositoryInterface
@@ -38,6 +38,16 @@ final class RoleRepository implements RoleRepositoryInterface
         return $spatieRoles->map(function (SpatieRole $spatieRole) {
             return DomainRole::fromSpatieRole($spatieRole);
         })->toArray();
+    }
+
+    public function findByName(string $name): ?DomainRole
+    {
+        try {
+            $role = SpatieRole::findByName($name);
+            return $role ? DomainRole::fromSpatieRole($role) : null;
+        } catch (RoleDoesNotExist $e) {
+            return null;
+        }
     }
 
     public function userHasRole(EntityId $userUuid, string $roleName): bool
@@ -72,6 +82,24 @@ final class RoleRepository implements RoleRepositoryInterface
             'guard_name' => $guardName,
         ]);
         return DomainRole::fromSpatieRole($spatieRole);
+    }
+
+    public function deleteRole(string $name): bool
+    {
+        $resp = SpatieRole::where('name', $name)->delete();
+        return boolval($resp);
+    }
+
+    public function hasActiveAssignments(string $name): bool
+    {
+        /** @var SpatieRole|null $spatieRole */
+        $spatieRole = SpatieRole::where('name', $name)->first();
+
+        if (!$spatieRole) {
+            return false;
+        }
+
+        return $spatieRole->users()->exists();
     }
 
     public function exists(string $roleName): bool
