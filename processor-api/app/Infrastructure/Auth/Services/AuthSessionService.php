@@ -6,17 +6,37 @@ namespace App\Infrastructure\Auth\Services;
 
 use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
 use App\Domain\Shared\ValueObjects\UserId;
+use App\Infrastructure\Persistence\Repositories\UserMapper;
+use App\Domain\Users\Models\User as DomainUser;
 use Illuminate\Http\Request;
 
 final class AuthSessionService implements AuthSessionServiceInterface
 {
+    private ?DomainUser $cachedDomainUser = null;
+
     public function __construct(
-        private readonly Request $request
+        private readonly Request $request,
+        private readonly UserMapper $userMapper,
     ) {}
 
     public function isAuthenticated(): bool
     {
+        dd($this->request->user());
         return $this->request->user() !== null;
+    }
+
+    public function getAuthenticatedDomainUser(): ?DomainUser
+    {
+        if ($this->cachedDomainUser !== null) {
+            return $this->cachedDomainUser;
+        }
+
+        $persistenceUser = $this->request->user();
+        if (!$persistenceUser) {
+            return null;
+        }
+
+        return $this->cachedDomainUser = $this->userMapper->mapToDomain($persistenceUser);
     }
 
     public function getUserId(): ?UserId

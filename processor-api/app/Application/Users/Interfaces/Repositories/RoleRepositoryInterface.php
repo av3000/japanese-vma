@@ -30,6 +30,15 @@ interface RoleRepositoryInterface
     public function userHasRole(EntityId $userUuid, string $roleName): bool;
 
     /**
+     * Creates a new role in the persistence layer.
+     *
+     * @param string $name
+     * @param string $guardName
+     * @return DomainRole The newly created DomainRole object.
+     */
+    public function createRole(string $name, string $guardName): DomainRole;
+
+    /**
      * Assign a role to a user.
      *
      * @param UserId $userId The internal ID (e.g., primary key) of the user.

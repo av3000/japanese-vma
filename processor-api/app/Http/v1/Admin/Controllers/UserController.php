@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\V1\Admin\Controllers;
 
+use App\Application\Users\Actions\GetCurrentUserAction;
 use App\Http\Controllers\Controller;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Domain\Users\Queries\UserQueryCriteria;
@@ -18,7 +19,8 @@ class UserController extends Controller
 {
     public function __construct(
         private readonly UserServiceInterface $userService,
-        private readonly UserResponseBuilder $userResponseBuilder
+        private readonly UserResponseBuilder $userResponseBuilder,
+        private readonly GetCurrentUserAction $getCurrentUserAction
     ) {}
 
     /**
@@ -31,9 +33,6 @@ class UserController extends Controller
     {
         $validatedData = $request->validated();
 
-        // TODO: I think AuthSession service should be used here to access authorized user, not sure how userViewPolicy integrates with it, I might introduced them both for the same goal mistakenly
-        $authenticatedUser = auth('api')->user();
-
         $criteria = UserQueryCriteria::forAdminListing(
             uuid: $validatedData['uuid'] ?? null,
             name: $validatedData['name'] ?? null,
@@ -43,6 +42,12 @@ class UserController extends Controller
             limit: $validatedData['limit'] ?? 20,
             offset: $validatedData['offset'] ?? 0,
         );
+
+        $authenticatedUserResult = $this->getCurrentUserAction->execute();
+        $authenticatedUser = null;
+        if ($authenticatedUserResult->isSuccess()) {
+            $authenticatedUser = $authenticatedUserResult->getData();
+        }
 
         $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
 

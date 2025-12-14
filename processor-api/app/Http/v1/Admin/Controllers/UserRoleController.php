@@ -12,7 +12,11 @@ use Illuminate\Validation\Rule;
 use App\Domain\Shared\Enums\UserRole;
 use App\Shared\Http\TypedResults;
 use App\Http\Controllers\Controller;
+use App\Http\V1\Admin\Requests\AssignRoleRequest;
+use App\Http\V1\Admin\Requests\CreateRoleRequest;
+use App\Http\V1\Admin\Requests\RemoveRoleRequest;
 use App\Http\V1\Admin\Resources\RoleResource;
+use App\Shared\Enums\HttpStatus;
 
 class UserRoleController extends Controller
 {
@@ -23,18 +27,14 @@ class UserRoleController extends Controller
     /**
      * Assign a role to a user.
      *
-     * @param Request $request
+     * @param AssignRoleRequest $request
      * @param string $userUuid
      * @return JsonResponse
      */
-    public function assignUserRole(Request $request, string $userUuid): JsonResponse
+    public function assignUserRole(AssignRoleRequest $request, string $userUuid): JsonResponse
     {
-        $request->validate([
-            'role' => ['required', 'string', Rule::in(array_column(UserRole::cases(), 'value'))],
-        ]);
-
         $userEntityId = new EntityId($userUuid);
-        $roleName = $request->input('role');
+        $roleName = $request->getRoleName();
 
         $result = $this->roleService->assignRole($userEntityId, $roleName);
 
@@ -42,24 +42,23 @@ class UserRoleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        return TypedResults::ok(['message' => 'Role assigned successfully']);
+        /** @var string $affectedUserUuid */
+        $affectedUserUuid = $result->getData();
+
+        return TypedResults::ok(['message' => 'Role assigned successfully', 'userUuid' => $affectedUserUuid]);
     }
 
     /**
      * Remove a role from a user.
      *
-     * @param Request $request
+     * @param RemoveRoleRequest $request
      * @param string $userUuid
      * @return JsonResponse
      */
-    public function removeUserRole(Request $request, string $userUuid): JsonResponse
+    public function removeUserRole(RemoveRoleRequest $request, string $userUuid): JsonResponse
     {
-        $request->validate([
-            'role' => ['required', 'string', Rule::in(array_column(UserRole::cases(), 'value'))],
-        ]);
-
         $userEntityId = new EntityId($userUuid);
-        $roleName = $request->input('role');
+        $roleName = $request->getRoleName();
 
         $result = $this->roleService->removeRole($userEntityId, $roleName);
 
@@ -67,7 +66,34 @@ class UserRoleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        return TypedResults::ok(['message' => 'Role removed successfully']);
+        /** @var string $affectedUserUuid */
+        $affectedUserUuid = $result->getData();
+
+        return TypedResults::ok(['message' => 'Role removed successfully', 'userUuid' => $affectedUserUuid]);
+    }
+
+
+    /**
+     * Create a new role in the system.
+     *
+     * @param CreateRoleRequest $request
+     * @return JsonResponse
+     */
+    public function createRole(CreateRoleRequest $request): JsonResponse
+    {
+        $name = $request->getName();
+        $guardName = $request->getGuardName();
+
+        $result = $this->roleService->createRole($name, $guardName);
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var DomainRole $newRole */
+        $newRole = $result->getData();
+
+        return TypedResults::ok(new RoleResource($newRole));
     }
 
     /**

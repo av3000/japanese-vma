@@ -2,23 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Users\Models; // Or App\Domain\Shared\Models; if more generic
+namespace App\Domain\Users\Models;
 
 use App\Domain\Shared\Enums\UserRole;
 
-// Making it final and readonly is a good practice for value objects/immutable domain models
 final readonly class Role
 {
     private function __construct(
         private string $name,
-        private string $guardName, // Include guardName as it comes from Spatie
-        private array $permissions = [] // Permissions might be fetched separately or embedded
+        private string $guardName,
+        private array $permissions = []
     ) {}
 
     /**
      * Creates a Role domain model from its name and guard name.
      * Use this when you're getting role names from Spatie's getRoleNames()
-     * or when you primarily only have the name and default guard.
      */
     public static function fromNameAndGuard(string $name, string $guardName = 'api'): self
     {
@@ -35,12 +33,9 @@ final readonly class Role
 
     /**
      * Creates a Role domain model from a Spatie Role model.
-     * This is typically used in the persistence layer (repository/mapper).
      */
     public static function fromSpatieRole(\Spatie\Permission\Models\Role $spatieRole): self
     {
-        // Here you might fetch permissions as well if they are always needed with the role
-        // For now, let's just get the name and guard.
         return new self(
             name: $spatieRole->name,
             guardName: $spatieRole->guard_name,

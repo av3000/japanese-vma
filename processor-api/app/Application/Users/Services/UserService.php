@@ -58,13 +58,8 @@ class UserService implements UserServiceInterface
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
      * @return Result<LengthAwarePaginator<UserWithProfileContext>>
      */
-    // TODO: add authenticatedUser type -> should come from authSession from controller.
     public function find(?UserQueryCriteria $criteria = null, $authenticatedUser = null): Result
     {
-        // TODO: figure business conditionals for this. Ensure methods exist, returns proper result.
-        // -    create error for invalidCriteria
-        // -    create roleService method for roleExists, and repository method if needed
-
         if ($criteria?->role !== null && !$this->roleService->roleExists($criteria->role)) {
             return Result::failure(RoleErrors::invalidRole($criteria->role));
         }
@@ -83,7 +78,9 @@ class UserService implements UserServiceInterface
                         $user->getUuid()
                     );
                 }
-                return UserWithProfileContext::fromDomainUser($user, $isOwnProfile);
+
+                $isViewerAdmin = $authenticatedUser->isAdmin();
+                return UserWithProfileContext::fromDomainUser($user, $isOwnProfile, $isViewerAdmin);
             }
         );
 

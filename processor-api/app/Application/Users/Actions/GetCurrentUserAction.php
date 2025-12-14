@@ -6,15 +6,12 @@ namespace App\Application\Users\Actions;
 
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
-use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Users\Errors\UserErrors;
-use App\Domain\Shared\ValueObjects\EntityId;
 use App\Shared\Results\Result;
 
 final class GetCurrentUserAction
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository,
         private readonly AuthSessionServiceInterface $authSession
     ) {}
 
@@ -25,23 +22,13 @@ final class GetCurrentUserAction
      */
     public function execute(): Result
     {
-        // TODO: Not sure how this works with route middleware which checks if user is authorized
-        if (!$this->authSession->isAuthenticated()) {
+        $domainUser = $this->authSession->getAuthenticatedDomainUser();
+
+        if (!$domainUser) {
+            // This implicitly covers both notAuthenticated and notFound scenarios for the current user.
             return Result::failure(UserErrors::notAuthenticated());
         }
 
-        $uuid = $this->authSession->getUserUuid();
-
-        if (!$uuid) {
-            return Result::failure(UserErrors::notAuthenticated());
-        }
-
-        $user = $this->userRepository->findByUuid(new EntityId($uuid));
-
-        if (!$user) {
-            return Result::failure(UserErrors::notFound($uuid));
-        }
-
-        return Result::success($user);
+        return Result::success($domainUser);
     }
 }

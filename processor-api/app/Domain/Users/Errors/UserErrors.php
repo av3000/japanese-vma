@@ -119,4 +119,26 @@ class UserErrors
             errorMessage: 'An unexpected error occurred during logout',
         );
     }
+
+    public static function roleAlreadyAssigned(string $roleName): Error
+    {
+        return new Error(
+            code: 'Users.RoleAlreadyAssigned',
+            status: HttpStatus::CONFLICT,
+            description: "Role '{$roleName}' is already assigned to the user.",
+            detail: "The user already has the role '{$roleName}'.",
+            errorMessage: "Role '{$roleName}' is already assigned.",
+        );
+    }
+
+    public static function roleNotAssigned(string $roleName): Error
+    {
+        return new Error(
+            code: 'Users.RoleNotAssigned',
+            status: HttpStatus::NOT_FOUND,
+            description: "Role '{$roleName}' is not assigned to the user.",
+            detail: "Role '{$roleName}' not found on user.",
+            errorMessage: "Role '{$roleName}' not found on user.",
+        );
+    }
 }

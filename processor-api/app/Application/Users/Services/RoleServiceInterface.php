@@ -12,8 +12,9 @@ interface RoleServiceInterface
 {
     public function userHasRole(EntityId $userUuid, string|UserRole $role): bool;
     public function isAdmin(EntityId $userUuid): bool;
-    public function assignRole(EntityId $userUuid, string|UserRole $role): Result;
-    public function removeRole(EntityId $userUuid, string|UserRole $role): Result;
+    public function assignRole(EntityId $userUuid, string $roleName): Result;
+    public function removeRole(EntityId $userUuid, string $roleName): Result;
+    public function createRole(string $name, ?string $guardName = null): Result;
     /**
      * Find roles based on specified criteria.
      *

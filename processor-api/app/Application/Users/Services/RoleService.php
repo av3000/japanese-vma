@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Application\Users\Services;
 
 use App\Application\Users\Interfaces\Repositories\{UserRepositoryInterface, RoleRepositoryInterface};
+use App\Application\Users\Policies\UserViewPolicy;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\UserRole;
+use App\Domain\Users\Errors\RoleErrors;
 use App\Domain\Users\Models\Role as DomainRole;
 use App\Shared\Results\Result;
 use App\Domain\Users\Errors\UserErrors;
@@ -14,9 +16,12 @@ use App\Domain\Users\Queries\RoleQueryCriteria;
 
 class RoleService implements RoleServiceInterface
 {
+    private const DEFAULT_GUARD_NAME = 'api';
+
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
-        private readonly RoleRepositoryInterface $roleRepository
+        private readonly RoleRepositoryInterface $roleRepository,
+        private readonly UserViewPolicy $userViewPolicy
     ) {}
 
     /**
@@ -43,12 +48,10 @@ class RoleService implements RoleServiceInterface
      * Assign a role to a user.
      *
      * @param EntityId $userUuid
-     * @param string|UserRole $role
-     * @return Result Success: true, Failure: Error (e.g., User not found, Role not found)
-     * @throws \Illuminate\Database\QueryException If a database error occurs in the repository
-     * @throws \Exception For other unexpected technical issues
+     * @param string $roleName
+     * @return Result<string> Success: User UUID, Failure: Error
      */
-    public function assignRole(EntityId $userUuid, string|UserRole $role): Result
+    public function assignRole(EntityId $userUuid, string $roleName): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
@@ -56,23 +59,27 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
-        $roleName = $role instanceof UserRole ? $role->value : $role;
+        if (!$this->roleExists($roleName)) {
+            return Result::failure(RoleErrors::invalidRole($roleName));
+        }
+
+        if ($this->roleRepository->userHasRole($userUuid, $roleName)) {
+            return Result::failure(UserErrors::roleAlreadyAssigned($roleName));
+        }
 
         $this->roleRepository->assignRole($user->getId(), $roleName);
 
-        return Result::success(true);
+        return Result::success($userUuid->value());
     }
 
     /**
      * Remove a role from a user.
      *
      * @param EntityId $userUuid
-     * @param string|UserRole $role
-     * @return Result Success: true, Failure: Error (e.g., User not found, Role not assigned)
-     * @throws \Illuminate\Database\QueryException If a database error occurs in the repository
-     * @throws \Exception For other unexpected technical issues
+     * @param string $roleName
+     * @return Result<string> Success: User UUID, Failure: Error
      */
-    public function removeRole(EntityId $userUuid, string|UserRole $role): Result
+    public function removeRole(EntityId $userUuid, string $roleName): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
@@ -80,11 +87,28 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
-        $roleName = $role instanceof UserRole ? $role->value : $role;
+        if ($roleName === UserRole::COMMON) {
+            return Result::failure(RoleErrors::protectedRoleCannotBeRemoved($roleName));
+        }
+
+        if ($roleName === UserRole::ADMIN->value) {
+            if ($user->hasRole(UserRole::ADMIN)) {
+                return Result::failure(RoleErrors::cannotRemoveAdminFromAdmin($roleName));
+            }
+        }
+
+        if (!$this->roleExists($roleName)) {
+            return Result::failure(RoleErrors::invalidRole($roleName));
+        }
+
+        if (!$this->roleRepository->userHasRole($userUuid, $roleName)) {
+            return Result::failure(UserErrors::roleNotAssigned($roleName));
+        }
 
         $this->roleRepository->removeRole($user->getId(), $roleName);
 
-        return Result::success(true);
+        // Return the UUID of the affected user
+        return Result::success($userUuid->value());
     }
 
     /**
@@ -130,5 +154,29 @@ class RoleService implements RoleServiceInterface
     public function roleExists(string $roleName): bool
     {
         return $this->roleRepository->exists($roleName);
+    }
+
+    /**
+     * Creates a new role.
+     *
+     * @param string $name
+     * @param string|null $guardName Defaults to 'api' if null.
+     * @return Result<DomainRole> Success: The newly created DomainRole, Failure: Error
+     */
+    public function createRole(string $name, ?string $guardName = null): Result
+    {
+        $actualGuardName = $guardName ?? self::DEFAULT_GUARD_NAME;
+
+        if ($this->roleRepository->exists($name)) {
+            return Result::failure(UserErrors::nameAlreadyExists($name));
+        }
+
+        $configuredGuards = array_keys(config('auth.guards'));
+        if (!in_array($actualGuardName, $configuredGuards)) {
+            return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
+        }
+
+        $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName); // Call repository
+        return Result::success($newDomainRole);
     }
 }

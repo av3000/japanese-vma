@@ -66,9 +66,10 @@ Route::prefix('v1')->group(function () {
 
             // User Role Management
             Route::get('/admin/roles', [AdminUserRoleController::class, 'getAllRoles']);
+            Route::post('/admin/roles', [AdminUserRoleController::class, 'createRole']);
             Route::get('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'getUserRoles']);
-            Route::post('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'assignRole']);
-            Route::delete('/admin/users/{uuid}/roles/{role}', [AdminUserRoleController::class, 'removeRole']);
+            Route::post('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'assignUserRole']);
+            Route::delete('/admin/users/{uuid}/roles', [AdminUserRoleController::class, 'removeUserRole']);
 
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);

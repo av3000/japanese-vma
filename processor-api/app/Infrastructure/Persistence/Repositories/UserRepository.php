@@ -73,13 +73,12 @@ class UserRepository implements UserRepositoryInterface
         $domainUsers = $paginatedResults->getCollection()
             ->map(fn(PersistenceUser $persistenceUser) => $this->userMapper->mapToDomain($persistenceUser));
 
-        // Set the transformed collection back onto the paginator
         $paginatedResults->setCollection($domainUsers);
 
-        // Return the wrapped domain collection
         return Users::fromEloquentPaginator($paginatedResults);
     }
 
+    // TODO: Consider UserQueryBuilder class pattern
     /**
      * Apply filters from UserQueryCriteria to the Eloquent query builder.
      *

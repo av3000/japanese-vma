@@ -15,10 +15,11 @@ class UserWithProfileContext
     public function __construct(
         public readonly DomainUser $user,
         public readonly bool $isOwnProfile,
+        public readonly ?bool $isViewerAdmin = null,
     ) {}
 
-    public static function fromDomainUser(DomainUser $user, bool $isOwnProfile): self
+    public static function fromDomainUser(DomainUser $user, bool $isOwnProfile, ?bool $isViewerAdmin = null): self
     {
-        return new self($user, $isOwnProfile);
+        return new self($user, $isOwnProfile, $isViewerAdmin);
     }
 }

@@ -22,6 +22,7 @@ class UserProfileResource extends JsonResource
         $userContext = $this->resource;
 
         $user = $userContext->user;
+        $isViewerAdmin = $userContext->isViewerAdmin;
 
         return [
             'uuid' => $user->getUuid()->value(),
@@ -29,8 +30,7 @@ class UserProfileResource extends JsonResource
             'roles' => RoleResource::collection($user->getRoles()),
             'created_at' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
             'isOwnProfile' => $userContext->isOwnProfile,
-            // TODO: in this admin route it should show all data including email, do checkRole('admin') or some 'isAdmin' validation.
-            'email' => $this->when($userContext->isOwnProfile, $user->getEmail()->value()),
+            'email' => $this->when($userContext->isOwnProfile || $isViewerAdmin, $user->getEmail()->value()),
         ];
     }
 }

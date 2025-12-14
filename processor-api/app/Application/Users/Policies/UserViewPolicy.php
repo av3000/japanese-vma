@@ -30,16 +30,16 @@ class UserViewPolicy
      * Check if authenticated user is viewing their own profile.
      * Used by Resource to determine email visibility.
      *
-     * @param AuthUser|null $authUser The authenticated user
+     * @param DomainUser|null $domainUser The authenticated domain user
      * @param EntityId $uuid The user profile being viewed
      * @return bool
      */
-    public function isOwnProfile(?AuthUser $authUser, EntityId $uuid): bool
+    public function isOwnProfile(?DomainUser $domainUser, EntityId $uuid): bool
     {
-        if (!$authUser) {
+        if (!$domainUser) {
             return false;
         }
 
-        return $authUser->uuid === $uuid->value();
+        return $domainUser->getUuid()->value() === $uuid->value();
     }
 }

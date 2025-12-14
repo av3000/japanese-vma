@@ -10,7 +10,6 @@ use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Users\Queries\RoleQueryCriteria;
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
-use Spatie\Permission\Models\Role as PersistenceRole;
 
 use Spatie\Permission\Models\Role as SpatieRole;
 
@@ -65,8 +64,18 @@ final class RoleRepository implements RoleRepositoryInterface
         return true;
     }
 
+    public function createRole(string $name, string $guardName): DomainRole
+    {
+        /** @var SpatieRole $spatieRole */
+        $spatieRole = SpatieRole::create([
+            'name' => $name,
+            'guard_name' => $guardName,
+        ]);
+        return DomainRole::fromSpatieRole($spatieRole);
+    }
+
     public function exists(string $roleName): bool
     {
-        return PersistenceRole::where('name', $roleName)->exists();
+        return SpatieRole::where('name', $roleName)->exists();
     }
 }

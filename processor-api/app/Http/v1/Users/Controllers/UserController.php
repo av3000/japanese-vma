@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Users\Controllers;
 
+use App\Application\Users\Actions\GetCurrentUserAction;
 use App\Http\Controllers\Controller;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Application\Users\Policies\UserViewPolicy;
@@ -22,7 +23,8 @@ class UserController extends Controller
     public function __construct(
         private readonly UserServiceInterface $userService,
         private readonly UserViewPolicy $userViewPolicy,
-        private readonly UserResponseBuilder $userResponseBuilder
+        private readonly UserResponseBuilder $userResponseBuilder,
+        private readonly GetCurrentUserAction $getCurrentUserAction
     ) {}
 
     /**
@@ -43,8 +45,12 @@ class UserController extends Controller
             limit: $validatedData['limit']
         );
 
-        // TODO: Potentially should come via authSession
-        $authenticatedUser = auth('api')->user();
+        $authenticatedUserResult = $this->getCurrentUserAction->execute();
+        $authenticatedUser = null;
+        if ($authenticatedUserResult->isSuccess()) {
+            $authenticatedUser = $authenticatedUserResult->getData();
+            dd($authenticatedUser->isAdmin());
+        }
 
         $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
 
