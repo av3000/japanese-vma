@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\Articles\Actions\Processing\ExtractKanjisAction;
+use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\{JlptLevels};
 use App\Domain\Articles\Enums\ArticleStatus;

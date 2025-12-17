@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Shared\ValueObjects;
 
 use Illuminate\Support\Str;
@@ -26,9 +27,14 @@ readonly class EntityId
         return new self(trim($value));
     }
 
+    public static function isValid(string $uuid): bool
+    {
+        return Str::isUuid($uuid);
+    }
+
     public static function generate(): self
     {
-        return new self(\Str::uuid()->toString());
+        return new self(Str::uuid()->toString());
     }
 
     public function value(): string

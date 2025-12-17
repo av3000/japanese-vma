@@ -6,6 +6,7 @@ use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Users\Controllers\{UserController};
 use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
+use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +19,8 @@ Route::prefix('v1')->group(function () {
     // ============================================
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
+
+
 
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
@@ -56,6 +59,10 @@ Route::prefix('v1')->group(function () {
 
         // Comments - Authenticated Write
         Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
+
+        // Kanjis
+        Route::get('kanjis', [KanjiController::class, 'index']);
+        Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
 
 
         // ============================================
