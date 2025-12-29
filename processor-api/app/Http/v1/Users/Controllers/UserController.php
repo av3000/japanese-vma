@@ -49,7 +49,6 @@ class UserController extends Controller
         $authenticatedUser = null;
         if ($authenticatedUserResult->isSuccess()) {
             $authenticatedUser = $authenticatedUserResult->getData();
-            dd($authenticatedUser->isAdmin());
         }
 
         $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);

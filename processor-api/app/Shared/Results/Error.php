@@ -3,6 +3,7 @@
 namespace App\Shared\Results;
 
 use App\Shared\Enums\HttpStatus;
+use Symfony\Component\HttpFoundation\Response;
 
 readonly class Error
 {

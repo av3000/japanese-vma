@@ -2,10 +2,9 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Engagement\Actions\{IncrementViewAction, LoadArticleCommentsAction};
+use App\Application\Engagement\Actions\{IncrementViewAction};
 use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
 use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
-// use App\Application\Articles\Actions\Processing\{ExtractKanjisAction};
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{HashtagRepositoryInterface, ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
@@ -13,7 +12,6 @@ use App\Application\Articles\Policies\ArticlePolicy;
 
 use App\Application\Articles\Actions\Updates\{
     ReprocessArticleDataAction,
-    // UpdateArticleHashtagsAction
 };
 
 use App\Application\Articles\Actions\Deletion\{
@@ -21,12 +19,15 @@ use App\Application\Articles\Actions\Deletion\{
     CleanupArticleCustomListsAction
 };
 
+use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\Factories\ArticleFactory;
-use App\Domain\Articles\ValueObjects\{ArticleId, ArticleSortCriteria, ArticleTitle, ArticleContent, ArticleSourceUrl};
-use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, Viewer, PerPageLimit, Pagination, SearchTerm};
+use App\Domain\Articles\ValueObjects\{ArticleSortCriteria, ArticleTitle, ArticleContent, ArticleSourceUrl};
+use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, Viewer, Pagination, SearchTerm};
 use App\Domain\Articles\Exceptions\{ArticleNotFoundException, ArticleAccessDeniedException};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Articles\Errors\ArticleErrors;
@@ -36,7 +37,7 @@ use App\Shared\Results\Result;
 
 // TODO: gradually replace these with repository pattern and remove the import of direct persistence model
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Http\User;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -68,6 +69,9 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository,
+
+        // private KanjiExtractionServiceInterface $kanjiExtractionService,
+        // private KanjiAttachmentService $kanjiAttachmentService
     ) {}
 
     /**
@@ -81,6 +85,8 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, User $user): Result
     {
         try {
+            // $uniqueKanjiCharacters = $this->kanjiExtractionService->extractUniqueKanjis($dto->content_jp);
+            // dd($uniqueKanjiCharacters);
             $article = DB::transaction(function () use ($dto, $user) {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
@@ -88,11 +94,11 @@ class ArticleService implements ArticleServiceInterface
                     new UserId($user->id),
                     new UserName($user->name)
                 );
-                $article = $this->articleRepository->create($domainArticle);
+                $createdDomainArticle = $this->articleRepository->create($domainArticle);
 
                 if ($dto->tags && !empty($dto->tags)) {
                     $hashtagResult = $this->hashtagService->createTagsForEntity(
-                        $article->getIdValue(),
+                        $createdDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->tags,
                         $user->id
@@ -104,7 +110,14 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                return $article;
+                // dd($dto, $createdDomainArticle);
+                // Dispatch the job for asynchronous Kanji processing
+                ProcessArticleKanjisJob::dispatch(
+                    $createdDomainArticle->getUid()->value(),
+                    $dto->content_jp // Pass the raw content for processing
+                );
+
+                return $createdDomainArticle;
             });
 
             return Result::success($article);
@@ -224,9 +237,15 @@ class ArticleService implements ArticleServiceInterface
                 }
 
                 // TODO: Add some extra checks to see if kanjis or words has changed.
-                if ($this->shouldReprocessContent($dto)) {
-                    // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
+                // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
+                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
                     // $this->reprocessData->execute($updatedDomainArticle);
+                    dd($dto);
+                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
+                    ProcessArticleKanjisJob::dispatch(
+                        $updatedDomainArticle->getUid(),
+                        $dto->content_jp // Pass the new content for processing
+                    );
                 }
 
                 return $updatedDomainArticle;
@@ -264,7 +283,7 @@ class ArticleService implements ArticleServiceInterface
      * @param ArticleUpdateDTO $dto Update data
      * @return DomainArticle New domain article with updated values
      */
-    // TODO: shouldnt it belong to some mapper class?
+    // TODO: shouldnt it belong to some mapper or builder class?
     private function applyUpdates(DomainArticle $article, ArticleUpdateDTO $dto): DomainArticle
     {
         return new DomainArticle(
@@ -359,7 +378,7 @@ class ArticleService implements ArticleServiceInterface
         $article = PersistenceArticle::findOrFail($articleId);
 
         return $article->kanjis()->paginate(
-            perPage: $pagination->perPage,
+            perPage: $pagination->per_page,
             page: $pagination->page
         );
     }
@@ -378,7 +397,7 @@ class ArticleService implements ArticleServiceInterface
         $article = PersistenceArticle::findOrFail($articleId);
 
         return $article->words()->paginate(
-            perPage: $pagination->perPage,
+            perPage: $pagination->per_page,
             page: $pagination->page
         );
     }

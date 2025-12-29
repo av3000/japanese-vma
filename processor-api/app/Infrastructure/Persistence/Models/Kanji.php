@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Models;
+namespace App\Infrastructure\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Kanji extends Model
 {
@@ -24,7 +25,8 @@ class Kanji extends Model
         'radical_parts'
     ];
 
-      protected $casts = [
+    protected $casts = [
+        'kanji'        => 'string',
         'stroke_count' => 'integer',
         'frequency' => 'integer',
         // Keep these as strings since they often contain multiple values
@@ -39,28 +41,32 @@ class Kanji extends Model
         'radical_parts' => 'string'
     ];
 
-    public function words() {
+    public function words()
+    {
         return $this->belongsToMany(Word::class, 'japanese_kanji_word_long');
     }
 
-    public function sentences() {
+    public function sentences()
+    {
         return $this->belongsToMany(Sentence::class, 'japanese_sentence_kanji');
     }
 
-    public function articles() {
+    public function articles()
+    {
         return $this->belongsToMany(Article::class, 'article_kanji');
     }
 
-    public function radicals() {
+    public function radicals()
+    {
         return $this->belongsToMany(Radical::class, 'japanese_radical_kanji_long');
     }
 
-    public function scopeByGrade($query, string $grade)
+    public function scopeByGrade(Builder $query, string $grade)
     {
         return $query->where('grade', $grade);
     }
 
-    public function scopeByJlptLevel($query, string $level)
+    public function scopeByJlptLevel(Builder $query, string $level)
     {
         return $query->where('jlpt', $level);
     }

@@ -1,7 +1,8 @@
 <?php
+
 namespace App\Application\Articles\Actions\Processing;
 
-use App\Application\Articles\Interfaces\Repositories\KanjiRepositoryInterface;
+use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 
 class ExtractKanjisAction
 {

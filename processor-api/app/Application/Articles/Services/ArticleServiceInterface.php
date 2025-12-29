@@ -1,11 +1,12 @@
 <?php
+
 namespace App\Application\Articles\Services;
 
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO};
-use App\Domain\Articles\Models\{Articles, Article};
+use App\Domain\Articles\Models\{Articles};
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Shared\Results\Result;
-use App\Http\User;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleServiceInterface

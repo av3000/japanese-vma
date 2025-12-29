@@ -301,7 +301,25 @@ Seed initial data
 php artisan db:seed
 ```
 
-API Documentation page is served on laravel side, to have it work install packages.
+Track logging for Laravel errors:
+
+```bash
+tail -f storage/logs/laravel.log
+```
+
+Or for local works well:
+
+```bash
+tail -f storage/logs/laravel.log | grep "local.ERROR"
+```
+
+Track queue jobs:
+
+```bash
+php artisan queue:work
+```
+
+API Documentation page is served on laravel side, to have it work install npm packages.
 
 ```bash
 npm install

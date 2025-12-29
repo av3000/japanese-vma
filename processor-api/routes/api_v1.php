@@ -6,6 +6,7 @@ use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Users\Controllers\{UserController};
 use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
+use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,10 +20,11 @@ Route::prefix('v1')->group(function () {
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
 
+
+
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);
-    Route::get('articles/{id}/kanjis', [ArticleController::class, 'kanjis']);
     Route::get('articles/{id}/words', [ArticleController::class, 'words']);
 
     // Comments - Public Read
@@ -30,6 +32,10 @@ Route::prefix('v1')->group(function () {
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+
+    // Kanjis
+    Route::get('kanjis', [KanjiController::class, 'index']);
+    Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES

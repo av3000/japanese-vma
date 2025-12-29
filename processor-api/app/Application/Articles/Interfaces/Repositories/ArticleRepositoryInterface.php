@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\Models\Article as DomainArticle;
@@ -37,7 +38,7 @@ interface ArticleRepositoryInterface
      */
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle;
 
-     /**
+    /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      * @param ArticleCriteriaDTO
      * $criteria Complete filter criteria including:
@@ -83,4 +84,14 @@ interface ArticleRepositoryInterface
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function getIdByUuid(EntityId $entityUuid): int|null;
+
+    /**
+     * Syncs a list of Kanji IDs to an article.
+     * This replaces any existing kanjis attached to the article.
+     *
+     * @param int $articleId The internal ID of the article.
+     * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
+     * @return void
+     */
+    public function syncKanjis(int $articleId, array $kanjiIds): void;
 }

@@ -43,7 +43,7 @@ class UserRepository implements UserRepositoryInterface
             ->where('uuid', $userUuid->value())
             ->first();
 
-        return $persistenceUser ? UserMapper::mapToDomain($persistenceUser) : null;
+        return $persistenceUser ? $this->userMapper->mapToDomain($persistenceUser) : null;
     }
 
     /**
@@ -198,7 +198,7 @@ class UserRepository implements UserRepositoryInterface
         $entityUser = PersistenceUser::where('uuid', $user->getUuid()->value())
             ->firstOrFail();
 
-        UserMapper::mapToExistingEntity($user, $entityUser);
+        $this->userMapper->mapToExistingEntity($user, $entityUser);
 
         $entityUser->save();
     }
@@ -217,7 +217,7 @@ class UserRepository implements UserRepositoryInterface
         }
 
         return [
-            'user' => UserMapper::mapToDomain($persistenceUser),
+            'user' => $this->userMapper->mapToDomain($persistenceUser),
             'passwordHash' => $persistenceUser->password,
         ];
     }
