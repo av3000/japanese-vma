@@ -20,14 +20,16 @@ RUN apt-get update && apt-get install -y \
     jq \
     wget \
     default-mysql-client \
-    libxrender1 \
-    libfontconfig1 \
-    libxtst6 \
-    xvfb \
-    wkhtmltopdf \
-    fonts-ipafont-gothic \
+    # TODO: Test one by one and see which library causes issues
+    # libxrender1 \
+    # libfontconfig1 \
+    # libxtst6 \
+    # xvfb \
+    # wkhtmltopdf \
+    # fonts-ipafont-gothic \
     nodejs \
-    npm
+    npm \
+    libicu-dev
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl

@@ -10,10 +10,12 @@ else
 fi
 
 # Wait for MySQL to be ready
-while ! mysqladmin ping -h"$DB_HOST" --silent; do
-    echo "Waiting for database connection..."
+
+while ! mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" --silent; do
+    echo "Waiting for database connection at $DB_HOST:$DB_PORT ..."
     sleep 2
 done
+echo "Database connection established!"
 
 # Create common tables migrations
 # php artisan migrate --path=database/migrations/now

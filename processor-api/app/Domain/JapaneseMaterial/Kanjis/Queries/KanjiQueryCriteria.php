@@ -11,6 +11,9 @@ use App\Domain\Shared\ValueObjects\Pagination;
 final readonly class KanjiQueryCriteria
 {
     public function __construct(
+        // TODO: pass in the persistence model instead of optional id parameters for each entity
+        public readonly ?EntityId $articleId = null,
+        public readonly ?int $customListId = null,
         public readonly ?EntityId $uuid = null,
         public readonly ?KanjiCharacter $character = null,
         public readonly ?KanjiGrade $grade = null,
@@ -24,14 +27,7 @@ final readonly class KanjiQueryCriteria
         public readonly ?Pagination $pagination = null,
         public readonly ?int $limit = null,
         public readonly ?int $offset = null,
-    ) {
-        if (($minStrokeCount !== null && $minStrokeCount < 0) || ($maxStrokeCount !== null && $maxStrokeCount < 0)) {
-            throw new \InvalidArgumentException('Stroke count cannot be negative.');
-        }
-        if ($minStrokeCount !== null && $maxStrokeCount !== null && $minStrokeCount > $maxStrokeCount) {
-            throw new \InvalidArgumentException('Minimum stroke count cannot be greater than maximum stroke count.');
-        }
-    }
+    ) {}
 
     public static function forListing(
         int $perPage = 10,
@@ -46,9 +42,11 @@ final readonly class KanjiQueryCriteria
         ?array $kunyomi = null,
         ?string $radical = null,
         ?int $limit = null,
-        ?int $offset = null
+        ?int $offset = null,
+        ?EntityId $articleId
     ): self {
         return new self(
+            articleId: $articleId,
             character: $character ? new KanjiCharacter($character) : null,
             grade: $grade ? new KanjiGrade($grade) : null,
             jlpt: $jlpt ? new JlptLevel($jlpt) : null,

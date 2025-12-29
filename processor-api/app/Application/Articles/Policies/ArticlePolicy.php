@@ -5,11 +5,10 @@ namespace App\Application\Articles\Policies;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Articles\Models\Article;
 
-use App\Domain\Shared\Enums\{PublicityStatus, UserRole};
+use App\Domain\Shared\Enums\{PublicityStatus};
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Http\User;
+use App\Infrastructure\Persistence\Models\User;
 
-// TODO: rename to ArticlePolicy
 class ArticlePolicy
 {
     public function __construct(

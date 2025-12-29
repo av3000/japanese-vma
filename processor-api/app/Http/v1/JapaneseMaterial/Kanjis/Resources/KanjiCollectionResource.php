@@ -19,8 +19,10 @@ class KanjiCollectionResource extends ResourceCollection
 
     public function toArray($request): array
     {
+        $kanjis = parent::toArray($request);
+
         return [
-            'data' => $this->collection,
+            'kanjis' => $kanjis,
             'pagination' => [
                 'total' => $this->total(),
                 'count' => $this->count(),

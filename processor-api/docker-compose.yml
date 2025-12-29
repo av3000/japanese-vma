@@ -10,10 +10,12 @@ services:
       SERVICE_NAME: laravel-app
       SERVICE_TAGS: dev
       DB_HOST: db
+      DB_PORT: '${DB_PORT}'
       DB_DATABASE: '${DB_DATABASE}'
       DB_USERNAME: '${DB_USERNAME}'
       DB_PASSWORD: '${DB_PASSWORD}'
       APP_URL: '${APP_URL}'
+      QUEUE_CONNECTION: '${QUEUE_CONNECTION}'
     volumes:
       - ./:/var/www/html
       - vendor-volume:/var/www/html/vendor          # Cache vendor

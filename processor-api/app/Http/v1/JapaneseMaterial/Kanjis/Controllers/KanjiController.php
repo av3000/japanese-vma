@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\v1\JapaneseMaterial\Kanjis\Requests\IndexKanjiRequest;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiCollectionResource;
@@ -26,9 +27,13 @@ class KanjiController extends Controller
     {
         $validatedData = $request->validated();
 
+        $articleId = isset($validatedData['article_uuid'])
+            ? EntityId::from($validatedData['article_uuid'])
+            : null;
+
         $criteria = KanjiQueryCriteria::forListing(
-            page: $validatedData['page'] ?? 1,
-            perPage: $validatedData['per_page'] ?? 10,
+            page: $validatedData['page'] ?? Pagination::MIN_PAGE,
+            perPage: $validatedData['per_page'] ?? Pagination::DEFAULT_PER_PAGE,
             character: $validatedData['character'] ?? null,
             grade: $validatedData['grade'] ?? null,
             jlpt: $validatedData['jlpt'] ?? null,
@@ -39,7 +44,8 @@ class KanjiController extends Controller
             kunyomi: $validatedData['kunyomi'] ?? null,
             radical: $validatedData['radical'] ?? null,
             limit: $validatedData['limit'] ?? null,
-            offset: $validatedData['offset'] ?? null
+            offset: $validatedData['offset'] ?? null,
+            articleId: $articleId,
         );
 
         $paginatedKanjisResult = $this->kanjiService->find($criteria);

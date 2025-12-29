@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
@@ -10,11 +11,15 @@ use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Domain\Shared\Enums\PublicityStatus;
+// use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
-    public function __construct() {}
+    public function __construct(
+        private readonly ArticleMapper $articleMapper,
+        // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
+    ) {}
 
     /**
      * Create a new article in persistence.
@@ -25,11 +30,12 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function create(DomainArticle $article): DomainArticle
     {
-        $mappedArticle = ArticleMapper::mapToEntity($article);
+        // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
+        $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
         $entityArticle->load('user');
 
-        return ArticleMapper::mapToDomain($entityArticle);
+        return $this->articleMapper->mapToDomain($entityArticle);
     }
 
     /**
@@ -45,8 +51,10 @@ class ArticleRepository implements ArticleRepositoryInterface
             ->where('uuid', $article->getUid()->value())
             ->firstOrFail();
 
-        ArticleMapper::mapToExistingEntity($article, $entityArticle);
+        $this->articleMapper->mapToExistingEntity($article, $entityArticle);
         $entityArticle->save();
+
+        // TODO: update attached kanjis
     }
 
     /**
@@ -62,18 +70,11 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         $query = PersistenceArticle::query();
 
-        $with = [];
-        if ($dto !== null) {
-            if ($dto->include_user) $with[] = 'user';
-            if ($dto->include_kanjis) $with[] = 'kanjis';
-            if ($dto->include_words) $with[] = 'words';
-        }
-
-        $persistenceArticle = $query->with($with)
+        $persistenceArticle = $query->with(['user', 'kanjis'])
             ->where('uuid', $articleUuid->value())
             ->first();
 
-        return $persistenceArticle ? ArticleMapper::mapToDomain($persistenceArticle) : null;
+        return $persistenceArticle ? $this->articleMapper->mapToDomain($persistenceArticle) : null;
     }
 
     /**
@@ -90,7 +91,6 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         $persistenceArticle = PersistenceArticle::findOrFail($id);
 
-        // Clean up many-to-many relationships
         $persistenceArticle->kanjis()->detach();
         $persistenceArticle->words()->detach();
 
@@ -149,7 +149,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles
     {
-        $query = PersistenceArticle::query()->with(['user']);
+        $query = PersistenceArticle::query()->with(['user', 'kanjis']);
 
         $this->applyVisibilityFilters($query, $criteria->visibilityRules);
         $this->applyContentFilters($query, $criteria);
@@ -163,7 +163,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         );
 
         $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) {
-            return ArticleMapper::mapToDomain($persistenceArticle);
+            return $this->articleMapper->mapToDomain($persistenceArticle);
         });
 
         $paginatedResults->setCollection($domainArticles);
@@ -197,14 +197,14 @@ class ArticleRepository implements ArticleRepositoryInterface
             return;
         }
 
-        $query->where(function($q) use ($rules) {
+        $query->where(function ($q) use ($rules) {
             if (isset($rules['access_own_private']) && $rules['access_own_private']) {
                 // Authenticated user: public articles OR own private articles
                 $q->where('publicity', PublicityStatus::PUBLIC)
-                  ->orWhere(function($subQ) use ($rules) {
-                      $subQ->where('publicity', PublicityStatus::PRIVATE)
-                           ->where('user_id', $rules['user_id']);
-                  });
+                    ->orWhere(function ($subQ) use ($rules) {
+                        $subQ->where('publicity', PublicityStatus::PRIVATE)
+                            ->where('user_id', $rules['user_id']);
+                    });
             } else {
                 // Anonymous user: only specified publicity statuses
                 $q->whereIn('publicity', $rules['publicity']);
@@ -233,9 +233,9 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
-            $query->where(function($q) use ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
                 $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
-                  ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
+                    ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
         }
     }
@@ -252,5 +252,19 @@ class ArticleRepository implements ArticleRepositoryInterface
     private function applySorting(Builder $query, ArticleSortCriteria $sort): void
     {
         $query->orderBy($sort->field->value, $sort->direction->value);
+    }
+
+    /**
+     * Syncs a list of Kanji IDs to an article.
+     *
+     * @param int $articleId The internal ID of the article.
+     * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
+     * @return void
+     */
+    public function syncKanjis(int $articleId, array $kanjiIds): void
+    {
+        $persistenceArticle = PersistenceArticle::findOrFail($articleId);
+        // TODO: use custom query assign kanjis in a single query, instead of individual for each kanji
+        $persistenceArticle->kanjis()->sync($kanjiIds);
     }
 }

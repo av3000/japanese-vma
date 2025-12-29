@@ -36,6 +36,7 @@ class KanjiMapper
             : (int) $persistenceKanji->frequency;
 
         return new DomainKanji(
+            id: $persistenceKanji->id,
             uuid: $uuid,
             character: new KanjiCharacter($persistenceKanji->kanji),
             onyomi: $onyomi,

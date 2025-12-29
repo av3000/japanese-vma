@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Domain\Articles\Models;
 
+use App\Domain\Articles\Models\Article as DomainArticle;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class Articles
@@ -9,6 +11,12 @@ class Articles
 
     private function __construct(LengthAwarePaginator $paginator)
     {
+        foreach ($paginator->getCollection() as $item) {
+            if (!$item instanceof DomainArticle) {
+                throw new \InvalidArgumentException('Paginator collection must contain only DomainArticle instances.');
+            }
+        }
+
         $this->paginator = $paginator;
     }
 
@@ -22,7 +30,6 @@ class Articles
      */
     public static function fromArray(array $domainModels, LengthAwarePaginator $originalPaginator): self
     {
-        // Create new paginator with domain models
         $newPaginator = new LengthAwarePaginator(
             $domainModels,
             $originalPaginator->total(),
@@ -52,6 +59,9 @@ class Articles
         return $this->paginator->isEmpty();
     }
 
+    /**
+     * @return DomainArticle[]
+     */
     public function getItems(): array
     {
         return $this->paginator->items();

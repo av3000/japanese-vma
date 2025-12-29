@@ -8,7 +8,6 @@ use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanjis;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
-use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiSortCriteria;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Infrastructure\Persistence\Repositories\KanjiMapper;
@@ -37,10 +36,13 @@ class KanjiRepository implements KanjiRepositoryInterface
         $query = PersistenceKanji::query();
 
         if ($criteria) {
-            $this->applyFilters($query, $criteria);
-        } else {
-            $query->orderBy('kanji', 'asc');
+            $this->applyKanjiFilters($query, $criteria);
+            $this->applyParentEntityFilters($query, $criteria);
+            // $this->applyFilters($query, $criteria);
         }
+        //  else {
+        //     $query->orderBy('kanji', 'asc');
+        // }
 
         $perPage = $criteria?->pagination?->per_page ?? Pagination::DEFAULT_PER_PAGE;
         $page = $criteria?->pagination?->page ?? Pagination::MIN_PAGE;
@@ -58,7 +60,7 @@ class KanjiRepository implements KanjiRepositoryInterface
         return Kanjis::fromEloquentPaginator($paginatedResults);
     }
 
-    private function applyFilters(Builder $query, KanjiQueryCriteria $criteria): void
+    private function applyKanjiFilters(Builder $query, KanjiQueryCriteria $criteria): void
     {
         if ($criteria->uuid !== null) {
             $query->where('uuid', $criteria->uuid->value());
@@ -107,6 +109,27 @@ class KanjiRepository implements KanjiRepositoryInterface
         }
     }
 
+    private function applyParentEntityFilters(Builder $query, KanjiQueryCriteria $criteria): void
+    {
+        if ($criteria->articleId !== null) {
+            $query->whereHas('articles', function (Builder $q) use ($criteria) {
+                $q->where('uuid', $criteria->articleId->value());
+            });
+            // Alternative: use a join for performance on large pivot tables
+            // $query->join('article_kanji', 'japanese_kanji_bank_long.id', '=', 'article_kanji.kanji_id')
+            //       ->join('articles', 'article_kanji.article_id', '=', 'articles.id')
+            //       ->where('articles.uuid', $criteria->articleId->value())
+            //       ->select('japanese_kanji_bank_long.*'); // Important to select original kanji columns
+        }
+        // TODO: implement when customLists will be migrated to clean architecture
+        // if ($criteria->customListId !== null) {
+        //     // Similarly, query through the custom_list_kanji pivot table
+        //     $query->whereHas('customLists', function(Builder $q) use ($criteria) {
+        //         $q->where('id', $criteria->customListId);
+        //     });
+        // }
+    }
+
 
     public function findIdsByCharacters(array $characters): array
     {
@@ -131,5 +154,20 @@ class KanjiRepository implements KanjiRepositoryInterface
         // TODO: create and use kanji mapper
         // TODO: create and use kanji domain object with value objects
         return $entities;
+    }
+
+    public function findManyByCharacters(array $characters): array
+    {
+        if (empty($characters)) {
+            return [];
+        }
+
+        $charValues = array_map(fn(KanjiCharacter $c) => $c->value(), $characters);
+
+        $persistenceKanjis = PersistenceKanji::whereIn('kanji', $charValues)->get();
+
+        return $persistenceKanjis->map(
+            fn(PersistenceKanji $pk) => $this->kanjiMapper->mapToDomain($pk)
+        )->toArray();
     }
 }

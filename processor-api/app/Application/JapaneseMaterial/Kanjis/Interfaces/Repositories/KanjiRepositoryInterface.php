@@ -22,4 +22,12 @@ interface KanjiRepositoryInterface
     public function findIdsByCharacters(array $characters): array;
     public function findByIds(array $ids): array;
     public function findByCharacters(array $characters): array;
+
+    /**
+     * Finds multiple Kanjis by their characters.
+     *
+     * @param KanjiCharacter[] $characters An array of KanjiCharacter value objects.
+     * @return \App\Domain\JapaneseMaterial\Kanjis\Models\Kanji[] An array of DomainKanji models.
+     */
+    public function findManyByCharacters(array $characters): array;
 }

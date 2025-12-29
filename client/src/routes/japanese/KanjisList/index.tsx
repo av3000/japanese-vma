@@ -33,7 +33,7 @@ export class KanjiList extends Component {
 
 	fetchKanjis() {
 		this.setState({ isLoading: true });
-		return apiCall(HttpMethod.GET, '/api/kanjis')
+		return apiCall({ method: HttpMethod.GET, path: '/kanjis' })
 			.then((res) => {
 				const newState = Object.assign({}, this.state);
 				newState.paginateObject = res.kanjis;

@@ -12,6 +12,7 @@ use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\JlptLevel;
 final readonly class Kanji
 {
     public function __construct(
+        private int $id,
         private EntityId $uuid,
         private KanjiCharacter $character,
         private array $onyomi,
@@ -29,6 +30,11 @@ final readonly class Kanji
     public function getUuid(): EntityId
     {
         return $this->uuid;
+    }
+
+    public function getIdValue(): int
+    {
+        return $this->id;
     }
 
     public function getCharacter(): KanjiCharacter

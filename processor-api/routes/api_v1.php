@@ -25,7 +25,6 @@ Route::prefix('v1')->group(function () {
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);
-    Route::get('articles/{id}/kanjis', [ArticleController::class, 'kanjis']);
     Route::get('articles/{id}/words', [ArticleController::class, 'words']);
 
     // Comments - Public Read
@@ -33,6 +32,10 @@ Route::prefix('v1')->group(function () {
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+
+    // Kanjis
+    Route::get('kanjis', [KanjiController::class, 'index']);
+    Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES
@@ -59,10 +62,6 @@ Route::prefix('v1')->group(function () {
 
         // Comments - Authenticated Write
         Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
-
-        // Kanjis
-        Route::get('kanjis', [KanjiController::class, 'index']);
-        Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
 
 
         // ============================================

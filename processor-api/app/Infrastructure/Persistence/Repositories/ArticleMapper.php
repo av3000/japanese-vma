@@ -10,12 +10,23 @@ use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourc
 
 class ArticleMapper
 {
-    public static function mapToDomain(PersistenceArticle $entity): DomainArticle
+    public function __construct(
+        private readonly KanjiMapper $kanjiMapper
+    ) {}
+
+    public function mapToDomain(PersistenceArticle $entity): DomainArticle
     {
+        $domainKanjis = [];
+        if ($entity->kanjis) {
+            $domainKanjis = $entity->kanjis->map(
+                fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
+            )->toArray();
+        }
+
         return new DomainArticle(
             $entity->id,
             new EntityId($entity->uuid),
-            $entity->entity_type_uuid ? new EntityId($entity->entity_type_uuid) : 'broken',
+            $entity->entity_type_uuid ? new EntityId($entity->entity_type_uuid) : null,
             new UserId($entity->user_id),
             new UserName($entity->user?->name ?? 'Unknown User'),
             new ArticleTitle($entity->title_jp),
@@ -35,6 +46,7 @@ class ArticleMapper
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
+            kanjis: $domainKanjis,
         );
     }
 

@@ -1,14 +1,11 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Articles\ValueObjects\ArticleTitle;
-use App\Domain\Articles\ValueObjects\ArticleContent;
-use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
-use App\Domain\Shared\ValueObjects\Tags;
 use Illuminate\Database\Eloquent\Model;
-use App\Http\Models\Kanji;
+use App\Infrastructure\Persistence\Models\Kanji;
 use App\Http\Models\Word;
 use App\Http\User;
 

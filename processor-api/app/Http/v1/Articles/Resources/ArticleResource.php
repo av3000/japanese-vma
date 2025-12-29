@@ -3,7 +3,7 @@
 namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\{Article, ArticleStats};
-
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
 
@@ -67,7 +67,8 @@ class ArticleResource extends JsonResource
                     'downloads_count' => $this->stats->getDownloadsCount(),
                     'comments_count' => $this->stats->getCommentsCount(),
                 ] : null,
-            ]
+            ],
+            'kanjis' => KanjiResource::collection($article->getKanjis()),
         ];
     }
 }

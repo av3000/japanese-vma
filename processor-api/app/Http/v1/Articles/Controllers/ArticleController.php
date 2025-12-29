@@ -13,15 +13,19 @@ use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
-
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
+use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
+use App\Domain\Shared\ValueObjects\Pagination;
+use App\Http\v1\Articles\Requests\ArticleKanjisIndexRequest;
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiCollectionResource;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
@@ -29,10 +33,11 @@ use Illuminate\Http\JsonResponse;
 class ArticleController extends Controller
 {
     public function __construct(
-        private ArticleServiceInterface $articleService,
-        private EngagementServiceInterface $engagementService,
-        private HashtagServiceInterface $hashtagService,
-        private ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
+        private readonly ArticleServiceInterface $articleService,
+        private readonly KanjiServiceInterface $kanjiService,
+        private readonly EngagementServiceInterface $engagementService,
+        private readonly HashtagServiceInterface $hashtagService,
+        private readonly ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
     public function index(IndexArticleRequest $request): JsonResponse
@@ -57,7 +62,7 @@ class ArticleController extends Controller
         }
 
         $resources = [];
-        // TODO: This supposed to be hidden somehow and not handled in controller, especially engagement data...
+        // TODO: This supposed to use some Mapper or Builder for mature mapping.
         foreach ($paginatedArticles->getItems() as $article) {
             $stats = $statsMap[$article->getIdValue()] ?? null;
             $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
@@ -69,7 +74,7 @@ class ArticleController extends Controller
             ], $stats, $hashtags);
         }
 
-        $data = [
+        $articleDetailResource = [
             'items' => $resources,
             'pagination' => [
                 'page' => $paginatedArticles->getPaginator()->currentPage(),
@@ -80,7 +85,7 @@ class ArticleController extends Controller
             ],
         ];
 
-        return new JsonResponse($data, 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
+        return TypedResults::ok($articleDetailResource);
     }
 
     private function getImagePath(): string
@@ -105,10 +110,9 @@ class ArticleController extends Controller
             ObjectTemplateType::ARTICLE
         );
 
-        // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-        // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
-
-        // TODO: returning only Id might be enough for frontend.
+        // TODO: returning article data that available pretty much right away,
+        // then using the article id to listen for websocket
+        // which would inform when kanjis attaching is done, then refetch on frontend.
         return TypedResults::created(
             new ArticleResource(article: $article, hashtags: $hashtags)
         );
@@ -218,24 +222,7 @@ class ArticleController extends Controller
         }
     }
 
-    public function kanjis(Request $request, int $id): JsonResponse
-    {
-        try {
-            $kanjis = $this->articleService->getArticleKanjis(
-                $id,
-                $request->get('page'),
-                $request->get('per_page')
-            );
-
-            return response()->json(new ArticleKanjiCollection($kanjis));
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
-        }
-    }
-
+    // TODO: refactor to clean architecture
     public function words(Request $request, int $id): JsonResponse
     {
         try {
