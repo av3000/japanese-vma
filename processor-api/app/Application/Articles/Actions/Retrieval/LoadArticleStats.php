@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Domain\Articles\Actions\Retrieval;
+namespace App\Application\Articles\Actions\Retrieval;
 
-use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\{Like, Download, View, Comment, ObjectTemplate};
 
 class LoadArticleStats
 {
-    public function execute(Article $article): void
+    public function execute($article): void // TODO: add proper Article type
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 

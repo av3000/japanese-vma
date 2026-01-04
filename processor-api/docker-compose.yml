@@ -22,8 +22,8 @@ services:
     volumes:
       - ./:/var/www/html
       - vendor-volume:/var/www/html/vendor          # Cache vendor
-      - storage-volume:/var/www/html/storage        # Cache storage
-      - cache-volume:/var/www/html/bootstrap/cache  # Cache bootstrap
+      # - storage-volume:/var/www/html/storage        # Cache storage
+      # - cache-volume:/var/www/html/bootstrap/cache  # Cache bootstrap
     networks:
       - shared-network
     depends_on:
@@ -167,7 +167,7 @@ networks:
 volumes:
   dbdata:
   vendor-volume:
-  storage-volume:
-  cache-volume:
+  # storage-volume:
+  # cache-volume:
   redis_data:
   redisinsight_data:

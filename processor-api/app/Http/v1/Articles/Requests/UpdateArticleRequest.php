@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\v1\Articles\requests;
+namespace App\Http\v1\Articles\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,7 +11,7 @@ class UpdateArticleRequest extends FormRequest
         return auth('api')->check();
     }
 
-     public function rules(): array
+    public function rules(): array
     {
         return [
             'title_jp' => 'sometimes|string|min:2|max:255',

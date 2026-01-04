@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\V1\Admin\Controllers;
+namespace App\Http\v1\Admin\Controllers;
 
 use App\Application\Users\Actions\GetCurrentUserAction;
 use App\Http\Controllers\Controller;
@@ -12,7 +12,6 @@ use App\Http\V1\Admin\Requests\UserIndexRequest;
 use App\Http\v1\Users\Builders\UserResponseBuilder;
 use Illuminate\Http\JsonResponse;
 use App\Shared\Http\TypedResults;
-use App\Http\v1\Users\Resources\UserProfileResource;
 use Illuminate\Http\Request;
 
 class UserController extends Controller

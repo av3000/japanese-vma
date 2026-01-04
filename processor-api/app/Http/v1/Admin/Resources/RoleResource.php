@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\V1\Admin\Resources;
+namespace App\Http\v1\Admin\Resources;
 
 use App\Domain\Users\Models\Role as DomainRole;
 use Illuminate\Http\Request;

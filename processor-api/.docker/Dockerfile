@@ -37,7 +37,6 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
 
 # Install Redis PHP extension via PECL
-# ADDED: Update PECL channel and use force option
 RUN pecl channel-update pecl.php.net \
     && pecl install -o -f redis \
     && rm -rf /tmp/pear \

@@ -1,8 +1,9 @@
 <?php
-namespace App\Domain\Hashtags\Errors;
 
+namespace App\Domain\Engagement\Errors;
+
+use App\Shared\Enums\HttpStatus;
 use App\Shared\Results\Error;
-use App\Shared\Enums\ErrorType;
 
 class HashtagErrors
 {
@@ -10,8 +11,8 @@ class HashtagErrors
     {
         return new Error(
             code: 'Hashtags.InvalidTag',
-            type: ErrorType::VALIDATION,
             description: 'Invalid hashtag format',
+            status: HttpStatus::NOT_FOUND,
             detail: "Tag '{$tag}' contains invalid characters or format"
         );
     }
@@ -20,7 +21,7 @@ class HashtagErrors
     {
         return new Error(
             code: 'Hashtags.TooManyTags',
-            type: ErrorType::VALIDATION,
+            status: HttpStatus::BAD_REQUEST,
             description: 'Too many hashtags',
             detail: "Cannot add {$count} hashtags. Maximum allowed is {$limit}"
         );
@@ -30,7 +31,7 @@ class HashtagErrors
     {
         return new Error(
             code: 'Hashtags.CreationFailed',
-            type: ErrorType::UNEXPECTED,
+            status: HttpStatus::BAD_REQUEST,
             description: 'Hashtag creation failed',
             detail: 'An unexpected error occurred while creating hashtags'
         );

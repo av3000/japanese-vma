@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Domain\Articles\Actions;
+namespace App\Application\Articles\Actions\Updates;
 
-use App\Domain\Articles\Http\Models\Article;
+// use App\Domain\Articles\Http\Models\Article;
 use App\Http\Models\{ObjectTemplate, Uniquehashtag};
 use Illuminate\Support\Facades\DB;
 
 class UpdateArticleHashtagsAction
 {
-    public function execute(Article $article, array $tags): void
+    public function execute($article, array $tags): void // TODO: add proper Article type
     {
         $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
 
@@ -27,7 +27,7 @@ class UpdateArticleHashtagsAction
             ->delete();
     }
 
-    private function attachHashtags(Article $article, array $tags, int $objectTemplateId): void
+    private function attachHashtags($article, array $tags, int $objectTemplateId): void
     {
         $tagsString = implode(' ', $tags);
         $hashtags = $this->extractHashtags($tagsString);
