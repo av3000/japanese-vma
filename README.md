@@ -114,6 +114,14 @@ Now, in `/processor-api` repository root run:
 chmod +x .docker/entrypoint.sh
 ```
 
+Install composer packages on local machine to copy into containers:
+
+Ignores requirements that are linux specific packages
+
+```bash
+composer install --ignore-platform-reqs
+```
+
 Run docker containers in detached mode:
 
 ```bash

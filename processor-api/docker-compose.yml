@@ -21,7 +21,9 @@ services:
       REDIS_PASSWORD: '${REDIS_PASSWORD}'
     volumes:
       - ./:/var/www/html
-      - vendor-volume:/var/www/html/vendor          # Cache vendor
+      - /var/www/html/vendor # Anonymous vendor volume to use container vendors instead of copying local ones.
+      - /var/www/html/bootstrap/cache
+      # - vendor-volume:/var/www/html/vendor          # Cache vendor
       # - storage-volume:/var/www/html/storage        # Cache storage
       # - cache-volume:/var/www/html/bootstrap/cache  # Cache bootstrap
     networks:
@@ -115,7 +117,7 @@ services:
       REVERB_APP_ID: '${REVERB_APP_ID}'
       REVERB_APP_KEY: '${REVERB_APP_KEY}'
       REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
-      REVERB_HOST: '0.0.0.0' # Listen on all interfaces inside the container
+      REVERB_HOST: 'reverb_server'
       REVERB_PORT: '${REVERB_PORT}'
       REVERB_SCHEME: '${REVERB_SCHEME}'
       REDIS_HOST: 'redis' # Reverb needs to connect to Redis for internal features too
@@ -123,13 +125,15 @@ services:
       REDIS_PASSWORD: '${REDIS_PASSWORD}'
     volumes:
       - ./:/var/www/html
-      - vendor-volume:/var/www/html/vendor
+      - /var/www/html/bootstrap/cache
+      - /var/www/html/vendor
     ports:
       - '${REVERB_PORT}:${REVERB_PORT}'
     networks:
       - shared-network
     depends_on:
       - redis
+    command: php artisan reverb:start --host=0.0.0.0 --port=${REVERB_PORT} --debug
 
   queue:
     build:
@@ -139,6 +143,15 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
+      # CRITICAL: The Queue connects to the container name
+      REVERB_HOST: 'reverb_server'
+      # REVERB_PORT: 8081
+      REVERB_PORT: '${REVERB_PORT}'
+      REVERB_SCHEME: 'http'
+      REVERB_APP_ID: '${REVERB_APP_ID}'
+      REVERB_APP_KEY: '${REVERB_APP_KEY}'
+      REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
+
       APP_DEBUG: '${APP_DEBUG}'
       APP_ENV: '${APP_ENV}'
       DB_CONNECTION: '${DB_CONNECTION}'
@@ -152,7 +165,8 @@ services:
       REDIS_PASSWORD: '${REDIS_PASSWORD}'
     volumes:
       - ./:/var/www/html
-      - vendor-volume:/var/www/html/vendor
+      - /var/www/html/bootstrap/cache
+      - /var/www/html/vendor
     networks:
       - shared-network
     depends_on:
@@ -166,7 +180,7 @@ networks:
 
 volumes:
   dbdata:
-  vendor-volume:
+  # vendor-volume:
   # storage-volume:
   # cache-volume:
   redis_data:

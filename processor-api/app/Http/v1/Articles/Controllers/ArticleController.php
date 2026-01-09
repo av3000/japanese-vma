@@ -11,21 +11,15 @@ use App\Http\v1\Articles\Requests\UpdateArticleRequest;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
-use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
+use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
-use App\Http\v1\Articles\Resources\ArticleKanjiCollection;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
-use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
-use App\Domain\Shared\ValueObjects\Pagination;
-use App\Http\v1\Articles\Requests\ArticleKanjisIndexRequest;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiCollectionResource;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
@@ -34,10 +28,9 @@ class ArticleController extends Controller
 {
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
-        private readonly KanjiServiceInterface $kanjiService,
+        private readonly LastOperationServiceInterface $lastOperationService,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-        private readonly ArticleKanjiProcessingServiceInterface $articleKanjiProcessingService
     ) {}
 
     public function index(IndexArticleRequest $request): JsonResponse
@@ -45,10 +38,17 @@ class ArticleController extends Controller
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
-        $entityIds = array_map(fn($article) => $article->getIdValue(), $paginatedArticles->getItems());
+        $entityIds = [];
+        $entityUuidStrings = [];
+
+        foreach ($paginatedArticles->getItems() as $article) {
+            $entityIdInts[] = $article->getIdValue();
+            $entityUuidStrings[] = $article->getUid()->value();
+        }
 
         $statsMap = [];
         $hashtagsMap = [];
+        $lastOperationsMap = [];
 
         if ($listDTO->include_stats_counts) {
             $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
@@ -61,17 +61,30 @@ class ArticleController extends Controller
             );
         }
 
+        $lastOperationsMap = $this->lastOperationService->getBatchLatestStates(
+            $entityUuidStrings,
+            'kanji_extraction'
+        );
+
         $resources = [];
         // TODO: This supposed to use some Mapper or Builder for mature mapping.
         foreach ($paginatedArticles->getItems() as $article) {
             $stats = $statsMap[$article->getIdValue()] ?? null;
             $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
 
+            $lastOperation = $lastOperationsMap[$article->getUid()->value()] ?? null;
+
             // TODO: make options in article resource type agnostic, best accept array and check individual values inside, rather than specifying exact DTO like ArticleListDTO
-            $resources[] = new ArticleResource($article, [
-                'include_hashtags' => $listDTO->include_hashtags,
-                'include_stats' => $listDTO->include_stats_counts,
-            ], $stats, $hashtags);
+            $resources[] = new ArticleResource(
+                $article,
+                [
+                    'include_hashtags' => $listDTO->include_hashtags,
+                    'include_stats' => $listDTO->include_stats_counts,
+                ],
+                $stats,
+                $hashtags,
+                $lastOperation
+            );
         }
 
         $articleDetailResource = [
@@ -99,22 +112,14 @@ class ArticleController extends Controller
 
         $result = $this->articleService->createArticle($createDTO, auth('api')->user());
 
-        $article = $result->getData();
-
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
         }
 
-        $hashtags = $this->hashtagService->getHashtags(
-            $article->getIdValue(),
-            ObjectTemplateType::ARTICLE
-        );
+        $article = $result->getData();
 
-        // TODO: returning article data that available pretty much right away,
-        // then using the article id to listen for websocket
-        // which would inform when kanjis attaching is done, then refetch on frontend.
         return TypedResults::created(
-            new ArticleResource(article: $article, hashtags: $hashtags)
+            ['uuid' => $article->getUid()->value()]
         );
     }
 
@@ -138,6 +143,12 @@ class ArticleController extends Controller
             ObjectTemplateType::ARTICLE
         );
 
+        $kanjiOperationState = $this->lastOperationService->getLatestState(
+            $article->getUid(),
+            'kanji_extraction'
+        );
+
+        // TODO: fetch initially in repository 'with(['kanjis', 'words']);
         $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
         $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
@@ -147,7 +158,8 @@ class ArticleController extends Controller
                 engagementData: $engagementData,
                 kanjis: $kanjis,
                 words: $words,
-                hashtags: $hashtags
+                hashtags: $hashtags,
+                lastOperation: $kanjiOperationState
             )
         );
     }
@@ -167,6 +179,7 @@ class ArticleController extends Controller
         // TODO: Always Check if user at given time exists, but each request is checked for authentication, so additional check is redundant??
         // $user = $this->userService->getUserById(auth('auth')->user()->id)
 
+        // TODO: dispatch update kanjis list job
         $result = $this->articleService->updateArticle(
             $uid,
             $updateDTO,
@@ -183,9 +196,6 @@ class ArticleController extends Controller
             $article->getIdValue(),
             ObjectTemplateType::ARTICLE
         );
-
-        // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-        // $this->articleKanjiProcessingService->queueKanjiProcessing($article->getUid());
 
         // TODO: returning only Id might be enough for frontend.
         return TypedResults::ok(

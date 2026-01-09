@@ -4,6 +4,7 @@ namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\{Article, ArticleStats};
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
+use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,7 @@ class ArticleResource extends JsonResource
         ?array $options = null,
         ?ArticleStats $stats = null,
         array $hashtags = [],
+        private ?LastOperationState $lastOperation = null
     ) {
         parent::__construct($article);
         $this->options = $options;
@@ -69,6 +71,11 @@ class ArticleResource extends JsonResource
                 ] : null,
             ],
             'kanjis' => KanjiResource::collection($article->getKanjis()),
+            'processing_status' => $this->lastOperation ? [
+                'type' => $this->lastOperation->task_type,
+                'status' => $this->lastOperation->status->value,
+                'metadata' => $this->lastOperation->metadata,
+            ] : null,
         ];
     }
 }

@@ -22,6 +22,7 @@ use App\Application\Articles\Actions\Deletion\{
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
+use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
@@ -46,6 +47,7 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
+        private readonly LastOperationRepositoryInterface $lastOperationRepository,
         private HashtagServiceInterface $hashtagService,
         private EngagementServiceInterface $engagementService,
         private ArticlePolicy $ArticlePolicy,
@@ -85,8 +87,6 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, User $user): Result
     {
         try {
-            // $uniqueKanjiCharacters = $this->kanjiExtractionService->extractUniqueKanjis($dto->content_jp);
-            // dd($uniqueKanjiCharacters);
             $article = DB::transaction(function () use ($dto, $user) {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
@@ -110,11 +110,17 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                // dd($dto, $createdDomainArticle);
-                // Dispatch the job for asynchronous Kanji processing
+                $operationState = $this->lastOperationRepository->start(
+                    $createdDomainArticle->getUid(),
+                    // TODO: entity type name and task name both should be typed values, atleast consts.
+                    'article',
+                    'kanji_extraction'
+                );
+
                 ProcessArticleKanjisJob::dispatch(
                     $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp // Pass the raw content for processing
+                    $dto->content_jp,
+                    $operationState->id
                 );
 
                 return $createdDomainArticle;

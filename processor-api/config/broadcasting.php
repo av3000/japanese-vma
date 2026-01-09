@@ -34,16 +34,18 @@ return [
             'driver' => 'reverb',
             'host' => env('REVERB_HOST'),
             'port' => env('REVERB_PORT'),
-            'scheme' => env('REVERB_SCHEME', 'https'),
+            // TODO: when working on deployments check if it should be https
+            'scheme' => env('REVERB_SCHEME', 'http'),
             'app_id' => env('REVERB_APP_ID'),
             'key' => env('REVERB_APP_KEY'),
             'secret' => env('REVERB_APP_SECRET'),
             'debug' => env('APP_DEBUG', false),
             'options' => [
-                // If you were using a "cluster" in a previous Pusher setup, you might map it here,
-                // but for direct Reverb connection, it's often not explicitly needed unless for specific Reverb features.
-                'cluster' => env('REVERB_CLUSTER'),
-                'useTLS' => true
+                // 'cluster' => 'mt1' // Dummy cluster to bypass internal validation
+                'host' => env('REVERB_HOST'),
+                'port' => env('REVERB_PORT', 8081),
+                'scheme' => env('REVERB_SCHEME', 'http'),
+                'useTLS' => env('REVERB_SCHEME') === 'https',
             ],
         ],
 

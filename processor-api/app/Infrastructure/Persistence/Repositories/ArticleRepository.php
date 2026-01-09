@@ -13,6 +13,7 @@ use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Domain\Shared\Enums\PublicityStatus;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
@@ -33,9 +34,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
-        $entityArticle->load('user');
 
-        return $this->articleMapper->mapToDomain($entityArticle);
+        return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }
 
     /**
@@ -263,8 +263,26 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void
     {
-        $persistenceArticle = PersistenceArticle::findOrFail($articleId);
-        // TODO: use custom query assign kanjis in a single query, instead of individual for each kanji
-        $persistenceArticle->kanjis()->sync($kanjiIds);
+        if (empty($kanjiIds)) {
+            DB::table('article_kanji')->where('article_id', $articleId)->delete();
+            return;
+        }
+
+        $pivotRecords = [];
+
+        foreach ($kanjiIds as $kanjiId) {
+            $pivotRecords[] = [
+                'article_id' => $articleId,
+                'kanji_id'   => $kanjiId,
+            ];
+        }
+
+        DB::transaction(function () use ($articleId, $pivotRecords) {
+            DB::table('article_kanji')->where('article_id', $articleId)->delete();
+
+            foreach (array_chunk($pivotRecords, 1000) as $chunk) {
+                DB::table('article_kanji')->insert($chunk);
+            }
+        });
     }
 }

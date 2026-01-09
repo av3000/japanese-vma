@@ -50,6 +50,36 @@ class ArticleMapper
         );
     }
 
+    public function mapToCreatedArticleDomain(PersistenceArticle $entity): DomainArticle
+    {
+
+        return new DomainArticle(
+            $entity->id,
+            new EntityId($entity->uuid),
+            $entity->entity_type_uuid ? new EntityId($entity->entity_type_uuid) : null,
+            new UserId($entity->user_id),
+            new UserName($entity->user?->name ?? 'Unknown User'),
+            new ArticleTitle($entity->title_jp),
+            $entity->title_en ? new ArticleTitle($entity->title_en) : null,
+            new ArticleContent($entity->content_jp),
+            $entity->content_en ? new ArticleContent($entity->content_en) : null,
+            new ArticleSourceUrl($entity->source_link),
+            $entity->publicity,
+            $entity->status,
+            new JlptLevels(
+                (int)$entity->n1,
+                (int)$entity->n2,
+                (int)$entity->n3,
+                (int)$entity->n4,
+                (int)$entity->n5,
+                (int)$entity->uncommon
+            ),
+            $entity->created_at->toDateTimeImmutable(),
+            $entity->updated_at->toDateTimeImmutable(),
+            kanjis: [],
+        );
+    }
+
     // TODO: shouldnt retun type be persistence article?
     public static function mapToEntity(DomainArticle $article): array
     {

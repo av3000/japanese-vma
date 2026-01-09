@@ -49,5 +49,8 @@ RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
 # Copy the application code LAST to avoid invalidating cache
 COPY . /var/www/html
 
+# TODO: doublecheck if this fits for deployments to production when working on them.
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
 EXPOSE 9000
 CMD ["php-fpm"]

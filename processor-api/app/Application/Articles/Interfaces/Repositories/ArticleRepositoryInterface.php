@@ -13,7 +13,7 @@ interface ArticleRepositoryInterface
      * Create a new article in persistence.
      *
      * @param DomainArticle $article The domain article to create
-     * @return DomainArticle The created article with generated ID and relationships
+     * @return DomainArticle The created article with generated ID
      * @throws \Illuminate\Database\QueryException On database constraint violation
      */
     public function create(DomainArticle $article): DomainArticle;
