@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
 				'@/routes': path.resolve(__dirname, './src/routes'),
 				'@/components': path.resolve(__dirname, './src/components'),
 				'@/containers': path.resolve(__dirname, './src/containers'),
-				'@/contexts': path.resolve(__dirname, './src/contexts'),
+				'@/providers': path.resolve(__dirname, './src/providers'),
 				'@/store': path.resolve(__dirname, './src/store'),
 				'@/services': path.resolve(__dirname, './src/services'),
 				'@/shared': path.resolve(__dirname, './src/shared'),

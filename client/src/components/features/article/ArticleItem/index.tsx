@@ -1,57 +1,38 @@
 import React from 'react';
+import { Article } from '@/api/articles';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { Card } from '@/components/shared/Card';
 import { Icon } from '@/components/shared/Icon';
+// TODO: Hooks should be grouped by feature in the future.
+import { useArticleSubscription } from '@/hooks/useArticleSubscription';
 import styles from './ArticleItem.module.scss';
 
-interface Hashtag {
-	id: string;
-	content: string;
-}
-
-interface ArticleItemProps {
-	id: string | number;
-	created_at: string;
-	title_jp: string;
-	commentsTotal: number;
-	viewsTotal: number;
-	likesTotal: number;
-	hashtags: Hashtag[];
-	n1: number;
-	n2: number;
-	n3: number;
-	n4: number;
-	n5: number;
-	uncommon: number;
-}
-
-const ArticleItem: React.FC<ArticleItemProps> = ({
+const ArticleItem: React.FC<Article> = ({
 	id,
+	uuid,
 	created_at,
 	title_jp,
-	commentsTotal,
-	viewsTotal,
-	likesTotal,
+	engagement: { stats },
 	hashtags,
-	n1,
-	n2,
-	n3,
-	n4,
-	n5,
-	uncommon,
+	jlpt_levels,
+	processing_status,
 }) => {
+	const currentStatus = processing_status?.status || 'completed';
+
+	useArticleSubscription(currentStatus === 'completed' ? undefined : uuid);
+
 	return (
 		<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 			<Card
 				title={title_jp}
 				image={{ url: DefaultArticleImg, title: title_jp, alt: title_jp }}
 				url={`/article/${id}`}
-				date={created_at} // TODO: use primary date and create date transformations on frontend
+				date={created_at} // TODO: use primary date and create date transformations pipes on frontend
 				tags={hashtags}
 			>
 				<div className="d-flex justify-content-between align-items-center">
 					<ruby className="h4 mr-2">
-						{n1}
+						{jlpt_levels.n1}
 						<rp>(</rp>
 						<rt>
 							<strong>N1</strong>
@@ -59,7 +40,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 						<rp>)</rp>
 					</ruby>
 					<ruby className="h4 mr-2">
-						{n2}
+						{jlpt_levels.n2}
 						<rp>(</rp>
 						<rt>
 							<strong>N2</strong>
@@ -67,7 +48,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 						<rp>)</rp>
 					</ruby>
 					<ruby className="h4 mr-2">
-						{n3}
+						{jlpt_levels.n3}
 						<rp>(</rp>
 						<rt>
 							<strong>N3</strong>
@@ -75,7 +56,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 						<rp>)</rp>
 					</ruby>
 					<ruby className="h4 mr-2">
-						{n4}
+						{jlpt_levels.n4}
 						<rp>(</rp>
 						<rt>
 							<strong>N4</strong>
@@ -83,7 +64,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 						<rp>)</rp>
 					</ruby>
 					<ruby className="h4 mr-2">
-						{n5}
+						{jlpt_levels.n5}
 						<rp>(</rp>
 						<rt>
 							<strong>N5</strong>
@@ -91,7 +72,7 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 						<rp>)</rp>
 					</ruby>
 					<ruby className="h4 mr-2">
-						{uncommon}
+						{jlpt_levels.uncommon}
 						<rp>(</rp>
 						<rt>
 							<strong>NA</strong>
@@ -102,15 +83,15 @@ const ArticleItem: React.FC<ArticleItemProps> = ({
 				<div className={styles.metaInfo}>
 					<div className={styles.statItem}>
 						<Icon size="sm" name="eyeRegular" className={styles.statIcon} />
-						<span>{viewsTotal}</span>
+						<span>{stats.views_count}</span>
 					</div>
 					<div className={styles.statItem}>
 						<Icon size="sm" name="commentSolid" className={styles.statIcon} />
-						<span>{commentsTotal}</span>
+						<span>{stats.comments_count}</span>
 					</div>
 					<div className={styles.statItem}>
 						<Icon size="sm" name="thumbsUpSolid" className={styles.statIcon} />
-						<span>{likesTotal}</span>
+						<span>{stats.likes_count}</span>
 					</div>
 				</div>
 			</Card>

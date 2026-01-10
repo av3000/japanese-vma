@@ -50,6 +50,8 @@ const ArticleDetails: React.FC = () => {
 	useEffect(() => {
 		const fetchArticleDetails = async () => {
 			try {
+				console.log('fetchArticleDetails');
+				// TODO: it supposed to be using frontend api routes, not build them here.
 				const url = `${BASE_URL}/api/article/${article_id}`;
 				// @ts-ignore
 				const data = await apiCall(HttpMethod.GET, url);
@@ -58,7 +60,7 @@ const ArticleDetails: React.FC = () => {
 					navigate('/articles');
 					return;
 				}
-				dispatch(setSelectedArticle(article));
+				// dispatch(setSelectedArticle(article));
 				setArticle(article);
 				setArticleTempStatus(article.status);
 			} catch (error) {
@@ -127,7 +129,7 @@ const ArticleDetails: React.FC = () => {
 				fetchUserArticleLists();
 			}
 		}
-	}, [article_id, currentUser, dispatch, history, selectedArticle]);
+	}, [article_id, currentUser, dispatch, history]);
 
 	const addToOrRemoveFromList = async (id: any, action: any) => {
 		try {

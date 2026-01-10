@@ -1,5 +1,5 @@
+import { HttpMethod } from '@/shared/types';
 import { apiCall } from '../../services/api';
-import { HttpMethod } from '../../shared/constants';
 import { LOAD_ARTICLES, SET_LOADING, SET_PAGINATION_INFO, REMOVE_ARTICLE, SET_SELECTED_ARTICLE } from '../actionTypes';
 import { addError } from './errors';
 

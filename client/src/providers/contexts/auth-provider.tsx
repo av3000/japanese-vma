@@ -8,6 +8,7 @@ interface AuthContextType {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	sessionExpired: boolean;
+	token: string | null;
 	login: ({ email, password }: { email: string; password: string }) => Promise<void>;
 	register: ({
 		name,
@@ -34,13 +35,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [sessionExpired, setSessionExpired] = useState(false);
+	const token = localStorage.getItem('token');
 	const navigate = useNavigate();
 
 	const isAuthenticated = !!user;
 
 	const checkAuth = useCallback(async () => {
-		const token = localStorage.getItem('token');
-
 		if (!token) {
 			setIsLoading(false);
 			return;
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		} finally {
 			setIsLoading(false);
 		}
-	}, []);
+	}, [token]);
 
 	const login = useCallback(async (loginPayload) => {
 		const response = await axiosInstance.post('/v1/login', loginPayload);
@@ -117,12 +117,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 			isAuthenticated,
 			isLoading,
 			sessionExpired,
+			token,
 			login,
 			register,
 			logout,
 			clearSessionExpired,
 		}),
-		[user, isAuthenticated, isLoading, sessionExpired, login, register, logout, clearSessionExpired],
+		[user, isAuthenticated, isLoading, sessionExpired, token, login, register, logout, clearSessionExpired],
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
