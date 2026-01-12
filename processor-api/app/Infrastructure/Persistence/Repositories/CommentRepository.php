@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
@@ -34,7 +35,6 @@ class CommentRepository implements CommentRepositoryInterface
         // if ($parentOnly) {
         //     $query->whereNull('parent_comment_id');
         // }
-
         $domainComments = $paginatedResults->getCollection()->map(function ($persistenceComment) {
             return CommentMapper::mapToDomain($persistenceComment);
         });

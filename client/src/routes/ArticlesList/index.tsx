@@ -12,7 +12,7 @@ const ArticleList: React.FC = () => {
 	const [filters, setFilters] = useState<Record<string, any>>({});
 
 	const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
-		queryKey: ['articles', filters], // <--- Includes filters! Changing this auto-refetches.
+		queryKey: ['articles', filters],
 		queryFn: ({ pageParam }) => fetchArticles(filters, pageParam),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {

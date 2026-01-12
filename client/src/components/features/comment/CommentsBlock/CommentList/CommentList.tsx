@@ -1,15 +1,6 @@
 import React from 'react';
+import { Comment } from '@/api/comments';
 import CommentItem from '../CommentItem/CommentItem';
-
-interface Comment {
-	id: string | number;
-	content: string;
-	userName: string;
-	user_id: string | number;
-	created_at: string;
-	likesTotal: number;
-	isLiked: boolean;
-}
 
 interface User {
 	id: string | number;

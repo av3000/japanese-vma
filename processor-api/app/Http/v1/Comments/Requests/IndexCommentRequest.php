@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\v1\Comments\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 
 class IndexCommentRequest extends FormRequest
 {
@@ -19,7 +19,7 @@ class IndexCommentRequest extends FormRequest
             'include_replies' => 'sometimes|boolean',
             'sort_by' => 'sometimes|string|in:created_at,updated_at',
             'sort_dir' => 'sometimes|string|in:asc,desc',
-            'include_likes' => 'sometimes|boolean',
+            'include_likes' => 'sometimes|boolean'
         ];
     }
 
@@ -42,5 +42,20 @@ class IndexCommentRequest extends FormRequest
             'include_replies' => 'include nested replies',
             'include_likes' => 'include likes count',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $data = [];
+
+        if ($this->has('include_replies')) {
+            $data['include_replies'] = $this->boolean('include_replies');
+        }
+
+        if ($this->has('include_likes')) {
+            $data['include_likes'] = $this->boolean('include_likes');
+        }
+
+        $this->merge($data);
     }
 }

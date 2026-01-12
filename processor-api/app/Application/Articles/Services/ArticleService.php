@@ -137,6 +137,11 @@ class ArticleService implements ArticleServiceInterface
         }
     }
 
+    public function getArticleIdByUuid(EntityId $uuid): int
+    {
+        return $this->articleRepository->getIdByUuid($uuid);
+    }
+
     /**
      * Get article by UUID with permission check and view tracking.
      *

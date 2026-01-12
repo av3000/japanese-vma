@@ -8,7 +8,7 @@ import { useArticleSubscription } from '@/hooks/useArticleSubscription';
 import styles from './ArticleItem.module.scss';
 
 const ArticleItem: React.FC<Article> = ({
-	id,
+	// id,
 	uuid,
 	created_at,
 	title_jp,
@@ -26,7 +26,7 @@ const ArticleItem: React.FC<Article> = ({
 			<Card
 				title={title_jp}
 				image={{ url: DefaultArticleImg, title: title_jp, alt: title_jp }}
-				url={`/article/${id}`}
+				url={`/articles/${uuid}`}
 				date={created_at} // TODO: use primary date and create date transformations pipes on frontend
 				tags={hashtags}
 			>

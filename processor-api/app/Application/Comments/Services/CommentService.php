@@ -1,11 +1,12 @@
 <?php
+
 namespace App\Application\Comments\Services;
 
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Domain\Shared\ValueObjects\{SearchTerm, EntityId};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Comments\Models\Comments; // TODO:Create some reusable PaginatedList<Model> type of model
-use App\Domain\Comments\DTOs\{CommentListDTO,CommentCriteriaDTO};
+use App\Domain\Comments\DTOs\{CommentListDTO, CommentCriteriaDTO};
 use App\Domain\Shared\ValueObjects\Pagination;
 
 class CommentService
@@ -14,7 +15,7 @@ class CommentService
         private CommentRepositoryInterface $commentRepository
     ) {}
 
-    public function getCommentsList(CommentListDTO $dto, ObjectTemplateType $entityType, string $entityId, ?User $user = null): Comments
+    public function getCommentsList(CommentListDTO $dto, ObjectTemplateType $entityType, string $entityId): Comments
     {
         $criteriaDTO = new CommentCriteriaDTO(
             entityId: $entityId,

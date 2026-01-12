@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/services/axios';
 
 export const lastOperationStatuses = ['pending', 'processing', 'completed', 'failed'] as const;
 export type LastOperationStatus = (typeof lastOperationStatuses)[number];
@@ -56,7 +56,7 @@ export interface ArticlesResponse {
 // TODO: explore option to use Orval generated data contracts
 export const fetchArticles = async (filters: Record<string, any>, pageParam: number) => {
 	const params = { ...filters, page: pageParam };
-	const url = `${import.meta.env.VITE_API_URL}/api/v1/articles`;
+	const url = `/v1/articles`;
 
 	try {
 		const response = await axios.get(url, { params });
@@ -65,4 +65,35 @@ export const fetchArticles = async (filters: Record<string, any>, pageParam: num
 		console.error('Axios failed:', error);
 		throw error;
 	}
+};
+
+export const fetchArticle = async (uuid: string) => {
+	const response = await axios.get(`v1/articles/${uuid}`);
+	return response.data.article;
+};
+
+export const fetchArticleLikeStatus = async (id: string) => {
+	const response = await axios.post(`article/${id}/checklike`);
+	return response.data;
+};
+
+export const fetchArticleSavedLists = async (id: string) => {
+	const response = await axios.post(`user/lists/contain`, { elementId: id });
+	return response.data.lists || [];
+};
+
+// TODO: should use request object parameters instead of named parameter:
+// ex: params: {like: boolean}
+// This change requires backend logic migration and liking implementation in V1 routes
+export const toggleArticleLike = async (id: number, isLiked: boolean) => {
+	const endpoint = isLiked ? 'unlike' : 'like';
+	return axios.post(`article/${id}/${endpoint}`);
+};
+
+export const setArticleStatus = async (id: string, status: number) => {
+	return axios.post(`article/${id}/setstatus`, { status });
+};
+
+export const deleteArticle = async (id: number) => {
+	return axios.delete(`article/${id}`);
 };

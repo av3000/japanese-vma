@@ -87,7 +87,7 @@ const AppRoutes: React.FC = () => {
 				}
 			/>
 			<Route
-				path="/article/:article_id"
+				path="/articles/:article_id"
 				element={
 					<SuspenseWrapper>
 						<ArticleDetailsPage />

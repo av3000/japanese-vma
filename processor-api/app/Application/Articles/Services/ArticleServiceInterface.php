@@ -20,6 +20,8 @@ interface ArticleServiceInterface
      */
     public function createArticle(ArticleCreateDTO $dto, User $user): Result;
 
+    public function getArticleIdByUuid(EntityId $uuid): int;
+
     /**
      * Get single article with optional relationships and permission check.
      * Tracks view if user has access.

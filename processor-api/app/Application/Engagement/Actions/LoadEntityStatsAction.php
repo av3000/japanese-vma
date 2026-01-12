@@ -1,23 +1,23 @@
 <?php
+
 namespace App\Application\Engagement\Actions;
-use App\Http\Models\ObjectTemplate;
+
 use Illuminate\Support\Facades\DB;
 
 class LoadEntityStatsAction
 {
     /**
-     * Load stats using UUIDs directly - no more complex ID mapping!
+     * Load stats using UUIDs directly
      */
     public function batchLoadStatsById(string $templateId, array $entityIds): array
     {
         if (empty($entityIds)) {
             return [];
         }
-
         // TODO: use Repository pattern for stats
         // Simple, direct queries using UUIDs
         $likes = DB::table('likes')
-            ->where('template_id', $templateId)
+            // ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
             ->pluck(DB::raw('count(*)'), 'real_object_id')
@@ -47,12 +47,39 @@ class LoadEntityStatsAction
 
         // Build result array indexed by entity UUID
         $result = [];
+
         foreach ($entityIds as $id) {
             $result[$id] = [
                 'likes' => $likes[$id] ?? 0,
                 'downloads' => $downloads[$id] ?? 0,
                 'views' => $views[$id] ?? 0,
                 'comments' => $comments[$id] ?? 0,
+            ];
+        }
+
+        return $result;
+    }
+
+    public function batchLoadLikesByEntityIds(array $entityIds): array
+    {
+        $likes = DB::table('likes')
+            ->leftJoin('users', 'users.id', '=', 'likes.user_id')
+            ->whereIn('likes.real_object_id', $entityIds)
+            ->orderBy('likes.created_at')
+            ->select([
+                'likes.*',
+                'users.uuid as user_uuid',
+                'users.name as user_name',
+            ])
+            ->get()
+            ->groupBy('real_object_id');
+
+        $result = [];
+        foreach ($entityIds as $id) {
+            $entityLikes = $likes->get($id, collect());
+
+            $result[$id] = [
+                'likes' => $entityLikes->values()->toArray(),
             ];
         }
 
