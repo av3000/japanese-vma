@@ -28,6 +28,10 @@ Route::group([
     Route::get('logout', 'UserController@logout');
     Route::get('user', 'UserController@user');
 
+    // TODO: move to V1 with dedicated controller for liking abstracted logic.
+    // Logic is ready, would only require to rename the API route
+    Route::post('article/comment/like', 'ArticleController@likeInstance');
+
     // Articles CUD
     Route::post('article', 'ArticleController@store');
     Route::put('article/{id}', 'ArticleController@update');
@@ -41,7 +45,7 @@ Route::group([
     Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
     // Article Comment
     Route::post('article/{id}/comment', 'ArticleController@storeComment');
-    Route::delete('article/{id}/comment/{commentid}', 'ArticleController@deleteComment');
+    Route::delete('article/comment/{commentid}', 'ArticleController@deleteComment');
     Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
     Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
     Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');

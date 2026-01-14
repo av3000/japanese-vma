@@ -32,6 +32,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading }) => {
 			setMessage('');
 			setError('');
 		} catch (err) {
+			console.error(err);
 			setError('Failed to post comment. Please try again.');
 		}
 	};

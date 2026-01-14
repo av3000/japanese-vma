@@ -104,7 +104,7 @@ class Handler extends ExceptionHandler
                 'error' => $exception->getMessage(),
                 'code' => $exception->getCode(),
                 'request_url' => $request->fullUrl(),
-                'user_id' => auth()->id(),
+                'user_id' => auth('api')->id(),
             ]);
 
             return response()->json([
@@ -119,13 +119,13 @@ class Handler extends ExceptionHandler
 
         if ($this->isHttpException($exception)) {
             if ($request->is('api/*')) {
-                $httpStatusEnum = HttpStatus::tryFrom($exception->getStatusCode());
+                $httpStatusEnum = HttpStatus::tryFrom($exception->getCode());
                 $httpStatus = $httpStatusEnum?->getHttpExceptionTitle() ?? 'Error';
 
                 return response()->json([
                     'type' => $httpStatusEnum->getTypeUri() ?? 'about:blank',
                     'title' => $httpStatus,
-                    'status' => $exception->getStatusCode(),
+                    'status' => $exception->getCode(),
                     'detail' => $exception->getMessage(),
                     'instance' => $request->path(),
                     'timestamp' => now()->toIso8601String()
@@ -133,14 +133,14 @@ class Handler extends ExceptionHandler
             }
 
             // Web routes - return views
-            if ($exception->getStatusCode() == 404) {
+            if ($exception->getCode() == 404) {
                 return response()->view('errors.404', [
                     'success' => false,
                     'error' => 404,
                 ], 404);
             }
 
-            if ($exception->getStatusCode() == 500) {
+            if ($exception->getCode() == 500) {
                 return response()->view('errors.500', [
                     'success' => false,
                     'error' => 500,

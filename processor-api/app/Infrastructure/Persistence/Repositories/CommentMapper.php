@@ -30,7 +30,7 @@ class CommentMapper
         return [
             'id' => $comment->getIdValue(),
             'template_id' => self::getTemplateIdFromEntityType($comment->getEntityType()),
-            'real_object_id' => $comment->getEntityId()->value(),
+            'real_object_id' => $comment->getEntityUuid()->value(),
             'user_id' => $comment->getAuthorId()->value(),
             'parent_comment_id' => $comment->getParentCommentId()?->value(),
             'content' => $comment->getContent(),

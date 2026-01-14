@@ -22,7 +22,7 @@ class Comment
     {
         return $this->id;
     }
-    public function getEntityId(): EntityId
+    public function getEntityUuid(): EntityId
     {
         return $this->entityId;
     }

@@ -34,7 +34,7 @@ class CommentResource extends JsonResource
 
         $data = [
             'id' => $comment->getIdValue(),
-            'entity_id' => $comment->getEntityId()->value(),
+            'entity_uuid' => $comment->getEntityUuid()->value(),
             'entity_type' => $comment->getEntityType(),
             'author_name' => $comment->getAuthorName(),
             'author_id' => $comment->getAuthorId()->value(),
