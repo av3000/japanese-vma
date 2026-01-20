@@ -150,8 +150,7 @@ class ArticleController extends Controller
         $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
         $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
-        // TODO: should return TypedResult.OK<ArticleDetailResource>
-        return response()->json(
+        return TypedResults::ok(
             new ArticleDetailResource(
                 article: $article,
                 engagement: $engagementSummary,

@@ -12,6 +12,7 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
 
 use App\Domain\Comments\DTOs\CommentListDTO;
 use App\Http\Controllers\Controller;
+use App\Shared\Http\TypedResults;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -65,7 +66,7 @@ class CommentController extends Controller
             ],
         ];
 
-        return new JsonResponse($data, 200, []);
+        return TypedResults::ok($data);
     }
 
 

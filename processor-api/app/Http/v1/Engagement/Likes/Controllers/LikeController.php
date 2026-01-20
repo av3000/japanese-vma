@@ -7,6 +7,7 @@ use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Engagement\Likes\Requests\LikeInstanceRequest;
 use App\Http\v1\Engagement\Resources\LikeResource;
+use App\Shared\Http\TypedResults;
 
 class LikeController extends Controller
 {
@@ -24,8 +25,7 @@ class LikeController extends Controller
             $request->getObjectType()
         );
 
-
-        return response()->json([
+        return TypedResults::ok([
             'success' => true,
             'like' => !!$like,
             'likeValues' => $like ? new LikeResource($like) : null
