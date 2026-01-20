@@ -87,7 +87,7 @@ class ArticleController extends Controller
             );
         }
 
-        $articleDetailResource = [
+        $articleListResource = [
             'items' => $resources,
             'pagination' => [
                 'page' => $paginatedArticles->getPaginator()->currentPage(),
@@ -98,7 +98,7 @@ class ArticleController extends Controller
             ],
         ];
 
-        return TypedResults::ok($articleDetailResource);
+        return TypedResults::ok($articleListResource);
     }
 
     private function getImagePath(): string
@@ -126,18 +126,17 @@ class ArticleController extends Controller
     public function show(string $uid, ArticleDetailRequest $request): JsonResponse
     {
         $articleUid = EntityId::from($uid);
-        $includeFilterOptionsDTO = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $result = $this->articleService->getArticle($articleUid, $includeFilterOptionsDTO, auth('api')->user());
+        $options = ArticleIncludeOptionsDTO::fromRequest($request->validated());
+        $result = $this->articleService->getArticle($articleUid, $options, auth('api')->user());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
         }
 
         $article = $result->getData();
-        // TODO: Have 4 separate calls rather than single multi-responsible service.
-        // Create findCountByFilter method for each repository
-        // return counts here. For richer data, separate filters should be used.
-        $engagementData = $this->engagementService->getSingleArticleEngagementData($article->getIdValue(), ObjectTemplateType::ARTICLE, $includeFilterOptionsDTO);
+
+        $engagementSummary = $this->engagementService->getSingleArticleEngagementSummary($article->getIdValue(), ObjectTemplateType::ARTICLE, $options, auth('api')->check());
+
         $hashtags = $this->hashtagService->getHashtags(
             $article->getIdValue(),
             ObjectTemplateType::ARTICLE
@@ -148,15 +147,15 @@ class ArticleController extends Controller
             'kanji_extraction'
         );
 
-        // TODO: fetch initially in repository 'with(['kanjis', 'words']);
         $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
         $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
+        // TODO: should return TypedResult.OK<ArticleDetailResource>
         return response()->json(
             new ArticleDetailResource(
                 article: $article,
-                engagementData: $engagementData,
-                kanjis: $kanjis,
+                engagement: $engagementSummary,
+                kanjis: $article->getKanjis(),
                 words: $words,
                 hashtags: $hashtags,
                 lastOperation: $kanjiOperationState
@@ -175,9 +174,6 @@ class ArticleController extends Controller
         }
 
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
-
-        // TODO: Always Check if user at given time exists, but each request is checked for authentication, so additional check is redundant??
-        // $user = $this->userService->getUserById(auth('auth')->user()->id)
 
         // TODO: dispatch update kanjis list job
         $result = $this->articleService->updateArticle(
@@ -203,6 +199,7 @@ class ArticleController extends Controller
         );
     }
 
+    // TODO: refactor to clean architecture
     public function destroy(string $uuid): JsonResponse
     {
         try {

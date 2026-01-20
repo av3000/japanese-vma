@@ -2,21 +2,28 @@
 
 namespace App\Http\v1\Engagement\Resources;
 
+use App\Domain\Engagement\Models\Like;
+use App\Domain\Users\Models\LikeUser;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class LikeResource extends JsonResource
 {
     public function toArray($request): array
     {
-        return [
-            'id' => $this->id,
-            'value' => $this->value,
-            'created_at' => $this->created_at,
 
-            'user' => $this->user_id ? [
-                'id' => $this->user_id,
-                'uuid' => $this->user_uuid,
-                'name' => $this->user_name,
+        /** @var Like $like */
+        $like = $this->resource;
+
+        /** @var LikeUser $user */
+        $user = $like->user;
+        return [
+            'id' => $like->getIdValue(),
+            'value' => $like->getValue(),
+            'created_at' => $like->getCreatedAt(),
+            'user' => $user ? [
+                'id' => $user->getIdValue(),
+                'uuid' => $user->getUuid()->value(),
+                'name' => $user->getName()->value(),
             ] : null,
         ];
     }

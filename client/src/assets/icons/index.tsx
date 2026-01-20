@@ -1,5 +1,7 @@
+import arrowDownSolid from './arrow-down-solid-full.svg?raw';
 import externalLink from './arrow-up-right-from-square-solid.svg?raw';
 import bookmarkRegular from './bookmark-regular.svg?raw';
+import bookmarkSolid from './bookmark-solid-full.svg?raw';
 import broomSolid from './broom-solid.svg?raw';
 import chevron from './chevron.svg?raw';
 import commentSolid from './comment-solid.svg?raw';
@@ -31,6 +33,7 @@ export const icons = {
 	thumbsUpSolid,
 	thumbsUpRegular,
 	bookmarkRegular,
+	bookmarkSolid,
 	filePdfSolid,
 	trashbinSolid,
 	penSolid,
@@ -46,4 +49,5 @@ export const icons = {
 	searchSolid,
 	removeSolid,
 	layerGroupSolid,
+	arrowDownSolid,
 } as const;

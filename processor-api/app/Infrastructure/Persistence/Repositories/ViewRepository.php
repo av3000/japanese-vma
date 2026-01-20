@@ -65,4 +65,16 @@ class ViewRepository implements ViewRepositoryInterface
     {
         View::where('id', $viewId)->touch();
     }
+
+    public function countByFilter(ViewFilterDTO $filter): int
+    {
+        $query = View::query()
+            ->where('template_id', $filter->objectType->getLegacyId());
+
+        if ($filter->entityId) {
+            $query->where('real_object_id', $filter->entityId);
+        }
+
+        return $query->count(); // executes SQL COUNT(*), extremely fast
+    }
 }

@@ -15,15 +15,11 @@ class CommentResource extends JsonResource
 
     public function __construct(
         Comment $comment,
-        bool $include_likes = true,
         bool $include_replies = false,
-        ?array $likes = null,
         array $replies = []
     ) {
         parent::__construct($comment);
-        $this->include_likes = $include_likes;
         $this->include_replies = $include_replies;
-        $this->likes = $likes;
         $this->replies = $replies;
     }
 
@@ -43,11 +39,9 @@ class CommentResource extends JsonResource
             'is_reply' => $comment->isReply(),
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
+            'likes_count' => $comment->getLikesCount(),
+            'is_liked_by_viewer' => $comment->isLikedByViewer(),
         ];
-
-        if ($this->include_likes) {
-            $data['likes'] = LikeResource::collection($this->likes ?? []);
-        }
 
         if ($this->include_replies && !$comment->isReply()) {
             $data['replies'] = $this->replies;

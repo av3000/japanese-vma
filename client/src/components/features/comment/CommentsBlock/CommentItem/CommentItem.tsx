@@ -1,5 +1,5 @@
 import React from 'react';
-import { Comment } from '@/api/comments';
+import { ApiComment as Comment } from '@/api/comments';
 import DefaultAvatar from '@/assets/images/avatar-man.svg';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
@@ -10,10 +10,12 @@ interface CommentItemProps {
 	currentUser: any;
 	onDelete: () => void;
 	onLike: () => void;
+	isLoading: boolean;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike }) => {
+const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike, isLoading }) => {
 	const canDelete = currentUser && (currentUser.id === comment.author_id || currentUser.is_admin);
+	console.log('single comment', comment);
 
 	return (
 		<div className="media">
@@ -30,9 +32,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelet
 				<div>{comment.content}</div>
 				<br />
 				<div className="text-muted d-flex align-items-center">
-					<span className="mx-2">{comment.likes.length} likes</span>
-					<Button onClick={onLike} variant="ghost" size="sm">
-						<Icon size="sm" name={comment.isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+					<span className="mx-2">{comment.likes_count} likes</span>
+					<Button onClick={onLike} variant="ghost" size="sm" disabled={isLoading}>
+						<Icon size="sm" name={comment.is_liked_by_viewer ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 					</Button>
 					<p className="ml-auto mb-0">{comment.created_at}</p>
 				</div>

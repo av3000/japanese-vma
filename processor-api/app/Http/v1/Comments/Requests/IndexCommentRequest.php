@@ -19,7 +19,6 @@ class IndexCommentRequest extends FormRequest
             'include_replies' => 'sometimes|boolean',
             'sort_by' => 'sometimes|string|in:created_at,updated_at',
             'sort_dir' => 'sometimes|string|in:asc,desc',
-            'include_likes' => 'sometimes|boolean'
         ];
     }
 
@@ -32,7 +31,6 @@ class IndexCommentRequest extends FormRequest
             'sort_by.in' => 'Sort field must be either created_at or updated_at',
             'sort_dir.in' => 'Sort direction must be either asc or desc',
             'include_replies.boolean' => 'Include replies must be a boolean value',
-            'include_likes.boolean' => 'Include likes must be a boolean value',
         ];
     }
 
@@ -40,7 +38,6 @@ class IndexCommentRequest extends FormRequest
     {
         return [
             'include_replies' => 'include nested replies',
-            'include_likes' => 'include likes count',
         ];
     }
 
@@ -50,10 +47,6 @@ class IndexCommentRequest extends FormRequest
 
         if ($this->has('include_replies')) {
             $data['include_replies'] = $this->boolean('include_replies');
-        }
-
-        if ($this->has('include_likes')) {
-            $data['include_likes'] = $this->boolean('include_likes');
         }
 
         $this->merge($data);

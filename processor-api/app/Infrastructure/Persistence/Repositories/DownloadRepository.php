@@ -56,4 +56,16 @@ class DownloadRepository implements DownloadRepositoryInterface
         return Download::where('template_id', $filter->objectType->getLegacyId())
             ->where('real_object_id', $filter->entityId);
     }
+
+    public function countByFilter(DownloadFilterDTO $filter): int
+    {
+        $query = Download::query()
+            ->where('template_id', $filter->objectType->getLegacyId());
+
+        if ($filter->entityId) {
+            $query->where('real_object_id', $filter->entityId);
+        }
+
+        return $query->count();
+    }
 }

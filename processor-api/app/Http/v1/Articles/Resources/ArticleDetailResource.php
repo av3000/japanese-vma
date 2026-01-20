@@ -2,25 +2,25 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Domain\Engagement\Models\EngagementData;
-use App\Http\v1\Comments\Resources\CommentResource;
+use App\Domain\Engagement\DTOs\EngagementSummary;
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ArticleDetailResource extends JsonResource
 {
-    private ?EngagementData $engagementData;
+    private ?EngagementSummary $engagement;
 
     public function __construct(
         $article,
-        ?EngagementData $engagementData = null,
+        ?EngagementSummary $engagement = null,
         private array $kanjis = [],
         private array $words = [],
         private array $hashtags = [],
         private ?LastOperationState $lastOperation = null
     ) {
         parent::__construct($article);
-        $this->engagementData = $engagementData;
+        $this->engagement = $engagement;
         $this->kanjis = $kanjis;
         $this->words = $words;
         $this->hashtags = $hashtags;
@@ -33,8 +33,6 @@ class ArticleDetailResource extends JsonResource
      * @return array
      */
     public function toArray($request)
-    // TODO: now im passing the domain object that I got from service via repository.
-    // Should there we a mapper into request? because resource shouldnt know about domain right?
     {
         return [
             'article' => [
@@ -57,20 +55,13 @@ class ArticleDetailResource extends JsonResource
                 'created_at' => $this->getCreatedAt()->format('c'),
                 'updated_at' => $this->getUpdatedAt()->format('c'),
                 'engagement' =>
-                $this->engagementData ? [
-                    'likes' => $this->engagementData?->getLikes(),
-                    'views' => $this->engagementData?->getViews(),
-                    'downloads' => $this->engagementData?->getDownloads(),
-                    'comments' => $this->engagementData?->getComments() ? array_map(function ($comment) {
-                        return (new CommentResource(
-                            comment: $comment,
-                            include_likes: false,
-                            include_replies: false
-                        ))->toArray(request());
-                    }, $this->engagementData->getComments())
-                        : [],
+                $this->engagement ? [
+                    'is_liked_by_viewer' => $this->engagement->isLikedByViewer,
+                    'likes_count' => $this->engagement->likesCount,
+                    'views_count' => $this->engagement->viewsCount,
+                    'downloads_count' => $this->engagement->downloadsCount,
                 ] : null,
-                'kanjis' => $this->kanjis,
+                'kanjis' => KanjiResource::collection($this->kanjis),
                 'words' => $this->words,
             ],
             'processing_status' => $this->lastOperation ? [

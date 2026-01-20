@@ -28,9 +28,7 @@ interface CommentRepositoryInterface
     public function save(DomainComment $commentData): DomainComment;
     public function findById(EntityId $commentId): ?DomainComment;
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
-    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
     public function findAllByFilter(CommentFilterDTO $filter): array;
 
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId): Comments;
-    // public function deleteById(EntityId $commentId): bool;
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, int $userId): Comments;
 }

@@ -15,6 +15,38 @@ interface Hashtag {
 	content: string;
 }
 
+export interface ArticleDetails {
+	id: number;
+	// TODO: fix in backend to have proper uuid
+	uid: string;
+	title_jp: string;
+	title_en: string;
+	content_jp: string;
+	content_en: string;
+	hashtags: Hashtag[];
+	jlpt_levels: {
+		n1: number;
+		n2: number;
+		n3: number;
+		n4: number;
+		n5: number;
+		uncommon: number;
+	};
+	source_link: string;
+	publicity: number;
+	status: number;
+	author: {
+		id: number;
+		name: string;
+	};
+	created_at: string;
+	updated_at: string;
+	engagement: { likes_count: number; views_count: number; downloads_count: number; is_liked_by_viewer: boolean };
+	kanjis: any;
+	words: any;
+	processing_status?: LastOperationEvent;
+}
+
 export interface Article {
 	id: number;
 	uuid: string;
@@ -67,27 +99,14 @@ export const fetchArticles = async (filters: Record<string, any>, pageParam: num
 	}
 };
 
-export const fetchArticle = async (uuid: string) => {
+export const fetchArticle = async (uuid: string): Promise<ArticleDetails> => {
 	const response = await axios.get(`v1/articles/${uuid}`);
 	return response.data.article;
-};
-
-export const fetchArticleLikeStatus = async (id: string) => {
-	const response = await axios.post(`article/${id}/checklike`);
-	return response.data;
 };
 
 export const fetchArticleSavedLists = async (id: string) => {
 	const response = await axios.post(`user/lists/contain`, { elementId: id });
 	return response.data.lists || [];
-};
-
-// TODO: should use request object parameters instead of named parameter:
-// ex: params: {like: boolean}
-// This change requires backend logic migration and liking implementation in V1 routes
-export const toggleArticleLike = async (id: number, isLiked: boolean) => {
-	const endpoint = isLiked ? 'unlike' : 'like';
-	return axios.post(`article/${id}/${endpoint}`);
 };
 
 export const setArticleStatus = async (id: string, status: number) => {

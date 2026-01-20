@@ -1,45 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { addComment, AddCommentPayload, deleteComment, fetchComments, toggleCommentLike } from '@/api/comments';
+import { addComment, AddCommentPayload, deleteComment, fetchComments } from '@/api/comments';
+import { LikeResponse, toggleCommentLike } from '@/api/likes/likes';
 import { useAuth } from '@/hooks/useAuth';
+import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import CommentForm from './CommentForm/CommentForm';
 import CommentList from './CommentList/CommentList';
 
 interface CommentsBlockProps {
 	objectUuid: string;
-	objectId: string | number;
-	objectType: 'article' | 'post' | 'list';
-	objectTypeId: number;
+	parentObjectId: string | number;
+	parentObjectType: 'article' | 'post' | 'list';
 	isLocked?: boolean;
 }
 
 const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	objectUuid,
-	objectId,
-	objectType,
-	objectTypeId,
+	parentObjectId,
+	parentObjectType,
 	isLocked = false,
 }) => {
 	const { isAuthenticated, user } = useAuth();
 
 	const queryClient = useQueryClient();
-	const queryKey = ['comments', objectType, objectId, { include_likes: true }];
+	const queryKey = ['comments', parentObjectType, parentObjectId, { include_likes: true }];
 	const { data: comments = [], isLoading } = useQuery({
 		queryKey,
-		queryFn: () => fetchComments(objectType, objectUuid, { include_likes: true }),
+		queryFn: () => fetchComments(parentObjectType, objectUuid, { include_likes: true }),
 		enabled: !!objectUuid,
 		select: (data) => {
 			return data.items.map((comment) => ({
 				...comment,
-				isLiked: comment.likes?.some((l) => l.user.id === user?.id),
-				likesTotal: comment.likes?.length || 0,
 			}));
 		},
 	});
 
 	const addMutation = useMutation({
-		mutationFn: (requestPayload: AddCommentPayload) => addComment(objectType, objectId, requestPayload),
+		mutationFn: (requestPayload: AddCommentPayload) => addComment(parentObjectType, parentObjectId, requestPayload),
 		onSuccess: (newComment) => {
 			queryClient.setQueryData(queryKey, (oldData: any) => {
 				if (!oldData) return oldData;
@@ -50,7 +48,6 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 						{
 							...newComment,
 							userName: user?.name,
-							likes: [],
 						},
 						...(oldData.items || []),
 					],
@@ -60,7 +57,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	});
 
 	const deleteMutation = useMutation({
-		mutationFn: (commentId: number) => deleteComment({ objectType, objectTypeId, commentId }),
+		mutationFn: (commentId: number) => deleteComment({ parentObjectType, parentObjectId, commentId }),
 		onMutate: async (commentId) => {
 			await queryClient.cancelQueries({ queryKey });
 			const previousComments = queryClient.getQueryData(queryKey);
@@ -83,69 +80,23 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 		},
 	});
 
-	const likeMutation = useMutation({
-		mutationFn: ({ id }: { id: number }) => toggleCommentLike({ objectType, objectTypeId, commentId: id }),
+	// TODO: refetch only single comment that was liked
+	const likeMutation = useMutation<LikeResponse, unknown, { id: number }>({
+		mutationFn: ({ id }) =>
+			toggleCommentLike({
+				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.COMMENT],
+				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.COMMENT],
+				instanceId: id,
+			}),
 
-		onMutate: async ({ id }) => {
-			await queryClient.cancelQueries({ queryKey });
-			const previousData = queryClient.getQueryData(queryKey);
-
-			queryClient.setQueryData(queryKey, (oldData: any) => {
-				if (!oldData?.items) return oldData;
-
-				// Optimistic instant update
-				return {
-					...oldData,
-					items: oldData.items.map((c: any) => {
-						if (c.id !== id) return c;
-
-						const isCurrentlyLiked = c.likes?.some((l: any) => l.user?.id === user?.id);
-						let newLikes = [...(c.likes || [])];
-
-						if (isCurrentlyLiked) {
-							newLikes = newLikes.filter((l: any) => l.user?.id !== user?.id);
-						} else {
-							newLikes.push({
-								id: 'temp-id',
-								user: { id: user?.id, name: user?.name },
-								created_at: new Date().toISOString(),
-							});
-						}
-
-						return { ...c, likes: newLikes };
-					}),
-				};
-			});
-
-			return { previousData };
+		onSuccess: () => {
+			// refetch the comments list to get authoritative totals/flags
+			queryClient.invalidateQueries({ queryKey });
 		},
-		onSuccess: (serverResult, variables) => {
-			const commentId = variables.id;
 
-			queryClient.setQueryData(queryKey, (oldData: any) => {
-				if (!oldData?.items) return oldData;
-
-				return {
-					...oldData,
-					items: oldData.items.map((c: any) => {
-						if (c.id !== commentId) return c;
-
-						const otherLikes = c.likes.filter((l: any) => l.user?.id !== user?.id);
-
-						const newLikes =
-							serverResult && typeof serverResult === 'object'
-								? [...otherLikes, serverResult]
-								: otherLikes;
-
-						return { ...c, likes: newLikes };
-					}),
-				};
-			});
-		},
-		onError: (_err, _vars, context: any) => {
-			if (context?.previousData) {
-				queryClient.setQueryData(queryKey, context.previousData);
-			}
+		onError: (err) => {
+			// optional: notify user
+			console.error('Like failed', err);
 		},
 	});
 
@@ -176,6 +127,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 					const comment = comments.find((c) => c.id === Number(id));
 					if (comment) likeMutation.mutate({ id: Number(id) });
 				}}
+				isLoading={likeMutation.isPending}
 			/>
 		</div>
 	);

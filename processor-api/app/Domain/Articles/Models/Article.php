@@ -44,7 +44,6 @@ class Article
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
         private array $kanjis = [],
-
     ) {}
 
     public function getIdValue(): int

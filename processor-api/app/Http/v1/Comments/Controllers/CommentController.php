@@ -21,8 +21,7 @@ class CommentController extends Controller
         // TODO: use interface for commentService
         private CommentService $commentService,
         private ArticleServiceInterface $articleService,
-        private EngagementServiceInterface $engagementService
-
+        // private EngagementServiceInterface $engagementService
     ) {}
 
     public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse
@@ -43,19 +42,15 @@ class CommentController extends Controller
             dto: $listDTO,
             entityType: $entityType,
             entityId: $entityId,
+            userId: auth('api')->user()->id
         );
 
-        if ($listDTO->include_likes) {
-            $likesMap = $this->engagementService->getLikesForList(entitiesList: $paginatedComments->getItems());
-        }
 
         $resources = [];
         foreach ($paginatedComments->getItems() as $comment) {
             $resources[] = new CommentResource(
                 comment: $comment,
-                include_likes: $listDTO->include_likes,
                 include_replies: $listDTO->include_replies,
-                likes: $likesMap[$comment->getIdValue()] ?? []
             );
         }
 
@@ -73,35 +68,6 @@ class CommentController extends Controller
         return new JsonResponse($data, 200, []);
     }
 
-    public function entityComments(string $uuid, Request $request, CommentService $commentService): JsonResponse
-    {
-        $articleUid = EntityId::from($uuid);
-        $page = $request->get('page', 1);
-        $perPage = $request->get('per_page', 10);
-
-        $comments = $commentService->getArticleComments($articleUid, $page, $perPage);
-
-        return response()->json([
-            'success' => true,
-            'comments' => $comments
-        ], 200);
-    }
-
-    public function articleComments(string $uuid, Request $request, CommentService $commentService): JsonResponse
-    {
-        $articleUid = EntityId::from($uuid);
-        $page = max(1, (int) $request->get('page', 1));
-        $perPage = min(50, max(1, (int) $request->get('per_page', 10)));
-
-        $comments = $commentService->getArticleComments($articleUid, $page, $perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $comments['data'],
-            'pagination' => $comments['pagination'],
-            'message' => 'Article comments retrieved successfully'
-        ], 200);
-    }
 
     public function store(Request $request)
     {

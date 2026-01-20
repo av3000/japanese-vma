@@ -1,37 +1,42 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { fetchArticles } from '@/api/articles/articles';
 import Spinner from '@/assets/images/spinner.gif';
-import { fetchArticles } from '@/store/slices/articlesSlice';
 import ArticleItem from '../article/ArticleItem';
 
 const ExploreArticleList: React.FC = () => {
-	const dispatch = useDispatch();
-	const articles = useSelector((state) => state.articles.all);
-	const isLoading = useSelector((state) => state.articles.loading);
-	const paginationInfo = useSelector((state) => state.articles.paginationInfo);
+	const { data, error, status } = useInfiniteQuery({
+		queryKey: ['articles'],
+		queryFn: ({ pageParam }) => fetchArticles({ per_page: 4 }, pageParam),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) => {
+			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
+		},
+	});
 
-	useEffect(() => {
-		if (!articles.length) {
-			// TODO: Either create loader on the route, or pass pagination parameters.
-			dispatch(fetchArticles());
-		}
-	}, [dispatch, articles.length]);
+	const allArticles = data?.pages.flatMap((page) => page.items) || [];
+	console.log('allArticles in explore article list', allArticles);
+	const totalCount = data?.pages[0]?.pagination.total || 0;
 
-	if (isLoading) {
+	if (status === 'pending') {
 		return (
-			<div className="d-flex justify-content-center w-100">
-				<img src={Spinner} alt="spinner loading" />
+			<div className="text-center mt-5">
+				<img src={Spinner} alt="Loading..." />
 			</div>
 		);
+	}
+
+	if (status === 'error') {
+		return <div className="text-danger">Error: {error.message}</div>;
 	}
 
 	return (
 		<>
 			<div className="d-flex justify-content-between align-items-center w-100 my-3">
-				<h3>Latest Articles ({paginationInfo.total || 0})</h3>
+				<h3>
+					Latest Articles {allArticles.length} of {totalCount}
+				</h3>
 				<div>
 					<Link to="/articles" className="homepage-section-title">
 						Read All Articles
@@ -39,9 +44,11 @@ const ExploreArticleList: React.FC = () => {
 				</div>
 			</div>
 			<div className="row">
-				{articles.map((a) => (
-					<ArticleItem key={a.id} {...a} />
-				))}
+				{allArticles.length === 0 ? (
+					<p>No articles found.</p>
+				) : (
+					allArticles.map((article) => <ArticleItem key={article.id} {...article} />)
+				)}
 			</div>
 		</>
 	);

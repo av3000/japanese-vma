@@ -14,6 +14,8 @@ class Comment
         private UserId $authorId,
         private string $content,
         private ?EntityId $parentCommentId,
+        private int $likesCount = 0,
+        private bool $isLikedByViewer = false,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt
     ) {}
@@ -53,6 +55,16 @@ class Comment
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getLikesCount(): int
+    {
+        return $this->likesCount;
+    }
+
+    public function isLikedByViewer(): int
+    {
+        return $this->isLikedByViewer;
     }
 
     public function isReply(): bool

@@ -13,6 +13,7 @@ readonly class ArticleCriteriaDTO
         public ?int $categoryId = null,
         public ?ArticleSortCriteria $sort,
         public array $visibilityRules = [],
-        public ?Pagination $pagination = null
+        public ?Pagination $pagination = null,
+        public bool $include_kanjis = false
     ) {}
 }

@@ -2,7 +2,7 @@
 // /* eslint-disable */
 import React, { useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchArticles } from '@/api/articles';
+import { fetchArticles } from '@/api/articles/articles';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import ArticleItem from '@/components/features/article/ArticleItem';
@@ -16,12 +16,9 @@ const ArticleList: React.FC = () => {
 		queryFn: ({ pageParam }) => fetchArticles(filters, pageParam),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
-			console.log('Checking lastPage:', lastPage);
 			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 		},
 	});
-
-	console.log('Query Data:', data);
 
 	const handleApplyFilters = (newFilters: any) => {
 		setFilters(newFilters);

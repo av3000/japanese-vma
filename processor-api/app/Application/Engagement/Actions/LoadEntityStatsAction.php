@@ -59,30 +59,4 @@ class LoadEntityStatsAction
 
         return $result;
     }
-
-    public function batchLoadLikesByEntityIds(array $entityIds): array
-    {
-        $likes = DB::table('likes')
-            ->leftJoin('users', 'users.id', '=', 'likes.user_id')
-            ->whereIn('likes.real_object_id', $entityIds)
-            ->orderBy('likes.created_at')
-            ->select([
-                'likes.*',
-                'users.uuid as user_uuid',
-                'users.name as user_name',
-            ])
-            ->get()
-            ->groupBy('real_object_id');
-
-        $result = [];
-        foreach ($entityIds as $id) {
-            $entityLikes = $likes->get($id, collect());
-
-            $result[$id] = [
-                'likes' => $entityLikes->values()->toArray(),
-            ];
-        }
-
-        return $result;
-    }
 }

@@ -1,68 +1,78 @@
 <?php
+
 namespace App\Domain\Comments\Models;
 
+use App\Shared\Utils\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class Comments
+final class Comments
 {
-    private LengthAwarePaginator $paginator;
+    private Paginator $inner;
 
-    private function __construct(LengthAwarePaginator $paginator)
+    private function __construct(Paginator $inner)
     {
-        $this->paginator = $paginator;
+        $this->inner = $inner;
     }
 
     public static function fromEloquentPaginator(LengthAwarePaginator $paginator): self
     {
-        return new self($paginator);
+        $inner = Paginator::fromEloquentPaginator($paginator, Comment::class);
+        return new self($inner);
     }
 
     /**
-     * Create paginated list from domain models array with pagination info
+     * @param Comment[] $domainModels
      */
     public static function fromArray(array $domainModels, LengthAwarePaginator $originalPaginator): self
     {
-        // Create new paginator with domain models
-        $newPaginator = new LengthAwarePaginator(
-            $domainModels,
-            $originalPaginator->total(),
-            $originalPaginator->perPage(),
-            $originalPaginator->currentPage(),
-            [
-                'path' => request()->url(),
-                'pageName' => 'page',
-            ]
-        );
-
-        return new self($newPaginator);
-    }
-
-    public function toEloquentPaginator(): LengthAwarePaginator
-    {
-        return $this->paginator;
+        $inner = Paginator::fromArray($domainModels, $originalPaginator, Comment::class);
+        return new self($inner);
     }
 
     public function getPaginator(): LengthAwarePaginator
     {
-        return $this->paginator;
+        return $this->inner->getPaginator();
+    }
+
+    public function toEloquentPaginator(): LengthAwarePaginator
+    {
+        return $this->inner->toEloquentPaginator();
     }
 
     public function isEmpty(): bool
     {
-        return $this->paginator->isEmpty();
-    }
-
-    public function getItems(): array
-    {
-        return $this->paginator->items();
+        return $this->inner->isEmpty();
     }
 
     /**
-     * Transform all Comments in the list
+     * @return Comment[]
      */
-    public function transform(callable $callback): self
+    public function getItems(): array
     {
-        $transformedItems = array_map($callback, $this->getItems());
-        return self::fromArray($transformedItems, $this->paginator);
+        return $this->inner->getItems();
+    }
+
+    /**
+     * Transform keeps typed wrapper: if transform returns Comment instances, keep Comments,
+     * otherwise return a Paginator of the new type via transform on inner.
+     *
+     * Accepts a callback fn(Comment): U and optional output validator.
+     *
+     * @template U
+     * @param callable $callback
+     * @param string|callable|null $outputValidator
+     * @return mixed  // either Comments (if U is Comment) or Paginator<U>
+     */
+    public function transform(callable $callback, $outputValidator = null)
+    {
+        $result = $this->inner->transform($callback, $outputValidator);
+
+        // If the caller expects Comments (i.e., output validator is Comment::class or omitted),
+        if ($outputValidator === Comment::class || $outputValidator === null) {
+            // Runtime-check: ensure transformed items are Comment instances
+            return new self($result instanceof Paginator ? $result : Paginator::fromEloquentPaginator($result->getPaginator(), Comment::class));
+        }
+
+        return $result;
     }
 }

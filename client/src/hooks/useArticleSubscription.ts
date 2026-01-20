@@ -15,6 +15,7 @@ import { useWebSocket } from '@/providers/contexts/socket-provider';
 // 	};
 // }
 
+// TODO: Explore Orval client generator for data contracts ( types, interfaces, endpoints) generation.
 export const useArticleSubscription = (articleUuid: string | undefined) => {
 	const { echo } = useWebSocket();
 	const queryClient = useQueryClient();

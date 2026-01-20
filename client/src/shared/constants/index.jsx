@@ -1,6 +1,6 @@
 export const BASE_URL = '';
 
-export const ObjectTemplates = {
+export const SavedListObjectTemplates = {
 	KNOWNRADICALS: 1,
 	KNOWNKANJIS: 2,
 	KNOWNWORDS: 3,

@@ -7,6 +7,7 @@ use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Users\Controllers\{UserController};
 use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
+use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +63,8 @@ Route::prefix('v1')->group(function () {
 
         // Comments - Authenticated Write
         Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
+
+        Route::post('/like-instance', [LikeController::class, 'likeInstance']);
 
 
         // ============================================

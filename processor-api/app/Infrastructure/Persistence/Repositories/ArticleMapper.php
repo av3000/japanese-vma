@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
 
@@ -14,10 +15,10 @@ class ArticleMapper
         private readonly KanjiMapper $kanjiMapper
     ) {}
 
-    public function mapToDomain(PersistenceArticle $entity): DomainArticle
+    public function mapToDomain(PersistenceArticle $entity, ArticleIncludeOptionsDTO $dto): DomainArticle
     {
         $domainKanjis = [];
-        if ($entity->kanjis) {
+        if ($dto->include_kanjis && $entity->relationLoaded('kanjis')) {
             $domainKanjis = $entity->kanjis->map(
                 fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
             )->toArray();

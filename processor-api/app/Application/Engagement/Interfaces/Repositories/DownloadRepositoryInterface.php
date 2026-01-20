@@ -15,4 +15,5 @@ interface DownloadRepositoryInterface
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
     public function findAllByFilter(DownloadFilterDTO $filter): array;
+    public function countByFilter(DownloadFilterDTO $filter): int;
 }

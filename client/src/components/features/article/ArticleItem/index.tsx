@@ -1,5 +1,5 @@
 import React from 'react';
-import { Article } from '@/api/articles';
+import { Article } from '@/api/articles/articles';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { Card } from '@/components/shared/Card';
 import { Icon } from '@/components/shared/Icon';

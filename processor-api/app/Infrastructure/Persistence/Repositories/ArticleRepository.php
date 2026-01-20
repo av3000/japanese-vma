@@ -70,11 +70,15 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         $query = PersistenceArticle::query();
 
-        $persistenceArticle = $query->with(['user', 'kanjis'])
-            ->where('uuid', $articleUuid->value())
-            ->first();
+        $persistenceArticle = $query->with(['user'])
+            ->where('uuid', $articleUuid->value());
 
-        return $persistenceArticle ? $this->articleMapper->mapToDomain($persistenceArticle) : null;
+        if ($dto->include_kanjis == true) {
+            $persistenceArticle->with(['kanjis']);
+        }
+
+
+        return $persistenceArticle ? $this->articleMapper->mapToDomain($persistenceArticle->first(), $dto) : null;
     }
 
     /**
@@ -149,7 +153,8 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles
     {
-        $query = PersistenceArticle::query()->with(['user', 'kanjis']);
+        // TODO: should exclude kanjis unless asked for in applyContentFilters
+        $query = PersistenceArticle::query()->with(['user']);
 
         $this->applyVisibilityFilters($query, $criteria->visibilityRules);
         $this->applyContentFilters($query, $criteria);
@@ -223,6 +228,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      * @param ArticleCriteriaDTO $criteria The criteria DTO containing:
      *                                     - categoryId: Optional category ID for exact filtering
      *                                     - search: Optional SearchTerm ValueObject for title search
+     *                                     - include_kanjis: Optional bool
      * @return void Query is modified by reference
      */
     private function applyContentFilters(Builder $query, ArticleCriteriaDTO $criteria): void
@@ -237,6 +243,11 @@ class ArticleRepository implements ArticleRepositoryInterface
                 $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
                     ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
+        }
+
+        if ($criteria->include_kanjis !== null && $criteria->include_kanjis == true) {
+            dd('provide kanjis');
+            $query->with('kanjis');
         }
     }
 

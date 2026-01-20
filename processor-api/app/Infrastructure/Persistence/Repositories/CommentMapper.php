@@ -20,6 +20,8 @@ class CommentMapper
             new UserId($entity->user_id),
             $entity->content,
             $entity->parent_comment_id ? new EntityId($entity->parent_comment_id) : null,
+            $entity->likes_count,
+            $entity->is_liked_by_viewer,
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable()
         );

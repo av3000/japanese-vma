@@ -3,7 +3,7 @@
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Http\Models\ObjectTemplate;
-use App\Http\User;
+use App\Infrastructure\Persistence\Models\User;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,7 +21,7 @@ class Like extends Model
         'value',
     ];
 
-      /**
+    /**
      * The attributes that should be cast.
      *
      * @var array

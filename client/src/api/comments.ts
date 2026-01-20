@@ -1,19 +1,6 @@
 import axios from '@/services/axios';
 import { PaginatedResponse } from '@/types';
 
-export interface LikeUser {
-	id: number;
-	uuid: string;
-	name: string;
-}
-
-export interface Like {
-	id: string;
-	value: number;
-	created_at: string;
-	user: LikeUser;
-}
-
 export interface ApiComment {
 	id: number;
 	content: string;
@@ -22,13 +9,8 @@ export interface ApiComment {
 	author_id: number;
 	created_at: string;
 	updated_at: string;
-	likes: Like[];
-	isLiked: boolean;
-}
-
-export interface Comment extends ApiComment {
-	isLiked: boolean;
-	likesTotal: number;
+	likes_count: number;
+	is_liked_by_viewer: boolean;
 }
 
 export interface CommentFilters {
@@ -41,14 +23,8 @@ export interface AddCommentPayload {
 }
 
 export interface RemoveCommentPayload {
-	objectType: string;
-	objectTypeId: number;
-	commentId: number;
-}
-
-export interface LikeRequestPayload {
-	objectType: string;
-	objectTypeId: number;
+	parentObjectType: string;
+	parentObjectId: string | number;
 	commentId: number;
 }
 
@@ -57,6 +33,7 @@ export const fetchComments = async (
 	objectId: string | number,
 	filters?: CommentFilters,
 ): Promise<PaginatedResponse<ApiComment>> => {
+	console.log('fetch comments call');
 	const url = `v1/${objectType}s/${objectId}/comments`;
 
 	const response = await axios.get(url, {
@@ -66,24 +43,19 @@ export const fetchComments = async (
 	return response.data || [];
 };
 
-export const addComment = async (objectType: string, objectId: string | number, requestPayload: AddCommentPayload) => {
-	const response = await axios.post(`${objectType}/${objectId}/comment`, requestPayload);
+export const addComment = async (
+	parentObjectType: string,
+	parentObjectId: string | number,
+	requestPayload: AddCommentPayload,
+) => {
+	const response = await axios.post(`${parentObjectType}/${parentObjectId}/comment`, requestPayload);
 	return response.data.comment;
 };
 
 export const deleteComment = async (requestPayload: RemoveCommentPayload) => {
-	return axios.delete(`${requestPayload.objectType}/comment/${requestPayload.commentId}`, {
+	return axios.delete(`${requestPayload.parentObjectType}/comment/${requestPayload.commentId}`, {
 		params: {
-			template_id: requestPayload.objectTypeId,
+			template_id: requestPayload.parentObjectId,
 		},
 	});
-};
-
-export const toggleCommentLike = async (requestPayload: LikeRequestPayload): Promise<Like | false> => {
-	const response = await axios.post(`${requestPayload.objectType}/comment/like`, {
-		template_id: requestPayload.objectTypeId,
-		real_object_id: requestPayload.commentId,
-	});
-
-	return response.data.like;
 };

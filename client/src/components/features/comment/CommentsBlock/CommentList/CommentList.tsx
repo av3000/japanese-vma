@@ -1,5 +1,5 @@
 import React from 'react';
-import { Comment } from '@/api/comments';
+import { ApiComment as Comment } from '@/api/comments';
 import CommentItem from '../CommentItem/CommentItem';
 
 interface User {
@@ -13,9 +13,10 @@ interface CommentListProps {
 	currentUser: User | null;
 	onDelete: (commentId: string | number) => void;
 	onLike: (commentId: string | number) => void;
+	isLoading: boolean;
 }
 
-const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDelete, onLike }) => {
+const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDelete, onLike, isLoading }) => {
 	return (
 		<div>
 			<h5 className="text-muted mb-4 mt-4">
@@ -34,6 +35,7 @@ const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDele
 						currentUser={currentUser}
 						onDelete={() => onDelete(comment.id)}
 						onLike={() => onLike(comment.id)}
+						isLoading={isLoading}
 					/>
 				))
 			)}

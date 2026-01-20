@@ -3,19 +3,14 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Engagement\Actions\{IncrementViewAction};
-use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
-use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
+use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{HashtagRepositoryInterface, ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
 
-use App\Application\Articles\Actions\Updates\{
-    ReprocessArticleDataAction,
-};
 
 use App\Application\Articles\Actions\Deletion\{
-    CleanupArticleHashtagsAction,
     CleanupArticleCustomListsAction
 };
 
@@ -49,12 +44,10 @@ class ArticleService implements ArticleServiceInterface
         private ArticleRepositoryInterface $articleRepository,
         private readonly LastOperationRepositoryInterface $lastOperationRepository,
         private HashtagServiceInterface $hashtagService,
-        private EngagementServiceInterface $engagementService,
         private ArticlePolicy $ArticlePolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementViewAction,
-        private LoadArticleDetailStatsAction $loadStats,
         // private ProcessWordMeaningsAction $processWords,
         // private LoadCommentsAction $loadComments,
         // List operations dependencies
@@ -62,9 +55,7 @@ class ArticleService implements ArticleServiceInterface
         // private LoadHashtagsAction $loadHashtags,
         // Update dependencies
         // private UpdateArticleHashtagsAction $updateHashtags,
-        private ReprocessArticleDataAction $reprocessData,
         // Delete dependencies
-        private CleanupArticleHashtagsAction $cleanupHashtags,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
         private HashtagRepositoryInterface $hashtagRepository,
         private ViewRepositoryInterface $viewRepository,
@@ -199,7 +190,8 @@ class ArticleService implements ArticleServiceInterface
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
             visibilityRules: $this->ArticlePolicy->getVisibilityCriteria($user),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
+            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
+            include_kanjis: $dto->include_kanjis
         );
 
         return $this->articleRepository->findByCriteria($criteriaDTO);
