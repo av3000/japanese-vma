@@ -101,7 +101,7 @@ export const fetchArticles = async (filters: Record<string, any>, pageParam: num
 
 export const fetchArticle = async (uuid: string): Promise<ArticleDetails> => {
 	const response = await axios.get(`v1/articles/${uuid}`);
-	return response.data.article;
+	return response.data.data.article;
 };
 
 export const fetchArticleSavedLists = async (id: string) => {

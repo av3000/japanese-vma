@@ -39,8 +39,8 @@ export const fetchComments = async (
 	const response = await axios.get(url, {
 		params: filters,
 	});
-
-	return response.data || [];
+	console.log('response comments: ', response);
+	return response.data.data || [];
 };
 
 export const addComment = async (

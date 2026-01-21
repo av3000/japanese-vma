@@ -1,10 +1,9 @@
 import React from 'react';
 import { Article } from '@/api/articles/articles';
+import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { Card } from '@/components/shared/Card';
 import { Icon } from '@/components/shared/Icon';
-// TODO: Hooks should be grouped by feature in the future.
-import { useArticleSubscription } from '@/hooks/useArticleSubscription';
 import styles from './ArticleItem.module.scss';
 
 const ArticleItem: React.FC<Article> = ({

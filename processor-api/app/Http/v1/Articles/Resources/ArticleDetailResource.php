@@ -63,12 +63,12 @@ class ArticleDetailResource extends JsonResource
                 ] : null,
                 'kanjis' => KanjiResource::collection($this->kanjis),
                 'words' => $this->words,
+                'processing_status' => $this->lastOperation ? [
+                    'type' => $this->lastOperation->task_type,
+                    'status' => $this->lastOperation->status->value,
+                    'metadata' => $this->lastOperation->metadata,
+                ] : null,
             ],
-            'processing_status' => $this->lastOperation ? [
-                'type' => $this->lastOperation->task_type,
-                'status' => $this->lastOperation->status->value,
-                'metadata' => $this->lastOperation->metadata,
-            ] : null,
         ];
     }
 }

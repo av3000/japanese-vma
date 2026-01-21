@@ -15,6 +15,10 @@ import { useWebSocket } from '@/providers/contexts/socket-provider';
 // 	};
 // }
 
+export const lastOperationStatuses = ['pending', 'processing', 'completed', 'failed'] as const;
+
+export type LastOperationStatus = (typeof lastOperationStatuses)[number];
+
 // TODO: Explore Orval client generator for data contracts ( types, interfaces, endpoints) generation.
 export const useArticleSubscription = (articleUuid: string | undefined) => {
 	const { echo } = useWebSocket();

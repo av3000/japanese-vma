@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { deleteArticle, fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
+import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
@@ -12,12 +13,11 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
-import { useArticleSubscription } from '@/hooks/useArticleSubscription';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
 import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
-import styles from '../ArticleDetails.module.scss';
+import styles from './ArticleContent.module.scss';
 
 interface ArticleContentProps {
 	article: MappedArticle;
@@ -27,6 +27,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
+
+	console.log('article: ', article);
 
 	const [modals, setModals] = useState({
 		showBookmark: false,
@@ -117,11 +119,23 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						</Link>
 					</span>
 
-					<div className="alert alert-warning mt-3 d-flex align-items-center">
-						<span className="spinner-border spinner-border-sm mr-3" />
-						<div>
-							<Chip variant="outline">{article.processing_status?.status}</Chip>
-							<div className="small">Please wait, this page will update automatically.</div>
+					{/* TODO: create shared component for processing status */}
+					<div
+						className={classNames(
+							'alert mt-3 d-flex align-items-center align-items-center',
+							article.processing_status?.status && styles[article.processing_status?.status],
+						)}
+					>
+						<div className="d-flex justify-content-between">
+							{/* TODO: use different variant based on status */}
+							<div className="small">
+								{/* TODO: Text should change based on status */}
+								Article background processing. Please wait, this page will update automatically.
+							</div>
+							<div>
+								<span className="spinner-border spinner-border-sm mr-3" />
+								<Chip variant="outline">{article.processing_status?.status}</Chip>
+							</div>
 						</div>
 					</div>
 
