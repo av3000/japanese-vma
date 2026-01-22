@@ -8,6 +8,7 @@ import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
@@ -119,25 +120,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						</Link>
 					</span>
 
-					{/* TODO: create shared component for processing status */}
-					<div
-						className={classNames(
-							'alert mt-3 d-flex align-items-center align-items-center',
-							article.processing_status?.status && styles[article.processing_status?.status],
-						)}
-					>
-						<div className="d-flex justify-content-between">
-							{/* TODO: use different variant based on status */}
-							<div className="small">
-								{/* TODO: Text should change based on status */}
-								Article background processing. Please wait, this page will update automatically.
-							</div>
-							<div>
-								<span className="spinner-border spinner-border-sm mr-3" />
-								<Chip variant="outline">{article.processing_status?.status}</Chip>
-							</div>
-						</div>
-					</div>
+					<ProcessingStatusAlert status={article.processing_status?.status} />
 
 					<h1 className="mt-4">{article.title_jp}</h1>
 

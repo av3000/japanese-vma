@@ -1,7 +1,13 @@
 import axios from '@/services/axios';
 
-export const lastOperationStatuses = ['pending', 'processing', 'completed', 'failed'] as const;
-export type LastOperationStatus = (typeof lastOperationStatuses)[number];
+export const LastOperationStatus = {
+	Pending: 'pending',
+	Processing: 'processing',
+	Completed: 'completed',
+	Failed: 'failed',
+} as const;
+
+export type LastOperationStatus = (typeof LastOperationStatus)[keyof typeof LastOperationStatus];
 
 interface LastOperationEvent {
 	id: number;
@@ -85,6 +91,21 @@ export interface ArticlesResponse {
 	};
 }
 
+export interface CreateArticlePayload {
+	title_jp: string;
+	title_en?: string | null;
+	content_jp: string;
+	content_en?: string | null;
+	source_link: string;
+	publicity: boolean | number;
+	tags?: string[];
+	attach?: number;
+}
+
+export interface CreateArticleResponse {
+	uuid: string;
+}
+
 // TODO: explore option to use Orval generated data contracts
 export const fetchArticles = async (filters: Record<string, any>, pageParam: number) => {
 	const params = { ...filters, page: pageParam };
@@ -115,4 +136,9 @@ export const setArticleStatus = async (id: string, status: number) => {
 
 export const deleteArticle = async (id: number) => {
 	return axios.delete(`article/${id}`);
+};
+
+export const createArticle = async (payload: CreateArticlePayload): Promise<CreateArticleResponse> => {
+	const response = await axios.post('/v1/articles', payload);
+	return { uuid: response.data.data.uuid ?? response.data };
 };
