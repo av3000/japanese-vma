@@ -3,7 +3,7 @@ import { Modal } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { deleteArticle, fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
+import { deleteArticle, fetchArticleSavedLists, LastOperationStatus, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
@@ -92,6 +92,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
+	// TODO: should be available only after kanji attachement processing operation is done
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {
@@ -291,7 +292,12 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<Modal show={modals.showPdf} onHide={() => toggleModal('showPdf')} size="sm" centered>
 				<Modal.Body className="text-center p-4">
 					<h5 className="mb-4">Generate PDF</h5>
-					<Button variant="ghost" className="w-100 mb-2 border" onClick={() => handleDownloadPdf('kanji')}>
+					<Button
+						variant="ghost"
+						className="w-100 mb-2 border"
+						disabled={article?.processing_status?.status !== LastOperationStatus.Completed}
+						onClick={() => handleDownloadPdf('kanji')}
+					>
 						Kanji List <Icon size="sm" name="filePdfSolid" className="ml-2" />
 					</Button>
 					<Button variant="ghost" className="w-100 border" onClick={() => handleDownloadPdf('words')}>
