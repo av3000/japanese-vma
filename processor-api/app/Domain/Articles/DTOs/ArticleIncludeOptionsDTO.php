@@ -2,7 +2,7 @@
 
 namespace App\Domain\Articles\DTOs;
 
-readonly class ArticleIncludeOptionsDTO
+readonly class ArticleIncludeOptionsDTO implements ArticleIncludeOptionsInterface
 {
     public function __construct(
         public bool $include_user = true,
@@ -17,5 +17,10 @@ readonly class ArticleIncludeOptionsDTO
             include_kanjis: $validated['include_kanjis'] ?? true,
             include_words: $validated['include_words'] ?? true,
         );
+    }
+
+    public function includeKanjis(): bool
+    {
+        return $this->include_kanjis;
     }
 }

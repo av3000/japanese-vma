@@ -8,6 +8,7 @@ import PageLoader from '@/components/features/PageLoader';
 import ScrollToTop from '@/helpers/ScrollToTop';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
+import { WebSocketProvider } from '@/providers/contexts/socket-provider';
 import AppRoutes from '@/routes/routes';
 import { configureAppStore } from '@/store/store';
 
@@ -46,7 +47,9 @@ const App = () => (
 		<ReduxProvider store={store}>
 			<Router>
 				<AuthProvider>
-					<AppContent />
+					<WebSocketProvider>
+						<AppContent />
+					</WebSocketProvider>
 				</AuthProvider>
 			</Router>
 		</ReduxProvider>

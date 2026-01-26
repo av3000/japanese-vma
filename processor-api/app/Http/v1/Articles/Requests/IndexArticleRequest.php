@@ -12,7 +12,7 @@ class IndexArticleRequest extends FormRequest
         return true; // Public endpoint
     }
 
-   public function rules(): array
+    public function rules(): array
     {
         return [
             'category' => 'sometimes|integer',
@@ -22,6 +22,7 @@ class IndexArticleRequest extends FormRequest
             'per_page' => 'sometimes|integer',
             'page' => 'sometimes|integer',
             'include_stats_counts' => 'sometimes|boolean',
+            'include_kanjis' => 'sometimes|boolean',
         ];
     }
 
@@ -35,6 +36,7 @@ class IndexArticleRequest extends FormRequest
             'per_page.integer' => 'Per page must be a number',
             'page.integer' => 'Page must be a number',
             'include_stats_counts.boolean' => 'Include stats must be a boolean value',
+            'include_kanjis.boolean' => 'Include kanjis must be a boolean value',
         ];
     }
 

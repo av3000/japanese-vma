@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsDTO};
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
@@ -55,30 +55,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         $entityArticle->save();
 
         // TODO: update attached kanjis
-    }
-
-    /**
-     * Find article by public UUID with optional selective eager loading.
-     *
-     *
-     * @param EntityId $articleUuid The article's public UUID
-     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
-     * @return DomainArticle|null The domain article if found, null if not found
-     * @throws \Illuminate\Database\QueryException On database failure
-     */
-    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle
-    {
-        $query = PersistenceArticle::query();
-
-        $persistenceArticle = $query->with(['user'])
-            ->where('uuid', $articleUuid->value());
-
-        if ($dto->include_kanjis == true) {
-            $persistenceArticle->with(['kanjis']);
-        }
-
-
-        return $persistenceArticle ? $this->articleMapper->mapToDomain($persistenceArticle->first(), $dto) : null;
     }
 
     /**
@@ -140,6 +116,32 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
+     * Find article by public UUID with optional selective eager loading.
+     *
+     *
+     * @param EntityId $articleUuid The article's public UUID
+     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
+     * @return DomainArticle|null The domain article if found, null if not found
+     * @throws \Illuminate\Database\QueryException On database failure
+     */
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $options = null): ?DomainArticle
+    {
+        $query = PersistenceArticle::query()
+            ->with(['user'])
+            ->where('uuid', $articleUuid->value());
+
+        if ($options?->includeKanjis()) {
+            $query->with(['kanjis']);
+        }
+
+        $persistenceArticle = $query->first();
+
+        return $persistenceArticle
+            ? $this->articleMapper->mapToDomain($persistenceArticle, $options)
+            : null;
+    }
+
+    /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
      * Returns a domain collection (Articles) that wraps the paginated results
@@ -167,8 +169,8 @@ class ArticleRepository implements ArticleRepositoryInterface
             $criteria->pagination->page
         );
 
-        $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) {
-            return $this->articleMapper->mapToDomain($persistenceArticle);
+        $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) use ($criteria) {
+            return $this->articleMapper->mapToDomain($persistenceArticle, $criteria);
         });
 
         $paginatedResults->setCollection($domainArticles);
@@ -246,7 +248,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         if ($criteria->include_kanjis !== null && $criteria->include_kanjis == true) {
-            dd('provide kanjis');
             $query->with('kanjis');
         }
     }

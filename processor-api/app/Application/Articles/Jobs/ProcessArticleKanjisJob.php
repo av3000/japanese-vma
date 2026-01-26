@@ -39,6 +39,15 @@ class ProcessArticleKanjisJob implements ShouldQueue
             LastOperationStatus::PROCESSING
         );
 
+        $delaySeconds = (int) env('KANJI_JOB_DELAY_SECONDS', 0);
+        if ($delaySeconds > 0) {
+            Log::info('Delaying kanji processing job', [
+                'article_uuid' => $this->articleUuid,
+                'delay_seconds' => $delaySeconds,
+            ]);
+            sleep($delaySeconds);
+        }
+
         try {
             $uniqueKanjiCharacters = $kanjiExtractionService->extractUniqueKanjis($this->articleContentJp);
 

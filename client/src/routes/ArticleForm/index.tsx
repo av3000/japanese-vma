@@ -58,11 +58,15 @@ export default function ArticleCreatePage() {
 		onError: (err: any) => {
 			const data = err?.response?.data;
 
+			console.log('errorData', data.errors);
 			if (isHttpValidationProblemDetails(data)) {
+				console.log('isHttpValidationProblem');
 				setFieldErrors(data.errors as FieldErrors);
 				setStatus(data.title ?? 'Validation failed');
 				return;
 			}
+
+			console.log('uncaught errror, returns generic error message');
 
 			setFieldErrors(null);
 			setStatus('Something went wrong. Please try again.');
@@ -132,6 +136,9 @@ export default function ArticleCreatePage() {
 					/>
 					{fieldErrors?.content_jp?.[0] && <div className="text-danger">{fieldErrors.content_jp[0]}</div>}
 
+					{/* TODO: should show current character count*/}
+					{/* TODO: consider text length increasing over 2000, not hard to hit it */}
+					{/* TODO: Text should allow to be saved formatted */}
 					<h4 className="mt-3">Content (EN)</h4>
 					<textarea
 						className="form-control resize-none"
@@ -153,6 +160,7 @@ export default function ArticleCreatePage() {
 					/>
 					{fieldErrors?.source_link?.[0] && <div className="text-danger">{fieldErrors.source_link[0]}</div>}
 
+					{/* TODO: Make Chip inputs */}
 					<h4 className="mt-3">Tags</h4>
 					<input
 						className="form-control"

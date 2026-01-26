@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
 
@@ -15,10 +15,10 @@ class ArticleMapper
         private readonly KanjiMapper $kanjiMapper
     ) {}
 
-    public function mapToDomain(PersistenceArticle $entity, ArticleIncludeOptionsDTO $dto): DomainArticle
+    public function mapToDomain(PersistenceArticle $entity, ?ArticleIncludeOptionsInterface $options = null): DomainArticle
     {
         $domainKanjis = [];
-        if ($dto->include_kanjis && $entity->relationLoaded('kanjis')) {
+        if ($options?->includeKanjis() && $entity->relationLoaded('kanjis')) {
             $domainKanjis = $entity->kanjis->map(
                 fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
             )->toArray();
@@ -31,9 +31,9 @@ class ArticleMapper
             new UserId($entity->user_id),
             new UserName($entity->user?->name ?? 'Unknown User'),
             new ArticleTitle($entity->title_jp),
-            $entity->title_en ? new ArticleTitle($entity->title_en) : null,
+            new ArticleTitle($entity->title_en),
             new ArticleContent($entity->content_jp),
-            $entity->content_en ? new ArticleContent($entity->content_en) : null,
+            new ArticleContent($entity->content_en),
             new ArticleSourceUrl($entity->source_link),
             $entity->publicity,
             $entity->status,

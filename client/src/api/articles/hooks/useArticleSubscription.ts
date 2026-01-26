@@ -33,9 +33,22 @@ export const useArticleSubscription = (articleUuid: string | undefined) => {
 		const channel = echo.private(channelName);
 
 		channel.listen('.OperationStatusUpdated', (event: any) => {
+			const payload = typeof event === 'string' ? JSON.parse(event) : event;
+			if (import.meta.env.DEV) {
+				console.log('OperationStatusUpdated', payload);
+			}
+
 			// Optimistic Update for Detail View
 			queryClient.setQueryData(['article', articleUuid], (old: any) => {
-				console.log('old data', old);
+				if (!old) return old;
+
+				return {
+					...old,
+					processing_status: {
+						status: payload.status,
+						metadata: payload.metadata,
+					},
+				};
 			});
 
 			// Optimistic Update for Infinite List View
@@ -54,8 +67,8 @@ export const useArticleSubscription = (articleUuid: string | undefined) => {
 								return {
 									...item,
 									processing_status: {
-										status: event.status,
-										metadata: event.metadata,
+										status: payload.status,
+										metadata: payload.metadata,
 									},
 								};
 							}

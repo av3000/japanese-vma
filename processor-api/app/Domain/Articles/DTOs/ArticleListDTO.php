@@ -2,6 +2,7 @@
 
 namespace App\Domain\Articles\DTOs;
 
+// TODO: Default values should not come from here.
 readonly class ArticleListDTO
 {
     public function __construct(
@@ -13,7 +14,7 @@ readonly class ArticleListDTO
         public ?int $page,
         public bool $include_stats_counts = true,
         public bool $include_hashtags = true,
-        public bool $include_kanjis = false
+        public bool $include_kanjis = true
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -27,7 +28,7 @@ readonly class ArticleListDTO
             page: $validated['page'] ?? null,
             include_stats_counts: $validated['include_stats_counts'] ?? true,
             include_hashtags: $validated['include_hashtags'] ?? true,
-            include_kanjis: $validated['include_kanjis'] ?? false
+            include_kanjis: $validated['include_kanjis'] ?? true
         );
     }
 }
