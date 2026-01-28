@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -8,6 +9,7 @@ export default defineConfig(({ mode }) => {
 	const isProduction = mode === 'production';
 	return {
 		plugins: [
+			tailwindcss(),
 			checker({
 				typescript: true,
 				eslint: {
