@@ -38,7 +38,7 @@ class ArticleController extends Controller
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
-        $entityIds = [];
+        $entityIdInts = [];
         $entityUuidStrings = [];
 
         foreach ($paginatedArticles->getItems() as $article) {
@@ -56,7 +56,7 @@ class ArticleController extends Controller
 
         if ($listDTO->include_hashtags) {
             $hashtagsMap = $this->hashtagService->getBatchHashtags(
-                $entityIds,
+                $entityIdInts,
                 ObjectTemplateType::ARTICLE
             );
         }

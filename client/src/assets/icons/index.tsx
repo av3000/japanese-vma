@@ -3,6 +3,7 @@ import externalLink from './arrow-up-right-from-square-solid.svg?raw';
 import bookmarkRegular from './bookmark-regular.svg?raw';
 import bookmarkSolid from './bookmark-solid-full.svg?raw';
 import broomSolid from './broom-solid.svg?raw';
+import checkSolid from './check-solid-full.svg?raw';
 import chevron from './chevron.svg?raw';
 import commentSolid from './comment-solid.svg?raw';
 import downloadSolid from './download-solid.svg?raw';
@@ -50,4 +51,5 @@ export const icons = {
 	removeSolid,
 	layerGroupSolid,
 	arrowDownSolid,
+	checkSolid,
 } as const;

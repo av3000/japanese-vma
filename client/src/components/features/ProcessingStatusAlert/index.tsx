@@ -5,7 +5,7 @@ import { ButtonVariant } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import styles from './ProcessingStatusAlert.module.scss';
 
-const STATUS_CONFIG: Record<LastOperationStatus, { label: string; message: string; variant: ButtonVariant }> = {
+export const STATUS_CONFIG: Record<LastOperationStatus, { label: string; message: string; variant: ButtonVariant }> = {
 	pending: {
 		label: 'Pending',
 		message: 'Article queued for processing. This page will update automatically.',

@@ -57,7 +57,7 @@ const ArticleList: React.FC = () => {
 					allArticles.map((article) => <ArticleItem key={article.id} {...article} />)
 				)}
 			</div>
-
+			{/* TODO: Should be shared UI component */}
 			<div className="row justify-content-center mt-4 mb-5">
 				{isFetchingNextPage ? (
 					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />

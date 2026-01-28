@@ -1,10 +1,8 @@
 @use '@/styles/01-tools/media';
 
 .button {
-	// Typography
 	--button-font-size: var(--font-size-body-md);
 
-	// Layout
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
@@ -13,7 +11,6 @@
 	padding: 0 var(--button-padding-x);
 	position: relative;
 
-	// Visual styling
 	cursor: pointer;
 	background-color: var(--color-primary);
 	border: var(--border-size-sm) solid transparent;
@@ -22,7 +19,6 @@
 	font-weight: var(--font-weight-semibold, 600);
 	line-height: var(--line-height-sm, 1.5);
 
-	// Transitions
 	transition:
 		background-color 0.2s ease,
 		border-color 0.2s ease,
@@ -30,7 +26,6 @@
 		transform 0.2s ease,
 		box-shadow 0.2s ease;
 
-	// Interactive states
 	@include media.mqHover {
 		&:hover(:not(.variantLinkButton)) {
 			background: var(--color-primary-hover);
