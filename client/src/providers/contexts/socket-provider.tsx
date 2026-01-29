@@ -1,15 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import type Echo from 'laravel-echo';
 import { useAuth } from '@/hooks/useAuth';
-
-declare global {
-	interface Window {
-		Pusher: any;
-	}
-}
-
-window.Pusher = Pusher;
+import { configureEcho, echo } from '@/lib/echo';
 
 interface SocketContextType {
 	echo: Echo<'reverb'> | null;
@@ -24,18 +16,23 @@ const SocketContext = createContext<SocketContextType>({
 export const useWebSocket = () => useContext(SocketContext);
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-	const [echo, setEcho] = useState<Echo<'reverb'> | null>(null);
+	const [echoClient, setEchoClient] = useState<Echo<'reverb'> | null>(null);
 	const [isConnected, setIsConnected] = useState(false);
 	const { token } = useAuth();
 
 	useEffect(() => {
-		// If no token, we might skip connection or connect to public-only channels
-		if (!token) return;
-
 		const wsHost = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
 		const wsPort = import.meta.env.VITE_REVERB_PORT ? parseInt(import.meta.env.VITE_REVERB_PORT, 10) : 8081;
 
-		const echoInstance = new Echo<'reverb'>({
+		const authHeaders: Record<string, string> = {
+			Accept: 'application/json',
+		};
+
+		if (token) {
+			authHeaders.Authorization = `Bearer ${token}`;
+		}
+
+		configureEcho({
 			broadcaster: 'reverb',
 			key: import.meta.env.VITE_REVERB_APP_KEY,
 			wsHost,
@@ -47,23 +44,21 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 			cluster: 'mt1',
 			authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
 			auth: {
-				headers: {
-					Authorization: `Bearer ${token}`,
-					Accept: 'application/json',
-				},
+				headers: authHeaders,
 			},
 		});
 
-		echoInstance.connector.pusher.connection.bind('connected', () => setIsConnected(true));
-		echoInstance.connector.pusher.connection.bind('disconnected', () => setIsConnected(false));
-		echoInstance.connector.pusher.connection.bind('unavailable', () => setIsConnected(false));
+		const echoInstance = echo<'reverb'>();
 
-		setEcho(echoInstance);
+		setEchoClient(echoInstance);
+		setIsConnected(true);
 
 		return () => {
 			echoInstance.disconnect();
+			setEchoClient(null);
+			setIsConnected(false);
 		};
 	}, [token]);
 
-	return <SocketContext.Provider value={{ echo, isConnected }}>{children}</SocketContext.Provider>;
+	return <SocketContext.Provider value={{ echo: echoClient, isConnected }}>{children}</SocketContext.Provider>;
 };

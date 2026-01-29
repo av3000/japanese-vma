@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWebSocket } from '@/providers/contexts/socket-provider';
+import { useEcho } from '@/lib/echo';
+import { LastOperationStatus } from '@/api/articles/articles';
 
 // Define the shape of your Article Cache Data
 // interface ArticleCacheData {
@@ -15,27 +15,22 @@ import { useWebSocket } from '@/providers/contexts/socket-provider';
 // 	};
 // }
 
-export const lastOperationStatuses = ['pending', 'processing', 'completed', 'failed'] as const;
-
-export type LastOperationStatus = (typeof lastOperationStatuses)[number];
+type OperationStatusPayload = {
+	status: LastOperationStatus;
+	metadata: Record<string, any>;
+};
 
 // TODO: Explore Orval client generator for data contracts ( types, interfaces, endpoints) generation.
-export const useArticleSubscription = (articleUuid: string | undefined) => {
-	const { echo } = useWebSocket();
+export const useArticleSubscription = (articleUuid: string) => {
 	const queryClient = useQueryClient();
 
-	useEffect(() => {
-		if (!echo || !articleUuid) return;
-
-		const channelName = `last_operations.${articleUuid}`;
-		console.log(`🔌 Subscribing to: ${channelName}`);
-
-		const channel = echo.private(channelName);
-
-		channel.listen('.OperationStatusUpdated', (event: any) => {
-			const payload = typeof event === 'string' ? JSON.parse(event) : event;
+	useEcho<OperationStatusPayload>(
+		`last_operations.${articleUuid}`,
+		'.OperationStatusUpdated',
+		(payload) => {
+			const normalizedPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
 			if (import.meta.env.DEV) {
-				console.log('OperationStatusUpdated', payload);
+				console.log('OperationStatusUpdated', normalizedPayload);
 			}
 
 			// Optimistic Update for Detail View
@@ -45,8 +40,8 @@ export const useArticleSubscription = (articleUuid: string | undefined) => {
 				return {
 					...old,
 					processing_status: {
-						status: payload.status,
-						metadata: payload.metadata,
+						status: normalizedPayload.status,
+						metadata: normalizedPayload.metadata,
 					},
 				};
 			});
@@ -67,8 +62,8 @@ export const useArticleSubscription = (articleUuid: string | undefined) => {
 								return {
 									...item,
 									processing_status: {
-										status: payload.status,
-										metadata: payload.metadata,
+										status: normalizedPayload.status,
+										metadata: normalizedPayload.metadata,
 									},
 								};
 							}
@@ -77,10 +72,8 @@ export const useArticleSubscription = (articleUuid: string | undefined) => {
 					})),
 				};
 			});
-		});
-
-		return () => {
-			channel.stopListening('.OperationStatusUpdated');
-		};
-	}, [echo, articleUuid, queryClient]);
+		},
+		[articleUuid, queryClient],
+		'private',
+	);
 };

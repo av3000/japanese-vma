@@ -1,8 +1,9 @@
 // // @ts-nocheck
 // /* eslint-disable */
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchArticles } from '@/api/articles/articles';
+import { fetchArticles, LastOperationStatus } from '@/api/articles/articles';
+import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import ArticleItem from '@/components/features/article/ArticleItem';
@@ -27,6 +28,26 @@ const ArticleList: React.FC = () => {
 	const allArticles = data?.pages.flatMap((page) => page.items) || [];
 	const totalCount = data?.pages[0]?.pagination.total || 0;
 
+	const trackedArticleUuids = useMemo(() => {
+		return allArticles
+			.filter(
+				(article) =>
+					article.processing_status?.status !== undefined &&
+					article.processing_status.status !== LastOperationStatus.Completed,
+			)
+			.map((article) => article.uuid);
+	}, [allArticles]);
+
+	const [debouncedTrackedUuids, setDebouncedTrackedUuids] = useState<string[]>([]);
+
+	useEffect(() => {
+		const timeout = window.setTimeout(() => {
+			setDebouncedTrackedUuids(trackedArticleUuids);
+		}, 300);
+
+		return () => window.clearTimeout(timeout);
+	}, [trackedArticleUuids]);
+
 	const searchHeading = filters.title ? `Results for: ${filters.title}` : '';
 
 	if (status === 'pending') {
@@ -43,6 +64,9 @@ const ArticleList: React.FC = () => {
 
 	return (
 		<div className="container">
+			{debouncedTrackedUuids.map((uuid) => (
+				<ArticleSubscription key={uuid} uuid={uuid} />
+			))}
 			<SearchBar fetchQuery={handleApplyFilters} searchType="articles" />
 
 			{searchHeading && <h4>{searchHeading}</h4>}
@@ -71,6 +95,11 @@ const ArticleList: React.FC = () => {
 			</div>
 		</div>
 	);
+};
+
+const ArticleSubscription: React.FC<{ uuid: string }> = ({ uuid }) => {
+	useArticleSubscription(uuid);
+	return null;
 };
 
 export default ArticleList;

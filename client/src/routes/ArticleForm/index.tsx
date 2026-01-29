@@ -43,6 +43,7 @@ export default function ArticleCreatePage() {
 	const [status, setStatus] = useState<string | null>(null);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors | null>(null);
 
+	// TODO: add upload image feature
 	const mutation = useMutation<CreateArticleResponse, unknown, CreateArticlePayload>({
 		mutationFn: createArticle,
 		onSuccess: ({ uuid }) => {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Article, LastOperationStatus } from '@/api/articles/articles';
-import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { Card } from '@/components/shared/Card';
 import { Icon } from '@/components/shared/Icon';
@@ -17,10 +16,6 @@ const ArticleItem: React.FC<Article> = ({
 	jlpt_levels,
 	processing_status,
 }) => {
-	// TODO: move this to articleList and ensure only articles with processing_status which is in progress are being tracked.
-	// TODO: All articles should be tracked in private user dashboard.
-	useArticleSubscription(uuid);
-
 	return (
 		<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 			<Card
