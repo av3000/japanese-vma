@@ -9,6 +9,7 @@ import ScrollToTop from '@/helpers/ScrollToTop';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
 import { WebSocketProvider } from '@/providers/contexts/socket-provider';
+import SocketConnectionBanner from '@/components/features/SocketConnectionBanner';
 import AppRoutes from '@/routes/routes';
 import { configureAppStore } from '@/store/store';
 
@@ -34,6 +35,7 @@ const AppContent = () => {
 		<div className="app-wrapper">
 			<ScrollToTop />
 			<Header />
+			<SocketConnectionBanner />
 			<main className="main-content">
 				<AppRoutes />
 			</main>

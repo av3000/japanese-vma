@@ -39,7 +39,7 @@ const meta = {
 			defaultValue: false,
 		},
 		variant: {
-			options: ['primary', 'secondary', 'primary-outline', 'secondary-outline'],
+			options: ['primary', 'secondary', 'success', 'pending', 'danger', 'outline', 'secondary-outline', 'ghost', 'linkButton'],
 			control: { type: 'select' },
 			description: 'The visual style of the chip',
 			defaultValue: 'secondary-outline',
@@ -159,7 +159,7 @@ export const ChipVariants: Story = {
 				</Chip>
 
 				<Chip variant="outline" onCancel={() => console.log('Cancelled')}>
-					Primary Outline
+					Outline
 				</Chip>
 
 				<Chip variant="primary" onCancel={() => console.log('Cancelled')}>
@@ -168,6 +168,26 @@ export const ChipVariants: Story = {
 
 				<Chip variant="secondary" onCancel={() => console.log('Cancelled')}>
 					Secondary
+				</Chip>
+
+				<Chip variant="success" onCancel={() => console.log('Cancelled')}>
+					Success
+				</Chip>
+
+				<Chip variant="pending" onCancel={() => console.log('Cancelled')}>
+					Pending
+				</Chip>
+
+				<Chip variant="danger" onCancel={() => console.log('Cancelled')}>
+					Destructive
+				</Chip>
+
+				<Chip variant="ghost" onCancel={() => console.log('Cancelled')}>
+					Ghost
+				</Chip>
+
+				<Chip variant="linkButton" onCancel={() => console.log('Cancelled')}>
+					Link
 				</Chip>
 
 				<Chip variant="secondary-outline" readonly={true}>

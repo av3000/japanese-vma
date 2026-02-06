@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Dropdown, Nav, NavDropdown, Navbar } from 'react-bootstrap';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import './header.scss';
 
 const Header: React.FC = () => {
@@ -64,6 +65,9 @@ const Header: React.FC = () => {
 				</Nav>
 				{isAuthenticated && user ? (
 					<Nav>
+						<div className="d-flex align-items-center mr-2">
+							<SocketStatusIndicator />
+						</div>
 						<Nav.Link as={Link} to="/dashboard">
 							Logged in as <strong>{user.name}</strong>
 						</Nav.Link>

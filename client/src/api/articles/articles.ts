@@ -1,20 +1,5 @@
+import { LastOperationEvent } from '@/api/last-operations/last-operations';
 import axios from '@/services/axios';
-
-export const LastOperationStatus = {
-	Pending: 'pending',
-	Processing: 'processing',
-	Completed: 'completed',
-	Failed: 'failed',
-} as const;
-
-export type LastOperationStatus = (typeof LastOperationStatus)[keyof typeof LastOperationStatus];
-
-interface LastOperationEvent {
-	id: number;
-	type: string;
-	status: LastOperationStatus;
-	metadata: Record<string, any>;
-}
 
 interface Hashtag {
 	id: string;

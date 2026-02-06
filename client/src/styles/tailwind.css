@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+/*
+  Tailwind v4 does not load a JS `tailwind.config.*` here. We define the semantic
+  tokens used by shadcn-style components via `@theme` so utilities like
+  `bg-primary`, `text-foreground`, `border-border`, etc. actually exist.
+
+  Keep these in sync with `src/styles/00-settings/colors.scss`.
+*/
+@theme {
+  --color-background: #ffffff; /* $color-neutral-0 */
+  --color-foreground: #212121; /* $color-neutral-900 */
+
+  --color-primary: #e67e22;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #6c757d;
+  --color-secondary-foreground: #ffffff;
+
+  --color-destructive: #dc3545; /* $color-error */
+
+  --color-accent: #f8f9fa; /* $color-neutral-100 */
+  --color-accent-foreground: #212121;
+
+  --color-border: #e9ecef; /* $color-neutral-200 */
+  --color-ring: #e67e22;
+}

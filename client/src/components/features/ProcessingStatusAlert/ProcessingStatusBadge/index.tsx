@@ -1,9 +1,13 @@
-import { LastOperationStatus } from '@/api/articles/articles';
+import classNames from 'classnames';
+import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import { Badge } from '@/components/ui/badge';
-import { Icon } from '../Icon';
+import { Icon } from '../../../shared/Icon';
 
 interface ProcessingStatusBadgeProps {
+	className?: string;
 	status: LastOperationStatus;
+	isOnlyIcon?: boolean;
+	showPrefix?: boolean;
 }
 
 const STATUS_CONFIG: Record<
@@ -20,15 +24,31 @@ const STATUS_CONFIG: Record<
 	failed: { variant: 'destructive', icon: 'removeSolid', label: 'Failed' },
 };
 
-const ProcessingStatusBadge: React.FC<ProcessingStatusBadgeProps> = ({ status }: ProcessingStatusBadgeProps) => {
+const ProcessingStatusBadge: React.FC<ProcessingStatusBadgeProps> = ({
+	className,
+	status,
+	isOnlyIcon = false,
+	showPrefix = false,
+}: ProcessingStatusBadgeProps) => {
 	const config = STATUS_CONFIG[status];
+
 	return (
-		<div className="mb-2">
-			<Badge variant={config.variant}>
+		<Badge
+			isOnlyIcon={isOnlyIcon}
+			variant={config.variant}
+			className={classNames(className)}
+			aria-label={isOnlyIcon ? config.label : undefined}
+		>
+			{isOnlyIcon ? (
 				<Icon size="sm" name={config.icon} />
-				{config.label}
-			</Badge>
-		</div>
+			) : (
+				<>
+					{showPrefix ? 'Status:' : null}
+					<Icon size="sm" name={config.icon} />
+					{config.label}
+				</>
+			)}
+		</Badge>
 	);
 };
 

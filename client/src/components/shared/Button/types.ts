@@ -4,6 +4,7 @@ export const buttonVariants = [
 	'ghost',
 	'outline',
 	'secondary-outline',
+	'pending',
 	'danger',
 	'success',
 	'linkButton',

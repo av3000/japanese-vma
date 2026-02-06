@@ -1,30 +1,21 @@
 import React from 'react';
 import classNames from 'classnames';
-import { LastOperationStatus } from '@/api/articles/articles';
-import { ButtonVariant } from '@/components/shared/Button';
-import { Chip } from '@/components/shared/Chip';
+import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import styles from './ProcessingStatusAlert.module.scss';
 
-export const STATUS_CONFIG: Record<LastOperationStatus, { label: string; message: string; variant: ButtonVariant }> = {
+export const STATUS_CONFIG: Record<LastOperationStatus, { message: string }> = {
 	pending: {
-		label: 'Pending',
-		message: 'Article queued for processing. This page will update automatically.',
-		variant: 'secondary-outline',
+		message: 'Instance queued for processing. This page will update automatically.',
 	},
 	processing: {
-		label: 'Processing',
-		message: 'Article background processing. Please wait, this page will update automatically.',
-		variant: 'outline',
+		message: 'Instance background processing. Please wait, this page will update automatically.',
 	},
 	completed: {
-		label: 'Completed',
-		message: 'Article processing complete.',
-		variant: 'success',
+		message: 'Instance processing complete.',
 	},
 	failed: {
-		label: 'Failed',
-		message: 'Article processing failed. Please try again later.',
-		variant: 'danger',
+		message: 'Instance processing failed. Please try again later.',
 	},
 };
 
@@ -47,9 +38,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ status, c
 					{(status === LastOperationStatus.Pending || status === LastOperationStatus.Processing) && (
 						<span className="spinner-border spinner-border-sm mr-3" />
 					)}
-					<Chip readonly variant={config.variant}>
-						{config.label}
-					</Chip>
+					<ProcessingStatusBadge status={status} />
 				</div>
 			</div>
 		</div>

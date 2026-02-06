@@ -69,3 +69,5 @@ declare global {
 export type EventName = keyof Events & string;
 
 export type InferEventPayload<TEvent extends string> = TEvent extends keyof Events ? Events[TEvent] : unknown;
+
+export type ConnectionStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'failed';

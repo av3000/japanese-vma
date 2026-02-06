@@ -1,6 +1,5 @@
 import { type DependencyList, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type BroadcastDriver } from 'laravel-echo';
-import type ConnectionStatus from 'laravel-echo';
 import { echo } from '../config';
 import type {
 	BroadcastNotification,
@@ -8,6 +7,7 @@ import type {
 	ChannelData,
 	ChannelReturnType,
 	Connection,
+	ConnectionStatus,
 	EventName,
 	InferEventPayload,
 	ModelEvents,
@@ -15,7 +15,64 @@ import type {
 } from '../types';
 import { toArray } from '../util';
 
-const channels: Record<string, ChannelData<BroadcastDriver>> = {};
+const channels = new Map<string, ChannelData<BroadcastDriver>>();
+
+const getPusherConnection = (
+	connector: unknown,
+): { bind: (event: string, callback: (payload: unknown) => void) => void; unbind: (event: string, callback: (payload: unknown) => void) => void; state?: string } | null => {
+	if (!connector || typeof connector !== 'object') {
+		return null;
+	}
+
+	if (!('pusher' in connector)) {
+		return null;
+	}
+
+	const pusher = (connector as { pusher?: unknown }).pusher;
+	if (!pusher || typeof pusher !== 'object') {
+		return null;
+	}
+
+	if (!('connection' in pusher)) {
+		return null;
+	}
+
+	const connection = (pusher as { connection?: unknown }).connection;
+	if (!connection || typeof connection !== 'object') {
+		return null;
+	}
+
+	const hasBind = 'bind' in connection && typeof (connection as { bind?: unknown }).bind === 'function';
+	const hasUnbind = 'unbind' in connection && typeof (connection as { unbind?: unknown }).unbind === 'function';
+
+	if (!hasBind || !hasUnbind) {
+		return null;
+	}
+
+	return connection as {
+		bind: (event: string, callback: (payload: unknown) => void) => void;
+		unbind: (event: string, callback: (payload: unknown) => void) => void;
+		state?: string;
+	};
+};
+
+const mapPusherState = (state: string | undefined): ConnectionStatus => {
+	switch (state) {
+		case 'initialized':
+		case 'connecting':
+			return 'connecting';
+		case 'connected':
+			return 'connected';
+		case 'unavailable':
+			return 'reconnecting';
+		case 'failed':
+			return 'failed';
+		case 'disconnected':
+			return 'disconnected';
+		default:
+			return 'disconnected';
+	}
+};
 
 const subscribeToChannel = <T extends BroadcastDriver>(channel: Channel): Connection<T> => {
 	const instance = echo<T>();
@@ -32,13 +89,15 @@ const subscribeToChannel = <T extends BroadcastDriver>(channel: Channel): Connec
 };
 
 const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
-	if (!channels[channel.id]) {
+	const channelEntry = channels.get(channel.id);
+
+	if (!channelEntry) {
 		return;
 	}
 
-	channels[channel.id].count -= 1;
+	channelEntry.count -= 1;
 
-	if (channels[channel.id].count > 0) {
+	if (channelEntry.count > 0) {
 		return;
 	}
 
@@ -48,22 +107,24 @@ const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
 		echo().leaveChannel(channel.id);
 	}
 
-	delete channels[channel.id];
+	channels.delete(channel.id);
 };
 
 const resolveChannelSubscription = <T extends BroadcastDriver>(channel: Channel): Connection<T> => {
-	if (channels[channel.id]) {
-		channels[channel.id].count += 1;
+	const existingChannel = channels.get(channel.id);
 
-		return channels[channel.id].connection;
+	if (existingChannel) {
+		existingChannel.count += 1;
+
+		return existingChannel.connection;
 	}
 
 	const channelSubscription = subscribeToChannel<T>(channel);
 
-	channels[channel.id] = {
+	channels.set(channel.id, {
 		count: 1,
 		connection: channelSubscription,
-	};
+	});
 
 	return channelSubscription;
 };
@@ -74,25 +135,7 @@ export function useEcho<
 	TVisibility extends Channel['visibility'] = 'private',
 >(
 	channelName: string,
-	event: TEvent,
-	callback: (payload: InferEventPayload<TEvent>) => void,
-	dependencies?: DependencyList,
-	visibility?: TVisibility,
-): {
-	leaveChannel: (leaveAll?: boolean) => void;
-	leave: () => void;
-	stopListening: () => void;
-	listen: () => void;
-	channel: () => ChannelReturnType<TDriver, TVisibility>;
-};
-
-export function useEcho<
-	TEvent extends EventName = EventName,
-	TDriver extends BroadcastDriver = BroadcastDriver,
-	TVisibility extends Channel['visibility'] = 'private',
->(
-	channelName: string,
-	event: TEvent[],
+	event: TEvent | TEvent[],
 	callback: (payload: InferEventPayload<TEvent>) => void,
 	dependencies?: DependencyList,
 	visibility?: TVisibility,
@@ -334,12 +377,44 @@ export const useEchoModel = <TPayload, TModel extends string, TDriver extends Br
 };
 
 export const useConnectionStatus = (): ConnectionStatus => {
-	const [status, setStatus] = useState<ConnectionStatus>(() => echo().connectionStatus());
+	const getConnectionStatus = (): ConnectionStatus => {
+		const connection = getPusherConnection(echo().connector);
+		if (!connection) {
+			return 'disconnected';
+		}
+
+		return mapPusherState(connection.state);
+	};
+
+	const [status, setStatus] = useState<ConnectionStatus>(() => getConnectionStatus());
 
 	useEffect(() => {
-		return echo().connector.onConnectionChange((newStatus: ConnectionStatus) => {
-			setStatus(newStatus);
-		});
+		const connection = getPusherConnection(echo().connector);
+		if (!connection) {
+			setStatus('disconnected');
+			return;
+		}
+
+		const handleStateChange = (payload: unknown) => {
+			if (typeof payload === 'string') {
+				setStatus(mapPusherState(payload));
+				return;
+			}
+
+			if (payload && typeof payload === 'object' && 'current' in payload) {
+				const current = (payload as { current?: unknown }).current;
+				if (typeof current === 'string') {
+					setStatus(mapPusherState(current));
+				}
+			}
+		};
+
+		connection.bind('state_change', handleStateChange);
+		setStatus(mapPusherState(connection.state));
+
+		return () => {
+			connection.unbind('state_change', handleStateChange);
+		};
 	}, []);
 
 	return status;

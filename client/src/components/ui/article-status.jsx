@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chip } from '../shared/Chip';
+import { Badge } from './badge';
 
 const ArticleStatusTypes = {
 	PENDING: 0,
@@ -12,33 +12,33 @@ const ArticleStatus = ({ status }) => {
 	switch (status) {
 		case ArticleStatusTypes.PENDING:
 			return (
-				<Chip readonly={true} variant="secondary-outline">
+				<Badge variant="pending">
 					Pending
-				</Chip>
+				</Badge>
 			);
 		case ArticleStatusTypes.REVIEWING:
 			return (
-				<Chip readonly={true} variant="secondary-outline">
+				<Badge variant="pending">
 					Reviewing
-				</Chip>
+				</Badge>
 			);
 		case ArticleStatusTypes.REJECTED:
 			return (
-				<Chip readonly={true} variant="danger">
+				<Badge variant="destructive">
 					Rejected
-				</Chip>
+				</Badge>
 			);
 		case ArticleStatusTypes.APPROVED:
 			return (
-				<Chip readonly={true} variant="success">
+				<Badge variant="success">
 					Approved
-				</Chip>
+				</Badge>
 			);
 		default:
 			return (
-				<Chip readonly={true} variant="secondary-outline">
+				<Badge variant="secondary">
 					Pending
-				</Chip>
+				</Badge>
 			);
 	}
 };

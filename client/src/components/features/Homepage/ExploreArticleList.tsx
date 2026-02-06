@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchArticles } from '@/api/articles/articles';
 import Spinner from '@/assets/images/spinner.gif';
-import ArticleItem from '../article/ArticleItem';
+import ArticleCard from '@/components/shared/ArticleCard';
 
 const ExploreArticleList: React.FC = () => {
 	const { data, error, status } = useInfiniteQuery({
@@ -47,7 +47,11 @@ const ExploreArticleList: React.FC = () => {
 				{allArticles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
-					allArticles.map((article) => <ArticleItem key={article.id} {...article} />)
+					<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+						{allArticles.map((article) => (
+							<ArticleCard key={article.id} {...article} />
+						))}
+					</div>
 				)}
 			</div>
 		</>

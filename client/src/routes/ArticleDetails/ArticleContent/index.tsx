@@ -3,9 +3,10 @@ import { Modal } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { deleteArticle, fetchArticleSavedLists, LastOperationStatus, setArticleStatus } from '@/api/articles/articles';
+import { deleteArticle, fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
@@ -14,6 +15,7 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
 import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
@@ -28,8 +30,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
-
-	console.log('article: ', article);
 
 	const [modals, setModals] = useState({
 		showBookmark: false,
@@ -130,9 +130,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							Posted on {article.formattedDate} <br />
 							<span>{article.engagement?.views_count || 0} views | </span>
 							{(isOwner || isAdmin) && (
-								<Chip readonly variant="secondary-outline" className="mr-2">
+								<Badge variant="secondary" className="mr-2">
 									{article.publicity === 1 ? 'Public' : 'Private'}
-								</Chip>
+								</Badge>
 							)}
 							{(isOwner || isAdmin) && <ArticleStatus status={article.status} />}
 						</div>

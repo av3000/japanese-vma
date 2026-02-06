@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import { useEcho } from '@/lib/echo';
-import { LastOperationStatus } from '@/api/articles/articles';
 
 // Define the shape of your Article Cache Data
 // interface ArticleCacheData {
@@ -72,6 +72,13 @@ export const useArticleSubscription = (articleUuid: string) => {
 					})),
 				};
 			});
+
+			if (
+				normalizedPayload.status === LastOperationStatus.Completed ||
+				normalizedPayload.status === LastOperationStatus.Failed
+			) {
+				queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
+			}
 		},
 		[articleUuid, queryClient],
 		'private',

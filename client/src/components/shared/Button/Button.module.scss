@@ -267,6 +267,34 @@
 	}
 }
 
+.variantPending {
+	background-color: #f59e0b;
+	border-color: #f59e0b;
+	color: var(--color-neutral-0);
+
+	@include media.mqHover {
+		&:hover {
+			background: #d97706;
+			border-color: #d97706;
+		}
+	}
+
+	&:active {
+		background: #d97706;
+		border-color: #d97706;
+	}
+
+	&:focus,
+	&:focus-visible {
+		outline-color: #fde68a;
+	}
+
+	&:disabled,
+	&.disabled {
+		opacity: 0.65;
+	}
+}
+
 .variantLinkButton {
 	padding-left: 0;
 	padding-right: 0;

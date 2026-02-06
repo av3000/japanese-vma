@@ -2,11 +2,12 @@
 // /* eslint-disable */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchArticles, LastOperationStatus } from '@/api/articles/articles';
+import { fetchArticles } from '@/api/articles/articles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
-import ArticleItem from '@/components/features/article/ArticleItem';
+import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
 
 const ArticleList: React.FC = () => {
@@ -25,7 +26,7 @@ const ArticleList: React.FC = () => {
 		setFilters(newFilters);
 	};
 
-	const allArticles = data?.pages.flatMap((page) => page.items) || [];
+	const allArticles = useMemo(() => data?.pages.flatMap((page) => page.items) || [], [data?.pages]);
 	const totalCount = data?.pages[0]?.pagination.total || 0;
 
 	const trackedArticleUuids = useMemo(() => {
@@ -78,7 +79,13 @@ const ArticleList: React.FC = () => {
 				{allArticles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
-					allArticles.map((article) => <ArticleItem key={article.id} {...article} />)
+					<>
+						{allArticles.map((article) => (
+							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+								<ArticleCard article={article} />
+							</div>
+						))}
+					</>
 				)}
 			</div>
 			{/* TODO: Should be shared UI component */}
