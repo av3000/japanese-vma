@@ -12,4 +12,6 @@ export interface LastOperationEvent {
 	type: string;
 	status: LastOperationStatus;
 	metadata: Record<string, any>;
+	created_at?: string;
+	updated_at?: string;
 }

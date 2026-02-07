@@ -18,6 +18,7 @@ use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
 use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
+use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
@@ -42,7 +43,7 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private readonly LastOperationRepositoryInterface $lastOperationRepository,
+        private LastOperationServiceInterface $lastOperationService,
         private HashtagServiceInterface $hashtagService,
         private ArticlePolicy $ArticlePolicy,
         // Engagement and stats dependencies
@@ -101,18 +102,10 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                $operationState = $this->lastOperationRepository->start(
-                    $createdDomainArticle->getUid(),
-                    // TODO: entity type name and task name both should be typed values, atleast consts.
-                    'article',
-                    'kanji_extraction'
-                );
-
-                ProcessArticleKanjisJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp,
-                    $operationState->id
-                );
+	                ProcessArticleKanjisJob::dispatch(
+	                    $createdDomainArticle->getUid()->value(),
+	                    $dto->content_jp
+	                );
 
                 return $createdDomainArticle;
             });
@@ -241,15 +234,15 @@ class ArticleService implements ArticleServiceInterface
 
                 // TODO: Add some extra checks to see if kanjis or words has changed.
                 // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
-                    // $this->reprocessData->execute($updatedDomainArticle);
-                    dd($dto);
-                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
-                    ProcessArticleKanjisJob::dispatch(
-                        $updatedDomainArticle->getUid(),
-                        $dto->content_jp // Pass the new content for processing
-                    );
-                }
+	                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
+	                    // $this->reprocessData->execute($updatedDomainArticle);
+	                    dd($dto);
+	                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
+	                    ProcessArticleKanjisJob::dispatch(
+	                        $updatedDomainArticle->getUid()->value(),
+	                        $dto->content_jp // Pass the new content for processing
+	                    );
+	                }
 
                 return $updatedDomainArticle;
             });

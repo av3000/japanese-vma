@@ -24,8 +24,7 @@ class ProcessArticleKanjisJob implements ShouldQueue
 
     public function __construct(
         private readonly string $articleUuid,
-        private readonly string $articleContentJp,
-        private readonly int $operationStateId
+        private readonly string $articleContentJp
     ) {}
 
     public function handle(
@@ -34,8 +33,15 @@ class ProcessArticleKanjisJob implements ShouldQueue
         LastOperationService $lastOperationService
     ): void {
 
+        $operationState = $lastOperationService->startOperation(
+            new EntityId($this->articleUuid),
+            'article',
+            'kanji_extraction'
+        );
+        $operationStateId = $operationState->id;
+
         $lastOperationService->updateStatus(
-            $this->operationStateId,
+            $operationStateId,
             LastOperationStatus::PROCESSING
         );
 
@@ -63,7 +69,7 @@ class ProcessArticleKanjisJob implements ShouldQueue
                 ]);
 
                 $lastOperationService->updateStatus(
-                    $this->operationStateId,
+                    $operationStateId,
                     LastOperationStatus::FAILED,
                     ['error' => $result->getError()->description]
                 );
@@ -80,7 +86,7 @@ class ProcessArticleKanjisJob implements ShouldQueue
 
 
             $lastOperationService->updateStatus(
-                $this->operationStateId,
+                $operationStateId,
                 LastOperationStatus::COMPLETED,
                 [
                     'kanji_count' => $kanjiCount,
@@ -95,7 +101,7 @@ class ProcessArticleKanjisJob implements ShouldQueue
             ]);
 
             $lastOperationService->updateStatus(
-                $this->operationStateId,
+                $operationStateId,
                 LastOperationStatus::FAILED,
                 ['error' => $e->getMessage()]
             );

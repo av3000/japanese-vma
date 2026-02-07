@@ -31,13 +31,13 @@ const ArticleList: React.FC = () => {
 
 	const trackedArticleUuids = useMemo(() => {
 		return allArticles
-			.filter(
-				(article) =>
-					article.processing_status?.status !== undefined &&
-					article.processing_status.status !== LastOperationStatus.Completed,
-			)
-			.map((article) => article.uuid);
-	}, [allArticles]);
+				.filter(
+					(article) =>
+						article.processing_status?.status !== undefined &&
+						article.processing_status?.status !== LastOperationStatus.Completed,
+				)
+				.map((article) => article.uuid);
+		}, [allArticles]);
 
 	const [debouncedTrackedUuids, setDebouncedTrackedUuids] = useState<string[]>([]);
 

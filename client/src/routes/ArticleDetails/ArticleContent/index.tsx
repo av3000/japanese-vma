@@ -121,7 +121,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						</Link>
 					</span>
 
-					<ProcessingStatusAlert status={article.processing_status?.status} />
+					<ProcessingStatusAlert processing_status={article.processing_status} />
 
 					<h1 className="mt-4">{article.title_jp}</h1>
 
@@ -178,7 +178,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						</div>
 						<div className="d-flex align-items-center">
 							<p className="mb-0 mr-2">{article.engagement?.likes_count}</p>
-							isLiked: {JSON.stringify(isLiked)}
 							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>

@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import Spinner from '@/components/shared/Spinner';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '../../../shared/Icon';
 
@@ -40,7 +41,13 @@ const ProcessingStatusBadge: React.FC<ProcessingStatusBadgeProps> = ({
 			aria-label={isOnlyIcon ? config.label : undefined}
 		>
 			{isOnlyIcon ? (
-				<Icon size="sm" name={config.icon} />
+				<>
+					{status === LastOperationStatus.Processing ? (
+						<Spinner size="sm" />
+					) : (
+						<Icon size="sm" name={config.icon} />
+					)}
+				</>
 			) : (
 				<>
 					{showPrefix ? 'Status:' : null}

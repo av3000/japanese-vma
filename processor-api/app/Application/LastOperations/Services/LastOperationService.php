@@ -23,6 +23,17 @@ class LastOperationService implements LastOperationServiceInterface
         return $this->repository->getLatest($entityId, $taskType);
     }
 
+    // TODO: entityType should be some defined value from consts list of entities which can be queues for operation. 'article', as an example value.
+    // TODO: taskType should be typed values from consts list of actions that can be done with specific instance. For example, 'article' entityType can have 'kanji_extraction', 'words_extraction' or other possible actions which will be queable and takes longer time of period than simple update of entity metadata.
+    public function startOperation(EntityId $entityId, string $entityType, string $taskType): LastOperationState
+    {
+        return $this->repository->start(
+            $entityId,
+            'article',
+            'kanji_extraction'
+        );
+    }
+
     public function updateStatus(int $id, LastOperationStatus $status, array $metadata = []): void
     {
         $state = $this->repository->findById($id);

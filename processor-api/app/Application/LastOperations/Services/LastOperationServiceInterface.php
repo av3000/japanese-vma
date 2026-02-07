@@ -20,4 +20,6 @@ interface LastOperationServiceInterface
     public function getBatchLatestStates(array $entityIds, string $taskType): array;
 
     public function updateStatus(int $id, LastOperationStatus $status, array $metadata = []): void;
+
+    public function startOperation(EntityId $entityId, string $entityType, string $taskType): LastOperationState;
 }

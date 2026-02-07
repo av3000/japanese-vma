@@ -11,13 +11,26 @@
   --color-background: #ffffff; /* $color-neutral-0 */
   --color-foreground: #212121; /* $color-neutral-900 */
 
+  --color-popover: #ffffff;
+  --color-popover-foreground: #212121;
+
   --color-primary: #e67e22;
   --color-primary-foreground: #ffffff;
 
   --color-secondary: #6c757d;
   --color-secondary-foreground: #ffffff;
 
+  --color-success: #28a745;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #ffc107;
+  --color-warning-foreground: #212121;
+
   --color-destructive: #dc3545; /* $color-error */
+  --color-destructive-foreground: #ffffff;
+
+  --color-muted: #f8f9fa;
+  --color-muted-foreground: #6c757d;
 
   --color-accent: #f8f9fa; /* $color-neutral-100 */
   --color-accent-foreground: #212121;

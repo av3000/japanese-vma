@@ -16,8 +16,12 @@ import { useEcho } from '@/lib/echo';
 // }
 
 type OperationStatusPayload = {
+	id?: number;
+	type?: string;
 	status: LastOperationStatus;
 	metadata: Record<string, any>;
+	created_at?: string;
+	updated_at?: string;
 };
 
 // TODO: Explore Orval client generator for data contracts ( types, interfaces, endpoints) generation.
@@ -33,18 +37,18 @@ export const useArticleSubscription = (articleUuid: string) => {
 				console.log('OperationStatusUpdated', normalizedPayload);
 			}
 
-			// Optimistic Update for Detail View
-			queryClient.setQueryData(['article', articleUuid], (old: any) => {
-				if (!old) return old;
+				// Optimistic Update for Detail View
+				queryClient.setQueryData(['article', articleUuid], (old: any) => {
+					if (!old) return old;
 
-				return {
-					...old,
-					processing_status: {
-						status: normalizedPayload.status,
-						metadata: normalizedPayload.metadata,
-					},
-				};
-			});
+					return {
+						...old,
+						processing_status: {
+							...(old.processing_status ?? {}),
+							...normalizedPayload,
+						},
+					};
+				});
 
 			// Optimistic Update for Infinite List View
 			// We need to iterate over all cached 'articles' lists and update this specific item that is subscribed to
@@ -59,16 +63,16 @@ export const useArticleSubscription = (articleUuid: string) => {
 						...page,
 						items: page.items.map((item: any) => {
 							if (item.uuid === articleUuid) {
-								return {
-									...item,
-									processing_status: {
-										status: normalizedPayload.status,
-										metadata: normalizedPayload.metadata,
-									},
-								};
-							}
-							return item;
-						}),
+									return {
+										...item,
+										processing_status: {
+											...(item.processing_status ?? {}),
+											...normalizedPayload,
+										},
+									};
+								}
+								return item;
+							}),
 					})),
 				};
 			});

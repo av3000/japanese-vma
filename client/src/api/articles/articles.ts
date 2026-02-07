@@ -35,7 +35,7 @@ export interface ArticleDetails {
 	engagement: { likes_count: number; views_count: number; downloads_count: number; is_liked_by_viewer: boolean };
 	kanjis: any;
 	words: any;
-	processing_status?: LastOperationEvent;
+	processing_status: LastOperationEvent | null;
 }
 
 export interface Article {
@@ -63,7 +63,7 @@ export interface Article {
 	updated_at: string;
 	engagement: { stats: any };
 	kanjis: any;
-	processing_status?: LastOperationEvent;
+	processing_status: LastOperationEvent | null;
 }
 
 export interface ArticlesResponse {

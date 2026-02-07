@@ -53,6 +53,7 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcast
             'type' => $this->operationState->task_type,
             'status' => $this->operationState->status->value,
             'metadata' => $this->operationState->metadata,
+            'created_at' => $this->operationState->created_at?->toIso8601String(),
             'updated_at' => $this->operationState->updated_at->toIso8601String(),
         ];
     }
