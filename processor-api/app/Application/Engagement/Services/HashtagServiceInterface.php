@@ -40,4 +40,21 @@ interface HashtagServiceInterface
         array $tags,
         int $userId
     ): Result;
+
+    /**
+     * Replace all hashtags for an entity.
+     * If tags array is empty, clears all existing hashtags.
+     *
+     * @param int $entityId The entity to sync hashtags for
+     * @param ObjectTemplateType $entityType The type of entity
+     * @param array<string> $tags Array of hashtag strings
+     * @param int $userId The user performing the update
+     * @return Result Success data: null (void operation), Failure data: Error
+     */
+    public function syncTagsForEntity(
+        int $entityId,
+        ObjectTemplateType $entityType,
+        array $tags,
+        int $userId
+    ): Result;
 }

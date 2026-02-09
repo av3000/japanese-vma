@@ -23,12 +23,12 @@ class KanjiAttachmentService
      * Finds existing Kanjis by character and attaches/syncs them to an Article.
      *
      * @param EntityId $articleUuid The UUID of the article.
-     * @param string[] $kanjiCharacters An array of unique Kanji character strings (e.g., ['亜', '愛']).
+     * @param string[] $uniqueKanjiCharacters An array of unique Kanji character strings (e.g., ['亜', '愛']) from request input.
      * @return Result Success data: array of attached Kanji IDs, Failure data: Error.
      */
-    public function attachKanjisToArticle(EntityId $articleUuid, array $kanjiCharacters): Result
+    public function attachKanjisToArticle(EntityId $articleUuid, array $uniqueKanjiCharacters): Result
     {
-        if (empty($kanjiCharacters)) {
+        if (empty($uniqueKanjiCharacters)) {
             return Result::success([]);
         }
 
@@ -38,7 +38,7 @@ class KanjiAttachmentService
         }
 
         $foundDomainKanjis = $this->kanjiRepository->findManyByCharacters(
-            array_map(fn($char) => new KanjiCharacter($char), $kanjiCharacters)
+            array_map(fn($char) => new KanjiCharacter($char), $uniqueKanjiCharacters)
         );
 
         $kanjiIdsToAttach = [];

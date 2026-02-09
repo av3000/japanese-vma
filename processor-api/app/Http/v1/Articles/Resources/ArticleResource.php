@@ -48,7 +48,7 @@ class ArticleResource extends JsonResource
             'uuid' => (string) $article->getUid(),
             'entity_type_uid' => (string) $article->getEntityTypeUid(),
             'title_jp' => (string) $article->getTitleJp(),
-            'title_en' => (string) $article->getTitleEn(),
+            'title_en' => $article->getTitleEn()?->value,
             'content_preview_jp' => $article->getContentJp()->excerpt(),
             'content_preview_en' => $article->getContentEn()?->excerpt(),
             'source_link' => (string) $article->getSourceUrl(),

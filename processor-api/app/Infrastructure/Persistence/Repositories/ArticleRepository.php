@@ -275,25 +275,31 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void
     {
-        if (empty($kanjiIds)) {
-            DB::table('article_kanji')->where('article_id', $articleId)->delete();
-            return;
-        }
+        $existingKanjiIds = DB::table('article_kanji')
+            ->where('article_id', $articleId)
+            ->pluck('kanji_id')
+            ->toArray();
 
-        $pivotRecords = [];
+        $kanjiIdsToAdd = array_diff($kanjiIds, $existingKanjiIds);
+        $kanjiIdsToRemove = array_diff($existingKanjiIds, $kanjiIds);
 
-        foreach ($kanjiIds as $kanjiId) {
-            $pivotRecords[] = [
-                'article_id' => $articleId,
-                'kanji_id'   => $kanjiId,
-            ];
-        }
+        DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove) {
+            if (!empty($kanjiIdsToRemove)) {
+                DB::table('article_kanji')
+                    ->where('article_id', $articleId)
+                    ->whereIn('kanji_id', $kanjiIdsToRemove)
+                    ->delete();
+            }
 
-        DB::transaction(function () use ($articleId, $pivotRecords) {
-            DB::table('article_kanji')->where('article_id', $articleId)->delete();
+            if (!empty($kanjiIdsToAdd)) {
+                $pivotRecords = array_map(fn($kanjiId) => [
+                    'article_id' => $articleId,
+                    'kanji_id'   => $kanjiId,
+                ], $kanjiIdsToAdd);
 
-            foreach (array_chunk($pivotRecords, 1000) as $chunk) {
-                DB::table('article_kanji')->insert($chunk);
+                foreach (array_chunk($pivotRecords, 1000) as $chunk) {
+                    DB::table('article_kanji')->insert($chunk);
+                }
             }
         });
     }
