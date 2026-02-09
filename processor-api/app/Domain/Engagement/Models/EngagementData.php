@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Engagement\Models;
 
 readonly class EngagementData
@@ -7,7 +8,6 @@ readonly class EngagementData
         private ?array $views = [],
         private ?array $likes = [],
         private ?array $downloads = [],
-        private ?array $comments = []
     ) {}
 
     public function getViews(): ?array
@@ -23,16 +23,11 @@ readonly class EngagementData
     {
         return $this->downloads;
     }
-    public function getComments(): ?array
-    {
-        return $this->comments;
-    }
 
     public function hasAnyData(): bool
     {
         return $this->views ||
-               $this->likes ||
-               $this->downloads ||
-               $this->comments;
+            $this->likes ||
+            $this->downloads;
     }
 }

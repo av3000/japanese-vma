@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Articles\Actions\Processing;
+namespace App\Application\Articles\Actions\Processing;
 
 use App\Infrastructure\Persistence\Models\Article;
 

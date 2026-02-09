@@ -79,29 +79,29 @@
 	padding-top: var(--card-padding);
 
 	// Get primary action to cover whole card
-	&::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-		border-radius: var(--card-radius);
-	}
+	// &::after {
+	// 	content: '';
+	// 	position: absolute;
+	// 	inset: 0;
+	// 	z-index: 1;
+	// 	border-radius: var(--card-radius);
+	// }
 
 	// Get primary action to set focus area
-	&:focus,
-	&:focus-visible {
-		outline: none;
-		&::after {
-			outline: var(--outline-size) solid currentColor;
-			outline-offset: var(--outline-size);
-		}
-	}
+	// &:focus,
+	// &:focus-visible {
+	// 	outline: none;
+	// 	&::after {
+	// 		outline: var(--outline-size) solid currentColor;
+	// 		outline-offset: var(--outline-size);
+	// 	}
+	// }
 
-	&:focus:not(:focus-visible) {
-		&::after {
-			outline: none;
-		}
-	}
+	// &:focus:not(:focus-visible) {
+	// 	&::after {
+	// 		outline: none;
+	// 	}
+	// }
 
 	// Tablet
 	@include media.mq('sm') {

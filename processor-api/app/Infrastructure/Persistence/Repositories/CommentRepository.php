@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
@@ -11,17 +12,27 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Models\{ObjectTemplate, User};
+use App\Infrastructure\Persistence\Models\Like;
 use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId): Comments
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, int $userId): Comments
     {
         $query = PersistenceComment::with(['user'])
             ->where('template_id', $criteria->entityType->getLegacyId())
             ->where('real_object_id', $entityId)
             ->orderBy('created_at', 'DESC');
+
+        $query->withCount('likes');
+
+        if ($userId) {
+            $query->withExists(['likes as is_liked_by_viewer' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }]);
+        }
 
         $paginatedResults = $query->paginate(
             $criteria->pagination->per_page,
@@ -30,11 +41,10 @@ class CommentRepository implements CommentRepositoryInterface
             $criteria->pagination->page
         );
 
-        // TODO: Cover include_replies
+        // TODO: Implement include_replies
         // if ($parentOnly) {
         //     $query->whereNull('parent_comment_id');
         // }
-
         $domainComments = $paginatedResults->getCollection()->map(function ($persistenceComment) {
             return CommentMapper::mapToDomain($persistenceComment);
         });
@@ -47,7 +57,7 @@ class CommentRepository implements CommentRepositoryInterface
     public function findPaginatedByEntity(
         int $entityId,
         ObjectTemplateType $entityType,
-        PaginationData $pagination,
+        Pagination $pagination,
         bool $parentOnly = true
     ): object {
         $query = PersistenceComment::with(['user'])
@@ -59,7 +69,7 @@ class CommentRepository implements CommentRepositoryInterface
             $query->whereNull('parent_comment_id');
         }
 
-        return $query->paginate($pagination->perPage, ['*'], 'page', $pagination->page);
+        return $query->paginate($pagination->per_page, ['*'], 'page', $pagination->page);
     }
 
     public function deleteByEntity(int $entityId, int $entityTypeId): void
@@ -219,17 +229,5 @@ class CommentRepository implements CommentRepositoryInterface
                 return CommentMapper::mapToDomain($comment);
             })
             ->toArray();
-    }
-
-    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
-    {
-        $results = PersistenceComment::where('template_id', $objectType->getLegacyId())
-            ->whereIn('real_object_id', $entityIds)
-            ->get()
-            ->groupBy('real_object_id')
-            ->map->toArray() // Convert each group to array
-            ->toArray();
-
-        return $results;
     }
 }

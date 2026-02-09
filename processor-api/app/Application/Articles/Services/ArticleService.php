@@ -3,25 +3,22 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Engagement\Actions\{IncrementViewAction};
-use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
-use App\Application\Articles\Actions\Retrieval\{LoadArticleDetailStatsAction};
+use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\{HashtagRepositoryInterface, ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
 
-use App\Application\Articles\Actions\Updates\{
-    ReprocessArticleDataAction,
-};
 
 use App\Application\Articles\Actions\Deletion\{
-    CleanupArticleHashtagsAction,
     CleanupArticleCustomListsAction
 };
 
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
+use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
+use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO, ArticleCriteriaDTO};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
@@ -46,13 +43,12 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
+        private LastOperationServiceInterface $lastOperationService,
         private HashtagServiceInterface $hashtagService,
-        private EngagementServiceInterface $engagementService,
         private ArticlePolicy $ArticlePolicy,
         // Engagement and stats dependencies
         // private ExtractKanjisAction $extractKanjis,
         private IncrementViewAction $incrementViewAction,
-        private LoadArticleDetailStatsAction $loadStats,
         // private ProcessWordMeaningsAction $processWords,
         // private LoadCommentsAction $loadComments,
         // List operations dependencies
@@ -60,9 +56,7 @@ class ArticleService implements ArticleServiceInterface
         // private LoadHashtagsAction $loadHashtags,
         // Update dependencies
         // private UpdateArticleHashtagsAction $updateHashtags,
-        private ReprocessArticleDataAction $reprocessData,
         // Delete dependencies
-        private CleanupArticleHashtagsAction $cleanupHashtags,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
         private HashtagRepositoryInterface $hashtagRepository,
         private ViewRepositoryInterface $viewRepository,
@@ -85,8 +79,6 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, User $user): Result
     {
         try {
-            // $uniqueKanjiCharacters = $this->kanjiExtractionService->extractUniqueKanjis($dto->content_jp);
-            // dd($uniqueKanjiCharacters);
             $article = DB::transaction(function () use ($dto, $user) {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
@@ -110,12 +102,10 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                // dd($dto, $createdDomainArticle);
-                // Dispatch the job for asynchronous Kanji processing
-                ProcessArticleKanjisJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp // Pass the raw content for processing
-                );
+	                ProcessArticleKanjisJob::dispatch(
+	                    $createdDomainArticle->getUid()->value(),
+	                    $dto->content_jp
+	                );
 
                 return $createdDomainArticle;
             });
@@ -129,6 +119,11 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::creationFailed());
         }
+    }
+
+    public function getArticleIdByUuid(EntityId $uuid): int
+    {
+        return $this->articleRepository->getIdByUuid($uuid);
     }
 
     /**
@@ -188,7 +183,8 @@ class ArticleService implements ArticleServiceInterface
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
             visibilityRules: $this->ArticlePolicy->getVisibilityCriteria($user),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page)
+            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
+            include_kanjis: $dto->include_kanjis
         );
 
         return $this->articleRepository->findByCriteria($criteriaDTO);
@@ -238,15 +234,15 @@ class ArticleService implements ArticleServiceInterface
 
                 // TODO: Add some extra checks to see if kanjis or words has changed.
                 // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
-                    // $this->reprocessData->execute($updatedDomainArticle);
-                    dd($dto);
-                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
-                    ProcessArticleKanjisJob::dispatch(
-                        $updatedDomainArticle->getUid(),
-                        $dto->content_jp // Pass the new content for processing
-                    );
-                }
+	                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
+	                    // $this->reprocessData->execute($updatedDomainArticle);
+	                    dd($dto);
+	                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
+	                    ProcessArticleKanjisJob::dispatch(
+	                        $updatedDomainArticle->getUid()->value(),
+	                        $dto->content_jp // Pass the new content for processing
+	                    );
+	                }
 
                 return $updatedDomainArticle;
             });

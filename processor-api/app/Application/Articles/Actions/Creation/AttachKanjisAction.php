@@ -1,12 +1,14 @@
 <?php
-namespace App\Domain\Articles\Actions\Creation;
 
+namespace App\Application\Articles\Actions\Creation;
+
+use App\Application\Articles\Actions\Processing\ExtractKanjisAction;
 use App\Infrastructure\Persistence\Models\Article;
 
 class AttachKanjisAction
 {
     public function __construct(
-        private ExtractKanjis $extractKanjis
+        private ExtractKanjisAction $extractKanjis
     ) {}
 
     /**

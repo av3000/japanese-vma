@@ -9,6 +9,16 @@ const meta: Meta<typeof Badge> = {
 	component: Badge,
 	title: 'Components/Badge',
 	tags: ['autodocs'],
+	parameters: {
+		docs: {
+			description: {
+				component: `
+This **shared/Badge** is for overlay counts/dots attached to another element (e.g., notifications).
+For inline status labels, use **components/ui/badge** instead.
+`,
+			},
+		},
+	},
 	argTypes: {
 		color: {
 			options: ['primary', 'secondary', 'error', 'success', 'warning'],

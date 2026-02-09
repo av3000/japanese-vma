@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Application\Comments\Interfaces\Repositories;
 
+use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
+use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\CommentFilterDTO;
@@ -25,7 +28,7 @@ interface CommentRepositoryInterface
     public function save(DomainComment $commentData): DomainComment;
     public function findById(EntityId $commentId): ?DomainComment;
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
-    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
     public function findAllByFilter(CommentFilterDTO $filter): array;
-    // public function deleteById(EntityId $commentId): bool;
+
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, int $userId): Comments;
 }

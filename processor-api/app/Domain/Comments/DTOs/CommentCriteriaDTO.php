@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Domain\Comments\DTOs;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\ValueObjects\CommentSearchTerm;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Http\User;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 
 readonly class CommentCriteriaDTO
 {

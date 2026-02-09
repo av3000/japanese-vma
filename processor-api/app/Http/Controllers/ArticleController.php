@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Models\Article;
 use App\Http\Models\Comment;
+use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Http\Models\Download;
 use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
-use App\Http\Models\Word;
 use App\Http\User;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use PDF;
 
 class ArticleController extends Controller
@@ -700,7 +700,7 @@ class ArticleController extends Controller
      */
     public function storeComment(Request $request, $id, $parentCommentId = null)
     {
-        if (! auth()->user()) {
+        if (! auth('api')->user()) {
             return response()->json([
                 'message' => 'you are not a user',
             ]);
@@ -714,68 +714,61 @@ class ArticleController extends Controller
             return response()->json($validator->errors()->toJson(), 400);
         }
 
-        $objectTemplateId = ObjectTemplate::where('title', 'article')->first()->id;
+        $objectTemplate = ObjectTemplate::where('title', 'article')->first();
 
         $comment = new Comment;
-        $comment->user_id = auth()->user()->id;
-        $comment->template_id = $objectTemplateId;
+        $comment->uuid = Str::uuid();
+        $comment->real_object_uuid = $request->get('entity_id');
         $comment->real_object_id = $id;
-        $comment->parent_comment_id = null;
+        $comment->entity_type_uuid = $objectTemplate->entity_type_uuid;
+        $comment->template_id = $objectTemplate->id;
+        $comment->user_id = auth('api')->user()->id;
+        $comment->parent_comment_id = $request->get('parent_comment_id');
         $comment->content = $request->get('content');
         $comment->save();
-        $comment->likesTotal = 0;
-        $comment->likes = [];
 
         return response()->json([
             'success' => true,
             'message' => 'You commented article of id: ' . $id,
-            'comment' => $comment,
+            'comment' =>
+            [
+                'id' => $comment->id,
+                'entity_uuid' => $comment->real_object_uuid,
+                'entity_type' => $objectTemplate->id,
+                'author_name' => auth('api')->user()->name,
+                'author_id' => auth('api')->user()->id,
+                'content' => $comment->content,
+                'parent_comment_id' => $comment->parent_comment_id,
+                'created_at' => $comment->created_at,
+                'updated_at' => $comment->updated_at,
+                'likes' => [],
+            ],
         ]);
     }
 
-    public function deleteComment($id, $commentid)
+    public function deleteComment(Request $request, int $commentId)
     {
-        if (! auth()->user()) {
-            return response()->json([
-                'message' => 'you are not a user',
-            ]);
-        }
-
-        $comment = Comment::where([
-            'id' => $commentid,
-            'user_id' => auth()->user()->id,
+        $comment = PersistenceComment::where([
+            'id' => $commentId,
         ])->first();
 
-        if (isset($comment)) {
-            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
+        if ($comment->user_id == auth('api')->user()->id || auth('api')->user()->hasRole('admin')) {
+            $commentLikes = Like::where('template_id', $request->get('template_id'))->where('real_object_id', $commentId);
+
+            $commentLikes->delete();
 
             $comment->delete();
 
             return response()->json([
                 'success' => true,
                 'message' => 'comment was deleted',
-            ]);
-        } elseif (! isset($comment) && auth()->user()->hasRole('admin') == true) {
-            $comment = Comment::where([
-                'id' => $commentid,
-            ])->first();
-
-            $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
-
-            $comment->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'comment was deleted by admin',
-            ]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Comment does not belong to user or comment doesnt exist',
-            ]);
+            ], 200);
         }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'unauthorized'
+        ], 401);
     }
 
     public function updateComment(Request $request, $id, $commentid)
@@ -818,7 +811,7 @@ class ArticleController extends Controller
 
     public function likeComment($id, $commentid)
     {
-        if (! auth()->user()) {
+        if (! auth('api')->user()) {
             return response()->json([
                 'message' => 'you are not a user',
             ]);
@@ -828,7 +821,7 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ])->first();
 
         if ($checkLike) {
@@ -838,7 +831,7 @@ class ArticleController extends Controller
         }
 
         $like = new Like;
-        $like->user_id = auth()->user()->id;
+        $like->user_id = auth('api')->user()->id;
         $like->template_id = $objectTemplateId;
         $like->real_object_id = $commentid;
         $like->value = 1;
@@ -857,7 +850,7 @@ class ArticleController extends Controller
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ]);
 
         $like->delete();
@@ -880,7 +873,7 @@ class ArticleController extends Controller
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ]);
 
         $like->delete();
@@ -893,7 +886,7 @@ class ArticleController extends Controller
 
     public function likeArticle($id)
     {
-        if (! auth()->user()) {
+        if (! auth('api')->user()) {
             return response()->json([
                 'message' => 'you are not a user',
             ]);
@@ -903,7 +896,7 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ])->first();
 
         if ($checkLike) {
@@ -913,7 +906,7 @@ class ArticleController extends Controller
         }
 
         $like = new Like;
-        $like->user_id = auth()->user()->id;
+        $like->user_id = auth('api')->user()->id;
         $like->template_id = $objectTemplateId;
         $like->real_object_id = $id;
         $like->value = 1;
@@ -933,19 +926,19 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
-                'userId' => auth()->user()->id,
+                'userId' => auth('api')->user()->id,
                 'isLiked' => true,
                 'message' => 'you already liked this article',
             ]);
         }
 
         return response()->json([
-            'userId' => auth()->user()->id,
+            'userId' => auth('api')->user()->id,
             'isLiked' => false,
             'message' => 'you havent liked the article yet',
         ]);
@@ -958,19 +951,19 @@ class ArticleController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id,
+            'user_id' => auth('api')->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
-                'userId' => auth()->user()->id,
+                'userId' => auth('api')->user()->id,
                 'isLiked' => true,
                 'message' => 'you already liked this comment',
             ]);
         }
 
         return response()->json([
-            'userId' => auth()->user()->id,
+            'userId' => auth('api')->user()->id,
             'isLiked' => false,
             'message' => 'you havent liked the comment yet',
         ]);

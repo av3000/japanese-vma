@@ -17,6 +17,7 @@ final readonly class KanjiGrade
     public const G7 = '7';
     public const G8 = '8';
     public const G9 = '9';
+    public const G10 = '10';
     public const UNASSIGNED = '-';
 
     public const VALID_GRADES = [
@@ -29,6 +30,7 @@ final readonly class KanjiGrade
         self::G7,
         self::G8,
         self::G9,
+        self::G10,
         self::UNASSIGNED,
     ];
 

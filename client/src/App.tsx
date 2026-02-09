@@ -1,15 +1,28 @@
-import { Provider } from 'react-redux';
+import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import Footer from '@/components/features/Footer';
 import Header from '@/components/features/Header';
 import PageLoader from '@/components/features/PageLoader';
-import { AuthProvider } from '@/contexts/AuthContext';
 import ScrollToTop from '@/helpers/ScrollToTop';
 import { useAuth } from '@/hooks/useAuth';
+import { AuthProvider } from '@/providers/contexts/auth-provider';
+import { WebSocketProvider } from '@/providers/contexts/socket-provider';
+import SocketConnectionBanner from '@/components/features/SocketConnectionBanner';
 import AppRoutes from '@/routes/routes';
 import { configureAppStore } from '@/store/store';
 
 const store = configureAppStore();
+
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes
+			retry: 1,
+		},
+	},
+});
 
 const AppContent = () => {
 	const { isLoading } = useAuth();
@@ -22,6 +35,7 @@ const AppContent = () => {
 		<div className="app-wrapper">
 			<ScrollToTop />
 			<Header />
+			<SocketConnectionBanner />
 			<main className="main-content">
 				<AppRoutes />
 			</main>
@@ -31,13 +45,18 @@ const AppContent = () => {
 };
 
 const App = () => (
-	<Provider store={store}>
-		<Router>
-			<AuthProvider>
-				<AppContent />
-			</AuthProvider>
-		</Router>
-	</Provider>
+	<QueryClientProvider client={queryClient}>
+		<ReduxProvider store={store}>
+			<Router>
+				<AuthProvider>
+					<WebSocketProvider>
+						<AppContent />
+					</WebSocketProvider>
+				</AuthProvider>
+			</Router>
+		</ReduxProvider>
+		<ReactQueryDevtools initialIsOpen={false} />
+	</QueryClientProvider>
 );
 
 export default App;

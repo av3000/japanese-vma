@@ -3,7 +3,7 @@ import { apiCall } from '@/services/api';
 import { HttpMethod } from '@/shared/types';
 import { addError } from './errorsSlice';
 
-// Async thunks
+// Fetch Article list effect
 export const fetchArticles = createAsyncThunk(
 	'articles/fetchArticles',
 	async (
@@ -43,6 +43,7 @@ export const fetchArticles = createAsyncThunk(
 	},
 );
 
+// Remove effect
 export const removeArticle = createAsyncThunk(
 	'articles/removeArticle',
 	async (article_id, { dispatch, rejectWithValue }) => {
@@ -56,6 +57,7 @@ export const removeArticle = createAsyncThunk(
 	},
 );
 
+// Slice store
 const articlesSlice = createSlice({
 	name: 'articles',
 	initialState: {

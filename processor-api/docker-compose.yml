@@ -16,15 +16,22 @@ services:
       DB_PASSWORD: '${DB_PASSWORD}'
       APP_URL: '${APP_URL}'
       QUEUE_CONNECTION: '${QUEUE_CONNECTION}'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '${REDIS_PORT}'
+      REDIS_PASSWORD: '${REDIS_PASSWORD}'
     volumes:
       - ./:/var/www/html
-      - vendor-volume:/var/www/html/vendor          # Cache vendor
-      - storage-volume:/var/www/html/storage        # Cache storage
-      - cache-volume:/var/www/html/bootstrap/cache  # Cache bootstrap
+      - /var/www/html/vendor # Anonymous vendor volume to use container vendors instead of copying local ones.
+      - /var/www/html/bootstrap/cache
+      # - vendor-volume:/var/www/html/vendor          # Cache vendor
+      # - storage-volume:/var/www/html/storage        # Cache storage
+      # - cache-volume:/var/www/html/bootstrap/cache  # Cache bootstrap
     networks:
       - shared-network
     depends_on:
       - db
+      - redis
+      - reverb
     entrypoint: ["/bin/sh", "/var/www/html/.docker/entrypoint.sh"]
 
   webserver:
@@ -66,12 +73,115 @@ services:
     networks:
       - shared-network
 
+  redis:
+    # image: 'redis:alpine'
+    image: redis:7.0.2
+    # it would use default persistence (RDB snapshots) if not set.
+    # Also, container name differs from the set one with underscore
+    command: ["redis-server", "--appendonly", "yes"]
+    container_name: redis_server
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - shared-network
+
+  redisinsight:
+    image: redislabs/redisinsight:1.12.0
+    container_name: redis_insight_gui
+    restart: unless-stopped
+    volumes:
+      - redisinsight_data:/data
+    ports:
+      - '${REDIS_INSIGHT_PORT:-8001}:8001'
+    networks:
+      - shared-network
+    environment:
+      RI_DATABASE_URL: 'redis://redis:6379' # Auto-connect to your 'redis' service (Redis container)
+      # RI_PASSWORD: '${REDIS_PASSWORD}' # Uncomment if your Redis server requires a password
+    depends_on:
+      - redis
+
+  reverb:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: reverb_server
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      APP_DEBUG: '${APP_DEBUG}'
+      APP_ENV: '${APP_ENV}'
+      REVERB_APP_ID: '${REVERB_APP_ID}'
+      REVERB_APP_KEY: '${REVERB_APP_KEY}'
+      REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
+      REVERB_HOST: 'reverb_server'
+      REVERB_PORT: '${REVERB_PORT}'
+      REVERB_SCHEME: '${REVERB_SCHEME}'
+      REDIS_HOST: 'redis' # Reverb needs to connect to Redis for internal features too
+      REDIS_PORT: '${REDIS_PORT}'
+      REDIS_PASSWORD: '${REDIS_PASSWORD}'
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/bootstrap/cache
+      - /var/www/html/vendor
+    ports:
+      - '${REVERB_PORT}:${REVERB_PORT}'
+    networks:
+      - shared-network
+    depends_on:
+      - redis
+    command: php artisan reverb:start --host=0.0.0.0 --port=${REVERB_PORT} --debug
+
+  queue:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: laravel_queue_worker
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      # CRITICAL: The Queue connects to the container name
+      REVERB_HOST: 'reverb_server'
+      # REVERB_PORT: 8081
+      REVERB_PORT: '${REVERB_PORT}'
+      REVERB_SCHEME: 'http'
+      REVERB_APP_ID: '${REVERB_APP_ID}'
+      REVERB_APP_KEY: '${REVERB_APP_KEY}'
+      REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
+
+      APP_DEBUG: '${APP_DEBUG}'
+      APP_ENV: '${APP_ENV}'
+      DB_CONNECTION: '${DB_CONNECTION}'
+      DB_HOST: 'db'
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_USERNAME: '${DB_USERNAME}'
+      DB_PASSWORD: '${DB_PASSWORD}'
+      QUEUE_CONNECTION: 'redis'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '${REDIS_PORT}'
+      REDIS_PASSWORD: '${REDIS_PASSWORD}'
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/bootstrap/cache
+      - /var/www/html/vendor
+    networks:
+      - shared-network
+    depends_on:
+      - db
+      - redis
+    command: php artisan queue:work --verbose
+
 networks:
   shared-network:
     driver: bridge
 
 volumes:
   dbdata:
-  vendor-volume:
-  storage-volume:
-  cache-volume:
+  # vendor-volume:
+  # storage-volume:
+  # cache-volume:
+  redis_data:
+  redisinsight_data:

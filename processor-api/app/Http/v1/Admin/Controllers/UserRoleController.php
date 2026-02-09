@@ -2,21 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Http\V1\Admin\Controllers;
+namespace App\Http\v1\Admin\Controllers;
 
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use App\Domain\Shared\Enums\UserRole;
 use App\Shared\Http\TypedResults;
 use App\Http\Controllers\Controller;
 use App\Http\V1\Admin\Requests\AssignRoleRequest;
 use App\Http\V1\Admin\Requests\CreateRoleRequest;
 use App\Http\V1\Admin\Requests\RemoveRoleRequest;
 use App\Http\V1\Admin\Resources\RoleResource;
-use App\Shared\Enums\HttpStatus;
 
 class UserRoleController extends Controller
 {

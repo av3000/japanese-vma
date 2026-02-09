@@ -30,14 +30,22 @@ return [
 
     'connections' => [
 
-        'pusher' => [
-            'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+        'reverb' => [
+            'driver' => 'reverb',
+            'host' => env('REVERB_HOST'),
+            'port' => env('REVERB_PORT'),
+            // TODO: when working on deployments check if it should be https
+            'scheme' => env('REVERB_SCHEME', 'http'),
+            'app_id' => env('REVERB_APP_ID'),
+            'key' => env('REVERB_APP_KEY'),
+            'secret' => env('REVERB_APP_SECRET'),
+            'debug' => env('APP_DEBUG', false),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
-                'useTLS' => true,
+                // 'cluster' => 'mt1' // Dummy cluster to bypass internal validation
+                'host' => env('REVERB_HOST'),
+                'port' => env('REVERB_PORT', 8081),
+                'scheme' => env('REVERB_SCHEME', 'http'),
+                'useTLS' => env('REVERB_SCHEME') === 'https',
             ],
         ],
 

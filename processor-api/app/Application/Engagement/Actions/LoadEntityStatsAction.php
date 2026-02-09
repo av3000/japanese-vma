@@ -1,23 +1,23 @@
 <?php
+
 namespace App\Application\Engagement\Actions;
-use App\Http\Models\ObjectTemplate;
+
 use Illuminate\Support\Facades\DB;
 
 class LoadEntityStatsAction
 {
     /**
-     * Load stats using UUIDs directly - no more complex ID mapping!
+     * Load stats using UUIDs directly
      */
     public function batchLoadStatsById(string $templateId, array $entityIds): array
     {
         if (empty($entityIds)) {
             return [];
         }
-
         // TODO: use Repository pattern for stats
         // Simple, direct queries using UUIDs
         $likes = DB::table('likes')
-            ->where('template_id', $templateId)
+            // ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
             ->pluck(DB::raw('count(*)'), 'real_object_id')
@@ -47,6 +47,7 @@ class LoadEntityStatsAction
 
         // Build result array indexed by entity UUID
         $result = [];
+
         foreach ($entityIds as $id) {
             $result[$id] = [
                 'likes' => $likes[$id] ?? 0,

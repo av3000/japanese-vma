@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\V1\Admin\Requests;
+namespace App\Http\v1\Admin\Requests;
 
 use App\Domain\Shared\ValueObjects\Pagination;
 use Illuminate\Foundation\Http\FormRequest;

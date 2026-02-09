@@ -1,39 +1,27 @@
 import React from 'react';
+import { ApiComment as Comment } from '@/api/comments';
 import DefaultAvatar from '@/assets/images/avatar-man.svg';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 
-interface Comment {
-	id: string | number;
-	userName: string;
-	user_id: string | number;
-	content: string;
-	created_at: string;
-	likesTotal: number;
-	isLiked: boolean;
-}
-
-interface User {
-	id: string | number;
-	is_admin?: boolean;
-}
-
 interface CommentItemProps {
 	comment: Comment;
-	currentUser: User | null;
+	// TODO: use proper User type with admin fields included
+	currentUser: any;
 	onDelete: () => void;
 	onLike: () => void;
+	isLoading: boolean;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike }) => {
-	const canDelete = currentUser && (currentUser.id === comment.user_id || currentUser.is_admin);
+const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike, isLoading }) => {
+	const canDelete = currentUser && (currentUser.id === comment.author_id || currentUser.is_admin);
 
 	return (
 		<div className="media">
 			<img className="d-flex mr-3 rounder-circle" src={DefaultAvatar} alt="default-avatar" />
 			<div className="media-body">
 				<div className="d-flex justify-content-between align-items-center">
-					<h5>@{comment.userName}</h5>
+					<h5>@{comment.author_name}</h5>
 					{canDelete && (
 						<Button onClick={onDelete} variant="ghost" size="sm">
 							<Icon size="sm" name="trashbinSolid" />
@@ -43,9 +31,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelet
 				<div>{comment.content}</div>
 				<br />
 				<div className="text-muted d-flex align-items-center">
-					<span className="mx-2">{comment.likesTotal} likes</span>
-					<Button onClick={onLike} variant="ghost" size="sm">
-						<Icon size="sm" name="thumbsUpSolid" />
+					<span className="mx-2">{comment.likes_count} likes</span>
+					<Button onClick={onLike} variant="ghost" size="sm" disabled={isLoading}>
+						<Icon size="sm" name={comment.is_liked_by_viewer ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 					</Button>
 					<p className="ml-auto mb-0">{comment.created_at}</p>
 				</div>

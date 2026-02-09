@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
 
@@ -14,14 +15,44 @@ class ArticleMapper
         private readonly KanjiMapper $kanjiMapper
     ) {}
 
-    public function mapToDomain(PersistenceArticle $entity): DomainArticle
+    public function mapToDomain(PersistenceArticle $entity, ?ArticleIncludeOptionsInterface $options = null): DomainArticle
     {
         $domainKanjis = [];
-        if ($entity->kanjis) {
+        if ($options?->includeKanjis() && $entity->relationLoaded('kanjis')) {
             $domainKanjis = $entity->kanjis->map(
                 fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
             )->toArray();
         }
+
+        return new DomainArticle(
+            $entity->id,
+            new EntityId($entity->uuid),
+            $entity->entity_type_uuid ? new EntityId($entity->entity_type_uuid) : null,
+            new UserId($entity->user_id),
+            new UserName($entity->user?->name ?? 'Unknown User'),
+            new ArticleTitle($entity->title_jp),
+            new ArticleTitle($entity->title_en),
+            new ArticleContent($entity->content_jp),
+            new ArticleContent($entity->content_en),
+            new ArticleSourceUrl($entity->source_link),
+            $entity->publicity,
+            $entity->status,
+            new JlptLevels(
+                (int)$entity->n1,
+                (int)$entity->n2,
+                (int)$entity->n3,
+                (int)$entity->n4,
+                (int)$entity->n5,
+                (int)$entity->uncommon
+            ),
+            $entity->created_at->toDateTimeImmutable(),
+            $entity->updated_at->toDateTimeImmutable(),
+            kanjis: $domainKanjis,
+        );
+    }
+
+    public function mapToCreatedArticleDomain(PersistenceArticle $entity): DomainArticle
+    {
 
         return new DomainArticle(
             $entity->id,
@@ -46,7 +77,7 @@ class ArticleMapper
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
-            kanjis: $domainKanjis,
+            kanjis: [],
         );
     }
 

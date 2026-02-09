@@ -1,125 +1,117 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { addComment, AddCommentPayload, deleteComment, fetchComments } from '@/api/comments';
+import { LikeResponse, toggleCommentLike } from '@/api/likes/likes';
 import { useAuth } from '@/hooks/useAuth';
-import { apiCall } from '@/services/api';
-import { HttpMethod } from '@/shared/types';
+import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import CommentForm from './CommentForm/CommentForm';
 import CommentList from './CommentList/CommentList';
 
-interface Comment {
-	id: string | number;
-	content: string;
-	userName: string;
-	user_id: string | number;
-	created_at: string;
-	likesTotal: number;
-	isLiked: boolean;
-}
-
 interface CommentsBlockProps {
-	objectId: string | number;
-	objectType: 'article' | 'post' | 'list';
-	initialComments: Comment[];
-	isLocked?: boolean; // NEW: For locked posts
+	objectUuid: string;
+	parentObjectId: string | number;
+	parentObjectType: 'article' | 'post' | 'list';
+	isLocked?: boolean;
 }
 
 const CommentsBlock: React.FC<CommentsBlockProps> = ({
-	objectId,
-	objectType,
-	initialComments,
-	isLocked = false, // NEW
+	objectUuid,
+	parentObjectId,
+	parentObjectType,
+	isLocked = false,
 }) => {
-	const [comments, setComments] = useState<Comment[]>(initialComments);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const { isAuthenticated, user } = useAuth();
 
-	const handleAddComment = useCallback(
-		async (content: string) => {
-			if (!isAuthenticated || !user) return;
+	const queryClient = useQueryClient();
+	// TODO: query keys management should be somehow centralized
+	const queryKey = ['comments', parentObjectType, parentObjectId, { include_likes: true }];
+	const { data: comments = [], isLoading } = useQuery({
+		queryKey,
+		queryFn: () => fetchComments(parentObjectType, objectUuid, { include_likes: true }),
+		enabled: !!objectUuid,
+		select: (data) => {
+			return data.items.map((comment) => ({
+				...comment,
+			}));
+		},
+	});
 
-			setIsSubmitting(true);
-			try {
-				const response = await apiCall({
-					method: HttpMethod.POST,
-					path: `/api/${objectType}/${objectId}/comment`,
-					data: { content },
-				});
+	const addMutation = useMutation({
+		mutationFn: (requestPayload: AddCommentPayload) => addComment(parentObjectType, parentObjectId, requestPayload),
+		onSuccess: (newComment) => {
+			queryClient.setQueryData(queryKey, (oldData: any) => {
+				if (!oldData) return oldData;
 
-				const newComment: Comment = {
-					...response.comment,
-					userName: user.name,
+				return {
+					...oldData,
+					items: [
+						{
+							...newComment,
+							userName: user?.name,
+						},
+						...(oldData.items || []),
+					],
 				};
+			});
+		},
+	});
 
-				setComments((prev) => [newComment, ...prev]);
-			} catch (error) {
-				console.error('Error adding comment:', error);
-				throw error;
-			} finally {
-				setIsSubmitting(false);
+	const deleteMutation = useMutation({
+		mutationFn: (commentId: number) => deleteComment({ parentObjectType, parentObjectId, commentId }),
+		onMutate: async (commentId) => {
+			await queryClient.cancelQueries({ queryKey });
+			const previousComments = queryClient.getQueryData(queryKey);
+
+			queryClient.setQueryData(queryKey, (oldData: any) => {
+				if (!oldData?.items) return oldData;
+
+				return {
+					...oldData,
+					items: oldData.items.filter((c: any) => c.id !== commentId),
+				};
+			});
+
+			return { previousComments };
+		},
+		onError: (_err, _vars, context) => {
+			if (context?.previousComments) {
+				queryClient.setQueryData(queryKey, context.previousComments);
 			}
 		},
-		[isAuthenticated, user, objectType, objectId],
-	);
+	});
 
-	const handleDeleteComment = useCallback(
-		async (commentId: string | number) => {
-			try {
-				await apiCall({
-					method: HttpMethod.DELETE,
-					path: `/api/${objectType}/${objectId}/comment/${commentId}`,
-				});
+	// TODO: refetch only single comment that was liked
+	const likeMutation = useMutation<LikeResponse, unknown, { id: number }>({
+		mutationFn: ({ id }) =>
+			toggleCommentLike({
+				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.COMMENT],
+				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.COMMENT],
+				instanceId: id,
+			}),
 
-				setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-			} catch (error) {
-				console.error('Error deleting comment:', error);
-			}
+		onSuccess: () => {
+			// TODO: now it refetches the whole list for comments totals/flags, perhaps we could optimize it for local update with single comment fetch
+			queryClient.invalidateQueries({ queryKey });
 		},
-		[objectType, objectId],
-	);
 
-	const handleLikeComment = useCallback(
-		async (commentId: string | number) => {
-			if (!isAuthenticated) return;
-
-			try {
-				const comment = comments.find((c) => c.id === commentId);
-				if (!comment) return;
-
-				const endpoint = comment.isLiked ? 'unlike' : 'like';
-
-				await apiCall({
-					method: HttpMethod.POST,
-					path: `/api/${objectType}/${objectId}/comment/${commentId}/${endpoint}`,
-				});
-
-				setComments((prev) =>
-					prev.map((c) =>
-						c.id === commentId
-							? {
-									...c,
-									isLiked: !c.isLiked,
-									likesTotal: c.likesTotal + (endpoint === 'like' ? 1 : -1),
-								}
-							: c,
-					),
-				);
-			} catch (error) {
-				console.error('Error liking comment:', error);
-			}
+		onError: (err) => {
+			console.error('Like failed', err);
 		},
-		[isAuthenticated, comments, objectType, objectId],
-	);
+	});
 
 	return (
 		<div>
 			<hr />
-			{/* NEW: Handle locked state */}
 			{isLocked ? (
 				<h6 className="alert alert-warning">This post is locked and new comments are not allowed.</h6>
 			) : isAuthenticated && user ? (
 				<>
 					<h6>Share what's on your mind</h6>
-					<CommentForm onSubmit={handleAddComment} isSubmitting={isSubmitting} />
+					<CommentForm
+						onSubmit={(content) => addMutation.mutateAsync({ content, entity_id: objectUuid })}
+						isLoading={isLoading}
+					/>
 				</>
 			) : (
 				<h6>
@@ -130,8 +122,12 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 			<CommentList
 				comments={comments}
 				currentUser={user}
-				onDelete={handleDeleteComment}
-				onLike={handleLikeComment}
+				onDelete={(id) => deleteMutation.mutate(Number(id))}
+				onLike={(id) => {
+					const comment = comments.find((c) => c.id === Number(id));
+					if (comment) likeMutation.mutate({ id: Number(id) });
+				}}
+				isLoading={likeMutation.isPending}
 			/>
 		</div>
 	);

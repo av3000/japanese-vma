@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Application\Articles\Actions\Updates;
 
-use App\Domain\Articles\Http\Models\Article;
+// use App\Domain\Articles\Http\Models\Article;
+use Illuminate\Support\Facades\Log;
 
 class ReprocessArticleDataAction
 {
-    public function execute(Article $article): void
+    public function execute($article): void // TODO: Use proper Article type
     {
         // TODO: Implement kanji and JLPT level reprocessing
         // This should:
@@ -13,6 +15,6 @@ class ReprocessArticleDataAction
         // 2. Recalculate JLPT levels
         // 3. Update article with new levels
 
-        \Log::info("Article data reprocessing skipped for article {$article->id} - implementation pending");
+        Log::info("Article data reprocessing skipped for article {$article->id} - implementation pending");
     }
 }

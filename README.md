@@ -114,6 +114,14 @@ Now, in `/processor-api` repository root run:
 chmod +x .docker/entrypoint.sh
 ```
 
+Install composer packages on local machine to copy into containers:
+
+Ignores requirements that are linux specific packages
+
+```bash
+composer install --ignore-platform-reqs
+```
+
 Run docker containers in detached mode:
 
 ```bash
@@ -317,6 +325,27 @@ Track queue jobs:
 
 ```bash
 php artisan queue:work
+```
+
+Clear failed and expired jobs:
+
+```bash
+php artisan queue:forget <JOB_ID>
+```
+
+Retry failed job or all:
+
+```bash
+php artisan queue:retry <JOB_ID>
+
+php artisan queue:retry all
+
+```
+
+Get rid of all the jobs:
+
+```bash
+php artisan queue:flush
 ```
 
 API Documentation page is served on laravel side, to have it work install npm packages.

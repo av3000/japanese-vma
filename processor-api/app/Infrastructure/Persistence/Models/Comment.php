@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Infrastructure\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,10 @@ class Comment extends Model
         'real_object_id',
         'user_id',
         'parent_comment_id',
-        'content'
+        'content',
+        'uuid',
+        'real_object_uuid',
+        'entity_type_uuid'
     ];
 
     protected $casts = [
@@ -28,7 +32,7 @@ class Comment extends Model
     public function scopeForEntity($query, int $templateId, int $objectId)
     {
         return $query->where('template_id', $templateId)
-                    ->where('real_object_id', $objectId);
+            ->where('real_object_id', $objectId);
     }
 
     public function objecttemplate()
@@ -44,11 +48,11 @@ class Comment extends Model
     public function likes()
     {
         return $this->hasMany(Like::class, 'real_object_id')
-                    ->where('template_id', function($query) {
-                        $query->select('id')
-                              ->from('objecttemplates')
-                              ->where('title', 'comment');
-                    });
+            ->where('template_id', function ($query) {
+                $query->select('id')
+                    ->from('objecttemplates')
+                    ->where('title', 'comment');
+            });
     }
 
     public function parentComment()

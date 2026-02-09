@@ -6,10 +6,10 @@ const MAX_CHAR_LIMIT = 1000;
 
 interface CommentFormProps {
 	onSubmit: (content: string) => Promise<void>;
-	isSubmitting: boolean;
+	isLoading: boolean;
 }
 
-const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting }) => {
+const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading }) => {
 	const [message, setMessage] = useState<string>('');
 	const [error, setError] = useState<string>('');
 
@@ -32,6 +32,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting }) => 
 			setMessage('');
 			setError('');
 		} catch (err) {
+			console.error(err);
 			setError('Failed to post comment. Please try again.');
 		}
 	};
@@ -47,7 +48,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting }) => 
 					name="message"
 					rows={5}
 					maxLength={MAX_CHAR_LIMIT}
-					disabled={isSubmitting}
+					disabled={isLoading}
 				/>
 				<small className="form-text text-muted">{MAX_CHAR_LIMIT - message.length} characters remaining</small>
 			</div>
@@ -57,9 +58,9 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isSubmitting }) => 
 			<div className="form-group">
 				<Button
 					type="submit"
-					disabled={isSubmitting || !message.trim()}
+					disabled={isLoading || !message.trim()}
 					variant="outline"
-					isLoading={isSubmitting}
+					isLoading={isLoading}
 					size="sm"
 				>
 					Comment

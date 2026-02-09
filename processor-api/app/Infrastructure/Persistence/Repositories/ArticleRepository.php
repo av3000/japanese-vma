@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsDTO};
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
@@ -13,6 +13,7 @@ use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Domain\Shared\Enums\PublicityStatus;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
@@ -33,9 +34,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
-        $entityArticle->load('user');
 
-        return $this->articleMapper->mapToDomain($entityArticle);
+        return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }
 
     /**
@@ -55,26 +55,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         $entityArticle->save();
 
         // TODO: update attached kanjis
-    }
-
-    /**
-     * Find article by public UUID with optional selective eager loading.
-     *
-     *
-     * @param EntityId $articleUuid The article's public UUID
-     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
-     * @return DomainArticle|null The domain article if found, null if not found
-     * @throws \Illuminate\Database\QueryException On database failure
-     */
-    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle
-    {
-        $query = PersistenceArticle::query();
-
-        $persistenceArticle = $query->with(['user', 'kanjis'])
-            ->where('uuid', $articleUuid->value())
-            ->first();
-
-        return $persistenceArticle ? $this->articleMapper->mapToDomain($persistenceArticle) : null;
     }
 
     /**
@@ -136,6 +116,32 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
+     * Find article by public UUID with optional selective eager loading.
+     *
+     *
+     * @param EntityId $articleUuid The article's public UUID
+     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
+     * @return DomainArticle|null The domain article if found, null if not found
+     * @throws \Illuminate\Database\QueryException On database failure
+     */
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $options = null): ?DomainArticle
+    {
+        $query = PersistenceArticle::query()
+            ->with(['user'])
+            ->where('uuid', $articleUuid->value());
+
+        if ($options?->includeKanjis()) {
+            $query->with(['kanjis']);
+        }
+
+        $persistenceArticle = $query->first();
+
+        return $persistenceArticle
+            ? $this->articleMapper->mapToDomain($persistenceArticle, $options)
+            : null;
+    }
+
+    /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
      * Returns a domain collection (Articles) that wraps the paginated results
@@ -149,7 +155,8 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles
     {
-        $query = PersistenceArticle::query()->with(['user', 'kanjis']);
+        // TODO: should exclude kanjis unless asked for in applyContentFilters
+        $query = PersistenceArticle::query()->with(['user']);
 
         $this->applyVisibilityFilters($query, $criteria->visibilityRules);
         $this->applyContentFilters($query, $criteria);
@@ -162,8 +169,8 @@ class ArticleRepository implements ArticleRepositoryInterface
             $criteria->pagination->page
         );
 
-        $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) {
-            return $this->articleMapper->mapToDomain($persistenceArticle);
+        $domainArticles = $paginatedResults->getCollection()->map(function ($persistenceArticle) use ($criteria) {
+            return $this->articleMapper->mapToDomain($persistenceArticle, $criteria);
         });
 
         $paginatedResults->setCollection($domainArticles);
@@ -223,6 +230,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      * @param ArticleCriteriaDTO $criteria The criteria DTO containing:
      *                                     - categoryId: Optional category ID for exact filtering
      *                                     - search: Optional SearchTerm ValueObject for title search
+     *                                     - include_kanjis: Optional bool
      * @return void Query is modified by reference
      */
     private function applyContentFilters(Builder $query, ArticleCriteriaDTO $criteria): void
@@ -237,6 +245,10 @@ class ArticleRepository implements ArticleRepositoryInterface
                 $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
                     ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
+        }
+
+        if ($criteria->include_kanjis !== null && $criteria->include_kanjis == true) {
+            $query->with('kanjis');
         }
     }
 
@@ -263,8 +275,26 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void
     {
-        $persistenceArticle = PersistenceArticle::findOrFail($articleId);
-        // TODO: use custom query assign kanjis in a single query, instead of individual for each kanji
-        $persistenceArticle->kanjis()->sync($kanjiIds);
+        if (empty($kanjiIds)) {
+            DB::table('article_kanji')->where('article_id', $articleId)->delete();
+            return;
+        }
+
+        $pivotRecords = [];
+
+        foreach ($kanjiIds as $kanjiId) {
+            $pivotRecords[] = [
+                'article_id' => $articleId,
+                'kanji_id'   => $kanjiId,
+            ];
+        }
+
+        DB::transaction(function () use ($articleId, $pivotRecords) {
+            DB::table('article_kanji')->where('article_id', $articleId)->delete();
+
+            foreach (array_chunk($pivotRecords, 1000) as $chunk) {
+                DB::table('article_kanji')->insert($chunk);
+            }
+        });
     }
 }

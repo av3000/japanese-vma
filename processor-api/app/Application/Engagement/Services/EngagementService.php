@@ -1,96 +1,62 @@
 <?php
+
 namespace App\Application\Engagement\Services;
 
-use App\Application\Engagement\Actions\LoadEntityHashtagsAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Application\Engagement\Interfaces\Repositories\{ViewRepositoryInterface, LikeRepositoryInterface, DownloadRepositoryInterface};
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
-use App\Domain\Engagement\Models\EngagementData;
-use App\Domain\Engagement\DTOs\{ViewFilterDTO, EngagementFilterDTO, LikeFilterDTO, DownloadFilterDTO};
-use App\Domain\Engagement\DTOs\CommentFilterDTO;
+use App\Domain\Engagement\DTOs\{ViewFilterDTO, LikeFilterDTO, DownloadFilterDTO, EngagementSummary};
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\Models\{Articles, Article, ArticleWithEnhancements, ArticleStats};
-
-
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use App\Domain\Articles\Models\{Articles, Article, ArticleStats};
+use App\Infrastructure\Persistence\Models\Like as PersistenceLike;
+use App\Infrastructure\Persistence\Repositories\LikeMapper;
 
 class EngagementService implements EngagementServiceInterface
 {
-   public function __construct(
+    public function __construct(
         private LoadEntityStatsAction $loadStats,
         private ViewRepositoryInterface $viewRepository,
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository
+        // TOOD: should be removed after toggleLike method will go through likeRepository
+        private LikeMapper $likeMapper
     ) {}
 
-    public function getSingleArticleEngagementData(
+    public function getSingleArticleEngagementSummary(
         int $entityId,
         ObjectTemplateType $objectType,
-        ArticleIncludeOptionsDTO $includeOptions
-    ) : EngagementData {
+        ArticleIncludeOptionsDTO $includeOptions,
+        bool $isLoggedUser
+    ): EngagementSummary {
+        $likesCount = $this->likeRepository->countByFilter(new LikeFilterDTO(
+            entityId: $entityId,
+            objectType: $objectType
+        ));
 
-        $views = [];
-        $likes = [];
-        $downloads = [];
-        $comments = [];
-
-        if ($includeOptions->include_views) {
-            $views = $this->viewRepository->findAllByFilter(new ViewFilterDTO(
+        $isLiked = false;
+        if ($isLoggedUser) {
+            $isLiked = $this->likeRepository->userLikedByFilter(new LikeFilterDTO(
                 entityId: $entityId,
                 objectType: $objectType
             ));
         }
 
-        if ($includeOptions->include_likes) {
-            $likes = $this->likeRepository->findAllByFilter(new LikeFilterDTO(
-                entityId: $entityId,
-                objectType: $objectType
-            ));
-        }
+        $viewsCount = $this->viewRepository->countByFilter(new ViewFilterDTO(
+            entityId: $entityId,
+            objectType: $objectType
+        ));
 
-        if ($includeOptions->include_downloads) {
-            $downloads = $this->downloadRepository->findAllByFilter(new DownloadFilterDTO(
-                entityId: $entityId,
-                objectType: $objectType
-            ));
-        }
+        $downloadsCount = $this->downloadRepository->countByFilter(new DownloadFilterDTO(
+            entityId: $entityId,
+            objectType: $objectType
+        ));
 
-        if ($includeOptions->include_comments) {
-            $comments = $this->commentRepository->findAllByFilter(new CommentFilterDTO(
-                entityId: $entityId,
-                objectType: $objectType
-            ));
-        }
-
-        return new EngagementData($views, $likes, $downloads, $comments);
-    }
-
-    // TODO: create generic paginated list model with generic item object of following properties
-    // Is paginated list
-    // has isEmpty();
-    // has getItems();
-    // has getIdValue();
-    // has getEntityType();
-    // has IncludeOptionsDTO created to pass optional booleans of which stats should be included: likes, views, downloads, comments.
-    public function getLikesCount(array $entitiesList, string $entityId, IncludeOptionsDTO $dto): array
-    {
-        if ($entitiesList->isEmpty()) {
-            return $entitiesList;
-        }
-
-        $entityIds = array_map(fn($entity) => $entity->getIdValue(), $entitiesList);
-
-        $statsData = $this->loadStats->batchLoadStatsById($entityId, $entityIds);
-
-        $likesMap = [];
-        foreach ($entityIds as $id) {
-            $likesMap[$id] = $statsData[$id]['likes'] ?? 0;
-        }
-
-        return $likesMap;
+        return new EngagementSummary(
+            likesCount: $likesCount,
+            viewsCount: $viewsCount,
+            downloadsCount: $downloadsCount,
+            isLikedByViewer: $isLiked
+        );
     }
 
     public function enhanceArticlesWithStatsCounts(Articles $articles): array
@@ -108,7 +74,10 @@ class EngagementService implements EngagementServiceInterface
         $statsMap = [];
         foreach ($articles->getItems() as $article) {
             $stats = $statsData[$article->getIdValue()] ?? [
-                'likes' => 0, 'downloads' => 0, 'views' => 0, 'comments' => 0
+                'likes' => 0,
+                'downloads' => 0,
+                'views' => 0,
+                'comments' => 0
             ];
 
             $statsMap[$article->getIdValue()] = new ArticleStats(
@@ -122,21 +91,29 @@ class EngagementService implements EngagementServiceInterface
         return $statsMap;
     }
 
-    private function applyStatsToArticle(Article $article, array $statsData): Article
+    // TODO: use LikeRepository to query DB instead of leaking persistence model to service and controller layers.
+    // TODO: Add return type DomainLike | false
+    public function toggleLike(int $userId, int $entityId, ObjectTemplateType $type)
     {
-        $articleUuid = $article->getIdValue();
-        $stats = $statsData[$articleUuid] ?? [
-            'likes' => 0,
-            'downloads' => 0,
-            'views' => 0,
-            'comments' => 0
-        ];
+        $like = PersistenceLike::where([
+            'user_id' => $userId,
+            'real_object_id' => $entityId,
+            'template_id' => $type->getLegacyId(),
+        ])->first();
 
-        return $article->withStats(
-            $stats['likes'],
-            $stats['downloads'],
-            $stats['views'],
-            $stats['comments']
-        );
+        if (!$like) {
+            $like = new PersistenceLike();
+            $like->user_id = $userId;
+            $like->template_id = $type->getLegacyId();
+            $like->real_object_id = $entityId;
+            $like->value = 1;
+            $like->save();
+            $like->load('user:id,uuid,name');
+            $mappedDomainLike = $this->likeMapper->mapToDomain($like);
+            return $mappedDomainLike;
+        }
+
+        $like->delete();
+        return null;
     }
 }

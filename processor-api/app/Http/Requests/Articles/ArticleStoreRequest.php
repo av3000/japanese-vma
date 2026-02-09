@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\Articles;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,7 +13,7 @@ class ArticleStoreRequest extends FormRequest
      */
     public function authorize()
     {
-        return auth()->check();
+        return auth('api')->check();
     }
 
     /**

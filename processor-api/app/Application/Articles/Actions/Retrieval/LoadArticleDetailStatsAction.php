@@ -1,11 +1,11 @@
 <?php
+
 namespace App\Application\Articles\Actions\Retrieval;
 
 use App\Application\Articles\Actions\Retrieval\{LoadArticleListStatsAction, LoadArticleListHashtagsAction};
 
-use App\Domain\Articles\Http\Models\Article;
+// use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 
 class LoadArticleDetailStatsAction
 {
@@ -19,7 +19,7 @@ class LoadArticleDetailStatsAction
      * This demonstrates how we can reuse existing efficient batch loading logic
      * even for single-item scenarios by creating a temporary collection.
      */
-    public function execute(Article $article): void
+    public function execute($article): void // TODO: add proper Article type
     {
         // Create a temporary paginator with just our single article
         // This allows us to reuse the efficient batch loading logic

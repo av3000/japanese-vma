@@ -30,27 +30,27 @@ export interface CardProps {
  * Generic Card component that can be used as a base for specialized card types
  */
 export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, children, className }) => {
-	const renderContent = (): React.ReactElement => {
-		return <>{children && <div className={styles.childrenWrapper}>{children}</div>}</>;
-	};
-
 	return (
 		<article className={classNames(styles.wrapper, className)}>
 			<div>
 				{image && (
-					<div className={styles.img}>
-						<img
-							src={image.url}
-							alt={image.alt}
-							title={image.title || image.alt}
-							className={styles.image}
-						/>
-					</div>
+					<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
+						<div className={styles.img}>
+							<img
+								src={image.url}
+								alt={image.alt}
+								title={image.title || image.alt}
+								className={styles.image}
+							/>
+						</div>
+					</Link>
 				)}
 
 				{date && <div className={classNames(styles.date, 'mt-2')}>{formatDate(date, 'ja', true)}</div>}
 
-				{title && <p className={classNames(styles.title)}>{title}</p>}
+				<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
+					{title && <p className={classNames(styles.title)}>{title}</p>}
+				</Link>
 
 				{tags && tags.length > 0 && (
 					<div className={classNames(styles.chipList, 'mt-2 d-flex align-items-center flex-wrap')}>
@@ -63,13 +63,7 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 				)}
 			</div>
 
-			{url ? (
-				<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
-					{renderContent()}
-				</Link>
-			) : (
-				renderContent()
-			)}
+			<>{children && <div className={styles.childrenWrapper}>{children}</div>}</>
 		</article>
 	);
 };

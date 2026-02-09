@@ -4,7 +4,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsDTO};
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface};
 use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 
 interface ArticleRepositoryInterface
@@ -13,7 +13,7 @@ interface ArticleRepositoryInterface
      * Create a new article in persistence.
      *
      * @param DomainArticle $article The domain article to create
-     * @return DomainArticle The created article with generated ID and relationships
+     * @return DomainArticle The created article with generated ID
      * @throws \Illuminate\Database\QueryException On database constraint violation
      */
     public function create(DomainArticle $article): DomainArticle;
@@ -32,11 +32,11 @@ interface ArticleRepositoryInterface
      *
      *
      * @param EntityId $articleUuid The article's public UUID
-     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
+     * @param ArticleIncludeOptionsInterface|null $dto Options for eager loading:
      * @return DomainArticle|null The domain article if found, null if not found
      * @throws \Illuminate\Database\QueryException On database failure
      */
-    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsDTO $dto = null): ?DomainArticle;
+    public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $dto = null): ?DomainArticle;
 
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.

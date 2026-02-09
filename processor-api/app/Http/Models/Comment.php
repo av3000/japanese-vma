@@ -9,17 +9,27 @@ use App\Http\Models\Like;
 
 class Comment extends Model
 {
-    public function objecttemplate() 
+    protected $fillable = [
+        'template_id',
+        'real_object_id',
+        'user_id',
+        'parent_comment_id',
+        'content',
+        'uuid',
+        'real_object_uuid',
+        'entity_type_uuid'
+    ];
+    public function objecttemplate()
     {
         return $this->belongsTo(ObjectTemplate::class);
     }
 
-    public function user() 
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function likes() 
+    public function likes()
     {
         return $this->hasMany(Like::class);
     }

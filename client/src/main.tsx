@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 import './assets/font-awesome/css/all.min.css';
+import './styles/tailwind.css';
 import './styles/App.scss';
 import './styles/index.scss';
 

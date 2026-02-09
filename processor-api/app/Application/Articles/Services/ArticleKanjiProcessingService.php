@@ -10,6 +10,7 @@ use App\Domain\Articles\ValueObjects\{JlptLevels};
 use App\Domain\Articles\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 
+// TODO: probably to be refactored or decommisioned. See in ArticleService how the job is being called
 class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInterface
 {
     public function __construct(

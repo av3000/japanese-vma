@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Comments\DTOs;
 
 readonly class CommentListDTO
@@ -12,6 +13,8 @@ readonly class CommentListDTO
         public bool $include_replies = false,
         public bool $include_likes = false,
         public bool $include_author = true,
+        public bool $include_engagement_summary = true,
+
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -25,6 +28,7 @@ readonly class CommentListDTO
             include_replies: $validated['include_replies'] ?? false,
             include_likes: $validated['include_likes'] ?? false,
             include_author: $validated['include_author'] ?? true,
+            include_engagement_summary: $validated['include_engagement_summary'] ?? true,
         );
     }
 }

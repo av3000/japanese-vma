@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\V1\Admin\Requests;
+namespace App\Http\v1\Admin\Requests;
 
-use App\Domain\Shared\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class RemoveRoleRequest extends FormRequest
 {

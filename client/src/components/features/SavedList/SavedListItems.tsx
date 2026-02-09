@@ -1,6 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 import React from 'react';
+// TODO: specify that ObjectTemplates are for lists specifically and for general instance types use `ObjectTemplateType` enum.
 import { ObjectTemplates } from '@/shared/constants';
 import ListArticlesList from './SavedLists/SavedArticlesList';
 import ListKanjisList from './SavedLists/SavedKanjisList';

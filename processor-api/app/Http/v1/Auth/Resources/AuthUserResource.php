@@ -24,6 +24,7 @@ class AuthUserResource extends JsonResource
         $user = $this->resource;
 
         $data = [
+            'id' => $user->getId()->value(),
             'uuid' => $user->getUuid()->value(),
             'name' => $user->getName()->value(),
             'email' => $user->getEmail()->value(),

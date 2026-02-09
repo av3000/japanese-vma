@@ -34,7 +34,7 @@ const SavedListDetails: React.FC = () => {
 	useEffect(() => {
 		const getListWithAuth = async () => {
 			try {
-				const url = `${BASE_URL}/api/list/${list_id}`;
+				const url = `${BASE_URL}/list/${list_id}`;
 				const res = await apiCall({ method: HttpMethod.GET, path: url });
 				const listData = res.list;
 				setList(listData);
@@ -42,7 +42,7 @@ const SavedListDetails: React.FC = () => {
 				if (!listData) {
 					navigate('/lists');
 				} else if (isAuthenticated) {
-					const likeRes = await apiCall({ method: HttpMethod.POST, path: `/api/list/${list_id}/checklike` });
+					const likeRes = await apiCall({ method: HttpMethod.POST, path: `/list/${list_id}/checklike` });
 					setList((prevList) => ({ ...prevList, isLiked: likeRes.isLiked }));
 				}
 
@@ -116,7 +116,7 @@ const SavedListDetails: React.FC = () => {
 				return;
 			}
 
-			const url = `${BASE_URL}/api/list/${list_id}/${endpoint}`;
+			const url = `${BASE_URL}/list/${list_id}/${endpoint}`;
 
 			try {
 				const res = await apiCall({
