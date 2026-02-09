@@ -37,14 +37,12 @@ export const useLikeArticleMutation = (articleUuid: string) => {
 			}),
 
 		onSuccess: () => {
-			// refetch the article detail (and optionally lists)
 			queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
-			// optionally:
-			// queryClient.invalidateQueries({ queryKey: ['articles'] });
 		},
 
 		onError: (err) => {
 			console.error('Like article failed', err);
+			// TODO: Figure how to inform user - perhaps general toast message.
 		},
 	});
 };

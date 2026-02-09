@@ -39,8 +39,6 @@ const SavedListDetails: React.FC = () => {
 				const listData = res.list;
 				setList(listData);
 
-				console.log('getlist res', res, 'listData', listData);
-
 				if (!listData) {
 					navigate('/lists');
 				} else if (isAuthenticated) {

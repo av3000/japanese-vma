@@ -70,6 +70,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		setModals((prev) => ({ ...prev, [modalName]: !prev[modalName] }));
 	};
 
+	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
 	const handleListAction = async (listId: number, action: string) => {
 		setLoadingListIds((prev) => [...prev, listId]);
 		try {
@@ -92,7 +93,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	// TODO: should be available only after kanji attachement processing operation is done
+	// TODO: Refactor to queries when backend is migrated to V1 endpoint for PDF endpoints.
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {

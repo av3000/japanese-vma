@@ -28,10 +28,6 @@ Route::group([
     Route::get('logout', 'UserController@logout');
     Route::get('user', 'UserController@user');
 
-    // TODO: move to V1 with dedicated controller for liking abstracted logic.
-    // Logic is ready, would only require to rename the API route
-    Route::post('article/like', 'ArticleController@likeInstance');
-
     // Articles CUD
     Route::post('article', 'ArticleController@store');
     Route::put('article/{id}', 'ArticleController@update');

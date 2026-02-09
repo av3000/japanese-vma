@@ -7,6 +7,7 @@ import ArticleCard from '@/components/shared/ArticleCard';
 
 const ExploreArticleList: React.FC = () => {
 	const { data, error, status } = useInfiniteQuery({
+		// TODO: query keys should be managed centrally
 		queryKey: ['articles'],
 		queryFn: ({ pageParam }) => fetchArticles({ per_page: 4 }, pageParam),
 		initialPageParam: 1,
@@ -16,7 +17,6 @@ const ExploreArticleList: React.FC = () => {
 	});
 
 	const allArticles = data?.pages.flatMap((page) => page.items) || [];
-	console.log('allArticles in explore article list', allArticles);
 	const totalCount = data?.pages[0]?.pagination.total || 0;
 
 	if (status === 'pending') {

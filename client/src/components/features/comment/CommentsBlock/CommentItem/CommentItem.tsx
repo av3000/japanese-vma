@@ -15,7 +15,6 @@ interface CommentItemProps {
 
 const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike, isLoading }) => {
 	const canDelete = currentUser && (currentUser.id === comment.author_id || currentUser.is_admin);
-	console.log('single comment', comment);
 
 	return (
 		<div className="media">

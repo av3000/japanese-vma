@@ -41,7 +41,7 @@ class CommentRepository implements CommentRepositoryInterface
             $criteria->pagination->page
         );
 
-        // TODO: Cover include_replies
+        // TODO: Implement include_replies
         // if ($parentOnly) {
         //     $query->whereNull('parent_comment_id');
         // }
@@ -230,16 +230,4 @@ class CommentRepository implements CommentRepositoryInterface
             })
             ->toArray();
     }
-
-    // public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
-    // {
-    //     $results = PersistenceComment::where('template_id', $objectType->getLegacyId())
-    //         ->whereIn('real_object_id', $entityIds)
-    //         ->get()
-    //         ->groupBy('real_object_id')
-    //         ->map->toArray() // Convert each group to array
-    //         ->toArray();
-
-    //     return $results;
-    // }
 }

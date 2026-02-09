@@ -37,6 +37,7 @@ class CommentController extends Controller
         int $entityId,
         ObjectTemplateType $entityType
     ): JsonResponse {
+        // TODO: Implement include_replies
         $listDTO = CommentListDTO::fromRequest($request->validated());
 
         $paginatedComments = $this->commentService->getCommentsList(

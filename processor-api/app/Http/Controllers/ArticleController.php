@@ -9,14 +9,9 @@ use App\Http\Models\Download;
 use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
-use App\Http\Models\Word;
-use App\Http\Requests\Articles\LikeInstanceRequest;
 use App\Http\User;
-use App\Http\v1\Engagement\Resources\LikeResource;
-use App\Shared\Enums\HttpStatus;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use PDF;
@@ -923,38 +918,6 @@ class ArticleController extends Controller
             'like' => $like,
         ]);
     }
-    // public function likeInstance(LikeInstanceRequest $request)
-    // {
-    //     $like = Like::where([
-    //         'real_object_id' => $request->get('real_object_id'),
-    //         'template_id' => $request->get('template_id'),
-    //         'user_id' => auth('api')->user()->id,
-    //     ])->first();
-
-    //     if (!$like) {
-    //         $like = new Like;
-    //         $like->user_id = auth('api')->user()->id;
-    //         $like->template_id = $request->get('template_id');
-    //         $like->real_object_id = $request->get('real_object_id');
-    //         $like->value = 1;
-    //         $like->save();
-
-    //         $like->load('user');
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'like' => new LikeResource($like)
-    //         ]);
-    //     }
-
-    //     $deletedId = $like->id;
-    //     $like->delete();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'like' => $deletedId,
-    //     ]);
-    // }
 
     public function checkIfLikedArticle($id)
     {

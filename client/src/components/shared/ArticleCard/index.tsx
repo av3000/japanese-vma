@@ -37,7 +37,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 
 					{shouldShowProcessingBadge(status) && (
 						<div className={styles.statusOverlay}>
-							{/* TODO: should not have hover effect as its read only */}
+							{/* TODO: should show estimated delivery time on popover click when backend will support estimation */}
 							<ProcessingStatusBadge status={status} />
 						</div>
 					)}

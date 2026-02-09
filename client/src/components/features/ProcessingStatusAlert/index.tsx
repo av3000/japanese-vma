@@ -2,7 +2,6 @@ import React from 'react';
 import classNames from 'classnames';
 import { LastOperationEvent, LastOperationStatus } from '@/api/last-operations/last-operations';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
-import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
 import {
 	Popover,
 	PopoverContent,
@@ -11,6 +10,7 @@ import {
 	PopoverTitle,
 	PopoverTrigger,
 } from '@/components/ui/popover';
+import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
 import styles from './ProcessingStatusAlert.module.scss';
 
 export const STATUS_CONFIG: Record<LastOperationStatus, { message: string }> = {
@@ -47,7 +47,9 @@ const formatDurationCompact = (ms: number): string => {
 	return parts.join(' ');
 };
 
-// TODO: Should perhaps allow to close permanently, after each processing, probably saving the last state on browser storage
+// TODO: Should perhaps allow to close permanently, after each processing,
+// probably saving the last state on browser storage.
+// Or change UI presentation for smarter UX
 const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processing_status, className }) => {
 	const status = processing_status?.status;
 
@@ -73,6 +75,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 		durationText = formatDurationCompact(updatedAtMs - createdAtMs);
 	}
 
+	// TODO: not sure about this class mapping if it is the clean way.
 	const statusVariant: StatusVariant =
 		status === LastOperationStatus.Completed
 			? 'success'

@@ -64,15 +64,6 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 			</div>
 
 			<>{children && <div className={styles.childrenWrapper}>{children}</div>}</>
-
-			{/* // TODO: redo styling to have a link only on article header and image
-			{url ? (
-				<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
-					{renderContent()}
-				</Link>
-			) : (
-				renderContent()
-			)} */}
 		</article>
 	);
 };

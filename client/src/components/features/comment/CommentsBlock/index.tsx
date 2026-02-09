@@ -24,6 +24,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	const { isAuthenticated, user } = useAuth();
 
 	const queryClient = useQueryClient();
+	// TODO: query keys management should be somehow centralized
 	const queryKey = ['comments', parentObjectType, parentObjectId, { include_likes: true }];
 	const { data: comments = [], isLoading } = useQuery({
 		queryKey,
@@ -90,12 +91,11 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 			}),
 
 		onSuccess: () => {
-			// refetch the comments list to get authoritative totals/flags
+			// TODO: now it refetches the whole list for comments totals/flags, perhaps we could optimize it for local update with single comment fetch
 			queryClient.invalidateQueries({ queryKey });
 		},
 
 		onError: (err) => {
-			// optional: notify user
 			console.error('Like failed', err);
 		},
 	});
