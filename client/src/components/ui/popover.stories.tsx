@@ -1,19 +1,21 @@
+import { useArgs } from '@storybook/preview-api';
 import type { Meta, StoryObj } from '@storybook/react';
-import {
-	Popover,
-	PopoverContent,
-	PopoverDescription,
-	PopoverHeader,
-	PopoverTitle,
-	PopoverTrigger,
-} from './popover';
+import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from './popover';
 
-const meta = {
+type PopoverStoryArgs = {
+	open: boolean;
+	modal: boolean;
+	align: 'start' | 'center' | 'end';
+	sideOffset: number;
+};
+
+const meta: Meta<PopoverStoryArgs> = {
 	title: 'UI/Popover',
-	component: Popover,
 	tags: ['autodocs'],
 	parameters: {
 		docs: {
+			story: { inline: false },
+			canvas: { height: '500px' }, //TODO: check why doesnt apply for general popover page
 			description: {
 				component: `
 **When to use**
@@ -24,20 +26,38 @@ const meta = {
 			},
 		},
 	},
-} satisfies Meta<typeof Popover>;
+	argTypes: {
+		open: { control: 'boolean' },
+		modal: { control: 'boolean' },
+		align: {
+			options: ['start', 'center', 'end'],
+			control: { type: 'select' },
+		},
+		sideOffset: { control: { type: 'number', min: 0, max: 24, step: 1 } },
+	},
+	args: {
+		open: false,
+		modal: false,
+		align: 'start',
+		sideOffset: 8,
+	},
+};
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type TriggerButtonProps = React.ComponentProps<'button'> & { children: React.ReactNode };
 
-const TriggerButton = ({ children }: { children: React.ReactNode }) => (
+const TriggerButton = ({ children, ...props }: TriggerButtonProps) => (
 	<button
 		type="button"
 		className="inline-flex items-center rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
+		{...props}
 	>
 		{children}
 	</button>
 );
+
+type Story = StoryObj<PopoverStoryArgs>;
 
 export const Interactive: Story = {
 	render: () => (
@@ -54,6 +74,33 @@ export const Interactive: Story = {
 			</PopoverContent>
 		</Popover>
 	),
+};
+
+export const Playground: Story = {
+	render: function PlaygroundRender() {
+		const [{ open, modal, align, sideOffset }, updateArgs] = useArgs<PopoverStoryArgs>();
+
+		return (
+			<Popover
+				open={open}
+				modal={modal}
+				onOpenChange={(next) => {
+					updateArgs({ open: next });
+				}}
+			>
+				<PopoverTrigger asChild>
+					<TriggerButton>Toggle popover</TriggerButton>
+				</PopoverTrigger>
+				<PopoverContent align={align} sideOffset={sideOffset}>
+					<PopoverHeader>
+						<PopoverTitle>Playground</PopoverTitle>
+						<PopoverDescription>Use Controls to change props.</PopoverDescription>
+					</PopoverHeader>
+					<div className="text-sm">Click the trigger or toggle the `open` control.</div>
+				</PopoverContent>
+			</Popover>
+		);
+	},
 };
 
 export const DefaultOpen: Story = {
@@ -131,4 +178,3 @@ export const Alignments: Story = {
 		</div>
 	),
 };
-
