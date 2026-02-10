@@ -80,6 +80,8 @@
 }
 
 .title {
+	display: flex;
+	align-items: center;
 	margin: 0;
 	font-size: var(--font-size-heading-4);
 	font-weight: var(--font-weight-semibold);
