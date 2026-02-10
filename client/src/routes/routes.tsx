@@ -1,4 +1,3 @@
-// src/routes/routes.tsx
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import PageLoader from '@/components/features/PageLoader';
@@ -15,7 +14,7 @@ const RegisterPage = lazy(() => import('@/routes/Register'));
 // Article routes
 const ArticlesListPage = lazy(() => import('@/routes/ArticlesList'));
 const ArticleDetailsPage = lazy(() => import('@/routes/ArticleDetails'));
-const ArticleFormPage = lazy(() => import('@/routes/ArticleForm'));
+const ArticleCreatePage = lazy(() => import('@/routes/ArticleCreate'));
 const ArticleEditPage = lazy(() => import('@/routes/ArticleEdit'));
 
 // List routes
@@ -43,7 +42,6 @@ const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 // Dashboard routes
 const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
-// Wrap all lazy-loaded components with the suspense boundary
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
 	<Suspense fallback={<PageLoader />}>{children}</Suspense>
 );
@@ -203,7 +201,7 @@ const AppRoutes: React.FC = () => {
 					path="/newarticle"
 					element={
 						<SuspenseWrapper>
-							<ArticleFormPage />
+							<ArticleCreatePage />
 						</SuspenseWrapper>
 					}
 				/>

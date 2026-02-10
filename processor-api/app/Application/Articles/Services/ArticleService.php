@@ -28,7 +28,6 @@ use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, Viewer, Paginati
 use App\Domain\Articles\Exceptions\{ArticleNotFoundException, ArticleAccessDeniedException};
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Articles\Errors\ArticleErrors;
-use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Shared\Results\Result;
 
@@ -86,6 +85,7 @@ class ArticleService implements ArticleServiceInterface
                     new UserId($user->id),
                     new UserName($user->name)
                 );
+                // TODO: for frontend we only need UUID/ID which can be used to redirect user to article details page where frontend fetched the article show endpoint.
                 $createdDomainArticle = $this->articleRepository->create($domainArticle);
 
                 if ($dto->tags && !empty($dto->tags)) {
@@ -102,10 +102,10 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-	                ProcessArticleKanjisJob::dispatch(
-	                    $createdDomainArticle->getUid()->value(),
-	                    $dto->content_jp
-	                );
+                ProcessArticleKanjisJob::dispatch(
+                    $createdDomainArticle->getUid()->value(),
+                    $dto->content_jp
+                );
 
                 return $createdDomainArticle;
             });
@@ -196,7 +196,7 @@ class ArticleService implements ArticleServiceInterface
      * @param EntityId $articleUid Article UID
      * @param ArticleUpdateDTO $dto Update data
      * @param User $user User for authorized actions
-     * @return Result Success data: PersistenceArticle, Failure data: Error
+     * @return Result Success data: DomainArticle, Failure data: Error
      * @todo Refactor to use EntityId and return DomainArticle
      */
     public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result
@@ -204,50 +204,48 @@ class ArticleService implements ArticleServiceInterface
         $articleUid = EntityId::from($uid);
 
         try {
-            $result = DB::transaction(function () use ($articleUid, $dto, $user) {
-                $domainArticle = $this->articleRepository->findByPublicUid($articleUid);
+            $domainArticle = $this->articleRepository->findByPublicUid($articleUid);
 
-                if (!$domainArticle) {
-                    return Result::failure(ArticleErrors::notFound($articleUid->value()));
-                }
+            if (!$domainArticle) {
+                return Result::failure(ArticleErrors::notFound($articleUid->value()));
+            }
 
-                if (!$this->ArticlePolicy->canView($user, $domainArticle)) {
-                    return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
-                }
+            if (!$this->ArticlePolicy->canUpdate($user, $domainArticle)) {
+                return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
+            }
 
+            $shouldReprocessContent = $dto->content_jp !== null
+                && $dto->content_jp !== $domainArticle->getContentJp()->value;
+
+            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $user) {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
                 $this->articleRepository->update($updatedDomainArticle);
 
-                if ($dto->tags !== null) {
-                    $hashtagResult = $this->hashtagService->updateTagsForEntity(
+                if ($dto->hashtags !== null) {
+                    $hashtagResult = $this->hashtagService->syncTagsForEntity(
                         $domainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
-                        $dto->tags,
+                        $dto->hashtags,
                         $user->id
                     );
 
                     if ($hashtagResult->isFailure()) {
-                        throw new \Exception($hashtagResult->error->description);
+                        throw new \Exception($hashtagResult->getError()->description);
                     }
                 }
-
-                // TODO: Add some extra checks to see if kanjis or words has changed.
-                // TODO: implement kanji processing queueing. Part of live updates with websocket for frontend.
-	                if ($this->shouldReprocessContent($dto) && $dto->content_jp !== null) {
-	                    // $this->reprocessData->execute($updatedDomainArticle);
-	                    dd($dto);
-	                    // If content changed or reattachment requested, dispatch job for reprocessing Kanjis
-	                    ProcessArticleKanjisJob::dispatch(
-	                        $updatedDomainArticle->getUid()->value(),
-	                        $dto->content_jp // Pass the new content for processing
-	                    );
-	                }
 
                 return $updatedDomainArticle;
             });
 
-            return Result::success($result);
+            if ($shouldReprocessContent) {
+                ProcessArticleKanjisJob::dispatch(
+                    $updatedDomainArticle->getUid()->value(),
+                    $dto->content_jp
+                );
+            }
+
+            return Result::success($updatedDomainArticle);
         } catch (\Exception $e) {
             Log::error('Article update failed', [
                 'user_id' => $user->id,
@@ -257,18 +255,6 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::updateFailed($e->getMessage()));
         }
-    }
-
-    /**
-    // TODO: Might consider moving this method somewhere closer to domain.
-     * Determine if content changes require kanji/word reprocessing.
-     *
-     * @param ArticleUpdateDTO $dto Update data
-     * @return bool True if reprocessing needed
-     */
-    private function shouldReprocessContent(ArticleUpdateDTO $dto): bool
-    {
-        return $dto->reattach || $dto->content_jp !== null;
     }
 
     /**
@@ -291,24 +277,22 @@ class ArticleService implements ArticleServiceInterface
             $dto->title_jp !== null
                 ? new ArticleTitle($dto->title_jp)
                 : $article->getTitleJp(),
-            $dto->title_en !== null
-                ? ($dto->title_en ? new ArticleTitle($dto->title_en) : null)
+            $dto->title_en_present
+                ? ($dto->title_en !== null ? new ArticleTitle($dto->title_en) : null)
                 : $article->getTitleEn(),
             $dto->content_jp !== null
                 ? new ArticleContent($dto->content_jp)
                 : $article->getContentJp(),
-            $dto->content_en !== null
-                ? ($dto->content_en ? new ArticleContent($dto->content_en) : null)
+            $dto->content_en_present
+                ? ($dto->content_en !== null ? new ArticleContent($dto->content_en) : null)
                 : $article->getContentEn(),
             $dto->source_link !== null
                 ? new ArticleSourceUrl($dto->source_link)
                 : $article->getSourceUrl(),
             $dto->publicity !== null
-                ? PublicityStatus::from($dto->publicity)
+                ? ($dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE)
                 : $article->getPublicity(),
-            $dto->status !== null
-                ? ArticleStatus::from($dto->status)
-                : $article->getStatus(),
+            $article->getStatus(),
             $article->getJlptLevels(), // TODO: Recalculate if content changed
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp

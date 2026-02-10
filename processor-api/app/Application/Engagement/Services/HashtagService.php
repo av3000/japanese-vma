@@ -99,6 +99,55 @@ class HashtagService implements HashtagServiceInterface
     }
 
     /**
+     * Replace all hashtags for an entity within a transaction.
+     *
+     * If tags are empty, clears all hashtags for the entity.
+     * Validates all tags before applying changes.
+     */
+    public function syncTagsForEntity(
+        int $entityId,
+        ObjectTemplateType $entityType,
+        array $tags,
+        int $userId
+    ): Result {
+        foreach ($tags as $tag) {
+            if (!$this->isValidTag($tag)) {
+                return Result::failure(HashtagErrors::invalidTag($tag));
+            }
+        }
+
+        try {
+            \DB::transaction(function () use ($entityId, $entityType, $tags, $userId) {
+                $this->hashtagRepository->deleteByEntity(
+                    $entityId,
+                    $entityType->getLegacyId()
+                );
+
+                foreach ($tags as $tag) {
+                    $this->hashtagRepository->create([
+                        'entity_id' => $entityId,
+                        'entity_type_id' => $entityType->getLegacyId(),
+                        'content' => $tag,
+                        'user_id' => $userId
+                    ]);
+                }
+            });
+
+            return Result::success();
+        } catch (\Exception $e) {
+            \Log::error('Hashtag sync failed', [
+                'entity_id' => $entityId,
+                'entity_type' => $entityType->value,
+                'tags' => $tags,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(HashtagErrors::creationFailed());
+        }
+    }
+
+    /**
      * Validate a hashtag against business rules.
      *
      * Rules:

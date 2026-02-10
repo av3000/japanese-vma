@@ -15,15 +15,13 @@ class UpdateArticleRequest extends FormRequest
     {
         return [
             'title_jp' => 'sometimes|string|min:2|max:255',
-            'title_en' => 'sometimes|nullable|string|max:255',
+            'title_en' => 'sometimes|nullable|string|min:2|max:255',
             'content_jp' => 'sometimes|string|min:10|max:2000',
-            'content_en' => 'sometimes|nullable|string|max:2000',
+            'content_en' => 'sometimes|nullable|string|min:10|max:2000',
             'source_link' => 'sometimes|url|max:500',
             'publicity' => 'sometimes|boolean',
-            'status' => 'sometimes|integer|between:0,3',
-            'tags' => 'sometimes|nullable|array|max:10',
-            'tags.*' => 'string|max:50|distinct',
-            'reattach' => 'sometimes|boolean',
+            'hashtags' => 'sometimes|array|max:10',
+            'hashtags.*' => 'string|max:50|distinct',
         ];
     }
 
@@ -33,10 +31,17 @@ class UpdateArticleRequest extends FormRequest
             'title_jp.min' => 'Japanese title must be at least 2 characters',
             'content_jp.min' => 'Japanese content must be at least 10 characters',
             'source_link.url' => 'Source link must be a valid URL',
-            'tags.max' => 'Maximum 10 tags allowed',
-            'tags.*.max' => 'Each tag must not exceed 50 characters',
-            'tags.*.distinct' => 'Duplicate tags are not allowed',
+            'hashtags.max' => 'Maximum 10 hashtags allowed',
+            'hashtags.*.max' => 'Each hashtag must not exceed 50 characters',
+            'hashtags.*.distinct' => 'Duplicate hashtags are not allowed',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (!$this->has('hashtags') && $this->has('tags')) {
+            $this->merge(['hashtags' => $this->input('tags')]);
+        }
     }
 
     /**
@@ -51,9 +56,8 @@ class UpdateArticleRequest extends FormRequest
             'content_en',
             'source_link',
             'publicity',
-            'status',
-            'tags',
-            'reattach'
+            'hashtags',
+            'tags'
         ];
     }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { deleteArticle, fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
 import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
+import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
 
 interface ArticleContentProps {
@@ -28,6 +29,7 @@ interface ArticleContentProps {
 
 const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
 
@@ -40,16 +42,20 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 
+	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
 
+	// TODO: Should only call queries propagating up to smart component
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
 		queryFn: () => fetchArticleSavedLists(article.id.toString()),
 		enabled: isAuthenticated,
 	});
 
+	// TODO: how should this backend call passed onto - directly here or come from parent smart component?
 	const likeMutation = useLikeArticleMutation(article.uuid);
 
+	// TODO: Should only call queries propagating up to smart component
 	const statusMutation = useMutation({
 		mutationFn: (status: number) => setArticleStatus(article.uuid, status),
 		onSuccess: (res) => {
@@ -70,7 +76,21 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		setModals((prev) => ({ ...prev, [modalName]: !prev[modalName] }));
 	};
 
+	// TODO: not sure about modal opening flow. It is purely url based I believe, not sure if that is enough
+	const openEditModal = () => {
+		const next = new URLSearchParams(searchParams);
+		next.set('edit', '1');
+		setSearchParams(next);
+	};
+
+	const closeEditModal = () => {
+		const next = new URLSearchParams(searchParams);
+		next.delete('edit');
+		setSearchParams(next);
+	};
+
 	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
+	// TODO: Should only call queries propagating up to smart component
 	const handleListAction = async (listId: number, action: string) => {
 		setLoadingListIds((prev) => [...prev, listId]);
 		try {
@@ -94,6 +114,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	};
 
 	// TODO: Refactor to queries when backend is migrated to V1 endpoint for PDF endpoints.
+	// TODO: Should only call queries propagating up to smart component
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {
@@ -111,6 +132,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const isLiked = article.engagement?.is_liked_by_viewer;
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
+	const isEditOpen = isOwner && searchParams.get('edit') === '1';
 
 	return (
 		<div className="container pb-5">
@@ -149,7 +171,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 									<Button onClick={() => toggleModal('showDelete')} variant="ghost" hasOnlyIcon>
 										<Icon name="trashbinSolid" size="md" />
 									</Button>
-									<Button to={`/article/edit/${article.id}`} variant="ghost" hasOnlyIcon>
+									<Button onClick={openEditModal} variant="ghost" hasOnlyIcon>
 										<Icon name="penSolid" size="md" />
 									</Button>
 								</div>
@@ -305,6 +327,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 					</Button>
 				</Modal.Body>
 			</Modal>
+
+			<ArticleEditModal article={article} isOpen={isEditOpen} onClose={closeEditModal} />
 		</div>
 	);
 };

@@ -11,9 +11,9 @@ export interface ArticleDetails {
 	// TODO: fix in backend to have proper uuid
 	uid: string;
 	title_jp: string;
-	title_en: string;
+	title_en: string | null;
 	content_jp: string;
-	content_en: string;
+	content_en: string | null;
 	hashtags: Hashtag[];
 	jlpt_levels: {
 		n1: number;
@@ -42,7 +42,9 @@ export interface Article {
 	id: number;
 	uuid: string;
 	title_jp: string;
+	title_en: string | null;
 	content_preview_jp: string;
+	content_preview_en: string | null;
 	hashtags: Hashtag[];
 	jlpt_levels: {
 		n1: number;
@@ -91,6 +93,16 @@ export interface CreateArticleResponse {
 	uuid: string;
 }
 
+export interface UpdateArticlePayload {
+	title_jp?: string;
+	title_en?: string | null;
+	content_jp?: string;
+	content_en?: string | null;
+	source_link?: string;
+	publicity?: boolean;
+	hashtags?: string[];
+}
+
 // TODO: explore option to use Orval generated data contracts
 export const fetchArticles = async (filters: Record<string, any>, pageParam: number) => {
 	const params = { ...filters, page: pageParam };
@@ -126,4 +138,9 @@ export const deleteArticle = async (id: number) => {
 export const createArticle = async (payload: CreateArticlePayload): Promise<CreateArticleResponse> => {
 	const response = await axios.post('/v1/articles', payload);
 	return { uuid: response.data.data.uuid ?? response.data };
+};
+
+export const updateArticle = async (uuid: string, payload: UpdateArticlePayload) => {
+	const response = await axios.put(`/v1/articles/${uuid}`, payload);
+	return response.data.data ?? response.data;
 };

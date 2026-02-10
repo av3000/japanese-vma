@@ -1,7 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
-import { Button, ButtonBaseProps } from '../Button';
-import { Icon } from '../Icon';
+import { Button } from '@/components/shared/Button';
+import { ButtonBaseProps } from '@/components/shared/Button/types';
+import { Icon } from '@/components/shared/Icon';
 import styles from './Chip.module.scss';
 
 interface ChipProps {

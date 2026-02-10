@@ -164,7 +164,6 @@ class ArticleController extends Controller
 
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse
     {
-        // TODO: could find better way to handle this, perhaps generic validator accepting $request as param.
         if (!$request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
                 ['fields' => ['At least one field must be provided for update operation']],
