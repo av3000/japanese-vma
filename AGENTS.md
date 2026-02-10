@@ -1,113 +1,68 @@
 # AGENTS.md
 
-This file provides repository-wide guidance for AI agents and contributors working in `japanese-vma`.
+This file provides **repository-wide** guidance for AI agents and contributors working in `japanese-vma`.
 
-## 1) Repository Overview
-- **Goal:** Japanese learning platform with article/list/community features and Japanese language resources.
-- **Main apps:**
-  - `processor-api/` → Laravel API (legacy + v1 routes coexist).
-  - `client/` → React frontend (Vite + Storybook + Vitest toolchain).
-  - `docs/` → project demo assets.
-- **Preferred direction:** Continue migrating feature work toward backend v1 architecture and strongly typed frontend patterns.
+## 1) Repository Purpose & Shape
+- **Product goal:** Japanese learning platform with content, community, and Japanese language study resources.
+- **Main applications:**
+  - `processor-api/` → Laravel API.
+  - `client/` → React application.
+  - `docs/` → documentation assets.
+- **Scoped instructions:**
+  - Use this root file for cross-cutting repo rules.
+  - Use `processor-api/AGENTS.md` for backend-specific implementation rules.
+  - Use `client/AGENTS.md` for frontend-specific implementation rules.
 
-## 2) High-Level Architecture
-- **Backend style:** Domain-driven modular monolith with layered responsibilities.
-- **Backend flow to preserve:**
-  - Route → Controller → Request validation → DTO/Value Objects → Service/Application layer → Repository/Model → Resource/HTTP response.
-- **Frontend style:** Route-driven UI with shared components, centralized axios client, and mixed state strategies (Zustand + React Query).
-- **Cross-cutting concerns:**
-  - Authentication/authorization, validation, pagination, and consistent error responses.
+## 2) Developer Experience (DX) Baseline
+- **Recommended local tooling:**
+  - Git + conventional commit hygiene.
+  - Node/npm for frontend workflows.
+  - PHP/Composer for Laravel workflows.
+  - Docker/docker-compose for full-stack local environment when needed.
+- **Editor quality-of-life plugins (recommended):**
+  - ESLint + Prettier extensions for frontend lint/format feedback.
+  - EditorConfig support.
+  - PHP Intelephense (or equivalent) for Laravel navigation.
+  - Tailwind CSS IntelliSense for utility-class workflows.
+- **Before opening PRs:**
+  - Run targeted checks for touched surface area first.
+  - Run broader checks when practical.
+  - Keep outputs and assumptions explicit in summaries.
 
-## 3) Backend Conventions (`processor-api`)
-- **Route policy:**
-  - Keep existing legacy endpoints stable unless task explicitly requires legacy refactor.
-  - Add new/refactored endpoints in `routes/api_v1.php` whenever possible.
-- **Layering policy:**
-  - Keep transport concerns (request objects, HTTP status shape) out of domain entities.
-  - Prefer application services and repository interfaces over direct controller-to-model logic.
-  - Use DTOs for operation contracts, especially for create/update flows.
-- **Validation policy:**
-  - Prefer dedicated Request classes per endpoint.
-  - For PATCH/partial updates, validate optional fields and explicitly handle "no update fields provided".
-- **Identifier policy:**
-  - Follow existing v1 conventions around UUID/entity identifiers per endpoint.
-- **Response policy:**
-  - Reuse existing response/resource patterns in the module being modified.
-  - Keep success/error envelope consistent with neighboring v1 endpoints.
-- **Authorization policy:**
-  - Enforce ownership/role checks in appropriate layer (policy/service), not ad-hoc in many places.
+## 3) How to Work in This Repository
+- **Change strategy:**
+  - Keep diffs focused; avoid unrelated refactors.
+  - Prefer incremental, reviewable changes.
+  - Reuse existing local patterns before introducing new abstractions.
+- **Architecture strategy:**
+  - Maintain separation of concerns and avoid cross-layer leakage.
+  - Prefer consistency with neighboring code over inventing parallel styles.
+- **Migration strategy:**
+  - Legacy and v1 paths may coexist; migrate intentionally and incrementally.
+  - Preserve behavior unless change is intentional and documented.
 
-## 4) Frontend Conventions (`client`)
-- **Data access:**
-  - Use shared axios service and existing API modules.
-  - Keep authentication token handling centralized.
-- **UI structure:**
-  - Prefer existing shared components before introducing new one-off UI primitives.
-  - Keep feature routes lazy-loaded and aligned with existing routing patterns.
-- **State strategy:**
-  - Use React Query for server-state patterns.
-  - Use Zustand for app/global client-state patterns (prefer over Redux for new work).
-- **Validation strategy:**
-  - Use Zod schemas for frontend request/response and form data validation where practical.
-- **Type safety:**
-  - Prefer typed interfaces/types inferred from or aligned with Zod schemas for API payloads and route-level data mapping.
-
-## 5) Migration Playbook (Legacy API → v1)
-- **Discovery first:**
-  - Locate legacy route/controller/service path.
-  - Locate nearest v1 equivalent and align naming/shape.
-  - Identify side effects (hashtags, likes, comments, last-operations, etc.).
-- **Plan implementation in layers:**
-  - Route definition.
-  - Request validation contract.
-  - DTO + value object mapping.
-  - Service orchestration and domain rules.
-  - Repository/data persistence method(s).
-  - Resource/response mapping.
-- **Compatibility notes:**
-  - Preserve behavior intentionally or document intentional changes.
-  - Keep migration incremental and testable.
-- **Done criteria for migrated endpoint:**
-  - Endpoint exists in v1 with documented request/response behavior.
-  - Validation/authorization/error handling are explicit.
-  - Tests added/updated for success + failure + edge cases.
-
-## 6) Testing & Verification Expectations
-- **Backend checks (when backend changes):**
-  - Run targeted PHPUnit tests for modified area.
-  - Add/adjust feature tests for endpoint behavior.
-- **Frontend checks (when frontend changes):**
-  - Run lint/typecheck/tests relevant to touched files.
-  - For visible UI changes, capture a screenshot artifact when tooling/environment allows.
-- **General:**
-  - Prefer targeted checks first, then broader suite when practical.
-  - If environment constraints block a check, state it clearly in the final report.
-
-## 7) Change Management & Safety
-- **Keep diffs focused:**
-  - Avoid unrelated refactors in the same change.
-  - Prefer small, reviewable commits with clear intent.
-- **Document behavior-impacting changes:**
-  - Call out API contract differences.
-  - Mention migration/deployment implications if applicable.
-- **Do not silently change patterns:**
-  - If deviating from local conventions, explain why in PR notes.
-
-## 8) Prompting Guidelines for Future Agents
-- **When asking for plans:**
-  - Include scope, non-goals, required output format, and acceptance criteria.
-  - Ask for discovery summary before implementation steps.
-- **When asking for code changes:**
-  - Specify touched modules, endpoint contract, auth rules, and tests to add/update.
-- **When asking for architecture feedback:**
-  - Request split between "must-do now" and "follow-up improvements".
-
-## 9) Definition of a High-Quality Agent Output
+## 4) Cross-Cutting Quality Standards
 - **Clarity:**
-  - Explicit assumptions, constraints, and tradeoffs.
+  - State assumptions and constraints explicitly.
 - **Traceability:**
-  - File-by-file change summaries and validation commands.
+  - Include file-level summaries and commands used for validation.
 - **Reliability:**
-  - Meaningful tests/checks, with failures or limitations reported honestly.
-- **Pragmatism:**
-  - Incremental, maintainable changes over speculative over-engineering.
+  - Validate changed behavior with tests/checks where feasible.
+  - If environment blocks a check, report the limitation clearly.
+- **Safety:**
+  - Do not silently alter contracts or conventions.
+  - Highlight behavior-impacting changes and rollout implications.
+
+## 5) Prompting Guidance (All Domains)
+- **For planning tasks:**
+  - Include scope, non-goals, required format, and acceptance criteria.
+  - Request discovery summary before proposed implementation steps.
+- **For implementation tasks:**
+  - Specify target modules/files, constraints, and validation expectations.
+  - Ask for “must-do now” vs “follow-up” recommendations when refactoring.
+
+## 6) Domain-Specific Instruction Files
+- Backend rules live in: `processor-api/AGENTS.md`
+- Frontend rules live in: `client/AGENTS.md`
+
+When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
