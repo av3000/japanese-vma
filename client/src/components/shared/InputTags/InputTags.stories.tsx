@@ -17,10 +17,10 @@ const ControlledExample = () => {
 	const [tags, setTags] = React.useState<string[]>(['Kana', 'Grammar']);
 
 	return (
-		<div style={{ maxWidth: 520 }}>
+		<div style={{ maxWidth: '520px' }}>
 			<InputTags
 				label="Controlled"
-				value={tags}
+				defaultTags={tags}
 				onChange={setTags}
 				placeholder="Type a tag and press Enter, comma, or space"
 			/>
@@ -46,7 +46,7 @@ const UncontrolledExample = () => {
 		<div style={{ maxWidth: 520 }}>
 			<InputTags
 				label="Uncontrolled"
-				defaultValue={['Kana', 'Grammar']}
+				defaultTags={['Kana', 'Grammar']}
 				onChange={setLastOnChangeValue}
 				placeholder="Type a tag and press Enter, comma, or space"
 			/>

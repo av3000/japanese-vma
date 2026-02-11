@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createArticle, CreateArticlePayload, CreateArticleResponse } from '@/api/articles/articles';
 import { ArticleForm, ArticleFormFieldErrors, ArticleFormValues } from '@/components/features/articles/ArticleForm';
-import { parseTags } from '@/components/features/articles/articleFormUtils';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
 export default function ArticleCreatePage() {
@@ -21,7 +20,7 @@ export default function ArticleCreatePage() {
 			content_en: '',
 			source_link: '',
 			publicity: true,
-			tagsText: '',
+			tags: [],
 		};
 	}, []);
 
@@ -68,18 +67,17 @@ export default function ArticleCreatePage() {
 		setStatus(null);
 		setFormErrors(null);
 
-		const tags = parseTags(values.tagsText);
-
 		const payload: CreateArticlePayload = {
 			title_jp: values.title_jp.trim(),
-			title_en: values.title_en.trim() ? values.title_en.trim() : null,
+			title_en: values.title_en.trim(),
 			content_jp: values.content_jp.trim(),
 			content_en: values.content_en.trim() ? values.content_en.trim() : null,
 			source_link: values.source_link.trim(),
 			publicity: values.publicity,
-			tags,
+			tags: values.tags,
 		};
 
+		console.log('create article payload: ', payload);
 		mutation.mutate(payload);
 	};
 
@@ -96,6 +94,7 @@ export default function ArticleCreatePage() {
 					statusMessage={status}
 					onClearError={(field) => clearError(field)}
 					requireTitleContent
+					requireEnglishTitle
 					requireSourceLink
 				/>
 			</div>

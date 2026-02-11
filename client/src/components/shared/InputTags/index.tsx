@@ -4,14 +4,12 @@ import { Chip } from '@/components/shared/Chip';
 import styles from './InputTags.module.scss';
 
 export interface InputTagsProps {
-	value?: string[];
-	defaultValue?: string[];
+	defaultTags?: string[];
 	onChange?: (nextTags: string[]) => void;
 	placeholder?: string;
 	disabled?: boolean;
 	maxTags?: number;
 	allowDuplicates?: boolean;
-	normalizeTag?: (raw: string) => string;
 	label?: string;
 	id?: string;
 	name?: string;
@@ -19,6 +17,7 @@ export interface InputTagsProps {
 	inputClassName?: string;
 	'aria-label'?: string;
 	'aria-labelledby'?: string;
+	hideLabel?: boolean;
 }
 
 // TODO: are these key values compatible with most current browsers
@@ -27,14 +26,12 @@ const isDelimiterKey = (event: React.KeyboardEvent<HTMLInputElement>): boolean =
 };
 
 export const InputTags: React.FunctionComponent<InputTagsProps> = ({
-	value,
-	defaultValue = [],
+	defaultTags = [],
 	onChange,
 	placeholder,
 	disabled = false,
 	maxTags,
 	allowDuplicates = false,
-	normalizeTag,
 	label,
 	id,
 	name,
@@ -42,29 +39,22 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 	inputClassName,
 	'aria-label': ariaLabel,
 	'aria-labelledby': ariaLabelledby,
+	hideLabel,
 }) => {
-	const [internalTags, setInternalTags] = React.useState<string[]>(defaultValue ?? []);
+	const isControlled = !!defaultTags?.length;
+	const [tags, setInternalTags] = React.useState<string[]>(isControlled ? defaultTags : []);
 	const [inputValue, setInputValue] = React.useState<string>('');
-	const isControlled = value !== undefined;
-	const tags = isControlled ? value : internalTags;
+
 	const autoId = React.useId();
 	const inputId = id ?? `input-tags-${autoId}`;
 
-	const normalize = React.useCallback(
-		(rawValue: string) => {
-			const trimmed = rawValue.trim();
-			const normalized = normalizeTag ? normalizeTag(trimmed) : trimmed;
-			return normalized.trim();
-		},
-		[normalizeTag],
-	);
-
 	const updateTags = React.useCallback(
 		(nextTags: string[]) => {
-			if (!isControlled) {
-				setInternalTags(nextTags);
+			setInternalTags(nextTags);
+
+			if (isControlled) {
+				onChange?.(nextTags);
 			}
-			onChange?.(nextTags);
 		},
 		[isControlled, onChange],
 	);
@@ -93,8 +83,9 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 	);
 
 	const addTag = React.useCallback(
-		(rawValue: string) => {
-			const normalizedTag = normalize(rawValue);
+		(rawTag: string) => {
+			const normalizedTag = rawTag.trim();
+
 			if (!canAddTag(normalizedTag)) {
 				return false;
 			}
@@ -102,7 +93,7 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 			updateTags([...tags, normalizedTag]);
 			return true;
 		},
-		[canAddTag, normalize, tags, updateTags],
+		[canAddTag, tags, updateTags],
 	);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,13 +129,13 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 
 	return (
 		<div className={classNames(styles.wrapper, className)}>
-			{label && (
+			{label && !hideLabel && (
 				<label className={styles.label} htmlFor={inputId}>
 					{label}
 				</label>
 			)}
 			<div
-				className={classNames('form-control', styles.inputContainer, { [styles.disabled]: disabled })}
+				className={classNames(styles.inputContainer, { [styles.disabled]: disabled })}
 				data-disabled={disabled || undefined}
 			>
 				{tags.map((tag, index) => (

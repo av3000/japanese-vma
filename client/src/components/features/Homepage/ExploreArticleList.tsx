@@ -49,7 +49,7 @@ const ExploreArticleList: React.FC = () => {
 				) : (
 					<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 						{allArticles.map((article) => (
-							<ArticleCard key={article.id} {...article} />
+							<ArticleCard key={article.id} article={article} />
 						))}
 					</div>
 				)}

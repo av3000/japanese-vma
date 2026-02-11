@@ -1,13 +1,13 @@
 import React from 'react';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
+import styles from '@/components/shared/ArticleCard/ArticleCard.module.scss';
 import { Card } from '@/components/shared/Card';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
-import styles from '../../article/ArticleItem/ArticleItem.module.scss';
 
 // You'll need to create this file
 
-interface Hashtag {
+export interface Hashtag {
 	id: string;
 	content: string;
 }
