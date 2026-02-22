@@ -5,10 +5,13 @@ import styles from './InputTags.module.scss';
 
 export interface InputTagsProps {
 	defaultTags?: string[];
+	value?: string[];
 	onChange?: (nextTags: string[]) => void;
 	placeholder?: string;
 	disabled?: boolean;
 	maxTags?: number;
+	maxTagLength?: number;
+	showTagLengthCounter?: boolean;
 	allowDuplicates?: boolean;
 	label?: string;
 	id?: string;
@@ -27,10 +30,13 @@ const isDelimiterKey = (event: React.KeyboardEvent<HTMLInputElement>): boolean =
 
 export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 	defaultTags = [],
+	value,
 	onChange,
 	placeholder,
 	disabled = false,
 	maxTags,
+	maxTagLength,
+	showTagLengthCounter = false,
 	allowDuplicates = false,
 	label,
 	id,
@@ -41,20 +47,30 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 	'aria-labelledby': ariaLabelledby,
 	hideLabel,
 }) => {
-	const isControlled = !!defaultTags?.length;
-	const [tags, setInternalTags] = React.useState<string[]>(isControlled ? defaultTags : []);
+	const isControlled = value !== undefined;
+	const [internalTags, setInternalTags] = React.useState<string[]>(defaultTags);
 	const [inputValue, setInputValue] = React.useState<string>('');
 
 	const autoId = React.useId();
 	const inputId = id ?? `input-tags-${autoId}`;
 
+	const tags = isControlled ? value : internalTags;
+
+	React.useEffect(() => {
+		if (isControlled) {
+			return;
+		}
+
+		setInternalTags(defaultTags);
+	}, [defaultTags, isControlled]);
+
 	const updateTags = React.useCallback(
 		(nextTags: string[]) => {
-			setInternalTags(nextTags);
-
-			if (isControlled) {
-				onChange?.(nextTags);
+			if (!isControlled) {
+				setInternalTags(nextTags);
 			}
+
+			onChange?.(nextTags);
 		},
 		[isControlled, onChange],
 	);
@@ -69,6 +85,10 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 				return false;
 			}
 
+			if (maxTagLength !== undefined && candidate.length > maxTagLength) {
+				return false;
+			}
+
 			if (!allowDuplicates) {
 				const normalizedCandidate = candidate.toLowerCase();
 				const hasDuplicate = tags.some((tag) => tag.toLowerCase() === normalizedCandidate);
@@ -79,7 +99,7 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 
 			return true;
 		},
-		[allowDuplicates, maxTags, tags],
+		[allowDuplicates, maxTagLength, maxTags, tags],
 	);
 
 	const addTag = React.useCallback(
@@ -97,7 +117,9 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 	);
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setInputValue(event.target.value);
+		const nextValue =
+			maxTagLength !== undefined ? event.target.value.slice(0, Math.max(0, maxTagLength)) : event.target.value;
+		setInputValue(nextValue);
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -158,10 +180,20 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 					onKeyDown={handleKeyDown}
 					placeholder={placeholder}
 					disabled={disabled}
+					maxLength={maxTagLength}
 					aria-label={label ? undefined : ariaLabel}
 					aria-labelledby={ariaLabelledby}
 				/>
 			</div>
+			{showTagLengthCounter && maxTagLength !== undefined && (
+				<small
+					className={`d-block text-end ${
+						inputValue.length >= maxTagLength ? 'text-danger' : 'text-muted'
+					}`}
+				>
+					{inputValue.length}/{maxTagLength}
+				</small>
+			)}
 		</div>
 	);
 };

@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createArticle, CreateArticlePayload, CreateArticleResponse } from '@/api/articles/articles';
-import { ArticleForm, ArticleFormFieldErrors, ArticleFormValues } from '@/components/features/articles/ArticleForm';
+import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
 export default function ArticleCreatePage() {
 	const qc = useQueryClient();
 	const navigate = useNavigate();
 
-	const [formErrors, setFormErrors] = useState<ArticleFormFieldErrors | null>(null);
+	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
 	const [status, setStatus] = useState<string | null>(null);
 
 	const initialValues = useMemo<ArticleFormValues>(() => {
@@ -29,9 +29,8 @@ export default function ArticleCreatePage() {
 		mutationFn: createArticle,
 		onSuccess: ({ uuid }) => {
 			setStatus(null);
-			setFormErrors(null);
+			setServerErrors(null);
 
-			console.log('got back in form uuid of it!', uuid);
 			// make lists refetch so the new article appears
 			// TODO: is there a need to invalidate if we navigate and then fetch articles on navigation?
 			qc.invalidateQueries({ queryKey: ['articles'] });
@@ -41,31 +40,21 @@ export default function ArticleCreatePage() {
 		onError: (err: any) => {
 			const data = err?.response?.data;
 
-			console.log('errorData', data.errors);
 			if (isHttpValidationProblemDetails(data)) {
-				console.log('isHttpValidationProblem');
-				setFormErrors(data.errors as ArticleFormFieldErrors);
+				setServerErrors(data.errors);
 				setStatus(data.title ?? 'Validation failed');
 				return;
 			}
 
-			console.log('uncaught errror, returns generic error message');
-
-			setFormErrors(null);
+			setServerErrors(null);
 			setStatus('Something went wrong. Please try again.');
 			console.error(err);
 		},
 	});
 
-	const clearError = (field: keyof ArticleFormFieldErrors) => {
-		if (!formErrors?.[field]) return;
-		const { [field]: _, ...rest } = formErrors;
-		setFormErrors(Object.keys(rest).length ? (rest as ArticleFormFieldErrors) : null);
-	};
-
 	const onSubmit = (values: ArticleFormValues) => {
 		setStatus(null);
-		setFormErrors(null);
+		setServerErrors(null);
 
 		const payload: CreateArticlePayload = {
 			title_jp: values.title_jp.trim(),
@@ -77,7 +66,6 @@ export default function ArticleCreatePage() {
 			tags: values.tags,
 		};
 
-		console.log('create article payload: ', payload);
 		mutation.mutate(payload);
 	};
 
@@ -90,9 +78,8 @@ export default function ArticleCreatePage() {
 					onSubmit={onSubmit}
 					isSubmitting={mutation.isPending}
 					submitLabel="Create"
-					fieldErrors={formErrors}
+					serverErrors={serverErrors}
 					statusMessage={status}
-					onClearError={(field) => clearError(field)}
 					requireTitleContent
 					requireEnglishTitle
 					requireSourceLink

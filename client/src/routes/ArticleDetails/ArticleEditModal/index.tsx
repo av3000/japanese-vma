@@ -3,7 +3,11 @@ import { Modal } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateArticle, UpdateArticlePayload } from '@/api/articles/articles';
 import { MappedArticle } from '@/api/articles/details';
-import { ArticleForm, ArticleFormFieldErrors, ArticleFormValues } from '@/components/features/articles/ArticleForm';
+import {
+	ArticleForm,
+	type ArticleFormSubmitMeta,
+	type ArticleFormValues,
+} from '@/components/features/articles/ArticleForm';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
 interface ArticleEditModalProps {
@@ -12,50 +16,28 @@ interface ArticleEditModalProps {
 	onClose: () => void;
 }
 
-const normalizeText = (value: string) => value.trim();
-
 const normalizeOptional = (value: string) => {
 	const trimmed = value.trim();
 	return trimmed === '' ? null : trimmed;
 };
 
-const buildUpdatePayload = (values: ArticleFormValues, initialValues: ArticleFormValues): UpdateArticlePayload => {
-	const payload: UpdateArticlePayload = {};
+type DirtyKey = ArticleFormSubmitMeta['dirtyKeys'][number];
 
-	const nextTitleJp = normalizeText(values.title_jp);
-	const prevTitleJp = normalizeText(initialValues.title_jp);
-	if (nextTitleJp !== prevTitleJp) payload.title_jp = nextTitleJp;
+const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): UpdateArticlePayload => {
+	return dirtyKeys.reduce<UpdateArticlePayload>((payload, dirtyKey) => {
+		if (dirtyKey === 'tags') payload.hashtags = values.tags;
+		else if (dirtyKey === 'title_en') payload.title_en = normalizeOptional(values.title_en);
+		else if (dirtyKey === 'content_en') payload.content_en = normalizeOptional(values.content_en);
+		else payload[dirtyKey] = values[dirtyKey] as any;
 
-	const nextTitleEn = normalizeOptional(values.title_en);
-	const prevTitleEn = normalizeOptional(initialValues.title_en);
-	if (nextTitleEn !== prevTitleEn) payload.title_en = nextTitleEn;
-
-	const nextContentJp = normalizeText(values.content_jp);
-	const prevContentJp = normalizeText(initialValues.content_jp);
-	if (nextContentJp !== prevContentJp) payload.content_jp = nextContentJp;
-
-	const nextContentEn = normalizeOptional(values.content_en);
-	const prevContentEn = normalizeOptional(initialValues.content_en);
-	if (nextContentEn !== prevContentEn) payload.content_en = nextContentEn;
-
-	const nextSourceLink = normalizeText(values.source_link);
-	const prevSourceLink = normalizeText(initialValues.source_link);
-	if (nextSourceLink !== prevSourceLink) payload.source_link = nextSourceLink;
-
-	if (values.publicity !== initialValues.publicity) payload.publicity = values.publicity;
-
-	const nextTags = [...values.tags];
-	const tagsChanged =
-		nextTags.length !== initialValues.tags.length || nextTags.some((tag, idx) => tag !== initialValues.tags[idx]);
-	if (tagsChanged) payload.hashtags = nextTags;
-
-	return payload;
+		return payload;
+	}, {});
 };
 
 export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEditModalProps) {
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<string | null>(null);
-	const [fieldErrors, setFieldErrors] = useState<ArticleFormFieldErrors | null>(null);
+	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
 
 	const initialValues: ArticleFormValues = useMemo(
 		() => ({
@@ -73,7 +55,7 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 	useEffect(() => {
 		if (isOpen) {
 			setStatus(null);
-			setFieldErrors(null);
+			setServerErrors(null);
 		}
 	}, [isOpen]);
 
@@ -81,7 +63,7 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 		mutationFn: (payload: UpdateArticlePayload) => updateArticle(article.uuid, payload),
 		onSuccess: () => {
 			setStatus(null);
-			setFieldErrors(null);
+			setServerErrors(null);
 			queryClient.invalidateQueries({ queryKey: ['article', article.uuid] });
 			queryClient.invalidateQueries({ queryKey: ['articles'] });
 			onClose();
@@ -89,38 +71,27 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 		onError: (err: any) => {
 			const data = err?.response?.data;
 			if (isHttpValidationProblemDetails(data)) {
-				setFieldErrors(data.errors as ArticleFormFieldErrors);
+				setServerErrors(data.errors);
 				setStatus(data.title ?? 'Validation failed');
 				return;
 			}
 
-			setFieldErrors(null);
+			setServerErrors(null);
 			setStatus('Something went wrong. Please try again.');
 			console.error(err);
 		},
 	});
 
-	const clearError = (field: keyof ArticleFormFieldErrors) => {
-		if (!fieldErrors?.[field]) return;
-		const { [field]: _, ...rest } = fieldErrors;
-		setFieldErrors(Object.keys(rest).length ? (rest as ArticleFormFieldErrors) : null);
-	};
-
-	const handleSubmit = (values: ArticleFormValues) => {
+	const handleSubmit = (values: ArticleFormValues, meta: ArticleFormSubmitMeta) => {
 		setStatus(null);
-		setFieldErrors(null);
+		setServerErrors(null);
 
-		const diffPayload = buildUpdatePayload(values, initialValues);
-
-		if (Object.keys(diffPayload).length === 0) {
+		if (meta.dirtyKeys.length === 0) {
 			setStatus('No changes to update.');
 			return;
 		}
 
-		const payload: UpdateArticlePayload = {
-			...diffPayload,
-			title_en: normalizeText(values.title_en),
-		};
+		const payload = buildUpdatePayload(values, meta.dirtyKeys);
 
 		mutation.mutate(payload);
 	};
@@ -137,9 +108,8 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 						onSubmit={handleSubmit}
 						isSubmitting={mutation.isPending}
 						submitLabel="Update"
-						fieldErrors={fieldErrors}
+						serverErrors={serverErrors}
 						statusMessage={status}
-						onClearError={(field) => clearError(field)}
 						requireEnglishTitle
 						disableSubmitWhenUnchanged
 					/>
