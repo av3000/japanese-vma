@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import { Modal as BootstrapModal } from 'react-bootstrap';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -10,6 +10,7 @@ import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
@@ -17,6 +18,7 @@ import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useModal } from '@/hooks/useModal';
 import { apiCall } from '@/services/api';
 import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
@@ -35,12 +37,12 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	const [modals, setModals] = useState({
 		showBookmark: false,
-		showPdf: false,
 		showDelete: false,
 		showStatus: false,
 	});
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	const pdfModal = useModal({ id: 'article-pdf-modal' });
 
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
@@ -207,7 +209,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							<Button variant="ghost" hasOnlyIcon onClick={() => toggleModal('showBookmark')}>
 								<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
 							</Button>
-							<Button variant="ghost" hasOnlyIcon onClick={() => toggleModal('showPdf')}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								aria-controls={pdfModal.id}
+								aria-expanded={pdfModal.isOpen}
+								onClick={pdfModal.open}
+							>
 								<Icon size="md" name="filePdfSolid" />
 							</Button>
 						</div>
@@ -221,11 +229,11 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				</div>
 			</div>
 
-			<Modal show={modals.showBookmark} onHide={() => toggleModal('showBookmark')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Save to List</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
+			<BootstrapModal show={modals.showBookmark} onHide={() => toggleModal('showBookmark')}>
+				<BootstrapModal.Header closeButton>
+					<BootstrapModal.Title>Save to List</BootstrapModal.Title>
+				</BootstrapModal.Header>
+				<BootstrapModal.Body>
 					{userLists.length === 0 && <p className="text-muted">You have no lists created.</p>}
 					{userLists.map((list: any) => (
 						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
@@ -256,14 +264,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							+ Create a new list
 						</Link>
 					</div>
-				</Modal.Body>
-			</Modal>
+				</BootstrapModal.Body>
+			</BootstrapModal>
 
-			<Modal show={modals.showStatus} onHide={() => toggleModal('showStatus')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Review Article</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
+			<BootstrapModal show={modals.showStatus} onHide={() => toggleModal('showStatus')}>
+				<BootstrapModal.Header closeButton>
+					<BootstrapModal.Title>Review Article</BootstrapModal.Title>
+				</BootstrapModal.Header>
+				<BootstrapModal.Body>
 					<p>Change Visibility/Approval Status</p>
 					<select
 						className="form-control"
@@ -275,8 +283,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						<option value={2}>Reject</option>
 						<option value={3}>Approve</option>
 					</select>
-				</Modal.Body>
-				<Modal.Footer>
+				</BootstrapModal.Body>
+				<BootstrapModal.Footer>
 					<Button variant="secondary" onClick={() => toggleModal('showStatus')}>
 						Cancel
 					</Button>
@@ -287,17 +295,17 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 					>
 						{statusMutation.isPending ? 'Saving...' : 'Save Changes'}
 					</Button>
-				</Modal.Footer>
-			</Modal>
+				</BootstrapModal.Footer>
+			</BootstrapModal>
 
-			<Modal show={modals.showDelete} onHide={() => toggleModal('showDelete')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Are you absolutely sure?</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
+			<BootstrapModal show={modals.showDelete} onHide={() => toggleModal('showDelete')}>
+				<BootstrapModal.Header closeButton>
+					<BootstrapModal.Title>Are you absolutely sure?</BootstrapModal.Title>
+				</BootstrapModal.Header>
+				<BootstrapModal.Body>
 					This action cannot be undone. This will permanently delete <strong>{article.title_jp}</strong>.
-				</Modal.Body>
-				<Modal.Footer>
+				</BootstrapModal.Body>
+				<BootstrapModal.Footer>
 					<Button variant="secondary" onClick={() => toggleModal('showDelete')}>
 						Cancel
 					</Button>
@@ -308,25 +316,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 					>
 						{deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete Article'}
 					</Button>
-				</Modal.Footer>
-			</Modal>
+				</BootstrapModal.Footer>
+			</BootstrapModal>
 
-			<Modal show={modals.showPdf} onHide={() => toggleModal('showPdf')} size="sm" centered>
-				<Modal.Body className="text-center p-4">
-					<h5 className="mb-4">Generate PDF</h5>
-					<Button
-						variant="ghost"
-						className="w-100 mb-2 border"
-						disabled={article?.processing_status?.status !== LastOperationStatus.Completed}
-						onClick={() => handleDownloadPdf('kanji')}
-					>
-						Kanji List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-					</Button>
-					<Button variant="ghost" className="w-100 border" onClick={() => handleDownloadPdf('words')}>
-						Vocabulary List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-					</Button>
-				</Modal.Body>
-			</Modal>
+			<ArticlePdfModal
+				controller={pdfModal}
+				onDownload={handleDownloadPdf}
+				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.Completed}
+			/>
 
 			<ArticleEditModal article={article} isOpen={isEditOpen} onClose={closeEditModal} />
 		</div>
