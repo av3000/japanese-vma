@@ -1,5 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Modal } from 'react-bootstrap';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateArticle, UpdateArticlePayload } from '@/api/articles/articles';
 import { MappedArticle } from '@/api/articles/details';
@@ -8,6 +7,8 @@ import {
 	type ArticleFormSubmitMeta,
 	type ArticleFormValues,
 } from '@/components/features/articles/ArticleForm';
+import { DialogModal } from '@/components/shared/DialogModal';
+import { useModal } from '@/hooks/useModal';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
 interface ArticleEditModalProps {
@@ -38,6 +39,8 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<string | null>(null);
 	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
+	const modal = useModal({ id: 'article-edit-modal', onClose });
+	const wasOpenRef = useRef(isOpen);
 
 	const initialValues: ArticleFormValues = useMemo(
 		() => ({
@@ -58,6 +61,16 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 			setServerErrors(null);
 		}
 	}, [isOpen]);
+
+	useEffect(() => {
+		if (isOpen && !wasOpenRef.current) {
+			modal.open();
+		} else if (!isOpen && wasOpenRef.current) {
+			modal.close();
+		}
+
+		wasOpenRef.current = isOpen;
+	}, [isOpen, modal.open, modal.close]);
 
 	const mutation = useMutation({
 		mutationFn: (payload: UpdateArticlePayload) => updateArticle(article.uuid, payload),
@@ -96,12 +109,12 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 		mutation.mutate(payload);
 	};
 
-	return (
-		<Modal show={isOpen} onHide={onClose} size="lg" centered>
-			<Modal.Header closeButton>
-				<Modal.Title>Edit Article</Modal.Title>
-			</Modal.Header>
-			<Modal.Body>
+	return modal.isRendered ? (
+		<DialogModal {...modal.dialogProps} size="lg" ariaLabel="Edit Article">
+			<DialogModal.Header>
+				<DialogModal.Title>Edit Article</DialogModal.Title>
+			</DialogModal.Header>
+			<DialogModal.Body>
 				<div className="row justify-content-lg-center text-center">
 					<ArticleForm
 						initialValues={initialValues}
@@ -114,7 +127,7 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 						disableSubmitWhenUnchanged
 					/>
 				</div>
-			</Modal.Body>
-		</Modal>
-	);
+			</DialogModal.Body>
+		</DialogModal>
+	) : null;
 }

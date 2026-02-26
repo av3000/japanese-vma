@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Modal as BootstrapModal } from 'react-bootstrap';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -9,8 +8,11 @@ import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscript
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
+import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
+import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
@@ -35,13 +37,11 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
 
-	const [modals, setModals] = useState({
-		showBookmark: false,
-		showDelete: false,
-		showStatus: false,
-	});
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	const bookmarkModal = useModal({ id: 'article-bookmark-modal' });
+	const reviewModal = useModal({ id: 'article-review-modal' });
+	const deleteModal = useModal({ id: 'article-delete-modal' });
 	const pdfModal = useModal({ id: 'article-pdf-modal' });
 
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
@@ -65,7 +65,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				...old,
 				status: res.data.newStatus,
 			}));
-			setModals((p) => ({ ...p, showStatus: false }));
+			reviewModal.close();
 		},
 	});
 
@@ -73,10 +73,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		mutationFn: () => deleteArticle(article.id),
 		onSuccess: () => navigate('/articles'),
 	});
-
-	const toggleModal = (modalName: keyof typeof modals) => {
-		setModals((prev) => ({ ...prev, [modalName]: !prev[modalName] }));
-	};
 
 	// TODO: not sure about modal opening flow. It is purely url based I believe, not sure if that is enough
 	const openEditModal = () => {
@@ -164,13 +160,25 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 						<div className="d-flex align-items-center">
 							{isAdmin && (
-								<Button onClick={() => toggleModal('showStatus')} variant="ghost" size="md">
+								<Button
+									onClick={reviewModal.open}
+									variant="ghost"
+									size="md"
+									aria-controls={reviewModal.id}
+									aria-expanded={reviewModal.isOpen}
+								>
 									Review
 								</Button>
 							)}
 							{isOwner && (
 								<div className="d-flex ml-2">
-									<Button onClick={() => toggleModal('showDelete')} variant="ghost" hasOnlyIcon>
+									<Button
+										onClick={deleteModal.open}
+										variant="ghost"
+										hasOnlyIcon
+										aria-controls={deleteModal.id}
+										aria-expanded={deleteModal.isOpen}
+									>
 										<Icon name="trashbinSolid" size="md" />
 									</Button>
 									<Button onClick={openEditModal} variant="ghost" hasOnlyIcon>
@@ -206,7 +214,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
-							<Button variant="ghost" hasOnlyIcon onClick={() => toggleModal('showBookmark')}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								aria-controls={bookmarkModal.id}
+								aria-expanded={bookmarkModal.isOpen}
+								onClick={bookmarkModal.open}
+							>
 								<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
 							</Button>
 							<Button
@@ -229,95 +243,27 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				</div>
 			</div>
 
-			<BootstrapModal show={modals.showBookmark} onHide={() => toggleModal('showBookmark')}>
-				<BootstrapModal.Header closeButton>
-					<BootstrapModal.Title>Save to List</BootstrapModal.Title>
-				</BootstrapModal.Header>
-				<BootstrapModal.Body>
-					{userLists.length === 0 && <p className="text-muted">You have no lists created.</p>}
-					{userLists.map((list: any) => (
-						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
-							<Link to={`/list/${list.id}`}>{list.title}</Link>
-							<Button
-								variant={list.elementBelongsToList ? 'danger' : 'primary'}
-								size="sm"
-								onClick={() =>
-									handleListAction(
-										list.id,
-										list.elementBelongsToList ? LIST_ACTIONS.REMOVE_ITEM : LIST_ACTIONS.ADD_ITEM,
-									)
-								}
-								disabled={loadingListIds.includes(list.id)}
-							>
-								{loadingListIds.includes(list.id) ? (
-									<span className="spinner-border spinner-border-sm" />
-								) : list.elementBelongsToList ? (
-									'Remove'
-								) : (
-									'Add'
-								)}
-							</Button>
-						</div>
-					))}
-					<div className="mt-3 text-right">
-						<Link to="/newlist" className="small">
-							+ Create a new list
-						</Link>
-					</div>
-				</BootstrapModal.Body>
-			</BootstrapModal>
+			<CatalogueBookmarkModal
+				controller={bookmarkModal}
+				lists={userLists}
+				loadingListIds={loadingListIds}
+				onListAction={handleListAction}
+			/>
 
-			<BootstrapModal show={modals.showStatus} onHide={() => toggleModal('showStatus')}>
-				<BootstrapModal.Header closeButton>
-					<BootstrapModal.Title>Review Article</BootstrapModal.Title>
-				</BootstrapModal.Header>
-				<BootstrapModal.Body>
-					<p>Change Visibility/Approval Status</p>
-					<select
-						className="form-control"
-						value={tempStatus}
-						onChange={(e) => setTempStatus(Number(e.target.value))}
-					>
-						<option value={0}>Pending</option>
-						<option value={1}>Review</option>
-						<option value={2}>Reject</option>
-						<option value={3}>Approve</option>
-					</select>
-				</BootstrapModal.Body>
-				<BootstrapModal.Footer>
-					<Button variant="secondary" onClick={() => toggleModal('showStatus')}>
-						Cancel
-					</Button>
-					<Button
-						variant="success"
-						onClick={() => statusMutation.mutate(tempStatus)}
-						disabled={statusMutation.isPending}
-					>
-						{statusMutation.isPending ? 'Saving...' : 'Save Changes'}
-					</Button>
-				</BootstrapModal.Footer>
-			</BootstrapModal>
+			<ArticleReviewModal
+				controller={reviewModal}
+				status={tempStatus}
+				onStatusChange={setTempStatus}
+				onSave={() => statusMutation.mutate(tempStatus)}
+				isProcessing={statusMutation.isPending}
+			/>
 
-			<BootstrapModal show={modals.showDelete} onHide={() => toggleModal('showDelete')}>
-				<BootstrapModal.Header closeButton>
-					<BootstrapModal.Title>Are you absolutely sure?</BootstrapModal.Title>
-				</BootstrapModal.Header>
-				<BootstrapModal.Body>
-					This action cannot be undone. This will permanently delete <strong>{article.title_jp}</strong>.
-				</BootstrapModal.Body>
-				<BootstrapModal.Footer>
-					<Button variant="secondary" onClick={() => toggleModal('showDelete')}>
-						Cancel
-					</Button>
-					<Button
-						variant="danger"
-						onClick={() => deleteMutation.mutate()}
-						disabled={deleteMutation.isPending}
-					>
-						{deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete Article'}
-					</Button>
-				</BootstrapModal.Footer>
-			</BootstrapModal>
+			<DeleteInstanceModal
+				controller={deleteModal}
+				instanceName={article.title_jp}
+				onDelete={() => deleteMutation.mutate()}
+				isProcessing={deleteMutation.isPending}
+			/>
 
 			<ArticlePdfModal
 				controller={pdfModal}
