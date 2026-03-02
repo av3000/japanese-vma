@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from '@/components/shared/Button';
 import { useModal } from '@/hooks/useModal';
@@ -21,7 +22,8 @@ export default meta;
 type Story = StoryObj<typeof DialogModal>;
 
 const DefaultTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => {
-	const controller = useModal();
+	const dialogRef = useRef<HTMLDialogElement | null>(null);
+	const controller = useModal(dialogRef);
 
 	return (
 		<>
@@ -64,7 +66,8 @@ export const Default: Story = {
 };
 
 const BodyOnlyTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => {
-	const controller = useModal();
+	const dialogRef = useRef<HTMLDialogElement | null>(null);
+	const controller = useModal(dialogRef);
 
 	return (
 		<>

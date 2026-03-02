@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateArticle, UpdateArticlePayload } from '@/api/articles/articles';
 import { MappedArticle } from '@/api/articles/details';
@@ -8,13 +8,12 @@ import {
 	type ArticleFormValues,
 } from '@/components/features/articles/ArticleForm';
 import { DialogModal } from '@/components/shared/DialogModal';
-import { useModal } from '@/hooks/useModal';
+import type { ModalController } from '@/hooks/useModal';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
 interface ArticleEditModalProps {
 	article: MappedArticle;
-	isOpen: boolean;
-	onClose: () => void;
+	controller: ModalController;
 }
 
 const normalizeOptional = (value: string) => {
@@ -35,12 +34,10 @@ const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): U
 	}, {});
 };
 
-export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEditModalProps) {
+export default function ArticleEditModal({ article, controller }: ArticleEditModalProps) {
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<string | null>(null);
 	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
-	const modal = useModal({ id: 'article-edit-modal', onClose });
-	const wasOpenRef = useRef(isOpen);
 
 	const initialValues: ArticleFormValues = useMemo(
 		() => ({
@@ -55,23 +52,6 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 		[article],
 	);
 
-	useEffect(() => {
-		if (isOpen) {
-			setStatus(null);
-			setServerErrors(null);
-		}
-	}, [isOpen]);
-
-	useEffect(() => {
-		if (isOpen && !wasOpenRef.current) {
-			modal.open();
-		} else if (!isOpen && wasOpenRef.current) {
-			modal.close();
-		}
-
-		wasOpenRef.current = isOpen;
-	}, [isOpen, modal.open, modal.close]);
-
 	const mutation = useMutation({
 		mutationFn: (payload: UpdateArticlePayload) => updateArticle(article.uuid, payload),
 		onSuccess: () => {
@@ -79,7 +59,7 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 			setServerErrors(null);
 			queryClient.invalidateQueries({ queryKey: ['article', article.uuid] });
 			queryClient.invalidateQueries({ queryKey: ['articles'] });
-			onClose();
+			controller.close();
 		},
 		onError: (err: any) => {
 			const data = err?.response?.data;
@@ -109,8 +89,8 @@ export default function ArticleEditModal({ article, isOpen, onClose }: ArticleEd
 		mutation.mutate(payload);
 	};
 
-	return modal.isRendered ? (
-		<DialogModal {...modal.dialogProps} size="lg" ariaLabel="Edit Article">
+	return controller.isRendered ? (
+		<DialogModal {...controller.dialogProps} size="lg" ariaLabel="Edit Article">
 			<DialogModal.Header>
 				<DialogModal.Title>Edit Article</DialogModal.Title>
 			</DialogModal.Header>

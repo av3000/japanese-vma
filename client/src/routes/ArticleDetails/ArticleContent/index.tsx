@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -39,10 +39,15 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
-	const bookmarkModal = useModal({ id: 'article-bookmark-modal' });
-	const reviewModal = useModal({ id: 'article-review-modal' });
-	const deleteModal = useModal({ id: 'article-delete-modal' });
-	const pdfModal = useModal({ id: 'article-pdf-modal' });
+	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
+	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
+	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
+	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
+	const editDialogRef = useRef<HTMLDialogElement | null>(null);
+	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'article-bookmark-modal' });
+	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
+	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
+	const pdfModal = useModal(pdfDialogRef, { id: 'article-pdf-modal' });
 
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
@@ -131,6 +136,24 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
+	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
+	const {
+		open: openEditDialog,
+		close: closeEditDialog,
+		isOpen: isEditDialogOpen,
+		isRendered: isEditDialogRendered,
+	} = editModal;
+
+	useEffect(() => {
+		if (isEditOpen) {
+			if (!isEditDialogOpen) openEditDialog();
+			return;
+		}
+
+		if (isEditDialogOpen || isEditDialogRendered) {
+			closeEditDialog();
+		}
+	}, [isEditOpen, isEditDialogOpen, isEditDialogRendered, openEditDialog, closeEditDialog]);
 
 	return (
 		<div className="container pb-5">
@@ -271,7 +294,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.Completed}
 			/>
 
-			<ArticleEditModal article={article} isOpen={isEditOpen} onClose={closeEditModal} />
+			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}
 		</div>
 	);
 };

@@ -29,22 +29,25 @@ export interface ModalController {
 	dialogProps: ModalDialogProps;
 }
 
-export const useModal = ({
-	id: idProp,
-	onOpen,
-	onClose,
-	transitionMs = 400,
-	closeOnEscape = true,
-	lockScroll = true,
-}: UseModalOptions = {}): ModalController => {
+export const useModal = (
+	dialogRef: RefObject<HTMLDialogElement | null>,
+	{ id: idProp, onOpen, onClose, transitionMs = 400, closeOnEscape = true, lockScroll = true }: UseModalOptions = {},
+): ModalController => {
 	const reactId = useId();
 	const id = useMemo(() => idProp ?? `dialog-${reactId}`, [idProp, reactId]);
-	const dialogRef = useRef<HTMLDialogElement | null>(null);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isRendered, setIsRendered] = useState(false);
+	const openTimeoutRef = useRef<number | null>(null);
 	const closeTimeoutRef = useRef<number | null>(null);
 	const activeElementRef = useRef<HTMLElement | null>(null);
 	const setScrollLock = useScrollLock();
+
+	const clearOpenTimeout = useCallback(() => {
+		if (openTimeoutRef.current !== null) {
+			window.clearTimeout(openTimeoutRef.current);
+			openTimeoutRef.current = null;
+		}
+	}, []);
 
 	const clearCloseTimeout = useCallback(() => {
 		if (closeTimeoutRef.current !== null) {
@@ -62,6 +65,7 @@ export const useModal = ({
 	}, []);
 
 	const open = useCallback(() => {
+		clearOpenTimeout();
 		clearCloseTimeout();
 		setIsRendered(true);
 
@@ -69,23 +73,29 @@ export const useModal = ({
 
 		activeElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
-		setTimeout(() => {
+		openTimeoutRef.current = window.setTimeout(() => {
 			const node = dialogRef.current;
 			if (!node || node.open) return;
 			setIsOpen(true);
 			node.removeAttribute('inert');
 			node.showModal();
+			if (lockScroll) {
+				setScrollLock(true);
+			}
 			onOpen?.();
 		}, 10);
-	}, [clearCloseTimeout, onOpen]);
+	}, [clearOpenTimeout, clearCloseTimeout, dialogRef, lockScroll, onOpen, setScrollLock]);
 
 	const close = useCallback(() => {
+		clearOpenTimeout();
 		clearCloseTimeout();
 		setIsOpen(false);
-
 		if (dialogRef.current?.open) {
 			dialogRef.current.close();
 			dialogRef.current.setAttribute('inert', '');
+			if (lockScroll) {
+				setScrollLock(false);
+			}
 		}
 
 		closeTimeoutRef.current = window.setTimeout(() => {
@@ -93,7 +103,16 @@ export const useModal = ({
 			onClose?.();
 			restoreFocus();
 		}, transitionMs);
-	}, [clearCloseTimeout, onClose, restoreFocus, transitionMs]);
+	}, [
+		clearOpenTimeout,
+		clearCloseTimeout,
+		dialogRef,
+		lockScroll,
+		onClose,
+		restoreFocus,
+		setScrollLock,
+		transitionMs,
+	]);
 
 	useEffect(() => {
 		const node = dialogRef.current;
@@ -101,18 +120,11 @@ export const useModal = ({
 		node.setAttribute('inert', '');
 
 		return () => {
+			clearOpenTimeout();
 			clearCloseTimeout();
-		};
-	}, [clearCloseTimeout]);
-
-	useEffect(() => {
-		if (!lockScroll) {
 			setScrollLock(false);
-			return;
-		}
-
-		setScrollLock(isOpen);
-	}, [isOpen, lockScroll, setScrollLock]);
+		};
+	}, [clearOpenTimeout, clearCloseTimeout, dialogRef, setScrollLock]);
 
 	useEffect(() => {
 		const node = dialogRef.current;
@@ -133,10 +145,11 @@ export const useModal = ({
 		return () => {
 			node.removeEventListener('cancel', handleCancel);
 		};
-	}, [close, closeOnEscape]);
+	}, [close, closeOnEscape, dialogRef]);
 
 	useOnClickAway(dialogRef, close, isOpen);
 
+	// TODO: is this really must needed?
 	const dialogProps = useMemo(
 		() => ({
 			id,
