@@ -15,23 +15,28 @@
  */
 
 html {
-  // font-size: ($inuit-global-font-size / 16px) * 1em; /* [1] */
-  // line-height: $inuit-global-line-height / $inuit-global-font-size; /* [1] */
-  // overflow-y: scroll; /* [2] */
-  // min-height: 100%; /* [3] */
-  background-color: var(--page-background-color);
-  font-family: var(--font-family);
-  font-size: var(--font-size-body-md);
-  line-height: var(--line-height-lg);
-  color: var(--color-text-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+	background-color: var(--page-background-color);
+	font-family: var(--font-family);
+	font-size: var(--font-size-body-md);
+	line-height: var(--line-height-lg);
+	color: var(--color-text-primary);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 
-// Adds support setting footer display to sticky,
-// so it is always in the bottom
-html,
-body,
-#react-app {
-  height: 100%;
+	// Generic Scrollbar
+	background: var(--color-neutral-100);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-scrollbar-thumb) transparent;
+
+	&::-webkit-scrollbar {
+		width: 12px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background-color: transparent;
+		border: none;
+	}
 }
