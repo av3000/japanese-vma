@@ -47,7 +47,7 @@ const SavedListForm = () => {
 
 	const postNewList = async (payload) => {
 		try {
-			const res = await apiCall('post', `/api/list`, payload);
+			const res = await apiCall({ method: 'post', path: `/list`, data: payload });
 			setIsLoading(false);
 			navigate('/list/' + res.newList.id);
 		} catch (err) {
