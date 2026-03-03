@@ -63,7 +63,7 @@ const DialogModalBody: React.FunctionComponent<DialogModalBodyProps> = ({
 }) => {
 	return (
 		<div id={idProp} className={classNames(styles.body, className)} {...props}>
-			{children}
+			<div className={styles['body-content']}>{children}</div>
 		</div>
 	);
 };
@@ -103,8 +103,8 @@ export const DialogModal = (({
 	const ariaLabelValue = ariaLabel ?? 'Dialog';
 	const describedBy = isSimpleLayout ? autoBodyId : undefined;
 	const content = isSimpleLayout ? (
-		<div id={autoBodyId} className={classNames(styles.body, styles['body-with-close'])}>
-			{children}
+		<div id={autoBodyId} className={styles.body}>
+			<div className={classNames(styles['body-content'], styles['body-with-close'])}>{children}</div>
 		</div>
 	) : (
 		children

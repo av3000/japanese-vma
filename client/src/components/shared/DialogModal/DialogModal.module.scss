@@ -90,8 +90,26 @@
 }
 
 .body {
+	background: var(--color-neutral-100);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-scrollbar-thumb) transparent;
+
+	&::-webkit-scrollbar {
+		width: 12px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background-color: transparent;
+		border: none;
+	}
+}
+
+.body-content {
+	background: var(--color-neutral-0);
 	padding: var(--spacing-lg);
-	overflow: auto;
 }
 
 .footer {
