@@ -36,7 +36,14 @@ export const CatalogueBookmarkModal = ({
 	if (!controller.isRendered) return null;
 
 	return (
-		<DialogModal {...controller.dialogProps} size={size} ariaLabel={ariaLabel}>
+		<DialogModal
+			id={controller.id}
+			dialogRef={controller.dialogRef}
+			isOpen={controller.isOpen}
+			onClose={controller.close}
+			size={size}
+			ariaLabel={ariaLabel}
+		>
 			<DialogModal.Header>
 				<DialogModal.Title>{title}</DialogModal.Title>
 			</DialogModal.Header>

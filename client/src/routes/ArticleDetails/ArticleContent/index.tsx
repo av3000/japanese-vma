@@ -44,6 +44,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
 	const editDialogRef = useRef<HTMLDialogElement | null>(null);
+
 	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'article-bookmark-modal' });
 	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
 	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
@@ -79,7 +80,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		onSuccess: () => navigate('/articles'),
 	});
 
-	// TODO: not sure about modal opening flow. It is purely url based I believe, not sure if that is enough
 	const openEditModal = () => {
 		const next = new URLSearchParams(searchParams);
 		next.set('edit', '1');
@@ -91,6 +91,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		next.delete('edit');
 		setSearchParams(next);
 	};
+
+	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
+	const {
+		open: openEditDialog,
+		close: closeEditDialog,
+		isOpen: isEditDialogOpen,
+		isRendered: isEditDialogRendered,
+	} = editModal;
 
 	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
 	// TODO: Should only call queries propagating up to smart component
@@ -136,13 +144,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
-	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
-	const {
-		open: openEditDialog,
-		close: closeEditDialog,
-		isOpen: isEditDialogOpen,
-		isRendered: isEditDialogRendered,
-	} = editModal;
 
 	useEffect(() => {
 		if (isEditOpen) {

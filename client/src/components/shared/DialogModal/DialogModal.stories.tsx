@@ -31,7 +31,13 @@ const DefaultTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => {
 				Open Dialog
 			</Button>
 			{controller.isRendered && (
-				<DialogModal {...args} {...controller.dialogProps}>
+				<DialogModal
+					{...args}
+					id={controller.id}
+					dialogRef={controller.dialogRef}
+					isOpen={controller.isOpen}
+					onClose={controller.close}
+				>
 					<DialogModal.Header>
 						<DialogModal.Title>Invite collaborators</DialogModal.Title>
 					</DialogModal.Header>
@@ -75,7 +81,14 @@ const BodyOnlyTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => 
 				Open Compact Dialog
 			</Button>
 			{controller.isRendered && (
-				<DialogModal {...args} {...controller.dialogProps} ariaLabel="Confirm action">
+				<DialogModal
+					{...args}
+					id={controller.id}
+					dialogRef={controller.dialogRef}
+					isOpen={controller.isOpen}
+					onClose={controller.close}
+					ariaLabel="Confirm action"
+				>
 					<p className="mb-0">This dialog uses body-only mode with no Header/Footer.</p>
 				</DialogModal>
 			)}

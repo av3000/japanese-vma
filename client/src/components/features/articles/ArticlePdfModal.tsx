@@ -23,7 +23,14 @@ export const ArticlePdfModal = ({
 	if (!controller.isRendered) return null;
 
 	return (
-		<DialogModal {...controller.dialogProps} size={size} ariaLabel={ariaLabel}>
+		<DialogModal
+			id={controller.id}
+			dialogRef={controller.dialogRef}
+			isOpen={controller.isOpen}
+			onClose={controller.close}
+			size={size}
+			ariaLabel={ariaLabel}
+		>
 			<div className="text-center p-4">
 				<h5 className="mb-4">{title}</h5>
 				<Button

@@ -90,7 +90,14 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 	};
 
 	return controller.isRendered ? (
-		<DialogModal {...controller.dialogProps} size="lg" ariaLabel="Edit Article">
+		<DialogModal
+			id={controller.id}
+			dialogRef={controller.dialogRef}
+			isOpen={controller.isOpen}
+			onClose={controller.close}
+			size="lg"
+			ariaLabel="Edit Article"
+		>
 			<DialogModal.Header>
 				<DialogModal.Title>Edit Article</DialogModal.Title>
 			</DialogModal.Header>

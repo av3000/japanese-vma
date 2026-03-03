@@ -39,7 +39,10 @@ export const ConfirmModal = ({
 
 	return (
 		<DialogModal
-			{...controller.dialogProps}
+			id={controller.id}
+			dialogRef={controller.dialogRef}
+			isOpen={controller.isOpen}
+			onClose={controller.close}
 			size={size}
 			closeOnBackdrop={closeOnBackdrop}
 			ariaLabel={ariaLabel}
