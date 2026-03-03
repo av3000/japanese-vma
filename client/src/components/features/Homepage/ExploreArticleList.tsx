@@ -47,11 +47,13 @@ const ExploreArticleList: React.FC = () => {
 				{allArticles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
-					<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+					<>
 						{allArticles.map((article) => (
-							<ArticleCard key={article.id} article={article} />
+							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+								<ArticleCard article={article} />
+							</div>
 						))}
-					</div>
+					</>
 				)}
 			</div>
 		</>

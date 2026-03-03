@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -9,7 +8,11 @@ import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscript
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
+import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
+import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
@@ -17,6 +20,7 @@ import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useModal } from '@/hooks/useModal';
 import { apiCall } from '@/services/api';
 import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
@@ -33,14 +37,18 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
 
-	const [modals, setModals] = useState({
-		showBookmark: false,
-		showPdf: false,
-		showDelete: false,
-		showStatus: false,
-	});
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
+	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
+	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
+	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
+	const editDialogRef = useRef<HTMLDialogElement | null>(null);
+
+	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'article-bookmark-modal' });
+	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
+	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
+	const pdfModal = useModal(pdfDialogRef, { id: 'article-pdf-modal' });
 
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
@@ -63,7 +71,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				...old,
 				status: res.data.newStatus,
 			}));
-			setModals((p) => ({ ...p, showStatus: false }));
+			reviewModal.close();
 		},
 	});
 
@@ -72,11 +80,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		onSuccess: () => navigate('/articles'),
 	});
 
-	const toggleModal = (modalName: keyof typeof modals) => {
-		setModals((prev) => ({ ...prev, [modalName]: !prev[modalName] }));
-	};
-
-	// TODO: not sure about modal opening flow. It is purely url based I believe, not sure if that is enough
 	const openEditModal = () => {
 		const next = new URLSearchParams(searchParams);
 		next.set('edit', '1');
@@ -88,6 +91,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		next.delete('edit');
 		setSearchParams(next);
 	};
+
+	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
+	const {
+		open: openEditDialog,
+		close: closeEditDialog,
+		isOpen: isEditDialogOpen,
+		isRendered: isEditDialogRendered,
+	} = editModal;
 
 	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
 	// TODO: Should only call queries propagating up to smart component
@@ -134,6 +145,17 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const isAdmin = currentUser?.isAdmin;
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
 
+	useEffect(() => {
+		if (isEditOpen) {
+			if (!isEditDialogOpen) openEditDialog();
+			return;
+		}
+
+		if (isEditDialogOpen || isEditDialogRendered) {
+			closeEditDialog();
+		}
+	}, [isEditOpen, isEditDialogOpen, isEditDialogRendered, openEditDialog, closeEditDialog]);
+
 	return (
 		<div className="container pb-5">
 			<div className="row justify-content-center">
@@ -162,13 +184,25 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 						<div className="d-flex align-items-center">
 							{isAdmin && (
-								<Button onClick={() => toggleModal('showStatus')} variant="ghost" size="md">
+								<Button
+									onClick={reviewModal.open}
+									variant="ghost"
+									size="md"
+									aria-controls={reviewModal.id}
+									aria-expanded={reviewModal.isOpen}
+								>
 									Review
 								</Button>
 							)}
 							{isOwner && (
 								<div className="d-flex ml-2">
-									<Button onClick={() => toggleModal('showDelete')} variant="ghost" hasOnlyIcon>
+									<Button
+										onClick={deleteModal.open}
+										variant="ghost"
+										hasOnlyIcon
+										aria-controls={deleteModal.id}
+										aria-expanded={deleteModal.isOpen}
+									>
 										<Icon name="trashbinSolid" size="md" />
 									</Button>
 									<Button onClick={openEditModal} variant="ghost" hasOnlyIcon>
@@ -204,10 +238,22 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
-							<Button variant="ghost" hasOnlyIcon onClick={() => toggleModal('showBookmark')}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								aria-controls={bookmarkModal.id}
+								aria-expanded={bookmarkModal.isOpen}
+								onClick={bookmarkModal.open}
+							>
 								<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
 							</Button>
-							<Button variant="ghost" hasOnlyIcon onClick={() => toggleModal('showPdf')}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								aria-controls={pdfModal.id}
+								aria-expanded={pdfModal.isOpen}
+								onClick={pdfModal.open}
+							>
 								<Icon size="md" name="filePdfSolid" />
 							</Button>
 						</div>
@@ -221,114 +267,35 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				</div>
 			</div>
 
-			<Modal show={modals.showBookmark} onHide={() => toggleModal('showBookmark')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Save to List</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					{userLists.length === 0 && <p className="text-muted">You have no lists created.</p>}
-					{userLists.map((list: any) => (
-						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
-							<Link to={`/list/${list.id}`}>{list.title}</Link>
-							<Button
-								variant={list.elementBelongsToList ? 'danger' : 'primary'}
-								size="sm"
-								onClick={() =>
-									handleListAction(
-										list.id,
-										list.elementBelongsToList ? LIST_ACTIONS.REMOVE_ITEM : LIST_ACTIONS.ADD_ITEM,
-									)
-								}
-								disabled={loadingListIds.includes(list.id)}
-							>
-								{loadingListIds.includes(list.id) ? (
-									<span className="spinner-border spinner-border-sm" />
-								) : list.elementBelongsToList ? (
-									'Remove'
-								) : (
-									'Add'
-								)}
-							</Button>
-						</div>
-					))}
-					<div className="mt-3 text-right">
-						<Link to="/newlist" className="small">
-							+ Create a new list
-						</Link>
-					</div>
-				</Modal.Body>
-			</Modal>
+			<CatalogueBookmarkModal
+				controller={bookmarkModal}
+				lists={userLists}
+				loadingListIds={loadingListIds}
+				onListAction={handleListAction}
+			/>
 
-			<Modal show={modals.showStatus} onHide={() => toggleModal('showStatus')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Review Article</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					<p>Change Visibility/Approval Status</p>
-					<select
-						className="form-control"
-						value={tempStatus}
-						onChange={(e) => setTempStatus(Number(e.target.value))}
-					>
-						<option value={0}>Pending</option>
-						<option value={1}>Review</option>
-						<option value={2}>Reject</option>
-						<option value={3}>Approve</option>
-					</select>
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={() => toggleModal('showStatus')}>
-						Cancel
-					</Button>
-					<Button
-						variant="success"
-						onClick={() => statusMutation.mutate(tempStatus)}
-						disabled={statusMutation.isPending}
-					>
-						{statusMutation.isPending ? 'Saving...' : 'Save Changes'}
-					</Button>
-				</Modal.Footer>
-			</Modal>
+			<ArticleReviewModal
+				controller={reviewModal}
+				status={tempStatus}
+				onStatusChange={setTempStatus}
+				onSave={() => statusMutation.mutate(tempStatus)}
+				isProcessing={statusMutation.isPending}
+			/>
 
-			<Modal show={modals.showDelete} onHide={() => toggleModal('showDelete')}>
-				<Modal.Header closeButton>
-					<Modal.Title>Are you absolutely sure?</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					This action cannot be undone. This will permanently delete <strong>{article.title_jp}</strong>.
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={() => toggleModal('showDelete')}>
-						Cancel
-					</Button>
-					<Button
-						variant="danger"
-						onClick={() => deleteMutation.mutate()}
-						disabled={deleteMutation.isPending}
-					>
-						{deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete Article'}
-					</Button>
-				</Modal.Footer>
-			</Modal>
+			<DeleteInstanceModal
+				controller={deleteModal}
+				instanceName={article.title_jp}
+				onDelete={() => deleteMutation.mutate()}
+				isProcessing={deleteMutation.isPending}
+			/>
 
-			<Modal show={modals.showPdf} onHide={() => toggleModal('showPdf')} size="sm" centered>
-				<Modal.Body className="text-center p-4">
-					<h5 className="mb-4">Generate PDF</h5>
-					<Button
-						variant="ghost"
-						className="w-100 mb-2 border"
-						disabled={article?.processing_status?.status !== LastOperationStatus.Completed}
-						onClick={() => handleDownloadPdf('kanji')}
-					>
-						Kanji List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-					</Button>
-					<Button variant="ghost" className="w-100 border" onClick={() => handleDownloadPdf('words')}>
-						Vocabulary List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-					</Button>
-				</Modal.Body>
-			</Modal>
+			<ArticlePdfModal
+				controller={pdfModal}
+				onDownload={handleDownloadPdf}
+				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.Completed}
+			/>
 
-			<ArticleEditModal article={article} isOpen={isEditOpen} onClose={closeEditModal} />
+			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}
 		</div>
 	);
 };

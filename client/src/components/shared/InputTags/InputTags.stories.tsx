@@ -20,7 +20,7 @@ const ControlledExample = () => {
 		<div style={{ maxWidth: '520px' }}>
 			<InputTags
 				label="Controlled"
-				defaultTags={tags}
+				value={tags}
 				onChange={setTags}
 				placeholder="Type a tag and press Enter, comma, or space"
 			/>
