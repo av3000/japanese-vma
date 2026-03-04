@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Shared\Enums;
 
-enum CustomListType: int
+enum CatalogueType: int
 {
     case KNOWN_RADICALS = 1;
     case KNOWN_KANJIS = 2;

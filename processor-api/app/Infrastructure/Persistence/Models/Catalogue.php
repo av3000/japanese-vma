@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
-use App\Domain\Shared\Enums\CustomListType;
+use App\Domain\Shared\Enums\CatalogueType;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\User;
 
-class CustomList extends Model
+class Catalogue extends Model
 {
     protected $table = "customlists";
 
@@ -23,7 +23,7 @@ class CustomList extends Model
 
     protected $casts = [
         'publicity' => 'boolean',
-        'type' => CustomListType::class,
+        'type' => CatalogueType::class,
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
     ];

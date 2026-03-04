@@ -21,8 +21,6 @@ Route::prefix('v1')->group(function () {
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
 
-
-
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);

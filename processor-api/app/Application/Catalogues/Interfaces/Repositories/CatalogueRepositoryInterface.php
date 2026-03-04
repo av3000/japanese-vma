@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Application\CustomLists\Interfaces\Repositories;
+namespace App\Application\Catalogues\Interfaces\Repositories;
 
-use App\Domain\Shared\Enums\CustomListType;
+use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Shared\ValueObjects\UserId;
 
-interface CustomListRepositoryInterface
+interface CatalogueRepositoryInterface
 {
     /**
      * Create default learning lists for a user
@@ -15,13 +15,13 @@ interface CustomListRepositoryInterface
      * @param UserId $userId
      * @return void
      */
-    public function createDefaultListsForUser(UserId $userId): void;
+    public function createDefaultCatalogueForUser(UserId $userId): void;
 
     /**
      * Create a single custom list
      *
      * @param UserId $userId
-     * @param CustomListType $type
+     * @param CatalogueType $type
      * @param string $title
      * @param string $description
      * @param bool $publicity
@@ -29,7 +29,7 @@ interface CustomListRepositoryInterface
      */
     public function create(
         UserId $userId,
-        CustomListType $type,
+        CatalogueType $type,
         string $title,
         string $description,
         bool $publicity = false
