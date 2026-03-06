@@ -1,7 +1,4 @@
-// @ts-nocheck
-/* eslint-disable */
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
@@ -30,22 +27,21 @@ const DashboardList: React.FC = () => {
 	const [articles, setArticles] = useState([]);
 	const [articlesPending, setArticlesPending] = useState([]);
 	const [dashboard, setDashboard] = useState(DASHBOARD_TYPES.COMMON_USER);
-	const [setFilters] = useState({});
+	const [, setFilters] = useState({});
 	const [isLoading, setIsLoading] = useState(true);
 
 	const { isAuthenticated, user: currentUser } = useAuth();
 
 	useEffect(() => {
-		const { isAuthenticated, user } = currentUser;
 		if (isAuthenticated) {
 			fetchArticles();
 			fetchLists();
 
-			if (user.isAdmin) {
+			if (currentUser?.isAdmin) {
 				fetchArticlesPending();
 			}
 		}
-	}, [currentUser]);
+	}, [currentUser, isAuthenticated]);
 
 	const toggleResource = () => {
 		setCurrentResource((prev) => (prev === RESOURCE_TYPES.LISTS ? RESOURCE_TYPES.ARTICLES : RESOURCE_TYPES.LISTS));
@@ -63,7 +59,7 @@ const DashboardList: React.FC = () => {
 	const fetchArticlesPending = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, '/api/articles/pendinglist');
+			const res = await apiCall({ method: HttpMethod.GET, path: '/api/articles/pendinglist' });
 			setArticlesPending(res.articlesPending);
 			setIsLoading(false);
 		} catch (err) {
@@ -75,7 +71,7 @@ const DashboardList: React.FC = () => {
 	const fetchArticles = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, '/api/user/articles');
+			const res = await apiCall({ method: HttpMethod.GET, path: '/api/user/articles' });
 			setArticles(res.articles);
 			setIsLoading(false);
 		} catch (err) {
@@ -87,7 +83,7 @@ const DashboardList: React.FC = () => {
 	const fetchLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, '/api/user/lists');
+			const res = await apiCall({ method: HttpMethod.GET, path: '/api/user/lists' });
 			setLists(res.lists);
 			setIsLoading(false);
 		} catch (err) {

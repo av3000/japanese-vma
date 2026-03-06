@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
-use App\Domain\Shared\Enums\CatalogueType;
+use App\Domain\Shared\Enums\SavedListType;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\User;
 
@@ -19,11 +19,12 @@ class Catalogue extends Model
         'type',
         'user_id',
         'uuid',
+        'entity_type_uuid',
     ];
 
     protected $casts = [
         'publicity' => 'boolean',
-        'type' => CatalogueType::class,
+        'type' => SavedListType::class,
         'created_at' => 'immutable_datetime',
         'updated_at' => 'immutable_datetime',
     ];

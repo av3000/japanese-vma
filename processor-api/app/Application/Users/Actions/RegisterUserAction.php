@@ -6,19 +6,18 @@ namespace App\Application\Users\Actions;
 
 use App\Domain\Users\DTOs\RegisterUserDTO;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
-use App\Application\CustomLists\Interfaces\Repositories\CustomListRepositoryInterface;
+use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Domain\Users\DTOs\RegisteredUserDTO;
 use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Users\Factories\UserFactory;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 final class RegisterUserAction
 {
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
-        private readonly CustomListRepositoryInterface $customListRepository
+        private readonly CatalogueRepositoryInterface $catalogueRepository
     ) {}
 
     /**
@@ -40,7 +39,7 @@ final class RegisterUserAction
                 hashedPassword: $userData['hashedPassword']
             );
 
-            $this->customListRepository->createDefaultListsForUser($result['userId']);
+            $this->catalogueRepository->createDefaultCataloguesForUser($result['userId']);
 
             $accessToken = $this->userRepository->generateAccessToken($result['userId']);
 

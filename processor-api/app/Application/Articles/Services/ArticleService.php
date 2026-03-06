@@ -178,6 +178,7 @@ class ArticleService implements ArticleServiceInterface
      */
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
     {
+        // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
         $criteriaDTO = new ArticleCriteriaDTO(
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),

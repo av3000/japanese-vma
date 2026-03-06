@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
+use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Users\Controllers\{UserController};
 use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
@@ -35,6 +36,10 @@ Route::prefix('v1')->group(function () {
     // Kanjis
     Route::get('kanjis', [KanjiController::class, 'index']);
     Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
+
+    // Catalogues - Public Read Access
+    Route::get('catalogues', [CatalogueController::class, 'index']);
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES

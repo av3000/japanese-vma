@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Application\Catalogues\Interfaces\Repositories;
 
 use App\Domain\Shared\Enums\CatalogueType;
+use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
+use App\Domain\Catalogues\Models\Catalogues;
+use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 
 interface CatalogueRepositoryInterface
@@ -15,7 +19,7 @@ interface CatalogueRepositoryInterface
      * @param UserId $userId
      * @return void
      */
-    public function createDefaultCatalogueForUser(UserId $userId): void;
+    public function createDefaultCataloguesForUser(UserId $userId): void;
 
     /**
      * Create a single custom list
@@ -34,4 +38,8 @@ interface CatalogueRepositoryInterface
         string $description,
         bool $publicity = false
     ): void;
+
+    public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues;
+
+    public function findByPublicUid(EntityId $uuid): ?Catalogue;
 }
