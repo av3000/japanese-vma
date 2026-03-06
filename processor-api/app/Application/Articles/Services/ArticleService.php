@@ -183,6 +183,7 @@ class ArticleService implements ArticleServiceInterface
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
+            authorUid: $dto->author_uid,
             visibilityRules: $this->ArticlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
             include_kanjis: $dto->include_kanjis

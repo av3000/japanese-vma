@@ -239,6 +239,12 @@ class ArticleRepository implements ArticleRepositoryInterface
             $query->where('category_id', $criteria->categoryId);
         }
 
+        if ($criteria->authorUid !== null) {
+            $query->whereHas('user', function (Builder $userQuery) use ($criteria) {
+                $userQuery->where('uuid', $criteria->authorUid);
+            });
+        }
+
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
             $query->where(function ($q) use ($searchValue) {
