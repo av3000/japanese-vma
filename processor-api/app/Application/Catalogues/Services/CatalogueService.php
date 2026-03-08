@@ -26,12 +26,24 @@ class CatalogueService implements CatalogueServiceInterface
 
     public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): Catalogues
     {
+        $requestedOwnerUid = $dto->owner_uid;
+        $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($user, $requestedOwnerUid);
+        $publicOnly = $dto->public_only;
+
+        if ($requestedOwnerUid === null) {
+            $publicOnly = true;
+        } elseif (!$publicOnly && !$canIndexPrivateCatalogues) {
+            $publicOnly = true;
+        }
+
         $criteria = new CatalogueCriteriaDTO(
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: CatalogueSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            publicOnly: true,
-            customOnly: true
+            ownerUid: $requestedOwnerUid,
+            type: $dto->type,
+            publicOnly: $publicOnly,
+            customOnly: $requestedOwnerUid === null ? true : $dto->custom_only
         );
 
         return $this->catalogueRepository->findByCriteria($criteria);

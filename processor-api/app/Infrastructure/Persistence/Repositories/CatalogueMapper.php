@@ -25,6 +25,7 @@ class CatalogueMapper
             PublicityStatus::from((int) $entity->publicity),
             new UserId($entity->user_id),
             new UserName($entity->user?->name ?? 'Unknown User'),
+            new EntityId($entity->user?->uuid ?? null),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
         );

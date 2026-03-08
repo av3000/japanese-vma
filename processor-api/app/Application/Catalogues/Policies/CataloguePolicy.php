@@ -30,4 +30,17 @@ class CataloguePolicy
 
         return $user->id === $catalogue->getOwnerId()->value();
     }
+
+    public function canIndexPrivateCatalogues(?User $user, ?string $ownerUid): bool
+    {
+        if ($user === null || $ownerUid === null) {
+            return false;
+        }
+
+        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+            return true;
+        }
+
+        return $user->uuid === $ownerUid;
+    }
 }

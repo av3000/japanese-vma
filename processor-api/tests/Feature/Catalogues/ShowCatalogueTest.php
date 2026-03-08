@@ -4,17 +4,36 @@ namespace Tests\Feature\Catalogues;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
+use Spatie\Permission\Models\Role;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\View;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\UserRole;
 
 class ShowCatalogueTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
+        Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
+
+        DB::table('objecttemplates')->insert([
+            'id' => ObjectTemplateType::LIST->getLegacyId(),
+            'title' => 'list',
+            'entity_type_uuid' => ObjectTemplateType::LIST->value,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 
     private function createUser(array $overrides = []): User
     {

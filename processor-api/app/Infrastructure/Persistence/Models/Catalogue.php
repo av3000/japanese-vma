@@ -8,6 +8,7 @@ use App\Domain\Shared\Enums\SavedListType;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\User;
 
+// TODO: Should list all model fields without a nee
 class Catalogue extends Model
 {
     protected $table = "customlists";

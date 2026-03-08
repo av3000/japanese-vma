@@ -19,6 +19,7 @@ class Catalogue
         private PublicityStatus $publicity,
         private UserId $ownerId,
         private UserName $ownerName,
+        private EntityId $ownerUuid,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt
     ) {}
@@ -66,6 +67,11 @@ class Catalogue
     public function getOwnerName(): UserName
     {
         return $this->ownerName;
+    }
+
+    public function getOwnerUuid(): EntityId
+    {
+        return $this->ownerUuid;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

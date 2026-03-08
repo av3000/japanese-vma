@@ -58,12 +58,22 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
     {
         $query = Catalogue::query()->with(['user']);
 
+        if ($criteria->ownerUid !== null) {
+            $query->whereHas('user', function (Builder $userQuery) use ($criteria) {
+                $userQuery->where('uuid', $criteria->ownerUid);
+            });
+        }
+
         if ($criteria->publicOnly) {
             $query->where('publicity', 1);
         }
 
         if ($criteria->customOnly) {
             $query->where('type', '>', 4);
+        }
+
+        if ($criteria->type !== null) {
+            $query->where('type', $criteria->type);
         }
 
         if ($criteria->search !== null) {

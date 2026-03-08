@@ -36,6 +36,7 @@ class CatalogueResource extends JsonResource
             'publicity' => $catalogue->getPublicity()->value,
             'owner' => [
                 'id' => $catalogue->getOwnerId()->value(),
+                'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ],
             'items_count' => $this->itemsCount ?? 0,

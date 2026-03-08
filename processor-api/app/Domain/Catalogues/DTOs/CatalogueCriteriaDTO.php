@@ -14,6 +14,8 @@ readonly class CatalogueCriteriaDTO
         public ?SearchTerm $search,
         public CatalogueSortCriteria $sort,
         public Pagination $pagination,
+        public ?string $ownerUid = null,
+        public ?int $type = null,
         public bool $publicOnly = true,
         public bool $customOnly = true
     ) {}
