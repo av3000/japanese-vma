@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     libicu-dev \
+    libpq-dev \
     # ADDED: autoconf for PECL extensions
     autoconf
 
