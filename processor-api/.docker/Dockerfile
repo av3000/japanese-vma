@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     autoconf
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl
 
 # Install Redis PHP extension via PECL
 RUN pecl channel-update pecl.php.net \
