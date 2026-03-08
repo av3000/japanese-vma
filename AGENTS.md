@@ -82,3 +82,9 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - Live backend deployment and worker behavior may involve Render, GitLab CI, GCP VM worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
 
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
+
+## 7) Laravel AI Guidance
+- Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
+- For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
+- Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.
+- Repo and scoped `AGENTS.md` constraints still take precedence over generic clean architecture advice.

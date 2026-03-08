@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy to V1 Migration"
+  short_description: "Laravel legacy endpoint migration"
+  default_prompt: "Use $legacy-to-v1-migration to migrate a legacy Laravel endpoint into the repo's v1 clean architecture."
