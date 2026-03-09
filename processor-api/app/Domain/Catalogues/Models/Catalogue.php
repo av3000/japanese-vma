@@ -11,7 +11,7 @@ use App\Domain\Shared\ValueObjects\{EntityId, UserId, UserName};
 class Catalogue
 {
     public function __construct(
-        private int $id,
+        private ?int $id,
         private EntityId $uuid,
         private SavedListType $type,
         private CatalogueTitle $title,

@@ -6,13 +6,18 @@ use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryIn
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
+use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
+use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Shared\Http\TypedResults;
@@ -89,6 +94,26 @@ class CatalogueController extends Controller
         ]);
     }
 
+    public function store(StoreCatalogueRequest $request): JsonResponse
+    {
+        $createDTO = CatalogueCreateDTO::fromRequest($request->validated());
+        $result = $this->catalogueService->createCatalogue(
+            $createDTO,
+            auth('api')->user(),
+            new Viewer(auth('api')->id(), $request->ip())
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        $catalogue = $result->getData();
+
+        return TypedResults::created([
+            'uuid' => $catalogue->getUid()->value(),
+        ]);
+    }
+
     public function show(string $uuid): JsonResponse
     {
         $catalogueUid = EntityId::from($uuid);
@@ -133,6 +158,40 @@ class CatalogueController extends Controller
                 $stats,
                 $hashtags,
                 $detail->itemsCount
+            )
+        );
+    }
+
+    public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse
+    {
+        if (!$request->hasAnyUpdateableFields()) {
+            return TypedResults::validationProblem(
+                ['fields' => ['At least one field must be provided for update operation']],
+                'No fields to update'
+            );
+        }
+
+        $catalogueUid = EntityId::from($uuid);
+        $updateDTO = CatalogueUpdateDTO::fromRequest($request->validated());
+        $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, auth('api')->user());
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        $catalogue = $result->getData();
+        $hashtags = $this->hashtagService->getHashtags(
+            $catalogue->getIdValue(),
+            ObjectTemplateType::LIST
+        );
+        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogue->getIdValue()]);
+        $itemsCount = $itemsCountMap[$catalogue->getIdValue()] ?? 0;
+
+        return TypedResults::ok(
+            new CatalogueResource(
+                catalogue: $catalogue,
+                hashtags: $hashtags,
+                itemsCount: $itemsCount
             )
         );
     }

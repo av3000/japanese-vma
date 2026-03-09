@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\Catalogues\Interfaces\Repositories;
 
-use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Catalogues\Models\Catalogue;
@@ -21,23 +20,9 @@ interface CatalogueRepositoryInterface
      */
     public function createDefaultCataloguesForUser(UserId $userId): void;
 
-    /**
-     * Create a single custom list
-     *
-     * @param UserId $userId
-     * @param CatalogueType $type
-     * @param string $title
-     * @param string $description
-     * @param bool $publicity
-     * @return void
-     */
-    public function create(
-        UserId $userId,
-        CatalogueType $type,
-        string $title,
-        string $description,
-        bool $publicity = false
-    ): void;
+    public function create(Catalogue $catalogue): Catalogue;
+
+    public function update(Catalogue $catalogue): void;
 
     public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues;
 

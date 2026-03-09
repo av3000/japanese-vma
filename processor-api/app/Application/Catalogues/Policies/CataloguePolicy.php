@@ -43,4 +43,13 @@ class CataloguePolicy
 
         return $user->uuid === $ownerUid;
     }
+
+    public function canUpdate(?User $user, Catalogue $catalogue): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return $user->id === $catalogue->getOwnerId()->value();
+    }
 }

@@ -27,7 +27,7 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
     public function createDefaultCataloguesForUser(UserId $userId): void
     {
         foreach (CatalogueType::cases() as $listType) {
-            $this->create(
+            $this->createDefaultCatalogue(
                 userId: $userId,
                 type: $listType,
                 title: $listType->title(),
@@ -37,7 +37,25 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         }
     }
 
-    public function create(
+    public function create(DomainCatalogue $catalogue): DomainCatalogue
+    {
+        $entity = Catalogue::create($this->catalogueMapper->mapToEntity($catalogue));
+        $entity->load('user');
+
+        return $this->catalogueMapper->mapToDomain($entity);
+    }
+
+    public function update(DomainCatalogue $catalogue): void
+    {
+        $entity = Catalogue::with('user')
+            ->where('uuid', $catalogue->getUid()->value())
+            ->firstOrFail();
+
+        $this->catalogueMapper->mapToExistingEntity($catalogue, $entity);
+        $entity->save();
+    }
+
+    private function createDefaultCatalogue(
         UserId $userId,
         CatalogueType $type,
         string $title,
@@ -47,6 +65,7 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         Catalogue::create([
             'user_id' => $userId->value(),
             'uuid' => Str::uuid()->toString(),
+            'entity_type_uuid' => ObjectTemplateType::LIST->value,
             'type' => $type->value,
             'title' => $title,
             'description' => $description,

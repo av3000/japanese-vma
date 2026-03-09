@@ -28,4 +28,26 @@ class CatalogueErrors
             errorMessage: "You don't have permission to access catalogue {$catalogueUid}",
         );
     }
+
+    public static function creationFailed(): Error
+    {
+        return new Error(
+            code: 'Catalogues.CreationFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Catalogue creation failed',
+            detail: 'An unexpected error occurred during catalogue creation',
+            errorMessage: 'An unexpected error occurred during catalogue creation',
+        );
+    }
+
+    public static function updateFailed(string $errorMessage): Error
+    {
+        return new Error(
+            code: 'Catalogues.UpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Catalogue update failed',
+            detail: 'An unexpected error occurred during catalogue updating',
+            errorMessage: $errorMessage,
+        );
+    }
 }

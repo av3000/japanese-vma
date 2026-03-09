@@ -4,8 +4,8 @@ namespace App\Application\Engagement\Services;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\Errors\HashtagErrors;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Shared\Results\Result;
 
 
@@ -65,8 +65,8 @@ class HashtagService implements HashtagServiceInterface
         array $tags,
         int $userId
     ): Result {
-        foreach($tags as $tag) {
-            if(!$this->isValidTag($tag)) {
+        foreach ($tags as $tag) {
+            if (!$this->isValidTag($tag)) {
                 return Result::failure(HashtagErrors::invalidTag($tag));
             }
         }
@@ -84,7 +84,6 @@ class HashtagService implements HashtagServiceInterface
             });
 
             return Result::success();
-
         } catch (\Exception $e) {
             \Log::error('Hashtag creation failed', [
                 'entity_id' => $entityId,

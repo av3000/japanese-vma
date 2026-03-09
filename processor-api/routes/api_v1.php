@@ -64,6 +64,10 @@ Route::prefix('v1')->group(function () {
         // User's Own Articles
         Route::get('user/articles', [ArticleController::class, 'userArticles']); // TODO: implement
 
+        // Catalogues - Authenticated Actions
+        Route::post('catalogues', [CatalogueController::class, 'store']);
+        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
+
         // Comments - Authenticated Write
         Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
 
