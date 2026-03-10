@@ -25,17 +25,17 @@ build_backend_image:
       SMOKE_ENV_FILE="$(mktemp)"
       SMOKE_APP_KEY="base64:$(openssl rand -base64 32)"
 
-      cat > "$SMOKE_ENV_FILE" <<EOF
-APP_ENV=production
-APP_DEBUG=false
-APP_KEY=$SMOKE_APP_KEY
-APP_URL=http://127.0.0.1:8080
-DB_CONNECTION=sqlite
-DB_DATABASE=/tmp/database.sqlite
-CACHE_DRIVER=file
-SESSION_DRIVER=file
-QUEUE_CONNECTION=sync
-EOF
+      printf '%s\n' \
+        "APP_ENV=production" \
+        "APP_DEBUG=false" \
+        "APP_KEY=$SMOKE_APP_KEY" \
+        "APP_URL=http://127.0.0.1:8080" \
+        "DB_CONNECTION=sqlite" \
+        "DB_DATABASE=/tmp/database.sqlite" \
+        "CACHE_DRIVER=file" \
+        "SESSION_DRIVER=file" \
+        "QUEUE_CONNECTION=sync" \
+        > "$SMOKE_ENV_FILE"
 
       trap 'rm -f "$SMOKE_ENV_FILE"; docker rm -f processor-api-smoke >/dev/null 2>&1 || true' EXIT
       docker run -d --name processor-api-smoke -p 8080:80 \
