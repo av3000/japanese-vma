@@ -1,0 +1,41 @@
+FROM php:8.3-apache-bookworm
+
+WORKDIR /var/www/html
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        libicu-dev \
+        libonig-dev \
+        libpq-dev \
+        libsqlite3-dev \
+        libzip-dev \
+        unzip \
+    && docker-php-ext-install \
+        bcmath \
+        intl \
+        mbstring \
+        pcntl \
+        pdo_mysql \
+        pdo_pgsql \
+        pdo_sqlite \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY .docker/apache-ci.conf /etc/apache2/sites-available/000-default.conf
+
+COPY . /var/www/html
+
+RUN mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache \
+    && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]

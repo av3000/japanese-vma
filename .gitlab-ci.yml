@@ -1,0 +1,64 @@
+stages:
+  - docker
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+build_backend_image:
+  stage: docker
+  image: docker:27
+  services:
+    - docker:27-dind
+  rules:
+    - changes:
+        - .gitlab-ci.yml
+        - processor-api/**/*
+  before_script:
+    - apk add --no-cache curl
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
+    - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
+    - |
+      trap 'docker rm -f processor-api-smoke >/dev/null 2>&1 || true' EXIT
+      docker run -d --name processor-api-smoke -p 8080:80 \
+        -e APP_ENV=development \
+        -e APP_DEBUG=false \
+        -e APP_KEY=base64:JrGvku0+JgI2r4zD3uNwT+gS1g5N0rR4kE0E9W0T0yI= \
+        -e APP_URL=http://127.0.0.1:8080 \
+        -e DB_CONNECTION=sqlite \
+        -e DB_DATABASE=/tmp/database.sqlite \
+        -e CACHE_DRIVER=file \
+        -e SESSION_DRIVER=file \
+        -e QUEUE_CONNECTION=sync \
+        "$IMAGE_NAME" \
+        sh -lc "touch /tmp/database.sqlite && exec apache2-foreground"
+    - |
+      for attempt in $(seq 1 30); do
+        rm -f smoke-response.html
+        status_code="$(curl -s -o smoke-response.html -w "%{http_code}" http://127.0.0.1:8080/ || true)"
+
+        if [ "$status_code" = "200" ] && grep -q 'id="root"' smoke-response.html; then
+          break
+        fi
+
+        if [ "$attempt" -eq 30 ]; then
+          docker logs processor-api-smoke || true
+
+          if [ -f smoke-response.html ]; then
+            cat smoke-response.html
+          fi
+
+          exit 1
+        fi
+
+        sleep 2
+      done
+    - docker push "$IMAGE_NAME"
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$IMAGE_NAME" "$LATEST_IMAGE"
+        docker push "$LATEST_IMAGE"
+      fi
