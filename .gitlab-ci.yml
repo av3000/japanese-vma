@@ -29,7 +29,7 @@ build_backend_image:
         "APP_ENV=production" \
         "APP_DEBUG=false" \
         "APP_KEY=$SMOKE_APP_KEY" \
-        "APP_URL=http://127.0.0.1:8080" \
+        "APP_URL=http://docker:8080" \
         "DB_CONNECTION=sqlite" \
         "DB_DATABASE=/tmp/database.sqlite" \
         "CACHE_DRIVER=file" \
@@ -45,7 +45,7 @@ build_backend_image:
     - |
       for attempt in $(seq 1 30); do
         rm -f smoke-response.html
-        status_code="$(curl -s -o smoke-response.html -w "%{http_code}" http://127.0.0.1:8080/ || true)"
+        status_code="$(curl -s -o smoke-response.html -w "%{http_code}" http://docker:8080/ || true)"
 
         if [ "$status_code" = "200" ] && grep -q 'id="root"' smoke-response.html; then
           break
