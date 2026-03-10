@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // V1 Routes (Domain Architecture)
@@ -20,6 +19,10 @@ require __DIR__ . '/api_v1.php';
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
+
+Route::get('health', function () {
+    return response()->json(['ok' => true], 200);
+});
 
 Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
