@@ -48,8 +48,10 @@ build_backend_image:
     - changes: *backend_changes
   script:
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
     - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
     - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
+    - docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE_NAME" .
     - |
       SMOKE_ENV_FILE="$(mktemp)"
       SMOKE_APP_KEY="base64:$(openssl rand -base64 32)"
@@ -97,6 +99,7 @@ build_backend_image:
         exit 1
       fi
     - docker push "$IMAGE_NAME"
+    - docker push "$IMPORT_IMAGE_NAME"
     - |
       if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
         docker tag "$IMAGE_NAME" "$LATEST_IMAGE"
@@ -130,14 +133,14 @@ import_japanese_data:
       when: manual
   allow_failure: false
   script:
-    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
-    - docker pull "$IMAGE_NAME"
+    - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
+    - docker pull "$IMPORT_IMAGE_NAME"
     - *prepare_runtime_env
     - |
       if [ "${IMPORT_FORCE_RERUN:-false}" = "true" ]; then
-        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT" --allow-rerun
+        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMPORT_IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT" --allow-rerun
       else
-        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT"
+        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMPORT_IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT"
       fi
 
 deploy_render:

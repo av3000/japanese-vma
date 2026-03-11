@@ -9,6 +9,12 @@ use RuntimeException;
 use SplFileObject;
 use Throwable;
 
+/**
+ * Imports the archived Japanese dataset dumps into the PostgreSQL-backed tables
+ * created by Laravel migrations. It reruns legacy INSERT statements through
+ * Laravel database writes(not a raw sql or direct dump import),
+ * guards against accidental reruns with a sentinel record, and supports an explicit full refresh when a rerun is requested.
+ */
 class JapaneseDataImporter
 {
     private const SENTINEL_TASK = 'japanese-data-import';
@@ -26,8 +32,7 @@ class JapaneseDataImporter
      */
     public function import(string $environment, bool $allowRerun = false, ?callable $output = null): array
     {
-        $output ??= static function (string $message): void {
-        };
+        $output ??= static function (string $message): void {};
 
         $datasets = $this->loadManifest();
         $sentinel = $this->loadSentinel($environment);
@@ -49,8 +54,8 @@ class JapaneseDataImporter
             $tableList = implode(', ', $populatedTables);
 
             throw new RuntimeException(
-                "Japanese data tables already contain rows without a sentinel record: {$tableList}. ".
-                'Verify the environment and rerun with --allow-rerun if you intend to replace the imported data.'
+                "Japanese data tables already contain rows without a sentinel record: {$tableList}. " .
+                    'Verify the environment and rerun with --allow-rerun if you intend to replace the imported data.'
             );
         }
 
@@ -150,7 +155,7 @@ class JapaneseDataImporter
     private function resetTables(array $datasets): void
     {
         $tableNames = array_values(array_unique(array_map(
-            static fn (array $dataset): string => $dataset['table'],
+            static fn(array $dataset): string => $dataset['table'],
             $datasets,
         )));
 
@@ -158,11 +163,11 @@ class JapaneseDataImporter
 
         if (DB::connection()->getDriverName() === 'pgsql') {
             $quotedTables = array_map(
-                fn (string $table): string => $this->quoteIdentifier($table),
+                fn(string $table): string => $this->quoteIdentifier($table),
                 $reversedTables,
             );
 
-            DB::statement('TRUNCATE TABLE '.implode(', ', $quotedTables).' RESTART IDENTITY CASCADE');
+            DB::statement('TRUNCATE TABLE ' . implode(', ', $quotedTables) . ' RESTART IDENTITY CASCADE');
 
             return;
         }
@@ -197,6 +202,8 @@ class JapaneseDataImporter
                 $line = $file->fgets();
                 $trimmedLine = ltrim($line);
 
+                // The dump can contain non-INSERT lines; only complete INSERT statements
+                // are replayed into the target PostgreSQL table.
                 if (!$collectingInsert) {
                     if (!str_starts_with($trimmedLine, 'INSERT INTO')) {
                         continue;
@@ -205,6 +212,8 @@ class JapaneseDataImporter
                     $statementBuffer = $line;
                     $collectingInsert = !$this->statementEnded($statementBuffer);
 
+                    // Some dumps emit a full INSERT on one line, so we can parse and
+                    // insert it without entering the multi-line buffering path.
                     if (!$collectingInsert) {
                         $rowCount += $this->processInsertStatement($table, $statementBuffer);
                         $statementBuffer = '';
@@ -213,6 +222,8 @@ class JapaneseDataImporter
                     continue;
                 }
 
+                // Large INSERT blocks often span many lines; keep buffering until the
+                // statement terminator is reached, then hand the full SQL to the parser.
                 $statementBuffer .= $line;
 
                 if ($this->statementEnded($statementBuffer)) {
@@ -331,6 +342,6 @@ class JapaneseDataImporter
 
     private function quoteIdentifier(string $identifier): string
     {
-        return '"'.str_replace('"', '""', $identifier).'"';
+        return '"' . str_replace('"', '""', $identifier) . '"';
     }
 }
