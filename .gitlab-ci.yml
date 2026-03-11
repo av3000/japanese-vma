@@ -37,6 +37,10 @@ variables:
     "DB_SSLMODE=${DB_SSLMODE:-require}" \
     "CACHE_DRIVER=file" \
     "SESSION_DRIVER=file" \
+    "PASSPORT_PRIVATE_KEY_B64=$PASSPORT_PRIVATE_KEY_B64" \
+    "PASSPORT_PUBLIC_KEY_B64=$PASSPORT_PUBLIC_KEY_B64" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=$PASSPORT_PERSONAL_ACCESS_CLIENT_ID" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=$PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" \
     "QUEUE_CONNECTION=sync" \
     > "$RUNTIME_ENV_FILE"
   trap 'rm -f "$RUNTIME_ENV_FILE"' EXIT
@@ -143,6 +147,22 @@ import_japanese_data:
         docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMPORT_IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT"
       fi
 
+setup_passport_personal_client:
+  extends: .docker_backend_job
+  stage: release
+  needs:
+    - build_backend_image
+    - migrate_backend
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  allow_failure: false
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - docker pull "$IMAGE_NAME"
+    - *prepare_runtime_env
+    - docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan passport:client --personal --name="Render Personal Access Client" --no-interaction
+
 deploy_render:
   stage: release
   image: alpine:3.20
@@ -201,9 +221,9 @@ verify_render:
         exit 1
       fi
     - |
-      articles_status="$(curl -s -o verify-articles.json -w "%{http_code}" "$RENDER_BASE_URL/api/v1/articles?per_page=1" || true)"
+      kanjis_status="$(curl -s -o verify-kanjis.json -w "%{http_code}" "$RENDER_BASE_URL/api/v1/kanjis?per_page=1" || true)"
 
-      if [ "$articles_status" != "200" ] || ! grep -q '"success":true' verify-articles.json; then
-        [ -f verify-articles.json ] && cat verify-articles.json
+      if [ "$kanjis_status" != "200" ] || ! grep -q '"success":true' verify-kanjis.json; then
+        [ -f verify-kanjis.json ] && cat verify-kanjis.json
         exit 1
       fi

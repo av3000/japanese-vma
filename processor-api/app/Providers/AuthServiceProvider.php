@@ -5,8 +5,6 @@ namespace App\Providers;
 use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
 use App\Infrastructure\Auth\Services\AuthSessionService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Laravel\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
 {
