@@ -78,7 +78,7 @@ return new class extends Migration
         });
 
         Schema::table('objecttemplates', function (Blueprint $table) {
-            $table->uuid('uuid')->nullable()->change();
+            $table->uuid('entity_type_uuid')->nullable()->change();
         });
     }
 };
