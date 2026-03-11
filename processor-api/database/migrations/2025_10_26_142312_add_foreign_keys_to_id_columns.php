@@ -11,17 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-       // Drop any existing foreign keys first (in case of partial failure)
-        try {
-            Schema::table('hashtag_entity', function (Blueprint $table) {
-                $table->dropForeign(['hashtag_id']);
-                $table->dropForeign(['entity_type_id']);
-                $table->dropForeign(['user_id']);
-            });
-        } catch (\Exception $e) {
-            // Ignore if they don't exist
-        }
-
         Schema::table('hashtag_entity', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->change();
         });
