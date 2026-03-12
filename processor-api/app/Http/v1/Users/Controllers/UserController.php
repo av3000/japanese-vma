@@ -14,7 +14,7 @@ use App\Http\v1\Users\Resources\UserProfileResource;
 use App\Shared\Http\TypedResults;
 use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Users\Queries\UserQueryCriteria;
-use App\Http\V1\Admin\Requests\UserIndexRequest;
+use App\Http\v1\Admin\Requests\UserIndexRequest;
 use App\Http\v1\Users\Builders\UserResponseBuilder;
 use Illuminate\Http\JsonResponse;
 

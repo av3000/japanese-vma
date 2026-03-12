@@ -6,7 +6,7 @@ namespace App\Http\v1\Auth\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Domain\Users\Models\User as DomainUser;
-use App\Http\V1\Admin\Resources\RoleResource;
+use App\Http\v1\Admin\Resources\RoleResource;
 
 class AuthUserResource extends JsonResource
 {
