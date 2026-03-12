@@ -9,15 +9,12 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        // TODO: try to setup project from scratch and fix these as required to make it work
-        $this->call([
-            RoleSeeder::class
-        ]);
-        $this->call([UserTableSeeder::class])
+        // Keep production-safe seeds idempotent. Create required roles (ex: "common") only.
+        $this->call(RoleSeeder::class);
+        // The seeders below create sample/dev data; keep them opt-in.
         // $this->call(UserTableSeeder::class);
         // $this->call(ObjectTemplatesTableSeeder::class);
         // $this->call(ArticlesTableSeeder::class);

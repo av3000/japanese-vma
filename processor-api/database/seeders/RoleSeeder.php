@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Domain\Shared\Enums\UserRole;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class RoleSeeder extends Seeder
 {
@@ -14,19 +13,28 @@ class RoleSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create roles from your UserRole enum
+        $created = [];
+        $existing = [];
+
+        // Create roles from your UserRole enum (idempotent via firstOrCreate).
         foreach (UserRole::cases() as $role) {
-            Role::firstOrCreate([
+            $spatieRole = Role::firstOrCreate([
                 'name' => $role->value,
                 'guard_name' => 'api'
             ]);
+            if ($spatieRole->wasRecentlyCreated) {
+                $created[] = $spatieRole->name;
+            } else {
+                $existing[] = $spatieRole->name;
+            }
         }
 
-        Role::firstOrCreate(['name' => 'testuser', 'guard_name' => 'api']);
-        // TODO: Create permissions and assign to roles
-        // $editArticles = Permission::create(['name' => 'edit articles', 'guard_name' => 'api']);
-        // $adminRole->givePermissionTo($editArticles);
-
-        $this->command->info('✅ Roles created: admin, user');
+        $this->command?->info('✅ Roles seed complete.');
+        if ($created !== []) {
+            $this->command?->info('Created: ' . implode(', ', $created));
+        }
+        if ($existing !== []) {
+            $this->command?->info('Already existed: ' . implode(', ', $existing));
+        }
     }
 }

@@ -7,10 +7,17 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
   DEPLOY_ENVIRONMENT: production
+  SHOW_IMPORT_JAPANESE_DATA_JOB: "false"
+  SHOW_SETUP_PASSPORT_JOB: "false"
+  FORCE_SHOW_MIGRATE_JOB: "false"
 
 .backend_changes: &backend_changes
   - .gitlab-ci.yml
   - processor-api/**/*
+
+.migration_changes: &migration_changes
+  - .gitlab-ci.yml
+  - processor-api/database/migrations/**/*
 
 .docker_backend_job:
   image: docker:27
@@ -55,7 +62,10 @@ build_backend_image:
     - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
     - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
     - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
-    - docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE_NAME" .
+    - |
+      if [ "${SHOW_IMPORT_JAPANESE_DATA_JOB:-false}" = "true" ]; then
+        docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE_NAME" .
+      fi
     - |
       SMOKE_ENV_FILE="$(mktemp)"
       SMOKE_APP_KEY="base64:$(openssl rand -base64 32)"
@@ -103,7 +113,10 @@ build_backend_image:
         exit 1
       fi
     - docker push "$IMAGE_NAME"
-    - docker push "$IMPORT_IMAGE_NAME"
+    - |
+      if [ "${SHOW_IMPORT_JAPANESE_DATA_JOB:-false}" = "true" ]; then
+        docker push "$IMPORT_IMAGE_NAME"
+      fi
     - |
       if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
         docker tag "$IMAGE_NAME" "$LATEST_IMAGE"
@@ -116,25 +129,33 @@ migrate_backend:
   needs:
     - build_backend_image
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      changes: *backend_changes
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FORCE_SHOW_MIGRATE_JOB == "true"'
+      when: manual
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *migration_changes
       when: manual
   allow_failure: false
   script:
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
     - docker pull "$IMAGE_NAME"
     - *prepare_runtime_env
-    - docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan migrate --force
+    - |
+      docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" sh -lc '
+        php artisan migrate --force &&
+        php artisan db:seed --class="Database\\Seeders\\RoleSeeder" --force
+      '
 
 import_japanese_data:
   extends: .docker_backend_job
   stage: release
   needs:
     - build_backend_image
-    - migrate_backend
+    - job: migrate_backend
+      optional: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SHOW_IMPORT_JAPANESE_DATA_JOB == "true"'
       when: manual
+    - when: never # Continue only if conditional is met, otherwise - never (skip)
   allow_failure: false
   script:
     - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
@@ -152,10 +173,12 @@ setup_passport_personal_client:
   stage: release
   needs:
     - build_backend_image
-    - migrate_backend
+    - job: migrate_backend
+      optional: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SHOW_SETUP_PASSPORT_JOB == "true"'
       when: manual
+    - when: never # Continue only if conditional is met, otherwise - never (skip)
   allow_failure: false
   script:
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
@@ -167,9 +190,10 @@ deploy_render:
   stage: release
   image: alpine:3.20
   needs:
-    - migrate_backend
+    - job: migrate_backend
+      optional: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
       changes: *backend_changes
       when: manual
   allow_failure: false
@@ -184,7 +208,7 @@ verify_render:
   needs:
     - deploy_render
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
       changes: *backend_changes
   before_script:
     - apk add --no-cache curl

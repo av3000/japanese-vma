@@ -1,7 +1,5 @@
 <?php
 
-use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
-
 return [
     /*
      * Your API path. By default, all routes starting with this path will be added to the docs.
@@ -10,9 +8,11 @@ return [
     'api_path' => 'api/v1',
     // 'api_path' => 'api/v2/test-only',  // Only match your test route
 
-    'only' => [
-        'api/v1/users/*',
-    ],
+    // Docs are public for now; include all routes under api_path.
+    // You can later reintroduce restrictions via Scramble's `only` / `except` or custom route resolver.
+    // 'only' => [
+    //     'api/v1/users/*',
+    // ],
 
     'debug' => true, // Add this to enable debug mode.
 
@@ -78,7 +78,6 @@ return [
 
     'middleware' => [
         'web',
-        RestrictedDocsAccess::class,
     ],
 
     'extensions' => [],
