@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - master
-      - develop
     paths:
       - "client/**"
       - ".github/workflows/frontend-ci.yml"
   pull_request:
+    branches:
+      - develop
+      - master
     paths:
       - "client/**"
       - ".github/workflows/frontend-ci.yml"
