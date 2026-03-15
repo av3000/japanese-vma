@@ -1,0 +1,253 @@
+stages:
+  - build
+  - release
+  - verify
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  DEPLOY_ENVIRONMENT: production
+  SHOW_IMPORT_JAPANESE_DATA_JOB: "false"
+  SHOW_SETUP_PASSPORT_JOB: "false"
+  FORCE_SHOW_MIGRATE_JOB: "false"
+
+.backend_changes: &backend_changes
+  - .gitlab-ci.yml
+  - processor-api/**/*
+
+.migration_changes: &migration_changes
+  - .gitlab-ci.yml
+  - processor-api/database/migrations/**/*
+
+.docker_backend_job:
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - apk add --no-cache curl openssl
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+.prepare_runtime_env: &prepare_runtime_env |
+  RUNTIME_ENV_FILE="$(mktemp)"
+  export RUNTIME_ENV_FILE
+  printf '%s\n' \
+    "APP_ENV=production" \
+    "APP_DEBUG=false" \
+    "APP_KEY=$APP_KEY" \
+    "APP_URL=$APP_URL" \
+    "DB_CONNECTION=${DB_CONNECTION:-pgsql}" \
+    "DB_HOST=$DB_HOST" \
+    "DB_PORT=$DB_PORT" \
+    "DB_DATABASE=$DB_DATABASE" \
+    "DB_USERNAME=$DB_USERNAME" \
+    "DB_PASSWORD=$DB_PASSWORD" \
+    "DB_SSLMODE=${DB_SSLMODE:-require}" \
+    "CACHE_DRIVER=file" \
+    "SESSION_DRIVER=file" \
+    "PASSPORT_PRIVATE_KEY_B64=$PASSPORT_PRIVATE_KEY_B64" \
+    "PASSPORT_PUBLIC_KEY_B64=$PASSPORT_PUBLIC_KEY_B64" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=$PASSPORT_PERSONAL_ACCESS_CLIENT_ID" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=$PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" \
+    "QUEUE_CONNECTION=sync" \
+    > "$RUNTIME_ENV_FILE"
+  trap 'rm -f "$RUNTIME_ENV_FILE"' EXIT
+
+build_backend_image:
+  extends: .docker_backend_job
+  stage: build
+  rules:
+    - changes: *backend_changes
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
+    - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
+    - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
+    - |
+      if [ "${SHOW_IMPORT_JAPANESE_DATA_JOB:-false}" = "true" ]; then
+        docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE_NAME" .
+      fi
+    - |
+      SMOKE_ENV_FILE="$(mktemp)"
+      SMOKE_APP_KEY="base64:$(openssl rand -base64 32)"
+
+      printf '%s\n' \
+        "APP_ENV=production" \
+        "APP_DEBUG=false" \
+        "APP_KEY=$SMOKE_APP_KEY" \
+        "APP_URL=http://docker:8080" \
+        "DB_CONNECTION=sqlite" \
+        "DB_DATABASE=/tmp/database.sqlite" \
+        "CACHE_DRIVER=file" \
+        "SESSION_DRIVER=file" \
+        "QUEUE_CONNECTION=sync" \
+        > "$SMOKE_ENV_FILE"
+
+      trap 'rm -f "$SMOKE_ENV_FILE"; docker rm -f processor-api-smoke >/dev/null 2>&1 || true' EXIT
+      docker run -d --name processor-api-smoke -p 8080:80 \
+        --env-file "$SMOKE_ENV_FILE" \
+        "$IMAGE_NAME" \
+        sh -lc "touch /tmp/database.sqlite && exec apache2-foreground"
+    - |
+      for attempt in $(seq 1 30); do
+        rm -f smoke-root.html
+        status_code="$(curl -s -o smoke-root.html -w "%{http_code}" http://docker:8080/ || true)"
+
+        if [ "$status_code" = "200" ] && grep -q 'id="root"' smoke-root.html; then
+          break
+        fi
+
+        if [ "$attempt" -eq 30 ]; then
+          docker logs processor-api-smoke || true
+          [ -f smoke-root.html ] && cat smoke-root.html
+          exit 1
+        fi
+
+        sleep 2
+      done
+    - |
+      health_status="$(curl -s -o smoke-health.json -w "%{http_code}" http://docker:8080/api/health || true)"
+
+      if [ "$health_status" != "200" ] || ! grep -q '"ok":true' smoke-health.json; then
+        docker logs processor-api-smoke || true
+        [ -f smoke-health.json ] && cat smoke-health.json
+        exit 1
+      fi
+    - docker push "$IMAGE_NAME"
+    - |
+      if [ "${SHOW_IMPORT_JAPANESE_DATA_JOB:-false}" = "true" ]; then
+        docker push "$IMPORT_IMAGE_NAME"
+      fi
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$IMAGE_NAME" "$LATEST_IMAGE"
+        docker push "$LATEST_IMAGE"
+      fi
+
+migrate_backend:
+  extends: .docker_backend_job
+  stage: release
+  needs:
+    - build_backend_image
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $FORCE_SHOW_MIGRATE_JOB == "true"'
+      when: manual
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *migration_changes
+      when: manual
+  allow_failure: false
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - docker pull "$IMAGE_NAME"
+    - *prepare_runtime_env
+    - |
+      docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" sh -lc '
+        php artisan migrate --force &&
+        php artisan db:seed --class="Database\\Seeders\\RoleSeeder" --force
+      '
+
+import_japanese_data:
+  extends: .docker_backend_job
+  stage: release
+  needs:
+    - build_backend_image
+    - job: migrate_backend
+      optional: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SHOW_IMPORT_JAPANESE_DATA_JOB == "true"'
+      when: manual
+    - when: never # Continue only if conditional is met, otherwise - never (skip)
+  allow_failure: false
+  script:
+    - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
+    - docker pull "$IMPORT_IMAGE_NAME"
+    - *prepare_runtime_env
+    - |
+      if [ "${IMPORT_FORCE_RERUN:-false}" = "true" ]; then
+        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMPORT_IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT" --allow-rerun
+      else
+        docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMPORT_IMAGE_NAME" php artisan app:import-japanese-data --environment="$DEPLOY_ENVIRONMENT"
+      fi
+
+setup_passport_personal_client:
+  extends: .docker_backend_job
+  stage: release
+  needs:
+    - build_backend_image
+    - job: migrate_backend
+      optional: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SHOW_SETUP_PASSPORT_JOB == "true"'
+      when: manual
+    - when: never # Continue only if conditional is met, otherwise - never (skip)
+  allow_failure: false
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - docker pull "$IMAGE_NAME"
+    - *prepare_runtime_env
+    - docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan passport:client --personal --name="Render Personal Access Client" --no-interaction
+
+deploy_render:
+  stage: release
+  image: alpine:3.20
+  needs:
+    - job: migrate_backend
+      optional: true
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *backend_changes
+      when: manual
+  allow_failure: false
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
+
+verify_render:
+  stage: verify
+  image: alpine:3.20
+  needs:
+    - deploy_render
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *backend_changes
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - sleep 20
+    - |
+      for attempt in $(seq 1 60); do
+        rm -f verify-health.json
+        status_code="$(curl -s -o verify-health.json -w "%{http_code}" "$RENDER_BASE_URL/api/health" || true)"
+
+        if [ "$status_code" = "200" ] && grep -q '"ok":true' verify-health.json; then
+          break
+        fi
+
+        if [ "$attempt" -eq 60 ]; then
+          [ -f verify-health.json ] && cat verify-health.json
+          exit 1
+        fi
+
+        sleep 5
+      done
+    - |
+      root_status="$(curl -s -o verify-root.html -w "%{http_code}" "$RENDER_BASE_URL/" || true)"
+
+      if [ "$root_status" != "200" ] || ! grep -q 'id="root"' verify-root.html; then
+        [ -f verify-root.html ] && cat verify-root.html
+        exit 1
+      fi
+    - |
+      health_status="$(curl -s -o verify-health.json -w "%{http_code}" "$RENDER_BASE_URL/api/health" || true)"
+
+      if [ "$health_status" != "200" ] || ! grep -q '"ok":true' verify-health.json; then
+        [ -f verify-health.json ] && cat verify-health.json
+        exit 1
+      fi
+    - |
+      kanjis_status="$(curl -s -o verify-kanjis.json -w "%{http_code}" "$RENDER_BASE_URL/api/v1/kanjis?per_page=1" || true)"
+
+      if [ "$kanjis_status" != "200" ] || ! grep -q '"success":true' verify-kanjis.json; then
+        [ -f verify-kanjis.json ] && cat verify-kanjis.json
+        exit 1
+      fi

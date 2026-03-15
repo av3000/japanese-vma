@@ -37,7 +37,8 @@ class ArticleController extends Controller
     {
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $paginatedArticles = $this->articleService->getArticlesList($listDTO, auth('api')->user());
+        $viewer = $this->resolveOptionalApiUser($request);
+        $paginatedArticles = $this->articleService->getArticlesList($listDTO, $viewer);
         $entityIdInts = [];
         $entityUuidStrings = [];
 
@@ -127,7 +128,8 @@ class ArticleController extends Controller
     {
         $articleUid = EntityId::from($uid);
         $options = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $result = $this->articleService->getArticle($articleUid, $options, auth('api')->user());
+        $viewer = $this->resolveOptionalApiUser($request);
+        $result = $this->articleService->getArticle($articleUid, $options, $viewer);
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -135,7 +137,12 @@ class ArticleController extends Controller
 
         $article = $result->getData();
 
-        $engagementSummary = $this->engagementService->getSingleArticleEngagementSummary($article->getIdValue(), ObjectTemplateType::ARTICLE, $options, auth('api')->check());
+        $engagementSummary = $this->engagementService->getSingleArticleEngagementSummary(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE,
+            $options,
+            $viewer !== null
+        );
 
         $hashtags = $this->hashtagService->getHashtags(
             $article->getIdValue(),
@@ -244,5 +251,16 @@ class ArticleController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
+    }
+
+    private function resolveOptionalApiUser(Request $request): ?\App\Infrastructure\Persistence\Models\User
+    {
+        $bearerToken = $request->bearerToken();
+
+        if ($bearerToken === null || trim($bearerToken) === '') {
+            return null;
+        }
+
+        return auth('api')->user();
     }
 }

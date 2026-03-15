@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\v1\Users\Resources;
 
 use App\Application\Users\DTOs\UserWithProfileContext;
-use App\Http\V1\Admin\Resources\RoleResource;
+use App\Http\v1\Admin\Resources\RoleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

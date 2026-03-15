@@ -3,11 +3,23 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LogRequest
 {
+    private const MASKED_VALUE = '[MASKED]';
+
+    private const SENSITIVE_KEYS = [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'token',
+        'access_token',
+        'refresh_token',
+        'authorization',
+    ];
+
     /**
      * Handle an incoming request.
      *
@@ -20,9 +32,25 @@ class LogRequest
         Log::channel('stderr')->info('Request Logged', [
             'url' => $request->url(),
             'method' => $request->method(),
-            'input' => $request->all(),
+            'input' => $this->sanitizeInput($request->all()),
         ]);
 
         return $next($request);
+    }
+
+    private function sanitizeInput(array $input): array
+    {
+        foreach ($input as $key => $value) {
+            if (in_array(strtolower((string) $key), self::SENSITIVE_KEYS, true)) {
+                $input[$key] = self::MASKED_VALUE;
+                continue;
+            }
+
+            if (is_array($value)) {
+                $input[$key] = $this->sanitizeInput($value);
+            }
+        }
+
+        return $input;
     }
 }

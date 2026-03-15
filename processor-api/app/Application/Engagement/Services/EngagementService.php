@@ -62,7 +62,7 @@ class EngagementService implements EngagementServiceInterface
     public function enhanceArticlesWithStatsCounts(Articles $articles): array
     {
         if ($articles->isEmpty()) {
-            return $articles;
+            return [];
         }
 
         $articleIds = array_map(fn($article) => $article->getIdValue(), $articles->getItems());

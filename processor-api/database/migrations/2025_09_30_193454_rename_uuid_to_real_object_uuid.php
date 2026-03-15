@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->renameColumn('uuid', 'real_object_uuid');
+            $table->uuid('real_object_uuid')->nullable()->after('entity_type_uuid');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('comments', function (Blueprint $table) {
-            $table->renameColumn('real_object_uuid', 'uuid');
+            $table->dropColumn('real_object_uuid');
         });
     }
 };

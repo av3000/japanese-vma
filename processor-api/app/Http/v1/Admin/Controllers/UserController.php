@@ -8,7 +8,7 @@ use App\Application\Users\Actions\GetCurrentUserAction;
 use App\Http\Controllers\Controller;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Domain\Users\Queries\UserQueryCriteria;
-use App\Http\V1\Admin\Requests\UserIndexRequest;
+use App\Http\v1\Admin\Requests\UserIndexRequest;
 use App\Http\v1\Users\Builders\UserResponseBuilder;
 use Illuminate\Http\JsonResponse;
 use App\Shared\Http\TypedResults;

@@ -5,14 +5,13 @@ namespace App\Exceptions;
 use App\Domain\Shared\Exceptions\ValueObjectValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 use App\Shared\Enums\HttpStatus;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Exceptions\RoleDoesNotExist;
 
 class Handler extends ExceptionHandler
 {
@@ -118,29 +117,35 @@ class Handler extends ExceptionHandler
         }
 
         if ($this->isHttpException($exception)) {
+            // Some IDEs/static analyzers won't narrow types inside a ternary. Keep this explicit.
+            $statusCode = (int) $exception->getCode();
+            if ($exception instanceof HttpExceptionInterface) {
+                $statusCode = $exception->getStatusCode();
+            }
+
             if ($request->is('api/*')) {
-                $httpStatusEnum = HttpStatus::tryFrom($exception->getCode());
+                $httpStatusEnum = HttpStatus::tryFrom($statusCode);
                 $httpStatus = $httpStatusEnum?->getHttpExceptionTitle() ?? 'Error';
 
                 return response()->json([
-                    'type' => $httpStatusEnum->getTypeUri() ?? 'about:blank',
+                    'type' => $httpStatusEnum?->getTypeUri() ?? 'about:blank',
                     'title' => $httpStatus,
-                    'status' => $exception->getCode(),
+                    'status' => $statusCode,
                     'detail' => $exception->getMessage(),
                     'instance' => $request->path(),
                     'timestamp' => now()->toIso8601String()
-                ], $httpStatusEnum->value);
+                ], $httpStatusEnum?->value ?? $statusCode);
             }
 
             // Web routes - return views
-            if ($exception->getCode() == 404) {
+            if ($statusCode === 404) {
                 return response()->view('errors.404', [
                     'success' => false,
                     'error' => 404,
                 ], 404);
             }
 
-            if ($exception->getCode() == 500) {
+            if ($statusCode === 500) {
                 return response()->view('errors.500', [
                     'success' => false,
                     'error' => 500,
