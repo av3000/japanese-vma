@@ -10,8 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
 import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
-import Spinner from '../../assets/images/spinner.gif';
-import Hashtags from '../ui/hashtags';
+import Spinner from '@/assets/images/spinner.gif';
 
 const KanjiOpen: React.FC = () => {
 	const [kanji, setKanji] = useState({});
@@ -41,6 +40,7 @@ const KanjiOpen: React.FC = () => {
 			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/kanji/${kanji_id}`);
 
 			// Process the kanji data
+			// TODO: Should handle data materialization on backend and return necessary formatted data.
 			const processedKanji = {
 				...res,
 				meaning: res.meaning.split('|').join(', '),

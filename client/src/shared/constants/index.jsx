@@ -14,6 +14,8 @@ export const SavedListObjectTemplates = {
 	ARTISTS: 11,
 };
 
+export const ObjectTemplates = SavedListObjectTemplates;
+
 export const LIST_ACTIONS = {
 	ADD_ITEM: 'add',
 	REMOVE_ITEM: 'remove',
