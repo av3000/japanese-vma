@@ -30,5 +30,5 @@ interface CommentRepositoryInterface
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
     public function findAllByFilter(CommentFilterDTO $filter): array;
 
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, int $userId): Comments;
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments;
 }

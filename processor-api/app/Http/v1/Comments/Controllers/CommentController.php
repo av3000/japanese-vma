@@ -6,6 +6,7 @@ use App\Application\Comments\Services\CommentService;
 use App\Http\v1\Comments\Resources\CommentResource;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
+use App\Http\v1\Concerns\ResolvesOptionalApiUser;
 use App\Http\v1\Comments\Requests\IndexCommentRequest;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -18,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 
 class CommentController extends Controller
 {
+    use ResolvesOptionalApiUser;
+
     public function __construct(
         // TODO: use interface for commentService
         private CommentService $commentService,
@@ -44,7 +47,7 @@ class CommentController extends Controller
             dto: $listDTO,
             entityType: $entityType,
             entityId: $entityId,
-            userId: auth('api')->user()->id
+            viewerUserId: $this->resolveOptionalApiUserId($request)
         );
 
 
@@ -69,8 +72,6 @@ class CommentController extends Controller
 
         return TypedResults::ok($data);
     }
-
-
     public function store(Request $request)
     {
         //

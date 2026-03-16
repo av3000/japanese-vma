@@ -5,6 +5,7 @@ namespace App\Http\v1\Articles\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
+use App\Http\v1\Concerns\ResolvesOptionalApiUser;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
@@ -26,6 +27,8 @@ use Illuminate\Http\JsonResponse;
 
 class ArticleController extends Controller
 {
+    use ResolvesOptionalApiUser;
+
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
         private readonly LastOperationServiceInterface $lastOperationService,
@@ -253,14 +256,4 @@ class ArticleController extends Controller
         }
     }
 
-    private function resolveOptionalApiUser(Request $request): ?\App\Infrastructure\Persistence\Models\User
-    {
-        $bearerToken = $request->bearerToken();
-
-        if ($bearerToken === null || trim($bearerToken) === '') {
-            return null;
-        }
-
-        return auth('api')->user();
-    }
 }

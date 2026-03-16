@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, int $userId): Comments
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments
     {
         $query = PersistenceComment::with(['user'])
             ->where('template_id', $criteria->entityType->getLegacyId())
@@ -28,9 +28,9 @@ class CommentRepository implements CommentRepositoryInterface
 
         $query->withCount('likes');
 
-        if ($userId) {
-            $query->withExists(['likes as is_liked_by_viewer' => function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+        if ($viewerUserId !== null) {
+            $query->withExists(['likes as is_liked_by_viewer' => function ($q) use ($viewerUserId) {
+                $q->where('user_id', $viewerUserId);
             }]);
         }
 
