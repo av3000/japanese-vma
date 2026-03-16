@@ -17,6 +17,18 @@ class IndexKanjiRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge($this->castIntegerFields([
+            'page',
+            'per_page',
+            'limit',
+            'offset',
+            'min_stroke_count',
+            'max_stroke_count',
+        ]));
+    }
+
     public function rules(): array
     {
         return [
@@ -40,5 +52,28 @@ class IndexKanjiRequest extends FormRequest
             // 'sort_by' => ['nullable', 'string', Rule::in(array_column(KanjiSortField::cases(), 'value'))],
             // 'sort_direction' => ['nullable', 'string', Rule::in([SortDirection::ASC->value, SortDirection::DESC->value])],
         ];
+    }
+
+    /**
+     * @param array<int, string> $fields
+     * @return array<string, int>
+     */
+    private function castIntegerFields(array $fields): array
+    {
+        $normalized = [];
+
+        foreach ($fields as $field) {
+            $value = $this->input($field);
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if (is_numeric($value)) {
+                $normalized[$field] = (int) $value;
+            }
+        }
+
+        return $normalized;
     }
 }
