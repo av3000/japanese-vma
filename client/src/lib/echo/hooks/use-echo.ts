@@ -1,6 +1,6 @@
 import { type DependencyList, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type BroadcastDriver } from 'laravel-echo';
-import { echo } from '../config';
+import { echo, echoIsConfigured } from '../config';
 import type {
 	BroadcastNotification,
 	Channel,
@@ -16,6 +16,27 @@ import type {
 import { toArray } from '../util';
 
 const channels = new Map<string, ChannelData<BroadcastDriver>>();
+
+const createNoopConnection = <T extends BroadcastDriver>(): Connection<T> => {
+	const noopConnection = {
+		listen: () => noopConnection,
+		stopListening: () => noopConnection,
+		listenForWhisper: () => noopConnection,
+		stopListeningForWhisper: () => noopConnection,
+		subscribed: () => noopConnection,
+		error: () => noopConnection,
+		on: () => noopConnection,
+		here: () => noopConnection,
+		joining: () => noopConnection,
+		leaving: () => noopConnection,
+		whisper: () => noopConnection,
+		notification: () => noopConnection,
+		stopListeningForNotification: () => noopConnection,
+		unsubscribe: () => undefined,
+	};
+
+	return noopConnection as unknown as Connection<T>;
+};
 
 const getPusherConnection = (
 	connector: unknown,
@@ -75,6 +96,10 @@ const mapPusherState = (state: string | undefined): ConnectionStatus => {
 };
 
 const subscribeToChannel = <T extends BroadcastDriver>(channel: Channel): Connection<T> => {
+	if (!echoIsConfigured()) {
+		return createNoopConnection<T>();
+	}
+
 	const instance = echo<T>();
 
 	if (channel.visibility === 'presence') {
@@ -89,6 +114,11 @@ const subscribeToChannel = <T extends BroadcastDriver>(channel: Channel): Connec
 };
 
 const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
+	if (!echoIsConfigured()) {
+		channels.delete(channel.id);
+		return;
+	}
+
 	const channelEntry = channels.get(channel.id);
 
 	if (!channelEntry) {
@@ -378,6 +408,10 @@ export const useEchoModel = <TPayload, TModel extends string, TDriver extends Br
 
 export const useConnectionStatus = (): ConnectionStatus => {
 	const getConnectionStatus = (): ConnectionStatus => {
+		if (!echoIsConfigured()) {
+			return 'disconnected';
+		}
+
 		const connection = getPusherConnection(echo().connector);
 		if (!connection) {
 			return 'disconnected';
@@ -389,6 +423,11 @@ export const useConnectionStatus = (): ConnectionStatus => {
 	const [status, setStatus] = useState<ConnectionStatus>(() => getConnectionStatus());
 
 	useEffect(() => {
+		if (!echoIsConfigured()) {
+			setStatus('disconnected');
+			return;
+		}
+
 		const connection = getPusherConnection(echo().connector);
 		if (!connection) {
 			setStatus('disconnected');

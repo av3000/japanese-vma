@@ -7,6 +7,7 @@ import type { ConnectionStatus } from '@/lib/echo/types';
 interface SocketContextType {
 	echo: Echo<'reverb'> | null;
 	isConnected: boolean;
+	isConfigured: boolean;
 	connectionStatus: ConnectionStatus;
 	lastError: string | null;
 	connectionInfo: { host: string; port: number; scheme: 'ws' | 'wss'; appKey: string };
@@ -16,6 +17,7 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType>({
 	echo: null,
 	isConnected: false,
+	isConfigured: false,
 	connectionStatus: 'disconnected',
 	lastError: null,
 	connectionInfo: { host: 'localhost', port: 8081, scheme: 'ws', appKey: '' },
@@ -68,7 +70,17 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 		return { host, port, scheme, appKey };
 	}, []);
 
+	const isConfigured = connectionInfo.appKey.trim().length > 0;
+
 	useEffect(() => {
+		if (!isConfigured) {
+			setEchoClient(null);
+			setHasAttemptedConnection(false);
+			setConnectionStatus('disconnected');
+			setLastError(null);
+			return;
+		}
+
 		const wsHost = connectionInfo.host;
 		const wsPort = connectionInfo.port;
 
@@ -153,13 +165,21 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 			setEchoClient(null);
 			setConnectionStatus('disconnected');
 		};
-	}, [token, connectionInfo.host, connectionInfo.port]);
+	}, [token, connectionInfo.host, connectionInfo.port, isConfigured]);
 
 	const isConnected = connectionStatus === 'connected';
 
 	return (
 		<SocketContext.Provider
-			value={{ echo: echoClient, isConnected, connectionStatus, lastError, connectionInfo, hasAttemptedConnection }}
+			value={{
+				echo: echoClient,
+				isConnected,
+				isConfigured,
+				connectionStatus,
+				lastError,
+				connectionInfo,
+				hasAttemptedConnection,
+			}}
 		>
 			{children}
 		</SocketContext.Provider>
