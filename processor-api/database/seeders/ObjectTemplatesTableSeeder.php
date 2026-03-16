@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use Illuminate\Support\Facades\DB;
-use App\Http\Models\ObjectTemplate;
 use Illuminate\Database\Seeder;
 
 class ObjectTemplatesTableSeeder extends Seeder
@@ -16,12 +15,24 @@ class ObjectTemplatesTableSeeder extends Seeder
      */
     public function run()
     {
-
         foreach (ObjectTemplateType::cases() as $case) {
-            DB::table('objecttemplates')->updateOrInsert(
-                ['entity_type_uuid' => $case->value],
-                ['title' => $case->getTitle()]
-            );
+            $existing = DB::table('objecttemplates')
+                ->where('entity_type_uuid', $case->value)
+                ->first();
+
+            if ($existing) {
+                DB::table('objecttemplates')
+                    ->where('id', $existing->id)
+                    ->update(['title' => $case->getTitle()]);
+
+                continue;
+            }
+
+            DB::table('objecttemplates')->insert([
+                'id' => $case->getLegacyId(),
+                'entity_type_uuid' => $case->value,
+                'title' => $case->getTitle(),
+            ]);
         }
     }
 }

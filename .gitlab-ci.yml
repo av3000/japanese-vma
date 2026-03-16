@@ -142,6 +142,7 @@ migrate_backend:
     - |
       docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" sh -lc '
         php artisan migrate --force &&
+        php artisan db:seed --class="Database\\Seeders\\ObjectTemplatesTableSeeder" --force &&
         php artisan db:seed --class="Database\\Seeders\\RoleSeeder" --force
       '
 

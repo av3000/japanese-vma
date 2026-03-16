@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
-use App\Infrastructure\Persistence\Models\{HashtagEntity, Uniquehashtag};
+use App\Infrastructure\Persistence\Models\{HashtagEntity, ObjectTemplate, Uniquehashtag};
 use Illuminate\Database\Eloquent\Builder;
 
 class HashtagRepository implements HashtagRepositoryInterface
@@ -28,7 +28,7 @@ class HashtagRepository implements HashtagRepositoryInterface
         // Create the association
         HashtagEntity::create([
             'hashtag_id' => $uniquehashtag->id,
-            'entity_type_id' => $data['entity_type_id'],
+            'entity_type_id' => $this->resolveTemplateIdFromLegacyId($data['entity_type_id']),
             'entity_id' => $data['entity_id'],
             'user_id' => $data['user_id'],
         ]);
@@ -47,7 +47,7 @@ class HashtagRepository implements HashtagRepositoryInterface
     public function findAllByFilter(HashtagFilterDTO $filter): array
     {
         return HashtagEntity::with('uniquehashtag')
-            ->where('entity_type_id', $filter->entityType->getLegacyId())
+            ->where('entity_type_id', $this->resolveTemplateId($filter->entityType))
             ->where('entity_id', $filter->entityId)
             ->get()
             ->map(fn($link) => $link->uniquehashtag)
@@ -68,7 +68,7 @@ class HashtagRepository implements HashtagRepositoryInterface
     public function deleteByEntity(int $entityId, int $entityTypeId): void
     {
         HashtagEntity::where('entity_id', $entityId)
-            ->where('entity_type_id', $entityTypeId)
+            ->where('entity_type_id', $this->resolveTemplateIdFromLegacyId($entityTypeId))
             ->delete();
     }
 
@@ -80,7 +80,7 @@ class HashtagRepository implements HashtagRepositoryInterface
      */
     private function buildBaseQuery(HashtagFilterDTO $filter): Builder
     {
-        return HashtagEntity::where('entity_type_id', $filter->entityType->getLegacyId())
+        return HashtagEntity::where('entity_type_id', $this->resolveTemplateId($filter->entityType))
             ->where('entity_id', $filter->entityId);
     }
 
@@ -99,11 +99,30 @@ class HashtagRepository implements HashtagRepositoryInterface
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $entityType): array
     {
         return HashtagEntity::with('uniquehashtag')
-            ->where('entity_type_id', $entityType->getLegacyId())
+            ->where('entity_type_id', $this->resolveTemplateId($entityType))
             ->whereIn('entity_id', $entityIds)
             ->get()
             ->groupBy('entity_id')
             ->map(fn($links) => $links->map(fn($link) => $link->uniquehashtag))
             ->toArray();
+    }
+
+    private function resolveTemplateId(ObjectTemplateType $entityType): int
+    {
+        return ObjectTemplate::query()
+            ->where('entity_type_uuid', $entityType->value)
+            ->value('id')
+            ?? $entityType->getLegacyId();
+    }
+
+    private function resolveTemplateIdFromLegacyId(int $legacyId): int
+    {
+        $entityType = ObjectTemplateType::tryFromLegacyValue($legacyId);
+
+        if ($entityType === null) {
+            return $legacyId;
+        }
+
+        return $this->resolveTemplateId($entityType);
     }
 }
