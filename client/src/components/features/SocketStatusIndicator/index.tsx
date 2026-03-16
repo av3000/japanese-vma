@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
 
 const SocketStatusIndicator: React.FC = () => {
-	const { connectionStatus, lastError, connectionInfo, hasAttemptedConnection } = useWebSocket();
+	const { connectionStatus, lastError, connectionInfo, hasAttemptedConnection, isConfigured } = useWebSocket();
 
 	const { variant, label } = useMemo(() => {
 		switch (connectionStatus) {
@@ -19,6 +19,10 @@ const SocketStatusIndicator: React.FC = () => {
 				return { variant: 'destructive' as const, label: connectionStatus };
 		}
 	}, [connectionStatus]);
+
+	if (!isConfigured) {
+		return null;
+	}
 
 	const popover = (
 		<Popover id="socket-status-popover">

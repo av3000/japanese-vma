@@ -4,9 +4,9 @@ import { useWebSocket } from '@/providers/contexts/socket-provider';
 
 const SocketConnectionBanner: React.FC = () => {
 	const { user } = useAuth();
-	const { connectionStatus, lastError, connectionInfo } = useWebSocket();
+	const { connectionStatus, lastError, connectionInfo, isConfigured } = useWebSocket();
 
-	if (!user?.isAdmin) {
+	if (!user?.isAdmin || !isConfigured) {
 		return null;
 	}
 
