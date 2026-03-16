@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
+    private const COUNT_ALIAS = 'aggregate_count';
+
     public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments
     {
         $query = PersistenceComment::with(['user'])
@@ -148,7 +150,8 @@ class CommentRepository implements CommentRepositoryInterface
             ->where('template_id', $commentTemplateId)
             ->whereIn('real_object_id', $commentIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
     }
 

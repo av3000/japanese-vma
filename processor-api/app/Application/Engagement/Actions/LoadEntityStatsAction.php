@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\DB;
 
 class LoadEntityStatsAction
 {
+    private const COUNT_ALIAS = 'aggregate_count';
+
     /**
      * Load stats using UUIDs directly
      */
@@ -17,24 +19,27 @@ class LoadEntityStatsAction
         // TODO: use Repository pattern for stats
         // Simple, direct queries using UUIDs
         $likes = DB::table('likes')
-            // ->where('template_id', $templateId)
+            ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         $downloads = DB::table('downloads')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         $views = DB::table('views')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
 
@@ -42,7 +47,8 @@ class LoadEntityStatsAction
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $entityIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         // Build result array indexed by entity UUID
