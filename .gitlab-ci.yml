@@ -33,8 +33,11 @@ variables:
   printf '%s\n' \
     "APP_ENV=production" \
     "APP_DEBUG=false" \
+    "APP_RELEASE=$CI_COMMIT_SHA" \
     "APP_KEY=$APP_KEY" \
     "APP_URL=$APP_URL" \
+    "LOG_CHANNEL=${LOG_CHANNEL:-stderr}" \
+    "LOG_LEVEL=${LOG_LEVEL:-warning}" \
     "DB_CONNECTION=${DB_CONNECTION:-pgsql}" \
     "DB_HOST=$DB_HOST" \
     "DB_PORT=$DB_PORT" \
@@ -48,6 +51,9 @@ variables:
     "PASSPORT_PUBLIC_KEY_B64=$PASSPORT_PUBLIC_KEY_B64" \
     "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=$PASSPORT_PERSONAL_ACCESS_CLIENT_ID" \
     "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=$PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" \
+    "SENTRY_LARAVEL_DSN=${SENTRY_LARAVEL_DSN:-}" \
+    "SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}" \
+    "SENTRY_RELEASE=${SENTRY_RELEASE:-$CI_COMMIT_SHA}" \
     "QUEUE_CONNECTION=sync" \
     > "$RUNTIME_ENV_FILE"
   trap 'rm -f "$RUNTIME_ENV_FILE"' EXIT
@@ -73,12 +79,17 @@ build_backend_image:
       printf '%s\n' \
         "APP_ENV=production" \
         "APP_DEBUG=false" \
+        "APP_RELEASE=$CI_COMMIT_SHA" \
         "APP_KEY=$SMOKE_APP_KEY" \
         "APP_URL=http://docker:8080" \
+        "LOG_CHANNEL=stderr" \
+        "LOG_LEVEL=warning" \
         "DB_CONNECTION=sqlite" \
         "DB_DATABASE=/tmp/database.sqlite" \
         "CACHE_DRIVER=file" \
         "SESSION_DRIVER=file" \
+        "SENTRY_ENVIRONMENT=production" \
+        "SENTRY_RELEASE=$CI_COMMIT_SHA" \
         "QUEUE_CONNECTION=sync" \
         > "$SMOKE_ENV_FILE"
 
@@ -201,6 +212,11 @@ deploy_render:
   before_script:
     - apk add --no-cache curl
   script:
+    - |
+      if [ -z "${SENTRY_LARAVEL_DSN:-}" ]; then
+        echo "SENTRY_LARAVEL_DSN GitLab variable is required for production deploys."
+        exit 1
+      fi
     - curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
 
 verify_render:

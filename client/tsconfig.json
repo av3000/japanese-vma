@@ -20,6 +20,7 @@
       "@/shared/*": ["src/shared/*"],
       "@/assets/*": ["src/assets/*"],
       "@/helpers/*": ["src/helpers/*"],
+      "@/lib/*": ["src/lib/*"],
       "@/hooks/*": ["src/hooks/*"],
       "@/types/*": ["src/types/*"],
       "@/storybook/*": ["./storybook/*"],
