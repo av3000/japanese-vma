@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
 				'@/shared': path.resolve(__dirname, './src/shared'),
 				'@/assets': path.resolve(__dirname, './src/assets'),
 				'@/helpers': path.resolve(__dirname, './src/helpers'),
+				'@/lib': path.resolve(__dirname, '.src/lib'),
 				'@/hooks': path.resolve(__dirname, './src/hooks'),
 				'@/types/*': path.resolve(__dirname, './src/types'),
 				'@/storybook': path.resolve(__dirname, './storybook'),

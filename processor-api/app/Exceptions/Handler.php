@@ -4,14 +4,17 @@ namespace App\Exceptions;
 
 use App\Domain\Shared\Exceptions\ValueObjectValidationException;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 use App\Shared\Enums\HttpStatus;
-use Illuminate\Support\Facades\Log;
+use function Sentry\captureException;
+use function Sentry\configureScope;
 
 class Handler extends ExceptionHandler
 {
@@ -44,6 +47,32 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
+        if ($this->shouldReport($exception) && config('sentry.dsn')) {
+            configureScope(function ($scope) use ($exception) {
+                $scope->setTag('app_env', app()->environment());
+                $scope->setTag('app_release', (string) config('app.release'));
+                $scope->setTag('exception_class', $exception::class);
+
+                if (app()->bound('request') && !app()->runningInConsole()) {
+                    $request = request();
+
+                    $scope->setContext('request', [
+                        'path' => $request->path(),
+                        'method' => $request->method(),
+                    ]);
+
+                    $userId = auth('api')->id();
+                    if ($userId !== null) {
+                        $scope->setUser([
+                            'id' => (string) $userId,
+                        ]);
+                    }
+                }
+            });
+
+            captureException($exception);
+        }
+
         parent::report($exception);
     }
 
@@ -71,8 +100,9 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof ValueObjectValidationException && ($request->expectsJson() || $request->is('api/*'))) {
-            // Log the exception if it indicates a severe issue, otherwise just return 422
-            Log::warning("Value Object validation failed: {$exception->getMessage()}", ['errors' => $exception->getErrors(), 'request_url' => $request->fullUrl()]);
+            Log::warning("Value Object validation failed: {$exception->getMessage()}", $this->buildLogContext($request, $exception, [
+                'errors' => $exception->getErrors(),
+            ]));
 
             return response()->json([
                 'type' => HttpStatus::UNPROCESSABLE_ENTITY->getTypeUri(),
@@ -97,14 +127,12 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof QueryException && ($request->expectsJson() || $request->is('api/*'))) {
-            Log::error('Database query failed', [
+            Log::error('Database query failed', $this->buildLogContext($request, $exception, [
                 'sql' => $exception->getSql(),
                 'bindings' => $exception->getBindings(),
                 'error' => $exception->getMessage(),
                 'code' => $exception->getCode(),
-                'request_url' => $request->fullUrl(),
-                'user_id' => auth('api')->id(),
-            ]);
+            ]));
 
             return response()->json([
                 'type' => HttpStatus::INTERNAL_SERVER_ERROR->getTypeUri(),
@@ -159,5 +187,18 @@ class Handler extends ExceptionHandler
     public function register()
     {
         // Custom handling, runs after render.
+    }
+
+    private function buildLogContext(Request $request, Throwable $exception, array $context = []): array
+    {
+        return array_filter(array_merge([
+            'request_url' => $request->fullUrl(),
+            'request_path' => $request->path(),
+            'request_method' => $request->method(),
+            'user_id' => auth('api')->id(),
+            'app_env' => app()->environment(),
+            'app_release' => config('app.release'),
+            'exception_class' => $exception::class,
+        ], $context), static fn ($value) => $value !== null && $value !== '');
     }
 }

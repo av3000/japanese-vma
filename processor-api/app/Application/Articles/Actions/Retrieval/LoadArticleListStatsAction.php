@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 class LoadArticleListStatsAction
 {
+    private const COUNT_ALIAS = 'aggregate_count';
+
     /**
      * Load statistical data (likes, downloads, views, comments) for a collection of articles.
      * This action has one responsibility: efficiently batch-load engagement statistics.
@@ -49,28 +51,32 @@ class LoadArticleListStatsAction
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $articleIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         $downloads = DB::table('downloads')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $articleIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         $views = DB::table('views')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $articleIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         $comments = DB::table('comments')
             ->where('template_id', $templateId)
             ->whereIn('real_object_id', $articleIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         return [

@@ -15,7 +15,7 @@ class CommentService
         private CommentRepositoryInterface $commentRepository
     ) {}
 
-    public function getCommentsList(CommentListDTO $dto, ObjectTemplateType $entityType, string $entityId, int $userId): Comments
+    public function getCommentsList(CommentListDTO $dto, ObjectTemplateType $entityType, string $entityId, ?int $viewerUserId): Comments
     {
         $criteriaDTO = new CommentCriteriaDTO(
             entityId: $entityId,
@@ -26,6 +26,6 @@ class CommentService
             include_author: $dto->include_author
         );
 
-        return $this->commentRepository->findByCriteriaForEntity($criteriaDTO, $entityId, $userId);
+        return $this->commentRepository->findByCriteriaForEntity($criteriaDTO, $entityId, $viewerUserId);
     }
 }

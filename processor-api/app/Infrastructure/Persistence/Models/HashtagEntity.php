@@ -1,7 +1,7 @@
 <?php
 namespace App\Infrastructure\Persistence\Models;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use App\Infrastructure\Persistence\Models\Uniquehashtag;
+use App\Infrastructure\Persistence\Models\{ObjectTemplate, Uniquehashtag};
 
 class HashtagEntity extends Model
 {
@@ -23,5 +23,10 @@ class HashtagEntity extends Model
     public function uniquehashtag()
     {
         return $this->belongsTo(Uniquehashtag::class, 'hashtag_id');
+    }
+
+    public function objectTemplate()
+    {
+        return $this->belongsTo(ObjectTemplate::class, 'entity_type_id');
     }
 }

@@ -5,7 +5,7 @@ namespace App\Application\Engagement\Services;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Hashtags\Errors\HashtagErrors;
+use App\Domain\Engagement\Errors\HashtagErrors;
 use App\Shared\Results\Result;
 
 

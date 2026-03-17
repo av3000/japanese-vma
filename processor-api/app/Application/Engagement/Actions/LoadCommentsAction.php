@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class LoadCommentsAction
 {
+    private const COUNT_ALIAS = 'aggregate_count';
+
     /**
      * Load comments for an entity with efficient batch loading to avoid N+1 queries.
      * This demonstrates the same pattern as your stats loading - batch the related data
@@ -40,7 +42,8 @@ class LoadCommentsAction
             ->where('template_id', $commentTemplateId)
             ->whereIn('real_object_id', $commentIds)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
 
         // Attach the batched data to each comment

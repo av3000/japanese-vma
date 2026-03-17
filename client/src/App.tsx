@@ -1,7 +1,9 @@
 import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter as Router } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import AppErrorFallback from '@/components/system/AppErrorFallback';
 import Footer from '@/components/features/Footer';
 import Header from '@/components/features/Header';
 import PageLoader from '@/components/features/PageLoader';
@@ -50,7 +52,9 @@ const App = () => (
 			<Router>
 				<AuthProvider>
 					<WebSocketProvider>
-						<AppContent />
+						<Sentry.ErrorBoundary fallback={AppErrorFallback}>
+							<AppContent />
+						</Sentry.ErrorBoundary>
 					</WebSocketProvider>
 				</AuthProvider>
 			</Router>

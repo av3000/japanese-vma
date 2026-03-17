@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { captureApiError, isSentryEnabled } from '@/lib/monitoring/sentry';
 
 const axiosInstance: AxiosInstance = axios.create({
 	baseURL: `${import.meta.env.VITE_API_URL}/api/`,
@@ -34,6 +35,18 @@ axiosInstance.interceptors.response.use(
 			if (!isPublicEndpoint) {
 				window.dispatchEvent(new CustomEvent('auth:unauthorized'));
 			}
+		}
+
+		const status = error.response?.status;
+		const shouldCapture = isSentryEnabled && (status === undefined || status >= 500);
+
+		if (shouldCapture) {
+			captureApiError(error, {
+				baseURL: error.config?.baseURL,
+				method: error.config?.method,
+				status,
+				url: error.config?.url,
+			});
 		}
 
 		return Promise.reject(error);
