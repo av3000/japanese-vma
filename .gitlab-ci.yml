@@ -115,7 +115,8 @@ build_backend_image:
     - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
     - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
     - |
-      if ! docker run --rm "$IMAGE_NAME" php -m | grep -qx 'redis'; then
+      PHP_MODULES="$(docker run --rm "$IMAGE_NAME" php -m)"
+      if ! printf '%s\n' "$PHP_MODULES" | grep -qx 'redis'; then
         echo "Redis PHP extension is missing from the production image."
         exit 1
       fi
