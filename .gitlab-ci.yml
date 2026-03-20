@@ -283,20 +283,21 @@ deploy_worker:
     - chmod 700 ~/.ssh
     - |
       if [ -n "${WORKER_SSH_PRIVATE_KEY_B64:-}" ]; then
-        printf '%s' "$WORKER_SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_worker
+        printf '%s' "$WORKER_SSH_PRIVATE_KEY_B64" | tr -d '\r\n ' | base64 -d > ~/.ssh/id_worker
       else
         printf '%s\n' "$WORKER_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_worker
       fi
     - chmod 600 ~/.ssh/id_worker
+    - ssh-keygen -yf ~/.ssh/id_worker >/dev/null
     - ssh-keyscan -p "$WORKER_SSH_PORT" "$WORKER_SSH_HOST" >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-    - ssh -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" "mkdir -p '$WORKER_APP_DIR'"
-    - scp -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" processor-api/.deploy/worker/docker-compose.yml "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/docker-compose.yml"
-    - scp -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" "$QUEUE_RUNTIME_ENV_FILE" "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/.env.worker"
+    - ssh -o IdentitiesOnly=yes -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" "mkdir -p '$WORKER_APP_DIR'"
+    - scp -o IdentitiesOnly=yes -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" processor-api/.deploy/worker/docker-compose.yml "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/docker-compose.yml"
+    - scp -o IdentitiesOnly=yes -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" "$QUEUE_RUNTIME_ENV_FILE" "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/.env.worker"
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
     - export CI_REGISTRY_PASSWORD_B64="$(printf '%s' "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')"
     - |
-      ssh -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" \
+      ssh -o IdentitiesOnly=yes -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" \
         "export WORKER_APP_DIR='$WORKER_APP_DIR' IMAGE_NAME='$IMAGE_NAME' CI_REGISTRY='$CI_REGISTRY' CI_REGISTRY_USER='$CI_REGISTRY_USER' CI_REGISTRY_PASSWORD_B64='$CI_REGISTRY_PASSWORD_B64'; sh -s" <<'EOF'
       set -eu
       cd "$WORKER_APP_DIR"
