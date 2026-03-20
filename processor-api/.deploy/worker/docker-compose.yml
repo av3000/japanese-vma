@@ -1,0 +1,19 @@
+services:
+  worker:
+    image: ${IMAGE_NAME}
+    restart: unless-stopped
+    env_file:
+      - .env.worker
+    command:
+      - /bin/sh
+      - -lc
+      - >
+        exec php artisan queue:work redis
+        --queue="${REDIS_QUEUE:-default}"
+        --sleep="${QUEUE_WORKER_SLEEP:-3}"
+        --tries="${QUEUE_WORKER_TRIES:-3}"
+        --backoff="${QUEUE_WORKER_BACKOFF:-15}"
+        --timeout="${QUEUE_WORKER_TIMEOUT:-150}"
+        --max-jobs="${QUEUE_WORKER_MAX_JOBS:-500}"
+        --max-time="${QUEUE_WORKER_MAX_TIME:-3600}"
+        --verbose

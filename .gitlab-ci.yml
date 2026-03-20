@@ -58,6 +58,52 @@ variables:
     > "$RUNTIME_ENV_FILE"
   trap 'rm -f "$RUNTIME_ENV_FILE"' EXIT
 
+.prepare_queue_runtime_env: &prepare_queue_runtime_env |
+  QUEUE_RUNTIME_ENV_FILE="$(mktemp)"
+  export QUEUE_RUNTIME_ENV_FILE
+  printf '%s\n' \
+    "APP_ENV=production" \
+    "APP_DEBUG=false" \
+    "APP_RELEASE=$CI_COMMIT_SHA" \
+    "APP_KEY=$APP_KEY" \
+    "APP_URL=$APP_URL" \
+    "LOG_CHANNEL=${LOG_CHANNEL:-stderr}" \
+    "LOG_LEVEL=${LOG_LEVEL:-warning}" \
+    "DB_CONNECTION=${DB_CONNECTION:-pgsql}" \
+    "DB_HOST=$DB_HOST" \
+    "DB_PORT=$DB_PORT" \
+    "DB_DATABASE=$DB_DATABASE" \
+    "DB_USERNAME=$DB_USERNAME" \
+    "DB_PASSWORD=$DB_PASSWORD" \
+    "DB_SSLMODE=${DB_SSLMODE:-require}" \
+    "CACHE_DRIVER=redis" \
+    "SESSION_DRIVER=file" \
+    "PASSPORT_PRIVATE_KEY_B64=$PASSPORT_PRIVATE_KEY_B64" \
+    "PASSPORT_PUBLIC_KEY_B64=$PASSPORT_PUBLIC_KEY_B64" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=$PASSPORT_PERSONAL_ACCESS_CLIENT_ID" \
+    "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=$PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" \
+    "SENTRY_LARAVEL_DSN=${SENTRY_LARAVEL_DSN:-}" \
+    "SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}" \
+    "SENTRY_RELEASE=${SENTRY_RELEASE:-$CI_COMMIT_SHA}" \
+    "REDIS_CLIENT=${REDIS_CLIENT:-phpredis}" \
+    "REDIS_URL=${REDIS_URL:-}" \
+    "REDIS_SCHEME=${REDIS_SCHEME:-tls}" \
+    "REDIS_HOST=${REDIS_HOST:-}" \
+    "REDIS_PORT=${REDIS_PORT:-6379}" \
+    "REDIS_USERNAME=${REDIS_USERNAME:-}" \
+    "REDIS_PASSWORD=${REDIS_PASSWORD:-}" \
+    "REDIS_QUEUE=${REDIS_QUEUE:-default}" \
+    "QUEUE_CONNECTION=redis" \
+    "QUEUE_RETRY_AFTER=${QUEUE_RETRY_AFTER:-180}" \
+    "QUEUE_WORKER_TIMEOUT=${QUEUE_WORKER_TIMEOUT:-150}" \
+    "QUEUE_WORKER_SLEEP=${QUEUE_WORKER_SLEEP:-3}" \
+    "QUEUE_WORKER_TRIES=${QUEUE_WORKER_TRIES:-3}" \
+    "QUEUE_WORKER_BACKOFF=${QUEUE_WORKER_BACKOFF:-15}" \
+    "QUEUE_WORKER_MAX_JOBS=${QUEUE_WORKER_MAX_JOBS:-500}" \
+    "QUEUE_WORKER_MAX_TIME=${QUEUE_WORKER_MAX_TIME:-3600}" \
+    > "$QUEUE_RUNTIME_ENV_FILE"
+  trap 'rm -f "$QUEUE_RUNTIME_ENV_FILE"' EXIT
+
 build_backend_image:
   extends: .docker_backend_job
   stage: build
@@ -68,6 +114,11 @@ build_backend_image:
     - export IMPORT_IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api-import:$CI_COMMIT_SHA"
     - export LATEST_IMAGE="$CI_REGISTRY_IMAGE/processor-api:latest"
     - docker build --pull -f processor-api/.docker/Dockerfile.ci -t "$IMAGE_NAME" processor-api
+    - |
+      if ! docker run --rm "$IMAGE_NAME" php -m | grep -qx 'redis'; then
+        echo "Redis PHP extension is missing from the production image."
+        exit 1
+      fi
     - |
       if [ "${SHOW_IMPORT_JAPANESE_DATA_JOB:-false}" = "true" ]; then
         docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE_NAME" .
@@ -198,6 +249,69 @@ setup_passport_personal_client:
     - *prepare_runtime_env
     - docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan passport:client --personal --name="Render Personal Access Client" --no-interaction
 
+deploy_worker:
+  stage: release
+  image: alpine:3.20
+  needs:
+    - build_backend_image
+    - job: migrate_backend
+      optional: true
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *backend_changes
+  allow_failure: false
+  before_script:
+    - apk add --no-cache openssh-client
+  script:
+    - |
+      [ -n "${WORKER_SSH_HOST:-}" ] || { echo "WORKER_SSH_HOST is required."; exit 1; }
+      [ -n "${WORKER_SSH_USER:-}" ] || { echo "WORKER_SSH_USER is required."; exit 1; }
+      [ -n "${WORKER_SSH_PRIVATE_KEY:-}" ] || { echo "WORKER_SSH_PRIVATE_KEY is required."; exit 1; }
+      [ -n "${CI_REGISTRY:-}" ] || { echo "CI_REGISTRY is required."; exit 1; }
+      [ -n "${CI_REGISTRY_USER:-}" ] || { echo "CI_REGISTRY_USER is required."; exit 1; }
+      [ -n "${CI_REGISTRY_PASSWORD:-}" ] || { echo "CI_REGISTRY_PASSWORD is required."; exit 1; }
+    - export WORKER_APP_DIR="${WORKER_APP_DIR:-/opt/japanese-vma-worker}"
+    - export WORKER_SSH_PORT="${WORKER_SSH_PORT:-22}"
+    - *prepare_queue_runtime_env
+    - |
+      printf '%s\n' "IMAGE_NAME=$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA" >> "$QUEUE_RUNTIME_ENV_FILE"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - printf '%s\n' "$WORKER_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_worker
+    - chmod 600 ~/.ssh/id_worker
+    - ssh-keyscan -p "$WORKER_SSH_PORT" "$WORKER_SSH_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - ssh -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" "mkdir -p '$WORKER_APP_DIR'"
+    - scp -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" processor-api/.deploy/worker/docker-compose.yml "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/docker-compose.yml"
+    - scp -i ~/.ssh/id_worker -P "$WORKER_SSH_PORT" "$QUEUE_RUNTIME_ENV_FILE" "$WORKER_SSH_USER@$WORKER_SSH_HOST:$WORKER_APP_DIR/.env.worker"
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - export CI_REGISTRY_PASSWORD_B64="$(printf '%s' "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')"
+    - |
+      ssh -i ~/.ssh/id_worker -p "$WORKER_SSH_PORT" "$WORKER_SSH_USER@$WORKER_SSH_HOST" \
+        "export WORKER_APP_DIR='$WORKER_APP_DIR' IMAGE_NAME='$IMAGE_NAME' CI_REGISTRY='$CI_REGISTRY' CI_REGISTRY_USER='$CI_REGISTRY_USER' CI_REGISTRY_PASSWORD_B64='$CI_REGISTRY_PASSWORD_B64'; sh -s" <<'EOF'
+      set -eu
+      cd "$WORKER_APP_DIR"
+      printf '%s' "$CI_REGISTRY_PASSWORD_B64" | base64 -d | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+      docker compose pull worker
+      docker compose up -d --remove-orphans worker
+      EOF
+
+verify_worker:
+  extends: .docker_backend_job
+  stage: release
+  needs:
+    - build_backend_image
+    - deploy_worker
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *backend_changes
+  allow_failure: false
+  script:
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
+    - docker pull "$IMAGE_NAME"
+    - *prepare_queue_runtime_env
+    - docker run --rm --env-file "$QUEUE_RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan app:verify-queue-worker --queue="${REDIS_QUEUE:-default}" --timeout=30 --ttl=120 --poll=1
+
 deploy_render:
   stage: release
   image: alpine:3.20
@@ -205,6 +319,7 @@ deploy_render:
     - build_backend_image
     - job: migrate_backend
       optional: true
+    - verify_worker
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
       changes: *backend_changes
