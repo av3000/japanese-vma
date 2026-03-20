@@ -266,7 +266,10 @@ deploy_worker:
     - |
       [ -n "${WORKER_SSH_HOST:-}" ] || { echo "WORKER_SSH_HOST is required."; exit 1; }
       [ -n "${WORKER_SSH_USER:-}" ] || { echo "WORKER_SSH_USER is required."; exit 1; }
-      [ -n "${WORKER_SSH_PRIVATE_KEY:-}" ] || { echo "WORKER_SSH_PRIVATE_KEY is required."; exit 1; }
+      if [ -z "${WORKER_SSH_PRIVATE_KEY_B64:-}" ] && [ -z "${WORKER_SSH_PRIVATE_KEY:-}" ]; then
+        echo "WORKER_SSH_PRIVATE_KEY_B64 or WORKER_SSH_PRIVATE_KEY is required."
+        exit 1
+      fi
       [ -n "${CI_REGISTRY:-}" ] || { echo "CI_REGISTRY is required."; exit 1; }
       [ -n "${CI_REGISTRY_USER:-}" ] || { echo "CI_REGISTRY_USER is required."; exit 1; }
       [ -n "${CI_REGISTRY_PASSWORD:-}" ] || { echo "CI_REGISTRY_PASSWORD is required."; exit 1; }
@@ -277,7 +280,12 @@ deploy_worker:
       printf '%s\n' "IMAGE_NAME=$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA" >> "$QUEUE_RUNTIME_ENV_FILE"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - printf '%s\n' "$WORKER_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_worker
+    - |
+      if [ -n "${WORKER_SSH_PRIVATE_KEY_B64:-}" ]; then
+        printf '%s' "$WORKER_SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_worker
+      else
+        printf '%s\n' "$WORKER_SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_worker
+      fi
     - chmod 600 ~/.ssh/id_worker
     - ssh-keyscan -p "$WORKER_SSH_PORT" "$WORKER_SSH_HOST" >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
