@@ -9,6 +9,19 @@ let isInitialized = false;
 
 export const isSentryEnabled = Boolean(sentryDsn);
 
+const getMaskedDsn = () => {
+	if (!sentryDsn) {
+		return null;
+	}
+
+	try {
+		const url = new URL(sentryDsn);
+		return `${url.protocol}//${url.host}${url.pathname}`;
+	} catch {
+		return 'invalid-dsn';
+	}
+};
+
 const clearSmokeTestQueryParam = () => {
 	if (typeof window === 'undefined') {
 		return;
@@ -37,12 +50,22 @@ const maybeRunSentrySmokeTest = () => {
 		return;
 	}
 
+	console.info('Frontend Sentry smoke test requested.', {
+		enabled: isSentryEnabled,
+		environment: sentryEnvironment,
+		release: sentryRelease ?? null,
+		dsn: getMaskedDsn(),
+	});
+
 	const eventId = triggerSentrySmokeTest();
 	clearSmokeTestQueryParam();
 
 	if (eventId) {
 		console.info('Triggered frontend Sentry smoke test.', { eventId });
+		return;
 	}
+
+	console.warn('Frontend Sentry smoke test did not send because Sentry is disabled in this build.');
 };
 
 export const initSentry = () => {

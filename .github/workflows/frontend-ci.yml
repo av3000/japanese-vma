@@ -57,10 +57,13 @@ jobs:
       - name: Build frontend
         env:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ci
+          VITE_SENTRY_RELEASE: ${{ github.sha }}
         run: npm run build
 
       - name: Build production image
-        run: docker build --build-arg VITE_API_URL="${{ vars.CLIENT_VITE_API_URL }}" -f .docker/Dockerfile.production -t japanese-vma-client:${{ github.sha }} .
+        run: docker build --build-arg VITE_API_URL="${{ vars.CLIENT_VITE_API_URL }}" --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" --build-arg VITE_SENTRY_ENVIRONMENT="ci" --build-arg VITE_SENTRY_RELEASE="${{ github.sha }}" -f .docker/Dockerfile.production -t japanese-vma-client:${{ github.sha }} .
 
       - name: Smoke test production image
         run: |
@@ -105,6 +108,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Ensure production frontend variables exist
+        run: |
+          if [ -z "${{ vars.VITE_SENTRY_DSN }}" ]; then
+            echo "VITE_SENTRY_DSN repository variable is required."
+            exit 1
+          fi
+
+          if [ -z "${{ vars.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
+            exit 1
+          fi
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -123,6 +138,27 @@ jobs:
           push: true
           build-args: |
             VITE_API_URL=${{ vars.CLIENT_VITE_API_URL }}
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+            VITE_SENTRY_ENVIRONMENT=production
+            VITE_SENTRY_RELEASE=${{ github.sha }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy-production:
+    name: Deploy production frontend
+    runs-on: ubuntu-latest
+    needs: publish
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    permissions:
+      contents: read
+    steps:
+      - name: Ensure production deploy hook exists
+        run: |
+          if [ -z "${{ vars.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
+            exit 1
+          fi
+
+      - name: Trigger Render deploy
+        run: curl --fail --silent --show-error -X POST "${{ vars.RENDER_DEPLOY_HOOK_URL }}"
