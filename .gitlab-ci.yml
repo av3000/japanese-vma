@@ -302,8 +302,8 @@ deploy_worker:
       set -eu
       cd "$WORKER_APP_DIR"
       printf '%s' "$CI_REGISTRY_PASSWORD_B64" | base64 -d | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-      docker compose pull worker
-      docker compose up -d --remove-orphans worker
+      docker compose --env-file .env.worker pull worker
+      docker compose --env-file .env.worker up -d --remove-orphans worker
       EOF
 
 verify_worker:
