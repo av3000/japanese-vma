@@ -3,6 +3,7 @@
 This file provides **repository-wide** guidance for AI agents and contributors working in `japanese-vma`.
 
 ## 1) Repository Purpose & Shape
+
 - **Product goal:** Japanese learning platform with content, community, and Japanese language study resources.
 - **Main applications:**
   - `processor-api/` → Laravel API.
@@ -13,7 +14,17 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Use `processor-api/AGENTS.md` for backend-specific implementation rules.
   - Use `client/AGENTS.md` for frontend-specific implementation rules.
 
+### Current Live Environment
+
+- **Frontend live hosting:** GitHub Actions workflow deploys the frontend; see `docs/frontend-github-actions-plan.md` for pipeline context.
+- **Backend live hosting:** Render hosts the live Laravel API/web service.
+- **Queue / worker runtime:** Production queue workers run on a GCP VM via Docker Compose, not on Render.
+- **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
+- **Backend deployment flow:** GitLab CI builds the backend image, deploys the worker to the GCP VM over SSH, verifies the worker, then triggers the Render backend deploy.
+- **Rule for agents:** Treat live environment changes as cross-system work. Check backend config, worker compose/runtime, CI/CD, and docs together before proposing or implementing production changes.
+
 ## 2) Developer Experience (DX) Baseline
+
 - **Recommended local tooling:**
   - Git + conventional commit hygiene.
   - Node/npm for frontend workflows.
@@ -30,6 +41,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Keep outputs and assumptions explicit in summaries.
 
 ## 3) How to Work in This Repository
+
 - **Change strategy:**
   - Keep diffs focused; avoid unrelated refactors.
   - Prefer incremental, reviewable changes.
@@ -42,6 +54,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Preserve behavior unless change is intentional and documented.
 
 ## 4) Cross-Cutting Quality Standards
+
 - **Clarity:**
   - State assumptions and constraints explicitly.
 - **Traceability:**
@@ -54,6 +67,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Highlight behavior-impacting changes and rollout implications.
 
 ## 5) Prompting Guidance (All Domains)
+
 - **For planning tasks:**
   - Include scope, non-goals, required format, and acceptance criteria.
   - Request discovery summary before proposed implementation steps.
@@ -62,7 +76,9 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Ask for “must-do now” vs “follow-up” recommendations when refactoring.
 
 ## 6) Domain-Specific Instruction Files
+
 - Backend rules live in: `processor-api/AGENTS.md`
 - Frontend rules live in: `client/AGENTS.md`
+- Live backend deployment and worker behavior may involve Render, GitLab CI, GCP VM worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
 
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
