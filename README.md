@@ -114,24 +114,40 @@ Now, in `/processor-api` repository root run:
 chmod +x .docker/entrypoint.sh
 ```
 
-Install composer packages on local machine to copy into containers:
-
-Ignores requirements that are linux specific packages
-
-```bash
-composer install --ignore-platform-reqs
-```
+If you are developing with Docker, treat the `laravel-app` container as the PHP/Composer environment for the project.
+Do not run Composer or Artisan from your local Windows PHP installation, because it may not match the container extensions required by the app such as `pcntl` for Horizon.
 
 Run docker containers in detached mode:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
+```
+
+Enter container terminal:
+
+```bash
+docker exec -it laravel_app sh
+```
+
+Install PHP dependencies inside the Laravel container:
+
+```bash
+docker compose exec laravel-app composer install
+```
+
+Whenever you need to add, update, or refresh backend dependencies, run Composer in the container:
+
+```bash
+docker compose exec laravel-app composer require <package>
+docker compose exec laravel-app composer require <package> --dev
+docker compose exec laravel-app composer update
+docker compose exec laravel-app composer dump-autoload
 ```
 
 Test if Mysql initialized properly, by entering container via bash or docker desktop:
 
 ```bash
-docker-compose exec db bash
+docker compose exec db bash
 mysql -u <DB_USERNAME> -p
 prompted password: <DB_PASSWORD>
 ```
@@ -147,18 +163,16 @@ SHOW TABLES;
 If tables are there, proceed with Japanese data migration.
 Data volume is big, so it may take over a minute and be cautions when rebuilding containers to avoid duplication.
 
-Enter container via bash or docker desktop into laravel app:
+Run Artisan commands in the Laravel container:
 
 ```bash
-# Enter container
-docker-compose exec laravel-app bash
 # Create japanese material tables
-php artisan migrate --path=database/migrations/japanese-data
+docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
 ```
 
 ```bash
 # Create new tables, generate encryption keys for Passport
-php artisan passport:install
+docker compose exec laravel-app php artisan passport:install
 ```
 
 Necessary to fill-up the categories for the entities objects in "objecttemplates" table.
@@ -166,24 +180,24 @@ Creates common and admin users
 Example custom lists and articles
 
 ```bash
-php artisan db:seed
+docker compose exec laravel-app php artisan db:seed
 # seed single table
-php aritsan db:seed --class=<ClassNameSeeder>
+docker compose exec laravel-app php artisan db:seed --class=<ClassNameSeeder>
 ```
 
 If by chance something seems cached or configs not updated try reset:
 
 ```bash
-composer dump-autoload
-php artisan config:clear
-php artisan cache:clear
+docker compose exec laravel-app composer dump-autoload
+docker compose exec laravel-app php artisan config:clear
+docker compose exec laravel-app php artisan cache:clear
 ```
 
 Take containers down and empty volumes for clean containers rebuild
 
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 ```
 
 Remember after clean rebuild to run migrations and seed once again.
@@ -413,7 +427,6 @@ npm run storybook
 - [ ] Add Husky for hooks
 
 - [ ] Refactor Architecture to follow cleaner pattern
-
   - [x] Articles
     - [ ] Add 'fields' filter to return only wanted fields. (graphQL vs 'fields')
   - [ ] Japanese Data
@@ -421,13 +434,11 @@ npm run storybook
   - [ ] Posts
 
 - [ ] Consume new endpoints with cleaner pattern on frontend
-
   - [ ] Articles
   - [ ] Japanese Data
   - [ ] Posts
 
 - Features:
-
   - Feature toggle on/off for admin
 
   - Give access as owner of private Article or List to other user
