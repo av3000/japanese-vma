@@ -202,6 +202,36 @@ docker compose up -d --build
 
 Remember after clean rebuild to run migrations and seed once again.
 
+### Git work trees
+
+Each work tree must have their own branch
+
+```bash
+git worktree add -b feature/<new-branch-name-for-work-tree> <path-where-folder-for-work-tree-should-be-created> <optionally-specify-branch-out-source-or-leave-to-use-current-branch>
+```
+
+Open work tree folder in new IDE.
+
+After development is done in the worktree branch, we can either merge it locally
+
+```bash
+git switch <source-branch>
+git merge <worktree-branch>
+```
+
+or the usual, push to origin and create a PR:
+
+```bash
+git push -u origin <worktree-branch>
+```
+
+And cleanup
+
+```bash
+git worktree remove ../superpowers-skills-setup
+git branch -d feature/worktree-setup-superpowers-skills
+```
+
 ### Test API
 
 Basic requests for testing purposes. Enter laravel api container and register/login:
