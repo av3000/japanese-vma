@@ -204,10 +204,10 @@ Remember after clean rebuild to run migrations and seed once again.
 
 ### Git work trees
 
-Each work tree must have their own branch
+Each work tree must have their own branch, and to avoid git tracking folders put them in .worktrees
 
 ```bash
-git worktree add -b feature/<new-branch-name-for-work-tree> <path-where-folder-for-work-tree-should-be-created> <optionally-specify-branch-out-source-or-leave-to-use-current-branch>
+git worktree add -b .worktrees/<new-branch-name-for-work-tree> <path-where-folder-for-work-tree-should-be-created> <optionally-specify-branch-out-source-or-leave-to-use-current-branch>
 ```
 
 Open work tree folder in new IDE.
