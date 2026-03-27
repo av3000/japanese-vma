@@ -207,7 +207,7 @@ Remember after clean rebuild to run migrations and seed once again.
 Each work tree must have their own branch, and to avoid git tracking folders put them in .worktrees
 
 ```bash
-git worktree add -b .worktrees/<new-branch-name-for-work-tree> <path-where-folder-for-work-tree-should-be-created> <optionally-specify-branch-out-source-or-leave-to-use-current-branch>
+git worktree add -b <worktree-branch> .worktrees/<worktree-folder> <start-point-or-current-branch>
 ```
 
 Open work tree folder in new IDE.
@@ -228,9 +228,14 @@ git push -u origin <worktree-branch>
 And cleanup
 
 ```bash
-git worktree remove ../superpowers-skills-setup
-git branch -d feature/worktree-setup-superpowers-skills
+git worktree remove .worktrees/<worktree-folder>
+git branch -d <worktree-branch>
 ```
+
+### Laravel Boost in VS Code
+
+The Laravel Boost MCP configuration added in `processor-api/.vscode/mcp.json` is only picked up when you open `processor-api/` as the VS Code workspace root.
+If you open the repository root instead, that nested `.vscode` folder will not be applied automatically.
 
 ### Test API
 
