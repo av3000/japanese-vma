@@ -10,7 +10,7 @@ Swagger docs with [scramble.dedoc.co](https://scramble.dedoc.co/) for autogenera
 
 ![Application demo2](./docs/assets/images/jpl-short-2.gif)
 
-Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/).
+Built using [Laravel](https://laravel.com/docs) for Server API and [React](https://reactjs.org/) for the client side generated with [create-react-app](https://create-react-app.dev/docs/getting-started/), migrated to Vite.
 
 Japanese data comes from [Electronic Dictionary Research and Development Group](http://www.edrdg.org/), and are used in conformance with the Group's [licence](http://www.edrdg.org/edrdg/licence.html).
 This site uses the [JMdict](http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project), [Kanjidic2](http://www.edrdg.org/wiki/index.php/KANJIDIC_Project), [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), and [Radkfile](http://www.edrdg.org/krad/kradinf.html) dictionary files. JLPT data comes from Jonathan Waller's JLPT Resources [page](http://www.tanos.co.uk/jlpt/).
@@ -114,24 +114,40 @@ Now, in `/processor-api` repository root run:
 chmod +x .docker/entrypoint.sh
 ```
 
-Install composer packages on local machine to copy into containers:
-
-Ignores requirements that are linux specific packages
-
-```bash
-composer install --ignore-platform-reqs
-```
+If you are developing with Docker, treat the `laravel-app` container as the PHP/Composer environment for the project.
+Do not run Composer or Artisan from your local Windows PHP installation, because it may not match the container extensions required by the app such as `pcntl` for Horizon.
 
 Run docker containers in detached mode:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
+```
+
+Enter container terminal:
+
+```bash
+docker exec -it laravel_app sh
+```
+
+Install PHP dependencies inside the Laravel container:
+
+```bash
+docker compose exec laravel-app composer install
+```
+
+Whenever you need to add, update, or refresh backend dependencies, run Composer in the container:
+
+```bash
+docker compose exec laravel-app composer require <package>
+docker compose exec laravel-app composer require <package> --dev
+docker compose exec laravel-app composer update
+docker compose exec laravel-app composer dump-autoload
 ```
 
 Test if Mysql initialized properly, by entering container via bash or docker desktop:
 
 ```bash
-docker-compose exec db bash
+docker compose exec db bash
 mysql -u <DB_USERNAME> -p
 prompted password: <DB_PASSWORD>
 ```
@@ -147,18 +163,16 @@ SHOW TABLES;
 If tables are there, proceed with Japanese data migration.
 Data volume is big, so it may take over a minute and be cautions when rebuilding containers to avoid duplication.
 
-Enter container via bash or docker desktop into laravel app:
+Run Artisan commands in the Laravel container:
 
 ```bash
-# Enter container
-docker-compose exec laravel-app bash
 # Create japanese material tables
-php artisan migrate --path=database/migrations/japanese-data
+docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
 ```
 
 ```bash
 # Create new tables, generate encryption keys for Passport
-php artisan passport:install
+docker compose exec laravel-app php artisan passport:install
 ```
 
 Necessary to fill-up the categories for the entities objects in "objecttemplates" table.
@@ -166,27 +180,62 @@ Creates common and admin users
 Example custom lists and articles
 
 ```bash
-php artisan db:seed
+docker compose exec laravel-app php artisan db:seed
 # seed single table
-php aritsan db:seed --class=<ClassNameSeeder>
+docker compose exec laravel-app php artisan db:seed --class=<ClassNameSeeder>
 ```
 
 If by chance something seems cached or configs not updated try reset:
 
 ```bash
-composer dump-autoload
-php artisan config:clear
-php artisan cache:clear
+docker compose exec laravel-app composer dump-autoload
+docker compose exec laravel-app php artisan config:clear
+docker compose exec laravel-app php artisan cache:clear
 ```
 
 Take containers down and empty volumes for clean containers rebuild
 
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 ```
 
 Remember after clean rebuild to run migrations and seed once again.
+
+### Git work trees
+
+Each work tree must have their own branch, and to avoid git tracking folders put them in .worktrees
+
+```bash
+git worktree add -b <worktree-branch> .worktrees/<worktree-folder> <start-point-or-current-branch>
+```
+
+Open work tree folder in new IDE.
+
+After development is done in the worktree branch, we can either merge it locally
+
+```bash
+git switch <source-branch>
+git merge <worktree-branch>
+```
+
+or the usual, push to origin and create a PR:
+
+```bash
+git push -u origin <worktree-branch>
+```
+
+And cleanup
+
+```bash
+git worktree remove .worktrees/<worktree-folder>
+git branch -d <worktree-branch>
+```
+
+### Laravel Boost in VS Code
+
+The Laravel Boost MCP configuration added in `processor-api/.vscode/mcp.json` is only picked up when you open `processor-api/` as the VS Code workspace root.
+If you open the repository root instead, that nested `.vscode` folder will not be applied automatically.
 
 ### Test API
 
@@ -413,7 +462,6 @@ npm run storybook
 - [ ] Add Husky for hooks
 
 - [ ] Refactor Architecture to follow cleaner pattern
-
   - [x] Articles
     - [ ] Add 'fields' filter to return only wanted fields. (graphQL vs 'fields')
   - [ ] Japanese Data
@@ -421,13 +469,11 @@ npm run storybook
   - [ ] Posts
 
 - [ ] Consume new endpoints with cleaner pattern on frontend
-
   - [ ] Articles
   - [ ] Japanese Data
   - [ ] Posts
 
 - Features:
-
   - Feature toggle on/off for admin
 
   - Give access as owner of private Article or List to other user
