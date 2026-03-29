@@ -12,7 +12,7 @@ interface UserServiceInterface
      * Get user profile by UUID.
      *
      * @param EntityId $userUuid User public UUID
-     * @return Result<UserWithProfileContext> Success data: UserWithProfileContext, Failure data: Error
+     * @return Result<UserWithProfileContext> Success data: UserWithProfileContext, Failure data: ResultError
      */
     public function findByUuid(EntityId $userUuid): Result;
 

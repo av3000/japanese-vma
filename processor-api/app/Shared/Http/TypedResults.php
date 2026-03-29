@@ -3,7 +3,7 @@
 namespace App\Shared\Http;
 
 use Illuminate\Http\JsonResponse;
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 use App\Shared\Enums\{HttpStatus};
 
 class TypedResults
@@ -12,7 +12,7 @@ class TypedResults
     // Result Pattern Integration
     // ========================================
 
-    public static function fromError(Error $error): JsonResponse
+    public static function fromError(ResultError $error): JsonResponse
     {
         $status = $error->toHttpStatus();
 

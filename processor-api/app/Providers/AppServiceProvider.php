@@ -14,9 +14,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
-    {
-    }
+    public function register() {}
 
     /**
      * Bootstrap any application services.
@@ -30,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
             'app_release' => config('app.release'),
             'request_id' => app()->runningInConsole() ? null : (request()->headers->get('X-Request-Id') ?: (string) Str::uuid()),
             'request_path' => app()->runningInConsole() ? null : request()->path(),
-        ], static fn ($value) => $value !== null && $value !== '');
+        ], static fn($value) => $value !== null && $value !== '');
 
         $logger = Log::getFacadeRoot();
 
@@ -63,5 +61,4 @@ class AppServiceProvider extends ServiceProvider
             return $this;
         });
     }
-
 }

@@ -20,7 +20,7 @@ final class LogoutUserAction
     /**
      * Logout current authenticated user
      *
-     * @return Result Success: null, Failure: Error
+     * @return Result Success: null, Failure: ResultError
      */
     public function execute(): Result
     {

@@ -30,7 +30,7 @@ class UserService implements UserServiceInterface
      * Get user profile by UUID.
      *
      * @param EntityId $userUuid User public UUID
-     * @return Result Success data: DomainUser, Failure data: Error
+     * @return Result Success data: DomainUser, Failure data: ResultError
      */
     // TODO: add authenticatedUser type -> should come from authSession from controller.
     public function findByUuid(EntityId $userUuid,  $authenticatedUser = null): Result

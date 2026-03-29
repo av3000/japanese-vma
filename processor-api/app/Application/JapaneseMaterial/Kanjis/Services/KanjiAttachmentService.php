@@ -24,7 +24,7 @@ class KanjiAttachmentService
      *
      * @param EntityId $articleUuid The UUID of the article.
      * @param string[] $uniqueKanjiCharacters An array of unique Kanji character strings (e.g., ['亜', '愛']) from request input.
-     * @return Result Success data: array of attached Kanji IDs, Failure data: Error.
+     * @return Result Success data: array of attached Kanji IDs, Failure data: ResultError.
      */
     public function attachKanjisToArticle(EntityId $articleUuid, array $uniqueKanjiCharacters): Result
     {

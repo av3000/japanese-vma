@@ -24,7 +24,7 @@ final class RegisterUserAction
      * Register a new user with default setup
      *
      * @param RegisterUserDTO $dto Registration data
-     * @return Result Success data: RegisteredUserDTO, Failure data: Error
+     * @return Result Success data: RegisteredUserDTO, Failure data: ResultError
      *
      */
     public function execute(RegisterUserDTO $dto): Result

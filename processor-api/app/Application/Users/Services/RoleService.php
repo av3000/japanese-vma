@@ -48,7 +48,7 @@ class RoleService implements RoleServiceInterface
      *
      * @param EntityId $userUuid
      * @param string $roleName
-     * @return Result<string> Success: User UUID, Failure: Error
+     * @return Result<string> Success: User UUID, Failure: ResultError
      */
     public function assignRole(EntityId $userUuid, string $roleName): Result
     {
@@ -76,7 +76,7 @@ class RoleService implements RoleServiceInterface
      *
      * @param EntityId $userUuid
      * @param string $roleName
-     * @return Result<string> Success: User UUID, Failure: Error
+     * @return Result<string> Success: User UUID, Failure: ResultError
      */
     public function removeRole(EntityId $userUuid, string $roleName): Result
     {
@@ -113,7 +113,7 @@ class RoleService implements RoleServiceInterface
      * Permanently deletes a role, with guardrails.
      *
      * @param string $name The name of the role to delete.
-     * @return Result<string> Success: Name of deleted role, Failure: Error
+     * @return Result<string> Success: Name of deleted role, Failure: ResultError
      */
     public function deleteRole(string $name): Result
     {
@@ -190,7 +190,7 @@ class RoleService implements RoleServiceInterface
      *
      * @param string $name
      * @param string|null $guardName Defaults to 'api' if null.
-     * @return Result<DomainRole> Success: The newly created DomainRole, Failure: Error
+     * @return Result<DomainRole> Success: The newly created DomainRole, Failure: ResultError
      */
     public function createRole(string $name, ?string $guardName = null): Result
     {

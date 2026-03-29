@@ -32,7 +32,7 @@ interface HashtagServiceInterface
      * @param ObjectTemplateType $entityType The type of entity
      * @param array<string> $tags Array of hashtag strings (e.g., ['#php', '#laravel'])
      * @param int $userId The user creating the hashtags
-     * @return Result Success data: null (void operation), Failure data: Error
+     * @return Result Success data: null (void operation), Failure data: ResultError
      */
     public function createTagsForEntity(
         int $entityId,
@@ -49,7 +49,7 @@ interface HashtagServiceInterface
      * @param ObjectTemplateType $entityType The type of entity
      * @param array<string> $tags Array of hashtag strings
      * @param int $userId The user performing the update
-     * @return Result Success data: null (void operation), Failure data: Error
+     * @return Result Success data: null (void operation), Failure data: ResultError
      */
     public function syncTagsForEntity(
         int $entityId,

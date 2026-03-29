@@ -2,14 +2,14 @@
 
 namespace App\Domain\Catalogues\Errors;
 
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
 
 class CatalogueErrors
 {
-    public static function notFound(string $catalogueUid): Error
+    public static function notFound(string $catalogueUid): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Catalogues.NotFound',
             status: HttpStatus::NOT_FOUND,
             description: 'Catalogue not found',
@@ -18,9 +18,9 @@ class CatalogueErrors
         );
     }
 
-    public static function accessDenied(string $catalogueUid): Error
+    public static function accessDenied(string $catalogueUid): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Catalogues.AccessDenied',
             status: HttpStatus::FORBIDDEN,
             description: 'Access denied',
@@ -29,9 +29,9 @@ class CatalogueErrors
         );
     }
 
-    public static function creationFailed(): Error
+    public static function creationFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Catalogues.CreationFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Catalogue creation failed',
@@ -40,9 +40,9 @@ class CatalogueErrors
         );
     }
 
-    public static function updateFailed(string $errorMessage): Error
+    public static function updateFailed(string $errorMessage): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Catalogues.UpdateFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Catalogue update failed',

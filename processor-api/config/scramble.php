@@ -12,6 +12,7 @@ return [
     // You can later reintroduce restrictions via Scramble's `only` / `except` or custom route resolver.
     // 'only' => [
     //     'api/v1/users/*',
+    //     'api/v1/catalogues*',
     // ],
 
     'debug' => true, // Add this to enable debug mode.

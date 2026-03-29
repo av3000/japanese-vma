@@ -40,10 +40,10 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly HashtagServiceInterface $hashtagService,
     ) {}
 
-    public function createCatalogue(CatalogueCreateDTO $dto, User $user, Viewer $viewer): Result
+    public function createCatalogue(CatalogueCreateDTO $dto, User $user): Result
     {
         try {
-            $catalogue = DB::transaction(function () use ($dto, $user, $viewer) {
+            $catalogue = DB::transaction(function () use ($dto, $user) {
                 $domainCatalogue = CatalogueFactory::createFromDTO(
                     $dto,
                     new UserId($user->id),
@@ -53,7 +53,7 @@ class CatalogueService implements CatalogueServiceInterface
 
                 $createdCatalogue = $this->catalogueRepository->create($domainCatalogue);
 
-                if (! empty($dto->hashtags)) {
+                if ($dto->hashtags && ! empty($dto->hashtags)) {
                     $hashtagResult = $this->hashtagService->createTagsForEntity(
                         $createdCatalogue->getIdValue(),
                         ObjectTemplateType::LIST,
@@ -65,12 +65,6 @@ class CatalogueService implements CatalogueServiceInterface
                         throw new \Exception($hashtagResult->getError()->description);
                     }
                 }
-
-                $this->trackView(
-                    $createdCatalogue->getIdValue(),
-                    ObjectTemplateType::LIST,
-                    $viewer
-                );
 
                 return $createdCatalogue;
             });
@@ -209,7 +203,7 @@ class CatalogueService implements CatalogueServiceInterface
             $catalogue->getOwnerName(),
             $catalogue->getOwnerUuid(),
             $catalogue->getCreatedAt(),
-            new \DateTimeImmutable(),
+            now()->toDateTimeImmutable(),
         );
     }
 }
