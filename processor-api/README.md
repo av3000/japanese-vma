@@ -92,5 +92,13 @@ To test and see what's failing:
 vendor/bin/pint --test app/Application/Catalogues/Services/CatalogueService.php
 
 To scan and format the file, use without --test flag:
-vendor/bin/pint --test app/Application/Catalogues/Services/CatalogueService.php
+vendor/bin/pint app/Application/Catalogues/Services/CatalogueService.php
+
+vendor/bin/pint app/Application/Articles/Services/ArticleService.php
+```
+
+Scan the code for errors with PHPStan for Laravel:
+
+```bash
+vendor/bin/phpstan analyse app/Application/Catalogues/Services/CatalogueService.php
 ```
