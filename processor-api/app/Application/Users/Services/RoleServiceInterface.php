@@ -40,7 +40,7 @@ interface RoleServiceInterface
      * Permanently deletes a role.
      *
      * @param string $id
-     * @return Result<string> Success: Id of deleted role, Failure: Error
+     * @return Result<string> Success: Id of deleted role, Failure: ResultError
      */
     public function deleteRole(string $id): Result;
 

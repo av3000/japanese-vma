@@ -1,19 +1,29 @@
-// @ts-nocheck
-/* eslint-disable */
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
+import type { CatalogueHashtag } from '@/api/catalogues/catalogues';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 
-const DashboardListItem: React.FC = ({
+interface DashboardListItemProps {
+	id: number;
+	created_at: string;
+	title: string;
+	commentsTotal: number;
+	likesTotal: number;
+	viewsTotal: number;
+	hashtags?: CatalogueHashtag[];
+	typeTitle: string;
+}
+
+const DashboardListItem: React.FC<DashboardListItemProps> = ({
 	id,
 	created_at,
 	title,
 	commentsTotal,
 	likesTotal,
 	viewsTotal,
-	hashtags,
+	hashtags = [],
 	typeTitle,
 }) => (
 	<div className="row border-bottom border-gray">

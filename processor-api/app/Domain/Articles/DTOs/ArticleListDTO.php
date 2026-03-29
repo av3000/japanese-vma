@@ -8,6 +8,7 @@ readonly class ArticleListDTO
     public function __construct(
         public ?int $category,
         public ?string $search,
+        public ?string $author_uid,
         public ?string $sort_by,
         public ?string $sort_dir,
         public ?int $per_page,
@@ -22,6 +23,7 @@ readonly class ArticleListDTO
         return new self(
             category: $validated['category'] ?? null,
             search: $validated['search'] ?? null,
+            author_uid: $validated['author_uid'] ?? null,
             sort_by: $validated['sort_by'] ?? null,
             sort_dir: $validated['sort_dir'] ?? null,
             per_page: $validated['per_page'] ?? null,

@@ -3,13 +3,13 @@
 namespace App\Domain\Engagement\Errors;
 
 use App\Shared\Enums\HttpStatus;
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 
 class HashtagErrors
 {
-    public static function invalidTag(string $tag): Error
+    public static function invalidTag(string $tag): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Hashtags.InvalidTag',
             description: 'Invalid hashtag format',
             status: HttpStatus::NOT_FOUND,
@@ -17,9 +17,9 @@ class HashtagErrors
         );
     }
 
-    public static function tooManyTags(int $count, int $limit): Error
+    public static function tooManyTags(int $count, int $limit): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Hashtags.TooManyTags',
             status: HttpStatus::BAD_REQUEST,
             description: 'Too many hashtags',
@@ -27,9 +27,9 @@ class HashtagErrors
         );
     }
 
-    public static function creationFailed(): Error
+    public static function creationFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Hashtags.CreationFailed',
             status: HttpStatus::BAD_REQUEST,
             description: 'Hashtag creation failed',

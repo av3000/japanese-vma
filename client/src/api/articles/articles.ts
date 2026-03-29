@@ -1,9 +1,28 @@
 import { LastOperationEvent } from '@/api/last-operations/last-operations';
 import axios from '@/services/axios';
 
-interface Hashtag {
+export interface Hashtag {
 	id: string;
 	content: string;
+}
+
+export interface ArticleEngagementStats {
+	likes_count: number;
+	views_count: number;
+	downloads_count: number;
+	comments_count: number;
+}
+
+export interface FetchArticlesFilters {
+	search?: string;
+	category?: number;
+	sort_by?: string;
+	sort_dir?: string;
+	per_page?: number;
+	author_uid?: string;
+	include_stats_counts?: boolean;
+	include_hashtags?: boolean;
+	include_kanjis?: boolean;
 }
 
 export interface ArticleDetails {
@@ -32,7 +51,12 @@ export interface ArticleDetails {
 	};
 	created_at: string;
 	updated_at: string;
-	engagement: { likes_count: number; views_count: number; downloads_count: number; is_liked_by_viewer: boolean };
+	engagement: {
+		likes_count: number;
+		views_count: number;
+		downloads_count: number;
+		is_liked_by_viewer: boolean;
+	};
 	kanjis: any;
 	words: any;
 	processing_status: LastOperationEvent | null;
@@ -63,7 +87,7 @@ export interface Article {
 	};
 	created_at: string;
 	updated_at: string;
-	engagement: { stats: any };
+	engagement: { stats: ArticleEngagementStats | null };
 	kanjis: any;
 	processing_status: LastOperationEvent | null;
 }
@@ -104,7 +128,7 @@ export interface UpdateArticlePayload {
 }
 
 // TODO: explore option to use Orval generated data contracts
-export const fetchArticles = async (filters: Record<string, any>, pageParam: number) => {
+export const fetchArticles = async (filters: FetchArticlesFilters = {}, pageParam = 1) => {
 	const params = { ...filters, page: pageParam };
 	const url = `/v1/articles`;
 

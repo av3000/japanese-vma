@@ -358,7 +358,7 @@ Seed initial data
 php artisan db:seed
 ```
 
-Track logging for Laravel errors:
+Track logging for Laravel errors, inside container:
 
 ```bash
 tail -f storage/logs/laravel.log

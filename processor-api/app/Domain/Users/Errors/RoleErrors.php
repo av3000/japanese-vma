@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Users\Errors;
 
 use App\Shared\Enums\HttpStatus;
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 
 class RoleErrors
 {
 
-    public static function failed(): Error
+    public static function failed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.Failed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Role action has failed',
@@ -21,9 +21,9 @@ class RoleErrors
         );
     }
 
-    public static function notFound(string $name): Error
+    public static function notFound(string $name): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.NotFound',
             status: HttpStatus::NOT_FOUND,
             description: 'Role not found',
@@ -34,11 +34,11 @@ class RoleErrors
 
     /**
      * @param string $roleName The name of the invalid role.
-     * @return Error
+     * @return ResultError
      */
-    public static function invalidRole(string $roleName): Error
+    public static function invalidRole(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.InvalidRole',
             status: HttpStatus::BAD_REQUEST,
             description: "Role '{$roleName}' is not a valid role type.",
@@ -47,9 +47,9 @@ class RoleErrors
         );
     }
 
-    public static function cannotRemoveAdminFromAdmin(string $roleName): Error
+    public static function cannotRemoveAdminFromAdmin(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.CannotRemoveAdminFromAdmin',
             status: HttpStatus::FORBIDDEN,
             description: "Cannot remove the '{$roleName}' role from an admin user.",
@@ -58,9 +58,9 @@ class RoleErrors
         );
     }
 
-    public static function protectedRoleCannotBeRemoved(string $roleName): Error
+    public static function protectedRoleCannotBeRemoved(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.ProtectedRoleCannotBeRemoved',
             status: HttpStatus::FORBIDDEN,
             description: "The '{$roleName}' role cannot be removed from any user.",
@@ -69,9 +69,9 @@ class RoleErrors
         );
     }
 
-    public static function protectedRoleCannotBeDeleted(string $roleName): Error
+    public static function protectedRoleCannotBeDeleted(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.protectedRoleCannotBeDeleted',
             status: HttpStatus::FORBIDDEN,
             description: "The '{$roleName}' role cannot be deleted.",
@@ -80,9 +80,9 @@ class RoleErrors
         );
     }
 
-    public static function invalidGuardName(string $guardName): Error
+    public static function invalidGuardName(string $guardName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.InvalidGuardName',
             status: HttpStatus::BAD_REQUEST,
             description: "Guard name '{$guardName}' is not a valid system guard.",
@@ -91,9 +91,9 @@ class RoleErrors
         );
     }
 
-    public static function roleHasActiveAssignments(string $roleName): Error
+    public static function roleHasActiveAssignments(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Roles.RoleHasActiveAssignments',
             status: HttpStatus::CONFLICT,
             description: 'Role has active assignments',

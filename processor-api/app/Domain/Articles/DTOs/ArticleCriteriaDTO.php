@@ -9,9 +9,10 @@ use App\Domain\Shared\ValueObjects\Pagination;
 readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
 {
     public function __construct(
+        public ?ArticleSortCriteria $sort,
         public ?SearchTerm $search = null,
         public ?int $categoryId = null,
-        public ?ArticleSortCriteria $sort,
+        public ?string $authorUid = null,
         public array $visibilityRules = [],
         public ?Pagination $pagination = null,
         public bool $include_kanjis = false

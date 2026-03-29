@@ -71,7 +71,7 @@ class KanjiController extends Controller
         } elseif (preg_match('/^\p{Han}$/u', $identifier)) {
             $kanjiResult = $this->kanjiService->findByCharacter(new KanjiCharacter($identifier));
         } else {
-            return TypedResults::fromError(new \App\Shared\Results\Error(
+            return TypedResults::fromError(new \App\Shared\Results\ResultError(
                 'INVALID_IDENTIFIER',
                 HttpStatus::BAD_REQUEST,
                 'Identifier must be a valid UUID or a single Kanji character.'

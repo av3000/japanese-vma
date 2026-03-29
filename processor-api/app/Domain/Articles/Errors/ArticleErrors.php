@@ -2,14 +2,14 @@
 
 namespace App\Domain\Articles\Errors;
 
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
 
 class ArticleErrors
 {
-    public static function notFound(string $articleUid): Error
+    public static function notFound(string $articleUid): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.NotFound',
             status: HttpStatus::NOT_FOUND,
             description: 'Article not found',
@@ -18,9 +18,9 @@ class ArticleErrors
         );
     }
 
-    public static function accessDenied(string $articleUid): Error
+    public static function accessDenied(string $articleUid): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.AccessDenied',
             status: HttpStatus::FORBIDDEN,
             description: 'Access denied',
@@ -29,9 +29,9 @@ class ArticleErrors
         );
     }
 
-    public static function updateFailed(string $errorMessage): Error
+    public static function updateFailed(string $errorMessage): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.UpdateFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Article update failed',
@@ -40,9 +40,9 @@ class ArticleErrors
         );
     }
 
-    public static function creationFailed(): Error
+    public static function creationFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.CreationFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Article creation failed',
@@ -51,9 +51,9 @@ class ArticleErrors
         );
     }
 
-    public static function deletionFailed(): Error
+    public static function deletionFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.DeletionFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Article deletion failed',
@@ -62,9 +62,9 @@ class ArticleErrors
         );
     }
 
-    public static function validationFailed(array $errors): Error
+    public static function validationFailed(array $errors): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Articles.ValidationFailed',
             status: HttpStatus::UNPROCESSABLE_ENTITY,
             description: 'Validation failed',
