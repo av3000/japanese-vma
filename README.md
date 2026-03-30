@@ -132,3 +132,35 @@ docker compose logs -f webserver
 - [client/README.md](./client/README.md) explains frontend structure, setup, and commands.
 - [processor-api/README.md](./processor-api/README.md) explains backend layers, local runtime, and contributor workflows.
 - `docs/assets/images/` stores the current product screenshots used in this README.
+
+## Development notes
+
+### Git work trees
+
+Each work tree must have their own branch, and to avoid git tracking folders put them in .worktrees
+
+```bash
+git worktree add -b <worktree-branch> .worktrees/<worktree-folder> <start-point-or-current-branch>
+```
+
+Open work tree folder in new IDE.
+
+After development is done in the worktree branch, we can either merge it locally
+
+```bash
+git switch <source-branch>
+git merge <worktree-branch>
+```
+
+or the usual, push to origin and create a PR:
+
+```bash
+git push -u origin <worktree-branch>
+```
+
+And cleanup
+
+```bash
+git worktree remove .worktrees/<worktree-folder>
+git branch -d <worktree-branch>
+```
