@@ -3,7 +3,9 @@
 namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\{Article, ArticleStats};
+use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
+use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
@@ -55,30 +57,17 @@ class ArticleResource extends JsonResource
             'publicity' => $article->getPublicity()->value,
             'status' => $article->getStatus()->value,
             'jlpt_levels' => $article->getJlptLevels()->toArray(),
-            'author' => [
+            // TODO: Rename to Owner and add uuid field
+            'author' => new ArticleAuthorResource([
                 'id' => $article->getAuthorId()->value(),
                 'name' => $article->getAuthorName()->value(),
-            ],
-            'hashtags' => $includeHashtags ? $this->hashtags : [],
+            ]),
+            'hashtags' => HashtagResource::collection($includeHashtags ? $this->hashtags : []),
             'created_at' => $article->getCreatedAt()->format('c'),
             'updated_at' => $article->getUpdatedAt()->format('c'),
-            'engagement' => [
-                'stats' => $includeStats && $this->stats ? [
-                    'likes_count' => $this->stats->getLikesCount(),
-                    'views_count' => $this->stats->getViewsCount(),
-                    'downloads_count' => $this->stats->getDownloadsCount(),
-                    'comments_count' => $this->stats->getCommentsCount(),
-                ] : null,
-            ],
+            'engagement' => new ArticleListEngagementResource($includeStats ? $this->stats : null),
             'kanjis' => KanjiResource::collection($article->getKanjis()),
-            'processing_status' => $this->lastOperation ? [
-                'id' => $this->lastOperation->id,
-                'type' => $this->lastOperation->task_type,
-                'status' => $this->lastOperation->status->value,
-                'metadata' => $this->lastOperation->metadata,
-                'created_at' => $this->lastOperation->created_at?->toIso8601String(),
-                'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
-            ] : null,
+            'processing_status' => $this->lastOperation ? new ProcessingStatusResource($this->lastOperation) : null,
         ];
     }
 }

@@ -4,8 +4,11 @@ namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Engagement\DTOs\EngagementSummary;
+use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
+use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -33,10 +36,9 @@ class ArticleDetailResource extends JsonResource
     /**
      * Transform the article domain model into an API representation.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
             'article' => [
@@ -51,30 +53,17 @@ class ArticleDetailResource extends JsonResource
                 'publicity' => $this->getPublicity()->value,
                 'status' => $this->getStatus()->value,
                 'jlpt_levels' => $this->getJlptLevels()->toArray(),
-                'author' => [
+                'author' => new ArticleAuthorResource([
                     'id' => $this->getAuthorId()->value(),
                     'name' => $this->getAuthorName()->value(),
-                ],
-                'hashtags' => $this->hashtags,
+                ]),
+                'hashtags' => HashtagResource::collection($this->hashtags),
                 'created_at' => $this->getCreatedAt()->format('c'),
                 'updated_at' => $this->getUpdatedAt()->format('c'),
-                'engagement' =>
-                $this->engagement ? [
-                    'is_liked_by_viewer' => $this->engagement->isLikedByViewer,
-                    'likes_count' => $this->engagement->likesCount,
-                    'views_count' => $this->engagement->viewsCount,
-                    'downloads_count' => $this->engagement->downloadsCount,
-                ] : null,
+                'engagement' => $this->engagement ? new ArticleDetailEngagementResource($this->engagement) : null,
                 'kanjis' => KanjiResource::collection($this->kanjis),
                 'words' => $this->words,
-                'processing_status' => $this->lastOperation ? [
-                    'id' => $this->lastOperation->id,
-                    'type' => $this->lastOperation->task_type,
-                    'status' => $this->lastOperation->status->value,
-                    'metadata' => $this->lastOperation->metadata,
-                    'created_at' => $this->lastOperation->created_at?->toIso8601String(),
-                    'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
-                ] : null,
+                'processing_status' => $this->lastOperation ? new ProcessingStatusResource($this->lastOperation) : null,
             ],
         ];
     }

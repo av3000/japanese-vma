@@ -22,6 +22,7 @@ use App\Http\v1\Articles\Resources\ArticleWordCollection;
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
+use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
@@ -38,9 +39,9 @@ class ArticleController extends Controller
     ) {}
 
     /**
-     * @response array{success: true, data: array{items: list<ArticleResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}
+     * @response array{success: true, data: ArticleListResource}
      */
-    #[Response(type: 'array{success: true, data: array{items: list<ArticleResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}')]
+    #[Response(type: 'array{success: true, data: ArticleListResource}')]
     public function index(IndexArticleRequest $request): JsonResponse
     {
         // TODO: figure graceful error handling pattern
@@ -96,7 +97,7 @@ class ArticleController extends Controller
             );
         }
 
-        $articleListResource = [
+        return TypedResults::ok(new ArticleListResource([
             'items' => $resources,
             'pagination' => [
                 'page' => $paginatedArticles->getPaginator()->currentPage(),
@@ -105,9 +106,7 @@ class ArticleController extends Controller
                 'last_page' => $paginatedArticles->getPaginator()->lastPage(),
                 'has_more' => $paginatedArticles->getPaginator()->hasMorePages(),
             ],
-        ];
-
-        return TypedResults::ok($articleListResource);
+        ]));
     }
 
     private function getImagePath(): string
@@ -280,5 +279,4 @@ class ArticleController extends Controller
             ], 422);
         }
     }
-
 }
