@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { fetchArticles } from '@/api/articles/articles';
-import type { Article, Hashtag } from '@/api/articles/articles';
+import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
+import type { Hashtag } from '@/api/articles/articles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import Spinner from '@/assets/images/spinner.gif';
@@ -48,40 +48,11 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	onToggleDashboardView,
 }) => {
 	const [filters, setFilters] = useState<DashboardArticleFilters>({});
-
-	const {
-		data,
-		error,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
-		status,
-	} = useInfiniteQuery({
-		queryKey: [
-			'articles',
-			{
-				scope: 'dashboard',
-				author_uid: currentUser?.uuid ?? null,
-				search: filters.search ?? null,
-			},
-		],
-		queryFn: ({ pageParam }) => {
-			if (!currentUser?.uuid) {
-				throw new Error('Missing current user UUID');
-			}
-
-			return fetchArticles(
-				{
-					author_uid: currentUser.uuid,
-					search: filters.search,
-					include_stats_counts: true,
-				},
-				pageParam,
-			);
-		},
-		initialPageParam: 1,
-		getNextPageParam: (lastPage) => {
-			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
+	const { articles, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteArticles({
+		filters: {
+			author_uid: currentUser?.uuid,
+			search: filters.search,
+			include_stats_counts: true,
 		},
 		enabled: dashboardView === DASHBOARD_TYPES.COMMON_USER && isAuthenticated && !!currentUser?.uuid,
 	});
@@ -95,28 +66,16 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 		enabled: shouldFetchPendingArticles,
 	});
 
-	const allArticles = useMemo<Article[]>(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
-	const totalArticleCount = data?.pages[0]?.pagination.total ?? 0;
-
 	const trackedArticleUuids = useMemo(() => {
-		return allArticles
+		return articles
 			.filter(
 				(article) =>
 					article.processing_status?.status !== undefined &&
 					article.processing_status?.status !== LastOperationStatus.Completed,
 			)
 			.map((article) => article.uuid);
-	}, [allArticles]);
-
-	const [debouncedTrackedUuids, setDebouncedTrackedUuids] = useState<string[]>([]);
-
-	useEffect(() => {
-		const timeout = window.setTimeout(() => {
-			setDebouncedTrackedUuids(trackedArticleUuids);
-		}, 300);
-
-		return () => window.clearTimeout(timeout);
-	}, [trackedArticleUuids]);
+	}, [articles]);
+	const deferredTrackedUuids = useDeferredValue(trackedArticleUuids);
 
 	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
 		const keyword = newFilters.keyword.trim();
@@ -203,7 +162,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 						</div>
 						<div className="col-lg-12 col-md-10 mx-auto">
 							<div className="mb-3 text-muted">
-								Showing {allArticles.length} of {totalArticleCount}
+								Showing {articles.length} of {total}
 							</div>
 							<div className="row d-none d-md-flex pb-2 mb-3 border-bottom border-gray small text-uppercase text-muted">
 								<div className="col-md-8 d-flex justify-content-between">
@@ -219,12 +178,12 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 								<LoadingState altText="Loading articles..." />
 							) : status === 'error' ? (
 								<div className="alert alert-danger">{articleErrorMessage}</div>
-							) : allArticles.length ? (
+							) : articles.length ? (
 								<>
-									{debouncedTrackedUuids.map((uuid) => (
+									{deferredTrackedUuids.map((uuid) => (
 										<ArticleSubscription key={uuid} uuid={uuid} />
 									))}
-									{allArticles.map((article) => (
+									{articles.map((article) => (
 										<DashboardArticleItem
 											key={article.id}
 											uuid={article.uuid}

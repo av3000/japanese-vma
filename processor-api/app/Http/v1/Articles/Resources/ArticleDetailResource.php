@@ -2,11 +2,15 @@
 
 namespace App\Http\v1\Articles\Resources;
 
+use App\Domain\Articles\Models\Article;
 use App\Domain\Engagement\DTOs\EngagementSummary;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property Article $resource
+ */
 class ArticleDetailResource extends JsonResource
 {
     private ?EngagementSummary $engagement;
@@ -32,7 +36,7 @@ class ArticleDetailResource extends JsonResource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'article' => [

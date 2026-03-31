@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
@@ -36,6 +37,10 @@ class ArticleController extends Controller
         private readonly HashtagServiceInterface $hashtagService,
     ) {}
 
+    /**
+     * @response array{success: true, data: array{items: list<ArticleResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}
+     */
+    #[Response(type: 'array{success: true, data: array{items: list<ArticleResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}')]
     public function index(IndexArticleRequest $request): JsonResponse
     {
         // TODO: figure graceful error handling pattern
@@ -110,6 +115,10 @@ class ArticleController extends Controller
         return '/var/www/html/public/images/articles/user/testing-image.jpg';
     }
 
+    /**
+     * @response 201 array{success: true, data: array{uuid: string}}
+     */
+    #[Response(201, type: 'array{success: true, data: array{uuid: string}}')]
     public function store(StoreArticleRequest $request): JsonResponse
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
@@ -127,6 +136,10 @@ class ArticleController extends Controller
         );
     }
 
+    /**
+     * @response array{success: true, data: ArticleDetailResource}
+     */
+    #[Response(type: 'array{success: true, data: ArticleDetailResource}')]
     public function show(string $uid, ArticleDetailRequest $request): JsonResponse
     {
         $articleUid = EntityId::from($uid);
@@ -172,6 +185,10 @@ class ArticleController extends Controller
         );
     }
 
+    /**
+     * @response array{success: true, data: ArticleResource}
+     */
+    #[Response(type: 'array{success: true, data: ArticleResource}')]
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse
     {
         if (!$request->hasAnyUpdateableFields()) {
@@ -208,6 +225,10 @@ class ArticleController extends Controller
     }
 
     // TODO: refactor to clean architecture
+    /**
+     * @response array{success: true, message: string}
+     */
+    #[Response(type: 'array{success: true, message: string}')]
     public function destroy(string $uuid): JsonResponse
     {
         try {
@@ -238,6 +259,10 @@ class ArticleController extends Controller
     }
 
     // TODO: refactor to clean architecture
+    /**
+     * @response ArticleWordCollection
+     */
+    #[Response(type: 'ArticleWordCollection')]
     public function words(Request $request, int $id): JsonResponse
     {
         try {

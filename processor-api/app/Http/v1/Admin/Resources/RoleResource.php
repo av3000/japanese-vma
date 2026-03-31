@@ -8,6 +8,9 @@ use App\Domain\Users\Models\Role as DomainRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property DomainRole $resource
+ */
 class RoleResource extends JsonResource
 {
     /**
@@ -25,10 +28,12 @@ class RoleResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var DomainRole $this */
+        /** @var DomainRole $role */
+        $role = $this->resource;
+
         return [
-            'name' => $this->getName(),
-            'guard_name' => $this->getGuardName(),
+            'name' => $role->getName(),
+            'guard_name' => $role->getGuardName(),
         ];
     }
 }

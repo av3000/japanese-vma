@@ -50,29 +50,49 @@ export const useArticleSubscription = (articleUuid: string) => {
 					};
 				});
 
-			// Optimistic Update for Infinite List View
-			// We need to iterate over all cached 'articles' lists and update this specific item that is subscribed to
-			queryClient.setQueryDefaults(['articles'], { staleTime: 0 }); // Mark lists as stale
-
 			queryClient.setQueriesData({ queryKey: ['articles'] }, (oldData: any) => {
 				if (!oldData) return oldData;
+				if (!Array.isArray(oldData.pages)) return oldData;
 
 				return {
 					...oldData,
 					pages: oldData.pages.map((page: any) => ({
 						...page,
-						items: page.items.map((item: any) => {
-							if (item.uuid === articleUuid) {
-									return {
-										...item,
-										processing_status: {
-											...(item.processing_status ?? {}),
-											...normalizedPayload,
-										},
-									};
+						data: page.data
+							? {
+									...page.data,
+									items: page.data.items.map((item: any) => {
+										if (item.uuid !== articleUuid) {
+											return item;
+										}
+
+										return {
+											...item,
+											processing_status: {
+												...(item.processing_status ?? {}),
+												...normalizedPayload,
+											},
+										};
+									}),
 								}
-								return item;
-							}),
+							: page.items
+								? {
+										...page,
+										items: page.items.map((item: any) => {
+											if (item.uuid !== articleUuid) {
+												return item;
+											}
+
+											return {
+												...item,
+												processing_status: {
+													...(item.processing_status ?? {}),
+													...normalizedPayload,
+												},
+											};
+										}),
+									}
+								: page.data,
 					})),
 				};
 			});

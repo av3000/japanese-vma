@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { Article } from '@/api/articles/articles';
+import type { ArticleResource } from '@/api/generated/model/articleResource';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
@@ -11,7 +11,7 @@ import { formatDate } from '@/helpers';
 import styles from './ArticleCard.module.scss';
 
 export interface ArticleCardProps {
-	article: Article;
+	article: ArticleResource;
 	className?: string;
 }
 

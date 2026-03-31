@@ -1,8 +1,5 @@
-// // @ts-nocheck
-// /* eslint-disable */
-import React, { useEffect, useMemo, useState } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchArticles } from '@/api/articles/articles';
+import React, { useDeferredValue, useMemo, useState } from 'react';
+import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import Spinner from '@/assets/images/spinner.gif';
@@ -10,48 +7,52 @@ import SearchBar from '@/components/features/SearchBar';
 import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
 
+const DEFAULT_PER_PAGE = 12;
+
+type ArticleSearchFilters = {
+	keyword: string;
+	sortByWhat: string;
+	filterType: string;
+};
+
+const mapSearchFiltersToArticleParams = (filters: Record<string, unknown>) => ({
+	search: typeof filters.keyword === 'string' && filters.keyword.trim() ? filters.keyword.trim() : undefined,
+	category:
+		typeof filters.filterType === 'string' && filters.filterType !== '20' ? Number(filters.filterType) : undefined,
+	sort_by: filters.sortByWhat === 'pop' ? 'views_total' : 'created_at',
+	sort_dir: 'desc',
+	per_page: DEFAULT_PER_PAGE,
+	include_stats_counts: true,
+	include_hashtags: true,
+	include_kanjis: true,
+});
+
 const ArticleList: React.FC = () => {
-	const [filters, setFilters] = useState<Record<string, any>>({});
+	const [filters, setFilters] = useState<ArticleSearchFilters | Record<string, never>>({});
+	const queryFilters = useMemo(() => mapSearchFiltersToArticleParams(filters), [filters]);
+	const { articles, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
+		useInfiniteArticles({
+			filters: queryFilters,
+		});
 
-	const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
-		queryKey: ['articles', filters],
-		queryFn: ({ pageParam }) => fetchArticles(filters, pageParam),
-		initialPageParam: 1,
-		getNextPageParam: (lastPage) => {
-			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
-		},
-	});
+	const trackedArticleUuids = useMemo(() => {
+		return articles
+			.filter(
+				(article) =>
+					article.processing_status?.status !== undefined &&
+					article.processing_status?.status !== LastOperationStatus.Completed,
+			)
+			.map((article) => article.uuid);
+	}, [articles]);
+	const deferredTrackedArticleUuids = useDeferredValue(trackedArticleUuids);
 
-	const handleApplyFilters = (newFilters: any) => {
+	const handleApplyFilters = (newFilters: ArticleSearchFilters) => {
 		setFilters(newFilters);
 	};
 
-	const allArticles = useMemo(() => data?.pages.flatMap((page) => page.items) || [], [data?.pages]);
-	const totalCount = data?.pages[0]?.pagination.total || 0;
+	const searchHeading = typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
 
-	const trackedArticleUuids = useMemo(() => {
-		return allArticles
-				.filter(
-					(article) =>
-						article.processing_status?.status !== undefined &&
-						article.processing_status?.status !== LastOperationStatus.Completed,
-				)
-				.map((article) => article.uuid);
-		}, [allArticles]);
-
-	const [debouncedTrackedUuids, setDebouncedTrackedUuids] = useState<string[]>([]);
-
-	useEffect(() => {
-		const timeout = window.setTimeout(() => {
-			setDebouncedTrackedUuids(trackedArticleUuids);
-		}, 300);
-
-		return () => window.clearTimeout(timeout);
-	}, [trackedArticleUuids]);
-
-	const searchHeading = filters.title ? `Results for: ${filters.title}` : '';
-
-	if (status === 'pending') {
+	if (isPending && articles.length === 0) {
 		return (
 			<div className="text-center mt-5">
 				<img src={Spinner} alt="Loading..." />
@@ -59,28 +60,28 @@ const ArticleList: React.FC = () => {
 		);
 	}
 
-	if (status === 'error') {
+	if (isError) {
 		return <div className="text-danger">Error: {error.message}</div>;
 	}
 
 	return (
 		<div className="container">
-			{debouncedTrackedUuids.map((uuid) => (
+			{deferredTrackedArticleUuids.map((uuid) => (
 				<ArticleSubscription key={uuid} uuid={uuid} />
 			))}
 			<SearchBar fetchQuery={handleApplyFilters} searchType="articles" />
 
 			{searchHeading && <h4>{searchHeading}</h4>}
 			<div className="mb-3 text-muted">
-				Showing {allArticles.length} of {totalCount}
+				Showing {articles.length} of {total}
 			</div>
 
 			<div className="row">
-				{allArticles.length === 0 ? (
+				{articles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
 					<>
-						{allArticles.map((article) => (
+						{articles.map((article) => (
 							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 								<ArticleCard article={article} />
 							</div>
@@ -88,7 +89,6 @@ const ArticleList: React.FC = () => {
 					</>
 				)}
 			</div>
-			{/* TODO: Should be shared UI component */}
 			<div className="row justify-content-center mt-4 mb-5">
 				{isFetchingNextPage ? (
 					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />

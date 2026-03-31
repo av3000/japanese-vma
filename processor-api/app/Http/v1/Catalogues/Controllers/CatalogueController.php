@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Catalogues\Controllers;
 
+use Dedoc\Scramble\Attributes\Response;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
@@ -32,6 +33,10 @@ class CatalogueController extends Controller
         private readonly HashtagServiceInterface $hashtagService,
     ) {}
 
+    /**
+     * @response array{success: true, data: array{items: list<CatalogueResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}
+     */
+    #[Response(type: 'array{success: true, data: array{items: list<CatalogueResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}')]
     public function index(IndexCatalogueRequest $request): JsonResponse
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
@@ -94,6 +99,10 @@ class CatalogueController extends Controller
         ]);
     }
 
+    /**
+     * @response 201 array{success: true, data: array{uuid: string}}
+     */
+    #[Response(201, type: 'array{success: true, data: array{uuid: string}}')]
     public function store(StoreCatalogueRequest $request): JsonResponse
     {
         $createDTO = CatalogueCreateDTO::fromRequest($request->validated());
@@ -114,6 +123,10 @@ class CatalogueController extends Controller
         ]);
     }
 
+    /**
+     * @response array{success: true, data: CatalogueDetailResource}
+     */
+    #[Response(type: 'array{success: true, data: CatalogueDetailResource}')]
     public function show(string $uuid): JsonResponse
     {
         $catalogueUid = EntityId::from($uuid);
@@ -162,6 +175,10 @@ class CatalogueController extends Controller
         );
     }
 
+    /**
+     * @response array{success: true, data: CatalogueResource}
+     */
+    #[Response(type: 'array{success: true, data: CatalogueResource}')]
     public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse
     {
         if (!$request->hasAnyUpdateableFields()) {

@@ -8,7 +8,7 @@ import tsEslint from "typescript-eslint";
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
-    ignores: ["node_modules/", "dist/", "generated/", "**/*.js", "**/*.cjs", "vite.config.ts"],
+    ignores: ["node_modules/", "dist/", "generated/", "src/api/generated/**", "**/*.js", "**/*.cjs", "vite.config.ts"],
   },
   {
     languageOptions: {

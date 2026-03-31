@@ -1,2118 +1,3271 @@
 {
-    "openapi": "3.1.0",
-    "info": {
-        "title": "Laravel",
-        "version": "0.0.1",
-        "description": "API for Japanese learning application with articles, kanjis, and lists"
-    },
-    "servers": [
-        {
-            "url": "http:\/\/localhost:8080\/api\/v1"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Laravel",
+    "version": "0.0.1",
+    "description": "API for Japanese learning application with articles, kanjis, and lists"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1"
+    }
+  ],
+  "paths": {
+    "/articles": {
+      "get": {
+        "operationId": "article.index",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "author_uid",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_dir",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "include_stats_counts",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_kanjis",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
         }
-    ],
-    "paths": {
-        "\/articles": {
-            "get": {
-                "operationId": "article.index",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "author_uid",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "sort_dir",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "include_stats_counts",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_kanjis",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "article.store",
-                "tags": [
-                    "Article"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/StoreArticleRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
+      },
+      "post": {
+        "operationId": "article.store",
+        "tags": [
+          "Article"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreArticleRequest"
+              }
             }
-        },
-        "\/articles\/{uid}": {
-            "get": {
-                "operationId": "article.show",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "uid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "include_kanjis",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_words",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_comments",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_views",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_downloads",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_likes",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            },
-            "put": {
-                "operationId": "article.update",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "uid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/UpdateArticleRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "TODO: returning only Id might be enough for frontend.",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/articles\/{id}\/words": {
-            "get": {
-                "operationId": "article.words",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "`ArticleWordCollection`",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/ArticleWordCollection"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/articles\/{uuid}": {
-            "delete": {
-                "operationId": "article.destroy",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Article deleted successfully"
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Article not found or unauthorized"
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/articles\/{id}\/like": {
-            "post": {
-                "operationId": "article.like",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ]
-            },
-            "delete": {
-                "operationId": "article.unlike",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ]
-            }
-        },
-        "\/articles\/{id}\/toggle-publicity": {
-            "post": {
-                "operationId": "article.togglePublicity",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ]
-            }
-        },
-        "\/user\/articles": {
-            "get": {
-                "operationId": "article.userArticles",
-                "tags": [
-                    "Article"
-                ]
-            }
-        },
-        "\/articles\/{id}\/status": {
-            "post": {
-                "operationId": "article.setStatus",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ]
-            }
-        },
-        "\/articles\/pending": {
-            "get": {
-                "operationId": "article.pending",
-                "tags": [
-                    "Article"
-                ]
-            }
-        },
-        "\/register": {
-            "post": {
-                "operationId": "auth.register",
-                "summary": "POST \/api\/v1\/register\nRegister new user and return access token",
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/RegisterRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/login": {
-            "post": {
-                "operationId": "auth.login",
-                "summary": "POST \/api\/v1\/login",
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/LoginRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/logout": {
-            "post": {
-                "operationId": "auth.logout",
-                "summary": "POST \/api\/v1\/logout",
-                "tags": [
-                    "Auth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/me": {
-            "get": {
-                "operationId": "auth.me",
-                "summary": "GET \/api\/v1\/me",
-                "tags": [
-                    "Auth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/catalogues": {
-            "get": {
-                "operationId": "catalogue.index",
-                "tags": [
-                    "Catalogue"
-                ],
-                "parameters": [
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "owner_uid",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "created_at",
-                                "views"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "sort_dir",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "asc",
-                                "desc"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "public_only",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "custom_only",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_stats_counts",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "include_hashtags",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "catalogue.store",
-                "tags": [
-                    "Catalogue"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/StoreCatalogueRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/catalogues\/{uuid}": {
-            "get": {
-                "operationId": "catalogue.show",
-                "tags": [
-                    "Catalogue"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "operationId": "catalogue.update",
-                "tags": [
-                    "Catalogue"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/UpdateCatalogueRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/articles\/{uuid}\/comments": {
-            "get": {
-                "operationId": "comment.getArticleComments",
-                "tags": [
-                    "Comment"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "include_replies",
-                        "in": "query",
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "created_at",
-                                "updated_at"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "sort_dir",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "asc",
-                                "desc"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "comment.store",
-                "tags": [
-                    "Comment"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/kanjis": {
-            "get": {
-                "operationId": "kanji.index",
-                "tags": [
-                    "Kanji"
-                ],
-                "parameters": [
-                    {
-                        "name": "article_uuid",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 0
-                        }
-                    },
-                    {
-                        "name": "character",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 1
-                        }
-                    },
-                    {
-                        "name": "grade",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "enum": [
-                                "1",
-                                "2",
-                                "3",
-                                "4",
-                                "5",
-                                "6",
-                                "7",
-                                "8",
-                                "9",
-                                "10",
-                                "-"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "jlpt",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "enum": [
-                                "1",
-                                "2",
-                                "3",
-                                "4",
-                                "5",
-                                "-"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "min_stroke_count",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "max_stroke_count",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "radical",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "minLength": 1,
-                            "maxLength": 1
-                        }
-                    },
-                    {
-                        "name": "meanings",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "array",
-                                "null"
-                            ],
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
-                        }
-                    },
-                    {
-                        "name": "onyomi",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "array",
-                                "null"
-                            ],
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
-                        }
-                    },
-                    {
-                        "name": "kunyomi",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "array",
-                                "null"
-                            ],
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/kanjis\/{identifier}": {
-            "get": {
-                "operationId": "kanji.show",
-                "tags": [
-                    "Kanji"
-                ],
-                "parameters": [
-                    {
-                        "name": "identifier",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/like-instance": {
-            "post": {
-                "operationId": "like.likeInstance",
-                "tags": [
-                    "Like"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/LikeInstanceRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#\/components\/responses\/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "\/users\/{uuid}": {
-            "get": {
-                "operationId": "user.show",
-                "summary": "Display user profile",
-                "tags": [
-                    "User"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
-                        "description": "User UUID",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/users": {
-            "get": {
-                "operationId": "v1.users.user.index",
-                "summary": "Get a list of publicly visible users",
-                "tags": [
-                    "User"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "name",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 255
-                        }
-                    },
-                    {
-                        "name": "email",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "format": "email",
-                            "maxLength": 255
-                        }
-                    },
-                    {
-                        "name": "role",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "include_inactive",
-                        "in": "query",
-                        "description": "Assuming role names return strings",
-                        "schema": {
-                            "type": [
-                                "boolean",
-                                "null"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 0
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/admin\/users": {
-            "get": {
-                "operationId": "v1.admin.user.index",
-                "summary": "Get a list of users for administration",
-                "tags": [
-                    "User"
-                ],
-                "parameters": [
-                    {
-                        "name": "uuid",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "name",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 255
-                        }
-                    },
-                    {
-                        "name": "email",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "format": "email",
-                            "maxLength": 255
-                        }
-                    },
-                    {
-                        "name": "role",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "include_inactive",
-                        "in": "query",
-                        "description": "Assuming role names return strings",
-                        "schema": {
-                            "type": [
-                                "boolean",
-                                "null"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 0
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/admin\/roles": {
-            "get": {
-                "operationId": "userRole.getAllRoles",
-                "summary": "Get all available roles in the system",
-                "tags": [
-                    "UserRole"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "userRole.createRole",
-                "summary": "Create a new role in the system",
-                "tags": [
-                    "UserRole"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/CreateRoleRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/admin\/roles\/{name}": {
-            "delete": {
-                "operationId": "userRole.deleteRole",
-                "summary": "Permanently deletes a role",
-                "tags": [
-                    "UserRole"
-                ],
-                "parameters": [
-                    {
-                        "name": "name",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        },
-        "\/admin\/users\/{userUuid}\/roles": {
-            "get": {
-                "operationId": "userRole.getUserRoles",
-                "summary": "Get all roles assigned to a specific user",
-                "tags": [
-                    "UserRole"
-                ],
-                "parameters": [
-                    {
-                        "name": "userUuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            },
-            "post": {
-                "operationId": "userRole.assignUserRole",
-                "summary": "Assign a role to a user",
-                "tags": [
-                    "UserRole"
-                ],
-                "parameters": [
-                    {
-                        "name": "userUuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/AssignRoleRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "userRole.removeUserRole",
-                "summary": "Remove a role from a user",
-                "tags": [
-                    "UserRole"
-                ],
-                "parameters": [
-                    {
-                        "name": "userUuid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "role",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#\/components\/responses\/AuthenticationException"
-                    }
-                }
-            }
-        }
-    },
-    "components": {
-        "schemas": {
-            "ArticleWordCollection": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "words": {
-                        "type": "string"
-                    },
-                    "message": {
-                        "type": "string",
-                        "example": "Article words fetched"
-                    }
-                },
-                "required": [
-                    "success",
-                    "words",
-                    "message"
-                ],
-                "title": "ArticleWordCollection"
-            },
-            "AssignRoleRequest": {
-                "type": "object",
-                "properties": {
-                    "role": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "role"
-                ],
-                "title": "AssignRoleRequest"
-            },
-            "CreateRoleRequest": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "guard_name": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "enum": [
-                            "web",
-                            "api"
-                        ],
-                        "maxLength": 255
-                    }
-                },
-                "required": [
-                    "name"
-                ],
-                "title": "CreateRoleRequest"
-            },
-            "LikeInstanceRequest": {
-                "type": "object",
-                "properties": {
-                    "template_id": {
-                        "type": "integer"
-                    },
-                    "real_object_id": {
-                        "type": "integer"
-                    }
-                },
-                "required": [
-                    "template_id",
-                    "real_object_id"
-                ],
-                "title": "LikeInstanceRequest"
-            },
-            "LoginRequest": {
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string",
-                        "format": "email"
-                    },
-                    "password": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "email",
-                    "password"
-                ],
-                "title": "LoginRequest"
-            },
-            "RegisterRequest": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "maxLength": 255
-                    },
-                    "password": {
-                        "type": "string"
-                    },
-                    "password_confirmation": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "name",
-                    "email",
-                    "password",
-                    "password_confirmation"
-                ],
-                "title": "RegisterRequest"
-            },
-            "StoreArticleRequest": {
-                "type": "object",
-                "properties": {
-                    "title_jp": {
-                        "type": "string",
-                        "minLength": 2,
-                        "maxLength": 255
-                    },
-                    "title_en": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "content_jp": {
-                        "type": "string",
-                        "minLength": 10,
-                        "maxLength": 2000
-                    },
-                    "content_en": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "minLength": 10,
-                        "maxLength": 2000
-                    },
-                    "source_link": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 500
-                    },
-                    "publicity": {
-                        "type": "boolean"
-                    },
-                    "tags": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "type": "string",
-                            "description": "TODO: Also handle tags logic in business layer",
-                            "maxLength": 50
-                        },
-                        "maxItems": 10
-                    }
-                },
-                "required": [
-                    "title_jp",
-                    "title_en",
-                    "content_jp",
-                    "source_link",
-                    "publicity"
-                ],
-                "title": "StoreArticleRequest"
-            },
-            "StoreCatalogueRequest": {
-                "type": "object",
-                "properties": {
-                    "title": {
-                        "type": "string",
-                        "minLength": 2,
-                        "maxLength": 255
-                    },
-                    "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 500
-                    },
-                    "type": {
-                        "type": "integer",
-                        "enum": [
-                            "5",
-                            "6",
-                            "7",
-                            "8",
-                            "9"
-                        ]
-                    },
-                    "publicity": {
-                        "type": [
-                            "boolean",
-                            "null"
-                        ]
-                    },
-                    "tags": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                },
-                "required": [
-                    "title",
-                    "type"
-                ],
-                "title": "StoreCatalogueRequest"
-            },
-            "UpdateArticleRequest": {
-                "type": "object",
-                "properties": {
-                    "title_jp": {
-                        "type": "string",
-                        "minLength": 2,
-                        "maxLength": 255
-                    },
-                    "title_en": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "minLength": 2,
-                        "maxLength": 255
-                    },
-                    "content_jp": {
-                        "type": "string",
-                        "minLength": 10,
-                        "maxLength": 2000
-                    },
-                    "content_en": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "minLength": 10,
-                        "maxLength": 2000
-                    },
-                    "source_link": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 500
-                    },
-                    "publicity": {
-                        "type": "boolean"
-                    },
-                    "hashtags": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "maxLength": 50
-                        },
-                        "maxItems": 10
-                    }
-                },
-                "title": "UpdateArticleRequest"
-            },
-            "UpdateCatalogueRequest": {
-                "type": "object",
-                "properties": {
-                    "title": {
-                        "type": "string",
-                        "minLength": 2,
-                        "maxLength": 255
-                    },
-                    "type": {
-                        "type": "integer",
-                        "enum": [
-                            "5",
-                            "6",
-                            "7",
-                            "8",
-                            "9"
-                        ]
-                    },
-                    "publicity": {
-                        "type": "boolean"
-                    },
-                    "tags": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                },
-                "title": "UpdateCatalogueRequest"
-            }
+          }
         },
         "responses": {
-            "ValidationException": {
-                "description": "Validation error",
-                "content": {
-                    "application\/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Errors overview."
-                                },
-                                "errors": {
-                                    "type": "object",
-                                    "description": "A detailed description of each field that failed validation.",
-                                    "additionalProperties": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "required": [
-                                "message",
-                                "errors"
-                            ]
-                        }
-                    }
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UuidCreatedResponse"
                 }
-            },
-            "AuthorizationException": {
-                "description": "Authorization error",
-                "content": {
-                    "application\/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "AuthenticationException": {
-                "description": "Unauthenticated",
-                "content": {
-                    "application\/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
+              }
             }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
         }
+      }
+    },
+    "/articles/{uid}": {
+      "get": {
+        "operationId": "article.show",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_kanjis",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_words",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_comments",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_views",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_downloads",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_likes",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "article.update",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateArticleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleResourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{id}/words": {
+      "get": {
+        "operationId": "article.words",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`ArticleWordCollection`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ArticleWordCollection"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{uuid}": {
+      "delete": {
+        "operationId": "article.destroy",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessMessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Article not found or unauthorized"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{id}/like": {
+      "post": {
+        "operationId": "article.like",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "article.unlike",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/articles/{id}/toggle-publicity": {
+      "post": {
+        "operationId": "article.togglePublicity",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/user/articles": {
+      "get": {
+        "operationId": "article.userArticles",
+        "tags": [
+          "Article"
+        ]
+      }
+    },
+    "/articles/{id}/status": {
+      "post": {
+        "operationId": "article.setStatus",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/articles/pending": {
+      "get": {
+        "operationId": "article.pending",
+        "tags": [
+          "Article"
+        ]
+      }
+    },
+    "/register": {
+      "post": {
+        "operationId": "auth.register",
+        "summary": "POST /api/v1/register\nRegister new user and return access token",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "operationId": "auth.login",
+        "summary": "POST /api/v1/login",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "operationId": "auth.logout",
+        "summary": "POST /api/v1/logout",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessMessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "auth.me",
+        "summary": "GET /api/v1/me",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogues": {
+      "get": {
+        "operationId": "catalogue.index",
+        "tags": [
+          "Catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "owner_uid",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "views"
+              ]
+            }
+          },
+          {
+            "name": "sort_dir",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "public_only",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "custom_only",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_stats_counts",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "include_hashtags",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "catalogue.store",
+        "tags": [
+          "Catalogue"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreCatalogueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UuidCreatedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogues/{uuid}": {
+      "get": {
+        "operationId": "catalogue.show",
+        "tags": [
+          "Catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "catalogue.update",
+        "tags": [
+          "Catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCatalogueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueResourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/articles/{uuid}/comments": {
+      "get": {
+        "operationId": "comment.getArticleComments",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "include_replies",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "updated_at"
+              ]
+            }
+          },
+          {
+            "name": "sort_dir",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "comment.store",
+        "tags": [
+          "Comment"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanjis": {
+      "get": {
+        "operationId": "kanji.index",
+        "tags": [
+          "Kanji"
+        ],
+        "parameters": [
+          {
+            "name": "article_uuid",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          {
+            "name": "character",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 1
+            }
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "-"
+              ]
+            }
+          },
+          {
+            "name": "jlpt",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "-"
+              ]
+            }
+          },
+          {
+            "name": "min_stroke_count",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "max_stroke_count",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "radical",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 1
+            }
+          },
+          {
+            "name": "meanings",
+            "in": "query",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "name": "onyomi",
+            "in": "query",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "name": "kunyomi",
+            "in": "query",
+            "schema": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanjis/{identifier}": {
+      "get": {
+        "operationId": "kanji.show",
+        "tags": [
+          "Kanji"
+        ],
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/like-instance": {
+      "post": {
+        "operationId": "like.likeInstance",
+        "tags": [
+          "Like"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LikeInstanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{uuid}": {
+      "get": {
+        "operationId": "user.show",
+        "summary": "Display user profile",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "User UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "v1.users.user.index",
+        "summary": "Get a list of publicly visible users",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "email",
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "description": "Assuming role names return strings",
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "operationId": "v1.admin.user.index",
+        "summary": "Get a list of users for administration",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "email",
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "description": "Assuming role names return strings",
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/roles": {
+      "get": {
+        "operationId": "userRole.getAllRoles",
+        "summary": "Get all available roles in the system",
+        "tags": [
+          "UserRole"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "userRole.createRole",
+        "summary": "Create a new role in the system",
+        "tags": [
+          "UserRole"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/roles/{name}": {
+      "delete": {
+        "operationId": "userRole.deleteRole",
+        "summary": "Permanently deletes a role",
+        "tags": [
+          "UserRole"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users/{userUuid}/roles": {
+      "get": {
+        "operationId": "userRole.getUserRoles",
+        "summary": "Get all roles assigned to a specific user",
+        "tags": [
+          "UserRole"
+        ],
+        "parameters": [
+          {
+            "name": "userUuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "userRole.assignUserRole",
+        "summary": "Assign a role to a user",
+        "tags": [
+          "UserRole"
+        ],
+        "parameters": [
+          {
+            "name": "userUuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "userRole.removeUserRole",
+        "summary": "Remove a role from a user",
+        "tags": [
+          "UserRole"
+        ],
+        "parameters": [
+          {
+            "name": "userUuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationExceptionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authorization error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationExceptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationExceptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
+  },
+  "components": {
+    "schemas": {
+      "ArticleWordCollection": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Article words fetched"
+          }
+        },
+        "required": [
+          "success",
+          "words",
+          "message"
+        ],
+        "title": "ArticleWordCollection"
+      },
+      "AssignRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "AssignRoleRequest"
+      },
+      "CreateRoleRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "guard_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "web",
+              "api"
+            ],
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateRoleRequest"
+      },
+      "LikeInstanceRequest": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "integer"
+          },
+          "real_object_id": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "template_id",
+          "real_object_id"
+        ],
+        "title": "LikeInstanceRequest"
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string"
+          },
+          "password_confirmation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "title": "RegisterRequest"
+      },
+      "StoreArticleRequest": {
+        "type": "object",
+        "properties": {
+          "title_jp": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "title_en": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "content_jp": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "content_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "source_link": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 500
+          },
+          "publicity": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "description": "TODO: Also handle tags logic in business layer",
+              "maxLength": 50
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "title_jp",
+          "title_en",
+          "content_jp",
+          "source_link",
+          "publicity"
+        ],
+        "title": "StoreArticleRequest"
+      },
+      "StoreCatalogueRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "type": {
+            "type": "integer",
+            "enum": [
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "publicity": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "type"
+        ],
+        "title": "StoreCatalogueRequest"
+      },
+      "UpdateArticleRequest": {
+        "type": "object",
+        "properties": {
+          "title_jp": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "title_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "content_jp": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "content_en": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "source_link": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 500
+          },
+          "publicity": {
+            "type": "boolean"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "maxItems": 10
+          }
+        },
+        "title": "UpdateArticleRequest"
+      },
+      "UpdateCatalogueRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "type": {
+            "type": "integer",
+            "enum": [
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "publicity": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "UpdateCatalogueRequest"
+      },
+      "AuthenticationExceptionResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "AuthorizationExceptionResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ValidationExceptionResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "message",
+          "errors"
+        ]
+      },
+      "RoleResource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "guard_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "guard_name"
+        ]
+      },
+      "AuthUserResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoleResource"
+            }
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "uuid",
+          "name",
+          "email",
+          "roles",
+          "is_admin",
+          "created_at"
+        ]
+      },
+      "AuthUserResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AuthUserResource"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SuccessMessageResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "UuidCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "uuid": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "uuid"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ArticleAuthorResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ArticleHashtagResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content"
+        ]
+      },
+      "ArticleJlptLevelsResource": {
+        "type": "object",
+        "properties": {
+          "n1": {
+            "type": "integer"
+          },
+          "n2": {
+            "type": "integer"
+          },
+          "n3": {
+            "type": "integer"
+          },
+          "n4": {
+            "type": "integer"
+          },
+          "n5": {
+            "type": "integer"
+          },
+          "uncommon": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "n1",
+          "n2",
+          "n3",
+          "n4",
+          "n5",
+          "uncommon"
+        ]
+      },
+      "ArticleEngagementStatsResource": {
+        "type": "object",
+        "properties": {
+          "likes_count": {
+            "type": "integer"
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "downloads_count": {
+            "type": "integer"
+          },
+          "comments_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "ArticleEngagementSummaryResource": {
+        "type": "object",
+        "properties": {
+          "is_liked_by_viewer": {
+            "type": "boolean"
+          },
+          "likes_count": {
+            "type": "integer"
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "downloads_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "ArticleProcessingStatusResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ArticleResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entity_type_uid": {
+            "type": "string"
+          },
+          "title_jp": {
+            "type": "string"
+          },
+          "title_en": {
+            "type": "string"
+          },
+          "content_preview_jp": {
+            "type": "string"
+          },
+          "content_preview_en": {
+            "type": "string"
+          },
+          "source_link": {
+            "type": "string"
+          },
+          "publicity": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "jlpt_levels": {
+            "$ref": "#/components/schemas/ArticleJlptLevelsResource"
+          },
+          "author": {
+            "$ref": "#/components/schemas/ArticleAuthorResource"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleHashtagResource"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "engagement": {
+            "type": "object",
+            "properties": {
+              "stats": {
+                "$ref": "#/components/schemas/ArticleEngagementStatsResource"
+              }
+            }
+          },
+          "kanjis": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "processing_status": {
+            "$ref": "#/components/schemas/ArticleProcessingStatusResource"
+          }
+        },
+        "required": [
+          "id",
+          "uuid",
+          "entity_type_uid",
+          "title_jp",
+          "source_link",
+          "publicity",
+          "status",
+          "jlpt_levels",
+          "author",
+          "hashtags",
+          "created_at",
+          "updated_at",
+          "engagement",
+          "kanjis"
+        ]
+      },
+      "ArticleDetailResource": {
+        "type": "object",
+        "properties": {
+          "article": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "uid": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "entity_type_uid": {
+                "type": "string"
+              },
+              "title_jp": {
+                "type": "string"
+              },
+              "title_en": {
+                "type": "string"
+              },
+              "content_jp": {
+                "type": "string"
+              },
+              "content_en": {
+                "type": "string"
+              },
+              "source_link": {
+                "type": "string"
+              },
+              "publicity": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "integer"
+              },
+              "jlpt_levels": {
+                "$ref": "#/components/schemas/ArticleJlptLevelsResource"
+              },
+              "author": {
+                "$ref": "#/components/schemas/ArticleAuthorResource"
+              },
+              "hashtags": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArticleHashtagResource"
+                }
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "engagement": {
+                "$ref": "#/components/schemas/ArticleEngagementSummaryResource"
+              },
+              "kanjis": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "words": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "processing_status": {
+                "$ref": "#/components/schemas/ArticleProcessingStatusResource"
+              }
+            },
+            "required": [
+              "id",
+              "uid",
+              "entity_type_uid",
+              "title_jp",
+              "content_jp",
+              "source_link",
+              "publicity",
+              "status",
+              "jlpt_levels",
+              "author",
+              "hashtags",
+              "created_at",
+              "updated_at",
+              "kanjis",
+              "words"
+            ]
+          }
+        },
+        "required": [
+          "article"
+        ]
+      },
+      "ArticleListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArticleResource"
+                }
+              },
+              "pagination": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  },
+                  "per_page": {
+                    "type": "integer"
+                  },
+                  "total": {
+                    "type": "integer"
+                  },
+                  "last_page": {
+                    "type": "integer"
+                  },
+                  "has_more": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "page",
+                  "per_page",
+                  "total",
+                  "last_page",
+                  "has_more"
+                ]
+              }
+            },
+            "required": [
+              "items",
+              "pagination"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ArticleDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ArticleDetailResource"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ArticleResourceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ArticleResource"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CatalogueOwnerResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "uuid",
+          "name"
+        ]
+      },
+      "CatalogueOwnerSummaryResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CatalogueEngagementResource": {
+        "type": "object",
+        "properties": {
+          "likes_count": {
+            "type": "integer"
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "downloads_count": {
+            "type": "integer"
+          },
+          "comments_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "CatalogueResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "integer"
+          },
+          "type_label": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "publicity": {
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/CatalogueOwnerResource"
+          },
+          "items_count": {
+            "type": "integer"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "engagement": {
+            "$ref": "#/components/schemas/CatalogueEngagementResource"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "uuid",
+          "type",
+          "type_label",
+          "title",
+          "publicity",
+          "owner",
+          "items_count",
+          "hashtags",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CatalogueDetailResource": {
+        "type": "object",
+        "properties": {
+          "catalogue": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "uuid": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": {
+                "type": "integer"
+              },
+              "type_label": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "publicity": {
+                "type": "string"
+              },
+              "owner": {
+                "$ref": "#/components/schemas/CatalogueOwnerSummaryResource"
+              },
+              "items_count": {
+                "type": "integer"
+              },
+              "hashtags": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "engagement": {
+                "$ref": "#/components/schemas/CatalogueEngagementResource"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "uuid",
+              "type",
+              "type_label",
+              "title",
+              "publicity",
+              "owner",
+              "items_count",
+              "hashtags",
+              "items",
+              "created_at",
+              "updated_at"
+            ]
+          }
+        },
+        "required": [
+          "catalogue"
+        ]
+      },
+      "CatalogueListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CatalogueResource"
+                }
+              },
+              "pagination": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  },
+                  "per_page": {
+                    "type": "integer"
+                  },
+                  "total": {
+                    "type": "integer"
+                  },
+                  "last_page": {
+                    "type": "integer"
+                  },
+                  "has_more": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "page",
+                  "per_page",
+                  "total",
+                  "last_page",
+                  "has_more"
+                ]
+              }
+            },
+            "required": [
+              "items",
+              "pagination"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CatalogueDetailResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/CatalogueDetailResource"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CatalogueResourceResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/CatalogueResource"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      }
+    },
+    "responses": {}
+  }
 }

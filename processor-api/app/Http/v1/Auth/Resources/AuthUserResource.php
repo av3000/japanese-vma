@@ -8,6 +8,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use App\Domain\Users\Models\User as DomainUser;
 use App\Http\v1\Admin\Resources\RoleResource;
 
+/**
+ * @property DomainUser $resource
+ */
 class AuthUserResource extends JsonResource
 {
     private ?string $accessToken = null;
@@ -15,6 +18,7 @@ class AuthUserResource extends JsonResource
     public function withToken(string $token): self
     {
         $this->accessToken = $token;
+
         return $this;
     }
 
