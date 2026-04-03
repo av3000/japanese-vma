@@ -20,6 +20,14 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ArticleListResource extends JsonResource
 {
+    public static $wrap = null;
+
+    /**
+     * @return array{
+     *     items: array<int, ArticleResource>,
+     *     pagination: PaginationResource
+     * }
+     */
     public function toArray(Request $request): array
     {
         return [

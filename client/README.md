@@ -83,6 +83,13 @@ npm run storybook
 npm run build-storybook
 ```
 
+## Generate API Client
+
+```bash
+npm run orval:article
+docker compose run --rm react-app
+```
+
 ## What To Look At First
 
 If you are new to the frontend, these files are the best starting points:

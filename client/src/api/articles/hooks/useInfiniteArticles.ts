@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { articleIndex } from '@/api/generated/article';
+import { articleIndex } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
@@ -21,12 +21,12 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 			}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
-			return lastPage.data.pagination.has_more ? lastPage.data.pagination.page + 1 : undefined;
+			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 		},
 		enabled,
 	});
 
-	const articles = query.data?.pages.flatMap((page) => page.data.items) ?? [];
+	const articles = query.data?.pages.flatMap((page) => page.items) ?? [];
 	const total = query.data?.pages[0]?.data.pagination.total ?? 0;
 
 	return {

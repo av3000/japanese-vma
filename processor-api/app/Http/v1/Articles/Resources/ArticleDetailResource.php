@@ -16,6 +16,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ArticleDetailResource extends JsonResource
 {
+    public static $wrap = null;
+
     private ?EngagementSummary $engagement;
 
     public function __construct(
@@ -36,13 +38,46 @@ class ArticleDetailResource extends JsonResource
     /**
      * Transform the article domain model into an API representation.
      *
-     * @return array
+     * @return array{
+     *     article: array{
+     *         id: int,
+     *         uid: string,
+     *         entity_type_uid: string,
+     *         title_jp: string,
+     *         title_en: ?string,
+     *         content_jp: string,
+     *         content_en: ?string,
+     *         source_link: string,
+     *         publicity: int,
+     *         status: int,
+     *         jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
+     *         author: ArticleAuthorResource,
+     *         hashtags: array<int, HashtagResource>,
+     *         created_at: string,
+     *         updated_at: string,
+     *         engagement: ArticleDetailEngagementResource|null,
+     *         kanjis: array<int, KanjiResource>,
+     *         words: array<int, mixed>,
+     *         processing_status: ProcessingStatusResource|null
+     *     }
+     * }
      */
     public function toArray(Request $request): array
     {
+        $publicity = (int) $this->getPublicity()->value;
+        $status = (int) $this->getStatus()->value;
+        $jlptLevels = [
+            'n1' => (int) $this->getJlptLevels()->n1,
+            'n2' => (int) $this->getJlptLevels()->n2,
+            'n3' => (int) $this->getJlptLevels()->n3,
+            'n4' => (int) $this->getJlptLevels()->n4,
+            'n5' => (int) $this->getJlptLevels()->n5,
+            'uncommon' => (int) $this->getJlptLevels()->uncommon,
+        ];
+
         return [
             'article' => [
-                'id' => $this->getIdValue(),
+                'id' => (int) $this->getIdValue(),
                 'uid' => (string) $this->getUid(),
                 'entity_type_uid' => (string) $this->getEntityTypeUid(),
                 'title_jp' => $this->getTitleJp()->value,
@@ -50,9 +85,9 @@ class ArticleDetailResource extends JsonResource
                 'content_jp' => $this->getContentJp()->value,
                 'content_en' => $this->getContentEn()?->value,
                 'source_link' => $this->getSourceUrl()->value,
-                'publicity' => $this->getPublicity()->value,
-                'status' => $this->getStatus()->value,
-                'jlpt_levels' => $this->getJlptLevels()->toArray(),
+                'publicity' => $publicity,
+                'status' => $status,
+                'jlpt_levels' => $jlptLevels,
                 'author' => new ArticleAuthorResource([
                     'id' => $this->getAuthorId()->value(),
                     'name' => $this->getAuthorName()->value(),
@@ -63,7 +98,14 @@ class ArticleDetailResource extends JsonResource
                 'engagement' => $this->engagement ? new ArticleDetailEngagementResource($this->engagement) : null,
                 'kanjis' => KanjiResource::collection($this->kanjis),
                 'words' => $this->words,
-                'processing_status' => $this->lastOperation ? new ProcessingStatusResource($this->lastOperation) : null,
+                'processing_status' => $this->lastOperation ? new ProcessingStatusResource([
+                    'id' => $this->lastOperation->id,
+                    'type' => $this->lastOperation->task_type,
+                    'status' => $this->lastOperation->status->value,
+                    'metadata' => $this->lastOperation->metadata,
+                    'created_at' => $this->lastOperation->created_at?->toIso8601String(),
+                    'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
+                ]) : null,
             ],
         ];
     }
