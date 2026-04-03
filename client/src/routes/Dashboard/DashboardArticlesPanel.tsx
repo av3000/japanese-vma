@@ -41,6 +41,12 @@ interface PendingArticlesResponse {
 	articlesPending: PendingArticle[];
 }
 
+const toDisplayCount = (value: number | string | undefined) => {
+	const parsedValue = typeof value === 'number' ? value : Number(value);
+
+	return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
 const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	dashboardView,
 	isAuthenticated,
@@ -190,9 +196,9 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 											created_at={article.created_at}
 											title_jp={article.title_jp}
 											status={article.status}
-											commentsTotal={article.engagement?.stats?.comments_count ?? 0}
-											likesTotal={article.engagement?.stats?.likes_count ?? 0}
-											viewsTotal={article.engagement?.stats?.views_count ?? 0}
+											commentsTotal={toDisplayCount(article.engagement?.stats?.comments_count)}
+											likesTotal={toDisplayCount(article.engagement?.stats?.likes_count)}
+											viewsTotal={toDisplayCount(article.engagement?.stats?.views_count)}
 											hashtags={article.hashtags}
 										/>
 									))}
