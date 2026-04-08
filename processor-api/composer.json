@@ -15,7 +15,7 @@
         "guzzlehttp/guzzle": "^7.8",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.41",
-        "laravel/passport": "^12.0",
+        "laravel/passport": "^13.7",
         "laravel/reverb": "^1.6",
         "laravel/telescope": "^5.16",
         "laravel/tinker": "^2.9",
