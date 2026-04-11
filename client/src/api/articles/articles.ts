@@ -128,18 +128,18 @@ export interface UpdateArticlePayload {
 }
 
 // TODO: explore option to use Orval generated data contracts
-export const fetchArticles = async (filters: FetchArticlesFilters = {}, pageParam = 1) => {
-	const params = { ...filters, page: pageParam };
-	const url = `/v1/articles`;
+// export const fetchArticles = async (filters: FetchArticlesFilters = {}, pageParam = 1) => {
+// 	const params = { ...filters, page: pageParam };
+// 	const url = `/v1/articles`;
 
-	try {
-		const response = await axios.get(url, { params });
-		return response.data.data;
-	} catch (error) {
-		console.error('Axios failed:', error);
-		throw error;
-	}
-};
+// 	try {
+// 		const response = await axios.get(url, { params });
+// 		return response.data.data;
+// 	} catch (error) {
+// 		console.error('Axios failed:', error);
+// 		throw error;
+// 	}
+// };
 
 export const fetchArticle = async (uuid: string): Promise<ArticleDetails> => {
 	const response = await axios.get(`v1/articles/${uuid}`);

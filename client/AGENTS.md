@@ -3,6 +3,7 @@
 This file defines **frontend-specific** guidance for changes under `client/`.
 
 ## 1) Frontend Architecture Direction
+
 - **App style:** Route-driven React app with shared components and feature modules.
 - **Data fetching/server state:**
   - Prefer React Query patterns for server state.
@@ -15,6 +16,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - Keep TypeScript types aligned with or inferred from Zod schemas.
 
 ## 2) Frontend Implementation Conventions
+
 - **Routing/UI composition:**
   - Keep feature routes aligned with existing route patterns.
   - Reuse existing shared components before introducing one-off primitives.
@@ -22,10 +24,26 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - Use centralized axios/service conventions already present.
   - Keep auth token behavior centralized (avoid duplicating auth mechanics).
 - **Styling:**
+
   - Follow existing styling approach in touched area.
   - Avoid introducing parallel style systems for isolated changes.
 
+  ## Generated API Contract Drift
+
+  When frontend errors involve `client/src/api/generated/**`, Orval output, or unexpected generated model shapes, treat the issue as a backend/frontend contract problem first, not a client typing problem.
+
+  Before adding frontend coercion, adapters, or workarounds:
+
+  - Check the generated TypeScript model.
+  - Check the OpenAPI schema at `/docs/api.json`.
+  - Check the backend v1 Resource / response annotation that produces the schema.
+  - If generated types are wrong, fix the backend Scramble/OpenAPI source and add or update schema tests.
+  - Regenerate Orval types after the schema is correct.
+  - Do not hand-edit generated files.
+  - Only add client-side normalization when the runtime API intentionally supports multiple wire shapes.
+
 ## 3) Quality & Validation Expectations
+
 - **For frontend code changes:**
   - Run lint, typecheck, and relevant tests for touched surface area.
 - **For visible UI changes:**
@@ -34,6 +52,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - Report limitation clearly and provide best-effort local verification.
 
 ## 4) Refactor & Migration Guardrails
+
 - **Refactors should be incremental:**
   - Avoid large rewrites unless explicitly requested.
   - Keep behavior stable unless a behavior change is requested.
@@ -43,6 +62,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - Keep concerns separated (presentation vs state vs data access).
 
 ## 5) Preferred Output Characteristics
+
 - **Explain tradeoffs:** note why chosen pattern fits existing codebase.
 - **Be explicit on risk:** list user-visible and integration risks.
 - **Be test-oriented:** tie implementation claims to executed checks.

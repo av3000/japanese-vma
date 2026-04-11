@@ -84,6 +84,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
 
 ## 7) Laravel AI Guidance
+
 - Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
 - For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
 - Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.

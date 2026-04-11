@@ -18,7 +18,7 @@ describe('customInstance', () => {
 
 		const result = await customInstance<{ ok: boolean }>(
 			{
-				url: '/v1/articles',
+				url: '/articles',
 				method: 'get',
 				headers: {
 					Accept: 'application/json',
@@ -35,7 +35,8 @@ describe('customInstance', () => {
 		);
 
 		expect(axiosInstance).toHaveBeenCalledWith({
-			url: '/v1/articles',
+			baseURL: 'http://localhost:8080/api/v1/',
+			url: '/articles',
 			method: 'get',
 			params: {
 				page: 2,

@@ -19,11 +19,11 @@ class PaginationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'page' => $this->resource['page'],
-            'per_page' => $this->resource['per_page'],
-            'total' => $this->resource['total'],
-            'last_page' => $this->resource['last_page'],
-            'has_more' => $this->resource['has_more'],
+            'page' => (int) $this->resource['page'],
+            'per_page' => (int) $this->resource['per_page'],
+            'total' => (int) $this->resource['total'],
+            'last_page' => (int) $this->resource['last_page'],
+            'has_more' => (bool) $this->resource['has_more'],
         ];
     }
 }

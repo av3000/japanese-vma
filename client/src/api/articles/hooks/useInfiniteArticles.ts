@@ -13,45 +13,10 @@ type UseInfiniteArticlesOptions = {
 
 export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => ['articles', filters] as const;
 
-const toPaginationNumber = (value: number | string | undefined) => {
-	const parsedValue = typeof value === 'number' ? value : Number(value);
+export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
+	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
-	return Number.isFinite(parsedValue) ? parsedValue : 0;
-};
-
-const toPaginationBoolean = (value: boolean | string | undefined) => {
-	if (typeof value === 'boolean') {
-		return value;
-	}
-
-	if (typeof value !== 'string') {
-		return false;
-	}
-
-	const normalizedValue = value.trim().toLowerCase();
-
-	if (normalizedValue === 'true') {
-		return true;
-	}
-
-	if (normalizedValue === 'false' || normalizedValue.length === 0) {
-		return false;
-	}
-
-	return toPaginationNumber(normalizedValue) > 0;
-};
-
-export const getNextArticlesPageParam = (lastPage: ArticleListResource) => {
-	if (!toPaginationBoolean(lastPage.pagination.has_more)) {
-		return undefined;
-	}
-
-	return toPaginationNumber(lastPage.pagination.page) + 1;
-};
-
-export const getArticlesTotal = (pages: ArticleListResource[] | undefined) => {
-	return toPaginationNumber(pages?.[0]?.pagination.total);
-};
+export const getArticlesTotal = (pages: ArticleListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfiniteArticlesOptions = {}) => {
 	const query = useInfiniteQuery<

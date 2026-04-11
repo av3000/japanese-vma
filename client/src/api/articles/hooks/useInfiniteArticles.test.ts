@@ -4,17 +4,17 @@ import type { ArticleListResource } from '@/api/generated/model/articleListResou
 const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResource => ({
 	items: [],
 	pagination: {
-		page: '2',
-		per_page: '12',
-		total: '42',
-		last_page: '4',
-		has_more: '1',
+		page: 2,
+		per_page: 12,
+		total: 42,
+		last_page: 4,
+		has_more: true,
 	},
 	...overrides,
 });
 
 describe('useInfiniteArticles helpers', () => {
-	it('derives the next numeric page from string pagination metadata', async () => {
+	it('derives the next numeric page from typed pagination metadata', async () => {
 		const module = await import('./useInfiniteArticles');
 
 		expect(module.getNextArticlesPageParam(createPage())).toBe(3);
@@ -22,11 +22,11 @@ describe('useInfiniteArticles helpers', () => {
 			module.getNextArticlesPageParam(
 				createPage({
 					pagination: {
-						page: '4',
-						per_page: '12',
-						total: '42',
-						last_page: '4',
-						has_more: '0',
+						page: 4,
+						per_page: 12,
+						total: 42,
+						last_page: 4,
+						has_more: false,
 					},
 				}),
 			),
