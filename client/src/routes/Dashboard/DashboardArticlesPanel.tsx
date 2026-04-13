@@ -1,8 +1,8 @@
 import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
-import type { Hashtag } from '@/api/articles/articles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import type { ArticleHashtagResource } from '@/api/generated/model/articleHashtagResource';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
@@ -21,6 +21,8 @@ type DashboardArticleFilters = {
 	search?: string;
 };
 
+type DashboardArticleHashtag = Pick<ArticleHashtagResource, 'id' | 'content'>;
+
 interface DashboardArticlesPanelProps {
 	dashboardView: DashboardType;
 	isAuthenticated: boolean;
@@ -32,7 +34,7 @@ interface PendingArticle {
 	id: number;
 	uuid?: string;
 	title_jp: string;
-	hashtags?: Hashtag[];
+	hashtags?: DashboardArticleHashtag[];
 	created_at: string;
 	statusTitle?: string;
 }
@@ -111,9 +113,9 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 							</Button>
 						</div>
 						<div className="col-lg-12 col-md-12 mx-auto">
-							{shouldFetchPendingArticles && pendingArticlesQuery.status === 'pending' ? (
+							{shouldFetchPendingArticles && pendingArticlesQuery.isPending ? (
 								<LoadingState altText="Loading pending articles..." />
-							) : shouldFetchPendingArticles && pendingArticlesQuery.status === 'error' ? (
+							) : shouldFetchPendingArticles && pendingArticlesQuery.isError ? (
 								<div className="alert alert-danger">{pendingArticlesErrorMessage}</div>
 							) : pendingArticles.length ? (
 								pendingArticles.map((article) => (

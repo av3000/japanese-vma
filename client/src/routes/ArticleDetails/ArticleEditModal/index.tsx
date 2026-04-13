@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateArticle, UpdateArticlePayload } from '@/api/articles/articles';
 import { MappedArticle } from '@/api/articles/details';
+import { articleUpdate } from '@/api/generated/article/article';
+import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
 	ArticleForm,
 	type ArticleFormSubmitMeta,
@@ -23,8 +24,8 @@ const normalizeOptional = (value: string) => {
 
 type DirtyKey = ArticleFormSubmitMeta['dirtyKeys'][number];
 
-const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): UpdateArticlePayload => {
-	return dirtyKeys.reduce<UpdateArticlePayload>((payload, dirtyKey) => {
+const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): UpdateArticleRequest => {
+	return dirtyKeys.reduce<UpdateArticleRequest>((payload, dirtyKey) => {
 		if (dirtyKey === 'tags') payload.hashtags = values.tags;
 		else if (dirtyKey === 'title_en') payload.title_en = normalizeOptional(values.title_en);
 		else if (dirtyKey === 'content_en') payload.content_en = normalizeOptional(values.content_en);
@@ -53,7 +54,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 	);
 
 	const mutation = useMutation({
-		mutationFn: (payload: UpdateArticlePayload) => updateArticle(article.uuid, payload),
+		mutationFn: (payload: UpdateArticleRequest) => articleUpdate(article.uuid, payload),
 		onSuccess: () => {
 			setStatus(null);
 			setServerErrors(null);

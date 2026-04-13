@@ -23,7 +23,6 @@ const mapSearchFiltersToArticleParams = (filters: Record<string, unknown>) => ({
 	sort_dir: 'desc',
 	per_page: DEFAULT_PER_PAGE,
 	include_stats_counts: true,
-	include_hashtags: true,
 	include_kanjis: true,
 });
 

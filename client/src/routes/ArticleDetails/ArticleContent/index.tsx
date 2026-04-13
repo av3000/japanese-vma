@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { deleteArticle, fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
+import { fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { articleDestroy } from '@/api/generated/article/article';
 import { LastOperationStatus } from '@/api/last-operations/last-operations';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -65,7 +66,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	// TODO: Should only call queries propagating up to smart component
 	const statusMutation = useMutation({
-		mutationFn: (status: number) => setArticleStatus(article.uuid, status),
+		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
 		onSuccess: (res) => {
 			queryClient.setQueryData(['article', article.uuid], (old: any) => ({
 				...old,
@@ -76,7 +77,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	});
 
 	const deleteMutation = useMutation({
-		mutationFn: () => deleteArticle(article.id),
+		mutationFn: () => articleDestroy(article.uuid),
 		onSuccess: () => navigate('/articles'),
 	});
 

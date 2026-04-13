@@ -1,27 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '@/shared/constants';
+import { articleShow } from '@/api/generated/article/article';
+import type { ArticleDetailResourceArticle } from '@/api/generated/model/articleDetailResourceArticle';
+import type { LastOperationEvent, LastOperationStatus } from '@/api/last-operations/last-operations';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import { LikeResponse, toggleCommentLike } from '../likes/likes';
-import { fetchArticle, ArticleDetails } from './articles';
 
-export interface MappedArticle extends ArticleDetails {
+export interface MappedArticle extends Omit<ArticleDetailResourceArticle, 'processing_status'> {
 	displayName: string;
 	uuid: string;
 	formattedDate: string;
+	processing_status: LastOperationEvent | null;
 }
+
+const mapProcessingStatus = (
+	processingStatus: ArticleDetailResourceArticle['processing_status'],
+): LastOperationEvent | null => {
+	if (!processingStatus?.status) return null;
+
+	return {
+		id: processingStatus.id ?? 0,
+		type: processingStatus.type ?? '',
+		status: processingStatus.status as LastOperationStatus,
+		metadata: processingStatus.metadata ?? {},
+		created_at: processingStatus.created_at,
+		updated_at: processingStatus.updated_at,
+	};
+};
+
+export const mapArticleDetail = (data: ArticleDetailResourceArticle): MappedArticle => ({
+	...data,
+	uuid: data.uid,
+	displayName: data.author?.name || 'Unknown Author',
+	formattedDate: new Date(data.created_at).toLocaleDateString(),
+	processing_status: mapProcessingStatus(data.processing_status),
+});
 
 export const useArticleQuery = (uuid: string | undefined) => {
 	return useQuery({
 		queryKey: ['article', uuid],
-		queryFn: () => fetchArticle(uuid as string),
+		queryFn: async () => {
+			const detail = await articleShow(uuid as string);
+			return detail.data.article;
+		},
 		enabled: !!uuid,
 		retry: false,
-		select: (data): MappedArticle => ({
-			...data,
-			uuid: data.uid,
-			displayName: data.author?.name || 'Unknown Author',
-			formattedDate: new Date(data.created_at).toLocaleDateString(),
-		}),
+		select: mapArticleDetail,
 	});
 };
 

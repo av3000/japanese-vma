@@ -1,10 +1,12 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { Hashtag } from '@/api/articles/articles';
+import type { ArticleHashtagResource } from '@/api/generated/model/articleHashtagResource';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '../../ui/article-status';
+
+type DashboardArticleHashtag = Pick<ArticleHashtagResource, 'id' | 'content'>;
 
 interface DashboardArticleItemProps {
 	uuid: string;
@@ -14,7 +16,7 @@ interface DashboardArticleItemProps {
 	commentsTotal: number;
 	likesTotal: number;
 	viewsTotal: number;
-	hashtags?: Hashtag[];
+	hashtags?: DashboardArticleHashtag[];
 }
 
 const DashboardArticleItem: React.FC<DashboardArticleItemProps> = ({

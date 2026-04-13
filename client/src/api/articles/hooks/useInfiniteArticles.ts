@@ -2,7 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { articleIndex } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
-import type { ArticleListResource } from '@/api/generated/model/articleListResource';
+import type { ArticleListResponseData } from '@/api/generated/model/articleListResponseData';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -13,25 +13,27 @@ type UseInfiniteArticlesOptions = {
 
 export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => ['articles', filters] as const;
 
-export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
+export const getNextArticlesPageParam = (lastPage: ArticleListResponseData) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
-export const getArticlesTotal = (pages: ArticleListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
+export const getArticlesTotal = (pages: ArticleListResponseData[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfiniteArticlesOptions = {}) => {
 	const query = useInfiniteQuery<
-		ArticleListResource,
+		ArticleListResponseData,
 		Error,
-		InfiniteData<ArticleListResource>,
+		InfiniteData<ArticleListResponseData>,
 		ReturnType<typeof getInfiniteArticlesQueryKey>,
 		number
 	>({
 		queryKey: getInfiniteArticlesQueryKey(filters),
-		queryFn: ({ pageParam }) =>
-			articleIndex({
+		queryFn: async ({ pageParam }) => {
+			const response = await articleIndex({
 				...filters,
 				page: pageParam,
-			}),
+			});
+			return response.data;
+		},
 		initialPageParam: 1,
 		getNextPageParam: getNextArticlesPageParam,
 		enabled,
