@@ -1,6 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
-import { LastOperationEvent, LastOperationStatus } from '@/api/last-operations/last-operations';
+import {
+	LastOperationStatus,
+	type LastOperationStatus as LastOperationStatusType,
+} from '@/api/generated/model/lastOperationStatus';
+import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import {
 	Popover,
@@ -13,7 +17,7 @@ import {
 import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
 import styles from './ProcessingStatusAlert.module.scss';
 
-export const STATUS_CONFIG: Record<LastOperationStatus, { message: string }> = {
+export const STATUS_CONFIG: Record<LastOperationStatusType, { message: string }> = {
 	pending: {
 		message: 'Instance queued for processing. This page will update automatically.',
 	},
@@ -29,7 +33,7 @@ export const STATUS_CONFIG: Record<LastOperationStatus, { message: string }> = {
 };
 
 interface ProcessingStatusAlertProps {
-	processing_status?: LastOperationEvent | null;
+	processing_status?: ProcessingStatusResource | null;
 	className?: string;
 }
 
@@ -68,7 +72,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	const hasValidTiming = createdAtMs !== null && updatedAtMs !== null;
 
-	const isTerminal = status === LastOperationStatus.Completed || status === LastOperationStatus.Failed;
+	const isTerminal = status === LastOperationStatus.completed || status === LastOperationStatus.failed;
 
 	let durationText: string | null = null;
 	if (isTerminal && createdAtMs !== null && updatedAtMs !== null) {
@@ -77,9 +81,9 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	// TODO: not sure about this class mapping if it is the clean way.
 	const statusVariant: StatusVariant =
-		status === LastOperationStatus.Completed
+		status === LastOperationStatus.completed
 			? 'success'
-			: status === LastOperationStatus.Failed
+			: status === LastOperationStatus.failed
 				? 'destructive'
 				: 'pending';
 
@@ -95,7 +99,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 			<div className={styles.content}>
 				<div className="small">{config.message}</div>
 				<div className={styles.status}>
-					{(status === LastOperationStatus.Pending || status === LastOperationStatus.Processing) && (
+					{(status === LastOperationStatus.pending || status === LastOperationStatus.processing) && (
 						<span className="spinner-border spinner-border-sm mr-3" />
 					)}
 					<Popover>

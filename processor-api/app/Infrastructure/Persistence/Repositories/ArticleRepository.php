@@ -34,6 +34,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
+        $entityArticle->load('user');
 
         return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }

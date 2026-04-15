@@ -1,12 +1,13 @@
 import React, { useDeferredValue, useMemo, useState } from 'react';
-import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
+import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
 
+// TODO: reuse const from shared consts
 const DEFAULT_PER_PAGE = 12;
 
 type ArticleSearchFilters = {
@@ -39,7 +40,7 @@ const ArticleList: React.FC = () => {
 			.filter(
 				(article) =>
 					article.processing_status?.status !== undefined &&
-					article.processing_status?.status !== LastOperationStatus.Completed,
+					article.processing_status?.status !== LastOperationStatus.completed,
 			)
 			.map((article) => article.uuid);
 	}, [articles]);
@@ -49,7 +50,8 @@ const ArticleList: React.FC = () => {
 		setFilters(newFilters);
 	};
 
-	const searchHeading = typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
+	const searchHeading =
+		typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
 
 	if (isPending && articles.length === 0) {
 		return (

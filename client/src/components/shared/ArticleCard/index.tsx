@@ -1,7 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
 import type { ArticleResource } from '@/api/generated/model/articleResource';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import {
+	LastOperationStatus,
+	type LastOperationStatus as LastOperationStatusType,
+} from '@/api/generated/model/lastOperationStatus';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import { Chip } from '@/components/shared/Chip';
@@ -15,13 +18,13 @@ export interface ArticleCardProps {
 	className?: string;
 }
 
-const shouldShowProcessingBadge = (status: string | undefined): status is LastOperationStatus => {
-	if (!status || status === LastOperationStatus.Completed) return false;
+const shouldShowProcessingBadge = (status: string | undefined): status is LastOperationStatusType => {
+	if (!status || status === LastOperationStatus.completed) return false;
 
 	return (
-		status === LastOperationStatus.Pending ||
-		status === LastOperationStatus.Processing ||
-		status === LastOperationStatus.Failed
+		status === LastOperationStatus.pending ||
+		status === LastOperationStatus.processing ||
+		status === LastOperationStatus.failed
 	);
 };
 

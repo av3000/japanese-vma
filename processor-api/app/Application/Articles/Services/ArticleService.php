@@ -95,7 +95,8 @@ class ArticleService implements ArticleServiceInterface
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
                     new UserId($user->id),
-                    new UserName($user->name)
+                    new UserName($user->name),
+                    new EntityId($user->uuid)
                 );
                 // TODO: for frontend we only need UUID/ID which can be used to redirect user to article details page where frontend fetched the article show endpoint.
                 $createdDomainArticle = $this->articleRepository->create($domainArticle);
@@ -288,6 +289,7 @@ class ArticleService implements ArticleServiceInterface
             $article->getEntityTypeUid(),
             $article->getAuthorId(),
             $article->getAuthorName(),
+            $article->getAuthorUuid(),
             $dto->title_jp !== null
                 ? new ArticleTitle($dto->title_jp)
                 : $article->getTitleJp(),

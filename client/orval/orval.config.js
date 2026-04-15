@@ -17,11 +17,10 @@ export default defineConfig({
 			mode: 'tags',
 			target: path.resolve(generatedDir, 'index.ts'),
 			schemas: path.resolve(generatedDir, 'model'),
-			client: 'axios-functions',
+			client: 'react-query',
 			httpClient: 'axios',
 			clean: true,
 			prettier: true,
-			indexFiles: false,
 			urlEncodeParameters: true,
 			override: {
 				mutator: {
@@ -32,27 +31,51 @@ export default defineConfig({
 		},
 	},
 
-	articleQuery: {
-		input: {
-			target: openApiTarget,
-			filters: {
-				tags: ['Article'],
-			},
-		},
-		output: {
-			mode: 'tags-split',
-			target: path.resolve(generatedDir, 'article-query.ts'),
-			schemas: path.resolve(generatedDir, 'model'),
-			client: 'react-query',
-			httpClient: 'axios',
-			clean: false,
-			prettier: true,
-			override: {
-				mutator: {
-					path: path.resolve(rootDir, 'src/services/orval-mutator.ts'),
-					name: 'customInstance',
-				},
-			},
-		},
-	},
+	// articleQuery: {
+	// 	input: {
+	// 		target: openApiTarget,
+	// 		filters: {
+	// 			tags: ['Article'],
+	// 		},
+	// 	},
+	// 	output: {
+	// 		mode: 'tags-split',
+	// 		target: path.resolve(generatedDir, 'article-query.ts'),
+	// 		schemas: path.resolve(generatedDir, 'model'),
+	// 		client: 'react-query',
+	// 		httpClient: 'axios',
+	// 		clean: false,
+	// 		prettier: true,
+	// 		override: {
+	// 			mutator: {
+	// 				path: path.resolve(rootDir, 'src/services/orval-mutator.ts'),
+	// 				name: 'customInstance',
+	// 			},
+	// 		},
+	// 	},
+	// },
+
+	// catalogueQuery: {
+	// 	input: {
+	// 		target: openApiTarget,
+	// 		filters: {
+	// 			tags: ['Catalogue'],
+	// 		},
+	// 	},
+	// 	output: {
+	// 		mode: 'tags-split',
+	// 		target: path.resolve(generatedDir, 'catalogue-query.ts'),
+	// 		schemas: path.resolve(generatedDir, 'model'),
+	// 		client: 'react-query',
+	// 		httpClient: 'axios',
+	// 		clean: false,
+	// 		prettier: true,
+	// 		override: {
+	// 			mutator: {
+	// 				path: path.resolve(rootDir, 'src/services/orval-mutator.ts'),
+	// 				name: 'customInstance',
+	// 			},
+	// 		},
+	// 	},
+	// },
 });

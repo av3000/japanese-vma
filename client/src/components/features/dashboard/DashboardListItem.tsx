@@ -1,30 +1,17 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import type { CatalogueHashtag } from '@/api/catalogues/catalogues';
+import { CatalogueResource } from '@/api/generated/model';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 
-interface DashboardListItemProps {
-	id: number;
-	created_at: string;
-	title: string;
-	commentsTotal: number;
-	likesTotal: number;
-	viewsTotal: number;
-	hashtags?: CatalogueHashtag[];
-	typeTitle: string;
-}
-
-const DashboardListItem: React.FC<DashboardListItemProps> = ({
+const DashboardListItem: React.FC<CatalogueResource> = ({
 	id,
-	created_at,
+	hashtags,
 	title,
-	commentsTotal,
-	likesTotal,
-	viewsTotal,
-	hashtags = [],
-	typeTitle,
+	engagement,
+	type_label,
+	created_at,
 }) => (
 	<div className="row border-bottom border-gray">
 		<div className="col-md-8 ">
@@ -49,14 +36,14 @@ const DashboardListItem: React.FC<DashboardListItemProps> = ({
 		<div className="col-md-4">
 			<ListGroup variant="flush" className="text-muted">
 				<ListGroup.Item className="p-0 d-flex justify-content-between align-items-center">
-					<span>{commentsTotal} Comments</span>
-					<span>{viewsTotal} Views</span>
-					<span>{likesTotal} Likes</span>
+					<span>{engagement?.comments_count} Comments</span>
+					<span>{engagement?.views_count} Views</span>
+					<span>{engagement?.likes_count} Likes</span>
 					<Button to={`/list/${id}`} variant="ghost" size="sm" type="button">
 						<Icon name="externalLink" size="sm" />
 					</Button>
 				</ListGroup.Item>
-				<small>ListType: {typeTitle}</small>
+				<small>ListType: {type_label}</small>
 				<ListGroup.Item className="p-0">
 					<small>{created_at}</small>
 				</ListGroup.Item>

@@ -5,8 +5,8 @@ import classNames from 'classnames';
 import { fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import { articleDestroy } from '@/api/generated/article/article';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import { articleDestroy } from '@/api/generated/article';
+import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -293,7 +293,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<ArticlePdfModal
 				controller={pdfModal}
 				onDownload={handleDownloadPdf}
-				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.Completed}
+				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
 			/>
 
 			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}

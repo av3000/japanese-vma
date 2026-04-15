@@ -29,6 +29,8 @@ Route::prefix('v1')->group(function () {
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
+    // TODO: Comments - Public generic route to read all comments entity agnostic
+    Route::get('comments', [CommentController::class, 'getCommentsForEntity']);
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);

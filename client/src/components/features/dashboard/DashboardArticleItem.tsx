@@ -1,12 +1,12 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import type { ArticleHashtagResource } from '@/api/generated/model/articleHashtagResource';
+import type { HashtagResource } from '@/api/generated/model';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '../../ui/article-status';
 
-type DashboardArticleHashtag = Pick<ArticleHashtagResource, 'id' | 'content'>;
+type DashboardArticleHashtag = Pick<HashtagResource, 'id' | 'content'>;
 
 interface DashboardArticleItemProps {
 	uuid: string;

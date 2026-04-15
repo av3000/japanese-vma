@@ -2,8 +2,8 @@ import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import type { ArticleHashtagResource } from '@/api/generated/model/articleHashtagResource';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import type { HashtagResource } from '@/api/generated/model';
+import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
 import { Button } from '@/components/shared/Button';
@@ -21,7 +21,7 @@ type DashboardArticleFilters = {
 	search?: string;
 };
 
-type DashboardArticleHashtag = Pick<ArticleHashtagResource, 'id' | 'content'>;
+type DashboardArticleHashtag = Pick<HashtagResource, 'id' | 'content'>;
 
 interface DashboardArticlesPanelProps {
 	dashboardView: DashboardType;
@@ -79,7 +79,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 			.filter(
 				(article) =>
 					article.processing_status?.status !== undefined &&
-					article.processing_status?.status !== LastOperationStatus.Completed,
+					article.processing_status?.status !== LastOperationStatus.completed,
 			)
 			.map((article) => article.uuid);
 	}, [articles]);

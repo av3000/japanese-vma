@@ -1,18 +1,21 @@
 import classNames from 'classnames';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import {
+	LastOperationStatus,
+	type LastOperationStatus as LastOperationStatusType,
+} from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/components/shared/Spinner';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '../../../shared/Icon';
 
 interface ProcessingStatusBadgeProps {
 	className?: string;
-	status: LastOperationStatus;
+	status: LastOperationStatusType;
 	isOnlyIcon?: boolean;
 	showPrefix?: boolean;
 }
 
 const STATUS_CONFIG: Record<
-	LastOperationStatus,
+	LastOperationStatusType,
 	{
 		variant: 'success' | 'pending' | 'destructive';
 		icon: 'checkSolid' | 'minusSolid' | 'removeSolid';
@@ -42,7 +45,7 @@ const ProcessingStatusBadge: React.FC<ProcessingStatusBadgeProps> = ({
 		>
 			{isOnlyIcon ? (
 				<>
-					{status === LastOperationStatus.Processing ? (
+					{status === LastOperationStatus.processing ? (
 						<Spinner size="sm" />
 					) : (
 						<Icon size="sm" name={config.icon} />

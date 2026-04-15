@@ -5,8 +5,14 @@ namespace App\Http\v1\Engagement\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property array{id: int|string, content: string, created_at?: mixed, updated_at?: mixed}|object $resource
+ */
 class HashtagResource extends JsonResource
 {
+    /**
+     * @return array{id: int|string|null, content: string|null, created_at: string|null, updated_at: string|null}
+     */
     public function toArray(Request $request): array
     {
         return [
@@ -17,12 +23,12 @@ class HashtagResource extends JsonResource
         ];
     }
 
-    private function formatDate(mixed $value): mixed
+    private function formatDate(mixed $value): ?string
     {
         if ($value instanceof \DateTimeInterface) {
             return $value->format('c');
         }
 
-        return $value;
+        return is_string($value) ? $value : null;
     }
 }

@@ -111,17 +111,7 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isA
 					) : allCatalogues.length ? (
 						<>
 							{allCatalogues.map((catalogue) => (
-								<DashboardListItem
-									key={catalogue.id}
-									id={catalogue.id}
-									created_at={catalogue.created_at}
-									title={catalogue.title}
-									commentsTotal={catalogue.engagement?.comments_count ?? 0}
-									likesTotal={catalogue.engagement?.likes_count ?? 0}
-									viewsTotal={catalogue.engagement?.views_count ?? 0}
-									hashtags={catalogue.hashtags ?? []}
-									typeTitle={catalogue.type_label}
-								/>
+								<DashboardListItem key={catalogue.id} {...catalogue} />
 							))}
 							<div className="row justify-content-center mt-4 mb-2">
 								{isFetchingNextPage ? (

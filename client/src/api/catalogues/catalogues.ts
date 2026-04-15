@@ -1,66 +1,19 @@
 import axios from '@/services/axios';
+import type {
+	AuthorResource,
+	CatalogueDetailResourceCatalogue,
+	CatalogueListResource,
+	CatalogueResource,
+	EngagementStatsResource,
+	HashtagResource,
+} from '@/api/generated/model';
 
-export interface CatalogueHashtag {
-	id: string;
-	content: string;
-}
-
-export interface CatalogueEngagementStats {
-	likes_count: number;
-	views_count: number;
-	downloads_count: number;
-	comments_count: number;
-}
-
-export interface CatalogueOwner {
-	id: number;
-	name: string;
-	uuid: string;
-}
-
-export interface Catalogue {
-	id: number;
-	uuid: string;
-	type: number;
-	type_label: string;
-	title: string;
-	description: string | null;
-	publicity: number;
-	owner: CatalogueOwner;
-	items_count: number;
-	hashtags: CatalogueHashtag[];
-	engagement: CatalogueEngagementStats | null;
-	created_at: string;
-	updated_at: string;
-}
-
-export interface CatalogueDetails {
-	id: number;
-	uuid: string;
-	type: number;
-	type_label: string;
-	title: string;
-	description: string | null;
-	publicity: number;
-	owner: CatalogueOwner;
-	items_count: number;
-	hashtags: CatalogueHashtag[];
-	engagement: CatalogueEngagementStats | null;
-	items: unknown[];
-	created_at: string;
-	updated_at: string;
-}
-
-export interface CataloguesResponse {
-	items: Catalogue[];
-	pagination: {
-		page: number;
-		per_page: number;
-		total: number;
-		last_page: number;
-		has_more: boolean;
-	};
-}
+export type CatalogueHashtag = Pick<HashtagResource, 'id' | 'content'>;
+export type CatalogueEngagementStats = EngagementStatsResource;
+export type CatalogueOwner = AuthorResource;
+export type Catalogue = CatalogueResource;
+export type CatalogueDetails = CatalogueDetailResourceCatalogue;
+export type CataloguesResponse = CatalogueListResource;
 
 export interface FetchCataloguesFilters {
 	search?: string;

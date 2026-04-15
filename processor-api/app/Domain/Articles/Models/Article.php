@@ -15,6 +15,7 @@ class Article
      * @param EntityId|string $entityTypeUid
      * @param UserId $authorId
      * @param UserName $authorName
+     * @param EntityId $authorUuid
      * @param ArticleTitle $titleJp
      * @param ?ArticleTitle $titleEn
      * @param ArticleContent $contentJp
@@ -33,6 +34,7 @@ class Article
         private EntityId|string $entityTypeUid,
         private UserId $authorId,
         private UserName $authorName,
+        private EntityId $authorUuid,
         private ArticleTitle $titleJp,
         private ?ArticleTitle $titleEn,
         private ArticleContent $contentJp,
@@ -65,6 +67,10 @@ class Article
     public function getAuthorName(): UserName
     {
         return $this->authorName;
+    }
+    public function getAuthorUuid(): EntityId
+    {
+        return $this->authorUuid;
     }
     public function getTitleJp(): ArticleTitle
     {

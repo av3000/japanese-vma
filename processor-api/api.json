@@ -89,7 +89,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ArticleListResponse"
+                  "$ref": "#/components/schemas/ArticleListResource"
                 }
               }
             }
@@ -137,7 +137,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UuidCreatedResponse"
+                  "$ref": "#/components/schemas/UuidCreatedResource"
                 }
               }
             }
@@ -239,7 +239,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ArticleDetailResponse"
+                  "$ref": "#/components/schemas/ArticleDetailResource"
                 }
               }
             }
@@ -296,7 +296,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ArticleResourceResponse"
+                  "$ref": "#/components/schemas/ArticleResource"
                 }
               }
             }
@@ -2589,34 +2589,16 @@
           "data"
         ]
       },
-      "ArticleAuthorResource": {
+      "UuidCreatedResource": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
-          "id",
-          "name"
-        ]
-      },
-      "ArticleHashtagResource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "content"
+          "uuid"
         ]
       },
       "ArticleJlptLevelsResource": {
@@ -2649,66 +2631,6 @@
           "n5",
           "uncommon"
         ]
-      },
-      "ArticleEngagementStatsResource": {
-        "type": "object",
-        "properties": {
-          "likes_count": {
-            "type": "integer"
-          },
-          "views_count": {
-            "type": "integer"
-          },
-          "downloads_count": {
-            "type": "integer"
-          },
-          "comments_count": {
-            "type": "integer"
-          }
-        }
-      },
-      "ArticleEngagementSummaryResource": {
-        "type": "object",
-        "properties": {
-          "is_liked_by_viewer": {
-            "type": "boolean"
-          },
-          "likes_count": {
-            "type": "integer"
-          },
-          "views_count": {
-            "type": "integer"
-          },
-          "downloads_count": {
-            "type": "integer"
-          }
-        }
-      },
-      "ArticleProcessingStatusResource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "type": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
       },
       "ArticleResource": {
         "type": "object",
@@ -2748,12 +2670,12 @@
             "$ref": "#/components/schemas/ArticleJlptLevelsResource"
           },
           "author": {
-            "$ref": "#/components/schemas/ArticleAuthorResource"
+            "$ref": "#/components/schemas/AuthorResource"
           },
           "hashtags": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ArticleHashtagResource"
+              "$ref": "#/components/schemas/HashtagResource"
             }
           },
           "created_at": {
@@ -2765,12 +2687,7 @@
             "format": "date-time"
           },
           "engagement": {
-            "type": "object",
-            "properties": {
-              "stats": {
-                "$ref": "#/components/schemas/ArticleEngagementStatsResource"
-              }
-            }
+            "$ref": "#/components/schemas/EngagementStatsSummaryResource"
           },
           "kanjis": {
             "type": "array",
@@ -2779,7 +2696,14 @@
             }
           },
           "processing_status": {
-            "$ref": "#/components/schemas/ArticleProcessingStatusResource"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingStatusResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2840,12 +2764,12 @@
                 "$ref": "#/components/schemas/ArticleJlptLevelsResource"
               },
               "author": {
-                "$ref": "#/components/schemas/ArticleAuthorResource"
+                "$ref": "#/components/schemas/AuthorResource"
               },
               "hashtags": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/ArticleHashtagResource"
+                  "$ref": "#/components/schemas/HashtagResource"
                 }
               },
               "created_at": {
@@ -2857,7 +2781,14 @@
                 "format": "date-time"
               },
               "engagement": {
-                "$ref": "#/components/schemas/ArticleEngagementSummaryResource"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EngagementResource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "kanjis": {
                 "type": "array",
@@ -2872,7 +2803,14 @@
                 }
               },
               "processing_status": {
-                "$ref": "#/components/schemas/ArticleProcessingStatusResource"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ProcessingStatusResource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -2898,144 +2836,50 @@
           "article"
         ]
       },
-      "ArticleListResponse": {
+      "PaginationResource": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
+          "page": {
+            "type": "integer"
           },
-          "data": {
-            "type": "object",
-            "properties": {
-              "items": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ArticleResource"
-                }
-              },
-              "pagination": {
-                "type": "object",
-                "properties": {
-                  "page": {
-                    "type": "integer"
-                  },
-                  "per_page": {
-                    "type": "integer"
-                  },
-                  "total": {
-                    "type": "integer"
-                  },
-                  "last_page": {
-                    "type": "integer"
-                  },
-                  "has_more": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "page",
-                  "per_page",
-                  "total",
-                  "last_page",
-                  "has_more"
-                ]
-              }
-            },
-            "required": [
-              "items",
-              "pagination"
-            ]
+          "per_page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "last_page": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
           }
         },
         "required": [
-          "success",
-          "data"
+          "page",
+          "per_page",
+          "total",
+          "last_page",
+          "has_more"
         ]
       },
-      "ArticleDetailResponse": {
+      "ArticleListResource": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleResource"
+            }
           },
-          "data": {
-            "$ref": "#/components/schemas/ArticleDetailResource"
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationResource"
           }
         },
         "required": [
-          "success",
-          "data"
+          "items",
+          "pagination"
         ]
-      },
-      "ArticleResourceResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "data": {
-            "$ref": "#/components/schemas/ArticleResource"
-          }
-        },
-        "required": [
-          "success",
-          "data"
-        ]
-      },
-      "CatalogueOwnerResource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "uuid": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "uuid",
-          "name"
-        ]
-      },
-      "CatalogueOwnerSummaryResource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name"
-        ]
-      },
-      "CatalogueEngagementResource": {
-        "type": "object",
-        "properties": {
-          "likes_count": {
-            "type": "integer"
-          },
-          "views_count": {
-            "type": "integer"
-          },
-          "downloads_count": {
-            "type": "integer"
-          },
-          "comments_count": {
-            "type": "integer"
-          }
-        }
       },
       "CatalogueResource": {
         "type": "object",
@@ -3057,13 +2901,20 @@
             "type": "string"
           },
           "description": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "publicity": {
-            "type": "string"
+            "type": "integer"
           },
           "owner": {
-            "$ref": "#/components/schemas/CatalogueOwnerResource"
+            "$ref": "#/components/schemas/AuthorResource"
           },
           "items_count": {
             "type": "integer"
@@ -3071,11 +2922,18 @@
           "hashtags": {
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/HashtagResource"
             }
           },
           "engagement": {
-            "$ref": "#/components/schemas/CatalogueEngagementResource"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EngagementStatsResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "created_at": {
             "type": "string",
@@ -3123,13 +2981,20 @@
                 "type": "string"
               },
               "description": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "publicity": {
-                "type": "string"
+                "type": "integer"
               },
               "owner": {
-                "$ref": "#/components/schemas/CatalogueOwnerSummaryResource"
+                "$ref": "#/components/schemas/AuthorResource"
               },
               "items_count": {
                 "type": "integer"
@@ -3137,11 +3002,18 @@
               "hashtags": {
                 "type": "array",
                 "items": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/HashtagResource"
                 }
               },
               "engagement": {
-                "$ref": "#/components/schemas/CatalogueEngagementResource"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EngagementStatsResource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "items": {
                 "type": "array",
@@ -3263,6 +3135,193 @@
         "required": [
           "success",
           "data"
+        ]
+      },
+      "AuthorResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "uuid"
+        ]
+      },
+      "HashtagResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "EngagementStatsResource": {
+        "type": "object",
+        "properties": {
+          "likes_count": {
+            "type": "integer"
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "downloads_count": {
+            "type": "integer"
+          },
+          "comments_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "likes_count",
+          "views_count",
+          "downloads_count",
+          "comments_count"
+        ]
+      },
+      "EngagementStatsSummaryResource": {
+        "type": "object",
+        "properties": {
+          "stats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EngagementStatsResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stats"
+        ]
+      },
+      "EngagementResource": {
+        "type": "object",
+        "properties": {
+          "is_liked_by_viewer": {
+            "type": "boolean"
+          },
+          "likes_count": {
+            "type": "integer"
+          },
+          "views_count": {
+            "type": "integer"
+          },
+          "downloads_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "is_liked_by_viewer",
+          "likes_count",
+          "views_count",
+          "downloads_count"
+        ]
+      },
+      "LastOperationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "processing",
+          "completed",
+          "failed"
+        ]
+      },
+      "ProcessingStatusResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LastOperationStatus"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "metadata",
+          "created_at",
+          "updated_at"
         ]
       }
     },

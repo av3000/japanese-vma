@@ -119,6 +119,7 @@ class ArticleController extends Controller
     /**
      * @response UuidCreatedResource
      */
+    #[Response(201, type: 'UuidCreatedResource')]
     public function store(StoreArticleRequest $request): JsonResponse|JsonResource
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { ArticleListResponseData } from '@/api/generated/model/articleListResponseData';
+import type { ArticleListResource } from '@/api/generated/model/articleListResource';
 
-const createPage = (overrides?: Partial<ArticleListResponseData>): ArticleListResponseData => ({
+const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResource => ({
 	items: [],
 	pagination: {
 		page: 2,

@@ -13,6 +13,9 @@ class UuidCreatedResource extends JsonResource
 {
     public static $wrap = null;
 
+    /**
+     * @return array{uuid: string}
+     */
     public function toArray(Request $request): array
     {
         return [

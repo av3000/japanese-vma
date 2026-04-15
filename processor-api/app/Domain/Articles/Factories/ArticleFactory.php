@@ -10,7 +10,12 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
 
 class ArticleFactory
 {
-    public static function createFromDTO(ArticleCreateDTO $dto, UserId $authorId, UserName $authorName): Article
+    public static function createFromDTO(
+        ArticleCreateDTO $dto,
+        UserId $authorId,
+        UserName $authorName,
+        EntityId $authorUuid
+    ): Article
     {
         return new Article(
             id: null,
@@ -18,6 +23,7 @@ class ArticleFactory
             entityTypeUid: new EntityId(ObjectTemplateType::ARTICLE->value),
             authorId: $authorId,
             authorName: $authorName,
+            authorUuid: $authorUuid,
             titleJp: new ArticleTitle($dto->title_jp),
             titleEn: $dto->title_en ? new ArticleTitle($dto->title_en) : null,
             contentJp: new ArticleContent($dto->content_jp),

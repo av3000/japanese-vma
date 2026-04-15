@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ArticleDetailResourceArticle } from '@/api/generated/model/articleDetailResourceArticle';
+import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ArticleDetailResourceArticle } from '../generated/model/articleDetailResourceArticle';
 import { mapArticleDetail } from './details';
 
 const createArticle = (overrides: Partial<ArticleDetailResourceArticle> = {}): ArticleDetailResourceArticle => ({
@@ -23,6 +24,7 @@ const createArticle = (overrides: Partial<ArticleDetailResourceArticle> = {}): A
 	},
 	author: {
 		id: 7,
+		uuid: 'author-uuid',
 		name: 'Aki',
 	},
 	hashtags: [],
@@ -36,7 +38,7 @@ const createArticle = (overrides: Partial<ArticleDetailResourceArticle> = {}): A
 	},
 	kanjis: [],
 	words: [],
-	processing_status: undefined,
+	processing_status: null,
 	...overrides,
 });
 
@@ -55,5 +57,26 @@ describe('mapArticleDetail', () => {
 		const article = mapArticleDetail(createArticle({ author: undefined as any }));
 
 		expect(article.displayName).toBe('Unknown Author');
+	});
+
+	it('keeps generated processing status metadata and enum status on mapped article details', () => {
+		const article = mapArticleDetail(
+			createArticle({
+				processing_status: {
+					id: 10,
+					type: 'kanji_extraction',
+					status: LastOperationStatus.completed,
+					metadata: {
+						message: 'Attached 76 kanjis.',
+						kanji_count: 76,
+					},
+					created_at: '2026-04-01T12:00:00.000Z',
+					updated_at: '2026-04-01T12:01:00.000Z',
+				},
+			}),
+		);
+
+		expect(article.processing_status?.status).toBe(LastOperationStatus.completed);
+		expect(article.processing_status?.metadata?.kanji_count).toBe(76);
 	});
 });

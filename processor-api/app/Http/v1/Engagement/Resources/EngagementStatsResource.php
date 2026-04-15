@@ -1,24 +1,33 @@
 <?php
 
-namespace App\Http\v1\Articles\Resources;
+namespace App\Http\v1\Engagement\Resources;
 
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Catalogues\Models\CatalogueStats;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ArticleStats $resource
+ * @property ArticleStats|CatalogueStats $resource
  */
-class ArticleStatsResource extends JsonResource
+class EngagementStatsResource extends JsonResource
 {
-    public function __construct(ArticleStats $stats)
+    public function __construct(ArticleStats|CatalogueStats $stats)
     {
         parent::__construct($stats);
     }
 
+    /**
+     * @return array{
+     *     likes_count: int,
+     *     views_count: int,
+     *     downloads_count: int,
+     *     comments_count: int
+     * }
+     */
     public function toArray(Request $request): array
     {
-        /** @var ArticleStats $stats */
+        /** @var ArticleStats|CatalogueStats $stats */
         $stats = $this->resource;
 
         return [

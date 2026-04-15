@@ -4,9 +4,11 @@ namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Engagement\DTOs\EngagementSummary;
+use App\Http\v1\Engagement\Resources\EngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Shared\Resources\AuthorResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -51,11 +53,11 @@ class ArticleDetailResource extends JsonResource
      *         publicity: int,
      *         status: int,
      *         jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
-     *         author: ArticleAuthorResource,
+     *         author: AuthorResource,
      *         hashtags: array<int, HashtagResource>,
      *         created_at: string,
      *         updated_at: string,
-     *         engagement: ArticleDetailEngagementResource|null,
+     *         engagement: EngagementResource|null,
      *         kanjis: array<int, KanjiResource>,
      *         words: array<int, mixed>,
      *         processing_status: ProcessingStatusResource|null
@@ -66,6 +68,7 @@ class ArticleDetailResource extends JsonResource
     {
         $publicity = (int) $this->getPublicity()->value;
         $status = (int) $this->getStatus()->value;
+        // TODO: move to separate resource for entity agnostic usage
         $jlptLevels = [
             'n1' => (int) $this->getJlptLevels()->n1,
             'n2' => (int) $this->getJlptLevels()->n2,
@@ -88,25 +91,34 @@ class ArticleDetailResource extends JsonResource
                 'publicity' => $publicity,
                 'status' => $status,
                 'jlpt_levels' => $jlptLevels,
-                'author' => new ArticleAuthorResource([
+                'author' => new AuthorResource([
                     'id' => $this->getAuthorId()->value(),
                     'name' => $this->getAuthorName()->value(),
+                    'uuid' => $this->getAuthorUuid()->value(),
                 ]),
                 'hashtags' => HashtagResource::collection($this->hashtags),
                 'created_at' => $this->getCreatedAt()->format('c'),
                 'updated_at' => $this->getUpdatedAt()->format('c'),
-                'engagement' => $this->engagement ? new ArticleDetailEngagementResource($this->engagement) : null,
+                'engagement' => $this->engagement ? new EngagementResource($this->engagement) : null,
                 'kanjis' => KanjiResource::collection($this->kanjis),
-                'words' => $this->words,
+                'words' => $this->articleWords(),
                 'processing_status' => $this->lastOperation ? new ProcessingStatusResource([
                     'id' => $this->lastOperation->id,
                     'type' => $this->lastOperation->task_type,
-                    'status' => $this->lastOperation->status->value,
+                    'status' => $this->lastOperation->status,
                     'metadata' => $this->lastOperation->metadata,
                     'created_at' => $this->lastOperation->created_at?->toIso8601String(),
                     'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
                 ]) : null,
             ],
         ];
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function articleWords(): array
+    {
+        return $this->words;
     }
 }

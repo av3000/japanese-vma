@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MappedArticle } from '@/api/articles/details';
-import { articleUpdate } from '@/api/generated/article/article';
+import { articleUpdate } from '@/api/generated/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
 	ArticleForm,
@@ -9,8 +9,8 @@ import {
 	type ArticleFormValues,
 } from '@/components/features/articles/ArticleForm';
 import { DialogModal } from '@/components/shared/DialogModal';
-import type { ModalController } from '@/hooks/useModal';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
+import type { ModalController } from '@/hooks/useModal';
 
 interface ArticleEditModalProps {
 	article: MappedArticle;

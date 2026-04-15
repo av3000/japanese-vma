@@ -20,6 +20,7 @@ use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
+use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Shared\Http\TypedResults;
 use Illuminate\Http\JsonResponse;
@@ -34,9 +35,9 @@ class CatalogueController extends Controller
     ) {}
 
     /**
-     * @response array{success: true, data: array{items: list<CatalogueResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}
+     * @response array{success: true, data: CatalogueListResource}
      */
-    #[Response(type: 'array{success: true, data: array{items: list<CatalogueResource>, pagination: array{page: int, per_page: int, total: int, last_page: int, has_more: bool}}}')]
+    #[Response(type: 'array{success: true, data: CatalogueListResource}')]
     public function index(IndexCatalogueRequest $request): JsonResponse
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
@@ -87,7 +88,7 @@ class CatalogueController extends Controller
 
         $paginator = $paginatedCatalogues->getPaginator();
 
-        return TypedResults::ok([
+        return TypedResults::ok(new CatalogueListResource([
             'items' => $resources,
             'pagination' => [
                 'page' => $paginator->currentPage(),
@@ -96,7 +97,7 @@ class CatalogueController extends Controller
                 'last_page' => $paginator->lastPage(),
                 'has_more' => $paginator->hasMorePages(),
             ],
-        ]);
+        ]));
     }
 
     /**

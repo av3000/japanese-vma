@@ -4,6 +4,9 @@ namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Http\v1\Engagement\Resources\EngagementStatsResource;
+use App\Http\v1\Engagement\Resources\HashtagResource;
+use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
 
@@ -21,6 +24,23 @@ class CatalogueResource extends JsonResource
         parent::__construct($catalogue);
     }
 
+    /**
+     * @return array{
+     *     id: int,
+     *     uuid: string,
+     *     type: int,
+     *     type_label: string,
+     *     title: string,
+     *     description: string|null,
+     *     publicity: int,
+     *     owner: AuthorResource,
+     *     items_count: int,
+     *     hashtags: array<int, HashtagResource>,
+     *     engagement: EngagementStatsResource|null,
+     *     created_at: string,
+     *     updated_at: string
+     * }
+     */
     public function toArray(Request $request): array
     {
         /** @var Catalogue $catalogue */
@@ -34,19 +54,14 @@ class CatalogueResource extends JsonResource
             'title' => (string) $catalogue->getTitle(),
             'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
             'publicity' => $catalogue->getPublicity()->value,
-            'owner' => [
+            'owner' => new AuthorResource([
                 'id' => $catalogue->getOwnerId()->value(),
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
-            ],
+            ]),
             'items_count' => $this->itemsCount ?? 0,
-            'hashtags' => $this->hashtags,
-            'engagement' => $this->stats ? [
-                'likes_count' => $this->stats->getLikesCount(),
-                'views_count' => $this->stats->getViewsCount(),
-                'downloads_count' => $this->stats->getDownloadsCount(),
-                'comments_count' => $this->stats->getCommentsCount(),
-            ] : null,
+            'hashtags' => HashtagResource::collection($this->hashtags),
+            'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),
         ];

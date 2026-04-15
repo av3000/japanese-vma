@@ -16,6 +16,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class PaginationResource extends JsonResource
 {
+    /**
+     * @return array{
+     *     page: int,
+     *     per_page: int,
+     *     total: int,
+     *     last_page: int,
+     *     has_more: bool
+     * }
+     */
     public function toArray(Request $request): array
     {
         return [
