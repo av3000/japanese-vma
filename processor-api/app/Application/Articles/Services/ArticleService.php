@@ -15,9 +15,6 @@ use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterfac
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
@@ -53,7 +50,6 @@ class ArticleService implements ArticleServiceInterface
 {
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
-        private LastOperationServiceInterface $lastOperationService,
         private HashtagServiceInterface $hashtagService,
         private ArticlePolicy $ArticlePolicy,
         // Engagement and stats dependencies
@@ -76,8 +72,7 @@ class ArticleService implements ArticleServiceInterface
 
         // private KanjiExtractionServiceInterface $kanjiExtractionService,
         // private KanjiAttachmentService $kanjiAttachmentService
-    ) {
-    }
+    ) {}
 
     /**
      * Create article with hashtags atomically.
@@ -177,7 +172,7 @@ class ArticleService implements ArticleServiceInterface
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            Log::error("Failed to increment view for article {$id}: ".$e->getMessage());
+            Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
         }
     }
 

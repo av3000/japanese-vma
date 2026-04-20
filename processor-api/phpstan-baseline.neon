@@ -1,0 +1,2179 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to property \$id on an unknown class App\\Domain\\Articles\\Http\\Models\\Article\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Articles/Actions/Deletion/CleanupArticleHashtagsAction.php
+
+		-
+			message: '#^Parameter \$article of method App\\Application\\Articles\\Actions\\Deletion\\CleanupArticleHashtagsAction\:\:execute\(\) has invalid type App\\Domain\\Articles\\Http\\Models\\Article\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Articles/Actions/Deletion/CleanupArticleHashtagsAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$kanjis\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Application/Articles/Actions/Processing/CalculateJLPTLevels.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Application/Articles/Actions/Updates/UpdateArticleHashtagsAction.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(ArticleCriteriaDTO
+				\$criteria Complete filter criteria including\:\)\: Unexpected token "\\n     \* ", expected variable at offset 130 on line 3$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Application/Articles/Interfaces/Repositories/ArticleRepositoryInterface.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Application/Articles/Jobs/ProcessArticleKanjisJob.php
+
+		-
+			message: '#^Access to constant PROCESSED on an unknown class App\\Domain\\Articles\\Enums\\ArticleStatus\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Call to an undefined method App\\Application\\Articles\\Interfaces\\Repositories\\ArticleRepositoryInterface\:\:findByUid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Call to an undefined method App\\Application\\Articles\\Interfaces\\Repositories\\ArticleRepositoryInterface\:\:saveWithKanjis\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Class App\\Domain\\Articles\\Models\\Article constructor invoked with 13 parameters, 16\-17 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Instantiated class App\\Domain\\Articles\\ValueObjects\\JlptLevels not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Method App\\Application\\Articles\\Services\\ArticleKanjiProcessingService\:\:calculateJlptLevels\(\) has invalid return type App\\Domain\\Articles\\ValueObjects\\JlptLevels\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Parameter \#10 \$contentEn of class App\\Domain\\Articles\\Models\\Article constructor expects App\\Domain\\Articles\\ValueObjects\\ArticleContent\|null, App\\Domain\\Articles\\ValueObjects\\JlptLevels given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^Parameter \#13 \$status of class App\\Domain\\Articles\\Models\\Article constructor expects App\\Domain\\Shared\\Enums\\ArticleStatus, DateTimeImmutable given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$articleUid$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleService.php
+
+		-
+			message: '#^Property App\\Application\\Articles\\Services\\ArticleService\:\:\$lastOperationService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Application/Articles/Services/ArticleService.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$id$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$userId$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Application/Articles/Services/ArticleServiceInterface.php
+
+		-
+			message: '#^Parameter \#1 \$templateId of method App\\Application\\Engagement\\Actions\\LoadEntityStatsAction\:\:batchLoadStatsById\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Application/Catalogues/Services/CatalogueItemService.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Application/Engagement/Actions/LoadCommentsAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$userName\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Application/Engagement/Actions/LoadCommentsAction.php
+
+		-
+			message: '#^Undefined variable\: \$article$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Application/Engagement/Actions/LoadCommentsAction.php
+
+		-
+			message: '#^Parameter \#1 \$templateId of method App\\Application\\Engagement\\Actions\\LoadEntityStatsAction\:\:batchLoadStatsById\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Application/Engagement/Services/EngagementService.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Like\:\:\$value \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Application/Engagement/Services/EngagementService.php
+
+		-
+			message: '#^Call to an undefined static method Laravel\\Reverb\\Loggers\\Log\:\:error\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Application/Engagement/Services/HashtagService.php
+
+		-
+			message: '#^Method App\\Application\\JapaneseMaterial\\Kanjis\\Services\\KanjiService\:\:find\(\) has invalid return type App\\Application\\JapaneseMaterial\\Kanjis\\Services\\Kanji\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/JapaneseMaterial/Kanjis/Services/KanjiService.php
+
+		-
+			message: '#^Method App\\Application\\JapaneseMaterial\\Kanjis\\Services\\KanjiServiceInterface\:\:find\(\) has invalid return type App\\Application\\JapaneseMaterial\\Kanjis\\Services\\Kanji\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/JapaneseMaterial/Kanjis/Services/KanjiServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<App\\Domain\\JapaneseMaterial\\Kanjis\\Models\\Kanji\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/JapaneseMaterial/Kanjis/Services/KanjiServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<Illuminate\\Pagination\\LengthAwarePaginator&iterable\<App\\Application\\JapaneseMaterial\\Kanjis\\Services\\Kanji\>\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/JapaneseMaterial/Kanjis/Services/KanjiServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$EntityId$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Application/Users/Interfaces/Repositories/RoleRepositoryInterface.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<App\\Domain\\Users\\Models\\Role\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/Users/Services/RoleService.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<string\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 3
+			path: app/Application/Users/Services/RoleService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Domain\\Shared\\Enums\\UserRole\:\:COMMON will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Application/Users/Services/RoleService.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<string\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/Users/Services/RoleServiceInterface.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserService\:\:find\(\) has invalid return type App\\Application\\Users\\Services\\LengthAwarePaginator\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Users/Services/UserService.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<App\\Application\\Users\\Services\\LengthAwarePaginator\<App\\Application\\Users\\DTOs\\UserWithProfileContext\>\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/Users/Services/UserService.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:find\(\) has invalid return type App\\Application\\Users\\Services\\LengthAwarePaginator\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Users/Services/UserServiceInterface.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:find\(\) has invalid return type App\\Application\\Users\\Services\\UserWithProfileContext\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Users/Services/UserServiceInterface.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:findByUuid\(\) has invalid return type App\\Application\\Users\\Services\\UserWithProfileContext\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Application/Users/Services/UserServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<App\\Application\\Users\\Services\\LengthAwarePaginator\<App\\Application\\Users\\Services\\UserWithProfileContext\>\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/Users/Services/UserServiceInterface.php
+
+		-
+			message: '#^PHPDoc tag @return contains generic type App\\Shared\\Results\\Result\<App\\Application\\Users\\Services\\UserWithProfileContext\> but class App\\Shared\\Results\\Result is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: app/Application/Users/Services/UserServiceInterface.php
+
+		-
+			message: '#^Variable \$commentsBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateCommentsUuids.php
+
+		-
+			message: '#^Variable \$kanjisBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateKanjisUuids.php
+
+		-
+			message: '#^Variable \$radicalsBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateRadicalsUuids.php
+
+		-
+			message: '#^Variable \$sentenceBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateSentenceUuids.php
+
+		-
+			message: '#^Variable \$usersBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateUsersUuids.php
+
+		-
+			message: '#^Variable \$wordsBatch in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Console/Commands/PopulateWordsUuids.php
+
+		-
+			message: '#^Method App\\Domain\\Articles\\Models\\Article\:\:getKanjis\(\) has invalid return type App\\Domain\\JapaneseMaterial\\Kanji\\Models\\Kanji\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Domain/Articles/Models/Article.php
+
+		-
+			message: '#^Parameter \$kanjis of method App\\Domain\\Articles\\Models\\Article\:\:__construct\(\) has invalid type App\\Domain\\JapaneseMaterial\\Kanji\\Models\\Kanji\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Domain/Articles/Models/Article.php
+
+		-
+			message: '#^Property App\\Domain\\Articles\\Models\\Article\:\:\$kanjis has unknown class App\\Domain\\JapaneseMaterial\\Kanji\\Models\\Kanji as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Domain/Articles/Models/Article.php
+
+		-
+			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Domain/Articles/Models/Articles.php
+
+		-
+			message: '#^Template type U of method App\\Domain\\Articles\\Models\\Articles\:\:transform\(\) is not referenced in a parameter\.$#'
+			identifier: method.templateTypeNotInParameter
+			count: 1
+			path: app/Domain/Articles/Models/Articles.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int\<1, max\> and 0 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Domain/Articles/ValueObjects/ArticleId.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Domain/Catalogues/Support/CatalogueTagParser.php
+
+		-
+			message: '#^Deprecated in PHP 8\.1\: Required parameter \$entityType follows optional parameter \$entityId\.$#'
+			identifier: parameter.requiredAfterOptional
+			count: 1
+			path: app/Domain/Comments/DTOs/CommentCriteriaDTO.php
+
+		-
+			message: '#^Deprecated in PHP 8\.0\: Required parameter \$createdAt follows optional parameter \$isLikedByViewer\.$#'
+			identifier: parameter.requiredAfterOptional
+			count: 1
+			path: app/Domain/Comments/Models/Comment.php
+
+		-
+			message: '#^Deprecated in PHP 8\.0\: Required parameter \$updatedAt follows optional parameter \$isLikedByViewer\.$#'
+			identifier: parameter.requiredAfterOptional
+			count: 1
+			path: app/Domain/Comments/Models/Comment.php
+
+		-
+			message: '#^Method App\\Domain\\Comments\\Models\\Comment\:\:isLikedByViewer\(\) should return int but returns bool\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Domain/Comments/Models/Comment.php
+
+		-
+			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Domain/Comments/Models/Comments.php
+
+		-
+			message: '#^Template type U of method App\\Domain\\Comments\\Models\\Comments\:\:transform\(\) is not referenced in a parameter\.$#'
+			identifier: method.templateTypeNotInParameter
+			count: 1
+			path: app/Domain/Comments/Models/Comments.php
+
+		-
+			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Domain/Engagement/Models/Likes.php
+
+		-
+			message: '#^Template type U of method App\\Domain\\Engagement\\Models\\Likes\:\:transform\(\) is not referenced in a parameter\.$#'
+			identifier: method.templateTypeNotInParameter
+			count: 1
+			path: app/Domain/Engagement/Models/Likes.php
+
+		-
+			message: '#^Deprecated in PHP 8\.1\: Required parameter \$articleId follows optional parameter \$offset\.$#'
+			identifier: parameter.requiredAfterOptional
+			count: 1
+			path: app/Domain/JapaneseMaterial/Kanjis/Queries/KanjiQueryCriteria.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Domain/Shared/ValueObjects/Tags.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$roleId$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Domain/Users/Queries/RoleQueryCriteria.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Exceptions\\Handler\:\:\$dontFlash is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Exceptions\\Handler\:\:\$dontFlash\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Exceptions\\Handler\:\:\$dontReport is not covariant with PHPDoc type array\<int, class\-string\<Throwable\>\> of overridden property Illuminate\\Foundation\\Exceptions\\Handler\:\:\$dontReport\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Helpers/hashtags-methods.php
+
+		-
+			message: '#^Access to offset int\<0, max\> on an unknown class charArray\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Access to offset int\<1, max\> on an unknown class charArray\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Function japanese_custom_mb_str_split\(\) has invalid return type charArray\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Function japanese_custom_mb_str_split\(\) should return charArray but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Function japanese_custom_mb_str_split\(\) should return charArray but returns list\<string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Function japanese_custom_mb_str_split\(\) should return charArray but returns list\<string\>\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Loose comparison using \=\= between 0 and 0 will always evaluate to true\.$#'
+			identifier: equal.alwaysTrue
+			count: 2
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^PHPDoc tag @param has invalid value \(object Article\)\: Unexpected token "Article", expected variable at offset 21 on line 2$#'
+			identifier: phpDoc.parseError
+			count: 2
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^PHPDoc tag @param has invalid value \(string, @param array\)\: Unexpected token ",", expected variable at offset 67 on line 3$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Parameter \#1 \$value of function sizeof expects array\|Countable, charArray given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Variable \$potentialWords might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Variable \$potentialWordsNext might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Variable \$tempWordNext might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Helpers/japanese-text-methods.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$downloadsTotal\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$hashtags\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$jp_day\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$jp_hour\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$jp_minute\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$jp_month\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$jp_year\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$statusTitle\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$viewsTotal\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$comments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$downloadsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$hashtags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$jlptcommon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$kanjiTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$kanjis\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$likes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$userId\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$userName\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$viewsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Article\>\:\:\$words\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Call to method validated\(\) on an unknown class App\\Http\\Controllers\\ArticleStoreRequest\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Function removeHashtags invoked with 3 parameters, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:delete\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:delete\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:getUserArticles\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:getUserArticles\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:index\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:index\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:store\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:store\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:storeComment\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:storeComment\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:togglePublicity\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:togglePublicity\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:unlikeArticle\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:unlikeArticle\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:update\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\ArticleController\:\:update\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 4
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\User\>\:\:role\(\) invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Parameter \$request of method App\\Http\\Controllers\\ArticleController\:\:store\(\) has invalid type App\\Http\\Controllers\\ArticleStoreRequest\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\Article\:\:\$publicity \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\Like\:\:\$value \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Variable \$articles in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 2
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^Variable \$status might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/ArticleController.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(User;\)\: Unexpected token ";", expected TOKEN_HORIZONTAL_WS at offset 120 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$downloadsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$hashtags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$savesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Article\:\:\$viewsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\CustomList\:\:\$downloadsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\CustomList\:\:\$elementBelongsToList\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\CustomList\:\:\$listItems\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Kanji\:\:\$savesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Kanji\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Kanji\>\:\:\$uncommon\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Radical\:\:\$savesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\:\:\$savesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Word\:\:\$savesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Call to method validated\(\) on an unknown class App\\Http\\Controllers\\CustomListStoreRequest\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CustomListController\:\:index\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CustomListController\:\:index\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CustomListController\:\:removeHashtags\(\) invoked with 3 parameters, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CustomListController\:\:store\(\) has invalid return type App\\Http\\Controllers\\JsonResponse\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CustomListController\:\:store\(\) should return App\\Http\\Controllers\\JsonResponse but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\User\>\:\:role\(\) invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Parameter \$request of method App\\Http\\Controllers\\CustomListController\:\:store\(\) has invalid type App\\Http\\Controllers\\CustomListStoreRequest\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\Like\:\:\$value \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Variable \$comment in isset\(\) always exists and is always null\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Variable \$lists in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 2
+			path: app/Http/Controllers/CustomListController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Kanji\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Kanji\>\:\:\$articles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Kanji\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Kanji\>\:\:\$sentences\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Kanji\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Kanji\>\:\:\$words\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Radical\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Radical\>\:\:\$kanjis\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\:\:\$content_en\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Sentence\>\:\:\$comments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Sentence\>\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Sentence\>\:\:\$content_en\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Sentence\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Sentence\>\:\:\$kanjis\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to offset int\<0, max\> on an unknown class App\\Http\\Controllers\\charArray\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to offset int\<1, max\> on an unknown class App\\Http\\Controllers\\charArray\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Models\\Sentence\:\:words\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Models\\Sentence\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Sentence\>\:\:words\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Loose comparison using \=\= between 0 and 0 will always evaluate to true\.$#'
+			identifier: equal.alwaysTrue
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\JapaneseDataController\:\:mb_str_split\(\) has invalid return type App\\Http\\Controllers\\charArray\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\JapaneseDataController\:\:mb_str_split\(\) should return App\\Http\\Controllers\\charArray but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\JapaneseDataController\:\:mb_str_split\(\) should return App\\Http\\Controllers\\charArray but returns list\<string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\JapaneseDataController\:\:mb_str_split\(\) should return App\\Http\\Controllers\\charArray but returns list\<string\>\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^PHPDoc tag @param has invalid value \(object Sentence TODO\)\: Unexpected token "Sentence", expected variable at offset 25 on line 2$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^PHPDoc tag @param has invalid value \(object Sentence\)\: Unexpected token "Sentence", expected variable at offset 25 on line 2$#'
+			identifier: phpDoc.parseError
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Parameter \#1 \$value of function sizeof expects array\|Countable, App\\Http\\Controllers\\charArray given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\Like\:\:\$value \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Undefined variable\: \$article$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Variable \$comment in isset\(\) always exists and is always null\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Variable \$potentialWords might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Variable \$potentialWordsNext might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Variable \$tempWordNext might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Http/Controllers/JapaneseDataController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Comment\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$hashtags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$postType\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$userName\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\:\:\$viewsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$comments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$commentsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$hashtags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$likesTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$postType\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$userId\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$userName\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Models\\Post\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Http\\Models\\Post\>\:\:\$viewsTotal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PostController\:\:removeHashtags\(\) invoked with 3 parameters, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\Like\:\:\$value \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 2
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Variable \$comment in isset\(\) always exists and is always null\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Variable \$posts in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\User\:\:\$isAdmin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Called ''first'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\User\>\:\:role\(\) invoked with 0 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(\[json\] user object\)\: Unexpected token "\[", expected type at offset 60 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(\[string\] message\)\: Unexpected token "\[", expected type at offset 64 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Property App\\Http\\Models\\CustomList\:\:\$publicity \(bool\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 4
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middleware is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middlewareGroups is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middlewareGroups\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$routeMiddleware is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$routeMiddleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\CheckForMaintenanceMode\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/CheckForMaintenanceMode.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\EncryptCookies\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Cookie\\Middleware\\EncryptCookies\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/EncryptCookies.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Http/Middleware/EnsureHorizonBasicAuth.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\TrimStrings\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\TrimStrings\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/TrimStrings.php
+
+		-
+			message: '#^PHPDoc type array\|string of property App\\Http\\Middleware\\TrustProxies\:\:\$proxies is not covariant with PHPDoc type array\<int, string\>\|string\|null of overridden property Illuminate\\Http\\Middleware\\TrustProxies\:\:\$proxies\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/TrustProxies.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\VerifyCsrfToken\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/VerifyCsrfToken.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\Article\:\:\$attributes is not covariant with PHPDoc type array\<string, mixed\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$attributes\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/Article.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\Article\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/Article.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\Article\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/Article.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\CustomList\:\:\$attributes is not covariant with PHPDoc type array\<string, mixed\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$attributes\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/CustomList.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\CustomList\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/CustomList.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Models\\CustomList\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Models/CustomList.php
+
+		-
+			message: '#^Class App\\Http\\Models\\User not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Models/Download.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:belongsTo\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Models/Download.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\User\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\User\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\User\:\:\$hidden is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$hidden\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/User.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Http\\Request\:\:validated\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Admin/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:find\(\) invoked with 2 parameters, 0\-1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/v1/Admin/Controllers/UserController.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$newRole contains unknown class App\\Http\\v1\\Admin\\Controllers\\DomainRole\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/v1/Admin/Controllers/UserRoleController.php
+
+		-
+			message: '#^Method App\\Http\\v1\\Articles\\Controllers\\ArticleController\:\:getImagePath\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Http/v1/Articles/Controllers/ArticleController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/v1/Articles/Controllers/ArticleController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getAuthorId\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getAuthorName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getAuthorUuid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getContentEn\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getContentJp\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getCreatedAt\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getEntityTypeUid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getIdValue\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getJlptLevels\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getPublicity\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getSourceUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getStatus\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getTitleEn\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getTitleJp\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getUid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getUpdatedAt\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:toArray\(\) should return array\{article\: array\{id\: int, uid\: string, entity_type_uid\: string, title_jp\: string, title_en\: string\|null, content_jp\: string, content_en\: string\|null, source_link\: string, \.\.\.\}\} but returns array\{article\: array\{id\: int, uid\: string, entity_type_uid\: string, title_jp\: mixed, title_en\: mixed, content_jp\: mixed, content_en\: mixed, source_link\: mixed, \.\.\.\}\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleDetailResource.php
+
+		-
+			message: '#^Method App\\Http\\v1\\Articles\\Resources\\ArticleResource\:\:toArray\(\) should return array\{id\: int, uuid\: string, entity_type_uid\: string, title_jp\: string, title_en\: string\|null, content_preview_jp\: string, content_preview_en\: string\|null, source_link\: string, \.\.\.\} but returns array\{id\: int, uuid\: string, entity_type_uid\: string, title_jp\: string, title_en\: string\|null, content_preview_jp\: string, content_preview_en\: string\|null, source_link\: string, \.\.\.\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/v1/Articles/Resources/ArticleResource.php
+
+		-
+			message: '#^Parameter \#1 \$templateId of method App\\Application\\Engagement\\Actions\\LoadEntityStatsAction\:\:batchLoadStatsById\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/v1/Catalogues/Controllers/CatalogueController.php
+
+		-
+			message: '#^Method App\\Http\\v1\\Catalogues\\Resources\\CatalogueDetailResource\:\:toArray\(\) should return array\{catalogue\: array\{id\: int, uuid\: string, type\: int, type_label\: string, title\: string, description\: string\|null, publicity\: int, owner\: App\\Http\\v1\\Shared\\Resources\\AuthorResource, \.\.\.\}\} but returns array\{catalogue\: array\{id\: int, uuid\: string, type\: 1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11, type_label\: string, title\: string, description\: string\|null, publicity\: 0\|1, owner\: App\\Http\\v1\\Shared\\Resources\\AuthorResource, \.\.\.\}\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/v1/Catalogues/Resources/CatalogueDetailResource.php
+
+		-
+			message: '#^Method App\\Http\\v1\\Catalogues\\Resources\\CatalogueResource\:\:toArray\(\) should return array\{id\: int, uuid\: string, type\: int, type_label\: string, title\: string, description\: string\|null, publicity\: int, owner\: App\\Http\\v1\\Shared\\Resources\\AuthorResource, \.\.\.\} but returns array\{id\: int, uuid\: string, type\: 1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11, type_label\: string, title\: string, description\: string\|null, publicity\: 0\|1, owner\: App\\Http\\v1\\Shared\\Resources\\AuthorResource, \.\.\.\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/v1/Catalogues/Resources/CatalogueResource.php
+
+		-
+			message: '#^Parameter \$entityId of method App\\Application\\Comments\\Services\\CommentService\:\:getCommentsList\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/v1/Comments/Controllers/CommentController.php
+
+		-
+			message: '#^Property App\\Http\\v1\\Comments\\Resources\\CommentResource\:\:\$include_likes is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/Http/v1/Comments/Resources/CommentResource.php
+
+		-
+			message: '#^Property App\\Http\\v1\\Comments\\Resources\\CommentResource\:\:\$likes is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/Http/v1/Comments/Resources/CommentResource.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/v1/Engagement/Resources/LikeResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:currentPage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:lastPage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:nextPageUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:perPage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:previousPageUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:total\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiCollectionResource.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:find\(\) invoked with 2 parameters, 0\-1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/v1/Users/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Application\\Users\\Services\\UserServiceInterface\:\:findByUuid\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/v1/Users/Controllers/UserController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Infrastructure/Auth/Services/AuthSessionService.php
+
+		-
+			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>, Illuminate\\Support\\Collection\<int, App\\Domain\\JapaneseMaterial\\Kanjis\\Models\\Kanji\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Builders/KanjiRelationQueryBuilder.php
+
+		-
+			message: '#^Parameter \#1 \$persistenceKanji of method App\\Infrastructure\\Persistence\\Repositories\\KanjiMapper\:\:mapToDomain\(\) expects App\\Infrastructure\\Persistence\\Models\\Kanji, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Builders/KanjiRelationQueryBuilder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Builders/KanjiRelationQueryBuilder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Builders/KanjiRelationQueryBuilder.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\Download\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Download.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\Download\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Download.php
+
+		-
+			message: '#^Class App\\Infrastructure\\Persistence\\Models\\Radical not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Kanji.php
+
+		-
+			message: '#^Class App\\Infrastructure\\Persistence\\Models\\Sentence not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Kanji.php
+
+		-
+			message: '#^Class App\\Infrastructure\\Persistence\\Models\\Word not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Kanji.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:belongsToMany\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Infrastructure/Persistence/Models/Kanji.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\Like\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Like.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\Like\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/Like.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\View\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/View.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Infrastructure\\Persistence\\Models\\View\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Infrastructure/Persistence/Models/View.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$kanjis\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n1 \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n2 \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n3 \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n4 \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n5 \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$publicity \(App\\Domain\\Shared\\Enums\\PublicityStatus\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$status \(App\\Domain\\Shared\\Enums\\ArticleStatus\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$uncommon \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(ArticleCriteriaDTO
+				\$criteria Complete filter criteria including\:\)\: Unexpected token "\\n     \* ", expected variable at offset 287 on line 7$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$dto$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Article\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Article\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Articles\\Models\\Article\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^Relation ''kanjis'' is not found in App\\Infrastructure\\Persistence\\Models\\Article model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Article model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between bool and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
+
+		-
+			message: '#^Instanceof between App\\Domain\\Shared\\Enums\\SavedListType and App\\Domain\\Shared\\Enums\\SavedListType will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Catalogue\:\:\$type \(App\\Domain\\Shared\\Enums\\SavedListType\) does not accept int\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
+
+		-
+			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Catalogue\:\:\$updated_at \(Carbon\\Carbon\|string\|null\) does not accept DateTimeImmutable\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>uuid" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
+
+		-
+			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Catalogue\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Catalogue\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Catalogues\\Models\\Catalogue\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CatalogueRepository.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Catalogue model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Infrastructure/Persistence/Repositories/CatalogueRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Comment\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CommentMapper.php
+
+		-
+			message: '#^Parameter \#1 \$value of class App\\Domain\\Shared\\ValueObjects\\EntityId constructor expects string, int\<min, \-1\>\|int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CommentMapper.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Comment\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+
+		-
+			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Comment\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Comment\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Comments\\Models\\Comment\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+
+		-
+			message: '#^Parameter \#2 \$entityId of method App\\Infrastructure\\Persistence\\Repositories\\CommentRepository\:\:countCommentsForEntity\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+
+		-
+			message: '#^Parameter \#2 \$objectId of method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Comment\>\:\:forEntity\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Comment model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Domain\\Engagement\\DTOs\\DownloadFilterDTO\:\:\$likeValue\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/DownloadRepository.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/DownloadRepository.php
+
+		-
+			message: '#^Parameter \#1 \$attributes of static method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Download\>\:\:create\(\) expects array\<string, mixed\>, App\\Domain\\Engagement\\DTOs\\DownloadCreateDTO given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/DownloadRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\HashtagEntity\:\:\$uniquehashtag\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
+
+		-
+			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\HashtagRepository\:\:buildBaseQuery\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
+
+		-
+			message: '#^Relation ''uniquehashtag'' is not found in App\\Infrastructure\\Persistence\\Models\\HashtagEntity model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int and ''\-'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiMapper.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:byGrade\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:byJlptLevel\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Cannot access offset ''max'' on int\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Cannot access offset ''min'' on int\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\KanjiRepository\:\:findByCharacters\(\) should return array but returns Illuminate\\Database\\Eloquent\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Kanji\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\KanjiRepository\:\:findByIds\(\) should return array but returns Illuminate\\Database\\Eloquent\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Kanji\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Like\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Infrastructure/Persistence/Repositories/LikeMapper.php
+
+		-
+			message: '#^Parameter \$value of class App\\Domain\\Engagement\\Models\\Like constructor expects int, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeMapper.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
+
+		-
+			message: '#^Parameter \#1 \$attributes of static method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Like\>\:\:create\(\) expects array\<string, mixed\>, App\\Domain\\Engagement\\DTOs\\LikeCreateDTO given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Like model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
+
+		-
+			message: '#^Parameter \#1 \$spatieRole of static method App\\Domain\\Users\\Models\\Role\:\:fromSpatieRole\(\) expects Spatie\\Permission\\Models\\Role, Spatie\\Permission\\Contracts\\Role given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/RoleRepository.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/RoleRepository.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: App\\Domain\\Users\\Models\\Role, Closure\(Spatie\\Permission\\Models\\Role\)\: App\\Domain\\Users\\Models\\Role given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/UserMapper.php
+
+		-
+			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\UserRepository\:\:create\(\) should return array\{userId\: App\\Domain\\Shared\\ValueObjects\\UserId, uuid\: App\\Domain\\Shared\\ValueObjects\\EntityId, user\: App\\Infrastructure\\Persistence\\Models\\User\} but returns array\{userId\: App\\Domain\\Shared\\ValueObjects\\UserId, uuid\: App\\Domain\\Shared\\ValueObjects\\EntityId\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Infrastructure/Persistence/Repositories/ViewRepository.php
+
+		-
+			message: '#^Parameter \#1 \$articleUid of method App\\Application\\Articles\\Services\\ArticleKanjiProcessingService\:\:processArticleKanjis\(\) expects App\\Domain\\Shared\\ValueObjects\\EntityId, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ProcessArticleKanjis.php
+
+		-
+			message: '#^Function array_wrap not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Providers\\AuthServiceProvider\:\:\$policies is not covariant with PHPDoc type array\<class\-string, class\-string\> of overridden property Illuminate\\Foundation\\Support\\Providers\\AuthServiceProvider\:\:\$policies\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Providers/AuthServiceProvider.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Providers\\EventServiceProvider\:\:\$listen is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider\:\:\$listen\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Providers/HorizonServiceProvider.php
+
+		-
+			message: '#^Comparison operation "\<" between 500 and 600 is always true\.$#'
+			identifier: smaller.alwaysTrue
+			count: 1
+			path: app/Shared/Enums/HttpStatus.php
+
+		-
+			message: '#^Comparison operation "\>\=" between 200\|201\|202\|204\|400\|401\|403\|404\|409\|422\|500 and 200 is always true\.$#'
+			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: app/Shared/Enums/HttpStatus.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Illuminate\\Pagination\\LengthAwarePaginator&iterable\<T\> and ''getPageName'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Shared/Utils/Paginator.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Shared/Utils/Paginator.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between array\<string, mixed\> and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Support/JapaneseDataImport/JapaneseDataImporter.php
+
+		-
+			message: '#^Trait App\\Traits\\JsonRespondController is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/JsonRespondController.php

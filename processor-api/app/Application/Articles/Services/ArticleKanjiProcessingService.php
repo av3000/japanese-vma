@@ -2,13 +2,15 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Actions\Processing\ExtractKanjisAction;
+use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
-use App\Domain\Articles\Models\Article as DomainArticle;
-use App\Domain\Articles\ValueObjects\{JlptLevels};
 use App\Domain\Articles\Enums\ArticleStatus;
+use App\Domain\Articles\Exceptions\ArticleNotFoundException;
+use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Jobs\ProcessArticleKanjis;
 
 // TODO: probably to be refactored or decommisioned. See in ArticleService how the job is being called
 class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInterface
@@ -28,7 +30,7 @@ class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInte
     {
         $article = $this->articleRepository->findByUid($articleUid);
 
-        if (!$article) {
+        if (! $article) {
             throw new ArticleNotFoundException("Article not found: {$articleUid->value()}");
         }
 

@@ -11,6 +11,8 @@
 -   Laravel Reverb
 -   Laravel Telescope
 -   Laravel Boost
+-   Laravel PHPStan(https://larastan.org/)
+-   Laravel Pint
 -   Dedoc Scramble
 -   Sentry Laravel
 -   Spatie Laravel Permission
@@ -120,14 +122,50 @@ The local Docker Compose setup includes:
 ```bash
 cd processor-api
 docker compose up -d --build
-docker compose exec laravel-app php artisan test --compact
-docker compose exec laravel-app vendor/bin/pint --test app
-docker compose exec laravel-app vendor/bin/phpstan analyse app
-docker compose exec laravel-app php artisan route:list
-docker compose exec laravel-app php artisan horizon
+composer format
+composer stan
+composer test
+composer quality
+composer quality:ci
+php artisan route:list
+php artisan horizon
 docker compose logs -f queue
 docker compose logs -f webserver
 ```
+
+Use `composer format` during local work to run Pint against dirty PHP files when Git metadata is available to the PHP runtime.
+
+Use `composer test` for the PHPUnit suite, and `composer quality` before handing off a backend change.
+In CI or review gates, prefer `composer quality:ci` so Pint checks formatting without modifying files.
+
+### Larastan - static analysis
+
+Use `composer stan` for Larastan(Laravel phpstan static ),
+looks for type errors, missing classes, bad method calls, impossible conditions, wrong array shapes, nullable mistakes, and similar problems.
+
+`phpstan.neon` has levels of strictness and other configurations.
+`phpstan-baseline.neon` is the current debt list, and is included in phpstan to avoid reruning known files issues. After making fixes from debt list, do not manually edit it, use `composer stan --generate-baseline`.
+
+```bash
+composer stan -- app/Application/Articles/Services/ArticleKanjiProcessingService.php
+composer stan -- app/Application/Articles
+composer stan -- app/Foo.php app/Bar.php
+```
+
+### Pint - code style fixer
+
+The current Docker Compose mount exposes `processor-api/` to the Laravel container, while the `.git` directory lives at the repository root. Because of that, Pint's `--dirty` mode may report `0 files` inside the container. For targeted Docker formatting, run Pint against explicit files or directories:
+
+```bash
+vendor/bin/pint app/Path/To/File.php
+vendor/bin/pint --test app/Path/To/File.php
+```
+
+If the branch is still carrying legacy style drift, format touched PHP files directly during daily work and reserve whole-repository checks such as `composer format:check` or `composer quality:ci` for cleanup branches or CI gates with an agreed formatting baseline.
+
+Larastan uses `phpstan-baseline.neon` to ignore the current backlog of existing findings. When fixing static-analysis issues, regenerate the baseline only after confirming the reduction is intentional.
+
+research what do you know about @property-read
 
 ## Laravel Boost
 

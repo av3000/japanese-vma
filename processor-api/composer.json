@@ -76,6 +76,21 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "format": "vendor/bin/pint --dirty",
+        "format:all": "vendor/bin/pint",
+        "format:check": "vendor/bin/pint --test",
+        "stan": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "test": "php artisan test --compact",
+        "quality": [
+            "@format",
+            "@stan",
+            "@test"
+        ],
+        "quality:ci": [
+            "@format:check",
+            "@stan",
+            "@test"
         ]
     }
 }
