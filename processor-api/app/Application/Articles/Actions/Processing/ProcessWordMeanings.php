@@ -1,5 +1,3 @@
-<!-- TODO: Use only ProcessWordMeaningsAction and remove this redundant old implementation-->
-
 <?php
 
 namespace App\Application\Articles\Actions\Processing;
@@ -7,6 +5,7 @@ namespace App\Application\Articles\Actions\Processing;
 // use App\Domain\Articles\Http\Models\Article;
 use Illuminate\Support\Facades\Log;
 
+// TODO: Use only ProcessWordMeaningsAction and remove this redundant old implementation.
 class ProcessWordMeanings
 {
     public function execute($article): void //TODO: add proper ARticle type
