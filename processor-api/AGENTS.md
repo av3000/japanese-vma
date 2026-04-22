@@ -78,6 +78,70 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   Keep this file as the source of truth for backend constraints; the skill should reinforce these rules, not override them.
 
 <laravel-boost-guidelines>
+=== .ai/backend-response-and-errors rules ===
+
+# Backend Response And Errors
+
+For v1 endpoints:
+
+- Return success responses through `App\Shared\Http\TypedResults`.
+- Return service-level failures through `App\Shared\Results\Result` and typed error classes.
+- Keep pagination, envelope shape, and include-flag behavior aligned with the nearest existing v1 module.
+- Use request validation classes to reject invalid inputs before service orchestration.
+
+When changing contracts:
+
+- Make the change explicit in the task summary or implementation notes.
+- Keep legacy behavior unless a migration intentionally moves to a new v1 contract.
+- Do not mix legacy JSON patterns and v1 `TypedResults` patterns in the same endpoint family without a clear reason.
+
+=== .ai/backend-v1-architecture rules ===
+
+# Backend V1 Architecture
+
+Use this request flow for v1 Laravel endpoints:
+
+`routes/api_v1.php` -> v1 Controller -> Request -> DTO or Value Object -> Application Service or Policy -> Repository Interface -> Infrastructure Repository, Model, Mapper or Builder -> Resource -> `TypedResults`
+
+Keep responsibilities separated by layer:
+
+- `app/Domain`
+  - Put domain models, DTOs, value objects, enums, and typed errors here.
+  - Do not leak HTTP requests, responses, Eloquent models, or raw query builders into this layer.
+- `app/Application`
+  - Put use-case orchestration, policies, actions, jobs, and repository interfaces here.
+  - Keep business rules here instead of controllers.
+- `app/Infrastructure/Persistence`
+  - Put persistence models, repositories, and mappers or builders here.
+  - Encapsulate query logic and batch loading here instead of the HTTP layer.
+- `app/Http/v1`
+  - Put controllers, requests, and resources here.
+  - Keep controllers thin and focused on coordination, mapping, and returning `TypedResults`.
+
+Apply these guardrails:
+
+- Reuse nearby v1 patterns before inventing new abstractions.
+- Add a mapper or builder when the persistence shape should not leak into the domain shape.
+- Add a focused service or action when logic is reusable, side-effectful, batch-heavy, or heterogeneous.
+- Keep interface bindings explicit in service and repository providers.
+
+=== .ai/repository rules ===
+
+# Repository Guidance
+
+Use this repository as a multi-application workspace:
+
+- `processor-api/` contains the Laravel backend.
+- `client/` contains the React frontend.
+- `docs/` contains project documentation assets.
+
+When migrating backend endpoints:
+
+- Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
+- Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
+- Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
+- Use `.ai/guidelines/` for always-on conventions and `.ai/skills/` for deeper, task-specific workflows.
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -109,6 +173,10 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
 - `configuring-horizon` — Use this skill whenever the user mentions Horizon by name in a Laravel context. Covers the full Horizon lifecycle: installing Horizon (horizon:install, Sail setup), configuring config/horizon.php (supervisor blocks, queue assignments, balancing strategies, minProcesses/maxProcesses), fixing the dashboard (authorization via Gate::define viewHorizon, blank metrics, horizon:snapshot scheduling), and troubleshooting production issues (worker crashes, timeout chain ordering, LongWaitDetected notifications, waits config). Also covers job tagging and silencing. Do not use for generic Laravel queues without Horizon, SQS or database drivers, standalone Redis setup, Linux supervisord, Telescope, or job batching.
+- `spatie-javascript` — Apply Spatie's JavaScript coding standards for any task that creates, edits, reviews, refactors, or formats JavaScript or TypeScript code; use for variable declarations, comparisons, functions, destructuring, and Prettier configuration to align with Spatie's JS conventions.
+- `spatie-laravel-php` — Apply Spatie's Laravel and PHP coding standards for any task that creates, edits, reviews, refactors, or formats Laravel/PHP code or Blade templates; use for controllers, Eloquent models, routes, config, validation, migrations, tests, and related files to align with Laravel conventions and PSR-12.
+- `spatie-security` — Apply Spatie's security guidelines when configuring applications, databases, or servers, or when reviewing code for security concerns; use for SSL setup, CSRF protection, password hashing, database permissions, and server hardening.
+- `spatie-version-control` — Apply Spatie's version control conventions when creating commits, branches, pull requests, or managing Git repositories; use for naming repos, writing commit messages, choosing branch strategies, and merging code.
 
 ## Conventions
 
@@ -240,12 +308,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Laravel 10 Structure
 
-- Middleware typically lives in `app/Http/Middleware/` and service providers in `app/Providers/`.
+- Middleware typically lives in `app\Http/Middleware/` and service providers in `app\Providers/`.
 - There is no `bootstrap/app.php` application configuration in a Laravel 10 structure:
-    - Middleware registration happens in `app/Http/Kernel.php`
-    - Exception handling is in `app/Exceptions/Handler.php`
-    - Console commands and schedule register in `app/Console/Kernel.php`
-    - Rate limits likely exist in `RouteServiceProvider` or `app/Http/Kernel.php`
+    - Middleware registration happens in `app\Http/Kernel.php`
+    - Exception handling is in `app\Exceptions/Handler.php`
+    - Console commands and schedule register in `app\Console/Kernel.php`
+    - Rate limits likely exist in `RouteServiceProvider` or `app\Http/Kernel.php`
 
 ## Database
 
@@ -280,5 +348,15 @@ This project has domain-specific skills available. You MUST activate the relevan
 - To run all tests: `php artisan test --compact`.
 - To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+
+=== spatie/guidelines-skills rules ===
+
+# Project Coding Guidelines
+
+- This codebase follows Spatie's coding guidelines.
+- Always activate the `spatie-laravel-php` skill when writing, editing, reviewing, or formatting Laravel or PHP code.
+- Always activate the `spatie-javascript` skill when writing, editing, reviewing, or formatting JavaScript or TypeScript code.
+- Always activate the `spatie-version-control` skill when creating commits, branches, or managing Git operations.
+- Always activate the `spatie-security` skill when configuring security, reviewing authentication, or setting up servers and databases.
 
 </laravel-boost-guidelines>
