@@ -13,18 +13,6 @@ parameters:
 			path: app/Application/Articles/Actions/Deletion/CleanupArticleHashtagsAction.php
 
 		-
-			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$kanjis\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Application/Articles/Actions/Processing/CalculateJLPTLevels.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Application/Articles/Actions/Updates/UpdateArticleHashtagsAction.php
-
-		-
 			message: '''
 				#^PHPDoc tag @param has invalid value \(ArticleCriteriaDTO
 				\$criteria Complete filter criteria including\:\)\: Unexpected token "\\n     \* ", expected variable at offset 130 on line 3$#
@@ -64,38 +52,8 @@ parameters:
 			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
 
 		-
-			message: '#^Instantiated class App\\Domain\\Articles\\ValueObjects\\JlptLevels not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Method App\\Application\\Articles\\Services\\ArticleKanjiProcessingService\:\:calculateJlptLevels\(\) has invalid return type App\\Domain\\Articles\\ValueObjects\\JlptLevels\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Parameter \#10 \$contentEn of class App\\Domain\\Articles\\Models\\Article constructor expects App\\Domain\\Articles\\ValueObjects\\ArticleContent\|null, App\\Domain\\Articles\\ValueObjects\\JlptLevels given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Parameter \#13 \$status of class App\\Domain\\Articles\\Models\\Article constructor expects App\\Domain\\Shared\\Enums\\ArticleStatus, DateTimeImmutable given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
 			message: '#^PHPDoc tag @param references unknown parameter\: \$articleUid$#'
 			identifier: parameter.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleService.php
-
-		-
-			message: '#^Property App\\Application\\Articles\\Services\\ArticleService\:\:\$lastOperationService is never read, only written\.$#'
-			identifier: property.onlyWritten
 			count: 1
 			path: app/Application/Articles/Services/ArticleService.php
 
@@ -304,22 +262,10 @@ parameters:
 			path: app/Domain/Articles/Models/Article.php
 
 		-
-			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Domain/Articles/Models/Articles.php
-
-		-
 			message: '#^Template type U of method App\\Domain\\Articles\\Models\\Articles\:\:transform\(\) is not referenced in a parameter\.$#'
 			identifier: method.templateTypeNotInParameter
 			count: 1
 			path: app/Domain/Articles/Models/Articles.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between int\<1, max\> and 0 will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Domain/Articles/ValueObjects/ArticleId.php
 
 		-
 			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
@@ -1450,18 +1396,6 @@ parameters:
 			path: app/Http/v1/Admin/Controllers/UserRoleController.php
 
 		-
-			message: '#^Method App\\Http\\v1\\Articles\\Controllers\\ArticleController\:\:getImagePath\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: app/Http/v1/Articles/Controllers/ArticleController.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: app/Http/v1/Articles/Controllers/ArticleController.php
-
-		-
 			message: '#^Call to an undefined method App\\Http\\v1\\Articles\\Resources\\ArticleDetailResource\:\:getAuthorId\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -1750,18 +1684,6 @@ parameters:
 			path: app/Infrastructure/Persistence/Models/View.php
 
 		-
-			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$kanjis\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
-
-		-
-			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
-
-		-
 			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Article\:\:\$n1 \(int\) does not accept string\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -1810,12 +1732,6 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Infrastructure/Persistence/Repositories/ArticleMapper.php
-
-		-
 			message: '''
 				#^PHPDoc tag @param has invalid value \(ArticleCriteriaDTO
 				\$criteria Complete filter criteria including\:\)\: Unexpected token "\\n     \* ", expected variable at offset 287 on line 7$#
@@ -1831,36 +1747,6 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
 
 		-
-			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Article\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Article\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Articles\\Models\\Article\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
-
-		-
-			message: '#^Relation ''kanjis'' is not found in App\\Infrastructure\\Persistence\\Models\\Article model\.$#'
-			identifier: larastan.relationExistence
-			count: 2
-			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Article model\.$#'
-			identifier: larastan.relationExistence
-			count: 4
-			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between bool and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/ArticleRepository.php
-
-		-
-			message: '#^Instanceof between App\\Domain\\Shared\\Enums\\SavedListType and App\\Domain\\Shared\\Enums\\SavedListType will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
-
-		-
 			message: '#^Property App\\Infrastructure\\Persistence\\Models\\Catalogue\:\:\$type \(App\\Domain\\Shared\\Enums\\SavedListType\) does not accept int\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -1871,24 +1757,6 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>uuid" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CatalogueMapper.php
-
-		-
-			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Catalogue\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Catalogue\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Catalogues\\Models\\Catalogue\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CatalogueRepository.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Catalogue model\.$#'
@@ -1903,33 +1771,9 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/CommentMapper.php
 
 		-
-			message: '#^Parameter \#1 \$value of class App\\Domain\\Shared\\ValueObjects\\EntityId constructor expects string, int\<min, \-1\>\|int\<1, max\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CommentMapper.php
-
-		-
 			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Comment\:\:\$user\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
-
-		-
-			message: '#^Parameter \#1 \$collection of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Infrastructure\\Persistence\\Models\\Comment\>\:\:setCollection\(\) expects Illuminate\\Support\\Collection\<int, App\\Infrastructure\\Persistence\\Models\\Comment\>, Illuminate\\Support\\Collection\<int, App\\Domain\\Comments\\Models\\Comment\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
-
-		-
-			message: '#^Parameter \#2 \$entityId of method App\\Infrastructure\\Persistence\\Repositories\\CommentRepository\:\:countCommentsForEntity\(\) expects int, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
-
-		-
-			message: '#^Parameter \#2 \$objectId of method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Comment\>\:\:forEntity\(\) expects int, string given\.$#'
-			identifier: argument.type
-			count: 1
 			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
 
 		-
@@ -1951,21 +1795,9 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/DownloadRepository.php
 
 		-
-			message: '#^Parameter \#1 \$attributes of static method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Download\>\:\:create\(\) expects array\<string, mixed\>, App\\Domain\\Engagement\\DTOs\\DownloadCreateDTO given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/DownloadRepository.php
-
-		-
 			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\HashtagEntity\:\:\$uniquehashtag\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
-
-		-
-			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\HashtagRepository\:\:buildBaseQuery\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
 			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
 
 		-
@@ -1973,12 +1805,6 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 2
 			path: app/Infrastructure/Persistence/Repositories/HashtagRepository.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between int and ''\-'' will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/KanjiMapper.php
 
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:byGrade\(\)\.$#'
@@ -2017,38 +1843,14 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/KanjiRepository.php
-
-		-
 			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Like\:\:\$user\.$#'
 			identifier: property.notFound
 			count: 3
 			path: app/Infrastructure/Persistence/Repositories/LikeMapper.php
 
 		-
-			message: '#^Parameter \$value of class App\\Domain\\Engagement\\Models\\Like constructor expects int, bool given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/LikeMapper.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
-
-		-
-			message: '#^Parameter \#1 \$attributes of static method Illuminate\\Database\\Eloquent\\Builder\<App\\Infrastructure\\Persistence\\Models\\Like\>\:\:create\(\) expects array\<string, mixed\>, App\\Domain\\Engagement\\DTOs\\LikeCreateDTO given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
 
@@ -2059,50 +1861,8 @@ parameters:
 			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/LikeRepository.php
-
-		-
-			message: '#^Parameter \#1 \$spatieRole of static method App\\Domain\\Users\\Models\\Role\:\:fromSpatieRole\(\) expects Spatie\\Permission\\Models\\Role, Spatie\\Permission\\Contracts\\Role given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/RoleRepository.php
-
-		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/RoleRepository.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: App\\Domain\\Users\\Models\\Role, Closure\(Spatie\\Permission\\Models\\Role\)\: App\\Domain\\Users\\Models\\Role given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/UserMapper.php
-
-		-
 			message: '#^Method App\\Infrastructure\\Persistence\\Repositories\\UserRepository\:\:create\(\) should return array\{userId\: App\\Domain\\Shared\\ValueObjects\\UserId, uuid\: App\\Domain\\Shared\\ValueObjects\\EntityId, user\: App\\Infrastructure\\Persistence\\Models\\User\} but returns array\{userId\: App\\Domain\\Shared\\ValueObjects\\UserId, uuid\: App\\Domain\\Shared\\ValueObjects\\EntityId\}\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>per_page" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Infrastructure/Persistence/Repositories/UserRepository.php
 

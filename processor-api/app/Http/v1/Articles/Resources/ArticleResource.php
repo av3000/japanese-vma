@@ -2,25 +2,34 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Domain\Articles\Models\{Article, ArticleStats};
+use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\Models\ArticleStats;
 use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Article $resource
+ * @property-read Article $resource
  */
 class ArticleResource extends JsonResource
 {
     public static $wrap = null;
 
+    /**
+     * @var array{include_hashtags?: bool, include_stats?: bool}|null
+     */
     private ?array $options;
+
     private ?ArticleStats $stats;
+
+    /**
+     * @var array<int, array{id: int|string, content: string, created_at?: mixed, updated_at?: mixed}|object>
+     */
     private array $hashtags;
 
     public function __construct(
@@ -35,10 +44,10 @@ class ArticleResource extends JsonResource
         $this->stats = $stats;
         $this->hashtags = $hashtags;
     }
+
     /**
      * Transform the article domain model into an API representation.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array{
      *     id: int,
      *     uuid: string,
