@@ -24,6 +24,8 @@ interface CatalogueRepositoryInterface
 
     public function update(Catalogue $catalogue): void;
 
+    public function deleteById(int $id): bool;
+
     public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues;
 
     public function findByPublicUid(EntityId $uuid): ?Catalogue;

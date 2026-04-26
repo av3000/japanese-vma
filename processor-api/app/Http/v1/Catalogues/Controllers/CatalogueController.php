@@ -17,6 +17,7 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
+use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
@@ -127,6 +128,26 @@ class CatalogueController extends Controller
     }
 
     /**
+     * @response array{}
+     */
+    #[Response(201, type: 'array{}')]
+    public function addItem(string $uuid, StoreCatalogueItemRequest $request): JsonResponse
+    {
+        $catalogueUid = EntityId::from($uuid);
+        $result = $this->catalogueService->addItemToCatalogue(
+            $catalogueUid,
+            (int) $request->validated('item_id'),
+            auth('api')->user(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return response()->json([], 201);
+    }
+
+    /**
      * @response CatalogueDetailResource
      */
     #[Response(type: 'CatalogueDetailResource')]
@@ -210,5 +231,17 @@ class CatalogueController extends Controller
             hashtags: $hashtags,
             itemsCount: $itemsCount
         );
+    }
+
+    public function destroy(string $uuid): JsonResponse
+    {
+        $catalogueUid = EntityId::from($uuid);
+        $result = $this->catalogueService->deleteCatalogue($catalogueUid, auth('api')->user());
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return TypedResults::noContent();
     }
 }

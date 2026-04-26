@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Catalogues\Interfaces\Repositories;
 
+use App\Domain\Shared\Enums\SavedListType;
+
 interface CatalogueItemRepositoryInterface
 {
     /**
@@ -22,4 +24,10 @@ interface CatalogueItemRepositoryInterface
      * @return array<int,int> map real_object_id => count
      */
     public function countSavesByItemIds(array $itemIds, int $listType): array;
+
+    public function containsItem(int $catalogueId, int $itemId): bool;
+
+    public function addItem(int $catalogueId, SavedListType $catalogueType, int $itemId): void;
+
+    public function deleteByCatalogueId(int $catalogueId): void;
 }

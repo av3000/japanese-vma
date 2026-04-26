@@ -12,7 +12,10 @@ use Spatie\Permission\Models\Role;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Catalogue as PersistenceCatalogue;
+use App\Infrastructure\Persistence\Models\Comment;
+use App\Infrastructure\Persistence\Models\Download;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
+use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
@@ -29,11 +32,20 @@ class StoreUpdateCatalogueTest extends TestCase
         Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
 
         DB::table('objecttemplates')->insert([
-            'id' => ObjectTemplateType::LIST->getLegacyId(),
-            'title' => 'list',
-            'entity_type_uuid' => ObjectTemplateType::LIST->value,
-            'created_at' => now(),
-            'updated_at' => now(),
+            [
+                'id' => ObjectTemplateType::LIST->getLegacyId(),
+                'title' => 'list',
+                'entity_type_uuid' => ObjectTemplateType::LIST->value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => ObjectTemplateType::COMMENT->getLegacyId(),
+                'title' => 'comment',
+                'entity_type_uuid' => ObjectTemplateType::COMMENT->value,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 
@@ -223,5 +235,91 @@ class StoreUpdateCatalogueTest extends TestCase
         ])->assertStatus(200);
 
         $this->assertSame([], $this->getHashtagContents($catalogue));
+    }
+
+    public function test_destroy_allows_owner_to_delete_catalogue_and_related_records(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user);
+        $this->attachHashtags($catalogue, ['#tokyo']);
+
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogue->id,
+            'listtype_id' => $catalogue->type->value,
+            'real_object_id' => 123,
+        ]);
+
+        View::create([
+            'user_id' => $user->id,
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'user_ip' => '127.0.0.1',
+        ]);
+
+        Download::create([
+            'user_id' => $user->id,
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+        ]);
+
+        Like::create([
+            'user_id' => $user->id,
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'value' => 1,
+        ]);
+
+        $comment = Comment::create([
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'user_id' => $user->id,
+            'content' => 'Delete me',
+        ]);
+
+        Like::create([
+            'user_id' => $user->id,
+            'template_id' => ObjectTemplateType::COMMENT->getLegacyId(),
+            'real_object_id' => $comment->id,
+            'value' => 1,
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('DELETE', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertNoContent();
+
+        $this->assertNull(PersistenceCatalogue::find($catalogue->id));
+        $this->assertSame(0, DB::table('customlist_object')->where('list_id', $catalogue->id)->count());
+        $this->assertSame(0, View::where('real_object_id', $catalogue->id)->count());
+        $this->assertSame(0, Download::where('real_object_id', $catalogue->id)->count());
+        $this->assertSame(0, Like::where('template_id', ObjectTemplateType::LIST->getLegacyId())
+            ->where('real_object_id', $catalogue->id)
+            ->count());
+        $this->assertSame(0, Comment::where('real_object_id', $catalogue->id)->count());
+        $this->assertSame(0, Like::where('template_id', ObjectTemplateType::COMMENT->getLegacyId())
+            ->where('real_object_id', $comment->id)
+            ->count());
+        $this->assertSame(0, HashtagEntity::where('entity_id', $catalogue->id)->count());
+    }
+
+    public function test_destroy_forbids_non_owner(): void
+    {
+        $owner = $this->createUser();
+        $otherUser = $this->createUser();
+        $catalogue = $this->createCatalogue($owner);
+
+        Passport::actingAs($otherUser, ['*'], 'api');
+
+        $this->json('DELETE', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertStatus(403);
+    }
+
+    public function test_destroy_returns_not_found_for_unknown_uuid(): void
+    {
+        $user = $this->createUser();
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('DELETE', '/api/v1/catalogues/' . (string) Str::uuid())
+            ->assertStatus(404);
     }
 }

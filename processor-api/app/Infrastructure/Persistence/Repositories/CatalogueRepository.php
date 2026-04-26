@@ -55,6 +55,13 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         $entity->save();
     }
 
+    public function deleteById(int $id): bool
+    {
+        $entity = Catalogue::findOrFail($id);
+
+        return $entity->delete();
+    }
+
     private function createDefaultCatalogue(
         UserId $userId,
         CatalogueType $type,

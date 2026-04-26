@@ -18,5 +18,9 @@ interface CatalogueServiceInterface
 
     public function getCatalogue(EntityId $uuid, ?User $user = null): Result;
 
+    public function addItemToCatalogue(EntityId $uuid, int $itemId, User $user): Result;
+
     public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, User $user): Result;
+
+    public function deleteCatalogue(EntityId $uuid, User $user): Result;
 }
