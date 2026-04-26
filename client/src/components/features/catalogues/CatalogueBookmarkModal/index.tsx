@@ -7,6 +7,7 @@ import { LIST_ACTIONS } from '@/shared/constants';
 interface BookmarkListItem {
 	id: number;
 	title: string;
+	uuid?: string;
 	elementBelongsToList?: boolean;
 }
 
@@ -29,7 +30,7 @@ export const CatalogueBookmarkModal = ({
 	onListAction,
 	title = 'Save to List',
 	emptyText = 'You have no lists created.',
-	createListHref = '/newlist',
+	createListHref = '/catalogues/new',
 	ariaLabel = 'Save to List',
 	size = 'md',
 }: CatalogueBookmarkModalProps) => {
@@ -56,7 +57,7 @@ export const CatalogueBookmarkModal = ({
 
 					return (
 						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
-							<Link to={`/list/${list.id}`}>{list.title}</Link>
+							<Link to={`/catalogues/${list.uuid ?? list.id}`}>{list.title}</Link>
 							<Button
 								variant={isActive ? 'danger' : 'primary'}
 								size="sm"

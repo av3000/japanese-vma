@@ -17,11 +17,11 @@ const ArticleDetailsPage = lazy(() => import('@/routes/ArticleDetails'));
 const ArticleCreatePage = lazy(() => import('@/routes/ArticleCreate'));
 const ArticleEditPage = lazy(() => import('@/routes/ArticleEdit'));
 
-// List routes
-const ListsPage = lazy(() => import('@/routes/SavedLists'));
-const ListDetailsPage = lazy(() => import('@/routes/SavedListDetails'));
-const ListFormPage = lazy(() => import('@/routes/SavedListForm'));
-const ListEditPage = lazy(() => import('@/routes/SavedListEdit'));
+// Catalogue routes
+const CataloguesListPage = lazy(() => import('@/routes/CataloguesList'));
+const CatalogueDetailsPage = lazy(() => import('@/routes/CatalogueDetails'));
+const CatalogueCreatePage = lazy(() => import('@/routes/CatalogueCreate'));
+const CatalogueEditPage = lazy(() => import('@/routes/CatalogueEdit'));
 
 // Japanese learning routes
 const RadicalsPage = lazy(() => import('@/routes/japanese/RadicalsList'));
@@ -93,20 +93,36 @@ const AppRoutes: React.FC = () => {
 				}
 			/>
 
-			{/* Lists */}
+			{/* Catalogues */}
 			<Route
-				path="/lists"
+				path="/catalogues"
 				element={
 					<SuspenseWrapper>
-						<ListsPage />
+						<CataloguesListPage />
 					</SuspenseWrapper>
 				}
 			/>
 			<Route
-				path="/list/:list_id"
+				path="/catalogues/:catalogueId"
 				element={
 					<SuspenseWrapper>
-						<ListDetailsPage />
+						<CatalogueDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/lists"
+				element={
+					<SuspenseWrapper>
+						<CataloguesListPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/list/:catalogueId"
+				element={
+					<SuspenseWrapper>
+						<CatalogueDetailsPage />
 					</SuspenseWrapper>
 				}
 			/>
@@ -214,18 +230,34 @@ const AppRoutes: React.FC = () => {
 					}
 				/>
 				<Route
-					path="/newlist"
+					path="/catalogues/new"
 					element={
 						<SuspenseWrapper>
-							<ListFormPage />
+							<CatalogueCreatePage />
 						</SuspenseWrapper>
 					}
 				/>
 				<Route
-					path="/list/edit/:list_id"
+					path="/catalogues/:catalogueId/edit"
 					element={
 						<SuspenseWrapper>
-							<ListEditPage />
+							<CatalogueEditPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/newlist"
+					element={
+						<SuspenseWrapper>
+							<CatalogueCreatePage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/list/edit/:catalogueId"
+					element={
+						<SuspenseWrapper>
+							<CatalogueEditPage />
 						</SuspenseWrapper>
 					}
 				/>
