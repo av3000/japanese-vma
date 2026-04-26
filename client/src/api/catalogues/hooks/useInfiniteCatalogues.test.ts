@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { CataloguesResponse } from '../catalogues';
+import type { CatalogueListResource } from '@/api/generated/model/catalogueListResource';
 import { getCataloguesTotal, getNextCataloguesPageParam } from './useInfiniteCatalogues';
 
-const createPage = (overrides?: Partial<CataloguesResponse>): CataloguesResponse => ({
+const createPage = (overrides?: Partial<CatalogueListResource>): CatalogueListResource => ({
 	items: [],
 	pagination: {
 		page: 2,

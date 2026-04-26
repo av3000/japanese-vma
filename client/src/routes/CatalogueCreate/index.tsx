@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-	createCatalogue,
-	stringifyCatalogueTags,
-	type CreateCataloguePayload,
-} from '@/api/catalogues/catalogues';
+import { buildCreateCataloguePayload } from '@/api/catalogues/payloads';
+import { catalogueStore, getCatalogueIndexQueryKey } from '@/api/generated/catalogue/catalogue';
+import type { StoreCatalogueRequest } from '@/api/generated/model/storeCatalogueRequest';
+import type { UuidCreatedResource } from '@/api/generated/model/uuidCreatedResource';
 import {
 	CatalogueForm,
 	type CatalogueFormValues,
@@ -29,12 +28,12 @@ const CatalogueCreatePage = () => {
 		[],
 	);
 
-	const mutation = useMutation({
-		mutationFn: (payload: CreateCataloguePayload) => createCatalogue(payload),
+	const mutation = useMutation<UuidCreatedResource, unknown, StoreCatalogueRequest>({
+		mutationFn: (payload: StoreCatalogueRequest) => catalogueStore(payload),
 		onSuccess: ({ uuid }) => {
 			setStatus(null);
 			setServerErrors(null);
-			queryClient.invalidateQueries({ queryKey: ['catalogues'] });
+			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
 			navigate(CATALOGUE_ROUTES.detail(uuid));
 		},
 		onError: (error: any) => {
@@ -64,12 +63,7 @@ const CatalogueCreatePage = () => {
 					onSubmit={(values) => {
 						setStatus(null);
 						setServerErrors(null);
-						mutation.mutate({
-							title: values.title.trim(),
-							type: values.type,
-							publicity: values.publicity,
-							tags: stringifyCatalogueTags(values.tags),
-						});
+						mutation.mutate(buildCreateCataloguePayload(values));
 					}}
 				/>
 			</div>

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
+import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { Button } from '@/components/shared/Button';
@@ -15,8 +17,8 @@ import {
 	downloadLegacyCataloguePdf,
 	removeLegacyCatalogueItem,
 	setLegacyCatalogueLike,
-	type CatalogueDetails,
-} from '@/api/catalogues/catalogues';
+} from '@/api/catalogues/legacyCatalogues';
+import type { CatalogueDetails } from '@/api/catalogues/catalogues';
 import { formatDate } from '@/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
@@ -56,19 +58,26 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 		},
 		onSuccess: () => {
 			queryClient.setQueryData(['catalogue-like', catalogue.id], !isLiked);
-			queryClient.setQueryData(['catalogue', catalogue.uuid], (old: CatalogueDetails | undefined) => {
-				if (!old) return old;
-				const nextLikes = (old.engagement?.likes_count ?? 0) + (isLiked ? -1 : 1);
-				return {
-					...old,
-					engagement: {
-						likes_count: nextLikes,
-						downloads_count: old.engagement?.downloads_count ?? 0,
-						views_count: old.engagement?.views_count ?? 0,
-						comments_count: old.engagement?.comments_count ?? 0,
-					},
-				};
-			});
+			queryClient.setQueryData(
+				getCatalogueShowQueryKey(catalogue.uuid),
+				(old: CatalogueDetailResource | undefined) => {
+					if (!old) return old;
+					const nextLikes = (old.catalogue.engagement?.likes_count ?? 0) + (isLiked ? -1 : 1);
+
+					return {
+						...old,
+						catalogue: {
+							...old.catalogue,
+							engagement: {
+								likes_count: nextLikes,
+								downloads_count: old.catalogue.engagement?.downloads_count ?? 0,
+								views_count: old.catalogue.engagement?.views_count ?? 0,
+								comments_count: old.catalogue.engagement?.comments_count ?? 0,
+							},
+						},
+					};
+				},
+			);
 		},
 	});
 
@@ -80,14 +89,20 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const removeItemMutation = useMutation({
 		mutationFn: (itemId: number) => removeLegacyCatalogueItem(catalogue.id, itemId),
 		onSuccess: (_, itemId) => {
-			queryClient.setQueryData(['catalogue', catalogue.uuid], (old: CatalogueDetails | undefined) => {
-				if (!old) return old;
-				return {
-					...old,
-					items: old.items.filter((item: any) => item.id !== itemId),
-					items_count: Math.max(0, old.items_count - 1),
-				};
-			});
+			queryClient.setQueryData(
+				getCatalogueShowQueryKey(catalogue.uuid),
+				(old: CatalogueDetailResource | undefined) => {
+					if (!old) return old;
+					return {
+						...old,
+						catalogue: {
+							...old.catalogue,
+							items: old.catalogue.items.filter((item: any) => item.id !== itemId),
+							items_count: Math.max(0, old.catalogue.items_count - 1),
+						},
+					};
+				},
+			);
 		},
 	});
 

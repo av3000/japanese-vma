@@ -843,7 +843,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogueListResponse"
+                  "$ref": "#/components/schemas/CatalogueListResource"
                 }
               }
             }
@@ -891,7 +891,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UuidCreatedResponse"
+                  "$ref": "#/components/schemas/UuidCreatedResource"
                 }
               }
             }
@@ -951,7 +951,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogueDetailResponse"
+                  "$ref": "#/components/schemas/CatalogueDetailResource"
                 }
               }
             }
@@ -988,7 +988,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogueResourceResponse"
+                  "$ref": "#/components/schemas/CatalogueResource"
                 }
               }
             }
@@ -3050,59 +3050,46 @@
           "catalogue"
         ]
       },
-      "CatalogueListResponse": {
+      "CatalogueListResource": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogueResource"
+            }
           },
-          "data": {
+          "pagination": {
             "type": "object",
             "properties": {
-              "items": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/CatalogueResource"
-                }
+              "page": {
+                "type": "integer"
               },
-              "pagination": {
-                "type": "object",
-                "properties": {
-                  "page": {
-                    "type": "integer"
-                  },
-                  "per_page": {
-                    "type": "integer"
-                  },
-                  "total": {
-                    "type": "integer"
-                  },
-                  "last_page": {
-                    "type": "integer"
-                  },
-                  "has_more": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "page",
-                  "per_page",
-                  "total",
-                  "last_page",
-                  "has_more"
-                ]
+              "per_page": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "last_page": {
+                "type": "integer"
+              },
+              "has_more": {
+                "type": "boolean"
               }
             },
             "required": [
-              "items",
-              "pagination"
+              "page",
+              "per_page",
+              "total",
+              "last_page",
+              "has_more"
             ]
           }
         },
         "required": [
-          "success",
-          "data"
+          "items",
+          "pagination"
         ]
       },
       "CatalogueDetailResponse": {

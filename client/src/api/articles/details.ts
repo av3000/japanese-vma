@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { articleShow } from '@/api/generated/article';
+import { articleShow } from '@/api/generated/article/article';
 import type { ArticleDetailResourceArticle } from '@/api/generated/model/articleDetailResourceArticle';
 import '@/shared/constants';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';

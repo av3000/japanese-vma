@@ -22,8 +22,10 @@ use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
+use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\TypedResults;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class CatalogueController extends Controller
 {
@@ -35,10 +37,10 @@ class CatalogueController extends Controller
     ) {}
 
     /**
-     * @response array{success: true, data: CatalogueListResource}
+     * @response CatalogueListResource
      */
-    #[Response(type: 'array{success: true, data: CatalogueListResource}')]
-    public function index(IndexCatalogueRequest $request): JsonResponse
+    #[Response(type: 'CatalogueListResource')]
+    public function index(IndexCatalogueRequest $request): JsonResponse|JsonResource
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
 
@@ -88,7 +90,7 @@ class CatalogueController extends Controller
 
         $paginator = $paginatedCatalogues->getPaginator();
 
-        return TypedResults::ok(new CatalogueListResource([
+        return new CatalogueListResource([
             'items' => $resources,
             'pagination' => [
                 'page' => $paginator->currentPage(),
@@ -97,14 +99,14 @@ class CatalogueController extends Controller
                 'last_page' => $paginator->lastPage(),
                 'has_more' => $paginator->hasMorePages(),
             ],
-        ]));
+        ]);
     }
 
     /**
-     * @response 201 array{success: true, data: array{uuid: string}}
+     * @response UuidCreatedResource
      */
-    #[Response(201, type: 'array{success: true, data: array{uuid: string}}')]
-    public function store(StoreCatalogueRequest $request): JsonResponse
+    #[Response(201, type: 'UuidCreatedResource')]
+    public function store(StoreCatalogueRequest $request): JsonResponse|JsonResource
     {
         $createDTO = CatalogueCreateDTO::fromRequest($request->validated());
 
@@ -119,16 +121,16 @@ class CatalogueController extends Controller
 
         $catalogue = $result->getData();
 
-        return TypedResults::created([
+        return new UuidCreatedResource([
             'uuid' => $catalogue->getUid()->value(),
         ]);
     }
 
     /**
-     * @response array{success: true, data: CatalogueDetailResource}
+     * @response CatalogueDetailResource
      */
-    #[Response(type: 'array{success: true, data: CatalogueDetailResource}')]
-    public function show(string $uuid): JsonResponse
+    #[Response(type: 'CatalogueDetailResource')]
+    public function show(string $uuid): JsonResponse|JsonResource
     {
         $catalogueUid = EntityId::from($uuid);
         $result = $this->catalogueService->getCatalogue($catalogueUid, auth('api')->user());
@@ -165,22 +167,20 @@ class CatalogueController extends Controller
             ObjectTemplateType::LIST
         );
 
-        return TypedResults::ok(
-            new CatalogueDetailResource(
-                $catalogue,
-                $detail->items,
-                $stats,
-                $hashtags,
-                $detail->itemsCount
-            )
+        return new CatalogueDetailResource(
+            $catalogue,
+            $detail->items,
+            $stats,
+            $hashtags,
+            $detail->itemsCount
         );
     }
 
     /**
-     * @response array{success: true, data: CatalogueResource}
+     * @response CatalogueResource
      */
-    #[Response(type: 'array{success: true, data: CatalogueResource}')]
-    public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse
+    #[Response(type: 'CatalogueResource')]
+    public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse|JsonResource
     {
         if (!$request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
@@ -205,12 +205,10 @@ class CatalogueController extends Controller
         $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogue->getIdValue()]);
         $itemsCount = $itemsCountMap[$catalogue->getIdValue()] ?? 0;
 
-        return TypedResults::ok(
-            new CatalogueResource(
-                catalogue: $catalogue,
-                hashtags: $hashtags,
-                itemsCount: $itemsCount
-            )
+        return new CatalogueResource(
+            catalogue: $catalogue,
+            hashtags: $hashtags,
+            itemsCount: $itemsCount
         );
     }
 }

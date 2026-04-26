@@ -73,6 +73,7 @@ Route::prefix('v1')->group(function () {
         // Comments - Authenticated Write
         Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
 
+        // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
 
 

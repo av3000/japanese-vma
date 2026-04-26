@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import { articleDestroy } from '@/api/generated/article';
+import { articleDestroy } from '@/api/generated/article/article';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';

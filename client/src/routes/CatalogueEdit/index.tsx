@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCatalogueQuery } from '@/api/catalogues/hooks/useCatalogueQuery';
+import { buildUpdateCataloguePayload } from '@/api/catalogues/payloads';
 import {
-	resolveLegacyCatalogueIdentity,
-	stringifyCatalogueTags,
-	updateCatalogue,
-	type UpdateCataloguePayload,
-} from '@/api/catalogues/catalogues';
+	catalogueUpdate,
+	getCatalogueIndexQueryKey,
+	getCatalogueShowQueryKey,
+	useCatalogueShow,
+} from '@/api/generated/catalogue/catalogue';
+import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
+import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
+import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import {
 	CatalogueForm,
@@ -15,26 +18,8 @@ import {
 	type CatalogueFormValues,
 } from '@/components/features/catalogues/CatalogueForm';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
-import { CATALOGUE_ROUTES, isCatalogueRouteUuid } from '@/shared/constants/catalogues';
-
-const buildCatalogueUpdatePayload = (values: CatalogueFormValues, dirtyKeys: string[]): UpdateCataloguePayload => {
-	const payload: UpdateCataloguePayload = {};
-
-	if (dirtyKeys.includes('title')) {
-		payload.title = values.title.trim();
-	}
-	if (dirtyKeys.includes('type')) {
-		payload.type = values.type;
-	}
-	if (dirtyKeys.includes('publicity')) {
-		payload.publicity = values.publicity;
-	}
-	if (dirtyKeys.includes('tags')) {
-		payload.tags = stringifyCatalogueTags(values.tags);
-	}
-
-	return payload;
-};
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import { getCatalogueRouteState } from '@/routes/catalogueRouteState';
 
 const CatalogueEditPage = () => {
 	const navigate = useNavigate();
@@ -42,12 +27,12 @@ const CatalogueEditPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
 	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
 	const [status, setStatus] = useState<string | null>(null);
-	const hasUuidParam = Boolean(catalogueId && isCatalogueRouteUuid(catalogueId));
+	const routeState = getCatalogueRouteState(catalogueId);
 
 	const legacyIdentityQuery = useQuery({
 		queryKey: ['catalogue-edit-legacy-identity', catalogueId],
 		queryFn: () => resolveLegacyCatalogueIdentity(catalogueId as string),
-		enabled: Boolean(catalogueId && !hasUuidParam),
+		enabled: routeState.shouldResolveLegacyIdentity,
 		retry: false,
 	});
 
@@ -57,16 +42,22 @@ const CatalogueEditPage = () => {
 		}
 	}, [legacyIdentityQuery.data?.uuid, navigate]);
 
-	const resolvedUuid = hasUuidParam ? catalogueId : legacyIdentityQuery.data?.uuid;
-	const { data: catalogue, isPending, isError } = useCatalogueQuery(resolvedUuid, Boolean(resolvedUuid));
+	const resolvedUuid = getCatalogueRouteState(catalogueId, legacyIdentityQuery.data?.uuid).resolvedUuid;
+	const { data, isPending, isError } = useCatalogueShow(resolvedUuid ?? '', {
+		query: {
+			enabled: Boolean(resolvedUuid),
+		},
+	});
+	const catalogue = data?.catalogue;
 
-	const mutation = useMutation({
-		mutationFn: ({ uuid, payload }: { uuid: string; payload: UpdateCataloguePayload }) => updateCatalogue(uuid, payload),
+	const mutation = useMutation<CatalogueResource, unknown, { uuid: string; payload: UpdateCatalogueRequest }>({
+		mutationFn: ({ uuid, payload }: { uuid: string; payload: UpdateCatalogueRequest }) =>
+			catalogueUpdate(uuid, payload),
 		onSuccess: (updatedCatalogue) => {
 			setStatus(null);
 			setServerErrors(null);
-			queryClient.invalidateQueries({ queryKey: ['catalogues'] });
-			queryClient.invalidateQueries({ queryKey: ['catalogue', updatedCatalogue.uuid] });
+			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
+			queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(updatedCatalogue.uuid) });
 			navigate(CATALOGUE_ROUTES.detail(updatedCatalogue.uuid));
 		},
 		onError: (error: any) => {
@@ -132,7 +123,7 @@ const CatalogueEditPage = () => {
 					statusMessage={status}
 					disableSubmitWhenUnchanged
 					onSubmit={(values, meta: CatalogueFormSubmitMeta) => {
-						const payload = buildCatalogueUpdatePayload(values, meta.dirtyKeys);
+						const payload = buildUpdateCataloguePayload(values, meta.dirtyKeys);
 						setStatus(null);
 						setServerErrors(null);
 						mutation.mutate({ uuid: resolvedUuid, payload });

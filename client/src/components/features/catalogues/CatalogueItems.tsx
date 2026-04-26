@@ -39,7 +39,6 @@ export const CatalogueItems = ({
 					currentUser={compatibleCurrentUser}
 					objects={compatibleItems}
 					removeFromList={handleRemoveItem}
-					heading="Radicals"
 				/>
 			);
 		case ObjectTemplates.KNOWNKANJIS:
@@ -51,7 +50,6 @@ export const CatalogueItems = ({
 					currentUser={compatibleCurrentUser}
 					objects={compatibleItems}
 					removeFromList={handleRemoveItem}
-					heading="Kanjis"
 				/>
 			);
 		case ObjectTemplates.KNOWNWORDS:
@@ -63,7 +61,6 @@ export const CatalogueItems = ({
 					currentUser={compatibleCurrentUser}
 					objects={compatibleItems}
 					removeFromList={handleRemoveItem}
-					heading="Words"
 				/>
 			);
 		case ObjectTemplates.KNOWNSENTENCES:
@@ -75,18 +72,15 @@ export const CatalogueItems = ({
 					currentUser={compatibleCurrentUser}
 					objects={compatibleItems}
 					removeFromList={handleRemoveItem}
-					heading="Sentences"
 				/>
 			);
 		case ObjectTemplates.ARTICLES:
 			return (
 				<ListArticlesList
-					editToggle={editMode}
 					listUserId={ownerId}
 					currentUser={compatibleCurrentUser}
 					objects={compatibleItems}
 					removeFromList={handleRemoveItem}
-					heading="Articles"
 				/>
 			);
 		default:

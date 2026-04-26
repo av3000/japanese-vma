@@ -1,21 +1,22 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useCatalogueShow } from '@/api/generated/catalogue/catalogue';
 import Spinner from '@/assets/images/spinner.gif';
-import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/catalogues';
-import { useCatalogueQuery } from '@/api/catalogues/hooks/useCatalogueQuery';
-import { CATALOGUE_ROUTES, isCatalogueRouteUuid } from '@/shared/constants/catalogues';
+import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import { getCatalogueRouteState } from '@/routes/catalogueRouteState';
 import CatalogueContent from './CatalogueContent';
 
 const CatalogueDetailsPage = () => {
 	const navigate = useNavigate();
 	const { catalogueId } = useParams<{ catalogueId: string }>();
-	const hasUuidParam = Boolean(catalogueId && isCatalogueRouteUuid(catalogueId));
+	const routeState = getCatalogueRouteState(catalogueId);
 
 	const legacyIdentityQuery = useQuery({
 		queryKey: ['catalogue-legacy-identity', catalogueId],
 		queryFn: () => resolveLegacyCatalogueIdentity(catalogueId as string),
-		enabled: Boolean(catalogueId && !hasUuidParam),
+		enabled: routeState.shouldResolveLegacyIdentity,
 		retry: false,
 	});
 
@@ -25,8 +26,13 @@ const CatalogueDetailsPage = () => {
 		}
 	}, [legacyIdentityQuery.data?.uuid, navigate]);
 
-	const resolvedUuid = hasUuidParam ? catalogueId : legacyIdentityQuery.data?.uuid;
-	const { data: catalogue, isPending, isError } = useCatalogueQuery(resolvedUuid, Boolean(resolvedUuid));
+	const resolvedUuid = getCatalogueRouteState(catalogueId, legacyIdentityQuery.data?.uuid).resolvedUuid;
+	const { data, isPending, isError } = useCatalogueShow(resolvedUuid ?? '', {
+		query: {
+			enabled: Boolean(resolvedUuid),
+		},
+	});
+	const catalogue = data?.catalogue;
 
 	if (!catalogueId || legacyIdentityQuery.isPending || (isPending && !catalogue)) {
 		return (

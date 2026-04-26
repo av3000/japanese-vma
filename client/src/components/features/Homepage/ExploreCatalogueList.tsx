@@ -1,27 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useCatalogueIndex } from '@/api/generated/catalogue/catalogue';
 import Spinner from '@/assets/images/spinner.gif';
-import { fetchCatalogues } from '@/api/catalogues/catalogues';
+import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
 
+export const HOMEPAGE_CATALOGUE_FILTERS: FetchCataloguesFilters = {
+	per_page: 3,
+	public_only: true,
+	custom_only: true,
+	include_stats_counts: true,
+	include_hashtags: true,
+};
+
 const ExploreCatalogueList: React.FC = () => {
-	const { data, isLoading } = useQuery({
-		queryKey: ['homepage-catalogues'],
-		queryFn: () =>
-			fetchCatalogues({
-				per_page: 3,
-				public_only: true,
-				custom_only: true,
-				include_stats_counts: true,
-				include_hashtags: true,
-			}),
-	});
+	const { data, isPending } = useCatalogueIndex(HOMEPAGE_CATALOGUE_FILTERS);
 
 	const lists = data?.items ?? [];
 	const totalLists = data?.pagination.total ?? 0;
 
-	if (isLoading) {
+	if (isPending) {
 		return (
 			<div className="d-flex justify-content-center w-100">
 				<img src={Spinner} alt="spinner loading" />
