@@ -69,6 +69,7 @@ Route::prefix('v1')->group(function () {
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
         Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
+        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
         Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
         Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
 

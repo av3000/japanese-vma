@@ -230,6 +230,44 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
+    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    {
+        try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+                return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+            }
+
+            if (! $this->catalogueItemRepository->containsItem($catalogue->getIdValue(), $itemId)) {
+                return Result::failure(CatalogueErrors::itemNotFound($uuid->value(), $itemId));
+            }
+
+            $wasRemoved = DB::transaction(function () use ($catalogue, $itemId) {
+                return $this->catalogueItemService->removeItem($catalogue, $itemId);
+            });
+
+            if (! $wasRemoved) {
+                return Result::failure(CatalogueErrors::removeItemFailed());
+            }
+
+            return Result::success();
+        } catch (\Exception $e) {
+            Log::error('Catalogue item removal failed', [
+                'catalogue_uuid' => $uuid->value(),
+                'item_id' => $itemId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(CatalogueErrors::removeItemFailed());
+        }
+    }
+
     public function deleteCatalogue(EntityId $uuid, User $user): Result
     {
         try {

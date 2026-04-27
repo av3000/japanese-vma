@@ -65,6 +65,22 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
         $this->incrementLegacyKanjiJlptCounters($catalogueId, $catalogueType, $itemId);
     }
 
+    public function removeItem(int $catalogueId, SavedListType $catalogueType, int $itemId): bool
+    {
+        $deletedRows = DB::table('customlist_object')
+            ->where('list_id', $catalogueId)
+            ->where('real_object_id', $itemId)
+            ->delete();
+
+        if ($deletedRows < 1) {
+            return false;
+        }
+
+        $this->decrementLegacyKanjiJlptCounters($catalogueId, $catalogueType, $itemId);
+
+        return true;
+    }
+
     public function deleteByCatalogueId(int $catalogueId): void
     {
         DB::table('customlist_object')
@@ -96,5 +112,31 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
         DB::table('customlists')
             ->where('id', $catalogueId)
             ->increment($column);
+    }
+
+    private function decrementLegacyKanjiJlptCounters(int $catalogueId, SavedListType $catalogueType, int $itemId): void
+    {
+        if (! in_array($catalogueType, [SavedListType::KANJIS, SavedListType::KNOWNKANJIS], true)) {
+            return;
+        }
+
+        $jlptLevel = Kanji::query()->whereKey($itemId)->value('jlpt');
+
+        $column = match ((string) $jlptLevel) {
+            '1' => 'n1',
+            '2' => 'n2',
+            '3' => 'n3',
+            '4' => 'n4',
+            '5' => 'n5',
+            default => null,
+        };
+
+        if ($column === null) {
+            return;
+        }
+
+        DB::table('customlists')
+            ->where('id', $catalogueId)
+            ->decrement($column);
     }
 }

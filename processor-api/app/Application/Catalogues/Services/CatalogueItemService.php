@@ -66,6 +66,15 @@ class CatalogueItemService
         );
     }
 
+    public function removeItem(Catalogue $catalogue, int $itemId): bool
+    {
+        return $this->catalogueItemRepository->removeItem(
+            $catalogue->getIdValue(),
+            $catalogue->getType(),
+            $itemId
+        );
+    }
+
     private function mapRadicals(array $itemIds, array $savesMap): array
     {
         return Radical::whereIn('id', $itemIds)

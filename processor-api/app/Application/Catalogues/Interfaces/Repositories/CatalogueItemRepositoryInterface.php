@@ -29,5 +29,7 @@ interface CatalogueItemRepositoryInterface
 
     public function addItem(int $catalogueId, SavedListType $catalogueType, int $itemId): void;
 
+    public function removeItem(int $catalogueId, SavedListType $catalogueType, int $itemId): bool;
+
     public function deleteByCatalogueId(int $catalogueId): void;
 }

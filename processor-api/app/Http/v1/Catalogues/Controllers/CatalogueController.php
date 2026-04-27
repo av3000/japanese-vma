@@ -27,6 +27,7 @@ use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\TypedResults;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class CatalogueController extends Controller
 {
@@ -145,6 +146,26 @@ class CatalogueController extends Controller
         }
 
         return response()->json([], 201);
+    }
+
+    /**
+     * @response 204
+     */
+    #[Response(204)]
+    public function removeItem(string $uuid, int $itemId): HttpResponse|JsonResponse
+    {
+        $catalogueUid = EntityId::from($uuid);
+        $result = $this->catalogueService->removeItemFromCatalogue(
+            $catalogueUid,
+            $itemId,
+            auth('api')->user(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return response()->noContent();
     }
 
     /**

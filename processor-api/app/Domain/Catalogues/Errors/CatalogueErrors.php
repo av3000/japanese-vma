@@ -84,6 +84,28 @@ class CatalogueErrors
         );
     }
 
+    public static function itemNotFound(string $catalogueUid, int $itemId): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.ItemNotFound',
+            status: HttpStatus::NOT_FOUND,
+            description: 'Catalogue item not found',
+            detail: "Item {$itemId} is not present in catalogue {$catalogueUid}",
+            errorMessage: "Item {$itemId} is not present in catalogue {$catalogueUid}",
+        );
+    }
+
+    public static function removeItemFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.RemoveItemFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Catalogue item removal failed',
+            detail: 'An unexpected error occurred while removing an item from the catalogue',
+            errorMessage: 'An unexpected error occurred while removing an item from the catalogue',
+        );
+    }
+
     public static function deletionFailed(): ResultError
     {
         return new ResultError(
