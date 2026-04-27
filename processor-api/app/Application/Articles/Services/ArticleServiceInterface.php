@@ -2,11 +2,14 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Domain\Articles\DTOs\{ArticleCreateDTO, ArticleIncludeOptionsDTO, ArticleUpdateDTO, ArticleListDTO};
-use App\Domain\Articles\Models\{Articles};
+use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
+use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Shared\Results\Result;
 use App\Infrastructure\Persistence\Models\User;
+use App\Shared\Results\Result;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleServiceInterface
@@ -16,7 +19,8 @@ interface ArticleServiceInterface
      *
      * @param ArticleCreateDTO $dto Article data including title, content, tags
      * @param User $user The authenticated user creating the article
-     * @return Result Success data: Article, Failure data: ResultError (creationFailed, invalidTag)
+     *
+     * @return Result Success data: DomainArticle, Failure data: ResultError
      */
     public function createArticle(ArticleCreateDTO $dto, User $user): Result;
 
@@ -29,7 +33,8 @@ interface ArticleServiceInterface
      * @param EntityId $articleUid Article's public UUID
      * @param ArticleIncludeOptionsDTO $dto Options for eager loading (user, kanjis, words)
      * @param User|null $user Current user for permission check
-     * @return Result Success data: Article, Failure data: ResultError (notFound, accessDenied)
+     *
+     * @return Result Success data: DomainArticle, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result;
 
@@ -38,6 +43,7 @@ interface ArticleServiceInterface
      *
      * @param ArticleListDTO $dto Filters: search, category, sort, pagination
      * @param User|null $user Current user for visibility rules
+     *
      * @return Articles Domain collection with paginated results
      */
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles;
@@ -45,11 +51,11 @@ interface ArticleServiceInterface
     /**
      * Update article with optional hashtag and content reprocessing.
      *
-     * @param int $id Article integer ID
+     * @param string $uid Article public UUID
      * @param ArticleUpdateDTO $dto Fields to update
-     * @param int $userId User ID for authorization
-     * @return Result Success data: Article, Failure data: ResultError (notFound, unauthorized)
-     * @todo Refactor to use EntityId and return domain model instead of persistence model
+     * @param User $user User for authorization
+     *
+     * @return Result Success data: DomainArticle, Failure data: ResultError
      */
     public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result;
 
@@ -58,6 +64,7 @@ interface ArticleServiceInterface
      *
      * @param EntityId $articleUuid Article's public UUID
      * @param User $user User requesting deletion (for authorization)
+     *
      * @return Result Success data: null (void), Failure data: ResultError (notFound, accessDenied)
      */
     public function deleteArticle(EntityId $articleUuid, User $user): Result;
@@ -68,7 +75,9 @@ interface ArticleServiceInterface
      * @param int $articleId Article integer ID
      * @param int|null $page Page number
      * @param int|null $perPage Items per page
+     *
      * @return LengthAwarePaginator Eloquent paginator with kanji models
+     *
      * @todo Return domain models instead of Eloquent models
      */
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
@@ -79,7 +88,9 @@ interface ArticleServiceInterface
      * @param int $articleId Article integer ID
      * @param int|null $page Page number
      * @param int|null $perPage Items per page
+     *
      * @return LengthAwarePaginator Eloquent paginator with word models
+     *
      * @todo Return domain models instead of Eloquent models
      */
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;

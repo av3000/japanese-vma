@@ -2,14 +2,12 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\Actions\Deletion\{
-    CleanupArticleCustomListsAction
-};
+use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
-use App\Application\Engagement\Actions\{IncrementViewAction};
+use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
@@ -39,7 +37,6 @@ use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-// TODO: gradually replace these with repository pattern and remove the import of direct persistence model
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -51,35 +48,24 @@ class ArticleService implements ArticleServiceInterface
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
-        private ArticlePolicy $ArticlePolicy,
-        // Engagement and stats dependencies
-        // private ExtractKanjisAction $extractKanjis,
+        private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
-        // private ProcessWordMeaningsAction $processWords,
-        // private LoadCommentsAction $loadComments,
-        // List operations dependencies
-        // private LoadStatsAction $loadListStats,
-        // private LoadHashtagsAction $loadHashtags,
-        // Update dependencies
-        // private UpdateArticleHashtagsAction $updateHashtags,
-        // Delete dependencies
         private CleanupArticleCustomListsAction $cleanupCustomLists,
         private HashtagRepositoryInterface $hashtagRepository,
         private ViewRepositoryInterface $viewRepository,
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository,
-
-        // private KanjiExtractionServiceInterface $kanjiExtractionService,
-        // private KanjiAttachmentService $kanjiAttachmentService
-    ) {}
+        private CommentRepositoryInterface $commentRepository
+    ) {
+    }
 
     /**
      * Create article with hashtags atomically.
      * Validates hashtags before transaction, creates article and hashtags together.
      *
-     * @param  ArticleCreateDTO  $dto  Article data
-     * @param  User  $user  Authenticated user
+     * @param ArticleCreateDTO $dto Article data
+     * @param User $user Authenticated user
+     *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
     public function createArticle(ArticleCreateDTO $dto, User $user): Result
@@ -137,9 +123,10 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Get article by UUID with permission check and view tracking.
      *
-     * @param  EntityId  $articleUid  Article UUID
-     * @param  ArticleIncludeOptionsDTO  $dto  Eager loading options
-     * @param  User|null  $user  Current user
+     * @param EntityId $articleUid Article UUID
+     * @param ArticleIncludeOptionsDTO $dto Eager loading options
+     * @param User|null $user Current user
+     *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result
@@ -150,7 +137,7 @@ class ArticleService implements ArticleServiceInterface
             return Result::failure(ArticleErrors::notFound($articleUid->value()));
         }
 
-        if (! $this->ArticlePolicy->canView($user, $article)) {
+        if (! $this->articlePolicy->canView($user, $article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
         }
 
@@ -163,24 +150,28 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Track article view (gracefully handles failures).
      *
-     * @param  int  $id  Article ID
-     * @param  ObjectTemplateType  $objectTemplateType  Entity type
-     * @param  Viewer  $viewer  User and IP info
+     * @param int $id Article ID
+     * @param ObjectTemplateType $objectTemplateType Entity type
+     * @param Viewer $viewer User and IP info
      */
     private function trackView(int $id, ObjectTemplateType $objectTemplateType, Viewer $viewer): void
     {
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
+            Log::error('Failed to increment article view', [
+                'article_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     /**
      * Get filtered, sorted, paginated list of articles with permission-based visibility.
      *
-     * @param  ArticleListDTO  $dto  Filter criteria
-     * @param  User|null  $user  Current user for visibility
+     * @param ArticleListDTO $dto Filter criteria
+     * @param User|null $user Current user for visibility
+     *
      * @return Articles Domain collection with pagination metadata
      */
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
@@ -191,7 +182,7 @@ class ArticleService implements ArticleServiceInterface
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
             authorUid: $dto->author_uid,
-            visibilityRules: $this->ArticlePolicy->getVisibilityCriteria($user),
+            visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
             include_kanjis: $dto->include_kanjis
         );
@@ -202,9 +193,10 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Update article with optional hashtag and content reprocessing.
      *
-     * @param  EntityId  $articleUid  Article UID
-     * @param  ArticleUpdateDTO  $dto  Update data
-     * @param  User  $user  User for authorized actions
+     * @param string $uid Article UUID
+     * @param ArticleUpdateDTO $dto Update data
+     * @param User $user User for authorized actions
+     *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      *
      * @todo Refactor to use EntityId and return DomainArticle
@@ -220,7 +212,7 @@ class ArticleService implements ArticleServiceInterface
                 return Result::failure(ArticleErrors::notFound($articleUid->value()));
             }
 
-            if (! $this->ArticlePolicy->canUpdate($user, $domainArticle)) {
+            if (! $this->articlePolicy->canUpdate($user, $domainArticle)) {
                 return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
             }
 
@@ -259,7 +251,7 @@ class ArticleService implements ArticleServiceInterface
         } catch (\Exception $e) {
             Log::error('Article update failed', [
                 'user_id' => $user->id,
-                'article_uuid' => $articleUid,
+                'article_uuid' => $articleUid->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -271,11 +263,11 @@ class ArticleService implements ArticleServiceInterface
      * Apply DTO updates to domain model, returning new immutable instance.
      * Only updates fields that are present (non-null) in the DTO.
      *
-     * @param  DomainArticle  $article  Original domain article
-     * @param  ArticleUpdateDTO  $dto  Update data
+     * @param DomainArticle $article Original domain article
+     * @param ArticleUpdateDTO $dto Update data
+     *
      * @return DomainArticle New domain article with updated values
      */
-    // TODO: shouldnt it belong to some mapper or builder class?
     private function applyUpdates(DomainArticle $article, ArticleUpdateDTO $dto): DomainArticle
     {
         return new DomainArticle(
@@ -313,8 +305,9 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Delete article with full cleanup of relationships and engagement data.
      *
-     * @param  EntityId  $articleUuid  Article UUID
-     * @param  User  $user  User requesting deletion
+     * @param EntityId $articleUuid Article UUID
+     * @param User $user User requesting deletion
+     *
      * @return Result Success data: null, Failure data: ResultError
      */
     public function deleteArticle(EntityId $articleUuid, User $user): Result
@@ -327,7 +320,7 @@ class ArticleService implements ArticleServiceInterface
                     throw new ArticleNotFoundException($articleUuid->value());
                 }
 
-                if (! $this->ArticlePolicy->canDelete($user, $article)) {
+                if (! $this->articlePolicy->canDelete($user, $article)) {
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 
@@ -359,9 +352,10 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Get paginated kanjis for article.
      *
-     * @param  int  $articleId  Article ID
-     * @param  int|null  $page  Page number
-     * @param  int|null  $perPage  Items per page
+     * @param int $articleId Article ID
+     * @param int|null $page Page number
+     * @param int|null $perPage Items per page
+     *
      * @return LengthAwarePaginator Eloquent paginator
      */
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
@@ -378,9 +372,10 @@ class ArticleService implements ArticleServiceInterface
     /**
      * Get paginated words for article.
      *
-     * @param  int  $articleId  Article ID
-     * @param  int|null  $page  Page number
-     * @param  int|null  $perPage  Items per page
+     * @param int $articleId Article ID
+     * @param int|null $page Page number
+     * @param int|null $perPage Items per page
+     *
      * @return LengthAwarePaginator Eloquent paginator
      */
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
