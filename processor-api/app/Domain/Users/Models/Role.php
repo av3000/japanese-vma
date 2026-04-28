@@ -13,7 +13,8 @@ final readonly class Role
         private string $guardName,
         private readonly ?\DateTimeImmutable $createdAt = null,
         private readonly ?\DateTimeImmutable $updatedAt = null,
-        private array $permissions = []
+        private array $permissions = [],
+        private bool $isSystemRole = false,
     ) {}
 
     /**
@@ -42,8 +43,11 @@ final readonly class Role
             name: $spatieRole->name,
             guardName: $spatieRole->guard_name,
             createdAt: $spatieRole->created_at?->toImmutable(),
-            updatedAt: $spatieRole->updated_at?->toImmutable()
-            // permissions: $spatieRole->permissions->map(fn($p) => $p->name)->toArray() // Example if you want permissions
+            updatedAt: $spatieRole->updated_at?->toImmutable(),
+            permissions: $spatieRole->relationLoaded('permissions')
+                ? $spatieRole->permissions->pluck('name')->sort()->values()->all()
+                : [],
+            isSystemRole: in_array($spatieRole->name, UserRole::values(), true),
         );
     }
 
@@ -84,5 +88,15 @@ final readonly class Role
     public function isAdmin(): bool
     {
         return $this->name === UserRole::ADMIN->value;
+    }
+
+    public function isCommon(): bool
+    {
+        return $this->name === UserRole::COMMON->value;
+    }
+
+    public function isSystemRole(): bool
+    {
+        return $this->isSystemRole;
     }
 }

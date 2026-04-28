@@ -34,6 +34,8 @@ class RoleResource extends JsonResource
         return [
             'name' => $role->getName(),
             'guard_name' => $role->getGuardName(),
+            'permissions' => $role->getPermissions(),
+            'is_system_role' => $role->isSystemRole(),
         ];
     }
 }

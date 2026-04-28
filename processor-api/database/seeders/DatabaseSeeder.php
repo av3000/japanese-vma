@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Keep production-safe seeds idempotent. Create required roles (ex: "common") only.
+        $this->call(PermissionSeeder::class);
         $this->call(RoleSeeder::class);
         // The seeders below create sample/dev data; keep them opt-in.
         // $this->call(UserTableSeeder::class);

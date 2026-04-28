@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Services;
 
+use App\Application\Users\Support\PermissionCatalog;
 use App\Application\Users\Interfaces\Repositories\{UserRepositoryInterface, RoleRepositoryInterface};
-use App\Application\Users\Policies\UserViewPolicy;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\UserRole;
 use App\Domain\Users\Errors\RoleErrors;
@@ -86,7 +86,7 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
-        if ($roleName === UserRole::COMMON) {
+        if ($roleName === UserRole::COMMON->value) {
             return Result::failure(RoleErrors::protectedRoleCannotBeRemoved($roleName));
         }
 
@@ -123,7 +123,7 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::notFound($name));
         }
 
-        if ($role->getName() === UserRole::ADMIN->value || $role->getName() === UserRole::COMMON) {
+        if ($role->getName() === UserRole::ADMIN->value || $role->getName() === UserRole::COMMON->value) {
             return Result::failure(RoleErrors::protectedRoleCannotBeDeleted($role->getName()));
         }
 
@@ -192,7 +192,7 @@ class RoleService implements RoleServiceInterface
      * @param string|null $guardName Defaults to 'api' if null.
      * @return Result<DomainRole> Success: The newly created DomainRole, Failure: ResultError
      */
-    public function createRole(string $name, ?string $guardName = null): Result
+    public function createRole(string $name, ?string $guardName = null, array $permissions = []): Result
     {
         $actualGuardName = $guardName ?? self::DEFAULT_GUARD_NAME;
 
@@ -205,7 +205,100 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
         }
 
+        $invalidPermissions = $this->getInvalidPermissions($permissions);
+        if ($invalidPermissions !== []) {
+            return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
+        }
+
         $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
-        return Result::success($newDomainRole);
+
+        if ($permissions === []) {
+            return Result::success($newDomainRole);
+        }
+
+        return $this->syncRolePermissions($newDomainRole->getName(), $permissions);
+    }
+
+    public function updateRole(string $currentName, string $newName, ?string $guardName = null, array $permissions = []): Result
+    {
+        $role = $this->roleRepository->findByName($currentName);
+
+        if (!$role) {
+            return Result::failure(RoleErrors::notFound($currentName));
+        }
+
+        $actualGuardName = $guardName ?? $role->getGuardName();
+
+        if ($role->isSystemRole() && ($currentName !== $newName || $role->getGuardName() !== $actualGuardName)) {
+            return Result::failure(RoleErrors::protectedRoleIdentityCannotBeChanged($currentName));
+        }
+
+        if ($currentName !== $newName && $this->roleRepository->exists($newName)) {
+            return Result::failure(UserErrors::nameAlreadyExists($newName));
+        }
+
+        $configuredGuards = array_keys(config('auth.guards'));
+        if (!in_array($actualGuardName, $configuredGuards, true)) {
+            return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
+        }
+
+        $invalidPermissions = $this->getInvalidPermissions($permissions);
+        if ($invalidPermissions !== []) {
+            return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
+        }
+
+        $updatedRole = $role;
+        if ($currentName !== $newName || $role->getGuardName() !== $actualGuardName) {
+            $updatedRole = $this->roleRepository->updateRole($currentName, $newName, $actualGuardName);
+        }
+
+        return $this->syncRolePermissions($updatedRole->getName(), $permissions);
+    }
+
+    public function syncRolePermissions(string $roleName, array $permissions): Result
+    {
+        if (!$this->roleRepository->exists($roleName)) {
+            return Result::failure(RoleErrors::notFound($roleName));
+        }
+
+        $invalidPermissions = $this->getInvalidPermissions($permissions);
+        if ($invalidPermissions !== []) {
+            return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
+        }
+
+        return Result::success($this->roleRepository->syncPermissions($roleName, $permissions));
+    }
+
+    public function getGroupedAssignablePermissions(): array
+    {
+        $assignablePermissions = array_fill_keys($this->roleRepository->getAssignablePermissions(), true);
+        $groups = [];
+
+        foreach (PermissionCatalog::groups() as $groupKey => $group) {
+            $groups[$groupKey] = [
+                'label' => $group['label'],
+                'permissions' => array_filter(
+                    $group['permissions'],
+                    static fn (string $permissionName): bool => isset($assignablePermissions[$permissionName]),
+                    ARRAY_FILTER_USE_KEY,
+                ),
+            ];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param array<int, string> $permissions
+     * @return array<int, string>
+     */
+    private function getInvalidPermissions(array $permissions): array
+    {
+        $assignablePermissions = array_fill_keys($this->roleRepository->getAssignablePermissions(), true);
+
+        return array_values(array_filter(
+            $permissions,
+            static fn (string $permission): bool => !isset($assignablePermissions[$permission]),
+        ));
     }
 }

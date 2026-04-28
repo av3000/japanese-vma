@@ -80,6 +80,17 @@ class RoleErrors
         );
     }
 
+    public static function protectedRoleIdentityCannotBeChanged(string $roleName): ResultError
+    {
+        return new ResultError(
+            code: 'Roles.ProtectedRoleIdentityCannotBeChanged',
+            status: HttpStatus::FORBIDDEN,
+            description: "The '{$roleName}' role cannot have its identity fields changed.",
+            detail: "The role '{$roleName}' is system-protected. Its name and guard cannot be changed.",
+            errorMessage: 'Cannot change protected role name or guard.',
+        );
+    }
+
     public static function invalidGuardName(string $guardName): ResultError
     {
         return new ResultError(
@@ -99,6 +110,22 @@ class RoleErrors
             description: 'Role has active assignments',
             detail: "Role with name '{$roleName}' has active user assignments and cannot be deleted.",
             errorMessage: "Role has active assignments.",
+        );
+    }
+
+    /**
+     * @param array<int, string> $permissionNames
+     */
+    public static function invalidPermissions(array $permissionNames): ResultError
+    {
+        $list = implode(', ', $permissionNames);
+
+        return new ResultError(
+            code: 'Roles.InvalidPermissions',
+            status: HttpStatus::BAD_REQUEST,
+            description: 'One or more permissions are not assignable.',
+            detail: "Invalid permissions: {$list}.",
+            errorMessage: 'One or more selected permissions are invalid.',
         );
     }
 }

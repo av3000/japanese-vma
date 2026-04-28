@@ -8,6 +8,7 @@ use App\Domain\Shared\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Infrastructure\Persistence\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,6 +103,19 @@ class UserResourceTest extends TestCase
         self::assertSame('updated-user@example.com', $user->email);
         self::assertTrue($user->hasRole(UserRole::COMMON->value));
         self::assertTrue($user->hasRole(UserRole::ADMIN->value));
+    }
+
+    public function test_admin_can_view_user_details(): void
+    {
+        $user = $this->createUser([UserRole::COMMON->value]);
+
+        Livewire::test(ViewUser::class, [
+            'record' => $user->getKey(),
+        ])
+            ->assertOk()
+            ->assertSee($user->name)
+            ->assertSee($user->email)
+            ->assertSee(UserRole::COMMON->value);
     }
 
     public function test_non_admin_cannot_access_the_user_resource_route(): void

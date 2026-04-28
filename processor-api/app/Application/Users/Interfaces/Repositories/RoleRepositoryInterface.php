@@ -40,6 +40,8 @@ interface RoleRepositoryInterface
      */
     public function createRole(string $name, string $guardName): DomainRole;
 
+    public function updateRole(string $currentName, string $newName, string $guardName): DomainRole;
+
     /**
      * Assign a role to a user.
      *
@@ -81,4 +83,14 @@ interface RoleRepositoryInterface
      * @return bool
      */
     public function exists(string $roleName): bool;
+
+    /**
+     * @param array<int, string> $permissions
+     */
+    public function syncPermissions(string $roleName, array $permissions): DomainRole;
+
+    /**
+     * @return string[]
+     */
+    public function getAssignablePermissions(): array;
 }
