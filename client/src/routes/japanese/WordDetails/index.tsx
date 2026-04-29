@@ -3,11 +3,18 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+	applyCatalogueMembershipAction,
+	fetchElementCatalogueMembership,
+	filterCatalogueMembershipByType,
+} from '@/api/catalogues/bookmarkMembership';
+import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import Spinner from '@/assets/images/spinner.gif';
 import { Chip } from '@/components/shared/Chip';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, ObjectTemplates } from '@/shared/constants';
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { HttpMethod } from '@/shared/types';
 
 const WordDetails: React.FC = () => {
@@ -49,20 +56,15 @@ const WordDetails: React.FC = () => {
 		const getUserWordLists = async () => {
 			try {
 				setIsLoading(true);
-				const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
-					elementId: word_id,
-				});
-
-				const knownLists = res.lists.filter(
-					(list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList,
+				const userLists = await fetchElementCatalogueMembership(word_id);
+				const nextLists = filterCatalogueMembershipByType(userLists, [
+					ObjectTemplates.KNOWNWORDS,
+					ObjectTemplates.WORDS,
+				]);
+				setWordIsKnown(
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList),
 				);
-				setWordIsKnown(knownLists.length > 0);
-
-				setLists(
-					res.lists.filter(
-						(list) => list.type === ObjectTemplates.KNOWNWORDS || list.type === ObjectTemplates.WORDS,
-					),
-				);
+				setLists(nextLists);
 			} catch (error) {
 				console.error(error);
 			} finally {
@@ -87,36 +89,19 @@ const WordDetails: React.FC = () => {
 	const addToOrRemoveFromList = async (listId, action) => {
 		try {
 			setLoadingListIds((prev) => [...prev, listId]);
-			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
-			const url = `${BASE_URL}/api/user/list/${endpoint}`;
-
-			await apiCall(HttpMethod.POST, url, {
-				listId,
+			await updateCatalogueMembership({
+				catalogueId: listId,
 				elementId: word_id,
+				action,
 			});
 
-			setLists((prevLists) =>
-				prevLists.map((list) =>
-					list.id === listId
-						? {
-								...list,
-								elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
-							}
-						: list,
-				),
-			);
-
-			if (action === LIST_ACTIONS.ADD_ITEM) {
-				if (lists.find((list) => list.id === listId && list.type === ObjectTemplates.KNOWNWORDS)) {
-					setWordIsKnown(true);
-				}
-			} else {
-				const stillKnown = lists.some(
-					(list) =>
-						list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList && list.id !== listId,
+			setLists((prevLists) => {
+				const nextLists = applyCatalogueMembershipAction(prevLists, listId, action);
+				setWordIsKnown(
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList),
 				);
-				setWordIsKnown(stillKnown);
-			}
+				return nextLists;
+			});
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -240,16 +225,14 @@ const WordDetails: React.FC = () => {
 						const isLoadingList = loadingListIds.includes(list.id);
 						return (
 							<div key={list.id} className="d-flex justify-content-between mb-2">
-								<Link to={`/list/${list.id}`}>{list.title}</Link>
+								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
 									variant={list.elementBelongsToList ? 'danger' : 'primary'}
 									size="sm"
 									onClick={() =>
 										addToOrRemoveFromList(
 											list.id,
-											list.elementBelongsToList
-												? LIST_ACTIONS.REMOVE_ITEM
-												: LIST_ACTIONS.ADD_ITEM,
+											list.elementBelongsToList ? 'remove' : 'add',
 										)
 									}
 									disabled={isLoadingList}
@@ -266,7 +249,7 @@ const WordDetails: React.FC = () => {
 						);
 					})}
 					<small>
-						<Link to="/newlist">Create a new list?</Link>
+						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
 					</small>
 				</Modal.Body>
 				<Modal.Footer>

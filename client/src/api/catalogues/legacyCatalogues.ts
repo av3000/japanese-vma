@@ -1,6 +1,8 @@
 import { apiCall } from '@/services/api';
 import { HttpMethod } from '@/shared/types';
 
+// TODO: replace with a backend/Orval-generated response model if legacy catalogue
+// compatibility endpoints are added to the documented schema while they still exist.
 interface LegacyCatalogueResponse {
 	list: {
 		id: number;
@@ -9,10 +11,8 @@ interface LegacyCatalogueResponse {
 	};
 }
 
-interface LegacyLikeResponse {
-	isLiked: boolean;
-}
-
+// TODO: replace this temporary compatibility DTO with a generated backend/Orval type
+// once legacy-id-to-UUID resolution is available through a documented schema.
 export interface LegacyCatalogueIdentity {
 	id: number;
 	uuid: string;
@@ -50,40 +50,6 @@ export const resolveLegacyCatalogueIdentity = async (
 		uuid,
 		title: response.list.title,
 	};
-};
-
-export const checkLegacyCatalogueLike = async (catalogueId: number) => {
-	const response = await apiCall<LegacyLikeResponse>({
-		method: HttpMethod.POST,
-		path: `/list/${catalogueId}/checklike`,
-	});
-
-	return response.isLiked;
-};
-
-export const setLegacyCatalogueLike = async (catalogueId: number, shouldLike: boolean) => {
-	await apiCall({
-		method: HttpMethod.POST,
-		path: `/list/${catalogueId}/${shouldLike ? 'like' : 'unlike'}`,
-	});
-};
-
-export const deleteLegacyCatalogue = async (catalogueId: number) => {
-	await apiCall({
-		method: HttpMethod.DELETE,
-		path: `/list/${catalogueId}`,
-	});
-};
-
-export const removeLegacyCatalogueItem = async (catalogueId: number, elementId: number) => {
-	await apiCall({
-		method: HttpMethod.POST,
-		path: '/user/list/removeitemwhileaway',
-		data: {
-			listId: catalogueId,
-			elementId,
-		},
-	});
 };
 
 export const getLegacyCataloguePdfEndpoint = (catalogueType: number) => {

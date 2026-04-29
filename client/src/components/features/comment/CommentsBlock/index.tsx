@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { addComment, AddCommentPayload, deleteComment, fetchComments } from '@/api/comments';
-import { LikeResponse, toggleCommentLike } from '@/api/likes/likes';
+import { LikeResponse, toggleInstanceLike } from '@/api/likes/likes';
 import { useAuth } from '@/hooks/useAuth';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import CommentForm from './CommentForm/CommentForm';
@@ -84,7 +84,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	// TODO: refetch only single comment that was liked
 	const likeMutation = useMutation<LikeResponse, unknown, { id: number }>({
 		mutationFn: ({ id }) =>
-			toggleCommentLike({
+			toggleInstanceLike({
 				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.COMMENT],
 				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.COMMENT],
 				instanceId: id,

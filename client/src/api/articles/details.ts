@@ -3,7 +3,7 @@ import { articleShow } from '@/api/generated/article/article';
 import type { ArticleDetailResourceArticle } from '@/api/generated/model/articleDetailResourceArticle';
 import '@/shared/constants';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
-import { LikeResponse, toggleCommentLike } from '../likes/likes';
+import { LikeResponse, toggleInstanceLike } from '../likes/likes';
 
 export interface MappedArticle extends ArticleDetailResourceArticle {
 	displayName: string;
@@ -36,7 +36,7 @@ export const useLikeArticleMutation = (articleUuid: string) => {
 
 	return useMutation<LikeResponse, unknown, number>({
 		mutationFn: (articleId: number) =>
-			toggleCommentLike({
+			toggleInstanceLike({
 				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.ARTICLE],
 				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.ARTICLE],
 				instanceId: articleId,

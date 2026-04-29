@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteCatalogue, downloadCataloguePdf, removeItemFromCatalogue } from '@/api/catalogues/actions';
 import { getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
@@ -11,14 +12,8 @@ import { Icon } from '@/components/shared/Icon';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
-import {
-	checkLegacyCatalogueLike,
-	deleteLegacyCatalogue,
-	downloadLegacyCataloguePdf,
-	removeLegacyCatalogueItem,
-	setLegacyCatalogueLike,
-} from '@/api/catalogues/legacyCatalogues';
 import type { CatalogueDetails } from '@/api/catalogues/catalogues';
+import { fetchCatalogueLikeStatus, toggleCatalogueLike } from '@/api/catalogues/likes';
 import { formatDate } from '@/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
@@ -43,7 +38,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 
 	const { data: isLiked = false } = useQuery({
 		queryKey: ['catalogue-like', catalogue.id],
-		queryFn: () => checkLegacyCatalogueLike(catalogue.id),
+		queryFn: () => fetchCatalogueLikeStatus(catalogue.id),
 		enabled: isAuthenticated,
 	});
 
@@ -54,15 +49,20 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 				return;
 			}
 
-			await setLegacyCatalogueLike(catalogue.id, !isLiked);
+			return toggleCatalogueLike(catalogue.id);
 		},
-		onSuccess: () => {
-			queryClient.setQueryData(['catalogue-like', catalogue.id], !isLiked);
+		onSuccess: (response) => {
+			if (!response) {
+				return;
+			}
+
+			const nextLiked = response.like;
+			queryClient.setQueryData(['catalogue-like', catalogue.id], nextLiked);
 			queryClient.setQueryData(
 				getCatalogueShowQueryKey(catalogue.uuid),
 				(old: CatalogueDetailResource | undefined) => {
 					if (!old) return old;
-					const nextLikes = (old.catalogue.engagement?.likes_count ?? 0) + (isLiked ? -1 : 1);
+					const nextLikes = (old.catalogue.engagement?.likes_count ?? 0) + (nextLiked ? 1 : -1);
 
 					return {
 						...old,
@@ -82,12 +82,12 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	});
 
 	const deleteMutation = useMutation({
-		mutationFn: () => deleteLegacyCatalogue(catalogue.id),
+		mutationFn: () => deleteCatalogue(catalogue.uuid),
 		onSuccess: () => navigate(CATALOGUE_ROUTES.list),
 	});
 
 	const removeItemMutation = useMutation({
-		mutationFn: (itemId: number) => removeLegacyCatalogueItem(catalogue.id, itemId),
+		mutationFn: (itemId: number) => removeItemFromCatalogue(catalogue.uuid, itemId),
 		onSuccess: (_, itemId) => {
 			queryClient.setQueryData(
 				getCatalogueShowQueryKey(catalogue.uuid),
@@ -113,7 +113,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 		}
 
 		try {
-			const response = await downloadLegacyCataloguePdf(catalogue.id, catalogue.type);
+			const response = await downloadCataloguePdf(catalogue.id, catalogue.type);
 			const file = new Blob([response], { type: 'application/pdf' });
 			window.open(URL.createObjectURL(file));
 		} catch (error) {

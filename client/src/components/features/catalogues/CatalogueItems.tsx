@@ -7,6 +7,8 @@ import ListSentencesList from '@/components/features/SavedList/SavedLists/SavedS
 import ListWordsList from '@/components/features/SavedList/SavedLists/SavedWordsList';
 
 interface CatalogueItemsProps {
+	// TODO: replace `unknown[]` with a backend/Orval-generated catalogue item union once
+	// the catalogue detail schema exposes typed item payloads per catalogue type.
 	items: unknown[];
 	catalogueType: number;
 	currentUser: User | null;

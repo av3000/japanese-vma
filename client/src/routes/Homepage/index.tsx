@@ -1,7 +1,7 @@
 import React from 'react';
 import FacebookIcon from '@/assets/icons/fb-icon.svg';
 import InstagramIcon from '@/assets/icons/ig-icon.svg';
-import { ExploreArticleList, ExploreCustomList } from '@/components/features/Homepage';
+import { ExploreArticleList, ExploreCatalogueList } from '@/components/features/Homepage';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,7 +49,7 @@ const Homepage: React.FC = () => {
 				</div>
 				<div className="container mt-4" id="readings">
 					<ExploreArticleList />
-					<ExploreCustomList />
+					<ExploreCatalogueList />
 				</div>
 			</div>
 		);
@@ -59,7 +59,7 @@ const Homepage: React.FC = () => {
 		<div className="container mt-4">
 			<h1 className="text-center">Welcome to your feed!</h1>
 			<ExploreArticleList />
-			<ExploreCustomList />
+			<ExploreCatalogueList />
 		</div>
 	);
 };

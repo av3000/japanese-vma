@@ -2,7 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
+import { setArticleStatus } from '@/api/articles/articles';
+import {
+	applyCatalogueMembershipAction,
+	type CatalogueBookmarkListItem,
+	fetchElementCatalogueMembership,
+	type CatalogueMembershipAction,
+} from '@/api/catalogues/bookmarkMembership';
+import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { articleDestroy } from '@/api/generated/article/article';
@@ -23,7 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { apiCall } from '@/services/api';
-import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
+import { BASE_URL } from '@/shared/constants';
 import { HttpMethod } from '@/shared/types';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
@@ -54,10 +61,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
 
-	// TODO: Should only call queries propagating up to smart component
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchArticleSavedLists(article.id.toString()),
+		queryFn: () => fetchElementCatalogueMembership(article.id),
 		enabled: isAuthenticated,
 	});
 
@@ -101,22 +107,17 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
-	// TODO: Should only call queries propagating up to smart component
-	const handleListAction = async (listId: number, action: string) => {
+	const handleListAction = async (listId: number, action: CatalogueMembershipAction) => {
 		setLoadingListIds((prev) => [...prev, listId]);
 		try {
-			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
-			await apiCall({
-				method: HttpMethod.POST,
-				path: `${BASE_URL}/api/user/list/${endpoint}`,
-				data: { listId, elementId: article.id },
+			await updateCatalogueMembership({
+				catalogueId: listId,
+				elementId: article.id,
+				action,
 			});
 
-			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists: any[]) => {
-				return oldLists?.map((list) =>
-					list.id === listId ? { ...list, elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM } : list,
-				);
+			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
+				return applyCatalogueMembershipAction(oldLists as CatalogueBookmarkListItem[], listId, action);
 			});
 		} catch (error) {
 			console.error('List action failed', error);

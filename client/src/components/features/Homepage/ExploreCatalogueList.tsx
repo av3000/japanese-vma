@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useCatalogueIndex } from '@/api/generated/catalogue/catalogue';
 import Spinner from '@/assets/images/spinner.gif';
-import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
 
 export const HOMEPAGE_CATALOGUE_FILTERS: FetchCataloguesFilters = {
@@ -13,6 +13,8 @@ export const HOMEPAGE_CATALOGUE_FILTERS: FetchCataloguesFilters = {
 	include_hashtags: true,
 };
 
+// TODO: Explore catalogues shouldnt include 'default' catalogues.
+// TODO: Add 'isDefaultList' property for catalogue persistence model, that would also make them immutable
 const ExploreCatalogueList: React.FC = () => {
 	const { data, isPending } = useCatalogueIndex(HOMEPAGE_CATALOGUE_FILTERS);
 

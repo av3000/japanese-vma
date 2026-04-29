@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { buildUpdateCataloguePayload } from '@/api/catalogues/payloads';
 import {
 	catalogueUpdate,
@@ -10,7 +10,6 @@ import {
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
-import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import {
 	CatalogueForm,
@@ -19,7 +18,6 @@ import {
 } from '@/components/features/catalogues/CatalogueForm';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
-import { getCatalogueRouteState } from '@/routes/catalogueRouteState';
 
 const CatalogueEditPage = () => {
 	const navigate = useNavigate();
@@ -27,25 +25,9 @@ const CatalogueEditPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
 	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
 	const [status, setStatus] = useState<string | null>(null);
-	const routeState = getCatalogueRouteState(catalogueId);
-
-	const legacyIdentityQuery = useQuery({
-		queryKey: ['catalogue-edit-legacy-identity', catalogueId],
-		queryFn: () => resolveLegacyCatalogueIdentity(catalogueId as string),
-		enabled: routeState.shouldResolveLegacyIdentity,
-		retry: false,
-	});
-
-	useEffect(() => {
-		if (legacyIdentityQuery.data?.uuid) {
-			navigate(CATALOGUE_ROUTES.edit(legacyIdentityQuery.data.uuid), { replace: true });
-		}
-	}, [legacyIdentityQuery.data?.uuid, navigate]);
-
-	const resolvedUuid = getCatalogueRouteState(catalogueId, legacyIdentityQuery.data?.uuid).resolvedUuid;
-	const { data, isPending, isError } = useCatalogueShow(resolvedUuid ?? '', {
+	const { data, isPending, isError } = useCatalogueShow(catalogueId ?? '', {
 		query: {
-			enabled: Boolean(resolvedUuid),
+			enabled: Boolean(catalogueId),
 		},
 	});
 	const catalogue = data?.catalogue;
@@ -93,7 +75,7 @@ const CatalogueEditPage = () => {
 		};
 	}, [catalogue]);
 
-	if (!catalogueId || legacyIdentityQuery.isPending || (isPending && !catalogue)) {
+	if (!catalogueId || (isPending && !catalogue)) {
 		return (
 			<div className="container text-center mt-5">
 				<img src={Spinner} alt="Loading..." />
@@ -101,7 +83,7 @@ const CatalogueEditPage = () => {
 		);
 	}
 
-	if (legacyIdentityQuery.isError || isError || !catalogue || !resolvedUuid) {
+	if (isError || !catalogue) {
 		return (
 			<div className="container mt-5 text-center">
 				<p className="lead">Catalogue not found or was deleted.</p>
@@ -126,7 +108,7 @@ const CatalogueEditPage = () => {
 						const payload = buildUpdateCataloguePayload(values, meta.dirtyKeys);
 						setStatus(null);
 						setServerErrors(null);
-						mutation.mutate({ uuid: resolvedUuid, payload });
+						mutation.mutate({ uuid: catalogueId, payload });
 					}}
 				/>
 			</div>

@@ -22,6 +22,7 @@ const CataloguesListPage = lazy(() => import('@/routes/CataloguesList'));
 const CatalogueDetailsPage = lazy(() => import('@/routes/CatalogueDetails'));
 const CatalogueCreatePage = lazy(() => import('@/routes/CatalogueCreate'));
 const CatalogueEditPage = lazy(() => import('@/routes/CatalogueEdit'));
+const CatalogueLegacyRedirectsPage = lazy(() => import('@/routes/CatalogueLegacyRedirects'));
 
 // Japanese learning routes
 const RadicalsPage = lazy(() => import('@/routes/japanese/RadicalsList'));
@@ -114,7 +115,7 @@ const AppRoutes: React.FC = () => {
 				path="/lists"
 				element={
 					<SuspenseWrapper>
-						<CataloguesListPage />
+						<CatalogueLegacyRedirectsPage />
 					</SuspenseWrapper>
 				}
 			/>
@@ -122,7 +123,7 @@ const AppRoutes: React.FC = () => {
 				path="/list/:catalogueId"
 				element={
 					<SuspenseWrapper>
-						<CatalogueDetailsPage />
+						<CatalogueLegacyRedirectsPage />
 					</SuspenseWrapper>
 				}
 			/>
@@ -249,7 +250,7 @@ const AppRoutes: React.FC = () => {
 					path="/newlist"
 					element={
 						<SuspenseWrapper>
-							<CatalogueCreatePage />
+							<CatalogueLegacyRedirectsPage />
 						</SuspenseWrapper>
 					}
 				/>
@@ -257,7 +258,7 @@ const AppRoutes: React.FC = () => {
 					path="/list/edit/:catalogueId"
 					element={
 						<SuspenseWrapper>
-							<CatalogueEditPage />
+							<CatalogueLegacyRedirectsPage />
 						</SuspenseWrapper>
 					}
 				/>
