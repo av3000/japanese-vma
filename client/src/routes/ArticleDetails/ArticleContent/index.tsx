@@ -31,6 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { apiCall } from '@/services/api';
 import { BASE_URL } from '@/shared/constants';
+import { ObjectTemplateType } from '@/shared/constants/enums';
 import { HttpMethod } from '@/shared/types';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
@@ -265,7 +266,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock parentObjectId={article.id} parentObjectType="article" objectUuid={article.uuid} />
+					<CommentsBlock
+						readObjectType="article"
+						readObjectUuid={article.uuid}
+						entityId={article.id}
+						entityType={ObjectTemplateType.ARTICLE}
+						entityUuid={article.uuid}
+					/>
 				</div>
 			</div>
 

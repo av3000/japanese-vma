@@ -6,8 +6,6 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '../../ui/article-status';
 
-type DashboardArticleHashtag = Pick<HashtagResource, 'id' | 'content'>;
-
 interface DashboardArticleItemProps {
 	uuid: string;
 	created_at: string;
@@ -16,7 +14,7 @@ interface DashboardArticleItemProps {
 	commentsTotal: number;
 	likesTotal: number;
 	viewsTotal: number;
-	hashtags?: DashboardArticleHashtag[];
+	hashtags?: HashtagResource[];
 }
 
 const DashboardArticleItem: React.FC<DashboardArticleItemProps> = ({

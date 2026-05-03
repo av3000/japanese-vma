@@ -8,7 +8,8 @@ import {
 	getCatalogueShowQueryKey,
 	useCatalogueShow,
 } from '@/api/generated/catalogue/catalogue';
-import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
+import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
+import type { CatalogueUpdate200 } from '@/api/generated/model/catalogueUpdate200';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
 import Spinner from '@/assets/images/spinner.gif';
 import {
@@ -25,17 +26,17 @@ const CatalogueEditPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
 	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
 	const [status, setStatus] = useState<string | null>(null);
-	const { data, isPending, isError } = useCatalogueShow(catalogueId ?? '', {
+	const { data, isPending, isError } = useCatalogueShow<CatalogueDetailResource>(catalogueId ?? '', {
 		query: {
 			enabled: Boolean(catalogueId),
 		},
 	});
-	const catalogue = data?.catalogue;
+	const catalogue = data;
 
-	const mutation = useMutation<CatalogueResource, unknown, { uuid: string; payload: UpdateCatalogueRequest }>({
+	const mutation = useMutation<CatalogueUpdate200, unknown, { uuid: string; payload: UpdateCatalogueRequest }>({
 		mutationFn: ({ uuid, payload }: { uuid: string; payload: UpdateCatalogueRequest }) =>
 			catalogueUpdate(uuid, payload),
-		onSuccess: (updatedCatalogue) => {
+		onSuccess: ({ data: updatedCatalogue }) => {
 			setStatus(null);
 			setServerErrors(null);
 			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });

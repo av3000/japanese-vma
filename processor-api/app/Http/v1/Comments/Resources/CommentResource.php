@@ -2,15 +2,17 @@
 
 namespace App\Http\v1\Comments\Resources;
 
-use Illuminate\Http\Resources\Json\JsonResource;
 use App\Domain\Comments\Models\Comment;
-use App\Http\v1\Engagement\Resources\LikeResource;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class CommentResource extends JsonResource
 {
     private bool $include_likes;
+
     private bool $include_replies;
+
     private ?array $likes;
+
     private array $replies;
 
     public function __construct(
@@ -35,7 +37,7 @@ class CommentResource extends JsonResource
             'author_name' => $comment->getAuthorName(),
             'author_id' => $comment->getAuthorId()->value(),
             'content' => $comment->getContent(),
-            'parent_comment_id' => $comment->getParentCommentId()?->value(),
+            'parent_comment_id' => $comment->getParentCommentId(),
             'is_reply' => $comment->isReply(),
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
@@ -43,7 +45,7 @@ class CommentResource extends JsonResource
             'is_liked_by_viewer' => $comment->isLikedByViewer(),
         ];
 
-        if ($this->include_replies && !$comment->isReply()) {
+        if ($this->include_replies && ! $comment->isReply()) {
             $data['replies'] = $this->replies;
         }
 

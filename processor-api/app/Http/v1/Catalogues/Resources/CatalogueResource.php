@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
  */
 class CatalogueResource extends JsonResource
 {
+    public static $wrap = null;
+
     public function __construct(
         Catalogue $catalogue,
         private ?CatalogueStats $stats = null,

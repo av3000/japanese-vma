@@ -19,6 +19,9 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   For new/refactored endpoints, prefer `routes/api_v1.php` conventions.
 -   **Migration behavior:**
     -   Preserve existing behavior intentionally, or document intentional changes.
+-   **Generic comment write contract:**
+    -   `POST /api/v1/comments` uses a generic write payload: `{ entity_type: ObjectTemplateType, entity_id, entity_uuid, content, parent_comment_id? }`.
+    -   Do not reintroduce string-name mappings like `article` or `catalogue` at the write boundary when the backend already accepts the shared enum value.
 
 ## 3) Layering & Domain Boundaries
 
@@ -38,11 +41,13 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Validation:**
     -   Prefer dedicated Request classes per endpoint.
     -   For partial updates, validate optional fields and handle empty-update payloads explicitly.
+    -   For generic v1 comment create, validate the `entity_type` / `entity_id` / `entity_uuid` tuple directly in the request contract instead of resolving numeric IDs from UUIDs inside the service layer.
 -   **DTOs/Value Objects:**
     -   Use DTO contracts for operation inputs/outputs where meaningful.
     -   Use value objects where they improve invariants and type safety.
 -   **Identifiers:**
     -   Follow existing v1 UUID/entity identifier conventions in the touched module.
+    -   Comment create currently trusts the validated `entity_type` / `entity_id` / `entity_uuid` tuple at write time; do not add per-type resolver indirection back unless the contract itself changes.
 
 ## 5) Response & Error Handling
 
@@ -52,6 +57,9 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Error behavior:**
     -   Prefer explicit, typed/structured error handling patterns.
     -   Do not hide contract-significant failures.
+-   **Schema guidance:**
+    -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
+    -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
 
 ## 6) Testing & Verification Expectations
 

@@ -39,6 +39,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.
   - Keep outputs and assumptions explicit in summaries.
+- **Generated API contract workflow:**
+  - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
+  - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
+  - Do not hand-edit generated API files to patch over contract problems.
 
 ## 3) How to Work in This Repository
 
@@ -62,6 +66,8 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
+  - In the current local setup, backend feature tests may be blocked if the expected MySQL host `mysql` is unavailable, and the current SQLite fallback is also unreliable due to an existing migration/index issue around `views.entity_type_uuid`.
+  - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
 - **Safety:**
   - Do not silently alter contracts or conventions.
   - Highlight behavior-impacting changes and rollout implications.

@@ -1,10 +1,11 @@
-import type { User } from '@/types';
-import { ObjectTemplates } from '@/shared/constants';
+import { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import ListArticlesList from '@/components/features/SavedList/SavedLists/SavedArticlesList';
 import ListKanjisList from '@/components/features/SavedList/SavedLists/SavedKanjisList';
 import ListRadicalList from '@/components/features/SavedList/SavedLists/SavedRadicalList';
 import ListSentencesList from '@/components/features/SavedList/SavedLists/SavedSentencesList';
 import ListWordsList from '@/components/features/SavedList/SavedLists/SavedWordsList';
+import { ObjectTemplates } from '@/shared/constants';
+import type { User } from '@/types';
 
 interface CatalogueItemsProps {
 	// TODO: replace `unknown[]` with a backend/Orval-generated catalogue item union once
@@ -34,6 +35,7 @@ export const CatalogueItems = ({
 	switch (catalogueType) {
 		case ObjectTemplates.KNOWNRADICALS:
 		case ObjectTemplates.RADICALS:
+			// TODO: add a typed catalogue radical-item boundary type when these items move off the generic path.
 			return (
 				<ListRadicalList
 					editToggle={editMode}
@@ -45,6 +47,7 @@ export const CatalogueItems = ({
 			);
 		case ObjectTemplates.KNOWNKANJIS:
 		case ObjectTemplates.KANJIS:
+			// TODO: add a typed catalogue kanji-item boundary type when these items move off the generic path.
 			return (
 				<ListKanjisList
 					editToggle={editMode}
@@ -56,6 +59,7 @@ export const CatalogueItems = ({
 			);
 		case ObjectTemplates.KNOWNWORDS:
 		case ObjectTemplates.WORDS:
+			// TODO: add a typed catalogue word-item boundary type when these items move off the generic path.
 			return (
 				<ListWordsList
 					editToggle={editMode}
@@ -67,6 +71,7 @@ export const CatalogueItems = ({
 			);
 		case ObjectTemplates.KNOWNSENTENCES:
 		case ObjectTemplates.SENTENCES:
+			// TODO: add a typed catalogue sentence-item boundary type when these items move off the generic path.
 			return (
 				<ListSentencesList
 					editToggle={editMode}
@@ -81,7 +86,7 @@ export const CatalogueItems = ({
 				<ListArticlesList
 					listUserId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={compatibleItems}
+					objects={items as CatalogueArticleItem[]}
 					removeFromList={handleRemoveItem}
 				/>
 			);

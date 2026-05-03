@@ -7,8 +7,8 @@ use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Shared\Results\Result;
 use App\Infrastructure\Persistence\Models\User;
+use App\Shared\Results\Result;
 
 interface CatalogueServiceInterface
 {
@@ -17,6 +17,8 @@ interface CatalogueServiceInterface
     public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): Catalogues;
 
     public function getCatalogue(EntityId $uuid, ?User $user = null): Result;
+
+    public function getIdByUuid(EntityId $uuid): ?int;
 
     public function addItemToCatalogue(EntityId $uuid, int $itemId, User $user): Result;
 

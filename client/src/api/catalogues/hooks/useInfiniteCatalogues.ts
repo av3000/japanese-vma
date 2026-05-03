@@ -8,7 +8,8 @@ import {
 import type { CatalogueListResource } from '@/api/generated/model/catalogueListResource';
 import type { FetchCataloguesFilters } from '../catalogues';
 
-export const getInfiniteCataloguesQueryKey = (filters: FetchCataloguesFilters = {}) => getCatalogueIndexQueryKey(filters);
+export const getInfiniteCataloguesQueryKey = (filters: FetchCataloguesFilters = {}) =>
+	getCatalogueIndexQueryKey(filters);
 
 export const getNextCataloguesPageParam = (lastPage: CatalogueListResource) => {
 	return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
-import { ArticleDetailResourceArticle } from '../generated/model/articleDetailResourceArticle';
 import { mapArticleDetail } from './details';
 
-const createArticle = (overrides: Partial<ArticleDetailResourceArticle> = {}): ArticleDetailResourceArticle => ({
+const createArticle = (overrides: Partial<ArticleDetailResource> = {}): ArticleDetailResource => ({
 	id: 123,
 	uid: 'article-uuid',
 	entity_type_uid: 'entity-type-uuid',

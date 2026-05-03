@@ -6,14 +6,14 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
-use App\Domain\Catalogues\Models\Catalogues;
-use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
 use App\Domain\Catalogues\Enums\CatalogueSortField;
-use App\Infrastructure\Persistence\Models\Catalogue;
+use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
+use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Infrastructure\Persistence\Models\Catalogue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,7 +22,8 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
 {
     public function __construct(
         private readonly CatalogueMapper $catalogueMapper
-    ) {}
+    ) {
+    }
 
     public function createDefaultCataloguesForUser(UserId $userId): void
     {
@@ -80,6 +81,22 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         ]);
     }
 
+    /**
+     * Get integer ID from catalogue UUID.
+     *
+     * Performs a lightweight query returning only the ID column.
+     * Useful when you need the integer ID for operations but only have the public UUID.
+     *
+     * @param  EntityId  $entityUuid  The catalogue's public UUID
+     * @return int|null The catalogue's integer ID, or null if UUID not found
+     *
+     * @throws \Illuminate\Database\QueryException On database failure
+     */
+    public function getIdByUuid(EntityId $entityUuid): ?int
+    {
+        return Catalogue::where('uuid', $entityUuid->value())->value('id');
+    }
+
     public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues
     {
         $query = Catalogue::query()->with(['user']);
@@ -105,8 +122,8 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
             $query->where(function (Builder $q) use ($searchValue) {
-                $q->where('title', 'LIKE', '%' . $searchValue . '%')
-                    ->orWhere('description', 'LIKE', '%' . $searchValue . '%');
+                $q->where('title', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('description', 'LIKE', '%'.$searchValue.'%');
             });
         }
 

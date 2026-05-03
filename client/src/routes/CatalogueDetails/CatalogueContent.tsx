@@ -2,22 +2,23 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCatalogue, downloadCataloguePdf, removeItemFromCatalogue } from '@/api/catalogues/actions';
+import type { CatalogueDetails } from '@/api/catalogues/catalogues';
+import { fetchCatalogueLikeStatus, toggleCatalogueLike } from '@/api/catalogues/likes';
 import { getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
-import { Button } from '@/components/shared/Button';
-import { Chip } from '@/components/shared/Chip';
-import { Icon } from '@/components/shared/Icon';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
-import type { CatalogueDetails } from '@/api/catalogues/catalogues';
-import { fetchCatalogueLikeStatus, toggleCatalogueLike } from '@/api/catalogues/likes';
+import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
+import { Icon } from '@/components/shared/Icon';
 import { formatDate } from '@/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import { ObjectTemplateType } from '@/shared/constants/enums';
 
 interface CatalogueContentProps {
 	catalogue: CatalogueDetails;
@@ -30,11 +31,10 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const [editMode, setEditMode] = useState(false);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteModal = useModal(deleteDialogRef, { id: 'catalogue-delete-modal' });
-
 	const isOwner = currentUser?.id === catalogue.owner.id;
-	const likesCount = catalogue.engagement?.likes_count ?? 0;
-	const viewsCount = catalogue.engagement?.views_count ?? 0;
-	const downloadCount = catalogue.engagement?.downloads_count ?? 0;
+	const likesCount = Number(catalogue.engagement?.likes_count ?? 0);
+	const viewsCount = Number(catalogue.engagement?.views_count ?? 0);
+	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
 
 	const { data: isLiked = false } = useQuery({
 		queryKey: ['catalogue-like', catalogue.id],
@@ -62,18 +62,15 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 				getCatalogueShowQueryKey(catalogue.uuid),
 				(old: CatalogueDetailResource | undefined) => {
 					if (!old) return old;
-					const nextLikes = (old.catalogue.engagement?.likes_count ?? 0) + (nextLiked ? 1 : -1);
+					const nextLikes = Number(old.engagement?.likes_count ?? 0) + (nextLiked ? 1 : -1);
 
 					return {
 						...old,
-						catalogue: {
-							...old.catalogue,
-							engagement: {
-								likes_count: nextLikes,
-								downloads_count: old.catalogue.engagement?.downloads_count ?? 0,
-								views_count: old.catalogue.engagement?.views_count ?? 0,
-								comments_count: old.catalogue.engagement?.comments_count ?? 0,
-							},
+						engagement: {
+							likes_count: String(nextLikes),
+							downloads_count: String(old.engagement?.downloads_count ?? 0),
+							views_count: String(old.engagement?.views_count ?? 0),
+							comments_count: String(old.engagement?.comments_count ?? 0),
 						},
 					};
 				},
@@ -95,11 +92,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 					if (!old) return old;
 					return {
 						...old,
-						catalogue: {
-							...old.catalogue,
-							items: old.catalogue.items.filter((item: any) => item.id !== itemId),
-							items_count: Math.max(0, old.catalogue.items_count - 1),
-						},
+						items: (old.items as unknown as Array<{ id: number }>).filter((item) => item.id !== itemId),
+						items_count: Math.max(0, Number(old.items_count) - 1),
 					};
 				},
 			);
@@ -137,9 +131,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 						<div className="col">
 							{formatDate(catalogue.created_at, 'ja')} <br />
 							<span>{viewsCount} views</span>
-							{isOwner && (
-								<span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>
-							)}
+							{isOwner && <span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>}
 							<br />
 							<strong>{catalogue.type_label}</strong>
 						</div>
@@ -193,6 +185,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate()}>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
+							{/* TODO: use const instead of type 9 */}
 							{catalogue.type !== 9 && (
 								<Button variant="ghost" hasOnlyIcon onClick={handleDownloadPdf}>
 									<Icon size="md" name="filePdfSolid" />
@@ -220,7 +213,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 								</div>
 							)}
 							<CatalogueItems
-								items={catalogue.items}
+								items={catalogue.items as unknown as unknown[]}
 								catalogueType={catalogue.type}
 								currentUser={currentUser}
 								ownerId={catalogue.owner.id}
@@ -236,7 +229,13 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock objectUuid={catalogue.uuid} parentObjectId={catalogue.id} parentObjectType="list" />
+					<CommentsBlock
+						readObjectType="catalogue"
+						readObjectUuid={catalogue.uuid}
+						entityId={catalogue.id}
+						entityType={ObjectTemplateType.LIST}
+						entityUuid={catalogue.uuid}
+					/>
 				</div>
 			</div>
 

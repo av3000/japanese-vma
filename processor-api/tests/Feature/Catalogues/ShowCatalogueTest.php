@@ -2,18 +2,18 @@
 
 namespace Tests\Feature\Catalogues;
 
-use Tests\TestCase;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Persistence\Models\Catalogue;
+use App\Infrastructure\Persistence\Models\User;
+use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
-use App\Infrastructure\Persistence\Models\User;
-use App\Infrastructure\Persistence\Models\Catalogue;
-use App\Infrastructure\Persistence\Models\View;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\Enums\UserRole;
+use Tests\TestCase;
 
 class ShowCatalogueTest extends TestCase
 {
@@ -39,7 +39,7 @@ class ShowCatalogueTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -66,7 +66,8 @@ class ShowCatalogueTest extends TestCase
         $response = $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.catalogue.uuid', $catalogue->uuid);
+            ->assertJsonPath('data.uuid', $catalogue->uuid)
+            ->assertJsonMissingPath('data.catalogue');
     }
 
     public function test_show_private_catalogue_requires_owner(): void

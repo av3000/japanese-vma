@@ -127,6 +127,12 @@ docker compose exec laravel-app php artisan route:list
 docker compose logs -f webserver
 ```
 
+## Orval API Client
+
+After making changes on backend related to api, the scramble auto type detection will run and generate new live `api.json`.
+
+Then, to have the latest changes on the frontend run `npm run orval:live`.
+
 ## Documentation Map
 
 - [client/README.md](./client/README.md) explains frontend structure, setup, and commands.

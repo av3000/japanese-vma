@@ -2,20 +2,22 @@
 
 namespace App\Http\v1\Comments\Controllers;
 
-use App\Application\Comments\Services\CommentService;
-use App\Http\v1\Comments\Resources\CommentResource;
 use App\Application\Articles\Services\ArticleServiceInterface;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-use App\Http\v1\Concerns\ResolvesOptionalApiUser;
-use App\Http\v1\Comments\Requests\IndexCommentRequest;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-
+use App\Application\Catalogues\Services\CatalogueServiceInterface;
+use App\Application\Comments\Services\CommentService;
+use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
+use App\Http\v1\Comments\Requests\IndexCommentRequest;
+use App\Http\v1\Comments\Requests\StoreCommentRequest;
+use App\Http\v1\Comments\Resources\CommentResource;
+use App\Http\v1\Concerns\ResolvesOptionalApiUser;
 use App\Shared\Http\TypedResults;
-use Illuminate\Http\Request;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
@@ -25,18 +27,39 @@ class CommentController extends Controller
         // TODO: use interface for commentService
         private CommentService $commentService,
         private ArticleServiceInterface $articleService,
+        private CatalogueServiceInterface $catalogueService,
         // private EngagementServiceInterface $engagementService
-    ) {}
+    ) {
+    }
 
     public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse
     {
-        $entityUuid = new EntityId($uuid);
+        $entityUuid = EntityId::from($uuid);
         $entityId = $this->articleService->getArticleIdByUuid($entityUuid);
+
+        if ($entityId === null) {
+            return TypedResults::notFound('Article not found');
+        }
+
         return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::ARTICLE);
+    }
+
+    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResponse
+    {
+        $entityUuid = EntityId::from($uuid);
+
+        $entityId = $this->catalogueService->getIdByUuid($entityUuid);
+
+        if ($entityId === null) {
+            return TypedResults::notFound('Catalogue not found');
+        }
+
+        return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::LIST);
     }
 
     private function getCommentsForEntity(
         IndexCommentRequest $request,
+        // TODO: after all legacy instances that reference 'id' will be migrated, use UUID.
         int $entityId,
         ObjectTemplateType $entityType
     ): JsonResponse {
@@ -49,7 +72,6 @@ class CommentController extends Controller
             entityId: $entityId,
             viewerUserId: $this->resolveOptionalApiUserId($request)
         );
-
 
         $resources = [];
         foreach ($paginatedComments->getItems() as $comment) {
@@ -70,11 +92,22 @@ class CommentController extends Controller
             ],
         ];
 
+        // TODO: consider returning resource instead of typed result
         return TypedResults::ok($data);
     }
-    public function store(Request $request)
+
+    /**
+     * @response array{success: true, data: array{id: int, entity_uuid: string, entity_type: string, author_name: string, author_id: int, content: string, parent_comment_id: int|null, is_reply: bool, created_at: string, updated_at: string, likes_count: int, is_liked_by_viewer: bool}}
+     */
+    #[Response(201, type: 'array{success: true, data: array{id: int, entity_uuid: string, entity_type: string, author_name: string, author_id: int, content: string, parent_comment_id: int|null, is_reply: bool, created_at: string, updated_at: string, likes_count: int, is_liked_by_viewer: bool}}')]
+    public function store(StoreCommentRequest $request): JsonResponse
     {
-        //
+        $comment = $this->commentService->createCommentForEntity(
+            dto: CommentCreateDTO::fromRequest($request->validated()),
+            author: auth('api')->user(),
+        );
+
+        return TypedResults::created(new CommentResource($comment));
     }
 
     public function show($id)

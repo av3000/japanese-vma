@@ -41,27 +41,25 @@ class ArticleDetailResource extends JsonResource
      * Transform the article domain model into an API representation.
      *
      * @return array{
-     *     article: array{
-     *         id: int,
-     *         uid: string,
-     *         entity_type_uid: string,
-     *         title_jp: string,
-     *         title_en: ?string,
-     *         content_jp: string,
-     *         content_en: ?string,
-     *         source_link: string,
-     *         publicity: int,
-     *         status: int,
-     *         jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
-     *         author: AuthorResource,
-     *         hashtags: array<int, HashtagResource>,
-     *         created_at: string,
-     *         updated_at: string,
-     *         engagement: EngagementResource|null,
-     *         kanjis: array<int, KanjiResource>,
-     *         words: array<int, mixed>,
-     *         processing_status: ProcessingStatusResource|null
-     *     }
+     *     id: int,
+     *     uid: string,
+     *     entity_type_uid: string,
+     *     title_jp: string,
+     *     title_en: ?string,
+     *     content_jp: string,
+     *     content_en: ?string,
+     *     source_link: string,
+     *     publicity: int,
+     *     status: int,
+     *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
+     *     author: AuthorResource,
+     *     hashtags: array<int, HashtagResource>,
+     *     created_at: string,
+     *     updated_at: string,
+     *     engagement: EngagementResource|null,
+     *     kanjis: array<int, KanjiResource>,
+     *     words: array<int, mixed>,
+     *     processing_status: ProcessingStatusResource|null
      * }
      */
     public function toArray(Request $request): array
@@ -79,38 +77,36 @@ class ArticleDetailResource extends JsonResource
         ];
 
         return [
-            'article' => [
-                'id' => (int) $this->getIdValue(),
-                'uid' => (string) $this->getUid(),
-                'entity_type_uid' => (string) $this->getEntityTypeUid(),
-                'title_jp' => $this->getTitleJp()->value,
-                'title_en' => $this->getTitleEn()?->value,
-                'content_jp' => $this->getContentJp()->value,
-                'content_en' => $this->getContentEn()?->value,
-                'source_link' => $this->getSourceUrl()->value,
-                'publicity' => $publicity,
-                'status' => $status,
-                'jlpt_levels' => $jlptLevels,
-                'author' => new AuthorResource([
-                    'id' => $this->getAuthorId()->value(),
-                    'name' => $this->getAuthorName()->value(),
-                    'uuid' => $this->getAuthorUuid()->value(),
-                ]),
-                'hashtags' => HashtagResource::collection($this->hashtags),
-                'created_at' => $this->getCreatedAt()->format('c'),
-                'updated_at' => $this->getUpdatedAt()->format('c'),
-                'engagement' => $this->engagement ? new EngagementResource($this->engagement) : null,
-                'kanjis' => KanjiResource::collection($this->kanjis),
-                'words' => $this->articleWords(),
-                'processing_status' => $this->lastOperation ? new ProcessingStatusResource([
-                    'id' => $this->lastOperation->id,
-                    'type' => $this->lastOperation->task_type,
-                    'status' => $this->lastOperation->status,
-                    'metadata' => $this->lastOperation->metadata,
-                    'created_at' => $this->lastOperation->created_at?->toIso8601String(),
-                    'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
-                ]) : null,
-            ],
+            'id' => (int) $this->getIdValue(),
+            'uid' => (string) $this->getUid(),
+            'entity_type_uid' => (string) $this->getEntityTypeUid(),
+            'title_jp' => $this->getTitleJp()->value,
+            'title_en' => $this->getTitleEn()?->value,
+            'content_jp' => $this->getContentJp()->value,
+            'content_en' => $this->getContentEn()?->value,
+            'source_link' => $this->getSourceUrl()->value,
+            'publicity' => $publicity,
+            'status' => $status,
+            'jlpt_levels' => $jlptLevels,
+            'author' => new AuthorResource([
+                'id' => $this->getAuthorId()->value(),
+                'name' => $this->getAuthorName()->value(),
+                'uuid' => $this->getAuthorUuid()->value(),
+            ]),
+            'hashtags' => HashtagResource::collection($this->hashtags),
+            'created_at' => $this->getCreatedAt()->format('c'),
+            'updated_at' => $this->getUpdatedAt()->format('c'),
+            'engagement' => $this->engagement ? new EngagementResource($this->engagement) : null,
+            'kanjis' => KanjiResource::collection($this->kanjis),
+            'words' => $this->articleWords(),
+            'processing_status' => $this->lastOperation ? new ProcessingStatusResource([
+                'id' => $this->lastOperation->id,
+                'type' => $this->lastOperation->task_type,
+                'status' => $this->lastOperation->status,
+                'metadata' => $this->lastOperation->metadata,
+                'created_at' => $this->lastOperation->created_at?->toIso8601String(),
+                'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
+            ]) : null,
         ];
     }
 

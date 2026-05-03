@@ -31,6 +31,8 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 - Keep request code in centralized API modules:
   - generated Orval clients under `src/api/generated/**`
   - typed service adapters such as `src/api/catalogues/catalogues.ts`
+- For API-boundary enums and request/response contract types, prefer Orval-generated models under `src/api/generated/model/**`.
+- Keep `src/shared/constants/enums.ts` for UI labels, legacy numeric IDs, and app-local helpers; do not use it as a substitute for generated API contract types when the backend schema already defines the enum.
 - If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw `apiCall(...)` usage through route trees.
 - Query keys should be descriptive and stable. Include the meaningful filter object in the key when server state depends on filters or ownership.
 - Avoid page-owned pagination/search/loading state when React Query already fits the problem.
@@ -88,6 +90,13 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - component-owned pagination/search state for server data
   - duplicated list type labels and magic numbers
   - legacy comment props that do not match the current `CommentsBlock` contract
+- Additional comment-specific debt to avoid copying forward:
+  - `src/routes/community/PostDetails/index.tsx`
+  - `src/routes/japanese/SentenceDetails/index.tsx`
+- Current comment precedents:
+  - `src/routes/ArticleDetails/ArticleContent/index.tsx`
+  - `src/routes/CatalogueDetails/CatalogueContent.tsx`
+  - Those are the current migrated examples for wiring `CommentsBlock` into detail routes.
 
 ## 8) SavedList And Catalogue Migration Guardrails
 
@@ -99,9 +108,11 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 - For list-style routes, first ask whether the surface should be backed by `/v1/catalogues`.
 - When migrating search/pagination, prefer typed query hooks and flattened query results over manual `next_page_url` state.
 - When migrating comments, match the current `CommentsBlock` contract:
-  - `objectUuid`
-  - `parentObjectId`
-  - `parentObjectType`
+  - read props: `readObjectType`, `readObjectUuid`
+  - write props: `entityType`, `entityId`, `entityUuid`
+- Keep the boundary explicit:
+  - reads still follow resource-specific routes like article/catalogue UUID comment endpoints
+  - writes use the generic v1 comment payload and should pass generated `ObjectTemplateType` values plus known entity metadata
 - If a route still depends on a legacy endpoint, keep that dependency in a dedicated adapter module with a TODO that names the target v1 replacement.
 - Preserve user-visible behavior unless a behavior change is explicit and documented.
 

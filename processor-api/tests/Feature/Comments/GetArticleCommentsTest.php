@@ -63,8 +63,8 @@ class GetArticleCommentsTest extends TestCase
 
     public function test_authenticated_viewer_gets_personalized_like_state_for_article_comments(): void
     {
-        $author = $this->createUser(['email' => Str::uuid() . '@author.example']);
-        $viewer = $this->createUser(['email' => Str::uuid() . '@viewer.example']);
+        $author = $this->createUser(['email' => Str::uuid().'@author.example']);
+        $viewer = $this->createUser(['email' => Str::uuid().'@viewer.example']);
         $article = $this->createArticle($author);
         $comment = $this->createComment($article, $author);
 
@@ -90,7 +90,10 @@ class GetArticleCommentsTest extends TestCase
         $author = $this->createUser();
         $article = $this->createArticle($author);
 
-        $response = $this->postJson("/api/v1/articles/{$article->uuid}/comments", [
+        $response = $this->postJson('/api/v1/comments', [
+            'entity_type' => ObjectTemplateType::ARTICLE->value,
+            'entity_id' => $article->id,
+            'entity_uuid' => $article->uuid,
             'content' => 'Guest comment attempt.',
         ]);
 
@@ -101,7 +104,7 @@ class GetArticleCommentsTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));

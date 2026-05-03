@@ -1,3 +1,8 @@
+import { commentStore } from '@/api/generated/comment/comment';
+import type { CommentStore200 } from '@/api/generated/model/commentStore200';
+import type { CommentStore201 } from '@/api/generated/model/commentStore201';
+import type { ObjectTemplateType } from '@/api/generated/model/objectTemplateType';
+import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
 import axios from '@/services/axios';
 import { PaginatedResponse } from '@/types';
 
@@ -15,11 +20,6 @@ export interface ApiComment {
 
 export interface CommentFilters {
 	include_likes?: boolean;
-}
-
-export interface AddCommentPayload {
-	content: string;
-	entity_id?: string;
 }
 
 export interface RemoveCommentPayload {
@@ -44,12 +44,19 @@ export const fetchComments = async (
 };
 
 export const addComment = async (
-	parentObjectType: string,
-	parentObjectId: string | number,
-	requestPayload: AddCommentPayload,
-) => {
-	const response = await axios.post(`${parentObjectType}/${parentObjectId}/comment`, requestPayload);
-	return response.data.comment;
+	entityType: ObjectTemplateType,
+	entityId: number,
+	entityUuid: string,
+	requestPayload: Pick<StoreCommentRequest, 'content' | 'parent_comment_id'>,
+): Promise<CommentStore200['data'] | CommentStore201['data']> => {
+	const response = await commentStore({
+		entity_type: entityType,
+		entity_id: entityId,
+		entity_uuid: entityUuid,
+		...requestPayload,
+	});
+
+	return response.data;
 };
 
 export const deleteComment = async (requestPayload: RemoveCommentPayload) => {

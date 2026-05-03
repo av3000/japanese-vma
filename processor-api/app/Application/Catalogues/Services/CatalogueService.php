@@ -50,7 +50,8 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly LikeRepositoryInterface $likeRepository,
         private readonly DownloadRepositoryInterface $downloadRepository,
         private readonly CommentRepositoryInterface $commentRepository,
-    ) {}
+    ) {
+    }
 
     public function createCatalogue(CatalogueCreateDTO $dto, User $user): Result
     {
@@ -115,6 +116,11 @@ class CatalogueService implements CatalogueServiceInterface
         );
 
         return $this->catalogueRepository->findByCriteria($criteria);
+    }
+
+    public function getIdByUuid(EntityId $uuid): ?int
+    {
+        return $this->catalogueRepository->getIdByUuid($uuid);
     }
 
     public function getCatalogue(EntityId $uuid, ?User $user = null): Result
@@ -311,7 +317,7 @@ class CatalogueService implements CatalogueServiceInterface
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            Log::error("Failed to increment view for catalogue {$id}: " . $e->getMessage());
+            Log::error("Failed to increment view for catalogue {$id}: ".$e->getMessage());
         }
     }
 

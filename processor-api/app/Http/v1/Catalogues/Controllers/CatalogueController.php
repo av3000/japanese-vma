@@ -2,7 +2,6 @@
 
 namespace App\Http\v1\Catalogues\Controllers;
 
-use Dedoc\Scramble\Attributes\Response;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
@@ -14,7 +13,6 @@ use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
@@ -25,6 +23,7 @@ use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\TypedResults;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -36,7 +35,8 @@ class CatalogueController extends Controller
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
         private readonly LoadEntityStatsAction $loadStats,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+    ) {
+    }
 
     /**
      * @response CatalogueListResource
@@ -48,7 +48,7 @@ class CatalogueController extends Controller
 
         $paginatedCatalogues = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
 
-        $catalogueIds = array_map(fn($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
+        $catalogueIds = array_map(fn ($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
 
         $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
 
@@ -224,7 +224,7 @@ class CatalogueController extends Controller
     #[Response(type: 'CatalogueResource')]
     public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse|JsonResource
     {
-        if (!$request->hasAnyUpdateableFields()) {
+        if (! $request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
                 ['fields' => ['At least one field must be provided for update operation']],
                 'No fields to update'

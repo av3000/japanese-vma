@@ -1,10 +1,10 @@
+import type { Catalogue } from '@/api/catalogues/catalogues';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
-import { Card } from '@/components/shared/Card';
+import styles from '@/components/shared/ArticleCard/ArticleCard.module.scss';
+import { Card, CardTag } from '@/components/shared/Card';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { CATALOGUE_ROUTES, resolveCatalogueTypeLabel } from '@/shared/constants/catalogues';
-import type { Catalogue } from '@/api/catalogues/catalogues';
-import styles from '@/components/shared/ArticleCard/ArticleCard.module.scss';
 
 interface CatalogueCardProps {
 	catalogue: Catalogue;
@@ -24,10 +24,13 @@ export const CatalogueCard = ({ catalogue }: CatalogueCardProps) => {
 				image={{ url: DefaultListImg, title: catalogue.title, alt: catalogue.title }}
 				url={CATALOGUE_ROUTES.detail(catalogue.uuid)}
 				date={catalogue.created_at}
-				tags={catalogue.hashtags.map((tag) => ({
-					...tag,
-					id: String(tag.id),
-				}))}
+				tags={catalogue.hashtags.map(
+					(tag) =>
+						({
+							content: tag.content,
+							id: String(tag.id),
+						}) as CardTag,
+				)}
 			>
 				<div className="mb-4">
 					<Chip readonly variant="outline">

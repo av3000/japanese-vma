@@ -6,18 +6,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property array{id: int|string, content: string, created_at?: mixed, updated_at?: mixed}|object $resource
+ * @property array{id: int, content: string, created_at?: mixed, updated_at?: mixed}|object $resource
  */
 class HashtagResource extends JsonResource
 {
     /**
-     * @return array{id: int|string|null, content: string|null, created_at: string|null, updated_at: string|null}
+     * @return array{id: int, content: string, created_at: string|null, updated_at: string|null}
      */
     public function toArray(Request $request): array
     {
         return [
-            'id' => data_get($this->resource, 'id'),
-            'content' => data_get($this->resource, 'content'),
+            'id' => (int) data_get($this->resource, 'id'),
+            'content' => (string) data_get($this->resource, 'content'),
             'created_at' => $this->formatDate(data_get($this->resource, 'created_at')),
             'updated_at' => $this->formatDate(data_get($this->resource, 'updated_at')),
         ];
