@@ -34,11 +34,14 @@ class HashtagResourceOpenApiTest extends TestCase
 
         $articleProperties = $apiJson['components']['schemas']['ArticleDetailResource']['properties'];
         $catalogueProperties = $apiJson['components']['schemas']['CatalogueDetailResource']['properties'];
+        $catalogueEngagementProperties = $apiJson['components']['schemas']['CatalogueDetailEngagementResource']['properties'];
 
         $this->assertArrayHasKey('uid', $articleProperties);
         $this->assertArrayNotHasKey('article', $articleProperties);
         $this->assertArrayHasKey('uuid', $catalogueProperties);
         $this->assertArrayNotHasKey('catalogue', $catalogueProperties);
+        $this->assertArrayHasKey('is_liked_by_viewer', $catalogueEngagementProperties);
+        $this->assertSame('boolean', $catalogueEngagementProperties['is_liked_by_viewer']['type']);
     }
 
     public function test_store_comment_request_reuses_object_template_type_schema(): void

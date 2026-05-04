@@ -56,9 +56,11 @@ class GetArticleCommentsTest extends TestCase
         $response = $this->getJson("/api/v1/articles/{$article->uuid}/comments");
 
         $response->assertOk()
-            ->assertJsonPath('data.items.0.id', $comment->id)
-            ->assertJsonPath('data.items.0.likes_count', 0)
-            ->assertJsonPath('data.items.0.is_liked_by_viewer', false);
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.likes_count', 0)
+            ->assertJsonPath('items.0.is_liked_by_viewer', false);
     }
 
     public function test_authenticated_viewer_gets_personalized_like_state_for_article_comments(): void
@@ -80,9 +82,11 @@ class GetArticleCommentsTest extends TestCase
         $response = $this->getJson("/api/v1/articles/{$article->uuid}/comments");
 
         $response->assertOk()
-            ->assertJsonPath('data.items.0.id', $comment->id)
-            ->assertJsonPath('data.items.0.likes_count', 1)
-            ->assertJsonPath('data.items.0.is_liked_by_viewer', true);
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.likes_count', 1)
+            ->assertJsonPath('items.0.is_liked_by_viewer', true);
     }
 
     public function test_guest_cannot_post_article_comments_to_protected_route(): void

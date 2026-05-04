@@ -1,17 +1,12 @@
-import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import { useParams } from 'react-router-dom';
-import { useCatalogueShow } from '@/api/generated/catalogue/catalogue';
+import { useCatalogueQuery } from '@/api/catalogues/details';
 import Spinner from '@/assets/images/spinner.gif';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import CatalogueContent from './CatalogueContent';
 
 const CatalogueDetailsPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
-	const { data, isPending, isError } = useCatalogueShow<CatalogueDetailResource>(catalogueId ?? '', {
-		query: {
-			enabled: Boolean(catalogueId),
-		},
-	});
+	const { data, isPending, isError } = useCatalogueQuery(catalogueId);
 	const catalogue = data;
 
 	if (!catalogueId || (isPending && !catalogue)) {

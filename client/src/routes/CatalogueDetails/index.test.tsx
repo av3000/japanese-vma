@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import CatalogueDetailsPage from './index';
-import { useCatalogueShow } from '@/api/generated/catalogue/catalogue';
+import { useCatalogueQuery } from '@/api/catalogues/details';
 import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
 
 const useParamsMock = vi.fn();
@@ -14,8 +14,8 @@ vi.mock('react-router-dom', async () => {
 	};
 });
 
-vi.mock('@/api/generated/catalogue/catalogue', () => ({
-	useCatalogueShow: vi.fn(),
+vi.mock('@/api/catalogues/details', () => ({
+	useCatalogueQuery: vi.fn(),
 }));
 
 vi.mock('@/api/catalogues/legacyCatalogues', async () => {
@@ -35,8 +35,8 @@ vi.mock('./CatalogueContent', () => ({
 describe('CatalogueDetailsPage', () => {
 	it('loads canonical UUID routes directly without legacy identity resolution', () => {
 		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
-		vi.mocked(useCatalogueShow).mockReturnValue({
-			data: { catalogue: { title: 'My catalogue' } },
+		vi.mocked(useCatalogueQuery).mockReturnValue({
+			data: { title: 'My catalogue' },
 			isPending: false,
 			isError: false,
 		} as never);
@@ -44,9 +44,7 @@ describe('CatalogueDetailsPage', () => {
 		const html = renderToStaticMarkup(<CatalogueDetailsPage />);
 
 		expect(html).toContain('My catalogue');
-		expect(useCatalogueShow).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', {
-			query: { enabled: true },
-		});
+		expect(useCatalogueQuery).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31');
 		expect(resolveLegacyCatalogueIdentity).not.toHaveBeenCalled();
 	});
 });

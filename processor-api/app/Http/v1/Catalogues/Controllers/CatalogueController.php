@@ -5,6 +5,7 @@ namespace App\Http\v1\Catalogues\Controllers;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
@@ -34,6 +35,7 @@ class CatalogueController extends Controller
         private readonly CatalogueServiceInterface $catalogueService,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
         private readonly LoadEntityStatsAction $loadStats,
+        private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
     ) {
     }
@@ -175,7 +177,8 @@ class CatalogueController extends Controller
     public function show(string $uuid): JsonResponse|JsonResource
     {
         $catalogueUid = EntityId::from($uuid);
-        $result = $this->catalogueService->getCatalogue($catalogueUid, auth('api')->user());
+        $viewer = auth('api')->user();
+        $result = $this->catalogueService->getCatalogue($catalogueUid, $viewer);
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -209,12 +212,19 @@ class CatalogueController extends Controller
             ObjectTemplateType::LIST
         );
 
+        $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
+            $catalogue->getIdValue(),
+            ObjectTemplateType::LIST,
+            $viewer !== null
+        );
+
         return new CatalogueDetailResource(
             $catalogue,
             $detail->items,
             $stats,
             $hashtags,
-            $detail->itemsCount
+            $detail->itemsCount,
+            $isLikedByViewer
         );
     }
 

@@ -52,10 +52,12 @@ class GetListCommentsTest extends TestCase
         $response = $this->getJson("/api/v1/catalogues/{$catalogue->uuid}/comments");
 
         $response->assertOk()
-            ->assertJsonPath('data.items.0.id', $comment->id)
-            ->assertJsonPath('data.items.0.entity_uuid', $catalogue->uuid)
-            ->assertJsonPath('data.items.0.likes_count', 0)
-            ->assertJsonPath('data.items.0.is_liked_by_viewer', false);
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.entity_uuid', $catalogue->uuid)
+            ->assertJsonPath('items.0.likes_count', 0)
+            ->assertJsonPath('items.0.is_liked_by_viewer', false);
     }
 
     public function test_unknown_catalogue_uuid_returns_not_found_for_list_comments(): void
@@ -63,7 +65,9 @@ class GetListCommentsTest extends TestCase
         $response = $this->getJson('/api/v1/catalogues/'.Str::uuid().'/comments');
 
         $response->assertNotFound()
-            ->assertJsonPath('title', 'Catalogue not found');
+            ->assertJsonPath('title', 'Not Found')
+            ->assertJsonPath('detail', 'Catalogue not found')
+            ->assertJsonPath('status', 404);
     }
 
     private function createUser(array $overrides = []): User

@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteCatalogue, downloadCataloguePdf, removeItemFromCatalogue } from '@/api/catalogues/actions';
-import type { CatalogueDetails } from '@/api/catalogues/catalogues';
-import { fetchCatalogueLikeStatus, toggleCatalogueLike } from '@/api/catalogues/likes';
+import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
 import { getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
@@ -21,7 +20,7 @@ import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { ObjectTemplateType } from '@/shared/constants/enums';
 
 interface CatalogueContentProps {
-	catalogue: CatalogueDetails;
+	catalogue: MappedCatalogue;
 }
 
 const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
@@ -35,48 +34,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const likesCount = Number(catalogue.engagement?.likes_count ?? 0);
 	const viewsCount = Number(catalogue.engagement?.views_count ?? 0);
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
-
-	const { data: isLiked = false } = useQuery({
-		queryKey: ['catalogue-like', catalogue.id],
-		queryFn: () => fetchCatalogueLikeStatus(catalogue.id),
-		enabled: isAuthenticated,
-	});
-
-	const likeMutation = useMutation({
-		mutationFn: async () => {
-			if (!isAuthenticated) {
-				navigate('/login');
-				return;
-			}
-
-			return toggleCatalogueLike(catalogue.id);
-		},
-		onSuccess: (response) => {
-			if (!response) {
-				return;
-			}
-
-			const nextLiked = response.like;
-			queryClient.setQueryData(['catalogue-like', catalogue.id], nextLiked);
-			queryClient.setQueryData(
-				getCatalogueShowQueryKey(catalogue.uuid),
-				(old: CatalogueDetailResource | undefined) => {
-					if (!old) return old;
-					const nextLikes = Number(old.engagement?.likes_count ?? 0) + (nextLiked ? 1 : -1);
-
-					return {
-						...old,
-						engagement: {
-							likes_count: String(nextLikes),
-							downloads_count: String(old.engagement?.downloads_count ?? 0),
-							views_count: String(old.engagement?.views_count ?? 0),
-							comments_count: String(old.engagement?.comments_count ?? 0),
-						},
-					};
-				},
-			);
-		},
-	});
+	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
 
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteCatalogue(catalogue.uuid),
@@ -114,6 +72,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			console.error('Catalogue PDF download failed', error);
 		}
 	};
+
+	const isLiked = catalogue.engagement?.is_liked_by_viewer ?? false;
 
 	return (
 		<div className="container pb-5">
@@ -182,7 +142,18 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 						</div>
 						<div className="d-flex align-items-center">
 							<p className="mb-0 mr-2">{likesCount}</p>
-							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate()}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								onClick={() => {
+									if (!isAuthenticated) {
+										navigate('/login');
+										return;
+									}
+
+									likeMutation.mutate(catalogue.id);
+								}}
+							>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
 							{/* TODO: use const instead of type 9 */}

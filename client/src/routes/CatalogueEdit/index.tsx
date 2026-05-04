@@ -9,7 +9,7 @@ import {
 	useCatalogueShow,
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
-import type { CatalogueUpdate200 } from '@/api/generated/model/catalogueUpdate200';
+import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
 import Spinner from '@/assets/images/spinner.gif';
 import {
@@ -33,10 +33,10 @@ const CatalogueEditPage = () => {
 	});
 	const catalogue = data;
 
-	const mutation = useMutation<CatalogueUpdate200, unknown, { uuid: string; payload: UpdateCatalogueRequest }>({
+	const updateMutation = useMutation<CatalogueResource, unknown, { uuid: string; payload: UpdateCatalogueRequest }>({
 		mutationFn: ({ uuid, payload }: { uuid: string; payload: UpdateCatalogueRequest }) =>
 			catalogueUpdate(uuid, payload),
-		onSuccess: ({ data: updatedCatalogue }) => {
+		onSuccess: (updatedCatalogue) => {
 			setStatus(null);
 			setServerErrors(null);
 			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
@@ -100,7 +100,7 @@ const CatalogueEditPage = () => {
 			<div className="row justify-content-lg-center text-center">
 				<CatalogueForm
 					initialValues={initialValues}
-					isSubmitting={mutation.isPending}
+					isSubmitting={updateMutation.isPending}
 					submitLabel="Update Catalogue"
 					serverErrors={serverErrors}
 					statusMessage={status}
@@ -109,7 +109,7 @@ const CatalogueEditPage = () => {
 						const payload = buildUpdateCataloguePayload(values, meta.dirtyKeys);
 						setStatus(null);
 						setServerErrors(null);
-						mutation.mutate({ uuid: catalogueId, payload });
+						updateMutation.mutate({ uuid: catalogueId, payload });
 					}}
 				/>
 			</div>

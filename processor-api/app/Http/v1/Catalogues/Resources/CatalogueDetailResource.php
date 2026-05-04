@@ -4,7 +4,7 @@ namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
-use App\Http\v1\Engagement\Resources\EngagementStatsResource;
+use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
@@ -22,7 +22,8 @@ class CatalogueDetailResource extends JsonResource
         private array $items = [],
         private ?CatalogueStats $stats = null,
         private array $hashtags = [],
-        private ?int $itemsCount = null
+        private ?int $itemsCount = null,
+        private bool $isLikedByViewer = false,
     ) {
         parent::__construct($catalogue);
     }
@@ -39,7 +40,7 @@ class CatalogueDetailResource extends JsonResource
      *     owner: AuthorResource,
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
-     *     engagement: EngagementStatsResource|null,
+     *     engagement: CatalogueDetailEngagementResource|null,
      *     items: array<int, mixed>,
      *     created_at: string,
      *     updated_at: string
@@ -65,7 +66,7 @@ class CatalogueDetailResource extends JsonResource
             ]),
             'items_count' => $this->itemsCount ?? count($this->items),
             'hashtags' => HashtagResource::collection($this->hashtags),
-            'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,
+            'engagement' => $this->stats ? new CatalogueDetailEngagementResource($this->stats, $this->isLikedByViewer) : null,
             'items' => $this->items,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),

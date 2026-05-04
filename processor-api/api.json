@@ -983,14 +983,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "TODO: consider returning resource instead of typed result",
+                        "description": "`CommentListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "$ref": "#/components/schemas/CommentListResource"
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundHttpException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -1062,14 +1065,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "TODO: consider returning resource instead of typed result",
+                        "description": "`CommentListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "$ref": "#/components/schemas/CommentListResource"
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundHttpException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -1095,78 +1101,11 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`CommentResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                },
-                                                "entity_uuid": {
-                                                    "type": "string"
-                                                },
-                                                "entity_type": {
-                                                    "type": "string"
-                                                },
-                                                "author_name": {
-                                                    "type": "string"
-                                                },
-                                                "author_id": {
-                                                    "type": "integer"
-                                                },
-                                                "content": {
-                                                    "type": "string"
-                                                },
-                                                "parent_comment_id": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "is_reply": {
-                                                    "type": "boolean"
-                                                },
-                                                "created_at": {
-                                                    "type": "string"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string"
-                                                },
-                                                "likes_count": {
-                                                    "type": "integer"
-                                                },
-                                                "is_liked_by_viewer": {
-                                                    "type": "boolean"
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "entity_uuid",
-                                                "entity_type",
-                                                "author_name",
-                                                "author_id",
-                                                "content",
-                                                "parent_comment_id",
-                                                "is_reply",
-                                                "created_at",
-                                                "updated_at",
-                                                "likes_count",
-                                                "is_liked_by_viewer"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "data"
-                                    ]
+                                    "$ref": "#/components/schemas/CommentResource"
                                 }
                             }
                         }
@@ -1178,78 +1117,11 @@
                         "$ref": "#/components/responses/ValidationException"
                     },
                     "201": {
-                        "description": "",
+                        "description": "`CommentResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                },
-                                                "entity_uuid": {
-                                                    "type": "string"
-                                                },
-                                                "entity_type": {
-                                                    "type": "string"
-                                                },
-                                                "author_name": {
-                                                    "type": "string"
-                                                },
-                                                "author_id": {
-                                                    "type": "integer"
-                                                },
-                                                "content": {
-                                                    "type": "string"
-                                                },
-                                                "parent_comment_id": {
-                                                    "type": [
-                                                        "integer",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "is_reply": {
-                                                    "type": "boolean"
-                                                },
-                                                "created_at": {
-                                                    "type": "string"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string"
-                                                },
-                                                "likes_count": {
-                                                    "type": "integer"
-                                                },
-                                                "is_liked_by_viewer": {
-                                                    "type": "boolean"
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "entity_uuid",
-                                                "entity_type",
-                                                "author_name",
-                                                "author_id",
-                                                "content",
-                                                "parent_comment_id",
-                                                "is_reply",
-                                                "created_at",
-                                                "updated_at",
-                                                "likes_count",
-                                                "is_liked_by_viewer"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "data"
-                                    ]
+                                    "$ref": "#/components/schemas/CommentResource"
                                 }
                             }
                         }
@@ -2417,6 +2289,34 @@
                 ],
                 "title": "AuthorResource"
             },
+            "CatalogueDetailEngagementResource": {
+                "type": "object",
+                "properties": {
+                    "likes_count": {
+                        "type": "integer"
+                    },
+                    "views_count": {
+                        "type": "integer"
+                    },
+                    "downloads_count": {
+                        "type": "integer"
+                    },
+                    "comments_count": {
+                        "type": "integer"
+                    },
+                    "is_liked_by_viewer": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "likes_count",
+                    "views_count",
+                    "downloads_count",
+                    "comments_count",
+                    "is_liked_by_viewer"
+                ],
+                "title": "CatalogueDetailEngagementResource"
+            },
             "CatalogueDetailResource": {
                 "type": "object",
                 "properties": {
@@ -2479,7 +2379,7 @@
                     "engagement": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/EngagementStatsResource"
+                                "$ref": "#/components/schemas/CatalogueDetailEngagementResource"
                             },
                             {
                                 "type": "null"
@@ -2628,6 +2528,91 @@
                     "updated_at"
                 ],
                 "title": "CatalogueResource"
+            },
+            "CommentListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CommentResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "CommentListResource"
+            },
+            "CommentResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "entity_uuid": {
+                        "type": "string"
+                    },
+                    "entity_type": {
+                        "type": "string"
+                    },
+                    "author_name": {
+                        "type": "string"
+                    },
+                    "author_id": {
+                        "type": "integer"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "parent_comment_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_reply": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    },
+                    "likes_count": {
+                        "type": "integer"
+                    },
+                    "is_liked_by_viewer": {
+                        "type": "boolean"
+                    },
+                    "replies": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CommentResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "entity_uuid",
+                    "entity_type",
+                    "author_name",
+                    "author_id",
+                    "content",
+                    "parent_comment_id",
+                    "is_reply",
+                    "created_at",
+                    "updated_at",
+                    "likes_count",
+                    "is_liked_by_viewer",
+                    "replies"
+                ],
+                "title": "CommentResource"
             },
             "CreateRoleRequest": {
                 "type": "object",
@@ -3230,6 +3215,25 @@
                             "required": [
                                 "message",
                                 "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "NotFoundHttpException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
                             ]
                         }
                     }

@@ -5,6 +5,7 @@ namespace Tests\Feature\Catalogues;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Catalogue;
+use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,6 +68,7 @@ class ShowCatalogueTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.uuid', $catalogue->uuid)
+            ->assertJsonPath('data.engagement.is_liked_by_viewer', false)
             ->assertJsonMissingPath('data.catalogue');
     }
 
@@ -97,5 +99,25 @@ class ShowCatalogueTest extends TestCase
         $this->assertSame(1, View::where('real_object_id', $catalogue->id)
             ->where('template_id', ObjectTemplateType::LIST->getLegacyId())
             ->count());
+    }
+
+    public function test_show_returns_like_state_for_authenticated_viewer(): void
+    {
+        $owner = $this->createUser();
+        $viewer = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, ['publicity' => 1, 'type' => 5]);
+
+        Like::create([
+            'user_id' => $viewer->id,
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'value' => 1,
+        ]);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.engagement.is_liked_by_viewer', true);
     }
 }

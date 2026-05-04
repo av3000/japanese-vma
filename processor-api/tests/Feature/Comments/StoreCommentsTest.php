@@ -75,12 +75,14 @@ class StoreCommentsTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.entity_uuid', $article->uuid)
-            ->assertJsonPath('data.entity_type', 'article')
-            ->assertJsonPath('data.author_id', $author->id)
-            ->assertJsonPath('data.content', 'New v1 article comment.')
-            ->assertJsonPath('data.likes_count', 0)
-            ->assertJsonPath('data.is_liked_by_viewer', false);
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('entity_uuid', $article->uuid)
+            ->assertJsonPath('entity_type', 'article')
+            ->assertJsonPath('author_id', $author->id)
+            ->assertJsonPath('content', 'New v1 article comment.')
+            ->assertJsonPath('likes_count', 0)
+            ->assertJsonPath('is_liked_by_viewer', false);
 
         $this->assertDatabaseHas('comments', [
             'template_id' => ObjectTemplateType::ARTICLE->getLegacyId(),
@@ -108,10 +110,12 @@ class StoreCommentsTest extends TestCase
         ]);
 
         $createResponse->assertCreated()
-            ->assertJsonPath('data.entity_uuid', $catalogue->uuid)
-            ->assertJsonPath('data.entity_type', 'list')
-            ->assertJsonPath('data.author_id', $author->id)
-            ->assertJsonPath('data.content', 'New v1 catalogue comment.');
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('entity_uuid', $catalogue->uuid)
+            ->assertJsonPath('entity_type', 'list')
+            ->assertJsonPath('author_id', $author->id)
+            ->assertJsonPath('content', 'New v1 catalogue comment.');
 
         $this->assertDatabaseHas('comments', [
             'template_id' => ObjectTemplateType::LIST->getLegacyId(),
@@ -125,8 +129,10 @@ class StoreCommentsTest extends TestCase
         $readResponse = $this->getJson("/api/v1/catalogues/{$catalogue->uuid}/comments");
 
         $readResponse->assertOk()
-            ->assertJsonPath('data.items.0.entity_uuid', $catalogue->uuid)
-            ->assertJsonPath('data.items.0.content', 'New v1 catalogue comment.');
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.entity_uuid', $catalogue->uuid)
+            ->assertJsonPath('items.0.content', 'New v1 catalogue comment.');
     }
 
     public function test_authenticated_user_can_create_post_comment_through_generic_v1_route(): void
@@ -143,10 +149,12 @@ class StoreCommentsTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.entity_uuid', $post->uuid)
-            ->assertJsonPath('data.entity_type', 'post')
-            ->assertJsonPath('data.author_id', $author->id)
-            ->assertJsonPath('data.content', 'New v1 post comment.');
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('entity_uuid', $post->uuid)
+            ->assertJsonPath('entity_type', 'post')
+            ->assertJsonPath('author_id', $author->id)
+            ->assertJsonPath('content', 'New v1 post comment.');
 
         $this->assertDatabaseHas('comments', [
             'template_id' => ObjectTemplateType::POST->getLegacyId(),

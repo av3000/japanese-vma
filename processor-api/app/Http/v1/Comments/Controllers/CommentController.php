@@ -12,12 +12,14 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Comments\Requests\IndexCommentRequest;
 use App\Http\v1\Comments\Requests\StoreCommentRequest;
+use App\Http\v1\Comments\Resources\CommentListResource;
 use App\Http\v1\Comments\Resources\CommentResource;
 use App\Http\v1\Concerns\ResolvesOptionalApiUser;
-use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CommentController extends Controller
 {
@@ -32,26 +34,34 @@ class CommentController extends Controller
     ) {
     }
 
-    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse
+    /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResource
     {
         $entityUuid = EntityId::from($uuid);
         $entityId = $this->articleService->getArticleIdByUuid($entityUuid);
 
         if ($entityId === null) {
-            return TypedResults::notFound('Article not found');
+            throw new NotFoundHttpException('Article not found');
         }
 
         return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::ARTICLE);
     }
 
-    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResponse
+    /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResource
     {
         $entityUuid = EntityId::from($uuid);
 
         $entityId = $this->catalogueService->getIdByUuid($entityUuid);
 
         if ($entityId === null) {
-            return TypedResults::notFound('Catalogue not found');
+            throw new NotFoundHttpException('Catalogue not found');
         }
 
         return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::LIST);
@@ -62,7 +72,7 @@ class CommentController extends Controller
         // TODO: after all legacy instances that reference 'id' will be migrated, use UUID.
         int $entityId,
         ObjectTemplateType $entityType
-    ): JsonResponse {
+    ): JsonResource {
         // TODO: Implement include_replies
         $listDTO = CommentListDTO::fromRequest($request->validated());
 
@@ -92,14 +102,13 @@ class CommentController extends Controller
             ],
         ];
 
-        // TODO: consider returning resource instead of typed result
-        return TypedResults::ok($data);
+        return new CommentListResource($data);
     }
 
     /**
-     * @response array{success: true, data: array{id: int, entity_uuid: string, entity_type: string, author_name: string, author_id: int, content: string, parent_comment_id: int|null, is_reply: bool, created_at: string, updated_at: string, likes_count: int, is_liked_by_viewer: bool}}
+     * @response CommentResource
      */
-    #[Response(201, type: 'array{success: true, data: array{id: int, entity_uuid: string, entity_type: string, author_name: string, author_id: int, content: string, parent_comment_id: int|null, is_reply: bool, created_at: string, updated_at: string, likes_count: int, is_liked_by_viewer: bool}}')]
+    #[Response(201, type: 'CommentResource')]
     public function store(StoreCommentRequest $request): JsonResponse
     {
         $comment = $this->commentService->createCommentForEntity(
@@ -107,7 +116,9 @@ class CommentController extends Controller
             author: auth('api')->user(),
         );
 
-        return TypedResults::created(new CommentResource($comment));
+        return (new CommentResource($comment))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show($id)
