@@ -59,6 +59,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Do not hide contract-significant failures.
 -   **Schema guidance:**
     -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
+    -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
     -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
 
 ## 6) Testing & Verification Expectations
@@ -69,6 +70,8 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
+    -   In Docker-backed PHPUnit runs, tests may resolve to MySQL host `db` while the configured database name is `:memory:`, causing access-denied failures before feature assertions execute.
+    -   Treat that as an environment limitation to report clearly, and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails
 

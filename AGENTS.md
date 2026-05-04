@@ -42,6 +42,8 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Generated API contract workflow:**
   - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
   - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
+  - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
+  - Verify the regenerated schema before trusting regenerated client types.
   - Do not hand-edit generated API files to patch over contract problems.
 
 ## 3) How to Work in This Repository
@@ -67,6 +69,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
   - In the current local setup, backend feature tests may be blocked if the expected MySQL host `mysql` is unavailable, and the current SQLite fallback is also unreliable due to an existing migration/index issue around `views.entity_type_uuid`.
+  - In Docker-backed PHPUnit runs, tests may also resolve to MySQL while `DB_DATABASE=':memory:'`, causing access-denied failures before feature assertions execute.
   - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
 - **Safety:**
   - Do not silently alter contracts or conventions.

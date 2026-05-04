@@ -28,6 +28,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 - Prefer **feature-scoped React Query hooks** for server state.
   - Example: `useInfiniteArticles` wraps pagination details and returns flattened items plus totals.
   - Example: `useArticleQuery` maps detail payloads into route-friendly UI data.
+  - Example: detail adapters such as `src/api/articles/details.ts` or `src/api/catalogues/details.ts` should sit between Orval and route components when a route needs mapped detail data plus related mutations.
 - Keep request code in centralized API modules:
   - generated Orval clients under `src/api/generated/**`
   - typed service adapters such as `src/api/catalogues/catalogues.ts`
@@ -35,6 +36,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 - Keep `src/shared/constants/enums.ts` for UI labels, legacy numeric IDs, and app-local helpers; do not use it as a substitute for generated API contract types when the backend schema already defines the enum.
 - If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw `apiCall(...)` usage through route trees.
 - Query keys should be descriptive and stable. Include the meaningful filter object in the key when server state depends on filters or ownership.
+- When a custom hook wraps an Orval show endpoint, reuse the generated query key helper such as `getXShowQueryKey(...)` for invalidation instead of inventing a parallel key.
 - Avoid page-owned pagination/search/loading state when React Query already fits the problem.
 
 ## 4) Forms And Validation
@@ -114,6 +116,8 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - reads still follow resource-specific routes like article/catalogue UUID comment endpoints
   - writes use the generic v1 comment payload and should pass generated `ObjectTemplateType` values plus known entity metadata
 - If a route still depends on a legacy endpoint, keep that dependency in a dedicated adapter module with a TODO that names the target v1 replacement.
+- Typed legacy adapters are acceptable transitional debt when a v1 replacement is missing or the frontend generation/worktree state is not yet aligned.
+- Catalogue membership and catalogue PDF export are current examples of dependencies that may remain intentionally legacy behind adapter modules.
 - Preserve user-visible behavior unless a behavior change is explicit and documented.
 
 ## 9) Banned Patterns For Touched Or Migrated Code
@@ -139,7 +143,9 @@ Before adding frontend coercion or adapters:
 - Check the backend v1 Resource or response annotation that produced the schema.
 - If generated types are wrong, fix the backend schema source and add or update backend schema tests.
 - Regenerate Orval types only after the schema is correct.
+- Do not run Orval against a stale `api.json`; complete backend schema regeneration first and only then regenerate frontend clients.
 - Do not hand-edit generated files.
+- Some generated subfields, especially complex catalogue detail shapes like `items`, may still be less trustworthy than the intended runtime shape; treat that as a backend schema problem first.
 - Only add client normalization when the runtime API intentionally supports multiple wire shapes.
 
 ## 11) Quality And Validation Expectations
