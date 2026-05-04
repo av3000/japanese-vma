@@ -13,12 +13,13 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - `src/api/articles/details.ts`
 - **Preferred list-query direction:** `src/routes/Dashboard/DashboardCataloguesPanel.tsx` plus `src/api/catalogues/catalogues.ts` are the current model for list-style routes that should move toward `/v1/catalogues`.
 - **Main migration target:** SavedList/custom-list surfaces should move toward catalogue-v1 patterns. Do not spend time modernizing legacy `/list` or `/lists` route trees in place unless the task is explicitly limited to legacy maintenance.
-- **Important caveat:** Article is the positive precedent, but not every line in Article is the end state. `src/routes/ArticleDetails/ArticleContent/index.tsx` still contains TODO-marked legacy `apiCall` escape hatches for bookmarks and PDF flows. Treat those as temporary adapters, not as a pattern to spread.
+- **Important caveat:** `src/routes/ArticleDetails/ArticleContent/index.tsx` is now the positive precedent for catalogue membership writes: bookmark add/remove already use generated v1 catalogue item endpoints there. Its remaining TODO-marked legacy escape hatch is PDF export, which should still be treated as temporary adapter debt rather than a pattern to spread.
 
 ## 2) Route Composition
 
 - Keep route files thin. A route should usually do param parsing, query/mutation hook wiring, and loading/error gating, then hand rendering to feature components.
 - Prefer React Router v6 hooks (`useParams`, `useNavigate`, `useSearchParams`) over prop-driven router access.
+- When `useParams()` values feed v1 writes on touched legacy detail routes, coerce them once near the top of the route with `Number(...)`, reuse that parsed `entityId`, and skip the write if coercion fails.
 - When a page has a substantial form or detail body, split it into a feature component instead of keeping all behavior in the route file.
 - Favor route-local filter-to-query mapping helpers over mixing raw query-shape logic into JSX.
 - For migrated or touched routes, do not add new class components.
@@ -34,7 +35,13 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - typed service adapters such as `src/api/catalogues/catalogues.ts`
 - For API-boundary enums and request/response contract types, prefer Orval-generated models under `src/api/generated/model/**`.
 - Keep `src/shared/constants/enums.ts` for UI labels, legacy numeric IDs, and app-local helpers; do not use it as a substitute for generated API contract types when the backend schema already defines the enum.
+- Catalogue membership is a split boundary in this repo:
+  - reads remain behind `src/api/catalogues/bookmarkMembership.ts`, which normalizes the legacy membership response into UUID-bearing catalogue items
+  - writes should use generated v1 catalogue item clients (`catalogueAddItem`, `catalogueRemoveItem`) either directly from the route or through a small helper in that same module
+- Do not route new catalogue membership writes through `src/api/catalogues/actions.ts` when a generated v1 client already exists and works.
 - If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw `apiCall(...)` usage through route trees.
+- Temporary adapters are for true transition states only. `actions.ts`-style wrappers are acceptable when the endpoint is intentionally legacy, undocumented, or the generated client is actually unusable. If Orval already generates a stable callable client for a documented v1 endpoint, prefer that generated client instead of adding a parallel wrapper.
+- `deleteCatalogue` and legacy PDF export are current examples of acceptable transitional adapters. Catalogue item add/remove are not.
 - Query keys should be descriptive and stable. Include the meaningful filter object in the key when server state depends on filters or ownership.
 - When a custom hook wraps an Orval show endpoint, reuse the generated query key helper such as `getXShowQueryKey(...)` for invalidation instead of inventing a parallel key.
 - Avoid page-owned pagination/search/loading state when React Query already fits the problem.
@@ -117,7 +124,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - writes use the generic v1 comment payload and should pass generated `ObjectTemplateType` values plus known entity metadata
 - If a route still depends on a legacy endpoint, keep that dependency in a dedicated adapter module with a TODO that names the target v1 replacement.
 - Typed legacy adapters are acceptable transitional debt when a v1 replacement is missing or the frontend generation/worktree state is not yet aligned.
-- Catalogue membership and catalogue PDF export are current examples of dependencies that may remain intentionally legacy behind adapter modules.
+- Catalogue membership reads and catalogue PDF export are current examples of dependencies that may remain intentionally legacy behind adapter modules. Catalogue membership writes should prefer the generated v1 item clients.
 - Preserve user-visible behavior unless a behavior change is explicit and documented.
 
 ## 9) Banned Patterns For Touched Or Migrated Code
@@ -153,6 +160,7 @@ Before adding frontend coercion or adapters:
 - Keep diffs focused and migration-friendly.
 - Run the relevant verification for the files you changed.
 - For frontend code changes, run lint, typecheck, and relevant tests for the touched area.
+- When multiple legacy routes share the same new write helper or adapter boundary, prefer strong unit coverage on the shared helper plus one representative route regression test before duplicating near-identical integration tests across every migrated route.
 - For guidance-only or skill-only changes, do a file review and run any applicable markdown/format checks that are available without mutating generated code.
 - If environment or tooling prevents a check, report the limitation clearly.
 - Call out behavior-impacting changes, integration risks, and temporary adapters in your summary.

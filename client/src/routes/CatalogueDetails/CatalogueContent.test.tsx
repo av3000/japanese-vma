@@ -1,14 +1,24 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
+import {
+	catalogueRemoveItem,
+	getCatalogueIndexQueryKey,
+	getCatalogueShowQueryKey,
+	useCatalogueDestroy,
+} from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import CatalogueContent from './CatalogueContent';
 
 const useNavigateMock = vi.fn();
 const setQueryDataMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
+const catalogueDestroyMutateMock = vi.fn();
 const capturedCatalogueItemsProps: Array<{
 	onRemoveItem: (id: number) => void;
+}> = [];
+const capturedDeleteModalProps: Array<{
+	onDelete: () => void;
 }> = [];
 
 vi.mock('react-router-dom', async () => {
@@ -32,7 +42,7 @@ vi.mock('@tanstack/react-query', async () => {
 			}),
 			isPending: false,
 		})),
-		useQueryClient: vi.fn(() => ({ setQueryData: setQueryDataMock, invalidateQueries: vi.fn() })),
+		useQueryClient: vi.fn(() => ({ setQueryData: setQueryDataMock, invalidateQueries: invalidateQueriesMock })),
 	};
 });
 
@@ -43,6 +53,10 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	return {
 		...actual,
 		catalogueRemoveItem: vi.fn(),
+		useCatalogueDestroy: vi.fn(() => ({
+			mutate: catalogueDestroyMutateMock,
+			isPending: false,
+		})),
 	};
 });
 
@@ -77,7 +91,10 @@ vi.mock('@/components/features/comment/CommentsBlock', () => ({
 }));
 
 vi.mock('@/components/features/DeleteInstanceModal', () => ({
-	DeleteInstanceModal: () => <div>Delete modal</div>,
+	DeleteInstanceModal: (props: { onDelete: () => void }) => {
+		capturedDeleteModalProps.push(props);
+		return <div>Delete modal</div>;
+	},
 }));
 
 const createCatalogue = (overrides: Partial<CatalogueDetailResource> = {}): CatalogueDetailResource => ({
@@ -112,6 +129,7 @@ describe('CatalogueContent', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		capturedCatalogueItemsProps.length = 0;
+		capturedDeleteModalProps.length = 0;
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
@@ -157,5 +175,26 @@ describe('CatalogueContent', () => {
 
 		expect(updated?.items).toEqual([{ id: 11, title: 'First item' }]);
 		expect(updated?.items_count).toBe(1);
+	});
+
+	it('deletes catalogues through the generated v1 destroy mutation and clears related cache keys', async () => {
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		capturedDeleteModalProps[0].onDelete();
+
+		expect(catalogueDestroyMutateMock).toHaveBeenCalledWith({ uuid: 'catalogue-uuid' });
+
+		const options = vi.mocked(useCatalogueDestroy).mock.calls[0]?.[0];
+		expect(options).toBeDefined();
+
+		await options?.mutation?.onSuccess?.('', { uuid: 'catalogue-uuid' }, undefined, {} as never);
+
+		expect(invalidateQueriesMock).toHaveBeenNthCalledWith(1, {
+			queryKey: getCatalogueIndexQueryKey(),
+		});
+		expect(invalidateQueriesMock).toHaveBeenNthCalledWith(2, {
+			queryKey: getCatalogueShowQueryKey('catalogue-uuid'),
+		});
+		expect(useNavigateMock).toHaveBeenCalledWith('/catalogues');
 	});
 });

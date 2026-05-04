@@ -1,9 +1,14 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteCatalogue, downloadCataloguePdf } from '@/api/catalogues/actions';
+import { downloadCataloguePdf } from '@/api/catalogues/actions';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
-import { catalogueRemoveItem, getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
+import {
+	catalogueRemoveItem,
+	getCatalogueIndexQueryKey,
+	getCatalogueShowQueryKey,
+	useCatalogueDestroy,
+} from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
@@ -36,9 +41,14 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
 
-	const deleteMutation = useMutation({
-		mutationFn: () => deleteCatalogue(catalogue.uuid),
-		onSuccess: () => navigate(CATALOGUE_ROUTES.list),
+	const deleteMutation = useCatalogueDestroy({
+		mutation: {
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
+				queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(catalogue.uuid) });
+				navigate(CATALOGUE_ROUTES.list);
+			},
+		},
 	});
 
 	const removeItemMutation = useMutation<unknown, unknown, number>({
@@ -213,7 +223,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={catalogue.title}
-				onDelete={() => deleteMutation.mutate()}
+				onDelete={() => deleteMutation.mutate({ uuid: catalogue.uuid })}
 				isProcessing={deleteMutation.isPending}
 				deleteLabel="Yes, Delete Catalogue"
 				ariaLabel="Delete catalogue"

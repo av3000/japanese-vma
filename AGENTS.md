@@ -45,6 +45,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
   - Verify the regenerated schema before trusting regenerated client types.
   - Do not hand-edit generated API files to patch over contract problems.
+  - When a v1 endpoint is already documented and Orval already generates a usable client, prefer that generated client over adding a custom frontend wrapper. Only add a custom adapter when the endpoint is legacy, missing from the schema, or the generated client is actually unusable.
 
 ## 3) How to Work in This Repository
 
