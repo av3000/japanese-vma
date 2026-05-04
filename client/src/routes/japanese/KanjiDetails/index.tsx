@@ -5,10 +5,12 @@ import { Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
 	applyCatalogueMembershipAction,
+	type CatalogueBookmarkListItem,
+	type CatalogueMembershipAction,
 	fetchElementCatalogueMembership,
 	filterCatalogueMembershipByType,
+	updateElementCatalogueMembership,
 } from '@/api/catalogues/bookmarkMembership';
-import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
@@ -31,6 +33,7 @@ const KanjiOpen: React.FC = () => {
 	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { kanji_id } = useParams();
+	const entityId = Number(kanji_id);
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
@@ -93,17 +96,19 @@ const KanjiOpen: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (listId, action) => {
+	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+		if (Number.isNaN(entityId)) return;
+
 		try {
-			setLoadingListIds((prev) => [...prev, listId]);
-			await updateCatalogueMembership({
-				catalogueId: listId,
-				elementId: kanji_id,
+			setLoadingListIds((prev) => [...prev, list.id]);
+			await updateElementCatalogueMembership({
+				list,
+				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, listId, action);
+				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
 				setKanjiIsKnown(
 					nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList),
 				);
@@ -112,7 +117,7 @@ const KanjiOpen: React.FC = () => {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 
@@ -296,12 +301,7 @@ const KanjiOpen: React.FC = () => {
 									variant={list.elementBelongsToList ? 'danger' : 'primary'}
 									size="sm"
 									isLoading={isLoadingList}
-									onClick={() =>
-										addToOrRemoveFromList(
-											list.id,
-											list.elementBelongsToList ? 'remove' : 'add',
-										)
-									}
+									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
 									{list.elementBelongsToList ? 'Remove' : 'Add'}

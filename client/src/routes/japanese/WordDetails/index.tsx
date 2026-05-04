@@ -5,10 +5,12 @@ import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
 	applyCatalogueMembershipAction,
+	type CatalogueBookmarkListItem,
+	type CatalogueMembershipAction,
 	fetchElementCatalogueMembership,
 	filterCatalogueMembershipByType,
+	updateElementCatalogueMembership,
 } from '@/api/catalogues/bookmarkMembership';
-import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import Spinner from '@/assets/images/spinner.gif';
 import { Chip } from '@/components/shared/Chip';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +30,7 @@ const WordDetails: React.FC = () => {
 	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { word_id } = useParams();
+	const entityId = Number(word_id);
 	const navigate = useNavigate();
 
 	const { isAuthenticated } = useAuth();
@@ -86,17 +89,19 @@ const WordDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (listId, action) => {
+	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+		if (Number.isNaN(entityId)) return;
+
 		try {
-			setLoadingListIds((prev) => [...prev, listId]);
-			await updateCatalogueMembership({
-				catalogueId: listId,
-				elementId: word_id,
+			setLoadingListIds((prev) => [...prev, list.id]);
+			await updateElementCatalogueMembership({
+				list,
+				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, listId, action);
+				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
 				setWordIsKnown(
 					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList),
 				);
@@ -105,7 +110,7 @@ const WordDetails: React.FC = () => {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 
@@ -229,12 +234,7 @@ const WordDetails: React.FC = () => {
 								<Button
 									variant={list.elementBelongsToList ? 'danger' : 'primary'}
 									size="sm"
-									onClick={() =>
-										addToOrRemoveFromList(
-											list.id,
-											list.elementBelongsToList ? 'remove' : 'add',
-										)
-									}
+									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
 									{isLoadingList ? (

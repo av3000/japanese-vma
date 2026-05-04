@@ -1,16 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axios from '@/services/axios';
-import {
+import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
+import * as bookmarkMembership from './bookmarkMembership';
+import { resolveLegacyCatalogueIdentity } from './legacyCatalogues';
+
+const {
 	applyCatalogueMembershipAction,
 	fetchElementCatalogueMembership,
 	filterCatalogueMembershipByType,
-} from './bookmarkMembership';
-import { resolveLegacyCatalogueIdentity } from './legacyCatalogues';
+} = bookmarkMembership;
 
 vi.mock('@/services/axios', () => ({
 	default: {
 		post: vi.fn(),
 	},
+}));
+
+vi.mock('@/api/generated/catalogue/catalogue', () => ({
+	catalogueAddItem: vi.fn(),
+	catalogueRemoveItem: vi.fn(),
 }));
 
 vi.mock('./legacyCatalogues', async () => {
@@ -103,5 +111,41 @@ describe('bookmarkMembership', () => {
 			{ id: 1, uuid: 'a', title: 'A', type: 1, elementBelongsToList: true },
 			{ id: 2, uuid: 'b', title: 'B', type: 5, elementBelongsToList: true },
 		]);
+	});
+
+	it('writes catalogue membership additions through the v1 catalogue item endpoint', async () => {
+		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
+
+		await (bookmarkMembership as any).updateElementCatalogueMembership({
+			list: {
+				id: 7,
+				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
+				title: 'Known words',
+				type: 3,
+				elementBelongsToList: false,
+			},
+			elementId: 42,
+			action: 'add',
+		});
+
+		expect(catalogueAddItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', { item_id: 42 });
+	});
+
+	it('writes catalogue membership removals through the v1 catalogue item endpoint', async () => {
+		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
+
+		await (bookmarkMembership as any).updateElementCatalogueMembership({
+			list: {
+				id: 7,
+				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
+				title: 'Known words',
+				type: 3,
+				elementBelongsToList: true,
+			},
+			elementId: 42,
+			action: 'remove',
+		});
+
+		expect(catalogueRemoveItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', 42);
 	});
 });

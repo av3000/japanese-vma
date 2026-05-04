@@ -111,6 +111,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		checkAuth();
 	}, [checkAuth]);
 
+	// TODO:
+	// Doublecheck if this context consumption doesnt cause full app re-renders.
+	// Might need to consider Zustand to be able use State selectors that ensure only selected store value consumer is re-rendered. instead of all the context consuming components.
 	const value = useMemo(
 		() => ({
 			user,

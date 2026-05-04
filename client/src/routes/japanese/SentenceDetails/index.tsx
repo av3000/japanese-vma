@@ -6,10 +6,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import {
 	applyCatalogueMembershipAction,
+	type CatalogueBookmarkListItem,
+	type CatalogueMembershipAction,
 	fetchElementCatalogueMembership,
 	filterCatalogueMembershipByType,
+	updateElementCatalogueMembership,
 } from '@/api/catalogues/bookmarkMembership';
-import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import CommentForm from '@/components/features/comment/CommentsBlock/CommentForm/CommentForm';
 import CommentList from '@/components/features/comment/CommentsBlock/CommentList/CommentList';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +31,7 @@ const SentenceDetails: React.FC = () => {
 	const [comments, setComments] = useState([]);
 
 	const { sentence_id } = useParams();
+	const entityId = Number(sentence_id);
 	const navigate = useNavigate();
 	const { user: currentUser, isAuthenticated } = useAuth();
 
@@ -89,17 +92,19 @@ const SentenceDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (listId, action) => {
-		setLoadingListIds((prev) => [...prev, listId]);
+	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+		if (Number.isNaN(entityId)) return;
+
+		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
-			await updateCatalogueMembership({
-				catalogueId: listId,
-				elementId: sentence_id,
+			await updateElementCatalogueMembership({
+				list,
+				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, listId, action);
+				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
 				setSentenceIsKnown(
 					nextLists.some(
 						(list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.elementBelongsToList,
@@ -110,7 +115,7 @@ const SentenceDetails: React.FC = () => {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 
@@ -194,12 +199,7 @@ const SentenceDetails: React.FC = () => {
 								<Button
 									variant={list.elementBelongsToList ? 'danger' : 'primary'}
 									size="sm"
-									onClick={() =>
-										addToOrRemoveFromList(
-											list.id,
-											list.elementBelongsToList ? 'remove' : 'add',
-										)
-									}
+									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
 									{isLoadingList ? (

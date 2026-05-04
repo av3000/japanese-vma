@@ -1,21 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import axios from '@/services/axios';
 import { customInstance } from '@/services/orval-mutator';
 import { downloadLegacyCataloguePdf } from './legacyCatalogues';
 import {
 	deleteCatalogue,
 	downloadCataloguePdf,
-	updateCatalogueMembership,
 } from './actions';
 
 vi.mock('@/services/orval-mutator', () => ({
 	customInstance: vi.fn(),
-}));
-
-vi.mock('@/services/axios', () => ({
-	default: {
-		post: vi.fn(),
-	},
 }));
 
 vi.mock('./legacyCatalogues', async () => {
@@ -40,14 +32,6 @@ describe('catalogue actions', () => {
 			url: '/catalogues/d453be67-1519-43e2-94ab-af85b79aeb31',
 			method: 'DELETE',
 		});
-	});
-
-	it('updates bookmark membership through the legacy membership contract adapter', async () => {
-		vi.mocked(axios.post).mockResolvedValue({ data: {} });
-
-		await updateCatalogueMembership({ catalogueId: 7, elementId: 42, action: 'remove' });
-
-		expect(axios.post).toHaveBeenCalledWith('user/list/removeitemwhileaway', { listId: 7, elementId: 42 });
 	});
 
 	it('keeps PDF export behind the temporary legacy adapter', async () => {

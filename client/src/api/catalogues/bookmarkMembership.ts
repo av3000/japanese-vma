@@ -1,4 +1,5 @@
 import axios from '@/services/axios';
+import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { resolveLegacyCatalogueIdentity } from './legacyCatalogues';
 
 // Transitional adapter: this file still fetches bookmark membership from a legacy endpoint,
@@ -81,6 +82,23 @@ export const filterCatalogueMembershipByType = (
 };
 
 export type CatalogueMembershipAction = 'add' | 'remove';
+
+export const updateElementCatalogueMembership = async ({
+	list,
+	elementId,
+	action,
+}: {
+	list: CatalogueBookmarkListItem;
+	elementId: number;
+	action: CatalogueMembershipAction;
+}) => {
+	if (action === 'add') {
+		await catalogueAddItem(list.uuid, { item_id: elementId });
+		return;
+	}
+
+	await catalogueRemoveItem(list.uuid, elementId);
+};
 
 // Applies the optimistic local membership change on the normalized result without re-exposing the
 // legacy endpoint response shape to callers.

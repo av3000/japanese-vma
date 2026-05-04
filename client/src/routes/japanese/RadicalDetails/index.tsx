@@ -6,10 +6,12 @@ import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
 	applyCatalogueMembershipAction,
+	type CatalogueBookmarkListItem,
+	type CatalogueMembershipAction,
 	fetchElementCatalogueMembership,
 	filterCatalogueMembershipByType,
+	updateElementCatalogueMembership,
 } from '@/api/catalogues/bookmarkMembership';
-import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import Spinner from '@/assets/images/spinner.gif';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
@@ -26,6 +28,7 @@ const RadicalDetails: React.FC = () => {
 	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { radical_id } = useParams();
+	const entityId = Number(radical_id);
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
@@ -75,17 +78,19 @@ const RadicalDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (id, action) => {
+	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+		if (Number.isNaN(entityId)) return;
+
 		try {
-			setLoadingListIds((prev) => [...prev, id]);
-			await updateCatalogueMembership({
-				catalogueId: id,
-				elementId: radical_id,
+			setLoadingListIds((prev) => [...prev, list.id]);
+			await updateElementCatalogueMembership({
+				list,
+				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, id, action);
+				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
 				setRadicalIsKnown(
 					nextLists.some(
 						(list) => list.type === ObjectTemplates.KNOWNRADICALS && list.elementBelongsToList,
@@ -96,7 +101,7 @@ const RadicalDetails: React.FC = () => {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((loadingId) => loadingId !== id));
+			setLoadingListIds((prev) => prev.filter((loadingId) => loadingId !== list.id));
 		}
 	};
 
@@ -172,12 +177,7 @@ const RadicalDetails: React.FC = () => {
 							<Button
 								variant={list.elementBelongsToList ? 'danger' : 'primary'}
 								size="sm"
-								onClick={() =>
-									addToOrRemoveFromList(
-										list.id,
-										list.elementBelongsToList ? 'remove' : 'add',
-									)
-								}
+								onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
 								disabled={loadingListIds.includes(list.id)}
 							>
 								{loadingListIds.includes(list.id) ? (
