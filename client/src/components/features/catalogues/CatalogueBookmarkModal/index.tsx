@@ -9,7 +9,7 @@ interface CatalogueBookmarkModalProps {
 	controller: ModalController;
 	lists: CatalogueBookmarkListItem[];
 	loadingListIds: number[];
-	onListAction: (listId: number, action: CatalogueMembershipAction) => void;
+	onListAction: (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => void;
 	title?: string;
 	emptyText?: string;
 	createListHref?: string;
@@ -55,7 +55,7 @@ export const CatalogueBookmarkModal = ({
 							<Button
 								variant={isActive ? 'danger' : 'primary'}
 								size="sm"
-								onClick={() => onListAction(list.id, action)}
+								onClick={() => onListAction(list, action)}
 								disabled={isLoading}
 							>
 								{isLoading ? (

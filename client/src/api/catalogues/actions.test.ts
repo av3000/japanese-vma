@@ -3,10 +3,8 @@ import axios from '@/services/axios';
 import { customInstance } from '@/services/orval-mutator';
 import { downloadLegacyCataloguePdf } from './legacyCatalogues';
 import {
-	addItemToCatalogue,
 	deleteCatalogue,
 	downloadCataloguePdf,
-	removeItemFromCatalogue,
 	updateCatalogueMembership,
 } from './actions';
 
@@ -40,24 +38,6 @@ describe('catalogue actions', () => {
 
 		expect(customInstance).toHaveBeenCalledWith({
 			url: '/catalogues/d453be67-1519-43e2-94ab-af85b79aeb31',
-			method: 'DELETE',
-		});
-	});
-
-	it('adds and removes catalogue items through the v1 catalogue item endpoints', async () => {
-		vi.mocked(customInstance).mockResolvedValue(undefined);
-
-		await addItemToCatalogue('d453be67-1519-43e2-94ab-af85b79aeb31', 321);
-		await removeItemFromCatalogue('d453be67-1519-43e2-94ab-af85b79aeb31', 321);
-
-		expect(customInstance).toHaveBeenNthCalledWith(1, {
-			url: '/catalogues/d453be67-1519-43e2-94ab-af85b79aeb31/items',
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			data: { item_id: 321 },
-		});
-		expect(customInstance).toHaveBeenNthCalledWith(2, {
-			url: '/catalogues/d453be67-1519-43e2-94ab-af85b79aeb31/items/321',
 			method: 'DELETE',
 		});
 	});

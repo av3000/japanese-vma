@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteCatalogue, downloadCataloguePdf, removeItemFromCatalogue } from '@/api/catalogues/actions';
+import { deleteCatalogue, downloadCataloguePdf } from '@/api/catalogues/actions';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
-import { getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
+import { catalogueRemoveItem, getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
@@ -41,8 +41,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 		onSuccess: () => navigate(CATALOGUE_ROUTES.list),
 	});
 
-	const removeItemMutation = useMutation({
-		mutationFn: (itemId: number) => removeItemFromCatalogue(catalogue.uuid, itemId),
+	const removeItemMutation = useMutation<unknown, unknown, number>({
+		mutationFn: (itemId: number) => catalogueRemoveItem(catalogue.uuid, itemId),
 		onSuccess: (_, itemId) => {
 			queryClient.setQueryData(
 				getCatalogueShowQueryKey(catalogue.uuid),

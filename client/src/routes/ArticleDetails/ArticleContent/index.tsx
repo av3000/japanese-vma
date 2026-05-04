@@ -9,10 +9,10 @@ import {
 	fetchElementCatalogueMembership,
 	type CatalogueMembershipAction,
 } from '@/api/catalogues/bookmarkMembership';
-import { updateCatalogueMembership } from '@/api/catalogues/actions';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { articleDestroy } from '@/api/generated/article/article';
+import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -88,6 +88,24 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		onSuccess: () => navigate('/articles'),
 	});
 
+	const catalogueMembershipMutation = useMutation<unknown, unknown, {
+		list: CatalogueBookmarkListItem;
+		action: CatalogueMembershipAction;
+	}>({
+		mutationFn: ({ list, action }: { list: CatalogueBookmarkListItem; action: CatalogueMembershipAction }) => {
+			if (action === 'add') {
+				return catalogueAddItem(list.uuid, { item_id: article.id });
+			}
+
+			return catalogueRemoveItem(list.uuid, article.id);
+		},
+		onSuccess: (_, { list, action }) => {
+			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
+				return applyCatalogueMembershipAction(oldLists as CatalogueBookmarkListItem[], list.id, action);
+			});
+		},
+	});
+
 	const openEditModal = () => {
 		const next = new URLSearchParams(searchParams);
 		next.set('edit', '1');
@@ -108,22 +126,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	const handleListAction = async (listId: number, action: CatalogueMembershipAction) => {
-		setLoadingListIds((prev) => [...prev, listId]);
+	const handleListAction = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
-			await updateCatalogueMembership({
-				catalogueId: listId,
-				elementId: article.id,
-				action,
-			});
-
-			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
-				return applyCatalogueMembershipAction(oldLists as CatalogueBookmarkListItem[], listId, action);
-			});
+			await catalogueMembershipMutation.mutateAsync({ list, action });
 		} catch (error) {
 			console.error('List action failed', error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 

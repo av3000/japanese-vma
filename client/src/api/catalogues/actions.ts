@@ -12,26 +12,6 @@ export const deleteCatalogue = async (catalogueUuid: string) => {
 	});
 };
 
-// TODO: switch to the generated v1 catalogue item-create client once the worktree/OpenAPI/Orval
-// state is aligned with the already-available UUID route.
-export const addItemToCatalogue = async (catalogueUuid: string, itemId: number) => {
-	await customInstance<unknown>({
-		url: `/catalogues/${encodeURIComponent(catalogueUuid)}/items`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: { item_id: itemId },
-	});
-};
-
-// TODO: switch to the generated v1 catalogue item-delete client once the worktree/OpenAPI/Orval
-// state is aligned with the already-available UUID route.
-export const removeItemFromCatalogue = async (catalogueUuid: string, itemId: number) => {
-	await customInstance<unknown>({
-		url: `/catalogues/${encodeURIComponent(catalogueUuid)}/items/${itemId}`,
-		method: 'DELETE',
-	});
-};
-
 export const updateCatalogueMembership = async ({
 	catalogueId,
 	elementId,
