@@ -72,6 +72,8 @@ docker compose exec laravel-app php artisan passport:install
 docker compose exec laravel-app php artisan db:seed
 ```
 
+Backend tests use the dedicated MySQL test lane through `docker compose exec test-runner ...`; see [processor-api/README.md](./processor-api/README.md) for the canonical commands.
+
 Useful backend URLs once running:
 
 - App/API: `http://localhost:8080`
@@ -120,7 +122,8 @@ npm run storybook
 ```bash
 cd processor-api
 docker compose up -d --build
-docker compose exec laravel-app php artisan test --compact
+docker compose up -d db-test test-runner
+docker compose exec test-runner composer test -- tests/Feature/OperationalRoutesTest.php
 docker compose exec laravel-app vendor/bin/pint --test app
 docker compose exec laravel-app vendor/bin/phpstan analyse app
 docker compose exec laravel-app php artisan route:list

@@ -75,8 +75,8 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
-  - In the current local setup, backend feature tests may be blocked if the expected MySQL host `mysql` is unavailable, and the current SQLite fallback is also unreliable due to an existing migration/index issue around `views.entity_type_uuid`.
-  - In Docker-backed PHPUnit runs, tests may also resolve to MySQL while `DB_DATABASE=':memory:'`, causing access-denied failures before feature assertions execute.
+  - For backend verification, use the dedicated Docker test lane from `processor-api/`: `docker compose up -d --build db-test test-runner`, then `docker compose exec test-runner composer test -- ...`.
+  - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
   - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
   - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
 - **Safety:**

@@ -38,7 +38,7 @@ const WordDetails: React.FC = () => {
 		const getWordDetails = async () => {
 			try {
 				setIsLoading(true);
-				const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/word/${word_id}`);
+				const res = await apiCall({ method: HttpMethod.GET, path: `${BASE_URL}/word/${word_id}` });
 
 				const processedWord = {
 					...res,

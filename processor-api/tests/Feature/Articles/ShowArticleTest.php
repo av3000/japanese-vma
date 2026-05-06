@@ -75,7 +75,7 @@ class ShowArticleTest extends TestCase
         $response = $this->json('GET', "/api/v1/articles/{$article->uuid}");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.uid', $article->uuid)
-            ->assertJsonMissingPath('data.article');
+            ->assertJsonPath('uid', $article->uuid)
+            ->assertJsonMissingPath('article');
     }
 }

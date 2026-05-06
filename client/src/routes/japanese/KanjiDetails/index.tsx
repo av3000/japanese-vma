@@ -57,7 +57,6 @@ const KanjiOpen: React.FC = () => {
 				onyomi: res.onyomi.split('|').join(', '),
 				kunyomi: res.kunyomi.split('|').join(', '),
 			};
-			console.log('getKanjiData: ', res.articles.data);
 			setKanji(processedKanji);
 			setWords(res.words.data || []);
 			setSentences(res.sentences.data || []);
@@ -149,7 +148,7 @@ const KanjiOpen: React.FC = () => {
 					<p>JLPT: {kanji.jlpt}</p>
 					<p>Frequency: {kanji.frequency}</p>
 					{kanjiIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<Button size="md" onClick={toggleModal} variant="outline">
+					<Button size="sm" onClick={toggleModal} variant="ghost">
 						<Icon size="sm" name="bookmarkRegular" />
 					</Button>
 				</div>
@@ -170,6 +169,7 @@ const KanjiOpen: React.FC = () => {
 									<div className="row">
 										<div className="col-md-6">
 											<h3>{word.word}</h3>
+											<p>{word.furigana}</p>
 										</div>
 										<div className="col-md-4">{meanings}</div>
 										<div className="col-md-2">

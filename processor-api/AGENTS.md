@@ -74,9 +74,12 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
-    -   In Docker-backed PHPUnit runs, tests may resolve to MySQL host `db` while the configured database name is `:memory:`, causing access-denied failures before feature assertions execute.
+    -   From `processor-api/`, bring up backend test infrastructure with `docker compose up -d --build db-test test-runner`.
+    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` MySQL service.
+    -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
+    -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
-    -   Treat that as an environment limitation to report clearly, and still run any unit or schema checks that remain feasible.
+    -   If the dedicated test lane itself is unavailable, report that environment limitation clearly and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails
 
@@ -214,7 +217,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands through `docker compose exec test-runner composer test -- ...` from `processor-api/`, with a specific filename or filter.
 
 === laravel/core rules ===
 
@@ -293,8 +296,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `php artisan test --compact`.
-- To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+- To run all tests: `docker compose exec test-runner composer test`.
+- To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>

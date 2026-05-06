@@ -82,7 +82,8 @@
         "format:all": "vendor/bin/pint",
         "format:check": "vendor/bin/pint --test",
         "stan": "vendor/bin/phpstan analyse --memory-limit=1G",
-        "test": "php artisan test --compact",
+        "test:prepare": "php artisan migrate:fresh --force",
+        "test": "vendor/bin/phpunit --colors=always",
         "quality": [
             "@format",
             "@stan",

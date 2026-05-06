@@ -72,6 +72,34 @@ services:
       - "3306:3306"
     networks:
       - shared-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER --password=$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  db-test:
+    image: mysql:8.0
+    container_name: mysql_test_db
+    restart: unless-stopped
+    command: --max_allowed_packet=134217728 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: 'japanese_vma_test_root'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'japanese_vma_test'
+      MYSQL_USER: 'japanese_vma_test'
+      MYSQL_PASSWORD: 'japanese_vma_test'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 0
+      MYSQL_COLLATION: 'utf8mb4_unicode_ci'
+    volumes:
+      - dbdata_test:/var/lib/mysql
+    networks:
+      - shared-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER --password=$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   redis:
     # image: 'redis:alpine'
@@ -174,12 +202,46 @@ services:
       - redis
     command: php artisan queue:work --verbose
 
+  test-runner:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      args:
+        INSTALL_DEV_DEPENDENCIES: "true"
+    container_name: laravel_test_runner
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env.testing
+    environment:
+      SERVICE_NAME: test-runner
+      SERVICE_TAGS: test
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/bootstrap/cache
+    networks:
+      - shared-network
+    depends_on:
+      db-test:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    entrypoint: ["/bin/sh", "/var/www/html/.docker/test-runner-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$$APP_ENV\" = \"testing\" && php artisan about > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 networks:
   shared-network:
     driver: bridge
 
 volumes:
   dbdata:
+  dbdata_test:
   # vendor-volume:
   # storage-volume:
   # cache-volume:
