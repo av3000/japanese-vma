@@ -63,12 +63,14 @@ If a needed backend capability is still missing, add a typed temporary adapter w
 ## Notes On Existing References
 
 - `DashboardCataloguesPanel` is the best current example of the target query shape, even though its numeric `LIST_FILTER_TYPES` set is still temporary debt.
-- `ArticleDetails/ArticleContent` shows the preferred modern comment usage and modal/controller composition, but its remaining legacy bookmark and PDF adapters should not be copied forward as a destination pattern.
+- `ArticleDetails/ArticleContent` shows the preferred modern comment usage, modal/controller composition, and generated catalogue-for-item path.
+- PDF export remains the transitional adapter example there. Bookmark for-item reads are no longer the adapter precedent.
 
 ## Migration Checklist
 
 - Is this surface better expressed as a catalogue list or catalogue detail?
 - Did data access move before presentation cleanup?
+- If a shared adapter boundary already exists, did the migration update all sibling routes consuming it or explicitly document why it is intentionally partial?
 - Did search, sort, and pagination move into typed query state?
 - Did numeric type logic leave the JSX?
 - Did comments and modals move onto current shared contracts?

@@ -17,6 +17,8 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Do not break legacy endpoints unless explicitly requested.
 -   **v1 preference:**
     -   For new/refactored endpoints, prefer `routes/api_v1.php` conventions.
+-   **Route specificity:**
+    -   When adding a concrete v1 route beside a parameterized sibling such as `catalogues/{uuid}`, place the concrete route where it cannot be shadowed by the parameterized match.
 -   **Migration behavior:**
     -   Preserve existing behavior intentionally, or document intentional changes.
 -   **Generic comment write contract:**
@@ -42,6 +44,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Prefer dedicated Request classes per endpoint.
     -   For partial updates, validate optional fields and handle empty-update payloads explicitly.
     -   For generic v1 comment create, validate the `entity_type` / `entity_id` / `entity_uuid` tuple directly in the request contract instead of resolving numeric IDs from UUIDs inside the service layer.
+    -   For new v1 array query params, prefer clean names like `types` over `types[]` unless legacy compatibility requires bracket syntax, because Orval preserves the literal wire name.
 -   **DTOs/Value Objects:**
     -   Use DTO contracts for operation inputs/outputs where meaningful.
     -   Use value objects where they improve invariants and type safety.
@@ -60,6 +63,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Schema guidance:**
     -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
     -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
+    -   For lean ad hoc response shapes, Resource PHPDoc may be insufficient for nested arrays. If Scramble still collapses the generated schema incorrectly, add an explicit controller-level `#[Response(type: 'array{...}')]`.
     -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
 
 ## 6) Testing & Verification Expectations
@@ -71,6 +75,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
     -   In Docker-backed PHPUnit runs, tests may resolve to MySQL host `db` while the configured database name is `:memory:`, causing access-denied failures before feature assertions execute.
+    -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
     -   Treat that as an environment limitation to report clearly, and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails

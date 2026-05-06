@@ -60,6 +60,10 @@ Those files show the debt to remove:
 
 `src/routes/ArticleDetails/ArticleContent/index.tsx` is still partly transitional. Copy its modal/controller composition, `CommentsBlock` usage, and query-driven detail flow. Do not copy its TODO-marked legacy `apiCall` escape hatches for bookmark and PDF actions without first checking whether a typed v1 adapter already exists.
 
+Catalogue for-item state now has a generated v1 read path behind a shared adapter boundary. PDF export remains the transitional adapter example, not bookmark for-item reads.
+
+If generated contract drift produces awkward field names or query params, keep that ugliness inside the shared adapter boundary when possible. Do not push route components to compensate directly for unstable wire shapes.
+
 ## Quick Checklist
 
 - Is the route shell thin?

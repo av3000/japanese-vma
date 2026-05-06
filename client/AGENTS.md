@@ -13,7 +13,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - `src/api/articles/details.ts`
 - **Preferred list-query direction:** `src/routes/Dashboard/DashboardCataloguesPanel.tsx` plus `src/api/catalogues/catalogues.ts` are the current model for list-style routes that should move toward `/v1/catalogues`.
 - **Main migration target:** SavedList/custom-list surfaces should move toward catalogue-v1 patterns. Do not spend time modernizing legacy `/list` or `/lists` route trees in place unless the task is explicitly limited to legacy maintenance.
-- **Important caveat:** `src/routes/ArticleDetails/ArticleContent/index.tsx` is now the positive precedent for catalogue membership writes: bookmark add/remove already use generated v1 catalogue item endpoints there. Its remaining TODO-marked legacy escape hatch is PDF export, which should still be treated as temporary adapter debt rather than a pattern to spread.
+- **Important caveat:** `src/routes/ArticleDetails/ArticleContent/index.tsx` is now the positive precedent for catalogue-for-item writes: bookmark add/remove already use generated v1 catalogue item endpoints there. Its remaining TODO-marked legacy escape hatch is PDF export, which should still be treated as temporary adapter debt rather than a pattern to spread.
 
 ## 2) Route Composition
 
@@ -35,13 +35,16 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - typed service adapters such as `src/api/catalogues/catalogues.ts`
 - For API-boundary enums and request/response contract types, prefer Orval-generated models under `src/api/generated/model/**`.
 - Keep `src/shared/constants/enums.ts` for UI labels, legacy numeric IDs, and app-local helpers; do not use it as a substitute for generated API contract types when the backend schema already defines the enum.
-- Catalogue membership is a split boundary in this repo:
-  - reads remain behind `src/api/catalogues/bookmarkMembership.ts`, which normalizes the legacy membership response into UUID-bearing catalogue items
+- Catalogue for-item state is a split boundary in this repo:
+  - reads and writes both belong behind `src/api/catalogues/cataloguesForItem.ts`
+  - reads should prefer generated v1 catalogue-for-item endpoints when available
   - writes should use generated v1 catalogue item clients (`catalogueAddItem`, `catalogueRemoveItem`) either directly from the route or through a small helper in that same module
-- Do not route new catalogue membership writes through `src/api/catalogues/actions.ts` when a generated v1 client already exists and works.
+  - `elementBelongsToList` is legacy debt; new or touched code should prefer generated for-item fields such as `contains_item`
+- Do not route new catalogue-for-item writes through `src/api/catalogues/actions.ts` when a generated v1 client already exists and works.
 - If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw `apiCall(...)` usage through route trees.
 - Temporary adapters are for true transition states only. `actions.ts`-style wrappers are acceptable when the endpoint is intentionally legacy, undocumented, or the generated client is actually unusable. If Orval already generates a stable callable client for a documented v1 endpoint, prefer that generated client instead of adding a parallel wrapper.
 - `deleteCatalogue` and legacy PDF export are current examples of acceptable transitional adapters. Catalogue item add/remove are not.
+- If backend-generated query params are awkward or unstable, hide that wire-shape behind the shared adapter boundary instead of leaking it into route code.
 - Query keys should be descriptive and stable. Include the meaningful filter object in the key when server state depends on filters or ownership.
 - When a custom hook wraps an Orval show endpoint, reuse the generated query key helper such as `getXShowQueryKey(...)` for invalidation instead of inventing a parallel key.
 - Avoid page-owned pagination/search/loading state when React Query already fits the problem.
@@ -115,6 +118,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   3. keep behavior stable with thin filter/param mapping layers
   4. rebuild the route around catalogue-v1 query patterns instead of modernizing legacy SavedList code in place
 - For list-style routes, first ask whether the surface should be backed by `/v1/catalogues`.
+- When changing catalogue for-item behavior, check `KanjiDetails`, `WordDetails`, `RadicalDetails`, and `SentenceDetails` together; they share the same legacy pattern and can drift if migrated piecemeal.
 - When migrating search/pagination, prefer typed query hooks and flattened query results over manual `next_page_url` state.
 - When migrating comments, match the current `CommentsBlock` contract:
   - read props: `readObjectType`, `readObjectUuid`
@@ -124,7 +128,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - writes use the generic v1 comment payload and should pass generated `ObjectTemplateType` values plus known entity metadata
 - If a route still depends on a legacy endpoint, keep that dependency in a dedicated adapter module with a TODO that names the target v1 replacement.
 - Typed legacy adapters are acceptable transitional debt when a v1 replacement is missing or the frontend generation/worktree state is not yet aligned.
-- Catalogue membership reads and catalogue PDF export are current examples of dependencies that may remain intentionally legacy behind adapter modules. Catalogue membership writes should prefer the generated v1 item clients.
+- Catalogue for-item reads and catalogue PDF export are current examples of dependencies that may remain intentionally legacy behind adapter modules. Catalogue for-item writes should prefer the generated v1 item clients.
 - Preserve user-visible behavior unless a behavior change is explicit and documented.
 
 ## 9) Banned Patterns For Touched Or Migrated Code
