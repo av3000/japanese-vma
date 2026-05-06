@@ -186,6 +186,67 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->assertSame(['#new1', '#new2'], $hashtags);
     }
 
+    public function test_update_allows_owner_to_make_private_catalogue_public_with_publicity_only_payload(): void
+    {
+        $owner = $this->createUser();
+        $viewer = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, [
+            'publicity' => false,
+        ]);
+
+        Passport::actingAs($owner, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'publicity' => true,
+        ])->assertStatus(200)
+            ->assertJsonPath('data.publicity', 1)
+            ->assertJsonPath('data.title', 'Original Catalogue');
+
+        $catalogue->refresh();
+
+        $this->assertTrue($catalogue->publicity);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.uuid', $catalogue->uuid);
+
+        $this->json('GET', '/api/v1/catalogues')
+            ->assertStatus(200)
+            ->assertJsonFragment(['uuid' => $catalogue->uuid]);
+    }
+
+    public function test_update_allows_owner_to_make_public_catalogue_private_with_publicity_only_payload(): void
+    {
+        $owner = $this->createUser();
+        $viewer = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, [
+            'publicity' => true,
+        ]);
+
+        Passport::actingAs($owner, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'publicity' => false,
+        ])->assertStatus(200)
+            ->assertJsonPath('data.publicity', 0)
+            ->assertJsonPath('data.title', 'Original Catalogue');
+
+        $catalogue->refresh();
+
+        $this->assertFalse($catalogue->publicity);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertStatus(403);
+
+        $this->json('GET', '/api/v1/catalogues')
+            ->assertStatus(200)
+            ->assertJsonMissing(['uuid' => $catalogue->uuid]);
+    }
+
     public function test_update_empty_payload_returns_validation_problem(): void
     {
         $user = $this->createUser();
@@ -210,6 +271,26 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
             'title' => 'Unauthorized Update',
         ])->assertStatus(403);
+    }
+
+    public function test_update_forbids_admin_when_admin_is_not_owner_for_publicity_only_update(): void
+    {
+        $owner = $this->createUser();
+        $admin = $this->createUser();
+        $admin->assignRole(UserRole::ADMIN->value);
+        $catalogue = $this->createCatalogue($owner, [
+            'publicity' => true,
+        ]);
+
+        Passport::actingAs($admin, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'publicity' => false,
+        ])->assertStatus(403);
+
+        $catalogue->refresh();
+
+        $this->assertTrue($catalogue->publicity);
     }
 
     public function test_update_returns_not_found_for_unknown_uuid(): void
