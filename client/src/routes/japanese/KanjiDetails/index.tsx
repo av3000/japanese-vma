@@ -4,14 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-	applyCatalogueMembershipAction,
-	type CatalogueBookmarkListItem,
-	type CatalogueMembershipAction,
-	fetchElementCatalogueMembership,
-	filterCatalogueMembershipByType,
-	updateElementCatalogueMembership,
-} from '@/api/catalogues/bookmarkMembership';
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
+import Spinner from '@/assets/images/spinner.gif';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,7 +20,6 @@ import { apiCall } from '@/services/api';
 import { BASE_URL, ObjectTemplates } from '@/shared/constants';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { HttpMethod } from '@/shared/types';
-import Spinner from '@/assets/images/spinner.gif';
 
 const KanjiOpen: React.FC = () => {
 	const [kanji, setKanji] = useState({});
@@ -47,7 +47,7 @@ const KanjiOpen: React.FC = () => {
 	const getKanjiOpen = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/kanji/${kanji_id}`);
+			const res = await apiCall({ method: HttpMethod.GET, path: `${BASE_URL}/kanji/${kanji_id}` });
 
 			// Process the kanji data
 			// TODO: Should handle data materialization on backend and return necessary formatted data.
@@ -57,7 +57,7 @@ const KanjiOpen: React.FC = () => {
 				onyomi: res.onyomi.split('|').join(', '),
 				kunyomi: res.kunyomi.split('|').join(', '),
 			};
-
+			console.log('getKanjiData: ', res.articles.data);
 			setKanji(processedKanji);
 			setWords(res.words.data || []);
 			setSentences(res.sentences.data || []);
@@ -72,14 +72,10 @@ const KanjiOpen: React.FC = () => {
 	const getUserKanjiLists = async () => {
 		try {
 			setIsLoading(true);
-			const userLists = await fetchElementCatalogueMembership(kanji_id);
-			const nextLists = filterCatalogueMembershipByType(userLists, [
-				ObjectTemplates.KNOWNKANJIS,
-				ObjectTemplates.KANJIS,
-			]);
-			setKanjiIsKnown(
-				nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList),
-			);
+			const nextLists = await fetchCataloguesForItem(kanji_id, {
+				types: [ObjectTemplates.KNOWNKANJIS, ObjectTemplates.KANJIS],
+			});
+			setKanjiIsKnown(nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.contains_item));
 			setLists(nextLists);
 		} catch (error) {
 			console.error(error);
@@ -96,21 +92,21 @@ const KanjiOpen: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) return;
 
 		try {
 			setLoadingListIds((prev) => [...prev, list.id]);
-			await updateElementCatalogueMembership({
+			await updateCatalogueForItem({
 				list,
 				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
 				setKanjiIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList),
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.contains_item),
 				);
 				return nextLists;
 			});
@@ -244,7 +240,7 @@ const KanjiOpen: React.FC = () => {
 									<div className="col-md-8">
 										<h3>{article.title_jp}</h3>
 										<section className="mt-2 d-flex align-items-center flex-wrap">
-											{hashtags.map((tag) => (
+											{article.hashtags.map((tag) => (
 												<Chip
 													className="mr-1"
 													readonly
@@ -298,13 +294,13 @@ const KanjiOpen: React.FC = () => {
 							<div key={list.id} className="d-flex justify-content-between mb-2">
 								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
-									variant={list.elementBelongsToList ? 'danger' : 'primary'}
+									variant={list.contains_item ? 'danger' : 'primary'}
 									size="sm"
 									isLoading={isLoadingList}
-									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
+									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
-									{list.elementBelongsToList ? 'Remove' : 'Add'}
+									{list.contains_item ? 'Remove' : 'Add'}
 								</Button>
 							</div>
 						);
@@ -329,12 +325,16 @@ const KanjiOpen: React.FC = () => {
 					Back
 				</Link>
 			</div>
-			{renderKanjiOpen()}
-			<hr />
-			{renderWordsList()}
-			{renderSentenceList()}
-			{renderArticleList()}
-			{renderAddModal()}
+			{!isLoading && (
+				<>
+					{renderKanjiOpen()}
+					<hr />
+					{renderWordsList()}
+					{renderSentenceList()}
+					{renderArticleList()}
+					{renderAddModal()}
+				</>
+			)}
 		</div>
 	);
 };

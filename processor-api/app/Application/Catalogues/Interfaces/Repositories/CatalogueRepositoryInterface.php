@@ -8,6 +8,7 @@ use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\UserId;
 
 interface CatalogueRepositoryInterface
@@ -37,6 +38,11 @@ interface CatalogueRepositoryInterface
     public function getIdByUuid(EntityId $entityUuid): ?int;
 
     public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues;
+
+    /**
+     * @return Catalogue[]
+     */
+    public function findOwnedForMembership(string $ownerUuid, ?SearchTerm $search = null, array $types = []): array;
 
     public function findByPublicUid(EntityId $uuid): ?Catalogue;
 }

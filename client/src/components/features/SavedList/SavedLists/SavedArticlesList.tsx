@@ -8,13 +8,20 @@ import { User } from '@/types';
 import sharedStyles from '../SharedListStyles.module.scss';
 
 interface SavedArticlesListProps {
+	editMode: boolean;
 	objects: CatalogueArticleItem[];
 	removeFromList: (id: string | number) => void;
 	currentUser: User;
 	listUserId: string | number;
 }
 
-const SavedArticlesList: React.FC<SavedArticlesListProps> = ({ objects, removeFromList, currentUser, listUserId }) => {
+const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
+	editMode,
+	objects,
+	removeFromList,
+	currentUser,
+	listUserId,
+}) => {
 	return (
 		<div className={sharedStyles.listContainer}>
 			{objects.map((article) => {
@@ -27,7 +34,7 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({ objects, removeFr
 									<Icon size="sm" name="externalLink" />
 								</Link>
 							</h5>
-							{currentUser?.id === listUserId && (
+							{currentUser?.id === listUserId && editMode && (
 								<Button
 									type="button"
 									size="md"

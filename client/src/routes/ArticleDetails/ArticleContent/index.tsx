@@ -3,14 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { setArticleStatus } from '@/api/articles/articles';
-import {
-	applyCatalogueMembershipAction,
-	type CatalogueBookmarkListItem,
-	fetchElementCatalogueMembership,
-	type CatalogueMembershipAction,
-} from '@/api/catalogues/bookmarkMembership';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import {
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	fetchCataloguesForItem,
+	type CatalogueForItemAction,
+} from '@/api/catalogues/cataloguesForItem';
 import { articleDestroy } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
@@ -64,7 +64,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchElementCatalogueMembership(article.id),
+		queryFn: () => fetchCataloguesForItem(article.id),
 		enabled: isAuthenticated,
 	});
 
@@ -72,6 +72,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const likeMutation = useLikeArticleMutation(article.uuid);
 
 	// TODO: Should only call queries propagating up to smart component
+	// ex: statusMutation could be called from a dashboard.
 	const statusMutation = useMutation({
 		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
 		onSuccess: (res) => {
@@ -83,16 +84,22 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		},
 	});
 
+	// TODO: move up to queries, and hide API details.
 	const deleteMutation = useMutation({
 		mutationFn: () => articleDestroy(article.uuid),
 		onSuccess: () => navigate('/articles'),
 	});
 
-	const catalogueMembershipMutation = useMutation<unknown, unknown, {
-		list: CatalogueBookmarkListItem;
-		action: CatalogueMembershipAction;
-	}>({
-		mutationFn: ({ list, action }: { list: CatalogueBookmarkListItem; action: CatalogueMembershipAction }) => {
+	// TODO: move up to queries and hide API details, only passing in the params.
+	const catalogueMembershipMutation = useMutation<
+		unknown,
+		unknown,
+		{
+			list: CatalogueForItem;
+			action: CatalogueForItemAction;
+		}
+	>({
+		mutationFn: ({ list, action }: { list: CatalogueForItem; action: CatalogueForItemAction }) => {
 			if (action === 'add') {
 				return catalogueAddItem(list.uuid, { item_id: article.id });
 			}
@@ -101,7 +108,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		},
 		onSuccess: (_, { list, action }) => {
 			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
-				return applyCatalogueMembershipAction(oldLists as CatalogueBookmarkListItem[], list.id, action);
+				return applyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
 			});
 		},
 	});
@@ -126,7 +133,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	const handleListAction = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+	const handleListAction = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
 			await catalogueMembershipMutation.mutateAsync({ list, action });
@@ -152,7 +159,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	const isBookmarked = userLists.some((l: any) => l.elementBelongsToList);
+	const isBookmarked = userLists.some((list) => list.contains_item);
 	const isLiked = article.engagement?.is_liked_by_viewer;
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;

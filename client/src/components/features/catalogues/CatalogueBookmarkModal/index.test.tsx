@@ -41,7 +41,9 @@ describe('CatalogueBookmarkModal', () => {
 							uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
 							title: 'My catalogue',
 							type: 5,
-							elementBelongsToList: false,
+							type_label: 'Radicals',
+							publicity: 0,
+							contains_item: false,
 						},
 					]}
 					loadingListIds={[]}
@@ -64,7 +66,9 @@ describe('CatalogueBookmarkModal', () => {
 			uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
 			title: 'My catalogue',
 			type: 5,
-			elementBelongsToList: false,
+			type_label: 'Radicals',
+			publicity: 0,
+			contains_item: false,
 		};
 
 		renderToStaticMarkup(

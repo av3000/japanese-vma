@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { CatalogueBookmarkListItem, CatalogueMembershipAction } from '@/api/catalogues/bookmarkMembership';
+import type { CatalogueForItem, CatalogueForItemAction } from '@/api/catalogues/cataloguesForItem';
 import { Button } from '@/components/shared/Button';
 import { DialogModal, type DialogModalSize } from '@/components/shared/DialogModal';
 import type { ModalController } from '@/hooks/useModal';
@@ -7,9 +7,9 @@ import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
 interface CatalogueBookmarkModalProps {
 	controller: ModalController;
-	lists: CatalogueBookmarkListItem[];
+	lists: CatalogueForItem[];
 	loadingListIds: number[];
-	onListAction: (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => void;
+	onListAction: (list: CatalogueForItem, action: CatalogueForItemAction) => void;
 	title?: string;
 	emptyText?: string;
 	createListHref?: string;
@@ -45,8 +45,8 @@ export const CatalogueBookmarkModal = ({
 			<DialogModal.Body>
 				{lists.length === 0 && <p className="text-muted">{emptyText}</p>}
 				{lists.map((list) => {
-					const isActive = Boolean(list.elementBelongsToList);
-					const action: CatalogueMembershipAction = isActive ? 'remove' : 'add';
+					const isActive = list.contains_item;
+					const action: CatalogueForItemAction = isActive ? 'remove' : 'add';
 					const isLoading = loadingListIds.includes(list.id);
 
 					return (

@@ -84,6 +84,7 @@ export const CatalogueItems = ({
 		case ObjectTemplates.ARTICLES:
 			return (
 				<ListArticlesList
+					editMode={editMode}
 					listUserId={ownerId}
 					currentUser={compatibleCurrentUser}
 					objects={items as CatalogueArticleItem[]}

@@ -41,7 +41,6 @@ Route::prefix('v1')->group(function () {
 
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
-    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES
@@ -68,6 +67,7 @@ Route::prefix('v1')->group(function () {
 
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
+        Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
         Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
         Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
         Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
@@ -101,4 +101,6 @@ Route::prefix('v1')->group(function () {
             Route::get('articles/pending', [ArticleController::class, 'pending']); // TODO: implement
         });
     });
+
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
 });

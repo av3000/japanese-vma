@@ -5,13 +5,12 @@ import { Button, Modal } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-	applyCatalogueMembershipAction,
-	type CatalogueBookmarkListItem,
-	type CatalogueMembershipAction,
-	fetchElementCatalogueMembership,
-	filterCatalogueMembershipByType,
-	updateElementCatalogueMembership,
-} from '@/api/catalogues/bookmarkMembership';
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
 import Spinner from '@/assets/images/spinner.gif';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
@@ -54,13 +53,11 @@ const RadicalDetails: React.FC = () => {
 	const getUserRadicalLists = async () => {
 		try {
 			setIsLoading(true);
-			const userLists = await fetchElementCatalogueMembership(radical_id);
-			const nextLists = filterCatalogueMembershipByType(userLists, [
-				ObjectTemplates.KNOWNRADICALS,
-				ObjectTemplates.RADICALS,
-			]);
+			const nextLists = await fetchCataloguesForItem(radical_id, {
+				types: [ObjectTemplates.KNOWNRADICALS, ObjectTemplates.RADICALS],
+			});
 			setRadicalIsKnown(
-				nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.elementBelongsToList),
+				nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
 			);
 			setLists(nextLists);
 		} catch (error) {
@@ -78,23 +75,21 @@ const RadicalDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) return;
 
 		try {
 			setLoadingListIds((prev) => [...prev, list.id]);
-			await updateElementCatalogueMembership({
+			await updateCatalogueForItem({
 				list,
 				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
 				setRadicalIsKnown(
-					nextLists.some(
-						(list) => list.type === ObjectTemplates.KNOWNRADICALS && list.elementBelongsToList,
-					),
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
 				);
 				return nextLists;
 			});
@@ -175,14 +170,14 @@ const RadicalDetails: React.FC = () => {
 						<div key={list.id} className="d-flex justify-content-between">
 							<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 							<Button
-								variant={list.elementBelongsToList ? 'danger' : 'primary'}
+								variant={list.contains_item ? 'danger' : 'primary'}
 								size="sm"
-								onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
+								onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 								disabled={loadingListIds.includes(list.id)}
 							>
 								{loadingListIds.includes(list.id) ? (
 									<span className="spinner-border spinner-border-sm"></span>
-								) : list.elementBelongsToList ? (
+								) : list.contains_item ? (
 									'Remove'
 								) : (
 									'Add'

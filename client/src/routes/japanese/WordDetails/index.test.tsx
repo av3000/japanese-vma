@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CatalogueBookmarkListItem } from '@/api/catalogues/bookmarkMembership';
+import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
 import WordDetails from './index';
 
-const updateElementCatalogueMembershipMock = vi.fn();
-const updateCatalogueMembershipLegacyMock = vi.fn();
+const updateCatalogueForItemMock = vi.fn();
 const useNavigateMock = vi.fn();
 const bootstrapButtonProps: Array<{ onClick?: () => Promise<void> | void; variant?: string }> = [];
 
@@ -51,19 +50,15 @@ vi.mock('react-bootstrap', () => ({
 	),
 }));
 
-vi.mock('@/api/catalogues/bookmarkMembership', async () => {
-	const actual = await vi.importActual<typeof import('@/api/catalogues/bookmarkMembership')>(
-		'@/api/catalogues/bookmarkMembership',
+vi.mock('@/api/catalogues/cataloguesForItem', async () => {
+	const actual = await vi.importActual<typeof import('@/api/catalogues/cataloguesForItem')>(
+		'@/api/catalogues/cataloguesForItem',
 	);
 	return {
 		...actual,
-		updateElementCatalogueMembership: (...args: unknown[]) => updateElementCatalogueMembershipMock(...args),
+		updateCatalogueForItem: (...args: unknown[]) => updateCatalogueForItemMock(...args),
 	};
 });
-
-vi.mock('@/api/catalogues/actions', () => ({
-	updateCatalogueMembership: (...args: unknown[]) => updateCatalogueMembershipLegacyMock(...args),
-}));
 
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
@@ -84,23 +79,24 @@ vi.mock('@/assets/images/spinner.gif', () => ({
 }));
 
 describe('WordDetails', () => {
-	const list: CatalogueBookmarkListItem = {
+	const list: CatalogueForItem = {
 		id: 7,
 		uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
 		title: 'Known words',
 		type: 3,
-		elementBelongsToList: false,
+		type_label: 'Known Words',
+		publicity: 0,
+		contains_item: false,
 	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		bootstrapButtonProps.length = 0;
-		updateElementCatalogueMembershipMock.mockResolvedValue(undefined);
-		updateCatalogueMembershipLegacyMock.mockResolvedValue(undefined);
+		updateCatalogueForItemMock.mockResolvedValue(undefined);
 		vi.mocked(React.useState).mockReset();
 	});
 
-	it('uses the shared v1 membership write helper with a numeric word id and updates known-word state by list id', async () => {
+	it('uses the shared v1 for-item write helper with a numeric word id and updates known-word state by list id', async () => {
 		const setWordMock = vi.fn();
 		const setKanjisMock = vi.fn();
 		const setArticlesMock = vi.fn();
@@ -108,9 +104,9 @@ describe('WordDetails', () => {
 		const setIsLoadingMock = vi.fn();
 		const setLoadingListIdsMock = vi.fn();
 		const setWordIsKnownMock = vi.fn();
-		let updatedLists: CatalogueBookmarkListItem[] | undefined;
+		let updatedLists: CatalogueForItem[] | undefined;
 
-		const setListsMock = vi.fn((updater: CatalogueBookmarkListItem[] | ((prev: CatalogueBookmarkListItem[]) => CatalogueBookmarkListItem[])) => {
+		const setListsMock = vi.fn((updater: CatalogueForItem[] | ((prev: CatalogueForItem[]) => CatalogueForItem[])) => {
 			if (typeof updater === 'function') {
 				updatedLists = updater([list]);
 			}
@@ -131,13 +127,12 @@ describe('WordDetails', () => {
 		const addButton = bootstrapButtonProps.find((props) => props.variant === 'primary');
 		await addButton?.onClick?.();
 
-		expect(updateElementCatalogueMembershipMock).toHaveBeenCalledWith({
+		expect(updateCatalogueForItemMock).toHaveBeenCalledWith({
 			list,
 			elementId: 42,
 			action: 'add',
 		});
-		expect(updateCatalogueMembershipLegacyMock).not.toHaveBeenCalled();
-		expect(updatedLists).toEqual([{ ...list, elementBelongsToList: true }]);
+		expect(updatedLists).toEqual([{ ...list, contains_item: true }]);
 		expect(setWordIsKnownMock).toHaveBeenCalledWith(true);
 	});
 });

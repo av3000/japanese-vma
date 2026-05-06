@@ -12,6 +12,7 @@ use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use Illuminate\Database\Eloquent\Builder;
@@ -99,33 +100,13 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
 
     public function findByCriteria(CatalogueCriteriaDTO $criteria): Catalogues
     {
-        $query = Catalogue::query()->with(['user']);
-
-        if ($criteria->ownerUid !== null) {
-            $query->whereHas('user', function (Builder $userQuery) use ($criteria) {
-                $userQuery->where('uuid', $criteria->ownerUid);
-            });
-        }
-
-        if ($criteria->publicOnly) {
-            $query->where('publicity', 1);
-        }
-
-        if ($criteria->customOnly) {
-            $query->where('type', '>', 4);
-        }
-
-        if ($criteria->type !== null) {
-            $query->where('type', $criteria->type);
-        }
-
-        if ($criteria->search !== null) {
-            $searchValue = $criteria->search->value;
-            $query->where(function (Builder $q) use ($searchValue) {
-                $q->where('title', 'LIKE', '%'.$searchValue.'%')
-                    ->orWhere('description', 'LIKE', '%'.$searchValue.'%');
-            });
-        }
+        $query = $this->buildCatalogueQuery(
+            ownerUid: $criteria->ownerUid,
+            publicOnly: $criteria->publicOnly,
+            customOnly: $criteria->customOnly,
+            type: $criteria->type,
+            search: $criteria->search,
+        );
 
         if ($criteria->sort->field === CatalogueSortField::VIEWS) {
             $templateId = ObjectTemplateType::LIST->getLegacyId();
@@ -157,6 +138,25 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         return Catalogues::fromEloquentPaginator($paginatedResults);
     }
 
+    public function findOwnedForMembership(string $ownerUuid, ?SearchTerm $search = null, array $types = []): array
+    {
+        $query = $this->buildCatalogueQuery(
+            ownerUid: $ownerUuid,
+            publicOnly: false,
+            customOnly: false,
+            type: null,
+            types: $types,
+            search: $search,
+        );
+
+        $query->orderBy('created_at', 'desc');
+
+        return $query
+            ->get()
+            ->map(fn (Catalogue $entity): DomainCatalogue => $this->catalogueMapper->mapToDomain($entity))
+            ->all();
+    }
+
     public function findByPublicUid(EntityId $uuid): ?DomainCatalogue
     {
         $entity = Catalogue::with(['user'])
@@ -164,5 +164,46 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
             ->first();
 
         return $entity ? $this->catalogueMapper->mapToDomain($entity) : null;
+    }
+
+    private function buildCatalogueQuery(
+        ?string $ownerUid,
+        bool $publicOnly,
+        bool $customOnly,
+        ?int $type = null,
+        array $types = [],
+        ?SearchTerm $search = null,
+    ): Builder {
+        $query = Catalogue::query()->with(['user']);
+
+        if ($ownerUid !== null) {
+            $query->whereHas('user', function (Builder $userQuery) use ($ownerUid) {
+                $userQuery->where('uuid', $ownerUid);
+            });
+        }
+
+        if ($publicOnly) {
+            $query->where('publicity', 1);
+        }
+
+        if ($customOnly) {
+            $query->where('type', '>', 4);
+        }
+
+        if ($types !== []) {
+            $query->whereIn('type', $types);
+        } elseif ($type !== null) {
+            $query->where('type', $type);
+        }
+
+        if ($search !== null) {
+            $searchValue = $search->value;
+            $query->where(function (Builder $q) use ($searchValue) {
+                $q->where('title', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('description', 'LIKE', '%'.$searchValue.'%');
+            });
+        }
+
+        return $query;
     }
 }

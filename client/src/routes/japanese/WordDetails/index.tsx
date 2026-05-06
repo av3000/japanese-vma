@@ -4,13 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-	applyCatalogueMembershipAction,
-	type CatalogueBookmarkListItem,
-	type CatalogueMembershipAction,
-	fetchElementCatalogueMembership,
-	filterCatalogueMembershipByType,
-	updateElementCatalogueMembership,
-} from '@/api/catalogues/bookmarkMembership';
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
 import Spinner from '@/assets/images/spinner.gif';
 import { Chip } from '@/components/shared/Chip';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,13 +58,11 @@ const WordDetails: React.FC = () => {
 		const getUserWordLists = async () => {
 			try {
 				setIsLoading(true);
-				const userLists = await fetchElementCatalogueMembership(word_id);
-				const nextLists = filterCatalogueMembershipByType(userLists, [
-					ObjectTemplates.KNOWNWORDS,
-					ObjectTemplates.WORDS,
-				]);
+				const nextLists = await fetchCataloguesForItem(word_id, {
+					types: [ObjectTemplates.KNOWNWORDS, ObjectTemplates.WORDS],
+				});
 				setWordIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList),
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.contains_item),
 				);
 				setLists(nextLists);
 			} catch (error) {
@@ -89,21 +86,21 @@ const WordDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) return;
 
 		try {
 			setLoadingListIds((prev) => [...prev, list.id]);
-			await updateElementCatalogueMembership({
+			await updateCatalogueForItem({
 				list,
 				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
 				setWordIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.elementBelongsToList),
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.contains_item),
 				);
 				return nextLists;
 			});
@@ -232,14 +229,14 @@ const WordDetails: React.FC = () => {
 							<div key={list.id} className="d-flex justify-content-between mb-2">
 								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
-									variant={list.elementBelongsToList ? 'danger' : 'primary'}
+									variant={list.contains_item ? 'danger' : 'primary'}
 									size="sm"
-									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
+									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
 									{isLoadingList ? (
 										<span className="spinner-border spinner-border-sm"></span>
-									) : list.elementBelongsToList ? (
+									) : list.contains_item ? (
 										'Remove'
 									) : (
 										'Add'

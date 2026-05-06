@@ -118,6 +118,27 @@ class CatalogueService implements CatalogueServiceInterface
         return $this->catalogueRepository->findByCriteria($criteria);
     }
 
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array
+    {
+        $catalogues = $this->catalogueRepository->findOwnedForMembership(
+            $user->uuid,
+            SearchTerm::fromInputOrNull($search),
+            $types,
+        );
+
+        $catalogueIds = array_map(
+            static fn (Catalogue $catalogue): int => $catalogue->getIdValue(),
+            $catalogues,
+        );
+
+        $containedCatalogueIds = $this->catalogueItemRepository->findCatalogueIdsContainingItem($catalogueIds, $itemId);
+
+        return [
+            'catalogues' => $catalogues,
+            'contained_catalogue_ids' => $containedCatalogueIds,
+        ];
+    }
+
     public function getIdByUuid(EntityId $uuid): ?int
     {
         return $this->catalogueRepository->getIdByUuid($uuid);

@@ -11,15 +11,19 @@ use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
+use App\Http\v1\Catalogues\Requests\IndexCataloguesForItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
+use App\Http\v1\Catalogues\Resources\CatalogueForItemListResource;
+use App\Http\v1\Catalogues\Resources\CatalogueForItemResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
@@ -103,6 +107,44 @@ class CatalogueController extends Controller
                 'last_page' => $paginator->lastPage(),
                 'has_more' => $paginator->hasMorePages(),
             ],
+        ]);
+    }
+
+    /**
+     * @response array{
+     *     items: array<int, array{
+     *         id: int,
+     *         uuid: string,
+     *         title: string,
+     *         type: int,
+     *         type_label: string,
+     *         publicity: int,
+     *         contains_item: bool
+     *     }>
+     * }
+     */
+    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, title: string, type: int, type_label: string, publicity: int, contains_item: bool}>}')]
+    public function forItem(IndexCataloguesForItemRequest $request): JsonResponse|JsonResource
+    {
+        $validated = $request->validated();
+        $cataloguesForItem = $this->catalogueService->getCataloguesForItem(
+            (int) $validated['item_id'],
+            $validated['types'] ?? [],
+            $validated['search'] ?? null,
+            auth('api')->user(),
+        );
+
+        $containedCatalogueIds = array_flip($cataloguesForItem['contained_catalogue_ids']);
+        $resources = array_map(
+            static fn (Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
+                $catalogue,
+                isset($containedCatalogueIds[$catalogue->getIdValue()]),
+            ),
+            $cataloguesForItem['catalogues'],
+        );
+
+        return new CatalogueForItemListResource([
+            'items' => $resources,
         ]);
     }
 

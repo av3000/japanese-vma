@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CatalogueBookmarkListItem } from '@/api/catalogues/bookmarkMembership';
+import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import ArticleContent from './index';
 
 const setQueryDataMock = vi.fn();
-const fetchElementCatalogueMembershipMock = vi.fn();
+const fetchCataloguesForItemMock = vi.fn();
 const useQueryMock = vi.fn();
 const capturedModalProps: Array<{
-	lists: CatalogueBookmarkListItem[];
+	lists: CatalogueForItem[];
 	loadingListIds: number[];
-	onListAction: (list: CatalogueBookmarkListItem, action: 'add' | 'remove') => Promise<void>;
+	onListAction: (list: CatalogueForItem, action: 'add' | 'remove') => Promise<void>;
 }> = [];
 
 vi.mock('react-router-dom', async () => {
@@ -51,18 +51,18 @@ vi.mock('@/api/generated/catalogue/catalogue', () => ({
 	catalogueRemoveItem: vi.fn(),
 }));
 
-vi.mock('@/api/catalogues/bookmarkMembership', () => ({
-	applyCatalogueMembershipAction: vi.fn((lists: CatalogueBookmarkListItem[], catalogueId: number, action: 'add' | 'remove') =>
+vi.mock('@/api/catalogues/cataloguesForItem', () => ({
+	applyCatalogueForItemAction: vi.fn((lists: CatalogueForItem[], catalogueId: number, action: 'add' | 'remove') =>
 		lists.map((list) =>
 			list.id === catalogueId
 				? {
 						...list,
-						elementBelongsToList: action === 'add',
+						contains_item: action === 'add',
 					}
 				: list,
 		),
 	),
-	fetchElementCatalogueMembership: (...args: unknown[]) => fetchElementCatalogueMembershipMock(...args),
+	fetchCataloguesForItem: (...args: unknown[]) => fetchCataloguesForItemMock(...args),
 }));
 
 vi.mock('@/api/articles/details', () => ({
@@ -180,38 +180,40 @@ describe('ArticleContent', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		capturedModalProps.length = 0;
-		useQueryMock.mockImplementation(({ queryFn }: { queryFn: () => Promise<CatalogueBookmarkListItem[]> }) => {
+		useQueryMock.mockImplementation(({ queryFn }: { queryFn: () => Promise<CatalogueForItem[]> }) => {
 			void queryFn();
-			return { data: membershipLists };
+			return { data: cataloguesForItemLists };
 		});
-		fetchElementCatalogueMembershipMock.mockResolvedValue(membershipLists);
+		fetchCataloguesForItemMock.mockResolvedValue(cataloguesForItemLists);
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
-	const membershipLists: CatalogueBookmarkListItem[] = [
+	const cataloguesForItemLists: CatalogueForItem[] = [
 		{
 			id: 9,
 			uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
 			title: 'My catalogue',
 			type: 5,
-			elementBelongsToList: false,
+			type_label: 'Radicals',
+			publicity: 0,
+			contains_item: false,
 		},
 	];
 
-	it('adds article bookmarks through the v1 catalogue item endpoint and reconciles membership by list id', async () => {
+	it('adds article bookmarks through the v1 catalogue item endpoint and reconciles for-item state by list id', async () => {
 		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
-		await capturedModalProps[0].onListAction(membershipLists[0], 'add');
+		await capturedModalProps[0].onListAction(cataloguesForItemLists[0], 'add');
 
 		expect(catalogueAddItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', { item_id: 321 });
 		expect(setQueryDataMock).toHaveBeenCalledWith(['article-bookmarks', 321], expect.any(Function));
 
-		const updater = setQueryDataMock.mock.calls[0][1] as (lists: CatalogueBookmarkListItem[]) => CatalogueBookmarkListItem[];
-		expect(updater(membershipLists)).toEqual([
+		const updater = setQueryDataMock.mock.calls[0][1] as (lists: CatalogueForItem[]) => CatalogueForItem[];
+		expect(updater(cataloguesForItemLists)).toEqual([
 			{
-				...membershipLists[0],
-				elementBelongsToList: true,
+				...cataloguesForItemLists[0],
+				contains_item: true,
 			},
 		]);
 	});
@@ -221,8 +223,8 @@ describe('ArticleContent', () => {
 
 		await capturedModalProps[0].onListAction(
 			{
-				...membershipLists[0],
-				elementBelongsToList: true,
+				...cataloguesForItemLists[0],
+				contains_item: true,
 			},
 			'remove',
 		);

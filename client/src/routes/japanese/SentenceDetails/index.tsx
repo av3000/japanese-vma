@@ -5,13 +5,12 @@ import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
 import {
-	applyCatalogueMembershipAction,
-	type CatalogueBookmarkListItem,
-	type CatalogueMembershipAction,
-	fetchElementCatalogueMembership,
-	filterCatalogueMembershipByType,
-	updateElementCatalogueMembership,
-} from '@/api/catalogues/bookmarkMembership';
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
 import CommentForm from '@/components/features/comment/CommentsBlock/CommentForm/CommentForm';
 import CommentList from '@/components/features/comment/CommentsBlock/CommentList/CommentList';
 import { useAuth } from '@/hooks/useAuth';
@@ -66,15 +65,11 @@ const SentenceDetails: React.FC = () => {
 	const getUserSentenceLists = async () => {
 		setIsLoading(true);
 		try {
-			const userLists = await fetchElementCatalogueMembership(sentence_id);
-			const nextLists = filterCatalogueMembershipByType(userLists, [
-				ObjectTemplates.KNOWNSENTENCES,
-				ObjectTemplates.SENTENCES,
-			]);
+			const nextLists = await fetchCataloguesForItem(sentence_id, {
+				types: [ObjectTemplates.KNOWNSENTENCES, ObjectTemplates.SENTENCES],
+			});
 			setSentenceIsKnown(
-				nextLists.some(
-					(list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.elementBelongsToList,
-				),
+				nextLists.some((list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.contains_item),
 			);
 			setLists(nextLists);
 		} catch (error) {
@@ -92,23 +87,21 @@ const SentenceDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (list: CatalogueBookmarkListItem, action: CatalogueMembershipAction) => {
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) return;
 
 		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
-			await updateElementCatalogueMembership({
+			await updateCatalogueForItem({
 				list,
 				elementId: entityId,
 				action,
 			});
 
 			setLists((prevLists) => {
-				const nextLists = applyCatalogueMembershipAction(prevLists, list.id, action);
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
 				setSentenceIsKnown(
-					nextLists.some(
-						(list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.elementBelongsToList,
-					),
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.contains_item),
 				);
 				return nextLists;
 			});
@@ -197,14 +190,14 @@ const SentenceDetails: React.FC = () => {
 							<div key={list.id} className="d-flex justify-content-between mb-2">
 								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
-									variant={list.elementBelongsToList ? 'danger' : 'primary'}
+									variant={list.contains_item ? 'danger' : 'primary'}
 									size="sm"
-									onClick={() => addToOrRemoveFromList(list, list.elementBelongsToList ? 'remove' : 'add')}
+									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
 									{isLoadingList ? (
 										<span className="spinner-border spinner-border-sm"></span>
-									) : list.elementBelongsToList ? (
+									) : list.contains_item ? (
 										'Remove'
 									) : (
 										'Add'

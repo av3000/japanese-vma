@@ -689,93 +689,37 @@
                 }
             }
         },
-        "/catalogues/{uuid}": {
+        "/catalogues/for-item": {
             "get": {
-                "operationId": "catalogue.show",
+                "operationId": "catalogue.forItem",
                 "tags": [
                     "Catalogue"
                 ],
                 "parameters": [
                     {
-                        "name": "uuid",
-                        "in": "path",
+                        "name": "item_id",
+                        "in": "query",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`CatalogueDetailResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CatalogueDetailResource"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "operationId": "catalogue.update",
-                "tags": [
-                    "Catalogue"
-                ],
-                "parameters": [
+                    },
                     {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
+                        "name": "types[]",
+                        "in": "query",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UpdateCatalogueRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "`CatalogueResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CatalogueResource"
-                                }
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            },
-            "delete": {
-                "operationId": "catalogue.destroy",
-                "tags": [
-                    "Catalogue"
-                ],
-                "parameters": [
                     {
-                        "name": "uuid",
-                        "in": "path",
-                        "required": true,
+                        "name": "search",
+                        "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 2
                         }
                     }
                 ],
@@ -785,13 +729,59 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "type": {
+                                                        "type": "integer"
+                                                    },
+                                                    "type_label": {
+                                                        "type": "string"
+                                                    },
+                                                    "publicity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "contains_item": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "title",
+                                                    "type",
+                                                    "type_label",
+                                                    "publicity",
+                                                    "contains_item"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "items"
+                                    ]
                                 }
                             }
                         }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -912,6 +902,113 @@
                             "application/json": {
                                 "schema": {
                                     "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/catalogues/{uuid}": {
+            "put": {
+                "operationId": "catalogue.update",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCatalogueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CatalogueResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CatalogueResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "catalogue.destroy",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "get": {
+                "operationId": "catalogue.show",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CatalogueDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CatalogueDetailResource"
                                 }
                             }
                         }
