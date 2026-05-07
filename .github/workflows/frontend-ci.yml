@@ -32,7 +32,7 @@ jobs:
         working-directory: client
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Ensure frontend build variable exists
         run: |
@@ -42,9 +42,9 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version-file: client/.nvmrc
           cache: npm
           cache-dependency-path: client/package-lock.json
 
@@ -114,7 +114,7 @@ jobs:
         working-directory: client
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Ensure production frontend variables exist
         run: |
@@ -129,9 +129,9 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version-file: client/.nvmrc
           cache: npm
           cache-dependency-path: client/package-lock.json
 
