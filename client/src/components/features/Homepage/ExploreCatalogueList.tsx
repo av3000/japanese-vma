@@ -5,7 +5,7 @@ import { useCatalogueIndex } from '@/api/generated/catalogue/catalogue';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
 import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCardSkeleton';
 
-const HOMEPAGE_CATALOGUE_SKELETON_COUNT = 3;
+const HOMEPAGE_CATALOGUE_SKELETON_COUNT = 4;
 
 export const HOMEPAGE_CATALOGUE_FILTERS: FetchCataloguesFilters = {
 	per_page: 3,

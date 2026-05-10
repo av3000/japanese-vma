@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import PrivateRoute from '@/helpers/PrivateRoute';
+import CataloguesListSkeleton from '@/routes/CataloguesList/CataloguesListSkeleton';
 import HomePage from '@/routes/Homepage';
 
 // Lazy-loaded page components
@@ -42,18 +43,21 @@ const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 // Dashboard routes
 const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-	<Suspense fallback={null}>{children}</Suspense>
+const SuspenseWrapper = ({
+	children,
+	fallback = null,
+}: {
+	children: React.ReactNode;
+	fallback?: React.ReactNode;
+}) => (
+	<Suspense fallback={fallback}>{children}</Suspense>
 );
 
 const AppRoutes: React.FC = () => {
 	return (
 		<Routes>
 			{/* Public routes */}
-			<Route
-				path="/"
-				element={<HomePage />}
-			/>
+			<Route path="/" element={<HomePage />} />
 			<Route
 				path="/login"
 				element={
@@ -93,7 +97,7 @@ const AppRoutes: React.FC = () => {
 			<Route
 				path="/catalogues"
 				element={
-					<SuspenseWrapper>
+					<SuspenseWrapper fallback={<CataloguesListSkeleton />}>
 						<CataloguesListPage />
 					</SuspenseWrapper>
 				}

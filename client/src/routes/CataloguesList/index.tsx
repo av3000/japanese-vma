@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import Spinner from '@/assets/images/spinner.gif';
-import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
-import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
+import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
+import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
+import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
 import { Button } from '@/components/shared/Button';
 import { isCustomCatalogueType } from '@/shared/constants/catalogues';
+import CataloguesListSkeleton from './CataloguesListSkeleton';
 
-const DEFAULT_PER_PAGE = 12;
+export const DEFAULT_PER_PAGE = 12;
 
 type CatalogueSearchFilters = {
 	keyword: string;
@@ -45,11 +46,7 @@ const CataloguesListPage: React.FC = () => {
 		typeof filters.keyword === 'string' && filters.keyword.trim() ? `Results for: ${filters.keyword.trim()}` : '';
 
 	if (isPending && catalogues.length === 0) {
-		return (
-			<div className="text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <CataloguesListSkeleton />;
 	}
 
 	if (isError) {
