@@ -1,14 +1,14 @@
 import React from 'react';
 import FacebookIcon from '@/assets/icons/fb-icon.svg';
 import InstagramIcon from '@/assets/icons/ig-icon.svg';
-import { ExploreArticleList, ExploreCatalogueList } from '@/components/features/Homepage';
+import ExploreArticleList from '@/components/features/Homepage/ExploreArticleList';
+import ExploreCatalogueList from '@/components/features/Homepage/ExploreCatalogueList';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
 import './Homepage.scss';
 
 const Homepage: React.FC = () => {
-	/* eslint-disable */
 	const { isAuthenticated } = useAuth();
 
 	if (!isAuthenticated) {
@@ -58,7 +58,7 @@ const Homepage: React.FC = () => {
 	return (
 		<div className="container mt-4">
 			<h1 className="text-center">Welcome to your feed!</h1>
-			<ExploreArticleList />
+			<ExploreCatalogueList />
 			<ExploreCatalogueList />
 		</div>
 	);

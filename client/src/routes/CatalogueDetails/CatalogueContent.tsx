@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { downloadCataloguePdf } from '@/api/catalogues/actions';
@@ -14,7 +14,6 @@ import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
-import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
@@ -27,6 +26,8 @@ import { ObjectTemplateType } from '@/shared/constants/enums';
 interface CatalogueContentProps {
 	catalogue: MappedCatalogue;
 }
+
+const LazyCommentsBlock = lazy(() => import('@/components/features/comment/CommentsBlock'));
 
 const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const navigate = useNavigate();
@@ -210,13 +211,15 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock
-						readObjectType="catalogue"
-						readObjectUuid={catalogue.uuid}
-						entityId={catalogue.id}
-						entityType={ObjectTemplateType.LIST}
-						entityUuid={catalogue.uuid}
-					/>
+					<Suspense fallback={null}>
+						<LazyCommentsBlock
+							readObjectType="catalogue"
+							readObjectUuid={catalogue.uuid}
+							entityId={catalogue.id}
+							entityType={ObjectTemplateType.LIST}
+							entityUuid={catalogue.uuid}
+						/>
+					</Suspense>
 				</div>
 			</div>
 

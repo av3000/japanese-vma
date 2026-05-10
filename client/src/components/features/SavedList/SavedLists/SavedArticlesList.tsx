@@ -34,18 +34,6 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 									<Icon size="sm" name="externalLink" />
 								</Link>
 							</h5>
-							{currentUser?.id === listUserId && editMode && (
-								<Button
-									type="button"
-									size="md"
-									hasOnlyIcon
-									variant="danger"
-									onClick={() => removeFromList(article.id)}
-									className={sharedStyles.removeButton}
-								>
-									<Icon size="sm" name="minusSolid" />
-								</Button>
-							)}
 						</div>
 
 						<div className={sharedStyles.itemDetails}>
@@ -64,27 +52,41 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 							</section>
 						</div>
 
-						<div className={sharedStyles.metaInfo}>
-							<div className={sharedStyles.statItem}>
-								<Icon size="sm" name="eyeRegular" className={sharedStyles.statIcon} />
-								<span>{article.engagement?.views_count ?? 0}</span>
+						<div className={'d-flex justify-between p-1'}>
+							<div className={sharedStyles.metaInfo}>
+								<div className={sharedStyles.statItem}>
+									<Icon size="sm" name="eyeRegular" className={sharedStyles.statIcon} />
+									<span>{article.engagement?.views_count ?? 0}</span>
+								</div>
+								<div className={sharedStyles.statItem}>
+									<Icon size="sm" name="bookmarkRegular" className={sharedStyles.statIcon} />
+									<span>{article.saves_count}</span>
+								</div>
+								<div className={sharedStyles.statItem}>
+									<Icon size="sm" name="downloadSolid" className={sharedStyles.statIcon} />
+									<span>{article.engagement?.downloads_count ?? 0}</span>
+								</div>
+								<div className={sharedStyles.statItem}>
+									<Icon size="sm" name="commentSolid" className={sharedStyles.statIcon} />
+									<span>{article.engagement?.comments_count ?? 0}</span>
+								</div>
+								<div className={sharedStyles.statItem}>
+									<Icon size="sm" name="thumbsUpSolid" className={sharedStyles.statIcon} />
+									<span>{article.engagement?.likes_count ?? 0}</span>
+								</div>
 							</div>
-							<div className={sharedStyles.statItem}>
-								<Icon size="sm" name="bookmarkRegular" className={sharedStyles.statIcon} />
-								<span>{article.saves_count}</span>
-							</div>
-							<div className={sharedStyles.statItem}>
-								<Icon size="sm" name="downloadSolid" className={sharedStyles.statIcon} />
-								<span>{article.engagement?.downloads_count ?? 0}</span>
-							</div>
-							<div className={sharedStyles.statItem}>
-								<Icon size="sm" name="commentSolid" className={sharedStyles.statIcon} />
-								<span>{article.engagement?.comments_count ?? 0}</span>
-							</div>
-							<div className={sharedStyles.statItem}>
-								<Icon size="sm" name="thumbsUpSolid" className={sharedStyles.statIcon} />
-								<span>{article.engagement?.likes_count ?? 0}</span>
-							</div>
+							{currentUser?.id === listUserId && editMode && (
+								<Button
+									type="button"
+									size="sm"
+									hasOnlyIcon
+									variant="danger"
+									onClick={() => removeFromList(article.id)}
+									className={sharedStyles.removeButton}
+								>
+									<Icon size="sm" name="minusSolid" />
+								</Button>
+							)}
 						</div>
 					</div>
 				);

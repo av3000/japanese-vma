@@ -1,13 +1,17 @@
-import * as Sentry from '@sentry/react';
-
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const sentryEnvironment = import.meta.env.VITE_SENTRY_ENVIRONMENT ?? import.meta.env.MODE;
 const sentryRelease = import.meta.env.VITE_SENTRY_RELEASE;
 const sentrySmokeTestQueryParam = 'sentry_test';
 
 let isInitialized = false;
+let sentryModulePromise: Promise<typeof import('@sentry/react')> | null = null;
 
 export const isSentryEnabled = Boolean(sentryDsn);
+
+const loadSentry = async () => {
+	sentryModulePromise ??= import('@sentry/react');
+	return sentryModulePromise;
+};
 
 const getMaskedDsn = () => {
 	if (!sentryDsn) {
@@ -32,15 +36,16 @@ const clearSmokeTestQueryParam = () => {
 	window.history.replaceState({}, document.title, url.toString());
 };
 
-export const triggerSentrySmokeTest = () => {
+export const triggerSentrySmokeTest = async () => {
 	if (!isSentryEnabled) {
 		return null;
 	}
 
+	const Sentry = await loadSentry();
 	return Sentry.captureException(new Error(`Frontend Sentry smoke test (${new Date().toISOString()})`));
 };
 
-const maybeRunSentrySmokeTest = () => {
+const maybeRunSentrySmokeTest = async () => {
 	if (typeof window === 'undefined') {
 		return;
 	}
@@ -57,7 +62,7 @@ const maybeRunSentrySmokeTest = () => {
 		dsn: getMaskedDsn(),
 	});
 
-	const eventId = triggerSentrySmokeTest();
+	const eventId = await triggerSentrySmokeTest();
 	clearSmokeTestQueryParam();
 
 	if (eventId) {
@@ -68,10 +73,12 @@ const maybeRunSentrySmokeTest = () => {
 	console.warn('Frontend Sentry smoke test did not send because Sentry is disabled in this build.');
 };
 
-export const initSentry = () => {
+export const initSentry = async () => {
 	if (!isSentryEnabled || isInitialized) {
 		return;
 	}
+
+	const Sentry = await loadSentry();
 
 	Sentry.init({
 		dsn: sentryDsn,
@@ -81,13 +88,15 @@ export const initSentry = () => {
 	});
 
 	isInitialized = true;
-	maybeRunSentrySmokeTest();
+	await maybeRunSentrySmokeTest();
 };
 
-export const captureApiError = (error: unknown, context: Record<string, unknown>) => {
+export const captureApiError = async (error: unknown, context: Record<string, unknown>) => {
 	if (!isSentryEnabled) {
 		return;
 	}
+
+	const Sentry = await loadSentry();
 
 	Sentry.withScope((scope) => {
 		scope.setTag('source', 'axios');
@@ -100,5 +109,20 @@ export const captureApiError = (error: unknown, context: Record<string, unknown>
 	});
 };
 
-export const sentryReactErrorHandler = Sentry.reactErrorHandler;
-export { Sentry };
+export const captureRenderError = async (error: unknown, context: Record<string, unknown> = {}) => {
+	if (!isSentryEnabled) {
+		return;
+	}
+
+	const Sentry = await loadSentry();
+
+	Sentry.withScope((scope) => {
+		scope.setTag('source', 'react');
+
+		Object.entries(context).forEach(([key, value]) => {
+			scope.setExtra(key, value);
+		});
+
+		Sentry.captureException(error);
+	});
+};

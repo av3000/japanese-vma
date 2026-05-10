@@ -106,3 +106,17 @@ When touching files under either subtree, treat the scoped AGENTS file there as 
 - For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
 - Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.
 - Repo and scoped `AGENTS.md` constraints still take precedence over generic clean architecture advice.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub is the main issue tracker for this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default triage label vocabulary unless the repo's GitHub labels are changed later. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context repo layout by default; read root and scoped `AGENTS.md` files as the current source of project guidance until `CONTEXT.md` or ADR docs exist. See `docs/agents/domain.md`.

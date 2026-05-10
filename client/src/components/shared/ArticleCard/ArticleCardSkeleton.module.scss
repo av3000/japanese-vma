@@ -1,0 +1,63 @@
+@keyframes skeletonShimmer {
+	0% {
+		background-position: 200% 0;
+	}
+
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.wrapper {
+	pointer-events: none;
+}
+
+.block {
+	background: linear-gradient(
+		90deg,
+		var(--color-background-neutral-weaker) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-background-neutral-weaker) 100%
+	);
+	background-size: 200% 100%;
+	animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+.image {
+	aspect-ratio: 1 / 1;
+	border-radius: inherit;
+}
+
+.line {
+	display: block;
+	border-radius: var(--border-radius-pill);
+}
+
+.date {
+	height: 0.875rem;
+	margin-top: var(--spacing-2xs);
+	width: 38%;
+}
+
+.title {
+	height: 1.5rem;
+	margin: var(--spacing-3xs) 0;
+	width: 82%;
+}
+
+.pill {
+	height: 1.75rem;
+	width: 4.75rem;
+	border-radius: var(--border-radius-pill);
+}
+
+.level {
+	height: 2.25rem;
+	width: 2.25rem;
+	border-radius: 999px;
+}
+
+.metaItem {
+	height: 1rem;
+	width: 3rem;
+}

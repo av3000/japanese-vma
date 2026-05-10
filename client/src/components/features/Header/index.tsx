@@ -6,7 +6,7 @@ import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import './header.scss';
 
 const Header: React.FC = () => {
-	const { user, isAuthenticated, logout } = useAuth();
+	const { user, isAuthenticated, isLoading, logout } = useAuth();
 
 	const handleLogout = () => {
 		logout();
@@ -63,7 +63,11 @@ const Header: React.FC = () => {
 						</>
 					)}
 				</Nav>
-				{isAuthenticated && user ? (
+				{isLoading ? (
+					<Nav aria-label="Account status">
+						<span className="header-auth-pending" aria-label="Checking account status" />
+					</Nav>
+				) : isAuthenticated && user ? (
 					<Nav>
 						<div className="d-flex align-items-center mr-2">
 							<SocketStatusIndicator />

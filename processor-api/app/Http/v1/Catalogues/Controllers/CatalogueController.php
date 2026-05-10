@@ -41,8 +41,7 @@ class CatalogueController extends Controller
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {
-    }
+    ) {}
 
     /**
      * @response CatalogueListResource
@@ -54,7 +53,7 @@ class CatalogueController extends Controller
 
         $paginatedCatalogues = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
 
-        $catalogueIds = array_map(fn ($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
+        $catalogueIds = array_map(fn($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
 
         $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
 
@@ -136,7 +135,7 @@ class CatalogueController extends Controller
 
         $containedCatalogueIds = array_flip($cataloguesForItem['contained_catalogue_ids']);
         $resources = array_map(
-            static fn (Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
+            static fn(Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
                 $catalogue,
                 isset($containedCatalogueIds[$catalogue->getIdValue()]),
             ),

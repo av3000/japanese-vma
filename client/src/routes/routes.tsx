@@ -1,10 +1,9 @@
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import PageLoader from '@/components/features/PageLoader';
 import PrivateRoute from '@/helpers/PrivateRoute';
+import HomePage from '@/routes/Homepage';
 
 // Lazy-loaded page components
-const HomePage = lazy(() => import('@/routes/Homepage'));
 const PageNotFound = lazy(() => import('@/routes/NotFound'));
 
 // Auth routes
@@ -44,7 +43,7 @@ const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-	<Suspense fallback={<PageLoader />}>{children}</Suspense>
+	<Suspense fallback={null}>{children}</Suspense>
 );
 
 const AppRoutes: React.FC = () => {
@@ -53,11 +52,7 @@ const AppRoutes: React.FC = () => {
 			{/* Public routes */}
 			<Route
 				path="/"
-				element={
-					<SuspenseWrapper>
-						<HomePage />
-					</SuspenseWrapper>
-				}
+				element={<HomePage />}
 			/>
 			<Route
 				path="/login"

@@ -32,7 +32,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ heading, buttonText }) => {
 				name: formData.get('name') as string,
 				email: formData.get('email') as string,
 				password: formData.get('password') as string,
-				passwordConfirmation: formData.get('password_confirmation') as string,
+				password_confirmation: formData.get('password_confirmation') as string,
 			});
 			navigate('/');
 		} catch (err: any) {

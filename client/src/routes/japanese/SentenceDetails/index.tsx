@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import Spinner from '@/assets/images/spinner.gif';
 import {
 	applyCatalogueForItemAction,
 	type CatalogueForItem,
@@ -11,6 +10,7 @@ import {
 	fetchCataloguesForItem,
 	updateCatalogueForItem,
 } from '@/api/catalogues/cataloguesForItem';
+import Spinner from '@/assets/images/spinner.gif';
 import CommentForm from '@/components/features/comment/CommentsBlock/CommentForm/CommentForm';
 import CommentList from '@/components/features/comment/CommentsBlock/CommentList/CommentList';
 import { useAuth } from '@/hooks/useAuth';

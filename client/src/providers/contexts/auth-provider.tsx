@@ -14,12 +14,12 @@ interface AuthContextType {
 		name,
 		email,
 		password,
-		passwordConfirmation,
+		password_confirmation,
 	}: {
 		name: string;
 		email: string;
 		password: string;
-		passwordConfirmation: string;
+		password_confirmation: string;
 	}) => Promise<void>;
 	logout: () => void;
 	clearSessionExpired: () => void;
@@ -32,52 +32,42 @@ interface AuthProviderProps {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+	const initialToken = useMemo(() => localStorage.getItem('token'), []);
 	const [user, setUser] = useState<User | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [token, setToken] = useState<string | null>(initialToken);
+	const [isLoading, setIsLoading] = useState(Boolean(initialToken));
 	const [sessionExpired, setSessionExpired] = useState(false);
-	const token = localStorage.getItem('token');
 	const navigate = useNavigate();
 
-	const isAuthenticated = !!user;
-
-	const checkAuth = useCallback(async () => {
-		if (!token) {
-			setIsLoading(false);
-			return;
-		}
-
-		try {
-			const response = await axiosInstance.get('/v1/me');
-			setUser({ isAdmin: response.data.data.is_admin, ...response.data.data });
-		} catch (error) {
-			console.error('Auth check failed:', error);
-			localStorage.removeItem('token');
-			setUser(null);
-		} finally {
-			setIsLoading(false);
-		}
-	}, [token]);
+	const isAuthenticated = Boolean(user);
 
 	const login = useCallback(async (loginPayload) => {
 		const response = await axiosInstance.post('/v1/login', loginPayload);
-		const { access_token, token_type, ...userData } = response.data.data;
+		const { access_token, ...userData } = response.data.data;
 
 		localStorage.setItem('token', access_token);
+		setToken(access_token);
 		setUser({ isAdmin: userData.is_admin, ...userData });
+		setIsLoading(false);
 		setSessionExpired(false);
 	}, []);
 
 	const register = useCallback(async (registerPayload) => {
 		const response = await axiosInstance.post('/v1/register', registerPayload);
-		const { access_token, token_type, ...userData } = response.data.data;
+		const { access_token, ...userData } = response.data.data;
 
 		localStorage.setItem('token', access_token);
+		setToken(access_token);
 		setUser({ isAdmin: userData.is_admin, ...userData });
+		setIsLoading(false);
+		setSessionExpired(false);
 	}, []);
 
 	const logout = useCallback(() => {
 		localStorage.removeItem('token');
+		setToken(null);
 		setUser(null);
+		setIsLoading(false);
 		navigate('/login');
 	}, [navigate]);
 
@@ -98,8 +88,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
 			if (e.key === 'token' && !e.newValue) {
+				setToken(null);
 				setUser(null);
+				setIsLoading(false);
 				navigate('/login');
+			}
+
+			if (e.key === 'token' && e.newValue) {
+				setToken(e.newValue);
+				setUser(null);
+				setIsLoading(true);
 			}
 		};
 
@@ -108,11 +106,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	}, [navigate]);
 
 	useEffect(() => {
-		checkAuth();
-	}, [checkAuth]);
+		if (!isLoading) {
+			return;
+		}
+
+		if (!token) {
+			setUser(null);
+			setIsLoading(false);
+			return;
+		}
+
+		let isActive = true;
+
+		const verifyToken = async () => {
+			try {
+				const response = await axiosInstance.get('/v1/me');
+
+				if (!isActive) {
+					return;
+				}
+
+				setUser({ isAdmin: response.data.data.is_admin, ...response.data.data });
+			} catch (error) {
+				if (!isActive) {
+					return;
+				}
+
+				console.error('Auth check failed:', error);
+				localStorage.removeItem('token');
+				setToken(null);
+				setUser(null);
+			} finally {
+				if (isActive) {
+					setIsLoading(false);
+				}
+			}
+		};
+
+		void verifyToken();
+
+		return () => {
+			isActive = false;
+		};
+	}, [isLoading, token]);
 
 	// TODO:
-	// Doublecheck if this context consumption doesnt cause full app re-renders.
+	// Doublecheck if this context consumption doesnt cause full app re-renders on unwanted occasions.
 	// Might need to consider Zustand to be able use State selectors that ensure only selected store value consumer is re-rendered. instead of all the context consuming components.
 	const value = useMemo(
 		() => ({
