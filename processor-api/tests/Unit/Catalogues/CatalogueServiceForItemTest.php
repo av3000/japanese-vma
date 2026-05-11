@@ -9,6 +9,7 @@ use App\Application\Catalogues\Services\CatalogueItemService;
 use App\Application\Catalogues\Services\CatalogueService;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
+use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
@@ -73,6 +74,7 @@ class CatalogueServiceForItemTest extends TestCase
             $this->createMock(LikeRepositoryInterface::class),
             $this->createMock(DownloadRepositoryInterface::class),
             $this->createMock(CommentRepositoryInterface::class),
+            $this->createMock(LoadEntityStatsAction::class),
         );
     }
 

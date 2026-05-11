@@ -41,8 +41,7 @@ class CatalogueController extends Controller
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {
-    }
+    ) {}
 
     /**
      * @response CatalogueListResource
@@ -52,62 +51,9 @@ class CatalogueController extends Controller
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
 
-        $paginatedCatalogues = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
+        $catalogueList = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
 
-        $catalogueIds = array_map(fn ($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
-
-        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
-
-        $statsMap = [];
-        if ($catalogueDTO->include_stats_counts) {
-            $statsData = $this->loadStats->batchLoadStatsById(ObjectTemplateType::LIST->getLegacyId(), $catalogueIds);
-            foreach ($catalogueIds as $id) {
-                $stats = $statsData[$id] ?? [
-                    'likes' => 0,
-                    'downloads' => 0,
-                    'views' => 0,
-                    'comments' => 0,
-                ];
-                $statsMap[$id] = new CatalogueStats(
-                    $stats['likes'],
-                    $stats['downloads'],
-                    $stats['views'],
-                    $stats['comments']
-                );
-            }
-        }
-
-        $hashtagsMap = [];
-        if ($catalogueDTO->include_hashtags) {
-            $hashtagsMap = $this->hashtagService->getBatchHashtags(
-                $catalogueIds,
-                ObjectTemplateType::LIST
-            );
-        }
-
-        $resources = [];
-        foreach ($paginatedCatalogues->getItems() as $catalogue) {
-            $id = $catalogue->getIdValue();
-            $resources[] = new CatalogueResource(
-                $catalogue,
-                $statsMap[$id] ?? null,
-                $hashtagsMap[$id] ?? [],
-                $itemsCountMap[$id] ?? 0
-            );
-        }
-
-        $paginator = $paginatedCatalogues->getPaginator();
-
-        return new CatalogueListResource([
-            'items' => $resources,
-            'pagination' => [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
-        ]);
+        return new CatalogueListResource($catalogueList);
     }
 
     /**
@@ -135,7 +81,7 @@ class CatalogueController extends Controller
         );
 
         $resources = array_map(
-            static fn (CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
+            static fn(CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
                 $item->catalogue,
                 $item->containsItem,
             ),

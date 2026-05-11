@@ -7,6 +7,7 @@ use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterf
 use App\Application\Catalogues\Policies\CataloguePolicy;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
+use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
@@ -16,13 +17,15 @@ use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CatalogueListItemDTO;
+use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Catalogues\Factories\CatalogueFactory;
 use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Catalogues\Models\Catalogues;
+use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Catalogues\ValueObjects\CatalogueSortCriteria;
 use App\Domain\Catalogues\ValueObjects\CatalogueTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -52,6 +55,7 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly LikeRepositoryInterface $likeRepository,
         private readonly DownloadRepositoryInterface $downloadRepository,
         private readonly CommentRepositoryInterface $commentRepository,
+        private readonly LoadEntityStatsAction $loadStats,
     ) {
     }
 
@@ -95,7 +99,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): Catalogues
+    public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): CatalogueListResultDTO
     {
         $requestedOwnerUid = $dto->owner_uid;
         $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($user, $requestedOwnerUid);
@@ -117,7 +121,39 @@ class CatalogueService implements CatalogueServiceInterface
             customOnly: $requestedOwnerUid === null ? true : $dto->custom_only
         );
 
-        return $this->catalogueRepository->findByCriteria($criteria);
+        $paginatedCatalogues = $this->catalogueRepository->findByCriteria($criteria);
+        $catalogues = $paginatedCatalogues->getItems();
+        $catalogueIds = array_map(
+            static fn (Catalogue $catalogue): int => $catalogue->getIdValue(),
+            $catalogues,
+        );
+
+        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
+        $statsMap = $this->loadCatalogueStats($catalogueIds, $dto->include_stats_counts);
+        $hashtagsMap = $dto->include_hashtags
+            ? $this->hashtagService->getBatchHashtags($catalogueIds, ObjectTemplateType::LIST)
+            : [];
+
+        $paginator = $paginatedCatalogues->getPaginator();
+
+        return new CatalogueListResultDTO(
+            array_map(
+                static fn (Catalogue $catalogue): CatalogueListItemDTO => new CatalogueListItemDTO(
+                    catalogue: $catalogue,
+                    stats: $statsMap[$catalogue->getIdValue()] ?? null,
+                    hashtags: $hashtagsMap[$catalogue->getIdValue()] ?? [],
+                    itemsCount: $itemsCountMap[$catalogue->getIdValue()] ?? 0,
+                ),
+                $catalogues,
+            ),
+            [
+                'page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ],
+        );
     }
 
     public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): CataloguePickerResultDTO
@@ -351,6 +387,41 @@ class CatalogueService implements CatalogueServiceInterface
         } catch (\Exception $e) {
             Log::error("Failed to increment view for catalogue {$id}: ".$e->getMessage());
         }
+    }
+
+    /**
+     * @param int[] $catalogueIds
+     *
+     * @return array<int, CatalogueStats>
+     */
+    private function loadCatalogueStats(array $catalogueIds, bool $includeStats): array
+    {
+        if (! $includeStats || $catalogueIds === []) {
+            return [];
+        }
+
+        $statsData = $this->loadStats->batchLoadStatsById(
+            ObjectTemplateType::LIST->getLegacyId(),
+            $catalogueIds
+        );
+
+        $statsMap = [];
+        foreach ($catalogueIds as $id) {
+            $stats = $statsData[$id] ?? [
+                'likes' => 0,
+                'downloads' => 0,
+                'views' => 0,
+                'comments' => 0,
+            ];
+            $statsMap[$id] = new CatalogueStats(
+                $stats['likes'],
+                $stats['downloads'],
+                $stats['views'],
+                $stats['comments']
+            );
+        }
+
+        return $statsMap;
     }
 
     private function applyUpdates(Catalogue $catalogue, CatalogueUpdateDTO $dto): Catalogue

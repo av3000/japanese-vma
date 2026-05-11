@@ -2,18 +2,20 @@
 
 namespace Tests\Feature\Catalogues;
 
-use Tests\TestCase;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Persistence\Models\Catalogue;
+use App\Infrastructure\Persistence\Models\HashtagEntity;
+use App\Infrastructure\Persistence\Models\Uniquehashtag;
+use App\Infrastructure\Persistence\Models\User;
+use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
-use App\Infrastructure\Persistence\Models\User;
-use App\Infrastructure\Persistence\Models\Catalogue;
-use App\Infrastructure\Persistence\Models\View;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\Enums\UserRole;
+use Tests\TestCase;
 
 class IndexCataloguesTest extends TestCase
 {
@@ -39,7 +41,7 @@ class IndexCataloguesTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -58,6 +60,29 @@ class IndexCataloguesTest extends TestCase
         ], $overrides));
     }
 
+    private function attachCatalogueItem(Catalogue $catalogue, int $itemId): void
+    {
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogue->id,
+            'listtype_id' => $catalogue->type->value,
+            'real_object_id' => $itemId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function attachHashtag(Catalogue $catalogue, string $tag): void
+    {
+        $uniqueTag = Uniquehashtag::firstOrCreate(['content' => $tag]);
+
+        HashtagEntity::create([
+            'entity_type_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'entity_id' => $catalogue->id,
+            'hashtag_id' => $uniqueTag->id,
+            'user_id' => $catalogue->user_id,
+        ]);
+    }
+
     public function test_index_returns_only_public_custom_lists(): void
     {
         $user = $this->createUser();
@@ -69,8 +94,55 @@ class IndexCataloguesTest extends TestCase
         $response = $this->json('GET', '/api/v1/catalogues');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.uuid', $publicCustom->uuid);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.uuid', $publicCustom->uuid);
+    }
+
+    public function test_index_includes_optional_stats_and_hashtags_by_default(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Public Custom', 'publicity' => 1, 'type' => 5]);
+        $this->attachCatalogueItem($catalogue, 321);
+        $this->attachHashtag($catalogue, '#study');
+
+        View::create([
+            'user_id' => null,
+            'user_ip' => '127.0.0.1',
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+        ]);
+
+        $response = $this->json('GET', '/api/v1/catalogues');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.items_count', 1)
+            ->assertJsonPath('items.0.engagement.views_count', 1)
+            ->assertJsonPath('items.0.hashtags.0.content', '#study');
+    }
+
+    public function test_index_can_skip_optional_stats_and_hashtags(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Public Custom', 'publicity' => 1, 'type' => 5]);
+        $this->attachCatalogueItem($catalogue, 321);
+        $this->attachHashtag($catalogue, '#study');
+
+        View::create([
+            'user_id' => null,
+            'user_ip' => '127.0.0.1',
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+        ]);
+
+        $response = $this->json('GET', '/api/v1/catalogues', [
+            'include_stats_counts' => false,
+            'include_hashtags' => false,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.items_count', 1)
+            ->assertJsonPath('items.0.engagement', null)
+            ->assertJsonPath('items.0.hashtags', []);
     }
 
     public function test_index_sorts_by_views(): void
@@ -103,7 +175,7 @@ class IndexCataloguesTest extends TestCase
         $response = $this->json('GET', '/api/v1/catalogues?sort_by=views&sort_dir=desc');
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.items.0.uuid', $highViews->uuid);
+            ->assertJsonPath('items.0.uuid', $highViews->uuid);
     }
 
     public function test_index_filters_by_search(): void
@@ -116,8 +188,8 @@ class IndexCataloguesTest extends TestCase
         $response = $this->json('GET', '/api/v1/catalogues?search=Tokyo');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.uuid', $match->uuid);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.uuid', $match->uuid);
     }
 
     public function test_index_returns_owned_private_and_known_catalogues_when_owner_scope_is_requested(): void
@@ -138,7 +210,7 @@ class IndexCataloguesTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data.items')
+            ->assertJsonCount(2, 'items')
             ->assertJsonFragment(['uuid' => $knownOwned->uuid])
             ->assertJsonFragment(['uuid' => $customOwned->uuid]);
     }
@@ -160,8 +232,8 @@ class IndexCataloguesTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.uuid', $publicCatalogue->uuid);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.uuid', $publicCatalogue->uuid);
     }
 
     public function test_index_admin_can_read_other_private_catalogues_with_owner_scope(): void
@@ -181,8 +253,8 @@ class IndexCataloguesTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.uuid', $privateCatalogue->uuid);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.uuid', $privateCatalogue->uuid);
     }
 
     public function test_index_filters_owned_catalogues_by_type(): void
@@ -202,8 +274,8 @@ class IndexCataloguesTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.items')
-            ->assertJsonPath('data.items.0.uuid', $articleList->uuid);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.uuid', $articleList->uuid);
     }
 
     public function test_index_rejects_invalid_owner_uid(): void
