@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MappedArticle } from '@/api/articles/details';
-import { articleUpdate } from '@/api/generated/article';
+import { articleUpdate } from '@/api/generated/article/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
 	ArticleForm,

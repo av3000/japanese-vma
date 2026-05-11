@@ -30,6 +30,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Node/npm for frontend workflows.
   - PHP/Composer for Laravel workflows.
   - Docker/docker-compose for full-stack local environment when needed.
+  - Docker Compose files are app-scoped in this repo:
+    - run backend compose commands from `processor-api/`
+    - run frontend compose commands from `client/`
+    - do not assume a repo-root compose file exists
 - **Editor quality-of-life plugins (recommended):**
   - ESLint + Prettier extensions for frontend lint/format feedback.
   - EditorConfig support.
@@ -39,6 +43,15 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.
   - Keep outputs and assumptions explicit in summaries.
+- **Generated API contract workflow:**
+  - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
+  - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
+  - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
+  - If Orval output looks wrong, inspect `processor-api/api.json` before adding frontend adapters or type coercion.
+  - Prefer fixing schema generation at the backend source even if the runtime endpoint itself appears correct.
+  - Verify the regenerated schema before trusting regenerated client types.
+  - Do not hand-edit generated API files to patch over contract problems.
+  - When a v1 endpoint is already documented and Orval already generates a usable client, prefer that generated client over adding a custom frontend wrapper. Only add a custom adapter when the endpoint is legacy, missing from the schema, or the generated client is actually unusable.
 
 ## 3) How to Work in This Repository
 
@@ -62,6 +75,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
+  - For backend verification, use the dedicated Docker test lane from `processor-api/`: `docker compose up -d --build db-test test-runner`, then `docker compose exec test-runner composer test -- ...`.
+  - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+  - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
+  - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
 - **Safety:**
   - Do not silently alter contracts or conventions.
   - Highlight behavior-impacting changes and rollout implications.
@@ -89,3 +106,17 @@ When touching files under either subtree, treat the scoped AGENTS file there as 
 - For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
 - Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.
 - Repo and scoped `AGENTS.md` constraints still take precedence over generic clean architecture advice.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub is the main issue tracker for this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default triage label vocabulary unless the repo's GitHub labels are changed later. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context repo layout by default; read root and scoped `AGENTS.md` files as the current source of project guidance until `CONTEXT.md` or ADR docs exist. See `docs/agents/domain.md`.

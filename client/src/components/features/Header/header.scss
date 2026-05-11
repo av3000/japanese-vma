@@ -58,3 +58,11 @@
 		color: var(--link-hover-color);
 	}
 }
+
+.header-auth-pending {
+	display: inline-block;
+	width: 8rem;
+	height: 1.5rem;
+	border-radius: 4px;
+	background-color: rgba(48, 48, 48, 0.12);
+}

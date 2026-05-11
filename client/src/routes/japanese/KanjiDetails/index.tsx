@@ -3,14 +3,23 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
+import Spinner from '@/assets/images/spinner.gif';
 import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, ObjectTemplates } from '@/shared/constants';
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { HttpMethod } from '@/shared/types';
-import Spinner from '@/assets/images/spinner.gif';
 
 const KanjiOpen: React.FC = () => {
 	const [kanji, setKanji] = useState({});
@@ -24,6 +33,7 @@ const KanjiOpen: React.FC = () => {
 	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { kanji_id } = useParams();
+	const entityId = Number(kanji_id);
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 
@@ -37,7 +47,7 @@ const KanjiOpen: React.FC = () => {
 	const getKanjiOpen = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/kanji/${kanji_id}`);
+			const res = await apiCall({ method: HttpMethod.GET, path: `${BASE_URL}/kanji/${kanji_id}` });
 
 			// Process the kanji data
 			// TODO: Should handle data materialization on backend and return necessary formatted data.
@@ -47,7 +57,6 @@ const KanjiOpen: React.FC = () => {
 				onyomi: res.onyomi.split('|').join(', '),
 				kunyomi: res.kunyomi.split('|').join(', '),
 			};
-
 			setKanji(processedKanji);
 			setWords(res.words.data || []);
 			setSentences(res.sentences.data || []);
@@ -62,20 +71,11 @@ const KanjiOpen: React.FC = () => {
 	const getUserKanjiLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
-				elementId: kanji_id,
+			const nextLists = await fetchCataloguesForItem(kanji_id, {
+				types: [ObjectTemplates.KNOWNKANJIS, ObjectTemplates.KANJIS],
 			});
-
-			const knownLists = res.lists.filter(
-				(list) => list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList,
-			);
-			setKanjiIsKnown(knownLists.length > 0);
-
-			setLists(
-				res.lists.filter(
-					(list) => list.type === ObjectTemplates.KNOWNKANJIS || list.type === ObjectTemplates.KANJIS,
-				),
-			);
+			setKanjiIsKnown(nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.contains_item));
+			setLists(nextLists);
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -91,45 +91,28 @@ const KanjiOpen: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (listId, action) => {
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
+		if (Number.isNaN(entityId)) return;
+
 		try {
-			setLoadingListIds((prev) => [...prev, listId]);
-
-			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
-			const url = `${BASE_URL}/api/user/list/${endpoint}`;
-
-			await apiCall(HttpMethod.POST, url, {
-				listId,
-				elementId: kanji_id,
+			setLoadingListIds((prev) => [...prev, list.id]);
+			await updateCatalogueForItem({
+				list,
+				elementId: entityId,
+				action,
 			});
 
-			setLists((prevLists) =>
-				prevLists.map((list) =>
-					list.id === listId
-						? {
-								...list,
-								elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
-							}
-						: list,
-				),
-			);
-
-			// Update kanjiIsKnown if the known kanji list is modified
-			if (action === LIST_ACTIONS.ADD_ITEM) {
-				if (lists.find((list) => list.id === listId && list.type === ObjectTemplates.KNOWNKANJIS)) {
-					setKanjiIsKnown(true);
-				}
-			} else {
-				const stillKnown = lists.some(
-					(list) =>
-						list.type === ObjectTemplates.KNOWNKANJIS && list.elementBelongsToList && list.id !== listId,
+			setLists((prevLists) => {
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
+				setKanjiIsKnown(
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNKANJIS && list.contains_item),
 				);
-				setKanjiIsKnown(stillKnown);
-			}
+				return nextLists;
+			});
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 
@@ -165,7 +148,7 @@ const KanjiOpen: React.FC = () => {
 					<p>JLPT: {kanji.jlpt}</p>
 					<p>Frequency: {kanji.frequency}</p>
 					{kanjiIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<Button size="md" onClick={toggleModal} variant="outline">
+					<Button size="sm" onClick={toggleModal} variant="ghost">
 						<Icon size="sm" name="bookmarkRegular" />
 					</Button>
 				</div>
@@ -186,6 +169,7 @@ const KanjiOpen: React.FC = () => {
 									<div className="row">
 										<div className="col-md-6">
 											<h3>{word.word}</h3>
+											<p>{word.furigana}</p>
 										</div>
 										<div className="col-md-4">{meanings}</div>
 										<div className="col-md-2">
@@ -256,7 +240,7 @@ const KanjiOpen: React.FC = () => {
 									<div className="col-md-8">
 										<h3>{article.title_jp}</h3>
 										<section className="mt-2 d-flex align-items-center flex-wrap">
-											{hashtags.map((tag) => (
+											{article.hashtags.map((tag) => (
 												<Chip
 													className="mr-1"
 													readonly
@@ -308,28 +292,21 @@ const KanjiOpen: React.FC = () => {
 						const isLoadingList = loadingListIds.includes(list.id);
 						return (
 							<div key={list.id} className="d-flex justify-content-between mb-2">
-								<Link to={`/list/${list.id}`}>{list.title}</Link>
+								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
-									variant={list.elementBelongsToList ? 'danger' : 'primary'}
+									variant={list.contains_item ? 'danger' : 'primary'}
 									size="sm"
 									isLoading={isLoadingList}
-									onClick={() =>
-										addToOrRemoveFromList(
-											list.id,
-											list.elementBelongsToList
-												? LIST_ACTIONS.REMOVE_ITEM
-												: LIST_ACTIONS.ADD_ITEM,
-										)
-									}
+									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 									disabled={isLoadingList}
 								>
-									{list.elementBelongsToList ? 'Remove' : 'Add'}
+									{list.contains_item ? 'Remove' : 'Add'}
 								</Button>
 							</div>
 						);
 					})}
 					<small>
-						<Link to="/newlist">Create a new list?</Link>
+						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
 					</small>
 				</Modal.Body>
 				<Modal.Footer>
@@ -348,12 +325,16 @@ const KanjiOpen: React.FC = () => {
 					Back
 				</Link>
 			</div>
-			{renderKanjiOpen()}
-			<hr />
-			{renderWordsList()}
-			{renderSentenceList()}
-			{renderArticleList()}
-			{renderAddModal()}
+			{!isLoading && (
+				<>
+					{renderKanjiOpen()}
+					<hr />
+					{renderWordsList()}
+					{renderSentenceList()}
+					{renderArticleList()}
+					{renderAddModal()}
+				</>
+			)}
 		</div>
 	);
 };

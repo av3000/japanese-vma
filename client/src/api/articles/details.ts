@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { articleShow } from '@/api/generated/article';
-import type { ArticleDetailResourceArticle } from '@/api/generated/model/articleDetailResourceArticle';
+import { articleShow } from '@/api/generated/article/article';
+import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import '@/shared/constants';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
-import { LikeResponse, toggleCommentLike } from '../likes/likes';
+import { LikeResponse, toggleInstanceLike } from '../likes/likes';
 
-export interface MappedArticle extends ArticleDetailResourceArticle {
+export interface MappedArticle extends ArticleDetailResource {
 	displayName: string;
 	uuid: string;
 	formattedDate: string;
 }
 
-export const mapArticleDetail = (data: ArticleDetailResourceArticle): MappedArticle => ({
+export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => ({
 	...data,
 	uuid: data.uid,
 	displayName: data.author?.name || 'Unknown Author',
@@ -22,8 +22,7 @@ export const useArticleQuery = (uuid: string | undefined) => {
 	return useQuery({
 		queryKey: ['article', uuid],
 		queryFn: async () => {
-			const detail = await articleShow(uuid as string);
-			return detail.article;
+			return articleShow(uuid as string);
 		},
 		enabled: !!uuid,
 		retry: false,
@@ -36,7 +35,7 @@ export const useLikeArticleMutation = (articleUuid: string) => {
 
 	return useMutation<LikeResponse, unknown, number>({
 		mutationFn: (articleId: number) =>
-			toggleCommentLike({
+			toggleInstanceLike({
 				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.ARTICLE],
 				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.ARTICLE],
 				instanceId: articleId,

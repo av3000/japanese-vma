@@ -2,17 +2,22 @@
 
 namespace Tests\Feature\Articles;
 
-use Tests\TestCase;
+use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Models\HashtagEntity;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Domain\Shared\Enums\{ArticleStatus, ObjectTemplateType, PublicityStatus, UserRole};
-use App\Infrastructure\Persistence\Models\{Article as PersistenceArticle, User, HashtagEntity};
+use Tests\TestCase;
 
 class UpdateArticleTest extends TestCase
 {
@@ -38,7 +43,7 @@ class UpdateArticleTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -84,11 +89,11 @@ class UpdateArticleTest extends TestCase
         Passport::actingAs($user, ['*'], 'api');
 
         $response = $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'title_jp' => 'Updated title'
+            'title_jp' => 'Updated title',
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.title_jp', 'Updated title');
+            ->assertJsonPath('title_jp', 'Updated title');
     }
 
     public function test_update_empty_payload_returns_validation_error(): void
@@ -107,13 +112,13 @@ class UpdateArticleTest extends TestCase
     public function test_update_non_owner_returns_forbidden(): void
     {
         $owner = $this->createUser();
-        $otherUser = $this->createUser(['email' => Str::uuid() . '@example.com']);
+        $otherUser = $this->createUser(['email' => Str::uuid().'@example.com']);
         $article = $this->createArticle($owner);
 
         Passport::actingAs($otherUser, ['*'], 'api');
 
         $response = $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'title_jp' => 'Attempted update'
+            'title_jp' => 'Attempted update',
         ]);
 
         $response->assertStatus(403);
@@ -125,8 +130,8 @@ class UpdateArticleTest extends TestCase
 
         Passport::actingAs($user, ['*'], 'api');
 
-        $response = $this->json('PUT', '/api/v1/articles/' . (string) Str::uuid(), [
-            'title_jp' => 'Updated title'
+        $response = $this->json('PUT', '/api/v1/articles/'.(string) Str::uuid(), [
+            'title_jp' => 'Updated title',
         ]);
 
         $response->assertStatus(404);
@@ -140,11 +145,11 @@ class UpdateArticleTest extends TestCase
         Passport::actingAs($user, ['*'], 'api');
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'hashtags' => ['#old']
+            'hashtags' => ['#old'],
         ])->assertStatus(200);
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'hashtags' => ['#new1', '#new2']
+            'hashtags' => ['#new1', '#new2'],
         ])->assertStatus(200);
 
         $hashtags = $this->getHashtagContents($article);
@@ -161,11 +166,11 @@ class UpdateArticleTest extends TestCase
         Passport::actingAs($user, ['*'], 'api');
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'hashtags' => ['#one', '#two']
+            'hashtags' => ['#one', '#two'],
         ])->assertStatus(200);
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'hashtags' => []
+            'hashtags' => [],
         ])->assertStatus(200);
 
         $this->assertSame([], $this->getHashtagContents($article));
@@ -179,7 +184,7 @@ class UpdateArticleTest extends TestCase
         Passport::actingAs($user, ['*'], 'api');
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'tags' => ['#legacy']
+            'tags' => ['#legacy'],
         ])->assertStatus(200);
 
         $this->assertSame(['#legacy'], $this->getHashtagContents($article));
@@ -194,7 +199,7 @@ class UpdateArticleTest extends TestCase
         Bus::fake();
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'content_jp' => 'Updated Japanese content text.'
+            'content_jp' => 'Updated Japanese content text.',
         ])->assertStatus(200);
 
         Bus::assertDispatched(ProcessArticleKanjisJob::class);

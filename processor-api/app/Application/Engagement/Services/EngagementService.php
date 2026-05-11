@@ -33,13 +33,7 @@ class EngagementService implements EngagementServiceInterface
             objectType: $objectType
         ));
 
-        $isLiked = false;
-        if ($isLoggedUser) {
-            $isLiked = $this->likeRepository->userLikedByFilter(new LikeFilterDTO(
-                entityId: $entityId,
-                objectType: $objectType
-            ));
-        }
+        $isLiked = $this->isEntityLikedByViewer($entityId, $objectType, $isLoggedUser);
 
         $viewsCount = $this->viewRepository->countByFilter(new ViewFilterDTO(
             entityId: $entityId,
@@ -57,6 +51,18 @@ class EngagementService implements EngagementServiceInterface
             downloadsCount: $downloadsCount,
             isLikedByViewer: $isLiked
         );
+    }
+
+    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, bool $isLoggedUser): bool
+    {
+        if (!$isLoggedUser) {
+            return false;
+        }
+
+        return $this->likeRepository->userLikedByFilter(new LikeFilterDTO(
+            entityId: $entityId,
+            objectType: $objectType
+        ));
     }
 
     public function enhanceArticlesWithStatsCounts(Articles $articles): array

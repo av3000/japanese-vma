@@ -2,6 +2,7 @@ import React, { FormEvent } from 'react';
 import { Col, Form, Row } from 'react-bootstrap';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import styles from './SearchBar.module.scss';
 
 interface SearchQuery {
 	keyword: string;
@@ -44,9 +45,9 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 	};
 
 	return (
-		<Form onSubmit={handleSubmit} className="u-container">
+		<Form onSubmit={handleSubmit} className={styles.searchWrapper}>
 			<Row>
-				<Col lg={4} md={6} sm={12} className="mt-3">
+				<Col lg={4} md={6} sm={12} classNames="mt-3">
 					<Form.Control
 						type="text"
 						placeholder="Ex.: title, text, #tag"
@@ -54,11 +55,18 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 						name="keyword"
 						value={keyword}
 						onChange={handleKeywordChange}
+						className={styles.searchInputHeight}
 					/>
 				</Col>
-				<Col lg={4} md={4} sm={12} className="mt-3">
+				<Col lg={4} md={4} sm={12} classNames="mt-3">
 					{searchType === 'posts' && (
-						<Form.Control as="select" name="filterType" value={filterType} onChange={handleFilterChange}>
+						<Form.Control
+							as="select"
+							name="filterType"
+							value={filterType}
+							onChange={handleFilterChange}
+							className={styles.searchInputHeight}
+						>
 							<option value="20">All</option>
 							<option value="1">Content-related</option>
 							<option value="2">Off-topic</option>
@@ -70,7 +78,13 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 						</Form.Control>
 					)}
 					{searchType === 'articles' && (
-						<Form.Control as="select" name="filterType" value={filterType} onChange={handleFilterChange}>
+						<Form.Control
+							as="select"
+							name="filterType"
+							value={filterType}
+							onChange={handleFilterChange}
+							className={styles.searchInputHeight}
+						>
 							<option value="20">All</option>
 							<option value="1">N1</option>
 							<option value="2">N2</option>
@@ -81,7 +95,13 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 						</Form.Control>
 					)}
 					{searchType === 'lists' && (
-						<Form.Control as="select" name="filterType" value={filterType} onChange={handleFilterChange}>
+						<Form.Control
+							as="select"
+							name="filterType"
+							value={filterType}
+							onChange={handleFilterChange}
+							className={styles.searchInputHeight}
+						>
 							<option value="20">All</option>
 							<option value="5">Radicals</option>
 							<option value="6">Kanjis</option>
@@ -91,14 +111,20 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 						</Form.Control>
 					)}
 				</Col>
-				<Col lg={2} md={2} sm={4} className="mt-3">
-					<Form.Control as="select" name="sortByWhat" value={sortByWhat} onChange={handleSortChange}>
+				<Col lg={2} md={2} sm={4} classNames="mt-3">
+					<Form.Control
+						as="select"
+						name="sortByWhat"
+						value={sortByWhat}
+						onChange={handleSortChange}
+						className={styles.searchInputHeight}
+					>
 						<option value="new">Newest</option>
 						<option value="pop">Popular</option>
 					</Form.Control>
 				</Col>
-				<Col lg={2} className="mt-3">
-					<Button type="submit" variant="secondary-outline" aria-hidden="true">
+				<Col lg={2} md={3} sm={4} classNames="mt-3">
+					<Button type="submit" variant="secondary-outline" aria-hidden="true" isFullWidth>
 						<Icon name="searchSolid" size="sm" />
 						<span className="ml-2">Search</span>
 					</Button>

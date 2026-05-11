@@ -96,6 +96,8 @@ docker compose exec laravel-app php artisan config:clear
 docker compose exec laravel-app php artisan cache:clear
 ```
 
+`processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` MySQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
+
 PDF generation uses Laravel Snappy. If PDF features fail locally, verify the wkhtmltopdf binary paths in `.env` and `config/snappy.php`.
 
 Useful local URLs:
@@ -109,34 +111,61 @@ Useful local URLs:
 
 The local Docker Compose setup includes:
 
--   `laravel-app` for PHP and Artisan/Composer commands
+-   `laravel-app` for runtime PHP and Artisan/Composer commands against the dev database
 -   `webserver` for the HTTP entrypoint on port `8080`
--   `db` for MySQL
+-   `db` for the main local MySQL development database
+-   `db-test` for the isolated MySQL test database
 -   `redis` for local Redis-backed behavior
 -   `reverb` for websocket/realtime support
 -   `queue` for local queue worker execution
+-   `test-runner` for backend Composer/PHPUnit verification commands in `APP_ENV=testing`
 -   `redisinsight` for Redis inspection
 
 ## Recommended Commands
 
+### Runtime and maintenance
+
 ```bash
 cd processor-api
 docker compose up -d --build
-composer format
-composer stan
-composer test
-composer quality
-composer quality:ci
-php artisan route:list
-php artisan horizon
+docker compose exec laravel-app composer format
+docker compose exec laravel-app composer format:check
+docker compose exec laravel-app composer stan
+docker compose exec laravel-app php artisan route:list
+docker compose exec laravel-app php artisan horizon
 docker compose logs -f queue
 docker compose logs -f webserver
 ```
 
-Use `composer format` during local work to run Pint against dirty PHP files when Git metadata is available to the PHP runtime.
+### Backend test lane
 
-Use `composer test` for the PHPUnit suite, and `composer quality` before handing off a backend change.
-In CI or review gates, prefer `composer quality:ci` so Pint checks formatting without modifying files.
+Bring up the dedicated MySQL test lane once per session:
+
+```bash
+cd processor-api
+docker compose up -d --build db-test test-runner
+```
+
+Optional reset when you want to recreate the test schema explicitly before a run:
+
+```bash
+docker compose exec test-runner composer test:prepare
+```
+
+Canonical backend verification commands:
+
+```bash
+docker compose exec test-runner composer test -- tests/Feature/OperationalRoutesTest.php
+docker compose exec test-runner composer test -- tests/Feature/Comments/GetListCommentsTest.php
+docker compose exec test-runner composer test -- --filter=test_guest_can_fetch_list_comments_by_catalogue_uuid
+docker compose exec test-runner composer test
+```
+
+Use `docker compose exec test-runner composer test -- ...` as the default backend verification interface. Do not run DB-backed backend tests through host PHP, `laravel-app`, or SQLite fallbacks.
+
+Use `docker compose exec laravel-app composer format` during local work to run Pint against dirty PHP files when Git metadata is available to the PHP runtime.
+
+Use `docker compose exec test-runner composer test` for the PHPUnit suite, then run the relevant Pint and Larastan commands through `laravel-app` before handing off a backend change.
 
 ### Larastan - static analysis
 
@@ -196,5 +225,5 @@ When changing backend infrastructure, queue behavior, or environment-sensitive c
 ## Other notes
 
 -   Preserve legacy behavior intentionally; do not silently rewrite contracts.
--   Run Composer and Artisan inside the `laravel-app` container instead of a local Windows PHP install.
+-   Run runtime Composer and Artisan commands inside `laravel-app`, and run backend tests inside `test-runner` instead of a local Windows PHP install.
 -   Reuse the existing service, repository, DTO, and resource patterns in the touched module before introducing new abstractions.

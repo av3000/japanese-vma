@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { articleStore } from '@/api/generated/article';
+import { articleStore } from '@/api/generated/article/article';
 import type { UuidCreatedResource } from '@/api/generated/model';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';

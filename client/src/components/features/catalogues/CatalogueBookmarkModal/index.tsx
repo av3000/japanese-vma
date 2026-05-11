@@ -1,20 +1,15 @@
 import { Link } from 'react-router-dom';
+import type { CatalogueForItem, CatalogueForItemAction } from '@/api/catalogues/cataloguesForItem';
 import { Button } from '@/components/shared/Button';
 import { DialogModal, type DialogModalSize } from '@/components/shared/DialogModal';
 import type { ModalController } from '@/hooks/useModal';
-import { LIST_ACTIONS } from '@/shared/constants';
-
-interface BookmarkListItem {
-	id: number;
-	title: string;
-	elementBelongsToList?: boolean;
-}
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
 interface CatalogueBookmarkModalProps {
 	controller: ModalController;
-	lists: BookmarkListItem[];
+	lists: CatalogueForItem[];
 	loadingListIds: number[];
-	onListAction: (listId: number, action: string) => void;
+	onListAction: (list: CatalogueForItem, action: CatalogueForItemAction) => void;
 	title?: string;
 	emptyText?: string;
 	createListHref?: string;
@@ -29,7 +24,7 @@ export const CatalogueBookmarkModal = ({
 	onListAction,
 	title = 'Save to List',
 	emptyText = 'You have no lists created.',
-	createListHref = '/newlist',
+	createListHref = CATALOGUE_ROUTES.create,
 	ariaLabel = 'Save to List',
 	size = 'md',
 }: CatalogueBookmarkModalProps) => {
@@ -50,17 +45,17 @@ export const CatalogueBookmarkModal = ({
 			<DialogModal.Body>
 				{lists.length === 0 && <p className="text-muted">{emptyText}</p>}
 				{lists.map((list) => {
-					const isActive = Boolean(list.elementBelongsToList);
-					const action = isActive ? LIST_ACTIONS.REMOVE_ITEM : LIST_ACTIONS.ADD_ITEM;
+					const isActive = list.contains_item;
+					const action: CatalogueForItemAction = isActive ? 'remove' : 'add';
 					const isLoading = loadingListIds.includes(list.id);
 
 					return (
 						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
-							<Link to={`/list/${list.id}`}>{list.title}</Link>
+							<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 							<Button
 								variant={isActive ? 'danger' : 'primary'}
 								size="sm"
-								onClick={() => onListAction(list.id, action)}
+								onClick={() => onListAction(list, action)}
 								disabled={isLoading}
 							>
 								{isLoading ? (

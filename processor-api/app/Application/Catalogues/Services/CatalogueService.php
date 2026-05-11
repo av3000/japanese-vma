@@ -2,9 +2,15 @@
 
 namespace App\Application\Catalogues\Services;
 
+use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
+use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
+use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
@@ -38,7 +44,14 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly IncrementViewAction $incrementViewAction,
         private readonly CatalogueItemService $catalogueItemService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+        private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
+        private readonly HashtagRepositoryInterface $hashtagRepository,
+        private readonly ViewRepositoryInterface $viewRepository,
+        private readonly LikeRepositoryInterface $likeRepository,
+        private readonly DownloadRepositoryInterface $downloadRepository,
+        private readonly CommentRepositoryInterface $commentRepository,
+    ) {
+    }
 
     public function createCatalogue(CatalogueCreateDTO $dto, User $user): Result
     {
@@ -103,6 +116,32 @@ class CatalogueService implements CatalogueServiceInterface
         );
 
         return $this->catalogueRepository->findByCriteria($criteria);
+    }
+
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array
+    {
+        $catalogues = $this->catalogueRepository->findOwnedForMembership(
+            $user->uuid,
+            SearchTerm::fromInputOrNull($search),
+            $types,
+        );
+
+        $catalogueIds = array_map(
+            static fn (Catalogue $catalogue): int => $catalogue->getIdValue(),
+            $catalogues,
+        );
+
+        $containedCatalogueIds = $this->catalogueItemRepository->findCatalogueIdsContainingItem($catalogueIds, $itemId);
+
+        return [
+            'catalogues' => $catalogues,
+            'contained_catalogue_ids' => $containedCatalogueIds,
+        ];
+    }
+
+    public function getIdByUuid(EntityId $uuid): ?int
+    {
+        return $this->catalogueRepository->getIdByUuid($uuid);
     }
 
     public function getCatalogue(EntityId $uuid, ?User $user = null): Result
@@ -177,12 +216,129 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
+    public function addItemToCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    {
+        try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+                return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+            }
+
+            if (! $this->catalogueItemService->isValidItemForCatalogue($catalogue, $itemId)) {
+                return Result::failure(CatalogueErrors::invalidItemForType($uuid->value(), $itemId));
+            }
+
+            if ($this->catalogueItemRepository->containsItem($catalogue->getIdValue(), $itemId)) {
+                return Result::failure(CatalogueErrors::duplicateItem($uuid->value(), $itemId));
+            }
+
+            DB::transaction(function () use ($catalogue, $itemId) {
+                $this->catalogueItemService->addItem($catalogue, $itemId);
+            });
+
+            return Result::success([
+                'catalogue_uuid' => $catalogue->getUid()->value(),
+                'item_id' => $itemId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Catalogue item add failed', [
+                'catalogue_uuid' => $uuid->value(),
+                'item_id' => $itemId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(CatalogueErrors::addItemFailed());
+        }
+    }
+
+    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    {
+        try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+                return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+            }
+
+            if (! $this->catalogueItemRepository->containsItem($catalogue->getIdValue(), $itemId)) {
+                return Result::failure(CatalogueErrors::itemNotFound($uuid->value(), $itemId));
+            }
+
+            $wasRemoved = DB::transaction(function () use ($catalogue, $itemId) {
+                return $this->catalogueItemService->removeItem($catalogue, $itemId);
+            });
+
+            if (! $wasRemoved) {
+                return Result::failure(CatalogueErrors::removeItemFailed());
+            }
+
+            return Result::success();
+        } catch (\Exception $e) {
+            Log::error('Catalogue item removal failed', [
+                'catalogue_uuid' => $uuid->value(),
+                'item_id' => $itemId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(CatalogueErrors::removeItemFailed());
+        }
+    }
+
+    public function deleteCatalogue(EntityId $uuid, User $user): Result
+    {
+        try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            if (! $this->cataloguePolicy->canDelete($user, $catalogue)) {
+                return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+            }
+
+            DB::transaction(function () use ($catalogue) {
+                $catalogueId = $catalogue->getIdValue();
+                $templateId = ObjectTemplateType::LIST->getLegacyId();
+
+                $this->catalogueItemRepository->deleteByCatalogueId($catalogueId);
+                $this->viewRepository->deleteByEntity($catalogueId, $templateId);
+                $this->downloadRepository->deleteByEntity($catalogueId, $templateId);
+                $this->likeRepository->deleteByEntity($catalogueId, $templateId);
+                $this->commentRepository->deleteByEntity($catalogueId, $templateId);
+                $this->hashtagRepository->deleteByEntity($catalogueId, $templateId);
+                $this->catalogueRepository->deleteById($catalogueId);
+            });
+
+            return Result::success();
+        } catch (\Exception $e) {
+            Log::error('Catalogue deletion failed', [
+                'catalogue_uuid' => $uuid->value(),
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(CatalogueErrors::deletionFailed());
+        }
+    }
+
     private function trackView(int $id, ObjectTemplateType $objectTemplateType, Viewer $viewer): void
     {
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            Log::error("Failed to increment view for catalogue {$id}: " . $e->getMessage());
+            Log::error("Failed to increment view for catalogue {$id}: ".$e->getMessage());
         }
     }
 

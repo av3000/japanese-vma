@@ -1,12 +1,13 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { CatalogueResource } from '@/api/generated/model';
+import type { Catalogue } from '@/api/catalogues/catalogues';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
-const DashboardListItem: React.FC<CatalogueResource> = ({
-	id,
+const DashboardListItem: React.FC<Catalogue> = ({
+	uuid,
 	hashtags,
 	title,
 	engagement,
@@ -39,7 +40,7 @@ const DashboardListItem: React.FC<CatalogueResource> = ({
 					<span>{engagement?.comments_count} Comments</span>
 					<span>{engagement?.views_count} Views</span>
 					<span>{engagement?.likes_count} Likes</span>
-					<Button to={`/list/${id}`} variant="ghost" size="sm" type="button">
+					<Button to={CATALOGUE_ROUTES.detail(uuid)} variant="ghost" size="sm" type="button">
 						<Icon name="externalLink" size="sm" />
 					</Button>
 				</ListGroup.Item>

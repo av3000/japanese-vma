@@ -56,8 +56,7 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository
-    ) {
-    }
+    ) {}
 
     /**
      * Create article with hashtags atomically.
@@ -115,7 +114,7 @@ class ArticleService implements ArticleServiceInterface
         }
     }
 
-    public function getArticleIdByUuid(EntityId $uuid): int
+    public function getArticleIdByUuid(EntityId $uuid): ?int
     {
         return $this->articleRepository->getIdByUuid($uuid);
     }

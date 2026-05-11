@@ -37,6 +37,8 @@ Current state matters here:
 
 ### Native Node workflow
 
+Use Node 24 for local frontend work. The repo-level version hint lives in `client/.nvmrc`.
+
 1. Create `client/.env` from `client/.env.example`.
 2. Install dependencies.
 3. Start the Vite dev server.
@@ -105,7 +107,9 @@ Frontend verification and deployment are defined in the repository root workflow
 
 That workflow currently:
 
+- uses Node 24 from `client/.nvmrc`
 - installs dependencies with `npm ci`
+- regenerates the Orval client from tracked `processor-api/api.json`
 - runs `npm run typecheck`
 - runs a production build with the required `VITE_*` variables
 - smoke-tests the production image
