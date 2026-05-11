@@ -9,10 +9,10 @@
 }
 
 .wrapper {
-	--skeleton-radius: var(--border-radius-md, 8px);
-	--skeleton-gap-xs: var(--spacing-2xs, 4px);
-	--skeleton-gap-sm: var(--spacing-xs, 8px);
-	--skeleton-gap-md: var(--spacing-md, 16px);
+	--skeleton-radius: var(--border-radius-md);
+	--skeleton-gap-xs: var(--spacing-2xs);
+	--skeleton-gap-sm: var(--spacing-xs);
+	--skeleton-gap-md: var(--spacing-md);
 
 	display: flex;
 	flex-direction: column;
@@ -26,9 +26,9 @@
 .block {
 	background: linear-gradient(
 		90deg,
-		var(--color-neutral-200, #e9ecef) 0%,
-		var(--color-neutral-100, #f8f9fa) 50%,
-		var(--color-neutral-200, #e9ecef) 100%
+		var(--color-neutral-200) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-neutral-200) 100%
 	);
 	background-size: 200% 100%;
 	animation: skeletonShimmer 1.6s ease-in-out infinite;
@@ -53,15 +53,15 @@
 
 .title {
 	height: 1.5rem;
-	margin: var(--spacing-3xs, 2px) 0;
+	margin: var(--spacing-3xs) 0;
 	width: 82%;
 }
 
 .chipList {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--spacing-3xs, 2px);
-	margin-top: var(--spacing-3xs, 2px);
+	gap: var(--spacing-3xs);
+	margin-top: var(--spacing-3xs);
 }
 
 .pill {
