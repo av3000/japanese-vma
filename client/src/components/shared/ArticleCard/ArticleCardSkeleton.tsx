@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import styles from './ArticleCard.module.scss';
 import skeletonStyles from './ArticleCardSkeleton.module.scss';
 
 const ARTICLE_LEVEL_PLACEHOLDERS = ['n1', 'n2', 'n3', 'n4', 'n5', 'na'];
@@ -8,29 +7,52 @@ const ARTICLE_META_PLACEHOLDERS = ['views', 'comments', 'likes'];
 export const ArticleCardSkeleton = () => (
 	<article
 		aria-hidden="true"
-		className={classNames(styles.wrapper, skeletonStyles.wrapper)}
+		className={skeletonStyles.wrapper}
 		data-testid="article-card-skeleton"
 	>
-		<div className={classNames(styles.imgWrapper, skeletonStyles.block, skeletonStyles.image)} />
+		<div
+			className={classNames(skeletonStyles.block, skeletonStyles.image)}
+			data-testid="article-card-skeleton-image"
+		/>
 
-		<span className={classNames(styles.date, skeletonStyles.block, skeletonStyles.line, skeletonStyles.date)} />
-		<span className={classNames(styles.title, skeletonStyles.block, skeletonStyles.line, skeletonStyles.title)} />
+		<span
+			className={classNames(skeletonStyles.block, skeletonStyles.line, skeletonStyles.date)}
+			data-testid="article-card-skeleton-date"
+		/>
+		<span
+			className={classNames(skeletonStyles.block, skeletonStyles.line, skeletonStyles.title)}
+			data-testid="article-card-skeleton-title"
+		/>
 
-		<div className={styles.chipList}>
-			<span className={classNames(skeletonStyles.block, skeletonStyles.pill)} />
-			<span className={classNames(skeletonStyles.block, skeletonStyles.pill)} />
+		<div className={skeletonStyles.chipList}>
+			<span
+				className={classNames(skeletonStyles.block, skeletonStyles.pill)}
+				data-testid="article-card-skeleton-pill"
+			/>
+			<span
+				className={classNames(skeletonStyles.block, skeletonStyles.pill)}
+				data-testid="article-card-skeleton-pill"
+			/>
 		</div>
 
-		<div className={styles.childrenWrapper}>
-			<div className="d-flex justify-content-between align-items-center">
+		<div className={skeletonStyles.children}>
+			<div className={skeletonStyles.levelRow}>
 				{ARTICLE_LEVEL_PLACEHOLDERS.map((level) => (
-					<span key={level} className={classNames(skeletonStyles.block, skeletonStyles.level)} />
+					<span
+						key={level}
+						className={classNames(skeletonStyles.block, skeletonStyles.level)}
+						data-testid="article-card-skeleton-level"
+					/>
 				))}
 			</div>
 
-			<div className={styles.metaInfo}>
+			<div className={skeletonStyles.metaRow}>
 				{ARTICLE_META_PLACEHOLDERS.map((item) => (
-					<span key={item} className={classNames(skeletonStyles.block, skeletonStyles.line, skeletonStyles.metaItem)} />
+					<span
+						key={item}
+						className={classNames(skeletonStyles.block, skeletonStyles.line, skeletonStyles.metaItem)}
+						data-testid="article-card-skeleton-stat"
+					/>
 				))}
 			</div>
 		</div>

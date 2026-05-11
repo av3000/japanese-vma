@@ -1,7 +1,7 @@
 import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import type { HashtagResource } from '@/api/generated/model';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
@@ -83,6 +83,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 			)
 			.map((article) => article.uuid);
 	}, [articles]);
+	// TODO: should rather use startTransition to deprioritize displaying the articles while filtering
 	const deferredTrackedUuids = useDeferredValue(trackedArticleUuids);
 
 	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
@@ -95,7 +96,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 		pendingArticlesQuery.error instanceof Error
 			? pendingArticlesQuery.error.message
 			: 'Failed to load pending articles.';
-	const pendingArticles = shouldFetchPendingArticles ? pendingArticlesQuery.data?.articlesPending ?? [] : [];
+	const pendingArticles = shouldFetchPendingArticles ? (pendingArticlesQuery.data?.articlesPending ?? []) : [];
 
 	return (
 		<>
@@ -123,7 +124,11 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 										<div className="col-lg-6">
 											<h4>
 												<Link
-													to={article.uuid ? `/articles/${article.uuid}` : `/article/${article.id}`}
+													to={
+														article.uuid
+															? `/articles/${article.uuid}`
+															: `/article/${article.id}`
+													}
 												>
 													{article.title_jp}
 												</Link>

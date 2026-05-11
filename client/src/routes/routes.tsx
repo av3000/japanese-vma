@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import PrivateRoute from '@/helpers/PrivateRoute';
+import ArticlesListSkeleton from '@/routes/ArticlesList/ArticlesListSkeleton/ArticlesListSkeleton';
 import CataloguesListSkeleton from '@/routes/CataloguesList/CatalogueListSkeleton/CataloguesListSkeleton';
 import HomePage from '@/routes/Homepage';
 
@@ -73,7 +74,7 @@ const AppRoutes: React.FC = () => {
 			<Route
 				path="/articles"
 				element={
-					<SuspenseWrapper>
+					<SuspenseWrapper fallback={<ArticlesListSkeleton />}>
 						<ArticlesListPage />
 					</SuspenseWrapper>
 				}
