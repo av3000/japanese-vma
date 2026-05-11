@@ -1,14 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\v1\Admin\Controllers\UserController as AdminUserController;
+use App\Http\v1\Admin\Controllers\UserRoleController as AdminUserRoleController;
 use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
-use App\Http\v1\Users\Controllers\{UserController};
-use App\Http\v1\Admin\Controllers\{UserRoleController as AdminUserRoleController, UserController as AdminUserController};
-use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 use App\Http\v1\Engagement\Likes\Controllers\LikeController;
+use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
+use App\Http\v1\Users\Controllers\{UserController};
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,8 +30,7 @@ Route::prefix('v1')->group(function () {
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
-    // TODO: Comments - Public generic route to read all comments entity agnostic
-    Route::get('comments', [CommentController::class, 'getCommentsForEntity']);
+    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments']);
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -41,7 +41,6 @@ Route::prefix('v1')->group(function () {
 
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
-    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES
@@ -68,13 +67,17 @@ Route::prefix('v1')->group(function () {
 
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
+        Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
+        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
+        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
         Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
+        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
 
         // Comments - Authenticated Write
-        Route::post('articles/{uuid}/comments', [CommentController::class, 'store']);
+        Route::post('comments', [CommentController::class, 'store']);
 
+        // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
-
 
         // ============================================
         // ADMIN-ONLY ROUTES
@@ -98,4 +101,6 @@ Route::prefix('v1')->group(function () {
             Route::get('articles/pending', [ArticleController::class, 'pending']); // TODO: implement
         });
     });
+
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
 });

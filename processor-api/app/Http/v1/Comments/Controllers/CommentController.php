@@ -2,20 +2,24 @@
 
 namespace App\Http\v1\Comments\Controllers;
 
-use App\Application\Comments\Services\CommentService;
-use App\Http\v1\Comments\Resources\CommentResource;
 use App\Application\Articles\Services\ArticleServiceInterface;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-use App\Http\v1\Concerns\ResolvesOptionalApiUser;
-use App\Http\v1\Comments\Requests\IndexCommentRequest;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-
+use App\Application\Catalogues\Services\CatalogueServiceInterface;
+use App\Application\Comments\Services\CommentService;
+use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
-use App\Shared\Http\TypedResults;
-use Illuminate\Http\Request;
+use App\Http\v1\Comments\Requests\IndexCommentRequest;
+use App\Http\v1\Comments\Requests\StoreCommentRequest;
+use App\Http\v1\Comments\Resources\CommentListResource;
+use App\Http\v1\Comments\Resources\CommentResource;
+use App\Http\v1\Concerns\ResolvesOptionalApiUser;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CommentController extends Controller
 {
@@ -25,21 +29,50 @@ class CommentController extends Controller
         // TODO: use interface for commentService
         private CommentService $commentService,
         private ArticleServiceInterface $articleService,
+        private CatalogueServiceInterface $catalogueService,
         // private EngagementServiceInterface $engagementService
-    ) {}
+    ) {
+    }
 
-    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse
+    /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResource
     {
-        $entityUuid = new EntityId($uuid);
+        $entityUuid = EntityId::from($uuid);
         $entityId = $this->articleService->getArticleIdByUuid($entityUuid);
+
+        if ($entityId === null) {
+            throw new NotFoundHttpException('Article not found');
+        }
+
         return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::ARTICLE);
+    }
+
+    /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResource
+    {
+        $entityUuid = EntityId::from($uuid);
+
+        $entityId = $this->catalogueService->getIdByUuid($entityUuid);
+
+        if ($entityId === null) {
+            throw new NotFoundHttpException('Catalogue not found');
+        }
+
+        return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::LIST);
     }
 
     private function getCommentsForEntity(
         IndexCommentRequest $request,
+        // TODO: after all legacy instances that reference 'id' will be migrated, use UUID.
         int $entityId,
         ObjectTemplateType $entityType
-    ): JsonResponse {
+    ): JsonResource {
         // TODO: Implement include_replies
         $listDTO = CommentListDTO::fromRequest($request->validated());
 
@@ -49,7 +82,6 @@ class CommentController extends Controller
             entityId: $entityId,
             viewerUserId: $this->resolveOptionalApiUserId($request)
         );
-
 
         $resources = [];
         foreach ($paginatedComments->getItems() as $comment) {
@@ -70,11 +102,23 @@ class CommentController extends Controller
             ],
         ];
 
-        return TypedResults::ok($data);
+        return new CommentListResource($data);
     }
-    public function store(Request $request)
+
+    /**
+     * @response CommentResource
+     */
+    #[Response(201, type: 'CommentResource')]
+    public function store(StoreCommentRequest $request): JsonResponse
     {
-        //
+        $comment = $this->commentService->createCommentForEntity(
+            dto: CommentCreateDTO::fromRequest($request->validated()),
+            author: auth('api')->user(),
+        );
+
+        return (new CommentResource($comment))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show($id)

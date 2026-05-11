@@ -8,7 +8,6 @@ const currentYear = new Date().getFullYear();
 
 const Footer: React.FC = () => (
 	<footer className="footer">
-		<hr />
 		<div className="u-container">
 			<div className="navbar-header">
 				<Link to="/" className="navbar-brand">

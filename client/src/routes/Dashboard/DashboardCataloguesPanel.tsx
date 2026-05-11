@@ -1,7 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchCatalogues } from '@/api/catalogues/catalogues';
-import type { Catalogue } from '@/api/catalogues/catalogues';
+import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
 import { Button } from '@/components/shared/Button';
@@ -25,67 +23,47 @@ interface DashboardCataloguesPanelProps {
 // TODO: these not supposed to be magical numbers, use some const typed values
 const LIST_FILTER_TYPES = new Set([5, 6, 7, 8, 9]);
 
+export const mapDashboardSearchFiltersToCatalogueFilters = (filters: SearchFilters): DashboardCatalogueFilters => {
+	const keyword = filters.keyword.trim();
+	const parsedType = Number(filters.filterType);
+
+	return {
+		search: keyword || undefined,
+		sort_by: filters.sortByWhat === 'pop' ? 'views' : 'created_at',
+		sort_dir: 'desc',
+		type: LIST_FILTER_TYPES.has(parsedType) ? parsedType : undefined,
+	};
+};
+
 const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isAuthenticated, currentUser }) => {
 	const [filters, setFilters] = useState<DashboardCatalogueFilters>({
 		sort_by: 'created_at',
 		sort_dir: 'desc',
 	});
 
-	const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
-		queryKey: [
-			'catalogues',
-			{
-				scope: 'dashboard',
-				owner_uid: currentUser?.uuid ?? null,
-				search: filters.search ?? null,
-				sort_by: filters.sort_by,
-				sort_dir: filters.sort_dir,
-				type: filters.type ?? null,
-				public_only: false,
-				custom_only: false,
-			},
-		],
-		queryFn: ({ pageParam }) => {
-			if (!currentUser?.uuid) {
-				throw new Error('Missing current user UUID');
-			}
+	const queryFilters = useMemo(
+		() => ({
+			owner_uid: currentUser?.uuid,
+			search: filters.search,
+			sort_by: filters.sort_by,
+			sort_dir: filters.sort_dir,
+			type: filters.type,
+			public_only: false,
+			custom_only: false,
+			include_stats_counts: true,
+			include_hashtags: true,
+		}),
+		[currentUser?.uuid, filters],
+	);
 
-			return fetchCatalogues(
-				{
-					owner_uid: currentUser.uuid,
-					search: filters.search,
-					sort_by: filters.sort_by,
-					sort_dir: filters.sort_dir,
-					type: filters.type,
-					public_only: false,
-					custom_only: false,
-					include_stats_counts: true,
-					include_hashtags: true,
-				},
-				pageParam,
-			);
-		},
-		initialPageParam: 1,
-		getNextPageParam: (lastPage) => {
-			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
-		},
-		enabled: isAuthenticated && !!currentUser?.uuid,
-	});
-
-	const allCatalogues = useMemo<Catalogue[]>(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
-	const totalCount = data?.pages[0]?.pagination.total ?? 0;
+	const { catalogues, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
+		useInfiniteCatalogues({
+			filters: queryFilters,
+			enabled: isAuthenticated && !!currentUser?.uuid,
+		});
 
 	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
-		const keyword = newFilters.keyword.trim();
-		const mappedSort = newFilters.sortByWhat === 'pop' ? 'views' : 'created_at';
-		const parsedType = Number(newFilters.filterType);
-
-		setFilters({
-			search: keyword || undefined,
-			sort_by: mappedSort,
-			sort_dir: 'desc',
-			type: LIST_FILTER_TYPES.has(parsedType) ? parsedType : undefined,
-		});
+		setFilters(mapDashboardSearchFiltersToCatalogueFilters(newFilters));
 	}, []);
 
 	const errorMessage = error instanceof Error ? error.message : 'Failed to load lists.';
@@ -102,15 +80,15 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isA
 				</div>
 				<div className="col-lg-12 col-md-10 mx-auto">
 					<div className="mb-3 text-muted">
-						Showing {allCatalogues.length} of {totalCount}
+						Showing {catalogues.length} of {total}
 					</div>
-					{status === 'pending' ? (
+					{isPending ? (
 						<LoadingState altText="Loading lists..." />
-					) : status === 'error' ? (
+					) : isError ? (
 						<div className="alert alert-danger">{errorMessage}</div>
-					) : allCatalogues.length ? (
+					) : catalogues.length ? (
 						<>
-							{allCatalogues.map((catalogue) => (
+							{catalogues.map((catalogue) => (
 								<DashboardListItem key={catalogue.id} {...catalogue} />
 							))}
 							<div className="row justify-content-center mt-4 mb-2">

@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import PageLoader from '@/components/features/PageLoader';
 import PrivateRoute from '@/helpers/PrivateRoute';
+import ArticlesListSkeleton from '@/routes/ArticlesList/ArticlesListSkeleton/ArticlesListSkeleton';
+import CataloguesListSkeleton from '@/routes/CataloguesList/CatalogueListSkeleton/CataloguesListSkeleton';
+import HomePage from '@/routes/Homepage';
 
 // Lazy-loaded page components
-const HomePage = lazy(() => import('@/routes/Homepage'));
 const PageNotFound = lazy(() => import('@/routes/NotFound'));
 
 // Auth routes
@@ -17,11 +18,12 @@ const ArticleDetailsPage = lazy(() => import('@/routes/ArticleDetails'));
 const ArticleCreatePage = lazy(() => import('@/routes/ArticleCreate'));
 const ArticleEditPage = lazy(() => import('@/routes/ArticleEdit'));
 
-// List routes
-const ListsPage = lazy(() => import('@/routes/SavedLists'));
-const ListDetailsPage = lazy(() => import('@/routes/SavedListDetails'));
-const ListFormPage = lazy(() => import('@/routes/SavedListForm'));
-const ListEditPage = lazy(() => import('@/routes/SavedListEdit'));
+// Catalogue routes
+const CataloguesListPage = lazy(() => import('@/routes/CataloguesList'));
+const CatalogueDetailsPage = lazy(() => import('@/routes/CatalogueDetails'));
+const CatalogueCreatePage = lazy(() => import('@/routes/CatalogueCreate'));
+const CatalogueEditPage = lazy(() => import('@/routes/CatalogueEdit'));
+const CatalogueLegacyRedirectsPage = lazy(() => import('@/routes/CatalogueLegacyRedirects'));
 
 // Japanese learning routes
 const RadicalsPage = lazy(() => import('@/routes/japanese/RadicalsList'));
@@ -42,22 +44,15 @@ const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 // Dashboard routes
 const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-	<Suspense fallback={<PageLoader />}>{children}</Suspense>
+const SuspenseWrapper = ({ children, fallback = null }: { children: React.ReactNode; fallback?: React.ReactNode }) => (
+	<Suspense fallback={fallback}>{children}</Suspense>
 );
 
 const AppRoutes: React.FC = () => {
 	return (
 		<Routes>
 			{/* Public routes */}
-			<Route
-				path="/"
-				element={
-					<SuspenseWrapper>
-						<HomePage />
-					</SuspenseWrapper>
-				}
-			/>
+			<Route path="/" element={<HomePage />} />
 			<Route
 				path="/login"
 				element={
@@ -79,7 +74,7 @@ const AppRoutes: React.FC = () => {
 			<Route
 				path="/articles"
 				element={
-					<SuspenseWrapper>
+					<SuspenseWrapper fallback={<ArticlesListSkeleton />}>
 						<ArticlesListPage />
 					</SuspenseWrapper>
 				}
@@ -93,20 +88,36 @@ const AppRoutes: React.FC = () => {
 				}
 			/>
 
-			{/* Lists */}
+			{/* Catalogues */}
 			<Route
-				path="/lists"
+				path="/catalogues"
 				element={
-					<SuspenseWrapper>
-						<ListsPage />
+					<SuspenseWrapper fallback={<CataloguesListSkeleton />}>
+						<CataloguesListPage />
 					</SuspenseWrapper>
 				}
 			/>
 			<Route
-				path="/list/:list_id"
+				path="/catalogues/:catalogueId"
 				element={
 					<SuspenseWrapper>
-						<ListDetailsPage />
+						<CatalogueDetailsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/lists"
+				element={
+					<SuspenseWrapper>
+						<CatalogueLegacyRedirectsPage />
+					</SuspenseWrapper>
+				}
+			/>
+			<Route
+				path="/list/:catalogueId"
+				element={
+					<SuspenseWrapper>
+						<CatalogueLegacyRedirectsPage />
 					</SuspenseWrapper>
 				}
 			/>
@@ -214,18 +225,34 @@ const AppRoutes: React.FC = () => {
 					}
 				/>
 				<Route
-					path="/newlist"
+					path="/catalogues/new"
 					element={
 						<SuspenseWrapper>
-							<ListFormPage />
+							<CatalogueCreatePage />
 						</SuspenseWrapper>
 					}
 				/>
 				<Route
-					path="/list/edit/:list_id"
+					path="/catalogues/:catalogueId/edit"
 					element={
 						<SuspenseWrapper>
-							<ListEditPage />
+							<CatalogueEditPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/newlist"
+					element={
+						<SuspenseWrapper>
+							<CatalogueLegacyRedirectsPage />
+						</SuspenseWrapper>
+					}
+				/>
+				<Route
+					path="/list/edit/:catalogueId"
+					element={
+						<SuspenseWrapper>
+							<CatalogueLegacyRedirectsPage />
 						</SuspenseWrapper>
 					}
 				/>

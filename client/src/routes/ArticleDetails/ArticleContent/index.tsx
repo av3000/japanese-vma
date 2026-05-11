@@ -2,10 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { fetchArticleSavedLists, setArticleStatus } from '@/api/articles/articles';
+import { setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import { articleDestroy } from '@/api/generated/article';
+import {
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	fetchCataloguesForItem,
+	type CatalogueForItemAction,
+} from '@/api/catalogues/cataloguesForItem';
+import { articleDestroy } from '@/api/generated/article/article';
+import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -23,7 +30,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { apiCall } from '@/services/api';
-import { LIST_ACTIONS, BASE_URL } from '@/shared/constants';
+import { BASE_URL } from '@/shared/constants';
+import { ObjectTemplateType } from '@/shared/constants/enums';
 import { HttpMethod } from '@/shared/types';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
@@ -54,10 +62,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
 
-	// TODO: Should only call queries propagating up to smart component
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchArticleSavedLists(article.id.toString()),
+		queryFn: () => fetchCataloguesForItem(article.id),
 		enabled: isAuthenticated,
 	});
 
@@ -65,6 +72,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const likeMutation = useLikeArticleMutation(article.uuid);
 
 	// TODO: Should only call queries propagating up to smart component
+	// ex: statusMutation could be called from a dashboard.
 	const statusMutation = useMutation({
 		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
 		onSuccess: (res) => {
@@ -76,9 +84,33 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		},
 	});
 
+	// TODO: move up to queries, and hide API details.
 	const deleteMutation = useMutation({
 		mutationFn: () => articleDestroy(article.uuid),
 		onSuccess: () => navigate('/articles'),
+	});
+
+	// TODO: move up to queries and hide API details, only passing in the params.
+	const catalogueMembershipMutation = useMutation<
+		unknown,
+		unknown,
+		{
+			list: CatalogueForItem;
+			action: CatalogueForItemAction;
+		}
+	>({
+		mutationFn: ({ list, action }: { list: CatalogueForItem; action: CatalogueForItemAction }) => {
+			if (action === 'add') {
+				return catalogueAddItem(list.uuid, { item_id: article.id });
+			}
+
+			return catalogueRemoveItem(list.uuid, article.id);
+		},
+		onSuccess: (_, { list, action }) => {
+			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
+				return applyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
+			});
+		},
 	});
 
 	const openEditModal = () => {
@@ -101,27 +133,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	// TODO: Refactor to queries when backend is migrated to V1 endpoint for saved lists endpoints.
-	// TODO: Should only call queries propagating up to smart component
-	const handleListAction = async (listId: number, action: string) => {
-		setLoadingListIds((prev) => [...prev, listId]);
+	const handleListAction = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
+		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
-			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
-			await apiCall({
-				method: HttpMethod.POST,
-				path: `${BASE_URL}/api/user/list/${endpoint}`,
-				data: { listId, elementId: article.id },
-			});
-
-			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists: any[]) => {
-				return oldLists?.map((list) =>
-					list.id === listId ? { ...list, elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM } : list,
-				);
-			});
+			await catalogueMembershipMutation.mutateAsync({ list, action });
 		} catch (error) {
 			console.error('List action failed', error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== listId));
+			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
 		}
 	};
 
@@ -140,7 +159,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	const isBookmarked = userLists.some((l: any) => l.elementBelongsToList);
+	const isBookmarked = userLists.some((list) => list.contains_item);
 	const isLiked = article.engagement?.is_liked_by_viewer;
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
@@ -264,7 +283,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock parentObjectId={article.id} parentObjectType="article" objectUuid={article.uuid} />
+					<CommentsBlock
+						readObjectType="article"
+						readObjectUuid={article.uuid}
+						entityId={article.id}
+						entityType={ObjectTemplateType.ARTICLE}
+						entityUuid={article.uuid}
+					/>
 				</div>
 			</div>
 

@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\PostStoreRequest;
-use Illuminate\Support\Facades\Validator;
-use App\Http\User;
-use App\Http\Models\Post;
-use App\Http\Models\Like;
-use App\Http\Models\Download;
 use App\Http\Models\Comment;
-use App\Http\Models\View;
-use App\Http\Models\Uniquehashtag;
+use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
+use App\Http\Models\Post;
+use App\Http\Models\Uniquehashtag;
+use App\Http\Models\View;
+use App\Http\Requests\PostStoreRequest;
+use App\Http\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-
     public function getPostTypes($index)
     {
 
@@ -28,54 +26,54 @@ class PostController extends Controller
             'Technical',
             'Bug',
             'Feedback',
-            'Announcement'
+            'Announcement',
         ];
 
-        $postTypes[20] = "All";
+        $postTypes[20] = 'All';
 
         return $postTypes[$index - 1];
     }
 
     public function index()
     {
-        $posts = Post::orderBy("created_at", "desc")->paginate(5);
+        $posts = Post::orderBy('created_at', 'desc')->paginate(5);
 
         $postsByTopics = [
-            "Content-related" => [],
-            "Off-topic" => [],
-            "FAQ" => [],
-            "Technical" => [],
-            "Bug" => [],
-            "Feedback" => [],
-            "Announcement" => [],
+            'Content-related' => [],
+            'Off-topic' => [],
+            'FAQ' => [],
+            'Technical' => [],
+            'Bug' => [],
+            'Feedback' => [],
+            'Announcement' => [],
         ];
 
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
         foreach ($posts as $singlePost) {
-            $singlePost->likesTotal    = $this->getImpression("like", $objectTemplateId, $singlePost, "total");
-            $singlePost->viewsTotal    = $this->getImpression("view", $objectTemplateId, $singlePost, "total");
+            $singlePost->likesTotal = $this->getImpression('like', $objectTemplateId, $singlePost, 'total');
+            $singlePost->viewsTotal = $this->getImpression('view', $objectTemplateId, $singlePost, 'total');
             $singlePost->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singlePost, 'total');
-            $singlePost->hashtags      = $this->getUniquehashtags($singlePost->id, $objectTemplateId);
+            $singlePost->hashtags = $this->getUniquehashtags($singlePost->id, $objectTemplateId);
             $singlePost->userName = User::find($singlePost->user_id)->name;
 
             if ($singlePost->type == 1) {
-                $postsByTopics["Content-related"][] = $singlePost;
-                $singlePost->postType = "Content-related";
-            } else if ($singlePost->type == 2) {
-                $postsByTopics["Off-topic"][] = $singlePost;
-                $singlePost->postType = "Off-topic";
-            } else if ($singlePost->type == 3) {
-                $postsByTopics["FAQ"][] = $singlePost;
-                $singlePost->postType = "FAQ";
-            } else if ($singlePost->type == 4) {
-                $postsByTopics["Technical"][] = $singlePost;
-                $singlePost->postType = "Technical";
-            } else if ($singlePost->type == 5) {
-                $postsByTopics["Bug"][] = $singlePost;
-                $singlePost->postType = "Bug";
-            } else if ($singlePost->type == 6) {
-                $postsByTopics["Announcement"][] = $singlePost;
-                $singlePost->postType = "Announcement";
+                $postsByTopics['Content-related'][] = $singlePost;
+                $singlePost->postType = 'Content-related';
+            } elseif ($singlePost->type == 2) {
+                $postsByTopics['Off-topic'][] = $singlePost;
+                $singlePost->postType = 'Off-topic';
+            } elseif ($singlePost->type == 3) {
+                $postsByTopics['FAQ'][] = $singlePost;
+                $singlePost->postType = 'FAQ';
+            } elseif ($singlePost->type == 4) {
+                $postsByTopics['Technical'][] = $singlePost;
+                $singlePost->postType = 'Technical';
+            } elseif ($singlePost->type == 5) {
+                $postsByTopics['Bug'][] = $singlePost;
+                $singlePost->postType = 'Bug';
+            } elseif ($singlePost->type == 6) {
+                $postsByTopics['Announcement'][] = $singlePost;
+                $singlePost->postType = 'Announcement';
             }
         }
 
@@ -83,12 +81,13 @@ class PostController extends Controller
             return response()->json([
                 'success' => true,
                 'posts' => $posts,
-                'postsByTopic' => $postsByTopics
+                'postsByTopic' => $postsByTopics,
             ]);
         }
+
         return response()->json([
             'success' => false,
-            'message' => 'There are no posts...'
+            'message' => 'There are no posts...',
         ]);
     }
 
@@ -96,40 +95,40 @@ class PostController extends Controller
     {
         $post = Post::find($id);
 
-        if (!isset($post)) {
+        if (! isset($post)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Requested Post does not exist'
+                'message' => 'Requested Post does not exist',
             ]);
         }
 
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
         $this->incrementView($post);
-        $post->hashtags   = $this->getUniquehashtags($post->id, $objectTemplateId);
-        $post->likesTotal = $this->getImpression("like", $objectTemplateId, $post, "total");
-        $post->viewsTotal = $this->getImpression("view", $objectTemplateId, $post, "total");
-        $post->comments   = $this->getImpression('comment', $objectTemplateId, $post, "all");
+        $post->hashtags = $this->getUniquehashtags($post->id, $objectTemplateId);
+        $post->likesTotal = $this->getImpression('like', $objectTemplateId, $post, 'total');
+        $post->viewsTotal = $this->getImpression('view', $objectTemplateId, $post, 'total');
+        $post->comments = $this->getImpression('comment', $objectTemplateId, $post, 'all');
         $post->commentsTotal = count($post->comments);
 
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach ($post->comments as $comment) {
-            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, "all");
+            $comment->likes = $this->getImpression('like', $objectTemplateId, $comment, 'all');
             $comment->likesTotal = count($comment->likes);
             $comment->userName = User::find($comment->user_id)->name;
         }
 
         if ($post->type == 1) {
-            $post->postType = "Content-related";
-        } else if ($post->type == 2) {
-            $post->postType = "Off-topic";
-        } else if ($post->type == 3) {
-            $post->postType = "FAQ";
-        } else if ($post->type == 4) {
-            $post->postType = "Technical";
-        } else if ($post->type == 5) {
-            $post->postType = "Bug";
-        } else if ($post->type == 6) {
-            $post->postType = "Announcement";
+            $post->postType = 'Content-related';
+        } elseif ($post->type == 2) {
+            $post->postType = 'Off-topic';
+        } elseif ($post->type == 3) {
+            $post->postType = 'FAQ';
+        } elseif ($post->type == 4) {
+            $post->postType = 'Technical';
+        } elseif ($post->type == 5) {
+            $post->postType = 'Bug';
+        } elseif ($post->type == 6) {
+            $post->postType = 'Announcement';
         }
 
         $user = User::find($post->user_id);
@@ -138,15 +137,15 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'post' => $post
+            'post' => $post,
         ]);
     }
 
     public function store(PostStoreRequest $request)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
@@ -165,22 +164,22 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'post' => $post
+            'post' => $post,
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $post = Post::find($id);
 
-        if (!$post || $post->user_id != auth()->user()->id) {
+        if (! $post || $post->user_id != auth()->user()->id) {
             return response()->json([
-                'message' => 'post doesnt exist or does not belong to the user'
+                'message' => 'post doesnt exist or does not belong to the user',
             ]);
         }
 
@@ -204,23 +203,23 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'updatedPost' => $post
+            'updatedPost' => $post,
         ]);
     }
 
     public function delete(Request $request, $id)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $post = Post::find($id);
 
-        if (!$post || $post->user_id != auth()->user()->id && auth()->user()->hasRole("admin") == false) {
+        if (! $post || $post->user_id != auth()->user()->id && auth()->user()->hasRole('admin') == false) {
             return response()->json([
                 'success' => false,
-                'message' => 'post doesnt exist or does not belong to the user'
+                'message' => 'post doesnt exist or does not belong to the user',
             ]);
         }
 
@@ -239,46 +238,46 @@ class PostController extends Controller
     public function getPostImpressionsSearch($posts)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
-        $jp_month = "月";
-        $jp_day = "日";
-        $jp_hour = "時";
-        $jp_minute = "分";
-        $jp_year = "年";
+        $jp_month = '月';
+        $jp_day = '日';
+        $jp_hour = '時';
+        $jp_minute = '分';
+        $jp_year = '年';
         foreach ($posts as $singlePost) {
             $user = User::find($singlePost->user_id);
             $singlePost->userName = $user->name;
             $singlePost->userId = $user->id;
 
             if ($singlePost->type == 1) {
-                $postsByTopics["Content-related"][] = $singlePost;
-                $singlePost->postType = "Content-related";
-            } else if ($singlePost->type == 2) {
-                $postsByTopics["Off-topic"][] = $singlePost;
-                $singlePost->postType = "Off-topic";
-            } else if ($singlePost->type == 3) {
-                $postsByTopics["FAQ"][] = $singlePost;
-                $singlePost->postType = "FAQ";
-            } else if ($singlePost->type == 4) {
-                $postsByTopics["Technical"][] = $singlePost;
-                $singlePost->postType = "Technical";
-            } else if ($singlePost->type == 5) {
-                $postsByTopics["Bug"][] = $singlePost;
-                $singlePost->postType = "Bug";
-            } else if ($singlePost->type == 6) {
-                $postsByTopics["Announcement"][] = $singlePost;
-                $singlePost->postType = "Announcement";
+                $postsByTopics['Content-related'][] = $singlePost;
+                $singlePost->postType = 'Content-related';
+            } elseif ($singlePost->type == 2) {
+                $postsByTopics['Off-topic'][] = $singlePost;
+                $singlePost->postType = 'Off-topic';
+            } elseif ($singlePost->type == 3) {
+                $postsByTopics['FAQ'][] = $singlePost;
+                $singlePost->postType = 'FAQ';
+            } elseif ($singlePost->type == 4) {
+                $postsByTopics['Technical'][] = $singlePost;
+                $singlePost->postType = 'Technical';
+            } elseif ($singlePost->type == 5) {
+                $postsByTopics['Bug'][] = $singlePost;
+                $singlePost->postType = 'Bug';
+            } elseif ($singlePost->type == 6) {
+                $postsByTopics['Announcement'][] = $singlePost;
+                $singlePost->postType = 'Announcement';
             }
 
-            $singlePost->jp_year   = $singlePost->created_at->year   . $jp_year;
-            $singlePost->jp_month  = $singlePost->created_at->month  . $jp_month;
-            $singlePost->jp_day    = $singlePost->created_at->day    . $jp_day;
-            $singlePost->jp_hour   = $singlePost->created_at->hour   . $jp_hour;
-            $singlePost->jp_minute = $singlePost->created_at->minute . $jp_minute;
+            $singlePost->jp_year = $singlePost->created_at->year.$jp_year;
+            $singlePost->jp_month = $singlePost->created_at->month.$jp_month;
+            $singlePost->jp_day = $singlePost->created_at->day.$jp_day;
+            $singlePost->jp_hour = $singlePost->created_at->hour.$jp_hour;
+            $singlePost->jp_minute = $singlePost->created_at->minute.$jp_minute;
 
-            $singlePost->likesTotal = $this->getImpression("like", $objectTemplateId, $singlePost, "total");
-            $singlePost->viewsTotal = $this->getImpression("view", $objectTemplateId, $singlePost, "total");
+            $singlePost->likesTotal = $this->getImpression('like', $objectTemplateId, $singlePost, 'total');
+            $singlePost->viewsTotal = $this->getImpression('view', $objectTemplateId, $singlePost, 'total');
             $singlePost->commentsTotal = $this->getImpression('comment', $objectTemplateId, $singlePost, 'total');
-            $singlePost->hashtags      = array_slice($this->getUniquehashtags($singlePost->id, $objectTemplateId), 0, 3);
+            $singlePost->hashtags = array_slice($this->getUniquehashtags($singlePost->id, $objectTemplateId), 0, 3);
         }
 
         return $posts;
@@ -306,7 +305,7 @@ class PostController extends Controller
     public function generateQuery(Request $request)
     {
         $posts = new Post;
-        $requestedQuery = "";
+        $requestedQuery = '';
         if (isset($request->keyword)) {
             $request->keyword = trim($request->keyword);
             $singleTag = explode(' ', trim($request->keyword))[0];
@@ -315,29 +314,28 @@ class PostController extends Controller
 
             if (preg_match("/{$search}/i", $singleTag)) {
                 $posts = $this->getUniquehashtagPosts($singleTag);
-                $requestedQuery .= $singleTag . ". ";
+                $requestedQuery .= $singleTag.'. ';
             } else {
                 $posts = Post::whereLike(['title', 'content'], $request->keyword);
-                $requestedQuery .= "keyword: " . $request->keyword . ". ";
+                $requestedQuery .= 'keyword: '.$request->keyword.'. ';
             }
         }
 
-        if (isset($request->filterType) && $request->filterType != 20) // 20 = all
-        {
+        if (isset($request->filterType) && $request->filterType != 20) { // 20 = all
             $posts = $posts->where('type', $request->filterType);
-            $requestedQuery .= "Filter by " . $this->getPostTypes($request->filterType) . ".";
+            $requestedQuery .= 'Filter by '.$this->getPostTypes($request->filterType).'.';
         }
 
         if (isset($request->sortByWhat)) {
 
-            if ($request->sortByWhat === "new") {
+            if ($request->sortByWhat === 'new') {
                 $posts = $posts->orderBy('created_at', 'desc');
-                $requestedQuery .= " Sort by Newest. ";
-            } else if ($request->sortByWhat === "pop") {
+                $requestedQuery .= ' Sort by Newest. ';
+            } elseif ($request->sortByWhat === 'pop') {
                 $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
 
                 $posts = $this->sortByViewsTotal($posts, $objectTemplateId);
-                $requestedQuery .= " Sort by Popular. ";
+                $requestedQuery .= ' Sort by Popular. ';
             }
         }
 
@@ -348,42 +346,42 @@ class PostController extends Controller
         return response()->json([
             'success' => true,
             'posts' => $posts,
-            'requestedQuery' => $requestedQuery
+            'requestedQuery' => $requestedQuery,
         ]);
     }
 
-    #=================================== Impressions
+    //=================================== Impressions
 
     public function getImpression($impressionType, $objectTemplateId, $object, $amount)
     {
         if ($impressionType == 'like') {
             $likes = Like::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $object->id
+                'real_object_id' => $object->id,
             ]);
-            if ($amount == "total") {
+            if ($amount == 'total') {
                 return $likes->count();
-            } else if ($amount == "all") {
+            } elseif ($amount == 'all') {
                 return $likes->get();
             }
-        } else if ($impressionType == 'view') {
+        } elseif ($impressionType == 'view') {
             $views = View::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $object->id
+                'real_object_id' => $object->id,
             ]);
-            if ($amount == "total") {
+            if ($amount == 'total') {
                 return $views->count();
-            } else if ($amount == "all") {
+            } elseif ($amount == 'all') {
                 return $views->get();
             }
-        } else if ($impressionType == 'comment') {
+        } elseif ($impressionType == 'comment') {
             $comments = Comment::where([
                 'template_id' => $objectTemplateId,
-                'real_object_id' => $object->id
+                'real_object_id' => $object->id,
             ]);
-            if ($amount == "total") {
+            if ($amount == 'total') {
                 return $comments->count();
-            } else if ($amount == "all") {
+            } elseif ($amount == 'all') {
                 return $comments->get();
             }
         }
@@ -392,23 +390,23 @@ class PostController extends Controller
     public function removeImpressions($object)
     {
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
-        $likes = Like::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
-        $views = View::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->delete();
+        $likes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $object->id)->delete();
+        $views = View::where('template_id', $objectTemplateId)->where('real_object_id', $object->id)->delete();
 
-        $comments = Comment::where("template_id", $objectTemplateId)->where("real_object_id", $object->id)->get();
+        $comments = Comment::where('template_id', $objectTemplateId)->where('real_object_id', $object->id)->get();
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
         foreach ($comments as $comment) {
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $comment->id)->delete();
+            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $comment->id)->delete();
             $comment->delete();
         }
     }
 
     public function incrementView(Post $post)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
                 'success' => true,
-                'message' => "User unauthenticated, no views counted"
+                'message' => 'User unauthenticated, no views counted',
             ]);
         }
 
@@ -416,7 +414,7 @@ class PostController extends Controller
         $checkView = View::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $post->id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if ($checkView) {
@@ -439,34 +437,36 @@ class PostController extends Controller
         if ($post->locked == 1) {
             $post->locked = 0;
             $post->update();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Post of id: ' . $id . ' was unlocked',
-                'locked' => $post->locked
+                'message' => 'Post of id: '.$id.' was unlocked',
+                'locked' => $post->locked,
             ]);
         } else {
             $post->locked = 1;
             $post->update();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Post of id: ' . $id . ' was locked',
-                'locked' => $post->locked
+                'message' => 'Post of id: '.$id.' was locked',
+                'locked' => $post->locked,
             ]);
         }
     }
 
     public function storeComment(Request $request, $id, $parentCommentId = null)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
         if (Post::find($id)->locked == 1) {
             return response()->json([
                 'success' => false,
-                'message' => 'Post is locked from commenting'
+                'message' => 'Post is locked from commenting',
             ]);
         }
 
@@ -491,61 +491,61 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You commented post of id: ' . $id,
-            'comment' => $comment
+            'message' => 'You commented post of id: '.$id,
+            'comment' => $comment,
         ]);
     }
 
     public function deleteComment($id, $commentid)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
         $comment = Comment::where([
             'id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if (isset($comment)) {
             $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
 
             $comment->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was deleted",
+                'message' => 'comment was deleted',
             ]);
-        } else if (!isset($comment) && auth()->user()->hasRole("admin") == true) {
+        } elseif (! isset($comment) && auth()->user()->hasRole('admin') == true) {
             $comment = Comment::where([
-                'id' => $commentid
+                'id' => $commentid,
             ])->first();
 
             $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
-            $commentLikes = Like::where("template_id", $objectTemplateId)->where('real_object_id', $commentid)->delete();
+            $commentLikes = Like::where('template_id', $objectTemplateId)->where('real_object_id', $commentid)->delete();
 
             $comment->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was deleted by admin",
+                'message' => 'comment was deleted by admin',
             ]);
         } else {
             return response()->json([
                 'success' => false,
-                'message' => "Comment does not belong to user or comment doesnt exist",
+                'message' => 'Comment does not belong to user or comment doesnt exist',
             ]);
         }
     }
 
     public function updateComment(Request $request, $id, $commentid)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
 
@@ -559,7 +559,7 @@ class PostController extends Controller
 
         $comment = Comment::where([
             'id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if (isset($comment)) {
@@ -569,21 +569,21 @@ class PostController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "comment was updated",
+                'message' => 'comment was updated',
             ]);
         } else {
             return response()->json([
                 'success' => false,
-                'message' => "Comment does not belong to user or comment doesnt exist",
+                'message' => 'Comment does not belong to user or comment doesnt exist',
             ]);
         }
     }
 
     public function likeComment($id, $commentid)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $objectTemplateId = ObjectTemplate::where('title', 'comment')->first()->id;
@@ -591,12 +591,12 @@ class PostController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
-                'message' => 'you cannot like the comment twice!'
+                'message' => 'you cannot like the comment twice!',
             ]);
         }
 
@@ -609,8 +609,8 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked comment of id: ' . $commentid,
-            'like' => $like
+            'message' => 'You liked comment of id: '.$commentid,
+            'like' => $like,
         ]);
     }
 
@@ -620,14 +620,14 @@ class PostController extends Controller
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $commentid,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ]);
 
         $like->delete();
 
         return response()->json([
             'success' => true,
-            'message' => "like was deleted",
+            'message' => 'like was deleted',
         ]);
     }
 
@@ -637,22 +637,22 @@ class PostController extends Controller
         $like = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ]);
 
         $like->delete();
 
         return response()->json([
             'success' => true,
-            'message' => "like was deleted",
+            'message' => 'like was deleted',
         ]);
     }
 
     public function likePost($id)
     {
-        if (!auth()->user()) {
+        if (! auth()->user()) {
             return response()->json([
-                'message' => 'you are not a user'
+                'message' => 'you are not a user',
             ]);
         }
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
@@ -660,12 +660,12 @@ class PostController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
-                'message' => 'you cannot like it twice!'
+                'message' => 'you cannot like it twice!',
             ]);
         }
 
@@ -678,8 +678,8 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You liked Post of id: ' . $id,
-            'like' => $like
+            'message' => 'You liked Post of id: '.$id,
+            'like' => $like,
         ]);
     }
 
@@ -690,21 +690,21 @@ class PostController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
                 'userId' => auth()->user()->id,
                 'isLiked' => true,
-                'message' => 'you already liked this post'
+                'message' => 'you already liked this post',
             ]);
         }
 
         return response()->json([
             'userId' => auth()->user()->id,
             'isLiked' => false,
-            'message' => 'you havent liked the post yet'
+            'message' => 'you havent liked the post yet',
         ]);
     }
 
@@ -715,25 +715,25 @@ class PostController extends Controller
         $checkLike = Like::where([
             'template_id' => $objectTemplateId,
             'real_object_id' => $id,
-            'user_id' => auth()->user()->id
+            'user_id' => auth()->user()->id,
         ])->first();
 
         if ($checkLike) {
             return response()->json([
                 'userId' => auth()->user()->id,
                 'isLiked' => true,
-                'message' => 'you already liked this comment'
+                'message' => 'you already liked this comment',
             ]);
         }
 
         return response()->json([
             'userId' => auth()->user()->id,
             'isLiked' => false,
-            'message' => 'you havent liked the comment yet'
+            'message' => 'you havent liked the comment yet',
         ]);
     }
 
-    #======================== Hashtags
+    //======================== Hashtags
 
     public function getUniquehashtags($id, $objectTemplateId)
     {
@@ -742,7 +742,7 @@ class PostController extends Controller
         $finalTags = [];
 
         foreach ($foundRows as $taglink) {
-            $uniqueTag = Uniquehashtag::find($taglink->uniquehashtag_id);
+            $uniqueTag = Uniquehashtag::find($taglink->hashtag_id);
             $finalTags[] = $uniqueTag;
         }
 
@@ -753,12 +753,12 @@ class PostController extends Controller
     {
         $objectTemplateId = ObjectTemplate::where('title', 'post')->first()->id;
         // get tag which was input id
-        $uniqueTag = Uniquehashtag::where("content", $wantedTag)->first();
-        if (!isset($uniqueTag)) {
+        $uniqueTag = Uniquehashtag::where('content', $wantedTag)->first();
+        if (! isset($uniqueTag)) {
             return null;
         }
         // get all hashtag foreign table rows
-        $foundRows = DB::table('hashtag_entity')->where('uniquehashtag_id', $uniqueTag->id)
+        $foundRows = DB::table('hashtag_entity')->where('hashtag_id', $uniqueTag->id)
             ->where('entity_type_id', $objectTemplateId)->get();
 
         $ids = [];
@@ -778,7 +778,7 @@ class PostController extends Controller
         $same = 0;
         $unique = 0;
         foreach ($tags as $tag) {
-            $uniqueTag = Uniquehashtag::where("content", $tag)->first();
+            $uniqueTag = Uniquehashtag::where('content', $tag)->first();
             if ($uniqueTag) {
                 // tag is not unique
                 $finalTags[] = $uniqueTag;
@@ -817,7 +817,7 @@ class PostController extends Controller
                 'entity_id' => $object->id,
                 'user_id' => $object->user_id,
                 'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
+                'updated_at' => date('Y-m-d H:i:s'),
             ];
 
             $x = DB::table('hashtag_entity')->insert($row);
@@ -825,18 +825,19 @@ class PostController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "hashtags were added."
+            'message' => 'hashtags were added.',
         ]);
     }
 
     public function getHashtags($string)
     {
-        $hashtags = FALSE;
+        $hashtags = false;
         preg_match_all("/(#\w+)/u", $string, $matches);
         if ($matches) {
             $hashtagsArray = array_count_values($matches[0]);
             $hashtags = array_keys($hashtagsArray);
         }
+
         return $hashtags;
     }
 }

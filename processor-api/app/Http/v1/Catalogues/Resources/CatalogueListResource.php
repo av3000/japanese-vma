@@ -20,6 +20,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class CatalogueListResource extends JsonResource
 {
+    public static $wrap = null;
+
     /**
      * @return array{
      *     items: array<int, CatalogueResource>,

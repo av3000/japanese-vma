@@ -17,8 +17,13 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Do not break legacy endpoints unless explicitly requested.
 -   **v1 preference:**
     -   For new/refactored endpoints, prefer `routes/api_v1.php` conventions.
+-   **Route specificity:**
+    -   When adding a concrete v1 route beside a parameterized sibling such as `catalogues/{uuid}`, place the concrete route where it cannot be shadowed by the parameterized match.
 -   **Migration behavior:**
     -   Preserve existing behavior intentionally, or document intentional changes.
+-   **Generic comment write contract:**
+    -   `POST /api/v1/comments` uses a generic write payload: `{ entity_type: ObjectTemplateType, entity_id, entity_uuid, content, parent_comment_id? }`.
+    -   Do not reintroduce string-name mappings like `article` or `catalogue` at the write boundary when the backend already accepts the shared enum value.
 
 ## 3) Layering & Domain Boundaries
 
@@ -38,11 +43,14 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Validation:**
     -   Prefer dedicated Request classes per endpoint.
     -   For partial updates, validate optional fields and handle empty-update payloads explicitly.
+    -   For generic v1 comment create, validate the `entity_type` / `entity_id` / `entity_uuid` tuple directly in the request contract instead of resolving numeric IDs from UUIDs inside the service layer.
+    -   For new v1 array query params, prefer clean names like `types` over `types[]` unless legacy compatibility requires bracket syntax, because Orval preserves the literal wire name.
 -   **DTOs/Value Objects:**
     -   Use DTO contracts for operation inputs/outputs where meaningful.
     -   Use value objects where they improve invariants and type safety.
 -   **Identifiers:**
     -   Follow existing v1 UUID/entity identifier conventions in the touched module.
+    -   Comment create currently trusts the validated `entity_type` / `entity_id` / `entity_uuid` tuple at write time; do not add per-type resolver indirection back unless the contract itself changes.
 
 ## 5) Response & Error Handling
 
@@ -52,6 +60,11 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Error behavior:**
     -   Prefer explicit, typed/structured error handling patterns.
     -   Do not hide contract-significant failures.
+-   **Schema guidance:**
+    -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
+    -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
+    -   For lean ad hoc response shapes, Resource PHPDoc may be insufficient for nested arrays. If Scramble still collapses the generated schema incorrectly, add an explicit controller-level `#[Response(type: 'array{...}')]`.
+    -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
 
 ## 6) Testing & Verification Expectations
 
@@ -61,6 +74,12 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
+    -   From `processor-api/`, bring up backend test infrastructure with `docker compose up -d --build db-test test-runner`.
+    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` MySQL service.
+    -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
+    -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+    -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
+    -   If the dedicated test lane itself is unavailable, report that environment limitation clearly and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails
 
@@ -198,7 +217,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands through `docker compose exec test-runner composer test -- ...` from `processor-api/`, with a specific filename or filter.
 
 === laravel/core rules ===
 
@@ -277,8 +296,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `php artisan test --compact`.
-- To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+- To run all tests: `docker compose exec test-runner composer test`.
+- To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>

@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - "client/**"
+      - "processor-api/api.json"
       - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches:
@@ -13,6 +14,7 @@ on:
       - master
     paths:
       - "client/**"
+      - "processor-api/api.json"
       - ".github/workflows/frontend-ci.yml"
 
 env:
@@ -30,7 +32,7 @@ jobs:
         working-directory: client
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Ensure frontend build variable exists
         run: |
@@ -40,14 +42,17 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version-file: client/.nvmrc
           cache: npm
           cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Orval client
+        run: npm run orval:file
 
       - name: Typecheck
         env:
@@ -104,9 +109,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    defaults:
+      run:
+        working-directory: client
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Ensure production frontend variables exist
         run: |
@@ -119,6 +127,19 @@ jobs:
             echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
             exit 1
           fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: client/.nvmrc
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Orval client
+        run: npm run orval:file
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type Echo from 'laravel-echo';
 import { useAuth } from '@/hooks/useAuth';
-import { configureEcho, echo } from '@/lib/echo';
 import type { ConnectionStatus } from '@/lib/echo/types';
 
 interface SocketContextType {
@@ -13,6 +12,16 @@ interface SocketContextType {
 	connectionInfo: { host: string; port: number; scheme: 'ws' | 'wss'; appKey: string };
 	hasAttemptedConnection: boolean;
 }
+
+export const shouldStartWebSocket = ({
+	isAuthenticated,
+	isConfigured,
+	token,
+}: {
+	isAuthenticated: boolean;
+	isConfigured: boolean;
+	token: string | null;
+}) => Boolean(isConfigured && isAuthenticated && token);
 
 const SocketContext = createContext<SocketContextType>({
 	echo: null,
@@ -57,7 +66,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 	const [lastError, setLastError] = useState<string | null>(null);
 	const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false);
-	const { token } = useAuth();
+	const { isAuthenticated, token } = useAuth();
 
 	const connectionInfo = useMemo(() => {
 		const envHost = import.meta.env.VITE_REVERB_HOST;
@@ -73,7 +82,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 	const isConfigured = connectionInfo.appKey.trim().length > 0;
 
 	useEffect(() => {
-		if (!isConfigured) {
+		if (
+			!shouldStartWebSocket({
+				isConfigured,
+				isAuthenticated,
+				token,
+			})
+		) {
 			setEchoClient(null);
 			setHasAttemptedConnection(false);
 			setConnectionStatus('disconnected');
@@ -83,89 +98,109 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 		const wsHost = connectionInfo.host;
 		const wsPort = connectionInfo.port;
+		let isActive = true;
+		let echoInstance: Echo<'reverb'> | null = null;
+		let cleanupConnection: (() => void) | null = null;
 
 		const authHeaders: Record<string, string> = {
 			Accept: 'application/json',
 		};
 
-		if (token) {
-			authHeaders.Authorization = `Bearer ${token}`;
-		}
+		authHeaders.Authorization = `Bearer ${token}`;
 
-		configureEcho({
-			broadcaster: 'reverb',
-			key: import.meta.env.VITE_REVERB_APP_KEY,
-			wsHost,
-			wsPort,
-			wssPort: wsPort,
-			forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
-			enabledTransports: ['ws', 'wss'],
-			disableStats: true,
-			cluster: 'mt1',
-			authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
-			auth: {
-				headers: authHeaders,
-			},
-		});
+		const connect = async () => {
+			const { configureEcho, echo } = await import('@/lib/echo/config/index');
 
-		const echoInstance = echo<'reverb'>();
+			if (!isActive) {
+				return;
+			}
 
-		setEchoClient(echoInstance);
-		setHasAttemptedConnection(true);
+			configureEcho({
+				broadcaster: 'reverb',
+				key: import.meta.env.VITE_REVERB_APP_KEY,
+				wsHost,
+				wsPort,
+				wssPort: wsPort,
+				forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
+				enabledTransports: ['ws', 'wss'],
+				disableStats: true,
+				cluster: 'mt1',
+				authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
+				auth: {
+					headers: authHeaders,
+				},
+			});
 
-		const connector = echoInstance.connector as unknown;
-		const pusher = connector && typeof connector === 'object' && 'pusher' in connector ? (connector as any).pusher : null;
-		const connection = pusher && typeof pusher === 'object' && 'connection' in pusher ? (pusher as any).connection : null;
-		const hasBind = connection && typeof connection.bind === 'function' && typeof connection.unbind === 'function';
+			echoInstance = echo<'reverb'>();
 
-		const stateChangeHandler = (payload: any) => {
-			const previous = typeof payload?.previous === 'string' ? payload.previous : undefined;
-			const current = typeof payload?.current === 'string' ? payload.current : typeof payload === 'string' ? payload : undefined;
-			const mapped = mapPusherState(current);
+			setEchoClient(echoInstance);
+			setHasAttemptedConnection(true);
 
-			setConnectionStatus(mapped);
+			const connector = echoInstance.connector as unknown;
+			const pusher =
+				connector && typeof connector === 'object' && 'pusher' in connector ? (connector as any).pusher : null;
+			const connection =
+				pusher && typeof pusher === 'object' && 'connection' in pusher ? (pusher as any).connection : null;
+			const hasBind =
+				connection && typeof connection.bind === 'function' && typeof connection.unbind === 'function';
 
-			if (import.meta.env.DEV) {
-				console.info(
-					`[reverb] state_change previous=${previous ?? 'n/a'} current=${current ?? 'n/a'} mapped=${mapped} host=${connectionInfo.host}:${connectionInfo.port}`,
-				);
+			const stateChangeHandler = (payload: any) => {
+				const previous = typeof payload?.previous === 'string' ? payload.previous : undefined;
+				const current =
+					typeof payload?.current === 'string'
+						? payload.current
+						: typeof payload === 'string'
+							? payload
+							: undefined;
+				const mapped = mapPusherState(current);
+
+				setConnectionStatus(mapped);
+
+				if (import.meta.env.DEV) {
+					console.info(
+						`[reverb] state_change previous=${previous ?? 'n/a'} current=${current ?? 'n/a'} mapped=${mapped} host=${connectionInfo.host}:${connectionInfo.port}`,
+					);
+				}
+			};
+
+			const errorHandler = (payload: any) => {
+				const message =
+					(typeof payload?.error?.data?.message === 'string' && payload.error.data.message) ||
+					(typeof payload?.error?.message === 'string' && payload.error.message) ||
+					(typeof payload?.message === 'string' && payload.message) ||
+					safeStringify(payload);
+
+				setLastError(message);
+
+				if (import.meta.env.DEV) {
+					console.warn('[reverb] error', payload);
+				}
+			};
+
+			if (hasBind) {
+				setConnectionStatus(mapPusherState(connection.state));
+				connection.bind('state_change', stateChangeHandler);
+				connection.bind('error', errorHandler);
+				cleanupConnection = () => {
+					connection.unbind('state_change', stateChangeHandler);
+					connection.unbind('error', errorHandler);
+				};
+			} else {
+				setConnectionStatus('disconnected');
+				setLastError('Reverb connector is missing a Pusher connection object.');
 			}
 		};
 
-		const errorHandler = (payload: any) => {
-			const message =
-				(typeof payload?.error?.data?.message === 'string' && payload.error.data.message) ||
-				(typeof payload?.error?.message === 'string' && payload.error.message) ||
-				(typeof payload?.message === 'string' && payload.message) ||
-				safeStringify(payload);
-
-			setLastError(message);
-
-			if (import.meta.env.DEV) {
-				console.warn('[reverb] error', payload);
-			}
-		};
-
-		if (hasBind) {
-			setConnectionStatus(mapPusherState(connection.state));
-			connection.bind('state_change', stateChangeHandler);
-			connection.bind('error', errorHandler);
-		} else {
-			setConnectionStatus('disconnected');
-			setLastError('Reverb connector is missing a Pusher connection object.');
-		}
+		void connect();
 
 		return () => {
-			if (hasBind) {
-				connection.unbind('state_change', stateChangeHandler);
-				connection.unbind('error', errorHandler);
-			}
-
-			echoInstance.disconnect();
+			isActive = false;
+			cleanupConnection?.();
+			echoInstance?.disconnect();
 			setEchoClient(null);
 			setConnectionStatus('disconnected');
 		};
-	}, [token, connectionInfo.host, connectionInfo.port, isConfigured]);
+	}, [isAuthenticated, token, connectionInfo.host, connectionInfo.port, isConfigured]);
 
 	const isConnected = connectionStatus === 'connected';
 

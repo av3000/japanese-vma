@@ -40,7 +40,7 @@ class IndexArticleTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -97,12 +97,14 @@ class IndexArticleTest extends TestCase
 
         Passport::actingAs($owner, ['*'], 'api');
 
-        $response = $this->json('GET', '/api/v1/articles', [
-            'author_uid' => $owner->uuid,
-        ]);
+        $response = $this
+            ->withHeader('Authorization', 'Bearer test-token')
+            ->json('GET', '/api/v1/articles', [
+                'author_uid' => $owner->uuid,
+            ]);
 
         $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('data.items'), ['Owner Private', 'Owner Public']);
+        $this->assertArticleTitles($response->json('items'), ['Owner Private', 'Owner Public']);
     }
 
     public function test_index_filters_other_authors_private_articles_for_authenticated_non_admin(): void
@@ -121,12 +123,14 @@ class IndexArticleTest extends TestCase
 
         Passport::actingAs($viewer, ['*'], 'api');
 
-        $response = $this->json('GET', '/api/v1/articles', [
-            'author_uid' => $author->uuid,
-        ]);
+        $response = $this
+            ->withHeader('Authorization', 'Bearer test-token')
+            ->json('GET', '/api/v1/articles', [
+                'author_uid' => $author->uuid,
+            ]);
 
         $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('data.items'), ['Author Public']);
+        $this->assertArticleTitles($response->json('items'), ['Author Public']);
     }
 
     public function test_index_filters_other_authors_private_articles_for_anonymous_user(): void
@@ -147,7 +151,7 @@ class IndexArticleTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('data.items'), ['Anonymous Public']);
+        $this->assertArticleTitles($response->json('items'), ['Anonymous Public']);
     }
 
     public function test_index_returns_all_matching_author_articles_for_admin(): void
@@ -167,12 +171,14 @@ class IndexArticleTest extends TestCase
 
         Passport::actingAs($admin, ['*'], 'api');
 
-        $response = $this->json('GET', '/api/v1/articles', [
-            'author_uid' => $author->uuid,
-        ]);
+        $response = $this
+            ->withHeader('Authorization', 'Bearer test-token')
+            ->json('GET', '/api/v1/articles', [
+                'author_uid' => $author->uuid,
+            ]);
 
         $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('data.items'), ['Admin Private', 'Admin Public']);
+        $this->assertArticleTitles($response->json('items'), ['Admin Private', 'Admin Public']);
     }
 
     public function test_index_rejects_invalid_author_uid(): void

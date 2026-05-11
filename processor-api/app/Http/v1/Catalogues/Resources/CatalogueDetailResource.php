@@ -4,45 +4,46 @@ namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
-use App\Http\v1\Engagement\Resources\EngagementStatsResource;
+use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @property Catalogue $resource
  */
 class CatalogueDetailResource extends JsonResource
 {
+    public static $wrap = null;
+
     public function __construct(
         Catalogue $catalogue,
         private array $items = [],
         private ?CatalogueStats $stats = null,
         private array $hashtags = [],
-        private ?int $itemsCount = null
+        private ?int $itemsCount = null,
+        private bool $isLikedByViewer = false,
     ) {
         parent::__construct($catalogue);
     }
 
     /**
      * @return array{
-     *     catalogue: array{
-     *         id: int,
-     *         uuid: string,
-     *         type: int,
-     *         type_label: string,
-     *         title: string,
-     *         description: string|null,
-     *         publicity: int,
-     *         owner: AuthorResource,
-     *         items_count: int,
-     *         hashtags: array<int, HashtagResource>,
-     *         engagement: EngagementStatsResource|null,
-     *         items: array<int, mixed>,
-     *         created_at: string,
-     *         updated_at: string
-     *     }
+     *     id: int,
+     *     uuid: string,
+     *     type: int,
+     *     type_label: string,
+     *     title: string,
+     *     description: string|null,
+     *     publicity: int,
+     *     owner: AuthorResource,
+     *     items_count: int,
+     *     hashtags: array<int, HashtagResource>,
+     *     engagement: CatalogueDetailEngagementResource|null,
+     *     items: array<int, mixed>,
+     *     created_at: string,
+     *     updated_at: string
      * }
      */
     public function toArray(Request $request): array
@@ -51,26 +52,24 @@ class CatalogueDetailResource extends JsonResource
         $catalogue = $this->resource;
 
         return [
-            'catalogue' => [
-                'id' => $catalogue->getIdValue(),
-                'uuid' => (string) $catalogue->getUid(),
-                'type' => $catalogue->getType()->value,
-                'type_label' => $catalogue->getTypeLabel(),
-                'title' => (string) $catalogue->getTitle(),
-                'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
-                'publicity' => $catalogue->getPublicity()->value,
-                'owner' => new AuthorResource([
-                    'id' => $catalogue->getOwnerId()->value(),
-                    'uuid' => $catalogue->getOwnerUuid()->value(),
-                    'name' => $catalogue->getOwnerName()->value(),
-                ]),
-                'items_count' => $this->itemsCount ?? count($this->items),
-                'hashtags' => HashtagResource::collection($this->hashtags),
-                'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,
-                'items' => $this->items,
-                'created_at' => $catalogue->getCreatedAt()->format('c'),
-                'updated_at' => $catalogue->getUpdatedAt()->format('c'),
-            ],
+            'id' => $catalogue->getIdValue(),
+            'uuid' => (string) $catalogue->getUid(),
+            'type' => $catalogue->getType()->value,
+            'type_label' => $catalogue->getTypeLabel(),
+            'title' => (string) $catalogue->getTitle(),
+            'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
+            'publicity' => $catalogue->getPublicity()->value,
+            'owner' => new AuthorResource([
+                'id' => $catalogue->getOwnerId()->value(),
+                'uuid' => $catalogue->getOwnerUuid()->value(),
+                'name' => $catalogue->getOwnerName()->value(),
+            ]),
+            'items_count' => $this->itemsCount ?? count($this->items),
+            'hashtags' => HashtagResource::collection($this->hashtags),
+            'engagement' => $this->stats ? new CatalogueDetailEngagementResource($this->stats, $this->isLikedByViewer) : null,
+            'items' => $this->items,
+            'created_at' => $catalogue->getCreatedAt()->format('c'),
+            'updated_at' => $catalogue->getUpdatedAt()->format('c'),
         ];
     }
 }

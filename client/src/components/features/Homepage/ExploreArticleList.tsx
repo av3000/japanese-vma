@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
-import Spinner from '@/assets/images/spinner.gif';
 import ArticleCard from '@/components/shared/ArticleCard';
+import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
+
+const HOMEPAGE_ARTICLE_SKELETON_COUNT = 4;
 
 const ExploreArticleList: React.FC = () => {
 	const { articles, total, error, isPending, isError } = useInfiniteArticles({
@@ -11,9 +13,23 @@ const ExploreArticleList: React.FC = () => {
 
 	if (isPending) {
 		return (
-			<div className="text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
+			<>
+				<div className="d-flex justify-content-between align-items-center w-100 my-3">
+					<h3>Latest Articles</h3>
+					<div>
+						<Link to="/articles" className="homepage-section-title">
+							Read All Articles
+						</Link>
+					</div>
+				</div>
+				<div className="row">
+					{Array.from({ length: HOMEPAGE_ARTICLE_SKELETON_COUNT }).map((_, index) => (
+						<div key={index} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+							<ArticleCardSkeleton />
+						</div>
+					))}
+				</div>
+			</>
 		);
 	}
 

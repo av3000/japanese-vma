@@ -72,7 +72,8 @@ class ArticleService implements ArticleServiceInterface
 
         // private KanjiExtractionServiceInterface $kanjiExtractionService,
         // private KanjiAttachmentService $kanjiAttachmentService
-    ) {}
+    ) {
+    }
 
     /**
      * Create article with hashtags atomically.
@@ -129,7 +130,7 @@ class ArticleService implements ArticleServiceInterface
         }
     }
 
-    public function getArticleIdByUuid(EntityId $uuid): int
+    public function getArticleIdByUuid(EntityId $uuid): ?int
     {
         return $this->articleRepository->getIdByUuid($uuid);
     }
@@ -172,7 +173,7 @@ class ArticleService implements ArticleServiceInterface
         try {
             $this->incrementViewAction->execute($id, $objectTemplateType, $viewer);
         } catch (\Exception $e) {
-            Log::error("Failed to increment view for article {$id}: " . $e->getMessage());
+            Log::error("Failed to increment view for article {$id}: ".$e->getMessage());
         }
     }
 

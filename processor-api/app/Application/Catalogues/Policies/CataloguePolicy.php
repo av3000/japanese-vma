@@ -52,4 +52,13 @@ class CataloguePolicy
 
         return $user->id === $catalogue->getOwnerId()->value();
     }
+
+    public function canDelete(?User $user, Catalogue $catalogue): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return $user->id === $catalogue->getOwnerId()->value();
+    }
 }

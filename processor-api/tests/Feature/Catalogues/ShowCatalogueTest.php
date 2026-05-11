@@ -2,18 +2,19 @@
 
 namespace Tests\Feature\Catalogues;
 
-use Tests\TestCase;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Persistence\Models\Catalogue;
+use App\Infrastructure\Persistence\Models\Like;
+use App\Infrastructure\Persistence\Models\User;
+use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
-use App\Infrastructure\Persistence\Models\User;
-use App\Infrastructure\Persistence\Models\Catalogue;
-use App\Infrastructure\Persistence\Models\View;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\Enums\UserRole;
+use Tests\TestCase;
 
 class ShowCatalogueTest extends TestCase
 {
@@ -39,7 +40,7 @@ class ShowCatalogueTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -66,7 +67,9 @@ class ShowCatalogueTest extends TestCase
         $response = $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.catalogue.uuid', $catalogue->uuid);
+            ->assertJsonPath('data.uuid', $catalogue->uuid)
+            ->assertJsonPath('data.engagement.is_liked_by_viewer', false)
+            ->assertJsonMissingPath('data.catalogue');
     }
 
     public function test_show_private_catalogue_requires_owner(): void
@@ -96,5 +99,25 @@ class ShowCatalogueTest extends TestCase
         $this->assertSame(1, View::where('real_object_id', $catalogue->id)
             ->where('template_id', ObjectTemplateType::LIST->getLegacyId())
             ->count());
+    }
+
+    public function test_show_returns_like_state_for_authenticated_viewer(): void
+    {
+        $owner = $this->createUser();
+        $viewer = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, ['publicity' => 1, 'type' => 5]);
+
+        Like::create([
+            'user_id' => $viewer->id,
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'value' => 1,
+        ]);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.engagement.is_liked_by_viewer', true);
     }
 }

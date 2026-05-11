@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article';
-import type { ArticleIndexQueryError } from '@/api/generated/article';
+import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article/article';
+import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
 

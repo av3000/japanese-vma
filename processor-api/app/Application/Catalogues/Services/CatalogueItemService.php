@@ -42,6 +42,39 @@ class CatalogueItemService
         };
     }
 
+    public function isValidItemForCatalogue(Catalogue $catalogue, int $itemId): bool
+    {
+        $listType = $catalogue->getType();
+        $baseType = $this->templateTypeClassifier->getBaseType($listType) ?? $listType;
+
+        return match ($baseType) {
+            SavedListType::RADICALS => Radical::query()->whereKey($itemId)->exists(),
+            SavedListType::KANJIS => Kanji::query()->whereKey($itemId)->exists(),
+            SavedListType::WORDS => Word::query()->whereKey($itemId)->exists(),
+            SavedListType::SENTENCES => Sentence::query()->whereKey($itemId)->exists(),
+            SavedListType::ARTICLES => PersistenceArticle::query()->whereKey($itemId)->exists(),
+            default => false,
+        };
+    }
+
+    public function addItem(Catalogue $catalogue, int $itemId): void
+    {
+        $this->catalogueItemRepository->addItem(
+            $catalogue->getIdValue(),
+            $catalogue->getType(),
+            $itemId
+        );
+    }
+
+    public function removeItem(Catalogue $catalogue, int $itemId): bool
+    {
+        return $this->catalogueItemRepository->removeItem(
+            $catalogue->getIdValue(),
+            $catalogue->getType(),
+            $itemId
+        );
+    }
+
     private function mapRadicals(array $itemIds, array $savesMap): array
     {
         return Radical::whereIn('id', $itemIds)
