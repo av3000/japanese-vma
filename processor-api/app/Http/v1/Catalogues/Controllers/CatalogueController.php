@@ -10,8 +10,8 @@ use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
-use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -134,13 +134,12 @@ class CatalogueController extends Controller
             auth('api')->user(),
         );
 
-        $containedCatalogueIds = array_flip($cataloguesForItem['contained_catalogue_ids']);
         $resources = array_map(
-            static fn (Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
-                $catalogue,
-                isset($containedCatalogueIds[$catalogue->getIdValue()]),
+            static fn (CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
+                $item->catalogue,
+                $item->containsItem,
             ),
-            $cataloguesForItem['catalogues'],
+            $cataloguesForItem->items,
         );
 
         return new CatalogueForItemListResource([

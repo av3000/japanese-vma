@@ -5,8 +5,8 @@ namespace App\Application\Catalogues\Services;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
-use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\User;
@@ -18,13 +18,7 @@ interface CatalogueServiceInterface
 
     public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): Catalogues;
 
-    /**
-     * @return array{
-     *     catalogues: array<int, Catalogue>,
-     *     contained_catalogue_ids: int[]
-     * }
-     */
-    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array;
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): CataloguePickerResultDTO;
 
     /**
      * @return Result<CatalogueDetailDTO>

@@ -16,6 +16,8 @@ use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Catalogues\Factories\CatalogueFactory;
@@ -118,7 +120,7 @@ class CatalogueService implements CatalogueServiceInterface
         return $this->catalogueRepository->findByCriteria($criteria);
     }
 
-    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): CataloguePickerResultDTO
     {
         $catalogues = $this->catalogueRepository->findOwnedForMembership(
             $user->uuid,
@@ -132,11 +134,17 @@ class CatalogueService implements CatalogueServiceInterface
         );
 
         $containedCatalogueIds = $this->catalogueItemRepository->findCatalogueIdsContainingItem($catalogueIds, $itemId);
+        $containedCatalogueIdsById = array_flip($containedCatalogueIds);
 
-        return [
-            'catalogues' => $catalogues,
-            'contained_catalogue_ids' => $containedCatalogueIds,
-        ];
+        return new CataloguePickerResultDTO(
+            array_map(
+                static fn (Catalogue $catalogue): CataloguePickerItemDTO => new CataloguePickerItemDTO(
+                    $catalogue,
+                    isset($containedCatalogueIdsById[$catalogue->getIdValue()]),
+                ),
+                $catalogues,
+            ),
+        );
     }
 
     public function getIdByUuid(EntityId $uuid): ?int
