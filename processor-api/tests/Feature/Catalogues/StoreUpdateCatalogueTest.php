@@ -2,13 +2,6 @@
 
 namespace Tests\Feature\Catalogues;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
-use Spatie\Permission\Models\Role;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Catalogue as PersistenceCatalogue;
@@ -19,6 +12,13 @@ use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class StoreUpdateCatalogueTest extends TestCase
 {
@@ -53,7 +53,7 @@ class StoreUpdateCatalogueTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -115,9 +115,9 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertTrue(Str::isUuid((string) $response->json('data.uuid')));
+        $this->assertTrue(Str::isUuid((string) $response->json('uuid')));
 
-        $catalogue = PersistenceCatalogue::where('uuid', $response->json('data.uuid'))->first();
+        $catalogue = PersistenceCatalogue::where('uuid', $response->json('uuid'))->first();
 
         $this->assertNotNull($catalogue);
         $this->assertSame($user->id, $catalogue->user_id);
@@ -169,10 +169,10 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.title', 'After Update')
-            ->assertJsonPath('data.type', 8)
-            ->assertJsonPath('data.publicity', 1)
-            ->assertJsonPath('data.description', 'Keep this description');
+            ->assertJsonPath('title', 'After Update')
+            ->assertJsonPath('type', 8)
+            ->assertJsonPath('publicity', 1)
+            ->assertJsonPath('description', 'Keep this description');
 
         $catalogue->refresh();
 
@@ -199,8 +199,8 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
             'publicity' => true,
         ])->assertStatus(200)
-            ->assertJsonPath('data.publicity', 1)
-            ->assertJsonPath('data.title', 'Original Catalogue');
+            ->assertJsonPath('publicity', 1)
+            ->assertJsonPath('title', 'Original Catalogue');
 
         $catalogue->refresh();
 
@@ -210,7 +210,7 @@ class StoreUpdateCatalogueTest extends TestCase
 
         $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
             ->assertStatus(200)
-            ->assertJsonPath('data.uuid', $catalogue->uuid);
+            ->assertJsonPath('uuid', $catalogue->uuid);
 
         $this->json('GET', '/api/v1/catalogues')
             ->assertStatus(200)
@@ -230,8 +230,8 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
             'publicity' => false,
         ])->assertStatus(200)
-            ->assertJsonPath('data.publicity', 0)
-            ->assertJsonPath('data.title', 'Original Catalogue');
+            ->assertJsonPath('publicity', 0)
+            ->assertJsonPath('title', 'Original Catalogue');
 
         $catalogue->refresh();
 
@@ -257,6 +257,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $response = $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", []);
 
         $response->assertStatus(422)
+            ->assertJsonPath('title', 'No fields to update')
             ->assertJsonPath('errors.fields.0', 'At least one field must be provided for update operation');
     }
 
@@ -298,7 +299,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $user = $this->createUser();
         Passport::actingAs($user, ['*'], 'api');
 
-        $this->json('PUT', '/api/v1/catalogues/' . (string) Str::uuid(), [
+        $this->json('PUT', '/api/v1/catalogues/'.(string) Str::uuid(), [
             'title' => 'Missing Catalogue',
         ])->assertStatus(404);
     }
@@ -351,6 +352,7 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $comment = Comment::create([
+            'uuid' => (string) Str::uuid(),
             'template_id' => ObjectTemplateType::LIST->getLegacyId(),
             'real_object_id' => $catalogue->id,
             'user_id' => $user->id,
@@ -400,7 +402,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $user = $this->createUser();
         Passport::actingAs($user, ['*'], 'api');
 
-        $this->json('DELETE', '/api/v1/catalogues/' . (string) Str::uuid())
+        $this->json('DELETE', '/api/v1/catalogues/'.(string) Str::uuid())
             ->assertStatus(404);
     }
 }

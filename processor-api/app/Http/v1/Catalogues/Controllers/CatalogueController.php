@@ -179,13 +179,6 @@ class CatalogueController extends Controller
     #[Response(type: 'CatalogueResource')]
     public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse|JsonResource
     {
-        if (! $request->hasAnyUpdateableFields()) {
-            return TypedResults::validationProblem(
-                ['fields' => ['At least one field must be provided for update operation']],
-                'No fields to update'
-            );
-        }
-
         $catalogueUid = EntityId::from($uuid);
         $updateDTO = CatalogueUpdateDTO::fromRequest($request->validated());
         $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, auth('api')->user());
