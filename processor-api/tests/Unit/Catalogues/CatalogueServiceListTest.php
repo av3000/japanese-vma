@@ -14,6 +14,7 @@ use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterfa
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
@@ -108,6 +109,7 @@ class CatalogueServiceListTest extends TestCase
             $this->createMock(DownloadRepositoryInterface::class),
             $this->createMock(CommentRepositoryInterface::class),
             $loadStats,
+            $this->createMock(EngagementServiceInterface::class),
         );
     }
 

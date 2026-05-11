@@ -70,6 +70,11 @@ class ShowCatalogueTest extends TestCase
             ->assertJsonPath('uuid', $catalogue->uuid)
             ->assertJsonPath('items_count', 0)
             ->assertJsonPath('items', [])
+            ->assertJsonPath('hashtags', [])
+            ->assertJsonPath('engagement.likes_count', 0)
+            ->assertJsonPath('engagement.views_count', 1)
+            ->assertJsonPath('engagement.downloads_count', 0)
+            ->assertJsonPath('engagement.comments_count', 0)
             ->assertJsonPath('engagement.is_liked_by_viewer', false)
             ->assertJsonMissingPath('catalogue');
     }

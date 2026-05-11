@@ -4,15 +4,12 @@ namespace App\Http\v1\Catalogues\Controllers;
 
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
-use App\Application\Engagement\Actions\LoadEntityStatsAction;
-use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
-use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
@@ -38,10 +35,9 @@ class CatalogueController extends Controller
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly LoadEntityStatsAction $loadStats,
-        private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+    ) {
+    }
 
     /**
      * @response CatalogueListResource
@@ -81,7 +77,7 @@ class CatalogueController extends Controller
         );
 
         $resources = array_map(
-            static fn(CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
+            static fn (CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
                 $item->catalogue,
                 $item->containsItem,
             ),
@@ -173,46 +169,8 @@ class CatalogueController extends Controller
 
         /** @var CatalogueDetailDTO $detail */
         $detail = $detailResult->getData();
-        $catalogue = $detail->catalogue;
 
-        $statsData = $this->loadStats->batchLoadStatsById(
-            ObjectTemplateType::LIST->getLegacyId(),
-            [$catalogue->getIdValue()]
-        );
-
-        $statsRow = $statsData[$catalogue->getIdValue()] ?? [
-            'likes' => 0,
-            'downloads' => 0,
-            'views' => 0,
-            'comments' => 0,
-        ];
-
-        $stats = new CatalogueStats(
-            $statsRow['likes'],
-            $statsRow['downloads'],
-            $statsRow['views'],
-            $statsRow['comments']
-        );
-
-        $hashtags = $this->hashtagService->getHashtags(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST
-        );
-
-        $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST,
-            $viewer !== null
-        );
-
-        return new CatalogueDetailResource(
-            $catalogue,
-            $detail->items,
-            $stats,
-            $hashtags,
-            $detail->itemsCount,
-            $isLikedByViewer
-        );
+        return new CatalogueDetailResource($detail);
     }
 
     /**

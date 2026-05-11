@@ -2,8 +2,7 @@
 
 namespace App\Http\v1\Catalogues\Resources;
 
-use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
@@ -11,21 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Catalogue $resource
+ * @property CatalogueDetailDTO $resource
  */
 class CatalogueDetailResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(
-        Catalogue $catalogue,
-        private array $items = [],
-        private ?CatalogueStats $stats = null,
-        private array $hashtags = [],
-        private ?int $itemsCount = null,
-        private bool $isLikedByViewer = false,
-    ) {
-        parent::__construct($catalogue);
+    public function __construct(CatalogueDetailDTO $detail)
+    {
+        parent::__construct($detail);
     }
 
     /**
@@ -48,8 +41,9 @@ class CatalogueDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var Catalogue $catalogue */
-        $catalogue = $this->resource;
+        /** @var CatalogueDetailDTO $detail */
+        $detail = $this->resource;
+        $catalogue = $detail->catalogue;
 
         return [
             'id' => $catalogue->getIdValue(),
@@ -64,10 +58,10 @@ class CatalogueDetailResource extends JsonResource
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
-            'items_count' => $this->itemsCount ?? count($this->items),
-            'hashtags' => HashtagResource::collection($this->hashtags),
-            'engagement' => $this->stats ? new CatalogueDetailEngagementResource($this->stats, $this->isLikedByViewer) : null,
-            'items' => $this->items,
+            'items_count' => $detail->itemsCount,
+            'hashtags' => HashtagResource::collection($detail->hashtags),
+            'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),
+            'items' => $detail->items,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),
         ];

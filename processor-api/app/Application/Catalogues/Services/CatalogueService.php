@@ -12,6 +12,7 @@ use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterfa
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
@@ -56,6 +57,7 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly DownloadRepositoryInterface $downloadRepository,
         private readonly CommentRepositoryInterface $commentRepository,
         private readonly LoadEntityStatsAction $loadStats,
+        private readonly EngagementServiceInterface $engagementService,
     ) {
     }
 
@@ -207,12 +209,23 @@ class CatalogueService implements CatalogueServiceInterface
         $this->trackView($catalogue->getIdValue(), ObjectTemplateType::LIST, $viewer);
 
         $items = $this->catalogueItemService->getItems($catalogue);
+        $catalogueId = $catalogue->getIdValue();
+        $stats = $this->loadCatalogueStats([$catalogueId], true)[$catalogueId];
+        $hashtags = $this->hashtagService->getHashtags($catalogueId, ObjectTemplateType::LIST);
+        $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
+            $catalogueId,
+            ObjectTemplateType::LIST,
+            $user !== null,
+        );
 
         return Result::success(
             new CatalogueDetailDTO(
                 catalogue: $catalogue,
                 items: $items,
-                itemsCount: count($items)
+                itemsCount: count($items),
+                stats: $stats,
+                hashtags: $hashtags,
+                isLikedByViewer: $isLikedByViewer,
             )
         );
     }
