@@ -64,7 +64,7 @@ return [
             'connection' => 'default',
             'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => (int) env('QUEUE_RETRY_AFTER', 180),
-            'block_for' => null,
+            'block_for' => env('QUEUE_BLOCK_FOR') !== null ? (int) env('QUEUE_BLOCK_FOR') : null,
         ],
 
     ],

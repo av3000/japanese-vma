@@ -2,17 +2,17 @@
 
 namespace App\Application\Comments\Interfaces\Repositories;
 
+use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\CommentFilterDTO;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Infrastructure\Persistence\Models\User;
 
 interface CommentRepositoryInterface
 {
     /**
-     *
      * This interface method is generic because it reflects the actual
      * database structure. The template system in your database treats
      * all entity types generically, so the repository interface mirrors
@@ -26,9 +26,17 @@ interface CommentRepositoryInterface
     ): array;
 
     public function save(DomainComment $commentData): DomainComment;
+
     public function findById(EntityId $commentId): ?DomainComment;
+
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
+
     public function findAllByFilter(CommentFilterDTO $filter): array;
 
     public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments;
+
+    public function createForEntity(
+        CommentCreateDTO $dto,
+        User $author
+    ): DomainComment;
 }

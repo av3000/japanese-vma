@@ -10,14 +10,15 @@ use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Users\Queries\RoleQueryCriteria;
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
-use Spatie\Permission\Exceptions\RoleDoesNotExist;
+use App\Application\Users\Support\PermissionCatalog;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role as SpatieRole;
 
 final class RoleRepository implements RoleRepositoryInterface
 {
     public function find(?RoleQueryCriteria $criteria = null): array
     {
-        $query = SpatieRole::query();
+        $query = SpatieRole::query()->with('permissions');
 
         if ($criteria?->roleName !== null) {
             $query->where('name', $criteria->roleName);
@@ -42,12 +43,12 @@ final class RoleRepository implements RoleRepositoryInterface
 
     public function findByName(string $name): ?DomainRole
     {
-        try {
-            $role = SpatieRole::findByName($name);
-            return $role ? DomainRole::fromSpatieRole($role) : null;
-        } catch (RoleDoesNotExist $e) {
-            return null;
-        }
+        $role = SpatieRole::query()
+            ->with('permissions')
+            ->where('name', $name)
+            ->first();
+
+        return $role ? DomainRole::fromSpatieRole($role) : null;
     }
 
     public function userHasRole(EntityId $userUuid, string $roleName): bool
@@ -81,7 +82,19 @@ final class RoleRepository implements RoleRepositoryInterface
             'name' => $name,
             'guard_name' => $guardName,
         ]);
-        return DomainRole::fromSpatieRole($spatieRole);
+
+        return DomainRole::fromSpatieRole($spatieRole->load('permissions'));
+    }
+
+    public function updateRole(string $currentName, string $newName, string $guardName): DomainRole
+    {
+        /** @var SpatieRole $spatieRole */
+        $spatieRole = SpatieRole::query()->where('name', $currentName)->firstOrFail();
+        $spatieRole->name = $newName;
+        $spatieRole->guard_name = $guardName;
+        $spatieRole->save();
+
+        return DomainRole::fromSpatieRole($spatieRole->load('permissions'));
     }
 
     public function deleteRole(string $name): bool
@@ -105,5 +118,23 @@ final class RoleRepository implements RoleRepositoryInterface
     public function exists(string $roleName): bool
     {
         return SpatieRole::where('name', $roleName)->exists();
+    }
+
+    public function syncPermissions(string $roleName, array $permissions): DomainRole
+    {
+        /** @var SpatieRole $spatieRole */
+        $spatieRole = SpatieRole::query()->where('name', $roleName)->firstOrFail();
+        $spatieRole->syncPermissions($permissions);
+
+        return DomainRole::fromSpatieRole($spatieRole->load('permissions'));
+    }
+
+    public function getAssignablePermissions(): array
+    {
+        return Permission::query()
+            ->where('guard_name', PermissionCatalog::guardName())
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
     }
 }

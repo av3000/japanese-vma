@@ -4,10 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+	applyCatalogueForItemAction,
+	type CatalogueForItem,
+	type CatalogueForItemAction,
+	fetchCataloguesForItem,
+	updateCatalogueForItem,
+} from '@/api/catalogues/cataloguesForItem';
 import Spinner from '@/assets/images/spinner.gif';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, LIST_ACTIONS, ObjectTemplates } from '@/shared/constants';
+import { BASE_URL, ObjectTemplates } from '@/shared/constants';
+import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { HttpMethod } from '@/shared/types';
 
 const RadicalDetails: React.FC = () => {
@@ -19,8 +27,9 @@ const RadicalDetails: React.FC = () => {
 	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { radical_id } = useParams();
+	const entityId = Number(radical_id);
 	const navigate = useNavigate();
-	const { user: currentUser, isAuthenticated } = useAuth;
+	const { isAuthenticated } = useAuth();
 
 	useEffect(() => {
 		getRadicalDetails();
@@ -44,18 +53,13 @@ const RadicalDetails: React.FC = () => {
 	const getUserRadicalLists = async () => {
 		try {
 			setIsLoading(true);
-			const res = await apiCall(HttpMethod.POST, `${BASE_URL}/api/user/lists/contain`, {
-				elementId: radical_id,
+			const nextLists = await fetchCataloguesForItem(radical_id, {
+				types: [ObjectTemplates.KNOWNRADICALS, ObjectTemplates.RADICALS],
 			});
-			const knownLists = res.lists.filter(
-				(list) => list.type === ObjectTemplates.KNOWNRADICALS && list.elementBelongsToList,
+			setRadicalIsKnown(
+				nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
 			);
-			setRadicalIsKnown(knownLists.length > 0);
-			setLists(
-				res.lists.filter(
-					(list) => list.type === ObjectTemplates.KNOWNRADICALS || list.type === ObjectTemplates.RADICALS,
-				),
-			);
+			setLists(nextLists);
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -71,36 +75,28 @@ const RadicalDetails: React.FC = () => {
 		}
 	};
 
-	const addToOrRemoveFromList = async (id, action) => {
-		try {
-			setLoadingListIds((prev) => [...prev, id]);
-			const endpoint = action === LIST_ACTIONS.ADD_ITEM ? 'additemwhileaway' : 'removeitemwhileaway';
-			const url = `${BASE_URL}/api/user/list/${endpoint}`;
+	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
+		if (Number.isNaN(entityId)) return;
 
-			await apiCall(HttpMethod.POST, url, {
-				listId: id,
-				elementId: radical_id,
+		try {
+			setLoadingListIds((prev) => [...prev, list.id]);
+			await updateCatalogueForItem({
+				list,
+				elementId: entityId,
+				action,
 			});
 
-			setLists((prevLists) =>
-				prevLists.map((list) =>
-					list.id === id
-						? {
-								...list,
-								elementBelongsToList: action === LIST_ACTIONS.ADD_ITEM,
-							}
-						: list,
-				),
-			);
-			setRadicalIsKnown(
-				action === LIST_ACTIONS.ADD_ITEM
-					? true
-					: lists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.elementBelongsToList),
-			);
+			setLists((prevLists) => {
+				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
+				setRadicalIsKnown(
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
+				);
+				return nextLists;
+			});
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setLoadingListIds((prev) => prev.filter((loadingId) => loadingId !== id));
+			setLoadingListIds((prev) => prev.filter((loadingId) => loadingId !== list.id));
 		}
 	};
 
@@ -172,21 +168,16 @@ const RadicalDetails: React.FC = () => {
 				<Modal.Body>
 					{lists.map((list) => (
 						<div key={list.id} className="d-flex justify-content-between">
-							<Link to={`/list/${list.id}`}>{list.title}</Link>
+							<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 							<Button
-								variant={list.elementBelongsToList ? 'danger' : 'primary'}
+								variant={list.contains_item ? 'danger' : 'primary'}
 								size="sm"
-								onClick={() =>
-									addToOrRemoveFromList(
-										list.id,
-										list.elementBelongsToList ? LIST_ACTIONS.REMOVE_ITEM : LIST_ACTIONS.ADD_ITEM,
-									)
-								}
+								onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
 								disabled={loadingListIds.includes(list.id)}
 							>
 								{loadingListIds.includes(list.id) ? (
 									<span className="spinner-border spinner-border-sm"></span>
-								) : list.elementBelongsToList ? (
+								) : list.contains_item ? (
 									'Remove'
 								) : (
 									'Add'
@@ -195,7 +186,7 @@ const RadicalDetails: React.FC = () => {
 						</div>
 					))}
 					<small>
-						<Link to="/newlist">Create a new list?</Link>
+						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
 					</small>
 				</Modal.Body>
 				<Modal.Footer>

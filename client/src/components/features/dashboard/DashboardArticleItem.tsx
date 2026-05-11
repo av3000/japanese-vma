@@ -1,20 +1,31 @@
-// @ts-nocheck
-/* eslint-disable */
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
+import type { HashtagResource } from '@/api/generated/model';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
+import { Icon } from '@/components/shared/Icon';
 import ArticleStatus from '../../ui/article-status';
 
-const DashboardArticleItem: React.FC = ({
-	id,
+interface DashboardArticleItemProps {
+	uuid: string;
+	created_at: string;
+	title_jp: string;
+	status: number;
+	commentsTotal: number;
+	likesTotal: number;
+	viewsTotal: number;
+	hashtags?: HashtagResource[];
+}
+
+const DashboardArticleItem: React.FC<DashboardArticleItemProps> = ({
+	uuid,
 	created_at,
 	title_jp,
 	status,
 	commentsTotal,
 	likesTotal,
 	viewsTotal,
-	hashtags,
+	hashtags = [],
 }) => (
 	<div className="row">
 		<div className="col-md-8 pb-3 mb-0 border-bottom border-gray">
@@ -44,7 +55,7 @@ const DashboardArticleItem: React.FC = ({
 					<span>{commentsTotal} Comments</span>
 					<span>{viewsTotal} Views</span>
 					<span>{likesTotal} Likes</span>
-					<Button to={`/article/${id}`} variant="outline" size="sm" type="button">
+					<Button to={`/articles/${uuid}`} variant="outline" size="sm" type="button">
 						<Icon name="externalLink" size="sm" />
 					</Button>
 				</ListGroup.Item>

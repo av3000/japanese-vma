@@ -2,6 +2,8 @@ FROM php:8.3-fpm
 
 WORKDIR /var/www/html
 
+ARG INSTALL_DEV_DEPENDENCIES=false
+
 # Copy Composer early to cache dependencies
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -51,7 +53,11 @@ RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
 COPY . /var/www/html
 
 # TODO: doublecheck if this fits for deployments to production when working on them.
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+RUN if [ "$INSTALL_DEV_DEPENDENCIES" = "true" ]; then \
+        composer install --no-interaction --optimize-autoloader; \
+    else \
+        composer install --no-interaction --optimize-autoloader --no-dev; \
+    fi
 
 EXPOSE 9000
 CMD ["php-fpm"]

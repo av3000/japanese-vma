@@ -1,25 +1,14 @@
+import { commentStore } from '@/api/generated/comment/comment';
+import type { CommentListResource } from '@/api/generated/model/commentListResource';
+import type { CommentResource } from '@/api/generated/model/commentResource';
+import type { ObjectTemplateType } from '@/api/generated/model/objectTemplateType';
+import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
 import axios from '@/services/axios';
-import { PaginatedResponse } from '@/types';
 
-export interface ApiComment {
-	id: number;
-	content: string;
-	entity_uuid: string;
-	author_name: string;
-	author_id: number;
-	created_at: string;
-	updated_at: string;
-	likes_count: number;
-	is_liked_by_viewer: boolean;
-}
+export type ApiComment = CommentResource;
 
 export interface CommentFilters {
 	include_likes?: boolean;
-}
-
-export interface AddCommentPayload {
-	content: string;
-	entity_id?: string;
 }
 
 export interface RemoveCommentPayload {
@@ -32,24 +21,29 @@ export const fetchComments = async (
 	objectType: string,
 	objectId: string | number,
 	filters?: CommentFilters,
-): Promise<PaginatedResponse<ApiComment>> => {
-	console.log('fetch comments call');
+): Promise<CommentListResource> => {
+	// TODO: use generated Orval route for fetching comments
 	const url = `v1/${objectType}s/${objectId}/comments`;
 
-	const response = await axios.get(url, {
+	const response = await axios.get<CommentListResource>(url, {
 		params: filters,
 	});
-	console.log('response comments: ', response);
-	return response.data.data || [];
+
+	return response.data;
 };
 
 export const addComment = async (
-	parentObjectType: string,
-	parentObjectId: string | number,
-	requestPayload: AddCommentPayload,
-) => {
-	const response = await axios.post(`${parentObjectType}/${parentObjectId}/comment`, requestPayload);
-	return response.data.comment;
+	entityType: ObjectTemplateType,
+	entityId: number,
+	entityUuid: string,
+	requestPayload: Pick<StoreCommentRequest, 'content' | 'parent_comment_id'>,
+): Promise<CommentResource> => {
+	return commentStore({
+		entity_type: entityType,
+		entity_id: entityId,
+		entity_uuid: entityUuid,
+		...requestPayload,
+	});
 };
 
 export const deleteComment = async (requestPayload: RemoveCommentPayload) => {

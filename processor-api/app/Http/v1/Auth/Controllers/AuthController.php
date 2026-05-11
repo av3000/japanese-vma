@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Auth\Controllers;
 
+use Dedoc\Scramble\Attributes\Response;
 use App\Application\Users\Actions\GetCurrentUserAction;
 use App\Application\Users\Actions\LoginUserAction;
 use App\Application\Users\Actions\LogoutUserAction;
@@ -29,7 +30,10 @@ class AuthController extends Controller
     /**
      * POST /api/v1/register
      * Register new user and return access token
+     *
+     * @response array{success: true, data: AuthUserResource}
      */
+    #[Response(201, type: 'array{success: true, data: AuthUserResource}')]
     public function register(RegisterRequest $request): JsonResponse
     {
         $dto = RegisterUserDTO::fromRequest($request->validated());
@@ -50,7 +54,10 @@ class AuthController extends Controller
 
     /**
      * POST /api/v1/login
+     *
+     * @response array{success: true, data: AuthUserResource}
      */
+    #[Response(type: 'array{success: true, data: AuthUserResource}')]
     public function login(LoginRequest $request): JsonResponse
     {
         $dto = LoginUserDTO::fromRequest($request->validated());
@@ -71,7 +78,10 @@ class AuthController extends Controller
 
     /**
      * POST /api/v1/logout
+     *
+     * @response array{success: true, message: string}
      */
+    #[Response(type: 'array{success: true, message: string}')]
     public function logout(): JsonResponse
     {
         $result = $this->logoutUserAction->execute();
@@ -85,7 +95,10 @@ class AuthController extends Controller
 
     /**
      * GET /api/v1/me
+     *
+     * @response array{success: true, data: AuthUserResource}
      */
+    #[Response(type: 'array{success: true, data: AuthUserResource}')]
     public function me(): JsonResponse
     {
         $result = $this->getCurrentUserAction->execute();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\LastOperations\Events;
 
+use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -48,13 +49,13 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return [
+        return (new ProcessingStatusResource([
             'id' => $this->operationState->id,
             'type' => $this->operationState->task_type,
-            'status' => $this->operationState->status->value,
+            'status' => $this->operationState->status,
             'metadata' => $this->operationState->metadata,
             'created_at' => $this->operationState->created_at?->toIso8601String(),
             'updated_at' => $this->operationState->updated_at->toIso8601String(),
-        ];
+        ]))->resolve();
     }
 }

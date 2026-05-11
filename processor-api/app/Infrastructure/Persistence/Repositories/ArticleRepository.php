@@ -34,6 +34,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
+        $entityArticle->load('user');
 
         return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }
@@ -237,6 +238,12 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         if ($criteria->categoryId !== null) {
             $query->where('category_id', $criteria->categoryId);
+        }
+
+        if ($criteria->authorUid !== null) {
+            $query->whereHas('user', function (Builder $userQuery) use ($criteria) {
+                $userQuery->where('uuid', $criteria->authorUid);
+            });
         }
 
         if ($criteria->search !== null) {

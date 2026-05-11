@@ -18,7 +18,7 @@ final class GetCurrentUserAction
     /**
      * Get currently authenticated user
      *
-     * @return Result Success data: DomainUser, Failure data: Error
+     * @return Result Success data: DomainUser, Failure data: ResultError
      */
     public function execute(): Result
     {

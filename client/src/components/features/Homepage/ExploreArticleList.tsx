@@ -1,33 +1,39 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchArticles } from '@/api/articles/articles';
-import Spinner from '@/assets/images/spinner.gif';
+import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import ArticleCard from '@/components/shared/ArticleCard';
+import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
+
+const HOMEPAGE_ARTICLE_SKELETON_COUNT = 4;
 
 const ExploreArticleList: React.FC = () => {
-	const { data, error, status } = useInfiniteQuery({
-		// TODO: query keys should be managed centrally
-		queryKey: ['articles'],
-		queryFn: ({ pageParam }) => fetchArticles({ per_page: 4 }, pageParam),
-		initialPageParam: 1,
-		getNextPageParam: (lastPage) => {
-			return lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
-		},
+	const { articles, total, error, isPending, isError } = useInfiniteArticles({
+		filters: { per_page: 4 },
 	});
 
-	const allArticles = data?.pages.flatMap((page) => page.items) || [];
-	const totalCount = data?.pages[0]?.pagination.total || 0;
-
-	if (status === 'pending') {
+	if (isPending) {
 		return (
-			<div className="text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
+			<>
+				<div className="d-flex justify-content-between align-items-center w-100 my-3">
+					<h3>Latest Articles</h3>
+					<div>
+						<Link to="/articles" className="homepage-section-title">
+							Read All Articles
+						</Link>
+					</div>
+				</div>
+				<div className="row">
+					{Array.from({ length: HOMEPAGE_ARTICLE_SKELETON_COUNT }).map((_, index) => (
+						<div key={index} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+							<ArticleCardSkeleton />
+						</div>
+					))}
+				</div>
+			</>
 		);
 	}
 
-	if (status === 'error') {
+	if (isError) {
 		return <div className="text-danger">Error: {error.message}</div>;
 	}
 
@@ -35,7 +41,7 @@ const ExploreArticleList: React.FC = () => {
 		<>
 			<div className="d-flex justify-content-between align-items-center w-100 my-3">
 				<h3>
-					Latest Articles {allArticles.length} of {totalCount}
+					Latest Articles {articles.length} of {total}
 				</h3>
 				<div>
 					<Link to="/articles" className="homepage-section-title">
@@ -44,11 +50,11 @@ const ExploreArticleList: React.FC = () => {
 				</div>
 			</div>
 			<div className="row">
-				{allArticles.length === 0 ? (
+				{articles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
 					<>
-						{allArticles.map((article) => (
+						{articles.map((article) => (
 							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
 								<ArticleCard article={article} />
 							</div>

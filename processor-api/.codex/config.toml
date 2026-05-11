@@ -1,0 +1,4 @@
+[mcp_servers.laravel-boost]
+command = "docker"
+args = ["compose", "exec", "-T", "laravel-app", "php", "artisan", "boost:mcp"]
+cwd = "C:/Users/alana/Documents/projects/japanese-vma/processor-api"

@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('likes', function (Blueprint $table) {
+            $table->dropIndex(['entity_type_uuid']);
             $table->dropIndex(['real_object_uuid']);
             $table->dropIndex(['entity_type_uuid', 'real_object_uuid']);
             $table->dropIndex(['user_id']);
@@ -28,6 +29,7 @@ return new class extends Migration
         Schema::table('likes', function (Blueprint $table) {
             $table->uuid('entity_type_uuid')->nullable()->after('id');
             $table->uuid('real_object_uuid')->nullable()->after('entity_type_uuid');
+            $table->index('entity_type_uuid');
             $table->index('real_object_uuid');
             $table->index(['entity_type_uuid', 'real_object_uuid']);
             $table->index('user_id');

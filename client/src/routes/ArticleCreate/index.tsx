@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createArticle, CreateArticlePayload, CreateArticleResponse } from '@/api/articles/articles';
+import { articleStore } from '@/api/generated/article/article';
+import type { UuidCreatedResource } from '@/api/generated/model';
+import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 
@@ -25,8 +27,8 @@ export default function ArticleCreatePage() {
 	}, []);
 
 	// TODO: add upload image feature
-	const mutation = useMutation<CreateArticleResponse, unknown, CreateArticlePayload>({
-		mutationFn: createArticle,
+	const mutation = useMutation<UuidCreatedResource, unknown, StoreArticleRequest>({
+		mutationFn: (payload) => articleStore(payload),
 		onSuccess: ({ uuid }) => {
 			setStatus(null);
 			setServerErrors(null);
@@ -56,7 +58,7 @@ export default function ArticleCreatePage() {
 		setStatus(null);
 		setServerErrors(null);
 
-		const payload: CreateArticlePayload = {
+		const payload: StoreArticleRequest = {
 			title_jp: values.title_jp.trim(),
 			title_en: values.title_en.trim(),
 			content_jp: values.content_jp.trim(),

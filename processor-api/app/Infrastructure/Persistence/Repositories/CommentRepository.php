@@ -2,20 +2,21 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
-use App\Infrastructure\Persistence\Repositories\CommentMapper;
+use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Domain\Comments\DTOs\CommentCreateDTO;
+use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
-use App\Domain\Comments\DTOs\CommentCriteriaDTO;
-
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\CommentFilterDTO;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Http\Models\{ObjectTemplate, User};
+use App\Http\Models\ObjectTemplate;
+use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Models\Like;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CommentRepository implements CommentRepositoryInterface
 {
@@ -54,6 +55,24 @@ class CommentRepository implements CommentRepositoryInterface
         $paginatedResults->setCollection($domainComments);
 
         return Comments::fromEloquentPaginator($paginatedResults);
+    }
+
+    public function createForEntity(
+        CommentCreateDTO $dto,
+        User $author
+    ): DomainComment {
+        $persistenceComment = PersistenceComment::create([
+            'uuid' => (string) Str::uuid(),
+            'template_id' => $dto->entity_type->getLegacyId(),
+            'real_object_id' => $dto->entity_id,
+            'real_object_uuid' => $dto->entity_uuid->value(),
+            'entity_type_uuid' => $dto->entity_type->value,
+            'user_id' => $author->id,
+            'parent_comment_id' => $dto->parent_comment_id,
+            'content' => $dto->content,
+        ]);
+
+        return CommentMapper::mapToDomain($persistenceComment->fresh(['user']));
     }
 
     public function findPaginatedByEntity(
@@ -131,8 +150,8 @@ class CommentRepository implements CommentRepositoryInterface
                 'current_page' => $page,
                 'per_page' => $perPage,
                 'total' => $this->countCommentsForEntity($entityTemplateId, $entityUid->value()),
-                'has_more' => count($commentData) === $perPage
-            ]
+                'has_more' => count($commentData) === $perPage,
+            ],
         ];
     }
 
@@ -150,7 +169,7 @@ class CommentRepository implements CommentRepositoryInterface
             ->where('template_id', $commentTemplateId)
             ->whereIn('real_object_id', $commentIds)
             ->groupBy('real_object_id')
-            ->selectRaw('real_object_id, COUNT(*) as ' . self::COUNT_ALIAS)
+            ->selectRaw('real_object_id, COUNT(*) as '.self::COUNT_ALIAS)
             ->pluck(self::COUNT_ALIAS, 'real_object_id')
             ->toArray();
     }
@@ -166,9 +185,9 @@ class CommentRepository implements CommentRepositoryInterface
     {
         static $templateCache = [];
 
-        if (!isset($templateCache[$entityType])) {
+        if (! isset($templateCache[$entityType])) {
             $template = ObjectTemplate::where('title', $entityType)->first();
-            if (!$template) {
+            if (! $template) {
                 throw new \InvalidArgumentException("Unknown entity type: {$entityType}");
             }
             $templateCache[$entityType] = $template->id;
@@ -199,8 +218,8 @@ class CommentRepository implements CommentRepositoryInterface
                 'current_page' => $page,
                 'per_page' => $perPage,
                 'total' => 0,
-                'has_more' => false
-            ]
+                'has_more' => false,
+            ],
         ];
     }
 

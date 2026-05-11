@@ -2,6 +2,11 @@
 
 use Illuminate\Support\Str;
 
+$horizonQueues = array_values(array_filter(array_map(
+    static fn (string $queue): string => trim($queue),
+    explode(',', (string) env('HORIZON_QUEUES', (string) env('REDIS_QUEUE', 'default')))
+)));
+
 return [
 
     /*
@@ -15,7 +20,7 @@ return [
     |
     */
 
-    'name' => env('HORIZON_NAME'),
+    'name' => env('HORIZON_NAME', env('APP_NAME', 'Laravel')),
 
     /*
     |--------------------------------------------------------------------------
@@ -83,7 +88,7 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => ['web', 'horizon.basic_auth'],
 
     /*
     |--------------------------------------------------------------------------
@@ -199,15 +204,18 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            'queue' => $horizonQueues === [] ? ['default'] : $horizonQueues,
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,
-            'maxTime' => 0,
-            'maxJobs' => 0,
+            'minProcesses' => 1,
+            'maxTime' => (int) env('QUEUE_WORKER_MAX_TIME', 3600),
+            'maxJobs' => (int) env('QUEUE_WORKER_MAX_JOBS', 500),
             'memory' => 128,
-            'tries' => 1,
-            'timeout' => 60,
+            'tries' => (int) env('QUEUE_WORKER_TRIES', 3),
+            'timeout' => (int) env('QUEUE_WORKER_TIMEOUT', 150),
+            'sleep' => (int) env('QUEUE_WORKER_SLEEP', 1),
+            'backoff' => (int) env('QUEUE_WORKER_BACKOFF', 15),
             'nice' => 0,
         ],
     ],
@@ -215,9 +223,9 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+                'maxProcesses' => (int) env('HORIZON_MAX_PROCESSES', 1),
+                'balanceMaxShift' => (int) env('HORIZON_BALANCE_MAX_SHIFT', 1),
+                'balanceCooldown' => (int) env('HORIZON_BALANCE_COOLDOWN', 3),
             ],
         ],
 

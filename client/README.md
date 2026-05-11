@@ -1,68 +1,124 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Japanese VMA Client
 
-## Available Scripts
+`client/` contains the contributor-facing frontend for Japanese VMA. It is the main browser application for browsing study material, managing personal content, and using the community features exposed by the backend API.
 
-In the project directory, you can run:
+## Stack
 
-### `npm start`
+- React 19
+- Vite 6
+- TypeScript
+- React Router 6
+- TanStack React Query 5
+- Redux Toolkit
+- Axios
+- Bootstrap and React Bootstrap
+- Storybook 8
+- Vitest
+- Sentry
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Frontend Architecture
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+The frontend is organized around routes, shared UI, and API-facing modules.
 
-### `npm test`
+- `src/routes/` contains page-level route modules such as articles, lists, dashboard, Japanese material, and community flows.
+- `src/components/` contains reusable UI and feature components.
+- `src/api/` and `src/services/` contain HTTP access and query/mutation hooks.
+- `src/providers/` contains app-wide providers such as auth and websocket context.
+- `src/store/` contains Redux Toolkit slices for the parts of the app that still use Redux-managed client state.
+- `src/storybook/` and component `*.stories.*` files support UI development and documentation.
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Current state matters here:
 
-### `npm run build`
+- React Query is the main server-state pattern.
+- Redux is still present and actively used in parts of the app.
+- The app root wires together `QueryClientProvider`, `ReduxProvider`, router, auth, websocket, and Sentry boundaries.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Local Setup
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+### Native Node workflow
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Use Node 24 for local frontend work. The repo-level version hint lives in `client/.nvmrc`.
 
-### `npm run eject`
+1. Create `client/.env` from `client/.env.example`.
+2. Install dependencies.
+3. Start the Vite dev server.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+cd client
+npm install
+npm run dev
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Important local variables from `.env.example`:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- `VITE_API_URL=http://localhost:8080`
+- `VITE_SENTRY_DSN=`
+- `VITE_SENTRY_ENVIRONMENT=local`
+- `VITE_SENTRY_RELEASE=local-dev`
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The app runs on `http://localhost:3000` by default.
 
-## Learn More
+### Docker workflow
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Use the local Docker setup when you want the frontend containerized or want Storybook exposed with the repo defaults.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+cd client
+docker compose up -d --build
+```
 
-### Code Splitting
+This starts:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+- `react-app` on `http://localhost:3000`
+- `storybook` on `http://localhost:6006`
 
-### Analyzing the Bundle Size
+## Recommended Commands
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+```bash
+cd client
+npm run dev
+npm run typecheck
+npm run test
+npm run test:coverage
+npm run build
+npm run storybook
+npm run build-storybook
+```
 
-### Making a Progressive Web App
+## Generate API Client
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+```bash
+npm run orval:article
+docker compose run --rm react-app
+```
 
-### Advanced Configuration
+## What To Look At First
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+If you are new to the frontend, these files are the best starting points:
 
-### Deployment
+- `src/App.tsx` for top-level providers and app bootstrapping
+- `src/routes/routes.tsx` for route structure and lazy loading
+- `src/services/axios.ts` for shared HTTP configuration
+- `src/store/store.jsx` for remaining Redux-managed state
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+## CI And Delivery
 
-### `npm run build` fails to minify
+Frontend verification and deployment are defined in the repository root workflow at `.github/workflows/frontend-ci.yml`.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+That workflow currently:
+
+- uses Node 24 from `client/.nvmrc`
+- installs dependencies with `npm ci`
+- regenerates the Orval client from tracked `processor-api/api.json`
+- runs `npm run typecheck`
+- runs a production build with the required `VITE_*` variables
+- smoke-tests the production image
+- publishes the frontend image
+- triggers the Render deploy hook for production
+
+## Notes For Contributors
+
+- Keep request logic in existing API and service modules.
+- Prefer React Query for new server-state work.
+- Avoid introducing new Redux-first patterns for new features.
+- Reuse existing route, provider, and shared-component patterns before adding parallel abstractions.

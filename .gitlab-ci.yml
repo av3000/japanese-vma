@@ -31,6 +31,7 @@ variables:
   RUNTIME_ENV_FILE="$(mktemp)"
   export RUNTIME_ENV_FILE
   printf '%s\n' \
+    "APP_NAME=${APP_NAME:-JapaneseVMA}" \
     "APP_ENV=production" \
     "APP_DEBUG=false" \
     "APP_RELEASE=$CI_COMMIT_SHA" \
@@ -62,6 +63,7 @@ variables:
   QUEUE_RUNTIME_ENV_FILE="$(mktemp)"
   export QUEUE_RUNTIME_ENV_FILE
   printf '%s\n' \
+    "APP_NAME=${APP_NAME:-JapaneseVMA}" \
     "APP_ENV=production" \
     "APP_DEBUG=false" \
     "APP_RELEASE=$CI_COMMIT_SHA" \
@@ -93,10 +95,20 @@ variables:
     "REDIS_USERNAME=${REDIS_USERNAME:-}" \
     "REDIS_PASSWORD=${REDIS_PASSWORD:-}" \
     "REDIS_QUEUE=${REDIS_QUEUE:-default}" \
+    "HORIZON_NAME=${HORIZON_NAME:-japanese-vma-worker}" \
+    "HORIZON_PATH=${HORIZON_PATH:-horizon}" \
+    "HORIZON_PREFIX=${HORIZON_PREFIX:-japanese_vma_horizon:}" \
+    "HORIZON_QUEUES=${HORIZON_QUEUES:-${REDIS_QUEUE:-default}}" \
+    "HORIZON_MAX_PROCESSES=${HORIZON_MAX_PROCESSES:-1}" \
+    "HORIZON_BALANCE_MAX_SHIFT=${HORIZON_BALANCE_MAX_SHIFT:-1}" \
+    "HORIZON_BALANCE_COOLDOWN=${HORIZON_BALANCE_COOLDOWN:-3}" \
+    "TELESCOPE_ENABLED=${TELESCOPE_ENABLED:false}" \
     "QUEUE_CONNECTION=redis" \
+    "QUEUE_FAILED_DRIVER=${QUEUE_FAILED_DRIVER:-database}" \
     "QUEUE_RETRY_AFTER=${QUEUE_RETRY_AFTER:-180}" \
+    "QUEUE_BLOCK_FOR=${QUEUE_BLOCK_FOR:-10}" \
     "QUEUE_WORKER_TIMEOUT=${QUEUE_WORKER_TIMEOUT:-150}" \
-    "QUEUE_WORKER_SLEEP=${QUEUE_WORKER_SLEEP:-3}" \
+    "QUEUE_WORKER_SLEEP=${QUEUE_WORKER_SLEEP:-1}" \
     "QUEUE_WORKER_TRIES=${QUEUE_WORKER_TRIES:-3}" \
     "QUEUE_WORKER_BACKOFF=${QUEUE_WORKER_BACKOFF:-15}" \
     "QUEUE_WORKER_MAX_JOBS=${QUEUE_WORKER_MAX_JOBS:-500}" \
@@ -320,6 +332,7 @@ verify_worker:
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE/processor-api:$CI_COMMIT_SHA"
     - docker pull "$IMAGE_NAME"
     - *prepare_queue_runtime_env
+    - docker run --rm --env-file "$QUEUE_RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan horizon:status
     - docker run --rm --env-file "$QUEUE_RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan app:verify-queue-worker --queue="${REDIS_QUEUE:-default}" --timeout=30 --ttl=120 --poll=1
 
 deploy_render:

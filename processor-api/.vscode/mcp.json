@@ -1,0 +1,16 @@
+{
+    "servers": {
+        "laravel-boost": {
+            "command": "docker",
+            "args": [
+                "compose",
+                "exec",
+                "-T",
+                "laravel-app",
+                "php",
+                "artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}

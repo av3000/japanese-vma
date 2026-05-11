@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
@@ -21,9 +22,12 @@ use App\Http\v1\Articles\Resources\ArticleWordCollection;
 use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
+use App\Http\v1\Articles\Resources\ArticleListResource;
+use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\TypedResults;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ArticleController extends Controller
 {
@@ -36,7 +40,11 @@ class ArticleController extends Controller
         private readonly HashtagServiceInterface $hashtagService,
     ) {}
 
-    public function index(IndexArticleRequest $request): JsonResponse
+    /**
+     * @response ArticleListResource
+     */
+    #[Response(type: 'ArticleListResource')]
+    public function index(IndexArticleRequest $request): JsonResponse|JsonResource
     {
         // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
@@ -91,7 +99,7 @@ class ArticleController extends Controller
             );
         }
 
-        $articleListResource = [
+        return new ArticleListResource([
             'items' => $resources,
             'pagination' => [
                 'page' => $paginatedArticles->getPaginator()->currentPage(),
@@ -100,9 +108,7 @@ class ArticleController extends Controller
                 'last_page' => $paginatedArticles->getPaginator()->lastPage(),
                 'has_more' => $paginatedArticles->getPaginator()->hasMorePages(),
             ],
-        ];
-
-        return TypedResults::ok($articleListResource);
+        ]);
     }
 
     private function getImagePath(): string
@@ -110,7 +116,11 @@ class ArticleController extends Controller
         return '/var/www/html/public/images/articles/user/testing-image.jpg';
     }
 
-    public function store(StoreArticleRequest $request): JsonResponse
+    /**
+     * @response UuidCreatedResource
+     */
+    #[Response(201, type: 'UuidCreatedResource')]
+    public function store(StoreArticleRequest $request): JsonResponse|JsonResource
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
 
@@ -122,12 +132,16 @@ class ArticleController extends Controller
 
         $article = $result->getData();
 
-        return TypedResults::created(
-            ['uuid' => $article->getUid()->value()]
-        );
+        return new UuidCreatedResource([
+            'uuid' => $article->getUid()->value(),
+        ]);
     }
 
-    public function show(string $uid, ArticleDetailRequest $request): JsonResponse
+    /**
+     * @response ArticleDetailResource
+     */
+    #[Response(type: 'ArticleDetailResource')]
+    public function show(string $uid, ArticleDetailRequest $request): JsonResponse|JsonResource
     {
         $articleUid = EntityId::from($uid);
         $options = ArticleIncludeOptionsDTO::fromRequest($request->validated());
@@ -160,19 +174,21 @@ class ArticleController extends Controller
         $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
         $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
 
-        return TypedResults::ok(
-            new ArticleDetailResource(
-                article: $article,
-                engagement: $engagementSummary,
-                kanjis: $article->getKanjis(),
-                words: $words,
-                hashtags: $hashtags,
-                lastOperation: $kanjiOperationState
-            )
+        return new ArticleDetailResource(
+            article: $article,
+            engagement: $engagementSummary,
+            kanjis: $article->getKanjis(),
+            words: $words,
+            hashtags: $hashtags,
+            lastOperation: $kanjiOperationState
         );
     }
 
-    public function update(string $uid, UpdateArticleRequest $request): JsonResponse
+    /**
+     * @response ArticleResource
+     */
+    #[Response(type: 'ArticleResource')]
+    public function update(string $uid, UpdateArticleRequest $request): JsonResponse|JsonResource
     {
         if (!$request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
@@ -202,12 +218,14 @@ class ArticleController extends Controller
         );
 
         // TODO: returning only Id might be enough for frontend.
-        return TypedResults::ok(
-            new ArticleResource(article: $article, hashtags: $hashtags)
-        );
+        return new ArticleResource(article: $article, hashtags: $hashtags);
     }
 
     // TODO: refactor to clean architecture
+    /**
+     * @response array{success: true, message: string}
+     */
+    #[Response(type: 'array{success: true, message: string}')]
     public function destroy(string $uuid): JsonResponse
     {
         try {
@@ -238,6 +256,10 @@ class ArticleController extends Controller
     }
 
     // TODO: refactor to clean architecture
+    /**
+     * @response ArticleWordCollection
+     */
+    #[Response(type: 'ArticleWordCollection')]
     public function words(Request $request, int $id): JsonResponse
     {
         try {
@@ -255,5 +277,4 @@ class ArticleController extends Controller
             ], 422);
         }
     }
-
 }

@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { LastOperationStatus } from '@/api/last-operations/last-operations';
+import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
 
 // Define the shape of your Article Cache Data
@@ -15,14 +16,7 @@ import { useEcho } from '@/lib/echo';
 // 	};
 // }
 
-type OperationStatusPayload = {
-	id?: number;
-	type?: string;
-	status: LastOperationStatus;
-	metadata: Record<string, any>;
-	created_at?: string;
-	updated_at?: string;
-};
+type OperationStatusPayload = ProcessingStatusResource;
 
 // TODO: Explore Orval client generator for data contracts ( types, interfaces, endpoints) generation.
 export const useArticleSubscription = (articleUuid: string) => {
@@ -37,49 +31,69 @@ export const useArticleSubscription = (articleUuid: string) => {
 				console.log('OperationStatusUpdated', normalizedPayload);
 			}
 
-				// Optimistic Update for Detail View
-				queryClient.setQueryData(['article', articleUuid], (old: any) => {
-					if (!old) return old;
+			// Optimistic Update for Detail View
+			queryClient.setQueryData(['article', articleUuid], (old: any) => {
+				if (!old) return old;
 
-					return {
-						...old,
-						processing_status: {
-							...(old.processing_status ?? {}),
-							...normalizedPayload,
-						},
-					};
-				});
-
-			// Optimistic Update for Infinite List View
-			// We need to iterate over all cached 'articles' lists and update this specific item that is subscribed to
-			queryClient.setQueryDefaults(['articles'], { staleTime: 0 }); // Mark lists as stale
+				return {
+					...old,
+					processing_status: {
+						...(old.processing_status ?? {}),
+						...normalizedPayload,
+					},
+				};
+			});
 
 			queryClient.setQueriesData({ queryKey: ['articles'] }, (oldData: any) => {
 				if (!oldData) return oldData;
+				if (!Array.isArray(oldData.pages)) return oldData;
 
 				return {
 					...oldData,
 					pages: oldData.pages.map((page: any) => ({
 						...page,
-						items: page.items.map((item: any) => {
-							if (item.uuid === articleUuid) {
-									return {
-										...item,
-										processing_status: {
-											...(item.processing_status ?? {}),
-											...normalizedPayload,
-										},
-									};
+						data: page.data
+							? {
+									...page.data,
+									items: page.data.items.map((item: any) => {
+										if (item.uuid !== articleUuid) {
+											return item;
+										}
+
+										return {
+											...item,
+											processing_status: {
+												...(item.processing_status ?? {}),
+												...normalizedPayload,
+											},
+										};
+									}),
 								}
-								return item;
-							}),
+							: page.items
+								? {
+										...page,
+										items: page.items.map((item: any) => {
+											if (item.uuid !== articleUuid) {
+												return item;
+											}
+
+											return {
+												...item,
+												processing_status: {
+													...(item.processing_status ?? {}),
+													...normalizedPayload,
+												},
+											};
+										}),
+									}
+								: page.data,
 					})),
 				};
 			});
 
 			if (
-				normalizedPayload.status === LastOperationStatus.Completed ||
-				normalizedPayload.status === LastOperationStatus.Failed
+				normalizedPayload.status === LastOperationStatus.completed ||
+				normalizedPayload.status === LastOperationStatus.failed
 			) {
 				queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
 			}

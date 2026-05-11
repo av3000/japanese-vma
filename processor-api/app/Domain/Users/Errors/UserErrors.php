@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Users\Errors;
 
-use App\Shared\Results\Error;
+use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
 
 class UserErrors
 {
-    public static function notFound(string $userUuid): Error
+    public static function notFound(string $userUuid): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.NotFound',
             status: HttpStatus::NOT_FOUND,
             description: 'User not found',
@@ -20,9 +20,9 @@ class UserErrors
         );
     }
 
-    public static function registrationFailed(): Error
+    public static function registrationFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.RegistrationFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'User registration failed',
@@ -31,9 +31,9 @@ class UserErrors
         );
     }
 
-    public static function emailAlreadyExists(string $email): Error
+    public static function emailAlreadyExists(string $email): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.EmailAlreadyExists',
             status: HttpStatus::CONFLICT,
             description: 'Email already registered',
@@ -42,9 +42,9 @@ class UserErrors
         );
     }
 
-    public static function nameAlreadyExists(string $name): Error
+    public static function nameAlreadyExists(string $name): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.NameAlreadyExists',
             status: HttpStatus::CONFLICT,
             description: 'Username already taken',
@@ -53,9 +53,9 @@ class UserErrors
         );
     }
 
-    public static function tokenGenerationFailed(): Error
+    public static function tokenGenerationFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.TokenGenerationFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Token generation failed',
@@ -65,9 +65,9 @@ class UserErrors
     }
 
     // Login
-    public static function invalidCredentials(): Error
+    public static function invalidCredentials(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.InvalidCredentials',
             status: HttpStatus::UNAUTHORIZED,
             description: 'Invalid credentials',
@@ -76,9 +76,9 @@ class UserErrors
         );
     }
 
-    public static function loginFailed(): Error
+    public static function loginFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.LoginFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Login failed',
@@ -87,9 +87,9 @@ class UserErrors
         );
     }
 
-    public static function notAuthenticated(): Error
+    public static function notAuthenticated(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.NotAuthenticated',
             status: HttpStatus::UNAUTHORIZED,
             description: 'Not authenticated',
@@ -98,9 +98,9 @@ class UserErrors
         );
     }
 
-    public static function notAuthorized(): Error
+    public static function notAuthorized(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.NotAuthorized',
             status: HttpStatus::UNAUTHORIZED,
             description: 'Not authorized',
@@ -109,9 +109,9 @@ class UserErrors
         );
     }
 
-    public static function logoutFailed(): Error
+    public static function logoutFailed(): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.LogoutFailed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Logout failed',
@@ -120,9 +120,9 @@ class UserErrors
         );
     }
 
-    public static function roleAlreadyAssigned(string $roleName): Error
+    public static function roleAlreadyAssigned(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.RoleAlreadyAssigned',
             status: HttpStatus::CONFLICT,
             description: "Role '{$roleName}' is already assigned to the user.",
@@ -131,9 +131,9 @@ class UserErrors
         );
     }
 
-    public static function roleNotAssigned(string $roleName): Error
+    public static function roleNotAssigned(string $roleName): ResultError
     {
-        return new Error(
+        return new ResultError(
             code: 'Users.RoleNotAssigned',
             status: HttpStatus::NOT_FOUND,
             description: "Role '{$roleName}' is not assigned to the user.",

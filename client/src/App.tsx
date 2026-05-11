@@ -3,15 +3,13 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import AppErrorFallback from '@/components/system/AppErrorFallback';
 import Footer from '@/components/features/Footer';
 import Header from '@/components/features/Header';
-import PageLoader from '@/components/features/PageLoader';
+import SocketConnectionBanner from '@/components/features/SocketConnectionBanner';
+import AppErrorFallback from '@/components/system/AppErrorFallback';
 import ScrollToTop from '@/helpers/ScrollToTop';
-import { useAuth } from '@/hooks/useAuth';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
 import { WebSocketProvider } from '@/providers/contexts/socket-provider';
-import SocketConnectionBanner from '@/components/features/SocketConnectionBanner';
 import AppRoutes from '@/routes/routes';
 import { configureAppStore } from '@/store/store';
 
@@ -27,12 +25,6 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
-	const { isLoading } = useAuth();
-
-	if (isLoading) {
-		return <PageLoader />;
-	}
-
 	return (
 		<div className="app-wrapper">
 			<ScrollToTop />

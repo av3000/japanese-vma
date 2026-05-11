@@ -21,7 +21,7 @@ final class LoginUserAction
      * Authenticate user and generate access token
      *
      * @param LoginUserDTO $dto Login credentials
-     * @return Result Success data: RegisteredUserDTO, Failure data: Error
+     * @return Result Success data: RegisteredUserDTO, Failure data: ResultError
      */
     public function execute(LoginUserDTO $dto): Result
     {

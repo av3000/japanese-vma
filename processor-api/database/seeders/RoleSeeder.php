@@ -2,16 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Shared\Enums\UserRole;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $created = [];
         $existing = [];
@@ -20,7 +22,7 @@ class RoleSeeder extends Seeder
         foreach (UserRole::cases() as $role) {
             $spatieRole = Role::firstOrCreate([
                 'name' => $role->value,
-                'guard_name' => 'api'
+                'guard_name' => PermissionCatalog::guardName(),
             ]);
             if ($spatieRole->wasRecentlyCreated) {
                 $created[] = $spatieRole->name;

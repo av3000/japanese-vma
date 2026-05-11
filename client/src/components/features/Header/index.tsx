@@ -6,7 +6,7 @@ import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import './header.scss';
 
 const Header: React.FC = () => {
-	const { user, isAuthenticated, logout } = useAuth();
+	const { user, isAuthenticated, isLoading, logout } = useAuth();
 
 	const handleLogout = () => {
 		logout();
@@ -23,8 +23,8 @@ const Header: React.FC = () => {
 					<Nav.Link as={Link} to="/articles">
 						Articles
 					</Nav.Link>
-					<Nav.Link as={Link} to="/lists">
-						Lists
+					<Nav.Link as={Link} to="/catalogues">
+						Catalogues
 					</Nav.Link>
 					<NavDropdown title="Japanese Material" id="material-nav-dropdown">
 						<Dropdown.Item as={Link} to="/radicals">
@@ -52,8 +52,8 @@ const Header: React.FC = () => {
 								<Dropdown.Item as={Link} to="/newarticle">
 									Article
 								</Dropdown.Item>
-								<Dropdown.Item as={Link} to="/newlist">
-									List
+								<Dropdown.Item as={Link} to="/catalogues/new">
+									Catalogue
 								</Dropdown.Item>
 								<Dropdown.Divider />
 								<Dropdown.Item as={Link} to="/newpost">
@@ -63,7 +63,11 @@ const Header: React.FC = () => {
 						</>
 					)}
 				</Nav>
-				{isAuthenticated && user ? (
+				{isLoading ? (
+					<Nav aria-label="Account status">
+						<span className="header-auth-pending" aria-label="Checking account status" />
+					</Nav>
+				) : isAuthenticated && user ? (
 					<Nav>
 						<div className="d-flex align-items-center mr-2">
 							<SocketStatusIndicator />

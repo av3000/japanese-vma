@@ -4,10 +4,11 @@ namespace App\Application\Engagement\Services;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\Errors\HashtagErrors;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Shared\Results\Result;
-
+use Illuminate\Support\Facades\DB;
+use Laravel\Reverb\Loggers\Log;
 
 class HashtagService implements HashtagServiceInterface
 {
@@ -57,7 +58,7 @@ class HashtagService implements HashtagServiceInterface
      * @param ObjectTemplateType $entityType The type of entity
      * @param array<string> $tags Array of hashtag strings (e.g., ['#php', '#laravel'])
      * @param int $userId The user creating the hashtags
-     * @return Result Success data: null (void operation), Failure data: Error (HashtagErrors::invalidTag or HashtagErrors::creationFailed)
+     * @return Result Success data: null (void operation), Failure data: ResultError (HashtagErrors::invalidTag or HashtagErrors::creationFailed)
      */
     public function createTagsForEntity(
         int $entityId,
@@ -65,14 +66,14 @@ class HashtagService implements HashtagServiceInterface
         array $tags,
         int $userId
     ): Result {
-        foreach($tags as $tag) {
-            if(!$this->isValidTag($tag)) {
+        foreach ($tags as $tag) {
+            if (!$this->isValidTag($tag)) {
                 return Result::failure(HashtagErrors::invalidTag($tag));
             }
         }
 
         try {
-            \DB::transaction(function () use ($entityId, $entityType, $tags, $userId) {
+            DB::transaction(function () use ($entityId, $entityType, $tags, $userId) {
                 foreach ($tags as $tag) {
                     $this->hashtagRepository->create([
                         'entity_id' => $entityId,
@@ -84,9 +85,8 @@ class HashtagService implements HashtagServiceInterface
             });
 
             return Result::success();
-
         } catch (\Exception $e) {
-            \Log::error('Hashtag creation failed', [
+            Log::error('Hashtag creation failed', [
                 'entity_id' => $entityId,
                 'entity_type' => $entityType->value,
                 'tags' => $tags,
@@ -117,7 +117,7 @@ class HashtagService implements HashtagServiceInterface
         }
 
         try {
-            \DB::transaction(function () use ($entityId, $entityType, $tags, $userId) {
+            DB::transaction(function () use ($entityId, $entityType, $tags, $userId) {
                 $this->hashtagRepository->deleteByEntity(
                     $entityId,
                     $entityType->getLegacyId()
@@ -135,7 +135,7 @@ class HashtagService implements HashtagServiceInterface
 
             return Result::success();
         } catch (\Exception $e) {
-            \Log::error('Hashtag sync failed', [
+            Log::error('Hashtag sync failed', [
                 'entity_id' => $entityId,
                 'entity_type' => $entityType->value,
                 'tags' => $tags,

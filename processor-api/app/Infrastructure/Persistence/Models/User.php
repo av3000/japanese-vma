@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\UserRole;
+use App\Http\Models\Article;
+use App\Http\Models\Comment;
+use App\Http\Models\CustomList;
+use App\Http\Models\Download;
+use App\Http\Models\Post;
+use App\Http\Models\View;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use App\Infrastructure\Persistence\Models\Like;
-use App\Http\Models\Article;
-use App\Http\Models\Download;
-use App\Http\Models\View;
-use App\Http\Models\Comment;
-use App\Http\Models\Post;
-use App\Http\Models\CustomList;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
-    use Notifiable, HasApiTokens, HasRoles;
+    use HasApiTokens, HasRoles, Notifiable;
 
     protected $guard_name = 'api';
 
@@ -78,13 +79,18 @@ class User extends Authenticatable
         return $this->hasMany(CustomList::class);
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'admin' && $this->hasRole(UserRole::ADMIN->value);
+    }
+
     /**
      * Boot method - assign default role on creation
      */
     protected static function booted(): void
     {
         static::created(function (User $user) {
-            if (!$user->hasAnyRole(UserRole::values())) {
+            if (! $user->hasAnyRole(UserRole::values())) {
                 $user->assignRole(UserRole::COMMON->value);
             }
         });
