@@ -1,0 +1,98 @@
+@keyframes skeletonShimmer {
+	0% {
+		background-position: 200% 0;
+	}
+
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.wrapper {
+	--skeleton-radius: var(--border-radius-md);
+	--skeleton-gap-xs: var(--spacing-2xs);
+	--skeleton-gap-sm: var(--spacing-xs);
+	--skeleton-gap-md: var(--spacing-md);
+
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	border-radius: var(--skeleton-radius);
+	pointer-events: none;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.block {
+	background: linear-gradient(
+		90deg,
+		var(--color-neutral-200) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-neutral-200) 100%
+	);
+	background-size: 200% 100%;
+	animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+.image {
+	aspect-ratio: 1 / 1;
+	width: 100%;
+	border-radius: var(--skeleton-radius);
+}
+
+.line {
+	display: block;
+	border-radius: 999px;
+}
+
+.date {
+	height: 0.875rem;
+	margin-top: var(--skeleton-gap-xs);
+	width: 36%;
+}
+
+.title {
+	height: 1.5rem;
+	margin: var(--spacing-3xs) 0;
+	width: 78%;
+}
+
+.chipList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--skeleton-gap-xs);
+	margin-top: var(--spacing-3xs);
+}
+
+.chip {
+	height: 1.75rem;
+	width: 5rem;
+	border-radius: 999px;
+}
+
+.children {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: end;
+	margin-top: var(--skeleton-gap-sm);
+}
+
+.metaRow {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: var(--skeleton-gap-md);
+	margin-bottom: var(--skeleton-gap-sm);
+}
+
+.metaItem {
+	height: 1rem;
+	width: 2.75rem;
+}

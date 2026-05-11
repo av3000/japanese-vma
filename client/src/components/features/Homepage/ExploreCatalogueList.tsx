@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useCatalogueIndex } from '@/api/generated/catalogue/catalogue';
-import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
-import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCardSkeleton';
+import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
+import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
 
 const HOMEPAGE_CATALOGUE_SKELETON_COUNT = 4;
 

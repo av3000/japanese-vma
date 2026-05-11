@@ -3,10 +3,10 @@ import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
-import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard';
+import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
 import { Button } from '@/components/shared/Button';
 import { isCustomCatalogueType } from '@/shared/constants/catalogues';
-import CataloguesListSkeleton from './CataloguesListSkeleton';
+import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkeleton';
 
 export const DEFAULT_PER_PAGE = 12;
 
@@ -37,7 +37,7 @@ export const mapSearchFiltersToCatalogueParams = (
 const CataloguesListPage: React.FC = () => {
 	const [filters, setFilters] = useState<CatalogueSearchFilters | Record<string, never>>({});
 	const queryFilters = useMemo(() => mapSearchFiltersToCatalogueParams(filters), [filters]);
-	const { catalogues, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
+	const { catalogues, total, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, error, isError } =
 		useInfiniteCatalogues({
 			filters: queryFilters,
 		});

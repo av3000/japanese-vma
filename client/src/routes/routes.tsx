@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import PrivateRoute from '@/helpers/PrivateRoute';
-import CataloguesListSkeleton from '@/routes/CataloguesList/CataloguesListSkeleton';
+import CataloguesListSkeleton from '@/routes/CataloguesList/CatalogueListSkeleton/CataloguesListSkeleton';
 import HomePage from '@/routes/Homepage';
 
 // Lazy-loaded page components
@@ -43,13 +43,7 @@ const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
 // Dashboard routes
 const DashboardPage = lazy(() => import('@/routes/Dashboard'));
 
-const SuspenseWrapper = ({
-	children,
-	fallback = null,
-}: {
-	children: React.ReactNode;
-	fallback?: React.ReactNode;
-}) => (
+const SuspenseWrapper = ({ children, fallback = null }: { children: React.ReactNode; fallback?: React.ReactNode }) => (
 	<Suspense fallback={fallback}>{children}</Suspense>
 );
 

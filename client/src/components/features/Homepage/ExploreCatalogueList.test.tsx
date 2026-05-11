@@ -28,7 +28,7 @@ describe('HOMEPAGE_CATALOGUE_FILTERS', () => {
 		});
 	});
 
-	it('renders the section header and three skeleton cards while catalogues are pending', () => {
+	it('renders the section header and four skeleton cards while catalogues are pending', () => {
 		vi.mocked(useCatalogueIndex).mockReturnValue({
 			data: undefined,
 			isPending: true,
@@ -38,7 +38,7 @@ describe('HOMEPAGE_CATALOGUE_FILTERS', () => {
 		const skeletonCount = html.match(/data-testid="catalogue-card-skeleton"/g)?.length ?? 0;
 
 		expect(html).toContain('Latest Catalogues');
-		expect(skeletonCount).toBe(3);
+		expect(skeletonCount).toBe(4);
 		expect(html).not.toContain('spinner.gif');
 		expect(html).not.toContain('spinner loading');
 	});

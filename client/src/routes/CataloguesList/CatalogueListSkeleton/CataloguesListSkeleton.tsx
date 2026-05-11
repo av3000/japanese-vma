@@ -1,6 +1,6 @@
 import classNames from 'classnames';
-import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCardSkeleton';
-import skeletonStyles from '@/components/features/catalogues/CatalogueCardSkeleton.module.scss';
+import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
+import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.scss';
 
 const CATALOGUES_LIST_SKELETON_COUNT = 12;
 
