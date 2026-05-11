@@ -3,6 +3,7 @@
 namespace App\Application\Catalogues\Services;
 
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
+use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\Models\Catalogue;
@@ -25,7 +26,10 @@ interface CatalogueServiceInterface
      */
     public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array;
 
-    public function getCatalogue(EntityId $uuid, ?User $user = null): Result;
+    /**
+     * @return Result<CatalogueDetailDTO>
+     */
+    public function getCatalogueDetail(EntityId $uuid, ?User $user = null): Result;
 
     public function getIdByUuid(EntityId $uuid): ?int;
 

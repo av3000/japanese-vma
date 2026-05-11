@@ -67,9 +67,17 @@ class ShowCatalogueTest extends TestCase
         $response = $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.uuid', $catalogue->uuid)
-            ->assertJsonPath('data.engagement.is_liked_by_viewer', false)
-            ->assertJsonMissingPath('data.catalogue');
+            ->assertJsonPath('uuid', $catalogue->uuid)
+            ->assertJsonPath('items_count', 0)
+            ->assertJsonPath('items', [])
+            ->assertJsonPath('engagement.is_liked_by_viewer', false)
+            ->assertJsonMissingPath('catalogue');
+    }
+
+    public function test_show_missing_catalogue_returns_not_found(): void
+    {
+        $this->json('GET', '/api/v1/catalogues/'.(string) Str::uuid())
+            ->assertStatus(404);
     }
 
     public function test_show_private_catalogue_requires_owner(): void
@@ -118,6 +126,6 @@ class ShowCatalogueTest extends TestCase
 
         $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
             ->assertStatus(200)
-            ->assertJsonPath('data.engagement.is_liked_by_viewer', true);
+            ->assertJsonPath('engagement.is_liked_by_viewer', true);
     }
 }

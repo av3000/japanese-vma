@@ -41,7 +41,8 @@ class CatalogueController extends Controller
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+    ) {
+    }
 
     /**
      * @response CatalogueListResource
@@ -53,7 +54,7 @@ class CatalogueController extends Controller
 
         $paginatedCatalogues = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
 
-        $catalogueIds = array_map(fn($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
+        $catalogueIds = array_map(fn ($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
 
         $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
 
@@ -135,7 +136,7 @@ class CatalogueController extends Controller
 
         $containedCatalogueIds = array_flip($cataloguesForItem['contained_catalogue_ids']);
         $resources = array_map(
-            static fn(Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
+            static fn (Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
                 $catalogue,
                 isset($containedCatalogueIds[$catalogue->getIdValue()]),
             ),
@@ -219,14 +220,14 @@ class CatalogueController extends Controller
     {
         $catalogueUid = EntityId::from($uuid);
         $viewer = auth('api')->user();
-        $result = $this->catalogueService->getCatalogue($catalogueUid, $viewer);
+        $detailResult = $this->catalogueService->getCatalogueDetail($catalogueUid, $viewer);
 
-        if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
+        if ($detailResult->isFailure()) {
+            return TypedResults::fromError($detailResult->getError());
         }
 
         /** @var CatalogueDetailDTO $detail */
-        $detail = $result->getData();
+        $detail = $detailResult->getData();
         $catalogue = $detail->catalogue;
 
         $statsData = $this->loadStats->batchLoadStatsById(

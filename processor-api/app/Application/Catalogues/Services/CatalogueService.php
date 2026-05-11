@@ -144,7 +144,10 @@ class CatalogueService implements CatalogueServiceInterface
         return $this->catalogueRepository->getIdByUuid($uuid);
     }
 
-    public function getCatalogue(EntityId $uuid, ?User $user = null): Result
+    /**
+     * @return Result<CatalogueDetailDTO>
+     */
+    public function getCatalogueDetail(EntityId $uuid, ?User $user = null): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
 
