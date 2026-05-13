@@ -2,23 +2,23 @@
 
 namespace App\Http\v1\Catalogues\Resources;
 
-use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
-use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
+use App\Domain\Catalogues\DTOs\CatalogueListItemDTO;
+use App\Http\v1\Engagement\Resources\EngagementStatsResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property CatalogueDetailDTO $resource
+ * @property CatalogueListItemDTO $resource
  */
-class CatalogueDetailResource extends JsonResource
+class CatalogueListItemResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(CatalogueDetailDTO $detail)
+    public function __construct(CatalogueListItemDTO $item)
     {
-        parent::__construct($detail);
+        parent::__construct($item);
     }
 
     /**
@@ -33,17 +33,16 @@ class CatalogueDetailResource extends JsonResource
      *     owner: AuthorResource,
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
-     *     engagement: CatalogueDetailEngagementResource|null,
-     *     items: array<int, mixed>,
+     *     engagement: EngagementStatsResource|null,
      *     created_at: string,
      *     updated_at: string
      * }
      */
     public function toArray(Request $request): array
     {
-        /** @var CatalogueDetailDTO $detail */
-        $detail = $this->resource;
-        $catalogue = $detail->catalogue;
+        /** @var CatalogueListItemDTO $item */
+        $item = $this->resource;
+        $catalogue = $item->catalogue;
 
         return [
             'id' => $catalogue->getIdValue(),
@@ -58,10 +57,9 @@ class CatalogueDetailResource extends JsonResource
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
-            'items_count' => $detail->itemsCount,
-            'hashtags' => HashtagResource::collection($detail->hashtags),
-            'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),
-            'items' => $detail->items,
+            'items_count' => $item->itemsCount,
+            'hashtags' => HashtagResource::collection($item->hashtags),
+            'engagement' => $item->stats ? new EngagementStatsResource($item->stats) : null,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),
         ];
