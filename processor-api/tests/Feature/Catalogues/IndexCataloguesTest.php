@@ -145,6 +145,74 @@ class IndexCataloguesTest extends TestCase
             ->assertJsonPath('items.0.hashtags', []);
     }
 
+    public function test_index_can_skip_optional_stats_without_suppressing_hashtags(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Public Custom', 'publicity' => 1, 'type' => 5]);
+        $this->attachCatalogueItem($catalogue, 321);
+        $this->attachHashtag($catalogue, '#study');
+
+        View::create([
+            'user_id' => null,
+            'user_ip' => '127.0.0.1',
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+        ]);
+
+        $response = $this->json('GET', '/api/v1/catalogues', [
+            'include_stats_counts' => false,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.items_count', 1)
+            ->assertJsonPath('items.0.engagement', null)
+            ->assertJsonPath('items.0.hashtags.0.content', '#study');
+    }
+
+    public function test_index_can_skip_optional_hashtags_without_suppressing_stats(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Public Custom', 'publicity' => 1, 'type' => 5]);
+        $this->attachCatalogueItem($catalogue, 321);
+        $this->attachHashtag($catalogue, '#study');
+
+        View::create([
+            'user_id' => null,
+            'user_ip' => '127.0.0.1',
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+        ]);
+
+        $response = $this->json('GET', '/api/v1/catalogues', [
+            'include_hashtags' => false,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.items_count', 1)
+            ->assertJsonPath('items.0.hashtags', [])
+            ->assertJsonPath('items.0.engagement.views_count', 1)
+            ->assertJsonPath('items.0.engagement.likes_count', 0)
+            ->assertJsonPath('items.0.engagement.downloads_count', 0)
+            ->assertJsonPath('items.0.engagement.comments_count', 0);
+    }
+
+    public function test_index_returns_default_enrichment_values_when_rows_are_absent(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Public Custom', 'publicity' => 1, 'type' => 5]);
+
+        $response = $this->json('GET', '/api/v1/catalogues');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.uuid', $catalogue->uuid)
+            ->assertJsonPath('items.0.items_count', 0)
+            ->assertJsonPath('items.0.hashtags', [])
+            ->assertJsonPath('items.0.engagement.likes_count', 0)
+            ->assertJsonPath('items.0.engagement.views_count', 0)
+            ->assertJsonPath('items.0.engagement.downloads_count', 0)
+            ->assertJsonPath('items.0.engagement.comments_count', 0);
+    }
+
     public function test_index_sorts_by_views(): void
     {
         $user = $this->createUser();
