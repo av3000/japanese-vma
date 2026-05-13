@@ -17,7 +17,7 @@ class CatalogueListResource extends JsonResource
 
     /**
      * @return array{
-     *     items: array<int, CatalogueResource>,
+     *     items: array<int, CatalogueListItemResource>,
      *     pagination: PaginationResource
      * }
      */
@@ -25,12 +25,7 @@ class CatalogueListResource extends JsonResource
     {
         return [
             'items' => array_map(
-                static fn(CatalogueListItemDTO $item): CatalogueResource => new CatalogueResource(
-                    $item->catalogue,
-                    $item->stats,
-                    $item->hashtags,
-                    $item->itemsCount,
-                ),
+                static fn (CatalogueListItemDTO $item): CatalogueListItemResource => new CatalogueListItemResource($item),
                 $this->resource->items,
             ),
             'pagination' => new PaginationResource($this->resource->pagination),

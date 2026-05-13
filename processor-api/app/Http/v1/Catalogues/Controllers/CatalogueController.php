@@ -8,7 +8,6 @@ use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
-use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -19,8 +18,7 @@ use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
-use App\Http\v1\Catalogues\Resources\CatalogueForItemListResource;
-use App\Http\v1\Catalogues\Resources\CatalogueForItemResource;
+use App\Http\v1\Catalogues\Resources\CatalogueListForItemResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
@@ -76,17 +74,7 @@ class CatalogueController extends Controller
             auth('api')->user(),
         );
 
-        $resources = array_map(
-            static fn (CataloguePickerItemDTO $item): CatalogueForItemResource => new CatalogueForItemResource(
-                $item->catalogue,
-                $item->containsItem,
-            ),
-            $cataloguesForItem->items,
-        );
-
-        return new CatalogueForItemListResource([
-            'items' => $resources,
-        ]);
+        return new CatalogueListForItemResource($cataloguesForItem);
     }
 
     /**
