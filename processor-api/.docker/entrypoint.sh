@@ -2,7 +2,14 @@
 
 # Ensure directories exist and have correct permissions for www-data
 # This is more direct than checking, to guarantee permissions on startup
-mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
+mkdir -p \
+    /var/www/html/storage/app/public \
+    /var/www/html/storage/framework/cache/data \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/testing \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/logs \
+    /var/www/html/bootstrap/cache
 
 # Set ownership to www-data for these directories
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
