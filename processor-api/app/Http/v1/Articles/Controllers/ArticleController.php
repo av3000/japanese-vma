@@ -15,6 +15,11 @@ use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
+use App\Application\Pdf\DTOs\PdfExportRequest;
+use App\Application\Pdf\PdfExportServiceInterface;
+use App\Domain\Pdf\Enums\PdfExportKind;
+use App\Domain\Pdf\Enums\PdfExportSource;
+use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
@@ -24,9 +29,12 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
+use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
+use App\Shared\Results\Result;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ArticleController extends Controller
@@ -35,6 +43,8 @@ class ArticleController extends Controller
 
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
+        private readonly PdfExportServiceInterface $pdfExportService,
+        private readonly PdfResponseFactory $pdfResponseFactory,
         private readonly LastOperationServiceInterface $lastOperationService,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
@@ -276,5 +286,39 @@ class ArticleController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
+    }
+
+    public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse
+    {
+        return $this->exportPdf($uuid, PdfExportKind::KANJIS);
+    }
+
+    public function exportWordsPdf(string $uuid): JsonResponse|HttpResponse
+    {
+        return $this->exportPdf($uuid, PdfExportKind::WORDS);
+    }
+
+    private function exportPdf(string $uuid, PdfExportKind $kind): JsonResponse|HttpResponse
+    {
+        $result = $this->pdfExportService->export(new PdfExportRequest(
+            source: PdfExportSource::ARTICLE,
+            entityUuid: EntityId::from($uuid),
+            kind: $kind,
+            viewer: auth('api')->user(),
+        ));
+
+        return $this->pdfResult($result);
+    }
+
+    private function pdfResult(Result $result): JsonResponse|HttpResponse
+    {
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var PdfRenderResult $pdf */
+        $pdf = $result->getData();
+
+        return $this->pdfResponseFactory->make($pdf);
     }
 }

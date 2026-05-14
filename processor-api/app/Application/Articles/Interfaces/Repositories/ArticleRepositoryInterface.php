@@ -4,7 +4,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface};
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface, ArticlePdfExportData};
 use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 
 interface ArticleRepositoryInterface
@@ -37,6 +37,8 @@ interface ArticleRepositoryInterface
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $dto = null): ?DomainArticle;
+
+    public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData;
 
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.

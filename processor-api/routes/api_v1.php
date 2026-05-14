@@ -58,6 +58,8 @@ Route::prefix('v1')->group(function () {
         Route::post('articles', [ArticleController::class, 'store']);
         Route::put('articles/{uuid}', [ArticleController::class, 'update']);
         Route::delete('articles/{uuid}', [ArticleController::class, 'destroy']);
+        Route::get('articles/{uuid}/kanjis-pdf', [ArticleController::class, 'exportKanjisPdf']);
+        Route::get('articles/{uuid}/words-pdf', [ArticleController::class, 'exportWordsPdf']);
         Route::post('articles/{id}/like', [ArticleController::class, 'like']); // TODO: implement
         Route::delete('articles/{id}/like', [ArticleController::class, 'unlike']); // TODO: implement
         Route::post('articles/{id}/toggle-publicity', [ArticleController::class, 'togglePublicity']); // TODO: implement
