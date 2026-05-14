@@ -60,8 +60,6 @@ Route::prefix('v1')->group(function () {
         Route::delete('articles/{uuid}', [ArticleController::class, 'destroy']);
         Route::get('articles/{uuid}/kanjis-pdf', [ArticleController::class, 'exportKanjisPdf']);
         Route::get('articles/{uuid}/words-pdf', [ArticleController::class, 'exportWordsPdf']);
-        Route::post('articles/{id}/like', [ArticleController::class, 'like']); // TODO: implement
-        Route::delete('articles/{id}/like', [ArticleController::class, 'unlike']); // TODO: implement
         Route::post('articles/{id}/toggle-publicity', [ArticleController::class, 'togglePublicity']); // TODO: implement
 
         // User's Own Articles
@@ -74,6 +72,8 @@ Route::prefix('v1')->group(function () {
         Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
         Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
         Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
+        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf']);
+        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf']);
 
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);

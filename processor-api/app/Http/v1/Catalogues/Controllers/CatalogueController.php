@@ -3,12 +3,14 @@
 namespace App\Http\v1\Catalogues\Controllers;
 
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
+use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
@@ -22,16 +24,21 @@ use App\Http\v1\Catalogues\Resources\CatalogueListForItemResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
+use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
+use App\Shared\Results\Result;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response as LaravelResponse;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class CatalogueController extends Controller
 {
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
+        private readonly CataloguePdfExportServiceInterface $cataloguePdfExportService,
+        private readonly PdfResponseFactory $pdfResponseFactory,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
         private readonly HashtagServiceInterface $hashtagService,
     ) {
@@ -200,5 +207,33 @@ class CatalogueController extends Controller
         }
 
         return TypedResults::noContent();
+    }
+
+    public function exportKanjisPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportKanjis(
+            EntityId::from($uuid),
+            auth('api')->user(),
+        ));
+    }
+
+    public function exportWordsPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportWords(
+            EntityId::from($uuid),
+            auth('api')->user(),
+        ));
+    }
+
+    private function pdfResult(Result $result): JsonResponse|LaravelResponse
+    {
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var PdfRenderResult $pdf */
+        $pdf = $result->getData();
+
+        return $this->pdfResponseFactory->make($pdf);
     }
 }

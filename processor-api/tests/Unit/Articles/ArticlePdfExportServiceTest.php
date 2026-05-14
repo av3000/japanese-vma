@@ -2,12 +2,14 @@
 
 namespace Tests\Unit\Articles;
 
-use App\Application\Articles\Services\ArticlePdfExportProvider;
-use App\Application\Pdf\DTOs\PdfExportRequest;
-use App\Domain\Pdf\DTOs\PdfExportPreparation;
+use App\Application\Articles\Services\ArticlePdfExportService;
+use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
+use App\Application\Pdf\PdfRendererInterface;
+use App\Domain\Engagement\DTOs\DownloadCreateDTO;
+use App\Domain\Engagement\DTOs\DownloadFilterDTO;
+use App\Domain\Pdf\DTOs\PdfDocument;
+use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Pdf\Enums\PdfDisposition;
-use App\Domain\Pdf\Enums\PdfExportKind;
-use App\Domain\Pdf\Enums\PdfExportSource;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -21,13 +23,23 @@ use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class ArticlePdfExportProviderTest extends TestCase
+class ArticlePdfExportServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    private FakePdfRenderer $pdfRenderer;
+
+    private FakeDownloadRepository $downloadRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->pdfRenderer = new FakePdfRenderer;
+        $this->downloadRepository = new FakeDownloadRepository;
+
+        $this->app->instance(PdfRendererInterface::class, $this->pdfRenderer);
+        $this->app->instance(DownloadRepositoryInterface::class, $this->downloadRepository);
 
         Role::firstOrCreate(['name' => 'common', 'guard_name' => 'api']);
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'api']);
@@ -41,7 +53,7 @@ class ArticlePdfExportProviderTest extends TestCase
         ]);
     }
 
-    public function test_kanjis_export_prepares_pdf_document_and_download_target(): void
+    public function test_kanjis_export_returns_rendered_pdf_and_records_download(): void
     {
         $viewer = $this->createUser();
         $article = $this->createArticle($viewer, [
@@ -50,31 +62,28 @@ class ArticlePdfExportProviderTest extends TestCase
         ]);
         $this->attachKanji($article);
 
-        $result = $this->provider()->prepare(new PdfExportRequest(
-            source: PdfExportSource::ARTICLE,
-            entityUuid: EntityId::from($article->uuid),
-            kind: PdfExportKind::KANJIS,
-            viewer: $viewer,
-        ));
+        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $viewer);
 
         $this->assertTrue($result->isSuccess());
-        $this->assertInstanceOf(PdfExportPreparation::class, $result->getData());
+        $this->assertInstanceOf(PdfRenderResult::class, $result->getData());
 
-        /** @var PdfExportPreparation $preparation */
-        $preparation = $result->getData();
-        $document = $preparation->document;
+        $document = $this->pdfRenderer->lastDocument;
 
+        $this->assertNotNull($document);
         $this->assertSame('pdf.articles.kanjis', $document->view);
         $this->assertSame('article-kanjis.pdf', $document->filename);
         $this->assertSame(PdfDisposition::INLINE, $document->disposition);
         $this->assertSame('漢字の記事', $document->data['article']['title_jp']);
         $this->assertSame('水', $document->data['kanjis'][0]['kanji']);
         $this->assertSame(config('app.frontend_url'), $document->data['frontend_url']);
-        $this->assertSame(ObjectTemplateType::ARTICLE, $preparation->downloadTarget->objectType);
-        $this->assertSame($article->id, $preparation->downloadTarget->entityId);
+        $this->assertSame('article-kanjis.pdf', $result->getData()->filename);
+        $this->assertCount(1, $this->downloadRepository->created);
+        $this->assertSame($viewer->id, $this->downloadRepository->created[0]->userId);
+        $this->assertSame(ObjectTemplateType::ARTICLE->getLegacyId(), $this->downloadRepository->created[0]->templateId);
+        $this->assertSame($article->id, $this->downloadRepository->created[0]->realObjectId);
     }
 
-    public function test_words_export_prepares_pdf_document_with_processed_word_meanings(): void
+    public function test_words_export_returns_rendered_pdf_with_processed_word_meanings_and_records_download(): void
     {
         $viewer = $this->createUser();
         $article = $this->createArticle($viewer, [
@@ -83,41 +92,33 @@ class ArticlePdfExportProviderTest extends TestCase
         ]);
         $this->attachWord($article);
 
-        $result = $this->provider()->prepare(new PdfExportRequest(
-            source: PdfExportSource::ARTICLE,
-            entityUuid: EntityId::from($article->uuid),
-            kind: PdfExportKind::WORDS,
-            viewer: $viewer,
-        ));
+        $result = $this->service()->exportWords(EntityId::from($article->uuid), $viewer);
 
         $this->assertTrue($result->isSuccess());
 
-        /** @var PdfExportPreparation $preparation */
-        $preparation = $result->getData();
-        $document = $preparation->document;
+        $document = $this->pdfRenderer->lastDocument;
 
+        $this->assertNotNull($document);
         $this->assertSame('pdf.articles.words', $document->view);
         $this->assertSame('article-words.pdf', $document->filename);
         $this->assertSame('言葉の記事', $document->data['article']['title_jp']);
         $this->assertSame('学校', $document->data['words'][0]['word']);
         $this->assertSame('school', $document->data['words'][0]['meaning']);
-        $this->assertSame(ObjectTemplateType::ARTICLE, $preparation->downloadTarget->objectType);
-        $this->assertSame($article->id, $preparation->downloadTarget->entityId);
+        $this->assertCount(1, $this->downloadRepository->created);
+        $this->assertSame(ObjectTemplateType::ARTICLE->getLegacyId(), $this->downloadRepository->created[0]->templateId);
+        $this->assertSame($article->id, $this->downloadRepository->created[0]->realObjectId);
     }
 
     public function test_missing_article_returns_article_not_found_error(): void
     {
         $viewer = $this->createUser();
 
-        $result = $this->provider()->prepare(new PdfExportRequest(
-            source: PdfExportSource::ARTICLE,
-            entityUuid: EntityId::from((string) Str::uuid()),
-            kind: PdfExportKind::KANJIS,
-            viewer: $viewer,
-        ));
+        $result = $this->service()->exportKanjis(EntityId::from((string) Str::uuid()), $viewer);
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Articles.NotFound', $result->getError()->code);
+        $this->assertNull($this->pdfRenderer->lastDocument);
+        $this->assertCount(0, $this->downloadRepository->created);
     }
 
     public function test_inaccessible_article_returns_article_access_denied_error(): void
@@ -128,15 +129,12 @@ class ArticlePdfExportProviderTest extends TestCase
             'publicity' => PublicityStatus::PRIVATE,
         ]);
 
-        $result = $this->provider()->prepare(new PdfExportRequest(
-            source: PdfExportSource::ARTICLE,
-            entityUuid: EntityId::from($article->uuid),
-            kind: PdfExportKind::KANJIS,
-            viewer: $viewer,
-        ));
+        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $viewer);
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Articles.AccessDenied', $result->getError()->code);
+        $this->assertNull($this->pdfRenderer->lastDocument);
+        $this->assertCount(0, $this->downloadRepository->created);
     }
 
     public function test_new_article_pdf_views_do_not_use_legacy_localhost_or_remote_assets(): void
@@ -188,9 +186,9 @@ class ArticlePdfExportProviderTest extends TestCase
         $this->assertStringNotContainsString('<script', $html);
     }
 
-    private function provider(): ArticlePdfExportProvider
+    private function service(): ArticlePdfExportService
     {
-        return $this->app->make(ArticlePdfExportProvider::class);
+        return $this->app->make(ArticlePdfExportService::class);
     }
 
     private function createUser(): User
@@ -270,5 +268,56 @@ class ArticlePdfExportProviderTest extends TestCase
             'article_id' => $article->id,
             'word_id' => $wordId,
         ]);
+    }
+}
+
+class FakePdfRenderer implements PdfRendererInterface
+{
+    public ?PdfDocument $lastDocument = null;
+
+    public function render(PdfDocument $document): PdfRenderResult
+    {
+        $this->lastDocument = $document;
+
+        return new PdfRenderResult(
+            contents: '%PDF-1.7',
+            filename: $document->filename,
+            disposition: $document->disposition,
+        );
+    }
+}
+
+class FakeDownloadRepository implements DownloadRepositoryInterface
+{
+    /** @var list<DownloadCreateDTO> */
+    public array $created = [];
+
+    public function create(DownloadCreateDTO $data): void
+    {
+        $this->created[] = $data;
+    }
+
+    public function findByFilter(DownloadFilterDTO $filter): ?int
+    {
+        return null;
+    }
+
+    public function deleteByEntity(int $entityId, int $entityTypeId): void
+    {
+    }
+
+    public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array
+    {
+        return [];
+    }
+
+    public function findAllByFilter(DownloadFilterDTO $filter): array
+    {
+        return [];
+    }
+
+    public function countByFilter(DownloadFilterDTO $filter): int
+    {
+        return 0;
     }
 }
