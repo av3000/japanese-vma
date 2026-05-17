@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     jq \
     wget \
     fonts-noto-cjk \
+    fonts-ipafont-gothic \
+    fonts-hanazono \
     default-mysql-client \
     # TODO: Test one by one and see which library causes issues (KEEP COMMENTED FOR NOW)
     # libxrender1 \
@@ -29,13 +31,14 @@ RUN apt-get update && apt-get install -y \
     # libxtst6 \
     # xvfb \
     # wkhtmltopdf \
-    # fonts-ipafont-gothic \
     nodejs \
     npm \
     libicu-dev \
     libpq-dev \
     # ADDED: autoconf for PECL extensions
     autoconf
+
+RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/zz-memory-limit.ini
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl

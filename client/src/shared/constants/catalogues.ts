@@ -7,6 +7,10 @@ export const CATALOGUE_TYPE_LABELS = {
 } as const;
 
 export type CustomCatalogueType = keyof typeof CATALOGUE_TYPE_LABELS;
+export type CataloguePdfExportKind = 'kanji' | 'words';
+
+const CATALOGUE_KANJI_PDF_TYPES = [2, 6] as const;
+const CATALOGUE_WORDS_PDF_TYPES = [3, 7] as const;
 
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
@@ -34,6 +38,20 @@ export const isCustomCatalogueType = (value: number): value is CustomCatalogueTy
 export const resolveCatalogueTypeLabel = (value: number) => {
 	return isCustomCatalogueType(value) ? CATALOGUE_TYPE_LABELS[value] : 'Unknown';
 };
+
+export const resolveCataloguePdfExportKind = (value: number): CataloguePdfExportKind | null => {
+	if ((CATALOGUE_KANJI_PDF_TYPES as readonly number[]).includes(value)) {
+		return 'kanji';
+	}
+
+	if ((CATALOGUE_WORDS_PDF_TYPES as readonly number[]).includes(value)) {
+		return 'words';
+	}
+
+	return null;
+};
+
+export const isCataloguePdfExportSupported = (value: number) => resolveCataloguePdfExportKind(value) !== null;
 
 export const isCatalogueRouteUuid = (value: string) => {
 	return CATALOGUE_UUID_PATTERN.test(value);

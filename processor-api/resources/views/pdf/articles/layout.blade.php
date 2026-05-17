@@ -5,12 +5,38 @@
     <meta charset="utf-8">
     <title>@yield('title')</title>
     <style>
+        @font-face {
+            font-family: 'HanaMinA';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/truetype/hanazono/HanaMinA.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'IPAGothic';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'IPAGothic';
+            font-style: normal;
+            font-weight: bold;
+            src: url('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf') format('truetype');
+        }
+
         body {
             margin: 0;
             color: #111827;
-            font-family: 'Noto Sans CJK JP', sans-serif;
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
             font-size: 12px;
             line-height: 1.5;
+        }
+
+        .japanese,
+        [lang='ja'] {
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
         }
 
         a {

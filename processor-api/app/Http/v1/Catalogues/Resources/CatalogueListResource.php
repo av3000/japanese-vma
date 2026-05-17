@@ -17,17 +17,26 @@ class CatalogueListResource extends JsonResource
 
     /**
      * @return array{
-     *     items: array<int, CatalogueListItemResource>,
+     *     items: array<int, CatalogueResource>,
      *     pagination: PaginationResource
      * }
      */
     public function toArray(Request $request): array
     {
-        return [
-            'items' => array_map(
-                static fn (CatalogueListItemDTO $item): CatalogueListItemResource => new CatalogueListItemResource($item),
-                $this->resource->items,
+        /** @var array<int, CatalogueResource> $items */
+        $items = array_map(
+            static fn (CatalogueListItemDTO $item): CatalogueResource => new CatalogueResource(
+                catalogue: $item->catalogue,
+                stats: $item->stats,
+                hashtags: $item->hashtags,
+                itemsCount: $item->itemsCount,
             ),
+            $this->resource->items,
+        );
+
+        return [
+            /** @var array<int, CatalogueResource> */
+            'items' => $items,
             'pagination' => new PaginationResource($this->resource->pagination),
         ];
     }

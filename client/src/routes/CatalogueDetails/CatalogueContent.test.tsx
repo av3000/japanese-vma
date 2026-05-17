@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	catalogueExportKanjisPdf,
+	catalogueExportWordsPdf,
 	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
 	getCatalogueShowQueryKey,
@@ -20,6 +22,11 @@ const capturedCatalogueItemsProps: Array<{
 const capturedDeleteModalProps: Array<{
 	onDelete: () => void;
 }> = [];
+const capturedPdfButtonProps: Array<{
+	onClick?: () => void;
+}> = [];
+const createObjectUrlMock = vi.fn();
+const windowOpenMock = vi.fn();
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -52,6 +59,8 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	);
 	return {
 		...actual,
+		catalogueExportKanjisPdf: vi.fn(),
+		catalogueExportWordsPdf: vi.fn(),
 		catalogueRemoveItem: vi.fn(),
 		useCatalogueDestroy: vi.fn(() => ({
 			mutate: catalogueDestroyMutateMock,
@@ -76,7 +85,17 @@ vi.mock('@/components/shared/Icon', () => ({
 }));
 
 vi.mock('@/components/shared/Button', () => ({
-	Button: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+	Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => {
+		if (isValidElement<{ name?: string }>(children) && children.props.name === 'filePdfSolid') {
+			capturedPdfButtonProps.push({ onClick });
+		}
+
+		return (
+			<button type="button" onClick={onClick}>
+				{children}
+			</button>
+		);
+	},
 }));
 
 vi.mock('@/components/features/catalogues/CatalogueItems', () => ({
@@ -119,7 +138,7 @@ const createCatalogue = (overrides: Partial<CatalogueDetailResource> = {}): Cata
 		comments_count: 1,
 		is_liked_by_viewer: true,
 	},
-	items: '',
+	items: [],
 	created_at: '2026-04-01T12:00:00.000Z',
 	updated_at: '2026-04-02T12:00:00.000Z',
 	...overrides,
@@ -130,6 +149,12 @@ describe('CatalogueContent', () => {
 		vi.clearAllMocks();
 		capturedCatalogueItemsProps.length = 0;
 		capturedDeleteModalProps.length = 0;
+		capturedPdfButtonProps.length = 0;
+		createObjectUrlMock.mockReturnValue('blob:catalogue-pdf');
+		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
+		vi.stubGlobal('window', { open: windowOpenMock });
+		vi.mocked(catalogueExportKanjisPdf).mockResolvedValue('%PDF-kanji' as never);
+		vi.mocked(catalogueExportWordsPdf).mockResolvedValue('%PDF-words' as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
@@ -196,5 +221,34 @@ describe('CatalogueContent', () => {
 			queryKey: getCatalogueShowQueryKey('catalogue-uuid'),
 		});
 		expect(useNavigateMock).toHaveBeenCalledWith('/catalogues');
+	});
+
+	it('downloads kanji catalogue pdf through the generated v1 endpoint', async () => {
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 6 }) as any} />);
+
+		await capturedPdfButtonProps[0].onClick?.();
+
+		expect(catalogueExportKanjisPdf).toHaveBeenCalledWith('catalogue-uuid', { responseType: 'blob' });
+		expect(catalogueExportWordsPdf).not.toHaveBeenCalled();
+		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
+		expect(windowOpenMock).toHaveBeenCalledWith('blob:catalogue-pdf');
+	});
+
+	it('downloads word catalogue pdf through the generated v1 endpoint', async () => {
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 7 }) as any} />);
+
+		await capturedPdfButtonProps[0].onClick?.();
+
+		expect(catalogueExportWordsPdf).toHaveBeenCalledWith('catalogue-uuid', { responseType: 'blob' });
+		expect(catalogueExportKanjisPdf).not.toHaveBeenCalled();
+		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
+		expect(windowOpenMock).toHaveBeenCalledWith('blob:catalogue-pdf');
+	});
+
+	it('does not render a pdf download button for unsupported catalogue types', () => {
+		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 5 }) as any} />);
+
+		expect(html).not.toContain('filePdfSolid');
+		expect(capturedPdfButtonProps).toHaveLength(0);
 	});
 });

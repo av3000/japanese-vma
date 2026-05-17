@@ -182,7 +182,7 @@ return [
          *
          * @var string
          */
-        'default_font' => env('DOMPDF_DEFAULT_FONT', 'Noto Sans CJK JP'),
+        'default_font' => env('DOMPDF_DEFAULT_FONT', 'HanaMinA'),
 
         /**
          * Image DPI setting

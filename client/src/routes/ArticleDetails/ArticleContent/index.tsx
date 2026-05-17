@@ -11,7 +11,7 @@ import {
 	fetchCataloguesForItem,
 	type CatalogueForItemAction,
 } from '@/api/catalogues/cataloguesForItem';
-import { articleDestroy } from '@/api/generated/article/article';
+import { articleDestroy, articleExportKanjisPdf } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
@@ -149,9 +149,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {
-			const pdfType = type === 'kanji' ? 'kanjis-pdf' : 'words-pdf';
-			const url = `${BASE_URL}/api/article/${article.id}/${pdfType}`;
-			const res: any = await apiCall({ method: HttpMethod.GET, path: url, config: { responseType: 'blob' } });
+			const res =
+				type === 'kanji'
+					? await articleExportKanjisPdf(article.uuid, { responseType: 'blob' })
+					: await apiCall({
+							method: HttpMethod.GET,
+							path: `${BASE_URL}/api/article/${article.id}/words-pdf`,
+							config: { responseType: 'blob' },
+						});
 			const file = new Blob([res], { type: 'application/pdf' });
 			window.open(URL.createObjectURL(file));
 		} catch (error) {

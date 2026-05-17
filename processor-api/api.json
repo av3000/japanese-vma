@@ -355,6 +355,96 @@
                 }
             }
         },
+        "/articles/{uuid}/kanjis-pdf": {
+            "get": {
+                "operationId": "article.exportKanjisPdf",
+                "tags": [
+                    "Article"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Length": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/articles/{uuid}/words-pdf": {
+            "get": {
+                "operationId": "article.exportWordsPdf",
+                "tags": [
+                    "Article"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Length": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/register": {
             "post": {
                 "operationId": "auth.register",
@@ -1012,6 +1102,96 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/catalogues/{uuid}/kanjis-pdf": {
+            "get": {
+                "operationId": "catalogue.exportKanjisPdf",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Length": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/catalogues/{uuid}/words-pdf": {
+            "get": {
+                "operationId": "catalogue.exportWordsPdf",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Length": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -2458,14 +2638,7 @@
                         "$ref": "#/components/schemas/AuthorResource"
                     },
                     "items_count": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "integer"
-                            }
-                        ]
+                        "type": "integer"
                     },
                     "hashtags": {
                         "type": "array",
@@ -2474,17 +2647,11 @@
                         }
                     },
                     "engagement": {
-                        "anyOf": [
-                            {
-                                "$ref": "#/components/schemas/CatalogueDetailEngagementResource"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
+                        "$ref": "#/components/schemas/CatalogueDetailEngagementResource"
                     },
                     "items": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {}
                     },
                     "created_at": {
                         "type": "string"
@@ -2574,17 +2741,7 @@
                         "$ref": "#/components/schemas/AuthorResource"
                     },
                     "items_count": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "integer",
-                                "enum": [
-                                    0
-                                ]
-                            }
-                        ]
+                        "type": "integer"
                     },
                     "hashtags": {
                         "type": "array",
@@ -3043,11 +3200,22 @@
                     },
                     "guard_name": {
                         "type": "string"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "is_system_role": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "name",
-                    "guard_name"
+                    "guard_name",
+                    "permissions",
+                    "is_system_role"
                 ],
                 "title": "RoleResource"
             },

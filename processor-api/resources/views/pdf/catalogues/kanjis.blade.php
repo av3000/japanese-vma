@@ -5,11 +5,12 @@
 @section('body')
     @php($frontendUrl = rtrim($frontend_url, '/'))
     <header class="header">
-        <p class="meta">{{ $catalogue['type_label'] }} catalogue / {{ $catalogue['author'] }} / {{ $catalogue['date']->format('Y-m-d') }}</p>
+        <p class="meta">{{ $catalogue['type_label'] }} catalogue / {{ $catalogue['author'] }} /
+            {{ $catalogue['date']->format('Y-m-d') }}</p>
         <h1>{{ $catalogue['title'] }}</h1>
         <div class="links">
-            <a href="{{ $frontendUrl.'/catalogues/'.$catalogue['uuid'] }}">Read catalogue online</a>
-            <a href="{{ $frontendUrl.'/users/'.$catalogue['user_id'] }}">Author profile</a>
+            <a href="{{ $frontendUrl . '/catalogues/' . $catalogue['uuid'] }}">Read catalogue online</a>
+            <a href="{{ $frontendUrl . '/users/' . $catalogue['user_id'] }}">Author profile</a>
         </div>
     </header>
 
@@ -26,9 +27,10 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($kanjis as $kanji)
+                @foreach ($kanjis as $kanji)
                     <tr>
-                        <td class="japanese"><a href="{{ $frontendUrl.'/kanjis/'.$kanji['id'] }}">{{ $kanji['kanji'] }}</a></td>
+                        <td class="japanese"><a href="{{ $frontendUrl . '/kanji/' . $kanji['id'] }}">{{ $kanji['kanji'] }}</a>
+                        </td>
                         <td>{{ $kanji['onyomi'] }}</td>
                         <td>{{ $kanji['kunyomi'] }}</td>
                         <td>{{ $kanji['meaning'] }}</td>

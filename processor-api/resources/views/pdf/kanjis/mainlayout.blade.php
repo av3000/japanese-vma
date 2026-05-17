@@ -11,10 +11,29 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style type="text/css">
+        @font-face {
+            font-family: 'HanaMinA';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/truetype/hanazono/HanaMinA.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'IPAGothic';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf') format('truetype');
+        }
+
         body,
         html {
             margin: 0;
-            font-family: 'IPAGothic', sans-serif;
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
+        }
+
+        .japanese,
+        [lang='ja'] {
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
         }
 
         table {

@@ -1,9 +1,10 @@
 import { Suspense, lazy, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { downloadCataloguePdf } from '@/api/catalogues/actions';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
 import {
+	catalogueExportKanjisPdf,
+	catalogueExportWordsPdf,
 	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
 	getCatalogueShowQueryKey,
@@ -20,7 +21,11 @@ import { Icon } from '@/components/shared/Icon';
 import { formatDate } from '@/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import {
+	CATALOGUE_ROUTES,
+	isCataloguePdfExportSupported,
+	resolveCataloguePdfExportKind,
+} from '@/shared/constants/catalogues';
 import { ObjectTemplateType } from '@/shared/constants/enums';
 
 interface CatalogueContentProps {
@@ -41,6 +46,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const viewsCount = Number(catalogue.engagement?.views_count ?? 0);
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
+	const isPdfExportSupported = isCataloguePdfExportSupported(catalogue.type);
 
 	const deleteMutation = useCatalogueDestroy({
 		mutation: {
@@ -75,8 +81,16 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			return;
 		}
 
+		const pdfKind = resolveCataloguePdfExportKind(catalogue.type);
+		if (!pdfKind) {
+			return;
+		}
+
 		try {
-			const response = await downloadCataloguePdf(catalogue.id, catalogue.type);
+			const response =
+				pdfKind === 'kanji'
+					? await catalogueExportKanjisPdf(catalogue.uuid, { responseType: 'blob' })
+					: await catalogueExportWordsPdf(catalogue.uuid, { responseType: 'blob' });
 			const file = new Blob([response], { type: 'application/pdf' });
 			window.open(URL.createObjectURL(file));
 		} catch (error) {
@@ -167,8 +181,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
-							{/* TODO: use const instead of type 9 */}
-							{catalogue.type !== 9 && (
+							{isPdfExportSupported && (
 								<Button variant="ghost" hasOnlyIcon onClick={handleDownloadPdf}>
 									<Icon size="md" name="filePdfSolid" />
 								</Button>

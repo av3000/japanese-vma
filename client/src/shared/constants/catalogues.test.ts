@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
 	CATALOGUE_ROUTES,
 	CATALOGUE_TYPE_LABELS,
+	isCataloguePdfExportSupported,
 	isCatalogueRouteUuid,
 	isCustomCatalogueType,
+	resolveCataloguePdfExportKind,
 	resolveCatalogueTypeLabel,
 } from './catalogues';
 
@@ -34,6 +36,18 @@ describe('catalogue constants', () => {
 		expect(isCustomCatalogueType(9)).toBe(true);
 		expect(isCustomCatalogueType(4)).toBe(false);
 		expect(isCustomCatalogueType(20)).toBe(false);
+	});
+
+	it('maps v1 catalogue PDF exports to supported catalogue types', () => {
+		expect(resolveCataloguePdfExportKind(2)).toBe('kanji');
+		expect(resolveCataloguePdfExportKind(6)).toBe('kanji');
+		expect(resolveCataloguePdfExportKind(3)).toBe('words');
+		expect(resolveCataloguePdfExportKind(7)).toBe('words');
+		expect(resolveCataloguePdfExportKind(5)).toBeNull();
+		expect(resolveCataloguePdfExportKind(8)).toBeNull();
+		expect(resolveCataloguePdfExportKind(9)).toBeNull();
+		expect(isCataloguePdfExportSupported(6)).toBe(true);
+		expect(isCataloguePdfExportSupported(9)).toBe(false);
 	});
 
 	it('treats UUID-like params as canonical identifiers and numeric params as legacy aliases', () => {

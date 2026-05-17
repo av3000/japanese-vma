@@ -53,7 +53,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 		[article],
 	);
 
-	const mutation = useMutation({
+	const updateMutation = useMutation({
 		mutationFn: (payload: UpdateArticleRequest) => articleUpdate(article.uuid, payload),
 		onSuccess: () => {
 			setStatus(null);
@@ -87,7 +87,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 
 		const payload = buildUpdatePayload(values, meta.dirtyKeys);
 
-		mutation.mutate(payload);
+		updateMutation.mutate(payload);
 	};
 
 	return controller.isRendered ? (
@@ -107,7 +107,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 					<ArticleForm
 						initialValues={initialValues}
 						onSubmit={handleSubmit}
-						isSubmitting={mutation.isPending}
+						isSubmitting={updateMutation.isPending}
 						submitLabel="Update"
 						serverErrors={serverErrors}
 						statusMessage={status}

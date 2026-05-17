@@ -7,8 +7,8 @@ use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Http\v1\Engagement\Resources\EngagementStatsResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @property Catalogue $resource
@@ -61,7 +61,7 @@ class CatalogueResource extends JsonResource
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
-            'items_count' => $this->itemsCount ?? 0,
+            'items_count' => (int) ($this->itemsCount ?? 0),
             'hashtags' => HashtagResource::collection($this->hashtags),
             'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
