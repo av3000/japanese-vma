@@ -56,6 +56,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+
     'asset_url' => env('ASSET_URL', null),
 
     /*
@@ -163,7 +165,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        Barryvdh\Snappy\ServiceProvider::class,
         Dedoc\Scramble\ScrambleServiceProvider::class,
 
         /*
@@ -183,6 +184,7 @@ return [
         App\Providers\TelescopeServiceProvider::class,
         App\Providers\ArticlesServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
+        App\Providers\PdfServiceProvider::class,
     ],
 
     /*
@@ -234,7 +236,6 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-        'PDF' => Barryvdh\DomPDF\Facade::class,
     ],
 
 ];

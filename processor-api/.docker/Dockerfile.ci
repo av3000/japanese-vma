@@ -5,6 +5,7 @@ WORKDIR /var/www/html
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     autoconf \
+    fonts-noto-cjk \
     g++ \
     git \
     libicu-dev \
@@ -36,6 +37,7 @@ RUN mkdir -p \
     storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
+    storage/fonts \
     storage/logs \
     bootstrap/cache \
     && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \

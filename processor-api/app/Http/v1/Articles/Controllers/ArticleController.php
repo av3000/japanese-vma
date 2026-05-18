@@ -2,32 +2,41 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
-use Dedoc\Scramble\Attributes\Response;
-use Illuminate\Http\Request;
+use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
+use App\Application\Articles\Services\ArticleServiceInterface;
 
+use App\Application\Engagement\Services\EngagementServiceInterface;
+use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Application\LastOperations\Services\LastOperationServiceInterface;
+use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
+use App\Domain\Articles\DTOs\ArticleListDTO;
+
+use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Pdf\DTOs\PdfRenderResult;
+use App\Domain\Shared\Enums\{ObjectTemplateType};
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
-use App\Http\v1\Concerns\ResolvesOptionalApiUser;
+use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
-use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
-use App\Application\Engagement\Services\{EngagementServiceInterface, HashtagServiceInterface};
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
-use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
-use App\Http\v1\Articles\Resources\ArticleWordCollection;
-
-use App\Domain\Articles\DTOs\{ArticleListDTO, ArticleIncludeOptionsDTO, ArticleCreateDTO, ArticleUpdateDTO};
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\Enums\{ObjectTemplateType};
 use App\Http\v1\Articles\Resources\ArticleListResource;
+use App\Http\v1\Articles\Resources\ArticleResource;
+use App\Http\v1\Articles\Resources\ArticleWordCollection;
+use App\Http\v1\Concerns\ResolvesOptionalApiUser;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
+use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
-
+use App\Shared\Results\Result;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
+
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response as HttpResponse;
 
 class ArticleController extends Controller
 {
@@ -35,10 +44,13 @@ class ArticleController extends Controller
 
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
+        private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
+        private readonly PdfResponseFactory $pdfResponseFactory,
         private readonly LastOperationServiceInterface $lastOperationService,
         private readonly EngagementServiceInterface $engagementService,
         private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+    ) {
+    }
 
     /**
      * @response ArticleListResource
@@ -190,7 +202,7 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleResource')]
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse|JsonResource
     {
-        if (!$request->hasAnyUpdateableFields()) {
+        if (! $request->hasAnyUpdateableFields()) {
             return TypedResults::validationProblem(
                 ['fields' => ['At least one field must be provided for update operation']],
                 'No fields to update'
@@ -236,21 +248,21 @@ class ArticleController extends Controller
                 auth('api')->user()
             );
 
-            if (!$deleted) {
+            if (! $deleted) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Article not found or unauthorized'
+                    'message' => 'Article not found or unauthorized',
                 ], 404);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Article deleted successfully'
+                'message' => 'Article deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -273,8 +285,36 @@ class ArticleController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse
+    {
+        return $this->pdfResult($this->articlePdfExportService->exportKanjis(
+            EntityId::from($uuid),
+            auth('api')->user(),
+        ));
+    }
+
+    public function exportWordsPdf(string $uuid): JsonResponse|HttpResponse
+    {
+        return $this->pdfResult($this->articlePdfExportService->exportWords(
+            EntityId::from($uuid),
+            auth('api')->user(),
+        ));
+    }
+
+    private function pdfResult(Result $result): JsonResponse|HttpResponse
+    {
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var PdfRenderResult $pdf */
+        $pdf = $result->getData();
+
+        return $this->pdfResponseFactory->make($pdf);
     }
 }

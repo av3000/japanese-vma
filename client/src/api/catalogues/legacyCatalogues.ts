@@ -51,33 +51,3 @@ export const resolveLegacyCatalogueIdentity = async (
 		title: response.list.title,
 	};
 };
-
-export const getLegacyCataloguePdfEndpoint = (catalogueType: number) => {
-	switch (catalogueType) {
-		case 5:
-			return 'radicals-pdf';
-		case 6:
-			return 'kanjis-pdf';
-		case 7:
-			return 'words-pdf';
-		case 8:
-			return 'sentences-pdf';
-		default:
-			return null;
-	}
-};
-
-export const downloadLegacyCataloguePdf = async (catalogueId: number, catalogueType: number) => {
-	const endpoint = getLegacyCataloguePdfEndpoint(catalogueType);
-	if (!endpoint) {
-		throw new Error('PDF export is not available for this catalogue type');
-	}
-
-	return apiCall<BlobPart>({
-		method: HttpMethod.GET,
-		path: `/list/${catalogueId}/${endpoint}`,
-		config: {
-			responseType: 'blob',
-		},
-	});
-};

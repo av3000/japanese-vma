@@ -61,6 +61,7 @@ class CatalogueDetailResource extends JsonResource
             'items_count' => $detail->itemsCount,
             'hashtags' => HashtagResource::collection($detail->hashtags),
             'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),
+            // TODO: add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type.
             'items' => $detail->items,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),

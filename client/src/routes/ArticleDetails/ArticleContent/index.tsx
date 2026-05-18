@@ -11,7 +11,7 @@ import {
 	fetchCataloguesForItem,
 	type CatalogueForItemAction,
 } from '@/api/catalogues/cataloguesForItem';
-import { articleDestroy } from '@/api/generated/article/article';
+import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
@@ -29,10 +29,7 @@ import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { apiCall } from '@/services/api';
-import { BASE_URL } from '@/shared/constants';
 import { ObjectTemplateType } from '@/shared/constants/enums';
-import { HttpMethod } from '@/shared/types';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
 
@@ -62,6 +59,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
 
+	// TODO: Lift this query up and create query function to pass in here
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
 		queryFn: () => fetchCataloguesForItem(article.id),
@@ -73,6 +71,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	// TODO: Should only call queries propagating up to smart component
 	// ex: statusMutation could be called from a dashboard.
+	// Lift this query up and create query function to be reused
 	const statusMutation = useMutation({
 		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
 		onSuccess: (res) => {
@@ -84,13 +83,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		},
 	});
 
-	// TODO: move up to queries, and hide API details.
+	// TODO: Lift this query up and create query function to be reused
 	const deleteMutation = useMutation({
 		mutationFn: () => articleDestroy(article.uuid),
 		onSuccess: () => navigate('/articles'),
 	});
 
-	// TODO: move up to queries and hide API details, only passing in the params.
+	// TODO: Lift this query up and create query function to be reused
 	const catalogueMembershipMutation = useMutation<
 		unknown,
 		unknown,
@@ -133,6 +132,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
+	// TODO: Lift this query up and create query function to be reused
 	const handleListAction = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
@@ -144,14 +144,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	// TODO: Refactor to queries when backend is migrated to V1 endpoint for PDF endpoints.
-	// TODO: Should only call queries propagating up to smart component
+	// TODO: Lift this query up and create query function to be reused
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {
-			const pdfType = type === 'kanji' ? 'kanjis-pdf' : 'words-pdf';
-			const url = `${BASE_URL}/api/article/${article.id}/${pdfType}`;
-			const res: any = await apiCall({ method: HttpMethod.GET, path: url, config: { responseType: 'blob' } });
+			const res =
+				type === 'kanji'
+					? await articleExportKanjisPdf(article.uuid, { responseType: 'blob' })
+					: await articleExportWordsPdf(article.uuid, { responseType: 'blob' });
 			const file = new Blob([res], { type: 'application/pdf' });
 			window.open(URL.createObjectURL(file));
 		} catch (error) {

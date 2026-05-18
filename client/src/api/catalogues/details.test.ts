@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCatalogueShowQueryKey, useCatalogueShow } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
-import { ObjectTemplateType, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import { toggleInstanceLike } from '@/api/likes/likes';
+import { ObjectTemplateType, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import { mapCatalogueDetail, useCatalogueQuery, useLikeCatalogueMutation } from './details';
 
 vi.mock('@tanstack/react-query', async () => {
@@ -51,7 +51,7 @@ const createCatalogue = (overrides: Partial<CatalogueDetailResource> = {}): Cata
 		comments_count: 1,
 		is_liked_by_viewer: true,
 	},
-	items: '',
+	items: [],
 	created_at: '2026-04-01T12:00:00.000Z',
 	updated_at: '2026-04-02T12:00:00.000Z',
 	...overrides,

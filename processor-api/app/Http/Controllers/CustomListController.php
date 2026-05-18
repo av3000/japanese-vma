@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Pdf\PdfRendererInterface;
+use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Http\Models\Article;
 use App\Http\Models\Comment;
 use App\Http\Models\CustomList;
@@ -16,10 +18,11 @@ use App\Http\Models\View;
 use App\Http\Models\Word;
 use App\Http\Requests\ListStoreRequest;
 use App\Http\User;
+use App\Shared\Http\PdfResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use PDF;
 
 class CustomListController extends Controller
 {
@@ -44,6 +47,12 @@ class CustomListController extends Controller
     const LYRICS = 10;
 
     const ARTISTS = 11;
+
+    public function __construct(
+        private readonly PdfRendererInterface $pdfRenderer,
+        private readonly PdfResponseFactory $pdfResponseFactory,
+    ) {
+    }
 
     public function getListTypes($index)
     {
@@ -708,13 +717,7 @@ class CustomListController extends Controller
             'radicalList' => $list->listItems,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.list-radicals', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
-
-        return $pdf->inline('list-radicals.pdf');
+        return $this->renderPdf('pdf.kanjis.list-radicals', $data, 'list-radicals.pdf');
     }
 
     public function generateKanjisPdf($id)
@@ -757,13 +760,7 @@ class CustomListController extends Controller
             'kanjiList' => $list->listItems,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.list-kanjis', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
-
-        return $pdf->inline('list-kanjis.pdf');
+        return $this->renderPdf('pdf.kanjis.list-kanjis', $data, 'list-kanjis.pdf');
     }
 
     public function extractWordsListAttributes($wordList)
@@ -879,13 +876,7 @@ class CustomListController extends Controller
             'wordList' => $list->listItems,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.list-words', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
-
-        return $pdf->inline('list-words.pdf');
+        return $this->renderPdf('pdf.kanjis.list-words', $data, 'list-words.pdf');
     }
 
     public function generateSentencesPdf($id)
@@ -921,13 +912,19 @@ class CustomListController extends Controller
             'sentenceList' => $list->listItems,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.list-sentences', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
+        return $this->renderPdf('pdf.kanjis.list-sentences', $data, 'list-sentences.pdf');
+    }
 
-        return $pdf->stream('list-sentences.pdf');
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function renderPdf(string $view, array $data, string $filename): Response
+    {
+        return $this->pdfResponseFactory->make($this->pdfRenderer->render(new PdfDocument(
+            view: $view,
+            data: $data,
+            filename: $filename,
+        )));
     }
 
     public function togglePublicity($id)

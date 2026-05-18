@@ -16,7 +16,7 @@
 -   Dedoc Scramble
 -   Sentry Laravel
 -   Spatie Laravel Permission
--   Barryvdh Laravel Snappy
+-   Barryvdh Laravel Dompdf
 -   MySQL for local development
 -   Redis for queue and cache coordination
 
@@ -98,7 +98,7 @@ docker compose exec laravel-app php artisan cache:clear
 
 `processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` MySQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
 
-PDF generation uses Laravel Snappy. If PDF features fail locally, verify the wkhtmltopdf binary paths in `.env` and `config/snappy.php`.
+PDF generation uses Laravel Dompdf through the project PDF renderer. If PDF features fail locally, verify Dompdf config and installed Japanese fonts in the backend container.
 
 Useful local URLs:
 

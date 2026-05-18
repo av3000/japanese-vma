@@ -13,7 +13,7 @@ class DownloadRepository implements DownloadRepositoryInterface
 {
     public function create(DownloadCreateDTO $data): void
     {
-        Download::create($data); // just providing DTO works because it implements Arrayable
+        Download::create($data->toArray());
     }
 
     public function findByFilter(DownloadFilterDTO $filter): ?int

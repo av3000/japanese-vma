@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface};
+use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface, ArticlePdfExportData};
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
@@ -142,6 +142,33 @@ class ArticleRepository implements ArticleRepositoryInterface
             : null;
     }
 
+    public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData
+    {
+        $query = PersistenceArticle::query()
+            ->with(['user'])
+            ->where('uuid', $articleUuid->value());
+
+        if ($includeKanjis) {
+            $query->with('kanjis');
+        }
+
+        if ($includeWords) {
+            $query->with('words');
+        }
+
+        $persistenceArticle = $query->first();
+
+        if ($persistenceArticle === null) {
+            return null;
+        }
+
+        return new ArticlePdfExportData(
+            article: $this->articleMapper->mapToDomain($persistenceArticle),
+            kanjis: $includeKanjis ? $this->mapKanjisForPdf($persistenceArticle) : [],
+            words: $includeWords ? $this->mapWordsForPdf($persistenceArticle) : [],
+        );
+    }
+
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
@@ -271,6 +298,82 @@ class ArticleRepository implements ArticleRepositoryInterface
     private function applySorting(Builder $query, ArticleSortCriteria $sort): void
     {
         $query->orderBy($sort->field->value, $sort->direction->value);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function mapKanjisForPdf(PersistenceArticle $article): array
+    {
+        if (! $article->relationLoaded('kanjis')) {
+            return [];
+        }
+
+        return $article->kanjis
+            ->map(fn ($kanji): array => [
+                'id' => $kanji->id,
+                'kanji' => $kanji->kanji,
+                'onyomi' => $kanji->onyomi,
+                'kunyomi' => $kanji->kunyomi,
+                'meaning' => $kanji->meaning,
+                'jlpt' => $kanji->jlpt,
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function mapWordsForPdf(PersistenceArticle $article): array
+    {
+        if (! $article->relationLoaded('words')) {
+            return [];
+        }
+
+        return $article->words
+            ->map(fn ($word): array => [
+                'id' => $word->id,
+                'word' => $word->word,
+                'furigana' => $word->furigana,
+                'meaning' => $this->extractWordMeaning($word->sense),
+                'jlpt' => $word->jlpt,
+            ])
+            ->all();
+    }
+
+    private function extractWordMeaning(?string $sense): string
+    {
+        $decodedSense = json_decode($sense ?? '[]', true);
+
+        if (! is_array($decodedSense)) {
+            return '';
+        }
+
+        $glosses = [];
+
+        foreach ($decodedSense as $sense) {
+            if (! is_array($sense)) {
+                continue;
+            }
+
+            foreach ($sense as $singleTag) {
+                if (($singleTag[0] ?? null) !== 'gloss') {
+                    continue;
+                }
+
+                $value = $singleTag[1] ?? null;
+
+                if (is_array($value)) {
+                    $value = reset($value);
+                }
+
+                if (is_string($value) && $value !== '') {
+                    $glosses[] = $value;
+                }
+            }
+        }
+
+        return implode(', ', array_slice($glosses, 0, 3));
     }
 
     /**

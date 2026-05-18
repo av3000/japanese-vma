@@ -95,7 +95,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 						<div className={sharedStyles.metaInfo}>
 							{kanji.jlpt && (
 								<div className={sharedStyles.badge}>
-									<span>{kanji.jlpt}</span>
+									<span>N{kanji.jlpt}</span>
 								</div>
 							)}
 

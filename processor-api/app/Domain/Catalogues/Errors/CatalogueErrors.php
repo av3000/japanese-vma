@@ -2,8 +2,8 @@
 
 namespace App\Domain\Catalogues\Errors;
 
-use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
+use App\Shared\Results\ResultError;
 
 class CatalogueErrors
 {
@@ -37,6 +37,17 @@ class CatalogueErrors
             description: 'Invalid catalogue item',
             detail: "Item {$itemId} cannot be added to catalogue {$catalogueUid}",
             errorMessage: "Item {$itemId} cannot be added to catalogue {$catalogueUid}",
+        );
+    }
+
+    public static function unsupportedPdfExportKind(string $catalogueUid, string $kind): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.UnsupportedPdfExportKind',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Unsupported catalogue PDF export',
+            detail: "Catalogue {$catalogueUid} cannot be exported as {$kind} PDF",
+            errorMessage: "Catalogue {$catalogueUid} cannot be exported as {$kind} PDF",
         );
     }
 

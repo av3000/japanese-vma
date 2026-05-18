@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiCall } from '@/services/api';
-import {
-	getLegacyCataloguePdfEndpoint,
-	resolveLegacyCatalogueIdentity,
-	stringifyCatalogueTags,
-} from './legacyCatalogues';
+import { resolveLegacyCatalogueIdentity, stringifyCatalogueTags } from './legacyCatalogues';
 
 vi.mock('@/services/api', () => ({
 	apiCall: vi.fn(),
@@ -39,11 +35,5 @@ describe('legacy catalogue adapters', () => {
 			method: 'get',
 			path: '/list/42',
 		});
-	});
-
-	it('maps legacy PDF-capable catalogue types to their export endpoints', () => {
-		expect(getLegacyCataloguePdfEndpoint(5)).toBe('radicals-pdf');
-		expect(getLegacyCataloguePdfEndpoint(8)).toBe('sentences-pdf');
-		expect(getLegacyCataloguePdfEndpoint(9)).toBeNull();
 	});
 });
