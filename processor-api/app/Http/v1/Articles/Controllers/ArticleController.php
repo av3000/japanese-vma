@@ -4,7 +4,6 @@ namespace App\Http\v1\Articles\Controllers;
 
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
-
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
@@ -59,69 +58,12 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleListResource')]
     public function index(IndexArticleRequest $request): JsonResponse|JsonResource
     {
-        // TODO: figure graceful error handling pattern
         $listDTO = ArticleListDTO::fromRequest($request->validated());
         $viewer = $this->resolveOptionalApiUser($request);
-        $paginatedArticles = $this->articleService->getArticlesList($listDTO, $viewer);
-        $entityIdInts = [];
-        $entityUuidStrings = [];
 
-        foreach ($paginatedArticles->getItems() as $article) {
-            $entityIdInts[] = $article->getIdValue();
-            $entityUuidStrings[] = $article->getUid()->value();
-        }
-
-        $statsMap = [];
-        $hashtagsMap = [];
-        $lastOperationsMap = [];
-
-        if ($listDTO->include_stats_counts) {
-            $statsMap = $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles);
-        }
-
-        if ($listDTO->include_hashtags) {
-            $hashtagsMap = $this->hashtagService->getBatchHashtags(
-                $entityIdInts,
-                ObjectTemplateType::ARTICLE
-            );
-        }
-
-        $lastOperationsMap = $this->lastOperationService->getBatchLatestStates(
-            $entityUuidStrings,
-            'kanji_extraction'
+        return new ArticleListResource(
+            $this->articleService->getArticlesList($listDTO, $viewer)
         );
-
-        $resources = [];
-        // TODO: This supposed to use some Mapper or Builder for mature mapping.
-        foreach ($paginatedArticles->getItems() as $article) {
-            $stats = $statsMap[$article->getIdValue()] ?? null;
-            $hashtags = $hashtagsMap[$article->getIdValue()] ?? [];
-
-            $lastOperation = $lastOperationsMap[$article->getUid()->value()] ?? null;
-
-            // TODO: make options in article resource type agnostic, best accept array and check individual values inside, rather than specifying exact DTO like ArticleListDTO
-            $resources[] = new ArticleResource(
-                $article,
-                [
-                    'include_hashtags' => $listDTO->include_hashtags,
-                    'include_stats' => $listDTO->include_stats_counts,
-                ],
-                $stats,
-                $hashtags,
-                $lastOperation
-            );
-        }
-
-        return new ArticleListResource([
-            'items' => $resources,
-            'pagination' => [
-                'page' => $paginatedArticles->getPaginator()->currentPage(),
-                'per_page' => $paginatedArticles->getPaginator()->perPage(),
-                'total' => $paginatedArticles->getPaginator()->total(),
-                'last_page' => $paginatedArticles->getPaginator()->lastPage(),
-                'has_more' => $paginatedArticles->getPaginator()->hasMorePages(),
-            ],
-        ]);
     }
 
     private function getImagePath(): string

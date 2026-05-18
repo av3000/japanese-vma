@@ -5,9 +5,9 @@ namespace App\Application\Articles\Services;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
-use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
@@ -45,9 +45,9 @@ interface ArticleServiceInterface
      * @param ArticleListDTO $dto Filters: search, category, sort, pagination
      * @param User|null $user Current user for visibility rules
      *
-     * @return Articles Domain collection with paginated results
+     * @return ArticleListResultDTO Shaped article list with pagination metadata
      */
-    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles;
+    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO;
 
     /**
      * Update article with optional hashtag and content reprocessing.

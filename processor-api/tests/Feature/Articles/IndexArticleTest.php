@@ -3,6 +3,7 @@
 namespace Tests\Feature\Articles;
 
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -189,5 +190,62 @@ class IndexArticleTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['author_uid']);
+    }
+
+    public function test_index_returns_enriched_article_list_payload(): void
+    {
+        $author = $this->createUser();
+        $article = $this->createArticle($author, [
+            'title_jp' => 'Tagged Article',
+            'publicity' => PublicityStatus::PUBLIC,
+        ]);
+
+        $hashtagId = DB::table('uniquehashtags')->insertGetId([
+            'content' => '#grammar',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('hashtag_entity')->insert([
+            'entity_id' => $article->id,
+            'entity_type_id' => ObjectTemplateType::ARTICLE->getLegacyId(),
+            'hashtag_id' => $hashtagId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('last_operations')->insert([
+            'processable_id' => $article->uuid,
+            'processable_type' => 'article',
+            'task_type' => 'kanji_extraction',
+            'status' => LastOperationStatus::COMPLETED->value,
+            'metadata' => json_encode(['source' => 'test'], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->json('GET', '/api/v1/articles');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.hashtags.0.content', '#grammar')
+            ->assertJsonPath('items.0.engagement.stats.likes', 0)
+            ->assertJsonPath('items.0.processing_status.type', 'kanji_extraction')
+            ->assertJsonPath('items.0.processing_status.status', LastOperationStatus::COMPLETED->value);
+    }
+
+    public function test_index_suppresses_stats_when_include_stats_counts_is_false(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, [
+            'title_jp' => 'No Stats Article',
+            'publicity' => PublicityStatus::PUBLIC,
+        ]);
+
+        $response = $this->json('GET', '/api/v1/articles', [
+            'include_stats_counts' => false,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('items.0.engagement.stats', null);
     }
 }

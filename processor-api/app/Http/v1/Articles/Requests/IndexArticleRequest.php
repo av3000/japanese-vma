@@ -2,7 +2,6 @@
 
 namespace App\Http\v1\Articles\Requests;
 
-
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexArticleRequest extends FormRequest
@@ -55,6 +54,8 @@ class IndexArticleRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        // TODO: include_hashtags is not validated/normalized at this request seam yet.
+        // Preserve today's effective always-on article-list hashtag behavior until that follow-up lands.
         $booleanFields = [
             'include_stats_counts',
             'include_kanjis',

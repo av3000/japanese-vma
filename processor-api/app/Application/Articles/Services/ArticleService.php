@@ -12,11 +12,15 @@ use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterfa
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
@@ -24,7 +28,6 @@ use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
-use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
@@ -38,6 +41,7 @@ use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Models\LastOperationState;
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -49,6 +53,8 @@ class ArticleService implements ArticleServiceInterface
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
+        private EngagementServiceInterface $engagementService,
+        private LastOperationServiceInterface $lastOperationService,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
@@ -173,9 +179,9 @@ class ArticleService implements ArticleServiceInterface
      * @param ArticleListDTO $dto Filter criteria
      * @param User|null $user Current user for visibility
      *
-     * @return Articles Domain collection with pagination metadata
+     * @return ArticleListResultDTO Shaped domain collection with pagination metadata
      */
-    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
+    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO
     {
         // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
         $criteriaDTO = new ArticleCriteriaDTO(
@@ -188,7 +194,54 @@ class ArticleService implements ArticleServiceInterface
             include_kanjis: $dto->include_kanjis
         );
 
-        return $this->articleRepository->findByCriteria($criteriaDTO);
+        $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
+        $articles = $paginatedArticles->getItems();
+        $articleIds = array_map(
+            static fn (DomainArticle $article): int => $article->getIdValue(),
+            $articles,
+        );
+        $articleUuids = array_map(
+            static fn (DomainArticle $article): string => $article->getUid()->value(),
+            $articles,
+        );
+
+        $statsMap = $dto->include_stats_counts
+            ? $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles)
+            : [];
+
+        // TODO: IndexArticleRequest still does not validate/normalize include_hashtags,
+        // so article-list hashtags remain effectively always-on until a follow-up cleanup.
+        $hashtagsMap = $dto->include_hashtags
+            ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
+            : [];
+
+        /** @var array<string, LastOperationState> $lastOperationsMap */
+        $lastOperationsMap = $articleUuids === []
+            ? []
+            : $this->lastOperationService->getBatchLatestStates($articleUuids, 'kanji_extraction');
+
+        $paginator = $paginatedArticles->getPaginator();
+
+        return new ArticleListResultDTO(
+            items: array_map(
+                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
+                    article: $article,
+                    stats: $statsMap[$article->getIdValue()] ?? null,
+                    hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
+                    lastOperation: $lastOperationsMap[$article->getUid()->value()] ?? null,
+                ),
+                $articles,
+            ),
+            pagination: [
+                'page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ],
+            include_hashtags: $dto->include_hashtags,
+            include_stats: $dto->include_stats_counts,
+        );
     }
 
     /**
