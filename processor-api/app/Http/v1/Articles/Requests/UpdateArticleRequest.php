@@ -2,10 +2,26 @@
 
 namespace App\Http\v1\Articles\Requests;
 
+use App\Shared\Http\TypedResults;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateArticleRequest extends FormRequest
 {
+    private const UPDATEABLE_FIELDS = [
+        'title_jp',
+        'title_en',
+        'content_jp',
+        'content_en',
+        'source_link',
+        'publicity',
+        'hashtags',
+        'tags',
+    ];
+
+    private const EMPTY_UPDATE_MESSAGE = 'At least one field must be provided for update operation';
+
     public function authorize(): bool
     {
         return auth('api')->check();
@@ -39,34 +55,30 @@ class UpdateArticleRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (!$this->has('hashtags') && $this->has('tags')) {
+        if (! $this->exists('hashtags') && $this->exists('tags')) {
             $this->merge(['hashtags' => $this->input('tags')]);
         }
     }
 
-    /**
-     * Get the list of updateable fields.
-     */
-    private function getUpdateableFields(): array
+    public function withValidator(Validator $validator): void
     {
-        return [
-            'title_jp',
-            'title_en',
-            'content_jp',
-            'content_en',
-            'source_link',
-            'publicity',
-            'hashtags',
-            'tags'
-        ];
+        $validator->after(function () use ($validator): void {
+            if ($validator->errors()->isNotEmpty() || $this->hasAnyUpdateableFields()) {
+                return;
+            }
+
+            throw new HttpResponseException(
+                TypedResults::validationProblem(
+                    ['fields' => [self::EMPTY_UPDATE_MESSAGE]],
+                    'No fields to update',
+                )
+            );
+        });
     }
 
-    /**
-     * Check if request contains at least one updateable field.
-     */
-    public function hasAnyUpdateableFields(): bool
+    private function hasAnyUpdateableFields(): bool
     {
-        return collect($this->getUpdateableFields())
-            ->some(fn($field) => $this->has($field));
+        return collect(self::UPDATEABLE_FIELDS)
+            ->some(fn (string $field): bool => $this->exists($field));
     }
 }

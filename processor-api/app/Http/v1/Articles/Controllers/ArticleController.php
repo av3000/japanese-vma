@@ -202,13 +202,6 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleResource')]
     public function update(string $uid, UpdateArticleRequest $request): JsonResponse|JsonResource
     {
-        if (! $request->hasAnyUpdateableFields()) {
-            return TypedResults::validationProblem(
-                ['fields' => ['At least one field must be provided for update operation']],
-                'No fields to update'
-            );
-        }
-
         $updateDTO = ArticleUpdateDTO::fromRequest($request->validated());
 
         // TODO: dispatch update kanjis list job
