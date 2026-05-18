@@ -4,9 +4,6 @@ namespace App\Http\v1\Articles\Controllers;
 
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
@@ -14,7 +11,6 @@ use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
-use App\Domain\Shared\Enums\{ObjectTemplateType};
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
@@ -46,9 +42,6 @@ class ArticleController extends Controller
         private readonly ArticleServiceInterface $articleService,
         private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
-        private readonly LastOperationServiceInterface $lastOperationService,
-        private readonly EngagementServiceInterface $engagementService,
-        private readonly HashtagServiceInterface $hashtagService,
     ) {
     }
 
@@ -107,36 +100,7 @@ class ArticleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->getData();
-
-        $engagementSummary = $this->engagementService->getSingleArticleEngagementSummary(
-            $article->getIdValue(),
-            ObjectTemplateType::ARTICLE,
-            $options,
-            $viewer !== null
-        );
-
-        $hashtags = $this->hashtagService->getHashtags(
-            $article->getIdValue(),
-            ObjectTemplateType::ARTICLE
-        );
-
-        $kanjiOperationState = $this->lastOperationService->getLatestState(
-            $article->getUid(),
-            'kanji_extraction'
-        );
-
-        $kanjis = []; // TODO: create service method and use - $japaneseMaterialService->getKanjis($article->getUid());
-        $words = []; // TODO: create service method and use $japaneseMaterialService->getWords($article->getUid());
-
-        return new ArticleDetailResource(
-            article: $article,
-            engagement: $engagementSummary,
-            kanjis: $article->getKanjis(),
-            words: $words,
-            hashtags: $hashtags,
-            lastOperation: $kanjiOperationState
-        );
+        return new ArticleDetailResource($result->getData());
     }
 
     /**

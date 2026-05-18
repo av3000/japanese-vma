@@ -17,6 +17,7 @@ use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
+use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleListItemDTO;
@@ -134,7 +135,7 @@ class ArticleService implements ArticleServiceInterface
      * @param ArticleIncludeOptionsDTO $dto Eager loading options
      * @param User|null $user Current user
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result
     {
@@ -151,7 +152,31 @@ class ArticleService implements ArticleServiceInterface
         $viewer = new Viewer($user?->id, request()->ip());
         $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
-        return Result::success($article);
+        $engagement = $this->engagementService->getSingleArticleEngagementSummary(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE,
+            $dto,
+            $user !== null,
+        );
+
+        $hashtags = $this->hashtagService->getHashtags(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE
+        );
+
+        $lastOperation = $this->lastOperationService->getLatestState(
+            $article->getUid(),
+            'kanji_extraction'
+        );
+
+        return Result::success(new ArticleDetailResultDTO(
+            article: $article,
+            engagement: $engagement,
+            kanjis: $article->getKanjis(),
+            words: [],
+            hashtags: $hashtags,
+            lastOperation: $lastOperation,
+        ));
     }
 
     /**

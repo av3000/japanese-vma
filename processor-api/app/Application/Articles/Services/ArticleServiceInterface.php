@@ -3,6 +3,7 @@
 namespace App\Application\Articles\Services;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleListResultDTO;
@@ -35,7 +36,7 @@ interface ArticleServiceInterface
      * @param ArticleIncludeOptionsDTO $dto Options for eager loading (user, kanjis, words)
      * @param User|null $user Current user for permission check
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result;
 

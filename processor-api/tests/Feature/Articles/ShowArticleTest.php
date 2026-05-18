@@ -3,6 +3,7 @@
 namespace Tests\Feature\Articles;
 
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -76,6 +77,48 @@ class ShowArticleTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('uid', $article->uuid)
+            ->assertJsonMissingPath('article');
+    }
+
+    public function test_show_returns_enriched_flat_article_detail_payload(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'publicity' => PublicityStatus::PUBLIC,
+        ]);
+
+        $hashtagId = DB::table('uniquehashtags')->insertGetId([
+            'content' => '#grammar',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('hashtag_entity')->insert([
+            'entity_id' => $article->id,
+            'entity_type_id' => ObjectTemplateType::ARTICLE->getLegacyId(),
+            'hashtag_id' => $hashtagId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('last_operations')->insert([
+            'processable_id' => $article->uuid,
+            'processable_type' => 'article',
+            'task_type' => 'kanji_extraction',
+            'status' => LastOperationStatus::COMPLETED->value,
+            'metadata' => json_encode(['source' => 'test'], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->json('GET', "/api/v1/articles/{$article->uuid}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('uid', $article->uuid)
+            ->assertJsonPath('hashtags.0.content', '#grammar')
+            ->assertJsonPath('engagement.stats.likes', 0)
+            ->assertJsonPath('processing_status.type', 'kanji_extraction')
+            ->assertJsonPath('processing_status.status', LastOperationStatus::COMPLETED->value)
             ->assertJsonMissingPath('article');
     }
 }
