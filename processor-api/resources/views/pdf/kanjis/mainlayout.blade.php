@@ -74,7 +74,6 @@
 </head>
 
 <body>
-    <!-- @include('pdf.kanjis.nav') -->
     <section class="text-center row">
         <div class="col-md-12 mb-5">
             @yield('links')
@@ -84,7 +83,6 @@
         @yield('content')
     </section>
     @include('pdf.kanjis.footer')
-    @include('pdf.kanjis.footer-scripts')
 </body>
 
 </html>

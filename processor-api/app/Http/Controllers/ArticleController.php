@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Pdf\PdfRendererInterface;
+use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Http\Models\Article;
 use App\Http\Models\Comment;
-use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Http\Models\Download;
 use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Uniquehashtag;
 use App\Http\User;
+use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
+use App\Shared\Http\PdfResponseFactory;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use PDF;
 
 class ArticleController extends Controller
 {
@@ -49,7 +52,11 @@ class ArticleController extends Controller
         'approved' => 3,
     ];
 
-    public function __constructor() {}
+    public function __construct(
+        private readonly PdfRendererInterface $pdfRenderer,
+        private readonly PdfResponseFactory $pdfResponseFactory,
+    ) {
+    }
 
     public function getArticleJlptTypes($index)
     {
@@ -583,14 +590,7 @@ class ArticleController extends Controller
             'wordList' => $wordList,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.article-words', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
-
-        // https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
-        return $pdf->inline('article-words.pdf');
+        return $this->renderPdf('pdf.kanjis.article-words', $data, 'article-words.pdf');
     }
 
     public function generateKanjisPdf($id)
@@ -629,13 +629,19 @@ class ArticleController extends Controller
             'kanjiList' => $kanjiList,
         ];
 
-        $pdf = PDF::loadView('pdf.kanjis.article-kanjis', $data);
-        $pdf->setOptions([
-            'footer-center' => '[page]',
-            'page-size' => 'a4',
-        ]);
+        return $this->renderPdf('pdf.kanjis.article-kanjis', $data, 'article-kanjis.pdf');
+    }
 
-        return $pdf->inline('article-kanjis.pdf');
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function renderPdf(string $view, array $data, string $filename): Response
+    {
+        return $this->pdfResponseFactory->make($this->pdfRenderer->render(new PdfDocument(
+            view: $view,
+            data: $data,
+            filename: $filename,
+        )));
     }
 
     /**

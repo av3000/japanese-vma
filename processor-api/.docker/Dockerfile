@@ -25,12 +25,6 @@ RUN apt-get update && apt-get install -y \
     fonts-ipafont-gothic \
     fonts-hanazono \
     default-mysql-client \
-    # TODO: Test one by one and see which library causes issues (KEEP COMMENTED FOR NOW)
-    # libxrender1 \
-    # libfontconfig1 \
-    # libxtst6 \
-    # xvfb \
-    # wkhtmltopdf \
     nodejs \
     npm \
     libicu-dev \

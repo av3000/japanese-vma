@@ -39,6 +39,9 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return $this->export($catalogueUuid, $viewer, PdfExportKind::WORDS);
     }
 
+    // TODO: Recreate radical and sentence PDF exports here as v1 service-backed
+    // exports when those kinds are supported; do not route them through
+    // CustomListController or any renderer facade.
     private function export(EntityId $catalogueUuid, User $viewer, PdfExportKind $kind): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($catalogueUuid);

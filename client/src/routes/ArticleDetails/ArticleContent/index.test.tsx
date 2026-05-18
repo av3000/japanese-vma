@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
-import { articleExportKanjisPdf } from '@/api/generated/article/article';
+import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import ArticleContent from './index';
 
@@ -86,6 +86,7 @@ vi.mock('@/api/articles/articles', () => ({
 vi.mock('@/api/generated/article/article', () => ({
 	articleDestroy: vi.fn(),
 	articleExportKanjisPdf: vi.fn(),
+	articleExportWordsPdf: vi.fn(),
 }));
 
 vi.mock('@/hooks/useAuth', () => ({
@@ -202,6 +203,7 @@ describe('ArticleContent', () => {
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 		vi.mocked(articleExportKanjisPdf).mockResolvedValue('%PDF-1.7' as never);
+		vi.mocked(articleExportWordsPdf).mockResolvedValue('%PDF-1.7' as never);
 	});
 
 	const cataloguesForItemLists: CatalogueForItem[] = [
@@ -253,6 +255,18 @@ describe('ArticleContent', () => {
 		await capturedPdfModalProps[0].onDownload('kanji');
 
 		expect(articleExportKanjisPdf).toHaveBeenCalledWith('article-uuid', { responseType: 'blob' });
+		expect(articleExportWordsPdf).not.toHaveBeenCalled();
+		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
+		expect(windowOpenMock).toHaveBeenCalledWith('blob:article-kanjis');
+	});
+
+	it('downloads article words pdf through the generated v1 article endpoint', async () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		await capturedPdfModalProps[0].onDownload('words');
+
+		expect(articleExportWordsPdf).toHaveBeenCalledWith('article-uuid', { responseType: 'blob' });
+		expect(articleExportKanjisPdf).not.toHaveBeenCalled();
 		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
 		expect(windowOpenMock).toHaveBeenCalledWith('blob:article-kanjis');
 	});

@@ -208,7 +208,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 								</div>
 							)}
 							<CatalogueItems
-								items={catalogue.items as unknown as unknown[]}
+								// TODO: Backend - add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type. Orvel autogenerates and use it here.
+								items={catalogue.items}
 								catalogueType={catalogue.type}
 								currentUser={currentUser}
 								ownerId={catalogue.owner.id}
