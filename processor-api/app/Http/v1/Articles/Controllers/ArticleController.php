@@ -13,6 +13,7 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\{ObjectTemplateType};
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -215,15 +216,17 @@ class ArticleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->getData();
+        /** @var ArticleUpdateResultDTO $updateResult */
+        $updateResult = $result->getData();
 
-        $hashtags = $this->hashtagService->getHashtags(
-            $article->getIdValue(),
-            ObjectTemplateType::ARTICLE
+        /**
+         * TODO: Consider a follow-up refactor where resources accept shaped
+         * response objects instead of several side inputs.
+         */
+        return new ArticleResource(
+            article: $updateResult->article,
+            hashtags: $updateResult->hashtags,
         );
-
-        // TODO: returning only Id might be enough for frontend.
-        return new ArticleResource(article: $article, hashtags: $hashtags);
     }
 
     // TODO: refactor to clean architecture

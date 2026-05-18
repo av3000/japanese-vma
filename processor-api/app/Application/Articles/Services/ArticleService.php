@@ -18,6 +18,7 @@ use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
@@ -56,7 +57,8 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Create article with hashtags atomically.
@@ -196,9 +198,9 @@ class ArticleService implements ArticleServiceInterface
      * @param ArticleUpdateDTO $dto Update data
      * @param User $user User for authorized actions
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleUpdateResultDTO, Failure data: ResultError
      *
-     * @todo Refactor to use EntityId and return DomainArticle
+     * @todo Refactor to use EntityId.
      */
     public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result
     {
@@ -246,7 +248,15 @@ class ArticleService implements ArticleServiceInterface
                 );
             }
 
-            return Result::success($updatedDomainArticle);
+            return Result::success(
+                new ArticleUpdateResultDTO(
+                    article: $updatedDomainArticle,
+                    hashtags: $this->hashtagService->getHashtags(
+                        $updatedDomainArticle->getIdValue(),
+                        ObjectTemplateType::ARTICLE
+                    ),
+                )
+            );
         } catch (\Exception $e) {
             Log::error('Article update failed', [
                 'user_id' => $user->id,

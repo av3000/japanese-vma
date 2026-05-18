@@ -6,6 +6,7 @@ use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\User;
@@ -55,7 +56,7 @@ interface ArticleServiceInterface
      * @param ArticleUpdateDTO $dto Fields to update
      * @param User $user User for authorization
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleUpdateResultDTO, Failure data: ResultError
      */
     public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result;
 
