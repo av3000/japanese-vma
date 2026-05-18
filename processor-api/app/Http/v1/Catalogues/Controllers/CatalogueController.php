@@ -2,16 +2,14 @@
 
 namespace App\Http\v1\Catalogues\Controllers;
 
-use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
-use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
@@ -39,8 +37,6 @@ class CatalogueController extends Controller
         private readonly CatalogueServiceInterface $catalogueService,
         private readonly CataloguePdfExportServiceInterface $cataloguePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
-        private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly HashtagServiceInterface $hashtagService,
     ) {
     }
 
@@ -182,18 +178,13 @@ class CatalogueController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        $catalogue = $result->getData();
-        $hashtags = $this->hashtagService->getHashtags(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST
-        );
-        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogue->getIdValue()]);
-        $itemsCount = $itemsCountMap[$catalogue->getIdValue()] ?? 0;
+        /** @var CatalogueUpdateResultDTO $updateResult */
+        $updateResult = $result->getData();
 
         return new CatalogueResource(
-            catalogue: $catalogue,
-            hashtags: $hashtags,
-            itemsCount: $itemsCount
+            catalogue: $updateResult->catalogue,
+            hashtags: $updateResult->hashtags,
+            itemsCount: $updateResult->itemsCount,
         );
     }
 

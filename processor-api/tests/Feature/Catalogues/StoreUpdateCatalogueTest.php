@@ -158,6 +158,18 @@ class StoreUpdateCatalogueTest extends TestCase
             'type' => 5,
         ]);
         $this->attachHashtags($catalogue, ['#old']);
+        DB::table('customlist_object')->insert([
+            [
+                'list_id' => $catalogue->id,
+                'listtype_id' => 8,
+                'real_object_id' => 101,
+            ],
+            [
+                'list_id' => $catalogue->id,
+                'listtype_id' => 8,
+                'real_object_id' => 102,
+            ],
+        ]);
 
         Passport::actingAs($user, ['*'], 'api');
 
@@ -172,7 +184,8 @@ class StoreUpdateCatalogueTest extends TestCase
             ->assertJsonPath('title', 'After Update')
             ->assertJsonPath('type', 8)
             ->assertJsonPath('publicity', 1)
-            ->assertJsonPath('description', 'Keep this description');
+            ->assertJsonPath('description', 'Keep this description')
+            ->assertJsonPath('items_count', 2);
 
         $catalogue->refresh();
 
@@ -184,6 +197,14 @@ class StoreUpdateCatalogueTest extends TestCase
         $hashtags = $this->getHashtagContents($catalogue);
         sort($hashtags);
         $this->assertSame(['#new1', '#new2'], $hashtags);
+
+        $responseHashtags = collect($response->json('hashtags'))
+            ->pluck('content')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['#new1', '#new2'], $responseHashtags);
     }
 
     public function test_update_allows_owner_to_make_private_catalogue_public_with_publicity_only_payload(): void

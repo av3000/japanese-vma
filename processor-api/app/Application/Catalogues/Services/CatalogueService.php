@@ -23,6 +23,7 @@ use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Catalogues\Factories\CatalogueFactory;
 use App\Domain\Catalogues\Models\Catalogue;
@@ -230,6 +231,9 @@ class CatalogueService implements CatalogueServiceInterface
         );
     }
 
+    /**
+     * @return Result<CatalogueUpdateResultDTO>
+     */
     public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, User $user): Result
     {
         try {
@@ -264,7 +268,16 @@ class CatalogueService implements CatalogueServiceInterface
                 return $updatedCatalogue;
             });
 
-            return Result::success($updatedCatalogue);
+            $catalogueId = $updatedCatalogue->getIdValue();
+            $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogueId]);
+
+            return Result::success(
+                new CatalogueUpdateResultDTO(
+                    catalogue: $updatedCatalogue,
+                    hashtags: $this->hashtagService->getHashtags($catalogueId, ObjectTemplateType::LIST),
+                    itemsCount: $itemsCountMap[$catalogueId] ?? 0,
+                )
+            );
         } catch (\Exception $e) {
             Log::error('Catalogue update failed', [
                 'user_id' => $user->id,
