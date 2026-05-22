@@ -8,6 +8,7 @@ use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
@@ -31,6 +32,9 @@ interface CatalogueServiceInterface
 
     public function removeItemFromCatalogue(EntityId $uuid, int $itemId, User $user): Result;
 
+    /**
+     * @return Result<CatalogueUpdateResultDTO>
+     */
     public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, User $user): Result;
 
     public function deleteCatalogue(EntityId $uuid, User $user): Result;

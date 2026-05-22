@@ -3,31 +3,39 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Repositories\ArticleMapper;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface, ArticlePdfExportData};
+use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
+use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
-use App\Domain\Shared\ValueObjects\{UserId, EntityId};
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
     public function __construct(
         private readonly ArticleMapper $articleMapper,
+        private readonly WordMapper $wordMapper,
         // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
-    ) {}
+    ) {
+    }
 
     /**
      * Create a new article in persistence.
      *
      * @param DomainArticle $article The domain article to create
-     * @return DomainArticle The created article with generated ID and relationships
+     *
      * @throws \Illuminate\Database\QueryException On database constraint violation
+     *
+     * @return DomainArticle The created article with generated ID and relationships
      */
     public function create(DomainArticle $article): DomainArticle
     {
@@ -43,7 +51,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      * Update an existing article in persistence.
      *
      * @param DomainArticle $article The domain article with updated state
-     * @return void
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article doesn't exist
      */
     public function update(DomainArticle $article): void
@@ -64,9 +72,11 @@ class ArticleRepository implements ArticleRepositoryInterface
      * by the service layer before calling this method.
      *
      * @param int $id The article's integer ID (not UUID)
-     * @return bool True if deleted successfully
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article with ID not found
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return bool True if deleted successfully
      */
     public function deleteById(int $id): bool
     {
@@ -86,9 +96,13 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param UserId $userId The author's user ID
      * @param int $limit Maximum number of articles to return (default: 10)
-     * @return array<array> Array of article arrays (raw Eloquent toArray() output, not domain models)
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<array> Array of article arrays (raw Eloquent toArray() output, not domain models)
+     *
      * @deprecated Consider using findByCriteria() instead for consistent return types
+     *
      * @todo This returns raw arrays instead of domain models - inconsistent with other methods
      */
     public function findByUserId(UserId $userId, int $limit = 10): array
@@ -108,10 +122,12 @@ class ArticleRepository implements ArticleRepositoryInterface
      * Useful when you need the integer ID for operations but only have the public UUID.
      *
      * @param EntityId $entityUuid The article's public UUID
-     * @return int|null The article's integer ID, or null if UUID not found
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return int|null The article's integer ID, or null if UUID not found
      */
-    public function getIdByUuid(EntityId $entityUuid): int|null
+    public function getIdByUuid(EntityId $entityUuid): ?int
     {
         return PersistenceArticle::where('uuid', $entityUuid->value())->value('id');
     }
@@ -121,9 +137,10 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      *
      * @param EntityId $articleUuid The article's public UUID
-     * @param ArticleIncludeOptionsDTO|null $dto Options for eager loading:
-     * @return DomainArticle|null The domain article if found, null if not found
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return DomainArticle|null The domain article if found, null if not found
      */
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $options = null): ?DomainArticle
     {
@@ -133,6 +150,10 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         if ($options?->includeKanjis()) {
             $query->with(['kanjis']);
+        }
+
+        if ($options?->includeWords()) {
+            $query->with(['words']);
         }
 
         $persistenceArticle = $query->first();
@@ -169,6 +190,28 @@ class ArticleRepository implements ArticleRepositoryInterface
         );
     }
 
+    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator
+    {
+        $article = PersistenceArticle::find($articleId);
+
+        if ($article === null) {
+            return null;
+        }
+
+        $paginator = $article->words()->paginate(
+            perPage: $pagination->per_page,
+            page: $pagination->page
+        );
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(
+                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
+            )
+        );
+
+        return $paginator;
+    }
+
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
@@ -177,9 +220,11 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param ArticleCriteriaDTO
      * $criteria Complete filter criteria including:
-     * @return Articles
-     * Domain collection containing:
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return Articles
+     *                  Domain collection containing:
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles
     {
@@ -219,7 +264,9 @@ class ArticleRepository implements ArticleRepositoryInterface
      *                     - publicity: 'all' | array of PublicityStatus values
      *                     - access_own_private: bool (can user see their own private articles)
      *                     - user_id: int (required if access_own_private is true)
+     *
      * @return void Query is modified by reference
+     *
      * @todo Rules should be defined as constants, enums, or ValueObjects instead of raw array
      */
     private function applyVisibilityFilters(Builder $query, array $rules): void
@@ -259,6 +306,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      *                                     - categoryId: Optional category ID for exact filtering
      *                                     - search: Optional SearchTerm ValueObject for title search
      *                                     - include_kanjis: Optional bool
+     *
      * @return void Query is modified by reference
      */
     private function applyContentFilters(Builder $query, ArticleCriteriaDTO $criteria): void
@@ -276,8 +324,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
             $query->where(function ($q) use ($searchValue) {
-                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
-                    ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
+                $q->where('title_jp', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('title_en', 'LIKE', '%'.$searchValue.'%');
             });
         }
 
@@ -291,8 +339,9 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param Builder $query The Eloquent query builder
      * @param ArticleSortCriteria $sort Sort criteria containing:
-     *                                   - field: Enum of allowed sort fields (created_at, title_jp, etc.)
-     *                                   - direction: Enum of sort directions (asc, desc)
+     *                                  - field: Enum of allowed sort fields (created_at, title_jp, etc.)
+     *                                  - direction: Enum of sort directions (asc, desc)
+     *
      * @return void Query is modified by reference
      */
     private function applySorting(Builder $query, ArticleSortCriteria $sort): void
@@ -322,7 +371,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, \App\Domain\JapaneseMaterial\Words\Models\Word>
      */
     private function mapWordsForPdf(PersistenceArticle $article): array
     {
@@ -331,49 +380,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->words
-            ->map(fn ($word): array => [
-                'id' => $word->id,
-                'word' => $word->word,
-                'furigana' => $word->furigana,
-                'meaning' => $this->extractWordMeaning($word->sense),
-                'jlpt' => $word->jlpt,
-            ])
+            ->map(fn ($word) => $this->wordMapper->mapToDomain($word))
             ->all();
-    }
-
-    private function extractWordMeaning(?string $sense): string
-    {
-        $decodedSense = json_decode($sense ?? '[]', true);
-
-        if (! is_array($decodedSense)) {
-            return '';
-        }
-
-        $glosses = [];
-
-        foreach ($decodedSense as $sense) {
-            if (! is_array($sense)) {
-                continue;
-            }
-
-            foreach ($sense as $singleTag) {
-                if (($singleTag[0] ?? null) !== 'gloss') {
-                    continue;
-                }
-
-                $value = $singleTag[1] ?? null;
-
-                if (is_array($value)) {
-                    $value = reset($value);
-                }
-
-                if (is_string($value) && $value !== '') {
-                    $glosses[] = $value;
-                }
-            }
-        }
-
-        return implode(', ', array_slice($glosses, 0, 3));
     }
 
     /**
@@ -381,7 +389,6 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param int $articleId The internal ID of the article.
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
-     * @return void
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void
     {
@@ -394,17 +401,17 @@ class ArticleRepository implements ArticleRepositoryInterface
         $kanjiIdsToRemove = array_diff($existingKanjiIds, $kanjiIds);
 
         DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove) {
-            if (!empty($kanjiIdsToRemove)) {
+            if (! empty($kanjiIdsToRemove)) {
                 DB::table('article_kanji')
                     ->where('article_id', $articleId)
                     ->whereIn('kanji_id', $kanjiIdsToRemove)
                     ->delete();
             }
 
-            if (!empty($kanjiIdsToAdd)) {
-                $pivotRecords = array_map(fn($kanjiId) => [
+            if (! empty($kanjiIdsToAdd)) {
+                $pivotRecords = array_map(fn ($kanjiId) => [
                     'article_id' => $articleId,
-                    'kanji_id'   => $kanjiId,
+                    'kanji_id' => $kanjiId,
                 ], $kanjiIdsToAdd);
 
                 foreach (array_chunk($pivotRecords, 1000) as $chunk) {

@@ -3,10 +3,12 @@
 namespace App\Application\Articles\Services;
 
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
-use App\Domain\Articles\Models\Articles;
+use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
@@ -34,7 +36,7 @@ interface ArticleServiceInterface
      * @param ArticleIncludeOptionsDTO $dto Options for eager loading (user, kanjis, words)
      * @param User|null $user Current user for permission check
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result;
 
@@ -44,9 +46,9 @@ interface ArticleServiceInterface
      * @param ArticleListDTO $dto Filters: search, category, sort, pagination
      * @param User|null $user Current user for visibility rules
      *
-     * @return Articles Domain collection with paginated results
+     * @return ArticleListResultDTO Shaped article list with pagination metadata
      */
-    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles;
+    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO;
 
     /**
      * Update article with optional hashtag and content reprocessing.
@@ -55,7 +57,7 @@ interface ArticleServiceInterface
      * @param ArticleUpdateDTO $dto Fields to update
      * @param User $user User for authorization
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleUpdateResultDTO, Failure data: ResultError
      */
     public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result;
 
@@ -83,15 +85,24 @@ interface ArticleServiceInterface
     public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
 
     /**
+     * Get paginated words for an article with typed failure handling.
+     *
+     * @param int $articleId Article integer ID
+     * @param int|null $page Page number
+     * @param int|null $perPage Items per page
+     *
+     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
+     */
+    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result;
+
+    /**
      * Get paginated words for an article.
      *
      * @param int $articleId Article integer ID
      * @param int|null $page Page number
      * @param int|null $perPage Items per page
      *
-     * @return LengthAwarePaginator Eloquent paginator with word models
-     *
-     * @todo Return domain models instead of Eloquent models
+     * @return LengthAwarePaginator Paginator with domain word models
      */
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
 }

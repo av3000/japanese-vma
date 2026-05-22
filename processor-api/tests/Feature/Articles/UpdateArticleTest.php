@@ -148,9 +148,13 @@ class UpdateArticleTest extends TestCase
             'hashtags' => ['#old'],
         ])->assertStatus(200);
 
-        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+        $response = $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
             'hashtags' => ['#new1', '#new2'],
-        ])->assertStatus(200);
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('hashtags.0.content', '#new1')
+            ->assertJsonPath('hashtags.1.content', '#new2');
 
         $hashtags = $this->getHashtagContents($article);
         sort($hashtags);

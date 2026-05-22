@@ -4,7 +4,6 @@ namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
-use App\Http\Models\Word;
 use App\Http\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;

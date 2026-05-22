@@ -101,6 +101,8 @@ class ArticlePdfExportV1Test extends TestCase
         $this->assertSame('article-words.pdf', $document->filename);
         $this->assertSame('言葉の記事', $document->data['article']['title_jp']);
         $this->assertSame('学校', $document->data['words'][0]['word']);
+        $this->assertSame('がっこう', $document->data['words'][0]['furigana']);
+        $this->assertSame('5', $document->data['words'][0]['jlpt']);
         $this->assertSame('school', $document->data['words'][0]['meaning']);
     }
 

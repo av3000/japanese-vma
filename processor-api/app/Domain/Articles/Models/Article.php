@@ -5,7 +5,8 @@ namespace App\Domain\Articles\Models;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
-use App\Domain\JapaneseMaterial\Kanji\Models\Kanji as DomainKanji;
+use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -16,10 +17,11 @@ use App\Domain\Shared\ValueObjects\UserName;
 class Article
 {
     /**
-     * @param  ?int  $id
-     * @param  ?ArticleTitle  $titleEn
-     * @param  ?ArticleContent  $contentEn
-     * @param  array<int, DomainKanji>  $kanjis
+     * @param ?int $id
+     * @param ?ArticleTitle $titleEn
+     * @param ?ArticleContent $contentEn
+     * @param array<int, DomainKanji> $kanjis
+     * @param array<int, DomainWord> $words
      * */
     public function __construct(
         private ?int $id,
@@ -39,6 +41,7 @@ class Article
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
         private array $kanjis = [],
+        private array $words = [],
     ) {
     }
 
@@ -128,5 +131,13 @@ class Article
     public function getKanjis(): array
     {
         return $this->kanjis;
+    }
+
+    /**
+     * @return array<int, DomainWord>
+     */
+    public function getWords(): array
+    {
+        return $this->words;
     }
 }

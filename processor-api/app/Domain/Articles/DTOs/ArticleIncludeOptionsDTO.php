@@ -8,7 +8,8 @@ readonly class ArticleIncludeOptionsDTO implements ArticleIncludeOptionsInterfac
         public bool $include_user = true,
         public bool $include_kanjis = true,
         public bool $include_words = true,
-    ) {}
+    ) {
+    }
 
     public static function fromRequest(array $validated): self
     {
@@ -22,5 +23,10 @@ readonly class ArticleIncludeOptionsDTO implements ArticleIncludeOptionsInterfac
     public function includeKanjis(): bool
     {
         return $this->include_kanjis;
+    }
+
+    public function includeWords(): bool
+    {
+        return $this->include_words;
     }
 }

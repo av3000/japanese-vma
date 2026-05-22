@@ -2,12 +2,13 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Kanji extends Model
 {
-    protected $table = "japanese_kanji_bank_long";
+    protected $table = 'japanese_kanji_bank_long';
 
     public $timestamps = false;
 
@@ -22,11 +23,11 @@ class Kanji extends Model
         'jlpt',
         'frequency',
         'radicals',
-        'radical_parts'
+        'radical_parts',
     ];
 
     protected $casts = [
-        'kanji'        => 'string',
+        'kanji' => 'string',
         'stroke_count' => 'integer',
         'frequency' => 'integer',
         // Keep these as strings since they often contain multiple values
@@ -38,10 +39,10 @@ class Kanji extends Model
         'grade' => 'string',
         'jlpt' => 'string',
         'radicals' => 'string',
-        'radical_parts' => 'string'
+        'radical_parts' => 'string',
     ];
 
-    public function words()
+    public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class, 'japanese_kanji_word_long');
     }
@@ -51,7 +52,7 @@ class Kanji extends Model
         return $this->belongsToMany(Sentence::class, 'japanese_sentence_kanji');
     }
 
-    public function articles()
+    public function articles(): BelongsToMany
     {
         return $this->belongsToMany(Article::class, 'article_kanji');
     }
