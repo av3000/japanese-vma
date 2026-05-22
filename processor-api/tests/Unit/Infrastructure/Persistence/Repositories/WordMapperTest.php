@@ -11,6 +11,13 @@ class WordMapperTest extends TestCase
 {
     public function test_map_to_domain_parses_delimited_and_json_word_fields(): void
     {
+        $rawSense = json_encode([
+            [
+                ['gloss', ['school']],
+                ['gloss', ['academy']],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
         $persistenceWord = new PersistenceWord([
             'id' => 10,
             'uuid' => 'word-uuid',
@@ -20,12 +27,7 @@ class WordMapperTest extends TestCase
             'word_type' => 'noun; education',
             'word_k_ele' => json_encode(['学校', '學校'], JSON_THROW_ON_ERROR),
             'furigana_r_ele' => json_encode(['がっこう'], JSON_THROW_ON_ERROR),
-            'sense' => json_encode([
-                [
-                    ['gloss', ['school']],
-                    ['gloss', ['academy']],
-                ],
-            ], JSON_THROW_ON_ERROR),
+            'sense' => $rawSense,
         ]);
 
         $persistenceWord->id = 10;
@@ -45,6 +47,7 @@ class WordMapperTest extends TestCase
         $this->assertSame('noun; education', $word->getRawWordType());
         $this->assertSame('["学校","學校"]', $word->getRawWritingElements());
         $this->assertSame('["がっこう"]', $word->getRawReadingElements());
+        $this->assertSame($rawSense, $word->getRawSense());
     }
 
     public function test_map_to_domain_keeps_non_json_legacy_fields_pragmatic(): void
