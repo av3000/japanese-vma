@@ -11,6 +11,8 @@ class WordMapperTest extends TestCase
 {
     public function test_map_to_domain_parses_delimited_and_json_word_fields(): void
     {
+        $rawWritingElements = json_encode(['学校', '學校'], JSON_THROW_ON_ERROR);
+        $rawReadingElements = json_encode(['がっこう'], JSON_THROW_ON_ERROR);
         $rawSense = json_encode([
             [
                 ['gloss', ['school']],
@@ -25,8 +27,8 @@ class WordMapperTest extends TestCase
             'furigana' => 'がっこう',
             'jlpt' => 'N5',
             'word_type' => 'noun; education',
-            'word_k_ele' => json_encode(['学校', '學校'], JSON_THROW_ON_ERROR),
-            'furigana_r_ele' => json_encode(['がっこう'], JSON_THROW_ON_ERROR),
+            'word_k_ele' => $rawWritingElements,
+            'furigana_r_ele' => $rawReadingElements,
             'sense' => $rawSense,
         ]);
 
@@ -45,8 +47,8 @@ class WordMapperTest extends TestCase
         $this->assertSame(['がっこう'], $word->getReadingElements());
         $this->assertSame(['school', 'academy'], $word->getMeanings());
         $this->assertSame('noun; education', $word->getRawWordType());
-        $this->assertSame('["学校","學校"]', $word->getRawWritingElements());
-        $this->assertSame('["がっこう"]', $word->getRawReadingElements());
+        $this->assertSame($rawWritingElements, $word->getRawWritingElements());
+        $this->assertSame($rawReadingElements, $word->getRawReadingElements());
         $this->assertSame($rawSense, $word->getRawSense());
     }
 
