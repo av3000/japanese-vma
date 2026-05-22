@@ -34,4 +34,30 @@ class ArticleDetailRequest extends FormRequest
             'include_likes.boolean' => 'Include likes must be a boolean value',
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        $booleanFields = [
+            'include_kanjis',
+            'include_words',
+            'include_comments',
+            'include_views',
+            'include_downloads',
+            'include_likes',
+        ];
+
+        $normalized = [];
+
+        foreach ($booleanFields as $field) {
+            if ($this->has($field)) {
+                $normalized[$field] = filter_var(
+                    $this->input($field),
+                    FILTER_VALIDATE_BOOLEAN,
+                    FILTER_NULL_ON_FAILURE
+                );
+            }
+        }
+
+        $this->merge($normalized);
+    }
 }

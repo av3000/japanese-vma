@@ -169,11 +169,13 @@ class ArticleService implements ArticleServiceInterface
             'kanji_extraction'
         );
 
+        // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
+        // once detail payload should stop carrying full lists.
         return Result::success(new ArticleDetailResultDTO(
             article: $article,
             engagement: $engagement,
             kanjis: $article->getKanjis(),
-            words: [],
+            words: $article->getWords(),
             hashtags: $hashtags,
             lastOperation: $lastOperation,
         ));
@@ -457,6 +459,40 @@ class ArticleService implements ArticleServiceInterface
     }
 
     /**
+     * Get paginated words for article with typed failure handling.
+     *
+     * @param int $articleId Article ID
+     * @param int|null $page Page number
+     * @param int|null $perPage Items per page
+     *
+     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
+     */
+    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result
+    {
+        try {
+            $article = PersistenceArticle::find($articleId);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound((string) $articleId));
+            }
+
+            $pagination = Pagination::fromInputOrDefault($page, $perPage);
+
+            return Result::success($article->words()->paginate(
+                perPage: $pagination->per_page,
+                page: $pagination->page
+            ));
+        } catch (\Exception $e) {
+            Log::error('Article words fetch failed', [
+                'article_id' => $articleId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::wordsFetchFailed());
+        }
+    }
+
+    /**
      * Get paginated words for article.
      *
      * @param int $articleId Article ID
@@ -467,7 +503,7 @@ class ArticleService implements ArticleServiceInterface
      */
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
-        $pagination = new Pagination($page, $perPage);
+        $pagination = Pagination::fromInputOrDefault($page, $perPage);
         $article = PersistenceArticle::findOrFail($articleId);
 
         return $article->words()->paginate(

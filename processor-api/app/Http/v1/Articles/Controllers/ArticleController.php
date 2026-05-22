@@ -142,31 +142,20 @@ class ArticleController extends Controller
     #[Response(type: 'array{success: true, message: string}')]
     public function destroy(string $uuid): JsonResponse
     {
-        try {
-            $articleUuid = EntityId::from($uuid);
+        $articleUuid = EntityId::from($uuid);
+        $result = $this->articleService->deleteArticle(
+            $articleUuid,
+            auth('api')->user()
+        );
 
-            $deleted = $this->articleService->deleteArticle(
-                $articleUuid,
-                auth('api')->user()
-            );
-
-            if (! $deleted) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Article not found or unauthorized',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Article deleted successfully',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+        if ($result->isFailure()) {
+            return $this->legacyFailure($result);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Article deleted successfully',
+        ]);
     }
 
     // TODO: refactor to clean architecture
@@ -176,20 +165,17 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleWordCollection')]
     public function words(Request $request, int $id): JsonResponse
     {
-        try {
-            $words = $this->articleService->getArticleWords(
-                $id,
-                $request->get('page'),
-                $request->get('per_page')
-            );
+        $result = $this->articleService->getArticleWordsResult(
+            $id,
+            $request->get('page'),
+            $request->get('per_page')
+        );
 
-            return response()->json(new ArticleWordCollection($words));
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+        if ($result->isFailure()) {
+            return $this->legacyFailure($result);
         }
+
+        return response()->json(new ArticleWordCollection($result->getData()));
     }
 
     public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse
@@ -218,5 +204,15 @@ class ArticleController extends Controller
         $pdf = $result->getData();
 
         return $this->pdfResponseFactory->make($pdf);
+    }
+
+    private function legacyFailure(Result $result): JsonResponse
+    {
+        $error = $result->getError();
+
+        return response()->json([
+            'success' => false,
+            'message' => $error->errorMessage ?? $error->description,
+        ], $error->status->value);
     }
 }

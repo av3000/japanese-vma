@@ -2,8 +2,8 @@
 
 namespace App\Domain\Articles\Errors;
 
-use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
+use App\Shared\Results\ResultError;
 
 class ArticleErrors
 {
@@ -59,6 +59,17 @@ class ArticleErrors
             description: 'Article deletion failed',
             detail: 'An unexpected error occurred during article deletion',
             errorMessage: 'An unexpected error occurred during article deletion',
+        );
+    }
+
+    public static function wordsFetchFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.WordsFetchFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article words fetch failed',
+            detail: 'An unexpected error occurred during article words fetching',
+            errorMessage: 'An unexpected error occurred during article words fetching',
         );
     }
 

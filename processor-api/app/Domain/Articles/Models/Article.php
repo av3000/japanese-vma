@@ -16,10 +16,11 @@ use App\Domain\Shared\ValueObjects\UserName;
 class Article
 {
     /**
-     * @param  ?int  $id
-     * @param  ?ArticleTitle  $titleEn
-     * @param  ?ArticleContent  $contentEn
-     * @param  array<int, DomainKanji>  $kanjis
+     * @param ?int $id
+     * @param ?ArticleTitle $titleEn
+     * @param ?ArticleContent $contentEn
+     * @param array<int, DomainKanji> $kanjis
+     * @param array<int, mixed> $words
      * */
     public function __construct(
         private ?int $id,
@@ -39,6 +40,7 @@ class Article
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
         private array $kanjis = [],
+        private array $words = [],
     ) {
     }
 
@@ -128,5 +130,13 @@ class Article
     public function getKanjis(): array
     {
         return $this->kanjis;
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public function getWords(): array
+    {
+        return $this->words;
     }
 }
