@@ -179,6 +179,10 @@ class ShowArticleTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('uid', $article->uuid)
             ->assertJsonPath('words.0.word', '勉強')
+            ->assertJsonPath('words.0.word_type', 'noun')
+            ->assertJsonPath('words.0.word_k_ele', '勉強')
+            ->assertJsonPath('words.0.furigana_r_ele', 'べんきょう')
+            ->assertJsonPath('words.0.sense', 'study')
             ->assertJsonMissingPath('article');
     }
 

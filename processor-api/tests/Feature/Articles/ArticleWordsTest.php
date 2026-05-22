@@ -97,7 +97,11 @@ class ArticleWordsTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Article words fetched')
-            ->assertJsonPath('words.0.word', '勉強');
+            ->assertJsonPath('words.0.word', '勉強')
+            ->assertJsonPath('words.0.word_type', 'noun')
+            ->assertJsonPath('words.0.word_k_ele', '勉強')
+            ->assertJsonPath('words.0.furigana_r_ele', 'べんきょう')
+            ->assertJsonPath('words.0.sense', 'study');
     }
 
     public function test_words_unknown_article_returns_legacy_error_body(): void
