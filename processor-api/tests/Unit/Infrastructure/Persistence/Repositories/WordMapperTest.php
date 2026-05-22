@@ -20,9 +20,11 @@ class WordMapperTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
+        $uuid = '11111111-1111-4111-8111-111111111111';
+
         $persistenceWord = new PersistenceWord([
             'id' => 10,
-            'uuid' => 'word-uuid',
+            'uuid' => $uuid,
             'word' => '学校',
             'furigana' => 'がっこう',
             'jlpt' => 'N5',
@@ -38,7 +40,7 @@ class WordMapperTest extends TestCase
 
         $this->assertInstanceOf(DomainWord::class, $word);
         $this->assertSame(10, $word->getIdValue());
-        $this->assertSame('word-uuid', $word->getUuid()->value());
+        $this->assertSame($uuid, $word->getUuid()->value());
         $this->assertSame('学校', $word->getSurface());
         $this->assertSame('がっこう', $word->getFurigana());
         $this->assertSame('N5', $word->getJlpt());
@@ -54,9 +56,11 @@ class WordMapperTest extends TestCase
 
     public function test_map_to_domain_keeps_non_json_legacy_fields_pragmatic(): void
     {
+        $uuid = '22222222-2222-4222-8222-222222222222';
+
         $persistenceWord = new PersistenceWord([
             'id' => 11,
-            'uuid' => 'word-uuid-2',
+            'uuid' => $uuid,
             'word' => '勉強',
             'furigana' => 'べんきょう',
             'jlpt' => 'N5',
