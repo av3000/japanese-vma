@@ -88,7 +88,7 @@ class ArticleDetailResource extends JsonResource
             'updated_at' => $article->getUpdatedAt()->format('c'),
             'engagement' => new EngagementResource($detail->engagement),
             'kanjis' => KanjiResource::collection($detail->kanjis),
-            'words' => $detail->words,
+            'words' => ArticleWordResource::collection($detail->words),
             'processing_status' => $detail->lastOperation ? new ProcessingStatusResource([
                 'id' => $detail->lastOperation->id,
                 'type' => $detail->lastOperation->task_type,

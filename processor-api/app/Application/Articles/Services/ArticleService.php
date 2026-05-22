@@ -45,6 +45,7 @@ use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -470,18 +471,14 @@ class ArticleService implements ArticleServiceInterface
     public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result
     {
         try {
-            $article = PersistenceArticle::find($articleId);
+            $pagination = Pagination::fromInputOrDefault($page, $perPage);
+            $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
 
-            if ($article === null) {
+            if ($paginator === null) {
                 return Result::failure(ArticleErrors::notFound((string) $articleId));
             }
 
-            $pagination = Pagination::fromInputOrDefault($page, $perPage);
-
-            return Result::success($article->words()->paginate(
-                perPage: $pagination->per_page,
-                page: $pagination->page
-            ));
+            return Result::success($paginator);
         } catch (\Exception $e) {
             Log::error('Article words fetch failed', [
                 'article_id' => $articleId,
@@ -504,11 +501,12 @@ class ArticleService implements ArticleServiceInterface
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
     {
         $pagination = Pagination::fromInputOrDefault($page, $perPage);
-        $article = PersistenceArticle::findOrFail($articleId);
+        $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
 
-        return $article->words()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
+        if ($paginator === null) {
+            throw new ModelNotFoundException;
+        }
+
+        return $paginator;
     }
 }

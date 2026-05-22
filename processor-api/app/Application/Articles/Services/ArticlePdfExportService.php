@@ -8,6 +8,7 @@ use App\Application\Engagement\Actions\RecordDownloadAction;
 use App\Application\Pdf\PdfRendererInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Errors\ArticleErrors;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Domain\Pdf\Enums\PdfExportKind;
 use App\Domain\Pdf\Errors\PdfExportErrors;
@@ -104,7 +105,16 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
                 'source_link' => $article->getSourceUrl()->value,
             ],
             'kanjis' => $exportData->kanjis,
-            'words' => $exportData->words,
+            'words' => array_map(
+                fn (DomainWord $word): array => [
+                    'id' => $word->getIdValue(),
+                    'word' => $word->getSurface(),
+                    'furigana' => $word->getFurigana(),
+                    'meaning' => implode(', ', array_slice($word->getMeanings(), 0, 3)),
+                    'jlpt' => $word->getJlpt(),
+                ],
+                $exportData->words
+            ),
         ];
     }
 }

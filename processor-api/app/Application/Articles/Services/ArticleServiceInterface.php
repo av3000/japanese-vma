@@ -102,9 +102,7 @@ interface ArticleServiceInterface
      * @param int|null $page Page number
      * @param int|null $perPage Items per page
      *
-     * @return LengthAwarePaginator Eloquent paginator with word models
-     *
-     * @todo Return domain models instead of Eloquent models
+     * @return LengthAwarePaginator Paginator with domain word models
      */
     public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
 }
