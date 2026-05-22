@@ -2,10 +2,15 @@
 
 namespace App\Application\Articles\Interfaces\Repositories;
 
+use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
+use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
+use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
-use App\Domain\Articles\DTOs\{ArticleCriteriaDTO, ArticleIncludeOptionsInterface, ArticlePdfExportData};
-use App\Domain\Shared\ValueObjects\{UserId, EntityId};
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\UserId;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleRepositoryInterface
 {
@@ -13,8 +18,10 @@ interface ArticleRepositoryInterface
      * Create a new article in persistence.
      *
      * @param DomainArticle $article The domain article to create
-     * @return DomainArticle The created article with generated ID
+     *
      * @throws \Illuminate\Database\QueryException On database constraint violation
+     *
+     * @return DomainArticle The created article with generated ID
      */
     public function create(DomainArticle $article): DomainArticle;
 
@@ -22,7 +29,7 @@ interface ArticleRepositoryInterface
      * Update an existing article in persistence.
      *
      * @param DomainArticle $article The domain article with updated state
-     * @return void
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article doesn't exist
      */
     public function update(DomainArticle $article): void;
@@ -33,20 +40,27 @@ interface ArticleRepositoryInterface
      *
      * @param EntityId $articleUuid The article's public UUID
      * @param ArticleIncludeOptionsInterface|null $dto Options for eager loading:
-     * @return DomainArticle|null The domain article if found, null if not found
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return DomainArticle|null The domain article if found, null if not found
      */
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $dto = null): ?DomainArticle;
 
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData;
 
+    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator;
+
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
+     *
      * @param ArticleCriteriaDTO
      * $criteria Complete filter criteria including:
-     * @return Articles
-     * Domain collection containing:
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return Articles
+     *                  Domain collection containing:
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles;
 
@@ -56,9 +70,11 @@ interface ArticleRepositoryInterface
      * by the service layer before calling this method.
      *
      * @param int $id The article's integer ID (not UUID)
-     * @return bool True if deleted successfully
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If article with ID not found
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return bool True if deleted successfully
      */
     public function deleteById(int $id): bool;
 
@@ -70,8 +86,11 @@ interface ArticleRepositoryInterface
      *
      * @param UserId $authorId The author's user ID
      * @param int $limit Maximum number of articles to return (default: 10)
-     * @return array<array> Array of article arrays (not domain models, raw Eloquent arrays)
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<array> Array of article arrays (not domain models, raw Eloquent arrays)
+     *
      * @todo Potentially not needed, as findByCriteria can be sufficient
      */
     public function findByUserId(UserId $authorId, int $limit = 10): array;
@@ -82,10 +101,12 @@ interface ArticleRepositoryInterface
      * Useful for operations that require the integer ID but only have the public UUID.
      *
      * @param EntityId $entityUuid The article's public UUID
-     * @return int|null The article's integer ID, or null if not found
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return int|null The article's integer ID, or null if not found
      */
-    public function getIdByUuid(EntityId $entityUuid): int|null;
+    public function getIdByUuid(EntityId $entityUuid): ?int;
 
     /**
      * Syncs a list of Kanji IDs to an article.
@@ -93,7 +114,6 @@ interface ArticleRepositoryInterface
      *
      * @param int $articleId The internal ID of the article.
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
-     * @return void
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void;
 }

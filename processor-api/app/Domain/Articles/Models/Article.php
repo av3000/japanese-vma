@@ -5,7 +5,8 @@ namespace App\Domain\Articles\Models;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
-use App\Domain\JapaneseMaterial\Kanji\Models\Kanji as DomainKanji;
+use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -20,7 +21,7 @@ class Article
      * @param ?ArticleTitle $titleEn
      * @param ?ArticleContent $contentEn
      * @param array<int, DomainKanji> $kanjis
-     * @param array<int, mixed> $words
+     * @param array<int, DomainWord> $words
      * */
     public function __construct(
         private ?int $id,
@@ -133,7 +134,7 @@ class Article
     }
 
     /**
-     * @return array<int, mixed>
+     * @return array<int, DomainWord>
      */
     public function getWords(): array
     {

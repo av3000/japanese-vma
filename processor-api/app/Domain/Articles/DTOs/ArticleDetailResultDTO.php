@@ -6,13 +6,14 @@ namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Engagement\DTOs\EngagementSummary;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 
 readonly class ArticleDetailResultDTO
 {
     /**
      * @param array<int, mixed> $kanjis
-     * @param array<int, mixed> $words
+     * @param array<int, DomainWord> $words
      * @param array<int, array{id: int|string, content: string, created_at?: mixed, updated_at?: mixed}|object> $hashtags
      */
     public function __construct(

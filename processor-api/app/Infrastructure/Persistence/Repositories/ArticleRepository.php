@@ -11,16 +11,19 @@ use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
     public function __construct(
         private readonly ArticleMapper $articleMapper,
+        private readonly WordMapper $wordMapper,
         // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
     ) {
     }
@@ -187,6 +190,28 @@ class ArticleRepository implements ArticleRepositoryInterface
         );
     }
 
+    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator
+    {
+        $article = PersistenceArticle::find($articleId);
+
+        if ($article === null) {
+            return null;
+        }
+
+        $paginator = $article->words()->paginate(
+            perPage: $pagination->per_page,
+            page: $pagination->page
+        );
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(
+                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
+            )
+        );
+
+        return $paginator;
+    }
+
     /**
      * Find articles matching complex criteria with filters, search, sorting, and pagination.
      *
@@ -346,7 +371,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, \App\Domain\JapaneseMaterial\Words\Models\Word>
      */
     private function mapWordsForPdf(PersistenceArticle $article): array
     {
@@ -355,49 +380,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->words
-            ->map(fn ($word): array => [
-                'id' => $word->id,
-                'word' => $word->word,
-                'furigana' => $word->furigana,
-                'meaning' => $this->extractWordMeaning($word->sense),
-                'jlpt' => $word->jlpt,
-            ])
+            ->map(fn ($word) => $this->wordMapper->mapToDomain($word))
             ->all();
-    }
-
-    private function extractWordMeaning(?string $sense): string
-    {
-        $decodedSense = json_decode($sense ?? '[]', true);
-
-        if (! is_array($decodedSense)) {
-            return '';
-        }
-
-        $glosses = [];
-
-        foreach ($decodedSense as $sense) {
-            if (! is_array($sense)) {
-                continue;
-            }
-
-            foreach ($sense as $singleTag) {
-                if (($singleTag[0] ?? null) !== 'gloss') {
-                    continue;
-                }
-
-                $value = $singleTag[1] ?? null;
-
-                if (is_array($value)) {
-                    $value = reset($value);
-                }
-
-                if (is_string($value) && $value !== '') {
-                    $glosses[] = $value;
-                }
-            }
-        }
-
-        return implode(', ', array_slice($glosses, 0, 3));
     }
 
     /**

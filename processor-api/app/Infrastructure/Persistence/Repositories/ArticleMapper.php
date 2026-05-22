@@ -5,7 +5,6 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
-
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -17,7 +16,8 @@ use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 class ArticleMapper
 {
     public function __construct(
-        private readonly KanjiMapper $kanjiMapper
+        private readonly KanjiMapper $kanjiMapper,
+        private readonly WordMapper $wordMapper,
     ) {
     }
 
@@ -33,17 +33,7 @@ class ArticleMapper
         $domainWords = [];
         if ($options?->includeWords() && $entity->relationLoaded('words')) {
             $domainWords = $entity->words->map(
-                fn ($persistenceWord) => [
-                    'id' => (int) $persistenceWord->id,
-                    'uuid' => (string) $persistenceWord->uuid,
-                    'word' => (string) $persistenceWord->word,
-                    'furigana' => (string) $persistenceWord->furigana,
-                    'jlpt' => (string) $persistenceWord->jlpt,
-                    'word_type' => (string) $persistenceWord->word_type,
-                    'word_k_ele' => (string) $persistenceWord->word_k_ele,
-                    'furigana_r_ele' => (string) $persistenceWord->furigana_r_ele,
-                    'sense' => (string) $persistenceWord->sense,
-                ]
+                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
             )->toArray();
         }
 
