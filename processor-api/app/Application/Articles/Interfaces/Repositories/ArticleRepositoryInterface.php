@@ -116,4 +116,13 @@ interface ArticleRepositoryInterface
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
      */
     public function syncKanjis(int $articleId, array $kanjiIds): void;
+
+    /**
+     * Syncs a list of Word IDs to an article.
+     * This replaces any existing words attached to the article.
+     *
+     * @param int $articleId The internal ID of the article.
+     * @param int[] $wordIds An array of Word internal IDs to attach.
+     */
+    public function syncWords(int $articleId, array $wordIds): void;
 }

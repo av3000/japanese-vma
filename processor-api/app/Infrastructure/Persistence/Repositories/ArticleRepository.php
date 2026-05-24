@@ -420,4 +420,41 @@ class ArticleRepository implements ArticleRepositoryInterface
             }
         });
     }
+
+    /**
+     * Syncs a list of Word IDs to an article.
+     *
+     * @param int $articleId The internal ID of the article.
+     * @param int[] $wordIds An array of Word internal IDs to attach.
+     */
+    public function syncWords(int $articleId, array $wordIds): void
+    {
+        $existingWordIds = DB::table('article_word')
+            ->where('article_id', $articleId)
+            ->pluck('word_id')
+            ->toArray();
+
+        $wordIdsToAdd = array_diff($wordIds, $existingWordIds);
+        $wordIdsToRemove = array_diff($existingWordIds, $wordIds);
+
+        DB::transaction(function () use ($articleId, $wordIdsToAdd, $wordIdsToRemove): void {
+            if (! empty($wordIdsToRemove)) {
+                DB::table('article_word')
+                    ->where('article_id', $articleId)
+                    ->whereIn('word_id', $wordIdsToRemove)
+                    ->delete();
+            }
+
+            if (! empty($wordIdsToAdd)) {
+                $pivotRecords = array_map(static fn (int $wordId): array => [
+                    'article_id' => $articleId,
+                    'word_id' => $wordId,
+                ], $wordIdsToAdd);
+
+                foreach (array_chunk($pivotRecords, 1000) as $chunk) {
+                    DB::table('article_word')->insert($chunk);
+                }
+            }
+        });
+    }
 }
