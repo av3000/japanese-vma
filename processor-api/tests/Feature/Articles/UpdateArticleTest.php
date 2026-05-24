@@ -3,6 +3,7 @@
 namespace Tests\Feature\Articles;
 
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\Articles\Jobs\ProcessArticleWordsJob;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
+use ReflectionClass;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -207,5 +209,80 @@ class UpdateArticleTest extends TestCase
         ])->assertStatus(200);
 
         Bus::assertDispatched(ProcessArticleKanjisJob::class);
+    }
+
+    public function test_update_title_jp_dispatches_word_job_only(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'title_jp' => '古いタイトル',
+            'content_jp' => '古い本文です。日本語の本文です。',
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $newTitle = '新しいタイトル';
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'title_jp' => $newTitle,
+        ])->assertStatus(200);
+
+        Bus::assertNotDispatched(ProcessArticleKanjisJob::class);
+        Bus::assertDispatched(
+            ProcessArticleWordsJob::class,
+            fn (ProcessArticleWordsJob $job): bool => $this->readJobProperty($job, 'articleUuid') === $article->uuid
+                && $this->readJobProperty($job, 'articleText') === $newTitle.$article->content_jp
+        );
+    }
+
+    public function test_update_content_jp_dispatches_kanji_and_word_jobs(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'title_jp' => '学校の話',
+            'content_jp' => '古い本文です。日本語の本文です。',
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $newContent = '更新された日本語本文です。学校で勉強します。';
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'content_jp' => $newContent,
+        ])->assertStatus(200);
+
+        Bus::assertDispatched(ProcessArticleKanjisJob::class);
+        Bus::assertDispatched(
+            ProcessArticleWordsJob::class,
+            fn (ProcessArticleWordsJob $job): bool => $this->readJobProperty($job, 'articleUuid') === $article->uuid
+                && $this->readJobProperty($job, 'articleText') === $article->title_jp.$newContent
+        );
+    }
+
+    public function test_update_metadata_only_does_not_dispatch_word_or_kanji_jobs(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'source_link' => 'https://example.com/updated-source',
+        ])->assertStatus(200);
+
+        Bus::assertNotDispatched(ProcessArticleKanjisJob::class);
+        Bus::assertNotDispatched(ProcessArticleWordsJob::class);
+    }
+
+    private function readJobProperty(object $job, string $property): mixed
+    {
+        $reflection = new ReflectionClass($job);
+        $jobProperty = $reflection->getProperty($property);
+        $jobProperty->setAccessible(true);
+
+        return $jobProperty->getValue($job);
     }
 }
