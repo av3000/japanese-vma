@@ -20,12 +20,16 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
+use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\JapaneseMaterial\Words\Services\WordExtractionService;
+use App\Application\JapaneseMaterial\Words\Services\WordExtractionServiceInterface;
 use App\Application\LastOperations\Services\LastOperationService;
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Application\Users\Services\RoleService;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Application\Users\Services\UserService;
 use App\Application\Users\Services\UserServiceInterface;
+use App\Infrastructure\Persistence\Repositories\WordRepository;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -45,6 +49,8 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(KanjiServiceInterface::class, KanjiService::class);
 
         $this->app->bind(KanjiExtractionServiceInterface::class, KanjiExtractionService::class);
+        $this->app->bind(WordRepositoryInterface::class, WordRepository::class);
+        $this->app->bind(WordExtractionServiceInterface::class, WordExtractionService::class);
         $this->app->bind(LastOperationServiceInterface::class, LastOperationService::class);
     }
 }
