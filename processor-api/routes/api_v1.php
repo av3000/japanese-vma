@@ -8,6 +8,7 @@ use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
 use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
+use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,10 @@ Route::prefix('v1')->group(function () {
     // Kanjis
     Route::get('kanjis', [KanjiController::class, 'index']);
     Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
+
+    // Radicals
+    Route::get('radicals', [RadicalController::class, 'index']);
+    Route::get('radicals/{identifier}', [RadicalController::class, 'show']);
 
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
