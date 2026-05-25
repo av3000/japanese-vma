@@ -181,7 +181,7 @@ const WordDetails: React.FC = () => {
 									<div className="col-md-8">
 										<h3>{article.title_jp}</h3>
 										<section className="mt-2 d-flex align-items-center flex-wrap">
-											{hashtags.map((tag) => (
+											{article.hashtags.map((tag) => (
 												<Chip
 													className="mr-1"
 													readonly
