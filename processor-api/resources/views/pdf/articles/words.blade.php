@@ -7,11 +7,11 @@
     <header class="header">
         <p class="meta">{{ $article['author'] }} / {{ $article['date']->format('Y-m-d') }}</p>
         <h1>{{ $article['title_jp'] }}</h1>
-        @if($article['title_en'])
+        @if ($article['title_en'])
             <p>{{ $article['title_en'] }}</p>
         @endif
         <div class="links">
-            <a href="{{ $frontendUrl.'/articles/'.$article['uuid'] }}">Read article online</a>
+            <a href="{{ $frontendUrl . '/articles/' . $article['uuid'] }}">Read article online</a>
             <a href="{{ $article['source_link'] }}">Original source</a>
         </div>
     </header>
@@ -32,9 +32,9 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($words as $word)
+                @foreach ($words as $word)
                     <tr>
-                        <td class="japanese"><a href="{{ $frontendUrl.'/words/'.$word['id'] }}">{{ $word['word'] }}</a></td>
+                        <td class="japanese"><a href="{{ $frontendUrl . '/word/' . $word['id'] }}">{{ $word['word'] }}</a></td>
                         <td>{{ $word['furigana'] }}</td>
                         <td>{{ $word['meaning'] }}</td>
                         <td>{{ $word['jlpt'] }}</td>

@@ -75,6 +75,9 @@ class ArticlePdfExportServiceTest extends TestCase
         $this->assertSame(PdfDisposition::INLINE, $document->disposition);
         $this->assertSame('漢字の記事', $document->data['article']['title_jp']);
         $this->assertSame('水', $document->data['kanjis'][0]['kanji']);
+        $this->assertSame(['スイ', 'ス'], $document->data['kanjis'][0]['onyomi']);
+        $this->assertSame(['みず', 'み'], $document->data['kanjis'][0]['kunyomi']);
+        $this->assertSame(['water', 'fluid'], $document->data['kanjis'][0]['meaning']);
         $this->assertSame(config('app.frontend_url'), $document->data['frontend_url']);
         $this->assertSame('article-kanjis.pdf', $result->getData()->filename);
         $this->assertCount(1, $this->downloadRepository->created);
@@ -159,9 +162,9 @@ class ArticlePdfExportServiceTest extends TestCase
                 [
                     'id' => 1,
                     'kanji' => '水',
-                    'onyomi' => 'スイ',
-                    'kunyomi' => 'みず',
-                    'meaning' => 'water',
+                    'onyomi' => ['スイ', 'ス'],
+                    'kunyomi' => ['みず', 'み'],
+                    'meaning' => ['water', 'fluid'],
                     'jlpt' => '5',
                 ],
             ],
@@ -181,6 +184,14 @@ class ArticlePdfExportServiceTest extends TestCase
         $html = $kanjisHtml.$wordsHtml;
 
         $this->assertStringContainsString('https://app.example.test/articles/article-uuid', $html);
+        $this->assertStringContainsString('.kanjis-table', $kanjisHtml);
+        $this->assertStringContainsString('width: 100%;', $kanjisHtml);
+        $this->assertStringContainsString('text-align: left;', $kanjisHtml);
+        $this->assertStringContainsString("td {\n            border-bottom: 1px solid #e5e7eb;\n            vertical-align: top;", $kanjisHtml);
+        $this->assertStringContainsString('<table class="kanjis-table">', $kanjisHtml);
+        $this->assertStringContainsString('<span class="value-line">スイ</span>', $kanjisHtml);
+        $this->assertStringContainsString('<span class="value-line">ス</span>', $kanjisHtml);
+        $this->assertStringNotContainsString('スイ|ス', $kanjisHtml);
         $this->assertStringNotContainsString('localhost:3000', $html);
         $this->assertStringNotContainsString('maxcdn.bootstrapcdn.com', $html);
         $this->assertStringNotContainsString('jquery', $html);
@@ -230,9 +241,9 @@ class ArticlePdfExportServiceTest extends TestCase
         $kanjiId = DB::table('japanese_kanji_bank_long')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'kanji' => '水',
-            'onyomi' => 'スイ',
-            'kunyomi' => 'みず',
-            'meaning' => 'water',
+            'onyomi' => 'スイ|ス',
+            'kunyomi' => 'みず|み',
+            'meaning' => 'water|fluid',
             'nanori' => '-',
             'grade' => '1',
             'stroke_count' => '4',

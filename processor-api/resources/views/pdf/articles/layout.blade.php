@@ -82,12 +82,22 @@
         }
 
         th {
-            padding: 6px 8px;
+            padding: 6px 0px;
+            text-align: left;
             vertical-align: top;
         }
 
         td {
             border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .kanjis-table {
+            width: 100%;
+        }
+
+        .value-line {
+            display: block;
         }
 
         .japanese {

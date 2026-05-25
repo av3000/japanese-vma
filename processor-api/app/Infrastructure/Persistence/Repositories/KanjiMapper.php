@@ -52,7 +52,7 @@ class KanjiMapper
         );
     }
 
-    private function parseStringToArray(?string $input): array
+    public function parseStringToArray(?string $input): array
     {
         if (empty($input)) {
             return [];
