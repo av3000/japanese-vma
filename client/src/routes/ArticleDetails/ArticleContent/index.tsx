@@ -29,7 +29,7 @@ import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { ObjectTemplateType } from '@/shared/constants/enums';
+import { ObjectTemplateType, SavedListType } from '@/shared/constants/enums';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
 
@@ -62,7 +62,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	// TODO: Lift this query up and create query function to pass in here
 	const { data: userLists = [] } = useQuery({
 		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchCataloguesForItem(article.id),
+		queryFn: () => fetchCataloguesForItem(article.id, { types: [SavedListType.ARTICLES] }),
 		enabled: isAuthenticated,
 	});
 
