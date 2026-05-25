@@ -148,15 +148,15 @@ const RadicalDetails: React.FC = () => {
 				<>
 					<h4>kanjis ({radical.kanjis.length}) results</h4>
 					{radical.kanjis.map((kanji) => (
-						<div className="row justify-content-center mt-5" key={kanji.id}>
+						<div className="row justify-content-center mt-5" key={kanji.uuid}>
 							<div className="col-md-8">
 								<div className="row justify-content-center">
 									<div className="col-md-6">
-										<h3>{kanji.kanji}</h3>
+										<h3>{kanji.character}</h3>
 									</div>
-									<div className="col-md-4">{kanji.meaning}</div>
+									<div className="col-md-4">{kanji.meanings}</div>
 									<div className="col-md-2">
-										<Link to={`/kanji/${kanji.id}`} className="float-right">
+										<Link to={`/kanji/${kanji.character}`} className="float-right">
 											<i className="fas fa-external-link-alt fa-lg"></i>
 										</Link>
 									</div>

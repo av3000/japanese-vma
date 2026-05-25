@@ -11,7 +11,22 @@ describe('mapRadicalDetail', () => {
 			hiragana: 'みず',
 			meaning: 'water',
 			strokes: 4,
-			kanjis: [{ id: 44, kanji: '海', meaning: 'sea' }],
+			kanjis: [
+				{
+					uuid: 'kanji-uuid',
+					character: '海',
+					onyomi: 'カイ',
+					kunyomi: 'うみ',
+					meanings: 'sea',
+					nanori: '',
+					grade: '2',
+					stroke_count: '9',
+					jlpt: '3',
+					frequency: '200',
+					radicals: '水',
+					radical_parts: '氵毎',
+				},
+			],
 		} as RadicalShow200;
 
 		expect(mapRadicalDetail(radical).kanjis).toHaveLength(1);
