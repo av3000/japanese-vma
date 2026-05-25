@@ -1,23 +1,20 @@
 import React, { FormEvent, useState } from 'react';
 import { Form, InputGroup } from 'react-bootstrap';
 
+import type { RadicalListFilters } from '@/api/radicals/hooks/useInfiniteRadicals';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 
-interface SearchQuery {
-  keyword: string;
-}
-
 interface SearchBarRadicalsProps {
-  fetchQuery: (query: SearchQuery) => void;
+  onSearch: (filters: RadicalListFilters) => void;
 }
 
-const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({ fetchQuery }) => {
+const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({ onSearch }) => {
   const [keyword, setKeyword] = useState<string>('');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    fetchQuery({ keyword });
+    onSearch(keyword.trim() ? { keyword: keyword.trim() } : {});
   };
 
   const handleKeywordChange = (e: React.ChangeEvent<HTMLElement>) => {
