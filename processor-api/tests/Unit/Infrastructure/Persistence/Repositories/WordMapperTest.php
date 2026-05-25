@@ -83,4 +83,56 @@ class WordMapperTest extends TestCase
         $this->assertSame('べんきょう', $word->getRawReadingElements());
         $this->assertSame('study', $word->getRawSense());
     }
+
+    public function test_map_to_domain_handles_nested_word_payload_shapes_without_array_to_string_errors(): void
+    {
+        $rawSense = json_encode([
+            [
+                ['pos', ['auxiliary verb']],
+                ['s_inf', ['after the imperfective form of certain verbs and adjectives']],
+                ['gloss', ['indicates speculation']],
+            ],
+            [
+                ['gloss', ['indicates will']],
+            ],
+            [
+                ['gloss', ['indicates invitation']],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $rawReadingElements = json_encode([
+            [
+                ['reb', ['う']],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $uuid = '33333333-3333-4333-8333-333333333333';
+
+        $persistenceWord = new PersistenceWord([
+            'id' => 12,
+            'uuid' => $uuid,
+            'word' => 'う',
+            'furigana' => '-',
+            'jlpt' => '-',
+            'word_type' => 'auxiliary verb|',
+            'word_k_ele' => '[]',
+            'furigana_r_ele' => $rawReadingElements,
+            'sense' => $rawSense,
+        ]);
+
+        $persistenceWord->id = 12;
+
+        $word = (new WordMapper)->mapToDomain($persistenceWord);
+
+        $this->assertSame(['auxiliary verb'], $word->getWordTypes());
+        $this->assertSame([], $word->getWritingElements());
+        $this->assertSame([], $word->getReadingElements());
+        $this->assertSame([
+            'indicates speculation',
+            'indicates will',
+            'indicates invitation',
+        ], $word->getMeanings());
+        $this->assertSame($rawReadingElements, $word->getRawReadingElements());
+        $this->assertSame($rawSense, $word->getRawSense());
+    }
 }

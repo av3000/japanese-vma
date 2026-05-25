@@ -15,10 +15,16 @@ readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
         public ?string $authorUid = null,
         public array $visibilityRules = [],
         public ?Pagination $pagination = null,
-        public bool $include_kanjis = false
+        public bool $include_kanjis = false,
+        public bool $include_words = false
     ) {}
 
     public function includeKanjis(): bool
+    {
+        return $this->include_kanjis;
+    }
+
+    public function includeWords(): bool
     {
         return $this->include_kanjis;
     }

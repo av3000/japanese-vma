@@ -66,8 +66,7 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository
-    ) {
-    }
+    ) {}
 
     /**
      * Create article with hashtags atomically.
@@ -218,6 +217,7 @@ class ArticleService implements ArticleServiceInterface
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO
     {
         // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
+        // TODO: ArticleListDTO or ArticleCriteriaDTO should not contain any default values, it is spilling business logic. Ensure consistency between 2 for now.
         $criteriaDTO = new ArticleCriteriaDTO(
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
@@ -225,17 +225,18 @@ class ArticleService implements ArticleServiceInterface
             authorUid: $dto->author_uid,
             visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_kanjis: $dto->include_kanjis
+            include_kanjis: $dto->include_kanjis,
+            include_words: $dto->include_words
         );
 
         $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
         $articles = $paginatedArticles->getItems();
         $articleIds = array_map(
-            static fn (DomainArticle $article): int => $article->getIdValue(),
+            static fn(DomainArticle $article): int => $article->getIdValue(),
             $articles,
         );
         $articleUuids = array_map(
-            static fn (DomainArticle $article): string => $article->getUid()->value(),
+            static fn(DomainArticle $article): string => $article->getUid()->value(),
             $articles,
         );
 
@@ -258,7 +259,7 @@ class ArticleService implements ArticleServiceInterface
 
         return new ArticleListResultDTO(
             items: array_map(
-                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
+                static fn(DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
                     article: $article,
                     stats: $statsMap[$article->getIdValue()] ?? null,
                     hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
@@ -367,7 +368,7 @@ class ArticleService implements ArticleServiceInterface
 
     private function articleWordProcessingText(DomainArticle $article): string
     {
-        return $article->getTitleJp()->value.$article->getContentJp()->value;
+        return $article->getTitleJp()->value . $article->getContentJp()->value;
     }
 
     /**

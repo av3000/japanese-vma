@@ -18,9 +18,9 @@ class WordMapper
             surface: (string) $persistenceWord->word,
             furigana: (string) $persistenceWord->furigana,
             jlpt: $persistenceWord->jlpt !== null ? (string) $persistenceWord->jlpt : null,
-            wordTypes: $this->parseListField($persistenceWord->word_type),
-            writingElements: $this->parseListField($persistenceWord->word_k_ele),
-            readingElements: $this->parseListField($persistenceWord->furigana_r_ele),
+            wordTypes: $this->extractStringListFromField($persistenceWord->word_type),
+            writingElements: $this->extractStringListFromField($persistenceWord->word_k_ele),
+            readingElements: $this->extractStringListFromField($persistenceWord->furigana_r_ele),
             meanings: $this->extractMeanings($persistenceWord->sense),
             rawWordType: $persistenceWord->word_type !== null ? (string) $persistenceWord->word_type : null,
             rawWritingElements: $persistenceWord->word_k_ele !== null ? (string) $persistenceWord->word_k_ele : null,
@@ -30,12 +30,12 @@ class WordMapper
     }
 
     /**
-     * If word source fields stabilize into a richer schema, replace this
-     * pragmatic parser with dedicated value objects instead of widening this mapper.
+     * Extracts a simple string list from a DB raw JSON encoded string field.
+     *
      *
      * @return array<int, string>
      */
-    private function parseListField(?string $value): array
+    private function extractStringListFromField(?string $value): array
     {
         if ($value === null || trim($value) === '' || trim($value) === '[]') {
             return [];
@@ -44,12 +44,16 @@ class WordMapper
         $decoded = json_decode($value, true);
 
         if (is_array($decoded)) {
-            return array_values(array_filter(array_map(
-                static fn (mixed $item): string => trim((string) $item),
-                $decoded
-            )));
+            return $this->topLevelStringValues($decoded);
         }
+        return $this->parseDelimitedStringList($value);
+    }
 
+    /**
+     * @return array<int, string>
+     */
+    private function parseDelimitedStringList(string $value): array
+    {
         return array_values(array_filter(array_map(
             'trim',
             preg_split('/[;|,]/', $value)
@@ -57,6 +61,8 @@ class WordMapper
     }
 
     /**
+     * Reads the `sense` JSON and extracts nested meaning text.
+     *
      * @return array<int, string>
      */
     private function extractMeanings(?string $sense): array
@@ -79,17 +85,56 @@ class WordMapper
                     continue;
                 }
 
-                $value = $tagEntry[1] ?? null;
-                $values = is_array($value) ? $value : [$value];
-
-                foreach ($values as $singleValue) {
-                    if (is_string($singleValue) && $singleValue !== '') {
-                        $meanings[] = $singleValue;
-                    }
-                }
+                $meanings = array_merge(
+                    $meanings,
+                    $this->nestedStringValues($tagEntry[1] ?? null),
+                );
             }
         }
 
         return array_values(array_unique($meanings));
+    }
+
+    /**
+     * @param array<int, mixed> $decoded
+     *
+     * @return array<int, string>
+     */
+    private function topLevelStringValues(array $decoded): array
+    {
+        return array_values(array_filter(array_map(
+            static function (mixed $item): string {
+                if (! is_scalar($item) && $item !== null) {
+                    return '';
+                }
+
+                return trim((string) $item);
+            },
+            $decoded
+        )));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function nestedStringValues(mixed $value): array
+    {
+        if (is_array($value)) {
+            $values = [];
+
+            foreach ($value as $nestedValue) {
+                $values = array_merge($values, $this->nestedStringValues($nestedValue));
+            }
+
+            return $values;
+        }
+
+        if (! is_scalar($value) || $value === null) {
+            return [];
+        }
+
+        $stringValue = trim((string) $value);
+
+        return $stringValue === '' ? [] : [$stringValue];
     }
 }
