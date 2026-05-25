@@ -67,19 +67,20 @@
 
         .content {
             margin-bottom: 24px;
-        }
-
-        table {
-            border-collapse: collapse;
             width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
-        th {
-            border-bottom: 1px solid #9ca3af;
-            text-align: left;
+        .content p {
+            white-space: normal;
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
+            display: block;
         }
 
-        td,
         th {
             padding: 6px 8px;
             vertical-align: top;

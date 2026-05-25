@@ -36,8 +36,15 @@
             font-family: 'HanaMinA', 'IPAGothic', sans-serif;
         }
 
-        table {
-            border-spacing: 0;
+        p,
+        td,
+        th {
+            white-space: normal;
+        }
+
+        .article-content p {
+            word-break: break-all;
+            overflow-wrap: anywhere;
         }
 
         thead {
@@ -53,8 +60,12 @@
             page-break-inside: avoid;
         }
 
-        td {
-            padding: 0;
+        td,
+        th {
+            padding: 0.5rem;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         #kanjiTd {
@@ -62,12 +73,12 @@
         }
 
         .kanjis-table {
-            overflow-x: visible !important;
+            overflow-x: hidden !important;
         }
 
         @media print {
             table {
-                overflow: visible !important;
+                overflow: hidden !important;
             }
         }
     </style>
