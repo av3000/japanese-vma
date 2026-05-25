@@ -15,7 +15,8 @@ readonly class ArticleListDTO
         public ?int $page,
         public bool $include_stats_counts = true,
         public bool $include_hashtags = true,
-        public bool $include_kanjis = true
+        public bool $include_kanjis = true,
+        public bool $include_words = true
     ) {}
 
     public static function fromRequest(array $validated): self
@@ -30,7 +31,8 @@ readonly class ArticleListDTO
             page: $validated['page'] ?? null,
             include_stats_counts: $validated['include_stats_counts'] ?? true,
             include_hashtags: $validated['include_hashtags'] ?? true,
-            include_kanjis: $validated['include_kanjis'] ?? true
+            include_kanjis: $validated['include_kanjis'] ?? true,
+            include_words: $validated['include_kanjis'] ?? true
         );
     }
 }

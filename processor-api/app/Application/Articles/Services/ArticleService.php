@@ -5,6 +5,7 @@ namespace App\Application\Articles\Services;
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\Articles\Jobs\ProcessArticleWordsJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
@@ -65,8 +66,7 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository
-    ) {
-    }
+    ) {}
 
     /**
      * Create article with hashtags atomically.
@@ -108,6 +108,11 @@ class ArticleService implements ArticleServiceInterface
                 ProcessArticleKanjisJob::dispatch(
                     $createdDomainArticle->getUid()->value(),
                     $dto->content_jp
+                );
+
+                ProcessArticleWordsJob::dispatch(
+                    $createdDomainArticle->getUid()->value(),
+                    $this->articleWordProcessingText($createdDomainArticle),
                 );
 
                 return $createdDomainArticle;
@@ -212,6 +217,7 @@ class ArticleService implements ArticleServiceInterface
     public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO
     {
         // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
+        // TODO: ArticleListDTO or ArticleCriteriaDTO should not contain any default values, it is spilling business logic. Ensure consistency between 2 for now.
         $criteriaDTO = new ArticleCriteriaDTO(
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
@@ -219,17 +225,18 @@ class ArticleService implements ArticleServiceInterface
             authorUid: $dto->author_uid,
             visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_kanjis: $dto->include_kanjis
+            include_kanjis: $dto->include_kanjis,
+            include_words: $dto->include_words
         );
 
         $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
         $articles = $paginatedArticles->getItems();
         $articleIds = array_map(
-            static fn (DomainArticle $article): int => $article->getIdValue(),
+            static fn(DomainArticle $article): int => $article->getIdValue(),
             $articles,
         );
         $articleUuids = array_map(
-            static fn (DomainArticle $article): string => $article->getUid()->value(),
+            static fn(DomainArticle $article): string => $article->getUid()->value(),
             $articles,
         );
 
@@ -252,7 +259,7 @@ class ArticleService implements ArticleServiceInterface
 
         return new ArticleListResultDTO(
             items: array_map(
-                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
+                static fn(DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
                     article: $article,
                     stats: $statsMap[$article->getIdValue()] ?? null,
                     hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
@@ -301,6 +308,9 @@ class ArticleService implements ArticleServiceInterface
             $shouldReprocessContent = $dto->content_jp !== null
                 && $dto->content_jp !== $domainArticle->getContentJp()->value;
 
+            $shouldReprocessWords = $shouldReprocessContent
+                || ($dto->title_jp !== null && $dto->title_jp !== $domainArticle->getTitleJp()->value);
+
             $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $user) {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
@@ -329,6 +339,13 @@ class ArticleService implements ArticleServiceInterface
                 );
             }
 
+            if ($shouldReprocessWords) {
+                ProcessArticleWordsJob::dispatch(
+                    $updatedDomainArticle->getUid()->value(),
+                    $this->articleWordProcessingText($updatedDomainArticle),
+                );
+            }
+
             return Result::success(
                 new ArticleUpdateResultDTO(
                     article: $updatedDomainArticle,
@@ -347,6 +364,11 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::updateFailed($e->getMessage()));
         }
+    }
+
+    private function articleWordProcessingText(DomainArticle $article): string
+    {
+        return $article->getTitleJp()->value . $article->getContentJp()->value;
     }
 
     /**

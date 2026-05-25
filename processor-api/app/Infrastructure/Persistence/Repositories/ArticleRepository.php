@@ -25,8 +25,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         private readonly ArticleMapper $articleMapper,
         private readonly WordMapper $wordMapper,
         // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
-    ) {
-    }
+    ) {}
 
     /**
      * Create a new article in persistence.
@@ -205,7 +204,7 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         $paginator->setCollection(
             $paginator->getCollection()->map(
-                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
+                fn($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
             )
         );
 
@@ -324,8 +323,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
             $query->where(function ($q) use ($searchValue) {
-                $q->where('title_jp', 'LIKE', '%'.$searchValue.'%')
-                    ->orWhere('title_en', 'LIKE', '%'.$searchValue.'%');
+                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
+                    ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
             });
         }
 
@@ -359,15 +358,30 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->kanjis
-            ->map(fn ($kanji): array => [
+            ->map(fn($kanji): array => [
                 'id' => $kanji->id,
                 'kanji' => $kanji->kanji,
-                'onyomi' => $kanji->onyomi,
-                'kunyomi' => $kanji->kunyomi,
-                'meaning' => $kanji->meaning,
+                'onyomi' => $this->splitKanjiPdfValues($kanji->onyomi),
+                'kunyomi' => $this->splitKanjiPdfValues($kanji->kunyomi),
+                'meaning' => $this->splitKanjiPdfValues($kanji->meaning),
                 'jlpt' => $kanji->jlpt,
             ])
             ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function splitKanjiPdfValues(?string $value): array
+    {
+        if ($value === null || trim($value) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode('|', $value)),
+            static fn(string $part): bool => $part !== ''
+        ));
     }
 
     /**
@@ -380,7 +394,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->words
-            ->map(fn ($word) => $this->wordMapper->mapToDomain($word))
+            ->map(fn($word) => $this->wordMapper->mapToDomain($word))
             ->all();
     }
 
@@ -409,13 +423,50 @@ class ArticleRepository implements ArticleRepositoryInterface
             }
 
             if (! empty($kanjiIdsToAdd)) {
-                $pivotRecords = array_map(fn ($kanjiId) => [
+                $pivotRecords = array_map(fn($kanjiId) => [
                     'article_id' => $articleId,
                     'kanji_id' => $kanjiId,
                 ], $kanjiIdsToAdd);
 
                 foreach (array_chunk($pivotRecords, 1000) as $chunk) {
                     DB::table('article_kanji')->insert($chunk);
+                }
+            }
+        });
+    }
+
+    /**
+     * Syncs a list of Word IDs to an article.
+     *
+     * @param int $articleId The internal ID of the article.
+     * @param int[] $wordIds An array of Word internal IDs to attach.
+     */
+    public function syncWords(int $articleId, array $wordIds): void
+    {
+        $existingWordIds = DB::table('article_word')
+            ->where('article_id', $articleId)
+            ->pluck('word_id')
+            ->toArray();
+
+        $wordIdsToAdd = array_diff($wordIds, $existingWordIds);
+        $wordIdsToRemove = array_diff($existingWordIds, $wordIds);
+
+        DB::transaction(function () use ($articleId, $wordIdsToAdd, $wordIdsToRemove): void {
+            if (! empty($wordIdsToRemove)) {
+                DB::table('article_word')
+                    ->where('article_id', $articleId)
+                    ->whereIn('word_id', $wordIdsToRemove)
+                    ->delete();
+            }
+
+            if (! empty($wordIdsToAdd)) {
+                $pivotRecords = array_map(static fn(int $wordId): array => [
+                    'article_id' => $articleId,
+                    'word_id' => $wordId,
+                ], $wordIdsToAdd);
+
+                foreach (array_chunk($pivotRecords, 1000) as $chunk) {
+                    DB::table('article_word')->insert($chunk);
                 }
             }
         });

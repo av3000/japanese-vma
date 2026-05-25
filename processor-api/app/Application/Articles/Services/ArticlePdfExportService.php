@@ -25,8 +25,7 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
         private readonly ArticlePolicy $articlePolicy,
         private readonly PdfRendererInterface $pdfRenderer,
         private readonly RecordDownloadAction $recordDownloadAction,
-    ) {
-    }
+    ) {}
 
     public function exportKanjis(EntityId $articleUuid, User $viewer): Result
     {
@@ -56,7 +55,6 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
         if (! $this->articlePolicy->canView($viewer, $exportData->article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUuid->value()));
         }
-
         $document = new PdfDocument(
             view: $includeKanjis ? 'pdf.articles.kanjis' : 'pdf.articles.words',
             data: $this->buildViewData($exportData),
@@ -106,7 +104,7 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
             ],
             'kanjis' => $exportData->kanjis,
             'words' => array_map(
-                fn (DomainWord $word): array => [
+                fn(DomainWord $word): array => [
                     'id' => $word->getIdValue(),
                     'word' => $word->getSurface(),
                     'furigana' => $word->getFurigana(),

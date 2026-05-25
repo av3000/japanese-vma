@@ -29,8 +29,8 @@ class LastOperationService implements LastOperationServiceInterface
     {
         return $this->repository->start(
             $entityId,
-            'article',
-            'kanji_extraction'
+            $entityType,
+            $taskType
         );
     }
 

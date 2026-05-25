@@ -8,38 +8,19 @@ const ArticleStatusTypes = {
 	APPROVED: 3,
 };
 
+// TOOD: convert to .tsx and add type
 const ArticleStatus = ({ status }) => {
 	switch (status) {
 		case ArticleStatusTypes.PENDING:
-			return (
-				<Badge variant="pending">
-					Pending
-				</Badge>
-			);
+			return <Badge variant="pending">Approval: Pending</Badge>;
 		case ArticleStatusTypes.REVIEWING:
-			return (
-				<Badge variant="pending">
-					Reviewing
-				</Badge>
-			);
+			return <Badge variant="pending">Approval: Reviewing</Badge>;
 		case ArticleStatusTypes.REJECTED:
-			return (
-				<Badge variant="destructive">
-					Rejected
-				</Badge>
-			);
+			return <Badge variant="destructive">Approval: Rejected</Badge>;
 		case ArticleStatusTypes.APPROVED:
-			return (
-				<Badge variant="success">
-					Approved
-				</Badge>
-			);
+			return <Badge variant="success">Approval: Approved</Badge>;
 		default:
-			return (
-				<Badge variant="secondary">
-					Pending
-				</Badge>
-			);
+			return <Badge variant="secondary">Approval: Pending</Badge>;
 	}
 };
 

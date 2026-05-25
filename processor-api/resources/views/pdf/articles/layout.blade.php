@@ -67,26 +67,37 @@
 
         .content {
             margin-bottom: 24px;
-        }
-
-        table {
-            border-collapse: collapse;
             width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .content p {
+            white-space: normal;
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
+            display: block;
         }
 
         th {
-            border-bottom: 1px solid #9ca3af;
+            padding: 6px 0px;
             text-align: left;
-        }
-
-        td,
-        th {
-            padding: 6px 8px;
             vertical-align: top;
         }
 
         td {
             border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .kanjis-table {
+            width: 100%;
+        }
+
+        .value-line {
+            display: block;
         }
 
         .japanese {
