@@ -29,6 +29,12 @@
 - Leverage:
 - Testing:
 
+**Scalability**
+
+- Current-size fit:
+- Near-term scale:
+- Long-term risk:
+
 **Migration Risk**
 
 - Contract risk:
