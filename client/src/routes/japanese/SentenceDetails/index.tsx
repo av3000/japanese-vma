@@ -1,5 +1,3 @@
-// @ts-nocheck
-/* eslint-disable */
 import React, { useEffect, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -10,60 +8,42 @@ import {
 	fetchCataloguesForItem,
 	updateCatalogueForItem,
 } from '@/api/catalogues/cataloguesForItem';
+import { useSentenceQuery } from '@/api/sentences/details';
 import Spinner from '@/assets/images/spinner.gif';
-import CommentForm from '@/components/features/comment/CommentsBlock/CommentForm/CommentForm';
-import CommentList from '@/components/features/comment/CommentsBlock/CommentList/CommentList';
 import { useAuth } from '@/hooks/useAuth';
-import { apiCall } from '@/services/api';
-import { BASE_URL, ObjectTemplates } from '@/shared/constants';
+import { ObjectTemplates } from '@/shared/constants';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
-import { HttpMethod } from '@/shared/types';
+
+const getKanjiMeanings = (kanji: { meanings?: string | string[]; meaning?: string }) => {
+	if (Array.isArray(kanji.meanings)) {
+		return kanji.meanings.slice(0, 3).join(', ');
+	}
+
+	return (kanji.meanings ?? kanji.meaning ?? '').split('|').slice(0, 3).join(', ');
+};
 
 const SentenceDetails: React.FC = () => {
-	const [sentence, setSentence] = useState({});
-	const [kanjis, setKanjis] = useState([]);
-	const [lists, setLists] = useState([]);
+	const [lists, setLists] = useState<CatalogueForItem[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [sentenceIsKnown, setSentenceIsKnown] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [loadingListIds, setLoadingListIds] = useState([]);
-	const [comments, setComments] = useState([]);
+	const [isLoadingLists, setIsLoadingLists] = useState(false);
+	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 
 	const { sentence_id } = useParams();
 	const entityId = Number(sentence_id);
 	const navigate = useNavigate();
-	const { user: currentUser, isAuthenticated } = useAuth();
+	const { isAuthenticated } = useAuth();
+	const sentenceQuery = useSentenceQuery(sentence_id);
+	const sentence = sentenceQuery.data;
 
 	useEffect(() => {
-		getSentenceDetails();
 		if (isAuthenticated) {
-			getUserSentenceLists();
+			void getUserSentenceLists();
 		}
-	}, [isAuthenticated]);
-
-	const getSentenceDetails = async () => {
-		setIsLoading(true);
-		try {
-			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/sentence/${sentence_id}`);
-			setSentence(res);
-			setKanjis(res.kanjis || []);
-			const sentenceComments = res.comments || [];
-
-			if (isAuthenticated) {
-				sentenceComments.forEach((comment) => {
-					comment.isLiked = comment.likes.some((like) => like.user_id === currentUser.id);
-				});
-			}
-			setComments(sentenceComments);
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	}, [isAuthenticated, sentence_id]);
 
 	const getUserSentenceLists = async () => {
-		setIsLoading(true);
+		setIsLoadingLists(true);
 		try {
 			const nextLists = await fetchCataloguesForItem(sentence_id, {
 				types: [ObjectTemplates.KNOWNSENTENCES, ObjectTemplates.SENTENCES],
@@ -75,20 +55,23 @@ const SentenceDetails: React.FC = () => {
 		} catch (error) {
 			console.error(error);
 		} finally {
-			setIsLoading(false);
+			setIsLoadingLists(false);
 		}
 	};
 
 	const toggleModal = () => {
 		if (!isAuthenticated) {
 			navigate('/login');
-		} else {
-			setShowModal(!showModal);
+			return;
 		}
+
+		setShowModal((isOpen) => !isOpen);
 	};
 
 	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		if (Number.isNaN(entityId)) return;
+		if (Number.isNaN(entityId)) {
+			return;
+		}
 
 		setLoadingListIds((prev) => [...prev, list.id]);
 		try {
@@ -112,8 +95,34 @@ const SentenceDetails: React.FC = () => {
 		}
 	};
 
-	const renderSentenceDetails = () => {
+	if (sentenceQuery.isLoading || isLoadingLists) {
 		return (
+			<div className="container mt-5">
+				<div className="row justify-content-center">
+					<img src={Spinner} alt="Loading..." />
+				</div>
+			</div>
+		);
+	}
+
+	if (sentenceQuery.error || !sentence) {
+		return (
+			<div className="container mt-5">
+				<div className="row justify-content-center">
+					<p>Sentence could not be loaded.</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="container">
+			<span className="mt-4">
+				<Link to="/sentences" className="tag-link">
+					Back
+				</Link>
+			</span>
+
 			<div className="row justify-content-center mt-5">
 				<div className="col-md-8">
 					<h4>{sentence.content}</h4>
@@ -134,51 +143,41 @@ const SentenceDetails: React.FC = () => {
 				</div>
 				<div className="col-md-4">
 					{sentenceIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<button
-						onClick={toggleModal}
-						className="btn btn-outline brand-button float-right"
-						variant="outline-primary"
-					>
+					<button onClick={toggleModal} className="btn btn-outline brand-button float-right">
 						<i className="far fa-bookmark fa-lg"></i>
 					</button>
 				</div>
 			</div>
-		);
-	};
 
-	const renderKanjiList = () => {
-		return (
+			<hr />
+
 			<>
-				<h4>Kanjis ({kanjis.length}) results</h4>
+				<h4>Kanjis ({sentence.kanjis.length}) results</h4>
 				<div className="container">
-					{kanjis.map((kanji) => {
-						const meanings = kanji.meaning.split('|').slice(0, 3).join(', ');
-						return (
-							<div className="row justify-content-center mt-5" key={kanji.id}>
-								<div className="col-md-10">
-									<div className="row">
-										<div className="col-md-6">
-											<h3>{kanji.kanji}</h3>
-										</div>
-										<div className="col-md-4">{meanings}</div>
-										<div className="col-md-2">
-											<Link to={`/api/kanji/${kanji.id}`} className="float-right">
-												<i className="fas fa-external-link-alt fa-lg"></i>
-											</Link>
-										</div>
+					{sentence.kanjis.map((kanji) => (
+						<div className="row justify-content-center mt-5" key={kanji.uuid}>
+							<div className="col-md-10">
+								<div className="row">
+									<div className="col-md-6">
+										<h3>{kanji.character}</h3>
 									</div>
-									<hr />
+									<div className="col-md-4">{getKanjiMeanings(kanji)}</div>
+									<div className="col-md-2">
+										<Link to={`/kanji/${kanji.uuid}`} className="float-right">
+											<i className="fas fa-external-link-alt fa-lg"></i>
+										</Link>
+									</div>
 								</div>
+								<hr />
 							</div>
-						);
-					})}
+						</div>
+					))}
 				</div>
 			</>
-		);
-	};
 
-	const renderAddModal = () => {
-		return (
+			<hr />
+			<br />
+
 			<Modal show={showModal} onHide={toggleModal}>
 				<Modal.Header closeButton>
 					<Modal.Title>Choose Sentence List to add</Modal.Title>
@@ -186,13 +185,16 @@ const SentenceDetails: React.FC = () => {
 				<Modal.Body>
 					{lists.map((list) => {
 						const isLoadingList = loadingListIds.includes(list.id);
+
 						return (
 							<div key={list.id} className="d-flex justify-content-between mb-2">
 								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
 								<Button
 									variant={list.contains_item ? 'danger' : 'primary'}
 									size="sm"
-									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
+									onClick={() =>
+										addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')
+									}
 									disabled={isLoadingList}
 								>
 									{isLoadingList ? (
@@ -216,41 +218,6 @@ const SentenceDetails: React.FC = () => {
 					</Button>
 				</Modal.Footer>
 			</Modal>
-		);
-	};
-
-	if (isLoading) {
-		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			</div>
-		);
-	}
-
-	return (
-		<div className="container">
-			<span className="mt-4">
-				<Link to="/sentences" className="tag-link">
-					Back
-				</Link>
-			</span>
-			{renderSentenceDetails()}
-			<hr />
-			{renderKanjiList()}
-			<hr />
-			<br />
-			<div className="row justify-content-center">
-				<div className="col-lg-8">
-					<CommentsBlock
-						objectId={sentence.id}
-						objectType="sentence"
-						initialComments={sentence.comments || []}
-					/>
-				</div>
-			</div>
-			{renderAddModal()}
 		</div>
 	);
 };
