@@ -43,6 +43,10 @@ const SentenceDetails: React.FC = () => {
 	}, [isAuthenticated, sentence_id]);
 
 	const getUserSentenceLists = async () => {
+		if (!sentence_id) {
+			return;
+		}
+
 		setIsLoadingLists(true);
 		try {
 			const nextLists = await fetchCataloguesForItem(sentence_id, {
