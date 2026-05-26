@@ -2562,7 +2562,9 @@
                 "properties": {
                     "items": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleResource"
+                        }
                     },
                     "pagination": {
                         "$ref": "#/components/schemas/PaginationResource"
