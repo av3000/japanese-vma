@@ -35,7 +35,10 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		enabled,
 	});
 
-	const articles: ArticleResource[] = query.data?.pages.flatMap((page): ArticleResource[] => page.items) ?? [];
+	const articles = (query.data?.pages ?? []).reduce<ArticleResource[]>((allArticles, page) => {
+		allArticles.push(...page.items);
+		return allArticles;
+	}, []);
 	const total = getArticlesTotal(query.data?.pages);
 
 	return {
