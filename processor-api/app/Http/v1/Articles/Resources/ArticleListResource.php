@@ -25,7 +25,7 @@ class ArticleListResource extends JsonResource
     {
         /** @var array<int, ArticleResource> $items */
         $items = array_map(
-            fn (ArticleListItemDTO $item): ArticleResource => new ArticleResource(
+            fn(ArticleListItemDTO $item): ArticleResource => new ArticleResource(
                 article: $item->article,
                 options: [
                     'include_hashtags' => $this->resource->include_hashtags,
@@ -39,6 +39,7 @@ class ArticleListResource extends JsonResource
         );
 
         return [
+            /** @var array<int, ArticleResource> */
             'items' => $items,
             'pagination' => new PaginationResource($this->resource->pagination),
         ];
