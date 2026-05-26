@@ -4,7 +4,6 @@ import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article/a
 import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
-import type { ArticleResource } from '@/api/generated/model/articleResource';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -35,11 +34,10 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		enabled,
 	});
 
-	const articles = (query.data?.pages ?? []).reduce<ArticleResource[]>((allArticles, page) => {
-		allArticles.push(...page.items);
-		return allArticles;
-	}, []);
-	const total = getArticlesTotal(query.data?.pages);
+	const pages = query.data?.pages as ArticleListResource[] | undefined;
+
+	const articles = query.data?.pages.flatMap((page) => page.items) ?? [];
+	const total = getArticlesTotal(pages);
 
 	return {
 		...query,
