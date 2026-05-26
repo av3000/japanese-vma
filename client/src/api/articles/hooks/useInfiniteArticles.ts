@@ -34,8 +34,10 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		enabled,
 	});
 
+	const pages = query.data?.pages as ArticleListResource[] | undefined;
+
 	const articles = query.data?.pages.flatMap((page) => page.items) ?? [];
-	const total = getArticlesTotal(query.data?.pages);
+	const total = getArticlesTotal(pages);
 
 	return {
 		...query,

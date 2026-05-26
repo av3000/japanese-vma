@@ -1676,6 +1676,246 @@
                 }
             }
         },
+        "/radicals": {
+            "get": {
+                "operationId": "radical.index",
+                "tags": [
+                    "Radical"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "radical",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 30
+                        }
+                    },
+                    {
+                        "name": "meaning",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "hiragana",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "strokes",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 30
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "radical": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "strokes": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "meaning": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "hiragana": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "radical",
+                                                    "strokes",
+                                                    "meaning",
+                                                    "hiragana"
+                                                ]
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "items",
+                                        "pagination"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/radicals/{identifier}": {
+            "get": {
+                "operationId": "radical.show",
+                "tags": [
+                    "Radical"
+                ],
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "uuid": {
+                                            "type": "string"
+                                        },
+                                        "radical": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "strokes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "meaning": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "hiragana": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "kanjis": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/KanjiResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "uuid",
+                                        "radical",
+                                        "strokes",
+                                        "meaning",
+                                        "hiragana",
+                                        "kanjis"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/users/{uuid}": {
             "get": {
                 "operationId": "user.show",
@@ -2269,14 +2509,7 @@
                         "type": "string"
                     },
                     "engagement": {
-                        "anyOf": [
-                            {
-                                "$ref": "#/components/schemas/EngagementResource"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
+                        "$ref": "#/components/schemas/EngagementResource"
                     },
                     "kanjis": {
                         "type": "array",
@@ -2286,7 +2519,9 @@
                     },
                     "words": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleWordResource"
+                        }
                     },
                     "processing_status": {
                         "anyOf": [
@@ -2471,7 +2706,7 @@
                     "words": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "$ref": "#/components/schemas/ArticleWordResource"
                         }
                     },
                     "message": {
@@ -2485,6 +2720,95 @@
                     "message"
                 ],
                 "title": "ArticleWordCollection"
+            },
+            "ArticleWordResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "word": {
+                        "type": "string"
+                    },
+                    "furigana": {
+                        "type": "string"
+                    },
+                    "jlpt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "word_type": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "word_k_ele": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "furigana_r_ele": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "sense": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "word",
+                    "furigana",
+                    "jlpt",
+                    "word_type",
+                    "word_k_ele",
+                    "furigana_r_ele",
+                    "sense"
+                ],
+                "title": "ArticleWordResource"
             },
             "AssignRoleRequest": {
                 "type": "object",
@@ -2651,6 +2975,7 @@
                     },
                     "items": {
                         "type": "array",
+                        "description": "TODO: add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type.",
                         "items": {}
                     },
                     "created_at": {

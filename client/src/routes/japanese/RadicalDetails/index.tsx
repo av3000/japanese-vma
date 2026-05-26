@@ -1,9 +1,6 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { useEffect, useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useRadicalQuery } from '@/api/radicals/details';
 import {
 	applyCatalogueForItemAction,
 	type CatalogueForItem,
@@ -12,67 +9,59 @@ import {
 	updateCatalogueForItem,
 } from '@/api/catalogues/cataloguesForItem';
 import Spinner from '@/assets/images/spinner.gif';
+import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
 import { useAuth } from '@/hooks/useAuth';
-import { apiCall } from '@/services/api';
-import { BASE_URL, ObjectTemplates } from '@/shared/constants';
-import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
-import { HttpMethod } from '@/shared/types';
+import { useModal } from '@/hooks/useModal';
+import { ObjectTemplates } from '@/shared/constants';
 
 const RadicalDetails: React.FC = () => {
-	const [radical, setRadical] = useState({});
-	const [lists, setLists] = useState([]);
-	const [showModal, setShowModal] = useState(false);
+	const [lists, setLists] = useState<CatalogueForItem[]>([]);
 	const [radicalIsKnown, setRadicalIsKnown] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [loadingListIds, setLoadingListIds] = useState([]);
+	const [listsAreLoading, setListsAreLoading] = useState(false);
+	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
 
 	const { radical_id } = useParams();
 	const entityId = Number(radical_id);
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
+	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'radical-bookmark-modal' });
+	const { data: radical, isLoading: radicalIsLoading, isError } = useRadicalQuery(radical_id);
 
 	useEffect(() => {
-		getRadicalDetails();
-		if (isAuthenticated) {
-			getUserRadicalLists();
+		if (!isAuthenticated || !radical_id) {
+			setLists([]);
+			setRadicalIsKnown(false);
+			return;
 		}
-	}, [isAuthenticated]);
 
-	const getRadicalDetails = async () => {
-		try {
-			setIsLoading(true);
-			const res = await apiCall(HttpMethod.GET, `${BASE_URL}/api/radical/${radical_id}`);
-			setRadical(res);
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+		const getUserRadicalLists = async () => {
+			try {
+				setListsAreLoading(true);
+				const nextLists = await fetchCataloguesForItem(radical_id, {
+					types: [ObjectTemplates.KNOWNRADICALS, ObjectTemplates.RADICALS],
+				});
+				setRadicalIsKnown(
+					nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
+				);
+				setLists(nextLists);
+			} catch (error) {
+				console.error(error);
+			} finally {
+				setListsAreLoading(false);
+			}
+		};
 
-	const getUserRadicalLists = async () => {
-		try {
-			setIsLoading(true);
-			const nextLists = await fetchCataloguesForItem(radical_id, {
-				types: [ObjectTemplates.KNOWNRADICALS, ObjectTemplates.RADICALS],
-			});
-			setRadicalIsKnown(
-				nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
-			);
-			setLists(nextLists);
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+		void getUserRadicalLists();
+	}, [isAuthenticated, radical_id]);
 
-	const toggleModal = () => {
+	const openBookmarkModal = () => {
 		if (!isAuthenticated) {
 			navigate('/login');
-		} else {
-			setShowModal((prevShow) => !prevShow);
+			return;
 		}
+
+		bookmarkModal.open();
 	};
 
 	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
@@ -100,6 +89,31 @@ const RadicalDetails: React.FC = () => {
 		}
 	};
 
+	if (radicalIsLoading || listsAreLoading) {
+		return (
+			<div className="container">
+				<div className="row justify-content-center">
+					<img src={Spinner} alt="spinner" />
+				</div>
+			</div>
+		);
+	}
+
+	if (isError || !radical) {
+		return (
+			<div className="container">
+				<div className="mt-5">
+					<Link to="/radicals" className="tag-link">
+						Back
+					</Link>
+				</div>
+				<div className="row justify-content-center mt-5">
+					<p>Unable to load radical.</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="container">
 			<div className="mt-5">
@@ -107,49 +121,42 @@ const RadicalDetails: React.FC = () => {
 					Back
 				</Link>
 			</div>
-			{isLoading ? (
-				<div className="container">
-					<div className="row justify-content-center">
-						<img src={Spinner} alt="spinner" />
-					</div>
+			<div className="row justify-content-center mt-5">
+				<div className="col-md-6">
+					<h1>
+						{radical.radical} <br />
+						{radical.hiragana}
+					</h1>
 				</div>
-			) : (
-				<div className="row justify-content-center mt-5">
-					<div className="col-md-6">
-						<h1>
-							{radical.radical} <br />
-							{radical.hiragana}
-						</h1>
-					</div>
-					<div className="col-md-6">
-						<p>meaning: {radical.meaning}</p>
-						<p>strokes: {radical.strokes}</p>
-						{radicalIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-						<button
-							onClick={toggleModal}
-							className="btn btn-outline brand-button float-right"
-							variant="outline-primary"
-						>
-							<i className="far fa-bookmark fa-lg"></i>
-						</button>
-					</div>
+				<div className="col-md-6">
+					<p>meaning: {radical.meaning}</p>
+					<p>strokes: {radical.strokes}</p>
+					{radicalIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
+					<button
+						onClick={openBookmarkModal}
+						className="btn btn-outline brand-button float-right"
+						aria-controls={bookmarkModal.id}
+						aria-expanded={bookmarkModal.isOpen}
+					>
+						<i className="far fa-bookmark fa-lg"></i>
+					</button>
 				</div>
-			)}
+			</div>
 
 			<hr />
-			{radical.kanjis && radical.kanjis.length > 0 && (
+			{radical.kanjis.length > 0 && (
 				<>
 					<h4>kanjis ({radical.kanjis.length}) results</h4>
 					{radical.kanjis.map((kanji) => (
-						<div className="row justify-content-center mt-5" key={kanji.id}>
+						<div className="row justify-content-center mt-5" key={kanji.uuid}>
 							<div className="col-md-8">
 								<div className="row justify-content-center">
 									<div className="col-md-6">
-										<h3>{kanji.kanji}</h3>
+										<h3>{kanji.character}</h3>
 									</div>
-									<div className="col-md-4">{kanji.meaning}</div>
+									<div className="col-md-4">{kanji.meanings}</div>
 									<div className="col-md-2">
-										<Link to={`/kanji/${kanji.id}`} className="float-right">
+										<Link to={`/kanji/${kanji.character}`} className="float-right">
 											<i className="fas fa-external-link-alt fa-lg"></i>
 										</Link>
 									</div>
@@ -161,40 +168,15 @@ const RadicalDetails: React.FC = () => {
 				</>
 			)}
 
-			<Modal show={showModal} onHide={toggleModal}>
-				<Modal.Header closeButton>
-					<Modal.Title>Choose Radical List to add</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					{lists.map((list) => (
-						<div key={list.id} className="d-flex justify-content-between">
-							<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
-							<Button
-								variant={list.contains_item ? 'danger' : 'primary'}
-								size="sm"
-								onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
-								disabled={loadingListIds.includes(list.id)}
-							>
-								{loadingListIds.includes(list.id) ? (
-									<span className="spinner-border spinner-border-sm"></span>
-								) : list.contains_item ? (
-									'Remove'
-								) : (
-									'Add'
-								)}
-							</Button>
-						</div>
-					))}
-					<small>
-						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
-					</small>
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={toggleModal}>
-						Close
-					</Button>
-				</Modal.Footer>
-			</Modal>
+			<CatalogueBookmarkModal
+				controller={bookmarkModal}
+				lists={lists}
+				loadingListIds={loadingListIds}
+				onListAction={addToOrRemoveFromList}
+				title="Choose Radical List to add"
+				emptyText="You have no radical lists created."
+				ariaLabel="Save radical to list"
+			/>
 		</div>
 	);
 };

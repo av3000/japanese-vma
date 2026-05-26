@@ -13,7 +13,9 @@ use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
+use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
 use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
+use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             KanjiRepositoryInterface::class,
             KanjiRepository::class
+        );
+
+        $this->app->singleton(
+            RadicalRepositoryInterface::class,
+            RadicalRepository::class
         );
 
         $this->app->singleton(
