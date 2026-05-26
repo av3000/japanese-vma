@@ -4,6 +4,7 @@ import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article/a
 import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
+import type { ArticleResource } from '@/api/generated/model/articleResource';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -34,7 +35,7 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		enabled,
 	});
 
-	const articles = query.data?.pages.flatMap((page) => page.items) ?? [];
+	const articles: ArticleResource[] = query.data?.pages.flatMap((page): ArticleResource[] => page.items) ?? [];
 	const total = getArticlesTotal(query.data?.pages);
 
 	return {
