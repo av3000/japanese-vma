@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
 	applyCatalogueForItemAction,
@@ -10,9 +9,10 @@ import {
 } from '@/api/catalogues/cataloguesForItem';
 import { useSentenceQuery } from '@/api/sentences/details';
 import Spinner from '@/assets/images/spinner.gif';
+import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useModal } from '@/hooks/useModal';
 import { ObjectTemplates } from '@/shared/constants';
-import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
 const getKanjiMeanings = (kanji: { meanings?: string | string[]; meaning?: string }) => {
 	if (Array.isArray(kanji.meanings)) {
@@ -24,10 +24,11 @@ const getKanjiMeanings = (kanji: { meanings?: string | string[]; meaning?: strin
 
 const SentenceDetails: React.FC = () => {
 	const [lists, setLists] = useState<CatalogueForItem[]>([]);
-	const [showModal, setShowModal] = useState(false);
 	const [sentenceIsKnown, setSentenceIsKnown] = useState(false);
 	const [isLoadingLists, setIsLoadingLists] = useState(false);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
+	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
 
 	const { sentence_id } = useParams();
 	const entityId = Number(sentence_id);
@@ -69,7 +70,7 @@ const SentenceDetails: React.FC = () => {
 			return;
 		}
 
-		setShowModal((isOpen) => !isOpen);
+		bookmarkModal.open();
 	};
 
 	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
@@ -147,7 +148,12 @@ const SentenceDetails: React.FC = () => {
 				</div>
 				<div className="col-md-4">
 					{sentenceIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<button onClick={toggleModal} className="btn btn-outline brand-button float-right">
+					<button
+						onClick={toggleModal}
+						className="btn btn-outline brand-button float-right"
+						aria-controls={bookmarkModal.id}
+						aria-expanded={bookmarkModal.isOpen}
+					>
 						<i className="far fa-bookmark fa-lg"></i>
 					</button>
 				</div>
@@ -182,46 +188,14 @@ const SentenceDetails: React.FC = () => {
 			<hr />
 			<br />
 
-			<Modal show={showModal} onHide={toggleModal}>
-				<Modal.Header closeButton>
-					<Modal.Title>Choose Sentence List to add</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					{lists.map((list) => {
-						const isLoadingList = loadingListIds.includes(list.id);
-
-						return (
-							<div key={list.id} className="d-flex justify-content-between mb-2">
-								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
-								<Button
-									variant={list.contains_item ? 'danger' : 'primary'}
-									size="sm"
-									onClick={() =>
-										addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')
-									}
-									disabled={isLoadingList}
-								>
-									{isLoadingList ? (
-										<span className="spinner-border spinner-border-sm"></span>
-									) : list.contains_item ? (
-										'Remove'
-									) : (
-										'Add'
-									)}
-								</Button>
-							</div>
-						);
-					})}
-					<small>
-						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
-					</small>
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={toggleModal}>
-						Close
-					</Button>
-				</Modal.Footer>
-			</Modal>
+			<CatalogueBookmarkModal
+				controller={bookmarkModal}
+				lists={lists}
+				loadingListIds={loadingListIds}
+				onListAction={addToOrRemoveFromList}
+				title="Choose Sentence List to add"
+				ariaLabel="Choose Sentence List to add"
+			/>
 		</div>
 	);
 };

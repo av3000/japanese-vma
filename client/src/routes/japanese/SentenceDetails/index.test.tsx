@@ -1,13 +1,21 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import SentenceDetails from '.';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
-import SentenceDetails from './index';
 
 const navigateMock = vi.fn();
 const fetchCataloguesForItemMock = vi.fn();
 const updateCatalogueForItemMock = vi.fn();
 const commentsBlockMock = vi.fn();
+const capturedBookmarkModalProps: Array<{
+	controller: { id: string; isRendered: boolean };
+	lists: CatalogueForItem[];
+	loadingListIds: number[];
+	onListAction: (list: CatalogueForItem, action: 'add' | 'remove') => Promise<void>;
+	title?: string;
+	ariaLabel?: string;
+}> = [];
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -64,6 +72,31 @@ vi.mock('@/hooks/useAuth', () => ({
 	}),
 }));
 
+vi.mock('@/hooks/useModal', () => ({
+	useModal: (dialogRef: { current: null }, options: { id: string }) => ({
+		id: options.id,
+		dialogRef,
+		isOpen: false,
+		isRendered: true,
+		open: vi.fn(),
+		close: vi.fn(),
+	}),
+}));
+
+vi.mock('@/components/features/catalogues/CatalogueBookmarkModal', () => ({
+	CatalogueBookmarkModal: (props: {
+		controller: { id: string; isRendered: boolean };
+		lists: CatalogueForItem[];
+		loadingListIds: number[];
+		onListAction: (list: CatalogueForItem, action: 'add' | 'remove') => Promise<void>;
+		title?: string;
+		ariaLabel?: string;
+	}) => {
+		capturedBookmarkModalProps.push(props);
+		return <div>Catalogue bookmark modal</div>;
+	},
+}));
+
 vi.mock('@/components/features/comment/CommentsBlock', () => ({
 	default: (props: Record<string, unknown>) => {
 		commentsBlockMock(props);
@@ -74,6 +107,7 @@ vi.mock('@/components/features/comment/CommentsBlock', () => ({
 describe('SentenceDetails', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		capturedBookmarkModalProps.length = 0;
 		fetchCataloguesForItemMock.mockResolvedValue([
 			{
 				id: 8,
@@ -100,5 +134,20 @@ describe('SentenceDetails', () => {
 		renderToStaticMarkup(<SentenceDetails />);
 
 		expect(commentsBlockMock).not.toHaveBeenCalled();
+	});
+
+	it('uses the shared catalogue bookmark modal for sentence catalogue actions', () => {
+		renderToStaticMarkup(<SentenceDetails />);
+
+		expect(capturedBookmarkModalProps[0]).toMatchObject({
+			controller: {
+				id: 'sentence-bookmark-modal',
+				isRendered: true,
+			},
+			loadingListIds: [],
+			title: 'Choose Sentence List to add',
+			ariaLabel: 'Choose Sentence List to add',
+		});
+		expect(capturedBookmarkModalProps[0].onListAction).toBeTypeOf('function');
 	});
 });
