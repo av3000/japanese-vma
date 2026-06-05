@@ -1,36 +1,24 @@
 // @ts-nocheck
 /* eslint-disable */
 import React, { useEffect, useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-	applyCatalogueForItemAction,
-	type CatalogueForItem,
-	type CatalogueForItemAction,
-	fetchCataloguesForItem,
-	updateCatalogueForItem,
-} from '@/api/catalogues/cataloguesForItem';
+import { Link, useParams } from 'react-router-dom';
 import Spinner from '@/assets/images/spinner.gif';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { Chip } from '@/components/shared/Chip';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
-import { BASE_URL, ObjectTemplates } from '@/shared/constants';
-import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import { BASE_URL } from '@/shared/constants';
+import { SavedListType } from '@/shared/constants/enums';
 import { HttpMethod } from '@/shared/types';
 
 const WordDetails: React.FC = () => {
 	const [word, setWord] = useState({});
 	const [kanjis, setKanjis] = useState([]);
 	const [articles, setArticles] = useState([]);
-	const [lists, setLists] = useState([]);
-	const [showModal, setShowModal] = useState(false);
-	const [wordIsKnown, setWordIsKnown] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const [loadingListIds, setLoadingListIds] = useState([]);
 
 	const { word_id } = useParams();
 	const entityId = Number(word_id);
-	const navigate = useNavigate();
 
 	const { isAuthenticated } = useAuth();
 
@@ -55,61 +43,8 @@ const WordDetails: React.FC = () => {
 			}
 		};
 
-		const getUserWordLists = async () => {
-			try {
-				setIsLoading(true);
-				const nextLists = await fetchCataloguesForItem(word_id, {
-					types: [ObjectTemplates.KNOWNWORDS, ObjectTemplates.WORDS],
-				});
-				setWordIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.contains_item),
-				);
-				setLists(nextLists);
-			} catch (error) {
-				console.error(error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
 		getWordDetails();
-		if (isAuthenticated) {
-			getUserWordLists();
-		}
 	}, [isAuthenticated]);
-
-	const toggleModal = () => {
-		if (!isAuthenticated) {
-			navigate('/login');
-		} else {
-			setShowModal((prevShow) => !prevShow);
-		}
-	};
-
-	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		if (Number.isNaN(entityId)) return;
-
-		try {
-			setLoadingListIds((prev) => [...prev, list.id]);
-			await updateCatalogueForItem({
-				list,
-				elementId: entityId,
-				action,
-			});
-
-			setLists((prevLists) => {
-				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
-				setWordIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNWORDS && list.contains_item),
-				);
-				return nextLists;
-			});
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
-		}
-	};
 
 	const renderWordDetails = () => {
 		return (
@@ -125,14 +60,14 @@ const WordDetails: React.FC = () => {
 					<p>
 						JLPT: {word.jlpt} <br /> Meaning: {word.meaning}
 					</p>
-					{wordIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<button
-						onClick={toggleModal}
-						className="btn btn-outline brand-button float-right"
-						variant="outline-primary"
-					>
-						<i className="far fa-bookmark fa-lg"></i>
-					</button>
+					{isAuthenticated && (
+						<AuthorizedBookmarkWidget
+							instanceObjectType={SavedListType.WORDS}
+							isKnownType={SavedListType.KNOWNWORDS}
+							entityId={entityId}
+							modalTitle="Choose Word List to add"
+						/>
+					)}
 				</div>
 			</div>
 		);
@@ -169,6 +104,7 @@ const WordDetails: React.FC = () => {
 		);
 	};
 
+	// TODO: move to japanese material related component, to reuse in any japanese material page
 	const renderArticleList = () => {
 		return (
 			<>
@@ -216,48 +152,6 @@ const WordDetails: React.FC = () => {
 		);
 	};
 
-	const renderAddModal = () => {
-		return (
-			<Modal show={showModal} onHide={toggleModal}>
-				<Modal.Header closeButton>
-					<Modal.Title>Choose Word List to add</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					{lists.map((list) => {
-						const isLoadingList = loadingListIds.includes(list.id);
-						return (
-							<div key={list.id} className="d-flex justify-content-between mb-2">
-								<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
-								<Button
-									variant={list.contains_item ? 'danger' : 'primary'}
-									size="sm"
-									onClick={() => addToOrRemoveFromList(list, list.contains_item ? 'remove' : 'add')}
-									disabled={isLoadingList}
-								>
-									{isLoadingList ? (
-										<span className="spinner-border spinner-border-sm"></span>
-									) : list.contains_item ? (
-										'Remove'
-									) : (
-										'Add'
-									)}
-								</Button>
-							</div>
-						);
-					})}
-					<small>
-						<Link to={CATALOGUE_ROUTES.create}>Create a new list?</Link>
-					</small>
-				</Modal.Body>
-				<Modal.Footer>
-					<Button variant="secondary" onClick={toggleModal}>
-						Close
-					</Button>
-				</Modal.Footer>
-			</Modal>
-		);
-	};
-
 	if (isLoading) {
 		return (
 			<div className="container mt-5">
@@ -280,7 +174,6 @@ const WordDetails: React.FC = () => {
 			{renderKanjiList()}
 			<hr />
 			{renderArticleList()}
-			{renderAddModal()}
 		</div>
 	);
 };

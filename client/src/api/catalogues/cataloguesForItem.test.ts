@@ -1,15 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	catalogueAddItem,
-	catalogueForItem,
-	catalogueRemoveItem,
-} from '@/api/generated/catalogue/catalogue';
+import { catalogueAddItem, catalogueForItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import * as cataloguesForItemModule from './cataloguesForItem';
 
-const {
-	applyCatalogueForItemAction,
-	fetchCataloguesForItem,
-} = cataloguesForItemModule;
+const { optimisticApplyCatalogueForItemAction, fetchCataloguesForItem } = cataloguesForItemModule;
 
 vi.mock('@/api/generated/catalogue/catalogue', () => ({
 	catalogueAddItem: vi.fn(),
@@ -87,7 +80,7 @@ describe('cataloguesForItem', () => {
 
 	it('updates for-item state locally without exposing numeric route fallbacks', () => {
 		expect(
-			applyCatalogueForItemAction(
+			optimisticApplyCatalogueForItemAction(
 				[
 					{
 						id: 1,

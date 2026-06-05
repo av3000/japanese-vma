@@ -1,95 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useRadicalQuery } from '@/api/radicals/details';
-import {
-	applyCatalogueForItemAction,
-	type CatalogueForItem,
-	type CatalogueForItemAction,
-	fetchCataloguesForItem,
-	updateCatalogueForItem,
-} from '@/api/catalogues/cataloguesForItem';
 import Spinner from '@/assets/images/spinner.gif';
-import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { useAuth } from '@/hooks/useAuth';
-import { useModal } from '@/hooks/useModal';
-import { ObjectTemplates } from '@/shared/constants';
+import { SavedListType } from '@/shared/constants/enums';
 
 const RadicalDetails: React.FC = () => {
-	const [lists, setLists] = useState<CatalogueForItem[]>([]);
-	const [radicalIsKnown, setRadicalIsKnown] = useState(false);
-	const [listsAreLoading, setListsAreLoading] = useState(false);
-	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
-	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
-
 	const { radical_id } = useParams();
 	const entityId = Number(radical_id);
-	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
-	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'radical-bookmark-modal' });
 	const { data: radical, isLoading: radicalIsLoading, isError } = useRadicalQuery(radical_id);
 
-	useEffect(() => {
-		if (!isAuthenticated || !radical_id) {
-			setLists([]);
-			setRadicalIsKnown(false);
-			return;
-		}
-
-		const getUserRadicalLists = async () => {
-			try {
-				setListsAreLoading(true);
-				const nextLists = await fetchCataloguesForItem(radical_id, {
-					types: [ObjectTemplates.KNOWNRADICALS, ObjectTemplates.RADICALS],
-				});
-				setRadicalIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
-				);
-				setLists(nextLists);
-			} catch (error) {
-				console.error(error);
-			} finally {
-				setListsAreLoading(false);
-			}
-		};
-
-		void getUserRadicalLists();
-	}, [isAuthenticated, radical_id]);
-
-	const openBookmarkModal = () => {
-		if (!isAuthenticated) {
-			navigate('/login');
-			return;
-		}
-
-		bookmarkModal.open();
-	};
-
-	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		if (Number.isNaN(entityId)) return;
-
-		try {
-			setLoadingListIds((prev) => [...prev, list.id]);
-			await updateCatalogueForItem({
-				list,
-				elementId: entityId,
-				action,
-			});
-
-			setLists((prevLists) => {
-				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
-				setRadicalIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNRADICALS && list.contains_item),
-				);
-				return nextLists;
-			});
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setLoadingListIds((prev) => prev.filter((loadingId) => loadingId !== list.id));
-		}
-	};
-
-	if (radicalIsLoading || listsAreLoading) {
+	if (radicalIsLoading) {
 		return (
 			<div className="container">
 				<div className="row justify-content-center">
@@ -131,15 +54,14 @@ const RadicalDetails: React.FC = () => {
 				<div className="col-md-6">
 					<p>meaning: {radical.meaning}</p>
 					<p>strokes: {radical.strokes}</p>
-					{radicalIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<button
-						onClick={openBookmarkModal}
-						className="btn btn-outline brand-button float-right"
-						aria-controls={bookmarkModal.id}
-						aria-expanded={bookmarkModal.isOpen}
-					>
-						<i className="far fa-bookmark fa-lg"></i>
-					</button>
+					{isAuthenticated && (
+						<AuthorizedBookmarkWidget
+							instanceObjectType={SavedListType.RADICALS}
+							isKnownType={SavedListType.KNOWNRADICALS}
+							entityId={entityId}
+							modalTitle="Choose Radical List to add"
+						/>
+					)}
 				</div>
 			</div>
 
@@ -167,16 +89,6 @@ const RadicalDetails: React.FC = () => {
 					))}
 				</>
 			)}
-
-			<CatalogueBookmarkModal
-				controller={bookmarkModal}
-				lists={lists}
-				loadingListIds={loadingListIds}
-				onListAction={addToOrRemoveFromList}
-				title="Choose Radical List to add"
-				emptyText="You have no radical lists created."
-				ariaLabel="Save radical to list"
-			/>
 		</div>
 	);
 };
