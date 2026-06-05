@@ -1,18 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-	applyCatalogueForItemAction,
-	type CatalogueForItem,
-	type CatalogueForItemAction,
-	fetchCataloguesForItem,
-	updateCatalogueForItem,
-} from '@/api/catalogues/cataloguesForItem';
+import React from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useSentenceQuery } from '@/api/sentences/details';
 import Spinner from '@/assets/images/spinner.gif';
-import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { useAuth } from '@/hooks/useAuth';
-import { useModal } from '@/hooks/useModal';
-import { ObjectTemplates } from '@/shared/constants';
+import { SavedListType } from '@/shared/constants/enums';
 
 const getKanjiMeanings = (kanji: { meanings?: string | string[]; meaning?: string }) => {
 	if (Array.isArray(kanji.meanings)) {
@@ -23,84 +15,13 @@ const getKanjiMeanings = (kanji: { meanings?: string | string[]; meaning?: strin
 };
 
 const SentenceDetails: React.FC = () => {
-	const [lists, setLists] = useState<CatalogueForItem[]>([]);
-	const [sentenceIsKnown, setSentenceIsKnown] = useState(false);
-	const [isLoadingLists, setIsLoadingLists] = useState(false);
-	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
-	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
-	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
-
 	const { sentence_id } = useParams();
 	const entityId = Number(sentence_id);
-	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 	const sentenceQuery = useSentenceQuery(sentence_id);
 	const sentence = sentenceQuery.data;
 
-	useEffect(() => {
-		if (isAuthenticated) {
-			void getUserSentenceLists();
-		}
-	}, [isAuthenticated, sentence_id]);
-
-	const getUserSentenceLists = async () => {
-		if (!sentence_id) {
-			return;
-		}
-
-		setIsLoadingLists(true);
-		try {
-			const nextLists = await fetchCataloguesForItem(sentence_id, {
-				types: [ObjectTemplates.KNOWNSENTENCES, ObjectTemplates.SENTENCES],
-			});
-			setSentenceIsKnown(
-				nextLists.some((list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.contains_item),
-			);
-			setLists(nextLists);
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoadingLists(false);
-		}
-	};
-
-	const toggleModal = () => {
-		if (!isAuthenticated) {
-			navigate('/login');
-			return;
-		}
-
-		bookmarkModal.open();
-	};
-
-	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		if (Number.isNaN(entityId)) {
-			return;
-		}
-
-		setLoadingListIds((prev) => [...prev, list.id]);
-		try {
-			await updateCatalogueForItem({
-				list,
-				elementId: entityId,
-				action,
-			});
-
-			setLists((prevLists) => {
-				const nextLists = applyCatalogueForItemAction(prevLists, list.id, action);
-				setSentenceIsKnown(
-					nextLists.some((list) => list.type === ObjectTemplates.KNOWNSENTENCES && list.contains_item),
-				);
-				return nextLists;
-			});
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
-		}
-	};
-
-	if (sentenceQuery.isLoading || isLoadingLists) {
+	if (sentenceQuery.isLoading) {
 		return (
 			<div className="container mt-5">
 				<div className="row justify-content-center">
@@ -146,17 +67,15 @@ const SentenceDetails: React.FC = () => {
 						</p>
 					)}
 				</div>
-				<div className="col-md-4">
-					{sentenceIsKnown && <i className="fas fa-check-circle text-success"> Learned</i>}
-					<button
-						onClick={toggleModal}
-						className="btn btn-outline brand-button float-right"
-						aria-controls={bookmarkModal.id}
-						aria-expanded={bookmarkModal.isOpen}
-					>
-						<i className="far fa-bookmark fa-lg"></i>
-					</button>
-				</div>
+
+				{isAuthenticated && (
+					<AuthorizedBookmarkWidget
+						instanceObjectType={SavedListType.SENTENCES}
+						isKnownType={SavedListType.KNOWNSENTENCES}
+						entityId={entityId}
+						modalTitle="Choose Sentence List to add"
+					/>
+				)}
 			</div>
 
 			<hr />
@@ -187,15 +106,6 @@ const SentenceDetails: React.FC = () => {
 
 			<hr />
 			<br />
-
-			<CatalogueBookmarkModal
-				controller={bookmarkModal}
-				lists={lists}
-				loadingListIds={loadingListIds}
-				onListAction={addToOrRemoveFromList}
-				title="Choose Sentence List to add"
-				ariaLabel="Choose Sentence List to add"
-			/>
 		</div>
 	);
 };

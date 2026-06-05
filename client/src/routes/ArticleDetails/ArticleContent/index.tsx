@@ -6,7 +6,7 @@ import { setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import {
-	applyCatalogueForItemAction,
+	optimisticApplyCatalogueForItemAction,
 	type CatalogueForItem,
 	fetchCataloguesForItem,
 	type CatalogueForItemAction,
@@ -107,7 +107,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		},
 		onSuccess: (_, { list, action }) => {
 			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
-				return applyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
+				return optimisticApplyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
 			});
 		},
 	});

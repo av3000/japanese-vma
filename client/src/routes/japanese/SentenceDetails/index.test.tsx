@@ -51,18 +51,19 @@ vi.mock('@/api/sentences/details', () => ({
 }));
 
 vi.mock('@/api/catalogues/cataloguesForItem', () => ({
-	applyCatalogueForItemAction: vi.fn((lists: CatalogueForItem[], catalogueId: number, action: 'add' | 'remove') =>
-		lists.map((list) =>
-			list.id === catalogueId
-				? {
-						...list,
-						contains_item: action === 'add',
-					}
-				: list,
-		),
+	optimisticApplyCatalogueForItemAction: vi.fn(
+		(lists: CatalogueForItem[], catalogueId: number, action: 'add' | 'remove') =>
+			lists.map((list) =>
+				list.id === catalogueId
+					? {
+							...list,
+							contains_item: action === 'add',
+						}
+					: list,
+			),
 	),
 	fetchCataloguesForItem: (...args: unknown[]) => fetchCataloguesForItemMock(...args),
-	updateCatalogueForItem: (...args: unknown[]) => updateCatalogueForItemMock(...args),
+	addOrRemoveCatalogueForItem: (...args: unknown[]) => updateCatalogueForItemMock(...args),
 }));
 
 vi.mock('@/hooks/useAuth', () => ({
