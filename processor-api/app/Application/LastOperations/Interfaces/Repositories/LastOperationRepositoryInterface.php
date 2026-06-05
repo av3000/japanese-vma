@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 interface LastOperationRepositoryInterface
 {
-
+    // TODO: create strict types for the entityType and taskType
     public function findById(int $id): ?LastOperationState;
 
     public function update(LastOperationState $state, LastOperationStatus $status, array $metadata = []): void;

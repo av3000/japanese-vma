@@ -2637,6 +2637,303 @@
                     }
                 }
             }
+        },
+        "/words": {
+            "get": {
+                "operationId": "word.index",
+                "tags": [
+                    "Word"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "word",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "furigana",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "jlpt",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "word": {
+                                                        "type": "string"
+                                                    },
+                                                    "furigana": {
+                                                        "type": "string"
+                                                    },
+                                                    "jlpt": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "meaning": {
+                                                        "type": "string"
+                                                    },
+                                                    "meanings": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "word_types": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "writing_elements": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "reading_elements": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "word_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "word_k_ele": {
+                                                        "type": "string"
+                                                    },
+                                                    "furigana_r_ele": {
+                                                        "type": "string"
+                                                    },
+                                                    "sense": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "word",
+                                                    "furigana",
+                                                    "jlpt",
+                                                    "meaning",
+                                                    "meanings",
+                                                    "word_types",
+                                                    "writing_elements",
+                                                    "reading_elements",
+                                                    "word_type",
+                                                    "word_k_ele",
+                                                    "furigana_r_ele",
+                                                    "sense"
+                                                ]
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "items",
+                                        "pagination"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/words/{identifier}": {
+            "get": {
+                "operationId": "word.show",
+                "tags": [
+                    "Word"
+                ],
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "uuid": {
+                                            "type": "string"
+                                        },
+                                        "word": {
+                                            "type": "string"
+                                        },
+                                        "furigana": {
+                                            "type": "string"
+                                        },
+                                        "jlpt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "meaning": {
+                                            "type": "string"
+                                        },
+                                        "meanings": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "word_types": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "writing_elements": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "reading_elements": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "word_type": {
+                                            "type": "string"
+                                        },
+                                        "word_k_ele": {
+                                            "type": "string"
+                                        },
+                                        "furigana_r_ele": {
+                                            "type": "string"
+                                        },
+                                        "sense": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "uuid",
+                                        "word",
+                                        "furigana",
+                                        "jlpt",
+                                        "meaning",
+                                        "meanings",
+                                        "word_types",
+                                        "writing_elements",
+                                        "reading_elements",
+                                        "word_type",
+                                        "word_k_ele",
+                                        "furigana_r_ele",
+                                        "sense"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
