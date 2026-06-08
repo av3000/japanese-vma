@@ -13,6 +13,7 @@ import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
 import styles from './AuthorizedBookmarkWidget.module.scss';
 
+// TODO: For lists it shouldnt fetch per instance, need to figure cheaper way to get it on list get request.
 interface AuthorizedBookmarkWidgetProps {
 	entityId: number; // TODO: Might consider uuid, but maybe it doesnt make a difference.
 	instanceObjectType: SavedListType;
