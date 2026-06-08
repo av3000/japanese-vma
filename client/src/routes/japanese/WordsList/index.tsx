@@ -29,8 +29,6 @@ const WordsList: React.FC = () => {
 	const searchHeading =
 		typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
 
-	const handleAddToList = () => undefined;
-
 	if (isPending && words.length === 0) {
 		return (
 			<div className="container text-center">
@@ -72,7 +70,6 @@ const WordsList: React.FC = () => {
 									word_type={word.word_type}
 									meaning={word.meaning}
 									jlpt={word.jlpt ?? ''}
-									addToList={handleAddToList}
 								/>
 							))
 						)}

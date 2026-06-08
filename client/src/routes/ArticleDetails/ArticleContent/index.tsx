@@ -1,18 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import { setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import {
-	optimisticApplyCatalogueForItemAction,
-	type CatalogueForItem,
-	fetchCataloguesForItem,
-	type CatalogueForItemAction,
-} from '@/api/catalogues/cataloguesForItem';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
-import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -20,7 +13,7 @@ import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
-import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
@@ -44,27 +37,17 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const { user: currentUser, isAuthenticated } = useAuth();
 
 	const [tempStatus, setTempStatus] = useState<number>(article.status);
-	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
-	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
 	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
 	const editDialogRef = useRef<HTMLDialogElement | null>(null);
 
-	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'article-bookmark-modal' });
 	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
 	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
 	const pdfModal = useModal(pdfDialogRef, { id: 'article-pdf-modal' });
 
 	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
 	useArticleSubscription(article.uuid);
-
-	// TODO: Lift this query up and create query function to pass in here
-	const { data: userLists = [] } = useQuery({
-		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchCataloguesForItem(article.id, { types: [SavedListType.ARTICLES] }),
-		enabled: isAuthenticated,
-	});
 
 	// TODO: how should this backend call passed onto - directly here or come from parent smart component?
 	const likeMutation = useLikeArticleMutation(article.uuid);
@@ -89,29 +72,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		onSuccess: () => navigate('/articles'),
 	});
 
-	// TODO: Lift this query up and create query function to be reused
-	const catalogueMembershipMutation = useMutation<
-		unknown,
-		unknown,
-		{
-			list: CatalogueForItem;
-			action: CatalogueForItemAction;
-		}
-	>({
-		mutationFn: ({ list, action }: { list: CatalogueForItem; action: CatalogueForItemAction }) => {
-			if (action === 'add') {
-				return catalogueAddItem(list.uuid, { item_id: article.id });
-			}
-
-			return catalogueRemoveItem(list.uuid, article.id);
-		},
-		onSuccess: (_, { list, action }) => {
-			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
-				return optimisticApplyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
-			});
-		},
-	});
-
 	const openEditModal = () => {
 		const next = new URLSearchParams(searchParams);
 		next.set('edit', '1');
@@ -133,18 +93,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	} = editModal;
 
 	// TODO: Lift this query up and create query function to be reused
-	const handleListAction = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		setLoadingListIds((prev) => [...prev, list.id]);
-		try {
-			await catalogueMembershipMutation.mutateAsync({ list, action });
-		} catch (error) {
-			console.error('List action failed', error);
-		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
-		}
-	};
-
-	// TODO: Lift this query up and create query function to be reused
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {
@@ -159,7 +107,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	const isBookmarked = userLists.some((list) => list.contains_item);
 	const isLiked = article.engagement?.is_liked_by_viewer;
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
@@ -258,15 +205,13 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
-							<Button
-								variant="ghost"
-								hasOnlyIcon
-								aria-controls={bookmarkModal.id}
-								aria-expanded={bookmarkModal.isOpen}
-								onClick={bookmarkModal.open}
-							>
-								<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
-							</Button>
+							{isAuthenticated && (
+								<AuthorizedBookmarkWidget
+									instanceObjectType={SavedListType.ARTICLES}
+									entityId={article.id}
+									modalTitle="Choose Articles List to add"
+								/>
+							)}
 							<Button
 								variant="ghost"
 								hasOnlyIcon
@@ -292,13 +237,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 					/>
 				</div>
 			</div>
-
-			<CatalogueBookmarkModal
-				controller={bookmarkModal}
-				lists={userLists}
-				loadingListIds={loadingListIds}
-				onListAction={handleListAction}
-			/>
 
 			<ArticleReviewModal
 				controller={reviewModal}

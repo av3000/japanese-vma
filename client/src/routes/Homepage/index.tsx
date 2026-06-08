@@ -58,7 +58,7 @@ const Homepage: React.FC = () => {
 	return (
 		<div className="container mt-4">
 			<h1 className="text-center">Welcome to your feed!</h1>
-			<ExploreCatalogueList />
+			<ExploreArticleList />
 			<ExploreCatalogueList />
 		</div>
 	);

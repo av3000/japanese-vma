@@ -28,14 +28,15 @@ class WordListResource extends JsonResource
     public function toArray(Request $request): array
     {
         /** @var WordListResultDTO $result */
-        $result = $this->resource;
+        $items = array_map(
+            fn(Word $word): WordResource => new WordResource($word),
+            $this->resource->items,
+        );
 
         return [
-            'items' => array_map(
-                fn (Word $word): WordResource => new WordResource($word),
-                $result->items,
-            ),
-            'pagination' => new PaginationResource($result->pagination),
+            /** @var array<int, WordResource> */
+            'items' => $items,
+            'pagination' => new PaginationResource($this->resource->pagination),
         ];
     }
 }

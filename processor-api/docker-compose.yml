@@ -33,6 +33,16 @@ services:
       - redis
       - reverb
     entrypoint: ["/bin/sh", "/var/www/html/.docker/entrypoint.sh"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "grep -q '00000000000000000000000000000000:2328' /proc/net/tcp6",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
   webserver:
     image: nginx:alpine
@@ -51,7 +61,8 @@ services:
     networks:
       - shared-network
     depends_on:
-      - laravel-app
+      laravel-app:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
