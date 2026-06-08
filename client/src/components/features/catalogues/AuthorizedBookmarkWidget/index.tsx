@@ -11,11 +11,13 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
+import styles from './AuthorizedBookmarkWidget.module.scss';
 
+// TODO: For lists it shouldnt fetch per instance, need to figure cheaper way to get it on list get request.
 interface AuthorizedBookmarkWidgetProps {
 	entityId: number; // TODO: Might consider uuid, but maybe it doesnt make a difference.
 	instanceObjectType: SavedListType;
-	isKnownType: SavedListType;
+	isKnownType?: SavedListType;
 	modalTitle?: string;
 }
 
@@ -23,7 +25,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	entityId,
 	instanceObjectType,
 	isKnownType,
-	modalTitle = 'Choose Sentence List to add',
+	modalTitle = 'Choose Instance List to add',
 }) => {
 	const [lists, setLists] = useState<CatalogueForItem[]>([]);
 	const [isBookmarked, setIsBookmarked] = useState(false);
@@ -34,8 +36,58 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
 
 	useEffect(() => {
+		const setDefaultsIfDoesntExist = () => {
+			if (!entityId || Number.isNaN(entityId)) {
+				setLists([]);
+				setIsBookmarked(false);
+				setIsKnown(false);
+				return;
+			}
+		};
+		setDefaultsIfDoesntExist();
+
+		let isActive = true;
+
+		const getUserCatalogues = async () => {
+			setIsLoadingUserCatalogues(true);
+			try {
+				const instanceTypes = [instanceObjectType];
+				if (isKnownType) {
+					instanceTypes.push(isKnownType);
+				}
+
+				const updatedLists = await fetchCataloguesForItem(entityId, {
+					types: instanceTypes,
+				});
+
+				if (!isActive) {
+					return;
+				}
+
+				setIsBookmarked(updatedLists.some((list) => list.contains_item));
+
+				if (isKnownType) {
+					setIsKnown(updatedLists.some((list) => list.contains_item && list.type === isKnownType));
+				}
+
+				setLists(updatedLists);
+			} catch (error) {
+				if (isActive) {
+					console.error(error);
+				}
+			} finally {
+				if (isActive) {
+					setIsLoadingUserCatalogues(false);
+				}
+			}
+		};
+
 		void getUserCatalogues();
-	}, [entityId]);
+
+		return () => {
+			isActive = false;
+		};
+	}, [entityId, instanceObjectType, isKnownType]);
 
 	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) {
@@ -65,31 +117,11 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 		}
 	};
 
-	const getUserCatalogues = async () => {
-		if (!entityId) {
-			return;
-		}
-
-		setIsLoadingUserCatalogues(true);
-		try {
-			const updatedLists = await fetchCataloguesForItem(entityId, {
-				types: [instanceObjectType, isKnownType],
-			});
-
-			setIsBookmarked(updatedLists.some((list) => list.contains_item));
-			setIsKnown(updatedLists.some((list) => list.contains_item && list.type === isKnownType));
-			setLists(updatedLists);
-		} catch (error) {
-			console.error(error);
-		} finally {
-			setIsLoadingUserCatalogues(false);
-		}
-	};
-
 	return (
-		<div>
-			<div className="col-md-4">
+		<>
+			<div className={styles.widgetWrapper}>
 				{!isLoadingUserCatalogues &&
+					isKnownType &&
 					(isKnown ? (
 						<i className="fas fa-check-circle text-success"> Learned</i>
 					) : (
@@ -98,7 +130,8 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 				<Button
 					onClick={bookmarkModal.open}
 					disabled={isLoadingUserCatalogues}
-					className="btn btn-outline brand-button float-right"
+					variant="ghost"
+					hasOnlyIcon
 					aria-controls={bookmarkModal.id}
 					aria-expanded={bookmarkModal.isOpen}
 				>
@@ -114,6 +147,6 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 				title={modalTitle}
 				ariaLabel={modalTitle}
 			/>
-		</div>
+		</>
 	);
 };

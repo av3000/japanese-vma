@@ -10,6 +10,7 @@ use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
 use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
+use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,10 @@ Route::prefix('v1')->group(function () {
     // Kanjis
     Route::get('kanjis', [KanjiController::class, 'index']);
     Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
+
+    // Words
+    Route::get('words', [WordController::class, 'index']);
+    Route::get('words/{identifier}', [WordController::class, 'show']);
 
     // Radicals
     Route::get('radicals', [RadicalController::class, 'index']);
