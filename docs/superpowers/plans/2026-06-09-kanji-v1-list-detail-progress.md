@@ -15,7 +15,7 @@ Branch approved for implementation: current checkout.
 
 - [x] Phase 0: Create restartable progress tracker
 - [x] Phase 1: Task 1 - Add backend v1 Kanji feature tests
-- [ ] Phase 2: Tasks 2-4 - Implement backend Kanji v1 contract/source schema
+- [x] Phase 2: Tasks 2-4 - Implement backend Kanji v1 contract/source schema
 - [ ] Phase 3: Task 5 - Regenerate OpenAPI and Orval
 - [ ] Phase 4: Tasks 6-8 - Migrate frontend Kanji list/detail
 - [ ] Phase 5: Task 9 - Final verification
@@ -44,7 +44,7 @@ Notes:
 
 ### Phase 2: Backend Contract Source
 
-Status: pending
+Status: complete
 
 Expected files:
 - `processor-api/app/Domain/JapaneseMaterial/Kanjis/DTOs/KanjiListResultDTO.php`
@@ -57,6 +57,13 @@ Expected files:
 - `processor-api/app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiResource.php`
 - `processor-api/app/Http/v1/JapaneseMaterial/Kanjis/Resources/KanjiListResource.php`
 - `processor-api/app/Http/v1/JapaneseMaterial/Kanjis/Controllers/KanjiController.php`
+
+Notes:
+- Backend contract files are patched.
+- Root-caused the stroke range failure to numeric comparisons on the legacy `varchar(5)` `stroke_count` column inside PHPUnit; fixed persistence stroke range filters with numeric casts.
+- `php -l` passed for touched PHP files.
+- `vendor/bin/pint --dirty` completed.
+- `docker compose exec test-runner composer test -- tests/Feature/JapaneseMaterial/Kanjis/KanjiV1Test.php` passed: 7 tests, 47 assertions, 1 PHPUnit deprecation.
 
 ### Phase 3: Generated Contract
 

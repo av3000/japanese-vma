@@ -3,9 +3,7 @@
 namespace App\Application\JapaneseMaterial\Kanjis\Services;
 
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Domain\JapaneseMaterial\Kanjis\Errors\KanjiErrors;
-use App\Domain\JapaneseMaterial\Kanjis\Models\Kanjis;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -15,13 +13,14 @@ class KanjiService implements KanjiServiceInterface
 {
     public function __construct(
         private readonly KanjiRepositoryInterface $kanjiRepository
-    ) {}
+    ) {
+    }
 
     public function findByUuid(EntityId $uuid): Result
     {
         $kanji = $this->kanjiRepository->findByUuid($uuid);
 
-        if (!$kanji) {
+        if (! $kanji) {
             return Result::failure(KanjiErrors::notFound($uuid->value()));
         }
 
@@ -32,7 +31,7 @@ class KanjiService implements KanjiServiceInterface
     {
         $kanji = $this->kanjiRepository->findByCharacter($character);
 
-        if (!$kanji) {
+        if (! $kanji) {
             return Result::failure(KanjiErrors::notFound($character->value()));
         }
 
@@ -41,9 +40,6 @@ class KanjiService implements KanjiServiceInterface
 
     public function find(?KanjiQueryCriteria $criteria = null): Result
     {
-        /** @var Kanjis $paginatedKanjisCollection */
-        $paginatedKanjisCollection = $this->kanjiRepository->find($criteria);
-
-        return Result::success($paginatedKanjisCollection->getPaginator());
+        return Result::success($this->kanjiRepository->find($criteria));
     }
 }
