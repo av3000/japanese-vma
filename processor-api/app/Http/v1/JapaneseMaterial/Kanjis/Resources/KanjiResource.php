@@ -8,6 +8,9 @@ use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property DomainKanji $resource
+ */
 class KanjiResource extends JsonResource
 {
     public static $wrap = null;
@@ -22,35 +25,38 @@ class KanjiResource extends JsonResource
      *     id: int,
      *     uuid: string,
      *     character: string,
-     *     onyomi: array<int, string>,
-     *     kunyomi: array<int, string>,
-     *     meanings: array<int, string>,
-     *     nanori: array<int, string>,
-     *     grade: string|null,
+     *     onyomi: list<string>,
+     *     kunyomi: list<string>,
+     *     meanings: list<string>,
+     *     nanori: list<string>,
+     *     grade: ?string,
      *     stroke_count: int,
-     *     jlpt: string|null,
-     *     frequency: int|null,
-     *     radicals: array<int, string>,
-     *     radical_parts: array<int, string>
+     *     jlpt: ?string,
+     *     frequency: ?int,
+     *     radicals: list<string>,
+     *     radical_parts: list<string>
      * }
      */
     public function toArray(Request $request): array
     {
         /** @var DomainKanji $kanji */
         $kanji = $this->resource;
+        $grade = $kanji->getGrade()?->value();
+        $jlpt = $kanji->getJlpt()?->value();
+        $frequency = $kanji->getFrequency();
 
         return [
-            'id' => $kanji->getIdValue(),
+            'id' => (int) $kanji->getIdValue(),
             'uuid' => $kanji->getUuid()->value(),
             'character' => $kanji->getCharacter()->value(),
             'onyomi' => $kanji->getOnyomi(),
             'kunyomi' => $kanji->getKunyomi(),
             'meanings' => $kanji->getMeanings(),
             'nanori' => $kanji->getNanori(),
-            'grade' => $kanji->getGrade()?->value(),
-            'stroke_count' => $kanji->getStrokeCount(),
-            'jlpt' => $kanji->getJlpt()?->value(),
-            'frequency' => $kanji->getFrequency(),
+            'grade' => $grade === null ? null : (string) $grade,
+            'stroke_count' => (int) $kanji->getStrokeCount(),
+            'jlpt' => $jlpt === null ? null : (string) $jlpt,
+            'frequency' => $frequency === null ? null : (int) $frequency,
             'radicals' => $kanji->getRadicals(),
             'radical_parts' => $kanji->getRadicalParts(),
         ];

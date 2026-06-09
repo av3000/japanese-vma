@@ -1470,6 +1470,18 @@
                         }
                     },
                     {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
                         "name": "character",
                         "in": "query",
                         "schema": {
@@ -1545,36 +1557,39 @@
                         }
                     },
                     {
-                        "name": "meanings[]",
+                        "name": "meanings",
                         "in": "query",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
                         }
                     },
                     {
-                        "name": "onyomi[]",
+                        "name": "onyomi",
                         "in": "query",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
                         }
                     },
                     {
-                        "name": "kunyomi[]",
+                        "name": "kunyomi",
                         "in": "query",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
                         }
                     },
                     {
@@ -1596,7 +1611,105 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "character": {
+                                                        "type": "string"
+                                                    },
+                                                    "onyomi": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "kunyomi": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "meanings": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "nanori": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "grade": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "stroke_count": {
+                                                        "type": "integer"
+                                                    },
+                                                    "jlpt": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "frequency": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "radicals": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "radical_parts": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "character",
+                                                    "onyomi",
+                                                    "kunyomi",
+                                                    "meanings",
+                                                    "nanori",
+                                                    "grade",
+                                                    "stroke_count",
+                                                    "jlpt",
+                                                    "frequency",
+                                                    "radicals",
+                                                    "radical_parts"
+                                                ]
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "items",
+                                        "pagination"
+                                    ]
                                 }
                             }
                         }
@@ -1629,7 +1742,90 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "uuid": {
+                                            "type": "string"
+                                        },
+                                        "character": {
+                                            "type": "string"
+                                        },
+                                        "onyomi": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "kunyomi": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meanings": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "nanori": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "grade": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "stroke_count": {
+                                            "type": "integer"
+                                        },
+                                        "jlpt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "frequency": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "radicals": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "radical_parts": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "uuid",
+                                        "character",
+                                        "onyomi",
+                                        "kunyomi",
+                                        "meanings",
+                                        "nanori",
+                                        "grade",
+                                        "stroke_count",
+                                        "jlpt",
+                                        "frequency",
+                                        "radicals",
+                                        "radical_parts"
+                                    ]
                                 }
                             }
                         }
@@ -3826,6 +4022,9 @@
             "KanjiResource": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
                     "uuid": {
                         "type": "string"
                     },
@@ -3833,37 +4032,65 @@
                         "type": "string"
                     },
                     "onyomi": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "kunyomi": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "meanings": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "nanori": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "grade": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "stroke_count": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "jlpt": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "frequency": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "radicals": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "radical_parts": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "required": [
+                    "id",
                     "uuid",
                     "character",
                     "onyomi",

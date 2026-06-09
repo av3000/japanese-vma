@@ -10,6 +10,9 @@ use App\Http\v1\Shared\Resources\PaginationResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property KanjiListResultDTO $resource
+ */
 class KanjiListResource extends JsonResource
 {
     public static $wrap = null;

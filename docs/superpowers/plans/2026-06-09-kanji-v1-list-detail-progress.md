@@ -16,7 +16,7 @@ Branch approved for implementation: current checkout.
 - [x] Phase 0: Create restartable progress tracker
 - [x] Phase 1: Task 1 - Add backend v1 Kanji feature tests
 - [x] Phase 2: Tasks 2-4 - Implement backend Kanji v1 contract/source schema
-- [ ] Phase 3: Task 5 - Regenerate OpenAPI and Orval
+- [x] Phase 3: Task 5 - Regenerate OpenAPI and Orval
 - [ ] Phase 4: Tasks 6-8 - Migrate frontend Kanji list/detail
 - [ ] Phase 5: Task 9 - Final verification
 
@@ -67,11 +67,20 @@ Notes:
 
 ### Phase 3: Generated Contract
 
-Status: pending
+Status: complete
 
 Expected commands:
 - `composer openapi`
 - `npm run orval:file`
+
+Notes:
+- Starting with local/script inspection to avoid dependency downloads or Docker builds while on mobile data.
+- Host `composer openapi` timed out after 120s and was not treated as a valid result.
+- Used the already-running Laravel container instead: `docker compose exec laravel-app php artisan scramble:export --path=api.json`.
+- Ran `npm run orval:file` from `client/`; no dependency install was needed.
+- Verified `kanjiIndex`, `kanjiShow`, `KanjiIndex200`, `KanjiShow200`, `KanjiIndexParams`, and `KanjiResource` generated with usable typed Kanji shapes.
+- `client/src/api/generated/**` is ignored by `client/.gitignore` in this checkout, so generated TypeScript output remains local and is not force-added.
+- Re-ran `docker compose exec test-runner composer test -- tests/Feature/JapaneseMaterial/Kanjis/KanjiV1Test.php`; passed 7 tests, 47 assertions, 1 PHPUnit deprecation.
 
 ### Phase 4: Frontend Migration
 
