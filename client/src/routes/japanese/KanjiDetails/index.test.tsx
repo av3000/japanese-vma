@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SavedListType } from '@/shared/constants/enums';
@@ -11,21 +11,48 @@ const authorizedWidgetProps: Array<{
 	modalTitle?: string;
 }> = [];
 
-vi.mock('react', async () => {
-	const actual = await vi.importActual<typeof import('react')>('react');
+vi.mock('react-router-dom', async () => {
+	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
 	return {
 		...actual,
-		useState: vi.fn(actual.useState),
+		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+		useParams: () => ({ kanji_id: 'kanji-uuid' }),
 	};
 });
 
-vi.mock('react-router-dom', async () => {
-	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-	return {
-		...actual,
-		useParams: () => ({ kanji_id: '88' }),
-	};
-});
+vi.mock('@/api/kanjis/details', () => ({
+	useKanjiQuery: () => ({
+		data: {
+			id: 88,
+			uuid: 'kanji-uuid',
+			character: '水',
+			onyomi: ['スイ'],
+			kunyomi: ['みず'],
+			meanings: ['water', 'river'],
+			nanori: [],
+			grade: '1',
+			stroke_count: 4,
+			jlpt: '5',
+			frequency: 2,
+			radicals: ['水'],
+			radical_parts: ['水'],
+			display: {
+				meaning: 'water, river',
+				onyomi: 'スイ',
+				kunyomi: 'みず',
+				nanori: '',
+				radicalParts: '水',
+				radicals: '水',
+				grade: '1',
+				jlpt: '5',
+				frequency: '2',
+			},
+		},
+		isLoading: false,
+		isError: false,
+	}),
+}));
 
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
@@ -33,44 +60,7 @@ vi.mock('@/hooks/useAuth', () => ({
 	}),
 }));
 
-vi.mock('@/services/api', () => ({
-	apiCall: vi.fn(),
-}));
-
-vi.mock('@/components/shared/Button', () => ({
-	Button: ({
-		children,
-		to,
-		href,
-	}: {
-		children: React.ReactNode;
-		to?: string;
-		href?: string;
-	}) =>
-		to || href ? (
-			<a href={to ?? href}>{children}</a>
-		) : (
-			<button type="button">{children}</button>
-		),
-}));
-
-vi.mock('@/components/shared/Chip', () => ({
-	Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}));
-
-vi.mock('@/components/shared/Icon', () => ({
-	Icon: ({ name }: { name: string }) => <span>{name}</span>,
-}));
-
-vi.mock('@/components/shared/Link', () => ({
-	Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
-}));
-
-vi.mock('@/assets/images/spinner.gif', () => ({
-	default: 'spinner.gif',
-}));
-
-vi.mock('../SentenceDetails/AuthorizedBookmarkWidget', () => ({
+vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
 	AuthorizedBookmarkWidget: (props: {
 		entityId: number;
 		instanceObjectType: SavedListType;
@@ -82,40 +72,27 @@ vi.mock('../SentenceDetails/AuthorizedBookmarkWidget', () => ({
 	},
 }));
 
+vi.mock('@/assets/images/spinner.gif', () => ({
+	default: 'spinner.gif',
+}));
+
 describe('KanjiDetails', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		authorizedWidgetProps.length = 0;
-		vi.mocked(React.useState).mockReset();
 	});
 
-	it('uses the shared authorized bookmark widget for kanji catalogue actions', () => {
-		const setKanjiMock = vi.fn();
-		const setWordsMock = vi.fn();
-		const setSentencesMock = vi.fn();
-		const setArticlesMock = vi.fn();
-		const setIsLoadingMock = vi.fn();
+	it('renders migrated v1 kanji detail data', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		vi.mocked(React.useState)
-			.mockImplementationOnce(() => [
-				{
-					kanji: '火',
-					hiragana: 'ひ',
-					meaning: 'fire',
-					onyomi: 'カ',
-					kunyomi: 'ひ',
-					radical_parts: '',
-					stroke_count: 4,
-					jlpt: 5,
-					frequency: 100,
-				} as never,
-				setKanjiMock,
-			])
-			.mockImplementationOnce(() => [[] as never, setWordsMock])
-			.mockImplementationOnce(() => [[] as never, setSentencesMock])
-			.mockImplementationOnce(() => [[] as never, setArticlesMock])
-			.mockImplementationOnce(() => [false as never, setIsLoadingMock]);
+		expect(html).toContain('水');
+		expect(html).toContain('Meaning: water, river');
+		expect(html).toContain('Onyomi: スイ');
+		expect(html).toContain('Kunyomi: みず');
+		expect(html).toContain('JLPT: 5');
+	});
 
+	it('uses numeric kanji id for catalogue actions', () => {
 		renderToStaticMarkup(<KanjiDetails />);
 
 		expect(authorizedWidgetProps[0]).toEqual({
@@ -124,5 +101,14 @@ describe('KanjiDetails', () => {
 			isKnownType: SavedListType.KNOWNKANJIS,
 			modalTitle: 'Choose Kanji List to add',
 		});
+	});
+
+	it('does not render deferred related sections in the first slice', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).not.toContain('Found in');
+		expect(html).not.toContain('words');
+		expect(html).not.toContain('sentences');
+		expect(html).not.toContain('articles');
 	});
 });

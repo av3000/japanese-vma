@@ -1,202 +1,129 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { getKanjiDisplayValues } from '@/api/kanjis/display';
+import { type KanjiListFilters, useInfiniteKanjis } from '@/api/kanjis/hooks/useInfiniteKanjis';
+import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
-import { apiCall } from '@/services/api';
-import { HttpMethod } from '@/shared/types';
+import { Button } from '@/components/shared/Button';
 import SearchBarKanjis from './SearchBarKanjis';
+import type { KanjiSearchFilters } from './SearchBarKanjis';
 
-export class KanjiList extends Component {
-	constructor() {
-		super();
-		this.state = {
-			url: `${process.env.REACT_APP_API_HOS}/api/kanjis`,
-			pagination: [],
-			kanjis: [],
-			paginateObject: {},
-			searchHeading: '',
-			searchTotal: '',
-			filters: [],
-			isLoading: false,
-		};
+const DEFAULT_PER_PAGE = 10;
+const VALID_JLPT_FILTERS = new Set<string>(Object.values(KanjiIndexJlpt));
 
-		this.loadMore = this.loadMore.bind(this);
-		this.loadSearchMore = this.loadSearchMore.bind(this);
-		this.fetchQuery = this.fetchQuery.bind(this);
-		this.fetchMoreQuery = this.fetchMoreQuery.bind(this);
+const getJlptFilter = (value: string | undefined) => {
+	if (!value || !VALID_JLPT_FILTERS.has(value)) {
+		return undefined;
 	}
 
-	componentDidMount() {
-		this.fetchKanjis(this.state.url);
-	}
+	return value as NonNullable<KanjiListFilters['jlpt']>;
+};
 
-	fetchKanjis() {
-		this.setState({ isLoading: true });
-		return apiCall({ method: HttpMethod.GET, path: '/kanjis' })
-			.then((res) => {
-				const newState = Object.assign({}, this.state);
-				newState.paginateObject = res.kanjis;
-				newState.kanjis = [...newState.kanjis, ...res.kanjis.data];
-				newState.url = res.kanjis.next_page_url;
+const getKanjiListFilters = (searchParams: URLSearchParams): KanjiListFilters => {
+	const keyword = searchParams.get('keyword')?.trim();
+	const jlpt = getJlptFilter(searchParams.get('jlpt')?.trim());
 
-				newState.searchTotal = "results total: '" + res.kanjis.total + "'";
+	return {
+		per_page: DEFAULT_PER_PAGE,
+		...(keyword ? { keyword } : {}),
+		...(jlpt ? { jlpt } : {}),
+	};
+};
 
-				return newState;
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-				this.setState(newState);
-			})
-			.catch((err) => {
-				console.log(err);
-				this.setState({ isLoading: false });
-			});
-	}
+const KanjisList = () => {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const filters = getKanjiListFilters(searchParams);
+	const keyword = filters.keyword ?? '';
+	const jlpt = filters.jlpt ?? '';
 
-	fetchQuery(queryParams) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		newState.filters = queryParams;
-		apiCall('post', '/api/kanjis/search', newState.filters)
-			.then((res) => {
-				if (res.success === true) {
-					newState.paginateObject = res.kanjis;
-					newState.kanjis = res.kanjis.data ? res.kanjis.data : newState.kanjis;
-					newState.url = res.kanjis.next_page_url;
-
-					newState.searchHeading = res.requestedQuery;
-					newState.searchTotal = "Results total: '" + res.kanjis.total + "'";
-					return newState;
-				}
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-
-				this.setState(newState);
-			})
-			.catch((err) => {
-				this.setState(newState);
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	fetchMoreQuery() {
-		const newState = Object.assign({}, this.state);
-		this.setState({ isLoading: true });
-		apiCall(HttpMethod.POST, '/api/kanjis', newState.filters)
-			.then((res) => {
-				newState.paginateObject = res.kanjis;
-				newState.kanjis = [...newState.kanjis, ...res.kanjis.data];
-				newState.url = res.kanjis.next_page_url;
-
-				newState.searchTotal = "Results total: '" + res.kanjis.total + "'";
-
-				return newState;
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-
-				this.setState(newState);
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	loadMore() {
-		this.fetchKanjis(this.state.pagination.next_page_url);
-	}
-
-	loadSearchMore() {
-		this.fetchMoreQuery(this.state.pagination.next_page_url);
-	}
-
-	makePagination(data) {
-		return {
-			current_page: data.current_page,
-			last_page: data.last_page,
-			next_page_url: data.next_page_url,
-			prev_page_url: data.prev_page_url,
-		};
-	}
-
-	addToList(id) {
-		console.log('addtoList kanjiList: ' + id);
-	}
-
-	render() {
-		const { kanjis, isLoading } = this.state;
-
-		if (isLoading) {
-			return (
-				<div className="container text-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			);
-		}
-
-		const kanjiList = kanjis.map((k) => {
-			k.meaning = k.meaning.split('|');
-			k.meaning = k.meaning.slice(0, 3);
-			k.meaning = k.meaning.join(', ');
-
-			k.onyomi = k.onyomi.split('|');
-			k.onyomi = k.onyomi.slice(0, 3);
-			k.onyomi = k.onyomi.join(', ');
-
-			k.kunyomi = k.kunyomi.split('|');
-			k.kunyomi = k.kunyomi.slice(0, 3);
-			k.kunyomi = k.kunyomi.join(', ');
-
-			return <KanjiItem key={k.id} id={k.id} {...k} parts={k.radical_parts} addToList={this.addToList} />;
+	const { kanjis, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
+		useInfiniteKanjis({
+			filters,
 		});
 
+	const handleSearch = ({ keyword, jlpt }: KanjiSearchFilters) => {
+		const nextParams = new URLSearchParams();
+
+		if (keyword !== '') {
+			nextParams.set('keyword', keyword);
+		}
+
+		if (jlpt !== '') {
+			nextParams.set('jlpt', jlpt);
+		}
+
+		setSearchParams(nextParams);
+	};
+
+	if (isPending && kanjis.length === 0) {
 		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<SearchBarKanjis fetchQuery={this.fetchQuery} />
-				</div>
-				<div className="container mt-5">
-					<div className="row justify-content-center">
-						{this.state.searchHeading ? <h4>{this.state.searchHeading}</h4> : ''}
-						&nbsp;
-						{this.state.searchTotal ? <h4>{this.state.searchTotal}</h4> : ''}
-					</div>
-					<div className="row">
-						<div className="col-lg-8 col-md-10 mx-auto">{kanjiList}</div>
-					</div>
-				</div>
-				<div className="row justify-content-center">
-					{isLoading ? (
-						<div className="container mt-5">
-							<div className="row justify-content-center">
-								<img src={Spinner} alt="spinner" />
-							</div>
-						</div>
-					) : (
-						''
-					)}
-					{!isLoading && this.state.pagination.last_page === this.state.pagination.current_page ? (
-						'no more results...'
-					) : this.state.url.includes('search') ? (
-						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadSearchMore}>
-							Load More
-						</button>
-					) : (
-						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadMore}>
-							Load More
-						</button>
-					)}
-				</div>
+			<div className="container text-center">
+				<img src={Spinner} alt="Loading..." />
 			</div>
 		);
 	}
-}
 
-export default KanjiList;
+	if (isError) {
+		const message = error instanceof Error ? error.message : 'Unable to load kanjis.';
+
+		return <div className="container mt-5 text-danger">Error: {message}</div>;
+	}
+
+	return (
+		<div className="container mt-5">
+			<div className="row justify-content-center">
+				<SearchBarKanjis defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
+			</div>
+			<div className="container mt-5">
+				<div className="row justify-content-center">
+					{keyword && <h4>keyword: {keyword}</h4>}
+					&nbsp;
+					{jlpt && <h4>JLPT: {jlpt === '-' ? 'Uncommon' : `N${jlpt}`}</h4>}
+					&nbsp;
+					<h4>
+						Showing {kanjis.length} of {total}
+					</h4>
+				</div>
+				<div className="row">
+					<div className="col-lg-8 col-md-10 mx-auto">
+						{kanjis.length === 0 ? (
+							<p>No kanjis found.</p>
+						) : (
+							kanjis.map((kanji) => {
+								const display = getKanjiDisplayValues(kanji);
+
+								return (
+									<KanjiItem
+										key={kanji.uuid}
+										uuid={kanji.uuid}
+										character={kanji.character}
+										strokeCount={kanji.stroke_count}
+										onyomi={display.onyomi}
+										kunyomi={display.kunyomi}
+										meaning={display.meaning}
+										frequency={display.frequency}
+										jlpt={display.jlpt}
+										parts={display.radicalParts}
+									/>
+								);
+							})
+						)}
+					</div>
+				</div>
+			</div>
+			<div className="row justify-content-center">
+				{isFetchingNextPage ? (
+					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
+				) : hasNextPage ? (
+					<Button variant="secondary-outline" className="w-50" onClick={() => fetchNextPage()}>
+						Load More
+					</Button>
+				) : (
+					<span className="text-muted">No more results</span>
+				)}
+			</div>
+		</div>
+	);
+};
+
+export default KanjisList;

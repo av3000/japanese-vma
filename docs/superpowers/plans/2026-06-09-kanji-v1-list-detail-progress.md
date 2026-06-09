@@ -17,8 +17,8 @@ Branch approved for implementation: current checkout.
 - [x] Phase 1: Task 1 - Add backend v1 Kanji feature tests
 - [x] Phase 2: Tasks 2-4 - Implement backend Kanji v1 contract/source schema
 - [x] Phase 3: Task 5 - Regenerate OpenAPI and Orval
-- [ ] Phase 4: Tasks 6-8 - Migrate frontend Kanji list/detail
-- [ ] Phase 5: Task 9 - Final verification
+- [x] Phase 4: Tasks 6-8 - Migrate frontend Kanji list/detail
+- [x] Phase 5: Task 9 - Final verification
 
 ## Detailed Task Log
 
@@ -84,7 +84,7 @@ Notes:
 
 ### Phase 4: Frontend Migration
 
-Status: pending
+Status: complete
 
 Expected files:
 - `client/src/api/kanjis/display.ts`
@@ -100,12 +100,27 @@ Expected files:
 - `client/src/routes/japanese/KanjiDetails/KanjiContent.tsx`
 - `client/src/routes/japanese/KanjiDetails/index.test.tsx`
 
+Notes:
+- Added `client/src/api/kanjis` display, infinite-list, and detail adapters backed by generated v1 clients.
+- Replaced legacy Kanji list class component, `@ts-nocheck`, raw `apiCall`, and legacy search endpoint with URL `keyword`/`jlpt` filters plus `useInfiniteKanjis`.
+- Replaced legacy Kanji detail `apiCall` route with a thin generated-query route and `KanjiContent`.
+- Detail first slice renders core Kanji fields and authenticated catalogue bookmark/known-list behavior using numeric `kanji.id`.
+- Related words, sentences, and articles are intentionally absent from the first migrated detail slice.
+- Updated `client/src/api/radicals/details.test.ts` because regenerated `KanjiResource` now exposes the corrected nested Kanji v1 shape.
+
 ### Phase 5: Verification
 
-Status: pending
+Status: complete
 
 Expected commands:
 - Backend Kanji feature test
 - Frontend Kanji tests
 - Frontend typecheck
 - Generated contract diff review
+
+Notes:
+- `docker compose exec test-runner composer test -- tests/Feature/JapaneseMaterial/Kanjis/KanjiV1Test.php` passed: 7 tests, 47 assertions, 1 PHPUnit deprecation.
+- `npm run test -- src/api/kanjis/hooks/useInfiniteKanjis.test.ts src/api/kanjis/details.test.ts src/routes/japanese/KanjisList/index.test.tsx src/routes/japanese/KanjiDetails/index.test.tsx src/api/radicals/details.test.ts` passed: 5 files, 13 tests.
+- `npm run typecheck` passed.
+- `npm run test` emitted a Vitest browser config deprecation warning; tests still passed.
+- Full frontend build was intentionally not run to avoid heavier work while the user is on mobile data.
