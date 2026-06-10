@@ -2,6 +2,7 @@ import type { KanjiIndex200ItemsItem } from '@/api/generated/model/kanjiIndex200
 import type { KanjiResource } from '@/api/generated/model/kanjiResource';
 import type { KanjiShow200 } from '@/api/generated/model/kanjiShow200';
 
+// TOOD: Remove wrappers with http codes on the backend to have clear response on orval generation
 type DisplayableKanji = KanjiIndex200ItemsItem | KanjiShow200 | KanjiResource;
 
 const joinLimited = (values: string[] | undefined, limit = 3) => (values ?? []).slice(0, limit).join(', ');
