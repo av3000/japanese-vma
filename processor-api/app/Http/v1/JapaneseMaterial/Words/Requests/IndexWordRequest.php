@@ -8,6 +8,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class IndexWordRequest extends FormRequest
 {
+    public const INCLUDE_VIEWER_CATALOGUE_STATE = 'viewer_catalogue_state';
+
     public function authorize(): bool
     {
         return true;
@@ -33,7 +35,23 @@ class IndexWordRequest extends FormRequest
             'word' => ['nullable', 'string', 'min:1', 'max:255'],
             'furigana' => ['nullable', 'string', 'min:1', 'max:255'],
             'jlpt' => ['nullable', 'string', 'min:1', 'max:20'],
+            'include' => ['nullable', 'string'],
         ];
+    }
+
+    public function includesViewerCatalogueState(): bool
+    {
+        $include = $this->input('include');
+
+        if (! is_string($include) || trim($include) === '') {
+            return false;
+        }
+
+        return in_array(
+            self::INCLUDE_VIEWER_CATALOGUE_STATE,
+            array_map('trim', explode(',', $include)),
+            true,
+        );
     }
 
     /**

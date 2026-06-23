@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Words\Resources;
 
+use App\Domain\Catalogues\DTOs\ViewerCatalogueStateDTO;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordListResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
 use App\Http\v1\Shared\Resources\PaginationResource;
@@ -14,8 +15,13 @@ class WordListResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(WordListResultDTO $resource)
-    {
+    /**
+     * @param array<int, ViewerCatalogueStateDTO> $viewerCatalogueStates
+     */
+    public function __construct(
+        WordListResultDTO $resource,
+        private readonly array $viewerCatalogueStates = [],
+    ) {
         parent::__construct($resource);
     }
 
@@ -29,7 +35,10 @@ class WordListResource extends JsonResource
     {
         /** @var WordListResultDTO $result */
         $items = array_map(
-            fn(Word $word): WordResource => new WordResource($word),
+            fn (Word $word): WordResource => new WordResource(
+                $word,
+                $this->viewerCatalogueStates[$word->getIdValue()] ?? null,
+            ),
             $this->resource->items,
         );
 

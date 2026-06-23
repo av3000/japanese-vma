@@ -4,14 +4,28 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JapaneseMaterial\Words;
 
+use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class WordV1Test extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
+        Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
+    }
 
     public function test_guest_can_list_words_with_pagination(): void
     {
@@ -129,6 +143,90 @@ class WordV1Test extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['per_page']);
+    }
+
+    public function test_guest_word_list_includes_null_viewer_catalogue_state(): void
+    {
+        $this->createWord(id: 101, word: '猫', furigana: 'ねこ', meanings: ['cat']);
+
+        $response = $this->getJson('/api/v1/words?per_page=1&include=viewer_catalogue_state');
+
+        $response->assertOk()
+            ->assertJsonPath('items.0.id', 101)
+            ->assertJsonPath('items.0.viewer_catalogue_state', null);
+    }
+
+    public function test_authenticated_word_list_includes_saved_and_known_viewer_catalogue_state(): void
+    {
+        $user = $this->createUser();
+
+        $this->createWord(id: 101, word: '猫', furigana: 'ねこ', meanings: ['cat']);
+        $this->createWord(id: 102, word: '犬', furigana: 'いぬ', meanings: ['dog']);
+        $this->createWord(id: 103, word: '水', furigana: 'みず', meanings: ['water']);
+
+        $savedListId = DB::table('customlists')->insertGetId([
+            'user_id' => $user->id,
+            'uuid' => (string) Str::uuid(),
+            'type' => SavedListType::WORDS->value,
+            'title' => 'Words To Review',
+            'description' => '',
+            'publicity' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $knownListId = DB::table('customlists')->insertGetId([
+            'user_id' => $user->id,
+            'uuid' => (string) Str::uuid(),
+            'type' => SavedListType::KNOWNWORDS->value,
+            'title' => 'Known Words',
+            'description' => '',
+            'publicity' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('customlist_object')->insert([
+            [
+                'list_id' => $savedListId,
+                'listtype_id' => (string) SavedListType::WORDS->value,
+                'real_object_id' => 101,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'list_id' => $knownListId,
+                'listtype_id' => (string) SavedListType::KNOWNWORDS->value,
+                'real_object_id' => 102,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $response = $this->getJson('/api/v1/words?per_page=3&include=viewer_catalogue_state');
+
+        $response->assertOk()
+            ->assertJsonPath('items.0.id', 101)
+            ->assertJsonPath('items.0.viewer_catalogue_state.is_saved', true)
+            ->assertJsonPath('items.0.viewer_catalogue_state.is_known', false)
+            ->assertJsonPath('items.1.id', 102)
+            ->assertJsonPath('items.1.viewer_catalogue_state.is_saved', false)
+            ->assertJsonPath('items.1.viewer_catalogue_state.is_known', true)
+            ->assertJsonPath('items.2.id', 103)
+            ->assertJsonPath('items.2.viewer_catalogue_state.is_saved', false)
+            ->assertJsonPath('items.2.viewer_catalogue_state.is_known', false);
+    }
+
+    private function createUser(array $overrides = []): User
+    {
+        return User::create(array_merge([
+            'name' => 'Test User',
+            'email' => Str::uuid().'@example.com',
+            'password' => Hash::make('password'),
+            'uuid' => (string) Str::uuid(),
+        ], $overrides));
     }
 
     /**
