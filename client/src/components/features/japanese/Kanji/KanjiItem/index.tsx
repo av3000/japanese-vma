@@ -1,8 +1,11 @@
 import React from 'react';
-
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { Link } from '@/components/shared/Link';
+import { useAuth } from '@/hooks/useAuth';
+import { SavedListType } from '@/shared/constants/enums';
 
 interface KanjiItemProps {
+	id: string | number;
 	uuid: string;
 	character: string;
 	strokeCount: number;
@@ -15,6 +18,7 @@ interface KanjiItemProps {
 }
 
 const KanjiItem: React.FC<KanjiItemProps> = ({
+	id,
 	uuid,
 	character,
 	strokeCount,
@@ -25,6 +29,9 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 	jlpt,
 	parts,
 }) => {
+	const { isAuthenticated } = useAuth();
+	const entityId = Number(id);
+
 	return (
 		<div className="post-preview">
 			<div className="post-title">
@@ -35,22 +42,27 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 			</div>
 			<div className="row">
 				<div className="col-md-6">
-					<p>
-						onyomi: {onyomi}, <br /> kunyomi: {kunyomi}
-					</p>
+					<div>onyomi: {onyomi},</div>
+					<div>kunyomi: {kunyomi}</div>
 				</div>
 				<div className="col-md-3">
-					<p>
-						frequency: {frequency}, <br /> jlpt: {jlpt}
-					</p>
+					<div>frequency: {frequency},</div>
+					<div>jlpt: {jlpt}</div>
 				</div>
 				<div className="col-md-3">
-					<p>
-						parts: {parts}, <br /> stroke_count: {strokeCount}
-						<span className="float-right">
-							<Link to={`/kanji/${uuid}`}>Open</Link>
-						</span>
-					</p>
+					<div>parts: {parts},</div>
+					<div>stroke_count: {strokeCount}</div>
+					<div className="float-right">
+						<Link to={`/kanji/${uuid}`}>Open</Link>
+					</div>
+					{isAuthenticated && (
+						<AuthorizedBookmarkWidget
+							instanceObjectType={SavedListType.KANJIS}
+							isKnownType={SavedListType.KNOWNKANJIS}
+							entityId={entityId}
+							modalTitle="Choose Word List to add"
+						/>
+					)}
 				</div>
 			</div>
 			<hr />

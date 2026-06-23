@@ -51,6 +51,9 @@
 .home-hero-explore-link {
 	font-size: 2rem;
 	color: var(--main-brand-color);
+	display: flex;
+	justify-content: end;
+	align-items: center;
 }
 
 .home-hero-explore-link:hover {

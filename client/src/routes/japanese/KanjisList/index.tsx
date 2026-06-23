@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
+import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import { getKanjiDisplayValues } from '@/api/kanjis/display';
 import { type KanjiListFilters, useInfiniteKanjis } from '@/api/kanjis/hooks/useInfiniteKanjis';
-import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
 import { Button } from '@/components/shared/Button';
@@ -55,6 +55,7 @@ const KanjisList = () => {
 		setSearchParams(nextParams);
 	};
 
+	// TODO: have loading indicator like skeleton or something else
 	if (isPending && kanjis.length === 0) {
 		return (
 			<div className="container text-center">
@@ -63,6 +64,7 @@ const KanjisList = () => {
 		);
 	}
 
+	// TODO: create generic error component, perhaps creating simple alert component with variants (info, success, error, warning), accept message
 	if (isError) {
 		const message = error instanceof Error ? error.message : 'Unable to load kanjis.';
 
@@ -94,6 +96,7 @@ const KanjisList = () => {
 
 								return (
 									<KanjiItem
+										id={kanji.id}
 										key={kanji.uuid}
 										uuid={kanji.uuid}
 										character={kanji.character}
