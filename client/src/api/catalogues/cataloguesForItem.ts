@@ -29,8 +29,12 @@ export const fetchCataloguesForItem = async (
 
 export type CatalogueForItemAction = 'add' | 'remove';
 
-export const deriveCatalogueWidgetState = (lists: CatalogueForItem[], isKnownType?: number) => ({
-	isBookmarked: lists.some((list) => list.contains_item),
+export const deriveCatalogueWidgetState = (
+	lists: CatalogueForItem[],
+	instanceObjectType: number,
+	isKnownType?: number,
+) => ({
+	isBookmarked: lists.some((list) => list.contains_item && list.type === instanceObjectType),
 	isKnown: isKnownType ? lists.some((list) => list.contains_item && list.type === isKnownType) : false,
 });
 

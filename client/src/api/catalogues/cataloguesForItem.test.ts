@@ -131,7 +131,7 @@ describe('cataloguesForItem', () => {
 		]);
 	});
 
-	it('derives bookmark and known state from picker membership', () => {
+	it('keeps bookmark false when an item is known but not saved', () => {
 		expect(
 			deriveCatalogueWidgetState(
 				[
@@ -142,7 +142,7 @@ describe('cataloguesForItem', () => {
 						type: 7,
 						type_label: 'Words',
 						publicity: 0,
-						contains_item: true,
+						contains_item: false,
 					},
 					{
 						id: 2,
@@ -151,14 +151,15 @@ describe('cataloguesForItem', () => {
 						type: 3,
 						type_label: 'Known Words',
 						publicity: 0,
-						contains_item: false,
+						contains_item: true,
 					},
 				],
+				7,
 				3,
 			),
 		).toEqual({
-			isBookmarked: true,
-			isKnown: false,
+			isBookmarked: false,
+			isKnown: true,
 		});
 	});
 

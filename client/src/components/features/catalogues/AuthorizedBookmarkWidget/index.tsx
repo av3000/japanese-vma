@@ -44,6 +44,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
 	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
+	const isInvalidEntity = !entityId || Number.isNaN(entityId);
 
 	useEffect(() => {
 		setIsBookmarked(initialIsBookmarked);
@@ -51,7 +52,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	}, [initialIsBookmarked, initialIsKnown]);
 
 	const loadUserCatalogues = useCallback(async () => {
-		if (!entityId || Number.isNaN(entityId)) {
+		if (isInvalidEntity) {
 			setLists([]);
 			setIsBookmarked(false);
 			setIsKnown(false);
@@ -70,7 +71,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			const updatedLists = await fetchCataloguesForItem(entityId, {
 				types: instanceTypes,
 			});
-			const nextState = deriveCatalogueWidgetState(updatedLists, isKnownType);
+			const nextState = deriveCatalogueWidgetState(updatedLists, instanceObjectType, isKnownType);
 
 			setIsBookmarked(nextState.isBookmarked);
 			setIsKnown(nextState.isKnown);
@@ -85,7 +86,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 		} finally {
 			setIsLoadingUserCatalogues(false);
 		}
-	}, [entityId, instanceObjectType, isKnownType, onStateChange]);
+	}, [entityId, instanceObjectType, isInvalidEntity, isKnownType, onStateChange]);
 
 	useEffect(() => {
 		if (!loadOnMount) {
@@ -114,7 +115,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const openBookmarkModal = async () => {
 		bookmarkModal.open();
 
-		if (!loadOnMount && !hasLoadedUserCatalogues) {
+		if (!loadOnMount && !hasLoadedUserCatalogues && !isLoadingUserCatalogues) {
 			await loadUserCatalogues();
 		}
 	};
@@ -135,7 +136,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			// TODO: This could become some mapper perhaps?
 			setLists((prevLists) => {
 				const updatedLists = optimisticApplyCatalogueForItemAction(prevLists, list.id, action);
-				const nextState = deriveCatalogueWidgetState(updatedLists, isKnownType);
+				const nextState = deriveCatalogueWidgetState(updatedLists, instanceObjectType, isKnownType);
 
 				setIsBookmarked(nextState.isBookmarked);
 				setIsKnown(nextState.isKnown);
@@ -162,7 +163,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 					))}
 				<Button
 					onClick={openBookmarkModal}
-					disabled={isLoadingUserCatalogues}
+					disabled={isInvalidEntity}
 					variant="ghost"
 					hasOnlyIcon
 					aria-controls={bookmarkModal.id}
