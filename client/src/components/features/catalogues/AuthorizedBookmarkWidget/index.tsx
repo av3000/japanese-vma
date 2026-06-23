@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+	deriveCatalogueWidgetState,
 	optimisticApplyCatalogueForItemAction,
 	CatalogueForItem,
 	CatalogueForItemAction,
@@ -19,6 +20,10 @@ interface AuthorizedBookmarkWidgetProps {
 	instanceObjectType: SavedListType;
 	isKnownType?: SavedListType;
 	modalTitle?: string;
+	initialIsBookmarked?: boolean;
+	initialIsKnown?: boolean;
+	loadOnMount?: boolean;
+	onStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
 }
 
 export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> = ({
@@ -26,68 +31,93 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	instanceObjectType,
 	isKnownType,
 	modalTitle = 'Choose Instance List to add',
+	initialIsBookmarked = false,
+	initialIsKnown = false,
+	loadOnMount = true,
+	onStateChange,
 }) => {
 	const [lists, setLists] = useState<CatalogueForItem[]>([]);
-	const [isBookmarked, setIsBookmarked] = useState(false);
-	const [isKnown, setIsKnown] = useState(false);
+	const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
+	const [isKnown, setIsKnown] = useState(initialIsKnown);
+	const [hasLoadedUserCatalogues, setHasLoadedUserCatalogues] = useState(false);
 	const [isLoadingUserCatalogues, setIsLoadingUserCatalogues] = useState(false);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
 	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
 
 	useEffect(() => {
-		const setDefaultsIfDoesntExist = () => {
-			if (!entityId || Number.isNaN(entityId)) {
-				setLists([]);
-				setIsBookmarked(false);
-				setIsKnown(false);
-				return;
+		setIsBookmarked(initialIsBookmarked);
+		setIsKnown(initialIsKnown);
+	}, [initialIsBookmarked, initialIsKnown]);
+
+	const loadUserCatalogues = useCallback(async () => {
+		if (!entityId || Number.isNaN(entityId)) {
+			setLists([]);
+			setIsBookmarked(false);
+			setIsKnown(false);
+			setHasLoadedUserCatalogues(true);
+			return [];
+		}
+
+		setIsLoadingUserCatalogues(true);
+
+		try {
+			const instanceTypes = [instanceObjectType];
+			if (isKnownType) {
+				instanceTypes.push(isKnownType);
 			}
-		};
-		setDefaultsIfDoesntExist();
+
+			const updatedLists = await fetchCataloguesForItem(entityId, {
+				types: instanceTypes,
+			});
+			const nextState = deriveCatalogueWidgetState(updatedLists, isKnownType);
+
+			setIsBookmarked(nextState.isBookmarked);
+			setIsKnown(nextState.isKnown);
+			setLists(updatedLists);
+			setHasLoadedUserCatalogues(true);
+			onStateChange?.(nextState);
+
+			return updatedLists;
+		} catch (error) {
+			console.error(error);
+			return [];
+		} finally {
+			setIsLoadingUserCatalogues(false);
+		}
+	}, [entityId, instanceObjectType, isKnownType, onStateChange]);
+
+	useEffect(() => {
+		if (!loadOnMount) {
+			return;
+		}
 
 		let isActive = true;
 
-		const getUserCatalogues = async () => {
-			setIsLoadingUserCatalogues(true);
-			try {
-				const instanceTypes = [instanceObjectType];
-				if (isKnownType) {
-					instanceTypes.push(isKnownType);
-				}
+		const load = async () => {
+			const updatedLists = await loadUserCatalogues();
 
-				const updatedLists = await fetchCataloguesForItem(entityId, {
-					types: instanceTypes,
-				});
-
-				if (!isActive) {
-					return;
-				}
-
-				setIsBookmarked(updatedLists.some((list) => list.contains_item));
-
-				if (isKnownType) {
-					setIsKnown(updatedLists.some((list) => list.contains_item && list.type === isKnownType));
-				}
-
-				setLists(updatedLists);
-			} catch (error) {
-				if (isActive) {
-					console.error(error);
-				}
-			} finally {
-				if (isActive) {
-					setIsLoadingUserCatalogues(false);
-				}
+			if (!isActive) {
+				return;
 			}
+
+			setLists(updatedLists);
 		};
 
-		void getUserCatalogues();
+		void load();
 
 		return () => {
 			isActive = false;
 		};
-	}, [entityId, instanceObjectType, isKnownType]);
+	}, [loadOnMount, loadUserCatalogues]);
+
+	const openBookmarkModal = async () => {
+		bookmarkModal.open();
+
+		if (!loadOnMount && !hasLoadedUserCatalogues) {
+			await loadUserCatalogues();
+		}
+	};
 
 	const addToOrRemoveFromList = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
 		if (Number.isNaN(entityId)) {
@@ -105,9 +135,12 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			// TODO: This could become some mapper perhaps?
 			setLists((prevLists) => {
 				const updatedLists = optimisticApplyCatalogueForItemAction(prevLists, list.id, action);
-				// since widget should be generic, no need for specific objectTemplate type.
-				setIsBookmarked(updatedLists.some((list) => list.contains_item));
-				setIsKnown(updatedLists.some((list) => list.contains_item && list.type === isKnownType));
+				const nextState = deriveCatalogueWidgetState(updatedLists, isKnownType);
+
+				setIsBookmarked(nextState.isBookmarked);
+				setIsKnown(nextState.isKnown);
+				onStateChange?.(nextState);
+
 				return updatedLists;
 			});
 		} catch (error) {
@@ -128,7 +161,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 						<i className="fas fa-check-circle text-secondary"> Not learned</i>
 					))}
 				<Button
-					onClick={bookmarkModal.open}
+					onClick={openBookmarkModal}
 					disabled={isLoadingUserCatalogues}
 					variant="ghost"
 					hasOnlyIcon
