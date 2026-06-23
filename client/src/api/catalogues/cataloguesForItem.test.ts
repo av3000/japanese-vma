@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { catalogueAddItem, catalogueForItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import * as cataloguesForItemModule from './cataloguesForItem';
 
-const { optimisticApplyCatalogueForItemAction, fetchCataloguesForItem } = cataloguesForItemModule;
+const {
+	addOrRemoveCatalogueForItem,
+	deriveCatalogueWidgetState,
+	optimisticApplyCatalogueForItemAction,
+	fetchCataloguesForItem,
+} = cataloguesForItemModule;
 
 vi.mock('@/api/generated/catalogue/catalogue', () => ({
 	catalogueAddItem: vi.fn(),
@@ -126,10 +131,41 @@ describe('cataloguesForItem', () => {
 		]);
 	});
 
+	it('derives bookmark and known state from picker membership', () => {
+		expect(
+			deriveCatalogueWidgetState(
+				[
+					{
+						id: 1,
+						uuid: 'saved-list',
+						title: 'Saved Words',
+						type: 7,
+						type_label: 'Words',
+						publicity: 0,
+						contains_item: true,
+					},
+					{
+						id: 2,
+						uuid: 'known-list',
+						title: 'Known Words',
+						type: 3,
+						type_label: 'Known Words',
+						publicity: 0,
+						contains_item: false,
+					},
+				],
+				3,
+			),
+		).toEqual({
+			isBookmarked: true,
+			isKnown: false,
+		});
+	});
+
 	it('writes catalogue for-item additions through the v1 catalogue item endpoint', async () => {
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 
-		await (cataloguesForItemModule as any).updateCatalogueForItem({
+		await addOrRemoveCatalogueForItem({
 			list: {
 				id: 7,
 				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
@@ -149,7 +185,7 @@ describe('cataloguesForItem', () => {
 	it('writes catalogue for-item removals through the v1 catalogue item endpoint', async () => {
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 
-		await (cataloguesForItemModule as any).updateCatalogueForItem({
+		await addOrRemoveCatalogueForItem({
 			list: {
 				id: 7,
 				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',

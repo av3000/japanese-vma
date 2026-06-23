@@ -7,6 +7,9 @@ import type { WordIndexParams } from '@/api/generated/model/wordIndexParams';
 
 export type WordListFilters = Omit<WordIndexParams, 'page'>;
 export type WordListResponse = WordIndex200;
+export type WordViewerCatalogueState = NonNullable<WordListResponse['items'][number]['viewer_catalogue_state']>;
+
+export const WORD_VIEWER_CATALOGUE_INCLUDE = 'viewer_catalogue_state';
 
 type UseInfiniteWordsOptions = {
 	enabled?: boolean;
@@ -19,6 +22,31 @@ export const getNextWordsPageParam = (lastPage: WordListResponse) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
 export const getWordsTotal = (pages: WordListResponse[] | undefined) => pages?.[0]?.pagination.total ?? 0;
+
+export const applyWordViewerCatalogueState = (
+	data: InfiniteData<WordListResponse> | undefined,
+	wordId: number,
+	viewerCatalogueState: WordViewerCatalogueState,
+): InfiniteData<WordListResponse> | undefined => {
+	if (!data) {
+		return data;
+	}
+
+	return {
+		...data,
+		pages: data.pages.map((page) => ({
+			...page,
+			items: page.items.map((word) =>
+				word.id === wordId
+					? {
+							...word,
+							viewer_catalogue_state: viewerCatalogueState,
+						}
+					: word,
+			),
+		})),
+	};
+};
 
 export const useInfiniteWords = ({ enabled = true, filters = {} }: UseInfiniteWordsOptions = {}) => {
 	const query = useInfiniteQuery<
