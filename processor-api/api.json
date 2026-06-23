@@ -2911,6 +2911,16 @@
                             "minLength": 1,
                             "maxLength": 20
                         }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -2985,6 +2995,27 @@
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "viewer_catalogue_state": {
+                                                        "type": [
+                                                            "object",
+                                                            "null"
+                                                        ],
+                                                        "properties": {
+                                                            "is_saved": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "is_known": {
+                                                                "type": [
+                                                                    "boolean",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "is_saved",
+                                                            "is_known"
+                                                        ]
                                                     }
                                                 },
                                                 "required": [
@@ -3001,7 +3032,8 @@
                                                     "word_type",
                                                     "word_k_ele",
                                                     "furigana_r_ele",
-                                                    "sense"
+                                                    "sense",
+                                                    "viewer_catalogue_state"
                                                 ]
                                             }
                                         },
