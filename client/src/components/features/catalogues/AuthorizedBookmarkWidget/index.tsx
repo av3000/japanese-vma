@@ -154,8 +154,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	return (
 		<>
 			<div className={styles.widgetWrapper}>
-				{!isLoadingUserCatalogues &&
-					isKnownType &&
+				{isKnownType &&
 					(isKnown ? (
 						<i className="fas fa-check-circle text-success"> Learned</i>
 					) : (
