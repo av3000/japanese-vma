@@ -11,9 +11,22 @@ interface WordItemProps {
 	word_type: string;
 	meaning: string;
 	jlpt: string;
+	isSaved?: boolean;
+	isKnown?: boolean;
+	onBookmarkStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
 }
 
-const WordItem: React.FC<WordItemProps> = ({ id, word, furigana, word_type, meaning, jlpt }) => {
+const WordItem: React.FC<WordItemProps> = ({
+	id,
+	word,
+	furigana,
+	word_type,
+	meaning,
+	jlpt,
+	isSaved = false,
+	isKnown = false,
+	onBookmarkStateChange,
+}) => {
 	const { isAuthenticated } = useAuth();
 
 	const entityId = Number(id);
@@ -44,6 +57,10 @@ const WordItem: React.FC<WordItemProps> = ({ id, word, furigana, word_type, mean
 								isKnownType={SavedListType.KNOWNWORDS}
 								entityId={entityId}
 								modalTitle="Choose Word List to add"
+								initialIsBookmarked={isSaved}
+								initialIsKnown={isKnown}
+								loadOnMount={false}
+								onStateChange={onBookmarkStateChange}
 							/>
 						)}
 					</div>
