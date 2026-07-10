@@ -29,9 +29,12 @@ services:
     networks:
       - shared-network
     depends_on:
-      - db
-      - redis
-      - reverb
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      reverb:
+        condition: service_started
     entrypoint: ["/bin/sh", "/var/www/html/.docker/entrypoint.sh"]
     healthcheck:
       test:
