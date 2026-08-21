@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Resources;
 
+use App\Domain\Catalogues\DTOs\ViewerCatalogueStateDTO;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiListResultDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Http\v1\Shared\Resources\PaginationResource;
@@ -17,8 +18,13 @@ class KanjiListResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(KanjiListResultDTO $resource)
-    {
+    /**
+     * @param array<int, ViewerCatalogueStateDTO> $viewerCatalogueStates
+     */
+    public function __construct(
+        KanjiListResultDTO $resource,
+        private readonly array $viewerCatalogueStates = [],
+    ) {
         parent::__construct($resource);
     }
 
@@ -35,7 +41,10 @@ class KanjiListResource extends JsonResource
 
         return [
             'items' => array_map(
-                fn (Kanji $kanji): KanjiResource => new KanjiResource($kanji),
+                fn (Kanji $kanji): KanjiResource => new KanjiResource(
+                    $kanji,
+                    $this->viewerCatalogueStates[$kanji->getIdValue()] ?? null,
+                ),
                 $result->items,
             ),
             'pagination' => new PaginationResource($result->pagination),

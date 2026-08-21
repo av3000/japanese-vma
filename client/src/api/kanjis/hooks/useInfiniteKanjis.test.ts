@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { KanjiIndex200 } from '@/api/generated/model/kanjiIndex200';
 import {
+	applyKanjiViewerCatalogueState,
 	getInfiniteKanjisQueryKey,
 	getKanjisTotal,
 	getNextKanjisPageParam,
@@ -23,6 +24,7 @@ const createKanjiListResponse = (overrides: Partial<KanjiListResponse> = {}): Ka
 			frequency: 2,
 			radicals: ['水'],
 			radical_parts: ['水'],
+			viewer_catalogue_state: null,
 		},
 	],
 	pagination: {
@@ -69,5 +71,30 @@ describe('useInfiniteKanjis helpers', () => {
 
 	it('returns zero total before pages load', () => {
 		expect(getKanjisTotal(undefined)).toBe(0);
+	});
+
+	it('patches viewer catalogue state for one kanji in loaded pages', () => {
+		const response = createKanjiListResponse();
+
+		expect(
+			applyKanjiViewerCatalogueState(
+				{ pages: [response], pageParams: [1] },
+				1,
+				{ is_saved: true, is_known: false },
+			),
+		).toEqual({
+			pages: [
+				{
+					...response,
+					items: [
+						{
+							...response.items[0],
+							viewer_catalogue_state: { is_saved: true, is_known: false },
+						},
+					],
+				},
+			],
+			pageParams: [1],
+		});
 	});
 });

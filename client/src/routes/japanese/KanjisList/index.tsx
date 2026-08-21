@@ -1,7 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import { getKanjiDisplayValues } from '@/api/kanjis/display';
-import { type KanjiListFilters, useInfiniteKanjis } from '@/api/kanjis/hooks/useInfiniteKanjis';
+import {
+	KANJI_VIEWER_CATALOGUE_INCLUDE,
+	applyKanjiViewerCatalogueState,
+	getInfiniteKanjisQueryKey,
+	type KanjiListFilters,
+	type KanjiListResponse,
+	type KanjiViewerCatalogueState,
+	useInfiniteKanjis,
+} from '@/api/kanjis/hooks/useInfiniteKanjis';
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
 import { Button } from '@/components/shared/Button';
@@ -25,12 +33,14 @@ const getKanjiListFilters = (searchParams: URLSearchParams): KanjiListFilters =>
 
 	return {
 		per_page: DEFAULT_PER_PAGE,
+		include: KANJI_VIEWER_CATALOGUE_INCLUDE,
 		...(keyword ? { keyword } : {}),
 		...(jlpt ? { jlpt } : {}),
 	};
 };
 
 const KanjisList = () => {
+	const queryClient = useQueryClient();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const filters = getKanjiListFilters(searchParams);
 	const keyword = filters.keyword ?? '';
@@ -53,6 +63,12 @@ const KanjisList = () => {
 		}
 
 		setSearchParams(nextParams);
+	};
+
+	const handleKanjiBookmarkStateChange = (kanjiId: number, state: KanjiViewerCatalogueState) => {
+		queryClient.setQueryData<InfiniteData<KanjiListResponse>>(getInfiniteKanjisQueryKey(filters), (data) =>
+			applyKanjiViewerCatalogueState(data, kanjiId, state),
+		);
 	};
 
 	// TODO: have loading indicator like skeleton or something else
@@ -107,6 +123,14 @@ const KanjisList = () => {
 										frequency={display.frequency}
 										jlpt={display.jlpt}
 										parts={display.radicalParts}
+										isSaved={kanji.viewer_catalogue_state?.is_saved ?? false}
+										isKnown={kanji.viewer_catalogue_state?.is_known ?? false}
+										onBookmarkStateChange={(state) =>
+											handleKanjiBookmarkStateChange(kanji.id, {
+												is_saved: state.isBookmarked,
+												is_known: state.isKnown,
+											})
+										}
 									/>
 								);
 							})
@@ -130,3 +154,5 @@ const KanjisList = () => {
 };
 
 export default KanjisList;
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';

@@ -11,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class IndexKanjiRequest extends FormRequest
 {
+    public const INCLUDE_VIEWER_CATALOGUE_STATE = 'viewer_catalogue_state';
+
     public function authorize(): bool
     {
         return true;
@@ -46,7 +48,23 @@ class IndexKanjiRequest extends FormRequest
             'onyomi' => ['nullable', 'string', 'min:1', 'max:255'],
             'kunyomi' => ['nullable', 'string', 'min:1', 'max:255'],
             'radical' => ['nullable', 'string', 'min:1', 'max:1'],
+            'include' => ['nullable', 'string'],
         ];
+    }
+
+    public function includesViewerCatalogueState(): bool
+    {
+        $include = $this->input('include');
+
+        if (! is_string($include) || trim($include) === '') {
+            return false;
+        }
+
+        return in_array(
+            self::INCLUDE_VIEWER_CATALOGUE_STATE,
+            array_map('trim', explode(',', $include)),
+            true,
+        );
     }
 
     /**

@@ -16,7 +16,8 @@ class SentenceRepository implements SentenceRepositoryInterface
 {
     public function __construct(
         private readonly SentenceMapper $sentenceMapper,
-    ) {}
+    ) {
+    }
 
     public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO
     {
@@ -94,6 +95,12 @@ class SentenceRepository implements SentenceRepositoryInterface
 
         if ($criteria->userId !== null) {
             $query->where('user_id', $criteria->userId);
+        }
+
+        if ($criteria->kanjiId !== null) {
+            $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
+                $kanjiQuery->whereKey($criteria->kanjiId);
+            });
         }
     }
 }

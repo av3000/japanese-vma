@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Controllers;
 
+use App\Application\Catalogues\Services\ViewerCatalogueStateService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
-use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
 use App\Http\v1\JapaneseMaterial\Kanjis\Requests\IndexKanjiRequest;
+use App\Http\v1\JapaneseMaterial\Kanjis\Requests\ShowKanjiRequest;
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiDetailResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiListResource;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\Shared\Resources\PaginationResource;
-use App\Shared\Enums\HttpStatus;
 use App\Shared\Http\TypedResults;
-use App\Shared\Results\ResultError;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,6 +26,8 @@ class KanjiController extends Controller
 {
     public function __construct(
         private readonly KanjiServiceInterface $kanjiService,
+        private readonly KanjiDetailServiceInterface $kanjiDetailService,
+        private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
     ) {
     }
 
@@ -43,12 +46,13 @@ class KanjiController extends Controller
      *         jlpt: string|null,
      *         frequency: int|null,
      *         radicals: array<int, string>,
-     *         radical_parts: array<int, string>
+     *         radical_parts: array<int, string>,
+     *         viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
      *     }>,
      *     pagination: PaginationResource
      * }
      */
-    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, character: string, onyomi: array<int, string>, kunyomi: array<int, string>, meanings: array<int, string>, nanori: array<int, string>, grade: string|null, stroke_count: int, jlpt: string|null, frequency: int|null, radicals: array<int, string>, radical_parts: array<int, string>}>, pagination: PaginationResource}')]
+    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, character: string, onyomi: array<int, string>, kunyomi: array<int, string>, meanings: array<int, string>, nanori: array<int, string>, grade: string|null, stroke_count: int, jlpt: string|null, frequency: int|null, radicals: array<int, string>, radical_parts: array<int, string>, viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null}>, pagination: PaginationResource}')]
     public function index(IndexKanjiRequest $request): JsonResponse|JsonResource
     {
         $validatedData = $request->validated();
@@ -81,46 +85,39 @@ class KanjiController extends Controller
             return TypedResults::fromError($paginatedKanjisResult->getError());
         }
 
-        return new KanjiListResource($paginatedKanjisResult->getData());
+        $kanjiListResult = $paginatedKanjisResult->getData();
+        $viewerCatalogueStates = [];
+        $viewer = auth('api')->user();
+
+        if ($request->includesViewerCatalogueState() && $viewer !== null) {
+            $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(
+                user: $viewer,
+                itemIds: array_map(
+                    static fn ($kanji): int => $kanji->getIdValue(),
+                    $kanjiListResult->items,
+                ),
+                savedType: SavedListType::KANJIS,
+                knownType: SavedListType::KNOWNKANJIS,
+            );
+        }
+
+        return new KanjiListResource($kanjiListResult, $viewerCatalogueStates);
     }
 
-    /**
-     * @response array{
-     *     id: int,
-     *     uuid: string,
-     *     character: string,
-     *     onyomi: array<int, string>,
-     *     kunyomi: array<int, string>,
-     *     meanings: array<int, string>,
-     *     nanori: array<int, string>,
-     *     grade: string|null,
-     *     stroke_count: int,
-     *     jlpt: string|null,
-     *     frequency: int|null,
-     *     radicals: array<int, string>,
-     *     radical_parts: array<int, string>
-     * }
-     */
-    #[Response(type: 'array{id: int, uuid: string, character: string, onyomi: array<int, string>, kunyomi: array<int, string>, meanings: array<int, string>, nanori: array<int, string>, grade: string|null, stroke_count: int, jlpt: string|null, frequency: int|null, radicals: array<int, string>, radical_parts: array<int, string>}')]
-    public function show(string $identifier): JsonResponse|JsonResource
+    #[Response(type: 'KanjiDetailResource')]
+    public function show(string $identifier, ShowKanjiRequest $request): JsonResponse|JsonResource
     {
-        if (EntityId::isValid($identifier)) {
-            $kanjiResult = $this->kanjiService->findByUuid(EntityId::from($identifier));
-        } elseif (preg_match('/^\p{Han}$/u', $identifier)) {
-            $kanjiResult = $this->kanjiService->findByCharacter(new KanjiCharacter($identifier));
-        } else {
-            return TypedResults::fromError(new ResultError(
-                'INVALID_IDENTIFIER',
-                HttpStatus::BAD_REQUEST,
-                'Identifier must be a valid UUID or a single Kanji character.',
-            ));
+        $result = $this->kanjiDetailService->findByIdentifier(
+            identifier: $identifier,
+            includes: $request->includes(),
+            viewer: auth('api')->user(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
         }
 
-        if ($kanjiResult->isFailure()) {
-            return TypedResults::fromError($kanjiResult->getError());
-        }
-
-        return new KanjiResource($kanjiResult->getData());
+        return new KanjiDetailResource($result->getData());
     }
 
     /**

@@ -1,5 +1,8 @@
 import type { MappedKanji } from '@/api/kanjis/details';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import KanjiRelatedArticles from '@/components/features/japanese/Kanji/KanjiRelatedArticles';
+import KanjiRelatedSentences from '@/components/features/japanese/Kanji/KanjiRelatedSentences';
+import KanjiRelatedWords from '@/components/features/japanese/Kanji/KanjiRelatedWords';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
 import { SavedListType } from '@/shared/constants/enums';
@@ -18,14 +21,14 @@ const KanjiContent = ({ kanji }: KanjiContentProps) => {
 					Back
 				</Link>
 			</div>
-			<div className="row justify-content-center mt-5">
+			<div className="row mt-5">
 				<div className="col-md-4">
 					<h1>{kanji.character}</h1>
-					<p>Meaning: {kanji.display.meaning}</p>
+					<p>Kunyomi: {kanji.display.kunyomi}</p>
+					<p>Onyomi: {kanji.display.onyomi}</p>
 				</div>
 				<div className="col-md-4">
-					<p>Onyomi: {kanji.display.onyomi}</p>
-					<p>Kunyomi: {kanji.display.kunyomi}</p>
+					<h2>{kanji.display.meaning}</h2>
 				</div>
 				<div className="col-md-2">
 					<p>Parts: {kanji.display.radicalParts}</p>
@@ -40,10 +43,16 @@ const KanjiContent = ({ kanji }: KanjiContentProps) => {
 							isKnownType={SavedListType.KNOWNKANJIS}
 							entityId={kanji.id}
 							modalTitle="Choose Kanji List to add"
+							initialIsBookmarked={kanji.viewer_catalogue_state?.is_saved ?? false}
+							initialIsKnown={kanji.viewer_catalogue_state?.is_known ?? false}
+							loadOnMount={false}
 						/>
 					)}
 				</div>
 			</div>
+			<KanjiRelatedWords items={kanji.related.words} total={kanji.related.wordTotal} />
+			<KanjiRelatedSentences items={kanji.related.sentences} total={kanji.related.sentenceTotal} />
+			<KanjiRelatedArticles items={kanji.related.articles} total={kanji.related.articleTotal} />
 		</div>
 	);
 };

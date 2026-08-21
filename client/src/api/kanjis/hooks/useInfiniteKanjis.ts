@@ -7,6 +7,11 @@ import type { KanjiIndexParams } from '@/api/generated/model/kanjiIndexParams';
 
 export type KanjiListFilters = Omit<KanjiIndexParams, 'page'>;
 export type KanjiListResponse = KanjiIndex200;
+export type KanjiViewerCatalogueState = NonNullable<
+	KanjiListResponse['items'][number]['viewer_catalogue_state']
+>;
+
+export const KANJI_VIEWER_CATALOGUE_INCLUDE = 'viewer_catalogue_state';
 
 type UseInfiniteKanjisOptions = {
 	enabled?: boolean;
@@ -19,6 +24,28 @@ export const getNextKanjisPageParam = (lastPage: KanjiListResponse) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
 export const getKanjisTotal = (pages: KanjiListResponse[] | undefined) => pages?.[0]?.pagination.total ?? 0;
+
+export const applyKanjiViewerCatalogueState = (
+	data: InfiniteData<KanjiListResponse> | undefined,
+	kanjiId: number,
+	viewerCatalogueState: KanjiViewerCatalogueState,
+): InfiniteData<KanjiListResponse> | undefined => {
+	if (!data) {
+		return data;
+	}
+
+	return {
+		...data,
+		pages: data.pages.map((page) => ({
+			...page,
+			items: page.items.map((kanji) =>
+				kanji.id === kanjiId
+					? { ...kanji, viewer_catalogue_state: viewerCatalogueState }
+					: kanji,
+			),
+		})),
+	};
+};
 
 export const useInfiniteKanjis = ({ enabled = true, filters = {} }: UseInfiniteKanjisOptions = {}) => {
 	const query = useInfiniteQuery<

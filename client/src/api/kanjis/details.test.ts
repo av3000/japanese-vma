@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { KanjiShow200 } from '@/api/generated/model/kanjiShow200';
+import type { KanjiDetailResource } from '@/api/generated/model/kanjiDetailResource';
 import { mapKanjiDetail } from './details';
 
-const kanji: KanjiShow200 = {
+const kanji: KanjiDetailResource = {
 	id: 1,
 	uuid: 'kanji-uuid',
 	character: '水',
@@ -16,6 +16,7 @@ const kanji: KanjiShow200 = {
 	frequency: 2,
 	radicals: ['水'],
 	radical_parts: ['水'],
+	viewer_catalogue_state: null,
 };
 
 describe('mapKanjiDetail', () => {
@@ -27,5 +28,18 @@ describe('mapKanjiDetail', () => {
 		expect(mapped.display.meaning).toBe('water, river, liquid');
 		expect(mapped.display.onyomi).toBe('スイ');
 		expect(mapped.display.frequency).toBe('2');
+	});
+
+	it('normalizes omitted related collections to empty UI data', () => {
+		const mapped = mapKanjiDetail(kanji);
+
+		expect(mapped.related).toEqual({
+			words: [],
+			wordTotal: 0,
+			sentences: [],
+			sentenceTotal: 0,
+			articles: [],
+			articleTotal: 0,
+		});
 	});
 });

@@ -106,5 +106,11 @@ class WordRepository implements WordRepositoryInterface
         if ($criteria->jlpt !== null && $criteria->jlpt !== '') {
             $query->where('jlpt', $criteria->jlpt);
         }
+
+        if ($criteria->kanjiId !== null) {
+            $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
+                $kanjiQuery->whereKey($criteria->kanjiId);
+            });
+        }
     }
 }

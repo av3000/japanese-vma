@@ -58,10 +58,15 @@ class RadicalV1Test extends TestCase
 
         $this->createRadical(id: 1, uuid: $radicalUuid, radical: '一', strokes: 1, meaning: 'one', hiragana: 'いち / ichi');
         $this->createKanji(id: 10, uuid: $kanjiUuid, kanji: '一');
+        $this->createKanji(id: 11, kanji: '????');
 
         DB::table('japanese_radical_kanji_long')->insert([
             'radical_id' => 1,
             'kanji_id' => 10,
+        ]);
+        DB::table('japanese_radical_kanji_long')->insert([
+            'radical_id' => 1,
+            'kanji_id' => 11,
         ]);
 
         $response = $this->getJson("/api/v1/radicals/{$radicalUuid}");
@@ -73,7 +78,8 @@ class RadicalV1Test extends TestCase
             ->assertJsonPath('uuid', $radicalUuid)
             ->assertJsonPath('radical', '一')
             ->assertJsonPath('kanjis.0.uuid', $kanjiUuid)
-            ->assertJsonPath('kanjis.0.character', '一');
+            ->assertJsonPath('kanjis.0.character', '一')
+            ->assertJsonCount(1, 'kanjis');
     }
 
     public function test_guest_can_fetch_radical_detail_by_legacy_numeric_id(): void

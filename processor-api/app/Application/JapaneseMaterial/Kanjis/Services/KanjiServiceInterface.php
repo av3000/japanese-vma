@@ -11,6 +11,13 @@ use App\Shared\Results\Result;
 interface KanjiServiceInterface
 {
     /**
+     * Resolve a Kanji by UUID, legacy numeric ID, or character.
+     *
+     * @return Result<DomainKanji>
+     */
+    public function findByIdentifier(string $identifier): Result;
+
+    /**
      * Get kanji by UUID.
      *
      * @return Result<DomainKanji>

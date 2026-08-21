@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Resources;
 
+use App\Domain\Catalogues\DTOs\ViewerCatalogueStateDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,8 +16,10 @@ class KanjiResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(DomainKanji $resource)
-    {
+    public function __construct(
+        DomainKanji $resource,
+        private readonly ?ViewerCatalogueStateDTO $viewerCatalogueState = null,
+    ) {
         parent::__construct($resource);
     }
 
@@ -34,7 +37,8 @@ class KanjiResource extends JsonResource
      *     jlpt: ?string,
      *     frequency: ?int,
      *     radicals: list<string>,
-     *     radical_parts: list<string>
+     *     radical_parts: list<string>,
+     *     viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
      * }
      */
     public function toArray(Request $request): array
@@ -59,6 +63,12 @@ class KanjiResource extends JsonResource
             'frequency' => $frequency === null ? null : (int) $frequency,
             'radicals' => $kanji->getRadicals(),
             'radical_parts' => $kanji->getRadicalParts(),
+            'viewer_catalogue_state' => $this->viewerCatalogueState === null
+                ? null
+                : [
+                    'is_saved' => $this->viewerCatalogueState->isSaved,
+                    'is_known' => $this->viewerCatalogueState->isKnown,
+                ],
         ];
     }
 }

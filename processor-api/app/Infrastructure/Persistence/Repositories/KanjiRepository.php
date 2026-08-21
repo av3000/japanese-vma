@@ -19,6 +19,15 @@ class KanjiRepository implements KanjiRepositoryInterface
     ) {
     }
 
+    public function findById(int $id): ?DomainKanji
+    {
+        $persistenceKanji = PersistenceKanji::query()->find($id);
+
+        return $persistenceKanji
+            ? $this->kanjiMapper->mapToDomain($persistenceKanji)
+            : null;
+    }
+
     public function findByUuid(EntityId $uuid): ?DomainKanji
     {
         $persistenceKanji = PersistenceKanji::where('uuid', $uuid->value())->first();

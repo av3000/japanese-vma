@@ -15,6 +15,9 @@ interface KanjiItemProps {
 	frequency: string;
 	jlpt: string;
 	parts: string;
+	isSaved?: boolean;
+	isKnown?: boolean;
+	onBookmarkStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
 }
 
 const KanjiItem: React.FC<KanjiItemProps> = ({
@@ -28,6 +31,9 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 	frequency,
 	jlpt,
 	parts,
+	isSaved = false,
+	isKnown = false,
+	onBookmarkStateChange,
 }) => {
 	const { isAuthenticated } = useAuth();
 	const entityId = Number(id);
@@ -60,7 +66,11 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 							instanceObjectType={SavedListType.KANJIS}
 							isKnownType={SavedListType.KNOWNKANJIS}
 							entityId={entityId}
-							modalTitle="Choose Word List to add"
+							modalTitle="Choose Kanji List to add"
+							initialIsBookmarked={isSaved}
+							initialIsKnown={isKnown}
+							loadOnMount={false}
+							onStateChange={onBookmarkStateChange}
 						/>
 					)}
 				</div>

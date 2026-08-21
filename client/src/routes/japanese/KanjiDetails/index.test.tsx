@@ -9,7 +9,11 @@ const authorizedWidgetProps: Array<{
 	instanceObjectType: SavedListType;
 	isKnownType: SavedListType;
 	modalTitle?: string;
+	initialIsBookmarked?: boolean;
+	initialIsKnown?: boolean;
+	loadOnMount?: boolean;
 }> = [];
+let isAuthenticated = true;
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -37,6 +41,7 @@ vi.mock('@/api/kanjis/details', () => ({
 			frequency: 2,
 			radicals: ['水'],
 			radical_parts: ['水'],
+			viewer_catalogue_state: { is_saved: true, is_known: false },
 			display: {
 				meaning: 'water, river',
 				onyomi: 'スイ',
@@ -48,6 +53,38 @@ vi.mock('@/api/kanjis/details', () => ({
 				jlpt: '5',
 				frequency: '2',
 			},
+			related: {
+				words: [
+					{
+						id: 501,
+						uuid: 'word-uuid',
+						word: '水泳',
+						furigana: 'すいえい',
+						jlpt: 'N5',
+						meanings: ['swimming'],
+					},
+				],
+				wordTotal: 1,
+				sentences: [
+					{
+						id: 601,
+						uuid: 'sentence-uuid',
+						content: '水を飲みます。',
+						tatoeba_entry: '12345',
+					},
+				],
+				sentenceTotal: 1,
+				articles: [
+					{
+						id: 701,
+						uuid: 'article-uuid',
+						title_jp: '水の記事',
+						hashtags: [],
+						engagement: { stats: null },
+					},
+				],
+				articleTotal: 1,
+			},
 		},
 		isLoading: false,
 		isError: false,
@@ -56,7 +93,7 @@ vi.mock('@/api/kanjis/details', () => ({
 
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
-		isAuthenticated: true,
+		isAuthenticated,
 	}),
 }));
 
@@ -66,6 +103,9 @@ vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
 		instanceObjectType: SavedListType;
 		isKnownType: SavedListType;
 		modalTitle?: string;
+		initialIsBookmarked?: boolean;
+		initialIsKnown?: boolean;
+		loadOnMount?: boolean;
 	}) => {
 		authorizedWidgetProps.push(props);
 		return <div>Authorized bookmark widget</div>;
@@ -80,35 +120,61 @@ describe('KanjiDetails', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		authorizedWidgetProps.length = 0;
+		isAuthenticated = true;
 	});
 
 	it('renders migrated v1 kanji detail data', () => {
 		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		expect(html).toContain('水');
-		expect(html).toContain('Meaning: water, river');
-		expect(html).toContain('Onyomi: スイ');
+		expect(html).toContain('<h1>水</h1>');
 		expect(html).toContain('Kunyomi: みず');
+		expect(html).toContain('Onyomi: スイ');
+		expect(html).toContain('<h2>water, river</h2>');
 		expect(html).toContain('JLPT: 5');
+		expect(html.indexOf('Kunyomi: みず')).toBeLessThan(html.indexOf('Onyomi: スイ'));
+		expect(html.indexOf('Onyomi: スイ')).toBeLessThan(html.indexOf('<h2>water, river</h2>'));
 	});
 
 	it('uses numeric kanji id for catalogue actions', () => {
 		renderToStaticMarkup(<KanjiDetails />);
 
-		expect(authorizedWidgetProps[0]).toEqual({
+		expect(authorizedWidgetProps[0]).toMatchObject({
 			entityId: 88,
 			instanceObjectType: SavedListType.KANJIS,
 			isKnownType: SavedListType.KNOWNKANJIS,
 			modalTitle: 'Choose Kanji List to add',
+			initialIsBookmarked: true,
+			initialIsKnown: false,
+			loadOnMount: false,
 		});
 	});
 
-	it('does not render deferred related sections in the first slice', () => {
+	it('renders related words sentences and articles from the v1 detail aggregate', () => {
 		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		expect(html).not.toContain('Found in');
-		expect(html).not.toContain('words');
-		expect(html).not.toContain('sentences');
-		expect(html).not.toContain('articles');
+		expect(html).toContain('Found in (1) words');
+		expect(html).toContain('水泳');
+		expect(html).toContain('<h3>swimming</h3>');
+		expect(html).toContain('JLPT: N5');
+		expect(html).toContain('/word/word-uuid');
+		expect(html).toContain('Found in (1) sentences');
+		expect(html).toContain('水を飲みます。');
+		expect(html).toContain('/sentence/sentence-uuid');
+		expect(html).toContain('Found in (1) articles');
+		expect(html).toContain('水の記事');
+		expect(html).toContain('/articles/article-uuid');
+		expect(html.match(/post-preview d-flex justify-content-between/g)).toHaveLength(3);
+		expect(html.match(/relatedResource/g)).toHaveLength(3);
+	});
+
+	it('keeps core and related detail public without catalogue actions for guests', () => {
+		isAuthenticated = false;
+
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toContain('<h2>water, river</h2>');
+		expect(html).toContain('Found in (1) words');
+		expect(html).not.toContain('Authorized bookmark widget');
+		expect(authorizedWidgetProps).toHaveLength(0);
 	});
 });

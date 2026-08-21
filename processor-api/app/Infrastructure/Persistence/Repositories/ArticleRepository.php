@@ -25,7 +25,8 @@ class ArticleRepository implements ArticleRepositoryInterface
         private readonly ArticleMapper $articleMapper,
         private readonly WordMapper $wordMapper,
         // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
-    ) {}
+    ) {
+    }
 
     /**
      * Create a new article in persistence.
@@ -204,7 +205,7 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         $paginator->setCollection(
             $paginator->getCollection()->map(
-                fn($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
+                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
             )
         );
 
@@ -323,8 +324,14 @@ class ArticleRepository implements ArticleRepositoryInterface
         if ($criteria->search !== null) {
             $searchValue = $criteria->search->value;
             $query->where(function ($q) use ($searchValue) {
-                $q->where('title_jp', 'LIKE', '%' . $searchValue . '%')
-                    ->orWhere('title_en', 'LIKE', '%' . $searchValue . '%');
+                $q->where('title_jp', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('title_en', 'LIKE', '%'.$searchValue.'%');
+            });
+        }
+
+        if ($criteria->kanjiId !== null) {
+            $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
+                $kanjiQuery->whereKey($criteria->kanjiId);
             });
         }
 
@@ -358,7 +365,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->kanjis
-            ->map(fn($kanji): array => [
+            ->map(fn ($kanji): array => [
                 'id' => $kanji->id,
                 'kanji' => $kanji->kanji,
                 'onyomi' => $this->splitKanjiPdfValues($kanji->onyomi),
@@ -380,7 +387,7 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         return array_values(array_filter(
             array_map('trim', explode('|', $value)),
-            static fn(string $part): bool => $part !== ''
+            static fn (string $part): bool => $part !== ''
         ));
     }
 
@@ -394,7 +401,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         }
 
         return $article->words
-            ->map(fn($word) => $this->wordMapper->mapToDomain($word))
+            ->map(fn ($word) => $this->wordMapper->mapToDomain($word))
             ->all();
     }
 
@@ -423,7 +430,7 @@ class ArticleRepository implements ArticleRepositoryInterface
             }
 
             if (! empty($kanjiIdsToAdd)) {
-                $pivotRecords = array_map(fn($kanjiId) => [
+                $pivotRecords = array_map(fn ($kanjiId) => [
                     'article_id' => $articleId,
                     'kanji_id' => $kanjiId,
                 ], $kanjiIdsToAdd);
@@ -460,7 +467,7 @@ class ArticleRepository implements ArticleRepositoryInterface
             }
 
             if (! empty($wordIdsToAdd)) {
-                $pivotRecords = array_map(static fn(int $wordId): array => [
+                $pivotRecords = array_map(static fn (int $wordId): array => [
                     'article_id' => $articleId,
                     'word_id' => $wordId,
                 ], $wordIdsToAdd);

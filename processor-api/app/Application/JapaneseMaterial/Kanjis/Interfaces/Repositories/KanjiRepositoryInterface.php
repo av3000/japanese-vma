@@ -10,6 +10,8 @@ use App\Domain\Shared\ValueObjects\EntityId;
 
 interface KanjiRepositoryInterface
 {
+    public function findById(int $id): ?Kanji;
+
     // Finds a single Kanji by its UUID.
     public function findByUuid(EntityId $uuid): ?Kanji;
 

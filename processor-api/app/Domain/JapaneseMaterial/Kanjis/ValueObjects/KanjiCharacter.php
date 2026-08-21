@@ -10,9 +10,14 @@ final readonly class KanjiCharacter
 {
     public function __construct(public string $value)
     {
-        if (!preg_match('/^\p{Han}$/u', $value)) {
+        if (!self::isValid($value)) {
             throw new InvalidArgumentException('Invalid Kanji character: ' . $value);
         }
+    }
+
+    public static function isValid(string $value): bool
+    {
+        return preg_match('/^\p{Han}$/u', $value) === 1;
     }
 
     public function value(): string
