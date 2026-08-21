@@ -16,6 +16,7 @@ final readonly class WordQueryCriteria
         public ?string $word = null,
         public ?string $furigana = null,
         public ?string $jlpt = null,
+        public ?int $kanjiId = null,
     ) {
     }
 
@@ -26,6 +27,7 @@ final readonly class WordQueryCriteria
         ?string $word = null,
         ?string $furigana = null,
         ?string $jlpt = null,
+        ?int $kanjiId = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -33,6 +35,7 @@ final readonly class WordQueryCriteria
             word: $word,
             furigana: $furigana,
             jlpt: $jlpt,
+            kanjiId: $kanjiId,
         );
     }
 }

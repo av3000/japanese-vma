@@ -3,8 +3,8 @@
 namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 
 readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
 {
@@ -16,8 +16,10 @@ readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
         public array $visibilityRules = [],
         public ?Pagination $pagination = null,
         public bool $include_kanjis = false,
-        public bool $include_words = false
-    ) {}
+        public bool $include_words = false,
+        public ?int $kanjiId = null,
+    ) {
+    }
 
     public function includeKanjis(): bool
     {

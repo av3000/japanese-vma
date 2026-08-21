@@ -4,23 +4,25 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Builders;
 
-use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use App\Infrastructure\Persistence\Repositories\KanjiMapper;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanjis as DomainKanjisCollection;
+use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Infrastructure\Persistence\Repositories\KanjiMapper;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class KanjiRelationQueryBuilder
 {
     public function __construct(
         private readonly KanjiMapper $kanjiMapper
-    ) {}
+    ) {
+    }
 
     /**
      * Applies filters and sorting from KanjiQueryCriteria to an Eloquent Relation query.
      *
      * @param Relation $relation The Eloquent relationship builder (e.g., $article->kanjis())
      * @param KanjiQueryCriteria $criteria Criteria for filtering, sorting, and pagination
+     *
      * @return \Illuminate\Database\Eloquent\Builder The modified Eloquent query builder for Kanjis
      */
     public function build(Relation $relation, KanjiQueryCriteria $criteria): \Illuminate\Database\Eloquent\Builder
@@ -37,10 +39,6 @@ class KanjiRelationQueryBuilder
 
     /**
      * Executes the query and returns a paginated DomainKanjisCollection.
-     *
-     * @param Relation $relation
-     * @param KanjiQueryCriteria $criteria
-     * @return DomainKanjisCollection
      */
     public function getPaginatedKanjis(Relation $relation, KanjiQueryCriteria $criteria): DomainKanjisCollection
     {
@@ -55,14 +53,13 @@ class KanjiRelationQueryBuilder
         );
 
         $domainKanjis = $paginatedResults->getCollection()->map(
-            fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
+            fn ($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
         );
 
         $paginatedResults->setCollection($domainKanjis);
 
         return DomainKanjisCollection::fromEloquentPaginator($paginatedResults);
     }
-
 
     private function applyFilters(\Illuminate\Database\Eloquent\Builder $query, KanjiQueryCriteria $criteria): void
     {
@@ -76,34 +73,34 @@ class KanjiRelationQueryBuilder
             $query->where('jlpt', $criteria->jlpt->value());
         }
         if ($criteria->minStrokeCount !== null) {
-            $query->where('stroke_count', '>=', $criteria->minStrokeCount);
+            $query->whereRaw('CAST(stroke_count AS UNSIGNED) >= ?', [$criteria->minStrokeCount]);
         }
         if ($criteria->maxStrokeCount !== null) {
-            $query->where('stroke_count', '<=', $criteria->maxStrokeCount);
+            $query->whereRaw('CAST(stroke_count AS UNSIGNED) <= ?', [$criteria->maxStrokeCount]);
         }
-        if ($criteria->meanings !== null && !empty($criteria->meanings)) {
+        if ($criteria->meanings !== null && ! empty($criteria->meanings)) {
             $query->where(function ($q) use ($criteria) {
                 foreach ($criteria->meanings as $meaning) {
-                    $q->orWhere('meaning', 'LIKE', '%' . $meaning . '%');
+                    $q->orWhere('meaning', 'LIKE', '%'.$meaning.'%');
                 }
             });
         }
-        if ($criteria->onyomi !== null && !empty($criteria->onyomi)) {
+        if ($criteria->onyomi !== null && ! empty($criteria->onyomi)) {
             $query->where(function ($q) use ($criteria) {
                 foreach ($criteria->onyomi as $onyomi) {
-                    $q->orWhere('onyomi', 'LIKE', '%' . $onyomi . '%');
+                    $q->orWhere('onyomi', 'LIKE', '%'.$onyomi.'%');
                 }
             });
         }
-        if ($criteria->kunyomi !== null && !empty($criteria->kunyomi)) {
+        if ($criteria->kunyomi !== null && ! empty($criteria->kunyomi)) {
             $query->where(function ($q) use ($criteria) {
                 foreach ($criteria->kunyomi as $kunyomi) {
-                    $q->orWhere('kunyomi', 'LIKE', '%' . $kunyomi . '%');
+                    $q->orWhere('kunyomi', 'LIKE', '%'.$kunyomi.'%');
                 }
             });
         }
         if ($criteria->radical !== null) {
-            $query->where('radicals', 'LIKE', '%' . $criteria->radical . '%');
+            $query->where('radicals', 'LIKE', '%'.$criteria->radical.'%');
         }
     }
 

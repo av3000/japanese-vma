@@ -1,25 +1,25 @@
 #!/bin/bash
 
-# Ensure directories exist and have correct permissions for www-data
-# This is more direct than checking, to guarantee permissions on startup
-mkdir -p \
-    /var/www/html/storage/app/public \
-    /var/www/html/storage/framework/cache/data \
-    /var/www/html/storage/framework/sessions \
-    /var/www/html/storage/framework/testing \
-    /var/www/html/storage/framework/views \
-    /var/www/html/storage/fonts \
-    /var/www/html/storage/logs \
-    /var/www/html/bootstrap/cache
+# Ensure Laravel writable directories exist without recursively walking the
+# Windows bind-mounted storage tree on every container start.
+WRITABLE_DIRS="
+/var/www/html/storage/app/public
+/var/www/html/storage/framework/cache/data
+/var/www/html/storage/framework/sessions
+/var/www/html/storage/framework/testing
+/var/www/html/storage/framework/views
+/var/www/html/storage/fonts
+/var/www/html/storage/logs
+/var/www/html/bootstrap/cache
+"
 
-# Set ownership to www-data for these directories
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+for dir in $WRITABLE_DIRS; do
+    mkdir -p "$dir"
+    chown www-data:www-data "$dir" 2>/dev/null || true
+    chmod 777 "$dir" 2>/dev/null || true
+done
 
-# Set generous write permissions for local development
-chmod -R 777 /var/www/html/storage
-chmod -R 777 /var/www/html/bootstrap/cache
-
-echo "Storage and cache permissions set for www-data."
+echo "Storage and cache directories are writable."
 
 # Wait for MySQL to be ready
 while ! mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" --silent; do

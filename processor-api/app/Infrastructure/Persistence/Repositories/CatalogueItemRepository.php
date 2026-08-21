@@ -59,6 +59,29 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
             ->toArray();
     }
 
+    public function findCatalogueIdsByItemIds(array $catalogueIds, array $itemIds): array
+    {
+        if (empty($catalogueIds) || empty($itemIds)) {
+            return [];
+        }
+
+        $rows = DB::table('customlist_object')
+            ->select(['real_object_id', 'list_id'])
+            ->whereIn('list_id', $catalogueIds)
+            ->whereIn('real_object_id', $itemIds)
+            ->get();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $itemId = (int) $row->real_object_id;
+            $map[$itemId] ??= [];
+            $map[$itemId][] = (int) $row->list_id;
+        }
+
+        return $map;
+    }
+
     public function containsItem(int $catalogueId, int $itemId): bool
     {
         return DB::table('customlist_object')

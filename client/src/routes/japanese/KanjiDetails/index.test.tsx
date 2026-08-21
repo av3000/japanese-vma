@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SavedListType } from '@/shared/constants/enums';
@@ -9,120 +9,172 @@ const authorizedWidgetProps: Array<{
 	instanceObjectType: SavedListType;
 	isKnownType: SavedListType;
 	modalTitle?: string;
+	initialIsBookmarked?: boolean;
+	initialIsKnown?: boolean;
+	loadOnMount?: boolean;
 }> = [];
-
-vi.mock('react', async () => {
-	const actual = await vi.importActual<typeof import('react')>('react');
-	return {
-		...actual,
-		useState: vi.fn(actual.useState),
-	};
-});
+let isAuthenticated = true;
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
 	return {
 		...actual,
-		useParams: () => ({ kanji_id: '88' }),
+		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+		useParams: () => ({ kanji_id: 'kanji-uuid' }),
 	};
 });
 
-vi.mock('@/hooks/useAuth', () => ({
-	useAuth: () => ({
-		isAuthenticated: true,
+vi.mock('@/api/kanjis/details', () => ({
+	useKanjiQuery: () => ({
+		data: {
+			id: 88,
+			uuid: 'kanji-uuid',
+			character: '水',
+			onyomi: ['スイ'],
+			kunyomi: ['みず'],
+			meanings: ['water', 'river'],
+			nanori: [],
+			grade: '1',
+			stroke_count: 4,
+			jlpt: '5',
+			frequency: 2,
+			radicals: ['水'],
+			radical_parts: ['水'],
+			viewer_catalogue_state: { is_saved: true, is_known: false },
+			display: {
+				meaning: 'water, river',
+				onyomi: 'スイ',
+				kunyomi: 'みず',
+				nanori: '',
+				radicalParts: '水',
+				radicals: '水',
+				grade: '1',
+				jlpt: '5',
+				frequency: '2',
+			},
+			related: {
+				words: [
+					{
+						id: 501,
+						uuid: 'word-uuid',
+						word: '水泳',
+						furigana: 'すいえい',
+						jlpt: 'N5',
+						meanings: ['swimming'],
+					},
+				],
+				wordTotal: 1,
+				sentences: [
+					{
+						id: 601,
+						uuid: 'sentence-uuid',
+						content: '水を飲みます。',
+						tatoeba_entry: '12345',
+					},
+				],
+				sentenceTotal: 1,
+				articles: [
+					{
+						id: 701,
+						uuid: 'article-uuid',
+						title_jp: '水の記事',
+						hashtags: [],
+						engagement: { stats: null },
+					},
+				],
+				articleTotal: 1,
+			},
+		},
+		isLoading: false,
+		isError: false,
 	}),
 }));
 
-vi.mock('@/services/api', () => ({
-	apiCall: vi.fn(),
+vi.mock('@/hooks/useAuth', () => ({
+	useAuth: () => ({
+		isAuthenticated,
+	}),
 }));
 
-vi.mock('@/components/shared/Button', () => ({
-	Button: ({
-		children,
-		to,
-		href,
-	}: {
-		children: React.ReactNode;
-		to?: string;
-		href?: string;
-	}) =>
-		to || href ? (
-			<a href={to ?? href}>{children}</a>
-		) : (
-			<button type="button">{children}</button>
-		),
-}));
-
-vi.mock('@/components/shared/Chip', () => ({
-	Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}));
-
-vi.mock('@/components/shared/Icon', () => ({
-	Icon: ({ name }: { name: string }) => <span>{name}</span>,
-}));
-
-vi.mock('@/components/shared/Link', () => ({
-	Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
-}));
-
-vi.mock('@/assets/images/spinner.gif', () => ({
-	default: 'spinner.gif',
-}));
-
-vi.mock('../SentenceDetails/AuthorizedBookmarkWidget', () => ({
+vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
 	AuthorizedBookmarkWidget: (props: {
 		entityId: number;
 		instanceObjectType: SavedListType;
 		isKnownType: SavedListType;
 		modalTitle?: string;
+		initialIsBookmarked?: boolean;
+		initialIsKnown?: boolean;
+		loadOnMount?: boolean;
 	}) => {
 		authorizedWidgetProps.push(props);
 		return <div>Authorized bookmark widget</div>;
 	},
 }));
 
+vi.mock('@/assets/images/spinner.gif', () => ({
+	default: 'spinner.gif',
+}));
+
 describe('KanjiDetails', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		authorizedWidgetProps.length = 0;
-		vi.mocked(React.useState).mockReset();
+		isAuthenticated = true;
 	});
 
-	it('uses the shared authorized bookmark widget for kanji catalogue actions', () => {
-		const setKanjiMock = vi.fn();
-		const setWordsMock = vi.fn();
-		const setSentencesMock = vi.fn();
-		const setArticlesMock = vi.fn();
-		const setIsLoadingMock = vi.fn();
+	it('renders migrated v1 kanji detail data', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		vi.mocked(React.useState)
-			.mockImplementationOnce(() => [
-				{
-					kanji: '火',
-					hiragana: 'ひ',
-					meaning: 'fire',
-					onyomi: 'カ',
-					kunyomi: 'ひ',
-					radical_parts: '',
-					stroke_count: 4,
-					jlpt: 5,
-					frequency: 100,
-				} as never,
-				setKanjiMock,
-			])
-			.mockImplementationOnce(() => [[] as never, setWordsMock])
-			.mockImplementationOnce(() => [[] as never, setSentencesMock])
-			.mockImplementationOnce(() => [[] as never, setArticlesMock])
-			.mockImplementationOnce(() => [false as never, setIsLoadingMock]);
+		expect(html).toContain('<h1>水</h1>');
+		expect(html).toContain('Kunyomi: みず');
+		expect(html).toContain('Onyomi: スイ');
+		expect(html).toContain('<h2>water, river</h2>');
+		expect(html).toContain('JLPT: 5');
+		expect(html.indexOf('Kunyomi: みず')).toBeLessThan(html.indexOf('Onyomi: スイ'));
+		expect(html.indexOf('Onyomi: スイ')).toBeLessThan(html.indexOf('<h2>water, river</h2>'));
+	});
 
+	it('uses numeric kanji id for catalogue actions', () => {
 		renderToStaticMarkup(<KanjiDetails />);
 
-		expect(authorizedWidgetProps[0]).toEqual({
+		expect(authorizedWidgetProps[0]).toMatchObject({
 			entityId: 88,
 			instanceObjectType: SavedListType.KANJIS,
 			isKnownType: SavedListType.KNOWNKANJIS,
 			modalTitle: 'Choose Kanji List to add',
+			initialIsBookmarked: true,
+			initialIsKnown: false,
+			loadOnMount: false,
 		});
+	});
+
+	it('renders related words sentences and articles from the v1 detail aggregate', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toContain('Found in (1) words');
+		expect(html).toContain('水泳');
+		expect(html).toContain('<h3>swimming</h3>');
+		expect(html).toContain('JLPT: N5');
+		expect(html).toContain('/word/word-uuid');
+		expect(html).toContain('Found in (1) sentences');
+		expect(html).toContain('水を飲みます。');
+		expect(html).toContain('/sentence/sentence-uuid');
+		expect(html).toContain('Found in (1) articles');
+		expect(html).toContain('水の記事');
+		expect(html).toContain('/articles/article-uuid');
+		expect(html.match(/post-preview d-flex justify-content-between/g)).toHaveLength(3);
+		expect(html.match(/relatedResource/g)).toHaveLength(3);
+	});
+
+	it('keeps core and related detail public without catalogue actions for guests', () => {
+		isAuthenticated = false;
+
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toContain('<h2>water, river</h2>');
+		expect(html).toContain('Found in (1) words');
+		expect(html).not.toContain('Authorized bookmark widget');
+		expect(authorizedWidgetProps).toHaveLength(0);
 	});
 });

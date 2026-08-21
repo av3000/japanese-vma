@@ -31,6 +31,13 @@ interface CatalogueItemRepositoryInterface
      */
     public function findCatalogueIdsContainingItem(array $catalogueIds, int $itemId): array;
 
+    /**
+     * @param  int[]  $catalogueIds
+     * @param  int[]  $itemIds
+     * @return array<int, int[]> map real_object_id => list_id[]
+     */
+    public function findCatalogueIdsByItemIds(array $catalogueIds, array $itemIds): array;
+
     public function containsItem(int $catalogueId, int $itemId): bool;
 
     public function addItem(int $catalogueId, SavedListType $catalogueType, int $itemId): void;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useArticleQuery } from '@/api/articles/details';
-import Spinner from '@/assets/images/spinner.gif';
 import ArticleContent from './ArticleContent';
+import ArticleDetailsSkeleton from './ArticleDetailsSkeleton';
 
 const ArticleDetails: React.FC = () => {
 	const { article_id } = useParams<{ article_id: string }>();
@@ -10,11 +10,7 @@ const ArticleDetails: React.FC = () => {
 	const { data: article, isLoading, isError } = useArticleQuery(article_id);
 
 	if (isLoading) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <ArticleDetailsSkeleton />;
 	}
 
 	if (isError || !article) {

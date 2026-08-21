@@ -1,0 +1,163 @@
+.backLink {
+	width: 8rem;
+	height: 1rem;
+	margin-top: var(--spacing-lg);
+}
+
+.title {
+	width: min(100%, 34rem);
+	height: 2.5rem;
+	margin-top: var(--spacing-md);
+}
+
+.metaRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-md);
+	margin: var(--spacing-sm) 0 var(--spacing-md);
+}
+
+.metaBlock {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+	width: min(100%, 22rem);
+}
+
+.metaLine {
+	height: 1rem;
+}
+
+.metaLineShort {
+	width: 45%;
+}
+
+.metaLineLong {
+	width: 78%;
+}
+
+.statusCluster {
+	display: flex;
+	gap: var(--spacing-xs);
+}
+
+.statusPill {
+	width: 4.75rem;
+	height: 1.75rem;
+	border-radius: 999px;
+}
+
+.cover {
+	aspect-ratio: 16 / 9;
+	width: 100%;
+	border-radius: var(--border-radius-md);
+	margin-bottom: var(--spacing-md);
+}
+
+.paragraphStack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xs);
+	margin-top: var(--spacing-md);
+}
+
+.paragraphLine {
+	height: 1.125rem;
+}
+
+.paragraphLineFull {
+	width: 100%;
+}
+
+.paragraphLineMedium {
+	width: 88%;
+}
+
+.paragraphLineShort {
+	width: 64%;
+}
+
+.chipList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-3xs);
+	margin-top: var(--spacing-md);
+}
+
+.chip {
+	width: 5rem;
+	height: 1.75rem;
+	border-radius: 999px;
+}
+
+.authorRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-md);
+}
+
+.author {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.avatar {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 999px;
+	flex: 0 0 auto;
+}
+
+.authorLine {
+	width: 11rem;
+	height: 1rem;
+}
+
+.actionCluster {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.action {
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: 999px;
+}
+
+.comments {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+}
+
+.commentsTitle {
+	width: 8rem;
+	height: 1.25rem;
+}
+
+.commentLine {
+	height: 1rem;
+}
+
+@media (max-width: 575.98px) {
+	.metaRow,
+	.authorRow {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.statusCluster,
+	.actionCluster {
+		width: 100%;
+		justify-content: flex-start;
+	}
+
+	.title {
+		height: 2rem;
+	}
+}

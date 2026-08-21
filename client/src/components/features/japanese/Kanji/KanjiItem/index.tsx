@@ -1,70 +1,83 @@
 import React from 'react';
-
-import { Button } from '@/components/shared/Button';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { Link } from '@/components/shared/Link';
+import { useAuth } from '@/hooks/useAuth';
+import { SavedListType } from '@/shared/constants/enums';
 
 interface KanjiItemProps {
-  id: string | number;
-  kanji: string;
-  stroke_count: number;
-  onyomi: string;
-  kunyomi: string;
-  meaning: string;
-  frequency: number | string;
-  jlpt: string;
-  parts: string;
-  addToList: (id: string | number) => void;
+	id: string | number;
+	uuid: string;
+	character: string;
+	strokeCount: number;
+	onyomi: string;
+	kunyomi: string;
+	meaning: string;
+	frequency: string;
+	jlpt: string;
+	parts: string;
+	isSaved?: boolean;
+	isKnown?: boolean;
+	onBookmarkStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
 }
 
 const KanjiItem: React.FC<KanjiItemProps> = ({
-  id,
-  kanji,
-  stroke_count,
-  onyomi,
-  kunyomi,
-  meaning,
-  frequency,
-  jlpt,
-  parts,
-  addToList,
+	id,
+	uuid,
+	character,
+	strokeCount,
+	onyomi,
+	kunyomi,
+	meaning,
+	frequency,
+	jlpt,
+	parts,
+	isSaved = false,
+	isKnown = false,
+	onBookmarkStateChange,
 }) => {
-  const handleAddToList = () => {
-    addToList(id);
-  };
-  return (
-    <div className="post-preview">
-      <div className="post-title">
-        <h1>{kanji}</h1>
-      </div>
-      <div className="post-subtitle">
-        <h3>{meaning}</h3>
-      </div>
-      <div className="row">
-        <div className="col-md-6">
-          <p>
-            onyomi: {onyomi}, <br /> kunyomi: {kunyomi}
-          </p>
-        </div>
-        <div className="col-md-3">
-          <p>
-            frequency: {frequency}, <br /> jlpt: {jlpt}
-          </p>
-        </div>
-        <div className="col-md-3">
-          <p>
-            parts: {parts}, <br /> stroke_count: {stroke_count}
-            <span className="float-right">
-              <Link to={`/kanji/${id}`}>Open</Link>
-            </span>
-          </p>
-          <Button size="sm" variant="ghost" onClick={handleAddToList}>
-            Add to List
-          </Button>
-        </div>
-      </div>
-      <hr />
-    </div>
-  );
+	const { isAuthenticated } = useAuth();
+	const entityId = Number(id);
+
+	return (
+		<div className="post-preview">
+			<div className="post-title">
+				<h1>{character}</h1>
+			</div>
+			<div className="post-subtitle">
+				<h3>{meaning}</h3>
+			</div>
+			<div className="row">
+				<div className="col-md-6">
+					<div>onyomi: {onyomi},</div>
+					<div>kunyomi: {kunyomi}</div>
+				</div>
+				<div className="col-md-3">
+					<div>frequency: {frequency},</div>
+					<div>jlpt: {jlpt}</div>
+				</div>
+				<div className="col-md-3">
+					<div>parts: {parts},</div>
+					<div>stroke_count: {strokeCount}</div>
+					<div className="float-right">
+						<Link to={`/kanji/${uuid}`}>Open</Link>
+					</div>
+					{isAuthenticated && (
+						<AuthorizedBookmarkWidget
+							instanceObjectType={SavedListType.KANJIS}
+							isKnownType={SavedListType.KNOWNKANJIS}
+							entityId={entityId}
+							modalTitle="Choose Kanji List to add"
+							initialIsBookmarked={isSaved}
+							initialIsKnown={isKnown}
+							loadOnMount={false}
+							onStateChange={onBookmarkStateChange}
+						/>
+					)}
+				</div>
+			</div>
+			<hr />
+		</div>
+	);
 };
 
 export default KanjiItem;

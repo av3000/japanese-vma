@@ -66,7 +66,8 @@ class ArticleService implements ArticleServiceInterface
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Create article with hashtags atomically.
@@ -226,17 +227,18 @@ class ArticleService implements ArticleServiceInterface
             visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
             include_kanjis: $dto->include_kanjis,
-            include_words: $dto->include_words
+            include_words: $dto->include_words,
+            kanjiId: $dto->kanji_id,
         );
 
         $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
         $articles = $paginatedArticles->getItems();
         $articleIds = array_map(
-            static fn(DomainArticle $article): int => $article->getIdValue(),
+            static fn (DomainArticle $article): int => $article->getIdValue(),
             $articles,
         );
         $articleUuids = array_map(
-            static fn(DomainArticle $article): string => $article->getUid()->value(),
+            static fn (DomainArticle $article): string => $article->getUid()->value(),
             $articles,
         );
 
@@ -259,7 +261,7 @@ class ArticleService implements ArticleServiceInterface
 
         return new ArticleListResultDTO(
             items: array_map(
-                static fn(DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
+                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
                     article: $article,
                     stats: $statsMap[$article->getIdValue()] ?? null,
                     hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
@@ -368,7 +370,7 @@ class ArticleService implements ArticleServiceInterface
 
     private function articleWordProcessingText(DomainArticle $article): string
     {
-        return $article->getTitleJp()->value . $article->getContentJp()->value;
+        return $article->getTitleJp()->value.$article->getContentJp()->value;
     }
 
     /**

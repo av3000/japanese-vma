@@ -1,6 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { useInfiniteWords } from '@/api/words/hooks/useInfiniteWords';
-import type { WordListFilters } from '@/api/words/hooks/useInfiniteWords';
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
+import {
+	WORD_VIEWER_CATALOGUE_INCLUDE,
+	applyWordViewerCatalogueState,
+	getInfiniteWordsQueryKey,
+	useInfiniteWords,
+} from '@/api/words/hooks/useInfiniteWords';
+import type { WordListFilters, WordListResponse, WordViewerCatalogueState } from '@/api/words/hooks/useInfiniteWords';
 import Spinner from '@/assets/images/spinner.gif';
 import WordItem from '@/components/features/japanese/word/WordItem';
 import { Button } from '@/components/shared/Button';
@@ -12,9 +19,11 @@ const DEFAULT_PER_PAGE = 10;
 const mapSearchFiltersToWordParams = (filters: WordSearchFilters | Record<string, never>): WordListFilters => ({
 	keyword: typeof filters.keyword === 'string' && filters.keyword.trim() ? filters.keyword.trim() : undefined,
 	per_page: DEFAULT_PER_PAGE,
+	include: WORD_VIEWER_CATALOGUE_INCLUDE,
 });
 
 const WordsList: React.FC = () => {
+	const queryClient = useQueryClient();
 	const [filters, setFilters] = useState<WordSearchFilters | Record<string, never>>({});
 	const queryFilters = useMemo(() => mapSearchFiltersToWordParams(filters), [filters]);
 	const { words, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
@@ -24,6 +33,12 @@ const WordsList: React.FC = () => {
 
 	const handleApplyFilters = (newFilters: WordSearchFilters) => {
 		setFilters(newFilters);
+	};
+
+	const handleWordBookmarkStateChange = (wordId: number, state: WordViewerCatalogueState) => {
+		queryClient.setQueryData<InfiniteData<WordListResponse>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
+			applyWordViewerCatalogueState(data, wordId, state),
+		);
 	};
 
 	const searchHeading =
@@ -70,6 +85,14 @@ const WordsList: React.FC = () => {
 									word_type={word.word_type}
 									meaning={word.meaning}
 									jlpt={word.jlpt ?? ''}
+									isSaved={word.viewer_catalogue_state?.is_saved ?? false}
+									isKnown={word.viewer_catalogue_state?.is_known ?? false}
+									onBookmarkStateChange={(state) =>
+										handleWordBookmarkStateChange(word.id, {
+											is_saved: state.isBookmarked,
+											is_known: state.isKnown,
+										})
+									}
 								/>
 							))
 						)}

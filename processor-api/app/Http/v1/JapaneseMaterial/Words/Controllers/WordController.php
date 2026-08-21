@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Words\Controllers;
 
+use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
 use App\Http\v1\JapaneseMaterial\Words\Requests\IndexWordRequest;
@@ -21,6 +23,7 @@ class WordController extends Controller
 {
     public function __construct(
         private readonly WordServiceInterface $wordService,
+        private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
     ) {
     }
 
@@ -40,12 +43,13 @@ class WordController extends Controller
      *         word_type: string,
      *         word_k_ele: string,
      *         furigana_r_ele: string,
-     *         sense: string|null
+     *         sense: string|null,
+     *         viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
      *     }>,
      *     pagination: PaginationResource
      * }
      */
-    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, word: string, furigana: string, jlpt: string|null, meaning: string, meanings: array<int, string>, word_types: array<int, string>, writing_elements: array<int, string>, reading_elements: array<int, string>, word_type: string, word_k_ele: string, furigana_r_ele: string, sense: string|null}>, pagination: PaginationResource}')]
+    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, word: string, furigana: string, jlpt: string|null, meaning: string, meanings: array<int, string>, word_types: array<int, string>, writing_elements: array<int, string>, reading_elements: array<int, string>, word_type: string, word_k_ele: string, furigana_r_ele: string, sense: string|null, viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null}>, pagination: PaginationResource}')]
     public function index(IndexWordRequest $request): JsonResponse|JsonResource
     {
         $validated = $request->validated();
@@ -65,7 +69,23 @@ class WordController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        return new WordListResource($result->getData());
+        $wordListResult = $result->getData();
+        $viewerCatalogueStates = [];
+        $user = auth('api')->user();
+
+        if ($request->includesViewerCatalogueState() && $user !== null) {
+            $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(
+                user: $user,
+                itemIds: array_map(
+                    static fn ($word): int => $word->getIdValue(),
+                    $wordListResult->items,
+                ),
+                savedType: SavedListType::WORDS,
+                knownType: SavedListType::KNOWNWORDS,
+            );
+        }
+
+        return new WordListResource($wordListResult, $viewerCatalogueStates);
     }
 
     /**

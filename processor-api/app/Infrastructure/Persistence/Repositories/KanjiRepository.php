@@ -3,67 +3,88 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
-use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
+use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiListResultDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
-use App\Domain\JapaneseMaterial\Kanjis\Models\Kanjis;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Infrastructure\Persistence\Repositories\KanjiMapper;
+use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
 use Illuminate\Database\Eloquent\Builder;
 
 class KanjiRepository implements KanjiRepositoryInterface
 {
     public function __construct(
         private readonly KanjiMapper $kanjiMapper
-    ) {}
+    ) {
+    }
+
+    public function findById(int $id): ?DomainKanji
+    {
+        $persistenceKanji = PersistenceKanji::query()->find($id);
+
+        return $persistenceKanji
+            ? $this->kanjiMapper->mapToDomain($persistenceKanji)
+            : null;
+    }
 
     public function findByUuid(EntityId $uuid): ?DomainKanji
     {
         $persistenceKanji = PersistenceKanji::where('uuid', $uuid->value())->first();
+
         return $persistenceKanji ? $this->kanjiMapper->mapToDomain($persistenceKanji) : null;
     }
 
     public function findByCharacter(KanjiCharacter $character): ?DomainKanji
     {
         $persistenceKanji = PersistenceKanji::where('kanji', $character->value())->first();
+
         return $persistenceKanji ? $this->kanjiMapper->mapToDomain($persistenceKanji) : null;
     }
 
-    public function find(?KanjiQueryCriteria $criteria = null): Kanjis
+    public function find(?KanjiQueryCriteria $criteria = null): KanjiListResultDTO
     {
-        $query = PersistenceKanji::query();
+        $query = PersistenceKanji::query()->orderBy('id');
 
         if ($criteria) {
             $this->applyKanjiFilters($query, $criteria);
             $this->applyParentEntityFilters($query, $criteria);
-            // $this->applyFilters($query, $criteria);
         }
-        //  else {
-        //     $query->orderBy('kanji', 'asc');
-        // }
 
         $perPage = $criteria?->pagination?->per_page ?? Pagination::DEFAULT_PER_PAGE;
         $page = $criteria?->pagination?->page ?? Pagination::MIN_PAGE;
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedResults */
-        $paginatedResults = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
-        $domainKanjis = $paginatedResults->getCollection()
-            ->map(function (PersistenceKanji $persistenceKanji) {
-                return $this->kanjiMapper->mapToDomain($persistenceKanji);
-            });
+        $items = $paginator->getCollection()
+            ->map(fn (PersistenceKanji $kanji): DomainKanji => $this->kanjiMapper->mapToDomain($kanji))
+            ->all();
 
-        $paginatedResults->setCollection($domainKanjis);
-
-        return Kanjis::fromEloquentPaginator($paginatedResults);
+        return new KanjiListResultDTO(
+            items: $items,
+            pagination: [
+                'page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ],
+        );
     }
 
     private function applyKanjiFilters(Builder $query, KanjiQueryCriteria $criteria): void
     {
         if ($criteria->uuid !== null) {
             $query->where('uuid', $criteria->uuid->value());
+        }
+
+        if ($criteria->keyword !== null && $criteria->keyword !== '') {
+            $keyword = $criteria->keyword;
+
+            $query->where(function (Builder $query) use ($keyword): void {
+                $query->where('kanji', 'LIKE', "%{$keyword}%")
+                    ->orWhere('meaning', 'LIKE', "%{$keyword}%");
+            });
         }
 
         if ($criteria->character !== null) {
@@ -79,33 +100,39 @@ class KanjiRepository implements KanjiRepositoryInterface
         }
 
         if ($criteria->minStrokeCount !== null) {
-            $query->where('stroke_count', '>=', $criteria->minStrokeCount['min']);
+            $query->whereRaw('CAST(stroke_count AS UNSIGNED) >= ?', [$criteria->minStrokeCount]);
         }
 
         if ($criteria->maxStrokeCount !== null) {
-            $query->where('stroke_count', '<=', $criteria->maxStrokeCount['max']);
+            $query->whereRaw('CAST(stroke_count AS UNSIGNED) <= ?', [$criteria->maxStrokeCount]);
         }
 
-        if ($criteria->meanings !== null && !empty($criteria->meanings)) {
-            foreach ($criteria->meanings as $meaning) {
-                $query->where('meaning', 'LIKE', '%' . $meaning . '%');
-            }
+        if ($criteria->meanings !== null && $criteria->meanings !== []) {
+            $query->where(function (Builder $query) use ($criteria): void {
+                foreach ($criteria->meanings as $meaning) {
+                    $query->orWhere('meaning', 'LIKE', "%{$meaning}%");
+                }
+            });
         }
-        if ($criteria->onyomi !== null && !empty($criteria->onyomi)) {
-            foreach ($criteria->onyomi as $onyomi) {
-                $query->orWhere('onyomi', 'LIKE', '%' . $onyomi . '%');
-            }
+
+        if ($criteria->onyomi !== null && $criteria->onyomi !== []) {
+            $query->where(function (Builder $query) use ($criteria): void {
+                foreach ($criteria->onyomi as $onyomi) {
+                    $query->orWhere('onyomi', 'LIKE', "%{$onyomi}%");
+                }
+            });
         }
-        if ($criteria->kunyomi !== null && !empty($criteria->kunyomi)) {
-            foreach ($criteria->kunyomi as $kunyomi) {
-                $query->orWhere('kunyomi', 'LIKE', '%' . $kunyomi . '%');
-            }
+
+        if ($criteria->kunyomi !== null && $criteria->kunyomi !== []) {
+            $query->where(function (Builder $query) use ($criteria): void {
+                foreach ($criteria->kunyomi as $kunyomi) {
+                    $query->orWhere('kunyomi', 'LIKE', "%{$kunyomi}%");
+                }
+            });
         }
-        // TODO: Radical and kanji have relational table, use that to find by radicals
+
         if ($criteria->radical !== null) {
-            $query->where('radicals', 'LIKE', '%' . $criteria->radical . '%');
-            // Or use a relation if 'radicals' is a proper relation
-            // $query->whereHas('radicals', fn($q) => $q->where('character', $criteria->radical));
+            $query->where('radicals', 'LIKE', "%{$criteria->radical}%");
         }
     }
 
@@ -129,7 +156,6 @@ class KanjiRepository implements KanjiRepositoryInterface
         //     });
         // }
     }
-
 
     public function findIdsByCharacters(array $characters): array
     {
@@ -162,12 +188,12 @@ class KanjiRepository implements KanjiRepositoryInterface
             return [];
         }
 
-        $charValues = array_map(fn(KanjiCharacter $c) => $c->value(), $characters);
+        $charValues = array_map(fn (KanjiCharacter $c) => $c->value(), $characters);
 
         $persistenceKanjis = PersistenceKanji::whereIn('kanji', $charValues)->get();
 
         return $persistenceKanjis->map(
-            fn(PersistenceKanji $pk) => $this->kanjiMapper->mapToDomain($pk)
+            fn (PersistenceKanji $pk) => $this->kanjiMapper->mapToDomain($pk)
         )->toArray();
     }
 }

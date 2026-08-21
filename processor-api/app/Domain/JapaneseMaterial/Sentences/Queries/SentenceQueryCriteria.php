@@ -16,7 +16,9 @@ final readonly class SentenceQueryCriteria
         public ?string $content = null,
         public ?string $tatoebaEntry = null,
         public ?int $userId = null,
-    ) {}
+        public ?int $kanjiId = null,
+    ) {
+    }
 
     public static function forListing(
         int $page = Pagination::MIN_PAGE,
@@ -25,6 +27,7 @@ final readonly class SentenceQueryCriteria
         ?string $content = null,
         ?string $tatoebaEntry = null,
         ?int $userId = null,
+        ?int $kanjiId = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -32,6 +35,7 @@ final readonly class SentenceQueryCriteria
             content: $content,
             tatoebaEntry: $tatoebaEntry,
             userId: $userId,
+            kanjiId: $kanjiId,
         );
     }
 }

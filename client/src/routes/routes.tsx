@@ -79,14 +79,7 @@ const AppRoutes: React.FC = () => {
 					</SuspenseWrapper>
 				}
 			/>
-			<Route
-				path="/articles/:article_id"
-				element={
-					<SuspenseWrapper>
-						<ArticleDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
+			<Route path="/articles/:article_id" element={<ArticleDetailsPage />} />
 
 			{/* Catalogues */}
 			<Route

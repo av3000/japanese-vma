@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WordIndex200 } from '@/api/generated/model/wordIndex200';
 import {
+	applyWordViewerCatalogueState,
 	getInfiniteWordsQueryKey,
 	getNextWordsPageParam,
 	getWordsTotal,
@@ -24,6 +25,7 @@ const createWordListResponse = (overrides: Partial<WordListResponse> = {}): Word
 			word_k_ele: '学校',
 			furigana_r_ele: 'がっこう',
 			sense: '[[["gloss",["school"]]]]',
+			viewer_catalogue_state: null,
 		},
 	],
 	pagination: {
@@ -70,5 +72,33 @@ describe('useInfiniteWords helpers', () => {
 
 	it('returns zero total before pages load', () => {
 		expect(getWordsTotal(undefined)).toBe(0);
+	});
+
+	it('patches viewer catalogue state for one word inside loaded pages', () => {
+		const response = createWordListResponse();
+
+		expect(
+			applyWordViewerCatalogueState(
+				{
+					pages: [response],
+					pageParams: [1],
+				},
+				1,
+				{ is_saved: true, is_known: false },
+			),
+		).toEqual({
+			pages: [
+				{
+					...response,
+					items: [
+						{
+							...response.items[0],
+							viewer_catalogue_state: { is_saved: true, is_known: false },
+						},
+					],
+				},
+			],
+			pageParams: [1],
+		});
 	});
 });
