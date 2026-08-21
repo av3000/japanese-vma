@@ -1,291 +1,97 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import PrivateRoute from '@/helpers/PrivateRoute';
+import ArticleDetailsSkeleton from '@/routes/ArticleDetails/ArticleDetailsSkeleton';
 import ArticlesListSkeleton from '@/routes/ArticlesList/ArticlesListSkeleton/ArticlesListSkeleton';
 import CataloguesListSkeleton from '@/routes/CataloguesList/CatalogueListSkeleton/CataloguesListSkeleton';
 import HomePage from '@/routes/Homepage';
+import { createLazyRoute } from '@/routes/routeLoading/createLazyRoute';
 
-// Lazy-loaded page components
-const PageNotFound = lazy(() => import('@/routes/NotFound'));
+const PageNotFound = createLazyRoute(() => import('@/routes/NotFound'));
 
-// Auth routes
-const LoginPage = lazy(() => import('@/routes/Login'));
-const RegisterPage = lazy(() => import('@/routes/Register'));
+const LoginPage = createLazyRoute(() => import('@/routes/Login'), { family: 'form' });
+const RegisterPage = createLazyRoute(() => import('@/routes/Register'), { family: 'form' });
 
-// Article routes
-const ArticlesListPage = lazy(() => import('@/routes/ArticlesList'));
-const ArticleDetailsPage = lazy(() => import('@/routes/ArticleDetails'));
-const ArticleCreatePage = lazy(() => import('@/routes/ArticleCreate'));
-const ArticleEditPage = lazy(() => import('@/routes/ArticleEdit'));
+const ArticlesListPage = createLazyRoute(() => import('@/routes/ArticlesList'), {
+	family: 'list',
+	visual: <ArticlesListSkeleton />,
+});
+const ArticleDetailsPage = createLazyRoute(() => import('@/routes/ArticleDetails'), {
+	family: 'detail',
+	visual: <ArticleDetailsSkeleton />,
+});
+const ArticleCreatePage = createLazyRoute(() => import('@/routes/ArticleCreate'), { family: 'form' });
+const ArticleEditPage = createLazyRoute(() => import('@/routes/ArticleEdit'), { family: 'form' });
 
-// Catalogue routes
-const CataloguesListPage = lazy(() => import('@/routes/CataloguesList'));
-const CatalogueDetailsPage = lazy(() => import('@/routes/CatalogueDetails'));
-const CatalogueCreatePage = lazy(() => import('@/routes/CatalogueCreate'));
-const CatalogueEditPage = lazy(() => import('@/routes/CatalogueEdit'));
-const CatalogueLegacyRedirectsPage = lazy(() => import('@/routes/CatalogueLegacyRedirects'));
+const CataloguesListPage = createLazyRoute(() => import('@/routes/CataloguesList'), {
+	family: 'list',
+	visual: <CataloguesListSkeleton />,
+});
+const CatalogueDetailsPage = createLazyRoute(() => import('@/routes/CatalogueDetails'), { family: 'detail' });
+const CatalogueCreatePage = createLazyRoute(() => import('@/routes/CatalogueCreate'), { family: 'form' });
+const CatalogueEditPage = createLazyRoute(() => import('@/routes/CatalogueEdit'), { family: 'form' });
+const CatalogueLegacyRedirectsPage = createLazyRoute(() => import('@/routes/CatalogueLegacyRedirects'));
 
-// Japanese learning routes
-const RadicalsPage = lazy(() => import('@/routes/japanese/RadicalsList'));
-const RadicalDetailsPage = lazy(() => import('@/routes/japanese/RadicalDetails'));
-const KanjisPage = lazy(() => import('@/routes/japanese/KanjisList'));
-const KanjiDetailsPage = lazy(() => import('@/routes/japanese/KanjiDetails'));
-const WordsPage = lazy(() => import('@/routes/japanese/WordsList'));
-const WordDetailsPage = lazy(() => import('@/routes/japanese/WordDetails'));
-const SentencesPage = lazy(() => import('@/routes/japanese/SentencesList'));
-const SentenceDetailsPage = lazy(() => import('@/routes/japanese/SentenceDetails'));
+const RadicalsPage = createLazyRoute(() => import('@/routes/japanese/RadicalsList'), { family: 'list' });
+const RadicalDetailsPage = createLazyRoute(() => import('@/routes/japanese/RadicalDetails'), {
+	family: 'detail',
+});
+const KanjisPage = createLazyRoute(() => import('@/routes/japanese/KanjisList'), { family: 'list' });
+const KanjiDetailsPage = createLazyRoute(() => import('@/routes/japanese/KanjiDetails'), { family: 'detail' });
+const WordsPage = createLazyRoute(() => import('@/routes/japanese/WordsList'), { family: 'list' });
+const WordDetailsPage = createLazyRoute(() => import('@/routes/japanese/WordDetails'), { family: 'detail' });
+const SentencesPage = createLazyRoute(() => import('@/routes/japanese/SentencesList'), { family: 'list' });
+const SentenceDetailsPage = createLazyRoute(() => import('@/routes/japanese/SentenceDetails'), {
+	family: 'detail',
+});
 
-// Community routes
-const CommunityPage = lazy(() => import('@/routes/community/PostsList'));
-const PostDetailsPage = lazy(() => import('@/routes/community/PostDetails'));
-const PostFormPage = lazy(() => import('@/routes/community/PostForm'));
-const PostEditPage = lazy(() => import('@/routes/community/PostEdit'));
+const CommunityPage = createLazyRoute(() => import('@/routes/community/PostsList'), { family: 'list' });
+const PostDetailsPage = createLazyRoute(() => import('@/routes/community/PostDetails'), { family: 'detail' });
+const PostFormPage = createLazyRoute(() => import('@/routes/community/PostForm'), { family: 'form' });
+const PostEditPage = createLazyRoute(() => import('@/routes/community/PostEdit'), { family: 'form' });
 
-// Dashboard routes
-const DashboardPage = lazy(() => import('@/routes/Dashboard'));
+const DashboardPage = createLazyRoute(() => import('@/routes/Dashboard'), { family: 'dashboard' });
 
-const SuspenseWrapper = ({ children, fallback = null }: { children: React.ReactNode; fallback?: React.ReactNode }) => (
-	<Suspense fallback={fallback}>{children}</Suspense>
+const AppRoutes: React.FC = () => (
+	<Routes>
+		<Route path="/" element={<HomePage />} />
+		<Route path="/login" element={<LoginPage />} />
+		<Route path="/register" element={<RegisterPage />} />
+
+		<Route path="/articles" element={<ArticlesListPage />} />
+		<Route path="/articles/:article_id" element={<ArticleDetailsPage />} />
+
+		<Route path="/catalogues" element={<CataloguesListPage />} />
+		<Route path="/catalogues/:catalogueId" element={<CatalogueDetailsPage />} />
+		<Route path="/lists" element={<CatalogueLegacyRedirectsPage />} />
+		<Route path="/list/:catalogueId" element={<CatalogueLegacyRedirectsPage />} />
+
+		<Route path="/radicals" element={<RadicalsPage />} />
+		<Route path="/radical/:radical_id" element={<RadicalDetailsPage />} />
+		<Route path="/kanjis" element={<KanjisPage />} />
+		<Route path="/kanji/:kanji_id" element={<KanjiDetailsPage />} />
+		<Route path="/words" element={<WordsPage />} />
+		<Route path="/word/:word_id" element={<WordDetailsPage />} />
+		<Route path="/sentences" element={<SentencesPage />} />
+		<Route path="/sentence/:sentence_id" element={<SentenceDetailsPage />} />
+
+		<Route path="/community" element={<CommunityPage />} />
+		<Route path="/community/:post_id" element={<PostDetailsPage />} />
+
+		<Route element={<PrivateRoute />}>
+			<Route path="/newarticle" element={<ArticleCreatePage />} />
+			<Route path="/article/edit/:article_id" element={<ArticleEditPage />} />
+			<Route path="/catalogues/new" element={<CatalogueCreatePage />} />
+			<Route path="/catalogues/:catalogueId/edit" element={<CatalogueEditPage />} />
+			<Route path="/newlist" element={<CatalogueLegacyRedirectsPage />} />
+			<Route path="/list/edit/:catalogueId" element={<CatalogueLegacyRedirectsPage />} />
+			<Route path="/newpost" element={<PostFormPage />} />
+			<Route path="/community/edit/:post_id" element={<PostEditPage />} />
+			<Route path="/dashboard" element={<DashboardPage />} />
+		</Route>
+
+		<Route path="*" element={<PageNotFound />} />
+	</Routes>
 );
-
-const AppRoutes: React.FC = () => {
-	return (
-		<Routes>
-			{/* Public routes */}
-			<Route path="/" element={<HomePage />} />
-			<Route
-				path="/login"
-				element={
-					<SuspenseWrapper>
-						<LoginPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/register"
-				element={
-					<SuspenseWrapper>
-						<RegisterPage />
-					</SuspenseWrapper>
-				}
-			/>
-
-			{/* Articles */}
-			<Route
-				path="/articles"
-				element={
-					<SuspenseWrapper fallback={<ArticlesListSkeleton />}>
-						<ArticlesListPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route path="/articles/:article_id" element={<ArticleDetailsPage />} />
-
-			{/* Catalogues */}
-			<Route
-				path="/catalogues"
-				element={
-					<SuspenseWrapper fallback={<CataloguesListSkeleton />}>
-						<CataloguesListPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/catalogues/:catalogueId"
-				element={
-					<SuspenseWrapper>
-						<CatalogueDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/lists"
-				element={
-					<SuspenseWrapper>
-						<CatalogueLegacyRedirectsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/list/:catalogueId"
-				element={
-					<SuspenseWrapper>
-						<CatalogueLegacyRedirectsPage />
-					</SuspenseWrapper>
-				}
-			/>
-
-			{/* Japanese learning resources */}
-			<Route
-				path="/radicals"
-				element={
-					<SuspenseWrapper>
-						<RadicalsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/radical/:radical_id"
-				element={
-					<SuspenseWrapper>
-						<RadicalDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/kanjis"
-				element={
-					<SuspenseWrapper>
-						<KanjisPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/kanji/:kanji_id"
-				element={
-					<SuspenseWrapper>
-						<KanjiDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/words"
-				element={
-					<SuspenseWrapper>
-						<WordsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/word/:word_id"
-				element={
-					<SuspenseWrapper>
-						<WordDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/sentences"
-				element={
-					<SuspenseWrapper>
-						<SentencesPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/sentence/:sentence_id"
-				element={
-					<SuspenseWrapper>
-						<SentenceDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-
-			{/* Community */}
-			<Route
-				path="/community"
-				element={
-					<SuspenseWrapper>
-						<CommunityPage />
-					</SuspenseWrapper>
-				}
-			/>
-			<Route
-				path="/community/:post_id"
-				element={
-					<SuspenseWrapper>
-						<PostDetailsPage />
-					</SuspenseWrapper>
-				}
-			/>
-
-			{/* Protected routes */}
-			<Route element={<PrivateRoute />}>
-				<Route
-					path="/newarticle"
-					element={
-						<SuspenseWrapper>
-							<ArticleCreatePage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/article/edit/:article_id"
-					element={
-						<SuspenseWrapper>
-							<ArticleEditPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/catalogues/new"
-					element={
-						<SuspenseWrapper>
-							<CatalogueCreatePage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/catalogues/:catalogueId/edit"
-					element={
-						<SuspenseWrapper>
-							<CatalogueEditPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/newlist"
-					element={
-						<SuspenseWrapper>
-							<CatalogueLegacyRedirectsPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/list/edit/:catalogueId"
-					element={
-						<SuspenseWrapper>
-							<CatalogueLegacyRedirectsPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/newpost"
-					element={
-						<SuspenseWrapper>
-							<PostFormPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/community/edit/:post_id"
-					element={
-						<SuspenseWrapper>
-							<PostEditPage />
-						</SuspenseWrapper>
-					}
-				/>
-				<Route
-					path="/dashboard"
-					element={
-						<SuspenseWrapper>
-							<DashboardPage />
-						</SuspenseWrapper>
-					}
-				/>
-			</Route>
-
-			{/* Catch-all for 404 */}
-			<Route
-				path="*"
-				element={
-					<SuspenseWrapper>
-						<PageNotFound />
-					</SuspenseWrapper>
-				}
-			/>
-		</Routes>
-	);
-};
 
 export default AppRoutes;
