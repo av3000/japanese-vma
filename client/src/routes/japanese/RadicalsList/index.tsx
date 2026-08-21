@@ -3,8 +3,8 @@ import {
 	type RadicalListFilters,
 	useInfiniteRadicals,
 } from '@/api/radicals/hooks/useInfiniteRadicals';
-import Spinner from '@/assets/images/spinner.gif';
 import RadicalItem from '@/components/features/japanese/radical/RadicalItem';
+import { PageLoading } from '@/components/shared/PageLoading';
 import SearchBarRadicals from './SearchBarRadicals';
 
 const DEFAULT_PER_PAGE = 10;
@@ -27,11 +27,7 @@ const RadicalsList = () => {
 	};
 
 	if (isLoading) {
-		return (
-			<div className="container text-center">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="list" />;
 	}
 
 	const searchTotal = `Results total: '${total}'`;

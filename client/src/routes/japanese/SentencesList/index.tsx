@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
-import Spinner from '@/assets/images/spinner.gif';
 import SentenceItem from '@/components/features/japanese/sentence/SentenceItem';
+import { PageLoading } from '@/components/shared/PageLoading';
 import SearchBarSentences from './SearchBarSentences';
 
 const DEFAULT_PER_PAGE = 10;
@@ -40,13 +40,7 @@ const SentencesList = () => {
 	};
 
 	if (isLoading) {
-		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			</div>
-		);
+		return <PageLoading family="list" />;
 	}
 
 	if (error) {

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import Spinner from '@/assets/images/spinner.gif';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { useAuth } from '@/hooks/useAuth';
 import DashboardArticlesPanel from './DashboardArticlesPanel';
 import DashboardCataloguesPanel from './DashboardCataloguesPanel';
@@ -23,13 +23,7 @@ const Dashboard: React.FC = () => {
 	}, []);
 
 	if (isLoading) {
-		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			</div>
-		);
+		return <PageLoading family="dashboard" />;
 	}
 
 	return (

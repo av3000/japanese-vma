@@ -13,6 +13,7 @@ import {
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
 import { Button } from '@/components/shared/Button';
+import { PageLoading } from '@/components/shared/PageLoading';
 import SearchBarKanjis from './SearchBarKanjis';
 import type { KanjiSearchFilters } from './SearchBarKanjis';
 
@@ -73,11 +74,7 @@ const KanjisList = () => {
 
 	// TODO: have loading indicator like skeleton or something else
 	if (isPending && kanjis.length === 0) {
-		return (
-			<div className="container text-center">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="list" />;
 	}
 
 	// TODO: create generic error component, perhaps creating simple alert component with variants (info, success, error, warning), accept message

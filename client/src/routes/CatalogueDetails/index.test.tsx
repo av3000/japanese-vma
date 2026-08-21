@@ -33,6 +33,22 @@ vi.mock('./CatalogueContent', () => ({
 }));
 
 describe('CatalogueDetailsPage', () => {
+	it('renders the detail loading family while the first query is pending', () => {
+		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
+		vi.mocked(useCatalogueQuery).mockReturnValue({
+			data: undefined,
+			isPending: true,
+			isError: false,
+		} as never);
+
+		const html = renderToStaticMarkup(<CatalogueDetailsPage />);
+
+		expect(html).toContain('aria-busy="true"');
+		expect(html).toContain('data-loading-family="detail"');
+		expect(html).toContain('Loading page.');
+		expect(html).not.toContain('alt="Loading..."');
+	});
+
 	it('loads canonical UUID routes directly without legacy identity resolution', () => {
 		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
 		vi.mocked(useCatalogueQuery).mockReturnValue({

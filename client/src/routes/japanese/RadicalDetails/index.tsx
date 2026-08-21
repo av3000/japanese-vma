@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useRadicalQuery } from '@/api/radicals/details';
-import Spinner from '@/assets/images/spinner.gif';
+import { PageLoading } from '@/components/shared/PageLoading';
 import RadicalContent from './RadicalContent';
 
 const RadicalDetails: React.FC = () => {
@@ -9,11 +9,7 @@ const RadicalDetails: React.FC = () => {
 	const { data: radical, isLoading, isError } = useRadicalQuery(radical_id);
 
 	if (isLoading) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" />;
 	}
 
 	if (isError || !radical) {

@@ -11,12 +11,12 @@ import {
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
-import Spinner from '@/assets/images/spinner.gif';
 import {
 	CatalogueForm,
 	type CatalogueFormSubmitMeta,
 	type CatalogueFormValues,
 } from '@/components/features/catalogues/CatalogueForm';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
@@ -77,11 +77,7 @@ const CatalogueEditPage = () => {
 	}, [catalogue]);
 
 	if (!catalogueId || (isPending && !catalogue)) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="form" />;
 	}
 
 	if (isError || !catalogue) {
