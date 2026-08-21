@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\JapaneseMaterial\Radicals\Models\Radical as DomainRadical;
+use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
 use App\Infrastructure\Persistence\Models\Radical as PersistenceRadical;
@@ -21,6 +22,7 @@ class RadicalMapper
 
         if ($persistenceRadical->relationLoaded('kanjis')) {
             $kanjis = $persistenceRadical->kanjis
+                ->filter(fn (PersistenceKanji $kanji) => KanjiCharacter::isValid($kanji->kanji))
                 ->map(fn (PersistenceKanji $kanji) => $this->kanjiMapper->mapToDomain($kanji))
                 ->all();
         }
