@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import {
 	WORD_VIEWER_CATALOGUE_INCLUDE,
 	applyWordViewerCatalogueState,
@@ -16,23 +17,34 @@ import type { WordSearchFilters } from './SearchBarWords';
 
 const DEFAULT_PER_PAGE = 10;
 
-const mapSearchFiltersToWordParams = (filters: WordSearchFilters | Record<string, never>): WordListFilters => ({
-	keyword: typeof filters.keyword === 'string' && filters.keyword.trim() ? filters.keyword.trim() : undefined,
-	per_page: DEFAULT_PER_PAGE,
-	include: WORD_VIEWER_CATALOGUE_INCLUDE,
-});
+const getWordListFilters = (searchParams: URLSearchParams): WordListFilters => {
+	const keyword = searchParams.get('keyword')?.trim();
+
+	return {
+		per_page: DEFAULT_PER_PAGE,
+		include: WORD_VIEWER_CATALOGUE_INCLUDE,
+		...(keyword ? { keyword } : {}),
+	};
+};
 
 const WordsList: React.FC = () => {
 	const queryClient = useQueryClient();
-	const [filters, setFilters] = useState<WordSearchFilters | Record<string, never>>({});
-	const queryFilters = useMemo(() => mapSearchFiltersToWordParams(filters), [filters]);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const queryFilters = getWordListFilters(searchParams);
+	const keyword = queryFilters.keyword ?? '';
 	const { words, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
 		useInfiniteWords({
 			filters: queryFilters,
 		});
 
 	const handleApplyFilters = (newFilters: WordSearchFilters) => {
-		setFilters(newFilters);
+		const nextParams = new URLSearchParams();
+
+		if (newFilters.keyword !== '') {
+			nextParams.set('keyword', newFilters.keyword);
+		}
+
+		setSearchParams(nextParams);
 	};
 
 	const handleWordBookmarkStateChange = (wordId: number, state: WordViewerCatalogueState) => {
@@ -42,7 +54,7 @@ const WordsList: React.FC = () => {
 	};
 
 	const searchHeading =
-		typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
+		keyword ? `Results for: ${keyword}` : '';
 
 	if (isPending && words.length === 0) {
 		return (
@@ -61,7 +73,7 @@ const WordsList: React.FC = () => {
 	return (
 		<div className="container mt-5">
 			<div className="row justify-content-center">
-				<SearchBarWords fetchQuery={handleApplyFilters} />
+				<SearchBarWords defaultKeyword={keyword} onSearch={handleApplyFilters} />
 			</div>
 			<div className="container mt-5">
 				<div className="row justify-content-center">
@@ -79,7 +91,8 @@ const WordsList: React.FC = () => {
 							words.map((word) => (
 								<WordItem
 									key={word.uuid}
-									id={word.id}
+									entityId={word.id}
+									detailIdentifier={word.uuid}
 									word={word.word}
 									furigana={word.furigana}
 									word_type={word.word_type}

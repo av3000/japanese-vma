@@ -335,6 +335,12 @@ class ArticleRepository implements ArticleRepositoryInterface
             });
         }
 
+        if ($criteria->wordId !== null) {
+            $query->whereHas('words', function (Builder $wordQuery) use ($criteria): void {
+                $wordQuery->whereKey($criteria->wordId);
+            });
+        }
+
         if ($criteria->include_kanjis !== null && $criteria->include_kanjis == true) {
             $query->with('kanjis');
         }

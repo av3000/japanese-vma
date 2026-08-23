@@ -80,7 +80,9 @@ vi.mock('@/api/kanjis/details', () => ({
 						uuid: 'article-uuid',
 						title_jp: '水の記事',
 						hashtags: [],
-						engagement: { stats: null },
+						views_total: 3,
+						likes_total: 2,
+						comments_total: 1,
 					},
 				],
 				articleTotal: 1,
@@ -162,6 +164,7 @@ describe('KanjiDetails', () => {
 		expect(html).toContain('/sentence/sentence-uuid');
 		expect(html).toContain('Found in (1) articles');
 		expect(html).toContain('水の記事');
+		expect(html).toContain('Likes: 2 · Views: 3 · Comments: 1');
 		expect(html).toContain('/articles/article-uuid');
 		expect(html.match(/post-preview d-flex justify-content-between/g)).toHaveLength(3);
 		expect(html.match(/relatedResource/g)).toHaveLength(3);

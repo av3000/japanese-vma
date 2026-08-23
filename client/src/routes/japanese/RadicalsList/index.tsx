@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
 	type RadicalListFilters,
 	useInfiniteRadicals,
@@ -7,10 +7,24 @@ import Spinner from '@/assets/images/spinner.gif';
 import RadicalItem from '@/components/features/japanese/radical/RadicalItem';
 import SearchBarRadicals from './SearchBarRadicals';
 
+const DEFAULT_PER_PAGE = 10;
+
 const RadicalsList = () => {
-	const [filters, setFilters] = useState<RadicalListFilters>({});
+	const [searchParams, setSearchParams] = useSearchParams();
+	const keyword = searchParams.get('keyword')?.trim() ?? '';
+	const filters: RadicalListFilters = { per_page: DEFAULT_PER_PAGE, ...(keyword ? { keyword } : {}) };
 	const { radicals, total, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =
 		useInfiniteRadicals({ filters });
+
+	const handleSearch = (nextKeyword: string) => {
+		const nextParams = new URLSearchParams();
+
+		if (nextKeyword !== '') {
+			nextParams.set('keyword', nextKeyword);
+		}
+
+		setSearchParams(nextParams);
+	};
 
 	if (isLoading) {
 		return (
@@ -25,7 +39,7 @@ const RadicalsList = () => {
 	return (
 		<div className="container mt-5">
 			<div className="row justify-content-center">
-				<SearchBarRadicals onSearch={setFilters} />
+				<SearchBarRadicals defaultKeyword={keyword} onSearch={handleSearch} />
 			</div>
 			<div className="container mt-5">
 				<div className="row justify-content-center">
@@ -39,7 +53,15 @@ const RadicalsList = () => {
 				<div className="row">
 					<div className="col-lg-8 col-md-10 mx-auto">
 						{radicals.map((radical) => (
-							<RadicalItem key={radical.id} {...radical} />
+							<RadicalItem
+								key={radical.uuid}
+								entityId={radical.id}
+								detailIdentifier={radical.uuid}
+								radical={radical.radical}
+								strokes={radical.strokes}
+								meaning={radical.meaning}
+								hiragana={radical.hiragana}
+							/>
 						))}
 						{radicals.length === 0 && !isError && <p>No radicals found.</p>}
 					</div>

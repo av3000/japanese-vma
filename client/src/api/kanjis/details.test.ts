@@ -42,4 +42,29 @@ describe('mapKanjiDetail', () => {
 			articleTotal: 0,
 		});
 	});
+
+	it('maps lean related articles and uses the preview length as the total', () => {
+		const mapped = mapKanjiDetail({
+			...kanji,
+			articles: [
+				{
+					id: 701,
+					uuid: 'article-uuid',
+					title_jp: '水の記事',
+					hashtags: [{ id: 1, content: '#water' }],
+					views_total: 3,
+					likes_total: 2,
+					comments_total: 1,
+				},
+			],
+		});
+
+		expect(mapped.related.articles[0]).toMatchObject({
+			uuid: 'article-uuid',
+			views_total: 3,
+			likes_total: 2,
+			comments_total: 1,
+		});
+		expect(mapped.related.articleTotal).toBe(1);
+	});
 });

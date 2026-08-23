@@ -4,7 +4,8 @@ import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 
 interface RadicalItemProps {
-  id: string | number;
+  entityId: number;
+  detailIdentifier: string;
   radical: string | null;
   strokes: number | null;
   meaning: string | null;
@@ -12,7 +13,7 @@ interface RadicalItemProps {
 }
 
 const RadicalItem: React.FC<RadicalItemProps> = ({
-  id,
+  detailIdentifier,
   radical,
   strokes,
   meaning,
@@ -30,7 +31,7 @@ const RadicalItem: React.FC<RadicalItemProps> = ({
         <p>
           meaning: {meaning ?? ''}, strokes: {strokes ?? ''}
           <span className="float-right">
-            <Link className="tag-link" to={`/radical/${id}`}>
+            <Link className="tag-link" to={`/radical/${detailIdentifier}`}>
               <Icon size="sm" name="externalLink" />
             </Link>
           </span>

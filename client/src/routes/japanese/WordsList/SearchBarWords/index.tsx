@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import { Form, InputGroup } from 'react-bootstrap';
 
 import { Button } from '@/components/shared/Button';
@@ -9,15 +9,18 @@ export type WordSearchFilters = {
 };
 
 interface SearchBarWordsProps {
-	fetchQuery: (query: WordSearchFilters) => void;
+	defaultKeyword?: string;
+	onSearch: (query: WordSearchFilters) => void;
 }
 
-const SearchBarWords: React.FC<SearchBarWordsProps> = ({ fetchQuery }) => {
-	const [keyword, setKeyword] = useState('');
+const SearchBarWords: React.FC<SearchBarWordsProps> = ({ defaultKeyword = '', onSearch }) => {
+	const [keyword, setKeyword] = useState(defaultKeyword);
+
+	useEffect(() => setKeyword(defaultKeyword), [defaultKeyword]);
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		fetchQuery({ keyword: keyword.trim() });
+		onSearch({ keyword: keyword.trim() });
 	};
 
 	const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {

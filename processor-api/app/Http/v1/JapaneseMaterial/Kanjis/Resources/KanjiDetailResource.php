@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Resources;
 
+use App\Domain\Articles\DTOs\ArticleListItemDTO;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailResultDTO;
-use App\Http\v1\Articles\Resources\ArticleListResource;
+use App\Http\v1\Articles\Resources\RelatedArticleSummaryResource;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceListResource;
 use App\Http\v1\JapaneseMaterial\Words\Resources\WordListResource;
 use App\Http\v1\Shared\Resources\PaginationResource;
@@ -70,15 +71,22 @@ class KanjiDetailResource extends JsonResource
      *         }>,
      *         pagination: PaginationResource
      *     },
-     *     articles?: ArticleListResource
+     *     articles?: array<int, array{
+     *         id: int,
+     *         uuid: string,
+     *         title_jp: string,
+     *         hashtags: array<int, array{id: int, content: string}>,
+     *         views_total: int,
+     *         likes_total: int,
+     *         comments_total: int
+     *     }>
      * }
      */
     public function toArray(Request $request): array
     {
-        $payload = (new KanjiResource(
-            $this->resource->kanji,
-            $this->resource->viewerCatalogueState,
-        ))->resolve($request);
+        $payload = (new KanjiResource($this->resource->kanji))
+            ->withViewerCatalogueState($this->resource->viewerCatalogueState)
+            ->resolve($request);
 
         if ($this->resource->words !== null) {
             $payload['words'] = new WordListResource($this->resource->words);
@@ -89,7 +97,10 @@ class KanjiDetailResource extends JsonResource
         }
 
         if ($this->resource->articles !== null) {
-            $payload['articles'] = new ArticleListResource($this->resource->articles);
+            $payload['articles'] = array_map(
+                static fn (ArticleListItemDTO $article): array => (new RelatedArticleSummaryResource($article))->resolve($request),
+                $this->resource->articles->items,
+            );
         }
 
         return $payload;

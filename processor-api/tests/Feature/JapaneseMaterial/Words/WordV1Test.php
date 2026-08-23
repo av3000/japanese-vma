@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JapaneseMaterial\Words;
 
+use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\User;
@@ -98,6 +101,69 @@ class WordV1Test extends TestCase
             ->assertJsonPath('word_type', 'noun')
             ->assertJsonPath('word_k_ele', '学校')
             ->assertJsonPath('furigana_r_ele', 'がっこう');
+    }
+
+    public function test_lean_word_detail_omits_related_collections(): void
+    {
+        $uuid = $this->createRelatedWordFixture();
+
+        $this->getJson("/api/v1/words/{$uuid}")
+            ->assertOk()
+            ->assertJsonMissingPath('kanjis')
+            ->assertJsonMissingPath('articles');
+    }
+
+    public function test_word_detail_rejects_unknown_include_values(): void
+    {
+        $uuid = $this->createRelatedWordFixture();
+
+        $this->getJson("/api/v1/words/{$uuid}?include=kanjis,unknown")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['include']);
+    }
+
+    public function test_word_detail_includes_bounded_ordered_kanjis_and_articles(): void
+    {
+        $uuid = $this->createRelatedWordFixture(6);
+
+        $response = $this->getJson("/api/v1/words/{$uuid}?include=kanjis,articles");
+
+        $response->assertOk()
+            ->assertJsonCount(5, 'kanjis')
+            ->assertJsonCount(5, 'articles')
+            ->assertJsonPath('kanjis.0.id', 201)
+            ->assertJsonPath('kanjis.0.uuid', fn (string $value): bool => Str::isUuid($value))
+            ->assertJsonPath('articles.0.id', 301)
+            ->assertJsonPath('articles.0.uuid', fn (string $value): bool => Str::isUuid($value))
+            ->assertJsonPath('articles.0.title_jp', 'Related article 301')
+            ->assertJsonPath('articles.0.hashtags.0.content', '#word')
+            ->assertJsonPath('articles.0.views_total', 1)
+            ->assertJsonPath('articles.0.likes_total', 1)
+            ->assertJsonPath('articles.0.comments_total', 1);
+
+        $this->assertSame([201, 202, 203, 204, 205], array_column($response->json('kanjis'), 'id'));
+        $this->assertSame([301, 302, 303, 304, 305], array_column($response->json('articles'), 'id'));
+    }
+
+    public function test_word_detail_returns_empty_requested_relations(): void
+    {
+        $uuid = (string) Str::uuid();
+        $this->createWord(id: 90, uuid: $uuid, word: '空', meanings: ['sky']);
+
+        $this->getJson("/api/v1/words/{$uuid}?include=kanjis,articles")
+            ->assertOk()
+            ->assertJsonPath('kanjis', [])
+            ->assertJsonPath('articles', []);
+    }
+
+    public function test_word_detail_returns_only_the_requested_relation(): void
+    {
+        $uuid = $this->createRelatedWordFixture();
+
+        $this->getJson("/api/v1/words/{$uuid}?include=kanjis")
+            ->assertOk()
+            ->assertJsonPath('kanjis.0.id', 201)
+            ->assertJsonMissingPath('articles');
     }
 
     public function test_guest_can_fetch_word_detail_by_exact_surface(): void
@@ -227,6 +293,115 @@ class WordV1Test extends TestCase
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
+    }
+
+    private function createRelatedWordFixture(int $relatedCount = 1): string
+    {
+        $uuid = (string) Str::uuid();
+        $this->createWord(id: 88, uuid: $uuid, word: '水', furigana: 'みず', meanings: ['water']);
+
+        $owner = $this->createUser();
+
+        for ($offset = $relatedCount - 1; $offset >= 0; $offset--) {
+            $kanjiId = 201 + $offset;
+            $articleId = 301 + $offset;
+
+            DB::table('japanese_kanji_bank_long')->insert([
+                'id' => $kanjiId,
+                'uuid' => (string) Str::uuid(),
+                'kanji' => '水',
+                'onyomi' => 'スイ',
+                'kunyomi' => 'みず',
+                'meaning' => 'water',
+                'nanori' => '',
+                'grade' => '1',
+                'stroke_count' => '4',
+                'jlpt' => '5',
+                'frequency' => (string) $kanjiId,
+                'radicals' => '水',
+                'radical_parts' => '水',
+            ]);
+            DB::table('japanese_kanji_word_long')->insert([
+                'kanji_id' => $kanjiId,
+                'word_id' => 88,
+            ]);
+
+            DB::table('articles')->insert([
+                'id' => $articleId,
+                'user_id' => $owner->id,
+                'uuid' => (string) Str::uuid(),
+                'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
+                'title_jp' => "Related article {$articleId}",
+                'title_en' => "Related article {$articleId}",
+                'content_jp' => 'Japanese content text.',
+                'content_en' => 'English content text.',
+                'source_link' => 'https://example.com/source',
+                'publicity' => PublicityStatus::PUBLIC->value,
+                'status' => ArticleStatus::PENDING->value,
+                'n1' => 0,
+                'n2' => 0,
+                'n3' => 0,
+                'n4' => 0,
+                'n5' => 0,
+                'uncommon' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            DB::table('article_word')->insert([
+                'article_id' => $articleId,
+                'word_id' => 88,
+            ]);
+        }
+
+        $templateId = ObjectTemplateType::ARTICLE->getLegacyId();
+        DB::table('objecttemplates')->insertOrIgnore([
+            'id' => $templateId,
+            'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
+            'title' => ObjectTemplateType::ARTICLE->getTitle(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $hashtagId = DB::table('uniquehashtags')->insertGetId([
+            'content' => '#word',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('hashtag_entity')->insert([
+            'entity_type_id' => $templateId,
+            'entity_id' => 301,
+            'user_id' => $owner->id,
+            'hashtag_id' => $hashtagId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('views')->insert([
+            'template_id' => $templateId,
+            'real_object_id' => 301,
+            'user_id' => $owner->id,
+            'user_ip' => '127.0.0.1',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('likes')->insert([
+            'template_id' => $templateId,
+            'real_object_id' => 301,
+            'user_id' => $owner->id,
+            'value' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('comments')->insert([
+            'uuid' => (string) Str::uuid(),
+            'template_id' => $templateId,
+            'real_object_id' => 301,
+            'user_id' => $owner->id,
+            'parent_comment_id' => null,
+            'content' => 'Related comment.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $uuid;
     }
 
     /**

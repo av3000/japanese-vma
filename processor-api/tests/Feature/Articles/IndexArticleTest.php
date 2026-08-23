@@ -69,6 +69,29 @@ class IndexArticleTest extends TestCase
         ], $overrides));
     }
 
+    private function attachKanji(PersistenceArticle $article, string $kanji = '水'): void
+    {
+        $kanjiId = DB::table('japanese_kanji_bank_long')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'kanji' => $kanji,
+            'onyomi' => 'スイ',
+            'kunyomi' => 'みず',
+            'meaning' => 'water',
+            'nanori' => '-',
+            'grade' => '1',
+            'stroke_count' => '4',
+            'jlpt' => '5',
+            'frequency' => '1',
+            'radicals' => 'water',
+            'radical_parts' => $kanji,
+        ]);
+
+        DB::table('article_kanji')->insert([
+            'article_id' => $article->id,
+            'kanji_id' => $kanjiId,
+        ]);
+    }
+
     private function assertArticleTitles(array $items, array $expectedTitles): void
     {
         $actualTitles = array_column($items, 'title_jp');
@@ -190,6 +213,18 @@ class IndexArticleTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['author_uid']);
+    }
+
+    public function test_index_returns_attached_kanjis(): void
+    {
+        $author = $this->createUser();
+        $article = $this->createArticle($author);
+        $this->attachKanji($article);
+
+        $response = $this->getJson('/api/v1/articles');
+
+        $response->assertOk()
+            ->assertJsonPath('items.0.kanjis.0.character', '水');
     }
 
     public function test_index_returns_enriched_article_list_payload(): void

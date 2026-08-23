@@ -5,7 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { SavedListType } from '@/shared/constants/enums';
 
 interface WordItemProps {
-	id: string | number;
+	entityId: number;
+	detailIdentifier: string;
 	word: string;
 	furigana: string;
 	word_type: string;
@@ -17,7 +18,8 @@ interface WordItemProps {
 }
 
 const WordItem: React.FC<WordItemProps> = ({
-	id,
+	entityId,
+	detailIdentifier,
 	word,
 	furigana,
 	word_type,
@@ -29,11 +31,9 @@ const WordItem: React.FC<WordItemProps> = ({
 }) => {
 	const { isAuthenticated } = useAuth();
 
-	const entityId = Number(id);
-
 	return (
 		<div className="post-preview">
-			<Link className="tag-link" to={`/word/${id}`}>
+			<Link className="tag-link" to={`/word/${detailIdentifier}`}>
 				<ruby className="h2 mr-2">
 					{word}
 					<rp>(</rp>

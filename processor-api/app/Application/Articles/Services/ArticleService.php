@@ -229,6 +229,7 @@ class ArticleService implements ArticleServiceInterface
             include_kanjis: $dto->include_kanjis,
             include_words: $dto->include_words,
             kanjiId: $dto->kanji_id,
+            wordId: $dto->word_id,
         );
 
         $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
