@@ -41,7 +41,7 @@ class IndexArticleTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => Str::uuid().'@example.com',
+            'email' => Str::uuid() . '@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ], $overrides));
@@ -221,9 +221,8 @@ class IndexArticleTest extends TestCase
         $article = $this->createArticle($author);
         $this->attachKanji($article);
 
-        $response = $this->getJson('/api/v1/articles');
-
-        $response->assertOk()
+        $this->getJson('/api/v1/articles')
+            ->assertOk()
             ->assertJsonPath('items.0.kanjis.0.character', '水');
     }
 

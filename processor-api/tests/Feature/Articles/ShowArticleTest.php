@@ -215,4 +215,17 @@ class ShowArticleTest extends TestCase
             ->assertJsonPath('uid', $article->uuid)
             ->assertJsonPath('kanjis', []);
     }
+
+    public function test_show_returns_attached_kanjis_by_default(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'publicity' => PublicityStatus::PUBLIC,
+        ]);
+        $this->attachKanji($article, '水');
+
+        $this->getJson("/api/v1/articles/{$article->uuid}")
+            ->assertOk()
+            ->assertJsonPath('kanjis.0.character', '水');
+    }
 }
