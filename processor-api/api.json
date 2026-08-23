@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8080/api/v1"
+            "url": "http://localhost/api/v1"
         }
     ],
     "paths": {
@@ -3031,6 +3031,16 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -3100,6 +3110,191 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "viewer_catalogue_state": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "is_saved": {
+                                                    "type": "boolean"
+                                                },
+                                                "is_known": {
+                                                    "type": [
+                                                        "boolean",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "is_saved",
+                                                "is_known"
+                                            ]
+                                        },
+                                        "kanjis": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "character": {
+                                                        "type": "string"
+                                                    },
+                                                    "onyomi": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "kunyomi": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "meanings": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "nanori": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "grade": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "stroke_count": {
+                                                        "type": "integer"
+                                                    },
+                                                    "jlpt": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "frequency": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "radicals": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "radical_parts": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "viewer_catalogue_state": {
+                                                        "type": [
+                                                            "object",
+                                                            "null"
+                                                        ],
+                                                        "properties": {
+                                                            "is_saved": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "is_known": {
+                                                                "type": [
+                                                                    "boolean",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "is_saved",
+                                                            "is_known"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "character",
+                                                    "onyomi",
+                                                    "kunyomi",
+                                                    "meanings",
+                                                    "nanori",
+                                                    "grade",
+                                                    "stroke_count",
+                                                    "jlpt",
+                                                    "frequency",
+                                                    "radicals",
+                                                    "radical_parts",
+                                                    "viewer_catalogue_state"
+                                                ]
+                                            }
+                                        },
+                                        "articles": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "uuid": {
+                                                        "type": "string"
+                                                    },
+                                                    "title_jp": {
+                                                        "type": "string"
+                                                    },
+                                                    "hashtags": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "content": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "content"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "views_total": {
+                                                        "type": "integer"
+                                                    },
+                                                    "likes_total": {
+                                                        "type": "integer"
+                                                    },
+                                                    "comments_total": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "uuid",
+                                                    "title_jp",
+                                                    "hashtags",
+                                                    "views_total",
+                                                    "likes_total",
+                                                    "comments_total"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -3116,11 +3311,15 @@
                                         "word_type",
                                         "word_k_ele",
                                         "furigana_r_ele",
-                                        "sense"
+                                        "sense",
+                                        "viewer_catalogue_state"
                                     ]
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4270,7 +4469,57 @@
                         ]
                     },
                     "articles": {
-                        "$ref": "#/components/schemas/ArticleListResource"
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "uuid": {
+                                    "type": "string"
+                                },
+                                "title_jp": {
+                                    "type": "string"
+                                },
+                                "hashtags": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "content": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "content"
+                                        ]
+                                    }
+                                },
+                                "views_total": {
+                                    "type": "integer"
+                                },
+                                "likes_total": {
+                                    "type": "integer"
+                                },
+                                "comments_total": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "uuid",
+                                "title_jp",
+                                "hashtags",
+                                "views_total",
+                                "likes_total",
+                                "comments_total"
+                            ]
+                        }
                     }
                 },
                 "required": [

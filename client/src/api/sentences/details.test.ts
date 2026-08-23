@@ -40,9 +40,10 @@ describe('mapSentenceDetail', () => {
 		expect(mapped.kanjis[0].character).toBe('水');
 	});
 
-	it('keeps transitional words as an empty array', () => {
+	it('normalizes related kanjis without creating sentence-word behavior', () => {
 		const mapped = mapSentenceDetail(createSentenceDetail({ words: [] }));
 
-		expect(mapped.words).toEqual([]);
+		expect(mapped.kanjis).toHaveLength(1);
+		expect(Object.prototype.hasOwnProperty.call(mapped, 'words')).toBe(false);
 	});
 });

@@ -237,8 +237,16 @@ class KanjiV1Test extends TestCase
             ->assertJsonPath('words.pagination.total', 1)
             ->assertJsonPath('sentences.items.0.content', '水を飲みます。')
             ->assertJsonPath('sentences.pagination.total', 1)
-            ->assertJsonPath('articles.items.0.title_jp', '水の記事')
-            ->assertJsonPath('articles.pagination.total', 1);
+            ->assertJsonCount(1, 'articles')
+            ->assertJsonPath('articles.0.title_jp', '水の記事')
+            ->assertJsonPath('articles.0.hashtags', [])
+            ->assertJsonPath('articles.0.views_total', 0)
+            ->assertJsonPath('articles.0.likes_total', 0)
+            ->assertJsonPath('articles.0.comments_total', 0)
+            ->assertJsonMissingPath('articles.items')
+            ->assertJsonMissingPath('articles.pagination')
+            ->assertJsonMissingPath('articles.0.content_jp')
+            ->assertJsonMissingPath('articles.0.engagement');
     }
 
     public function test_kanji_detail_rejects_unknown_include_values(): void

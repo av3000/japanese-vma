@@ -14,7 +14,7 @@ export interface MappedKanji extends KanjiDetailResource {
 		wordTotal: number;
 		sentences: NonNullable<KanjiDetailResource['sentences']>['items'];
 		sentenceTotal: number;
-		articles: NonNullable<KanjiDetailResource['articles']>['items'];
+		articles: NonNullable<KanjiDetailResource['articles']>;
 		articleTotal: number;
 	};
 }
@@ -27,16 +27,14 @@ export const mapKanjiDetail = (kanji: KanjiDetailResource): MappedKanji => ({
 		wordTotal: kanji.words?.pagination.total ?? 0,
 		sentences: kanji.sentences?.items ?? [],
 		sentenceTotal: kanji.sentences?.pagination.total ?? 0,
-		articles: kanji.articles?.items ?? [],
-		articleTotal: kanji.articles?.pagination.total ?? 0,
+		articles: kanji.articles ?? [],
+		articleTotal: kanji.articles?.length ?? 0,
 	},
 });
 
 export const useKanjiQuery = (identifier: string | undefined) =>
 	useQuery({
-		queryKey: identifier
-			? getKanjiShowQueryKey(identifier, detailParams)
-			: ['kanji', 'missing-identifier'],
+		queryKey: identifier ? getKanjiShowQueryKey(identifier, detailParams) : ['kanji', 'missing-identifier'],
 		queryFn: () => kanjiShow(identifier as string, detailParams),
 		enabled: !!identifier,
 		retry: false,

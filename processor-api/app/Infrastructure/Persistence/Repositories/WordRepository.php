@@ -16,6 +16,7 @@ class WordRepository implements WordRepositoryInterface
 {
     public function __construct(
         private readonly WordMapper $wordMapper,
+        private readonly KanjiMapper $kanjiMapper,
     ) {
     }
 
@@ -81,6 +82,22 @@ class WordRepository implements WordRepositoryInterface
             ->value('id');
 
         return $id !== null ? (int) $id : null;
+    }
+
+    public function findRelatedKanjis(int $wordId, int $limit): array
+    {
+        $word = PersistenceWord::query()->find($wordId);
+
+        if ($word === null) {
+            return [];
+        }
+
+        return $word->kanjis()
+            ->orderBy('japanese_kanji_bank_long.id')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($kanji) => $this->kanjiMapper->mapToDomain($kanji))
+            ->all();
     }
 
     private function applyFilters(Builder $query, WordQueryCriteria $criteria): void

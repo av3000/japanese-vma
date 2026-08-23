@@ -20,4 +20,7 @@ interface WordRepositoryInterface
     public function hasWordStartingWith(string $prefix): bool;
 
     public function findIdByWord(string $word): ?int;
+
+    /** @return array<int, \App\Domain\JapaneseMaterial\Kanjis\Models\Kanji> */
+    public function findRelatedKanjis(int $wordId, int $limit): array;
 }

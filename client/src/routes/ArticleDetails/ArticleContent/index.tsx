@@ -92,7 +92,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	// TODO: Lift this query up and create query function to be reused
+	// TODO: Lift this query up and create query function to be reused, with pending state to avoid multi calls
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 		try {

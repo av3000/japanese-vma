@@ -4,10 +4,12 @@ import Spinner from '@/assets/images/spinner.gif';
 import SentenceItem from '@/components/features/japanese/sentence/SentenceItem';
 import SearchBarSentences from './SearchBarSentences';
 
+const DEFAULT_PER_PAGE = 10;
+
 const getSentenceListFilters = (searchParams: URLSearchParams) => {
 	const keyword = searchParams.get('keyword')?.trim();
 
-	return keyword ? { keyword } : {};
+	return { per_page: DEFAULT_PER_PAGE, ...(keyword ? { keyword } : {}) };
 };
 
 const SentencesList = () => {
@@ -28,8 +30,10 @@ const SentencesList = () => {
 	const handleSearch = (nextKeyword: string) => {
 		const nextParams = new URLSearchParams();
 
-		if (nextKeyword !== '') {
-			nextParams.set('keyword', nextKeyword);
+		const keyword = nextKeyword.trim();
+
+		if (keyword !== '') {
+			nextParams.set('keyword', keyword);
 		}
 
 		setSearchParams(nextParams);
@@ -72,11 +76,10 @@ const SentencesList = () => {
 						{sentences.map((sentence) => (
 							<SentenceItem
 								key={sentence.uuid}
-								id={sentence.id}
+								detailIdentifier={sentence.uuid}
 								tatoeba_entry={sentence.tatoeba_entry ?? undefined}
 								userId={sentence.user_id ?? undefined}
 								sentence={sentence.content}
-								addToList={() => undefined}
 							/>
 						))}
 					</div>

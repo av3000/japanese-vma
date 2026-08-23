@@ -1,19 +1,21 @@
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 
-import type { RadicalListFilters } from '@/api/radicals/hooks/useInfiniteRadicals';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 
 interface SearchBarRadicalsProps {
-  onSearch: (filters: RadicalListFilters) => void;
+  defaultKeyword?: string;
+  onSearch: (keyword: string) => void;
 }
 
-const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({ onSearch }) => {
-  const [keyword, setKeyword] = useState<string>('');
+const SearchBarRadicals: React.FC<SearchBarRadicalsProps> = ({ defaultKeyword = '', onSearch }) => {
+  const [keyword, setKeyword] = useState<string>(defaultKeyword);
+
+  useEffect(() => setKeyword(defaultKeyword), [defaultKeyword]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSearch(keyword.trim() ? { keyword: keyword.trim() } : {});
+    onSearch(keyword.trim());
   };
 
   const handleKeywordChange = (e: ChangeEvent<HTMLInputElement>) => {

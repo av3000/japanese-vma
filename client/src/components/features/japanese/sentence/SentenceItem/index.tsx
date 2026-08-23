@@ -1,28 +1,21 @@
 import React from 'react';
 
-import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 
 interface SentenceItemProps {
-  id: string | number;
+  detailIdentifier: string;
   sentence: string;
   tatoeba_entry?: string | number;
   userId?: string | number;
-  addToList: (id: string | number) => void;
 }
 
 const SentenceItem: React.FC<SentenceItemProps> = ({
-  id,
+  detailIdentifier,
   sentence,
   tatoeba_entry,
   userId,
-  addToList,
 }) => {
-  const handleAddToList = () => {
-    addToList(id);
-  };
-
   return (
     <div className="post-preview">
       <div className="post-subtitle">
@@ -48,12 +41,9 @@ const SentenceItem: React.FC<SentenceItemProps> = ({
         <div className="col-md-6">
           <p>
             <span className="float-right">
-              <Link className="tag-link" to={`/sentence/${id}`}>
+              <Link className="tag-link" to={`/sentence/${detailIdentifier}`}>
                 <Icon size="sm" name="externalLink" />
               </Link>
-              <Button size="sm" variant="ghost" onClick={handleAddToList}>
-                Add to List
-              </Button>
             </span>
           </p>
         </div>

@@ -7,15 +7,20 @@ import type { SentenceShow200 } from '@/api/generated/model/sentenceShow200';
 
 export type SentenceDetailResponse = SentenceShow200;
 
-export type MappedSentenceDetail = SentenceDetailResponse;
+export type MappedSentenceDetail = Omit<SentenceDetailResponse, 'words'> & {
+	kanjis: SentenceDetailResponse['kanjis'];
+};
 
-export const mapSentenceDetail = (
-	sentence: SentenceDetailResponse,
-): MappedSentenceDetail => ({
-	...sentence,
-	kanjis: sentence.kanjis ?? [],
-	words: sentence.words ?? [],
-});
+export const mapSentenceDetail = (sentence: SentenceDetailResponse): MappedSentenceDetail => {
+	return {
+		id: sentence.id,
+		uuid: sentence.uuid,
+		user_id: sentence.user_id,
+		tatoeba_entry: sentence.tatoeba_entry,
+		content: sentence.content,
+		kanjis: sentence.kanjis ?? [],
+	};
+};
 
 export const useSentenceQuery = (identifier: string | undefined) => {
 	return useQuery({

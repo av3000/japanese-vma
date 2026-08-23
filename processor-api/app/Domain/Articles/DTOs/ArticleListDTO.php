@@ -18,6 +18,7 @@ readonly class ArticleListDTO
         public bool $include_kanjis = true,
         public bool $include_words = true,
         public ?int $kanji_id = null,
+        public ?int $word_id = null,
     ) {
     }
 
@@ -36,6 +37,7 @@ readonly class ArticleListDTO
             include_kanjis: $validated['include_kanjis'] ?? true,
             include_words: $validated['include_kanjis'] ?? true,
             kanji_id: $validated['kanji_id'] ?? null,
+            word_id: $validated['word_id'] ?? null,
         );
     }
 }

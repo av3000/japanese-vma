@@ -16,11 +16,13 @@ class KanjiResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(
-        DomainKanji $resource,
-        private readonly ?ViewerCatalogueStateDTO $viewerCatalogueState = null,
-    ) {
-        parent::__construct($resource);
+    private ?ViewerCatalogueStateDTO $viewerCatalogueState = null;
+
+    public function withViewerCatalogueState(?ViewerCatalogueStateDTO $viewerCatalogueState): self
+    {
+        $this->viewerCatalogueState = $viewerCatalogueState;
+
+        return $this;
     }
 
     /**

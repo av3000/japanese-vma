@@ -13,32 +13,26 @@ const KanjiRelatedArticles = ({ items, total }: KanjiRelatedArticlesProps) => (
 		{items.length === 0 ? (
 			<p>No related articles found.</p>
 		) : (
-			items.map((article) => {
-				const stats = article.engagement.stats;
-
-				return (
-					<div
-						className={`${styles.relatedResource} post-preview d-flex justify-content-between align-items-start`}
-						key={article.uuid}
-					>
-						<div>
-							<h3>{article.title_jp}</h3>
-							{article.hashtags.length > 0 && (
-								<p>{article.hashtags.map((hashtag) => hashtag.content).join(' ')}</p>
-							)}
-							{stats !== null && (
-								<p>
-									Likes: {stats.likes_count} · Views: {stats.views_count} · Comments:{' '}
-									{stats.comments_count}
-								</p>
-							)}
-						</div>
-						<Link className="ml-3 flex-shrink-0" to={`/articles/${article.uuid}`}>
-							Open
-						</Link>
+			items.map((article) => (
+				<div
+					className={`${styles.relatedResource} post-preview d-flex justify-content-between align-items-start`}
+					key={article.uuid}
+				>
+					<div>
+						<h3>{article.title_jp}</h3>
+						{article.hashtags.length > 0 && (
+							<p>{article.hashtags.map((hashtag) => hashtag.content).join(' ')}</p>
+						)}
+						<p>
+							Likes: {article.likes_total} · Views: {article.views_total} · Comments:{' '}
+							{article.comments_total}
+						</p>
 					</div>
-				);
-			})
+					<Link className="ml-3 flex-shrink-0" to={`/articles/${article.uuid}`}>
+						Open
+					</Link>
+				</div>
+			))
 		)}
 	</section>
 );

@@ -18,6 +18,7 @@ readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
         public bool $include_kanjis = false,
         public bool $include_words = false,
         public ?int $kanjiId = null,
+        public ?int $wordId = null,
     ) {
     }
 
