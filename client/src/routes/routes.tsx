@@ -32,7 +32,7 @@ const CatalogueCreatePage = createLazyRoute(() => import('@/routes/CatalogueCrea
 const CatalogueEditPage = createLazyRoute(() => import('@/routes/CatalogueEdit'), { family: 'form' });
 const CatalogueLegacyRedirectsPage = createLazyRoute(() => import('@/routes/CatalogueLegacyRedirects'));
 
-const RadicalsPage = createLazyRoute(() => import('@/routes/japanese/RadicalsList'), { family: 'list' });
+const RadicalsPage = createLazyRoute(() => import('@/routes/japanese/RadicalsList'), { family: 'generic' });
 const RadicalDetailsPage = createLazyRoute(() => import('@/routes/japanese/RadicalDetails'), {
 	family: 'detail',
 });

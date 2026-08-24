@@ -27,7 +27,7 @@ const RadicalsList = () => {
 	};
 
 	if (isLoading) {
-		return <PageLoading family="list" />;
+		return <PageLoading family="generic" />;
 	}
 
 	const searchTotal = `Results total: '${total}'`;
