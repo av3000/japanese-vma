@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useCatalogueQuery } from '@/api/catalogues/details';
-import Spinner from '@/assets/images/spinner.gif';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import CatalogueContent from './CatalogueContent';
 
@@ -10,11 +10,7 @@ const CatalogueDetailsPage = () => {
 	const catalogue = data;
 
 	if (!catalogueId || (isPending && !catalogue)) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" />;
 	}
 
 	if (isError || !catalogue) {

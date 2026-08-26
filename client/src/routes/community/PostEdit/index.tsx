@@ -1,8 +1,8 @@
 // @ts-nocheck
 /* eslint-disable */
 import React, { Component } from 'react';
-import Spinner from '@/assets/images/spinner.gif';
 import { Button } from '@/components/shared/Button';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { apiCall } from '@/services/api';
 import { hideLoader, showLoader } from '@/store/actions/application';
 
@@ -98,11 +98,7 @@ class PostEdit extends Component {
 		const { isLoading } = this.state;
 
 		if (isLoading) {
-			return (
-				<div className="d-flex justify-content-center w-100">
-					<img src={Spinner} alt="spinner loading" />
-				</div>
-			);
+			return <PageLoading family="form" />;
 		}
 
 		return (

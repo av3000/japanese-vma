@@ -1,11 +1,11 @@
 // @ts-nocheck
 /* eslint-disable */
 import React, { Component } from 'react';
-import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import PostItem from '@/components/features/community/PostItem';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { apiCall } from '@/services/api';
 
 export class PostsList extends Component {
@@ -181,11 +181,7 @@ export class PostsList extends Component {
 		const { posts, isLoading } = this.state;
 
 		if (isLoading) {
-			return (
-				<div className="container text-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			);
+			return <PageLoading family="list" />;
 		}
 
 		const postList = posts.map((w) => {

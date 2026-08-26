@@ -5,11 +5,11 @@ import { Badge, Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import classNames from 'classnames';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
-import Spinner from '@/assets/images/spinner.gif';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
 import { apiCall } from '@/services/api';
@@ -145,11 +145,7 @@ const PostDetails: React.FC = () => {
 	};
 
 	if (isLoading) {
-		return (
-			<div className="container text-center">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" />;
 	}
 
 	if (!post) {

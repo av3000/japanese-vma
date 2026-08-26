@@ -142,7 +142,10 @@ describe('KanjisList', () => {
 
 		const html = renderToStaticMarkup(<KanjisList />);
 
-		expect(html).toContain('alt="Loading..."');
+		expect(html).toContain('aria-busy="true"');
+		expect(html).toContain('data-loading-family="list"');
+		expect(html).toContain('Loading page.');
+		expect(html).not.toContain('alt="Loading..."');
 	});
 
 	it('renders the empty state', () => {

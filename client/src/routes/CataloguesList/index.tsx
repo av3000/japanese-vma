@@ -5,6 +5,7 @@ import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
 import { Button } from '@/components/shared/Button';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { isCustomCatalogueType } from '@/shared/constants/catalogues';
 import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkeleton';
 
@@ -46,7 +47,7 @@ const CataloguesListPage: React.FC = () => {
 		typeof filters.keyword === 'string' && filters.keyword.trim() ? `Results for: ${filters.keyword.trim()}` : '';
 
 	if (isPending && catalogues.length === 0) {
-		return <CataloguesListSkeleton />;
+		return <PageLoading family="list" visual={<CataloguesListSkeleton />} />;
 	}
 
 	if (isError) {

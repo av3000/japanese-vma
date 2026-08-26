@@ -12,6 +12,7 @@ import type { WordListFilters, WordListResponse, WordViewerCatalogueState } from
 import Spinner from '@/assets/images/spinner.gif';
 import WordItem from '@/components/features/japanese/word/WordItem';
 import { Button } from '@/components/shared/Button';
+import { PageLoading } from '@/components/shared/PageLoading';
 import SearchBarWords from './SearchBarWords';
 import type { WordSearchFilters } from './SearchBarWords';
 
@@ -57,11 +58,7 @@ const WordsList: React.FC = () => {
 		keyword ? `Results for: ${keyword}` : '';
 
 	if (isPending && words.length === 0) {
-		return (
-			<div className="container text-center">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="list" />;
 	}
 
 	if (isError) {

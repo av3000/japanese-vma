@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useArticleQuery } from '@/api/articles/details';
+import { PageLoading } from '@/components/shared/PageLoading';
 import ArticleContent from './ArticleContent';
 import ArticleDetailsSkeleton from './ArticleDetailsSkeleton';
 
@@ -10,7 +11,7 @@ const ArticleDetails: React.FC = () => {
 	const { data: article, isLoading, isError } = useArticleQuery(article_id);
 
 	if (isLoading) {
-		return <ArticleDetailsSkeleton />;
+		return <PageLoading family="detail" visual={<ArticleDetailsSkeleton />} />;
 	}
 
 	if (isError || !article) {

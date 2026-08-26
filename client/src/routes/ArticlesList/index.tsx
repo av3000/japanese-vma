@@ -6,6 +6,7 @@ import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
+import { PageLoading } from '@/components/shared/PageLoading';
 import ArticlesListSkeleton from './ArticlesListSkeleton/ArticlesListSkeleton';
 
 // TODO: reuse const from shared consts
@@ -56,7 +57,7 @@ const ArticleList: React.FC = () => {
 		typeof filters.keyword === 'string' && filters.keyword ? `Results for: ${filters.keyword}` : '';
 
 	if (isPending && articles.length === 0) {
-		return <ArticlesListSkeleton />;
+		return <PageLoading family="list" visual={<ArticlesListSkeleton />} />;
 	}
 
 	if (isError) {

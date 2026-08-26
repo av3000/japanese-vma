@@ -102,3 +102,9 @@
 	height: 1rem;
 	width: 3rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+	.block {
+		animation: none;
+	}
+}
