@@ -13,7 +13,7 @@ interface SentenceRepositoryInterface
 {
     public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO;
 
-    public function findByUuid(EntityId $uuid, bool $withKanjis = false): ?Sentence;
+    public function findByUuid(EntityId $uuid, bool $withKanjis = false, bool $withWords = false): ?Sentence;
 
-    public function findByLegacyId(int $id, bool $withKanjis = false): ?Sentence;
+    public function findByLegacyId(int $id, bool $withKanjis = false, bool $withWords = false): ?Sentence;
 }

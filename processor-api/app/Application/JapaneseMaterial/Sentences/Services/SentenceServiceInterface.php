@@ -11,5 +11,5 @@ interface SentenceServiceInterface
 {
     public function find(SentenceQueryCriteria $criteria): Result;
 
-    public function findByIdentifier(string $identifier, bool $withKanjis = true): Result;
+    public function findByIdentifier(string $identifier, bool $withKanjis = true, bool $withWords = true): Result;
 }

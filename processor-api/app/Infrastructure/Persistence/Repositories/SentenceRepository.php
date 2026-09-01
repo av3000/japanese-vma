@@ -48,7 +48,7 @@ class SentenceRepository implements SentenceRepositoryInterface
         );
     }
 
-    public function findByUuid(EntityId $uuid, bool $withKanjis = false): ?DomainSentence
+    public function findByUuid(EntityId $uuid, bool $withKanjis = false, bool $withWords = false): ?DomainSentence
     {
         $query = PersistenceSentence::query()->where('uuid', $uuid->value());
 
@@ -56,17 +56,25 @@ class SentenceRepository implements SentenceRepositoryInterface
             $query->with('kanjis');
         }
 
+        if ($withWords) {
+            $query->with('words');
+        }
+
         $sentence = $query->first();
 
         return $sentence ? $this->sentenceMapper->mapToDomain($sentence) : null;
     }
 
-    public function findByLegacyId(int $id, bool $withKanjis = false): ?DomainSentence
+    public function findByLegacyId(int $id, bool $withKanjis = false, bool $withWords = false): ?DomainSentence
     {
         $query = PersistenceSentence::query()->whereKey($id);
 
         if ($withKanjis) {
             $query->with('kanjis');
+        }
+
+        if ($withWords) {
+            $query->with('words');
         }
 
         $sentence = $query->first();

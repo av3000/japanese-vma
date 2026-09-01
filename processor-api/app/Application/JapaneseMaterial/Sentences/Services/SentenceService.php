@@ -21,10 +21,10 @@ class SentenceService implements SentenceServiceInterface
         return Result::success($this->sentenceRepository->find($criteria));
     }
 
-    public function findByIdentifier(string $identifier, bool $withKanjis = true): Result
+    public function findByIdentifier(string $identifier, bool $withKanjis = true, bool $withWords = true): Result
     {
         if (EntityId::isValid($identifier)) {
-            $sentence = $this->sentenceRepository->findByUuid(EntityId::from($identifier), $withKanjis);
+            $sentence = $this->sentenceRepository->findByUuid(EntityId::from($identifier), $withKanjis, $withWords);
 
             return $sentence
                 ? Result::success($sentence)
@@ -32,7 +32,7 @@ class SentenceService implements SentenceServiceInterface
         }
 
         if (ctype_digit($identifier) && (int) $identifier > 0) {
-            $sentence = $this->sentenceRepository->findByLegacyId((int) $identifier, $withKanjis);
+            $sentence = $this->sentenceRepository->findByLegacyId((int) $identifier, $withKanjis, $withWords);
 
             return $sentence
                 ? Result::success($sentence)
