@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Pull Request"
+  short_description: "Create a concise PR targeting develop"
+  default_prompt: "Use $create-pull-request to create a concise pull request targeting develop."
