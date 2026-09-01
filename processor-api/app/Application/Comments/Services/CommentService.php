@@ -11,7 +11,7 @@ use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\Enums\ObjectTemplateType; // TODO:Create some reusable PaginatedList<Model> type of model
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Shared\ValueObjects\UserId;
 
 class CommentService
 {
@@ -37,11 +37,11 @@ class CommentService
 
     public function createCommentForEntity(
         CommentCreateDTO $dto,
-        User $author
+        UserId $authorId,
     ): Comment {
         return $this->commentRepository->createForEntity(
             dto: $dto,
-            author: $author
+            authorId: $authorId,
         );
     }
 }

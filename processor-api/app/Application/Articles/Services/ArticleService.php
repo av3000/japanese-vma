@@ -7,6 +7,7 @@ use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Jobs\ProcessArticleWordsJob;
 use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
@@ -39,12 +40,9 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\LastOperationState;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -74,20 +72,19 @@ class ArticleService implements ArticleServiceInterface
      * Validates hashtags before transaction, creates article and hashtags together.
      *
      * @param ArticleCreateDTO $dto Article data
-     * @param User $user Authenticated user
      *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
-    public function createArticle(ArticleCreateDTO $dto, User $user): Result
+    public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $article = DB::transaction(function () use ($dto, $user) {
+            $article = DB::transaction(function () use ($dto, $authenticatedUser) {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
-                    new UserId($user->id),
-                    new UserName($user->name),
-                    new EntityId($user->uuid)
+                    $authenticatedUser->id,
+                    $authenticatedUser->name,
+                    $authenticatedUser->uuid,
                 );
                 // TODO: for frontend we only need UUID/ID which can be used to redirect user to article details page where frontend fetched the article show endpoint.
                 $createdDomainArticle = $this->articleRepository->create($domainArticle);
@@ -97,7 +94,7 @@ class ArticleService implements ArticleServiceInterface
                         $createdDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->tags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -122,7 +119,7 @@ class ArticleService implements ArticleServiceInterface
             return Result::success($article);
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -140,30 +137,32 @@ class ArticleService implements ArticleServiceInterface
      *
      * @param EntityId $articleUid Article UUID
      * @param ArticleIncludeOptionsDTO $dto Eager loading options
-     * @param User|null $user Current user
      *
      * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
-    public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result
-    {
+    public function getArticle(
+        EntityId $articleUid,
+        ArticleIncludeOptionsDTO $dto,
+        Viewer $viewer,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
         $article = $this->articleRepository->findByPublicUid($articleUid, $dto);
 
         if (! $article) {
             return Result::failure(ArticleErrors::notFound($articleUid->value()));
         }
 
-        if (! $this->articlePolicy->canView($user, $article)) {
+        if (! $this->articlePolicy->canView($authenticatedUser, $article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
         }
 
-        $viewer = new Viewer($user?->id, request()->ip());
         $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
         $engagement = $this->engagementService->getSingleArticleEngagementSummary(
             $article->getIdValue(),
             ObjectTemplateType::ARTICLE,
             $dto,
-            $user !== null,
+            $authenticatedUser !== null,
         );
 
         $hashtags = $this->hashtagService->getHashtags(
@@ -211,11 +210,10 @@ class ArticleService implements ArticleServiceInterface
      * Get filtered, sorted, paginated list of articles with permission-based visibility.
      *
      * @param ArticleListDTO $dto Filter criteria
-     * @param User|null $user Current user for visibility
      *
      * @return ArticleListResultDTO Shaped domain collection with pagination metadata
      */
-    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): ArticleListResultDTO
+    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListResultDTO
     {
         // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
         // TODO: ArticleListDTO or ArticleCriteriaDTO should not contain any default values, it is spilling business logic. Ensure consistency between 2 for now.
@@ -224,7 +222,7 @@ class ArticleService implements ArticleServiceInterface
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
             categoryId: $dto->category,
             authorUid: $dto->author_uid,
-            visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
+            visibilityRules: $this->articlePolicy->getVisibilityCriteria($authenticatedUser),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
             include_kanjis: $dto->include_kanjis,
             include_words: $dto->include_words,
@@ -287,13 +285,12 @@ class ArticleService implements ArticleServiceInterface
      *
      * @param string $uid Article UUID
      * @param ArticleUpdateDTO $dto Update data
-     * @param User $user User for authorized actions
      *
      * @return Result Success data: ArticleUpdateResultDTO, Failure data: ResultError
      *
      * @todo Refactor to use EntityId.
      */
-    public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result
+    public function updateArticle(string $uid, ArticleUpdateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         $articleUid = EntityId::from($uid);
 
@@ -304,7 +301,7 @@ class ArticleService implements ArticleServiceInterface
                 return Result::failure(ArticleErrors::notFound($articleUid->value()));
             }
 
-            if (! $this->articlePolicy->canUpdate($user, $domainArticle)) {
+            if (! $this->articlePolicy->canUpdate($authenticatedUser, $domainArticle)) {
                 return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
             }
 
@@ -314,7 +311,7 @@ class ArticleService implements ArticleServiceInterface
             $shouldReprocessWords = $shouldReprocessContent
                 || ($dto->title_jp !== null && $dto->title_jp !== $domainArticle->getTitleJp()->value);
 
-            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $user) {
+            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser) {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
                 $this->articleRepository->update($updatedDomainArticle);
@@ -324,7 +321,7 @@ class ArticleService implements ArticleServiceInterface
                         $domainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->hashtags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -360,7 +357,7 @@ class ArticleService implements ArticleServiceInterface
             );
         } catch (\Exception $e) {
             Log::error('Article update failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'article_uuid' => $articleUid->value(),
                 'error' => $e->getMessage(),
             ]);
@@ -421,21 +418,20 @@ class ArticleService implements ArticleServiceInterface
      * Delete article with full cleanup of relationships and engagement data.
      *
      * @param EntityId $articleUuid Article UUID
-     * @param User $user User requesting deletion
      *
      * @return Result Success data: null, Failure data: ResultError
      */
-    public function deleteArticle(EntityId $articleUuid, User $user): Result
+    public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            DB::transaction(function () use ($articleUuid, $user) {
+            DB::transaction(function () use ($articleUuid, $authenticatedUser) {
                 $article = $this->articleRepository->findByPublicUid($articleUuid);
 
                 if (! $article) {
                     throw new ArticleNotFoundException($articleUuid->value());
                 }
 
-                if (! $this->articlePolicy->canDelete($user, $article)) {
+                if (! $this->articlePolicy->canDelete($authenticatedUser, $article)) {
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 

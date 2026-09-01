@@ -27,7 +27,7 @@ class IncrementViewAction
         $existingViewId = $this->viewRepository->findByFilter(new ViewFilterDTO(
             entityId: $id,
             objectType: $objectType,
-            userId: $viewer->userId(),
+            userId: $viewer->userId()?->value(),
             ipAddress: $viewer->ipAddress()
         ));
 
@@ -37,7 +37,7 @@ class IncrementViewAction
             // TODO: Consider adding a check to prevent multiple views from the same IP within a short timeframe to avoid inflation. We check if view exists, but we update timestamp if it does all the time.
              // TODO: Consider using a job/queue for this to reduce request time impact.
             $payload = new ViewCreateDTO(
-                userId: $viewer->userId(),
+                userId: $viewer->userId()?->value(),
                 userIp: $viewer->ipAddress(),
                 templateId: $objectType->getLegacyId(),
                 realObjectId: $id,

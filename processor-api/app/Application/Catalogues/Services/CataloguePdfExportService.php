@@ -2,6 +2,7 @@
 
 namespace App\Application\Catalogues\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
 use App\Application\Engagement\Actions\RecordDownloadAction;
@@ -14,7 +15,6 @@ use App\Domain\Pdf\Errors\PdfExportErrors;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Throwable;
 
@@ -29,20 +29,20 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
     ) {
     }
 
-    public function exportKanjis(EntityId $catalogueUuid, User $viewer): Result
+    public function exportKanjis(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
     {
-        return $this->export($catalogueUuid, $viewer, PdfExportKind::KANJIS);
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::KANJIS);
     }
 
-    public function exportWords(EntityId $catalogueUuid, User $viewer): Result
+    public function exportWords(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
     {
-        return $this->export($catalogueUuid, $viewer, PdfExportKind::WORDS);
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::WORDS);
     }
 
     // TODO: Recreate radical and sentence PDF exports here as v1 service-backed
     // exports when those kinds are supported; do not route them through
     // CustomListController or any renderer facade.
-    private function export(EntityId $catalogueUuid, User $viewer, PdfExportKind $kind): Result
+    private function export(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser, PdfExportKind $kind): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($catalogueUuid);
 
@@ -50,7 +50,7 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
             return Result::failure(CatalogueErrors::notFound($catalogueUuid->value()));
         }
 
-        if (! $this->cataloguePolicy->canView($viewer, $catalogue)) {
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
             return Result::failure(CatalogueErrors::accessDenied($catalogueUuid->value()));
         }
 
@@ -76,7 +76,7 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         }
 
         $this->recordDownloadAction->record(
-            viewer: $viewer,
+            viewerId: $authenticatedUser->id,
             objectType: ObjectTemplateType::LIST,
             entityId: $catalogue->getIdValue(),
             context: [

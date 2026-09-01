@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Kanjis\Services;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
@@ -14,7 +15,6 @@ use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailResultDTO;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\SavedListType;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 
 final readonly class KanjiDetailService implements KanjiDetailServiceInterface
@@ -33,7 +33,7 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
     public function findByIdentifier(
         string $identifier,
         KanjiDetailIncludes $includes,
-        ?User $viewer = null,
+        ?AuthenticatedUser $authenticatedUser = null,
     ): Result {
         $kanjiResult = $this->kanjiService->findByIdentifier($identifier);
 
@@ -72,14 +72,14 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
                 include_kanjis: false,
                 include_words: false,
                 kanji_id: $kanjiId,
-            ), $viewer)
+            ), $authenticatedUser)
             : null;
 
         $viewerState = null;
 
-        if ($includes->viewerCatalogueState && $viewer !== null) {
+        if ($includes->viewerCatalogueState && $authenticatedUser !== null) {
             $viewerState = $this->viewerCatalogueStateService->forItems(
-                user: $viewer,
+                ownerUuid: $authenticatedUser->uuid,
                 itemIds: [$kanjiId],
                 savedType: SavedListType::KANJIS,
                 knownType: SavedListType::KNOWNKANJIS,

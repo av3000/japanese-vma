@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Words\Controllers;
 
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Words\Services\WordDetailServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
@@ -27,6 +28,7 @@ class WordController extends Controller
         private readonly WordServiceInterface $wordService,
         private readonly WordDetailServiceInterface $wordDetailService,
         private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
     ) {
     }
 
@@ -74,11 +76,11 @@ class WordController extends Controller
 
         $wordListResult = $result->getData();
         $viewerCatalogueStates = [];
-        $user = auth('api')->user();
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
 
-        if ($request->includesViewerCatalogueState() && $user !== null) {
+        if ($request->includesViewerCatalogueState() && $authenticatedUser !== null) {
             $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(
-                user: $user,
+                ownerUuid: $authenticatedUser->uuid,
                 itemIds: array_map(
                     static fn ($word): int => $word->getIdValue(),
                     $wordListResult->items,
@@ -115,7 +117,7 @@ class WordController extends Controller
         $result = $this->wordDetailService->findByIdentifier(
             rawurldecode($identifier),
             $request->includes(),
-            auth('api')->user(),
+            $this->currentUserProvider->currentAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {

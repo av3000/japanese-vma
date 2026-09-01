@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Actions;
 
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
-use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
 use App\Domain\Users\Errors\UserErrors;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\Log;
@@ -14,8 +14,9 @@ final class LogoutUserAction
 {
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
-        private readonly AuthSessionServiceInterface $authSession
-    ) {}
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+    ) {
+    }
 
     /**
      * Logout current authenticated user
@@ -25,22 +26,19 @@ final class LogoutUserAction
     public function execute(): Result
     {
         try {
-            if (!$this->authSession->isAuthenticated()) {
+            $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+
+            if ($authenticatedUser === null) {
                 return Result::failure(UserErrors::notAuthenticated());
             }
 
-            $userId = $this->authSession->getUserId();
-            $tokenId = $this->authSession->getTokenId();
+            $tokenId = $this->currentUserProvider->currentAccessTokenId();
 
-            if (!$userId || !$tokenId) {
+            if ($tokenId === null) {
                 return Result::failure(UserErrors::logoutFailed());
             }
 
-            // Revoke token
-            $this->userRepository->revokeToken($userId, $tokenId);
-
-            // Clear session
-            $this->authSession->clear();
+            $this->userRepository->revokeToken($authenticatedUser->id, $tokenId);
 
             return Result::success(null);
         } catch (\Exception $e) {

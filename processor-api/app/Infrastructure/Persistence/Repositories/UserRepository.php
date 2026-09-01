@@ -133,7 +133,7 @@ class UserRepository implements UserRepositoryInterface
     /**
      * Create a new user
      *
-     * @return array{userId: UserId, uuid: EntityId, user: PersistenceUser}
+     * @return array{userId: UserId, uuid: EntityId}
      */
     public function create(
         string $uuid,

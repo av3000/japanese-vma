@@ -4,6 +4,8 @@ namespace App\Http\v1\Articles\Controllers;
 
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
@@ -12,6 +14,7 @@ use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
@@ -22,26 +25,25 @@ use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
-use App\Http\v1\Concerns\ResolvesOptionalApiUser;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
 use Dedoc\Scramble\Attributes\Response;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Auth\AuthenticationException;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response as HttpResponse;
 
 class ArticleController extends Controller
 {
-    use ResolvesOptionalApiUser;
-
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
         private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
     ) {
     }
 
@@ -52,10 +54,10 @@ class ArticleController extends Controller
     public function index(IndexArticleRequest $request): JsonResponse|JsonResource
     {
         $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $viewer = $this->resolveOptionalApiUser($request);
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
 
         return new ArticleListResource(
-            $this->articleService->getArticlesList($listDTO, $viewer)
+            $this->articleService->getArticlesList($listDTO, $authenticatedUser)
         );
     }
 
@@ -72,7 +74,7 @@ class ArticleController extends Controller
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
 
-        $result = $this->articleService->createArticle($createDTO, auth('api')->user());
+        $result = $this->articleService->createArticle($createDTO, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -93,8 +95,9 @@ class ArticleController extends Controller
     {
         $articleUid = EntityId::from($uid);
         $options = ArticleIncludeOptionsDTO::fromRequest($request->validated());
-        $viewer = $this->resolveOptionalApiUser($request);
-        $result = $this->articleService->getArticle($articleUid, $options, $viewer);
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $viewer = new Viewer($authenticatedUser?->id, (string) $request->ip());
+        $result = $this->articleService->getArticle($articleUid, $options, $viewer, $authenticatedUser);
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -115,7 +118,7 @@ class ArticleController extends Controller
         $result = $this->articleService->updateArticle(
             $uid,
             $updateDTO,
-            auth('api')->user()
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -145,7 +148,7 @@ class ArticleController extends Controller
         $articleUuid = EntityId::from($uuid);
         $result = $this->articleService->deleteArticle(
             $articleUuid,
-            auth('api')->user()
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -182,7 +185,7 @@ class ArticleController extends Controller
     {
         return $this->pdfResult($this->articlePdfExportService->exportKanjis(
             EntityId::from($uuid),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         ));
     }
 
@@ -190,7 +193,7 @@ class ArticleController extends Controller
     {
         return $this->pdfResult($this->articlePdfExportService->exportWords(
             EntityId::from($uuid),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         ));
     }
 
@@ -214,5 +217,11 @@ class ArticleController extends Controller
             'success' => false,
             'message' => $error->errorMessage ?? $error->description,
         ], $error->status->value);
+    }
+
+    private function requiredAuthenticatedUser(): AuthenticatedUser
+    {
+        return $this->currentUserProvider->currentAuthenticatedUser()
+            ?? throw new AuthenticationException;
     }
 }

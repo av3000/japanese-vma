@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Actions;
 
-use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
-use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Users\Errors\UserErrors;
 use App\Shared\Results\Result;
 
 final class GetCurrentUserAction
 {
     public function __construct(
-        private readonly AuthSessionServiceInterface $authSession
-    ) {}
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+    ) {
+    }
 
     /**
      * Get currently authenticated user
@@ -22,13 +22,13 @@ final class GetCurrentUserAction
      */
     public function execute(): Result
     {
-        $domainUser = $this->authSession->getAuthenticatedDomainUser();
+        $user = $this->currentUserProvider->currentUser();
 
-        if (!$domainUser) {
+        if ($user === null) {
             // This implicitly covers both notAuthenticated and notFound scenarios for the current user.
             return Result::failure(UserErrors::notAuthenticated());
         }
 
-        return Result::success($domainUser);
+        return Result::success($user);
     }
 }

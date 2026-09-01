@@ -11,10 +11,10 @@ use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Http\Models\ObjectTemplate;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Models\Like;
-use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -59,7 +59,7 @@ class CommentRepository implements CommentRepositoryInterface
 
     public function createForEntity(
         CommentCreateDTO $dto,
-        User $author
+        UserId $authorId,
     ): DomainComment {
         $persistenceComment = PersistenceComment::create([
             'uuid' => (string) Str::uuid(),
@@ -67,7 +67,7 @@ class CommentRepository implements CommentRepositoryInterface
             'real_object_id' => $dto->entity_id,
             'real_object_uuid' => $dto->entity_uuid->value(),
             'entity_type_uuid' => $dto->entity_type->value,
-            'user_id' => $author->id,
+            'user_id' => $authorId->value(),
             'parent_comment_id' => $dto->parent_comment_id,
             'content' => $dto->content,
         ]);

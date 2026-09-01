@@ -7,7 +7,7 @@ use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterfa
 use App\Domain\Engagement\DTOs\DownloadCreateDTO;
 use App\Domain\Engagement\DTOs\DownloadFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Shared\ValueObjects\UserId;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use RuntimeException;
@@ -38,7 +38,7 @@ class RecordDownloadActionTest extends TestCase
         $action = new RecordDownloadAction($repository);
 
         $action->record(
-            viewer: $this->viewer(),
+            viewerId: $this->viewer(),
             objectType: ObjectTemplateType::LIST,
             entityId: 456,
             context: ['source' => 'catalogue', 'kind' => 'words'],
@@ -58,14 +58,9 @@ class RecordDownloadActionTest extends TestCase
             }));
     }
 
-    private function viewer(): User
+    private function viewer(): UserId
     {
-        $viewer = new User;
-        $viewer->id = 123;
-        $viewer->uuid = 'viewer-uuid';
-        $viewer->name = 'Viewer';
-
-        return $viewer;
+        return UserId::from(123);
     }
 }
 

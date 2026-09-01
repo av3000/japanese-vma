@@ -15,7 +15,6 @@ use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
-use App\Infrastructure\Persistence\Models\User;
 use PHPUnit\Framework\TestCase;
 
 final class ViewerCatalogueStateServiceTest extends TestCase
@@ -30,7 +29,7 @@ final class ViewerCatalogueStateServiceTest extends TestCase
 
         $catalogueRepository->expects($this->once())
             ->method('findOwnedForMembership')
-            ->with('owner-uuid', null, [7, 3])
+            ->with('550e8400-e29b-41d4-a716-446655440000', null, [7, 3])
             ->willReturn([$knownWords, $savedWords]);
 
         $catalogueItemRepository->expects($this->once())
@@ -44,7 +43,7 @@ final class ViewerCatalogueStateServiceTest extends TestCase
 
         $states = (new ViewerCatalogueStateService($catalogueRepository, $catalogueItemRepository))
             ->forItems(
-                user: $this->user('owner-uuid'),
+                ownerUuid: EntityId::from('550e8400-e29b-41d4-a716-446655440000'),
                 itemIds: [101, 102, 103],
                 savedType: SavedListType::WORDS,
                 knownType: SavedListType::KNOWNWORDS,
@@ -68,7 +67,7 @@ final class ViewerCatalogueStateServiceTest extends TestCase
 
         $states = (new ViewerCatalogueStateService($catalogueRepository, $catalogueItemRepository))
             ->forItems(
-                user: $this->user('owner-uuid'),
+                ownerUuid: EntityId::from('550e8400-e29b-41d4-a716-446655440000'),
                 itemIds: [101],
                 savedType: SavedListType::WORDS,
                 knownType: SavedListType::KNOWNWORDS,
@@ -95,11 +94,4 @@ final class ViewerCatalogueStateServiceTest extends TestCase
         );
     }
 
-    private function user(string $uuid): User
-    {
-        $user = new User;
-        $user->uuid = $uuid;
-
-        return $user;
-    }
 }

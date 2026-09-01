@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Catalogues;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
@@ -26,7 +27,7 @@ use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Shared\ValueObjects\Viewer;
 use Tests\TestCase;
 
 class CatalogueServiceDetailTest extends TestCase
@@ -42,7 +43,8 @@ class CatalogueServiceDetailTest extends TestCase
         $engagementService = $this->createMock(EngagementServiceInterface::class);
 
         $catalogue = $this->catalogue(10, 'Public Custom');
-        $viewer = $this->user(42);
+        $authenticatedUser = $this->authenticatedUser(42);
+        $viewer = new Viewer($authenticatedUser->id, '127.0.0.1');
         $items = [['id' => 321, 'title' => 'Item']];
         $hashtags = [['id' => 1, 'content' => '#grammar']];
 
@@ -53,7 +55,7 @@ class CatalogueServiceDetailTest extends TestCase
 
         $cataloguePolicy->expects($this->once())
             ->method('canView')
-            ->with($viewer, $catalogue)
+            ->with($authenticatedUser, $catalogue)
             ->willReturn(true);
 
         $incrementView->expects($this->once())
@@ -95,7 +97,7 @@ class CatalogueServiceDetailTest extends TestCase
             $loadStats,
             $hashtagService,
             $engagementService,
-        )->getCatalogueDetail($catalogue->getUid(), $viewer);
+        )->getCatalogueDetail($catalogue->getUid(), $viewer, $authenticatedUser);
 
         $this->assertTrue($result->isSuccess());
         $this->assertInstanceOf(CatalogueDetailDTO::class, $result->getData());
@@ -138,7 +140,7 @@ class CatalogueServiceDetailTest extends TestCase
             $loadStats,
             $hashtagService,
             $engagementService,
-        )->getCatalogueDetail($catalogue->getUid());
+        )->getCatalogueDetail($catalogue->getUid(), new Viewer(null, '127.0.0.1'));
 
         $this->assertTrue($result->isSuccess());
         $this->assertSame(0, $result->getData()->stats->getLikesCount());
@@ -192,11 +194,13 @@ class CatalogueServiceDetailTest extends TestCase
         );
     }
 
-    private function user(int $id): User
+    private function authenticatedUser(int $id): AuthenticatedUser
     {
-        $user = new User;
-        $user->id = $id;
-
-        return $user;
+        return new AuthenticatedUser(
+            UserId::from($id),
+            EntityId::generate(),
+            UserName::from('Viewer User'),
+            false,
+        );
     }
 }
