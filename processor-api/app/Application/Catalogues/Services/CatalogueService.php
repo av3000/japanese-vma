@@ -2,6 +2,7 @@
 
 namespace App\Application\Catalogues\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
@@ -35,10 +36,7 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,15 +60,15 @@ class CatalogueService implements CatalogueServiceInterface
     ) {
     }
 
-    public function createCatalogue(CatalogueCreateDTO $dto, User $user): Result
+    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $catalogue = DB::transaction(function () use ($dto, $user) {
+            $catalogue = DB::transaction(function () use ($dto, $authenticatedUser) {
                 $domainCatalogue = CatalogueFactory::createFromDTO(
                     $dto,
-                    new UserId($user->id),
-                    new UserName($user->name),
-                    EntityId::from($user->uuid),
+                    $authenticatedUser->id,
+                    $authenticatedUser->name,
+                    $authenticatedUser->uuid,
                 );
 
                 $createdCatalogue = $this->catalogueRepository->create($domainCatalogue);
@@ -80,7 +78,7 @@ class CatalogueService implements CatalogueServiceInterface
                         $createdCatalogue->getIdValue(),
                         ObjectTemplateType::LIST,
                         $dto->hashtags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -94,7 +92,7 @@ class CatalogueService implements CatalogueServiceInterface
             return Result::success($catalogue);
         } catch (\Exception $e) {
             Log::error('Catalogue creation failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -102,10 +100,10 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): CatalogueListResultDTO
+    public function getCatalogueList(CatalogueListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): CatalogueListResultDTO
     {
         $requestedOwnerUid = $dto->owner_uid;
-        $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($user, $requestedOwnerUid);
+        $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($authenticatedUser, $requestedOwnerUid);
         $publicOnly = $dto->public_only;
 
         if ($requestedOwnerUid === null) {
@@ -159,10 +157,10 @@ class CatalogueService implements CatalogueServiceInterface
         );
     }
 
-    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): CataloguePickerResultDTO
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, AuthenticatedUser $authenticatedUser): CataloguePickerResultDTO
     {
         $catalogues = $this->catalogueRepository->findOwnedForMembership(
-            $user->uuid,
+            $authenticatedUser->uuid->value(),
             SearchTerm::fromInputOrNull($search),
             $types,
         );
@@ -194,19 +192,21 @@ class CatalogueService implements CatalogueServiceInterface
     /**
      * @return Result<CatalogueDetailDTO>
      */
-    public function getCatalogueDetail(EntityId $uuid, ?User $user = null): Result
-    {
+    public function getCatalogueDetail(
+        EntityId $uuid,
+        Viewer $viewer,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
         $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
 
         if (! $catalogue) {
             return Result::failure(CatalogueErrors::notFound($uuid->value()));
         }
 
-        if (! $this->cataloguePolicy->canView($user, $catalogue)) {
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
             return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
         }
 
-        $viewer = new Viewer($user?->id, request()->ip());
         $this->trackView($catalogue->getIdValue(), ObjectTemplateType::LIST, $viewer);
 
         $items = $this->catalogueItemService->getItems($catalogue);
@@ -216,7 +216,7 @@ class CatalogueService implements CatalogueServiceInterface
         $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
             $catalogueId,
             ObjectTemplateType::LIST,
-            $user !== null,
+            $authenticatedUser !== null,
         );
 
         return Result::success(
@@ -234,7 +234,7 @@ class CatalogueService implements CatalogueServiceInterface
     /**
      * @return Result<CatalogueUpdateResultDTO>
      */
-    public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, User $user): Result
+    public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -243,11 +243,11 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            $updatedCatalogue = DB::transaction(function () use ($catalogue, $dto, $user) {
+            $updatedCatalogue = DB::transaction(function () use ($catalogue, $dto, $authenticatedUser) {
                 $updatedCatalogue = $this->applyUpdates($catalogue, $dto);
 
                 $this->catalogueRepository->update($updatedCatalogue);
@@ -257,7 +257,7 @@ class CatalogueService implements CatalogueServiceInterface
                         $catalogue->getIdValue(),
                         ObjectTemplateType::LIST,
                         $dto->hashtags ?? [],
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -280,7 +280,7 @@ class CatalogueService implements CatalogueServiceInterface
             );
         } catch (\Exception $e) {
             Log::error('Catalogue update failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'catalogue_uuid' => $uuid->value(),
                 'error' => $e->getMessage(),
             ]);
@@ -289,7 +289,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function addItemToCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    public function addItemToCatalogue(EntityId $uuid, int $itemId, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -298,7 +298,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
@@ -322,7 +322,7 @@ class CatalogueService implements CatalogueServiceInterface
             Log::error('Catalogue item add failed', [
                 'catalogue_uuid' => $uuid->value(),
                 'item_id' => $itemId,
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -330,7 +330,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -339,7 +339,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
@@ -360,7 +360,7 @@ class CatalogueService implements CatalogueServiceInterface
             Log::error('Catalogue item removal failed', [
                 'catalogue_uuid' => $uuid->value(),
                 'item_id' => $itemId,
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -368,7 +368,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function deleteCatalogue(EntityId $uuid, User $user): Result
+    public function deleteCatalogue(EntityId $uuid, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -377,7 +377,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canDelete($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canDelete($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
@@ -398,7 +398,7 @@ class CatalogueService implements CatalogueServiceInterface
         } catch (\Exception $e) {
             Log::error('Catalogue deletion failed', [
                 'catalogue_uuid' => $uuid->value(),
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 

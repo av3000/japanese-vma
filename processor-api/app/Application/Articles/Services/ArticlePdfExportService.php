@@ -4,6 +4,7 @@ namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Actions\RecordDownloadAction;
 use App\Application\Pdf\PdfRendererInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
@@ -14,7 +15,6 @@ use App\Domain\Pdf\Enums\PdfExportKind;
 use App\Domain\Pdf\Errors\PdfExportErrors;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Throwable;
 
@@ -25,19 +25,20 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
         private readonly ArticlePolicy $articlePolicy,
         private readonly PdfRendererInterface $pdfRenderer,
         private readonly RecordDownloadAction $recordDownloadAction,
-    ) {}
-
-    public function exportKanjis(EntityId $articleUuid, User $viewer): Result
-    {
-        return $this->export($articleUuid, $viewer, PdfExportKind::KANJIS);
+    ) {
     }
 
-    public function exportWords(EntityId $articleUuid, User $viewer): Result
+    public function exportKanjis(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
     {
-        return $this->export($articleUuid, $viewer, PdfExportKind::WORDS);
+        return $this->export($articleUuid, $authenticatedUser, PdfExportKind::KANJIS);
     }
 
-    private function export(EntityId $articleUuid, User $viewer, PdfExportKind $kind): Result
+    public function exportWords(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        return $this->export($articleUuid, $authenticatedUser, PdfExportKind::WORDS);
+    }
+
+    private function export(EntityId $articleUuid, AuthenticatedUser $authenticatedUser, PdfExportKind $kind): Result
     {
         $includeKanjis = $kind === PdfExportKind::KANJIS;
         $includeWords = $kind === PdfExportKind::WORDS;
@@ -52,7 +53,7 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
             return Result::failure(ArticleErrors::notFound($articleUuid->value()));
         }
 
-        if (! $this->articlePolicy->canView($viewer, $exportData->article)) {
+        if (! $this->articlePolicy->canView($authenticatedUser, $exportData->article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUuid->value()));
         }
         $document = new PdfDocument(
@@ -68,7 +69,7 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
         }
 
         $this->recordDownloadAction->record(
-            viewer: $viewer,
+            viewerId: $authenticatedUser->id,
             objectType: ObjectTemplateType::ARTICLE,
             entityId: $exportData->article->getIdValue(),
             context: [
@@ -104,7 +105,7 @@ class ArticlePdfExportService implements ArticlePdfExportServiceInterface
             ],
             'kanjis' => $exportData->kanjis,
             'words' => array_map(
-                fn(DomainWord $word): array => [
+                fn (DomainWord $word): array => [
                     'id' => $word->getIdValue(),
                     'word' => $word->getSurface(),
                     'furigana' => $word->getFurigana(),

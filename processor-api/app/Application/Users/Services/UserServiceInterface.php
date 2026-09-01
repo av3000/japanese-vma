@@ -2,6 +2,7 @@
 
 namespace App\Application\Users\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Queries\UserQueryCriteria;
 use App\Shared\Results\Result;
@@ -12,15 +13,17 @@ interface UserServiceInterface
      * Get user profile by UUID.
      *
      * @param EntityId $userUuid User public UUID
+     *
      * @return Result<UserWithProfileContext> Success data: UserWithProfileContext, Failure data: ResultError
      */
-    public function findByUuid(EntityId $userUuid): Result;
+    public function findByUuid(EntityId $userUuid, ?AuthenticatedUser $authenticatedUser = null): Result;
 
     /**
      * Finds users based on the given criteria.
      *
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
+     *
      * @return Result<LengthAwarePaginator<UserWithProfileContext>>
      */
-    public function find(?UserQueryCriteria $criteria = null): Result;
+    public function find(?UserQueryCriteria $criteria = null, ?AuthenticatedUser $authenticatedUser = null): Result;
 }

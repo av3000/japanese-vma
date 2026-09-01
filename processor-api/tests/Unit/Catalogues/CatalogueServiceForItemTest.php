@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Catalogues;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
@@ -25,7 +26,6 @@ use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
-use App\Infrastructure\Persistence\Models\User;
 use PHPUnit\Framework\TestCase;
 
 class CatalogueServiceForItemTest extends TestCase
@@ -40,7 +40,7 @@ class CatalogueServiceForItemTest extends TestCase
 
         $catalogueRepository->expects($this->once())
             ->method('findOwnedForMembership')
-            ->with('owner-uuid', null, [3, 7])
+            ->with('550e8400-e29b-41d4-a716-446655440000', null, [3, 7])
             ->willReturn([$matchingCatalogue, $otherCatalogue]);
 
         $catalogueItemRepository->expects($this->once())
@@ -49,7 +49,7 @@ class CatalogueServiceForItemTest extends TestCase
             ->willReturn([10]);
 
         $result = $this->service($catalogueRepository, $catalogueItemRepository)
-            ->getCataloguesForItem(321, [3, 7], null, $this->user('owner-uuid'));
+            ->getCataloguesForItem(321, [3, 7], null, $this->authenticatedUser());
 
         $this->assertInstanceOf(CataloguePickerResultDTO::class, $result);
         $this->assertCount(2, $result->items);
@@ -97,11 +97,13 @@ class CatalogueServiceForItemTest extends TestCase
         );
     }
 
-    private function user(string $uuid): User
+    private function authenticatedUser(): AuthenticatedUser
     {
-        $user = new User;
-        $user->uuid = $uuid;
-
-        return $user;
+        return new AuthenticatedUser(
+            UserId::from(1),
+            EntityId::from('550e8400-e29b-41d4-a716-446655440000'),
+            UserName::from('Owner User'),
+            false,
+        );
     }
 }

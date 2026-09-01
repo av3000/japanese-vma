@@ -3,6 +3,7 @@
 namespace Tests\Unit\Articles;
 
 use App\Application\Articles\Services\ArticlePdfExportService;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Pdf\PdfRendererInterface;
 use App\Domain\Engagement\DTOs\DownloadCreateDTO;
@@ -14,6 +15,8 @@ use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\UserName;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,7 +65,7 @@ class ArticlePdfExportServiceTest extends TestCase
         ]);
         $this->attachKanji($article);
 
-        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isSuccess());
         $this->assertInstanceOf(PdfRenderResult::class, $result->getData());
@@ -95,7 +98,7 @@ class ArticlePdfExportServiceTest extends TestCase
         ]);
         $this->attachWord($article);
 
-        $result = $this->service()->exportWords(EntityId::from($article->uuid), $viewer);
+        $result = $this->service()->exportWords(EntityId::from($article->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isSuccess());
 
@@ -118,7 +121,7 @@ class ArticlePdfExportServiceTest extends TestCase
     {
         $viewer = $this->createUser();
 
-        $result = $this->service()->exportKanjis(EntityId::from((string) Str::uuid()), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from((string) Str::uuid()), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Articles.NotFound', $result->getError()->code);
@@ -134,7 +137,7 @@ class ArticlePdfExportServiceTest extends TestCase
             'publicity' => PublicityStatus::PRIVATE,
         ]);
 
-        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from($article->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Articles.AccessDenied', $result->getError()->code);
@@ -212,6 +215,16 @@ class ArticlePdfExportServiceTest extends TestCase
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ]);
+    }
+
+    private function authenticatedUser(User $user): AuthenticatedUser
+    {
+        return new AuthenticatedUser(
+            UserId::from((int) $user->id),
+            EntityId::from((string) $user->uuid),
+            UserName::from((string) $user->name),
+            $user->hasRole('admin'),
+        );
     }
 
     private function createArticle(User $user, array $overrides = []): Article

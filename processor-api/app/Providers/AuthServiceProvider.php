@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Application\Auth\Interfaces\Services\AuthSessionServiceInterface;
-use App\Infrastructure\Auth\Services\AuthSessionService;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\User;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
@@ -35,8 +35,8 @@ class AuthServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(
-            AuthSessionServiceInterface::class,
-            AuthSessionService::class
+            CurrentUserProviderInterface::class,
+            PassportCurrentUserProvider::class,
         );
     }
 }

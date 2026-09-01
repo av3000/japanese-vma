@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Users\DTOs\UserWithProfileContext;
-use App\Shared\Results\Result;
-use App\Domain\Users\Errors\UserErrors;
-use App\Domain\Shared\ValueObjects\EntityId;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Users\Policies\UserViewPolicy;
-use App\Application\Users\Services\UserServiceInterface;
-use App\Domain\Users\Models\Users;
-use App\Domain\Users\Models\User as DomainUser;
-use App\Domain\Users\Queries\UserQueryCriteria;
-use App\Application\Users\Services\RoleServiceInterface;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Errors\RoleErrors;
+use App\Domain\Users\Errors\UserErrors;
+use App\Domain\Users\Models\User as DomainUser;
+use App\Domain\Users\Models\Users;
+use App\Domain\Users\Queries\UserQueryCriteria;
+use App\Shared\Results\Result;
 
 class UserService implements UserServiceInterface
 {
@@ -24,25 +23,26 @@ class UserService implements UserServiceInterface
         // TODO: create and use interface
         private UserViewPolicy $userViewPolicy,
         private RoleServiceInterface $roleService
-    ) {}
+    ) {
+    }
 
     /**
      * Get user profile by UUID.
      *
      * @param EntityId $userUuid User public UUID
+     *
      * @return Result Success data: DomainUser, Failure data: ResultError
      */
-    // TODO: add authenticatedUser type -> should come from authSession from controller.
-    public function findByUuid(EntityId $userUuid,  $authenticatedUser = null): Result
+    public function findByUuid(EntityId $userUuid, ?AuthenticatedUser $authenticatedUser = null): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
-        if (!$user) {
+        if (! $user) {
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
         $isOwnProfile = false;
-        if ($authenticatedUser) {
+        if ($authenticatedUser !== null) {
             $isOwnProfile = $this->userViewPolicy->isOwnProfile(
                 $authenticatedUser,
                 $user->getUuid()
@@ -56,11 +56,12 @@ class UserService implements UserServiceInterface
      * Finds users based on the given criteria.
      *
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
+     *
      * @return Result<LengthAwarePaginator<UserWithProfileContext>>
      */
-    public function find(?UserQueryCriteria $criteria = null, $authenticatedUser = null): Result
+    public function find(?UserQueryCriteria $criteria = null, ?AuthenticatedUser $authenticatedUser = null): Result
     {
-        if ($criteria?->role !== null && !$this->roleService->roleExists($criteria->role)) {
+        if ($criteria?->role !== null && ! $this->roleService->roleExists($criteria->role)) {
             return Result::failure(RoleErrors::invalidRole($criteria->role));
         }
 
@@ -72,14 +73,15 @@ class UserService implements UserServiceInterface
         $enrichedCollection = $paginator->getCollection()->map(
             function (DomainUser $user) use ($authenticatedUser): UserWithProfileContext {
                 $isOwnProfile = false;
-                if ($authenticatedUser) {
+                if ($authenticatedUser !== null) {
                     $isOwnProfile = $this->userViewPolicy->isOwnProfile(
                         $authenticatedUser,
                         $user->getUuid()
                     );
                 }
 
-                $isViewerAdmin = $authenticatedUser->isAdmin();
+                $isViewerAdmin = $authenticatedUser?->isAdmin ?? false;
+
                 return UserWithProfileContext::fromDomainUser($user, $isOwnProfile, $isViewerAdmin);
             }
         );

@@ -9,7 +9,7 @@ use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterf
 use App\Domain\Catalogues\DTOs\ViewerCatalogueStateDTO;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Shared\Enums\SavedListType;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Shared\ValueObjects\EntityId;
 
 final readonly class ViewerCatalogueStateService
 {
@@ -24,7 +24,7 @@ final readonly class ViewerCatalogueStateService
      * @return array<int, ViewerCatalogueStateDTO>
      */
     public function forItems(
-        User $user,
+        EntityId $ownerUuid,
         array $itemIds,
         SavedListType $savedType,
         ?SavedListType $knownType = null,
@@ -42,7 +42,7 @@ final readonly class ViewerCatalogueStateService
         }
 
         $catalogues = $this->catalogueRepository->findOwnedForMembership(
-            $user->uuid,
+            $ownerUuid->value(),
             null,
             array_values(array_unique($types)),
         );

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Words\Services;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 
 final readonly class WordDetailService implements WordDetailServiceInterface
@@ -27,7 +27,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
     public function findByIdentifier(
         string $identifier,
         WordDetailIncludes $includes,
-        ?User $viewer = null,
+        ?AuthenticatedUser $authenticatedUser = null,
     ): Result {
         $wordResult = $this->wordService->findByIdentifier($identifier);
 
@@ -58,7 +58,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
                 include_words: false,
                 kanji_id: null,
                 word_id: $wordId,
-            ), $viewer)->items
+            ), $authenticatedUser)->items
             : null;
 
         return Result::success(new WordDetailResultDTO(

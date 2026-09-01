@@ -34,7 +34,7 @@ interface UserRepositoryInterface
     /**
      * Create a new user
      *
-     * @return array{userId: UserId, uuid: EntityId, user: \App\Infrastructure\Persistence\Models\User}
+     * @return array{userId: UserId, uuid: EntityId}
      */
     public function create(
         string $uuid,

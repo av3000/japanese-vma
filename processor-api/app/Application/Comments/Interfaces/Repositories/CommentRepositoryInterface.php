@@ -8,7 +8,7 @@ use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
 use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Shared\ValueObjects\UserId;
 
 interface CommentRepositoryInterface
 {
@@ -37,6 +37,6 @@ interface CommentRepositoryInterface
 
     public function createForEntity(
         CommentCreateDTO $dto,
-        User $author
+        UserId $authorId,
     ): DomainComment;
 }

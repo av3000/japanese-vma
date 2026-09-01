@@ -2,6 +2,8 @@
 
 namespace App\Http\v1\Catalogues\Controllers;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
@@ -11,6 +13,7 @@ use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\IndexCataloguesForItemRequest;
@@ -26,7 +29,9 @@ use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response as LaravelResponse;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -37,6 +42,7 @@ class CatalogueController extends Controller
         private readonly CatalogueServiceInterface $catalogueService,
         private readonly CataloguePdfExportServiceInterface $cataloguePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
     ) {
     }
 
@@ -48,7 +54,10 @@ class CatalogueController extends Controller
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
 
-        $catalogueList = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
+        $catalogueList = $this->catalogueService->getCatalogueList(
+            $catalogueDTO,
+            $this->currentUserProvider->currentAuthenticatedUser(),
+        );
 
         return new CatalogueListResource($catalogueList);
     }
@@ -74,7 +83,7 @@ class CatalogueController extends Controller
             (int) $validated['item_id'],
             $validated['types'] ?? [],
             $validated['search'] ?? null,
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         return new CatalogueListForItemResource($cataloguesForItem);
@@ -90,7 +99,7 @@ class CatalogueController extends Controller
 
         $result = $this->catalogueService->createCatalogue(
             $createDTO,
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -114,7 +123,7 @@ class CatalogueController extends Controller
         $result = $this->catalogueService->addItemToCatalogue(
             $catalogueUid,
             (int) $request->validated('item_id'),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -134,7 +143,7 @@ class CatalogueController extends Controller
         $result = $this->catalogueService->removeItemFromCatalogue(
             $catalogueUid,
             $itemId,
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -148,11 +157,12 @@ class CatalogueController extends Controller
      * @response CatalogueDetailResource
      */
     #[Response(type: 'CatalogueDetailResource')]
-    public function show(string $uuid): JsonResponse|JsonResource
+    public function show(string $uuid, Request $request): JsonResponse|JsonResource
     {
         $catalogueUid = EntityId::from($uuid);
-        $viewer = auth('api')->user();
-        $detailResult = $this->catalogueService->getCatalogueDetail($catalogueUid, $viewer);
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $viewer = new Viewer($authenticatedUser?->id, (string) $request->ip());
+        $detailResult = $this->catalogueService->getCatalogueDetail($catalogueUid, $viewer, $authenticatedUser);
 
         if ($detailResult->isFailure()) {
             return TypedResults::fromError($detailResult->getError());
@@ -172,7 +182,7 @@ class CatalogueController extends Controller
     {
         $catalogueUid = EntityId::from($uuid);
         $updateDTO = CatalogueUpdateDTO::fromRequest($request->validated());
-        $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, auth('api')->user());
+        $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -191,7 +201,7 @@ class CatalogueController extends Controller
     public function destroy(string $uuid): JsonResponse
     {
         $catalogueUid = EntityId::from($uuid);
-        $result = $this->catalogueService->deleteCatalogue($catalogueUid, auth('api')->user());
+        $result = $this->catalogueService->deleteCatalogue($catalogueUid, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -204,7 +214,7 @@ class CatalogueController extends Controller
     {
         return $this->pdfResult($this->cataloguePdfExportService->exportKanjis(
             EntityId::from($uuid),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         ));
     }
 
@@ -212,7 +222,7 @@ class CatalogueController extends Controller
     {
         return $this->pdfResult($this->cataloguePdfExportService->exportWords(
             EntityId::from($uuid),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         ));
     }
 
@@ -226,5 +236,11 @@ class CatalogueController extends Controller
         $pdf = $result->getData();
 
         return $this->pdfResponseFactory->make($pdf);
+    }
+
+    private function requiredAuthenticatedUser(): AuthenticatedUser
+    {
+        return $this->currentUserProvider->currentAuthenticatedUser()
+            ?? throw new AuthenticationException;
     }
 }

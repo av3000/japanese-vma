@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Controllers;
 
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
@@ -28,6 +29,7 @@ class KanjiController extends Controller
         private readonly KanjiServiceInterface $kanjiService,
         private readonly KanjiDetailServiceInterface $kanjiDetailService,
         private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
     ) {
     }
 
@@ -87,11 +89,11 @@ class KanjiController extends Controller
 
         $kanjiListResult = $paginatedKanjisResult->getData();
         $viewerCatalogueStates = [];
-        $viewer = auth('api')->user();
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
 
-        if ($request->includesViewerCatalogueState() && $viewer !== null) {
+        if ($request->includesViewerCatalogueState() && $authenticatedUser !== null) {
             $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(
-                user: $viewer,
+                ownerUuid: $authenticatedUser->uuid,
                 itemIds: array_map(
                     static fn ($kanji): int => $kanji->getIdValue(),
                     $kanjiListResult->items,
@@ -110,7 +112,7 @@ class KanjiController extends Controller
         $result = $this->kanjiDetailService->findByIdentifier(
             identifier: $identifier,
             includes: $request->includes(),
-            viewer: auth('api')->user(),
+            authenticatedUser: $this->currentUserProvider->currentAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {

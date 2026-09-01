@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Catalogues;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Services\CataloguePdfExportService;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Pdf\PdfRendererInterface;
@@ -15,6 +16,8 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\UserName;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,7 +58,7 @@ class CataloguePdfExportServiceTest extends TestCase
         ]);
         $this->attachKanji($catalogue);
 
-        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isSuccess());
         $this->assertInstanceOf(PdfRenderResult::class, $result->getData());
@@ -86,7 +89,7 @@ class CataloguePdfExportServiceTest extends TestCase
         ]);
         $this->attachWord($catalogue);
 
-        $result = $this->service()->exportWords(EntityId::from($catalogue->uuid), $viewer);
+        $result = $this->service()->exportWords(EntityId::from($catalogue->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isSuccess());
 
@@ -107,7 +110,7 @@ class CataloguePdfExportServiceTest extends TestCase
     {
         $viewer = $this->createUser();
 
-        $result = $this->service()->exportKanjis(EntityId::from((string) Str::uuid()), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from((string) Str::uuid()), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Catalogues.NotFound', $result->getError()->code);
@@ -124,7 +127,7 @@ class CataloguePdfExportServiceTest extends TestCase
             'type' => SavedListType::KANJIS,
         ]);
 
-        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Catalogues.AccessDenied', $result->getError()->code);
@@ -139,7 +142,7 @@ class CataloguePdfExportServiceTest extends TestCase
             'type' => SavedListType::WORDS,
         ]);
 
-        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $viewer);
+        $result = $this->service()->exportKanjis(EntityId::from($catalogue->uuid), $this->authenticatedUser($viewer));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Catalogues.UnsupportedPdfExportKind', $result->getError()->code);
@@ -206,6 +209,16 @@ class CataloguePdfExportServiceTest extends TestCase
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ]);
+    }
+
+    private function authenticatedUser(User $user): AuthenticatedUser
+    {
+        return new AuthenticatedUser(
+            UserId::from((int) $user->id),
+            EntityId::from((string) $user->uuid),
+            UserName::from((string) $user->name),
+            $user->hasRole(UserRole::ADMIN->value),
+        );
     }
 
     private function createCatalogue(User $user, array $overrides = []): Catalogue
