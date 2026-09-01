@@ -48,6 +48,7 @@ Body rules:
 - Explain what changed and any important boundary or behavior decision; avoid exhaustive filenames and implementation trivia.
 - Report only validation observed in the current work. If relevant checks were not run, say so briefly and give the reason.
 - Include an issue reference only when it can be established from the branch, commits, or user context. Use `Closes #...` only when the PR fully resolves that issue; otherwise use `Related to #...`.
+- In the final handoff, point out any referenced issues that may need closing when the PR merges. This is a reminder for the developer, not an automatic close.
 - Omit empty headings, generic statements, diff statistics, and generated filler.
 - Add a short note only when reviewers need to know about a real limitation, follow-up, migration concern, or excluded work.
 
