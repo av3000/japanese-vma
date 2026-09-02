@@ -80,6 +80,11 @@ Route::prefix('v1')->group(function () {
         // User's Own Articles
         Route::get('user/articles', [ArticleController::class, 'userArticles']); // TODO: implement
 
+        // Sentences - Authenticated Actions
+        Route::post('sentences', [SentenceController::class, 'store']);
+        Route::put('sentences/{uuid}', [SentenceController::class, 'update']);
+        Route::delete('sentences/{uuid}', [SentenceController::class, 'destroy']);
+
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
         Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
