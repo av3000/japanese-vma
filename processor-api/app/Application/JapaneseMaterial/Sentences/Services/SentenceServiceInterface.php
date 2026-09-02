@@ -20,4 +20,6 @@ interface SentenceServiceInterface
 
     public function update(EntityId $uuid, SentenceWriteDTO $dto, AuthenticatedUser $actor): Result;
 
+    public function delete(EntityId $uuid, AuthenticatedUser $actor): Result;
+
 }

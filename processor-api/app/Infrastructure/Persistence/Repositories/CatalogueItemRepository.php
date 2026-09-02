@@ -124,6 +124,20 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
             ->delete();
     }
 
+    public function deleteByItem(int $itemId, array $catalogueTypes): void
+    {
+        DB::table('customlist_object')
+            ->where('real_object_id', $itemId)
+            ->whereIn(
+                'listtype_id',
+                array_map(
+                    static fn (SavedListType $catalogueType): int => $catalogueType->value,
+                    $catalogueTypes,
+                ),
+            )
+            ->delete();
+    }
+
     private function incrementLegacyKanjiJlptCounters(int $catalogueId, SavedListType $catalogueType, int $itemId): void
     {
         if (! in_array($catalogueType, [SavedListType::KANJIS, SavedListType::KNOWNKANJIS], true)) {

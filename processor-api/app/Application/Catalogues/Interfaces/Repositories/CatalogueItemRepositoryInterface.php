@@ -45,4 +45,9 @@ interface CatalogueItemRepositoryInterface
     public function removeItem(int $catalogueId, SavedListType $catalogueType, int $itemId): bool;
 
     public function deleteByCatalogueId(int $catalogueId): void;
+
+    /**
+     * @param array<int, SavedListType> $catalogueTypes
+     */
+    public function deleteByItem(int $itemId, array $catalogueTypes): void;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Sentences\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\JapaneseMaterial\Sentences\Actions\CleanupSentenceDependenciesAction;
 use App\Application\JapaneseMaterial\Sentences\Actions\DeriveSentenceRelationshipsAction;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Policies\SentencePolicy;
@@ -23,6 +24,7 @@ class SentenceService implements SentenceServiceInterface
         private readonly SentenceRepositoryInterface $sentenceRepository,
         private readonly SentencePolicy $sentencePolicy,
         private readonly DeriveSentenceRelationshipsAction $deriveRelationships,
+        private readonly CleanupSentenceDependenciesAction $cleanupSentenceDependencies,
     ) {
     }
 
@@ -111,6 +113,40 @@ class SentenceService implements SentenceServiceInterface
             ]);
 
             return Result::failure(SentenceErrors::updateFailed());
+        }
+    }
+
+    public function delete(EntityId $uuid, AuthenticatedUser $actor): Result
+    {
+        try {
+            DB::transaction(function () use ($uuid, $actor): void {
+                $sentence = $this->sentenceRepository->findByUuid($uuid);
+
+                if ($sentence === null) {
+                    throw new \DomainException('Sentence not found.');
+                }
+
+                if (! $this->sentencePolicy->canMutate($actor, $sentence)) {
+                    throw new \LogicException('Sentence access denied.');
+                }
+
+                $this->cleanupSentenceDependencies->execute($sentence->getIdValue());
+                $this->sentenceRepository->delete($sentence->getIdValue());
+            });
+
+            return Result::success();
+        } catch (\DomainException) {
+            return Result::failure(SentenceErrors::notFound($uuid->value()));
+        } catch (\LogicException) {
+            return Result::failure(SentenceErrors::accessDenied($uuid->value()));
+        } catch (\Throwable $exception) {
+            Log::error('Sentence deletion failed', [
+                'user_id' => $actor->id->value(),
+                'sentence_uuid' => $uuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(SentenceErrors::deletionFailed());
         }
     }
 

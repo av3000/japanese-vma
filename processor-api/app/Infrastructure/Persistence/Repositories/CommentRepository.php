@@ -95,10 +95,15 @@ class CommentRepository implements CommentRepositoryInterface
 
     public function deleteByEntity(int $entityId, int $entityTypeId): void
     {
-        $comments = PersistenceComment::where('real_object_id', $entityId)->get();
+        $comments = PersistenceComment::query()
+            ->where('real_object_id', $entityId)
+            ->where('template_id', $entityTypeId)
+            ->get();
 
         foreach ($comments as $comment) {
-            Like::where('real_object_id', $comment->id)
+            Like::query()
+                ->where('real_object_id', $comment->id)
+                ->where('template_id', ObjectTemplateType::COMMENT->getLegacyId())
                 ->delete();
 
             $comment->delete();
