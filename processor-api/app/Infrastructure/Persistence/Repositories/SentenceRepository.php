@@ -6,9 +6,11 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Domain\JapaneseMaterial\Sentences\DTOs\SentenceListResultDTO;
+use App\Domain\JapaneseMaterial\Sentences\DTOs\SentenceWriteDTO;
 use App\Domain\JapaneseMaterial\Sentences\Models\Sentence as DomainSentence;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Sentence as PersistenceSentence;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -82,6 +84,43 @@ class SentenceRepository implements SentenceRepositoryInterface
         return $sentence ? $this->sentenceMapper->mapToDomain($sentence) : null;
     }
 
+    public function create(SentenceWriteDTO $dto, UserId $ownerId, EntityId $uuid): DomainSentence
+    {
+        $sentence = PersistenceSentence::create([
+            'uuid' => $uuid->value(),
+            'user_id' => $ownerId->value(),
+            'tatoeba_entry' => null,
+            'content' => $dto->content,
+        ]);
+
+        return $this->sentenceMapper->mapToDomain($sentence);
+    }
+
+    public function updateContent(int $sentenceId, SentenceWriteDTO $dto): void
+    {
+        PersistenceSentence::query()
+            ->whereKey($sentenceId)
+            ->update(['content' => $dto->content]);
+    }
+
+    public function syncKanjis(int $sentenceId, array $kanjiIds): void
+    {
+        $this->sentenceOrFail($sentenceId)->kanjis()->sync($kanjiIds);
+    }
+
+    public function syncWords(int $sentenceId, array $wordIds): void
+    {
+        $this->sentenceOrFail($sentenceId)->words()->sync($wordIds);
+    }
+
+    public function delete(int $sentenceId): void
+    {
+        $sentence = $this->sentenceOrFail($sentenceId);
+        $sentence->kanjis()->detach();
+        $sentence->words()->detach();
+        $sentence->delete();
+    }
+
     private function applyFilters(Builder $query, SentenceQueryCriteria $criteria): void
     {
         if ($criteria->keyword !== null && $criteria->keyword !== '') {
@@ -110,5 +149,10 @@ class SentenceRepository implements SentenceRepositoryInterface
                 $kanjiQuery->whereKey($criteria->kanjiId);
             });
         }
+    }
+
+    private function sentenceOrFail(int $sentenceId): PersistenceSentence
+    {
+        return PersistenceSentence::query()->findOrFail($sentenceId);
     }
 }
