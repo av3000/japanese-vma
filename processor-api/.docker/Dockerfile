@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
     fonts-noto-cjk \
     fonts-ipafont-gothic \
     fonts-hanazono \
-    default-mysql-client \
+    postgresql-client \
     nodejs \
     npm \
     libicu-dev \
