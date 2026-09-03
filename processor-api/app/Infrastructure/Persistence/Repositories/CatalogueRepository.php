@@ -115,9 +115,9 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
                     $join->on('customlists.id', '=', 'views.real_object_id')
                         ->where('views.template_id', '=', $templateId);
                 })
-                ->addSelect(DB::raw('count(views.real_object_id) as viewsTotal'))
+                ->addSelect(DB::raw('count(views.real_object_id) as views_total'))
                 ->groupBy('customlists.id')
-                ->orderBy('viewsTotal', $criteria->sort->direction->value);
+                ->orderBy('views_total', $criteria->sort->direction->value);
         } else {
             $query->orderBy($criteria->sort->field->value, $criteria->sort->direction->value);
         }
