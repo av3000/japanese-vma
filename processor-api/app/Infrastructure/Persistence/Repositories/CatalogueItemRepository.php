@@ -28,7 +28,8 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
         return DB::table('customlist_object')
             ->whereIn('list_id', $catalogueIds)
             ->groupBy('list_id')
-            ->pluck(DB::raw('count(*)'), 'list_id')
+            ->select('list_id', DB::raw('count(*) as count'))
+            ->pluck('count', 'list_id')
             ->toArray();
     }
 
@@ -42,7 +43,8 @@ class CatalogueItemRepository implements CatalogueItemRepositoryInterface
             ->whereIn('real_object_id', $itemIds)
             ->where('listtype_id', $listType)
             ->groupBy('real_object_id')
-            ->pluck(DB::raw('count(*)'), 'real_object_id')
+            ->select('real_object_id', DB::raw('count(*) as count'))
+            ->pluck('count', 'real_object_id')
             ->toArray();
     }
 
