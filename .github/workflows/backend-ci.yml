@@ -1,0 +1,83 @@
+name: Backend quality
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Backend quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: processor-api
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: japanese_vma_test
+          POSTGRES_USER: japanese_vma_test
+          POSTGRES_PASSWORD: japanese_vma_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U japanese_vma_test -d japanese_vma_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7.0.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:zwDT99TJaWomjzB1IyTFX8UCztGtI/GBZwi8uNI1OIs=
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: japanese_vma_test
+      DB_USERNAME: japanese_vma_test
+      DB_PASSWORD: japanese_vma_test
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, mbstring, bcmath, gd, zip, intl, redis
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: processor-api/vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('processor-api/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Generate Passport keys
+        run: php artisan passport:keys --force
+
+      - name: Prepare test database
+        run: composer test:prepare
+
+      - name: Run quality gate
+        run: composer quality:ci
