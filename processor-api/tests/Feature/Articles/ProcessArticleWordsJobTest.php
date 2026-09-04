@@ -12,35 +12,24 @@ use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
-use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Spatie\Permission\Models\Role;
+use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
 class ProcessArticleWordsJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsBaselineData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
-        Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
-
-        DB::table('objecttemplates')->insert([
-            'id' => ObjectTemplateType::ARTICLE->getLegacyId(),
-            'title' => 'article',
-            'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->seedBaselineData();
     }
 
     public function test_process_article_words_job_attaches_words_replaces_old_words_and_records_completion(): void
@@ -126,20 +115,12 @@ class ProcessArticleWordsJobTest extends TestCase
 
     private function createUser(array $overrides = []): User
     {
-        return User::create(array_merge([
-            'name' => 'Test User',
-            'email' => Str::uuid().'@example.com',
-            'password' => Hash::make('password'),
-            'uuid' => (string) Str::uuid(),
-        ], $overrides));
+        return User::factory()->create($overrides);
     }
 
     private function createArticle(User $user, array $overrides = []): PersistenceArticle
     {
-        return PersistenceArticle::create(array_merge([
-            'user_id' => $user->id,
-            'uuid' => (string) Str::uuid(),
-            'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
+        return PersistenceArticle::factory()->byUser($user)->create(array_merge([
             'title_jp' => 'Japanese title',
             'title_en' => 'English title',
             'content_jp' => 'Japanese content text.',

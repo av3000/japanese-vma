@@ -96,10 +96,12 @@ class CatalogueController extends Controller
     public function store(StoreCatalogueRequest $request): JsonResponse|JsonResource
     {
         $createDTO = CatalogueCreateDTO::fromRequest($request->validated());
+        $authenticatedUser = $this->requiredAuthenticatedUser();
 
         $result = $this->catalogueService->createCatalogue(
             $createDTO,
-            $this->requiredAuthenticatedUser(),
+            $authenticatedUser,
+            new Viewer($authenticatedUser->id, (string) $request->ip()),
         );
 
         if ($result->isFailure()) {

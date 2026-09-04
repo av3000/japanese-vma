@@ -6,7 +6,9 @@ use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
 use Carbon\Carbon;
+use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,6 +39,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Article extends Model
 {
+    use HasFactory;
+
+    protected static function newFactory(): ArticleFactory
+    {
+        return ArticleFactory::new();
+    }
+
     protected $fillable = [
         'title_jp',
         'title_en',
