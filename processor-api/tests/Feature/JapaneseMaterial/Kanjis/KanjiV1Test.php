@@ -15,6 +15,7 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
@@ -91,10 +92,15 @@ class KanjiV1Test extends TestCase
             ->assertJsonPath('pagination.total', 2);
     }
 
-    public function test_stroke_range_uses_a_portable_decimal_cast(): void
+    public function test_stroke_range_uses_an_integer_column_without_a_cast(): void
     {
         $this->createKanji(id: 1, kanji: '一', meaning: 'one', strokeCount: '1');
         $this->createKanji(id: 2, kanji: '水', meaning: 'water', strokeCount: '4');
+
+        $this->assertSame(
+            'int4',
+            Schema::getColumnType('japanese_kanji_bank_long', 'stroke_count'),
+        );
 
         $queries = [];
 
@@ -110,8 +116,8 @@ class KanjiV1Test extends TestCase
             static fn (string $sql): bool => str_contains($sql, 'stroke_count'),
         )));
 
-        $this->assertStringContainsString(
-            'cast(stroke_count as decimal(10,0))',
+        $this->assertStringNotContainsString(
+            'cast(',
             $strokeRangeSql,
         );
     }

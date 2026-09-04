@@ -73,10 +73,10 @@ class KanjiRelationQueryBuilder
             $query->where('jlpt', $criteria->jlpt->value());
         }
         if ($criteria->minStrokeCount !== null) {
-            $query->whereRaw('CAST(stroke_count AS UNSIGNED) >= ?', [$criteria->minStrokeCount]);
+            $query->where('stroke_count', '>=', $criteria->minStrokeCount);
         }
         if ($criteria->maxStrokeCount !== null) {
-            $query->whereRaw('CAST(stroke_count AS UNSIGNED) <= ?', [$criteria->maxStrokeCount]);
+            $query->where('stroke_count', '<=', $criteria->maxStrokeCount);
         }
         if ($criteria->meanings !== null && ! empty($criteria->meanings)) {
             $query->where(function ($q) use ($criteria) {

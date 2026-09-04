@@ -100,11 +100,11 @@ class KanjiRepository implements KanjiRepositoryInterface
         }
 
         if ($criteria->minStrokeCount !== null) {
-            $query->whereRaw('CAST(stroke_count AS DECIMAL(10,0)) >= ?', [$criteria->minStrokeCount]);
+            $query->where('stroke_count', '>=', $criteria->minStrokeCount);
         }
 
         if ($criteria->maxStrokeCount !== null) {
-            $query->whereRaw('CAST(stroke_count AS DECIMAL(10,0)) <= ?', [$criteria->maxStrokeCount]);
+            $query->where('stroke_count', '<=', $criteria->maxStrokeCount);
         }
 
         if ($criteria->meanings !== null && $criteria->meanings !== []) {

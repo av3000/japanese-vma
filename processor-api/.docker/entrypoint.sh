@@ -21,8 +21,8 @@ done
 
 echo "Storage and cache directories are writable."
 
-# Wait for MySQL to be ready
-while ! mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" --silent; do
+# Wait for PostgreSQL to be ready
+while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE"; do
     echo "Waiting for database connection at $DB_HOST:$DB_PORT ..."
     sleep 2
 done
@@ -42,9 +42,9 @@ exec php-fpm
 #     echo "Permissions already correct."
 # fi
 
-# # Wait for MySQL to be ready
+# # Wait for PostgreSQL to be ready
 
-# while ! mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" --silent; do
+# while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE"; do
 #     echo "Waiting for database connection at $DB_HOST:$DB_PORT ..."
 #     sleep 2
 # done

@@ -17,7 +17,7 @@
 -   Sentry Laravel
 -   Spatie Laravel Permission
 -   Barryvdh Laravel Dompdf
--   MySQL for local development
+-   PostgreSQL for local development
 -   Redis for queue and cache coordination
 
 ## Backend Architecture
@@ -96,7 +96,7 @@ docker compose exec laravel-app php artisan config:clear
 docker compose exec laravel-app php artisan cache:clear
 ```
 
-`processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` MySQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
+`processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` PostgreSQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
 
 PDF generation uses Laravel Dompdf through the project PDF renderer. If PDF features fail locally, verify Dompdf config and installed Japanese fonts in the backend container.
 
@@ -113,8 +113,8 @@ The local Docker Compose setup includes:
 
 -   `laravel-app` for runtime PHP and Artisan/Composer commands against the dev database
 -   `webserver` for the HTTP entrypoint on port `8080`
--   `db` for the main local MySQL development database
--   `db-test` for the isolated MySQL test database
+-   `db` for the main local PostgreSQL development database
+-   `db-test` for the isolated PostgreSQL test database
 -   `redis` for local Redis-backed behavior
 -   `reverb` for websocket/realtime support
 -   `queue` for local queue worker execution
@@ -139,7 +139,7 @@ docker compose logs -f webserver
 
 ### Backend test lane
 
-Bring up the dedicated MySQL test lane once per session:
+Bring up the dedicated PostgreSQL test lane once per session:
 
 ```bash
 cd processor-api
