@@ -10,7 +10,6 @@ use App\Application\JapaneseMaterial\Words\Services\WordExtractionServiceInterfa
 use App\Application\LastOperations\Services\LastOperationService;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;

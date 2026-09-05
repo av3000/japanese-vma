@@ -4,7 +4,6 @@ namespace Tests\Feature\Catalogues;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\SavedListType;
-use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\User;

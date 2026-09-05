@@ -20,7 +20,7 @@ class Catalogue extends Model
         return CatalogueFactory::new();
     }
 
-    protected $table = "customlists";
+    protected $table = 'customlists';
 
     protected $fillable = [
         'title',

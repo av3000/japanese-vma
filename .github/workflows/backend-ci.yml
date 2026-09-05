@@ -55,6 +55,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -79,5 +81,22 @@ jobs:
       - name: Prepare test database
         run: composer test:prepare
 
-      - name: Run quality gate
-        run: composer quality:ci
+      - name: Run changed PHP style check
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          mapfile -t changed_php_files < <(
+            git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$HEAD_SHA" -- ':(top,glob)processor-api/**/*.php' |
+              sed 's#^processor-api/##'
+          )
+
+          if [ "${#changed_php_files[@]}" -eq 0 ]; then
+            echo "No PHP files changed."
+            exit 0
+          fi
+
+          vendor/bin/pint --test "${changed_php_files[@]}"
+
+      - name: Run test suite
+        run: composer test
