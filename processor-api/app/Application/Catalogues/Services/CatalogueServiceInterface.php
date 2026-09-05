@@ -16,7 +16,7 @@ use App\Shared\Results\Result;
 
 interface CatalogueServiceInterface
 {
-    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result;
+    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser, Viewer $viewer): Result;
 
     public function getCatalogueList(CatalogueListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): CatalogueListResultDTO;
 

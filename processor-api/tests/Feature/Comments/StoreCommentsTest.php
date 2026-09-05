@@ -211,7 +211,7 @@ class StoreCommentsTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonPath('errors.entity_uuid.0', 'The entity uuid field must be a valid UUID.');
+            ->assertJsonPath('errors.entity_uuid.0', 'The entity uuid must be a valid UUID.');
     }
 
     private function createUser(array $overrides = []): User

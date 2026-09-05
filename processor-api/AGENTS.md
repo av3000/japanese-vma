@@ -75,7 +75,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
     -   From `processor-api/`, bring up backend test infrastructure with `docker compose up -d --build db-test test-runner`.
-    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` MySQL service.
+    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` PostgreSQL service.
     -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
     -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
