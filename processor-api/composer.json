@@ -85,6 +85,8 @@
                 "php ./vendor/bin/pint"
             ]
         },
+        "setup": "php artisan app:setup --no-interaction",
+        "setup:dev": "php artisan app:setup --with-dev-users --no-interaction",
         "openapi": "php artisan scramble:export --path=api.json",
         "format": "vendor/bin/pint --dirty",
         "format:all": "vendor/bin/pint",

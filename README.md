@@ -63,14 +63,12 @@ The backend is Docker-first. Detailed instructions live in [processor-api/README
 
 ```bash
 cd processor-api
+cp .env.example .env
 docker compose up -d --build
-docker compose exec laravel-app composer install
-docker compose exec laravel-app php artisan key:generate
-docker compose exec laravel-app php artisan migrate
-docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
-docker compose exec laravel-app php artisan passport:install
-docker compose exec laravel-app php artisan db:seed
+docker compose exec laravel-app composer setup:dev
 ```
+
+`composer setup:dev` migrates, seeds reference data and sample users, installs Passport, and imports the Japanese dictionary. It is idempotent, so re-run it after any failure.
 
 Backend tests use the dedicated PostgreSQL test lane through `docker compose exec test-runner ...`; see [processor-api/README.md](./processor-api/README.md) for the canonical commands.
 

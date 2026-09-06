@@ -67,26 +67,40 @@ This flow exists alongside legacy routes and controllers that still live in `rou
 
 ## Local Setup
 
-The backend should be run through Docker so the PHP extensions and runtime match the application requirements.
-
-1. Create `processor-api/.env` from `processor-api/.env.example`.
-2. Start the local containers.
-3. Install Composer dependencies inside the Laravel container.
-4. Generate the app key.
-5. Run the standard migrations and the Japanese data migrations.
-6. Install Passport keys and clients.
-7. Seed the database.
+Run the backend through Docker. Three steps from a fresh clone.
 
 ```bash
 cd processor-api
+cp .env.example .env
 docker compose up -d --build
-docker compose exec laravel-app composer install
-docker compose exec laravel-app php artisan key:generate
-docker compose exec laravel-app php artisan migrate
-docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
-docker compose exec laravel-app php artisan passport:install
-docker compose exec laravel-app php artisan db:seed
+docker compose exec laravel-app composer setup:dev
 ```
+
+That is the whole setup. `composer setup:dev` runs `php artisan app:setup --with-dev-users`, which does, in order:
+
+| Step | What happens | Skipped when |
+|---|---|---|
+| Application key | `key:generate` writes `APP_KEY` into `.env` | key already set |
+| Migrations | `migrate --force` creates every table, including the Japanese dictionary tables | nothing pending |
+| Reference data | seeds permissions, roles, and `objecttemplates` | rows already exist |
+| Passport keys | `passport:keys` writes `storage/oauth-*.key` | files exist, or keys come from `PASSPORT_*_KEY` env |
+| Personal access client | creates the OAuth client that login tokens use | one already exists, or comes from `PASSPORT_PERSONAL_ACCESS_CLIENT_*` env |
+| Dev users | `admin@me.com` and `johndoe@me.com`, password `secret123` | only with `--with-dev-users` |
+| Japanese data | imports kanji, words, radicals and sentences from `database/japanese-data/*.sql` (about 130 MB, several minutes) | sentinel row in `environment_bootstrap_runs` says it already ran |
+
+Every step is idempotent. If a step fails, fix the cause and run the same command again; finished steps are skipped.
+
+Use `composer setup` instead of `setup:dev` when you do not want the sample users. The same command runs in deployment pipelines, where `.env` values come from the platform instead of the file.
+
+Useful flags on `php artisan app:setup`:
+
+- `--skip-import` leaves the Japanese tables empty. Handy for a quick schema-only database.
+- `--environment=name` overrides the sentinel name for the import. Defaults to `APP_ENV`.
+- Re-importing on purpose: `php artisan app:import-japanese-data --environment=local --allow-rerun`. This truncates the dictionary tables first.
+
+Do not run `migrate:fresh` against `laravel-app`. It drops the imported dictionary. The test lane uses its own `db-test` database, so `composer test:prepare` inside `test-runner` is safe.
+
+Coming from the old MySQL setup: update the `DB_*` block in your existing `.env` to match `.env.example`, remove `DB_COLLATION`, then run `docker compose up -d --build` and `composer setup:dev` as above. Your MySQL data stays in the old `processor-api_dbdata` volume; nothing is migrated automatically.
 
 If configuration or autoload state gets stale during local work:
 

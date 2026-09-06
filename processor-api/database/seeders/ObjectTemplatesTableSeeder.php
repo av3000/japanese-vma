@@ -34,5 +34,13 @@ class ObjectTemplatesTableSeeder extends Seeder
                 'title' => $case->getTitle(),
             ]);
         }
+
+        // Rows are inserted with explicit legacy ids, so move the PostgreSQL
+        // sequence past them or the next auto-generated id would collide.
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement(
+                "SELECT setval(pg_get_serial_sequence('objecttemplates', 'id'), COALESCE(MAX(id), 1), true) FROM objecttemplates"
+            );
+        }
     }
 }

@@ -12,12 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Keep production-safe seeds idempotent. Create required roles (ex: "common") only.
+        // Production-safe, idempotent reference data. Every environment needs these rows.
         $this->call(PermissionSeeder::class);
         $this->call(RoleSeeder::class);
+        $this->call(ObjectTemplatesTableSeeder::class);
         // The seeders below create sample/dev data; keep them opt-in.
-        // $this->call(UserTableSeeder::class);
-        // $this->call(ObjectTemplatesTableSeeder::class);
+        // UserTableSeeder runs through `php artisan app:setup --with-dev-users`.
         // $this->call(ArticlesTableSeeder::class);
         // $this->call(CustomListsTableSeeder::class);
     }
