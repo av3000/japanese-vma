@@ -2,6 +2,9 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
@@ -9,14 +12,15 @@ use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
 
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
@@ -60,13 +64,27 @@ class ArticleController extends Controller
      * @response ArticleListResource
      */
     #[Response(type: 'ArticleListResource')]
-    public function index(IndexArticleRequest $request): JsonResponse|JsonResource
+    public function index(IndexArticleRequest $request, SearchArticlesAction $searchArticles): JsonResponse|JsonResource
     {
-        $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $validated = $request->validated();
+
+        $query = new ArticleListQuery(
+            sort: ArticleSortCriteria::fromInputOrDefault($validated['sort_by'] ?? null, $validated['sort_dir'] ?? null),
+            pagination: Pagination::fromInputOrDefault($validated['page'] ?? null, $validated['per_page'] ?? null),
+            search: isset($validated['search']) ? SearchTerm::fromInputOrNull($validated['search']) : null,
+            categoryId: $validated['category'] ?? null,
+            authorUid: $validated['author_uid'] ?? null,
+        );
+
+        $projection = new ArticleListProjection(
+            includeStats: $validated['include_stats_counts'] ?? true,
+            includeHashtags: $validated['include_hashtags'] ?? true,
+            includeKanjis: $validated['include_kanjis'] ?? true,
+            includeWords: $validated['include_words'] ?? true,
+        );
 
         return new ArticleListResource(
-            $this->articleService->getArticlesList($listDTO, $authenticatedUser)
+            $searchArticles->execute($query, $projection, $this->currentUserProvider->currentAuthenticatedUser())
         );
     }
 

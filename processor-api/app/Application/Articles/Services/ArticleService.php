@@ -3,6 +3,10 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\DTOs\ArticleListPageDTO;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Jobs\ProcessArticleWordsJob;
@@ -22,8 +26,6 @@ use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\DTOs\ArticleListItemDTO;
-use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
@@ -42,7 +44,6 @@ use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Models\LastOperationState;
 use App\Shared\Results\Result;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -57,6 +58,7 @@ class ArticleService implements ArticleServiceInterface
         private EngagementServiceInterface $engagementService,
         private LastOperationServiceInterface $lastOperationService,
         private ArticlePolicy $articlePolicy,
+        private SearchArticlesAction $searchArticles,
         private IncrementViewAction $incrementViewAction,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
         private HashtagRepositoryInterface $hashtagRepository,
@@ -207,75 +209,37 @@ class ArticleService implements ArticleServiceInterface
     }
 
     /**
-     * Get filtered, sorted, paginated list of articles with permission-based visibility.
+     * Compatibility delegation for internal Kanji/Word callers.
+     *
+     * The HTTP list path now goes through SearchArticlesAction. This method survives
+     * only because KanjiDetailService and WordDetailService still build an HTTP-shaped
+     * ArticleListDTO; AFM-07 migrates them and deletes this method along with
+     * ArticleListDTO, ArticleCriteriaDTO and the Domain list result types.
+     *
+     * @deprecated Call SearchArticlesAction with ArticleListQuery/ArticleListProjection.
      *
      * @param ArticleListDTO $dto Filter criteria
-     *
-     * @return ArticleListResultDTO Shaped domain collection with pagination metadata
      */
-    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListResultDTO
+    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListPageDTO
     {
-        // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
-        // TODO: ArticleListDTO or ArticleCriteriaDTO should not contain any default values, it is spilling business logic. Ensure consistency between 2 for now.
-        $criteriaDTO = new ArticleCriteriaDTO(
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
+        $query = new ArticleListQuery(
             sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
+            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
+            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             categoryId: $dto->category,
             authorUid: $dto->author_uid,
-            visibilityRules: $this->articlePolicy->getVisibilityCriteria($authenticatedUser),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_kanjis: $dto->include_kanjis,
-            include_words: $dto->include_words,
             kanjiId: $dto->kanji_id,
             wordId: $dto->word_id,
         );
 
-        $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
-        $articles = $paginatedArticles->getItems();
-        $articleIds = array_map(
-            static fn (DomainArticle $article): int => $article->getIdValue(),
-            $articles,
-        );
-        $articleUuids = array_map(
-            static fn (DomainArticle $article): string => $article->getUid()->value(),
-            $articles,
+        $projection = new ArticleListProjection(
+            includeStats: $dto->include_stats_counts,
+            includeHashtags: $dto->include_hashtags,
+            includeKanjis: $dto->include_kanjis,
+            includeWords: $dto->include_words,
         );
 
-        $statsMap = $dto->include_stats_counts
-            ? $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles)
-            : [];
-
-        $hashtagsMap = $dto->include_hashtags
-            ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
-            : [];
-
-        /** @var array<string, LastOperationState> $lastOperationsMap */
-        $lastOperationsMap = $articleUuids === []
-            ? []
-            : $this->lastOperationService->getBatchLatestStates($articleUuids, 'kanji_extraction');
-
-        $paginator = $paginatedArticles->getPaginator();
-
-        return new ArticleListResultDTO(
-            items: array_map(
-                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
-                    article: $article,
-                    stats: $statsMap[$article->getIdValue()] ?? null,
-                    hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
-                    lastOperation: $lastOperationsMap[$article->getUid()->value()] ?? null,
-                ),
-                $articles,
-            ),
-            pagination: [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
-            include_hashtags: $dto->include_hashtags,
-            include_stats: $dto->include_stats_counts,
-        );
+        return $this->searchArticles->execute($query, $projection, $authenticatedUser);
     }
 
     /**

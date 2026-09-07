@@ -4,6 +4,7 @@ namespace App\Application\Articles\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\PublicityStatus;
 
 class ArticlePolicy
@@ -11,6 +12,26 @@ class ArticlePolicy
     public function canModerate(AuthenticatedUser $authenticatedUser): bool
     {
         return $authenticatedUser->isAdmin;
+    }
+
+    /**
+     * Derive the mandatory Article visibility scope from the actor.
+     *
+     * This is the typed replacement for getVisibilityCriteria()'s untyped array.
+     * The scope is the only thing allowed to decide eligibility, and it is built
+     * from the authenticated actor alone, so no request parameter can widen it.
+     */
+    public function scopeFor(?AuthenticatedUser $authenticatedUser): ArticleVisibilityScope
+    {
+        if ($authenticatedUser === null) {
+            return ArticleVisibilityScope::publicOnly();
+        }
+
+        if ($authenticatedUser->isAdmin) {
+            return ArticleVisibilityScope::unrestricted();
+        }
+
+        return ArticleVisibilityScope::publicOrOwnedBy($authenticatedUser->id->value());
     }
 
     /**

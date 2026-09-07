@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Application\Articles\DTOs\ArticleListItemDTO;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\JapaneseMaterial\Kanjis;
 
+use App\Application\Articles\DTOs\ArticleListPageDTO;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticlePaginationDTO;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
@@ -13,7 +16,6 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
@@ -143,9 +145,13 @@ class KanjiDetailServiceTest extends TestCase
         return new SentenceListResultDTO([], $this->emptyPagination());
     }
 
-    private function emptyArticleListResult(): ArticleListResultDTO
+    private function emptyArticleListResult(): ArticleListPageDTO
     {
-        return new ArticleListResultDTO([], $this->emptyPagination(), true, true);
+        return new ArticleListPageDTO(
+            items: [],
+            pagination: new ArticlePaginationDTO(page: 1, perPage: 5, total: 0, lastPage: 1, hasMore: false),
+            projection: new ArticleListProjection(),
+        );
     }
 
     /**

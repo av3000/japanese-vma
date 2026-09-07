@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\JapaneseMaterial\Words\DTOs;
 
-use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Application\Articles\DTOs\ArticleListItemDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
 
