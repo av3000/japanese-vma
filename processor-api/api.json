@@ -1932,6 +1932,123 @@
                 }
             }
         },
+        "/posts": {
+            "get": {
+                "operationId": "post.index",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 50
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "hashtag",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "topic",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PostTopic"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PostSort"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PostListResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostListResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/posts/{identifier}": {
+            "get": {
+                "operationId": "post.show",
+                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\r\nPost during migration; the response always carries the UUID",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/radicals": {
             "get": {
                 "operationId": "radical.index",
@@ -5068,6 +5185,172 @@
                     "has_more"
                 ],
                 "title": "PaginationResource"
+            },
+            "PostDetailResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "entity_type_uuid": {
+                        "type": "string",
+                        "description": "posts.entity_type_uuid is nullable and was never backfilled;\nthe canonical value comes from the enum."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "topic": {
+                        "type": "integer"
+                    },
+                    "topic_label": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/AuthorResource"
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "engagement": {
+                        "$ref": "#/components/schemas/EngagementStatsSummaryResource"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "entity_type_uuid",
+                    "title",
+                    "topic",
+                    "topic_label",
+                    "locked",
+                    "content",
+                    "author",
+                    "hashtags",
+                    "engagement",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PostDetailResource"
+            },
+            "PostListItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "entity_type_uuid": {
+                        "type": "string",
+                        "description": "posts.entity_type_uuid is nullable and was never backfilled;\nthe canonical value comes from the enum."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "topic": {
+                        "type": "integer"
+                    },
+                    "topic_label": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/AuthorResource"
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "engagement": {
+                        "$ref": "#/components/schemas/EngagementStatsSummaryResource"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "entity_type_uuid",
+                    "title",
+                    "topic",
+                    "topic_label",
+                    "locked",
+                    "author",
+                    "hashtags",
+                    "engagement",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PostListItemResource"
+            },
+            "PostListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PostListItemResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "PostListResource"
+            },
+            "PostSort": {
+                "type": "string",
+                "description": "Closed sort vocabulary for public Post reads. Callers never pass a raw column or direction; `newest` and `popular` are the only orderings the v1 contract exposes.\n",
+                "enum": [
+                    "newest",
+                    "popular"
+                ],
+                "title": "PostSort"
+            },
+            "PostTopic": {
+                "type": "integer",
+                "description": "Canonical Post topic vocabulary. The persisted `posts.type` column stores these codes as strings. The legacy read paths (PostController::index/show/getPostImpressionsSearch) label code 6 as \"Announcement\" and never label code 7; the canonical mapping below comes from the write/filter vocabulary in PostController::getPostTypes() and is the single source of truth for v1.\n",
+                "enum": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "title": "PostTopic"
             },
             "ProcessingStatusResource": {
                 "type": "object",

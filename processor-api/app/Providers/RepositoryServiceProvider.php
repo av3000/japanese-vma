@@ -7,6 +7,7 @@ use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
@@ -27,6 +28,7 @@ use App\Infrastructure\Persistence\Repositories\HashtagRepository;
 use App\Infrastructure\Persistence\Repositories\KanjiRepository;
 use App\Infrastructure\Persistence\Repositories\LastOperationRepository;
 use App\Infrastructure\Persistence\Repositories\LikeRepository;
+use App\Infrastructure\Persistence\Repositories\PostRepository;
 use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 use App\Infrastructure\Persistence\Repositories\RoleRepository;
 use App\Infrastructure\Persistence\Repositories\SentenceRepository;
@@ -42,6 +44,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             ArticleRepositoryInterface::class,
             ArticleRepository::class
+        );
+
+        $this->app->singleton(
+            PostRepositoryInterface::class,
+            PostRepository::class
         );
 
         $this->app->singleton(

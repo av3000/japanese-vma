@@ -6,6 +6,7 @@ use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
+use App\Http\v1\Community\Posts\Controllers\PostController;
 use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
@@ -68,6 +69,11 @@ Route::prefix('v1')->group(function () {
     // Sentences
     Route::get('sentences', [SentenceController::class, 'index']);
     Route::get('sentences/{identifier}', [SentenceController::class, 'show']);
+
+    // Community Posts - Public Read Access
+    // `identifier` is a UUID (canonical) or, transitionally, a positive legacy id.
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{identifier}', [PostController::class, 'show']);
 
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
