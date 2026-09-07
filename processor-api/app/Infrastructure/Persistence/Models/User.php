@@ -11,8 +11,10 @@ use App\Http\Models\CustomList;
 use App\Http\Models\Download;
 use App\Http\Models\Post;
 use App\Http\Models\View;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -20,7 +22,12 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
 
     protected $guard_name = 'api';
 

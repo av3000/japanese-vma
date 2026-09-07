@@ -60,10 +60,10 @@ class CatalogueService implements CatalogueServiceInterface
     ) {
     }
 
-    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
+    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser, Viewer $viewer): Result
     {
         try {
-            $catalogue = DB::transaction(function () use ($dto, $authenticatedUser) {
+            $catalogue = DB::transaction(function () use ($dto, $authenticatedUser, $viewer) {
                 $domainCatalogue = CatalogueFactory::createFromDTO(
                     $dto,
                     $authenticatedUser->id,
@@ -85,6 +85,12 @@ class CatalogueService implements CatalogueServiceInterface
                         throw new \Exception($hashtagResult->getError()->description);
                     }
                 }
+
+                $this->incrementViewAction->execute(
+                    $createdCatalogue->getIdValue(),
+                    ObjectTemplateType::LIST,
+                    $viewer,
+                );
 
                 return $createdCatalogue;
             });

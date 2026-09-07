@@ -19,7 +19,7 @@ flowchart LR
 
     client[React client\nVite and React Router]
     api[Laravel API\nlegacy and v1 routes]
-    mysql[(MySQL)]
+    postgres[(PostgreSQL)]
     redis[(Redis\nlocal or Upstash)]
     worker[Queue worker\nGCP VM in production config]
     realtime[Realtime channel\nLaravel Reverb client integration]
@@ -35,13 +35,13 @@ flowchart LR
     admin --> client
     client --> api
     client <--> realtime
-    api --> mysql
+    api --> postgres
     api --> redis
     api --> pdf
     api --> worker
     worker --> redis
-    worker --> mysql
-    datasets --> mysql
+    worker --> postgres
+    datasets --> postgres
     gha --> client
     gitlab --> worker
     gitlab --> render
@@ -63,7 +63,7 @@ flowchart LR
 
 - The React client calls both generated v1 clients and legacy API adapters.
 - The Laravel backend exposes both `processor-api/routes/api_v1.php` and `processor-api/routes/api.php`.
-- MySQL is the dedicated database in the Docker development and test topology.
+- PostgreSQL is the dedicated database in the Docker development and test topology.
 - Redis supports cache, queue, and realtime coordination according to backend configuration.
 - Article processing jobs and PDF services are explicit application boundaries.
 

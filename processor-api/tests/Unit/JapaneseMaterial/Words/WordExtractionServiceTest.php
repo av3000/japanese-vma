@@ -6,6 +6,11 @@ namespace Tests\Unit\JapaneseMaterial\Words;
 
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordExtractionService;
+use App\Domain\JapaneseMaterial\Words\DTOs\WordListResultDTO;
+use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
+use App\Domain\Shared\ValueObjects\EntityId;
+use LogicException;
 use Tests\TestCase;
 
 class WordExtractionServiceTest extends TestCase
@@ -73,5 +78,25 @@ final class FakeWordRepository implements WordRepositoryInterface
     public function findIdByWord(string $word): ?int
     {
         return $this->idsByWord[$word] ?? null;
+    }
+
+    public function find(WordQueryCriteria $criteria): WordListResultDTO
+    {
+        throw new LogicException('This fake only supports word extraction lookups.');
+    }
+
+    public function findByUuid(EntityId $uuid): ?Word
+    {
+        return null;
+    }
+
+    public function findBySurface(string $surface): ?Word
+    {
+        return null;
+    }
+
+    public function findRelatedKanjis(int $wordId, int $limit): array
+    {
+        return [];
     }
 }

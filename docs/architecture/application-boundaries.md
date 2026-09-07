@@ -77,7 +77,7 @@ sequenceDiagram
     participant Req as StoreArticleRequest
     participant Svc as ArticleService
     participant Repo as ArticleRepository
-    participant DB as MySQL
+    participant DB as PostgreSQL
     participant Queue as Queue
 
     UI->>API: POST /api/v1/articles

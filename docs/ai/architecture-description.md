@@ -32,7 +32,7 @@ The backend is an incrementally modernized modular monolith. Legacy controllers/
 
 ## Context View
 
-The [system context](../architecture/system-context.md) identifies users, the React client, Laravel API, MySQL, Redis, queue worker, realtime channel, reference datasets, CI systems, and hosting boundaries.
+The [system context](../architecture/system-context.md) identifies users, the React client, Laravel API, PostgreSQL, Redis, queue worker, realtime channel, reference datasets, CI systems, and hosting boundaries.
 
 ## Functional View
 

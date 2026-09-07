@@ -16,7 +16,7 @@ The production topology is intentionally cross-system:
 | Backend web service | Render |
 | Queue worker | Docker Compose on a GCP VM |
 | Shared Redis queue/cache coordination | Upstash Redis |
-| Primary application persistence | MySQL-compatible database configuration |
+| Primary application persistence | PostgreSQL database configuration |
 
 This review verified repository configuration and contributor guidance. It did not inspect provider dashboards or make live requests.
 

@@ -17,7 +17,7 @@
 -   Sentry Laravel
 -   Spatie Laravel Permission
 -   Barryvdh Laravel Dompdf
--   MySQL for local development
+-   PostgreSQL for local development
 -   Redis for queue and cache coordination
 
 ## Backend Architecture
@@ -67,26 +67,40 @@ This flow exists alongside legacy routes and controllers that still live in `rou
 
 ## Local Setup
 
-The backend should be run through Docker so the PHP extensions and runtime match the application requirements.
-
-1. Create `processor-api/.env` from `processor-api/.env.example`.
-2. Start the local containers.
-3. Install Composer dependencies inside the Laravel container.
-4. Generate the app key.
-5. Run the standard migrations and the Japanese data migrations.
-6. Install Passport keys and clients.
-7. Seed the database.
+Run the backend through Docker. Three steps from a fresh clone.
 
 ```bash
 cd processor-api
+cp .env.example .env
 docker compose up -d --build
-docker compose exec laravel-app composer install
-docker compose exec laravel-app php artisan key:generate
-docker compose exec laravel-app php artisan migrate
-docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
-docker compose exec laravel-app php artisan passport:install
-docker compose exec laravel-app php artisan db:seed
+docker compose exec laravel-app composer setup:dev
 ```
+
+That is the whole setup. `composer setup:dev` runs `php artisan app:setup --with-dev-users`, which does, in order:
+
+| Step | What happens | Skipped when |
+|---|---|---|
+| Application key | `key:generate` writes `APP_KEY` into `.env` | key already set |
+| Migrations | `migrate --force` creates every table, including the Japanese dictionary tables | nothing pending |
+| Reference data | seeds permissions, roles, and `objecttemplates` | rows already exist |
+| Passport keys | `passport:keys` writes `storage/oauth-*.key` | files exist, or keys come from `PASSPORT_*_KEY` env |
+| Personal access client | creates the OAuth client that login tokens use | one already exists, or comes from `PASSPORT_PERSONAL_ACCESS_CLIENT_*` env |
+| Dev users | `admin@me.com` and `johndoe@me.com`, password `secret123` | only with `--with-dev-users` |
+| Japanese data | imports kanji, words, radicals and sentences from `database/japanese-data/*.sql` (about 130 MB, several minutes) | sentinel row in `environment_bootstrap_runs` says it already ran |
+
+Every step is idempotent. If a step fails, fix the cause and run the same command again; finished steps are skipped.
+
+Use `composer setup` instead of `setup:dev` when you do not want the sample users. The same command runs in deployment pipelines, where `.env` values come from the platform instead of the file.
+
+Useful flags on `php artisan app:setup`:
+
+- `--skip-import` leaves the Japanese tables empty. Handy for a quick schema-only database.
+- `--environment=name` overrides the sentinel name for the import. Defaults to `APP_ENV`.
+- Re-importing on purpose: `php artisan app:import-japanese-data --environment=local --allow-rerun`. This truncates the dictionary tables first.
+
+Do not run `migrate:fresh` against `laravel-app`. It drops the imported dictionary. The test lane uses its own `db-test` database, so `composer test:prepare` inside `test-runner` is safe.
+
+Coming from the old MySQL setup: update the `DB_*` block in your existing `.env` to match `.env.example`, remove `DB_COLLATION`, then run `docker compose up -d --build` and `composer setup:dev` as above. Your MySQL data stays in the old `processor-api_dbdata` volume; nothing is migrated automatically.
 
 If configuration or autoload state gets stale during local work:
 
@@ -96,7 +110,7 @@ docker compose exec laravel-app php artisan config:clear
 docker compose exec laravel-app php artisan cache:clear
 ```
 
-`processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` MySQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
+`processor-api/.env.testing` is committed for the dedicated Docker test lane. The `test-runner` service always boots Laravel in `APP_ENV=testing` against the isolated `db-test` PostgreSQL service, so backend verification no longer depends on SQLite fallbacks or the main dev database.
 
 PDF generation uses Laravel Dompdf through the project PDF renderer. If PDF features fail locally, verify Dompdf config and installed Japanese fonts in the backend container.
 
@@ -113,8 +127,8 @@ The local Docker Compose setup includes:
 
 -   `laravel-app` for runtime PHP and Artisan/Composer commands against the dev database
 -   `webserver` for the HTTP entrypoint on port `8080`
--   `db` for the main local MySQL development database
--   `db-test` for the isolated MySQL test database
+-   `db` for the main local PostgreSQL development database
+-   `db-test` for the isolated PostgreSQL test database
 -   `redis` for local Redis-backed behavior
 -   `reverb` for websocket/realtime support
 -   `queue` for local queue worker execution
@@ -128,8 +142,7 @@ The local Docker Compose setup includes:
 ```bash
 cd processor-api
 docker compose up -d --build
-docker compose exec laravel-app composer format
-docker compose exec laravel-app composer format:check
+./format-changed.ps1                       # Pint on changed files (see Pint section)
 docker compose exec laravel-app composer stan
 docker compose exec laravel-app php artisan route:list
 docker compose exec laravel-app php artisan horizon
@@ -137,9 +150,11 @@ docker compose logs -f queue
 docker compose logs -f webserver
 ```
 
+`composer format` and `composer format:check` rely on Pint's `--dirty` flag and silently match nothing inside the containers. Use the `format-changed` helper instead; see [Pint - code style fixer](#pint---code-style-fixer).
+
 ### Backend test lane
 
-Bring up the dedicated MySQL test lane once per session:
+Bring up the dedicated PostgreSQL test lane once per session:
 
 ```bash
 cd processor-api
@@ -163,9 +178,7 @@ docker compose exec test-runner composer test
 
 Use `docker compose exec test-runner composer test -- ...` as the default backend verification interface. Do not run DB-backed backend tests through host PHP, `laravel-app`, or SQLite fallbacks.
 
-Use `docker compose exec laravel-app composer format` during local work to run Pint against dirty PHP files when Git metadata is available to the PHP runtime.
-
-Use `docker compose exec test-runner composer test` for the PHPUnit suite, then run the relevant Pint and Larastan commands through `laravel-app` before handing off a backend change.
+Use `docker compose exec test-runner composer test` for the PHPUnit suite, then run the Pint and Larastan checks below through `laravel-app` before handing off a backend change.
 
 ### Larastan - static analysis
 
@@ -183,14 +196,29 @@ composer stan -- app/Foo.php app/Bar.php
 
 ### Pint - code style fixer
 
-The current Docker Compose mount exposes `processor-api/` to the Laravel container, while the `.git` directory lives at the repository root. Because of that, Pint's `--dirty` mode may report `0 files` inside the container. For targeted Docker formatting, run Pint against explicit files or directories:
+**Run this before you push.** CI fails the build on any style drift in the PHP files your branch touched, so this is the single most common avoidable red build.
+
+From `processor-api/` on the host:
 
 ```bash
-vendor/bin/pint app/Path/To/File.php
-vendor/bin/pint --test app/Path/To/File.php
+./format-changed.ps1          # Windows: fix changed files
+./format-changed.ps1 -Test    # Windows: check only, non-zero exit on drift
+./format-changed.sh           # macOS/Linux: fix changed files
+./format-changed.sh --test    # macOS/Linux: check only
 ```
 
-If the branch is still carrying legacy style drift, format touched PHP files directly during daily work and reserve whole-repository checks such as `composer format:check` or `composer quality:ci` for cleanup branches or CI gates with an agreed formatting baseline.
+These helpers run exactly the check CI runs: every added, changed or untracked `.php` file under `processor-api/` between the merge-base with `origin/develop` and your working tree. Override the comparison point with `-Base origin/master` or `BASE_REF=origin/master`.
+
+Why a helper instead of `composer format`: that script uses Pint's `--dirty` flag, which needs Git metadata. Compose mounts only `processor-api/` into the containers while `.git` lives at the repository root, so inside a container `--dirty` matches nothing and reports `PASS 0 files`. That silent pass is why style drift reaches CI. The helpers run Git on the host and pass the resulting file list into the container, so nothing is skipped.
+
+For one-off work you can still target paths explicitly:
+
+```bash
+docker compose exec laravel-app vendor/bin/pint app/Path/To/File.php
+docker compose exec laravel-app vendor/bin/pint --test app/Path/To/File.php
+```
+
+Avoid `composer format:all` and `composer quality:ci` on a feature branch. The repository still carries legacy style drift, so a whole-repository pass produces a large unrelated diff. Reserve those for dedicated cleanup branches.
 
 Larastan uses `phpstan-baseline.neon` to ignore the current backlog of existing findings. When fixing static-analysis issues, regenerate the baseline only after confirming the reduction is intentional.
 

@@ -61,11 +61,6 @@ class ArticleController extends Controller
         );
     }
 
-    private function getImagePath(): string
-    {
-        return '/var/www/html/public/images/articles/user/testing-image.jpg';
-    }
-
     /**
      * @response UuidCreatedResource
      */

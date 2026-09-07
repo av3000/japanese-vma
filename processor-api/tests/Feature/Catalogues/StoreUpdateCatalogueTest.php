@@ -14,57 +14,30 @@ use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
-use Spatie\Permission\Models\Role;
+use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
 class StoreUpdateCatalogueTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsBaselineData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
-        Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
-
-        DB::table('objecttemplates')->insert([
-            [
-                'id' => ObjectTemplateType::LIST->getLegacyId(),
-                'title' => 'list',
-                'entity_type_uuid' => ObjectTemplateType::LIST->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => ObjectTemplateType::COMMENT->getLegacyId(),
-                'title' => 'comment',
-                'entity_type_uuid' => ObjectTemplateType::COMMENT->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $this->seedBaselineData();
     }
 
     private function createUser(array $overrides = []): User
     {
-        return User::create(array_merge([
-            'name' => 'Test User',
-            'email' => Str::uuid().'@example.com',
-            'password' => Hash::make('password'),
-            'uuid' => (string) Str::uuid(),
-        ], $overrides));
+        return User::factory()->create($overrides);
     }
 
     private function createCatalogue(User $user, array $overrides = []): PersistenceCatalogue
     {
-        return PersistenceCatalogue::create(array_merge([
-            'user_id' => $user->id,
-            'uuid' => (string) Str::uuid(),
-            'entity_type_uuid' => ObjectTemplateType::LIST->value,
+        return PersistenceCatalogue::factory()->byUser($user)->create(array_merge([
             'title' => 'Original Catalogue',
             'description' => 'Original description',
             'publicity' => false,
