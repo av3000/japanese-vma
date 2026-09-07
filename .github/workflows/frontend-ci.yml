@@ -76,19 +76,25 @@ jobs:
       - name: Generate Orval client
         run: npm run orval:file
 
+      # Hand the generated client to the publish job so it does not need Node,
+      # node_modules or a second Orval run just to populate the build context.
+      - name: Upload generated API client
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/upload-artifact@v7
+        with:
+          name: orval-client
+          path: client/src/api/generated
+          retention-days: 1
+          if-no-files-found: error
+
       - name: Typecheck
         env:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
         run: npm run typecheck
 
-      - name: Build frontend
-        env:
-          VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
-          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
-          VITE_SENTRY_ENVIRONMENT: ci
-          VITE_SENTRY_RELEASE: ${{ github.sha }}
-        run: npm run build
-
+      # No separate `npm run build` here: the production image build below runs
+      # the same `vite build`, and vite-plugin-checker runs TypeScript and ESLint
+      # during it. The native build produced an artifact nothing consumed.
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -174,27 +180,14 @@ jobs:
             exit 1
           fi
 
-      - name: Setup Node.js
-        id: setup-node
-        uses: actions/setup-node@v6
+      # No Node setup or npm install here. The only reason this job needed them
+      # was to regenerate the Orval client into the Docker build context, and
+      # the verify job already produced exactly that.
+      - name: Download generated API client
+        uses: actions/download-artifact@v8
         with:
-          node-version-file: client/.nvmrc
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-
-      - name: Cache node_modules
-        id: node-modules-cache
-        uses: actions/cache@v5
-        with:
-          path: client/node_modules
-          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
-
-      - name: Install dependencies
-        if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline --no-audit --no-fund
-
-      - name: Generate Orval client
-        run: npm run orval:file
+          name: orval-client
+          path: client/src/api/generated
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
