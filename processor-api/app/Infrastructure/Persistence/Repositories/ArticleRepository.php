@@ -9,6 +9,7 @@ use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
@@ -249,6 +250,38 @@ class ArticleRepository implements ArticleRepositoryInterface
         $paginatedResults->setCollection($domainArticles);
 
         return Articles::fromEloquentPaginator($paginatedResults);
+    }
+
+    public function findModerationQueue(Pagination $pagination): Articles
+    {
+        $paginator = PersistenceArticle::query()
+            ->with('user')
+            ->whereIn('status', [ArticleStatus::PENDING->value, ArticleStatus::REVIEWING->value])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($pagination->per_page, ['*'], 'page', $pagination->page);
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(
+                fn (PersistenceArticle $article) => $this->articleMapper->mapToDomain($article),
+            ),
+        );
+
+        return Articles::fromEloquentPaginator($paginator);
+    }
+
+    public function updateStatus(EntityId $articleUuid, ArticleStatus $status): ?ArticleStatus
+    {
+        $article = PersistenceArticle::where('uuid', $articleUuid->value())->first();
+
+        if ($article === null) {
+            return null;
+        }
+
+        $article->status = $status;
+        $article->save();
+
+        return $article->status;
     }
 
     /**

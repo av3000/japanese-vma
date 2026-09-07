@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Application\Articles\Services\ArticleKanjiProcessingService;
 use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
+use App\Application\Articles\Services\ArticleModerationService;
+use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportService;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleService;
@@ -46,6 +48,7 @@ class ArticlesServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(ArticleServiceInterface::class, ArticleService::class);
+        $this->app->bind(ArticleModerationServiceInterface::class, ArticleModerationService::class);
         $this->app->bind(ArticleKanjiProcessingServiceInterface::class, ArticleKanjiProcessingService::class);
         $this->app->bind(ArticlePdfExportServiceInterface::class, ArticlePdfExportService::class);
         $this->app->bind(CataloguePdfExportServiceInterface::class, CataloguePdfExportService::class);

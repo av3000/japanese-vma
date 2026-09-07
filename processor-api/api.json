@@ -11,6 +11,104 @@
         }
     ],
     "paths": {
+        "/articles/pending": {
+            "get": {
+                "operationId": "article.pending",
+                "tags": [
+                    "Article"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ArticleModerationListResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleModerationListResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/articles/{uuid}/status": {
+            "post": {
+                "operationId": "article.setStatus",
+                "tags": [
+                    "Article"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateArticleStatusRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ArticleStatusResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleStatusResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/articles": {
             "get": {
                 "operationId": "article.index",
@@ -3613,6 +3711,67 @@
                 ],
                 "title": "ArticleListResource"
             },
+            "ArticleModerationItemResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "title_jp": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Pending",
+                            "Processed",
+                            "Under Review",
+                            "Rejected",
+                            "Approved"
+                        ]
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "title_jp",
+                    "status",
+                    "status_label",
+                    "hashtags",
+                    "created_at"
+                ],
+                "title": "ArticleModerationItemResource"
+            },
+            "ArticleModerationListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleModerationItemResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "ArticleModerationListResource"
+            },
             "ArticleResource": {
                 "type": "object",
                 "properties": {
@@ -3733,6 +3892,44 @@
                     "processing_status"
                 ],
                 "title": "ArticleResource"
+            },
+            "ArticleStatus": {
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4
+                ],
+                "title": "ArticleStatus"
+            },
+            "ArticleStatusResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Pending",
+                            "Processed",
+                            "Under Review",
+                            "Rejected",
+                            "Approved"
+                        ]
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "status",
+                    "status_label"
+                ],
+                "title": "ArticleStatusResource"
             },
             "ArticleWordCollection": {
                 "type": "object",
@@ -5203,6 +5400,18 @@
                 },
                 "title": "UpdateArticleRequest"
             },
+            "UpdateArticleStatusRequest": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/ArticleStatus"
+                    }
+                },
+                "required": [
+                    "status"
+                ],
+                "title": "UpdateArticleStatusRequest"
+            },
             "UpdateCatalogueRequest": {
                 "type": "object",
                 "properties": {
@@ -5374,6 +5583,25 @@
             }
         },
         "responses": {
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
             "ValidationException": {
                 "description": "Validation error",
                 "content": {
@@ -5404,46 +5632,27 @@
                     }
                 }
             },
-            "NotFoundHttpException": {
-                "description": "Not found",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "AuthenticationException": {
-                "description": "Unauthenticated",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
             "AuthorizationException": {
                 "description": "Authorization error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "NotFoundHttpException": {
+                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {

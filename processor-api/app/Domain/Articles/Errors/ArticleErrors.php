@@ -29,6 +29,39 @@ class ArticleErrors
         );
     }
 
+    public static function moderationAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to moderate articles",
+            errorMessage: "You don't have permission to moderate articles",
+        );
+    }
+
+    public static function moderationQueueFetchFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationQueueFetchFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article moderation queue fetch failed',
+            detail: 'An unexpected error occurred while fetching the article moderation queue',
+            errorMessage: 'An unexpected error occurred while fetching the article moderation queue',
+        );
+    }
+
+    public static function moderationStatusUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationStatusUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article status update failed',
+            detail: 'An unexpected error occurred while updating the article status',
+            errorMessage: 'An unexpected error occurred while updating the article status',
+        );
+    }
+
     public static function updateFailed(string $errorMessage): ResultError
     {
         return new ResultError(

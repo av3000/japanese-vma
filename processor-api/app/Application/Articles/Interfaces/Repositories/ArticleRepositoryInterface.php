@@ -7,6 +7,7 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -63,6 +64,10 @@ interface ArticleRepositoryInterface
      *                  Domain collection containing:
      */
     public function findByCriteria(ArticleCriteriaDTO $criteria): Articles;
+
+    public function findModerationQueue(Pagination $pagination): Articles;
+
+    public function updateStatus(EntityId $articleUuid, ArticleStatus $status): ?ArticleStatus;
 
     /**
      * Delete article by integer ID with proper relationship cleanup.
