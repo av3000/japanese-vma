@@ -276,52 +276,6 @@
                         "schema": {
                             "type": "boolean"
                         }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Compatibility aliases, normalized in prepareForValidation().",
-                        "schema": {
-                            "type": "string",
-                            "minLength": 2,
-                            "maxLength": 200
-                        }
-                    },
-                    {
-                        "name": "category",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 6
-                        }
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "description": "Validated against the same closed set as `sort`, so a bad legacy value\nstill reports against the key the caller actually sent.",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "created_at",
-                                "updated_at",
-                                "title_jp",
-                                "title_en"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "sort_dir",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "asc",
-                                "desc",
-                                "ascending",
-                                "descending"
-                            ]
-                        }
                     }
                 ],
                 "responses": {

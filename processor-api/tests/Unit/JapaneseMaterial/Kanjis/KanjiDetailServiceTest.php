@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\JapaneseMaterial\Kanjis;
 
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
 use App\Application\Articles\DTOs\ArticleListPageDTO;
 use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\DTOs\ArticlePaginationDTO;
-use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
@@ -15,7 +16,6 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
@@ -36,7 +36,7 @@ class KanjiDetailServiceTest extends TestCase
 
     private SentenceServiceInterface&MockObject $sentenceService;
 
-    private ArticleServiceInterface&MockObject $articleService;
+    private SearchArticlesAction&MockObject $searchArticles;
 
     private KanjiDetailService $service;
 
@@ -45,7 +45,7 @@ class KanjiDetailServiceTest extends TestCase
         $this->kanjiService = $this->createMock(KanjiServiceInterface::class);
         $this->wordService = $this->createMock(WordServiceInterface::class);
         $this->sentenceService = $this->createMock(SentenceServiceInterface::class);
-        $this->articleService = $this->createMock(ArticleServiceInterface::class);
+        $this->searchArticles = $this->createMock(SearchArticlesAction::class);
 
         $catalogueRepository = $this->createMock(CatalogueRepositoryInterface::class);
         $catalogueItemRepository = $this->createMock(CatalogueItemRepositoryInterface::class);
@@ -54,7 +54,7 @@ class KanjiDetailServiceTest extends TestCase
             kanjiService: $this->kanjiService,
             wordService: $this->wordService,
             sentenceService: $this->sentenceService,
-            articleService: $this->articleService,
+            searchArticles: $this->searchArticles,
             viewerCatalogueStateService: new ViewerCatalogueStateService(
                 $catalogueRepository,
                 $catalogueItemRepository,
@@ -69,7 +69,7 @@ class KanjiDetailServiceTest extends TestCase
     {
         $this->wordService->expects($this->never())->method('find');
         $this->sentenceService->expects($this->never())->method('find');
-        $this->articleService->expects($this->never())->method('getArticlesList');
+        $this->searchArticles->expects($this->never())->method('execute');
 
         $result = $this->service->findByIdentifier(
             '水',
@@ -99,10 +99,12 @@ class KanjiDetailServiceTest extends TestCase
             ))
             ->willReturn(Result::success($this->emptySentenceListResult()));
 
-        $this->articleService->expects($this->once())
-            ->method('getArticlesList')
+        $this->searchArticles->expects($this->once())
+            ->method('execute')
             ->with(
-                $this->callback(fn (ArticleListDTO $dto): bool => $dto->kanji_id === 88),
+                // The canonical plural filter, not the retired singular kanji_id.
+                $this->callback(fn (ArticleListQuery $query): bool => $query->kanjiIds === [88]),
+                $this->isInstanceOf(ArticleListProjection::class),
                 null,
             )
             ->willReturn($this->emptyArticleListResult());

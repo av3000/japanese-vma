@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Application\JapaneseMaterial\Words\Services;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Shared\Results\Result;
 
 final readonly class WordDetailService implements WordDetailServiceInterface
@@ -20,7 +23,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
     public function __construct(
         private WordServiceInterface $wordService,
         private WordRepositoryInterface $wordRepository,
-        private ArticleServiceInterface $articleService,
+        private SearchArticlesAction $searchArticles,
     ) {
     }
 
@@ -44,21 +47,23 @@ final readonly class WordDetailService implements WordDetailServiceInterface
             : null;
 
         $articles = $includes->articles
-            ? $this->articleService->getArticlesList(new ArticleListDTO(
-                category: null,
-                search: null,
-                author_uid: null,
-                sort_by: 'id',
-                sort_dir: 'asc',
-                per_page: self::RELATED_LIMIT,
-                page: 1,
-                include_stats_counts: true,
-                include_hashtags: true,
-                include_kanjis: false,
-                include_words: false,
-                kanji_id: null,
-                word_id: $wordId,
-            ), $authenticatedUser)->items
+            ? $this->searchArticles->execute(
+                new ArticleListQuery(
+                    // Ordered by id ascending, as this panel always has been. Not a
+                    // public sort value: `id` is the deterministic tie-breaker appended
+                    // to every sort, exposed here only through the internal constructor.
+                    sort: ArticleListSort::fromLegacy('id', 'asc'),
+                    pagination: new Pagination(1, self::RELATED_LIMIT),
+                    wordIds: [$wordId],
+                ),
+                new ArticleListProjection(
+                    includeStats: true,
+                    includeHashtags: true,
+                    includeKanjis: false,
+                    includeWords: false,
+                ),
+                $authenticatedUser,
+            )->items
             : null;
 
         return Result::success(new WordDetailResultDTO(

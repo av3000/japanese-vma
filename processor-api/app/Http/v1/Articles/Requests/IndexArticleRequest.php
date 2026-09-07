@@ -31,12 +31,6 @@ class IndexArticleRequest extends FormRequest
      */
     public const MAX_OFFSET = 10000;
 
-    /**
-     * Temporary aliases kept so callers can migrate without an atomic
-     * backend/frontend deploy. AFM-07 removes them.
-     */
-    private const LEGACY_KEYS = ['search', 'category', 'sort_by', 'sort_dir'];
-
     private const BOOLEAN_FIELDS = [
         'include_stats_counts',
         'include_hashtags',
@@ -75,14 +69,6 @@ class IndexArticleRequest extends FormRequest
             'include_kanjis' => 'sometimes|boolean',
             'include_words' => 'sometimes|boolean',
             'include_facets' => 'sometimes|boolean',
-
-            // Compatibility aliases, normalized in prepareForValidation().
-            'search' => 'sometimes|string|min:'.self::MIN_SEARCH_LENGTH.'|max:'.self::MAX_SEARCH_LENGTH,
-            'category' => 'sometimes|integer|between:1,6',
-            // Validated against the same closed set as `sort`, so a bad legacy value
-            // still reports against the key the caller actually sent.
-            'sort_by' => ['sometimes', Rule::in(ArticleListSort::allowedFieldNames())],
-            'sort_dir' => ['sometimes', Rule::in(ArticleListSort::LEGACY_DIRECTIONS)],
         ];
     }
 
@@ -99,7 +85,6 @@ class IndexArticleRequest extends FormRequest
             'created_from.date_format' => 'created_from must be a date in YYYY-MM-DD format',
             'created_to.date_format' => 'created_to must be a date in YYYY-MM-DD format',
             'sort.in' => 'Sort must be one of: '.implode(', ', ArticleListSort::allowedValues()),
-            'category.between' => 'Category must be between 1 and 6',
             'per_page.max' => 'Per page may not be greater than '.Pagination::MAX_PER_PAGE,
         ];
     }
@@ -142,47 +127,22 @@ class IndexArticleRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $this->rejectUnknownKeys($validator);
-            $this->rejectConflictingAliases($validator);
             $this->rejectUnreachableOffset($validator);
         });
     }
 
     /**
-     * Canonical values only. Aliases are resolved here so nothing downstream has to
-     * know they ever existed.
+     * The validated request as canonical values.
      *
      * @return array<string, mixed>
      */
     public function canonical(): array
     {
-        $validated = $this->validated();
-
-        $canonical = $validated;
-
-        foreach (self::LEGACY_KEYS as $legacy) {
-            unset($canonical[$legacy]);
-        }
-
-        if (! isset($canonical['q']) && isset($validated['search'])) {
-            $canonical['q'] = $validated['search'];
-        }
-
-        if (! isset($canonical['jlpt_levels']) && isset($validated['category'])) {
-            $level = ArticleJlptLevel::fromLegacyCategory((int) $validated['category']);
-
-            if ($level !== null) {
-                $canonical['jlpt_levels'] = [$level->value];
-            }
-        }
-
-        if (! isset($canonical['sort']) && (isset($validated['sort_by']) || isset($validated['sort_dir']))) {
-            $canonical['sort'] = ArticleListSort::fromLegacy(
-                $validated['sort_by'] ?? null,
-                $validated['sort_dir'] ?? null,
-            )->toSigned();
-        }
-
-        return $canonical;
+        // Every accepted key is already canonical: AFM-07 removed the search,
+        // category, sort_by and sort_dir aliases once a caller scan showed nothing
+        // still sent them. The method stays as the single seam the controller reads
+        // through, so reintroducing a translation later does not touch the controller.
+        return $this->validated();
     }
 
     private function rejectUnknownKeys(Validator $validator): void
@@ -197,25 +157,6 @@ class IndexArticleRequest extends FormRequest
             if (! in_array($key, $supported, true)) {
                 $validator->errors()->add($key, "The {$key} parameter is not supported by this endpoint.");
             }
-        }
-    }
-
-    /**
-     * Sending both a canonical key and its alias is ambiguous, and silently
-     * preferring one would make the migration impossible to verify.
-     */
-    private function rejectConflictingAliases(Validator $validator): void
-    {
-        if ($this->has('q') && $this->has('search')) {
-            $validator->errors()->add('search', 'Use either q or the legacy search parameter, not both.');
-        }
-
-        if ($this->has('jlpt_levels') && $this->has('category')) {
-            $validator->errors()->add('category', 'Use either jlpt_levels or the legacy category parameter, not both.');
-        }
-
-        if ($this->has('sort') && ($this->has('sort_by') || $this->has('sort_dir'))) {
-            $validator->errors()->add('sort', 'Use either sort or the legacy sort_by/sort_dir parameters, not both.');
         }
     }
 

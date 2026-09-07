@@ -3,10 +3,6 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
-use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListPageDTO;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Jobs\ProcessArticleWordsJob;
@@ -22,27 +18,22 @@ use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
-use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Shared\Results\Result;
@@ -59,7 +50,6 @@ class ArticleService implements ArticleServiceInterface
         private EngagementServiceInterface $engagementService,
         private LastOperationServiceInterface $lastOperationService,
         private ArticlePolicy $articlePolicy,
-        private SearchArticlesAction $searchArticles,
         private IncrementViewAction $incrementViewAction,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
         private HashtagRepositoryInterface $hashtagRepository,
@@ -207,44 +197,6 @@ class ArticleService implements ArticleServiceInterface
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Compatibility delegation for internal Kanji/Word callers.
-     *
-     * The HTTP list path now goes through SearchArticlesAction. This method survives
-     * only because KanjiDetailService and WordDetailService still build an HTTP-shaped
-     * ArticleListDTO; AFM-07 migrates them and deletes this method along with
-     * ArticleListDTO, ArticleCriteriaDTO and the Domain list result types.
-     *
-     * @deprecated Call SearchArticlesAction with ArticleListQuery/ArticleListProjection.
-     *
-     * @param ArticleListDTO $dto Filter criteria
-     */
-    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListPageDTO
-    {
-        $jlptLevel = $dto->category !== null
-            ? ArticleJlptLevel::fromLegacyCategory($dto->category)
-            : null;
-
-        $query = new ArticleListQuery(
-            sort: ArticleListSort::fromLegacy($dto->sort_by, $dto->sort_dir),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
-            jlptLevels: $jlptLevel !== null ? [$jlptLevel] : [],
-            authorUid: $dto->author_uid,
-            kanjiIds: $dto->kanji_id !== null ? [$dto->kanji_id] : [],
-            wordIds: $dto->word_id !== null ? [$dto->word_id] : [],
-        );
-
-        $projection = new ArticleListProjection(
-            includeStats: $dto->include_stats_counts,
-            includeHashtags: $dto->include_hashtags,
-            includeKanjis: $dto->include_kanjis,
-            includeWords: $dto->include_words,
-        );
-
-        return $this->searchArticles->execute($query, $projection, $authenticatedUser);
     }
 
     /**

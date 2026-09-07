@@ -2,12 +2,10 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\DTOs\ArticleListPageDTO;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -38,15 +36,6 @@ interface ArticleServiceInterface
      * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, Viewer $viewer, ?AuthenticatedUser $authenticatedUser = null): Result;
-
-    /**
-     * Get paginated list of articles with filters and permission-based visibility.
-     *
-     * @param ArticleListDTO $dto Filters: search, category, sort, pagination
-     *
-     * @return ArticleListPageDTO Projected article list page
-     */
-    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListPageDTO;
 
     /**
      * Update article with optional hashtag and content reprocessing.

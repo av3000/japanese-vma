@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JapaneseMaterial\Kanjis;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -87,21 +90,13 @@ class KanjiRelatedQueryFiltersTest extends TestCase
 
     public function test_article_query_filters_by_kanji_id_and_keeps_visibility_rules(): void
     {
-        $result = app(ArticleServiceInterface::class)->getArticlesList(
-            new ArticleListDTO(
-                category: null,
-                search: null,
-                author_uid: null,
-                sort_by: 'created_at',
-                sort_dir: 'desc',
-                per_page: 5,
-                page: 1,
-                include_stats_counts: false,
-                include_hashtags: false,
-                include_kanjis: false,
-                include_words: false,
-                kanji_id: 88,
+        $result = app(SearchArticlesAction::class)->execute(
+            new ArticleListQuery(
+                sort: ArticleListSort::fromSigned('-created_at'),
+                pagination: new Pagination(1, 5),
+                kanjiIds: [88],
             ),
+            ArticleListProjection::itemsOnly(),
             null,
         );
 

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Articles;
 
-use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -216,50 +215,6 @@ class IndexArticleTest extends TestCase
         );
     }
 
-    public function test_index_rejects_unsupported_sort_field(): void
-    {
-        $response = $this->json('GET', '/api/v1/articles', [
-            'sort_by' => 'views_total',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['sort_by']);
-    }
-
-    public function test_index_rejects_unsupported_sort_direction(): void
-    {
-        $response = $this->json('GET', '/api/v1/articles', [
-            'sort_dir' => 'sideways',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['sort_dir']);
-    }
-
-    /**
-     * AFM-03 narrowed the sortable set: bare `id` is the deterministic tie-breaker
-     * appended to every sort, not a product-facing sort of its own.
-     */
-    public function test_index_accepts_every_supported_sort_field(): void
-    {
-        $author = $this->createUser();
-        $this->createArticle($author, ['title_jp' => 'Sortable']);
-
-        foreach (ArticleListSort::allowedFieldNames() as $field) {
-            $this->json('GET', '/api/v1/articles', [
-                'sort_by' => $field,
-                'sort_dir' => 'asc',
-            ])->assertStatus(200);
-        }
-    }
-
-    public function test_index_rejects_id_as_a_sort_field(): void
-    {
-        $this->json('GET', '/api/v1/articles', ['sort_by' => 'id'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['sort_by']);
-    }
-
     public function test_index_rejects_unknown_query_parameters(): void
     {
         $response = $this->json('GET', '/api/v1/articles', [
@@ -407,51 +362,6 @@ class IndexArticleTest extends TestCase
         $this->assertArticleTitles($response->json('items'), ['Findable']);
     }
 
-    public function test_legacy_search_still_resolves_to_q(): void
-    {
-        $author = $this->createUser();
-        $this->createArticle($author, ['title_jp' => 'Findable', 'title_en' => 'Grammar Notes']);
-
-        $response = $this->json('GET', '/api/v1/articles', ['search' => 'grammar']);
-
-        $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('items'), ['Findable']);
-    }
-
-    public function test_index_rejects_q_and_legacy_search_together(): void
-    {
-        $this->json('GET', '/api/v1/articles', ['q' => 'one', 'search' => 'two'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['search']);
-    }
-
-    public function test_legacy_numeric_category_resolves_to_a_jlpt_level(): void
-    {
-        $author = $this->createUser();
-        $this->createArticle($author, ['title_jp' => 'Beginner', 'n5' => 2]);
-        $this->createArticle($author, ['title_jp' => 'Advanced', 'n1' => 2]);
-
-        // category=5 is the legacy alias for n5.
-        $response = $this->json('GET', '/api/v1/articles', ['category' => 5]);
-
-        $response->assertStatus(200);
-        $this->assertArticleTitles($response->json('items'), ['Beginner']);
-    }
-
-    public function test_index_rejects_an_out_of_range_category(): void
-    {
-        $this->json('GET', '/api/v1/articles', ['category' => 9])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['category']);
-    }
-
-    public function test_index_rejects_canonical_and_legacy_sort_together(): void
-    {
-        $this->json('GET', '/api/v1/articles', ['sort' => '-created_at', 'sort_by' => 'created_at'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['sort']);
-    }
-
     public function test_index_rejects_views_total_as_canonical_sort(): void
     {
         $this->json('GET', '/api/v1/articles', ['sort' => 'views_total'])
@@ -567,18 +477,38 @@ class IndexArticleTest extends TestCase
     {
         $this->createArticle($this->createUser(), ['title_jp' => 'Any', 'n5' => 1]);
 
-        // Sent using the legacy aliases; the echo must report canonical keys.
         $response = $this->json('GET', '/api/v1/articles', [
-            'search' => 'Any',
-            'category' => 5,
-            'sort_by' => 'created_at',
-            'sort_dir' => 'asc',
+            'q' => 'Any',
+            'jlpt_levels' => ['n5'],
+            'sort' => 'created_at',
         ]);
 
         $response->assertStatus(200);
         $this->assertSame('Any', $response->json('query.q'));
         $this->assertSame(['n5'], $response->json('query.filters.jlpt_levels'));
         $this->assertSame('created_at', $response->json('query.sort'));
+    }
+
+    /**
+     * AFM-07 retired the compatibility aliases once a caller scan showed nothing sent
+     * them. They are now unknown keys, which the endpoint rejects like any other.
+     */
+    #[DataProvider('retiredAliasProvider')]
+    public function test_retired_compatibility_aliases_are_rejected(string $alias, mixed $value): void
+    {
+        $this->json('GET', '/api/v1/articles', [$alias => $value])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors([$alias]);
+    }
+
+    public static function retiredAliasProvider(): array
+    {
+        return [
+            'search' => ['search', 'grammar'],
+            'category' => ['category', 5],
+            'sort_by' => ['sort_by', 'created_at'],
+            'sort_dir' => ['sort_dir', 'asc'],
+        ];
     }
 
     public function test_the_query_echo_never_contains_visibility(): void

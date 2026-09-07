@@ -25,7 +25,12 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
  * Eloquent or vendor query syntax, so a future search-engine reader can be
  * swapped in underneath without touching authorization or enrichment.
  */
-final readonly class SearchArticlesAction
+/*
+ * Not final: KanjiDetailService and WordDetailService depend on this directly, and
+ * their unit tests double it. Introducing an interface purely to satisfy PHPUnit
+ * would add a layer that nothing else needs.
+ */
+readonly class SearchArticlesAction
 {
     public function __construct(
         private ArticleListReaderInterface $articleListReader,

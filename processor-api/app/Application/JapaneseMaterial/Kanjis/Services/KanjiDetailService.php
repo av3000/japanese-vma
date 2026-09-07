@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Application\JapaneseMaterial\Kanjis\Services;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\DTOs\ArticleListProjection;
+use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\DTOs\ArticleListDTO;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailResultDTO;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Shared\Results\Result;
 
 final readonly class KanjiDetailService implements KanjiDetailServiceInterface
@@ -25,7 +28,7 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
         private KanjiServiceInterface $kanjiService,
         private WordServiceInterface $wordService,
         private SentenceServiceInterface $sentenceService,
-        private ArticleServiceInterface $articleService,
+        private SearchArticlesAction $searchArticles,
         private ViewerCatalogueStateService $viewerCatalogueStateService,
     ) {
     }
@@ -59,20 +62,22 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
             : null;
 
         $articles = $includes->articles
-            ? $this->articleService->getArticlesList(new ArticleListDTO(
-                category: null,
-                search: null,
-                author_uid: null,
-                sort_by: 'created_at',
-                sort_dir: 'desc',
-                per_page: self::RELATED_PER_PAGE,
-                page: 1,
-                include_stats_counts: true,
-                include_hashtags: true,
-                include_kanjis: false,
-                include_words: false,
-                kanji_id: $kanjiId,
-            ), $authenticatedUser)
+            ? $this->searchArticles->execute(
+                new ArticleListQuery(
+                    sort: ArticleListSort::fromSigned('-created_at'),
+                    pagination: new Pagination(1, self::RELATED_PER_PAGE),
+                    kanjiIds: [$kanjiId],
+                ),
+                // The panel shows engagement counts and tags, but not nested kanji or
+                // word lists, so it does not pay to load them.
+                new ArticleListProjection(
+                    includeStats: true,
+                    includeHashtags: true,
+                    includeKanjis: false,
+                    includeWords: false,
+                ),
+                $authenticatedUser,
+            )
             : null;
 
         $viewerState = null;
