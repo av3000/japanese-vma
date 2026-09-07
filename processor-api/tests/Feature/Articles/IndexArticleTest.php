@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Articles;
 
-use App\Domain\Shared\Enums\ArticleSortField;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -236,17 +236,28 @@ class IndexArticleTest extends TestCase
             ->assertJsonValidationErrors(['sort_dir']);
     }
 
+    /**
+     * AFM-03 narrowed the sortable set: bare `id` is the deterministic tie-breaker
+     * appended to every sort, not a product-facing sort of its own.
+     */
     public function test_index_accepts_every_supported_sort_field(): void
     {
         $author = $this->createUser();
         $this->createArticle($author, ['title_jp' => 'Sortable']);
 
-        foreach (ArticleSortField::cases() as $field) {
+        foreach (ArticleListSort::allowedFieldNames() as $field) {
             $this->json('GET', '/api/v1/articles', [
-                'sort_by' => $field->value,
+                'sort_by' => $field,
                 'sort_dir' => 'asc',
             ])->assertStatus(200);
         }
+    }
+
+    public function test_index_rejects_id_as_a_sort_field(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['sort_by' => 'id'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['sort_by']);
     }
 
     public function test_index_rejects_unknown_query_parameters(): void
@@ -362,5 +373,153 @@ class IndexArticleTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('items.0.engagement.stats', null);
+    }
+    // ------------------------------------------------- AFM-03 canonical contract
+
+    public function test_index_filters_by_canonical_jlpt_levels(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Beginner', 'n5' => 4]);
+        $this->createArticle($author, ['title_jp' => 'Advanced', 'n1' => 3]);
+
+        $response = $this->json('GET', '/api/v1/articles', ['jlpt_levels' => ['n5']]);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['Beginner']);
+    }
+
+    public function test_index_rejects_an_unknown_jlpt_level(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['jlpt_levels' => ['n9']])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['jlpt_levels.0']);
+    }
+
+    public function test_index_accepts_canonical_q(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Findable', 'title_en' => 'Grammar Notes']);
+        $this->createArticle($author, ['title_jp' => 'Hidden', 'title_en' => 'Something Else']);
+
+        $response = $this->json('GET', '/api/v1/articles', ['q' => 'grammar']);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['Findable']);
+    }
+
+    public function test_legacy_search_still_resolves_to_q(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Findable', 'title_en' => 'Grammar Notes']);
+
+        $response = $this->json('GET', '/api/v1/articles', ['search' => 'grammar']);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['Findable']);
+    }
+
+    public function test_index_rejects_q_and_legacy_search_together(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['q' => 'one', 'search' => 'two'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['search']);
+    }
+
+    public function test_legacy_numeric_category_resolves_to_a_jlpt_level(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Beginner', 'n5' => 2]);
+        $this->createArticle($author, ['title_jp' => 'Advanced', 'n1' => 2]);
+
+        // category=5 is the legacy alias for n5.
+        $response = $this->json('GET', '/api/v1/articles', ['category' => 5]);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['Beginner']);
+    }
+
+    public function test_index_rejects_an_out_of_range_category(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['category' => 9])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['category']);
+    }
+
+    public function test_index_rejects_canonical_and_legacy_sort_together(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['sort' => '-created_at', 'sort_by' => 'created_at'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['sort']);
+    }
+
+    public function test_index_rejects_views_total_as_canonical_sort(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['sort' => 'views_total'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['sort']);
+    }
+
+    public function test_index_sorts_by_the_canonical_signed_key(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Older', 'created_at' => '2026-09-01 00:00:00']);
+        $this->createArticle($author, ['title_jp' => 'Newer', 'created_at' => '2026-09-02 00:00:00']);
+
+        $descending = $this->json('GET', '/api/v1/articles', ['sort' => '-created_at']);
+        $this->assertSame(['Newer', 'Older'], array_column($descending->json('items'), 'title_jp'));
+
+        $ascending = $this->json('GET', '/api/v1/articles', ['sort' => 'created_at']);
+        $this->assertSame(['Older', 'Newer'], array_column($ascending->json('items'), 'title_jp'));
+    }
+
+    public function test_index_filters_by_inclusive_creation_dates(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'InRange', 'created_at' => '2026-09-08 23:30:00']);
+        $this->createArticle($author, ['title_jp' => 'OutOfRange', 'created_at' => '2026-09-09 00:30:00']);
+
+        $response = $this->json('GET', '/api/v1/articles', [
+            'created_from' => '2026-09-08',
+            'created_to' => '2026-09-08',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['InRange']);
+    }
+
+    public function test_index_rejects_a_reversed_date_range(): void
+    {
+        $this->json('GET', '/api/v1/articles', [
+            'created_from' => '2026-09-09',
+            'created_to' => '2026-09-08',
+        ])->assertStatus(422)->assertJsonValidationErrors(['created_from']);
+    }
+
+    public function test_index_rejects_more_than_twenty_filter_values(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['hashtag_ids' => range(1, 21)])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['hashtag_ids']);
+    }
+
+    public function test_duplicate_filter_values_collapse_to_one(): void
+    {
+        // 21 values but only 2 unique ones: deduplication runs before the cap.
+        $this->json('GET', '/api/v1/articles', ['hashtag_ids' => array_merge(array_fill(0, 20, 3), [4])])
+            ->assertStatus(200);
+    }
+
+    public function test_index_rejects_a_page_beyond_the_maximum_offset(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['page' => 2000, 'per_page' => 100])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['page']);
+    }
+
+    public function test_index_rejects_a_single_character_search(): void
+    {
+        $this->json('GET', '/api/v1/articles', ['q' => 'a'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['q']);
     }
 }

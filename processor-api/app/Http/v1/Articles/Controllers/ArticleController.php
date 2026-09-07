@@ -15,7 +15,9 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Articles\Enums\ArticleJlptLevel;
+use App\Domain\Articles\ValueObjects\ArticleDateRange;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -66,21 +68,33 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleListResource')]
     public function index(IndexArticleRequest $request, SearchArticlesAction $searchArticles): JsonResponse|JsonResource
     {
-        $validated = $request->validated();
+        // Aliases are already resolved: canonical() sees search/category/sort_by/sort_dir,
+        // the application layer never does.
+        $canonical = $request->canonical();
 
         $query = new ArticleListQuery(
-            sort: ArticleSortCriteria::fromInputOrDefault($validated['sort_by'] ?? null, $validated['sort_dir'] ?? null),
-            pagination: Pagination::fromInputOrDefault($validated['page'] ?? null, $validated['per_page'] ?? null),
-            search: isset($validated['search']) ? SearchTerm::fromInputOrNull($validated['search']) : null,
-            categoryId: $validated['category'] ?? null,
-            authorUid: $validated['author_uid'] ?? null,
+            sort: ArticleListSort::fromSignedOrDefault($canonical['sort'] ?? null),
+            pagination: Pagination::fromInputOrDefault($canonical['page'] ?? null, $canonical['per_page'] ?? null),
+            search: isset($canonical['q']) ? SearchTerm::fromInputOrNull($canonical['q']) : null,
+            jlptLevels: array_map(
+                static fn (string $level): ArticleJlptLevel => ArticleJlptLevel::from($level),
+                $canonical['jlpt_levels'] ?? [],
+            ),
+            hashtagIds: array_map('intval', $canonical['hashtag_ids'] ?? []),
+            authorUid: $canonical['author_uid'] ?? null,
+            kanjiIds: array_map('intval', $canonical['kanji_ids'] ?? []),
+            wordIds: array_map('intval', $canonical['word_ids'] ?? []),
+            createdBetween: ArticleDateRange::fromInput(
+                $canonical['created_from'] ?? null,
+                $canonical['created_to'] ?? null,
+            ),
         );
 
         $projection = new ArticleListProjection(
-            includeStats: $validated['include_stats_counts'] ?? true,
-            includeHashtags: $validated['include_hashtags'] ?? true,
-            includeKanjis: $validated['include_kanjis'] ?? true,
-            includeWords: $validated['include_words'] ?? true,
+            includeStats: $canonical['include_stats_counts'] ?? true,
+            includeHashtags: $canonical['include_hashtags'] ?? true,
+            includeKanjis: $canonical['include_kanjis'] ?? true,
+            includeWords: $canonical['include_words'] ?? true,
         );
 
         return new ArticleListResource(

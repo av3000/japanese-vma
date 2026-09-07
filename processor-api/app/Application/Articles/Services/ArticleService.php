@@ -28,13 +28,14 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
+use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -222,14 +223,18 @@ class ArticleService implements ArticleServiceInterface
      */
     public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListPageDTO
     {
+        $jlptLevel = $dto->category !== null
+            ? ArticleJlptLevel::fromLegacyCategory($dto->category)
+            : null;
+
         $query = new ArticleListQuery(
-            sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
+            sort: ArticleListSort::fromLegacy($dto->sort_by, $dto->sort_dir),
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
             search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
-            categoryId: $dto->category,
+            jlptLevels: $jlptLevel !== null ? [$jlptLevel] : [],
             authorUid: $dto->author_uid,
-            kanjiId: $dto->kanji_id,
-            wordId: $dto->word_id,
+            kanjiIds: $dto->kanji_id !== null ? [$dto->kanji_id] : [],
+            wordIds: $dto->word_id !== null ? [$dto->word_id] : [],
         );
 
         $projection = new ArticleListProjection(

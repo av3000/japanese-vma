@@ -117,17 +117,49 @@
                 ],
                 "parameters": [
                     {
-                        "name": "category",
+                        "name": "q",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 200
                         }
                     },
                     {
-                        "name": "search",
+                        "name": "jlpt_levels[]",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "enum": [
+                                "n5",
+                                "n4",
+                                "n3",
+                                "n2",
+                                "n1",
+                                "uncommon"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "n5",
+                                    "n4",
+                                    "n3",
+                                    "n2",
+                                    "n1",
+                                    "uncommon"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "name": "hashtag_ids[]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
                         }
                     },
                     {
@@ -139,29 +171,57 @@
                         }
                     },
                     {
-                        "name": "sort_by",
+                        "name": "kanji_ids[]",
                         "in": "query",
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "id",
-                                "created_at",
-                                "updated_at",
-                                "title_jp",
-                                "title_en"
-                            ]
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
                         }
                     },
                     {
-                        "name": "sort_dir",
+                        "name": "word_ids[]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        }
+                    },
+                    {
+                        "name": "created_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "created_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort",
                         "in": "query",
                         "schema": {
                             "type": "string",
                             "enum": [
-                                "asc",
-                                "desc",
-                                "ascending",
-                                "descending"
+                                "created_at",
+                                "-created_at",
+                                "updated_at",
+                                "-updated_at",
+                                "title_jp",
+                                "-title_jp",
+                                "title_en",
+                                "-title_en"
                             ]
                         }
                     },
@@ -208,6 +268,52 @@
                         "in": "query",
                         "schema": {
                             "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Compatibility aliases, normalized in prepareForValidation().",
+                        "schema": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 200
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 6
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Validated against the same closed set as `sort`, so a bad legacy value\nstill reports against the key the caller actually sent.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "updated_at",
+                                "title_jp",
+                                "title_en"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_dir",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc",
+                                "ascending",
+                                "descending"
+                            ]
                         }
                     }
                 ],

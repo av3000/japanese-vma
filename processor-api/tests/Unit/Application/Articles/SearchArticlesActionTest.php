@@ -14,7 +14,7 @@ use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInte
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Articles\ValueObjects\ArticleListSort;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\ValueObjects\Pagination;
 use PHPUnit\Framework\TestCase;
@@ -100,7 +100,7 @@ class SearchArticlesActionTest extends TestCase
     private function query(): ArticleListQuery
     {
         return new ArticleListQuery(
-            sort: ArticleSortCriteria::default(),
+            sort: ArticleListSort::default(),
             pagination: Pagination::default(),
         );
     }
