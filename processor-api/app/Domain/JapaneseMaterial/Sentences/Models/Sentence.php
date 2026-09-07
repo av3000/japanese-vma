@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\JapaneseMaterial\Sentences\Models;
 
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Domain\Shared\ValueObjects\EntityId;
 
 final readonly class Sentence
 {
     /**
      * @param array<int, DomainKanji> $kanjis
-     * @param array<int, mixed> $words
+     * @param array<int, DomainWord> $words
      */
     public function __construct(
         private int $id,
@@ -21,7 +22,8 @@ final readonly class Sentence
         private string $content,
         private array $kanjis = [],
         private array $words = [],
-    ) {}
+    ) {
+    }
 
     public function getIdValue(): int
     {
@@ -57,7 +59,7 @@ final readonly class Sentence
     }
 
     /**
-     * @return array<int, mixed>
+     * @return array<int, DomainWord>
      */
     public function getWords(): array
     {

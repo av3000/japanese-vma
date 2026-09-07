@@ -6,7 +6,9 @@ namespace App\Http\v1\JapaneseMaterial\Sentences\Resources;
 
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
 use App\Domain\JapaneseMaterial\Sentences\Models\Sentence as DomainSentence;
+use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
+use App\Http\v1\JapaneseMaterial\Words\Resources\WordResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,7 +32,7 @@ class SentenceResource extends JsonResource
      *     tatoeba_entry: string|null,
      *     content: string,
      *     kanjis?: array<int, KanjiResource>,
-     *     words?: array<int, mixed>
+     *     words?: array<int, WordResource>
      * }
      */
     public function toArray(Request $request): array
@@ -54,8 +56,10 @@ class SentenceResource extends JsonResource
         }
 
         if ($this->includeWords) {
-            // Sentence-word relation is not represented in persistence yet; expose an empty array until that relation exists.
-            $payload['words'] = $sentence->getWords();
+            $payload['words'] = array_map(
+                fn (DomainWord $word): WordResource => new WordResource($word),
+                $sentence->getWords(),
+            );
         }
 
         return $payload;

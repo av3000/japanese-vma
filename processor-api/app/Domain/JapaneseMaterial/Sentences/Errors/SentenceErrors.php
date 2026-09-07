@@ -26,4 +26,49 @@ final readonly class SentenceErrors
             'Identifier must be a valid UUID or numeric sentence ID.',
         );
     }
+
+    public static function accessDenied(string $identifier): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_ACCESS_DENIED',
+            HttpStatus::FORBIDDEN,
+            "You do not have permission to modify sentence '{$identifier}'.",
+        );
+    }
+
+    public static function immutableImported(string $identifier): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_IMMUTABLE',
+            HttpStatus::FORBIDDEN,
+            "Sentence '{$identifier}' was imported and cannot be modified.",
+        );
+    }
+
+    public static function creationFailed(): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_CREATION_FAILED',
+            HttpStatus::INTERNAL_SERVER_ERROR,
+            'Sentence creation failed.',
+        );
+    }
+
+    public static function updateFailed(): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_UPDATE_FAILED',
+            HttpStatus::INTERNAL_SERVER_ERROR,
+            'Sentence update failed.',
+        );
+    }
+
+    public static function deletionFailed(): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_DELETION_FAILED',
+            HttpStatus::INTERNAL_SERVER_ERROR,
+            'Sentence deletion failed.',
+        );
+    }
 }

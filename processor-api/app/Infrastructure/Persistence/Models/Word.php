@@ -44,4 +44,9 @@ class Word extends Model
     {
         return $this->belongsToMany(Article::class, 'article_word');
     }
+
+    public function sentences(): BelongsToMany
+    {
+        return $this->belongsToMany(Sentence::class, 'japanese_sentence_word');
+    }
 }

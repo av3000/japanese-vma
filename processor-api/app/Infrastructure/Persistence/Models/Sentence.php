@@ -29,4 +29,9 @@ class Sentence extends Model
     {
         return $this->belongsToMany(Kanji::class, 'japanese_sentence_kanji');
     }
+
+    public function words(): BelongsToMany
+    {
+        return $this->belongsToMany(Word::class, 'japanese_sentence_word');
+    }
 }

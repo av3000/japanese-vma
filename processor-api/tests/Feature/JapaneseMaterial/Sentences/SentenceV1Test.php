@@ -58,17 +58,22 @@ class SentenceV1Test extends TestCase
             ->assertJsonPath('items.0.tatoeba_entry', '3003');
     }
 
-    public function test_guest_can_fetch_sentence_detail_by_uuid_with_related_kanjis_and_empty_words(): void
+    public function test_guest_can_fetch_sentence_detail_by_uuid_with_related_kanjis_and_words(): void
     {
         $sentenceUuid = (string) Str::uuid();
         $kanjiUuid = (string) Str::uuid();
 
         $this->createSentence(id: 10, uuid: $sentenceUuid, content: '水を飲みます。', tatoebaEntry: '5005');
         $this->createKanji(id: 20, uuid: $kanjiUuid, kanji: '水', meaning: 'water');
+        $this->createWord(id: 30, word: '水', furigana: 'みず');
 
         DB::table('japanese_sentence_kanji')->insert([
             'sentence_id' => 10,
             'kanji_id' => 20,
+        ]);
+        DB::table('japanese_sentence_word')->insert([
+            'sentence_id' => 10,
+            'word_id' => 30,
         ]);
 
         $response = $this->getJson("/api/v1/sentences/{$sentenceUuid}");
@@ -82,7 +87,7 @@ class SentenceV1Test extends TestCase
             ->assertJsonPath('tatoeba_entry', '5005')
             ->assertJsonPath('kanjis.0.uuid', $kanjiUuid)
             ->assertJsonPath('kanjis.0.character', '水')
-            ->assertJsonPath('words', []);
+            ->assertJsonPath('words.0.word', '水');
     }
 
     public function test_guest_can_fetch_sentence_detail_by_legacy_numeric_id(): void
@@ -161,6 +166,22 @@ class SentenceV1Test extends TestCase
             'frequency' => '2',
             'radicals' => '水',
             'radical_parts' => $kanji,
+        ]);
+    }
+
+    private function createWord(int $id, string $word, string $furigana): void
+    {
+        DB::table('japanese_word_bank_long')->insert([
+            'id' => $id,
+            'uuid' => (string) Str::uuid(),
+            'entry_sequence' => (string) (1000 + $id),
+            'word' => $word,
+            'furigana' => $furigana,
+            'jlpt' => 'N5',
+            'word_type' => 'noun',
+            'word_k_ele' => $word,
+            'furigana_r_ele' => $furigana,
+            'sense' => json_encode([[['gloss', ['water']]]], JSON_THROW_ON_ERROR),
         ]);
     }
 }

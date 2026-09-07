@@ -6,8 +6,10 @@ namespace Tests\Unit\JapaneseMaterial\Sentences;
 
 use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
 use App\Infrastructure\Persistence\Models\Sentence as PersistenceSentence;
+use App\Infrastructure\Persistence\Models\Word as PersistenceWord;
 use App\Infrastructure\Persistence\Repositories\KanjiMapper;
 use App\Infrastructure\Persistence\Repositories\SentenceMapper;
+use App\Infrastructure\Persistence\Repositories\WordMapper;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -24,7 +26,7 @@ class SentenceMapperTest extends TestCase
         $persistenceSentence->id = 85;
         $persistenceSentence->uuid = $uuid;
 
-        $mapper = new SentenceMapper(new KanjiMapper());
+        $mapper = new SentenceMapper(new KanjiMapper(), new WordMapper());
 
         $domainSentence = $mapper->mapToDomain($persistenceSentence);
 
@@ -37,7 +39,7 @@ class SentenceMapperTest extends TestCase
         $this->assertSame([], $domainSentence->getWords());
     }
 
-    public function test_mapper_maps_loaded_related_kanjis_and_keeps_words_empty(): void
+    public function test_mapper_maps_loaded_related_kanjis_and_words(): void
     {
         $persistenceSentence = new PersistenceSentence([
             'user_id' => 12,
@@ -65,13 +67,27 @@ class SentenceMapperTest extends TestCase
 
         $persistenceSentence->setRelation('kanjis', collect([$persistenceKanji]));
 
-        $mapper = new SentenceMapper(new KanjiMapper());
+        $persistenceWord = new PersistenceWord([
+            'word' => '水',
+            'furigana' => 'みず',
+            'jlpt' => 'N5',
+            'word_type' => 'noun',
+            'word_k_ele' => '水',
+            'furigana_r_ele' => 'みず',
+            'sense' => json_encode([[['gloss', ['water']]]], JSON_THROW_ON_ERROR),
+        ]);
+        $persistenceWord->id = 20;
+        $persistenceWord->uuid = (string) Str::uuid();
+        $persistenceSentence->setRelation('words', collect([$persistenceWord]));
+
+        $mapper = new SentenceMapper(new KanjiMapper(), new WordMapper());
 
         $domainSentence = $mapper->mapToDomain($persistenceSentence);
 
         $this->assertSame(12, $domainSentence->getUserId());
         $this->assertCount(1, $domainSentence->getKanjis());
         $this->assertSame('水', $domainSentence->getKanjis()[0]->getCharacter()->value());
-        $this->assertSame([], $domainSentence->getWords());
+        $this->assertCount(1, $domainSentence->getWords());
+        $this->assertSame('水', $domainSentence->getWords()[0]->getSurface());
     }
 }

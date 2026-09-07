@@ -2212,6 +2212,53 @@
                         "$ref": "#/components/responses/ValidationException"
                     }
                 }
+            },
+            "post": {
+                "operationId": "sentence.store",
+                "tags": [
+                    "Sentence"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSentenceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`SentenceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SentenceResource"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
             }
         },
         "/sentences/{identifier}": {
@@ -2267,7 +2314,9 @@
                                         },
                                         "words": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "$ref": "#/components/schemas/WordResource"
+                                            }
                                         }
                                     },
                                     "required": [
@@ -2279,6 +2328,96 @@
                                         "kanjis",
                                         "words"
                                     ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sentences/{uuid}": {
+            "put": {
+                "operationId": "sentence.update",
+                "tags": [
+                    "Sentence"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSentenceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SentenceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SentenceResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "sentence.destroy",
+                "tags": [
+                    "Sentence"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "204": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -4820,6 +4959,44 @@
                 ],
                 "title": "RoleResource"
             },
+            "SentenceResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "tatoeba_entry": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "kanjis": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "words": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "user_id",
+                    "tatoeba_entry",
+                    "content",
+                    "kanjis",
+                    "words"
+                ],
+                "title": "SentenceResource"
+            },
             "StoreArticleRequest": {
                 "type": "object",
                 "properties": {
@@ -4964,6 +5141,20 @@
                 ],
                 "title": "StoreCommentRequest"
             },
+            "StoreSentenceRequest": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "minLength": 4,
+                        "maxLength": 300
+                    }
+                },
+                "required": [
+                    "content"
+                ],
+                "title": "StoreSentenceRequest"
+            },
             "UpdateArticleRequest": {
                 "type": "object",
                 "properties": {
@@ -5042,6 +5233,20 @@
                 },
                 "title": "UpdateCatalogueRequest"
             },
+            "UpdateSentenceRequest": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "minLength": 4,
+                        "maxLength": 300
+                    }
+                },
+                "required": [
+                    "content"
+                ],
+                "title": "UpdateSentenceRequest"
+            },
             "UuidCreatedResource": {
                 "type": "object",
                 "properties": {
@@ -5053,6 +5258,119 @@
                     "uuid"
                 ],
                 "title": "UuidCreatedResource"
+            },
+            "WordResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "word": {
+                        "type": "string"
+                    },
+                    "furigana": {
+                        "type": "string"
+                    },
+                    "jlpt": {
+                        "type": "string"
+                    },
+                    "meaning": {
+                        "type": "string"
+                    },
+                    "meanings": {
+                        "type": "string"
+                    },
+                    "word_types": {
+                        "type": "string"
+                    },
+                    "writing_elements": {
+                        "type": "string"
+                    },
+                    "reading_elements": {
+                        "type": "string"
+                    },
+                    "word_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "word_k_ele": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "furigana_r_ele": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    },
+                    "sense": {
+                        "type": "string"
+                    },
+                    "viewer_catalogue_state": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "is_saved": {
+                                "type": "string"
+                            },
+                            "is_known": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "is_saved",
+                            "is_known"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "word",
+                    "furigana",
+                    "jlpt",
+                    "meaning",
+                    "meanings",
+                    "word_types",
+                    "writing_elements",
+                    "reading_elements",
+                    "word_type",
+                    "word_k_ele",
+                    "furigana_r_ele",
+                    "sense",
+                    "viewer_catalogue_state"
+                ],
+                "title": "WordResource"
             }
         },
         "responses": {
