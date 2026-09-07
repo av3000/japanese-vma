@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
+use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
@@ -13,22 +14,29 @@ use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
+use App\Http\v1\Articles\Requests\IndexPendingArticlesRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
+use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
+use App\Http\v1\Articles\Resources\ArticleModerationListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
+use App\Http\v1\Articles\Resources\ArticleStatusResource;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Auth\AuthenticationException;
 
@@ -41,6 +49,7 @@ class ArticleController extends Controller
 {
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
+        private readonly ArticleModerationServiceInterface $articleModerationService,
         private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
         private readonly CurrentUserProviderInterface $currentUserProvider,
@@ -59,6 +68,48 @@ class ArticleController extends Controller
         return new ArticleListResource(
             $this->articleService->getArticlesList($listDTO, $authenticatedUser)
         );
+    }
+
+    /**
+     * @response ArticleModerationListResource
+     */
+    #[Response(type: 'array{items: array<int, array{uuid: string, title_jp: string, status: int, status_label: string, hashtags: array<int, \App\Http\v1\Engagement\Resources\HashtagResource>, created_at: string}>, pagination: \App\Http\v1\Shared\Resources\PaginationResource}')]
+    public function pending(IndexPendingArticlesRequest $request): JsonResponse|JsonResource
+    {
+        $validated = $request->validated();
+        $result = $this->articleModerationService->getPendingArticles(
+            Pagination::fromInputOrDefault(
+                $validated['page'] ?? null,
+                $validated['per_page'] ?? null,
+            ),
+            $this->requiredAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return new ArticleModerationListResource($result->getData());
+    }
+
+    /**
+     * @response ArticleStatusResource
+     */
+    #[PathParameter('uuid', type: 'string', format: 'uuid')]
+    #[Response(type: 'ArticleStatusResource')]
+    public function setStatus(string $uuid, UpdateArticleStatusRequest $request): JsonResponse|JsonResource
+    {
+        $result = $this->articleModerationService->updateStatus(
+            EntityId::from($uuid),
+            ArticleStatus::from((int) $request->validated('status')),
+            $this->requiredAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return new ArticleStatusResource($result->getData());
     }
 
     /**

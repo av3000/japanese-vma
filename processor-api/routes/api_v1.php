@@ -22,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
+    Route::middleware(['auth:api', 'checkRole:admin'])->group(function (): void {
+        Route::get('articles/pending', [ArticleController::class, 'pending']);
+        Route::post('articles/{uuid}/status', [ArticleController::class, 'setStatus'])
+            ->whereUuid('uuid');
+    });
+
     // ============================================
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
@@ -113,9 +119,6 @@ Route::prefix('v1')->group(function () {
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);
 
-            // Article Moderation
-            Route::post('articles/{id}/status', [ArticleController::class, 'setStatus']); // TODO: implement
-            Route::get('articles/pending', [ArticleController::class, 'pending']); // TODO: implement
         });
     });
 
