@@ -22,6 +22,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
+    // ============================================
+    // ADMIN ARTICLE MODERATION
+    // ============================================
+    // Registered before the public routes on purpose: `articles/pending` must be
+    // matched before the public `articles/{id}` route, otherwise it resolves to
+    // ArticleController@show with an id of "pending". Do not fold this block into
+    // the ADMIN-ONLY ROUTES group further down.
+    // Guarded by tests/Feature/Articles/ArticleModerationV1Test.php
+    // ::test_pending_route_resolves_the_admin_moderation_action
     Route::middleware(['auth:api', 'checkRole:admin'])->group(function (): void {
         Route::get('articles/pending', [ArticleController::class, 'pending']);
         Route::post('articles/{uuid}/status', [ArticleController::class, 'setStatus'])
@@ -118,7 +127,6 @@ Route::prefix('v1')->group(function () {
 
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);
-
         });
     });
 

@@ -280,7 +280,6 @@ class ArticleRepository implements ArticleRepositoryInterface
 
         $article->status = $status;
         $article->save();
-        $article->refresh();
 
         return $article->status;
     }

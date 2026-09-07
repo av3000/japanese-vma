@@ -15,7 +15,14 @@ class ArticleModerationItemResource extends JsonResource
     public static $wrap = null;
 
     /**
-     * @return array{uuid: string, title_jp: string, status: int, status_label: string, hashtags: mixed, created_at: string}
+     * @return array{
+     *     uuid: string,
+     *     title_jp: string,
+     *     status: int,
+     *     status_label: string,
+     *     hashtags: array<int, HashtagResource>,
+     *     created_at: string
+     * }
      */
     public function toArray(Request $request): array
     {

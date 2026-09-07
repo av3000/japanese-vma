@@ -17,24 +17,21 @@ class ArticleModerationListResource extends JsonResource
 
     /**
      * @return array{
-     *     items: array<int, array{
-     *         uuid: string,
-     *         title_jp: string,
-     *         status: int,
-     *         status_label: string,
-     *         hashtags: array<int, HashtagResource>,
-     *         created_at: string
-     *     }>,
+     *     items: array<int, ArticleModerationItemResource>,
      *     pagination: PaginationResource
      * }
      */
     public function toArray(Request $request): array
     {
+        /** @var array<int, ArticleModerationItemResource> $items */
+        $items = array_map(
+            static fn (ArticleModerationItemDTO $item): ArticleModerationItemResource => new ArticleModerationItemResource($item),
+            $this->resource->items,
+        );
+
         return [
-            'items' => array_map(
-                static fn (ArticleModerationItemDTO $item): ArticleModerationItemResource => new ArticleModerationItemResource($item),
-                $this->resource->items,
-            ),
+            /** @var array<int, ArticleModerationItemResource> */
+            'items' => $items,
             'pagination' => new PaginationResource($this->resource->pagination),
         ];
     }

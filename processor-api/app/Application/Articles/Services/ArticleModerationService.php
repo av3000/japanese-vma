@@ -31,7 +31,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
     public function getPendingArticles(Pagination $pagination, AuthenticatedUser $authenticatedUser): Result
     {
         if (! $this->articlePolicy->canModerate($authenticatedUser)) {
-            return Result::failure(ArticleErrors::accessDenied('moderation'));
+            return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
         try {
@@ -68,14 +68,14 @@ class ArticleModerationService implements ArticleModerationServiceInterface
                 'error' => $exception->getMessage(),
             ]);
 
-            return Result::failure(ArticleErrors::updateFailed($exception->getMessage()));
+            return Result::failure(ArticleErrors::moderationQueueFetchFailed());
         }
     }
 
     public function updateStatus(EntityId $articleUuid, ArticleStatus $status, AuthenticatedUser $authenticatedUser): Result
     {
         if (! $this->articlePolicy->canModerate($authenticatedUser)) {
-            return Result::failure(ArticleErrors::accessDenied($articleUuid->value()));
+            return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
         try {
@@ -93,7 +93,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
                 'error' => $exception->getMessage(),
             ]);
 
-            return Result::failure(ArticleErrors::updateFailed($exception->getMessage()));
+            return Result::failure(ArticleErrors::moderationStatusUpdateFailed());
         }
     }
 }

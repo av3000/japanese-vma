@@ -7,9 +7,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class IndexPendingArticlesRequest extends FormRequest
 {
+    /**
+     * The route is already behind `auth:api` + `checkRole:admin`; mirroring
+     * StoreArticleRequest here is what makes Scramble document the 403 response.
+     */
     public function authorize(): bool
     {
-        return true;
+        return auth('api')->check();
     }
 
     public function rules(): array

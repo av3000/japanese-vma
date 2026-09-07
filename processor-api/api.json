@@ -42,53 +42,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "title_jp": {
-                                                        "type": "string"
-                                                    },
-                                                    "status": {
-                                                        "type": "integer"
-                                                    },
-                                                    "status_label": {
-                                                        "type": "string"
-                                                    },
-                                                    "hashtags": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "$ref": "#/components/schemas/HashtagResource"
-                                                        }
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "uuid",
-                                                    "title_jp",
-                                                    "status",
-                                                    "status_label",
-                                                    "hashtags",
-                                                    "created_at"
-                                                ]
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/PaginationResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "items",
-                                        "pagination"
-                                    ]
+                                    "$ref": "#/components/schemas/ArticleModerationListResource"
                                 }
                             }
                         }
@@ -98,6 +52,9 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -145,6 +102,9 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -3612,12 +3572,56 @@
                 ],
                 "title": "ArticleListResource"
             },
+            "ArticleModerationItemResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "title_jp": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "enum": [
+                            "Pending",
+                            "Processed",
+                            "Under Review",
+                            "Rejected",
+                            "Approved"
+                        ]
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "title_jp",
+                    "status",
+                    "status_label",
+                    "hashtags",
+                    "created_at"
+                ],
+                "title": "ArticleModerationItemResource"
+            },
             "ArticleModerationListResource": {
                 "type": "object",
                 "properties": {
                     "items": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleModerationItemResource"
+                        }
                     },
                     "pagination": {
                         "$ref": "#/components/schemas/PaginationResource"
@@ -5310,8 +5314,8 @@
                     }
                 }
             },
-            "NotFoundHttpException": {
-                "description": "Not found",
+            "AuthorizationException": {
+                "description": "Authorization error",
                 "content": {
                     "application/json": {
                         "schema": {
@@ -5329,8 +5333,8 @@
                     }
                 }
             },
-            "AuthorizationException": {
-                "description": "Authorization error",
+            "NotFoundHttpException": {
+                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {

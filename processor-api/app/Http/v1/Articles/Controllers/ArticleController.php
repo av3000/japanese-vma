@@ -73,7 +73,7 @@ class ArticleController extends Controller
     /**
      * @response ArticleModerationListResource
      */
-    #[Response(type: 'array{items: array<int, array{uuid: string, title_jp: string, status: int, status_label: string, hashtags: array<int, \App\Http\v1\Engagement\Resources\HashtagResource>, created_at: string}>, pagination: \App\Http\v1\Shared\Resources\PaginationResource}')]
+    #[Response(type: 'ArticleModerationListResource')]
     public function pending(IndexPendingArticlesRequest $request): JsonResponse|JsonResource
     {
         $validated = $request->validated();
