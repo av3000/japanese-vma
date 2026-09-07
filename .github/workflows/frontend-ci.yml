@@ -17,6 +17,14 @@ on:
       - "processor-api/api.json"
       - ".github/workflows/frontend-ci.yml"
 
+# SECURITY TODO: `vars.RENDER_DEPLOY_HOOK_URL` must become `secrets.RENDER_DEPLOY_HOOK_URL`.
+# Repository variables are NOT masked in run logs, and the steps below interpolate the
+# value straight into `run:` scripts, so the deploy hook URL is printed in plain text.
+# Anyone who reads it can trigger a production deploy. Render documents the hook URL as
+# confidential. Fix: move it to secrets, pass it through `env:` instead of inline
+# `${{ }}`, then regenerate the hook in the Render dashboard to invalidate the leaked one.
+# Tracked in docs/architecture/ci-and-containers-audit.md (finding H1).
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/japanese-vma-client
@@ -181,5 +189,8 @@ jobs:
             exit 1
           fi
 
+      # SECURITY TODO (H1): this line prints the deploy hook URL in the run log
+      # because `vars` is not masked. Move to `secrets.RENDER_DEPLOY_HOOK_URL` and
+      # reference it through `env:` so the value is masked. See note at top of file.
       - name: Trigger Render deploy
         run: curl --fail --silent --show-error -X POST "${{ vars.RENDER_DEPLOY_HOOK_URL }}"

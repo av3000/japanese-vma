@@ -30,7 +30,6 @@ class UserTableSeeder extends Seeder
         $adminUser->assignRole(UserRole::ADMIN->value);
         $adminUser->assignRole(UserRole::COMMON->value);
 
-
         $commonEmail = 'johndoe@me.com';
         $commonUser = PersistenceUser::firstOrCreate(
             ['email' => $commonEmail],
