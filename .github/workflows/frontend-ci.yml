@@ -50,14 +50,28 @@ jobs:
           fi
 
       - name: Setup Node.js
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: client/.nvmrc
           cache: npm
           cache-dependency-path: client/package-lock.json
 
+      # setup-node's `cache: npm` only caches ~/.npm (the download cache), so
+      # `npm ci` still re-extracts all ~950 packages every run. Caching
+      # node_modules itself lets us skip the install outright when the lockfile
+      # is unchanged. Exact key only: a partial restore is worse than a clean
+      # install, so no restore-keys here.
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
+
       - name: Install dependencies
-        run: npm ci
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Generate Orval client
         run: npm run orval:file
@@ -75,8 +89,32 @@ jobs:
           VITE_SENTRY_RELEASE: ${{ github.sha }}
         run: npm run build
 
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # A plain `docker build` on a fresh runner has no layer cache, so the
+      # `RUN npm ci` inside the Dockerfile downloaded all ~950 packages on every
+      # run. Buildx with the GitHub Actions cache backend reuses that layer
+      # whenever package-lock.json is unchanged. The Dockerfile copies
+      # package*.json before the install and the source after it, so source-only
+      # changes keep the install layer intact. `load: true` puts the image in the
+      # local daemon for the smoke test below. Shared `scope` lets the publish
+      # job reuse this cache.
       - name: Build production image
-        run: docker build --build-arg VITE_API_URL="${{ vars.CLIENT_VITE_API_URL }}" --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" --build-arg VITE_SENTRY_ENVIRONMENT="ci" --build-arg VITE_SENTRY_RELEASE="${{ github.sha }}" -f .docker/Dockerfile.production -t japanese-vma-client:${{ github.sha }} .
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          file: ./client/.docker/Dockerfile.production
+          push: false
+          load: true
+          tags: japanese-vma-client:${{ github.sha }}
+          build-args: |
+            VITE_API_URL=${{ vars.CLIENT_VITE_API_URL }}
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+            VITE_SENTRY_ENVIRONMENT=ci
+            VITE_SENTRY_RELEASE=${{ github.sha }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
       - name: Smoke test production image
         run: |
@@ -137,14 +175,23 @@ jobs:
           fi
 
       - name: Setup Node.js
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: client/.nvmrc
           cache: npm
           cache-dependency-path: client/package-lock.json
 
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
+
       - name: Install dependencies
-        run: npm ci
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Generate Orval client
         run: npm run orval:file
@@ -173,6 +220,11 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # Reuses the layers the verify job just built. Build args declared
+          # after `RUN npm ci` in the Dockerfile, so the ci/production split
+          # does not invalidate the install layer.
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
   deploy-production:
     name: Deploy production frontend
