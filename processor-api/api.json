@@ -3849,7 +3849,9 @@
                     },
                     "values": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleFacetValueResource"
+                        }
                     }
                 },
                 "required": [
@@ -3859,6 +3861,30 @@
                     "values"
                 ],
                 "title": "ArticleFacetResource"
+            },
+            "ArticleFacetValueResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer"
+                    },
+                    "selected": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "key",
+                    "label",
+                    "count",
+                    "selected"
+                ],
+                "title": "ArticleFacetValueResource"
             },
             "ArticleListResource": {
                 "type": "object",
@@ -3961,20 +3987,10 @@
                         ]
                     },
                     "filters": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/ArticleQueryFiltersResource"
                     },
                     "sort": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
+                        "type": "string"
                     }
                 },
                 "required": [
@@ -3983,6 +3999,41 @@
                     "sort"
                 ],
                 "title": "ArticleQueryEchoResource"
+            },
+            "ArticleQueryFiltersResource": {
+                "type": "object",
+                "properties": {
+                    "jlpt_levels": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "hashtag_ids": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "kanji_ids": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "word_ids": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "author_uid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "jlpt_levels",
+                    "hashtag_ids",
+                    "kanji_ids",
+                    "word_ids",
+                    "author_uid"
+                ],
+                "title": "ArticleQueryFiltersResource"
             },
             "ArticleResource": {
                 "type": "object",

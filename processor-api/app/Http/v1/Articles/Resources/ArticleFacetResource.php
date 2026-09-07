@@ -19,24 +19,23 @@ class ArticleFacetResource extends JsonResource
      *     key: string,
      *     label: string,
      *     type: string,
-     *     values: array<int, array{key: string, label: string, count: int, selected: bool}>
+     *     values: array<int, ArticleFacetValueResource>
      * }
      */
     public function toArray(Request $request): array
     {
+        /** @var array<int, ArticleFacetValueResource> $values */
+        $values = array_map(
+            static fn (ArticleFacetValueDTO $value): ArticleFacetValueResource => new ArticleFacetValueResource($value),
+            $this->resource->values,
+        );
+
         return [
             'key' => $this->resource->key,
             'label' => $this->resource->label,
             'type' => $this->resource->type,
-            'values' => array_map(
-                static fn (ArticleFacetValueDTO $value): array => [
-                    'key' => $value->key,
-                    'label' => $value->label,
-                    'count' => $value->count,
-                    'selected' => $value->selected,
-                ],
-                $this->resource->values,
-            ),
+            /** @var array<int, ArticleFacetValueResource> */
+            'values' => $values,
         ];
     }
 }

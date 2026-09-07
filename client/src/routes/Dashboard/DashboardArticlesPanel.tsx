@@ -59,8 +59,12 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	const { articles, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteArticles({
 		filters: {
 			author_uid: currentUser?.uuid,
-			search: filters.search,
+			// Canonical `q`, not the legacy `search` alias, so AFM-07 can retire it.
+			// The backend rejects a one-character search, so do not send one.
+			...(filters.search && filters.search.trim().length >= 2 ? { q: filters.search.trim() } : {}),
 			include_stats_counts: true,
+			// The dashboard renders no facet controls.
+			include_facets: false,
 		},
 		enabled: dashboardView === DASHBOARD_TYPES.COMMON_USER && isAuthenticated && !!currentUser?.uuid,
 	});

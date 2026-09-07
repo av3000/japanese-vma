@@ -20,7 +20,7 @@ class ArticleQueryEchoResource extends JsonResource
     /**
      * @return array{
      *     q: string|null,
-     *     filters: array<string, mixed>,
+     *     filters: ArticleQueryFiltersResource,
      *     sort: string
      * }
      */
@@ -28,8 +28,8 @@ class ArticleQueryEchoResource extends JsonResource
     {
         return [
             'q' => $this->resource['q'] ?? null,
-            'filters' => (object) ($this->resource['filters'] ?? []),
-            'sort' => $this->resource['sort'] ?? '',
+            'filters' => new ArticleQueryFiltersResource($this->resource['filters'] ?? []),
+            'sort' => (string) ($this->resource['sort'] ?? ''),
         ];
     }
 }
