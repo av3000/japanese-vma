@@ -88,7 +88,11 @@ class SentenceService implements SentenceServiceInterface
             return Result::failure(SentenceErrors::notFound($uuid->value()));
         }
 
-        if (! $this->sentencePolicy->canMutate($actor, $sentence)) {
+        if ($this->sentencePolicy->isImmutable($sentence)) {
+            return Result::failure(SentenceErrors::immutableImported($uuid->value()));
+        }
+
+        if (! $this->sentencePolicy->canUpdate($actor, $sentence)) {
             return Result::failure(SentenceErrors::accessDenied($uuid->value()));
         }
 
@@ -118,27 +122,27 @@ class SentenceService implements SentenceServiceInterface
 
     public function delete(EntityId $uuid, AuthenticatedUser $actor): Result
     {
+        $sentence = $this->sentenceRepository->findByUuid($uuid);
+
+        if ($sentence === null) {
+            return Result::failure(SentenceErrors::notFound($uuid->value()));
+        }
+
+        if ($this->sentencePolicy->isImmutable($sentence)) {
+            return Result::failure(SentenceErrors::immutableImported($uuid->value()));
+        }
+
+        if (! $this->sentencePolicy->canDelete($actor, $sentence)) {
+            return Result::failure(SentenceErrors::accessDenied($uuid->value()));
+        }
+
         try {
-            DB::transaction(function () use ($uuid, $actor): void {
-                $sentence = $this->sentenceRepository->findByUuid($uuid);
-
-                if ($sentence === null) {
-                    throw new \DomainException('Sentence not found.');
-                }
-
-                if (! $this->sentencePolicy->canMutate($actor, $sentence)) {
-                    throw new \LogicException('Sentence access denied.');
-                }
-
+            DB::transaction(function () use ($sentence): void {
                 $this->cleanupSentenceDependencies->execute($sentence->getIdValue());
                 $this->sentenceRepository->delete($sentence->getIdValue());
             });
 
             return Result::success();
-        } catch (\DomainException) {
-            return Result::failure(SentenceErrors::notFound($uuid->value()));
-        } catch (\LogicException) {
-            return Result::failure(SentenceErrors::accessDenied($uuid->value()));
         } catch (\Throwable $exception) {
             Log::error('Sentence deletion failed', [
                 'user_id' => $actor->id->value(),
@@ -149,5 +153,4 @@ class SentenceService implements SentenceServiceInterface
             return Result::failure(SentenceErrors::deletionFailed());
         }
     }
-
 }

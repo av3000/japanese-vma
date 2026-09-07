@@ -36,6 +36,15 @@ final readonly class SentenceErrors
         );
     }
 
+    public static function immutableImported(string $identifier): ResultError
+    {
+        return new ResultError(
+            'SENTENCE_IMMUTABLE',
+            HttpStatus::FORBIDDEN,
+            "Sentence '{$identifier}' was imported and cannot be modified.",
+        );
+    }
+
     public static function creationFailed(): ResultError
     {
         return new ResultError(

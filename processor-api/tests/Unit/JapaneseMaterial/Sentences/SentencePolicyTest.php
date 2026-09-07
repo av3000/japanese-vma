@@ -16,22 +16,38 @@ class SentencePolicyTest extends TestCase
 {
     public function test_owner_can_mutate_user_authored_sentence(): void
     {
-        self::assertTrue($this->policy()->canMutate($this->actor(10), $this->sentence(10)));
+        self::assertTrue($this->policy()->canUpdate($this->actor(10), $this->sentence(10)));
+        self::assertTrue($this->policy()->canDelete($this->actor(10), $this->sentence(10)));
     }
 
     public function test_non_owner_cannot_mutate_user_authored_sentence(): void
     {
-        self::assertFalse($this->policy()->canMutate($this->actor(11), $this->sentence(10)));
+        self::assertFalse($this->policy()->canUpdate($this->actor(11), $this->sentence(10)));
+        self::assertFalse($this->policy()->canDelete($this->actor(11), $this->sentence(10)));
     }
 
     public function test_admin_can_mutate_user_authored_sentence(): void
     {
-        self::assertTrue($this->policy()->canMutate($this->actor(11, isAdmin: true), $this->sentence(10)));
+        self::assertTrue($this->policy()->canUpdate($this->actor(11, isAdmin: true), $this->sentence(10)));
+        self::assertTrue($this->policy()->canDelete($this->actor(11, isAdmin: true), $this->sentence(10)));
+    }
+
+    public function test_guest_cannot_mutate_user_authored_sentence(): void
+    {
+        self::assertFalse($this->policy()->canUpdate(null, $this->sentence(10)));
+        self::assertFalse($this->policy()->canDelete(null, $this->sentence(10)));
     }
 
     public function test_imported_sentence_is_immutable_for_admin(): void
     {
-        self::assertFalse($this->policy()->canMutate($this->actor(11, isAdmin: true), $this->sentence(null)));
+        self::assertTrue($this->policy()->isImmutable($this->sentence(null)));
+        self::assertFalse($this->policy()->canUpdate($this->actor(11, isAdmin: true), $this->sentence(null)));
+        self::assertFalse($this->policy()->canDelete($this->actor(11, isAdmin: true), $this->sentence(null)));
+    }
+
+    public function test_user_authored_sentence_is_not_immutable(): void
+    {
+        self::assertFalse($this->policy()->isImmutable($this->sentence(10)));
     }
 
     private function policy(): SentencePolicy

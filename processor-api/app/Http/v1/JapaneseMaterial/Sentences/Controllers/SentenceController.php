@@ -84,7 +84,7 @@ class SentenceController extends Controller
     #[Response(type: 'array{id: int, uuid: string, user_id: int|null, tatoeba_entry: string|null, content: string, kanjis: array<int, KanjiResource>, words: array<int, WordResource>}')]
     public function show(string $identifier): JsonResponse|JsonResource
     {
-        $result = $this->sentenceService->findByIdentifier($identifier, withKanjis: true);
+        $result = $this->sentenceService->findByIdentifier($identifier, withKanjis: true, withWords: true);
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());

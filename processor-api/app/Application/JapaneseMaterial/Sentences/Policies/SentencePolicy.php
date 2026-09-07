@@ -9,14 +9,35 @@ use App\Domain\JapaneseMaterial\Sentences\Models\Sentence;
 
 final class SentencePolicy
 {
-    public function canMutate(AuthenticatedUser $actor, Sentence $sentence): bool
+    /**
+     * Business rule: imported sentences have no author and stay immutable,
+     * including for admins.
+     */
+    public function isImmutable(Sentence $sentence): bool
     {
-        $ownerId = $sentence->getUserId();
+        return $sentence->getUserId() === null;
+    }
 
-        if ($ownerId === null) {
+    public function canUpdate(?AuthenticatedUser $authenticatedUser, Sentence $sentence): bool
+    {
+        return $this->canMutate($authenticatedUser, $sentence);
+    }
+
+    public function canDelete(?AuthenticatedUser $authenticatedUser, Sentence $sentence): bool
+    {
+        return $this->canMutate($authenticatedUser, $sentence);
+    }
+
+    private function canMutate(?AuthenticatedUser $authenticatedUser, Sentence $sentence): bool
+    {
+        if ($authenticatedUser === null || $this->isImmutable($sentence)) {
             return false;
         }
 
-        return $actor->isAdmin || $actor->id->value() === $ownerId;
+        if ($authenticatedUser->isAdmin) {
+            return true;
+        }
+
+        return $authenticatedUser->id->value() === $sentence->getUserId();
     }
 }

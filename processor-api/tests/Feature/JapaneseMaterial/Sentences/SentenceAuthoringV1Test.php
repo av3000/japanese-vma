@@ -128,9 +128,11 @@ class SentenceAuthoringV1Test extends TestCase
         Passport::actingAs($this->createUser(), ['*'], 'api');
 
         $this->putJson("/api/v1/sentences/{$sentence->uuid}", ['content' => '変更された文です。'])
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('title', "You do not have permission to modify sentence '{$sentence->uuid}'.");
         $this->deleteJson("/api/v1/sentences/{$sentence->uuid}")
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('title', "You do not have permission to modify sentence '{$sentence->uuid}'.");
         $this->assertDatabaseHas('japanese_tatoeba_sentences', ['id' => $sentence->id]);
     }
 
@@ -156,9 +158,12 @@ class SentenceAuthoringV1Test extends TestCase
         Passport::actingAs($admin, ['*'], 'api');
 
         $this->putJson("/api/v1/sentences/{$sentence->uuid}", ['content' => '管理者の変更です。'])
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('title', "Sentence '{$sentence->uuid}' was imported and cannot be modified.");
         $this->deleteJson("/api/v1/sentences/{$sentence->uuid}")
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('title', "Sentence '{$sentence->uuid}' was imported and cannot be modified.");
+        $this->assertDatabaseHas('japanese_tatoeba_sentences', ['id' => $sentence->id]);
     }
 
     public function test_update_and_delete_validate_uuid_and_missing_sentence(): void
@@ -337,7 +342,9 @@ class SentenceAuthoringV1Test extends TestCase
 
         $this->app->instance(SentenceRepositoryInterface::class, new class($inner) implements SentenceRepositoryInterface
         {
-            public function __construct(private readonly SentenceRepositoryInterface $inner) {}
+            public function __construct(private readonly SentenceRepositoryInterface $inner)
+            {
+            }
 
             public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO
             {
