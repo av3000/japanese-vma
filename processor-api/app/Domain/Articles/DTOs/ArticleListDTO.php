@@ -35,7 +35,7 @@ readonly class ArticleListDTO
             include_stats_counts: $validated['include_stats_counts'] ?? true,
             include_hashtags: $validated['include_hashtags'] ?? true,
             include_kanjis: $validated['include_kanjis'] ?? true,
-            include_words: $validated['include_kanjis'] ?? true,
+            include_words: $validated['include_words'] ?? true,
             kanji_id: $validated['kanji_id'] ?? null,
             word_id: $validated['word_id'] ?? null,
         );

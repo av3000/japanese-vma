@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Articles;
 
+use App\Domain\Shared\Enums\ArticleSortField;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
@@ -186,6 +188,111 @@ class IndexArticleTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['author_uid']);
+    }
+
+    /**
+     * Characterization only. The Article list does not filter on moderation status today,
+     * so every status is visible under the public scope. AFM-01 must not change this;
+     * status filtering belongs to the separate moderation work.
+     */
+    public function test_index_returns_every_moderation_status_under_the_public_scope(): void
+    {
+        $author = $this->createUser();
+
+        foreach (ArticleStatus::cases() as $status) {
+            $this->createArticle($author, [
+                'title_jp' => 'Status '.$status->value,
+                'publicity' => PublicityStatus::PUBLIC,
+                'status' => $status,
+            ]);
+        }
+
+        $response = $this->json('GET', '/api/v1/articles');
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles(
+            $response->json('items'),
+            array_map(static fn (ArticleStatus $s): string => 'Status '.$s->value, ArticleStatus::cases()),
+        );
+    }
+
+    public function test_index_rejects_unsupported_sort_field(): void
+    {
+        $response = $this->json('GET', '/api/v1/articles', [
+            'sort_by' => 'views_total',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['sort_by']);
+    }
+
+    public function test_index_rejects_unsupported_sort_direction(): void
+    {
+        $response = $this->json('GET', '/api/v1/articles', [
+            'sort_dir' => 'sideways',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['sort_dir']);
+    }
+
+    public function test_index_accepts_every_supported_sort_field(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Sortable']);
+
+        foreach (ArticleSortField::cases() as $field) {
+            $this->json('GET', '/api/v1/articles', [
+                'sort_by' => $field->value,
+                'sort_dir' => 'asc',
+            ])->assertStatus(200);
+        }
+    }
+
+    public function test_index_rejects_unknown_query_parameters(): void
+    {
+        $response = $this->json('GET', '/api/v1/articles', [
+            'not_a_filter' => 'nope',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['not_a_filter']);
+    }
+
+    /**
+     * Characterization. Pagination already produces field-level 422s through
+     * ValueObjectValidationException; these lock the behavior in before AFM-02/AFM-03.
+     */
+    #[DataProvider('outOfRangePaginationProvider')]
+    public function test_index_rejects_out_of_range_pagination(string $field, int $value): void
+    {
+        $response = $this->json('GET', '/api/v1/articles', [$field => $value]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors([$field]);
+    }
+
+    public static function outOfRangePaginationProvider(): array
+    {
+        return [
+            'page below minimum' => ['page', 0],
+            'per_page below minimum' => ['per_page', 0],
+            'per_page above maximum' => ['per_page', 101],
+        ];
+    }
+
+    public function test_index_accepts_the_remaining_include_flags(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Included']);
+
+        $response = $this->json('GET', '/api/v1/articles', [
+            'include_words' => false,
+            'include_hashtags' => false,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertArticleTitles($response->json('items'), ['Included']);
     }
 
     public function test_index_returns_attached_kanjis(): void

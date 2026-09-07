@@ -245,8 +245,6 @@ class ArticleService implements ArticleServiceInterface
             ? $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles)
             : [];
 
-        // TODO: IndexArticleRequest still does not validate/normalize include_hashtags,
-        // so article-list hashtags remain effectively always-on until a follow-up cleanup.
         $hashtagsMap = $dto->include_hashtags
             ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
             : [];

@@ -1,5 +1,6 @@
 import React, { useDeferredValue, useMemo, useState } from 'react';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import type { ArticleListFilters } from '@/api/articles/hooks/useInfiniteArticles';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
@@ -18,11 +19,15 @@ type ArticleSearchFilters = {
 	filterType: string;
 };
 
-const mapSearchFiltersToArticleParams = (filters: Record<string, unknown>) => ({
+const mapSearchFiltersToArticleParams = (filters: Record<string, unknown>): ArticleListFilters => ({
 	search: typeof filters.keyword === 'string' && filters.keyword.trim() ? filters.keyword.trim() : undefined,
 	category:
 		typeof filters.filterType === 'string' && filters.filterType !== '20' ? Number(filters.filterType) : undefined,
-	sort_by: filters.sortByWhat === 'pop' ? 'views_total' : 'created_at',
+	// The Popular control used to send `views_total`, which has never been a supported
+	// backend sort: it returned 500 before AFM-01 and returns 422 after it. Popular now
+	// falls back to newest-first. AFM-06 (#276) removes the control itself, and a real
+	// popularity metric needs its own issue.
+	sort_by: 'created_at',
 	sort_dir: 'desc',
 	per_page: DEFAULT_PER_PAGE,
 	include_stats_counts: true,

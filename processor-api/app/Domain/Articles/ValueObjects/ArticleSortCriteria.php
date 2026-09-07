@@ -1,16 +1,18 @@
 <?php
+
 namespace App\Domain\Articles\ValueObjects;
 
 use App\Domain\Shared\Enums\ArticleSortField;
 use App\Domain\Shared\Enums\SortDirection;
-use InvalidArgumentException;
+use App\Domain\Shared\Exceptions\ValueObjectValidationException;
 
 readonly class ArticleSortCriteria
 {
     public function __construct(
         public ArticleSortField $field,
         public SortDirection $direction
-    ) {}
+    ) {
+    }
 
     public static function fromInputOrDefault(?string $field, ?string $direction): self
     {
@@ -35,7 +37,7 @@ readonly class ArticleSortCriteria
         }
 
         return ArticleSortField::tryFrom($field)
-            ?? throw new InvalidArgumentException("Invalid sort field: {$field}");
+            ?? throw ValueObjectValidationException::forField('sort_by', "Invalid sort field: {$field}");
     }
 
     private static function parseDirection(?string $direction): SortDirection
@@ -46,10 +48,11 @@ readonly class ArticleSortCriteria
 
         // Business rule: handle common variations
         $normalized = strtolower(trim($direction));
-        return match($normalized) {
+
+        return match ($normalized) {
             'asc', 'ascending' => SortDirection::ASC,
             'desc', 'descending' => SortDirection::DESC,
-            default => throw new InvalidArgumentException("Invalid sort direction: {$direction}")
+            default => throw ValueObjectValidationException::forField('sort_dir', "Invalid sort direction: {$direction}")
         };
     }
 

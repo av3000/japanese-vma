@@ -29,6 +29,6 @@ readonly class ArticleCriteriaDTO implements ArticleIncludeOptionsInterface
 
     public function includeWords(): bool
     {
-        return $this->include_kanjis;
+        return $this->include_words;
     }
 }
