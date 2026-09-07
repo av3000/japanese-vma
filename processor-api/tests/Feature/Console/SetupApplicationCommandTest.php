@@ -43,10 +43,13 @@ class SetupApplicationCommandTest extends TestCase
     public function testSetupIsIdempotent(): void
     {
         Artisan::call('app:setup', ['--skip-import' => true, '--no-interaction' => true]);
-        $exitCode = Artisan::call('app:setup', ['--skip-import' => true, '--no-interaction' => true]);
 
-        $this->assertSame(0, $exitCode, Artisan::output());
-        $this->assertStringContainsString('already present', Artisan::output());
+        // Assert through the command tester rather than Artisan::output(); the
+        // command makes nested Artisan calls, and each one replaces the shared
+        // last-output buffer.
+        $this->artisan('app:setup', ['--skip-import' => true])
+            ->expectsOutputToContain('already present')
+            ->assertExitCode(0);
 
         $this->assertSame(
             count(ObjectTemplateType::cases()),
