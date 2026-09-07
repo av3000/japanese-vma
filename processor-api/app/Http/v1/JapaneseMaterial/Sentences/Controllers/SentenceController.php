@@ -13,13 +13,11 @@ use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\JapaneseMaterial\Sentences\Requests\IndexSentenceRequest;
 use App\Http\v1\JapaneseMaterial\Sentences\Requests\StoreSentenceRequest;
 use App\Http\v1\JapaneseMaterial\Sentences\Requests\UpdateSentenceRequest;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceListResource;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceResource;
-use App\Http\v1\JapaneseMaterial\Words\Resources\WordResource;
 use App\Http\v1\Shared\Resources\PaginationResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
@@ -70,18 +68,10 @@ class SentenceController extends Controller
         return new SentenceListResource($result->getData());
     }
 
-    /**
-     * @response array{
-     *     id: int,
-     *     uuid: string,
-     *     user_id: int|null,
-     *     tatoeba_entry: string|null,
-     *     content: string,
-     *     kanjis: array<int, KanjiResource>,
-     *     words: array<int, WordResource>
-     * }
-     */
-    #[Response(type: 'array{id: int, uuid: string, user_id: int|null, tatoeba_entry: string|null, content: string, kanjis: array<int, KanjiResource>, words: array<int, WordResource>}')]
+    // Detail, create and update all return `SentenceResource`, so they all
+    // reference the one named component. An inline shape here would be a
+    // second description of the same class, free to drift from it silently.
+    #[Response(type: 'SentenceResource')]
     public function show(string $identifier): JsonResponse|JsonResource
     {
         $result = $this->sentenceService->findByIdentifier($identifier, withKanjis: true, withWords: true);
@@ -93,6 +83,13 @@ class SentenceController extends Controller
         return new SentenceResource($result->getData(), includeKanjis: true, includeWords: true);
     }
 
+    // Scramble documents an inferred `200` beside this `201` because the action
+    // returns a JsonResponse, and Orval turns the two success responses into
+    // `string | SentenceResource`. The seam in client/src/api/sentences/authoring.ts
+    // narrows that at runtime; see the note there. Attempts that did not help:
+    // widening the return type to `JsonResponse|JsonResource`, `response()->json(…, 201)`,
+    // and returning a bare resource — Scramble only replaces an inferred response
+    // when the attribute declares the *same* status.
     #[Response(201, type: 'SentenceResource')]
     public function store(StoreSentenceRequest $request): JsonResponse
     {
