@@ -122,11 +122,13 @@ cd processor-api
 docker compose up -d --build
 docker compose up -d db-test test-runner
 docker compose exec test-runner composer test -- tests/Feature/OperationalRoutesTest.php
-docker compose exec laravel-app vendor/bin/pint --test app
+./format-changed.ps1
 docker compose exec laravel-app vendor/bin/phpstan analyse app
 docker compose exec laravel-app php artisan route:list
 docker compose logs -f webserver
 ```
+
+`format-changed.ps1` (or `format-changed.sh`) runs Pint over the PHP files your branch changed, matching what CI checks. Run it before pushing; see [processor-api/README.md](./processor-api/README.md) for why `composer format` does not work inside the containers.
 
 ## Orval API Client
 

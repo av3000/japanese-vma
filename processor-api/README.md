@@ -142,14 +142,15 @@ The local Docker Compose setup includes:
 ```bash
 cd processor-api
 docker compose up -d --build
-docker compose exec laravel-app composer format
-docker compose exec laravel-app composer format:check
+./format-changed.ps1                       # Pint on changed files (see Pint section)
 docker compose exec laravel-app composer stan
 docker compose exec laravel-app php artisan route:list
 docker compose exec laravel-app php artisan horizon
 docker compose logs -f queue
 docker compose logs -f webserver
 ```
+
+`composer format` and `composer format:check` rely on Pint's `--dirty` flag and silently match nothing inside the containers. Use the `format-changed` helper instead; see [Pint - code style fixer](#pint---code-style-fixer).
 
 ### Backend test lane
 
@@ -177,9 +178,7 @@ docker compose exec test-runner composer test
 
 Use `docker compose exec test-runner composer test -- ...` as the default backend verification interface. Do not run DB-backed backend tests through host PHP, `laravel-app`, or SQLite fallbacks.
 
-Use `docker compose exec laravel-app composer format` during local work to run Pint against dirty PHP files when Git metadata is available to the PHP runtime.
-
-Use `docker compose exec test-runner composer test` for the PHPUnit suite, then run the relevant Pint and Larastan commands through `laravel-app` before handing off a backend change.
+Use `docker compose exec test-runner composer test` for the PHPUnit suite, then run the Pint and Larastan checks below through `laravel-app` before handing off a backend change.
 
 ### Larastan - static analysis
 
@@ -197,14 +196,29 @@ composer stan -- app/Foo.php app/Bar.php
 
 ### Pint - code style fixer
 
-The current Docker Compose mount exposes `processor-api/` to the Laravel container, while the `.git` directory lives at the repository root. Because of that, Pint's `--dirty` mode may report `0 files` inside the container. For targeted Docker formatting, run Pint against explicit files or directories:
+**Run this before you push.** CI fails the build on any style drift in the PHP files your branch touched, so this is the single most common avoidable red build.
+
+From `processor-api/` on the host:
 
 ```bash
-vendor/bin/pint app/Path/To/File.php
-vendor/bin/pint --test app/Path/To/File.php
+./format-changed.ps1          # Windows: fix changed files
+./format-changed.ps1 -Test    # Windows: check only, non-zero exit on drift
+./format-changed.sh           # macOS/Linux: fix changed files
+./format-changed.sh --test    # macOS/Linux: check only
 ```
 
-If the branch is still carrying legacy style drift, format touched PHP files directly during daily work and reserve whole-repository checks such as `composer format:check` or `composer quality:ci` for cleanup branches or CI gates with an agreed formatting baseline.
+These helpers run exactly the check CI runs: every added, changed or untracked `.php` file under `processor-api/` between the merge-base with `origin/develop` and your working tree. Override the comparison point with `-Base origin/master` or `BASE_REF=origin/master`.
+
+Why a helper instead of `composer format`: that script uses Pint's `--dirty` flag, which needs Git metadata. Compose mounts only `processor-api/` into the containers while `.git` lives at the repository root, so inside a container `--dirty` matches nothing and reports `PASS 0 files`. That silent pass is why style drift reaches CI. The helpers run Git on the host and pass the resulting file list into the container, so nothing is skipped.
+
+For one-off work you can still target paths explicitly:
+
+```bash
+docker compose exec laravel-app vendor/bin/pint app/Path/To/File.php
+docker compose exec laravel-app vendor/bin/pint --test app/Path/To/File.php
+```
+
+Avoid `composer format:all` and `composer quality:ci` on a feature branch. The repository still carries legacy style drift, so a whole-repository pass produces a large unrelated diff. Reserve those for dedicated cleanup branches.
 
 Larastan uses `phpstan-baseline.neon` to ignore the current backlog of existing findings. When fixing static-analysis issues, regenerate the baseline only after confirming the reduction is intentional.
 

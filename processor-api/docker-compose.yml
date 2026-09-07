@@ -3,6 +3,11 @@ services:
     build:
       context: .
       dockerfile: .docker/Dockerfile
+      args:
+        # Dev container: Pint, Larastan and Ignition must be present for
+        # `composer format` / `composer stan` to work. Production images are
+        # built from .docker/Dockerfile.ci and stay --no-dev.
+        INSTALL_DEV_DEPENDENCIES: "true"
     container_name: laravel_app
     restart: unless-stopped
     working_dir: /var/www/html
