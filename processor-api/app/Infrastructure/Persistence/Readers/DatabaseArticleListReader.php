@@ -218,9 +218,10 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
             $builder->with('kanjis');
         }
 
-        if ($projection->includeWords) {
-            $builder->with('words');
-        }
+        // Words are deliberately not eager-loaded. ArticleResource exposes no `words`
+        // field on list items, so loading them costs a query per page and renders
+        // nothing. includeWords stays inert for lists until a product decision adds
+        // that field; AFM-01 raised the question and it is still open.
     }
 
     /**
