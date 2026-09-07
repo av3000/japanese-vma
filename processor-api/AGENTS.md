@@ -79,6 +79,10 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
     -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
+-   **Code style (Pint):**
+    -   Run `./format-changed.ps1` (or `./format-changed.sh`) from `processor-api/` on the host before finalizing any PHP change. CI fails on style drift in changed files.
+    -   Do not rely on `composer format`, `composer format:check`, or `vendor/bin/pint --dirty` inside the containers. Only `processor-api/` is bind-mounted while `.git` lives at the repository root, so `--dirty` matches nothing and reports a false `PASS 0 files`. This overrides the generic Pint guidance in the Laravel Boost block below.
+    -   Do not run `composer format:all` or `composer quality:ci` on a feature branch; the repository still carries legacy style drift and a full pass creates a large unrelated diff.
     -   If the dedicated test lane itself is unavailable, report that environment limitation clearly and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails
