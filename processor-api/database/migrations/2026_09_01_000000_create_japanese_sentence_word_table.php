@@ -14,8 +14,8 @@ return new class extends Migration
             $table->increments('id');
             $table->unsignedInteger('sentence_id');
             $table->unsignedInteger('word_id');
+            // The unique index already serves sentence_id lookups.
             $table->unique(['sentence_id', 'word_id']);
-            $table->index('sentence_id');
             $table->index('word_id');
         });
     }
