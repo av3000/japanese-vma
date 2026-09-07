@@ -14,26 +14,30 @@ interface CatalogueItemRepositoryInterface
     public function findItemIdsByCatalogueId(int $catalogueId): array;
 
     /**
-     * @param  int[]  $catalogueIds
+     * @param int[] $catalogueIds
+     *
      * @return array<int,int> map list_id => count
      */
     public function countItemsByCatalogueIds(array $catalogueIds): array;
 
     /**
-     * @param  int[]  $itemIds
+     * @param int[] $itemIds
+     *
      * @return array<int,int> map real_object_id => count
      */
     public function countSavesByItemIds(array $itemIds, int $listType): array;
 
     /**
-     * @param  int[]  $catalogueIds
+     * @param int[] $catalogueIds
+     *
      * @return int[]
      */
     public function findCatalogueIdsContainingItem(array $catalogueIds, int $itemId): array;
 
     /**
-     * @param  int[]  $catalogueIds
-     * @param  int[]  $itemIds
+     * @param int[] $catalogueIds
+     * @param int[] $itemIds
+     *
      * @return array<int, int[]> map real_object_id => list_id[]
      */
     public function findCatalogueIdsByItemIds(array $catalogueIds, array $itemIds): array;

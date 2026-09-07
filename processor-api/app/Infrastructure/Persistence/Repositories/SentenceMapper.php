@@ -15,7 +15,8 @@ class SentenceMapper
     public function __construct(
         private readonly KanjiMapper $kanjiMapper,
         private readonly WordMapper $wordMapper,
-    ) {}
+    ) {
+    }
 
     public function mapToDomain(PersistenceSentence $persistenceSentence): DomainSentence
     {

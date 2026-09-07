@@ -34,5 +34,4 @@ interface SentenceRepositoryInterface
     public function syncWords(int $sentenceId, array $wordIds): void;
 
     public function delete(int $sentenceId): void;
-
 }

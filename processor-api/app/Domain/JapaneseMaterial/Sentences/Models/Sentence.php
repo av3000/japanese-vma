@@ -22,7 +22,8 @@ final readonly class Sentence
         private string $content,
         private array $kanjis = [],
         private array $words = [],
-    ) {}
+    ) {
+    }
 
     public function getIdValue(): int
     {
