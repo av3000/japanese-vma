@@ -74,10 +74,19 @@ final readonly class SearchArticlesAction
             $result->articles,
         );
 
+        // Counted from the same scope the items came from. If these were built from a
+        // separately derived predicate they could drift, and a drifting count is how a
+        // private Article leaks: the row stays hidden but still shows up in "N2 (13)".
+        $facets = $projection->includeFacets
+            ? $this->articleListReader->facets($query, $scope)
+            : [];
+
         return new ArticleListPageDTO(
             items: $items,
             pagination: $result->pagination,
             projection: $projection,
+            facets: $facets,
+            query: $query->toCanonicalArray(),
         );
     }
 }

@@ -95,6 +95,7 @@ class ArticleController extends Controller
             includeHashtags: $canonical['include_hashtags'] ?? true,
             includeKanjis: $canonical['include_kanjis'] ?? true,
             includeWords: $canonical['include_words'] ?? true,
+            includeFacets: $canonical['include_facets'] ?? false,
         );
 
         return new ArticleListResource(

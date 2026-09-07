@@ -522,4 +522,86 @@ class IndexArticleTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors(['q']);
     }
+    // ------------------------------------------------------- AFM-05 facets
+
+    public function test_facets_are_absent_by_default_but_the_key_is_stable(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any', 'n5' => 1]);
+
+        $response = $this->json('GET', '/api/v1/articles');
+
+        $response->assertStatus(200);
+        $this->assertSame([], $response->json('facets'), 'facets must be an empty array, not missing');
+    }
+
+    public function test_facets_are_returned_when_requested(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any', 'n5' => 2]);
+
+        $response = $this->json('GET', '/api/v1/articles', ['include_facets' => true]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'facets' => [['key', 'label', 'type', 'values' => [['key', 'label', 'count', 'selected']]]],
+        ]);
+
+        $keys = array_column($response->json('facets'), 'key');
+        $this->assertSame(['jlpt_levels', 'hashtag_ids'], $keys);
+    }
+
+    public function test_facet_counts_do_not_leak_private_articles_to_guests(): void
+    {
+        $author = $this->createUser();
+        $this->createArticle($author, ['title_jp' => 'Public', 'n5' => 1]);
+        $this->createArticle($author, ['title_jp' => 'Private', 'n5' => 1, 'publicity' => PublicityStatus::PRIVATE]);
+
+        $response = $this->json('GET', '/api/v1/articles', ['include_facets' => true]);
+
+        $facets = collect($response->json('facets'))->firstWhere('key', 'jlpt_levels');
+        $n5 = collect($facets['values'])->firstWhere('key', 'n5');
+
+        $this->assertSame(1, $n5['count'], 'A private Article leaked through the facet count');
+    }
+
+    public function test_the_query_echo_contains_canonical_intent_only(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any', 'n5' => 1]);
+
+        // Sent using the legacy aliases; the echo must report canonical keys.
+        $response = $this->json('GET', '/api/v1/articles', [
+            'search' => 'Any',
+            'category' => 5,
+            'sort_by' => 'created_at',
+            'sort_dir' => 'asc',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertSame('Any', $response->json('query.q'));
+        $this->assertSame(['n5'], $response->json('query.filters.jlpt_levels'));
+        $this->assertSame('created_at', $response->json('query.sort'));
+    }
+
+    public function test_the_query_echo_never_contains_visibility(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any']);
+
+        $echo = $this->json('GET', '/api/v1/articles')->json('query');
+
+        $flattened = json_encode($echo);
+        $this->assertStringNotContainsString('publicity', $flattened);
+        $this->assertStringNotContainsString('scope', $flattened);
+        $this->assertStringNotContainsString('visibility', $flattened);
+    }
+
+    public function test_existing_items_and_pagination_fields_remain_compatible(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any']);
+
+        $this->json('GET', '/api/v1/articles')
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'items' => [['id', 'uuid', 'title_jp']],
+                'pagination' => ['page', 'per_page', 'total', 'last_page', 'has_more'],
+            ]);
+    }
 }

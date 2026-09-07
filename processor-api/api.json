@@ -271,6 +271,13 @@
                         }
                     },
                     {
+                        "name": "include_facets",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "search",
                         "in": "query",
                         "description": "Compatibility aliases, normalized in prepareForValidation().",
@@ -3828,6 +3835,31 @@
                 ],
                 "title": "ArticleDetailResource"
             },
+            "ArticleFacetResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "key",
+                    "label",
+                    "type",
+                    "values"
+                ],
+                "title": "ArticleFacetResource"
+            },
             "ArticleListResource": {
                 "type": "object",
                 "properties": {
@@ -3837,12 +3869,23 @@
                             "$ref": "#/components/schemas/ArticleResource"
                         }
                     },
+                    "facets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleFacetResource"
+                        }
+                    },
+                    "query": {
+                        "$ref": "#/components/schemas/ArticleQueryEchoResource"
+                    },
                     "pagination": {
                         "$ref": "#/components/schemas/PaginationResource"
                     }
                 },
                 "required": [
                     "items",
+                    "facets",
+                    "query",
                     "pagination"
                 ],
                 "title": "ArticleListResource"
@@ -3907,6 +3950,39 @@
                     "pagination"
                 ],
                 "title": "ArticleModerationListResource"
+            },
+            "ArticleQueryEchoResource": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "filters": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    ""
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "q",
+                    "filters",
+                    "sort"
+                ],
+                "title": "ArticleQueryEchoResource"
             },
             "ArticleResource": {
                 "type": "object",

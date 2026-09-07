@@ -42,6 +42,7 @@ class IndexArticleRequest extends FormRequest
         'include_hashtags',
         'include_kanjis',
         'include_words',
+        'include_facets',
     ];
 
     private const ARRAY_FILTERS = ['jlpt_levels', 'hashtag_ids', 'kanji_ids', 'word_ids'];
@@ -73,6 +74,7 @@ class IndexArticleRequest extends FormRequest
             'include_hashtags' => 'sometimes|boolean',
             'include_kanjis' => 'sometimes|boolean',
             'include_words' => 'sometimes|boolean',
+            'include_facets' => 'sometimes|boolean',
 
             // Compatibility aliases, normalized in prepareForValidation().
             'search' => 'sometimes|string|min:'.self::MIN_SEARCH_LENGTH.'|max:'.self::MAX_SEARCH_LENGTH,

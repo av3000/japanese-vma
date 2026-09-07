@@ -18,6 +18,11 @@ final readonly class ArticleListProjection
         public bool $includeHashtags = true,
         public bool $includeKanjis = true,
         public bool $includeWords = true,
+        /**
+         * Off by default so homepage, dashboard and related-Article callers do not
+         * pay aggregation cost for controls they never render.
+         */
+        public bool $includeFacets = false,
     ) {
     }
 
@@ -26,6 +31,6 @@ final readonly class ArticleListProjection
      */
     public static function itemsOnly(): self
     {
-        return new self(false, false, false, false);
+        return new self(false, false, false, false, false);
     }
 }

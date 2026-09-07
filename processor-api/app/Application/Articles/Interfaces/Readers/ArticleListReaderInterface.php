@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Interfaces\Readers;
 
+use App\Application\Articles\DTOs\ArticleFacetDTO;
 use App\Application\Articles\DTOs\ArticleListProjection;
 use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\DTOs\ArticleListReadResult;
@@ -17,7 +18,7 @@ use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
  * nothing here may mention Eloquent, a query builder, or a Laravel paginator.
  *
  * Implementations must apply the scope to every result set they produce - rows,
- * totals, and later facet counts - so eligibility cannot drift between them.
+ * totals and facet counts - so eligibility cannot drift between them.
  */
 interface ArticleListReaderInterface
 {
@@ -26,4 +27,12 @@ interface ArticleListReaderInterface
         ArticleVisibilityScope $scope,
         ArticleListProjection $projection,
     ): ArticleListReadResult;
+
+    /**
+     * Disjunctive counts per dimension: each facet excludes its own active selection
+     * while retaining the mandatory scope and every other filter.
+     *
+     * @return array<int, ArticleFacetDTO>
+     */
+    public function facets(ArticleListQuery $query, ArticleVisibilityScope $scope): array;
 }
