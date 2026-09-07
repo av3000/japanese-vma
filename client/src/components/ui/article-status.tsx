@@ -1,23 +1,22 @@
 import React from 'react';
+import { ARTICLE_STATUS } from '@/api/articles/moderation';
 import { Badge } from './badge';
 
-const ArticleStatusTypes = {
-	PENDING: 0,
-	REVIEWING: 1,
-	REJECTED: 2,
-	APPROVED: 3,
-};
+interface ArticleStatusProps {
+	status: number;
+}
 
-// TOOD: convert to .tsx and add type
-const ArticleStatus = ({ status }) => {
+const ArticleStatus: React.FC<ArticleStatusProps> = ({ status }) => {
 	switch (status) {
-		case ArticleStatusTypes.PENDING:
+		case ARTICLE_STATUS.PENDING:
 			return <Badge variant="pending">Approval: Pending</Badge>;
-		case ArticleStatusTypes.REVIEWING:
+		case ARTICLE_STATUS.PROCESSED:
+			return <Badge variant="secondary">Approval: Processed</Badge>;
+		case ARTICLE_STATUS.REVIEWING:
 			return <Badge variant="pending">Approval: Reviewing</Badge>;
-		case ArticleStatusTypes.REJECTED:
+		case ARTICLE_STATUS.REJECTED:
 			return <Badge variant="destructive">Approval: Rejected</Badge>;
-		case ArticleStatusTypes.APPROVED:
+		case ARTICLE_STATUS.APPROVED:
 			return <Badge variant="success">Approval: Approved</Badge>;
 		default:
 			return <Badge variant="secondary">Approval: Pending</Badge>;

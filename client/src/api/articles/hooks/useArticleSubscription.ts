@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { getArticleDetailQueryKey } from '@/api/articles/details';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
@@ -32,7 +33,7 @@ export const useArticleSubscription = (articleUuid: string) => {
 			}
 
 			// Optimistic Update for Detail View
-			queryClient.setQueryData(['article', articleUuid], (old: any) => {
+			queryClient.setQueryData(getArticleDetailQueryKey(articleUuid), (old: any) => {
 				if (!old) return old;
 
 				return {
@@ -95,7 +96,7 @@ export const useArticleSubscription = (articleUuid: string) => {
 				normalizedPayload.status === LastOperationStatus.completed ||
 				normalizedPayload.status === LastOperationStatus.failed
 			) {
-				queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
+				queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(articleUuid) });
 			}
 		},
 		[articleUuid, queryClient],
