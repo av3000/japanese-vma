@@ -5,6 +5,7 @@ namespace App\Application\Catalogues\Services;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
 use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
@@ -28,6 +29,16 @@ interface CatalogueServiceInterface
     public function getCatalogueDetail(EntityId $uuid, Viewer $viewer, ?AuthenticatedUser $authenticatedUser = null): Result;
 
     public function getIdByUuid(EntityId $uuid): ?int;
+
+    /**
+     * Resolve a legacy numeric catalogue id to its canonical UUID identity.
+     *
+     * Visibility-safe and side-effect free: no view is recorded and no detail
+     * payload is assembled.
+     *
+     * @return Result<CatalogueLegacyIdentityDTO>
+     */
+    public function resolveLegacyIdentity(int $legacyId, ?AuthenticatedUser $authenticatedUser = null): Result;
 
     public function addItemToCatalogue(EntityId $uuid, int $itemId, AuthenticatedUser $authenticatedUser): Result;
 
