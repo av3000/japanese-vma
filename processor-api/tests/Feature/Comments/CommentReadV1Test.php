@@ -10,8 +10,10 @@ use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\Post as PersistencePost;
+use App\Infrastructure\Persistence\Models\Sentence as PersistenceSentence;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\SeedsBaselineData;
@@ -155,6 +157,251 @@ class CommentReadV1Test extends TestCase
             ->assertJsonPath('pagination.per_page', 2)
             ->assertJsonPath('pagination.total', 3)
             ->assertJsonPath('pagination.has_more', false);
+    }
+
+    // ========================================
+    // Post and Sentence reads
+    // ========================================
+
+    public function test_guest_can_fetch_post_comments_with_safe_viewer_defaults(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $comment = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+
+        $response = $this->getJson("/api/v1/posts/{$post->uuid}/comments");
+
+        $response->assertOk()
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.uuid', $comment->uuid)
+            ->assertJsonPath('items.0.entity_uuid', $post->uuid)
+            ->assertJsonPath('items.0.entity_type', 'post')
+            ->assertJsonPath('items.0.author_id', $author->id)
+            ->assertJsonPath('items.0.likes_count', 0)
+            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+    }
+
+    public function test_authenticated_viewer_gets_personalized_like_state_for_post_comments(): void
+    {
+        $author = User::factory()->create();
+        $viewer = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $comment = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+
+        Like::create([
+            'user_id' => $viewer->id,
+            'template_id' => ObjectTemplateType::COMMENT->getLegacyId(),
+            'real_object_id' => $comment->id,
+            'value' => true,
+        ]);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.likes_count', 1)
+            ->assertJsonPath('items.0.is_liked_by_viewer', true);
+    }
+
+    public function test_guest_can_fetch_sentence_comments_with_safe_viewer_defaults(): void
+    {
+        $author = User::factory()->create();
+        $sentence = $this->createSentence($author);
+        $comment = $this->createComment(ObjectTemplateType::SENTENCE, $sentence->id, $sentence->uuid, $author);
+
+        $response = $this->getJson("/api/v1/sentences/{$sentence->uuid}/comments");
+
+        $response->assertOk()
+            ->assertJsonMissingPath('success')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.entity_uuid', $sentence->uuid)
+            ->assertJsonPath('items.0.entity_type', 'sentence')
+            ->assertJsonPath('items.0.likes_count', 0)
+            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+    }
+
+    public function test_authenticated_viewer_gets_personalized_like_state_for_sentence_comments(): void
+    {
+        $author = User::factory()->create();
+        $viewer = User::factory()->create();
+        $sentence = $this->createSentence($author);
+        $comment = $this->createComment(ObjectTemplateType::SENTENCE, $sentence->id, $sentence->uuid, $author);
+
+        Like::create([
+            'user_id' => $viewer->id,
+            'template_id' => ObjectTemplateType::COMMENT->getLegacyId(),
+            'real_object_id' => $comment->id,
+            'value' => true,
+        ]);
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        $this->getJson("/api/v1/sentences/{$sentence->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.likes_count', 1)
+            ->assertJsonPath('items.0.is_liked_by_viewer', true);
+    }
+
+    /**
+     * Post threads inherit the shared Comment read shape as it stands: replies
+     * come back in the same flat page as their parent, each carrying its
+     * `parent_comment_id`, and `replies` is always empty. Nesting is an open
+     * TODO in CommentRepository::findByCriteriaForEntity() and is explicitly
+     * out of scope here - this pins the behavior a Post thread actually has so
+     * the client is not written against a shape the API does not serve.
+     */
+    public function test_post_comment_replies_are_served_flat_alongside_their_parent(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $parent = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+        $this->createComment(
+            ObjectTemplateType::POST,
+            $post->id,
+            $post->uuid,
+            $author,
+            ['parent_comment_id' => $parent->id, 'content' => 'A post reply.'],
+        );
+
+        $response = $this->getJson("/api/v1/posts/{$post->uuid}/comments?include_replies=1")
+            ->assertOk()
+            ->assertJsonCount(2, 'items')
+            ->assertJsonPath('pagination.total', 2);
+
+        $reply = collect($response->json('items'))
+            ->firstWhere('content', 'A post reply.');
+
+        $this->assertNotNull($reply);
+        $this->assertSame($parent->id, $reply['parent_comment_id']);
+        $this->assertTrue($reply['is_reply']);
+        $this->assertSame([], $reply['replies']);
+    }
+
+    public function test_post_comment_reads_honour_pagination_parameters(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+
+        foreach (range(1, 3) as $index) {
+            $this->createComment(
+                ObjectTemplateType::POST,
+                $post->id,
+                $post->uuid,
+                $author,
+                ['content' => "Post comment number {$index}."],
+            );
+        }
+
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments?per_page=2&page=2")
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('pagination.page', 2)
+            ->assertJsonPath('pagination.per_page', 2)
+            ->assertJsonPath('pagination.total', 3)
+            ->assertJsonPath('pagination.has_more', false);
+    }
+
+    public function test_locked_post_still_serves_its_existing_comments(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->locked()->create(['user_id' => $author->id]);
+        $comment = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.id', $comment->id);
+    }
+
+    /**
+     * A parent that is not there is a plain 404 with the shared body. Neither
+     * Post nor Sentence carries a visibility flag today, so "missing" is the
+     * only inaccessible case, and the response says nothing beyond the noun.
+     */
+    public function test_unknown_post_uuid_returns_not_found_for_post_comments(): void
+    {
+        $this->getJson('/api/v1/posts/'.Str::uuid().'/comments')
+            ->assertNotFound()
+            ->assertJsonPath('title', 'Not Found')
+            ->assertJsonPath('detail', 'Post not found')
+            ->assertJsonPath('status', 404);
+    }
+
+    public function test_unknown_sentence_uuid_returns_not_found_for_sentence_comments(): void
+    {
+        $this->getJson('/api/v1/sentences/'.Str::uuid().'/comments')
+            ->assertNotFound()
+            ->assertJsonPath('title', 'Not Found')
+            ->assertJsonPath('detail', 'Sentence not found')
+            ->assertJsonPath('status', 404);
+    }
+
+    /**
+     * Without the route `whereUuid` constraint the segment would reach
+     * EntityId::from(), which throws InvalidArgumentException that
+     * app/Exceptions/Handler.php does not map - a 500 instead of a 404.
+     */
+    public function test_malformed_parent_segment_is_not_served_as_a_comment_thread(): void
+    {
+        $this->getJson('/api/v1/posts/not-a-uuid/comments')->assertNotFound();
+        $this->getJson('/api/v1/sentences/not-a-uuid/comments')->assertNotFound();
+    }
+
+    /**
+     * A legacy numeric id resolves for `GET /v1/posts/{identifier}`, but comment
+     * threads are addressed by UUID only. Pinned so a later widening of the
+     * route constraint is a deliberate change rather than a side effect.
+     */
+    public function test_post_comment_reads_do_not_accept_a_legacy_numeric_id(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+
+        $this->getJson("/api/v1/posts/{$post->id}/comments")->assertNotFound();
+    }
+
+    /**
+     * Enrichment is bounded: likes count and viewer like state are resolved for
+     * the whole page in the same query as the comments, so a five-comment page
+     * costs exactly what a one-comment page costs.
+     */
+    public function test_post_comment_enrichment_does_not_grow_with_page_size(): void
+    {
+        $author = User::factory()->create();
+        $viewer = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+
+        foreach (range(1, 5) as $index) {
+            $comment = $this->createComment(
+                ObjectTemplateType::POST,
+                $post->id,
+                $post->uuid,
+                $author,
+                ['content' => "Counted comment {$index}."],
+            );
+
+            Like::create([
+                'user_id' => $viewer->id,
+                'template_id' => ObjectTemplateType::COMMENT->getLegacyId(),
+                'real_object_id' => $comment->id,
+                'value' => true,
+            ]);
+        }
+
+        Passport::actingAs($viewer, ['*'], 'api');
+
+        // The first authenticated request of a test also loads the viewer's
+        // Spatie roles, once. Warm that up so the comparison sees only the
+        // per-request cost of the read itself.
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments?per_page=1")->assertOk();
+
+        $single = $this->countQueriesFor("/api/v1/posts/{$post->uuid}/comments?per_page=1");
+        $page = $this->countQueriesFor("/api/v1/posts/{$post->uuid}/comments?per_page=5");
+
+        $this->assertSame($single, $page, 'Comment read enrichment is not batched.');
     }
 
     // ========================================
@@ -421,6 +668,31 @@ class CommentReadV1Test extends TestCase
             ->assertJsonPath('title', 'Parent comment belongs to another entity');
 
         $this->assertDatabaseCount('comments', 1);
+    }
+
+    private function createSentence(User $author): PersistenceSentence
+    {
+        return PersistenceSentence::create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $author->id,
+            'tatoeba_entry' => null,
+            'content' => 'Sentence content.',
+        ]);
+    }
+
+    private function countQueriesFor(string $url): int
+    {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        try {
+            $this->getJson($url)->assertOk();
+
+            return count(DB::getRawQueryLog());
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
     }
 
     private function createComment(
