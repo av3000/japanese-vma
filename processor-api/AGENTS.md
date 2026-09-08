@@ -51,6 +51,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Identifiers:**
     -   Follow existing v1 UUID/entity identifier conventions in the touched module.
     -   Comment create currently trusts the validated `entity_type` / `entity_id` / `entity_uuid` tuple at write time; do not add per-type resolver indirection back unless the contract itself changes.
+    -   The generic like toggle is the exception that proves that rule: its contract does require the target to be proven, so `LikeTargetRepositoryInterface` resolves existence and visibility per target type before any write. That indirection is deliberate - a like must not create a row against a missing or private target, and the 404 must not distinguish the two.
 
 ## 5) Response & Error Handling
 
