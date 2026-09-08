@@ -246,7 +246,7 @@ class CatalogueService implements CatalogueServiceInterface
         $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
             $catalogueId,
             ObjectTemplateType::LIST,
-            $authenticatedUser !== null,
+            $authenticatedUser?->id->value(),
         );
 
         return Result::success(

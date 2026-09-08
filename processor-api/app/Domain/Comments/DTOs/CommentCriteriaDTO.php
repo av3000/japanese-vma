@@ -9,7 +9,7 @@ use App\Domain\Shared\ValueObjects\SearchTerm;
 readonly class CommentCriteriaDTO
 {
     public function __construct(
-        public ?string $entityId,
+        public int $entityId,
         public ObjectTemplateType $entityType,
         public ?SearchTerm $search = null,
         public ?Pagination $pagination = null,

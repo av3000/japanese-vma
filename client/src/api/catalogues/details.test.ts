@@ -93,7 +93,7 @@ describe('catalogue details hooks', () => {
 			mutationOptions = options;
 			return { mutate: vi.fn(), isPending: false } as never;
 		});
-		vi.mocked(toggleInstanceLike).mockResolvedValue({ success: true, like: true });
+		vi.mocked(toggleInstanceLike).mockResolvedValue({ is_liked: true, likes_count: 1 });
 
 		useLikeCatalogueMutation('catalogue-uuid');
 
