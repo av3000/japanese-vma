@@ -1,13 +1,13 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Laravel",
+        "title": "JapaneseVMA",
         "version": "0.0.1",
         "description": "API for Japanese learning application with articles, kanjis, and lists"
     },
     "servers": [
         {
-            "url": "http://localhost/api/v1"
+            "url": "http://localhost:8080/api/v1"
         }
     ],
     "paths": {
@@ -4543,9 +4543,7 @@
                     "email",
                     "roles",
                     "is_admin",
-                    "created_at",
-                    "access_token",
-                    "token_type"
+                    "created_at"
                 ],
                 "title": "AuthUserResource"
             },
