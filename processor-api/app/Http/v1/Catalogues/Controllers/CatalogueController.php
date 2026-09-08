@@ -8,6 +8,7 @@ use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
@@ -21,6 +22,7 @@ use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
+use App\Http\v1\Catalogues\Resources\CatalogueLegacyIdentityResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListForItemResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
@@ -174,6 +176,36 @@ class CatalogueController extends Controller
         $detail = $detailResult->getData();
 
         return new CatalogueDetailResource($detail);
+    }
+
+    /**
+     * Resolve a legacy numeric catalogue id to its canonical UUID identity.
+     *
+     * Deliberately lean: no view is recorded and no detail payload is
+     * assembled. A catalogue the viewer may not see is reported as missing
+     * rather than forbidden, so the response cannot confirm that a private
+     * catalogue exists.
+     *
+     * The route constraint guarantees `$id` is a positive in-range integer.
+     *
+     * @response CatalogueLegacyIdentityResource
+     */
+    #[Response(type: 'CatalogueLegacyIdentityResource')]
+    public function resolveLegacyId(int $id): JsonResponse|JsonResource
+    {
+        $result = $this->catalogueService->resolveLegacyIdentity(
+            $id,
+            $this->currentUserProvider->currentAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var CatalogueLegacyIdentityDTO $identity */
+        $identity = $result->getData();
+
+        return new CatalogueLegacyIdentityResource($identity);
     }
 
     /**

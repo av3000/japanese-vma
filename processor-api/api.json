@@ -729,6 +729,38 @@
                 }
             }
         },
+        "/catalogues/legacy/{id}": {
+            "get": {
+                "operationId": "catalogue.resolveLegacyId",
+                "description": "Deliberately lean: no view is recorded and no detail payload is\nassembled. A catalogue the viewer may not see is reported as missing\nrather than forbidden, so the response cannot confirm that a private\ncatalogue exists.\n\nThe route constraint guarantees `$id` is a positive in-range integer.",
+                "summary": "Resolve a legacy numeric catalogue id to its canonical UUID identity",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CatalogueLegacyIdentityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CatalogueLegacyIdentityResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/catalogues": {
             "get": {
                 "operationId": "catalogue.index",
@@ -4236,6 +4268,22 @@
                     "updated_at"
                 ],
                 "title": "CatalogueDetailResource"
+            },
+            "CatalogueLegacyIdentityResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid"
+                ],
+                "title": "CatalogueLegacyIdentityResource"
             },
             "CatalogueListResource": {
                 "type": "object",

@@ -38,6 +38,25 @@ Route::prefix('v1')->group(function () {
     });
 
     // ============================================
+    // CATALOGUE LEGACY ID RESOLUTION
+    // ============================================
+    // Registered before the public routes on purpose. `catalogues/{uuid}` (at
+    // the bottom of this file) carries a `whereUuid` constraint for the same
+    // reason: without it, `catalogues/legacy` matches CatalogueController@show
+    // with a uuid of "legacy", EntityId::from() throws InvalidArgumentException,
+    // and app/Exceptions/Handler.php does not map it - a 500, not a 404.
+    // Guarded by tests/Feature/Catalogues/CatalogueLegacyIdentityV1Test.php
+    // ::test_legacy_segment_is_not_consumed_as_a_catalogue_uuid
+    //
+    // The constraint is the only validation this endpoint needs: 1 to 18 digits
+    // with no leading zero. That excludes 0, `007`, and anything long enough to
+    // clamp to PHP_INT_MAX when cast, and it keeps the whole error vocabulary at
+    // a single 404 - a validation error here would tell a caller more about an
+    // id than the 404 for a private catalogue does.
+    Route::get('catalogues/legacy/{id}', [CatalogueController::class, 'resolveLegacyId'])
+        ->where('id', '[1-9][0-9]{0,17}');
+
+    // ============================================
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
 
@@ -48,7 +67,8 @@ Route::prefix('v1')->group(function () {
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
-    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments']);
+    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments'])
+        ->whereUuid('uuid');
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -103,12 +123,18 @@ Route::prefix('v1')->group(function () {
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
         Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
-        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
-        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
-        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
-        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
-        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf']);
-        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf']);
+        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem'])
+            ->whereUuid('uuid');
+        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf'])
+            ->whereUuid('uuid');
 
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);
@@ -135,5 +161,8 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
+    // The constraint keeps non-UUID segments - `legacy` above all - from being
+    // swallowed here and turned into an unmapped InvalidArgumentException.
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show'])
+        ->whereUuid('uuid');
 });

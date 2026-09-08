@@ -18,6 +18,7 @@ use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListItemDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
@@ -193,6 +194,29 @@ class CatalogueService implements CatalogueServiceInterface
     public function getIdByUuid(EntityId $uuid): ?int
     {
         return $this->catalogueRepository->getIdByUuid($uuid);
+    }
+
+    /**
+     * @return Result<CatalogueLegacyIdentityDTO>
+     */
+    public function resolveLegacyIdentity(int $legacyId, ?AuthenticatedUser $authenticatedUser = null): Result
+    {
+        $catalogue = $this->catalogueRepository->findById($legacyId);
+
+        // Both branches answer with the same error on purpose: see
+        // CatalogueErrors::legacyIdentityNotFound().
+        if (! $catalogue || ! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
+            return Result::failure(CatalogueErrors::legacyIdentityNotFound($legacyId));
+        }
+
+        // Deliberately no trackView() and no item/stat/hashtag/engagement
+        // assembly: this endpoint exists to be cheaper than getCatalogueDetail().
+        return Result::success(
+            new CatalogueLegacyIdentityDTO(
+                id: $catalogue->getIdValue(),
+                uuid: $catalogue->getUid(),
+            )
+        );
     }
 
     /**

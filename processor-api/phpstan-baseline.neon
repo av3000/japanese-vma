@@ -1755,7 +1755,7 @@ parameters:
 		-
 			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Catalogue model\.$#'
 			identifier: larastan.relationExistence
-			count: 4
+			count: 5
 			path: app/Infrastructure/Persistence/Repositories/CatalogueRepository.php
 
 		-
