@@ -2198,6 +2198,53 @@
                         "$ref": "#/components/responses/ValidationException"
                     }
                 }
+            },
+            "post": {
+                "operationId": "post.store",
+                "tags": [
+                    "Post"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "201": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/posts/{identifier}": {
@@ -2227,6 +2274,149 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/posts/{uuid}": {
+            "put": {
+                "operationId": "post.update",
+                "summary": "Owner-only. Admins moderate a Post by locking or deleting it, not by\nediting another author's words",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "post.destroy",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "204": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{uuid}/lock": {
+            "put": {
+                "operationId": "post.lock",
+                "summary": "Admin-only and idempotent: the body carries the desired state, so a\nretry cannot flip a Post back the way the legacy toggle could",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LockPostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostLockResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostLockResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -5330,6 +5520,19 @@
                 ],
                 "title": "LikeToggleResource"
             },
+            "LockPostRequest": {
+                "type": "object",
+                "description": "Explicit lock state rather than the legacy toggle.\n\nLegacy exposed the same toggle twice (`post/{id}/toggleLock` unguarded, and an\nadmin-guarded `post/{id}/togglelock`); a retried toggle silently flips the Post\nback. Sending the desired state makes the endpoint idempotent and lets the\nclient render the control from data instead of inferring it.",
+                "properties": {
+                    "locked": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "locked"
+                ],
+                "title": "LockPostRequest"
+            },
             "LoginRequest": {
                 "type": "object",
                 "properties": {
@@ -5533,6 +5736,22 @@
                     "pagination"
                 ],
                 "title": "PostListResource"
+            },
+            "PostLockResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "locked"
+                ],
+                "title": "PostLockResource"
             },
             "PostSort": {
                 "type": "string",
@@ -5834,6 +6053,51 @@
                 ],
                 "title": "StoreCommentRequest"
             },
+            "StorePostRequest": {
+                "type": "object",
+                "description": "Title and content bounds match the legacy PostStoreRequest so existing drafts\nstay acceptable. `topic` replaces the legacy unvalidated `type`, which let any\nvalue reach the column and produced Posts the canonical mapping cannot label.",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 15000
+                    },
+                    "topic": {
+                        "type": "integer",
+                        "enum": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7"
+                        ]
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "maxItems": 10
+                    }
+                },
+                "required": [
+                    "title",
+                    "content",
+                    "topic"
+                ],
+                "title": "StorePostRequest"
+            },
             "StoreSentenceRequest": {
                 "type": "object",
                 "properties": {
@@ -5951,6 +6215,44 @@
                     "content"
                 ],
                 "title": "UpdateCommentRequest"
+            },
+            "UpdatePostRequest": {
+                "type": "object",
+                "description": "Partial update, matching the legacy `isset()` behaviour: any subset of the\nfields may be sent and the rest are left alone. An empty body is rejected\nrather than silently touching nothing.",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 15000
+                    },
+                    "topic": {
+                        "type": "integer",
+                        "enum": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7"
+                        ]
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "`sometimes` rather than `nullable`: sending `tags: []` clears every\ntag, so the empty array has to survive validation as a real value.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "maxItems": 10
+                    }
+                },
+                "title": "UpdatePostRequest"
             },
             "UpdateSentenceRequest": {
                 "type": "object",
