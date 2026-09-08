@@ -4,15 +4,16 @@ namespace App\Http\v1\Engagement\Resources;
 
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Community\Posts\Models\PostStats;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ArticleStats|CatalogueStats $resource
+ * @property ArticleStats|CatalogueStats|PostStats $resource
  */
 class EngagementStatsResource extends JsonResource
 {
-    public function __construct(ArticleStats|CatalogueStats $stats)
+    public function __construct(ArticleStats|CatalogueStats|PostStats $stats)
     {
         parent::__construct($stats);
     }
@@ -27,7 +28,7 @@ class EngagementStatsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var ArticleStats|CatalogueStats $stats */
+        /** @var ArticleStats|CatalogueStats|PostStats $stats */
         $stats = $this->resource;
 
         return [
