@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import classNames from 'classnames';
-import { setArticleStatus } from '@/api/articles/articles';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { useArticleStatusMutation } from '@/api/articles/moderation';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
+import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
@@ -33,10 +34,9 @@ interface ArticleContentProps {
 const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
-	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
 
-	const [tempStatus, setTempStatus] = useState<number>(article.status);
+	const [tempStatus, setTempStatus] = useState<ArticleStatusValue>(article.status as ArticleStatusValue);
 	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
@@ -54,16 +54,10 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	// TODO: Should only call queries propagating up to smart component
 	// ex: statusMutation could be called from a dashboard.
-	// Lift this query up and create query function to be reused
-	const statusMutation = useMutation({
-		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
-		onSuccess: (res) => {
-			queryClient.setQueryData(['article', article.uuid], (old: any) => ({
-				...old,
-				status: res.data.newStatus,
-			}));
-			reviewModal.close();
-		},
+	const statusMutation = useArticleStatusMutation(article.uuid, {
+		onSuccess: () => reviewModal.close(),
+		// Keep the select in step with the status the server still holds.
+		onError: () => setTempStatus(article.status as ArticleStatusValue),
 	});
 
 	// TODO: Lift this query up and create query function to be reused

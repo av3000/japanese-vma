@@ -1,8 +1,7 @@
 import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
-import type { HashtagResource } from '@/api/generated/model';
+import { usePendingArticles } from '@/api/articles/moderation';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
@@ -10,8 +9,6 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
-import { apiCall } from '@/services/api';
-import { HttpMethod } from '@/shared/types';
 import type { User } from '@/types';
 import SearchBarDashboard from './SearchBarDashboard';
 import type { SearchFilters } from './SearchBarDashboard';
@@ -21,26 +18,11 @@ type DashboardArticleFilters = {
 	search?: string;
 };
 
-type DashboardArticleHashtag = Pick<HashtagResource, 'id' | 'content'>;
-
 interface DashboardArticlesPanelProps {
 	dashboardView: DashboardType;
 	isAuthenticated: boolean;
 	currentUser: User | null;
 	onToggleDashboardView: () => void;
-}
-
-interface PendingArticle {
-	id: number;
-	uuid?: string;
-	title_jp: string;
-	hashtags?: DashboardArticleHashtag[];
-	created_at: string;
-	statusTitle?: string;
-}
-
-interface PendingArticlesResponse {
-	articlesPending: PendingArticle[];
 }
 
 const toDisplayCount = (value: number | string | undefined) => {
@@ -68,11 +50,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	const shouldFetchPendingArticles =
 		dashboardView === DASHBOARD_TYPES.ADMIN && isAuthenticated && !!currentUser?.isAdmin;
 
-	const pendingArticlesQuery = useQuery({
-		queryKey: ['dashboard', 'pending-articles', currentUser?.uuid ?? null],
-		queryFn: () => apiCall<PendingArticlesResponse>({ method: HttpMethod.GET, path: '/articles/pendinglist' }),
-		enabled: shouldFetchPendingArticles,
-	});
+	const pendingArticlesQuery = usePendingArticles({ enabled: shouldFetchPendingArticles });
 
 	const trackedArticleUuids = useMemo(() => {
 		return articles
@@ -96,7 +74,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 		pendingArticlesQuery.error instanceof Error
 			? pendingArticlesQuery.error.message
 			: 'Failed to load pending articles.';
-	const pendingArticles = shouldFetchPendingArticles ? (pendingArticlesQuery.data?.articlesPending ?? []) : [];
+	const pendingArticles = shouldFetchPendingArticles ? pendingArticlesQuery.pendingArticles : [];
 
 	return (
 		<>
@@ -119,47 +97,59 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 							) : shouldFetchPendingArticles && pendingArticlesQuery.isError ? (
 								<div className="alert alert-danger">{pendingArticlesErrorMessage}</div>
 							) : pendingArticles.length ? (
-								pendingArticles.map((article) => (
-									<div className="row pb-3 mb-0 mt-3 border-bottom border-gray" key={article.id}>
-										<div className="col-lg-6">
-											<h4>
-												<Link
-													to={
-														article.uuid
-															? `/articles/${article.uuid}`
-															: `/article/${article.id}`
-													}
-												>
-													{article.title_jp}
-												</Link>
-											</h4>
-											tags:{' '}
-											<section className="mt-2 d-flex align-items-center flex-wrap">
-												{(article.hashtags ?? []).map((tag) => (
-													<Chip
-														className="mr-1"
-														readonly
-														key={tag.id + tag.content}
-														title={tag.content}
-														name={tag.content}
-													>
-														{tag.content}
-													</Chip>
-												))}
-											</section>
+								<>
+									{pendingArticles.map((article) => (
+										<div
+											className="row pb-3 mb-0 mt-3 border-bottom border-gray"
+											key={article.uuid}
+										>
+											<div className="col-lg-6">
+												<h4>
+													<Link to={`/articles/${article.uuid}`}>{article.title_jp}</Link>
+												</h4>
+												tags:{' '}
+												<section className="mt-2 d-flex align-items-center flex-wrap">
+													{article.hashtags.map((tag) => (
+														<Chip
+															className="mr-1"
+															readonly
+															key={tag.id + tag.content}
+															title={tag.content}
+															name={tag.content}
+														>
+															{tag.content}
+														</Chip>
+													))}
+												</section>
+											</div>
+											<div className="col-lg-4 col-12-sm pt-3">
+												<small className="text-muted">
+													{article.created_at}
+													<br />
+													duration from now(?) {article.created_at}
+												</small>
+											</div>
+											<div className="col-lg-2">
+												<strong>{article.status_label}</strong>
+											</div>
 										</div>
-										<div className="col-lg-4 col-12-sm pt-3">
-											<small className="text-muted">
-												{article.created_at}
-												<br />
-												duration from now(?) {article.created_at}
-											</small>
-										</div>
-										<div className="col-lg-2">
-											<strong>{article.statusTitle}</strong>
-										</div>
+									))}
+									<div className="row justify-content-center mt-4 mb-2">
+										{pendingArticlesQuery.isFetchingNextPage ? (
+											<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
+										) : pendingArticlesQuery.hasNextPage ? (
+											<Button
+												variant="secondary-outline"
+												className="w-50"
+												onClick={() => pendingArticlesQuery.fetchNextPage()}
+											>
+												Load More
+											</Button>
+										) : (
+											<span className="text-muted">No more results</span>
+										)}
 									</div>
-								))
+								</>
 							) : (
 								<div className="alert text-center alert-info">There are no articles to review.</div>
 							)}
