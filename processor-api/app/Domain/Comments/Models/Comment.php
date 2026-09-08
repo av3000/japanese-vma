@@ -2,6 +2,7 @@
 
 namespace App\Domain\Comments\Models;
 
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 
@@ -9,9 +10,11 @@ class Comment
 {
     public function __construct(
         private ?int $id,
-        private EntityId $entityId,
-        private string $entityType,
-        private string $authorName,
+        private EntityId $uuid,
+        private int $entityId,
+        private ?EntityId $entityUuid,
+        private ObjectTemplateType $entityType,
+        private ?string $authorName,
         private UserId $authorId,
         private string $content,
         private ?int $parentCommentId,
@@ -27,12 +30,36 @@ class Comment
         return $this->id;
     }
 
-    public function getEntityUuid(): EntityId
+    public function getUuid(): EntityId
+    {
+        return $this->uuid;
+    }
+
+    /**
+     * Legacy numeric identifier of the commented entity.
+     *
+     * TODO: drop once every commentable entity is addressed by UUID only.
+     */
+    public function getEntityId(): int
     {
         return $this->entityId;
     }
 
-    public function getEntityType(): string
+    /**
+     * Null for legacy comments written before the entity UUID backfill, and
+     * for rows the legacy parent-specific routes still create without one.
+     */
+    public function getEntityUuid(): ?EntityId
+    {
+        return $this->entityUuid;
+    }
+
+    public function getEntityUuidValue(): ?string
+    {
+        return $this->entityUuid?->value();
+    }
+
+    public function getEntityType(): ObjectTemplateType
     {
         return $this->entityType;
     }
@@ -42,7 +69,7 @@ class Comment
         return $this->authorId;
     }
 
-    public function getAuthorName(): string
+    public function getAuthorName(): ?string
     {
         return $this->authorName;
     }
@@ -72,7 +99,7 @@ class Comment
         return $this->likesCount;
     }
 
-    public function isLikedByViewer(): int
+    public function isLikedByViewer(): bool
     {
         return $this->isLikedByViewer;
     }
@@ -80,5 +107,10 @@ class Comment
     public function isReply(): bool
     {
         return $this->parentCommentId !== null;
+    }
+
+    public function isAuthoredBy(UserId $userId): bool
+    {
+        return $this->authorId->equals($userId);
     }
 }

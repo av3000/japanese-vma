@@ -1399,11 +1399,18 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/NotFoundHttpException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "description": "Article not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1481,11 +1488,18 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/NotFoundHttpException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "description": "Catalogue not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1529,6 +1543,143 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/CommentResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Commented entity not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/{uuid}": {
+            "put": {
+                "operationId": "comment.update",
+                "tags": [
+                    "Comment"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCommentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CommentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommentResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Only the comment author may edit it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "comment.destroy",
+                "tags": [
+                    "Comment"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "204": {
+                        "description": "Comment and every reply beneath it were deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Only the comment author or an admin may delete it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -2053,7 +2204,7 @@
         "/posts/{identifier}": {
             "get": {
                 "operationId": "post.show",
-                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\r\nPost during migration; the response always carries the UUID",
+                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\nPost during migration; the response always carries the UUID",
                 "tags": [
                     "Post"
                 ],
@@ -4488,14 +4639,35 @@
                     "id": {
                         "type": "integer"
                     },
-                    "entity_uuid": {
+                    "uuid": {
                         "type": "string"
+                    },
+                    "entity_uuid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "entity_type": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "article",
+                            "artist",
+                            "lyric",
+                            "radical",
+                            "kanji",
+                            "word",
+                            "sentence",
+                            "list",
+                            "post",
+                            "comment"
+                        ]
                     },
                     "author_name": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "author_id": {
                         "type": "integer"
@@ -4533,6 +4705,7 @@
                 },
                 "required": [
                     "id",
+                    "uuid",
                     "entity_uuid",
                     "entity_type",
                     "author_name",
@@ -5737,6 +5910,20 @@
                 },
                 "title": "UpdateCatalogueRequest"
             },
+            "UpdateCommentRequest": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "content"
+                ],
+                "title": "UpdateCommentRequest"
+            },
             "UpdateSentenceRequest": {
                 "type": "object",
                 "properties": {
@@ -5816,25 +6003,6 @@
             },
             "AuthorizationException": {
                 "description": "Authorization error",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "NotFoundHttpException": {
-                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {
