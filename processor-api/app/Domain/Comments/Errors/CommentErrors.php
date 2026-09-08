@@ -77,6 +77,24 @@ class CommentErrors
         );
     }
 
+    /**
+     * The parent entity no longer accepts new comments. A locked Post is a
+     * state conflict, not an authorization failure: nothing about the caller
+     * would make the request succeed, so 409 rather than 403. It is also not a
+     * 422 - the client treats that status as field-level validation, and there
+     * is no field to correct here.
+     */
+    public static function parentLocked(string $entityNoun): ResultError
+    {
+        return new ResultError(
+            code: 'Comments.ParentLocked',
+            status: HttpStatus::CONFLICT,
+            description: 'Parent is locked',
+            detail: "This {$entityNoun} is locked and no longer accepts new comments",
+            errorMessage: "This {$entityNoun} is locked and no longer accepts new comments",
+        );
+    }
+
     public static function parentCommentNotFound(int $parentCommentId): ResultError
     {
         return new ResultError(

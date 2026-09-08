@@ -62,7 +62,10 @@ class CommentService implements CommentServiceInterface
 
     public function createComment(CommentCreateDTO $dto, AuthenticatedUser $author): Result
     {
-        $entityResult = $this->commentEntityResolver->resolveIdentity(
+        // The create-specific resolver also enforces the parent's write gate: a
+        // locked Post stops accepting new comments while its existing thread
+        // stays readable, editable and deletable through the paths below.
+        $entityResult = $this->commentEntityResolver->resolveIdentityForCreate(
             $dto->entity_type,
             $dto->entity_id,
             $dto->entity_uuid,
