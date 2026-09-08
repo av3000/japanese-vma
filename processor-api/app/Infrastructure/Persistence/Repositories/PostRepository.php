@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
+use App\Domain\Community\Posts\DTOs\PostCreateDTO;
 use App\Domain\Community\Posts\DTOs\PostPageDTO;
+use App\Domain\Community\Posts\DTOs\PostUpdateDTO;
 use App\Domain\Community\Posts\Enums\PostSort;
 use App\Domain\Community\Posts\Models\Post as DomainPost;
 use App\Domain\Community\Posts\Queries\PostQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Post as PersistencePost;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class PostRepository implements PostRepositoryInterface
 {
@@ -71,6 +75,54 @@ class PostRepository implements PostRepositoryInterface
             ->first();
 
         return $post ? $this->postMapper->mapToDomain($post) : null;
+    }
+
+    public function create(PostCreateDTO $dto, UserId $authorId, EntityId $uuid): DomainPost
+    {
+        $post = PersistencePost::create([
+            'uuid' => $uuid->value(),
+            'entity_type_uuid' => ObjectTemplateType::POST->value,
+            'user_id' => $authorId->value(),
+            // `posts.type` is a string column holding the numeric topic code.
+            'type' => (string) $dto->topic->value,
+            'title' => $dto->title,
+            'content' => $dto->content,
+            'locked' => false,
+        ]);
+
+        return $this->postMapper->mapToDomain($post->load('author'));
+    }
+
+    public function update(int $postId, PostUpdateDTO $dto): void
+    {
+        $attributes = $dto->toAttributes();
+
+        if ($attributes === []) {
+            return;
+        }
+
+        $this->postOrFail($postId)->update($attributes);
+    }
+
+    public function setLocked(int $postId, bool $locked): void
+    {
+        $this->postOrFail($postId)->update(['locked' => $locked]);
+    }
+
+    public function delete(int $postId): void
+    {
+        $this->postOrFail($postId)->delete();
+    }
+
+    /**
+     * Writes go through the model rather than a mass `update()` on the query so
+     * `updated_at` moves - the list `new` sort and the detail response both read
+     * timestamps the caller expects to change.
+     */
+    private function postOrFail(int $postId): PersistencePost
+    {
+        return PersistencePost::query()->whereKey($postId)->first()
+            ?? throw new RuntimeException("Post {$postId} no longer exists.");
     }
 
     /**
