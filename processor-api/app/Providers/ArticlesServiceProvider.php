@@ -16,6 +16,8 @@ use App\Application\Catalogues\Services\CatalogueService;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Community\Posts\Services\PostReadService;
 use App\Application\Community\Posts\Services\PostReadServiceInterface;
+use App\Application\Community\Posts\Services\PostWriteService;
+use App\Application\Community\Posts\Services\PostWriteServiceInterface;
 use App\Application\Engagement\Services\EngagementService;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagService;
@@ -56,6 +58,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(CataloguePdfExportServiceInterface::class, CataloguePdfExportService::class);
         $this->app->bind(CatalogueServiceInterface::class, CatalogueService::class);
         $this->app->bind(PostReadServiceInterface::class, PostReadService::class);
+        $this->app->bind(PostWriteServiceInterface::class, PostWriteService::class);
         $this->app->bind(EngagementServiceInterface::class, EngagementService::class);
         $this->app->bind(HashtagServiceInterface::class, HashtagService::class);
         $this->app->bind(UserServiceInterface::class, UserService::class);

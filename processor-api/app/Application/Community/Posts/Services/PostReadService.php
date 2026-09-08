@@ -91,16 +91,21 @@ class PostReadService implements PostReadServiceInterface
         // matching the legacy detail response.
         $this->recordView($post->getIdValue(), $viewer);
 
+        return Result::success($this->describe($post));
+    }
+
+    public function describe(Post $post): PostDetailResultDTO
+    {
         $statsById = $this->loadEntityStats->batchLoadStatsById(
             (string) ObjectTemplateType::POST->getLegacyId(),
             [$post->getIdValue()],
         );
 
-        return Result::success(new PostDetailResultDTO(
+        return new PostDetailResultDTO(
             post: $post,
             stats: $this->statsFor($statsById, $post->getIdValue()),
             hashtags: $this->hashtagService->getHashtags($post->getIdValue(), ObjectTemplateType::POST),
-        ));
+        );
     }
 
     /**

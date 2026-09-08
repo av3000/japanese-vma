@@ -142,6 +142,17 @@ Route::prefix('v1')->group(function () {
         Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf'])
             ->whereUuid('uuid');
 
+        // Community Posts - Authenticated Actions
+        // `whereUuid` for the same reason as the catalogues routes: without it a
+        // malformed segment reaches EntityId::from(), which throws
+        // InvalidArgumentException, and app/Exceptions/Handler.php does not map
+        // it - a 500 where the caller should see a 404.
+        Route::post('posts', [PostController::class, 'store']);
+        Route::put('posts/{uuid}', [PostController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('posts/{uuid}', [PostController::class, 'destroy'])
+            ->whereUuid('uuid');
+
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);
 
@@ -164,6 +175,13 @@ Route::prefix('v1')->group(function () {
 
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);
+
+            // Community Post Moderation
+            // Legacy exposed this twice - an unguarded `post/{id}/toggleLock`
+            // and an admin `post/{id}/togglelock`. v1 keeps one route, and it
+            // takes the desired state rather than toggling.
+            Route::put('posts/{uuid}/lock', [PostController::class, 'lock'])
+                ->whereUuid('uuid');
         });
     });
 
