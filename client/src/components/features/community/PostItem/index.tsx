@@ -8,9 +8,9 @@ interface Hashtag {
 }
 
 interface PostItemProps {
-	id: string | number;
+	/** Canonical Post UUID used for detail navigation. */
+	detailIdentifier: string;
 	title: string;
-	type: string | number;
 	commentsTotal: number;
 	likesTotal: number;
 	viewsTotal: number;
@@ -22,7 +22,7 @@ interface PostItemProps {
 }
 
 const PostItem: React.FC<PostItemProps> = ({
-	id,
+	detailIdentifier,
 	title,
 	commentsTotal,
 	likesTotal,
@@ -40,7 +40,7 @@ const PostItem: React.FC<PostItemProps> = ({
 					<strong className="d-block text-gray-dark">{userName}</strong>
 				</p>
 				<h5>
-					<Link to={`/community/${id}`}>{title}</Link>
+					<Link to={`/community/${detailIdentifier}`}>{title}</Link>
 				</h5>
 				Date: {date}
 				<br />
