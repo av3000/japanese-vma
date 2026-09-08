@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { articleShow, getArticleShowQueryKey } from '@/api/generated/article/article';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
+import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
 import '@/shared/constants';
-import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
-import { LikeResponse, toggleInstanceLike } from '../likes/likes';
+import { ObjectTemplateType } from '@/shared/constants/enums';
 
 export interface MappedArticle extends ArticleDetailResource {
 	displayName: string;
@@ -40,25 +40,34 @@ export const useArticleQuery = (uuid: string | undefined) => {
 	});
 };
 
-export const useLikeArticleMutation = (articleUuid: string) => {
-	const queryClient = useQueryClient();
+/**
+ * Article detail carries the viewer's own like state, so a toggle can be reflected in place
+ * instead of refetching the whole article for two numbers.
+ */
+const buildArticleLikeBinding = (articleUuid: string): LikeCacheBinding<ArticleDetailResource> => ({
+	queryKey: getArticleDetailQueryKey(articleUuid),
 
-	return useMutation<LikeResponse, unknown, number>({
-		mutationFn: (articleId: number) =>
-			toggleInstanceLike({
-				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.ARTICLE],
-				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.ARTICLE],
-				instanceId: articleId,
-			}),
+	read: (article) => ({
+		is_liked: article.engagement.is_liked_by_viewer,
+		likes_count: article.engagement.likes_count,
+	}),
 
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(articleUuid) });
+	write: (article, _instanceId, next) => ({
+		...article,
+		engagement: {
+			...article.engagement,
+			is_liked_by_viewer: next.is_liked,
+			likes_count: next.likes_count,
 		},
+	}),
+});
 
-		onError: (err) => {
-			console.error('Like article failed', err);
-			// TODO: Figure how to inform user - perhaps general toast message.
-			// How could it be done using useReducer with  zustand
-		},
+/**
+ * Toggles the like on the article the detail route is showing. The mutation variable is the
+ * article's loaded numeric `id`; the uuid only addresses the cache.
+ */
+export const useLikeArticleMutation = (articleUuid: string) =>
+	useToggleLikeMutation({
+		template: ObjectTemplateType.ARTICLE,
+		binding: buildArticleLikeBinding(articleUuid),
 	});
-};

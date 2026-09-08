@@ -1,12 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { addComment, deleteComment, fetchComments } from '@/api/comments';
+import { addComment, deleteComment, fetchComments, getCommentsQueryKey, useLikeCommentMutation } from '@/api/comments';
 import type { ObjectTemplateType as CommentEntityType } from '@/api/generated/model/objectTemplateType';
 import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
-import { LikeResponse, toggleInstanceLike } from '@/api/likes/likes';
 import { useAuth } from '@/hooks/useAuth';
-import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import CommentForm from './CommentForm/CommentForm';
 import CommentList from './CommentList/CommentList';
 
@@ -31,8 +29,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	const { isAuthenticated, user } = useAuth();
 
 	const queryClient = useQueryClient();
-	// TODO: query keys management should be somehow centralized
-	const queryKey = ['comments', readObjectType, entityId, { include_likes: true }];
+	const queryKey = getCommentsQueryKey(readObjectType, entityId);
 	const { data: comments = [], isLoading } = useQuery({
 		queryKey,
 		queryFn: () => fetchComments(readObjectType, readObjectUuid, { include_likes: true }),
@@ -66,7 +63,8 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 	});
 
 	const deleteMutation = useMutation({
-		mutationFn: (commentId: number) => deleteComment({ parentObjectType: readObjectType, parentObjectId: entityId, commentId }),
+		mutationFn: (commentId: number) =>
+			deleteComment({ parentObjectType: readObjectType, parentObjectId: entityId, commentId }),
 		onMutate: async (commentId) => {
 			await queryClient.cancelQueries({ queryKey });
 			const previousComments = queryClient.getQueryData(queryKey);
@@ -89,24 +87,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 		},
 	});
 
-	// TODO: refetch only single comment that was liked
-	const likeMutation = useMutation<LikeResponse, unknown, { id: number }>({
-		mutationFn: ({ id }) =>
-			toggleInstanceLike({
-				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.COMMENT],
-				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.COMMENT],
-				instanceId: id,
-			}),
-
-		onSuccess: () => {
-			// TODO: now it refetches the whole list for comments totals/flags, perhaps we could optimize it for local update with single comment fetch
-			queryClient.invalidateQueries({ queryKey });
-		},
-
-		onError: (err) => {
-			console.error('Like failed', err);
-		},
-	});
+	const likeMutation = useLikeCommentMutation(queryKey);
 
 	return (
 		<div>
@@ -130,12 +111,9 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 			<CommentList
 				comments={comments}
 				currentUser={user}
-				onDelete={(id) => deleteMutation.mutate(Number(id))}
-				onLike={(id) => {
-					const comment = comments.find((c) => c.id === Number(id));
-					if (comment) likeMutation.mutate({ id: Number(id) });
-				}}
-				isLoading={likeMutation.isPending}
+				onDelete={(id) => deleteMutation.mutate(id)}
+				onLike={(id) => likeMutation.mutate(id)}
+				isLikePending={likeMutation.isTogglingInstance}
 			/>
 		</div>
 	);

@@ -101,10 +101,21 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	};
 
-	const isLiked = article.engagement?.is_liked_by_viewer;
+	const isLiked = article.engagement?.is_liked_by_viewer ?? false;
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = currentUser?.isAdmin;
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
+
+	const handleLikeClick = () => {
+		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
+		// rather than as error handling after a pointless request.
+		if (!isAuthenticated) {
+			navigate('/login');
+			return;
+		}
+
+		likeMutation.mutate(article.id);
+	};
 
 	useEffect(() => {
 		if (isEditOpen) {
@@ -196,7 +207,14 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						</div>
 						<div className="d-flex align-items-center">
 							<p className="mb-0 mr-2">{article.engagement?.likes_count}</p>
-							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
+							<Button
+								variant="ghost"
+								hasOnlyIcon
+								aria-label={isLiked ? 'Unlike this article' : 'Like this article'}
+								aria-pressed={isLiked}
+								disabled={likeMutation.isTogglingInstance(article.id)}
+								onClick={handleLikeClick}
+							>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
 							{isAuthenticated && (

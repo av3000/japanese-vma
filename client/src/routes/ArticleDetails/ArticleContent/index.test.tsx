@@ -27,13 +27,18 @@ const capturedStatusMutationArgs: Array<[string, { onSuccess?: () => void; onErr
 const statusMutateMock = vi.fn();
 const modalCloseMocks: Record<string, ReturnType<typeof vi.fn>> = {};
 let statusMutationIsPending = false;
+const navigateMock = vi.fn();
+const likeMutateMock = vi.fn();
+let likeIsToggling = false;
+let isAuthenticatedMock = true;
+const capturedLikeButtonProps: Array<{ onClick?: () => void; disabled?: boolean; 'aria-pressed'?: boolean }> = [];
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 	return {
 		...actual,
 		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
-		useNavigate: () => vi.fn(),
+		useNavigate: () => navigateMock,
 		useSearchParams: () => [new URLSearchParams(), vi.fn()],
 	};
 });
@@ -74,7 +79,11 @@ vi.mock('@/api/catalogues/cataloguesForItem', async () => {
 });
 
 vi.mock('@/api/articles/details', () => ({
-	useLikeArticleMutation: () => ({ mutate: vi.fn(), isPending: false }),
+	useLikeArticleMutation: () => ({
+		mutate: likeMutateMock,
+		isPending: false,
+		isTogglingInstance: () => likeIsToggling,
+	}),
 }));
 
 vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
@@ -100,7 +109,7 @@ vi.mock('@/api/generated/article/article', () => ({
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
 		user: { id: 7, isAdmin: false },
-		isAuthenticated: true,
+		isAuthenticated: isAuthenticatedMock,
 	}),
 }));
 
@@ -153,7 +162,28 @@ vi.mock('@/components/features/comment/CommentsBlock', () => ({
 }));
 
 vi.mock('@/components/shared/Button', () => ({
-	Button: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+	Button: ({
+		children,
+		onClick,
+		disabled,
+		...rest
+	}: {
+		children: ReactNode;
+		onClick?: () => void;
+		disabled?: boolean;
+		'aria-label'?: string;
+		'aria-pressed'?: boolean;
+	}) => {
+		if (rest['aria-label']?.endsWith('this article')) {
+			capturedLikeButtonProps.push({ onClick, disabled, 'aria-pressed': rest['aria-pressed'] });
+		}
+
+		return (
+			<button type="button" disabled={disabled}>
+				{children}
+			</button>
+		);
+	},
 }));
 
 vi.mock('@/components/shared/Chip', () => ({
@@ -176,7 +206,7 @@ vi.mock('../ArticleEditModal', () => ({
 	default: () => <div>Article edit modal</div>,
 }));
 
-const createArticle = () =>
+const createArticle = (engagementOverrides: Record<string, unknown> = {}) =>
 	({
 		id: 321,
 		uuid: 'article-uuid',
@@ -195,6 +225,7 @@ const createArticle = () =>
 			views_count: 8,
 			likes_count: 3,
 			is_liked_by_viewer: false,
+			...engagementOverrides,
 		},
 		hashtags: [],
 		processing_status: {
@@ -209,7 +240,10 @@ describe('ArticleContent', () => {
 		capturedPdfModalProps.length = 0;
 		capturedReviewModalProps.length = 0;
 		capturedStatusMutationArgs.length = 0;
+		capturedLikeButtonProps.length = 0;
 		statusMutationIsPending = false;
+		likeIsToggling = false;
+		isAuthenticatedMock = true;
 		createObjectUrlMock.mockReturnValue('blob:article-kanjis');
 		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
 		vi.stubGlobal('window', { open: windowOpenMock });
@@ -313,5 +347,44 @@ describe('ArticleContent', () => {
 		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
 		expect(capturedReviewModalProps[0].isProcessing).toBe(true);
+	});
+
+	it('renders the unfilled like icon for an article the viewer has not liked', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html).toContain('thumbsUpRegular');
+		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(false);
+	});
+
+	it('renders the filled like icon for an article the viewer already liked', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle({ is_liked_by_viewer: true })} />);
+
+		expect(html).toContain('thumbsUpSolid');
+		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
+	});
+
+	it('likes through the loaded numeric article id rather than the uuid route parameter', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		capturedLikeButtonProps[0].onClick?.();
+
+		expect(likeMutateMock).toHaveBeenCalledWith(321);
+	});
+
+	it('sends an anonymous reader to login instead of a like the endpoint would reject', () => {
+		isAuthenticatedMock = false;
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		capturedLikeButtonProps[0].onClick?.();
+
+		expect(likeMutateMock).not.toHaveBeenCalled();
+		expect(navigateMock).toHaveBeenCalledWith('/login');
+	});
+
+	it('blocks a duplicate like while the toggle for this article is in flight', () => {
+		likeIsToggling = true;
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(capturedLikeButtonProps[0].disabled).toBe(true);
 	});
 });

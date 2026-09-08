@@ -11,12 +11,13 @@ interface User {
 interface CommentListProps {
 	comments: Comment[];
 	currentUser: User | null;
-	onDelete: (commentId: string | number) => void;
-	onLike: (commentId: string | number) => void;
-	isLoading: boolean;
+	onDelete: (commentId: number) => void;
+	onLike: (commentId: number) => void;
+	/** Pending state is per comment - liking one must not disable the whole thread. */
+	isLikePending: (commentId: number) => boolean;
 }
 
-const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDelete, onLike, isLoading }) => {
+const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDelete, onLike, isLikePending }) => {
 	return (
 		<div>
 			<h5 className="text-muted mb-4 mt-4">
@@ -35,7 +36,7 @@ const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDele
 						currentUser={currentUser}
 						onDelete={() => onDelete(comment.id)}
 						onLike={() => onLike(comment.id)}
-						isLoading={isLoading}
+						isLikePending={isLikePending(comment.id)}
 					/>
 				))
 			)}

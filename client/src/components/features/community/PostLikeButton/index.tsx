@@ -1,54 +1,41 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toggleInstanceLike } from '@/api/likes/likes';
-import { getPostDetailQueryKey } from '@/api/posts/reads';
+import { useLikePostMutation } from '@/api/posts/likes';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { useAuth } from '@/hooks/useAuth';
-import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 
 interface PostLikeButtonProps {
 	postId: number;
-	/** Route identifier the detail query is cached under, so a like refreshes the visible Post. */
+	/** Route identifier the detail query is cached under, so a like patches the visible Post. */
 	detailIdentifier: string;
 	likesCount: number;
 }
 
 /**
- * Transitional Post like control.
+ * Post like control.
  *
- * The v1 Post read contract carries aggregate counts only - `is_liked_by_viewer` is owned by the
- * Like slice (LIKE-FE-01, #144). Until that lands the button toggles through the generic v1
- * `like-instance` endpoint and refetches the count, without the filled/unfilled viewer state.
+ * Unlike Article, Catalogue and Comment, the v1 Post read contract carries aggregate counts only
+ * and no `is_liked_by_viewer`. There is therefore no persisted viewer state to render on load: the
+ * filled icon reflects the last toggle this session returned, and the count comes from the cached
+ * Post that the mutation patches on success.
  */
 const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifier, likesCount }) => {
 	const navigate = useNavigate();
-	const queryClient = useQueryClient();
 	const { isAuthenticated } = useAuth();
+	const likeMutation = useLikePostMutation(detailIdentifier);
 
-	const likeMutation = useMutation({
-		mutationFn: () =>
-			toggleInstanceLike({
-				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.POST],
-				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.POST],
-				instanceId: postId,
-			}),
-		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: getPostDetailQueryKey(detailIdentifier) });
-		},
-		onError: (likeError) => {
-			console.error('Like post failed', likeError);
-		},
-	});
+	const isLiked = likeMutation.data?.is_liked ?? false;
 
 	const handleClick = () => {
+		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
+		// rather than as error handling after a pointless request.
 		if (!isAuthenticated) {
 			navigate('/login');
 			return;
 		}
 
-		likeMutation.mutate();
+		likeMutation.mutate(postId);
 	};
 
 	return (
@@ -58,10 +45,11 @@ const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifie
 				variant="ghost"
 				hasOnlyIcon
 				aria-label="Like this post"
+				aria-pressed={isLiked}
 				onClick={handleClick}
-				disabled={likeMutation.isPending}
+				disabled={likeMutation.isTogglingInstance(postId)}
 			>
-				<Icon size="md" name="thumbsUpSolid" />
+				<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 			</Button>
 		</div>
 	);

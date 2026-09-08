@@ -10,10 +10,10 @@ interface CommentItemProps {
 	currentUser: any;
 	onDelete: () => void;
 	onLike: () => void;
-	isLoading: boolean;
+	isLikePending: boolean;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike, isLoading }) => {
+const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelete, onLike, isLikePending }) => {
 	const canDelete = currentUser && (currentUser.id === comment.author_id || currentUser.is_admin);
 
 	return (
@@ -32,7 +32,14 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelet
 				<br />
 				<div className="text-muted d-flex align-items-center">
 					<span className="mx-2">{comment.likes_count} likes</span>
-					<Button onClick={onLike} variant="ghost" size="sm" disabled={isLoading}>
+					<Button
+						onClick={onLike}
+						variant="ghost"
+						size="sm"
+						aria-label={comment.is_liked_by_viewer ? 'Unlike this comment' : 'Like this comment'}
+						aria-pressed={comment.is_liked_by_viewer}
+						disabled={isLikePending}
+					>
 						<Icon size="sm" name={comment.is_liked_by_viewer ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 					</Button>
 					<p className="ml-auto mb-0">{comment.created_at}</p>
