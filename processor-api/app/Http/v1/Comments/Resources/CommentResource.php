@@ -30,9 +30,10 @@ class CommentResource extends JsonResource
     /**
      * @return array{
      *     id: int,
-     *     entity_uuid: string,
+     *     uuid: string,
+     *     entity_uuid: string|null,
      *     entity_type: string,
-     *     author_name: string,
+     *     author_name: string|null,
      *     author_id: int,
      *     content: string,
      *     parent_comment_id: int|null,
@@ -51,17 +52,18 @@ class CommentResource extends JsonResource
 
         $data = [
             'id' => (int) $comment->getIdValue(),
-            'entity_uuid' => $comment->getEntityUuid()->value(),
-            'entity_type' => $comment->getEntityType(),
+            'uuid' => $comment->getUuid()->value(),
+            'entity_uuid' => $comment->getEntityUuidValue(),
+            'entity_type' => $comment->getEntityType()->getTitle(),
             'author_name' => $comment->getAuthorName(),
             'author_id' => (int) $comment->getAuthorId()->value(),
             'content' => $comment->getContent(),
             'parent_comment_id' => $comment->getParentCommentId(),
-            'is_reply' => (bool) $comment->isReply(),
+            'is_reply' => $comment->isReply(),
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
-            'likes_count' => (int) $comment->getLikesCount(),
-            'is_liked_by_viewer' => (bool) $comment->isLikedByViewer(),
+            'likes_count' => $comment->getLikesCount(),
+            'is_liked_by_viewer' => $comment->isLikedByViewer(),
             'replies' => [],
         ];
 

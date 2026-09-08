@@ -155,6 +155,10 @@ Route::prefix('v1')->group(function () {
 
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);
+        Route::put('comments/{uuid}', [CommentController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('comments/{uuid}', [CommentController::class, 'destroy'])
+            ->whereUuid('uuid');
 
         // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);

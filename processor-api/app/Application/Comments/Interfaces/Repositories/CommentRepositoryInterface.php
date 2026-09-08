@@ -6,37 +6,44 @@ use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
-use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 
 interface CommentRepositoryInterface
 {
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments;
+
+    public function findByUuid(EntityId $commentUuid): ?DomainComment;
+
     /**
-     * This interface method is generic because it reflects the actual
-     * database structure. The template system in your database treats
-     * all entity types generically, so the repository interface mirrors
-     * this design while hiding the complexity from the service layer
+     * Lookup by legacy numeric id, still needed because replies reference
+     * their parent by `parent_comment_id`.
      */
-    public function findByEntityWithPagination(
-        EntityId $entityUid,
-        string $entityType,
-        int $page,
-        int $perPage
-    ): array;
+    public function findById(int $commentId): ?DomainComment;
 
-    public function save(DomainComment $commentData): DomainComment;
+    public function createForEntity(CommentCreateDTO $dto, UserId $authorId): DomainComment;
 
-    public function findById(EntityId $commentId): ?DomainComment;
+    public function updateContent(int $commentId, string $content): DomainComment;
+
+    /**
+     * Every reply beneath the given comment, at any depth, deepest first.
+     *
+     * Nesting is not limited by the schema, so callers that clean up a thread
+     * must walk the whole subtree rather than assuming a single reply level.
+     *
+     * @return int[]
+     */
+    public function collectDescendantIds(int $commentId): array;
+
+    /**
+     * Delete the given comments together with the Likes attached to them.
+     *
+     * Not transactional on its own - callers wrap this in the transaction that
+     * owns the wider cleanup.
+     *
+     * @param int[] $commentIds
+     */
+    public function deleteWithLikesByIds(array $commentIds): void;
 
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
-
-    public function findAllByFilter(CommentFilterDTO $filter): array;
-
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments;
-
-    public function createForEntity(
-        CommentCreateDTO $dto,
-        UserId $authorId,
-    ): DomainComment;
 }

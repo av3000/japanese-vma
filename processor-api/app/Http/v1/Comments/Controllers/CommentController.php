@@ -2,36 +2,33 @@
 
 namespace App\Http\v1\Comments\Controllers;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
-use App\Application\Catalogues\Services\CatalogueServiceInterface;
-use App\Application\Comments\Services\CommentService;
+use App\Application\Comments\Services\CommentServiceInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Comments\DTOs\CommentUpdateDTO;
+use App\Domain\Comments\Models\Comment;
+use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Users\Errors\UserErrors;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Comments\Requests\IndexCommentRequest;
 use App\Http\v1\Comments\Requests\StoreCommentRequest;
+use App\Http\v1\Comments\Requests\UpdateCommentRequest;
 use App\Http\v1\Comments\Resources\CommentListResource;
 use App\Http\v1\Comments\Resources\CommentResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CommentController extends Controller
 {
     public function __construct(
-        // TODO: use interface for commentService
-        private CommentService $commentService,
-        private ArticleServiceInterface $articleService,
-        private CatalogueServiceInterface $catalogueService,
+        private CommentServiceInterface $commentService,
         private CurrentUserProviderInterface $currentUserProvider,
-        // private EngagementServiceInterface $engagementService
     ) {
     }
 
@@ -39,107 +36,114 @@ class CommentController extends Controller
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResource
+    #[Response(404, description: 'Article not found')]
+    public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
-        $entityUuid = EntityId::from($uuid);
-        $entityId = $this->articleService->getArticleIdByUuid($entityUuid);
-
-        if ($entityId === null) {
-            throw new NotFoundHttpException('Article not found');
-        }
-
-        return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::ARTICLE);
+        return $this->listForEntity($request, ObjectTemplateType::ARTICLE, $uuid);
     }
 
     /**
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResource
+    #[Response(404, description: 'Catalogue not found')]
+    public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
-        $entityUuid = EntityId::from($uuid);
-
-        $entityId = $this->catalogueService->getIdByUuid($entityUuid);
-
-        if ($entityId === null) {
-            throw new NotFoundHttpException('Catalogue not found');
-        }
-
-        return $this->getCommentsForEntity($request, $entityId, ObjectTemplateType::LIST);
-    }
-
-    private function getCommentsForEntity(
-        IndexCommentRequest $request,
-        // TODO: after all legacy instances that reference 'id' will be migrated, use UUID.
-        int $entityId,
-        ObjectTemplateType $entityType
-    ): JsonResource {
-        // TODO: Implement include_replies
-        $listDTO = CommentListDTO::fromRequest($request->validated());
-
-        $paginatedComments = $this->commentService->getCommentsList(
-            dto: $listDTO,
-            entityType: $entityType,
-            entityId: $entityId,
-            viewerUserId: $this->currentUserProvider->currentAuthenticatedUser()?->id->value(),
-        );
-
-        $resources = [];
-        foreach ($paginatedComments->getItems() as $comment) {
-            $resources[] = new CommentResource(
-                comment: $comment,
-                include_replies: $listDTO->include_replies,
-            );
-        }
-
-        $data = [
-            'items' => $resources,
-            'pagination' => [
-                'page' => $paginatedComments->getPaginator()->currentPage(),
-                'per_page' => $paginatedComments->getPaginator()->perPage(),
-                'total' => $paginatedComments->getPaginator()->total(),
-                'last_page' => $paginatedComments->getPaginator()->lastPage(),
-                'has_more' => $paginatedComments->getPaginator()->hasMorePages(),
-            ],
-        ];
-
-        return new CommentListResource($data);
+        return $this->listForEntity($request, ObjectTemplateType::LIST, $uuid);
     }
 
     /**
      * @response CommentResource
      */
     #[Response(201, type: 'CommentResource')]
-    public function store(StoreCommentRequest $request): JsonResponse
+    #[Response(404, description: 'Commented entity not found')]
+    public function store(StoreCommentRequest $request): JsonResponse|JsonResource
     {
-        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $result = $this->commentService->createComment(
+            dto: CommentCreateDTO::fromRequest($request->validated()),
+            author: $this->requiredAuthenticatedUser(),
+        );
 
-        if ($authenticatedUser === null) {
-            return TypedResults::fromError(UserErrors::notAuthenticated());
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
         }
 
-        $comment = $this->commentService->createCommentForEntity(
-            dto: CommentCreateDTO::fromRequest($request->validated()),
-            authorId: $authenticatedUser->id,
-        );
+        /** @var Comment $comment */
+        $comment = $result->getData();
 
         return (new CommentResource($comment))
             ->response()
             ->setStatusCode(201);
     }
 
-    public function show($id)
+    /**
+     * @response CommentResource
+     */
+    #[Response(type: 'CommentResource')]
+    #[Response(403, description: 'Only the comment author may edit it')]
+    #[Response(404, description: 'Comment not found')]
+    public function update(UpdateCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
-        //
+        $result = $this->commentService->updateComment(
+            commentUuid: EntityId::from($uuid),
+            dto: CommentUpdateDTO::fromRequest($request->validated()),
+            actor: $this->requiredAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var Comment $comment */
+        $comment = $result->getData();
+
+        return new CommentResource($comment);
     }
 
-    public function update(Request $request, $id)
+    #[Response(204, description: 'Comment and every reply beneath it were deleted')]
+    #[Response(403, description: 'Only the comment author or an admin may delete it')]
+    #[Response(404, description: 'Comment not found')]
+    public function destroy(string $uuid): JsonResponse
     {
-        //
+        $result = $this->commentService->deleteComment(
+            commentUuid: EntityId::from($uuid),
+            actor: $this->requiredAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return TypedResults::noContent();
     }
 
-    public function destroy($id)
+    private function listForEntity(
+        IndexCommentRequest $request,
+        ObjectTemplateType $entityType,
+        string $uuid,
+    ): JsonResponse|JsonResource {
+        $listDTO = CommentListDTO::fromRequest($request->validated());
+
+        $result = $this->commentService->getCommentsForEntity(
+            entityType: $entityType,
+            entityUuid: EntityId::from($uuid),
+            dto: $listDTO,
+            viewer: $this->currentUserProvider->currentAuthenticatedUser(),
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var Comments $comments */
+        $comments = $result->getData();
+
+        return CommentListResource::fromPaginated($comments, $listDTO->include_replies);
+    }
+
+    private function requiredAuthenticatedUser(): AuthenticatedUser
     {
-        //
+        return $this->currentUserProvider->currentAuthenticatedUser()
+            ?? throw new AuthenticationException;
     }
 }

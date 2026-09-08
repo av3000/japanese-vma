@@ -14,6 +14,8 @@ use App\Application\Catalogues\Services\CataloguePdfExportService;
 use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueService;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
+use App\Application\Comments\Services\CommentService;
+use App\Application\Comments\Services\CommentServiceInterface;
 use App\Application\Community\Posts\Services\PostReadService;
 use App\Application\Community\Posts\Services\PostReadServiceInterface;
 use App\Application\Community\Posts\Services\PostWriteService;
@@ -57,6 +59,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(ArticlePdfExportServiceInterface::class, ArticlePdfExportService::class);
         $this->app->bind(CataloguePdfExportServiceInterface::class, CataloguePdfExportService::class);
         $this->app->bind(CatalogueServiceInterface::class, CatalogueService::class);
+        $this->app->bind(CommentServiceInterface::class, CommentService::class);
         $this->app->bind(PostReadServiceInterface::class, PostReadService::class);
         $this->app->bind(PostWriteServiceInterface::class, PostWriteService::class);
         $this->app->bind(EngagementServiceInterface::class, EngagementService::class);

@@ -7,26 +7,22 @@ use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
-use App\Domain\Engagement\DTOs\CommentFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
-use App\Http\Models\ObjectTemplate;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Models\Like;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class CommentRepository implements CommentRepositoryInterface
 {
-    private const COUNT_ALIAS = 'aggregate_count';
-
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, string $entityId, ?int $viewerUserId): Comments
+    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments
     {
         $query = PersistenceComment::with(['user'])
             ->where('template_id', $criteria->entityType->getLegacyId())
-            ->where('real_object_id', $entityId)
+            ->where('real_object_id', $criteria->entityId)
             ->orderBy('created_at', 'DESC');
 
         $query->withCount('likes');
@@ -37,11 +33,13 @@ class CommentRepository implements CommentRepositoryInterface
             }]);
         }
 
+        $pagination = $criteria->pagination ?? Pagination::default();
+
         $paginatedResults = $query->paginate(
-            $criteria->pagination->per_page,
+            $pagination->per_page,
             ['*'],
             'page',
-            $criteria->pagination->page
+            $pagination->page
         );
 
         // TODO: Implement include_replies
@@ -57,10 +55,27 @@ class CommentRepository implements CommentRepositoryInterface
         return Comments::fromEloquentPaginator($paginatedResults);
     }
 
-    public function createForEntity(
-        CommentCreateDTO $dto,
-        UserId $authorId,
-    ): DomainComment {
+    public function findByUuid(EntityId $commentUuid): ?DomainComment
+    {
+        $entity = PersistenceComment::with('user')
+            ->withCount('likes')
+            ->where('uuid', $commentUuid->value())
+            ->first();
+
+        return $entity ? CommentMapper::mapToDomain($entity) : null;
+    }
+
+    public function findById(int $commentId): ?DomainComment
+    {
+        $entity = PersistenceComment::with('user')
+            ->withCount('likes')
+            ->find($commentId);
+
+        return $entity ? CommentMapper::mapToDomain($entity) : null;
+    }
+
+    public function createForEntity(CommentCreateDTO $dto, UserId $authorId): DomainComment
+    {
         $persistenceComment = PersistenceComment::create([
             'uuid' => (string) Str::uuid(),
             'template_id' => $dto->entity_type->getLegacyId(),
@@ -72,189 +87,91 @@ class CommentRepository implements CommentRepositoryInterface
             'content' => $dto->content,
         ]);
 
-        return CommentMapper::mapToDomain($persistenceComment->fresh(['user']));
+        return CommentMapper::mapToDomain($this->reload($persistenceComment->id));
     }
 
-    public function findPaginatedByEntity(
-        int $entityId,
-        ObjectTemplateType $entityType,
-        Pagination $pagination,
-        bool $parentOnly = true
-    ): object {
-        $query = PersistenceComment::with(['user'])
-            ->where('template_id', $entityType->getLegacyId())
-            ->where('real_object_id', $entityId)
-            ->orderBy('created_at', 'DESC');
+    public function updateContent(int $commentId, string $content): DomainComment
+    {
+        $persistenceComment = PersistenceComment::query()->find($commentId);
 
-        if ($parentOnly) {
-            $query->whereNull('parent_comment_id');
+        if ($persistenceComment === null) {
+            throw new RuntimeException("Comment {$commentId} disappeared before it could be updated");
         }
 
-        return $query->paginate($pagination->per_page, ['*'], 'page', $pagination->page);
+        $persistenceComment->content = $content;
+        $persistenceComment->save();
+
+        return CommentMapper::mapToDomain($this->reload($commentId));
     }
 
+    /**
+     * Breadth-first walk of the reply tree, returning deepest levels first so
+     * callers can delete children before their parents.
+     *
+     * @return int[]
+     */
+    public function collectDescendantIds(int $commentId): array
+    {
+        $levels = [];
+        $currentLevel = [$commentId];
+
+        while ($currentLevel !== []) {
+            $childIds = PersistenceComment::query()
+                ->whereIn('parent_comment_id', $currentLevel)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            if ($childIds === []) {
+                break;
+            }
+
+            $levels[] = $childIds;
+            $currentLevel = $childIds;
+        }
+
+        return $levels === [] ? [] : array_merge(...array_reverse($levels));
+    }
+
+    /**
+     * @param int[] $commentIds
+     */
+    public function deleteWithLikesByIds(array $commentIds): void
+    {
+        if ($commentIds === []) {
+            return;
+        }
+
+        Like::query()
+            ->where('template_id', ObjectTemplateType::COMMENT->getLegacyId())
+            ->whereIn('real_object_id', $commentIds)
+            ->delete();
+
+        PersistenceComment::query()
+            ->whereIn('id', $commentIds)
+            ->delete();
+    }
+
+    /**
+     * Replies are stored against the same entity as the comment they answer,
+     * so selecting by entity already covers the whole thread at every depth.
+     */
     public function deleteByEntity(int $entityId, int $entityTypeId): void
     {
-        $comments = PersistenceComment::query()
+        $commentIds = PersistenceComment::query()
             ->where('real_object_id', $entityId)
             ->where('template_id', $entityTypeId)
-            ->get();
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        foreach ($comments as $comment) {
-            Like::query()
-                ->where('real_object_id', $comment->id)
-                ->where('template_id', ObjectTemplateType::COMMENT->getLegacyId())
-                ->delete();
-
-            $comment->delete();
-        }
+        $this->deleteWithLikesByIds($commentIds);
     }
 
-    public function findByEntityWithPagination(EntityId $entityUid, string $entityType, int $page, int $perPage): array
+    private function reload(int $commentId): PersistenceComment
     {
-        $entityTemplateId = $this->getTemplateIdForEntityType($entityType);
-        $commentTemplateId = $this->getTemplateIdForEntityType('comment');
-
-        // Get paginated comments with user data
-        $offset = ($page - 1) * $perPage;
-        $comments = PersistenceComment::with('user')
-            ->forEntity($entityTemplateId, $entityUid->value())
-            ->whereNull('parent_comment_id') // Only top-level comments for now
-            ->orderBy('created_at', 'DESC')
-            ->offset($offset)
-            ->limit($perPage)
-            ->get();
-
-        if ($comments->isEmpty()) {
-            return $this->emptyResult($page, $perPage);
-        }
-
-        // Batch load like counts
-        $commentIds = $comments->pluck('id')->toArray();
-        $likeCounts = $this->batchLoadLikeCounts($commentIds, $commentTemplateId);
-
-        $commentData = $comments->map(function ($comment) use ($likeCounts) {
-            return [
-                'id' => $comment->id,
-                'content' => $comment->content,
-                'created_at' => $comment->created_at->toISOString(),
-                'updated_at' => $comment->updated_at->toISOString(),
-                'author' => [
-                    'id' => $comment->user->id,
-                    'name' => $comment->user->name,
-                ],
-                'likes_count' => $likeCounts[$comment->id] ?? 0,
-                'is_reply' => $comment->parent_comment_id !== null,
-            ];
-        })->toArray();
-
-        // Return structured data with pagination metadata
-        return [
-            'data' => $commentData,
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total' => $this->countCommentsForEntity($entityTemplateId, $entityUid->value()),
-                'has_more' => count($commentData) === $perPage,
-            ],
-        ];
-    }
-
-    /**
-     * Efficiently batch load like counts to avoid N+1 query problems
-     *
-     * This method demonstrates an important performance optimization
-     * technique. Instead of querying for like counts individually for each
-     * comment, we load all like counts in a single query and organize them
-     * by comment ID for quick lookup
-     */
-    private function batchLoadLikeCounts(array $commentIds, int $commentTemplateId): array
-    {
-        return DB::table('likes')
-            ->where('template_id', $commentTemplateId)
-            ->whereIn('real_object_id', $commentIds)
-            ->groupBy('real_object_id')
-            ->selectRaw('real_object_id, COUNT(*) as '.self::COUNT_ALIAS)
-            ->pluck(self::COUNT_ALIAS, 'real_object_id')
-            ->toArray();
-    }
-
-    /**
-     * Resolve entity type strings to template IDs with caching
-     *
-     * This method handles the complexity of your template system by
-     * maintaining a static cache of template ID lookups. This avoids
-     * repeated database queries for the same entity types within a request
-     */
-    private function getTemplateIdForEntityType(string $entityType): int
-    {
-        static $templateCache = [];
-
-        if (! isset($templateCache[$entityType])) {
-            $template = ObjectTemplate::where('title', $entityType)->first();
-            if (! $template) {
-                throw new \InvalidArgumentException("Unknown entity type: {$entityType}");
-            }
-            $templateCache[$entityType] = $template->id;
-        }
-
-        return $templateCache[$entityType];
-    }
-
-    /**
-     * Count total comments for pagination metadata
-     */
-    private function countCommentsForEntity(int $entityTemplateId, int $entityId): int
-    {
-        return PersistenceComment::where('template_id', $entityTemplateId)
-            ->where('real_object_id', $entityId)
-            ->whereNull('parent_comment_id')
-            ->count();
-    }
-
-    /**
-     * Return consistent empty result structure
-     */
-    private function emptyResult(int $page, int $perPage): array
-    {
-        return [
-            'data' => [],
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total' => 0,
-                'has_more' => false,
-            ],
-        ];
-    }
-
-    public function save(DomainComment $comment): DomainComment
-    {
-        $persistenceData = CommentMapper::mapToEntity($comment);
-
-        $persistenceComment = PersistenceComment::updateOrCreate(
-            ['id' => $persistenceData['id']],
-            $persistenceData
-        );
-
-        return CommentMapper::mapToDomain($persistenceComment->fresh(['user']));
-    }
-
-    public function findById(EntityId $commentId): ?DomainComment
-    {
-        $entity = PersistenceComment::with('user')->find($commentId->value());
-
-        return $entity ? CommentMapper::mapToDomain($entity) : null;
-    }
-
-    public function findAllByFilter(CommentFilterDTO $filter): array
-    {
-        return PersistenceComment::where('template_id', $filter->objectType->getLegacyId())
-            ->where('real_object_id', $filter->entityId)
-            ->get()
-            ->map(function ($comment) {
-                return CommentMapper::mapToDomain($comment);
-            })
-            ->toArray();
+        return PersistenceComment::with('user')
+            ->withCount('likes')
+            ->findOrFail($commentId);
     }
 }
