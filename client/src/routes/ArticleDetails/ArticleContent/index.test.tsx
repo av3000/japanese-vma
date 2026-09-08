@@ -6,9 +6,7 @@ import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/a
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import ArticleContent from './index';
 
-const setQueryDataMock = vi.fn();
 const fetchCataloguesForItemMock = vi.fn();
-const useQueryMock = vi.fn();
 const windowOpenMock = vi.fn();
 const createObjectUrlMock = vi.fn();
 const capturedModalProps: Array<{
@@ -19,6 +17,16 @@ const capturedModalProps: Array<{
 const capturedPdfModalProps: Array<{
 	onDownload: (type: 'kanji' | 'words') => Promise<void>;
 }> = [];
+const capturedReviewModalProps: Array<{
+	status: number;
+	onStatusChange: (nextStatus: number) => void;
+	onSave: () => void;
+	isProcessing: boolean;
+}> = [];
+const capturedStatusMutationArgs: Array<[string, { onSuccess?: () => void; onError?: () => void }]> = [];
+const statusMutateMock = vi.fn();
+const modalCloseMocks: Record<string, ReturnType<typeof vi.fn>> = {};
+let statusMutationIsPending = false;
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -45,10 +53,6 @@ vi.mock('@tanstack/react-query', async () => {
 			}),
 			isPending: false,
 		})),
-		useQuery: (options: any) => useQueryMock(options),
-		useQueryClient: () => ({
-			setQueryData: setQueryDataMock,
-		}),
 	};
 });
 
@@ -57,19 +61,17 @@ vi.mock('@/api/generated/catalogue/catalogue', () => ({
 	catalogueRemoveItem: vi.fn(),
 }));
 
-vi.mock('@/api/catalogues/cataloguesForItem', () => ({
-	applyCatalogueForItemAction: vi.fn((lists: CatalogueForItem[], catalogueId: number, action: 'add' | 'remove') =>
-		lists.map((list) =>
-			list.id === catalogueId
-				? {
-						...list,
-						contains_item: action === 'add',
-					}
-				: list,
-		),
-	),
-	fetchCataloguesForItem: (...args: unknown[]) => fetchCataloguesForItemMock(...args),
-}));
+// Only the network read is stubbed: the widget's add/remove path must reach the real
+// helper so the assertions below observe the generated catalogue endpoints.
+vi.mock('@/api/catalogues/cataloguesForItem', async () => {
+	const actual = await vi.importActual<typeof import('@/api/catalogues/cataloguesForItem')>(
+		'@/api/catalogues/cataloguesForItem',
+	);
+	return {
+		...actual,
+		fetchCataloguesForItem: (...args: unknown[]) => fetchCataloguesForItemMock(...args),
+	};
+});
 
 vi.mock('@/api/articles/details', () => ({
 	useLikeArticleMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -79,8 +81,14 @@ vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
 	useArticleSubscription: vi.fn(),
 }));
 
-vi.mock('@/api/articles/articles', () => ({
-	setArticleStatus: vi.fn(),
+vi.mock('@/api/articles/moderation', () => ({
+	useArticleStatusMutation: (
+		articleUuid: string,
+		callbacks: { onSuccess?: () => void; onError?: () => void } = {},
+	) => {
+		capturedStatusMutationArgs.push([articleUuid, callbacks]);
+		return { mutate: statusMutateMock, isPending: statusMutationIsPending };
+	},
 }));
 
 vi.mock('@/api/generated/article/article', () => ({
@@ -97,14 +105,18 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 
 vi.mock('@/hooks/useModal', () => ({
-	useModal: (dialogRef: { current: null }, options: { id: string; onClose?: () => void }) => ({
-		id: options.id,
-		dialogRef,
-		isOpen: false,
-		isRendered: true,
-		open: vi.fn(),
-		close: options.onClose ?? vi.fn(),
-	}),
+	useModal: (dialogRef: { current: null }, options: { id: string; onClose?: () => void }) => {
+		modalCloseMocks[options.id] ??= vi.fn();
+
+		return {
+			id: options.id,
+			dialogRef,
+			isOpen: false,
+			isRendered: true,
+			open: vi.fn(),
+			close: options.onClose ?? modalCloseMocks[options.id],
+		};
+	},
 }));
 
 vi.mock('@/components/features/catalogues/CatalogueBookmarkModal', () => ({
@@ -130,7 +142,10 @@ vi.mock('@/components/features/articles/ArticlePdfModal', () => ({
 }));
 
 vi.mock('@/components/features/articles/ArticleReviewModal', () => ({
-	ArticleReviewModal: () => <div>Article review modal</div>,
+	ArticleReviewModal: (props: any) => {
+		capturedReviewModalProps.push(props);
+		return <div>Article review modal</div>;
+	},
 }));
 
 vi.mock('@/components/features/comment/CommentsBlock', () => ({
@@ -192,13 +207,12 @@ describe('ArticleContent', () => {
 		vi.clearAllMocks();
 		capturedModalProps.length = 0;
 		capturedPdfModalProps.length = 0;
+		capturedReviewModalProps.length = 0;
+		capturedStatusMutationArgs.length = 0;
+		statusMutationIsPending = false;
 		createObjectUrlMock.mockReturnValue('blob:article-kanjis');
 		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
 		vi.stubGlobal('window', { open: windowOpenMock });
-		useQueryMock.mockImplementation(({ queryFn }: { queryFn: () => Promise<CatalogueForItem[]> }) => {
-			void queryFn();
-			return { data: cataloguesForItemLists };
-		});
 		fetchCataloguesForItemMock.mockResolvedValue(cataloguesForItemLists);
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
@@ -218,21 +232,13 @@ describe('ArticleContent', () => {
 		},
 	];
 
-	it('adds article bookmarks through the v1 catalogue item endpoint and reconciles for-item state by list id', async () => {
+	it('adds article bookmarks through the v1 catalogue item endpoint', async () => {
 		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
 		await capturedModalProps[0].onListAction(cataloguesForItemLists[0], 'add');
 
 		expect(catalogueAddItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', { item_id: 321 });
-		expect(setQueryDataMock).toHaveBeenCalledWith(['article-bookmarks', 321], expect.any(Function));
-
-		const updater = setQueryDataMock.mock.calls[0][1] as (lists: CatalogueForItem[]) => CatalogueForItem[];
-		expect(updater(cataloguesForItemLists)).toEqual([
-			{
-				...cataloguesForItemLists[0],
-				contains_item: true,
-			},
-		]);
+		expect(catalogueRemoveItem).not.toHaveBeenCalled();
 	});
 
 	it('removes article bookmarks through the v1 catalogue item endpoint', async () => {
@@ -247,6 +253,7 @@ describe('ArticleContent', () => {
 		);
 
 		expect(catalogueRemoveItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', 321);
+		expect(catalogueAddItem).not.toHaveBeenCalled();
 	});
 
 	it('downloads article kanji pdf through the generated v1 article endpoint', async () => {
@@ -269,5 +276,42 @@ describe('ArticleContent', () => {
 		expect(articleExportKanjisPdf).not.toHaveBeenCalled();
 		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
 		expect(windowOpenMock).toHaveBeenCalledWith('blob:article-kanjis');
+	});
+
+	it('moderates through the UUID-keyed status seam rather than numeric identity', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(capturedStatusMutationArgs[0][0]).toBe('article-uuid');
+
+		capturedReviewModalProps[0].onSave();
+
+		expect(statusMutateMock).toHaveBeenCalledWith(capturedReviewModalProps[0].status);
+		expect(capturedReviewModalProps[0].status).toBe(createArticle().status);
+	});
+
+	it('closes the review modal once the status mutation succeeds', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(modalCloseMocks['article-review-modal']).not.toHaveBeenCalled();
+
+		capturedStatusMutationArgs[0][1].onSuccess?.();
+
+		expect(modalCloseMocks['article-review-modal']).toHaveBeenCalled();
+	});
+
+	it('keeps the review modal open and writes no status when the mutation fails', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		capturedStatusMutationArgs[0][1].onError?.();
+
+		expect(modalCloseMocks['article-review-modal']).not.toHaveBeenCalled();
+	});
+
+	it('blocks a duplicate submit while the status mutation is in flight', () => {
+		statusMutationIsPending = true;
+
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(capturedReviewModalProps[0].isProcessing).toBe(true);
 	});
 });

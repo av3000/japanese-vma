@@ -3,9 +3,11 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
-use App\Infrastructure\Persistence\Models\{HashtagEntity, ObjectTemplate, Uniquehashtag};
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Infrastructure\Persistence\Models\HashtagEntity;
+use App\Infrastructure\Persistence\Models\ObjectTemplate;
+use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use Illuminate\Database\Eloquent\Builder;
 
 class HashtagRepository implements HashtagRepositoryInterface
@@ -17,7 +19,7 @@ class HashtagRepository implements HashtagRepositoryInterface
      * Then, creates the association between the hashtag and the entity.
      *
      * @param array{entity_id: int, entity_type_id: int, content: string, user_id: int} $data
-     * @return void
+     *
      * @throws \Illuminate\Database\QueryException On database constraint violation or connection failure
      */
     public function create(array $data): void
@@ -41,16 +43,19 @@ class HashtagRepository implements HashtagRepositoryInterface
      * Returns only the unique hashtag data, not the association records.
      *
      * @param HashtagFilterDTO $filter Filter criteria (entity_id, entity_type)
-     * @return array<object> Array of hashtag objects with properties: id, content, created_at, updated_at
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<object> Array of hashtag objects with properties: id, content, created_at, updated_at
      */
     public function findAllByFilter(HashtagFilterDTO $filter): array
     {
         return HashtagEntity::with('uniquehashtag')
             ->where('entity_type_id', $this->resolveTemplateId($filter->entityType))
             ->where('entity_id', $filter->entityId)
+            ->orderBy('id')
             ->get()
-            ->map(fn($link) => $link->uniquehashtag)
+            ->map(fn ($link) => $link->uniquehashtag)
             ->toArray();
     }
 
@@ -62,7 +67,7 @@ class HashtagRepository implements HashtagRepositoryInterface
      *
      * @param int $entityId The entity ID
      * @param int $entityTypeId The entity type ID (legacy integer ID)
-     * @return void
+     *
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function deleteByEntity(int $entityId, int $entityTypeId): void
@@ -76,6 +81,7 @@ class HashtagRepository implements HashtagRepositoryInterface
      * Build base query for hashtag filtering.
      *
      * @param HashtagFilterDTO $filter Filter criteria
+     *
      * @return Builder Eloquent query builder
      */
     private function buildBaseQuery(HashtagFilterDTO $filter): Builder
@@ -92,8 +98,11 @@ class HashtagRepository implements HashtagRepositoryInterface
      *
      * @param array<int> $entityIds Array of entity IDs to load hashtags for
      * @param ObjectTemplateType $entityType The type of entities
-     * @return array<int, array<object>> Associative array keyed by entity_id
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<int, array<object>> Associative array keyed by entity_id
+     *
      * @example [123 => [{id: 1, content: '#php'}, {id: 2, content: '#laravel'}], 456 => [{id: 3, content: '#vue'}]]
      */
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $entityType): array
@@ -101,9 +110,10 @@ class HashtagRepository implements HashtagRepositoryInterface
         return HashtagEntity::with('uniquehashtag')
             ->where('entity_type_id', $this->resolveTemplateId($entityType))
             ->whereIn('entity_id', $entityIds)
+            ->orderBy('id')
             ->get()
             ->groupBy('entity_id')
-            ->map(fn($links) => $links->map(fn($link) => $link->uniquehashtag))
+            ->map(fn ($links) => $links->map(fn ($link) => $link->uniquehashtag))
             ->toArray();
     }
 

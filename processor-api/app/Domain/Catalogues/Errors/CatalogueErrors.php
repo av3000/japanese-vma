@@ -18,6 +18,23 @@ class CatalogueErrors
         );
     }
 
+    /**
+     * Returned both when the legacy id is unknown and when the catalogue exists
+     * but the viewer may not see it. Resolving a numeric id must not confirm
+     * that a private catalogue exists, so the two cases are deliberately
+     * indistinguishable - unlike the detail endpoint, which answers 403.
+     */
+    public static function legacyIdentityNotFound(int $legacyId): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.LegacyIdentityNotFound',
+            status: HttpStatus::NOT_FOUND,
+            description: 'Catalogue not found',
+            detail: "Catalogue with legacy ID {$legacyId} does not exist",
+            errorMessage: "Catalogue with legacy ID {$legacyId} does not exist",
+        );
+    }
+
     public static function accessDenied(string $catalogueUid): ResultError
     {
         return new ResultError(

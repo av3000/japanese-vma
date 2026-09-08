@@ -9,8 +9,6 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
 
 interface EngagementServiceInterface
 {
-    public function toggleLike(int $userId, int $entityId, ObjectTemplateType $type);
-
     /**
      * Batch-load Article engagement stats.
      *
@@ -24,7 +22,7 @@ interface EngagementServiceInterface
      */
     public function getArticleStatsByIds(array $articleIds): array;
 
-    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, bool $isLoggedUser): bool;
+    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, ?int $viewerUserId): bool;
 
-    public function getSingleArticleEngagementSummary(int $entityId, ObjectTemplateType $objectType, ArticleIncludeOptionsDTO $includeOptions, bool $isLoggedUser): EngagementSummary;
+    public function getSingleArticleEngagementSummary(int $entityId, ObjectTemplateType $objectType, ArticleIncludeOptionsDTO $includeOptions, ?int $viewerUserId): EngagementSummary;
 }

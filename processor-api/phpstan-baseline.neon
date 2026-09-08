@@ -1540,12 +1540,6 @@ parameters:
 			path: app/Http/v1/Comments/Resources/CommentResource.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Http/v1/Engagement/Resources/LikeResource.php
-
-		-
 			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:currentPage\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -1755,7 +1749,7 @@ parameters:
 		-
 			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Catalogue model\.$#'
 			identifier: larastan.relationExistence
-			count: 4
+			count: 5
 			path: app/Infrastructure/Persistence/Repositories/CatalogueRepository.php
 
 		-

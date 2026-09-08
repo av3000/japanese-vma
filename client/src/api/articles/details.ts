@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { articleShow } from '@/api/generated/article/article';
+import { articleShow, getArticleShowQueryKey } from '@/api/generated/article/article';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import '@/shared/constants';
 import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
@@ -18,9 +18,19 @@ export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => 
 	formattedDate: new Date(data.created_at).toLocaleDateString(),
 });
 
+/**
+ * Single source for the article detail cache key.
+ *
+ * Everything that reads or reconciles a single article - the detail query, the like
+ * mutation, the processing-status subscription, the edit modal and the moderation
+ * status mutation - must go through here so no handwritten key can drift away from
+ * the generated transport.
+ */
+export const getArticleDetailQueryKey = (uuid: string) => getArticleShowQueryKey(uuid);
+
 export const useArticleQuery = (uuid: string | undefined) => {
 	return useQuery({
-		queryKey: ['article', uuid],
+		queryKey: getArticleDetailQueryKey(uuid as string),
 		queryFn: async () => {
 			return articleShow(uuid as string);
 		},
@@ -42,7 +52,7 @@ export const useLikeArticleMutation = (articleUuid: string) => {
 			}),
 
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
+			queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(articleUuid) });
 		},
 
 		onError: (err) => {

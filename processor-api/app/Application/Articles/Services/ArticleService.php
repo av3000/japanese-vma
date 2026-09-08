@@ -155,7 +155,7 @@ class ArticleService implements ArticleServiceInterface
             $article->getIdValue(),
             ObjectTemplateType::ARTICLE,
             $dto,
-            $authenticatedUser !== null,
+            $authenticatedUser?->id->value(),
         );
 
         $hashtags = $this->hashtagService->getHashtags(

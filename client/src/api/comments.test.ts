@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { commentStore } from '@/api/generated/comment/comment';
+import { CommentResourceEntityType } from '@/api/generated/model/commentResourceEntityType';
 import axios from '@/services/axios';
 import { addComment, fetchComments } from './comments';
 
@@ -21,8 +22,9 @@ describe('comments api', () => {
 	it('posts comments to the generic v1 comment endpoint for articles', async () => {
 		const createdComment = {
 			id: 1,
+			uuid: 'c1d7e9f0-1b2a-4c3d-8e4f-5a6b7c8d9e01',
 			entity_uuid: '0fb383ad-e203-43f3-9c15-a34bd1ad1a46',
-			entity_type: 'article',
+			entity_type: CommentResourceEntityType.article,
 			author_name: 'Alana',
 			author_id: 7,
 			content: 'hello',
@@ -52,8 +54,9 @@ describe('comments api', () => {
 	it('posts comments to the generic v1 comment endpoint for catalogues', async () => {
 		const createdComment = {
 			id: 2,
+			uuid: 'c1d7e9f0-1b2a-4c3d-8e4f-5a6b7c8d9e02',
 			entity_uuid: '57b661a6-85c5-4369-bb08-3896cc03e853',
-			entity_type: 'list',
+			entity_type: CommentResourceEntityType.list,
 			author_name: 'Alana',
 			author_id: 7,
 			content: 'hi',
@@ -86,7 +89,7 @@ describe('comments api', () => {
 				{
 					id: 3,
 					entity_uuid: '57b661a6-85c5-4369-bb08-3896cc03e853',
-					entity_type: 'list',
+					entity_type: CommentResourceEntityType.list,
 					author_name: 'Alana',
 					author_id: 7,
 					content: 'direct list comment',

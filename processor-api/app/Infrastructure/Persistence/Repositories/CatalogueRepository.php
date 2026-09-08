@@ -88,10 +88,11 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
      * Performs a lightweight query returning only the ID column.
      * Useful when you need the integer ID for operations but only have the public UUID.
      *
-     * @param  EntityId  $entityUuid  The catalogue's public UUID
-     * @return int|null The catalogue's integer ID, or null if UUID not found
+     * @param EntityId $entityUuid The catalogue's public UUID
      *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return int|null The catalogue's integer ID, or null if UUID not found
      */
     public function getIdByUuid(EntityId $entityUuid): ?int
     {
@@ -162,6 +163,13 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         $entity = Catalogue::with(['user'])
             ->where('uuid', $uuid->value())
             ->first();
+
+        return $entity ? $this->catalogueMapper->mapToDomain($entity) : null;
+    }
+
+    public function findById(int $id): ?DomainCatalogue
+    {
+        $entity = Catalogue::with(['user'])->find($id);
 
         return $entity ? $this->catalogueMapper->mapToDomain($entity) : null;
     }

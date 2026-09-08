@@ -13,8 +13,6 @@ use App\Domain\Engagement\DTOs\EngagementSummary;
 use App\Domain\Engagement\DTOs\LikeFilterDTO;
 use App\Domain\Engagement\DTOs\ViewFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Infrastructure\Persistence\Models\Like as PersistenceLike;
-use App\Infrastructure\Persistence\Repositories\LikeMapper;
 
 class EngagementService implements EngagementServiceInterface
 {
@@ -23,8 +21,6 @@ class EngagementService implements EngagementServiceInterface
         private ViewRepositoryInterface $viewRepository,
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
-        // TOOD: should be removed after toggleLike method will go through likeRepository
-        private LikeMapper $likeMapper
     ) {
     }
 
@@ -32,14 +28,14 @@ class EngagementService implements EngagementServiceInterface
         int $entityId,
         ObjectTemplateType $objectType,
         ArticleIncludeOptionsDTO $includeOptions,
-        bool $isLoggedUser
+        ?int $viewerUserId
     ): EngagementSummary {
         $likesCount = $this->likeRepository->countByFilter(new LikeFilterDTO(
             entityId: $entityId,
             objectType: $objectType
         ));
 
-        $isLiked = $this->isEntityLikedByViewer($entityId, $objectType, $isLoggedUser);
+        $isLiked = $this->isEntityLikedByViewer($entityId, $objectType, $viewerUserId);
 
         $viewsCount = $this->viewRepository->countByFilter(new ViewFilterDTO(
             entityId: $entityId,
@@ -59,15 +55,16 @@ class EngagementService implements EngagementServiceInterface
         );
     }
 
-    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, bool $isLoggedUser): bool
+    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, ?int $viewerUserId): bool
     {
-        if (! $isLoggedUser) {
+        if ($viewerUserId === null) {
             return false;
         }
 
         return $this->likeRepository->userLikedByFilter(new LikeFilterDTO(
             entityId: $entityId,
-            objectType: $objectType
+            objectType: $objectType,
+            userId: $viewerUserId
         ));
     }
 
@@ -100,33 +97,5 @@ class EngagementService implements EngagementServiceInterface
         }
 
         return $statsMap;
-    }
-
-    // TODO: use LikeRepository to query DB instead of leaking persistence model to service and controller layers.
-    // TODO: Add return type DomainLike | false
-    public function toggleLike(int $userId, int $entityId, ObjectTemplateType $type)
-    {
-        $like = PersistenceLike::where([
-            'user_id' => $userId,
-            'real_object_id' => $entityId,
-            'template_id' => $type->getLegacyId(),
-        ])->first();
-
-        if (! $like) {
-            $like = new PersistenceLike();
-            $like->user_id = $userId;
-            $like->template_id = $type->getLegacyId();
-            $like->real_object_id = $entityId;
-            $like->value = 1;
-            $like->save();
-            $like->load('user:id,uuid,name');
-            $mappedDomainLike = $this->likeMapper->mapToDomain($like);
-
-            return $mappedDomainLike;
-        }
-
-        $like->delete();
-
-        return null;
     }
 }

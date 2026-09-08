@@ -30,8 +30,13 @@ export const CATALOGUE_ROUTES = {
 	legacyEdit: (catalogueId: string) => `/list/edit/${catalogueId}`,
 } as const;
 
-const CATALOGUE_UUID_PATTERN =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const CATALOGUE_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Mirrors the `[1-9][0-9]{0,17}` route constraint on `GET /catalogues/legacy/{id}`
+// (processor-api/routes/api_v1.php), so an id the backend would answer with a bare
+// 404 never leaves the client. `Number.isSafeInteger` covers the tail of that range
+// the pattern allows but JavaScript cannot represent without rounding.
+const CATALOGUE_LEGACY_ID_PATTERN = /^[1-9][0-9]{0,17}$/;
 
 export const isCustomCatalogueType = (value: number): value is CustomCatalogueType => {
 	return Object.prototype.hasOwnProperty.call(CATALOGUE_TYPE_LABELS, value);
@@ -57,4 +62,14 @@ export const isCataloguePdfExportSupported = (value: number) => resolveCatalogue
 
 export const isCatalogueRouteUuid = (value: string) => {
 	return CATALOGUE_UUID_PATTERN.test(value);
+};
+
+export const parseCatalogueLegacyId = (value: string | undefined): number | null => {
+	if (!value || !CATALOGUE_LEGACY_ID_PATTERN.test(value)) {
+		return null;
+	}
+
+	const legacyId = Number(value);
+
+	return Number.isSafeInteger(legacyId) ? legacyId : null;
 };

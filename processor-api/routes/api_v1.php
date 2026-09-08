@@ -6,6 +6,7 @@ use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
+use App\Http\v1\Community\Posts\Controllers\PostController;
 use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
@@ -38,6 +39,25 @@ Route::prefix('v1')->group(function () {
     });
 
     // ============================================
+    // CATALOGUE LEGACY ID RESOLUTION
+    // ============================================
+    // Registered before the public routes on purpose. `catalogues/{uuid}` (at
+    // the bottom of this file) carries a `whereUuid` constraint for the same
+    // reason: without it, `catalogues/legacy` matches CatalogueController@show
+    // with a uuid of "legacy", EntityId::from() throws InvalidArgumentException,
+    // and app/Exceptions/Handler.php does not map it - a 500, not a 404.
+    // Guarded by tests/Feature/Catalogues/CatalogueLegacyIdentityV1Test.php
+    // ::test_legacy_segment_is_not_consumed_as_a_catalogue_uuid
+    //
+    // The constraint is the only validation this endpoint needs: 1 to 18 digits
+    // with no leading zero. That excludes 0, `007`, and anything long enough to
+    // clamp to PHP_INT_MAX when cast, and it keeps the whole error vocabulary at
+    // a single 404 - a validation error here would tell a caller more about an
+    // id than the 404 for a private catalogue does.
+    Route::get('catalogues/legacy/{id}', [CatalogueController::class, 'resolveLegacyId'])
+        ->where('id', '[1-9][0-9]{0,17}');
+
+    // ============================================
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
 
@@ -48,7 +68,8 @@ Route::prefix('v1')->group(function () {
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
-    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments']);
+    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments'])
+        ->whereUuid('uuid');
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -68,6 +89,11 @@ Route::prefix('v1')->group(function () {
     // Sentences
     Route::get('sentences', [SentenceController::class, 'index']);
     Route::get('sentences/{identifier}', [SentenceController::class, 'show']);
+
+    // Community Posts - Public Read Access
+    // `identifier` is a UUID (canonical) or, transitionally, a positive legacy id.
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{identifier}', [PostController::class, 'show']);
 
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
@@ -103,15 +129,36 @@ Route::prefix('v1')->group(function () {
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
         Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
-        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
-        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
-        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
-        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
-        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf']);
-        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf']);
+        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem'])
+            ->whereUuid('uuid');
+        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf'])
+            ->whereUuid('uuid');
+
+        // Community Posts - Authenticated Actions
+        // `whereUuid` for the same reason as the catalogues routes: without it a
+        // malformed segment reaches EntityId::from(), which throws
+        // InvalidArgumentException, and app/Exceptions/Handler.php does not map
+        // it - a 500 where the caller should see a 404.
+        Route::post('posts', [PostController::class, 'store']);
+        Route::put('posts/{uuid}', [PostController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('posts/{uuid}', [PostController::class, 'destroy'])
+            ->whereUuid('uuid');
 
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);
+        Route::put('comments/{uuid}', [CommentController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('comments/{uuid}', [CommentController::class, 'destroy'])
+            ->whereUuid('uuid');
 
         // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
@@ -132,8 +179,18 @@ Route::prefix('v1')->group(function () {
 
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);
+
+            // Community Post Moderation
+            // Legacy exposed this twice - an unguarded `post/{id}/toggleLock`
+            // and an admin `post/{id}/togglelock`. v1 keeps one route, and it
+            // takes the desired state rather than toggling.
+            Route::put('posts/{uuid}/lock', [PostController::class, 'lock'])
+                ->whereUuid('uuid');
         });
     });
 
-    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
+    // The constraint keeps non-UUID segments - `legacy` above all - from being
+    // swallowed here and turned into an unmapped InvalidArgumentException.
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show'])
+        ->whereUuid('uuid');
 });

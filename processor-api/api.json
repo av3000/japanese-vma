@@ -826,6 +826,38 @@
                 }
             }
         },
+        "/catalogues/legacy/{id}": {
+            "get": {
+                "operationId": "catalogue.resolveLegacyId",
+                "description": "Deliberately lean: no view is recorded and no detail payload is\nassembled. A catalogue the viewer may not see is reported as missing\nrather than forbidden, so the response cannot confirm that a private\ncatalogue exists.\n\nThe route constraint guarantees `$id` is a positive in-range integer.",
+                "summary": "Resolve a legacy numeric catalogue id to its canonical UUID identity",
+                "tags": [
+                    "Catalogue"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CatalogueLegacyIdentityResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CatalogueLegacyIdentityResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/catalogues": {
             "get": {
                 "operationId": "catalogue.index",
@@ -1464,11 +1496,18 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/NotFoundHttpException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "description": "Article not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1546,11 +1585,18 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/NotFoundHttpException"
-                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "description": "Catalogue not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1594,6 +1640,143 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/CommentResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Commented entity not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/{uuid}": {
+            "put": {
+                "operationId": "comment.update",
+                "tags": [
+                    "Comment"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCommentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CommentResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CommentResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Only the comment author may edit it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "comment.destroy",
+                "tags": [
+                    "Comment"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "204": {
+                        "description": "Comment and every reply beneath it were deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Only the comment author or an admin may delete it",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Comment not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -1993,6 +2176,8 @@
         "/like-instance": {
             "post": {
                 "operationId": "like.likeInstance",
+                "description": "Idempotent per direction: the response always states the resulting state rather\nthan the transition, so a repeated request cannot leave the caller guessing.",
+                "summary": "Toggle the authenticated user's like on an Article, Catalogue, Post, or Comment",
                 "tags": [
                     "Like"
                 ],
@@ -2008,11 +2193,315 @@
                 },
                 "responses": {
                     "200": {
+                        "description": "`LikeToggleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LikeToggleResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/posts": {
+            "get": {
+                "operationId": "post.index",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 50
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "hashtag",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "topic",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PostTopic"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/PostSort"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PostListResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostListResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "post.store",
+                "tags": [
+                    "Post"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "201": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{identifier}": {
+            "get": {
+                "operationId": "post.show",
+                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\nPost during migration; the response always carries the UUID",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{uuid}": {
+            "put": {
+                "operationId": "post.update",
+                "summary": "Owner-only. Admins moderate a Post by locking or deleting it, not by\nediting another author's words",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "post.destroy",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "204": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/{uuid}/lock": {
+            "put": {
+                "operationId": "post.lock",
+                "summary": "Admin-only and idempotent: the body carries the desired state, so a\nretry cannot flip a Post back the way the legacy toggle could",
+                "tags": [
+                    "Post"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LockPostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PostLockResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostLockResource"
                                 }
                             }
                         }
@@ -2474,55 +2963,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`SentenceResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "uuid": {
-                                            "type": "string"
-                                        },
-                                        "user_id": {
-                                            "type": [
-                                                "integer",
-                                                "null"
-                                            ]
-                                        },
-                                        "tatoeba_entry": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "content": {
-                                            "type": "string"
-                                        },
-                                        "kanjis": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/KanjiResource"
-                                            }
-                                        },
-                                        "words": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/WordResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "uuid",
-                                        "user_id",
-                                        "tatoeba_entry",
-                                        "content",
-                                        "kanjis",
-                                        "words"
-                                    ]
+                                    "$ref": "#/components/schemas/SentenceResource"
                                 }
                             }
                         }
@@ -4454,6 +4899,22 @@
                 ],
                 "title": "CatalogueDetailResource"
             },
+            "CatalogueLegacyIdentityResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid"
+                ],
+                "title": "CatalogueLegacyIdentityResource"
+            },
             "CatalogueListResource": {
                 "type": "object",
                 "properties": {
@@ -4584,14 +5045,35 @@
                     "id": {
                         "type": "integer"
                     },
-                    "entity_uuid": {
+                    "uuid": {
                         "type": "string"
+                    },
+                    "entity_uuid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "entity_type": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "article",
+                            "artist",
+                            "lyric",
+                            "radical",
+                            "kanji",
+                            "word",
+                            "sentence",
+                            "list",
+                            "post",
+                            "comment"
+                        ]
                     },
                     "author_name": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "author_id": {
                         "type": "integer"
@@ -4629,6 +5111,7 @@
                 },
                 "required": [
                     "id",
+                    "uuid",
                     "entity_uuid",
                     "entity_type",
                     "author_name",
@@ -5213,10 +5696,12 @@
                 "type": "object",
                 "properties": {
                     "template_id": {
-                        "type": "integer"
+                        "description": "The likeable subset of ObjectTemplateType.",
+                        "$ref": "#/components/schemas/LikeTargetType"
                     },
                     "real_object_id": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1
                     }
                 },
                 "required": [
@@ -5224,6 +5709,46 @@
                     "real_object_id"
                 ],
                 "title": "LikeInstanceRequest"
+            },
+            "LikeTargetType": {
+                "type": "integer",
+                "description": "The object templates that can be liked, as their legacy `template_id`.\n",
+                "enum": [
+                    1,
+                    8,
+                    9,
+                    10
+                ],
+                "title": "LikeTargetType"
+            },
+            "LikeToggleResource": {
+                "type": "object",
+                "properties": {
+                    "is_liked": {
+                        "type": "boolean"
+                    },
+                    "likes_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "is_liked",
+                    "likes_count"
+                ],
+                "title": "LikeToggleResource"
+            },
+            "LockPostRequest": {
+                "type": "object",
+                "description": "Explicit lock state rather than the legacy toggle.\n\nLegacy exposed the same toggle twice (`post/{id}/toggleLock` unguarded, and an\nadmin-guarded `post/{id}/togglelock`); a retried toggle silently flips the Post\nback. Sending the desired state makes the endpoint idempotent and lets the\nclient render the control from data instead of inferring it.",
+                "properties": {
+                    "locked": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "locked"
+                ],
+                "title": "LockPostRequest"
             },
             "LoginRequest": {
                 "type": "object",
@@ -5285,6 +5810,188 @@
                     "has_more"
                 ],
                 "title": "PaginationResource"
+            },
+            "PostDetailResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "entity_type_uuid": {
+                        "type": "string",
+                        "description": "posts.entity_type_uuid is nullable and was never backfilled;\nthe canonical value comes from the enum."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "topic": {
+                        "type": "integer"
+                    },
+                    "topic_label": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/AuthorResource"
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "engagement": {
+                        "$ref": "#/components/schemas/EngagementStatsSummaryResource"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "entity_type_uuid",
+                    "title",
+                    "topic",
+                    "topic_label",
+                    "locked",
+                    "content",
+                    "author",
+                    "hashtags",
+                    "engagement",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PostDetailResource"
+            },
+            "PostListItemResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "entity_type_uuid": {
+                        "type": "string",
+                        "description": "posts.entity_type_uuid is nullable and was never backfilled;\nthe canonical value comes from the enum."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "topic": {
+                        "type": "integer"
+                    },
+                    "topic_label": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/AuthorResource"
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/HashtagResource"
+                        }
+                    },
+                    "engagement": {
+                        "$ref": "#/components/schemas/EngagementStatsSummaryResource"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "entity_type_uuid",
+                    "title",
+                    "topic",
+                    "topic_label",
+                    "locked",
+                    "author",
+                    "hashtags",
+                    "engagement",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PostListItemResource"
+            },
+            "PostListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PostListItemResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "PostListResource"
+            },
+            "PostLockResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "locked"
+                ],
+                "title": "PostLockResource"
+            },
+            "PostSort": {
+                "type": "string",
+                "description": "Closed sort vocabulary for public Post reads. Callers never pass a raw column or direction; `newest` and `popular` are the only orderings the v1 contract exposes.\n",
+                "enum": [
+                    "newest",
+                    "popular"
+                ],
+                "title": "PostSort"
+            },
+            "PostTopic": {
+                "type": "integer",
+                "description": "Canonical Post topic vocabulary. The persisted `posts.type` column stores these codes as strings. The legacy read paths (PostController::index/show/getPostImpressionsSearch) label code 6 as \"Announcement\" and never label code 7; the canonical mapping below comes from the write/filter vocabulary in PostController::getPostTypes() and is the single source of truth for v1.\n",
+                "enum": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ],
+                "title": "PostTopic"
             },
             "ProcessingStatusResource": {
                 "type": "object",
@@ -5377,23 +6084,31 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "uuid": {
                         "type": "string"
                     },
                     "user_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "tatoeba_entry": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "content": {
                         "type": "string"
                     },
                     "kanjis": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
                     },
                     "words": {
                         "type": "array",
@@ -5555,6 +6270,51 @@
                 ],
                 "title": "StoreCommentRequest"
             },
+            "StorePostRequest": {
+                "type": "object",
+                "description": "Title and content bounds match the legacy PostStoreRequest so existing drafts\nstay acceptable. `topic` replaces the legacy unvalidated `type`, which let any\nvalue reach the column and produced Posts the canonical mapping cannot label.",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 15000
+                    },
+                    "topic": {
+                        "type": "integer",
+                        "enum": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7"
+                        ]
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "maxItems": 10
+                    }
+                },
+                "required": [
+                    "title",
+                    "content",
+                    "topic"
+                ],
+                "title": "StorePostRequest"
+            },
             "StoreSentenceRequest": {
                 "type": "object",
                 "properties": {
@@ -5659,6 +6419,58 @@
                 },
                 "title": "UpdateCatalogueRequest"
             },
+            "UpdateCommentRequest": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "content"
+                ],
+                "title": "UpdateCommentRequest"
+            },
+            "UpdatePostRequest": {
+                "type": "object",
+                "description": "Partial update, matching the legacy `isset()` behaviour: any subset of the\nfields may be sent and the rest are left alone. An empty body is rejected\nrather than silently touching nothing.",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 255
+                    },
+                    "content": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 15000
+                    },
+                    "topic": {
+                        "type": "integer",
+                        "enum": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7"
+                        ]
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "`sometimes` rather than `nullable`: sending `tags: []` clears every\ntag, so the empty array has to survive validation as a real value.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 50
+                        },
+                        "maxItems": 10
+                    }
+                },
+                "title": "UpdatePostRequest"
+            },
             "UpdateSentenceRequest": {
                 "type": "object",
                 "properties": {
@@ -5684,119 +6496,6 @@
                     "uuid"
                 ],
                 "title": "UuidCreatedResource"
-            },
-            "WordResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "uuid": {
-                        "type": "string"
-                    },
-                    "word": {
-                        "type": "string"
-                    },
-                    "furigana": {
-                        "type": "string"
-                    },
-                    "jlpt": {
-                        "type": "string"
-                    },
-                    "meaning": {
-                        "type": "string"
-                    },
-                    "meanings": {
-                        "type": "string"
-                    },
-                    "word_types": {
-                        "type": "string"
-                    },
-                    "writing_elements": {
-                        "type": "string"
-                    },
-                    "reading_elements": {
-                        "type": "string"
-                    },
-                    "word_type": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "word_k_ele": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "furigana_r_ele": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "sense": {
-                        "type": "string"
-                    },
-                    "viewer_catalogue_state": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "is_saved": {
-                                "type": "string"
-                            },
-                            "is_known": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "is_saved",
-                            "is_known"
-                        ]
-                    }
-                },
-                "required": [
-                    "id",
-                    "uuid",
-                    "word",
-                    "furigana",
-                    "jlpt",
-                    "meaning",
-                    "meanings",
-                    "word_types",
-                    "writing_elements",
-                    "reading_elements",
-                    "word_type",
-                    "word_k_ele",
-                    "furigana_r_ele",
-                    "sense",
-                    "viewer_catalogue_state"
-                ],
-                "title": "WordResource"
             }
         },
         "responses": {
@@ -5851,25 +6550,6 @@
             },
             "AuthorizationException": {
                 "description": "Authorization error",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
-            "NotFoundHttpException": {
-                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {

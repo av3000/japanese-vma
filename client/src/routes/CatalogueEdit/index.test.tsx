@@ -1,8 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { catalogueResolveLegacyId, useCatalogueShow } from '@/api/generated/catalogue/catalogue';
 import CatalogueEditPage from './index';
-import { useCatalogueShow } from '@/api/generated/catalogue/catalogue';
-import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
 
 const useParamsMock = vi.fn();
 const useNavigateMock = vi.fn();
@@ -32,16 +31,7 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	return {
 		...actual,
 		useCatalogueShow: vi.fn(),
-	};
-});
-
-vi.mock('@/api/catalogues/legacyCatalogues', async () => {
-	const actual = await vi.importActual<typeof import('@/api/catalogues/legacyCatalogues')>(
-		'@/api/catalogues/legacyCatalogues',
-	);
-	return {
-		...actual,
-		resolveLegacyCatalogueIdentity: vi.fn(),
+		catalogueResolveLegacyId: vi.fn(),
 	};
 });
 
@@ -54,12 +44,10 @@ describe('CatalogueEditPage', () => {
 		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
 		vi.mocked(useCatalogueShow).mockReturnValue({
 			data: {
-				catalogue: {
-					title: 'My catalogue',
-					type: 5,
-					publicity: 1,
-					hashtags: [],
-				},
+				title: 'My catalogue',
+				type: 5,
+				publicity: 1,
+				hashtags: [],
 			},
 			isPending: false,
 			isError: false,
@@ -71,6 +59,6 @@ describe('CatalogueEditPage', () => {
 		expect(useCatalogueShow).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', {
 			query: { enabled: true },
 		});
-		expect(resolveLegacyCatalogueIdentity).not.toHaveBeenCalled();
+		expect(catalogueResolveLegacyId).not.toHaveBeenCalled();
 	});
 });

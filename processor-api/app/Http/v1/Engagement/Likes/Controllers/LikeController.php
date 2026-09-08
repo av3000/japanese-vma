@@ -1,41 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\v1\Engagement\Likes\Controllers;
 
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-
+use App\Application\Engagement\Actions\ToggleLikeAction;
+use App\Domain\Users\Errors\UserErrors;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Engagement\Likes\Requests\LikeInstanceRequest;
-use App\Http\v1\Engagement\Resources\LikeResource;
+use App\Http\v1\Engagement\Resources\LikeToggleResource;
 use App\Shared\Http\TypedResults;
-use Illuminate\Auth\AuthenticationException;
+use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class LikeController extends Controller
 {
     public function __construct(
-        // TODO: use interface for commentService
-        private EngagementServiceInterface $engagementService,
-        private CurrentUserProviderInterface $currentUserProvider,
+        private readonly ToggleLikeAction $toggleLike,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
     ) {
     }
 
-    // TODO: look at getCommentsForEntity in CommentController for managing the ObjectTypeId validation for consistency
-    public function likeInstance(LikeInstanceRequest $request)
+    /**
+     * Toggle the authenticated user's like on an Article, Catalogue, Post, or Comment.
+     *
+     * Idempotent per direction: the response always states the resulting state rather
+     * than the transition, so a repeated request cannot leave the caller guessing.
+     *
+     * @response LikeToggleResource
+     */
+    #[Response(type: 'LikeToggleResource')]
+    public function likeInstance(LikeInstanceRequest $request): JsonResponse|JsonResource
     {
-        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser()
-            ?? throw new AuthenticationException;
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
 
-        $like = $this->engagementService->toggleLike(
-            $authenticatedUser->id->value(),
-            $request->get('real_object_id'),
-            $request->getObjectType()
-        );
+        if ($authenticatedUser === null) {
+            return TypedResults::fromError(UserErrors::notAuthenticated());
+        }
 
-        return TypedResults::ok([
-            'success' => true,
-            'like' => (bool) $like,
-            'likeValues' => $like ? new LikeResource($like) : null,
-        ]);
+        $result = $this->toggleLike->execute($request->toDTO($authenticatedUser->id));
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return new LikeToggleResource($result->getData());
     }
 }
