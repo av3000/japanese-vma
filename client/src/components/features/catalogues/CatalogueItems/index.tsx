@@ -1,11 +1,11 @@
 import { CatalogueArticleItem } from '@/api/catalogues/catalogues';
-import ListArticlesList from '@/components/features/SavedList/SavedLists/SavedArticlesList';
-import ListKanjisList from '@/components/features/SavedList/SavedLists/SavedKanjisList';
-import ListRadicalList from '@/components/features/SavedList/SavedLists/SavedRadicalList';
-import ListSentencesList from '@/components/features/SavedList/SavedLists/SavedSentencesList';
-import ListWordsList from '@/components/features/SavedList/SavedLists/SavedWordsList';
 import { ObjectTemplates } from '@/shared/constants';
 import type { User } from '@/types';
+import CatalogueArticleItems from './CatalogueArticleItems';
+import CatalogueKanjiItems from './CatalogueKanjiItems';
+import CatalogueRadicalItems from './CatalogueRadicalItems';
+import CatalogueSentenceItems from './CatalogueSentenceItems';
+import CatalogueWordItems from './CatalogueWordItems';
 
 interface CatalogueItemsProps {
 	// TODO: replace `unknown[]` with a backend/Orval-generated catalogue item union once
@@ -37,58 +37,58 @@ export const CatalogueItems = ({
 		case ObjectTemplates.RADICALS:
 			// TODO: add a typed catalogue radical-item boundary type when these items move off the generic path.
 			return (
-				<ListRadicalList
-					editToggle={editMode}
-					listUserId={ownerId}
+				<CatalogueRadicalItems
+					editMode={editMode}
+					ownerId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={compatibleItems}
-					removeFromList={handleRemoveItem}
+					items={compatibleItems}
+					onRemoveItem={handleRemoveItem}
 				/>
 			);
 		case ObjectTemplates.KNOWNKANJIS:
 		case ObjectTemplates.KANJIS:
 			// TODO: add a typed catalogue kanji-item boundary type when these items move off the generic path.
 			return (
-				<ListKanjisList
-					editToggle={editMode}
-					listUserId={ownerId}
+				<CatalogueKanjiItems
+					editMode={editMode}
+					ownerId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={compatibleItems}
-					removeFromList={handleRemoveItem}
+					items={compatibleItems}
+					onRemoveItem={handleRemoveItem}
 				/>
 			);
 		case ObjectTemplates.KNOWNWORDS:
 		case ObjectTemplates.WORDS:
 			// TODO: add a typed catalogue word-item boundary type when these items move off the generic path.
 			return (
-				<ListWordsList
-					editToggle={editMode}
-					listUserId={ownerId}
+				<CatalogueWordItems
+					editMode={editMode}
+					ownerId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={compatibleItems}
-					removeFromList={handleRemoveItem}
+					items={compatibleItems}
+					onRemoveItem={handleRemoveItem}
 				/>
 			);
 		case ObjectTemplates.KNOWNSENTENCES:
 		case ObjectTemplates.SENTENCES:
 			// TODO: add a typed catalogue sentence-item boundary type when these items move off the generic path.
 			return (
-				<ListSentencesList
-					editToggle={editMode}
-					listUserId={ownerId}
+				<CatalogueSentenceItems
+					editMode={editMode}
+					ownerId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={compatibleItems}
-					removeFromList={handleRemoveItem}
+					items={compatibleItems}
+					onRemoveItem={handleRemoveItem}
 				/>
 			);
 		case ObjectTemplates.ARTICLES:
 			return (
-				<ListArticlesList
+				<CatalogueArticleItems
 					editMode={editMode}
-					listUserId={ownerId}
+					ownerId={ownerId}
 					currentUser={compatibleCurrentUser}
-					objects={items as CatalogueArticleItem[]}
-					removeFromList={handleRemoveItem}
+					items={items as CatalogueArticleItem[]}
+					onRemoveItem={handleRemoveItem}
 				/>
 			);
 		default:

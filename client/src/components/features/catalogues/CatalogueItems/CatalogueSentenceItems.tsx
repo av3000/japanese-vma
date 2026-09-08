@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { User } from '@/types';
-import sharedStyles from '../SharedListStyles.module.scss';
+import sharedStyles from './CatalogueItems.module.scss';
 
 interface Sentence {
 	id: string | number;
@@ -12,20 +12,20 @@ interface Sentence {
 	tatoeba_entry?: string | number;
 }
 
-interface SavedSentencesListProps {
-	objects: Sentence[];
-	removeFromList: (id: string | number) => void;
+interface CatalogueSentenceItemsProps {
+	items: Sentence[];
+	onRemoveItem: (id: string | number) => void;
 	currentUser: User;
-	listUserId: string | number;
-	editToggle?: boolean;
+	ownerId: string | number;
+	editMode?: boolean;
 }
 
-const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
-	objects,
-	removeFromList,
+const CatalogueSentenceItems: React.FC<CatalogueSentenceItemsProps> = ({
+	items,
+	onRemoveItem,
 	currentUser,
-	listUserId,
-	editToggle = false,
+	ownerId,
+	editMode = false,
 }) => {
 	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
@@ -35,7 +35,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
 
 	const handleDeleteConfirm = (id: number | string) => {
 		handleDeleteModalClose();
-		removeFromList(id);
+		onRemoveItem(id);
 	};
 
 	const openModal = (modalId: number | string) => {
@@ -44,17 +44,18 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
 
 	return (
 		<div className={classNames(sharedStyles.listContainer, sharedStyles.sentencesContainer)}>
-			{objects.map((sentence) => {
+			{items.map((sentence) => {
 				return (
 					<div key={sentence.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
 							<div className={sharedStyles.detailValue}>{sentence.content}</div>
 
-							{currentUser.id === listUserId && editToggle && (
+							{currentUser.id === ownerId && editMode && (
 								<Button
 									type="button"
 									size="md"
 									variant="danger"
+									aria-label="Remove sentence from catalogue"
 									onClick={() => openModal(sentence.id)}
 									className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
 								>
@@ -98,7 +99,7 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
 				);
 			})}
 
-			{objects.length === 0 && (
+			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>
 					<p>No saved sentences found.</p>
 				</div>
@@ -107,4 +108,4 @@ const SavedSentencesList: React.FC<SavedSentencesListProps> = ({
 	);
 };
 
-export default SavedSentencesList;
+export default CatalogueSentenceItems;

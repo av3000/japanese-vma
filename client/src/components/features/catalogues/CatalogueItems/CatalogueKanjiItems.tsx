@@ -5,7 +5,7 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { User } from '@/types';
-import sharedStyles from '../SharedListStyles.module.scss';
+import sharedStyles from './CatalogueItems.module.scss';
 
 interface Kanji {
 	id: string | number;
@@ -17,20 +17,20 @@ interface Kanji {
 	frequency: string | number;
 }
 
-interface SavedKanjisListProps {
-	objects: Kanji[];
-	removeFromList: (id: string | number) => void;
+interface CatalogueKanjiItemsProps {
+	items: Kanji[];
+	onRemoveItem: (id: string | number) => void;
 	currentUser: User;
-	listUserId: string | number;
-	editToggle?: boolean;
+	ownerId: string | number;
+	editMode?: boolean;
 }
 
-const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
-	objects,
-	removeFromList,
+const CatalogueKanjiItems: React.FC<CatalogueKanjiItemsProps> = ({
+	items,
+	onRemoveItem,
 	currentUser,
-	listUserId,
-	editToggle = false,
+	ownerId,
+	editMode = false,
 }) => {
 	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
@@ -40,7 +40,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 
 	const handleDeleteConfirm = (id: number | string) => {
 		handleDeleteModalClose();
-		removeFromList(id);
+		onRemoveItem(id);
 	};
 
 	const openModal = (modalId: number | string) => {
@@ -49,7 +49,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 
 	return (
 		<div className={sharedStyles.listContainer}>
-			{objects.map((kanji) => {
+			{items.map((kanji) => {
 				// Process readings and meanings properly
 				const onyomiList = kanji.onyomi.split('|').slice(0, 3).join(', ');
 				const kunyomiList = kanji.kunyomi.split('|').slice(0, 3).join(', ');
@@ -62,11 +62,12 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 								<Link to={`/kanji/${kanji.id}`}>{kanji.kanji}</Link>
 							</div>
 
-							{currentUser.id === listUserId && editToggle && (
+							{currentUser.id === ownerId && editMode && (
 								<Button
 									type="button"
 									size="md"
 									variant="danger"
+									aria-label="Remove kanji from catalogue"
 									onClick={() => openModal(kanji.id)}
 									className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
 								>
@@ -125,7 +126,7 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 				);
 			})}
 
-			{objects.length === 0 && (
+			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>
 					<p>No saved kanji found.</p>
 				</div>
@@ -134,4 +135,4 @@ const SavedKanjisList: React.FC<SavedKanjisListProps> = ({
 	);
 };
 
-export default SavedKanjisList;
+export default CatalogueKanjiItems;

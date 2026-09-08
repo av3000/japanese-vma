@@ -5,7 +5,7 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { User } from '@/types';
-import sharedStyles from '../SharedListStyles.module.scss';
+import sharedStyles from './CatalogueItems.module.scss';
 
 interface Radical {
 	id: string | number;
@@ -15,20 +15,20 @@ interface Radical {
 	hiragana: string;
 }
 
-interface SavedRadicalsListProps {
-	objects: Radical[];
-	removeFromList: (id: string | number) => void;
+interface CatalogueRadicalItemsProps {
+	items: Radical[];
+	onRemoveItem: (id: string | number) => void;
 	currentUser: User;
-	listUserId: string | number;
-	editToggle?: boolean;
+	ownerId: string | number;
+	editMode?: boolean;
 }
 
-const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
-	objects,
-	removeFromList,
+const CatalogueRadicalItems: React.FC<CatalogueRadicalItemsProps> = ({
+	items,
+	onRemoveItem,
 	currentUser,
-	listUserId,
-	editToggle = false,
+	ownerId,
+	editMode = false,
 }) => {
 	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
@@ -38,7 +38,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
 
 	const handleDeleteConfirm = (id: number | string) => {
 		handleDeleteModalClose();
-		removeFromList(id);
+		onRemoveItem(id);
 	};
 
 	const openModal = (modalId: number | string) => {
@@ -47,7 +47,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
 
 	return (
 		<div className={classNames(sharedStyles.listContainer, sharedStyles.radicalsContainer)}>
-			{objects.map((radical) => {
+			{items.map((radical) => {
 				return (
 					<div key={radical.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
@@ -55,11 +55,12 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
 								<Link to={`/radical/${radical.id}`}>{radical.radical}</Link>
 							</div>
 
-							{currentUser.id === listUserId && editToggle && (
+							{currentUser.id === ownerId && editMode && (
 								<Button
 									type="button"
 									size="md"
 									variant="danger"
+									aria-label="Remove radical from catalogue"
 									onClick={() => openModal(radical.id)}
 									className={classNames(sharedStyles.removeButton, sharedStyles.absolute)}
 								>
@@ -107,7 +108,7 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
 				);
 			})}
 
-			{objects.length === 0 && (
+			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>
 					<p>No saved radicals found.</p>
 				</div>
@@ -116,4 +117,4 @@ const SavedRadicalsList: React.FC<SavedRadicalsListProps> = ({
 	);
 };
 
-export default SavedRadicalsList;
+export default CatalogueRadicalItems;
