@@ -1,172 +1,110 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
-import { Button } from '@/components/shared/Button';
+import { useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { PostTopic } from '@/api/generated/model/postTopic';
+import { POST_ROUTES, isPostTopic, usePostQuery } from '@/api/posts/reads';
+import { canUpdatePost, readPostWriteError, useUpdatePostMutation } from '@/api/posts/writes';
+import { PostForm, type PostFormSubmitMeta, type PostFormValues } from '@/components/features/community/PostForm';
+import { buildPostUpdatePayload } from '@/components/features/community/PostForm/postFormSchema';
+import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { apiCall } from '@/services/api';
-import { hideLoader, showLoader } from '@/store/actions/application';
+import { useAuth } from '@/hooks/useAuth';
 
-class PostEdit extends Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			title: '',
-			content: '',
-			tags: '',
-			type: 1,
-			isLoading: false,
-		};
+const BackToCommunity = () => (
+	<div className="mt-4">
+		<Link to={POST_ROUTES.list} className="tag-link">
+			Back to Community
+		</Link>
+	</div>
+);
 
-		this.handleChange = this.handleChange.bind(this);
+export default function PostEditPage() {
+	const { post_id: routeIdentifier } = useParams<{ post_id: string }>();
+	const navigate = useNavigate();
+	const { user } = useAuth();
+
+	// The detail route seeds this cache entry, so arriving from a Post page costs no extra request.
+	const { data: post, isLoading, isError } = usePostQuery(routeIdentifier);
+
+	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
+	const [status, setStatus] = useState<string | null>(null);
+
+	const initialValues = useMemo<PostFormValues>(
+		() => ({
+			title: post?.title ?? '',
+			content: post?.content ?? '',
+			// A legacy Post can carry a code outside the canonical vocabulary; the form has to open on
+			// a value the select can actually render.
+			topic: post && isPostTopic(post.topic) ? post.topic : PostTopic.NUMBER_1,
+			tags: post?.hashtags.map((hashtag) => hashtag.content) ?? [],
+		}),
+		[post],
+	);
+
+	// The route param may be a transitional numeric id; writes only accept the UUID.
+	const updateMutation = useUpdatePostMutation(post?.uuid ?? '');
+
+	if (isLoading) {
+		return <PageLoading family="form" />;
 	}
 
-	componentWillMount() {
-		this.getPostDetails();
+	if (isError || !post) {
+		return (
+			<div className="container mt-5">
+				<p className="text-danger">Post could not be loaded.</p>
+				<BackToCommunity />
+			</div>
+		);
 	}
 
-	getPostDetails() {
-		this.setState({ isLoading: true });
-		const postId = this.props.match.params.post_id;
-		return apiCall('get', `/api/post/${postId}`)
-			.then((res) => {
-				let tags = '';
-				res.post.hashtags.map((tag) => (tags += tag.content + ' '));
-				this.setState({
-					title: res.post.title,
-					content: res.post.content,
-					type: res.post.type,
-					tags: tags,
-					isLoading: false,
-				});
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
+	// Mirrors `PostPolicy::canUpdate`: editing is owner-only, so an admin viewing this URL is
+	// refused here exactly as the server would refuse the PUT.
+	if (!canUpdatePost(user, post.author.id)) {
+		return (
+			<div className="container mt-5">
+				<p className="text-danger">You do not have permission to edit this post.</p>
+				<BackToCommunity />
+			</div>
+		);
 	}
 
-	handleNewPost = (e) => {
-		e.preventDefault();
+	const handleSubmit = (values: PostFormValues, { dirtyKeys }: PostFormSubmitMeta) => {
+		setStatus(null);
+		setServerErrors(null);
 
-		const body = this.state.content + this.state.title;
-		if (body.length < 4) {
-			this.props.dispatch(showLoader('Fields are not filled properly!'));
-			setTimeout(() => {
-				this.props.dispatch(hideLoader());
-			}, 3000);
+		// `UpdatePostRequest` rejects an empty body. The submit button is already disabled while the
+		// form is pristine; this keeps a stray submit from turning into a 422.
+		if (dirtyKeys.length === 0) {
+			navigate(POST_ROUTES.detail(post.uuid));
 
 			return;
 		}
 
-		this.props.dispatch(showLoader('Creating Post, please wait.', ' It may take a few seconds.'));
+		updateMutation.mutate(buildPostUpdatePayload(values, dirtyKeys), {
+			onSuccess: (updated) => navigate(POST_ROUTES.detail(updated.uuid)),
+			onError: (error) => {
+				const failure = readPostWriteError(error);
 
-		const payload = {
-			title: this.state.title,
-			content: this.state.content,
-			tags: this.state.tags,
-			type: this.state.type,
-		};
-
-		this.postNewPost(payload);
+				setServerErrors(failure.kind === 'validation' ? failure.errors : null);
+				setStatus(failure.message);
+			},
+		});
 	};
 
-	postNewPost(payload) {
-		const postId = this.props.match.params.post_id;
-		return apiCall('put', `/api/post/${postId}`, payload)
-			.then((res) => {
-				this.props.dispatch(hideLoader());
-				this.props.history.push('/community/' + res.updatedPost.id);
-			})
-			.catch((err) => {
-				this.props.dispatch(hideLoader());
-				if (err.title) {
-					return { success: false, err: err.title };
-				} else if (err.content) {
-					return { success: false, err: err.content[0] };
-				} else {
-					console.log(err);
-					return { success: false, err };
-				}
-			});
-	}
-
-	handleChange(e) {
-		this.setState({ [e.target.name]: e.target.value });
-	}
-
-	render() {
-		const { isLoading } = this.state;
-
-		if (isLoading) {
-			return <PageLoading family="form" />;
-		}
-
-		return (
-			<div className="container">
-				<div className="row justify-content-lg-center text-center">
-					<form onSubmit={this.handleNewPost} className="col-12">
-						<label htmlFor="title" className="mt-3">
-							{' '}
-							<h4>Title</h4>{' '}
-						</label>
-						<input
-							placeholder="Post title text"
-							type="text"
-							className="form-control"
-							value={this.state.title}
-							name="title"
-							onChange={this.handleChange}
-						/>
-						<label htmlFor="content" className="mt-3">
-							{' '}
-							<h4>Content</h4>{' '}
-						</label>
-						<textarea
-							placeholder="Post body text"
-							type="text"
-							className="form-control resize-none"
-							value={this.state.content}
-							name="content"
-							onChange={this.handleChange}
-							rows="7"
-						></textarea>
-						<label htmlFor="tags" className="mt-3">
-							{' '}
-							<h4>Add Tags</h4>{' '}
-						</label>
-						<input
-							placeholder="#uimistake #suggestion #howto"
-							type="text"
-							className="form-control"
-							value={this.state.tags}
-							name="tags"
-							onChange={this.handleChange}
-						/>
-						<label htmlFor="type" className="mt-3">
-							Topic
-						</label>
-						<select
-							name="type"
-							value={this.state.type}
-							className="form-control"
-							onChange={this.handleChange}
-						>
-							<option value="1">Content-related</option>
-							<option value="2">Off-topic</option>
-							<option value="3">FAQ</option>
-							<option value="4">Technical</option>
-							<option value="5">Bug</option>
-							<option value="6">Feedback</option>
-							<option value="7">Announcement</option>
-						</select>
-						<Button type="submit" variant="primary">
-							Update Post
-						</Button>
-					</form>
-				</div>
+	return (
+		<div className="container">
+			<BackToCommunity />
+			<h2 className="mt-4">Edit post</h2>
+			<div className="row justify-content-lg-center text-center">
+				<PostForm
+					initialValues={initialValues}
+					onSubmit={handleSubmit}
+					isSubmitting={updateMutation.isPending}
+					submitLabel="Update Post"
+					serverErrors={serverErrors}
+					statusMessage={status}
+					disableSubmitWhenUnchanged
+				/>
 			</div>
-		);
-	}
+		</div>
+	);
 }
-
-export default PostEdit;

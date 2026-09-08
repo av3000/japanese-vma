@@ -1,4 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import type { SentenceResource } from '@/api/generated/model/sentenceResource';
+import type { StoreSentenceRequest } from '@/api/generated/model/storeSentenceRequest';
+import type { UpdateSentenceRequest } from '@/api/generated/model/updateSentenceRequest';
 import {
 	getSentenceIndexQueryKey,
 	getSentenceShowQueryKey,
@@ -6,10 +9,7 @@ import {
 	sentenceStore,
 	sentenceUpdate,
 } from '@/api/generated/sentence/sentence';
-import type { SentenceResource } from '@/api/generated/model/sentenceResource';
-import type { StoreSentenceRequest } from '@/api/generated/model/storeSentenceRequest';
-import type { UpdateSentenceRequest } from '@/api/generated/model/updateSentenceRequest';
-import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
+import { readWriteFailure, type WriteFailure } from '@/api/writeFailure';
 import type { User } from '@/types';
 
 export type SentenceWriteResponse = SentenceResource;
@@ -81,41 +81,10 @@ const asSentenceResource = (response: string | SentenceWriteResponse): SentenceW
 	return response;
 };
 
-export type SentenceWriteFailure =
-	| { kind: 'validation'; message: string; errors: Record<string, string[]> }
-	| { kind: 'unauthenticated' | 'forbidden' | 'notFound' | 'unknown'; message: string };
+export type SentenceWriteFailure = WriteFailure;
 
-type SentenceWriteFailureKind = Exclude<SentenceWriteFailure['kind'], 'validation'>;
-
-const FAILURE_KIND_BY_STATUS: Record<number, SentenceWriteFailureKind> = {
-	401: 'unauthenticated',
-	403: 'forbidden',
-	404: 'notFound',
-};
-
-/**
- * Failures arrive as problem details (`{ title, status, detail }`) from `TypedResults`,
- * or as a validation payload (`{ message, errors }`) from the form request.
- */
-export const readSentenceWriteError = (error: unknown): SentenceWriteFailure => {
-	const data = (error as { response?: { data?: unknown } })?.response?.data;
-
-	if (data && isHttpValidationProblemDetails(data)) {
-		return {
-			kind: 'validation',
-			message: data.title ?? 'Validation failed',
-			errors: data.errors,
-		};
-	}
-
-	const problem = data as { status?: number; title?: string } | undefined;
-	const kind = problem?.status ? (FAILURE_KIND_BY_STATUS[problem.status] ?? 'unknown') : 'unknown';
-
-	return {
-		kind,
-		message: kind === 'unknown' ? GENERIC_SENTENCE_WRITE_ERROR : (problem?.title ?? GENERIC_SENTENCE_WRITE_ERROR),
-	};
-};
+export const readSentenceWriteError = (error: unknown): SentenceWriteFailure =>
+	readWriteFailure(error, GENERIC_SENTENCE_WRITE_ERROR);
 
 export const useCreateSentenceMutation = () => {
 	const queryClient = useQueryClient();

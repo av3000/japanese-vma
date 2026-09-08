@@ -44,7 +44,7 @@ const PostContent: React.FC<PostContentProps> = ({ post }) => {
 
 						<PostOwnerActions
 							postId={post.id}
-							detailIdentifier={post.uuid}
+							uuid={post.uuid}
 							title={post.title}
 							authorId={post.author.id}
 							isLocked={post.locked}
