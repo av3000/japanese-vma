@@ -11,6 +11,7 @@ use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterf
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
+use App\Application\Engagement\Interfaces\Repositories\LikeTargetRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
@@ -28,6 +29,7 @@ use App\Infrastructure\Persistence\Repositories\HashtagRepository;
 use App\Infrastructure\Persistence\Repositories\KanjiRepository;
 use App\Infrastructure\Persistence\Repositories\LastOperationRepository;
 use App\Infrastructure\Persistence\Repositories\LikeRepository;
+use App\Infrastructure\Persistence\Repositories\LikeTargetRepository;
 use App\Infrastructure\Persistence\Repositories\PostRepository;
 use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 use App\Infrastructure\Persistence\Repositories\RoleRepository;
@@ -89,6 +91,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             LikeRepositoryInterface::class,
             LikeRepository::class
+        );
+
+        $this->app->singleton(
+            LikeTargetRepositoryInterface::class,
+            LikeTargetRepository::class
         );
 
         $this->app->singleton(

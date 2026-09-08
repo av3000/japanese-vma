@@ -2,15 +2,16 @@
 
 namespace App\Application\Engagement\Services;
 
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\Models\{Articles};
 use App\Domain\Engagement\DTOs\EngagementSummary;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 
 interface EngagementServiceInterface
 {
-    public function toggleLike(int $userId, int $entityId, ObjectTemplateType $type);
     public function enhanceArticlesWithStatsCounts(Articles $articles): array;
-    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, bool $isLoggedUser): bool;
-    public function getSingleArticleEngagementSummary(int $entityId, ObjectTemplateType $objectType, ArticleIncludeOptionsDTO $includeOptions, bool $isLoggedUser): EngagementSummary;
+
+    public function isEntityLikedByViewer(int $entityId, ObjectTemplateType $objectType, ?int $viewerUserId): bool;
+
+    public function getSingleArticleEngagementSummary(int $entityId, ObjectTemplateType $objectType, ArticleIncludeOptionsDTO $includeOptions, ?int $viewerUserId): EngagementSummary;
 }

@@ -13,9 +13,9 @@ describe('catalogue likes', () => {
 	});
 
 	it('toggles catalogue likes through the shared v1 like-instance endpoint', async () => {
-		vi.mocked(toggleInstanceLike).mockResolvedValue({ success: true, like: true });
+		vi.mocked(toggleInstanceLike).mockResolvedValue({ is_liked: true, likes_count: 1 });
 
-		await expect(toggleCatalogueLike(12)).resolves.toEqual({ success: true, like: true });
+		await expect(toggleCatalogueLike(12)).resolves.toEqual({ is_liked: true, likes_count: 1 });
 		expect(toggleInstanceLike).toHaveBeenCalledWith({
 			objectType: 'List',
 			objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.LIST],

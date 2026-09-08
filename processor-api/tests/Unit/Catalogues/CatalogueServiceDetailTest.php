@@ -86,7 +86,7 @@ class CatalogueServiceDetailTest extends TestCase
 
         $engagementService->expects($this->once())
             ->method('isEntityLikedByViewer')
-            ->with(10, ObjectTemplateType::LIST, true)
+            ->with(10, ObjectTemplateType::LIST, 42)
             ->willReturn(true);
 
         $result = $this->service(
