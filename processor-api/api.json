@@ -2409,55 +2409,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`SentenceResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "uuid": {
-                                            "type": "string"
-                                        },
-                                        "user_id": {
-                                            "type": [
-                                                "integer",
-                                                "null"
-                                            ]
-                                        },
-                                        "tatoeba_entry": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "content": {
-                                            "type": "string"
-                                        },
-                                        "kanjis": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/KanjiResource"
-                                            }
-                                        },
-                                        "words": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/WordResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "uuid",
-                                        "user_id",
-                                        "tatoeba_entry",
-                                        "content",
-                                        "kanjis",
-                                        "words"
-                                    ]
+                                    "$ref": "#/components/schemas/SentenceResource"
                                 }
                             }
                         }
@@ -5208,23 +5164,31 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "uuid": {
                         "type": "string"
                     },
                     "user_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "tatoeba_entry": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "content": {
                         "type": "string"
                     },
                     "kanjis": {
                         "type": "array",
-                        "items": {}
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
                     },
                     "words": {
                         "type": "array",
@@ -5515,119 +5479,6 @@
                     "uuid"
                 ],
                 "title": "UuidCreatedResource"
-            },
-            "WordResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "uuid": {
-                        "type": "string"
-                    },
-                    "word": {
-                        "type": "string"
-                    },
-                    "furigana": {
-                        "type": "string"
-                    },
-                    "jlpt": {
-                        "type": "string"
-                    },
-                    "meaning": {
-                        "type": "string"
-                    },
-                    "meanings": {
-                        "type": "string"
-                    },
-                    "word_types": {
-                        "type": "string"
-                    },
-                    "writing_elements": {
-                        "type": "string"
-                    },
-                    "reading_elements": {
-                        "type": "string"
-                    },
-                    "word_type": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "word_k_ele": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "furigana_r_ele": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "string",
-                                "enum": [
-                                    ""
-                                ]
-                            }
-                        ]
-                    },
-                    "sense": {
-                        "type": "string"
-                    },
-                    "viewer_catalogue_state": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "is_saved": {
-                                "type": "string"
-                            },
-                            "is_known": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "is_saved",
-                            "is_known"
-                        ]
-                    }
-                },
-                "required": [
-                    "id",
-                    "uuid",
-                    "word",
-                    "furigana",
-                    "jlpt",
-                    "meaning",
-                    "meanings",
-                    "word_types",
-                    "writing_elements",
-                    "reading_elements",
-                    "word_type",
-                    "word_k_ele",
-                    "furigana_r_ele",
-                    "sense",
-                    "viewer_catalogue_state"
-                ],
-                "title": "WordResource"
             }
         },
         "responses": {

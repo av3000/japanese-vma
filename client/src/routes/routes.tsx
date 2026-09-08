@@ -44,6 +44,8 @@ const SentencesPage = createLazyRoute(() => import('@/routes/japanese/SentencesL
 const SentenceDetailsPage = createLazyRoute(() => import('@/routes/japanese/SentenceDetails'), {
 	family: 'detail',
 });
+const SentenceCreatePage = createLazyRoute(() => import('@/routes/japanese/SentenceCreate'), { family: 'form' });
+const SentenceEditPage = createLazyRoute(() => import('@/routes/japanese/SentenceEdit'), { family: 'form' });
 
 const CommunityPage = createLazyRoute(() => import('@/routes/community/PostsList'), { family: 'list' });
 const PostDetailsPage = createLazyRoute(() => import('@/routes/community/PostDetails'), { family: 'detail' });
@@ -85,6 +87,8 @@ const AppRoutes: React.FC = () => (
 			<Route path="/catalogues/:catalogueId/edit" element={<CatalogueEditPage />} />
 			<Route path="/newlist" element={<CatalogueLegacyRedirectsPage />} />
 			<Route path="/list/edit/:catalogueId" element={<CatalogueLegacyRedirectsPage />} />
+			<Route path="/sentences/new" element={<SentenceCreatePage />} />
+			<Route path="/sentences/:sentence_id/edit" element={<SentenceEditPage />} />
 			<Route path="/newpost" element={<PostFormPage />} />
 			<Route path="/community/edit/:post_id" element={<PostEditPage />} />
 			<Route path="/dashboard" element={<DashboardPage />} />

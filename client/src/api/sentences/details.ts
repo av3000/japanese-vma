@@ -3,9 +3,9 @@ import {
 	getSentenceShowQueryKey,
 	sentenceShow,
 } from '@/api/generated/sentence/sentence';
-import type { SentenceShow200 } from '@/api/generated/model/sentenceShow200';
+import type { SentenceResource } from '@/api/generated/model/sentenceResource';
 
-export type SentenceDetailResponse = SentenceShow200;
+export type SentenceDetailResponse = SentenceResource;
 
 export type MappedSentenceDetail = Omit<SentenceDetailResponse, 'words'> & {
 	kanjis: SentenceDetailResponse['kanjis'];

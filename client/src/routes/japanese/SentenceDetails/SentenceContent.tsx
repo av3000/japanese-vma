@@ -1,7 +1,14 @@
+import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { canMutateSentence, readSentenceWriteError, useDeleteSentenceMutation } from '@/api/sentences/authoring';
 import type { MappedSentenceDetail } from '@/api/sentences/details';
+import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import { Button } from '@/components/shared/Button';
+import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { useAuth } from '@/hooks/useAuth';
+import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
 
 interface SentenceContentProps {
@@ -9,7 +16,28 @@ interface SentenceContentProps {
 }
 
 const SentenceContent = ({ sentence }: SentenceContentProps) => {
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, user } = useAuth();
+	const navigate = useNavigate();
+
+	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
+	const deleteModal = useModal(deleteDialogRef, { id: 'sentence-delete-modal' });
+
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+
+	const deleteMutation = useDeleteSentenceMutation(sentence);
+
+	// One gate for both controls, so imported sentences stay read-only for admins too.
+	const canMutate = canMutateSentence(user, sentence);
+
+	const handleDelete = () => {
+		setDeleteError(null);
+
+		deleteMutation.mutate(undefined, {
+			onSuccess: () => navigate('/sentences'),
+			// Keep the modal open on failure — the sentence is still there.
+			onError: (error) => setDeleteError(readSentenceWriteError(error).message),
+		});
+	};
 
 	return (
 		<div className="container">
@@ -30,6 +58,23 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 						</p>
 					)}
 				</div>
+				{canMutate && (
+					<div className="d-flex align-items-start">
+						<Button
+							onClick={deleteModal.open}
+							variant="ghost"
+							hasOnlyIcon
+							aria-label="Delete sentence"
+							aria-controls={deleteModal.id}
+							aria-expanded={deleteModal.isOpen}
+						>
+							<Icon name="trashbinSolid" size="md" />
+						</Button>
+						<Link to={`/sentences/${sentence.uuid}/edit`} className="tag-link ml-2">
+							Edit
+						</Link>
+					</div>
+				)}
 				{isAuthenticated && (
 					<AuthorizedBookmarkWidget
 						instanceObjectType={SavedListType.SENTENCES}
@@ -39,6 +84,7 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 					/>
 				)}
 			</div>
+			{deleteError && <div className="row justify-content-center text-danger">{deleteError}</div>}
 			<hr />
 			<h4>Kanjis ({sentence.kanjis.length}) results</h4>
 			<div className="container">
@@ -57,6 +103,13 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 					</div>
 				))}
 			</div>
+
+			<DeleteInstanceModal
+				controller={deleteModal}
+				instanceName={sentence.content}
+				onDelete={handleDelete}
+				isProcessing={deleteMutation.isPending}
+			/>
 		</div>
 	);
 };

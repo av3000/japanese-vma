@@ -1,7 +1,9 @@
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
 import SentenceItem from '@/components/features/japanese/sentence/SentenceItem';
+import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { useAuth } from '@/hooks/useAuth';
 import SearchBarSentences from './SearchBarSentences';
 
 const DEFAULT_PER_PAGE = 10;
@@ -13,6 +15,7 @@ const getSentenceListFilters = (searchParams: URLSearchParams) => {
 };
 
 const SentencesList = () => {
+	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const filters = getSentenceListFilters(searchParams);
 	const keyword = filters.keyword ?? '';
@@ -58,6 +61,14 @@ const SentencesList = () => {
 			<div className="row justify-content-center">
 				<SearchBarSentences defaultKeyword={keyword} onSearch={handleSearch} />
 			</div>
+
+			{isAuthenticated && (
+				<div className="row justify-content-center mt-3">
+					<Link to="/sentences/new" className="tag-link">
+						Create sentence
+					</Link>
+				</div>
+			)}
 
 			<div className="container mt-5">
 				<div className="row justify-content-center">

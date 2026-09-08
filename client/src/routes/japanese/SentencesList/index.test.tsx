@@ -19,6 +19,9 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/api/sentences/hooks/useInfiniteSentences', () => ({ useInfiniteSentences: vi.fn() }));
 
+let isAuthenticated = false;
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated }) }));
+
 const useInfiniteSentencesMock = vi.mocked(useInfiniteSentences);
 const loadedState = {
 	sentences: [{
@@ -39,6 +42,7 @@ const loadedState = {
 describe('SentencesList', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		isAuthenticated = false;
 		searchParams = new URLSearchParams();
 		useInfiniteSentencesMock.mockReturnValue(loadedState);
 	});
@@ -55,12 +59,21 @@ describe('SentencesList', () => {
 		expect(html).not.toContain('Add to List');
 	});
 
+	it('offers the create route only to authenticated viewers', () => {
+		expect(renderToStaticMarkup(<SentencesList />)).not.toContain('/sentences/new');
+
+		isAuthenticated = true;
+		expect(renderToStaticMarkup(<SentencesList />)).toContain('/sentences/new');
+	});
+
 	it('renders loading and failure states distinctly', () => {
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
 			isLoading: true,
 		} as ReturnType<typeof useInfiniteSentences>);
-		expect(renderToStaticMarkup(<SentencesList />)).toContain('Loading...');
+		// Was asserting 'Loading...' and failing on develop before this change:
+		// the route renders <PageLoading family="list" />, whose label is 'Loading page.'.
+		expect(renderToStaticMarkup(<SentencesList />)).toContain('data-loading-family="list"');
 
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
