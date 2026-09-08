@@ -4,6 +4,7 @@ import {
 	CATALOGUE_TYPE_LABELS,
 	isCataloguePdfExportSupported,
 	isCatalogueRouteUuid,
+	parseCatalogueLegacyId,
 	isCustomCatalogueType,
 	resolveCataloguePdfExportKind,
 	resolveCatalogueTypeLabel,
@@ -54,5 +55,27 @@ describe('catalogue constants', () => {
 		expect(isCatalogueRouteUuid('86f593b4-3f77-44fe-8d42-d8e993f7850b')).toBe(true);
 		expect(isCatalogueRouteUuid('42')).toBe(false);
 		expect(isCatalogueRouteUuid('not-a-uuid')).toBe(false);
+	});
+});
+
+describe('parseCatalogueLegacyId', () => {
+	it('accepts the positive in-range ids the legacy resolver route serves', () => {
+		expect(parseCatalogueLegacyId('42')).toBe(42);
+		expect(parseCatalogueLegacyId('1')).toBe(1);
+	});
+
+	it('rejects ids the route constraint excludes', () => {
+		expect(parseCatalogueLegacyId(undefined)).toBeNull();
+		expect(parseCatalogueLegacyId('')).toBeNull();
+		expect(parseCatalogueLegacyId('0')).toBeNull();
+		expect(parseCatalogueLegacyId('007')).toBeNull();
+		expect(parseCatalogueLegacyId('-1')).toBeNull();
+		expect(parseCatalogueLegacyId('4.2')).toBeNull();
+		expect(parseCatalogueLegacyId('not-a-number')).toBeNull();
+		expect(parseCatalogueLegacyId('86f593b4-3f77-44fe-8d42-d8e993f7850b')).toBeNull();
+	});
+
+	it('rejects an in-pattern id JavaScript cannot represent exactly', () => {
+		expect(parseCatalogueLegacyId('999999999999999999')).toBeNull();
 	});
 });

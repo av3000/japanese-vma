@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import CatalogueDetailsPage from './index';
 import { useCatalogueQuery } from '@/api/catalogues/details';
-import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
+import { catalogueResolveLegacyId } from '@/api/generated/catalogue/catalogue';
+import CatalogueDetailsPage from './index';
 
 const useParamsMock = vi.fn();
 
@@ -18,13 +18,13 @@ vi.mock('@/api/catalogues/details', () => ({
 	useCatalogueQuery: vi.fn(),
 }));
 
-vi.mock('@/api/catalogues/legacyCatalogues', async () => {
-	const actual = await vi.importActual<typeof import('@/api/catalogues/legacyCatalogues')>(
-		'@/api/catalogues/legacyCatalogues',
+vi.mock('@/api/generated/catalogue/catalogue', async () => {
+	const actual = await vi.importActual<typeof import('@/api/generated/catalogue/catalogue')>(
+		'@/api/generated/catalogue/catalogue',
 	);
 	return {
 		...actual,
-		resolveLegacyCatalogueIdentity: vi.fn(),
+		catalogueResolveLegacyId: vi.fn(),
 	};
 });
 
@@ -61,6 +61,6 @@ describe('CatalogueDetailsPage', () => {
 
 		expect(html).toContain('My catalogue');
 		expect(useCatalogueQuery).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31');
-		expect(resolveLegacyCatalogueIdentity).not.toHaveBeenCalled();
+		expect(catalogueResolveLegacyId).not.toHaveBeenCalled();
 	});
 });
