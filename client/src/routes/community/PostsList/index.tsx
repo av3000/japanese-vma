@@ -1,245 +1,139 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
-import SearchBar from '@/components/features/SearchBar';
+import { useSearchParams } from 'react-router-dom';
+import {
+	POST_ROUTES,
+	buildPostListSearchParams,
+	parsePostListFilters,
+	useInfinitePosts,
+	type PostListFilterInput,
+} from '@/api/posts/reads';
 import PostItem from '@/components/features/community/PostItem';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { apiCall } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
+import PostsSearchBar from './PostsSearchBar';
 
-export class PostsList extends Component {
-	_isMounted = false;
-	constructor(props) {
-		super(props);
-		this.state = {
-			url: '/api/posts',
-			pagination: [],
-			posts: [],
-			paginateObject: {},
-			searchHeading: '',
-			searchTotal: '',
-			filters: [],
-			isLoading: false,
-		};
+const PostsList = () => {
+	const { isAuthenticated } = useAuth();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const filters = parsePostListFilters(searchParams);
+	const hasActiveFilters = Boolean(filters.keyword || filters.hashtag || filters.topic);
 
-		this.loadMore = this.loadMore.bind(this);
-		this.loadSearchMore = this.loadSearchMore.bind(this);
-		this.fetchQuery = this.fetchQuery.bind(this);
-		this.fetchMoreQuery = this.fetchMoreQuery.bind(this);
-		this.clearSearch = this.clearSearch.bind(this);
+	const { posts, total, error, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
+		useInfinitePosts({ filters });
+
+	const handleSearch = (nextFilters: PostListFilterInput) => {
+		setSearchParams(buildPostListSearchParams(nextFilters));
+	};
+
+	const clearSearch = () => {
+		setSearchParams(new URLSearchParams());
+	};
+
+	// Only the very first load has nothing to show. Filter changes and background refetches keep the
+	// previous page rendered instead of dropping back to this loader.
+	if (isPending && posts.length === 0) {
+		return <PageLoading family="list" />;
 	}
 
-	componentDidMount() {
-		this._isMounted = true;
-		this.fetchPosts(this.state.url);
-	}
-
-	clearSearch() {
-		this.setState({ isLoading: true });
-		return apiCall('get', '/api/posts')
-			.then((res) => {
-				if (this._isMounted) {
-					const newState = Object.assign({}, this.state);
-					newState.paginateObject = res.posts;
-					newState.posts = res.posts.data;
-					newState.url = res.posts.next_page_url;
-
-					newState.searchHeading = '';
-					newState.searchTotal = "results total: '" + res.posts.total + "'";
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	componentWillUnmount() {
-		this._isMounted = false;
-	}
-
-	fetchPosts(givenUrl) {
-		this.setState({ isLoading: true });
-		return apiCall('get', givenUrl)
-			.then((res) => {
-				if (this._isMounted) {
-					const newState = Object.assign({}, this.state);
-					newState.paginateObject = res.posts;
-					newState.posts = [...newState.posts, ...res.posts.data];
-					newState.url = res.posts.next_page_url;
-
-					newState.searchTotal = "results total: '" + res.posts.total + "'";
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	fetchQuery(queryParams) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		newState.filters = queryParams;
-		apiCall('post', '/api/posts/search', newState.filters)
-			.then((res) => {
-				if (res.success === true) {
-					newState.paginateObject = res.posts;
-					newState.posts = res.posts.data ? res.posts.data : newState.posts;
-					newState.url = res.posts.next_page_url;
-
-					newState.searchHeading = res.requestedQuery;
-					newState.searchTotal = "Results total: '" + res.posts.total + "'";
-
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				newState.searchHeading = 'No results for tag: ' + newState.filters.title;
-				newState.isLoading = false;
-				this.setState(newState);
-				console.log(err);
-			});
-	}
-
-	fetchMoreQuery(givenUrl) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		apiCall('post', givenUrl, newState.filters)
-			.then((res) => {
-				newState.paginateObject = res.posts;
-				newState.posts = [...newState.posts, ...res.posts.data];
-				newState.url = res.posts.next_page_url;
-
-				newState.searchHeading = "Requested query: '" + newState.filters.title + "'";
-				newState.searchTotal = "Results total: '" + res.posts.total + "'";
-				newState.isLoading = false;
-				return newState;
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	loadMore() {
-		this.fetchPosts(this.state.pagination.next_page_url);
-	}
-
-	loadSearchMore() {
-		this.fetchMoreQuery(this.state.pagination.next_page_url);
-	}
-
-	makePagination(data) {
-		return {
-			current_page: data.current_page,
-			last_page: data.last_page,
-			next_page_url: data.next_page_url,
-			prev_page_url: data.prev_page_url,
-		};
-	}
-
-	render() {
-		const { posts, isLoading } = this.state;
-
-		if (isLoading) {
-			return <PageLoading family="list" />;
-		}
-
-		const postList = posts.map((w) => {
-			return (
-				<PostItem
-					key={w.id}
-					id={w.id}
-					{...w}
-					date={w.created_at}
-					userId={w.user_id}
-					hashtags={w.hashtags.slice(0, 3)}
-					isLocked={w.locked}
-				/>
-			);
-		});
-
+	if (isError && posts.length === 0) {
 		return (
-			<div className="container mt-3">
+			<div className="container mt-5">
 				<div className="row justify-content-center">
-					<SearchBar fetchQuery={this.fetchQuery} searchType="posts" />
-				</div>
-				<div className="mt-2">
-					<div className="col-10">
-						{this.state.searchHeading ? (
-							<>
-								<Button variant="ghost" onClick={this.clearSearch}>
-									<Icon name="broomSolid" /> Clear search
-								</Button>
-								<br />
-								<h4>{this.state.searchHeading}</h4>
-							</>
-						) : (
-							''
-						)}
-						&nbsp;
-						{this.state.searchTotal ? <h4>{this.state.searchTotal}</h4> : ''}
-					</div>
-					<div className="my-3 p-3 bg-white rounded box-shadow">
-						<hr />
-						<div className="col-lg-12 col-md-10 mx-auto">{postList}</div>
-					</div>
-				</div>
-				<div className="row justify-content-center">
-					{this.state.pagination.last_page === this.state.pagination.current_page ? (
-						'no more results...'
-					) : this.state.url.includes('search') ? (
-						<Button variant="outline" className="w-50" onClick={this.loadSearchMore}>
-							Load More
-						</Button>
-					) : (
-						<Button variant="outline" className="w-50" onClick={this.loadMore}>
-							Load More
-						</Button>
-					)}
+					<p>Posts could not be loaded. {error?.message}</p>
 				</div>
 			</div>
 		);
 	}
-}
+
+	const isBackgroundRefreshing = isFetching && !isFetchingNextPage;
+
+	return (
+		<div className="container mt-3">
+			<div className="row justify-content-center">
+				<PostsSearchBar
+					// Remount the control when the URL changes so its inputs follow back/forward navigation.
+					key={searchParams.toString()}
+					defaults={{
+						keyword: filters.keyword ?? '',
+						topic: filters.topic ? String(filters.topic) : '',
+						sort: filters.sort,
+					}}
+					onSearch={handleSearch}
+				/>
+			</div>
+
+			{isAuthenticated && (
+				<div className="row justify-content-center mt-3">
+					<Link to={POST_ROUTES.create} className="tag-link">
+						Create post
+					</Link>
+				</div>
+			)}
+
+			<div className="mt-2">
+				<div className="col-10">
+					{hasActiveFilters && (
+						<>
+							<Button variant="ghost" onClick={clearSearch}>
+								<Icon name="broomSolid" /> Clear search
+							</Button>
+							<br />
+							{filters.keyword && <h4>Results for: {filters.keyword}</h4>}
+							{filters.hashtag && <h4>Tagged: #{filters.hashtag}</h4>}
+						</>
+					)}
+					<h4>Results total: {total}</h4>
+					{isBackgroundRefreshing && (
+						<p role="status" className="text-muted">
+							Refreshing results...
+						</p>
+					)}
+				</div>
+
+				<div className="my-3 p-3 bg-white rounded box-shadow">
+					<hr />
+					<div className="col-lg-12 col-md-10 mx-auto">
+						{posts.length === 0 ? (
+							<p>No posts found.</p>
+						) : (
+							posts.map((post) => (
+								<PostItem
+									key={post.uuid}
+									detailIdentifier={post.uuid}
+									title={post.title}
+									postType={post.topic_label}
+									userName={post.authorName}
+									date={post.formattedDate}
+									commentsTotal={post.engagementCounts.comments}
+									likesTotal={post.engagementCounts.likes}
+									viewsTotal={post.engagementCounts.views}
+									hashtags={post.hashtags.slice(0, 3)}
+									isLocked={post.locked}
+								/>
+							))
+						)}
+					</div>
+				</div>
+			</div>
+
+			<div className="row justify-content-center">
+				{hasNextPage ? (
+					<Button
+						variant="outline"
+						className="w-50"
+						onClick={() => void fetchNextPage()}
+						disabled={isFetchingNextPage}
+					>
+						{isFetchingNextPage ? 'Loading more...' : 'Load More'}
+					</Button>
+				) : (
+					<span className="text-muted">no more results...</span>
+				)}
+			</div>
+		</div>
+	);
+};
 
 export default PostsList;
