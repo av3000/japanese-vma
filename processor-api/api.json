@@ -1928,6 +1928,8 @@
         "/like-instance": {
             "post": {
                 "operationId": "like.likeInstance",
+                "description": "Idempotent per direction: the response always states the resulting state rather\nthan the transition, so a repeated request cannot leave the caller guessing.",
+                "summary": "Toggle the authenticated user's like on an Article, Catalogue, Post, or Comment",
                 "tags": [
                     "Like"
                 ],
@@ -1943,11 +1945,11 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`LikeToggleResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "$ref": "#/components/schemas/LikeToggleResource"
                                 }
                             }
                         }
@@ -1957,9 +1959,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -2053,7 +2052,7 @@
         "/posts/{identifier}": {
             "get": {
                 "operationId": "post.show",
-                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\r\nPost during migration; the response always carries the UUID",
+                "summary": "Canonical identity is the UUID. A positive legacy integer resolves the same\nPost during migration; the response always carries the UUID",
                 "tags": [
                     "Post"
                 ],
@@ -5117,10 +5116,12 @@
                 "type": "object",
                 "properties": {
                     "template_id": {
-                        "type": "integer"
+                        "description": "The likeable subset of ObjectTemplateType.",
+                        "$ref": "#/components/schemas/LikeTargetType"
                     },
                     "real_object_id": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1
                     }
                 },
                 "required": [
@@ -5128,6 +5129,33 @@
                     "real_object_id"
                 ],
                 "title": "LikeInstanceRequest"
+            },
+            "LikeTargetType": {
+                "type": "integer",
+                "description": "The object templates that can be liked, as their legacy `template_id`.\n",
+                "enum": [
+                    1,
+                    8,
+                    9,
+                    10
+                ],
+                "title": "LikeTargetType"
+            },
+            "LikeToggleResource": {
+                "type": "object",
+                "properties": {
+                    "is_liked": {
+                        "type": "boolean"
+                    },
+                    "likes_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "is_liked",
+                    "likes_count"
+                ],
+                "title": "LikeToggleResource"
             },
             "LoginRequest": {
                 "type": "object",
