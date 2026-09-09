@@ -8,6 +8,12 @@ use App\Domain\Shared\ValueObjects\UserId;
 
 class Comment
 {
+    /**
+     * @param  Comment[]  $replies  Loaded subtree, oldest first. Empty when the
+     *                              caller did not ask for replies; a top-level
+     *                              comment with `repliesCount > 0` and an empty
+     *                              `replies` is a valid, expected state.
+     */
     public function __construct(
         private ?int $id,
         private EntityId $uuid,
@@ -15,19 +21,22 @@ class Comment
         private ?EntityId $entityUuid,
         private ObjectTemplateType $entityType,
         private ?string $authorName,
+        private ?EntityId $authorUuid,
         private UserId $authorId,
         private string $content,
         private ?int $parentCommentId,
         private int $likesCount,
         private bool $isLikedByViewer,
         private \DateTimeImmutable $createdAt,
-        private \DateTimeImmutable $updatedAt
+        private \DateTimeImmutable $updatedAt,
+        private int $repliesCount = 0,
+        private array $replies = [],
     ) {
     }
 
     public function getIdValue(): int
     {
-        return $this->id;
+        return (int) $this->id;
     }
 
     public function getUuid(): EntityId
@@ -74,6 +83,15 @@ class Comment
         return $this->authorName;
     }
 
+    /**
+     * Null when the author row is gone. The response drops the whole `author`
+     * object in that case rather than emitting a name-shaped hole.
+     */
+    public function getAuthorUuid(): ?EntityId
+    {
+        return $this->authorUuid;
+    }
+
     public function getContent(): string
     {
         return $this->content;
@@ -112,5 +130,40 @@ class Comment
     public function isAuthoredBy(UserId $userId): bool
     {
         return $this->authorId->equals($userId);
+    }
+
+    /**
+     * Size of the whole subtree beneath this comment, at every depth.
+     *
+     * Independent of how many replies were actually loaded: a caller that asked
+     * for three of forty still gets forty here, because that is the number a
+     * "show all replies" control renders.
+     */
+    public function getRepliesCount(): int
+    {
+        return $this->repliesCount;
+    }
+
+    /**
+     * @return Comment[]
+     */
+    public function getReplies(): array
+    {
+        return $this->replies;
+    }
+
+    /**
+     * Replies are attached after the comment is mapped, because they are read
+     * in one batched query for the whole page rather than per comment.
+     *
+     * @param  Comment[]  $replies
+     */
+    public function withReplies(array $replies, int $repliesCount): self
+    {
+        $clone = clone $this;
+        $clone->replies = $replies;
+        $clone->repliesCount = $repliesCount;
+
+        return $clone;
     }
 }

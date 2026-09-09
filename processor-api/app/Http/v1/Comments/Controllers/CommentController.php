@@ -4,6 +4,7 @@ namespace App\Http\v1\Comments\Controllers;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Application\Comments\Policies\CommentPolicy;
 use App\Application\Comments\Services\CommentServiceInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentListDTO;
@@ -12,12 +13,16 @@ use App\Domain\Comments\Models\Comment;
 use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
+use App\Http\v1\Comments\Requests\IndexCommentRepliesRequest;
 use App\Http\v1\Comments\Requests\IndexCommentRequest;
 use App\Http\v1\Comments\Requests\StoreCommentRequest;
 use App\Http\v1\Comments\Requests\UpdateCommentRequest;
 use App\Http\v1\Comments\Resources\CommentListResource;
+use App\Http\v1\Comments\Resources\CommentReplyListResource;
 use App\Http\v1\Comments\Resources\CommentResource;
+use App\Http\v1\Shared\Resources\ProblemDetailsResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Auth\AuthenticationException;
@@ -29,6 +34,10 @@ class CommentController extends Controller
     public function __construct(
         private CommentServiceInterface $commentService,
         private CurrentUserProviderInterface $currentUserProvider,
+        // Read by the resources so `viewer.can_edit` / `can_delete` come from
+        // the same object the write endpoints enforce, instead of each client
+        // re-deriving the rules.
+        private CommentPolicy $commentPolicy,
     ) {
     }
 
@@ -36,7 +45,7 @@ class CommentController extends Controller
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    #[Response(404, description: 'Article not found')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Article not found')]
     public function getArticleComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
         return $this->listForEntity($request, ObjectTemplateType::ARTICLE, $uuid);
@@ -46,7 +55,7 @@ class CommentController extends Controller
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    #[Response(404, description: 'Catalogue not found')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Catalogue not found')]
     public function getCatalogueComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
         return $this->listForEntity($request, ObjectTemplateType::LIST, $uuid);
@@ -56,7 +65,7 @@ class CommentController extends Controller
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    #[Response(404, description: 'Post not found')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Post not found')]
     public function getPostComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
         return $this->listForEntity($request, ObjectTemplateType::POST, $uuid);
@@ -66,23 +75,59 @@ class CommentController extends Controller
      * @response CommentListResource
      */
     #[Response(type: 'CommentListResource')]
-    #[Response(404, description: 'Sentence not found')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Sentence not found')]
     public function getSentenceComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
         return $this->listForEntity($request, ObjectTemplateType::SENTENCE, $uuid);
     }
 
     /**
+     * Every reply beneath one comment, at any depth, oldest first.
+     *
+     * The thread endpoints return a bounded preview plus `replies_count`; this
+     * is what a "show all replies" control reads once that count is large.
+     *
+     * @response CommentReplyListResource
+     */
+    #[Response(type: 'CommentReplyListResource')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Comment not found')]
+    public function replies(IndexCommentRepliesRequest $request, string $uuid): JsonResponse|JsonResource
+    {
+        $validated = $request->validated();
+        $viewer = $this->currentUserProvider->currentAuthenticatedUser();
+
+        $result = $this->commentService->getRepliesForComment(
+            commentUuid: EntityId::from($uuid),
+            pagination: Pagination::fromInputOrDefault(
+                $validated['page'] ?? null,
+                $validated['per_page'] ?? null,
+            ),
+            viewer: $viewer,
+        );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var Comments $replies */
+        $replies = $result->getData();
+
+        return CommentReplyListResource::fromPaginated($replies, $viewer, $this->commentPolicy);
+    }
+
+    /**
      * @response CommentResource
      */
     #[Response(201, type: 'CommentResource')]
-    #[Response(404, description: 'Commented entity not found')]
-    #[Response(409, description: 'Post is locked and does not accept new comments')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Commented entity not found')]
+    #[Response(409, type: ProblemDetailsResource::class, description: 'Post is locked and does not accept new comments')]
     public function store(StoreCommentRequest $request): JsonResponse|JsonResource
     {
+        $author = $this->requiredAuthenticatedUser();
+
         $result = $this->commentService->createComment(
             dto: CommentCreateDTO::fromRequest($request->validated()),
-            author: $this->requiredAuthenticatedUser(),
+            author: $author,
         );
 
         if ($result->isFailure()) {
@@ -92,7 +137,10 @@ class CommentController extends Controller
         /** @var Comment $comment */
         $comment = $result->getData();
 
-        return (new CommentResource($comment))
+        // A freshly created comment has no replies yet, so `replies_count` is 0
+        // and `replies` is empty - the same shape a read returns, which is what
+        // lets a client drop the response straight into its thread cache.
+        return (new CommentResource($comment, $author, $this->commentPolicy))
             ->response()
             ->setStatusCode(201);
     }
@@ -101,14 +149,16 @@ class CommentController extends Controller
      * @response CommentResource
      */
     #[Response(type: 'CommentResource')]
-    #[Response(403, description: 'Only the comment author may edit it')]
-    #[Response(404, description: 'Comment not found')]
+    #[Response(403, type: ProblemDetailsResource::class, description: 'Only the comment author may edit it')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Comment not found')]
     public function update(UpdateCommentRequest $request, string $uuid): JsonResponse|JsonResource
     {
+        $actor = $this->requiredAuthenticatedUser();
+
         $result = $this->commentService->updateComment(
             commentUuid: EntityId::from($uuid),
             dto: CommentUpdateDTO::fromRequest($request->validated()),
-            actor: $this->requiredAuthenticatedUser(),
+            actor: $actor,
         );
 
         if ($result->isFailure()) {
@@ -118,12 +168,15 @@ class CommentController extends Controller
         /** @var Comment $comment */
         $comment = $result->getData();
 
-        return new CommentResource($comment);
+        // `replies_count` is accurate here; `replies` is empty because an edit
+        // does not re-read the subtree. A caller patches the edited row into
+        // its cached thread and keeps the replies it already has.
+        return new CommentResource($comment, $actor, $this->commentPolicy);
     }
 
     #[Response(204, description: 'Comment and every reply beneath it were deleted')]
-    #[Response(403, description: 'Only the comment author or an admin may delete it')]
-    #[Response(404, description: 'Comment not found')]
+    #[Response(403, type: ProblemDetailsResource::class, description: 'Only the comment author or an admin may delete it')]
+    #[Response(404, type: ProblemDetailsResource::class, description: 'Comment not found')]
     public function destroy(string $uuid): JsonResponse
     {
         $result = $this->commentService->deleteComment(
@@ -143,13 +196,13 @@ class CommentController extends Controller
         ObjectTemplateType $entityType,
         string $uuid,
     ): JsonResponse|JsonResource {
-        $listDTO = CommentListDTO::fromRequest($request->validated());
+        $viewer = $this->currentUserProvider->currentAuthenticatedUser();
 
         $result = $this->commentService->getCommentsForEntity(
             entityType: $entityType,
             entityUuid: EntityId::from($uuid),
-            dto: $listDTO,
-            viewer: $this->currentUserProvider->currentAuthenticatedUser(),
+            dto: CommentListDTO::fromRequest($request->validated()),
+            viewer: $viewer,
         );
 
         if ($result->isFailure()) {
@@ -159,7 +212,7 @@ class CommentController extends Controller
         /** @var Comments $comments */
         $comments = $result->getData();
 
-        return CommentListResource::fromPaginated($comments, $listDTO->include_replies);
+        return CommentListResource::fromPaginated($comments, $viewer, $this->commentPolicy);
     }
 
     private function requiredAuthenticatedUser(): AuthenticatedUser

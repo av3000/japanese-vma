@@ -12,24 +12,30 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A top-level comment, plus a bounded preview of its reply subtree.
+ * A reply: every field of a top-level comment except `replies` and
+ * `replies_count`.
  *
- * `replies_count` is the size of the whole subtree at every depth and is always
- * present; `replies` holds at most `replies_limit` of them, oldest first, and is
- * empty when the caller did not ask for previews. A comment with
- * `replies_count: 40` and `replies: []` is a normal response, not a truncation
- * bug - `GET /comments/{uuid}/replies` serves the rest.
+ * Split from CommentResource on purpose. Storage allows unlimited nesting, but
+ * the contract does not expose a tree: a reply to a reply is returned in the
+ * same flat, chronological subtree as its siblings, carrying
+ * `parent_comment_id` so a client can render "replying to ...". That keeps the
+ * response bounded, keeps `replies_count` unambiguous, and keeps the generated
+ * TypeScript free of a self-referential type.
+ *
+ * The field list is written out rather than shared with CommentResource:
+ * Scramble reads the literal array to build the component schema, and a helper
+ * call would document both endpoints as returning `mixed`.
  *
  * @property-read Comment $resource
  */
-class CommentResource extends JsonResource
+class CommentReplyResource extends JsonResource
 {
     public static $wrap = null;
 
     public function __construct(
         Comment $comment,
-        private readonly ?AuthenticatedUser $viewer = null,
-        private readonly ?CommentPolicy $policy = null,
+        private readonly ?AuthenticatedUser $viewer,
+        private readonly CommentPolicy $policy,
     ) {
         parent::__construct($comment);
     }
@@ -47,8 +53,6 @@ class CommentResource extends JsonResource
      *     is_reply: bool,
      *     likes_count: int,
      *     viewer: CommentViewerResource,
-     *     replies_count: int,
-     *     replies: array<int, CommentReplyResource>,
      *     created_at: string,
      *     updated_at: string
      * }
@@ -58,19 +62,17 @@ class CommentResource extends JsonResource
         /** @var Comment $comment */
         $comment = $this->resource;
 
-        $policy = $this->policy ?? new CommentPolicy;
         $authorUuid = $comment->getAuthorUuid();
 
         return [
             'id' => $comment->getIdValue(),
             'uuid' => $comment->getUuid()->value(),
             'entity_uuid' => $comment->getEntityUuidValue(),
-            // The enum value, not its title. The create request already takes
-            // `entity_type` as an ObjectTemplateType uuid; emitting the title
-            // here meant request and response described one concept with two
-            // vocabularies and generated two client enums for it.
             'entity_type_uuid' => $comment->getEntityType()->value,
             'entity_type_label' => $comment->getEntityType()->label(),
+            // Null when the author row is gone. Better than a name-shaped hole:
+            // the client renders a placeholder and hides owner affordances,
+            // which `viewer.can_edit` already reports as false.
             'author' => $authorUuid === null ? null : new AuthorResource([
                 'id' => $comment->getAuthorId()->value(),
                 'name' => (string) $comment->getAuthorName(),
@@ -80,12 +82,7 @@ class CommentResource extends JsonResource
             'parent_comment_id' => $comment->getParentCommentId(),
             'is_reply' => $comment->isReply(),
             'likes_count' => $comment->getLikesCount(),
-            'viewer' => new CommentViewerResource($comment, $this->viewer, $policy),
-            'replies_count' => $comment->getRepliesCount(),
-            'replies' => array_map(
-                fn (Comment $reply) => new CommentReplyResource($reply, $this->viewer, $policy),
-                $comment->getReplies(),
-            ),
+            'viewer' => new CommentViewerResource($comment, $this->viewer, $this->policy),
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
         ];

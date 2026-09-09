@@ -11,10 +11,10 @@ use App\Domain\Comments\DTOs\CommentListDTO;
 use App\Domain\Comments\DTOs\CommentUpdateDTO;
 use App\Domain\Comments\Errors\CommentErrors;
 use App\Domain\Comments\Models\Comment;
+use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,18 +46,72 @@ class CommentService implements CommentServiceInterface
         $criteriaDTO = new CommentCriteriaDTO(
             entityId: $entityId,
             entityType: $entityType,
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
             pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_replies: $dto->include_replies,
-            include_author: $dto->include_author,
+            sortBy: $dto->sort_by,
+            sortDir: $dto->sort_dir,
         );
 
+        $viewerUserId = $viewer?->id->value();
+
+        $comments = $this->commentRepository->findByCriteriaForEntity(
+            criteria: $criteriaDTO,
+            viewerUserId: $viewerUserId,
+        );
+
+        return Result::success($this->attachReplies($comments, $dto, $viewerUserId));
+    }
+
+    public function getRepliesForComment(
+        EntityId $commentUuid,
+        Pagination $pagination,
+        ?AuthenticatedUser $viewer,
+    ): Result {
+        $comment = $this->commentRepository->findByUuid($commentUuid);
+
+        if ($comment === null) {
+            return Result::failure(CommentErrors::notFound($commentUuid->value()));
+        }
+
         return Result::success(
-            $this->commentRepository->findByCriteriaForEntity(
-                criteria: $criteriaDTO,
+            $this->commentRepository->findRepliesByRoot(
+                rootId: $comment->getIdValue(),
+                pagination: $pagination,
                 viewerUserId: $viewer?->id->value(),
             )
         );
+    }
+
+    /**
+     * Subtree sizes are attached whether or not previews were requested: a
+     * reader needs to know a comment has forty replies before deciding to load
+     * them, and the count costs the same query either way.
+     */
+    private function attachReplies(Comments $comments, CommentListDTO $dto, ?int $viewerUserId): Comments
+    {
+        $roots = $comments->getItems();
+
+        if ($roots === []) {
+            return $comments;
+        }
+
+        $replyData = $this->commentRepository->findRepliesForRoots(
+            rootIds: array_map(static fn (Comment $root) => $root->getIdValue(), $roots),
+            limitPerRoot: $dto->include_replies ? $dto->replies_limit : 0,
+            viewerUserId: $viewerUserId,
+        );
+
+        $paginator = $comments->getPaginator();
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(
+                static fn (Comment $root) => $root->withReplies(
+                    $replyData[$root->getIdValue()]['replies'] ?? [],
+                    $replyData[$root->getIdValue()]['count'] ?? 0,
+                )
+            )
+        );
+
+        return Comments::fromEloquentPaginator($paginator);
     }
 
     public function createComment(CommentCreateDTO $dto, AuthenticatedUser $author): Result

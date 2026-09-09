@@ -7,11 +7,38 @@ use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 
 interface CommentRepositoryInterface
 {
+    /**
+     * One page of an entity's **top-level** comments.
+     *
+     * Replies are excluded so that `pagination.total` counts conversations
+     * rather than rows, and so a reply can never be paginated away from the
+     * comment it answers.
+     */
     public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments;
+
+    /**
+     * Subtree sizes and reply previews for a page of top-level comments, in a
+     * fixed number of queries regardless of page size or nesting depth.
+     *
+     * The subtree is returned flat and oldest-first, not as a tree: a reply to
+     * a reply belongs to the same conversation, and a bounded flat list is what
+     * a two-level thread view renders.
+     *
+     * @param  int[]  $rootIds
+     * @return array<int, array{count: int, replies: DomainComment[]}> Keyed by root comment id.
+     *                                                                 Roots with no replies are absent.
+     */
+    public function findRepliesForRoots(array $rootIds, int $limitPerRoot, ?int $viewerUserId): array;
+
+    /**
+     * One page of a single comment's whole subtree, oldest first.
+     */
+    public function findRepliesByRoot(int $rootId, Pagination $pagination, ?int $viewerUserId): Comments;
 
     public function findByUuid(EntityId $commentUuid): ?DomainComment;
 
