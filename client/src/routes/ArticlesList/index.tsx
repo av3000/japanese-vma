@@ -34,6 +34,11 @@ const ArticleList: React.FC = () => {
 	const filterState = useMemo(() => parseArticleListSearchParams(searchParams), [searchParams]);
 
 	// This route renders the facet controls, so it is the one caller that pays for them.
+	// Known cost: include_facets is part of the infinite query key, so every Load More
+	// page recomputes both facet counts server-side and only pages[0] is read below.
+	// Two bounded queries per page today. Split facets into their own query keyed on
+	// the filter state without `page` once hashtag volume or list traffic makes that
+	// measurable.
 	const queryFilters = useMemo(
 		() => mapArticleFiltersToGeneratedParams(filterState, { includeFacets: true }),
 		[filterState],

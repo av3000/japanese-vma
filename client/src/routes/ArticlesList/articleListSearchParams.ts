@@ -18,18 +18,24 @@ export const DEFAULT_PER_PAGE = 12;
 export const DEFAULT_SORT: ArticleIndexSort = '-created_at';
 
 /**
- * Mirrors the backend's closed sort set. Kept as a literal list rather than derived
- * from the generated union so the sort dropdown can carry labels.
+ * One label per value of the generated sort union, in dropdown order. Typed as a
+ * Record so a backend addition fails typecheck here instead of silently missing
+ * from the dropdown.
  */
-export const SORT_OPTIONS: ReadonlyArray<{ value: ArticleIndexSort; label: string }> = [
-	{ value: '-created_at', label: 'Newest first' },
-	{ value: 'created_at', label: 'Oldest first' },
-	{ value: '-updated_at', label: 'Recently updated' },
-	{ value: 'title_jp', label: 'Title (JP) A-Z' },
-	{ value: '-title_jp', label: 'Title (JP) Z-A' },
-	{ value: 'title_en', label: 'Title (EN) A-Z' },
-	{ value: '-title_en', label: 'Title (EN) Z-A' },
-];
+const SORT_LABELS: Record<ArticleIndexSort, string> = {
+	'-created_at': 'Newest first',
+	created_at: 'Oldest first',
+	'-updated_at': 'Recently updated',
+	updated_at: 'Least recently updated',
+	title_jp: 'Title (JP) A-Z',
+	'-title_jp': 'Title (JP) Z-A',
+	title_en: 'Title (EN) A-Z',
+	'-title_en': 'Title (EN) Z-A',
+};
+
+export const SORT_OPTIONS: ReadonlyArray<{ value: ArticleIndexSort; label: string }> = (
+	Object.keys(SORT_LABELS) as ArticleIndexSort[]
+).map((value) => ({ value, label: SORT_LABELS[value] }));
 
 const SORT_VALUES = new Set<string>(SORT_OPTIONS.map((option) => option.value));
 
@@ -37,8 +43,11 @@ export const JLPT_LEVELS: ReadonlyArray<ArticleIndexJlptLevelsItem> = ['n5', 'n4
 
 const JLPT_VALUES = new Set<string>(JLPT_LEVELS);
 
-/** Backend rejects a shorter search, so do not spend a request finding out. */
-const MIN_SEARCH_LENGTH = 2;
+/**
+ * Backend rejects a shorter search (SearchTerm::MIN_LENGTH), so do not spend a
+ * request finding out. The single frontend definition; the filter form imports it.
+ */
+export const MIN_SEARCH_LENGTH = 2;
 
 export type ArticleListFilterState = {
 	q: string;

@@ -3,7 +3,13 @@ import type { ArticleFacetResource } from '@/api/generated/model/articleFacetRes
 import type { ArticleIndexJlptLevelsItem } from '@/api/generated/model/articleIndexJlptLevelsItem';
 import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
 import { Button } from '@/components/shared/Button';
-import { JLPT_LEVELS, SORT_OPTIONS, type ArticleListFilterState } from '@/routes/ArticlesList/articleListSearchParams';
+import {
+	DEFAULT_SORT,
+	JLPT_LEVELS,
+	MIN_SEARCH_LENGTH,
+	SORT_OPTIONS,
+	type ArticleListFilterState,
+} from '@/routes/ArticlesList/articleListSearchParams';
 
 /**
  * Articles-specific filter controls.
@@ -22,8 +28,6 @@ type ArticleFiltersProps = {
 	onSortChange: (sort: ArticleIndexSort) => void;
 	onReset: () => void;
 };
-
-const MIN_SEARCH_LENGTH = 2;
 
 const findFacet = (facets: ArticleFacetResource[], key: string) => facets.find((facet) => facet.key === key);
 
@@ -60,7 +64,7 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 	};
 
 	const hasActiveFilters =
-		state.q !== '' || state.jlptLevels.length > 0 || state.hashtagIds.length > 0 || state.sort !== '-created_at';
+		state.q !== '' || state.jlptLevels.length > 0 || state.hashtagIds.length > 0 || state.sort !== DEFAULT_SORT;
 
 	return (
 		<div className="mb-4">
