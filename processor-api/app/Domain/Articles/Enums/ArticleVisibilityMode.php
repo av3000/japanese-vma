@@ -7,8 +7,8 @@ namespace App\Domain\Articles\Enums;
 /**
  * How much of the Article corpus an actor is allowed to see.
  *
- * This is derived from the actor by ArticleVisibilityPolicy and is never supplied
- * by request input, so a query parameter cannot widen access.
+ * Derived from the actor by ArticlePolicy::scopeFor() and never supplied by
+ * request input, so a query parameter cannot widen access.
  */
 enum ArticleVisibilityMode: string
 {

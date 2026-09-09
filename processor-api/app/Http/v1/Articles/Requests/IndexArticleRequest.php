@@ -3,7 +3,7 @@
 namespace App\Http\v1\Articles\Requests;
 
 use App\Domain\Articles\Enums\ArticleJlptLevel;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\Pagination;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -61,7 +61,7 @@ class IndexArticleRequest extends FormRequest
             'word_ids.*' => 'integer|min:1',
             'created_from' => 'sometimes|date_format:Y-m-d',
             'created_to' => 'sometimes|date_format:Y-m-d',
-            'sort' => ['sometimes', Rule::in(ArticleListSort::allowedValues())],
+            'sort' => ['sometimes', Rule::in(ArticleSortCriteria::allowedValues())],
             'per_page' => 'sometimes|integer|min:1|max:'.Pagination::MAX_PER_PAGE,
             'page' => 'sometimes|integer|min:'.Pagination::MIN_PAGE,
             'include_stats_counts' => 'sometimes|boolean',
@@ -84,7 +84,7 @@ class IndexArticleRequest extends FormRequest
             'author_uid.uuid' => 'Author UID must be a valid UUID',
             'created_from.date_format' => 'created_from must be a date in YYYY-MM-DD format',
             'created_to.date_format' => 'created_to must be a date in YYYY-MM-DD format',
-            'sort.in' => 'Sort must be one of: '.implode(', ', ArticleListSort::allowedValues()),
+            'sort.in' => 'Sort must be one of: '.implode(', ', ArticleSortCriteria::allowedValues()),
             'per_page.max' => 'Per page may not be greater than '.Pagination::MAX_PER_PAGE,
         ];
     }

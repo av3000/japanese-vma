@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Interfaces\Readers;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\DTOs\ArticleListReadResult;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\DTOs\ArticlePageDTO;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 
 /**
@@ -23,10 +23,10 @@ use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 interface ArticleListReaderInterface
 {
     public function search(
-        ArticleListQuery $query,
+        ArticleQueryCriteria $criteria,
         ArticleVisibilityScope $scope,
-        ArticleListProjection $projection,
-    ): ArticleListReadResult;
+        ArticleListIncludes $includes,
+    ): ArticlePageDTO;
 
     /**
      * Disjunctive counts per dimension: each facet excludes its own active selection
@@ -34,5 +34,5 @@ interface ArticleListReaderInterface
      *
      * @return array<int, ArticleFacetDTO>
      */
-    public function facets(ArticleListQuery $query, ArticleVisibilityScope $scope): array;
+    public function facets(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): array;
 }

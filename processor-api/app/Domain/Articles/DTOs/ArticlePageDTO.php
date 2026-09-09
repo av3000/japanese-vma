@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\DTOs;
+namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\Models\Article;
 
@@ -13,7 +13,7 @@ use App\Domain\Articles\Models\Article;
  * pagination; SearchArticlesAction adds stats, hashtags and processing state so
  * a future search-engine reader does not have to reimplement that batching.
  */
-final readonly class ArticleListReadResult
+final readonly class ArticlePageDTO
 {
     /**
      * @param array<int, Article> $articles

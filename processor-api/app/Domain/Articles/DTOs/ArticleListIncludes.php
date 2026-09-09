@@ -2,16 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\DTOs;
+namespace App\Domain\Articles\DTOs;
 
 /**
- * Optional output cost for an Article list request.
+ * Optional enrichment for an Article list request.
  *
- * A projection may only make a response cheaper or richer. It must never change
+ * Includes may only make a response cheaper or richer. They must never change
  * which Articles are eligible - that is the scope's job - so nothing here is
  * allowed to reach the eligibility predicate.
+ *
+ * Implements ArticleIncludeOptionsInterface so the persistence mapper accepts it
+ * directly; the list path carries one includes shape, not two.
  */
-final readonly class ArticleListProjection
+final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterface
 {
     public function __construct(
         public bool $includeStats = true,
@@ -32,5 +35,15 @@ final readonly class ArticleListProjection
     public static function itemsOnly(): self
     {
         return new self(false, false, false, false, false);
+    }
+
+    public function includeKanjis(): bool
+    {
+        return $this->includeKanjis;
+    }
+
+    public function includeWords(): bool
+    {
+        return $this->includeWords;
     }
 }

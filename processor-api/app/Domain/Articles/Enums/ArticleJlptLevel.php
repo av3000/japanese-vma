@@ -41,29 +41,13 @@ enum ArticleJlptLevel: string
     }
 
     /**
-     * Deterministic easiest-to-hardest display order, used by AFM-05 facets.
+     * Deterministic easiest-to-hardest display order, used by facets.
      *
      * @return array<int, self>
      */
     public static function displayOrder(): array
     {
         return [self::N5, self::N4, self::N3, self::N2, self::N1, self::UNCOMMON];
-    }
-
-    /**
-     * The legacy numeric `category` alias, 1..6. Retired by AFM-07.
-     */
-    public static function fromLegacyCategory(int $category): ?self
-    {
-        return match ($category) {
-            1 => self::N1,
-            2 => self::N2,
-            3 => self::N3,
-            4 => self::N4,
-            5 => self::N5,
-            6 => self::UNCOMMON,
-            default => null,
-        };
     }
 
     /**

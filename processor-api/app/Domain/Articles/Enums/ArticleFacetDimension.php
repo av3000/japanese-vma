@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\Enums;
+namespace App\Domain\Articles\Enums;
 
 /**
  * The facet dimensions this program calculates.

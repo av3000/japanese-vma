@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * always an array: a client should not have to branch on whether a key exists. It
  * also keeps the generated type precise, which an open-ended map cannot be.
  */
-class ArticleQueryFiltersResource extends JsonResource
+class ArticleAppliedFiltersResource extends JsonResource
 {
     public static $wrap = null;
 

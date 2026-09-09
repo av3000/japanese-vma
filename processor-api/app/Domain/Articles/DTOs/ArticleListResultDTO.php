@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\DTOs;
+namespace App\Domain\Articles\DTOs;
 
 /**
- * A fully projected Article list page, ready for an API resource.
+ * An enriched Article list page, ready for an API resource.
+ *
+ * ArticlePageDTO is the raw reader output; this is what the list use case returns
+ * after batching stats, hashtags, processing state and facets onto it.
  */
-final readonly class ArticleListPageDTO
+final readonly class ArticleListResultDTO
 {
     /**
      * @param array<int, ArticleListItemDTO> $items
@@ -17,7 +20,7 @@ final readonly class ArticleListPageDTO
     public function __construct(
         public array $items,
         public ArticlePaginationDTO $pagination,
-        public ArticleListProjection $projection,
+        public ArticleListIncludes $includes,
         public array $facets = [],
         public array $query = [],
     ) {

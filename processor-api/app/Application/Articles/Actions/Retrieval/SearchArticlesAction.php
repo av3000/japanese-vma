@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Actions\Retrieval;
 
-use App\Application\Articles\DTOs\ArticleListItemDTO;
-use App\Application\Articles\DTOs\ArticleListPageDTO;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 
 /**
@@ -42,13 +42,13 @@ readonly class SearchArticlesAction
     }
 
     public function execute(
-        ArticleListQuery $query,
-        ArticleListProjection $projection,
+        ArticleQueryCriteria $criteria,
+        ArticleListIncludes $includes,
         ?AuthenticatedUser $actor = null,
-    ): ArticleListPageDTO {
+    ): ArticleListResultDTO {
         $scope = $this->articlePolicy->scopeFor($actor);
 
-        $result = $this->articleListReader->search($query, $scope, $projection);
+        $result = $this->articleListReader->search($criteria, $scope, $includes);
 
         $articleIds = array_map(
             static fn (DomainArticle $article): int => $article->getIdValue(),
@@ -59,11 +59,11 @@ readonly class SearchArticlesAction
             $result->articles,
         );
 
-        $statsMap = $projection->includeStats
+        $statsMap = $includes->includeStats
             ? $this->engagementService->getArticleStatsByIds($articleIds)
             : [];
 
-        $hashtagsMap = $projection->includeHashtags
+        $hashtagsMap = $includes->includeHashtags
             ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
             : [];
 
@@ -82,16 +82,16 @@ readonly class SearchArticlesAction
         // Counted from the same scope the items came from. If these were built from a
         // separately derived predicate they could drift, and a drifting count is how a
         // private Article leaks: the row stays hidden but still shows up in "N2 (13)".
-        $facets = $projection->includeFacets
-            ? $this->articleListReader->facets($query, $scope)
+        $facets = $includes->includeFacets
+            ? $this->articleListReader->facets($criteria, $scope)
             : [];
 
-        return new ArticleListPageDTO(
+        return new ArticleListResultDTO(
             items: $items,
             pagination: $result->pagination,
-            projection: $projection,
+            includes: $includes,
             facets: $facets,
-            query: $query->toCanonicalArray(),
+            query: $criteria->toCanonicalArray(),
         );
     }
 }

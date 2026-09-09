@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers;
 
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\Enums\ArticleFacetDimension;
+use App\Domain\Articles\Enums\ArticleFacetDimension;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * Passing an $exclude dimension gives the disjunctive behaviour facets need: every
  * filter applies except the one whose own options are being counted.
  */
-final readonly class ArticleQueryScope
+final readonly class ArticleListFilterBuilder
 {
     /**
      * PostgreSQL LIKE is case-sensitive, unlike the MySQL collation used before
@@ -39,14 +39,14 @@ final readonly class ArticleQueryScope
     private const LIKE_ESCAPE = '\\';
 
     public function newQuery(
-        ArticleListQuery $query,
+        ArticleQueryCriteria $criteria,
         ArticleVisibilityScope $scope,
         ?ArticleFacetDimension $exclude = null,
     ): Builder {
         $builder = PersistenceArticle::query();
 
         $this->applyVisibilityScope($builder, $scope);
-        $this->applyFilters($builder, $query, $exclude);
+        $this->applyFilters($builder, $criteria, $exclude);
 
         return $builder;
     }
@@ -82,51 +82,51 @@ final readonly class ArticleQueryScope
      */
     public function applyFilters(
         Builder $builder,
-        ArticleListQuery $query,
+        ArticleQueryCriteria $criteria,
         ?ArticleFacetDimension $exclude = null,
     ): void {
-        if ($query->jlptLevels !== [] && $exclude !== ArticleFacetDimension::JLPT_LEVELS) {
-            $builder->where(function (Builder $levels) use ($query): void {
-                foreach ($query->jlptLevels as $level) {
+        if ($criteria->jlptLevels !== [] && $exclude !== ArticleFacetDimension::JLPT_LEVELS) {
+            $builder->where(function (Builder $levels) use ($criteria): void {
+                foreach ($criteria->jlptLevels as $level) {
                     // column() returns an enum-backed name, never raw request input.
                     $levels->orWhere($level->column(), '>', 0);
                 }
             });
         }
 
-        if ($query->hashtagIds !== [] && $exclude !== ArticleFacetDimension::HASHTAG_IDS) {
-            $this->applyHashtagFilter($builder, $query->hashtagIds);
+        if ($criteria->hashtagIds !== [] && $exclude !== ArticleFacetDimension::HASHTAG_IDS) {
+            $this->applyHashtagFilter($builder, $criteria->hashtagIds);
         }
 
-        if ($query->authorUid !== null) {
-            $builder->whereHas('user', function (Builder $user) use ($query): void {
-                $user->where('uuid', $query->authorUid);
+        if ($criteria->authorUid !== null) {
+            $builder->whereHas('user', function (Builder $user) use ($criteria): void {
+                $user->where('uuid', $criteria->authorUid);
             });
         }
 
-        if ($query->hasSearch()) {
-            $this->applySearch($builder, $query->search->value);
+        if ($criteria->hasSearch()) {
+            $this->applySearch($builder, $criteria->search->value);
         }
 
-        if ($query->kanjiIds !== []) {
-            $builder->whereHas('kanjis', function (Builder $kanjis) use ($query): void {
-                $kanjis->whereIn('japanese_kanji_bank_long.id', $query->kanjiIds);
+        if ($criteria->kanjiIds !== []) {
+            $builder->whereHas('kanjis', function (Builder $kanjis) use ($criteria): void {
+                $kanjis->whereIn('japanese_kanji_bank_long.id', $criteria->kanjiIds);
             });
         }
 
-        if ($query->wordIds !== []) {
-            $builder->whereHas('words', function (Builder $words) use ($query): void {
-                $words->whereIn('japanese_word_bank_long.id', $query->wordIds);
+        if ($criteria->wordIds !== []) {
+            $builder->whereHas('words', function (Builder $words) use ($criteria): void {
+                $words->whereIn('japanese_word_bank_long.id', $criteria->wordIds);
             });
         }
 
-        if ($query->createdBetween !== null) {
-            if ($query->createdBetween->from !== null) {
-                $builder->where('articles.created_at', '>=', $query->createdBetween->from);
+        if ($criteria->createdBetween !== null) {
+            if ($criteria->createdBetween->from !== null) {
+                $builder->where('articles.created_at', '>=', $criteria->createdBetween->from);
             }
 
-            if ($query->createdBetween->to !== null) {
-                $builder->where('articles.created_at', '<=', $query->createdBetween->to);
+            if ($criteria->createdBetween->to !== null) {
+                $builder->where('articles.created_at', '<=', $criteria->createdBetween->to);
             }
         }
     }

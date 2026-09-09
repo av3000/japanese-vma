@@ -21,12 +21,12 @@ use Tests\TestCase;
  * with the page size. An N+1 introduced in enrichment is invisible on a 2-item test
  * fixture and catastrophic on a 100-item page, so these tests compare the two.
  */
-class ArticleListQueryBudgetTest extends TestCase
+class ArticleListDatabaseBudgetTest extends TestCase
 {
     use RefreshDatabase, SeedsBaselineData;
 
     /**
-     * Ceiling for a no-facet list with every enrichment projection on.
+     * Ceiling for a no-facet list with every enrichment include on.
      *
      * AFM-04 proposed 8 before anything was measured. The measured figure is 11, all
      * batched and all constant in page size:
@@ -85,7 +85,7 @@ class ArticleListQueryBudgetTest extends TestCase
     }
 
     /**
-     * A projection that switches enrichment off must actually cost less, otherwise
+     * An includes set that switches enrichment off must actually cost less, otherwise
      * include_* flags are decorative and internal callers pay for data they discard.
      */
     public function test_disabling_enrichment_reduces_the_query_count(): void

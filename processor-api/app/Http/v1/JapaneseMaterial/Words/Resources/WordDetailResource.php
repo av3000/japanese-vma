@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Words\Resources;
 
-use App\Application\Articles\DTOs\ArticleListItemDTO;
+use App\Domain\Articles\DTOs\ArticleListItemDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Http\v1\Articles\Resources\RelatedArticleSummaryResource;

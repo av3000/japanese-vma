@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\Application\Articles;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\DTOs\ArticleListReadResult;
-use App\Application\Articles\DTOs\ArticlePaginationDTO;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\DTOs\ArticlePageDTO;
+use App\Domain\Articles\DTOs\ArticlePaginationDTO;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\ValueObjects\Pagination;
 use PHPUnit\Framework\TestCase;
@@ -36,13 +36,13 @@ class SearchArticlesActionTest extends TestCase
             ->with(null)
             ->willReturn($scope);
 
-        $query = $this->query();
-        $projection = ArticleListProjection::itemsOnly();
+        $criteria = $this->criteria();
+        $includes = ArticleListIncludes::itemsOnly();
 
         $reader = $this->createMock(ArticleListReaderInterface::class);
         $reader->expects($this->once())
             ->method('search')
-            ->with($query, $this->identicalTo($scope), $projection)
+            ->with($criteria, $this->identicalTo($scope), $includes)
             ->willReturn($this->emptyReadResult());
 
         $action = new SearchArticlesAction(
@@ -53,10 +53,10 @@ class SearchArticlesActionTest extends TestCase
             $this->neverCalledHashtagService(),
         );
 
-        $action->execute($query, $projection);
+        $action->execute($criteria, $includes);
     }
 
-    public function test_it_skips_enrichment_the_projection_did_not_ask_for(): void
+    public function test_it_skips_enrichment_the_includes_did_not_ask_for(): void
     {
         $engagement = $this->createMock(EngagementServiceInterface::class);
         $engagement->expects($this->never())->method('getArticleStatsByIds');
@@ -72,12 +72,12 @@ class SearchArticlesActionTest extends TestCase
             $hashtags,
         );
 
-        $action->execute($this->query(), ArticleListProjection::itemsOnly());
+        $action->execute($this->criteria(), ArticleListIncludes::itemsOnly());
     }
 
-    public function test_it_returns_the_reader_pagination_and_the_requested_projection(): void
+    public function test_it_returns_the_reader_pagination_and_the_requested_includes(): void
     {
-        $projection = new ArticleListProjection(includeStats: false, includeHashtags: false);
+        $includes = new ArticleListIncludes(includeStats: false, includeHashtags: false);
 
         $action = new SearchArticlesAction(
             $this->readerReturningEmptyPage(),
@@ -87,27 +87,27 @@ class SearchArticlesActionTest extends TestCase
             $this->neverCalledHashtagService(),
         );
 
-        $page = $action->execute($this->query(), $projection);
+        $page = $action->execute($this->criteria(), $includes);
 
         $this->assertSame([], $page->items);
-        $this->assertSame($projection, $page->projection);
+        $this->assertSame($includes, $page->includes);
         $this->assertSame(1, $page->pagination->page);
         $this->assertSame(20, $page->pagination->perPage);
         $this->assertSame(0, $page->pagination->total);
         $this->assertFalse($page->pagination->hasMore);
     }
 
-    private function query(): ArticleListQuery
+    private function criteria(): ArticleQueryCriteria
     {
-        return new ArticleListQuery(
-            sort: ArticleListSort::default(),
+        return new ArticleQueryCriteria(
+            sort: ArticleSortCriteria::default(),
             pagination: Pagination::default(),
         );
     }
 
-    private function emptyReadResult(): ArticleListReadResult
+    private function emptyReadResult(): ArticlePageDTO
     {
-        return new ArticleListReadResult(
+        return new ArticlePageDTO(
             articles: [],
             pagination: new ArticlePaginationDTO(page: 1, perPage: 20, total: 0, lastPage: 1, hasMore: false),
         );

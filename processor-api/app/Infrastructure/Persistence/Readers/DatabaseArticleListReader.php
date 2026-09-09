@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers;
 
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\DTOs\ArticleListReadResult;
-use App\Application\Articles\DTOs\ArticlePaginationDTO;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
-use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\DTOs\ArticlePageDTO;
+use App\Domain\Articles\DTOs\ArticlePaginationDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Readers\ArticleFacets\HashtagFacetCounter;
@@ -21,52 +20,47 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * The Eloquent implementation of the Article read port.
  *
- * Everything framework-shaped about Article discovery lives here: the query builder,
+ * Everything framework-shaped about the Article list lives here: the query builder,
  * ordering and pagination. Callers above this class see only application and domain
  * types.
  *
- * Eligibility itself lives in ArticleQueryScope, shared with the facet counters, so
+ * Eligibility itself lives in ArticleListFilterBuilder, shared with the facet counters, so
  * items and counts cannot drift apart.
  */
 final readonly class DatabaseArticleListReader implements ArticleListReaderInterface
 {
     public function __construct(
         private ArticleMapper $articleMapper,
-        private ArticleQueryScope $queryScope,
+        private ArticleListFilterBuilder $filterBuilder,
         private JlptLevelFacetCounter $jlptFacets,
         private HashtagFacetCounter $hashtagFacets,
     ) {
     }
 
     public function search(
-        ArticleListQuery $query,
+        ArticleQueryCriteria $criteria,
         ArticleVisibilityScope $scope,
-        ArticleListProjection $projection,
-    ): ArticleListReadResult {
-        $builder = $this->queryScope->newQuery($query, $scope)->with(['user']);
+        ArticleListIncludes $includes,
+    ): ArticlePageDTO {
+        $builder = $this->filterBuilder->newQuery($criteria, $scope)->with(['user']);
 
-        $this->applyEagerLoads($builder, $projection);
-        $this->applySorting($builder, $query);
+        $this->applyEagerLoads($builder, $includes);
+        $this->applySorting($builder, $criteria);
 
         $paginator = $builder->paginate(
-            $query->pagination->per_page,
+            $criteria->pagination->per_page,
             ['*'],
             'page',
-            $query->pagination->page,
-        );
-
-        $includeOptions = new ArticleIncludeOptionsDTO(
-            include_kanjis: $projection->includeKanjis,
-            include_words: $projection->includeWords,
+            $criteria->pagination->page,
         );
 
         $articles = $paginator
             ->getCollection()
-            ->map(fn (PersistenceArticle $article): DomainArticle => $this->articleMapper->mapToDomain($article, $includeOptions))
+            ->map(fn (PersistenceArticle $article): DomainArticle => $this->articleMapper->mapToDomain($article, $includes))
             ->values()
             ->all();
 
-        return new ArticleListReadResult(
+        return new ArticlePageDTO(
             articles: $articles,
             pagination: new ArticlePaginationDTO(
                 page: $paginator->currentPage(),
@@ -83,20 +77,20 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
      * queries: one per dimension, independent of page size and of how many values
      * each dimension returns.
      */
-    public function facets(ArticleListQuery $query, ArticleVisibilityScope $scope): array
+    public function facets(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): array
     {
         return [
-            $this->jlptFacets->count($query, $scope),
-            $this->hashtagFacets->count($query, $scope),
+            $this->jlptFacets->count($criteria, $scope),
+            $this->hashtagFacets->count($criteria, $scope),
         ];
     }
 
     /**
-     * Projection may only change what is loaded, never which rows are eligible.
+     * Includes may only change what is loaded, never which rows are eligible.
      */
-    private function applyEagerLoads(Builder $builder, ArticleListProjection $projection): void
+    private function applyEagerLoads(Builder $builder, ArticleListIncludes $includes): void
     {
-        if ($projection->includeKanjis) {
+        if ($includes->includeKanjis) {
             $builder->with('kanjis');
         }
 
@@ -111,11 +105,11 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
      * created_at can reorder between requests and a user paging through the list sees
      * duplicates and gaps.
      */
-    private function applySorting(Builder $builder, ArticleListQuery $query): void
+    private function applySorting(Builder $builder, ArticleQueryCriteria $criteria): void
     {
-        $direction = $query->sort->direction->value;
+        $direction = $criteria->sort->direction->value;
 
-        $builder->orderBy('articles.'.$query->sort->field->value, $direction)
+        $builder->orderBy('articles.'.$criteria->sort->field->value, $direction)
             ->orderBy('articles.id', $direction);
     }
 }

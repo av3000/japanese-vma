@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\JapaneseMaterial\Kanjis;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListPageDTO;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\DTOs\ArticlePaginationDTO;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
@@ -16,6 +12,10 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
+use App\Domain\Articles\DTOs\ArticlePaginationDTO;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
@@ -103,8 +103,8 @@ class KanjiDetailServiceTest extends TestCase
             ->method('execute')
             ->with(
                 // The canonical plural filter, not the retired singular kanji_id.
-                $this->callback(fn (ArticleListQuery $query): bool => $query->kanjiIds === [88]),
-                $this->isInstanceOf(ArticleListProjection::class),
+                $this->callback(fn (ArticleQueryCriteria $criteria): bool => $criteria->kanjiIds === [88]),
+                $this->isInstanceOf(ArticleListIncludes::class),
                 null,
             )
             ->willReturn($this->emptyArticleListResult());
@@ -147,12 +147,12 @@ class KanjiDetailServiceTest extends TestCase
         return new SentenceListResultDTO([], $this->emptyPagination());
     }
 
-    private function emptyArticleListResult(): ArticleListPageDTO
+    private function emptyArticleListResult(): ArticleListResultDTO
     {
-        return new ArticleListPageDTO(
+        return new ArticleListResultDTO(
             items: [],
             pagination: new ArticlePaginationDTO(page: 1, perPage: 5, total: 0, lastPage: 1, hasMore: false),
-            projection: new ArticleListProjection(),
+            includes: new ArticleListIncludes(),
         );
     }
 

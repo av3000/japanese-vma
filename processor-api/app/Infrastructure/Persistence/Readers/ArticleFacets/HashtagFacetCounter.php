@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers\ArticleFacets;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleFacetValueDTO;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\Enums\ArticleFacetDimension;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
+use App\Domain\Articles\DTOs\ArticleFacetValueDTO;
+use App\Domain\Articles\Enums\ArticleFacetDimension;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Infrastructure\Persistence\Readers\ArticleQueryScope;
+use App\Infrastructure\Persistence\Readers\ArticleListFilterBuilder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,15 +31,15 @@ final readonly class HashtagFacetCounter
     private const MAX_VALUES = 50;
 
     public function __construct(
-        private ArticleQueryScope $queryScope,
+        private ArticleListFilterBuilder $filterBuilder,
     ) {
     }
 
-    public function count(ArticleListQuery $query, ArticleVisibilityScope $scope): ArticleFacetDTO
+    public function count(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): ArticleFacetDTO
     {
         // Disjunctive: every filter applies except the hashtag selection itself.
-        $eligible = $this->queryScope
-            ->newQuery($query, $scope, ArticleFacetDimension::HASHTAG_IDS)
+        $eligible = $this->filterBuilder
+            ->newQuery($criteria, $scope, ArticleFacetDimension::HASHTAG_IDS)
             ->toBase()
             ->select('articles.id');
 
@@ -60,7 +60,7 @@ final readonly class HashtagFacetCounter
             ->orderBy('uniquehashtags.id')
             ->get();
 
-        $selected = array_map('intval', $query->hashtagIds);
+        $selected = array_map('intval', $criteria->hashtagIds);
 
         $values = [];
         $seen = [];

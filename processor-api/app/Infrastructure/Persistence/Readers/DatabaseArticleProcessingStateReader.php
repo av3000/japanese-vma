@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers;
 
-use App\Application\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\LastOperations\Services\LastOperationServiceInterface;
+use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Infrastructure\Persistence\Models\LastOperationState;
 use DateTimeImmutable;
 

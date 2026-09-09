@@ -2,15 +2,15 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleListItemDTO;
-use App\Application\Articles\DTOs\ArticleListPageDTO;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
+use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Http\v1\Shared\Resources\PaginationResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ArticleListPageDTO $resource
+ * @property ArticleListResultDTO $resource
  */
 class ArticleListResource extends JsonResource
 {
@@ -23,21 +23,21 @@ class ArticleListResource extends JsonResource
      * @return array{
      *     items: array<int, ArticleResource>,
      *     facets: array<int, ArticleFacetResource>,
-     *     query: ArticleQueryEchoResource,
+     *     query: ArticleAppliedCriteriaResource,
      *     pagination: PaginationResource
      * }
      */
     public function toArray(Request $request): array
     {
-        $projection = $this->resource->projection;
+        $includes = $this->resource->includes;
 
         /** @var array<int, ArticleResource> $items */
         $items = array_map(
             fn (ArticleListItemDTO $item): ArticleResource => new ArticleResource(
                 article: $item->article,
                 options: [
-                    'include_hashtags' => $projection->includeHashtags,
-                    'include_stats' => $projection->includeStats,
+                    'include_hashtags' => $includes->includeHashtags,
+                    'include_stats' => $includes->includeStats,
                 ],
                 stats: $item->stats,
                 hashtags: $item->hashtags,
@@ -57,7 +57,7 @@ class ArticleListResource extends JsonResource
             'items' => $items,
             /** @var array<int, ArticleFacetResource> */
             'facets' => $facets,
-            'query' => new ArticleQueryEchoResource($this->resource->query),
+            'query' => new ArticleAppliedCriteriaResource($this->resource->query),
             'pagination' => new PaginationResource($this->resource->pagination->toArray()),
         ];
     }

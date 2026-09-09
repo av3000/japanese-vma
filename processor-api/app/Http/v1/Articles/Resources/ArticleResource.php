@@ -2,7 +2,7 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Application\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
 use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Infrastructure\Persistence\Readers\ArticleFacets;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -267,21 +267,21 @@ class ArticleFacetContractTest extends TestCase
     {
         DB::flushQueryLog();
         DB::enableQueryLog();
-        $this->reader->facets($this->query(pagination: $pagination), ArticleVisibilityScope::unrestricted());
+        $this->reader->facets($this->criteria(pagination: $pagination), ArticleVisibilityScope::unrestricted());
         $count = count(DB::getQueryLog());
         DB::disableQueryLog();
 
         return $count;
     }
 
-    private function query(
+    private function criteria(
         array $jlptLevels = [],
         array $hashtagIds = [],
         ?string $search = null,
         ?Pagination $pagination = null,
-    ): ArticleListQuery {
-        return new ArticleListQuery(
-            sort: ArticleListSort::default(),
+    ): ArticleQueryCriteria {
+        return new ArticleQueryCriteria(
+            sort: ArticleSortCriteria::default(),
             pagination: $pagination ?? Pagination::default(),
             search: $search !== null ? SearchTerm::fromInputOrNull($search) : null,
             jlptLevels: $jlptLevels,
@@ -292,7 +292,7 @@ class ArticleFacetContractTest extends TestCase
     private function jlptFacet(array $jlptLevels = [], array $hashtagIds = [], ?string $search = null, ?ArticleVisibilityScope $scope = null): ArticleFacetDTO
     {
         return $this->reader->facets(
-            $this->query($jlptLevels, $hashtagIds, $search),
+            $this->criteria($jlptLevels, $hashtagIds, $search),
             $scope ?? ArticleVisibilityScope::unrestricted(),
         )[0];
     }
@@ -300,7 +300,7 @@ class ArticleFacetContractTest extends TestCase
     private function hashtagFacet(array $jlptLevels = [], array $hashtagIds = [], ?string $search = null, ?ArticleVisibilityScope $scope = null): ArticleFacetDTO
     {
         return $this->reader->facets(
-            $this->query($jlptLevels, $hashtagIds, $search),
+            $this->criteria($jlptLevels, $hashtagIds, $search),
             $scope ?? ArticleVisibilityScope::unrestricted(),
         )[1];
     }

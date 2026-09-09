@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\DTOs;
+namespace App\Domain\Articles\Queries;
 
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\ValueObjects\ArticleDateRange;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 
@@ -17,13 +17,9 @@ use App\Domain\Shared\ValueObjects\SearchTerm;
  * visibility information: eligibility is derived from the actor by
  * ArticlePolicy::scopeFor(), so no query parameter can widen access.
  *
- * Everything here is canonical. The temporary `search`, `category`, `sort_by` and
- * `sort_dir` aliases are translated at the HTTP edge, so application and
- * persistence code never sees them.
- *
  * Multi-value dimensions are OR within a dimension and AND across dimensions.
  */
-final readonly class ArticleListQuery
+final readonly class ArticleQueryCriteria
 {
     /**
      * @param array<int, ArticleJlptLevel> $jlptLevels
@@ -32,7 +28,7 @@ final readonly class ArticleListQuery
      * @param array<int, int> $wordIds
      */
     public function __construct(
-        public ArticleListSort $sort,
+        public ArticleSortCriteria $sort,
         public Pagination $pagination,
         public ?SearchTerm $search = null,
         public array $jlptLevels = [],
@@ -50,8 +46,8 @@ final readonly class ArticleListQuery
     }
 
     /**
-     * The canonical echo of user intent, for the AFM-05 `query` response field.
-     * Never includes visibility, and never a compatibility alias.
+     * The canonical echo of user intent, for the `query` response field.
+     * Never includes visibility.
      *
      * @return array{q: ?string, filters: array<string, mixed>, sort: string}
      */

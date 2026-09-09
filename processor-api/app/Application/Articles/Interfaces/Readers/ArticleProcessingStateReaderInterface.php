@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Interfaces\Readers;
 
-use App\Application\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 
 /**
  * Batch access to Article background-processing state, keyed by Article UUID.

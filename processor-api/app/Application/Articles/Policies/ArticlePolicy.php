@@ -17,7 +17,6 @@ class ArticlePolicy
     /**
      * Derive the mandatory Article visibility scope from the actor.
      *
-     * This is the typed replacement for getVisibilityCriteria()'s untyped array.
      * The scope is the only thing allowed to decide eligibility, and it is built
      * from the authenticated actor alone, so no request parameter can widen it.
      */
@@ -32,35 +31,6 @@ class ArticlePolicy
         }
 
         return ArticleVisibilityScope::publicOrOwnedBy($authenticatedUser->id->value());
-    }
-
-    /**
-     * Business rule: Determine what visibility criteria apply to a user
-     * Returns domain concepts, not database queries
-     */
-    public function getVisibilityCriteria(?AuthenticatedUser $authenticatedUser): array
-    {
-        if ($authenticatedUser === null) {
-            // Anonymous users can only see public articles
-            return [
-                'publicity' => [PublicityStatus::PUBLIC],
-                'user_id' => null,
-            ];
-        }
-
-        if ($authenticatedUser->isAdmin) {
-            return [
-                'publicity' => 'all',
-                'user_id' => 'all',
-            ];
-        }
-
-        // Regular users can see public articles and their own private articles
-        return [
-            'publicity' => [PublicityStatus::PUBLIC, PublicityStatus::PRIVATE],
-            'user_id' => $authenticatedUser->id->value(),
-            'access_own_private' => true,
-        ];
     }
 
     /**

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Kanjis\Services;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailResultDTO;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
@@ -63,14 +63,14 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
 
         $articles = $includes->articles
             ? $this->searchArticles->execute(
-                new ArticleListQuery(
-                    sort: ArticleListSort::fromSigned('-created_at'),
+                new ArticleQueryCriteria(
+                    sort: ArticleSortCriteria::default(),
                     pagination: new Pagination(1, self::RELATED_PER_PAGE),
                     kanjiIds: [$kanjiId],
                 ),
                 // The panel shows engagement counts and tags, but not nested kanji or
                 // word lists, so it does not pay to load them.
-                new ArticleListProjection(
+                new ArticleListIncludes(
                     includeStats: true,
                     includeHashtags: true,
                     includeKanjis: false,

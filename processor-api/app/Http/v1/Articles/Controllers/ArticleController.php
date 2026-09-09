@@ -3,8 +3,6 @@
 namespace App\Http\v1\Articles\Controllers;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
@@ -12,12 +10,14 @@ use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-
+use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleDateRange;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -68,12 +68,10 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleListResource')]
     public function index(IndexArticleRequest $request, SearchArticlesAction $searchArticles): JsonResponse|JsonResource
     {
-        // Aliases are already resolved: canonical() sees search/category/sort_by/sort_dir,
-        // the application layer never does.
         $canonical = $request->canonical();
 
-        $query = new ArticleListQuery(
-            sort: ArticleListSort::fromSignedOrDefault($canonical['sort'] ?? null),
+        $criteria = new ArticleQueryCriteria(
+            sort: ArticleSortCriteria::fromSignedOrDefault($canonical['sort'] ?? null),
             pagination: Pagination::fromInputOrDefault($canonical['page'] ?? null, $canonical['per_page'] ?? null),
             search: isset($canonical['q']) ? SearchTerm::fromInputOrNull($canonical['q']) : null,
             jlptLevels: array_map(
@@ -90,7 +88,7 @@ class ArticleController extends Controller
             ),
         );
 
-        $projection = new ArticleListProjection(
+        $includes = new ArticleListIncludes(
             includeStats: $canonical['include_stats_counts'] ?? true,
             includeHashtags: $canonical['include_hashtags'] ?? true,
             includeKanjis: $canonical['include_kanjis'] ?? true,
@@ -99,7 +97,7 @@ class ArticleController extends Controller
         );
 
         return new ArticleListResource(
-            $searchArticles->execute($query, $projection, $this->currentUserProvider->currentAuthenticatedUser())
+            $searchArticles->execute($criteria, $includes, $this->currentUserProvider->currentAuthenticatedUser())
         );
     }
 

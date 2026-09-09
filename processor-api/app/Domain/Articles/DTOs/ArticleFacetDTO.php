@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\DTOs;
+namespace App\Domain\Articles\DTOs;
 
 /**
  * One facet dimension and its available choices.

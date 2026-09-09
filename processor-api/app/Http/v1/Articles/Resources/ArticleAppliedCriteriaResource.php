@@ -9,18 +9,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * The canonical echo of what the server understood the request to mean.
  *
  * Clients use it to render "you searched for X" state without re-parsing their own
- * URL, and to confirm that a legacy alias resolved the way they expected. It carries
- * user intent only: mandatory visibility scope is never echoed, because telling a
- * caller which scope was applied tells them something about data they cannot see.
+ * URL. It carries user intent only: the mandatory visibility scope is never echoed,
+ * because telling a caller which scope was applied tells them something about data
+ * they cannot see.
  */
-class ArticleQueryEchoResource extends JsonResource
+class ArticleAppliedCriteriaResource extends JsonResource
 {
     public static $wrap = null;
 
     /**
      * @return array{
      *     q: string|null,
-     *     filters: ArticleQueryFiltersResource,
+     *     filters: ArticleAppliedFiltersResource,
      *     sort: string
      * }
      */
@@ -28,7 +28,7 @@ class ArticleQueryEchoResource extends JsonResource
     {
         return [
             'q' => $this->resource['q'] ?? null,
-            'filters' => new ArticleQueryFiltersResource($this->resource['filters'] ?? []),
+            'filters' => new ArticleAppliedFiltersResource($this->resource['filters'] ?? []),
             'sort' => (string) ($this->resource['sort'] ?? ''),
         ];
     }

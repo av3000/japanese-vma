@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\JapaneseMaterial\Kanjis;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -91,12 +91,12 @@ class KanjiRelatedQueryFiltersTest extends TestCase
     public function test_article_query_filters_by_kanji_id_and_keeps_visibility_rules(): void
     {
         $result = app(SearchArticlesAction::class)->execute(
-            new ArticleListQuery(
-                sort: ArticleListSort::fromSigned('-created_at'),
+            new ArticleQueryCriteria(
+                sort: ArticleSortCriteria::default(),
                 pagination: new Pagination(1, 5),
                 kanjiIds: [88],
             ),
-            ArticleListProjection::itemsOnly(),
+            ArticleListIncludes::itemsOnly(),
             null,
         );
 

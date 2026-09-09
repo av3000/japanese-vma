@@ -2,8 +2,8 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleFacetValueDTO;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
+use App\Domain\Articles\DTOs\ArticleFacetValueDTO;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Infrastructure\Persistence\Readers;
 
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleDateRange;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -274,8 +274,8 @@ class DatabaseArticleListReaderContractTest extends TestCase
         $this->createArticle($author, ['title_jp' => 'Alpha', 'created_at' => '2026-09-01 00:00:00']);
         $this->createArticle($author, ['title_jp' => 'Beta', 'created_at' => '2026-09-02 00:00:00']);
 
-        $this->assertSame(['Beta', 'Alpha'], $this->titles($this->read(sort: ArticleListSort::fromSigned('-created_at'))));
-        $this->assertSame(['Alpha', 'Beta'], $this->titles($this->read(sort: ArticleListSort::fromSigned('created_at'))));
+        $this->assertSame(['Beta', 'Alpha'], $this->titles($this->read(sort: ArticleSortCriteria::fromSigned('-created_at'))));
+        $this->assertSame(['Alpha', 'Beta'], $this->titles($this->read(sort: ArticleSortCriteria::fromSigned('created_at'))));
     }
 
     // ----------------------------------------------------------------- pagination
@@ -307,11 +307,11 @@ class DatabaseArticleListReaderContractTest extends TestCase
         array $kanjiIds = [],
         array $wordIds = [],
         ?ArticleDateRange $createdBetween = null,
-        ?ArticleListSort $sort = null,
+        ?ArticleSortCriteria $sort = null,
         ?Pagination $pagination = null,
     ) {
-        $query = new ArticleListQuery(
-            sort: $sort ?? ArticleListSort::fromSigned('created_at'),
+        $criteria = new ArticleQueryCriteria(
+            sort: $sort ?? ArticleSortCriteria::fromSigned('created_at'),
             pagination: $pagination ?? Pagination::default(),
             search: $search !== null ? SearchTerm::fromInputOrNull($search) : null,
             jlptLevels: $jlptLevels,
@@ -322,9 +322,9 @@ class DatabaseArticleListReaderContractTest extends TestCase
         );
 
         return $this->reader->search(
-            $query,
+            $criteria,
             $scope ?? ArticleVisibilityScope::unrestricted(),
-            ArticleListProjection::itemsOnly(),
+            ArticleListIncludes::itemsOnly(),
         );
     }
 

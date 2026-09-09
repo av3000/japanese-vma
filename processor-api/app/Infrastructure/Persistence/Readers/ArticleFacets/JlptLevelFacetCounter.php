@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers\ArticleFacets;
 
-use App\Application\Articles\DTOs\ArticleFacetDTO;
-use App\Application\Articles\DTOs\ArticleFacetValueDTO;
-use App\Application\Articles\DTOs\ArticleListQuery;
-use App\Application\Articles\Enums\ArticleFacetDimension;
+use App\Domain\Articles\DTOs\ArticleFacetDTO;
+use App\Domain\Articles\DTOs\ArticleFacetValueDTO;
+use App\Domain\Articles\Enums\ArticleFacetDimension;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
-use App\Infrastructure\Persistence\Readers\ArticleQueryScope;
+use App\Infrastructure\Persistence\Readers\ArticleListFilterBuilder;
 
 /**
  * Counts eligible Articles per JLPT level.
@@ -22,15 +22,15 @@ use App\Infrastructure\Persistence\Readers\ArticleQueryScope;
 final readonly class JlptLevelFacetCounter
 {
     public function __construct(
-        private ArticleQueryScope $queryScope,
+        private ArticleListFilterBuilder $filterBuilder,
     ) {
     }
 
-    public function count(ArticleListQuery $query, ArticleVisibilityScope $scope): ArticleFacetDTO
+    public function count(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): ArticleFacetDTO
     {
         // Disjunctive: every filter applies except the JLPT selection itself, so
         // choosing N5 does not collapse the list to just N5.
-        $builder = $this->queryScope->newQuery($query, $scope, ArticleFacetDimension::JLPT_LEVELS);
+        $builder = $this->filterBuilder->newQuery($criteria, $scope, ArticleFacetDimension::JLPT_LEVELS);
 
         $selections = [];
         foreach (ArticleJlptLevel::cases() as $level) {
@@ -42,7 +42,7 @@ final readonly class JlptLevelFacetCounter
 
         $selected = array_map(
             static fn (ArticleJlptLevel $level): string => $level->value,
-            $query->jlptLevels,
+            $criteria->jlptLevels,
         );
 
         $values = [];

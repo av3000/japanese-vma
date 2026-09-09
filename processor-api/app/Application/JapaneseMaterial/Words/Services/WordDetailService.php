@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Words\Services;
 
 use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
-use App\Application\Articles\DTOs\ArticleListProjection;
-use App\Application\Articles\DTOs\ArticleListQuery;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
-use App\Domain\Articles\ValueObjects\ArticleListSort;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Domain\Shared\Enums\SortDirection;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Shared\Results\Result;
 
@@ -48,15 +49,14 @@ final readonly class WordDetailService implements WordDetailServiceInterface
 
         $articles = $includes->articles
             ? $this->searchArticles->execute(
-                new ArticleListQuery(
+                new ArticleQueryCriteria(
                     // Ordered by id ascending, as this panel always has been. Not a
-                    // public sort value: `id` is the deterministic tie-breaker appended
-                    // to every sort, exposed here only through the internal constructor.
-                    sort: ArticleListSort::fromLegacy('id', 'asc'),
+                    // public sort value, so it goes through the internal constructor.
+                    sort: ArticleSortCriteria::byId(SortDirection::ASC),
                     pagination: new Pagination(1, self::RELATED_LIMIT),
                     wordIds: [$wordId],
                 ),
-                new ArticleListProjection(
+                new ArticleListIncludes(
                     includeStats: true,
                     includeHashtags: true,
                     includeKanjis: false,
