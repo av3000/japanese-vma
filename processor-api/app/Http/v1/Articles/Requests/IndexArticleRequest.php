@@ -128,21 +128,8 @@ class IndexArticleRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             $this->rejectUnknownKeys($validator);
             $this->rejectUnreachableOffset($validator);
+            $this->rejectReversedDateRange($validator);
         });
-    }
-
-    /**
-     * The validated request as canonical values.
-     *
-     * @return array<string, mixed>
-     */
-    public function canonical(): array
-    {
-        // Every accepted key is already canonical: AFM-07 removed the search,
-        // category, sort_by and sort_dir aliases once a caller scan showed nothing
-        // still sent them. The method stays as the single seam the controller reads
-        // through, so reintroducing a translation later does not touch the controller.
-        return $this->validated();
     }
 
     private function rejectUnknownKeys(Validator $validator): void
@@ -157,6 +144,30 @@ class IndexArticleRequest extends FormRequest
             if (! in_array($key, $supported, true)) {
                 $validator->errors()->add($key, "The {$key} parameter is not supported by this endpoint.");
             }
+        }
+    }
+
+    /**
+     * Checked here rather than left to ArticleDateRange so the request is the single
+     * input gate: everything validated() returns can be turned into criteria without
+     * a value object throwing.
+     */
+    private function rejectReversedDateRange(Validator $validator): void
+    {
+        $from = $this->input('created_from');
+        $to = $this->input('created_to');
+
+        if (! is_string($from) || ! is_string($to) || $from === '' || $to === '') {
+            return;
+        }
+
+        if ($validator->errors()->hasAny(['created_from', 'created_to'])) {
+            return; // Already reported by the format rules.
+        }
+
+        // Both values passed date_format:Y-m-d, so string order is date order.
+        if ($from > $to) {
+            $validator->errors()->add('created_from', 'created_from must not be later than created_to.');
         }
     }
 

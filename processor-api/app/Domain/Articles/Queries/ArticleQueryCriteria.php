@@ -40,6 +40,63 @@ final readonly class ArticleQueryCriteria
     ) {
     }
 
+    /**
+     * The HTTP edge. Expects IndexArticleRequest::validated(): every value has
+     * already passed the closed-vocabulary rules, so nothing here can throw for a
+     * request the FormRequest accepted.
+     *
+     * @param array<string, mixed> $validated
+     */
+    public static function fromValidated(array $validated): self
+    {
+        return new self(
+            sort: ArticleSortCriteria::fromSignedOrDefault($validated['sort'] ?? null),
+            pagination: Pagination::fromInputOrDefault(
+                isset($validated['page']) ? (int) $validated['page'] : null,
+                isset($validated['per_page']) ? (int) $validated['per_page'] : null,
+            ),
+            search: isset($validated['q']) ? SearchTerm::fromInputOrNull((string) $validated['q']) : null,
+            jlptLevels: array_map(
+                static fn (string $level): ArticleJlptLevel => ArticleJlptLevel::from($level),
+                $validated['jlpt_levels'] ?? [],
+            ),
+            hashtagIds: array_map('intval', $validated['hashtag_ids'] ?? []),
+            authorUid: $validated['author_uid'] ?? null,
+            kanjiIds: array_map('intval', $validated['kanji_ids'] ?? []),
+            wordIds: array_map('intval', $validated['word_ids'] ?? []),
+            createdBetween: ArticleDateRange::fromInput(
+                $validated['created_from'] ?? null,
+                $validated['created_to'] ?? null,
+            ),
+        );
+    }
+
+    /**
+     * Internal callers, e.g. related-Article panels on kanji and word detail.
+     *
+     * @param array<int, int> $kanjiIds
+     * @param array<int, int> $wordIds
+     * @param array<int, int> $hashtagIds
+     */
+    public static function forListing(
+        int $page = Pagination::MIN_PAGE,
+        int $perPage = Pagination::DEFAULT_PER_PAGE,
+        ?ArticleSortCriteria $sort = null,
+        array $kanjiIds = [],
+        array $wordIds = [],
+        array $hashtagIds = [],
+        ?string $authorUid = null,
+    ): self {
+        return new self(
+            sort: $sort ?? ArticleSortCriteria::default(),
+            pagination: new Pagination($page, $perPage),
+            hashtagIds: $hashtagIds,
+            authorUid: $authorUid,
+            kanjiIds: $kanjiIds,
+            wordIds: $wordIds,
+        );
+    }
+
     public function hasSearch(): bool
     {
         return $this->search !== null && $this->search->value !== '';

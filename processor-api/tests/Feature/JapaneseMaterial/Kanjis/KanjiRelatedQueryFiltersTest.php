@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JapaneseMaterial\Kanjis;
 
-use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,15 +88,11 @@ class KanjiRelatedQueryFiltersTest extends TestCase
 
     public function test_article_query_filters_by_kanji_id_and_keeps_visibility_rules(): void
     {
-        $result = app(SearchArticlesAction::class)->execute(
-            new ArticleQueryCriteria(
-                sort: ArticleSortCriteria::default(),
-                pagination: new Pagination(1, 5),
-                kanjiIds: [88],
-            ),
+        $result = app(ArticleListServiceInterface::class)->list(
+            ArticleQueryCriteria::forListing(perPage: 5, kanjiIds: [88]),
             ArticleListIncludes::itemsOnly(),
             null,
-        );
+        )->getData();
 
         $this->assertCount(1, $result->items);
         $this->assertSame($this->relatedArticleId, $result->items[0]->article->getIdValue());

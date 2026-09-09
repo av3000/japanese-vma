@@ -2,7 +2,7 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
-use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
@@ -14,15 +14,11 @@ use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
-use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
-use App\Domain\Articles\ValueObjects\ArticleDateRange;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
@@ -55,6 +51,7 @@ class ArticleController extends Controller
 {
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
+        private readonly ArticleListServiceInterface $articleListService,
         private readonly ArticleModerationServiceInterface $articleModerationService,
         private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
@@ -66,39 +63,21 @@ class ArticleController extends Controller
      * @response ArticleListResource
      */
     #[Response(type: 'ArticleListResource')]
-    public function index(IndexArticleRequest $request, SearchArticlesAction $searchArticles): JsonResponse|JsonResource
+    public function index(IndexArticleRequest $request): JsonResponse|JsonResource
     {
-        $canonical = $request->canonical();
+        $validated = $request->validated();
 
-        $criteria = new ArticleQueryCriteria(
-            sort: ArticleSortCriteria::fromSignedOrDefault($canonical['sort'] ?? null),
-            pagination: Pagination::fromInputOrDefault($canonical['page'] ?? null, $canonical['per_page'] ?? null),
-            search: isset($canonical['q']) ? SearchTerm::fromInputOrNull($canonical['q']) : null,
-            jlptLevels: array_map(
-                static fn (string $level): ArticleJlptLevel => ArticleJlptLevel::from($level),
-                $canonical['jlpt_levels'] ?? [],
-            ),
-            hashtagIds: array_map('intval', $canonical['hashtag_ids'] ?? []),
-            authorUid: $canonical['author_uid'] ?? null,
-            kanjiIds: array_map('intval', $canonical['kanji_ids'] ?? []),
-            wordIds: array_map('intval', $canonical['word_ids'] ?? []),
-            createdBetween: ArticleDateRange::fromInput(
-                $canonical['created_from'] ?? null,
-                $canonical['created_to'] ?? null,
-            ),
+        $result = $this->articleListService->list(
+            ArticleQueryCriteria::fromValidated($validated),
+            ArticleListIncludes::fromValidated($validated),
+            $this->currentUserProvider->currentAuthenticatedUser(),
         );
 
-        $includes = new ArticleListIncludes(
-            includeStats: $canonical['include_stats_counts'] ?? true,
-            includeHashtags: $canonical['include_hashtags'] ?? true,
-            includeKanjis: $canonical['include_kanjis'] ?? true,
-            includeWords: $canonical['include_words'] ?? true,
-            includeFacets: $canonical['include_facets'] ?? false,
-        );
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
 
-        return new ArticleListResource(
-            $searchArticles->execute($criteria, $includes, $this->currentUserProvider->currentAuthenticatedUser())
-        );
+        return new ArticleListResource($result->getData());
     }
 
     /**

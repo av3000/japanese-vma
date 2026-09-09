@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\JapaneseMaterial\Words\Services;
 
-use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
+use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
@@ -14,7 +14,6 @@ use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
 use App\Domain\Shared\Enums\SortDirection;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Shared\Results\Result;
 
 final readonly class WordDetailService implements WordDetailServiceInterface
@@ -24,7 +23,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
     public function __construct(
         private WordServiceInterface $wordService,
         private WordRepositoryInterface $wordRepository,
-        private SearchArticlesAction $searchArticles,
+        private ArticleListServiceInterface $articleListService,
     ) {
     }
 
@@ -48,22 +47,17 @@ final readonly class WordDetailService implements WordDetailServiceInterface
             : null;
 
         $articles = $includes->articles
-            ? $this->searchArticles->execute(
-                new ArticleQueryCriteria(
+            ? $this->articleListService->list(
+                ArticleQueryCriteria::forListing(
+                    perPage: self::RELATED_LIMIT,
                     // Ordered by id ascending, as this panel always has been. Not a
                     // public sort value, so it goes through the internal constructor.
                     sort: ArticleSortCriteria::byId(SortDirection::ASC),
-                    pagination: new Pagination(1, self::RELATED_LIMIT),
                     wordIds: [$wordId],
                 ),
-                new ArticleListIncludes(
-                    includeStats: true,
-                    includeHashtags: true,
-                    includeKanjis: false,
-                    includeWords: false,
-                ),
+                ArticleListIncludes::relatedPanel(),
                 $authenticatedUser,
-            )->items
+            )->getData()->items
             : null;
 
         return Result::success(new WordDetailResultDTO(

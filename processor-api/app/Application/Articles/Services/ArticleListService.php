@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Articles\Actions\Retrieval;
+namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
@@ -16,21 +16,14 @@ use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Shared\Results\Result;
 
 /**
- * The Article discovery use case.
- *
  * It owns exactly two things: deriving the mandatory visibility scope from the
  * actor, and batching enrichment around whichever reader is bound. It contains no
- * Eloquent or vendor query syntax, so a future search-engine reader can be
- * swapped in underneath without touching authorization or enrichment.
+ * Eloquent or vendor query syntax.
  */
-/*
- * Not final: KanjiDetailService and WordDetailService depend on this directly, and
- * their unit tests double it. Introducing an interface purely to satisfy PHPUnit
- * would add a layer that nothing else needs.
- */
-readonly class SearchArticlesAction
+final readonly class ArticleListService implements ArticleListServiceInterface
 {
     public function __construct(
         private ArticleListReaderInterface $articleListReader,
@@ -41,22 +34,22 @@ readonly class SearchArticlesAction
     ) {
     }
 
-    public function execute(
+    public function list(
         ArticleQueryCriteria $criteria,
         ArticleListIncludes $includes,
         ?AuthenticatedUser $actor = null,
-    ): ArticleListResultDTO {
+    ): Result {
         $scope = $this->articlePolicy->scopeFor($actor);
 
-        $result = $this->articleListReader->search($criteria, $scope, $includes);
+        $page = $this->articleListReader->search($criteria, $scope, $includes);
 
         $articleIds = array_map(
             static fn (DomainArticle $article): int => $article->getIdValue(),
-            $result->articles,
+            $page->articles,
         );
         $articleUuids = array_map(
             static fn (DomainArticle $article): string => $article->getUid()->value(),
-            $result->articles,
+            $page->articles,
         );
 
         $statsMap = $includes->includeStats
@@ -76,7 +69,7 @@ readonly class SearchArticlesAction
                 hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
                 processingState: $processingStates[$article->getUid()->value()] ?? null,
             ),
-            $result->articles,
+            $page->articles,
         );
 
         // Counted from the same scope the items came from. If these were built from a
@@ -86,12 +79,12 @@ readonly class SearchArticlesAction
             ? $this->articleListReader->facets($criteria, $scope)
             : [];
 
-        return new ArticleListResultDTO(
+        return Result::success(new ArticleListResultDTO(
             items: $items,
-            pagination: $result->pagination,
+            pagination: $page->pagination,
             includes: $includes,
             facets: $facets,
             query: $criteria->toCanonicalArray(),
-        );
+        ));
     }
 }

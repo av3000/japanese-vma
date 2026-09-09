@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Articles;
 
-use App\Application\Articles\Actions\Retrieval\SearchArticlesAction;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Articles\Services\ArticleListService;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
@@ -19,7 +19,7 @@ use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\ValueObjects\Pagination;
 use PHPUnit\Framework\TestCase;
 
-class SearchArticlesActionTest extends TestCase
+class ArticleListServiceTest extends TestCase
 {
     /**
      * The security-critical delegation: the reader must receive exactly the scope the
@@ -45,7 +45,7 @@ class SearchArticlesActionTest extends TestCase
             ->with($criteria, $this->identicalTo($scope), $includes)
             ->willReturn($this->emptyReadResult());
 
-        $action = new SearchArticlesAction(
+        $service = new ArticleListService(
             $reader,
             $this->neverCalledProcessingStateReader(),
             $policy,
@@ -53,7 +53,7 @@ class SearchArticlesActionTest extends TestCase
             $this->neverCalledHashtagService(),
         );
 
-        $action->execute($criteria, $includes);
+        $service->list($criteria, $includes);
     }
 
     public function test_it_skips_enrichment_the_includes_did_not_ask_for(): void
@@ -64,7 +64,7 @@ class SearchArticlesActionTest extends TestCase
         $hashtags = $this->createMock(HashtagServiceInterface::class);
         $hashtags->expects($this->never())->method('getBatchHashtags');
 
-        $action = new SearchArticlesAction(
+        $service = new ArticleListService(
             $this->readerReturningEmptyPage(),
             $this->neverCalledProcessingStateReader(),
             $this->policyReturning(ArticleVisibilityScope::publicOnly()),
@@ -72,14 +72,14 @@ class SearchArticlesActionTest extends TestCase
             $hashtags,
         );
 
-        $action->execute($this->criteria(), ArticleListIncludes::itemsOnly());
+        $service->list($this->criteria(), ArticleListIncludes::itemsOnly());
     }
 
     public function test_it_returns_the_reader_pagination_and_the_requested_includes(): void
     {
         $includes = new ArticleListIncludes(includeStats: false, includeHashtags: false);
 
-        $action = new SearchArticlesAction(
+        $service = new ArticleListService(
             $this->readerReturningEmptyPage(),
             $this->neverCalledProcessingStateReader(),
             $this->policyReturning(ArticleVisibilityScope::unrestricted()),
@@ -87,7 +87,7 @@ class SearchArticlesActionTest extends TestCase
             $this->neverCalledHashtagService(),
         );
 
-        $page = $action->execute($this->criteria(), $includes);
+        $page = $service->list($this->criteria(), $includes)->getData();
 
         $this->assertSame([], $page->items);
         $this->assertSame($includes, $page->includes);
