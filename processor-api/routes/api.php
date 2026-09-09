@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // V1 Routes (Domain Architecture)
-require __DIR__ . '/api_v1.php';
+require __DIR__.'/api_v1.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -26,7 +26,7 @@ Route::get('health', function () {
 
 Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
-    'middleware' => 'auth:api'
+    'middleware' => 'auth:api',
 ], function () {
     Route::get('logout', 'UserController@logout');
     Route::get('user', 'UserController@user');
@@ -106,7 +106,7 @@ Route::group([
     // Admin example route
     Route::group(
         [
-            'middleware' => 'checkRole:admin'
+            'middleware' => 'checkRole:admin',
         ],
         function () {
             Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
