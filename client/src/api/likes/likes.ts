@@ -2,8 +2,45 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { QueryClient, QueryKey, UseMutationOptions } from '@tanstack/react-query';
 import { likeLikeInstance } from '@/api/generated/like/like';
 import type { LikeLikeInstanceMutationError } from '@/api/generated/like/like';
+import { LikeTargetType } from '@/api/generated/model/likeTargetType';
 import type { LikeToggleResource } from '@/api/generated/model/likeToggleResource';
-import { assertLikeInstanceId, toLikeTargetType, type LikeTargetTemplate } from './targets';
+import { ObjectTemplateType } from '@/shared/constants/enums';
+
+/**
+ * The likeable subset of `ObjectTemplateType`, bridged to the numeric `template_id` the wire wants.
+ *
+ * This cannot just index `ObjectTemplateTypeLegacyId`: that table is declared
+ * `satisfies Record<ObjectTemplateType, number>`, so its values widen to `number` and reusing it
+ * would need an unchecked `as LikeTargetType`. Naming the generated enum members instead means the
+ * compiler proves each value is one the contract still accepts.
+ */
+export const LIKE_TARGET_TYPES = {
+	[ObjectTemplateType.ARTICLE]: LikeTargetType.NUMBER_1,
+	[ObjectTemplateType.LIST]: LikeTargetType.NUMBER_8,
+	[ObjectTemplateType.POST]: LikeTargetType.NUMBER_9,
+	[ObjectTemplateType.COMMENT]: LikeTargetType.NUMBER_10,
+} as const satisfies Partial<Record<ObjectTemplateType, LikeTargetType>>;
+
+/**
+ * Only these four templates can reach the seam. A non-likeable template is a compile error at the
+ * call site, so no runtime guard is needed - every caller passes one of these literals.
+ */
+export type LikeTargetTemplate = keyof typeof LIKE_TARGET_TYPES;
+
+/**
+ * `real_object_id` addresses a loaded row, never a route parameter.
+ *
+ * Detail routes are keyed by UUID, so the tempting shortcut is to reuse the URL segment here.
+ * `Number('a4b78a83-...')` is `NaN`, which would serialize as `null` and silently like nothing, so
+ * this rejects anything that is not already a positive integer read off a loaded record.
+ */
+const assertLikeInstanceId = (instanceId: unknown): number => {
+	if (typeof instanceId !== 'number' || !Number.isInteger(instanceId) || instanceId < 1) {
+		throw new Error(`Like target id must be a loaded positive integer, received ${JSON.stringify(instanceId)}.`);
+	}
+
+	return instanceId;
+};
 
 /**
  * The like facts a cached record can hold. Identical in shape to the toggle response, so the
@@ -71,7 +108,7 @@ export const buildLikeToggleMutationOptions = <TCached>({
 	// throw out of the click handler.
 	mutationFn: async (instanceId) =>
 		likeLikeInstance({
-			template_id: toLikeTargetType(template),
+			template_id: LIKE_TARGET_TYPES[template],
 			real_object_id: assertLikeInstanceId(instanceId),
 		}),
 

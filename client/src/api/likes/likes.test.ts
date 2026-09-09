@@ -3,8 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { likeLikeInstance } from '@/api/generated/like/like';
 import { LikeTargetType } from '@/api/generated/model/likeTargetType';
 import { ObjectTemplateType } from '@/shared/constants/enums';
-import { buildLikeToggleMutationOptions, getLikeInstanceMutationKey, type LikeCacheBinding } from './likes';
-import { LikeContractError } from './targets';
+import { ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
+import {
+	buildLikeToggleMutationOptions,
+	getLikeInstanceMutationKey,
+	LIKE_TARGET_TYPES,
+	type LikeCacheBinding,
+} from './likes';
 
 /**
  * react-query 5.90 hands every mutation callback a trailing `MutationFunctionContext` that the
@@ -81,15 +86,6 @@ describe('like toggle transport', () => {
 			template_id: LikeTargetType.NUMBER_1,
 			real_object_id: 7,
 		});
-	});
-
-	it('refuses to send a uuid as the numeric instance id', async () => {
-		const { options } = setup(createCached());
-
-		await expect(options.mutationFn('article-uuid' as unknown as number, CALLBACK_CONTEXT)).rejects.toThrow(
-			LikeContractError,
-		);
-		expect(likeLikeInstance).not.toHaveBeenCalled();
 	});
 
 	it('keys every toggle of one target kind under one addressable mutation key', () => {
@@ -202,5 +198,48 @@ describe('like toggle cache behaviour', () => {
 		await options.onMutate(7, CALLBACK_CONTEXT);
 
 		expect(cancelQueries).toHaveBeenCalledWith({ queryKey: QUERY_KEY });
+	});
+});
+
+describe('like target mapping', () => {
+	it('covers exactly the likeable subset the contract declares', () => {
+		// A backend change to the likeable set is the one drift no type can catch: adding a fifth
+		// template widens the generated enum without touching this table.
+		expect(Object.values(LIKE_TARGET_TYPES).sort((a, b) => a - b)).toEqual(
+			Object.values(LikeTargetType).sort((a, b) => a - b),
+		);
+	});
+
+	it.each([
+		ObjectTemplateType.ARTICLE,
+		ObjectTemplateType.LIST,
+		ObjectTemplateType.POST,
+		ObjectTemplateType.COMMENT,
+	] as const)('maps %s to the same number the rest of the app knows it by', (template) => {
+		expect(LIKE_TARGET_TYPES[template]).toBe(ObjectTemplateTypeLegacyId[template]);
+	});
+});
+
+describe('like instance id guard', () => {
+	// The guard is not exported: it only exists inside the seam, so it is exercised through it.
+	const rejects = async (instanceId: unknown) => {
+		const { options } = setup(createCached());
+
+		await expect(options.mutationFn(instanceId as number, CALLBACK_CONTEXT)).rejects.toThrow(
+			/loaded positive integer/,
+		);
+		expect(likeLikeInstance).not.toHaveBeenCalled();
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('refuses a uuid route parameter instead of coercing it to a numeric id', async () => {
+		await rejects(ObjectTemplateType.ARTICLE);
+	});
+
+	it.each([[Number.NaN], [0], [-1], [1.5], [undefined], [null]])('refuses %s', async (value) => {
+		await rejects(value);
 	});
 });
