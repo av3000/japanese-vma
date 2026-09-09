@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Domain\Shared\Enums\CatalogueType;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -87,6 +88,9 @@ class AuthV1Test extends TestCase
 
         self::assertCount(4, $catalogues, 'a new account must start with its four "Known" catalogues');
 
+        // Two enums describe this column: the repository writes `CatalogueType`, while the
+        // persistence model casts the column back to `SavedListType`. Comparing the repository's
+        // values against what the model reads back also pins that the two still agree on 1-4.
         self::assertSame(
             [
                 CatalogueType::KNOWN_RADICALS->value,
@@ -94,7 +98,7 @@ class AuthV1Test extends TestCase
                 CatalogueType::KNOWN_WORDS->value,
                 CatalogueType::KNOWN_SENTENCES->value,
             ],
-            $catalogues->pluck('type')->map(static fn ($type): int => (int) $type)->all()
+            $catalogues->pluck('type')->map(static fn (SavedListType $type): int => $type->value)->all()
         );
 
         self::assertSame(
@@ -331,6 +335,12 @@ class AuthV1Test extends TestCase
         ])->assertOk()->json('data.access_token');
 
         $this->withToken($accessToken)->postJson('/api/v1/logout')->assertOk();
+
+        // RequestGuard memoises the user it resolved for the logout request, and the guard instance
+        // outlives a single request inside one test. Production never sees that cache - every
+        // request is a fresh container - so dropping the guards here is what makes the next call an
+        // honest second request rather than a replay of the authenticated one.
+        $this->app->make('auth')->forgetGuards();
 
         $this->withToken($accessToken)->getJson('/api/v1/me')->assertUnauthorized();
     }
