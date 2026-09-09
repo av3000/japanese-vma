@@ -9,10 +9,11 @@ use App\Domain\Shared\ValueObjects\UserId;
 class Comment
 {
     /**
-     * @param  Comment[]  $replies  Loaded subtree, oldest first. Empty when the
-     *                              caller did not ask for replies; a top-level
-     *                              comment with `repliesCount > 0` and an empty
-     *                              `replies` is a valid, expected state.
+     * `$replies` is the loaded subtree, oldest first, and is empty when the
+     * caller did not ask for replies. A top-level comment with
+     * `repliesCount > 0` and an empty `replies` is a valid, expected state.
+     *
+     * @param Comment[] $replies
      */
     public function __construct(
         private ?int $id,
@@ -156,7 +157,7 @@ class Comment
      * Replies are attached after the comment is mapped, because they are read
      * in one batched query for the whole page rather than per comment.
      *
-     * @param  Comment[]  $replies
+     * @param Comment[] $replies
      */
     public function withReplies(array $replies, int $repliesCount): self
     {

@@ -8,8 +8,7 @@ use App\Domain\Shared\ValueObjects\Pagination;
 readonly class CommentCriteriaDTO
 {
     /**
-     * @param  string  $sortBy   Already narrowed to the request whitelist.
-     * @param  string  $sortDir  Already narrowed to the request whitelist.
+     * `$sortBy` and `$sortDir` arrive already narrowed to the request whitelist.
      */
     public function __construct(
         public int $entityId,

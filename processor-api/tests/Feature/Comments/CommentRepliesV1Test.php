@@ -177,7 +177,7 @@ class CommentRepliesV1Test extends TestCase
     }
 
     /**
-     * @param  array<string, mixed>  $overrides
+     * @param array<string, mixed> $overrides
      */
     private function createComment(PersistencePost $post, User $author, array $overrides = []): PersistenceComment
     {

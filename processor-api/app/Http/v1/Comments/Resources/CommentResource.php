@@ -7,6 +7,7 @@ namespace App\Http\v1\Comments\Resources;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Policies\CommentPolicy;
 use App\Domain\Comments\Models\Comment;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,6 +20,14 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * empty when the caller did not ask for previews. A comment with
  * `replies_count: 40` and `replies: []` is a normal response, not a truncation
  * bug - `GET /comments/{uuid}/replies` serves the rest.
+ *
+ * `entity_type_uuid` carries the ObjectTemplateType case rather than its title.
+ * The create request already takes `entity_type` as an ObjectTemplateType uuid;
+ * answering with the title made request and response describe one concept in
+ * two vocabularies and generated two client enums for it. The enum instance is
+ * returned so the schema references the shared type instead of a bare string.
+ * `entity_type_label` is the human-facing counterpart and stays an open string -
+ * pinning it as an enum would break clients whenever a template is added.
  *
  * @property-read Comment $resource
  */
@@ -61,15 +70,19 @@ class CommentResource extends JsonResource
         $policy = $this->policy ?? new CommentPolicy;
         $authorUuid = $comment->getAuthorUuid();
 
+        /** @var array<int, CommentReplyResource> $replies */
+        $replies = array_map(
+            fn (Comment $reply): CommentReplyResource => new CommentReplyResource($reply, $this->viewer, $policy),
+            $comment->getReplies(),
+        );
+
         return [
             'id' => $comment->getIdValue(),
             'uuid' => $comment->getUuid()->value(),
             'entity_uuid' => $comment->getEntityUuidValue(),
-            // The enum value, not its title. The create request already takes
-            // `entity_type` as an ObjectTemplateType uuid; emitting the title
-            // here meant request and response described one concept with two
-            // vocabularies and generated two client enums for it.
-            'entity_type_uuid' => $comment->getEntityType()->value,
+            /** @var ObjectTemplateType */
+            'entity_type_uuid' => $comment->getEntityType(),
+            /** @var string */
             'entity_type_label' => $comment->getEntityType()->label(),
             'author' => $authorUuid === null ? null : new AuthorResource([
                 'id' => $comment->getAuthorId()->value(),
@@ -82,10 +95,8 @@ class CommentResource extends JsonResource
             'likes_count' => $comment->getLikesCount(),
             'viewer' => new CommentViewerResource($comment, $this->viewer, $policy),
             'replies_count' => $comment->getRepliesCount(),
-            'replies' => array_map(
-                fn (Comment $reply) => new CommentReplyResource($reply, $this->viewer, $policy),
-                $comment->getReplies(),
-            ),
+            /** @var array<int, CommentReplyResource> */
+            'replies' => $replies,
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
         ];

@@ -29,9 +29,11 @@ interface CommentRepositoryInterface
      * a reply belongs to the same conversation, and a bounded flat list is what
      * a two-level thread view renders.
      *
-     * @param  int[]  $rootIds
-     * @return array<int, array{count: int, replies: DomainComment[]}> Keyed by root comment id.
-     *                                                                 Roots with no replies are absent.
+     * The result is keyed by root comment id; roots with no replies are absent.
+     *
+     * @param int[] $rootIds
+     *
+     * @return array<int, array{count: int, replies: DomainComment[]}>
      */
     public function findRepliesForRoots(array $rootIds, int $limitPerRoot, ?int $viewerUserId): array;
 

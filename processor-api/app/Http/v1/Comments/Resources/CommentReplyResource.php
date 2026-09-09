@@ -7,6 +7,7 @@ namespace App\Http\v1\Comments\Resources;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Policies\CommentPolicy;
 use App\Domain\Comments\Models\Comment;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -68,7 +69,9 @@ class CommentReplyResource extends JsonResource
             'id' => $comment->getIdValue(),
             'uuid' => $comment->getUuid()->value(),
             'entity_uuid' => $comment->getEntityUuidValue(),
-            'entity_type_uuid' => $comment->getEntityType()->value,
+            /** @var ObjectTemplateType */
+            'entity_type_uuid' => $comment->getEntityType(),
+            /** @var string */
             'entity_type_label' => $comment->getEntityType()->label(),
             // Null when the author row is gone. Better than a name-shaped hole:
             // the client renders a placeholder and hides owner affordances,

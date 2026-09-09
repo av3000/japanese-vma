@@ -23,10 +23,11 @@ readonly class CommentListDTO
         public ?int $page,
         public bool $include_replies = false,
         public int $replies_limit = self::DEFAULT_REPLIES_LIMIT,
-    ) {}
+    ) {
+    }
 
     /**
-     * @param  array<string, mixed>  $validated
+     * @param array<string, mixed> $validated
      */
     public static function fromRequest(array $validated): self
     {

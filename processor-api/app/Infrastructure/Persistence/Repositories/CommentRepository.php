@@ -76,7 +76,8 @@ class CommentRepository implements CommentRepositoryInterface
     }
 
     /**
-     * @param  int[]  $rootIds
+     * @param int[] $rootIds
+     *
      * @return array<int, array{count: int, replies: DomainComment[]}>
      */
     public function findRepliesForRoots(array $rootIds, int $limitPerRoot, ?int $viewerUserId): array
@@ -308,7 +309,7 @@ class CommentRepository implements CommentRepositoryInterface
      * `likes_count` is always present; `is_liked_by_viewer` only exists for an
      * authenticated reader, and defaults to false in the mapper otherwise.
      *
-     * @param  Builder<PersistenceComment>  $query
+     * @param Builder<PersistenceComment> $query
      */
     private function applyLikeEnrichment(Builder $query, ?int $viewerUserId): void
     {
@@ -349,7 +350,8 @@ class CommentRepository implements CommentRepositoryInterface
     }
 
     /**
-     * @param  int[]  $commentIds
+     * @param int[] $commentIds
+     *
      * @return array<int, DomainComment> Keyed by comment id.
      */
     private function loadCommentsById(array $commentIds, ?int $viewerUserId): array

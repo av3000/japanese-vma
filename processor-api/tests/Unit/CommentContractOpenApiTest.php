@@ -67,15 +67,28 @@ class CommentContractOpenApiTest extends TestCase
         $comment = $schemas['CommentResource']['properties'];
 
         self::assertArrayNotHasKey('entity_type', $comment);
+
+        // Both sides reference the same component rather than each inlining a
+        // copy: a shared $ref is what makes the generated client able to hand a
+        // value read off a comment straight back to the create request.
         self::assertSame(
             '#/components/schemas/ObjectTemplateType',
             $schemas['StoreCommentRequest']['properties']['entity_type']['$ref'],
         );
         self::assertSame(
-            $schemas['ObjectTemplateType']['enum'],
-            $comment['entity_type_uuid']['enum'] ?? null,
-            'entity_type_uuid must offer exactly the ObjectTemplateType vocabulary.',
+            '#/components/schemas/ObjectTemplateType',
+            $comment['entity_type_uuid']['$ref'] ?? null,
+            'entity_type_uuid must reference the shared ObjectTemplateType schema.',
         );
+        self::assertSame(
+            '#/components/schemas/ObjectTemplateType',
+            $schemas['CommentReplyResource']['properties']['entity_type_uuid']['$ref'] ?? null,
+        );
+
+        // The label is display text, not a closed vocabulary. Pinning it as an
+        // enum would break clients every time a template is added.
+        self::assertSame('string', $comment['entity_type_label']['type']);
+        self::assertArrayNotHasKey('enum', $comment['entity_type_label']);
     }
 
     public function test_the_comment_shape_carries_an_author_object_and_a_viewer_block(): void
