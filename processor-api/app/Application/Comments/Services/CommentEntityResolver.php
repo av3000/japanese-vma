@@ -73,6 +73,47 @@ class CommentEntityResolver
         return Result::success($resolvedId);
     }
 
+    /**
+     * Resolve the parent for a create/reply, then confirm it still accepts new
+     * comments.
+     *
+     * The gate lives here rather than in the controller or the service so that
+     * every write path reaches it - top-level comments and replies alike - and
+     * so the Http layer never has to know which parent types can close.
+     * Only Post can be locked today; the other supported types fall through.
+     *
+     * @return Result Success payload is the resolved legacy entity id (int).
+     */
+    public function resolveIdentityForCreate(
+        ObjectTemplateType $entityType,
+        int $entityId,
+        EntityId $entityUuid,
+    ): Result {
+        if ($entityType !== ObjectTemplateType::POST) {
+            return $this->resolveIdentity($entityType, $entityId, $entityUuid);
+        }
+
+        // Resolved directly instead of through resolveIdentity() so the lock
+        // state comes from the same row the id check used, in one lookup.
+        $post = $this->postRepository->findByUuid($entityUuid);
+
+        if ($post === null) {
+            return Result::failure(CommentErrors::entityNotFound(self::entityNoun($entityType)));
+        }
+
+        if ($post->getIdValue() !== $entityId) {
+            return Result::failure(
+                CommentErrors::entityIdentityMismatch($entityId, $entityUuid->value())
+            );
+        }
+
+        if ($post->isLocked()) {
+            return Result::failure(CommentErrors::parentLocked(self::entityNoun($entityType)));
+        }
+
+        return Result::success($post->getIdValue());
+    }
+
     public static function supports(ObjectTemplateType $entityType): bool
     {
         return in_array($entityType, self::supportedTypes(), true);

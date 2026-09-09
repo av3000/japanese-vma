@@ -53,10 +53,31 @@ class CommentController extends Controller
     }
 
     /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    #[Response(404, description: 'Post not found')]
+    public function getPostComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
+    {
+        return $this->listForEntity($request, ObjectTemplateType::POST, $uuid);
+    }
+
+    /**
+     * @response CommentListResource
+     */
+    #[Response(type: 'CommentListResource')]
+    #[Response(404, description: 'Sentence not found')]
+    public function getSentenceComments(IndexCommentRequest $request, string $uuid): JsonResponse|JsonResource
+    {
+        return $this->listForEntity($request, ObjectTemplateType::SENTENCE, $uuid);
+    }
+
+    /**
      * @response CommentResource
      */
     #[Response(201, type: 'CommentResource')]
     #[Response(404, description: 'Commented entity not found')]
+    #[Response(409, description: 'Post is locked and does not accept new comments')]
     public function store(StoreCommentRequest $request): JsonResponse|JsonResource
     {
         $result = $this->commentService->createComment(

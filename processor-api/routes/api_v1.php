@@ -70,6 +70,16 @@ Route::prefix('v1')->group(function () {
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
     Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments'])
         ->whereUuid('uuid');
+    // Comment reads are UUID-only, even though `posts/{identifier}` still
+    // accepts a transitional legacy id. `whereUuid` for the same reason as the
+    // catalogue route above: without it a malformed segment reaches
+    // EntityId::from(), which throws InvalidArgumentException, and
+    // app/Exceptions/Handler.php does not map it - a 500 where the caller
+    // should see a 404.
+    Route::get('posts/{uuid}/comments', [CommentController::class, 'getPostComments'])
+        ->whereUuid('uuid');
+    Route::get('sentences/{uuid}/comments', [CommentController::class, 'getSentenceComments'])
+        ->whereUuid('uuid');
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
