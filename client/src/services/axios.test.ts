@@ -46,7 +46,9 @@ describe('axios 401 handling', () => {
 	});
 
 	// The generated clients send bare paths against an `/api/v1/` base URL, so the exemption has to
-	// match on the last segment rather than on a `/v1/...` literal.
+	// match on the last segment rather than on a `/v1/...` literal. The bare-path cases below are
+	// fixtures for that segment matching, not leftovers from the legacy routes RET-AUTH-01 retired -
+	// dropping them would narrow the guard to a `/v1/` prefix without any test noticing.
 	it.each(['/login', '/register', '/logout', '/v1/login', '/v1/register'])(
 		'lets %s report its own 401',
 		async (url) => {
