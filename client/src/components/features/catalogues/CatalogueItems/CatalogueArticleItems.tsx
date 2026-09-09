@@ -5,26 +5,26 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { User } from '@/types';
-import sharedStyles from '../SharedListStyles.module.scss';
+import sharedStyles from './CatalogueItems.module.scss';
 
-interface SavedArticlesListProps {
+interface CatalogueArticleItemsProps {
 	editMode: boolean;
-	objects: CatalogueArticleItem[];
-	removeFromList: (id: string | number) => void;
+	items: CatalogueArticleItem[];
+	onRemoveItem: (id: string | number) => void;
 	currentUser: User;
-	listUserId: string | number;
+	ownerId: string | number;
 }
 
-const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
+const CatalogueArticleItems: React.FC<CatalogueArticleItemsProps> = ({
 	editMode,
-	objects,
-	removeFromList,
+	items,
+	onRemoveItem,
 	currentUser,
-	listUserId,
+	ownerId,
 }) => {
 	return (
 		<div className={sharedStyles.listContainer}>
-			{objects.map((article) => {
+			{items.map((article) => {
 				return (
 					<div key={article.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
@@ -75,13 +75,14 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 									<span>{article.engagement?.likes_count ?? 0}</span>
 								</div>
 							</div>
-							{currentUser?.id === listUserId && editMode && (
+							{currentUser?.id === ownerId && editMode && (
 								<Button
 									type="button"
 									size="sm"
 									hasOnlyIcon
 									variant="danger"
-									onClick={() => removeFromList(article.id)}
+									aria-label="Remove article from catalogue"
+									onClick={() => onRemoveItem(article.id)}
 									className={sharedStyles.removeButton}
 								>
 									<Icon size="sm" name="minusSolid" />
@@ -92,7 +93,7 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 				);
 			})}
 
-			{objects.length === 0 && (
+			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>
 					<p>No saved articles found.</p>
 				</div>
@@ -101,4 +102,4 @@ const SavedArticlesList: React.FC<SavedArticlesListProps> = ({
 	);
 };
 
-export default SavedArticlesList;
+export default CatalogueArticleItems;

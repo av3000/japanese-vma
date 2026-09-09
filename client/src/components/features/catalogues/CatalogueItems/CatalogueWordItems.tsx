@@ -4,7 +4,7 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { User } from '@/types';
-import sharedStyles from '../SharedListStyles.module.scss';
+import sharedStyles from './CatalogueItems.module.scss';
 
 interface Word {
 	id: string | number;
@@ -15,20 +15,20 @@ interface Word {
 	word_type: string;
 }
 
-interface SavedWordsListProps {
-	objects: Word[];
-	removeFromList: (id: string | number) => void;
+interface CatalogueWordItemsProps {
+	items: Word[];
+	onRemoveItem: (id: string | number) => void;
 	currentUser: User;
-	listUserId: string | number;
-	editToggle?: boolean;
+	ownerId: string | number;
+	editMode?: boolean;
 }
 
-const SavedWordsList: React.FC<SavedWordsListProps> = ({
-	objects,
-	removeFromList,
+const CatalogueWordItems: React.FC<CatalogueWordItemsProps> = ({
+	items,
+	onRemoveItem,
 	currentUser,
-	listUserId,
-	editToggle = false,
+	ownerId,
+	editMode = false,
 }) => {
 	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
 
@@ -38,7 +38,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
 
 	const handleDeleteConfirm = (id: number | string) => {
 		handleDeleteModalClose();
-		removeFromList(id);
+		onRemoveItem(id);
 	};
 
 	const openModal = (modalId: number | string) => {
@@ -47,7 +47,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
 
 	return (
 		<div className={sharedStyles.listContainer}>
-			{objects.map((word) => {
+			{items.map((word) => {
 				// Process meaning properly
 				const meanings = word.meaning.split(',').slice(0, 3).join(', ');
 
@@ -64,11 +64,12 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
 								<div className={sharedStyles.detailValue}>{word.furigana}</div>
 							</div>
 
-							{currentUser.id === listUserId && editToggle && (
+							{currentUser.id === ownerId && editMode && (
 								<Button
 									type="button"
 									size="md"
 									variant="danger"
+									aria-label="Remove word from catalogue"
 									onClick={() => openModal(word.id)}
 									className={sharedStyles.removeButton}
 								>
@@ -115,7 +116,7 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
 				);
 			})}
 
-			{objects.length === 0 && (
+			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>
 					<p>No saved words found.</p>
 				</div>
@@ -124,4 +125,4 @@ const SavedWordsList: React.FC<SavedWordsListProps> = ({
 	);
 };
 
-export default SavedWordsList;
+export default CatalogueWordItems;
