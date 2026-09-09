@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // V1 Routes (Domain Architecture)
-require __DIR__ . '/api_v1.php';
+require __DIR__.'/api_v1.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -26,7 +26,7 @@ Route::get('health', function () {
 
 Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
-    'middleware' => 'auth:api'
+    'middleware' => 'auth:api',
 ], function () {
     Route::get('logout', 'UserController@logout');
     Route::get('user', 'UserController@user');
@@ -106,7 +106,7 @@ Route::group([
     // Admin example route
     Route::group(
         [
-            'middleware' => 'checkRole:admin'
+            'middleware' => 'checkRole:admin',
         ],
         function () {
             Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
@@ -129,22 +129,31 @@ Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
 Route::get('article/{id}/words', 'ArticleController@articleWords');
 Route::post('articles/search', 'ArticleController@generateQuery');
 
-// Japanese Resources
-Route::get('kanjis', 'JapaneseDataController@indexKanjis');
-Route::get('kanji/{kanji}', 'JapaneseDataController@showKanji');
-Route::post('kanjis/search', 'JapaneseDataController@generateKanjisQuery');
-Route::get('radicals', 'JapaneseDataController@indexRadicals');
-Route::get('radical/{radical}', 'JapaneseDataController@showRadical');
-Route::post('radicals/search', 'JapaneseDataController@generateRadicalsQuery');
-Route::get('words', 'JapaneseDataController@indexWords');
-Route::get('word/{id}', 'JapaneseDataController@showWord');
-Route::get('word/{id}/kanjis', 'JapaneseDataController@wordKanjis');
-Route::post('words/search', 'JapaneseDataController@generateWordsQuery');
-Route::get('sentences', 'JapaneseDataController@indexSentences');
-Route::get('sentence/{id}', 'JapaneseDataController@showSentence');
-Route::get('sentence/{id}/kanjis', 'JapaneseDataController@sentenceKanjis');
-Route::get('sentence/{id}/words', 'JapaneseDataController@sentenceWords');
-Route::post('sentences/search', 'JapaneseDataController@generateSentencesQuery');
+// Japanese Resources - public reads retired, nothing left to register here.
+//
+// The public Kanji/Radical/Word/Sentence read, search and relation routes were
+// retired here (RET-JPN-READ-01) once every one of them had an exact v1
+// replacement and zero routed React callers:
+//
+//   kanjis, kanji/{kanji}            -> GET v1/kanjis, GET v1/kanjis/{identifier}
+//   kanjis/search                    -> GET v1/kanjis query filters
+//   radicals, radical/{radical}      -> GET v1/radicals, GET v1/radicals/{identifier}
+//   radicals/search                  -> GET v1/radicals query filters
+//   words, word/{id}                 -> GET v1/words, GET v1/words/{identifier}
+//   word/{id}/kanjis                 -> `kanjis` on the v1 word detail payload
+//   words/search                     -> GET v1/words query filters
+//   sentences, sentence/{id}         -> GET v1/sentences, GET v1/sentences/{identifier}
+//   sentence/{id}/kanjis|words       -> `kanjis`/`words` on the v1 sentence detail payload
+//   sentences/search                 -> GET v1/sentences query filters
+//
+// Guarded by tests/Feature/Routes/LegacyJapaneseReadRouteRetirementTest.php.
+//
+// JapaneseDataController is still routed for the writes it has no v1 owner for
+// yet - Sentence store/update/delete and the Sentence comment endpoints above
+// (both retired by RET-SEN-01) and `user/list/contain`, which belongs to the
+// Catalogue lane. Those keep mb_str_split/getKanjiIdsFromText/getWordIdsFromText
+// and checkIfBelongToList alive in the controller; the read-only helpers went
+// with the routes.
 
 // Custom Lists
 Route::get('lists', 'CustomListController@index');
