@@ -1,8 +1,8 @@
 # Articles — Current to Target
 
 > **Status:** Migration map; target work is not presented as complete
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Last reviewed:** 2026-08-26
+> **Evidence baseline:** Repository working tree and filtering architecture sources inspected through 2026-08-26
 > **Audience:** Implementers, planners, and reviewers
 
 ## Flow Comparison
@@ -16,6 +16,7 @@
 | Processing | Jobs and last-operation state exist. | Make failure/retry/latency observability operationally explicit. | Worker and UI behavior are verified for success and failure. |
 | PDF | v1 kanji/word export is implemented. | Keep renderer and authorization behind application interfaces. | Generated clients and focused tests cover supported export kinds. |
 | Frontend data access | Major paths are modern; small legacy helpers remain. | Route -> feature/query module -> generated client. | Raw article endpoint strings are absent from active routes. |
+| Filtering and search | The v1 list has explicit parameters, but category/popularity mappings and include-field handling do not match the persistence contract. Filter state is local to the route. | Use the feature-owned typed query, mandatory visibility scope, projection, optional facets, and URL state. | Runtime, OpenAPI, generated client, database-driver tests, and URL behavior satisfy the filtering requirements. |
 
 ## Migration Constraints
 
@@ -25,6 +26,7 @@
 - Regenerate OpenAPI before Orval when article response or request shapes change.
 - Keep article extraction work separate from unrelated Japanese list/detail migrations.
 - Retire legacy article routes only after an active-caller search and compatibility decision.
+- Preserve current publicity behavior until moderation-status visibility is resolved as an explicit product decision.
 
 ## Leading Follow-Up
 
