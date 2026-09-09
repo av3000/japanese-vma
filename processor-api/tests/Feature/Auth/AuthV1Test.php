@@ -10,6 +10,7 @@ use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\Passport;
+use Tests\Support\CreatesPersonalAccessClient;
 use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
@@ -23,7 +24,7 @@ use Tests\TestCase;
  */
 class AuthV1Test extends TestCase
 {
-    use RefreshDatabase, SeedsBaselineData;
+    use CreatesPersonalAccessClient, RefreshDatabase, SeedsBaselineData;
 
     /**
      * A password that satisfies every rule on RegisterRequest: 8+ characters, mixed case, a digit
@@ -37,6 +38,7 @@ class AuthV1Test extends TestCase
         parent::setUp();
 
         $this->seedBaselineData();
+        $this->createPersonalAccessClient();
     }
 
     // ========================================
