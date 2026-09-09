@@ -60,7 +60,7 @@ final readonly class KanjiDetailService implements KanjiDetailServiceInterface
             : null;
 
         $articles = $includes->articles
-            ? $this->articleListService->list(
+            ? $this->articleListService->listItems(
                 ArticleQueryCriteria::forListing(perPage: self::RELATED_PER_PAGE, kanjiIds: [$kanjiId]),
                 ArticleListIncludes::relatedPanel(),
                 $authenticatedUser,

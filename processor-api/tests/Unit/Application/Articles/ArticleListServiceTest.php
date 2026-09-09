@@ -97,6 +97,60 @@ class ArticleListServiceTest extends TestCase
         $this->assertFalse($page->pagination->hasMore);
     }
 
+    /**
+     * Related-Article panels never render processing_status, so they must not pay
+     * the last_operations query for it.
+     */
+    public function test_it_skips_processing_state_when_not_included(): void
+    {
+        $processingStates = $this->createMock(ArticleProcessingStateReaderInterface::class);
+        $processingStates->expects($this->never())->method('latestKanjiExtractionStates');
+
+        // relatedPanel() still wants stats and hashtags; only processing state is off.
+        $engagement = $this->createMock(EngagementServiceInterface::class);
+        $engagement->method('getArticleStatsByIds')->willReturn([]);
+        $hashtags = $this->createMock(HashtagServiceInterface::class);
+        $hashtags->method('getBatchHashtags')->willReturn([]);
+
+        $service = new ArticleListService(
+            $this->readerReturningEmptyPage(),
+            $processingStates,
+            $this->policyReturning(ArticleVisibilityScope::publicOnly()),
+            $engagement,
+            $hashtags,
+        );
+
+        $service->list($this->criteria(), ArticleListIncludes::relatedPanel());
+    }
+
+    public function test_list_items_reads_rows_without_a_total_and_returns_only_items(): void
+    {
+        $scope = ArticleVisibilityScope::unrestricted();
+        $criteria = $this->criteria();
+        $includes = ArticleListIncludes::itemsOnly();
+
+        $reader = $this->createMock(ArticleListReaderInterface::class);
+        $reader->expects($this->never())->method('search');
+        $reader->expects($this->never())->method('facets');
+        $reader->expects($this->once())
+            ->method('listWithoutTotal')
+            ->with($criteria, $this->identicalTo($scope), $includes)
+            ->willReturn([]);
+
+        $service = new ArticleListService(
+            $reader,
+            $this->neverCalledProcessingStateReader(),
+            $this->policyReturning($scope),
+            $this->neverCalledEngagementService(),
+            $this->neverCalledHashtagService(),
+        );
+
+        $result = $service->listItems($criteria, $includes);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertSame([], $result->getData());
+    }
+
     private function criteria(): ArticleQueryCriteria
     {
         return new ArticleQueryCriteria(

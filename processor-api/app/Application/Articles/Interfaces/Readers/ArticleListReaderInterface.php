@@ -7,6 +7,7 @@ namespace App\Application\Articles\Interfaces\Readers;
 use App\Domain\Articles\DTOs\ArticleFacetDTO;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticlePageDTO;
+use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 
@@ -27,6 +28,19 @@ interface ArticleListReaderInterface
         ArticleVisibilityScope $scope,
         ArticleListIncludes $includes,
     ): ArticlePageDTO;
+
+    /**
+     * The same rows search() would return for the criteria's page, without the
+     * total. Related-Article panels show a fixed number of rows and never a count,
+     * so they must not pay for one.
+     *
+     * @return array<int, Article>
+     */
+    public function listWithoutTotal(
+        ArticleQueryCriteria $criteria,
+        ArticleVisibilityScope $scope,
+        ArticleListIncludes $includes,
+    ): array;
 
     /**
      * Disjunctive counts per dimension: each facet excludes its own active selection

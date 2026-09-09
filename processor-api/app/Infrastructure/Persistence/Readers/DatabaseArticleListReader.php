@@ -16,6 +16,7 @@ use App\Infrastructure\Persistence\Readers\ArticleFacets\HashtagFacetCounter;
 use App\Infrastructure\Persistence\Readers\ArticleFacets\JlptLevelFacetCounter;
 use App\Infrastructure\Persistence\Repositories\ArticleMapper;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * The Eloquent implementation of the Article read port.
@@ -42,26 +43,15 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
         ArticleVisibilityScope $scope,
         ArticleListIncludes $includes,
     ): ArticlePageDTO {
-        $builder = $this->filterBuilder->newQuery($criteria, $scope)->with(['user']);
-
-        $this->applyEagerLoads($builder, $includes);
-        $this->applySorting($builder, $criteria);
-
-        $paginator = $builder->paginate(
+        $paginator = $this->newListQuery($criteria, $scope, $includes)->paginate(
             $criteria->pagination->per_page,
             ['*'],
             'page',
             $criteria->pagination->page,
         );
 
-        $articles = $paginator
-            ->getCollection()
-            ->map(fn (PersistenceArticle $article): DomainArticle => $this->articleMapper->mapToDomain($article, $includes))
-            ->values()
-            ->all();
-
         return new ArticlePageDTO(
-            articles: $articles,
+            articles: $this->mapRows($paginator->getCollection(), $includes),
             pagination: new ArticlePaginationDTO(
                 page: $paginator->currentPage(),
                 perPage: $paginator->perPage(),
@@ -70,6 +60,48 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
                 hasMore: $paginator->hasMorePages(),
             ),
         );
+    }
+
+    public function listWithoutTotal(
+        ArticleQueryCriteria $criteria,
+        ArticleVisibilityScope $scope,
+        ArticleListIncludes $includes,
+    ): array {
+        $rows = $this->newListQuery($criteria, $scope, $includes)
+            ->forPage($criteria->pagination->page, $criteria->pagination->per_page)
+            ->get();
+
+        return $this->mapRows($rows, $includes);
+    }
+
+    /**
+     * Eligibility, eager loads and ordering are identical for both entry points; only
+     * how the page is cut differs.
+     */
+    private function newListQuery(
+        ArticleQueryCriteria $criteria,
+        ArticleVisibilityScope $scope,
+        ArticleListIncludes $includes,
+    ): Builder {
+        $builder = $this->filterBuilder->newQuery($criteria, $scope)->with(['user']);
+
+        $this->applyEagerLoads($builder, $includes);
+        $this->applySorting($builder, $criteria);
+
+        return $builder;
+    }
+
+    /**
+     * @param Collection<int, PersistenceArticle> $rows
+     *
+     * @return array<int, DomainArticle>
+     */
+    private function mapRows(Collection $rows, ArticleListIncludes $includes): array
+    {
+        return $rows
+            ->map(fn (PersistenceArticle $article): DomainArticle => $this->articleMapper->mapToDomain($article, $includes))
+            ->values()
+            ->all();
     }
 
     /**

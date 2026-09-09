@@ -19,9 +19,23 @@ use App\Shared\Results\Result;
 interface ArticleListServiceInterface
 {
     /**
+     * A page with total, facets and the applied-criteria echo.
+     *
      * @return Result Success data: ArticleListResultDTO
      */
     public function list(
+        ArticleQueryCriteria $criteria,
+        ArticleListIncludes $includes,
+        ?AuthenticatedUser $actor = null,
+    ): Result;
+
+    /**
+     * The enriched rows for one page and nothing else: no total, no facets. For
+     * related-Article panels that render a fixed number of rows.
+     *
+     * @return Result Success data: array<int, ArticleListItemDTO>
+     */
+    public function listItems(
         ArticleQueryCriteria $criteria,
         ArticleListIncludes $includes,
         ?AuthenticatedUser $actor = null,

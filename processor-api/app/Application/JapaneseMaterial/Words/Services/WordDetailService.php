@@ -47,7 +47,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
             : null;
 
         $articles = $includes->articles
-            ? $this->articleListService->list(
+            ? $this->articleListService->listItems(
                 ArticleQueryCriteria::forListing(
                     perPage: self::RELATED_LIMIT,
                     // Ordered by id ascending, as this panel always has been. Not a
@@ -57,7 +57,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
                 ),
                 ArticleListIncludes::relatedPanel(),
                 $authenticatedUser,
-            )->getData()->items
+            )->getData()
             : null;
 
         return Result::success(new WordDetailResultDTO(

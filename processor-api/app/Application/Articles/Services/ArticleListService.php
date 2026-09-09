@@ -43,13 +43,46 @@ final readonly class ArticleListService implements ArticleListServiceInterface
 
         $page = $this->articleListReader->search($criteria, $scope, $includes);
 
+        // Counted from the same scope the items came from. If these were built from a
+        // separately derived predicate they could drift, and a drifting count is how a
+        // private Article leaks: the row stays hidden but still shows up in "N2 (13)".
+        $facets = $includes->includeFacets
+            ? $this->articleListReader->facets($criteria, $scope)
+            : [];
+
+        return Result::success(new ArticleListResultDTO(
+            items: $this->enrich($page->articles, $includes),
+            pagination: $page->pagination,
+            includes: $includes,
+            facets: $facets,
+            query: $criteria->toCanonicalArray(),
+        ));
+    }
+
+    public function listItems(
+        ArticleQueryCriteria $criteria,
+        ArticleListIncludes $includes,
+        ?AuthenticatedUser $actor = null,
+    ): Result {
+        $scope = $this->articlePolicy->scopeFor($actor);
+
+        $articles = $this->articleListReader->listWithoutTotal($criteria, $scope, $includes);
+
+        return Result::success($this->enrich($articles, $includes));
+    }
+
+    /**
+     * Batched enrichment: one query per include, independent of page size.
+     *
+     * @param array<int, DomainArticle> $articles
+     *
+     * @return array<int, ArticleListItemDTO>
+     */
+    private function enrich(array $articles, ArticleListIncludes $includes): array
+    {
         $articleIds = array_map(
             static fn (DomainArticle $article): int => $article->getIdValue(),
-            $page->articles,
-        );
-        $articleUuids = array_map(
-            static fn (DomainArticle $article): string => $article->getUid()->value(),
-            $page->articles,
+            $articles,
         );
 
         $statsMap = $includes->includeStats
@@ -60,31 +93,21 @@ final readonly class ArticleListService implements ArticleListServiceInterface
             ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
             : [];
 
-        $processingStates = $this->processingStateReader->latestKanjiExtractionStates($articleUuids);
+        $processingStates = $includes->includeProcessingState
+            ? $this->processingStateReader->latestKanjiExtractionStates(array_map(
+                static fn (DomainArticle $article): string => $article->getUid()->value(),
+                $articles,
+            ))
+            : [];
 
-        $items = array_map(
+        return array_map(
             static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
                 article: $article,
                 stats: $statsMap[$article->getIdValue()] ?? null,
                 hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
                 processingState: $processingStates[$article->getUid()->value()] ?? null,
             ),
-            $page->articles,
+            $articles,
         );
-
-        // Counted from the same scope the items came from. If these were built from a
-        // separately derived predicate they could drift, and a drifting count is how a
-        // private Article leaks: the row stays hidden but still shows up in "N2 (13)".
-        $facets = $includes->includeFacets
-            ? $this->articleListReader->facets($criteria, $scope)
-            : [];
-
-        return Result::success(new ArticleListResultDTO(
-            items: $items,
-            pagination: $page->pagination,
-            includes: $includes,
-            facets: $facets,
-            query: $criteria->toCanonicalArray(),
-        ));
     }
 }

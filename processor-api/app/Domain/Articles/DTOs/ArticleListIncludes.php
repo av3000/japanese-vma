@@ -26,6 +26,11 @@ final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterfa
          * pay aggregation cost for controls they never render.
          */
         public bool $includeFacets = false,
+        /**
+         * Background kanji-extraction state per row. The public list renders it as
+         * processing_status; related-Article panels never do.
+         */
+        public bool $includeProcessingState = true,
     ) {
     }
 
@@ -51,7 +56,14 @@ final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterfa
      */
     public static function itemsOnly(): self
     {
-        return new self(false, false, false, false, false);
+        return new self(
+            includeStats: false,
+            includeHashtags: false,
+            includeKanjis: false,
+            includeWords: false,
+            includeFacets: false,
+            includeProcessingState: false,
+        );
     }
 
     /**
@@ -66,6 +78,7 @@ final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterfa
             includeKanjis: false,
             includeWords: false,
             includeFacets: false,
+            includeProcessingState: false,
         );
     }
 

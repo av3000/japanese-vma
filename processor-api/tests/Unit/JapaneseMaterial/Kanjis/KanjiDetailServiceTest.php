@@ -13,8 +13,6 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
-use App\Domain\Articles\DTOs\ArticleListResultDTO;
-use App\Domain\Articles\DTOs\ArticlePaginationDTO;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
@@ -69,7 +67,7 @@ class KanjiDetailServiceTest extends TestCase
     {
         $this->wordService->expects($this->never())->method('find');
         $this->sentenceService->expects($this->never())->method('find');
-        $this->articleListService->expects($this->never())->method('list');
+        $this->articleListService->expects($this->never())->method('listItems');
 
         $result = $this->service->findByIdentifier(
             '水',
@@ -100,14 +98,14 @@ class KanjiDetailServiceTest extends TestCase
             ->willReturn(Result::success($this->emptySentenceListResult()));
 
         $this->articleListService->expects($this->once())
-            ->method('list')
+            ->method('listItems')
             ->with(
                 // The canonical plural filter, not the retired singular kanji_id.
                 $this->callback(fn (ArticleQueryCriteria $criteria): bool => $criteria->kanjiIds === [88]),
                 $this->isInstanceOf(ArticleListIncludes::class),
                 null,
             )
-            ->willReturn(Result::success($this->emptyArticleListResult()));
+            ->willReturn(Result::success([]));
 
         $result = $this->service->findByIdentifier(
             'kanji-uuid',
@@ -145,15 +143,6 @@ class KanjiDetailServiceTest extends TestCase
     private function emptySentenceListResult(): SentenceListResultDTO
     {
         return new SentenceListResultDTO([], $this->emptyPagination());
-    }
-
-    private function emptyArticleListResult(): ArticleListResultDTO
-    {
-        return new ArticleListResultDTO(
-            items: [],
-            pagination: new ArticlePaginationDTO(page: 1, perPage: 5, total: 0, lastPage: 1, hasMore: false),
-            includes: new ArticleListIncludes(),
-        );
     }
 
     /**

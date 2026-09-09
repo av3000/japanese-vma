@@ -88,14 +88,35 @@ class KanjiRelatedQueryFiltersTest extends TestCase
 
     public function test_article_query_filters_by_kanji_id_and_keeps_visibility_rules(): void
     {
-        $result = app(ArticleListServiceInterface::class)->list(
+        $items = app(ArticleListServiceInterface::class)->listItems(
             ArticleQueryCriteria::forListing(perPage: 5, kanjiIds: [88]),
             ArticleListIncludes::itemsOnly(),
             null,
         )->getData();
 
-        $this->assertCount(1, $result->items);
-        $this->assertSame($this->relatedArticleId, $result->items[0]->article->getIdValue());
+        $this->assertCount(1, $items);
+        $this->assertSame($this->relatedArticleId, $items[0]->article->getIdValue());
+    }
+
+    /**
+     * The panel shows five rows and never a total, so the detail endpoint must not
+     * run a COUNT over the article/kanji join on every kanji page view.
+     */
+    public function test_kanji_detail_related_articles_issue_no_count_query(): void
+    {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $this->getJson('/api/v1/kanjis/88?include=articles')->assertStatus(200);
+
+        $articleCounts = array_filter(
+            DB::getQueryLog(),
+            static fn (array $entry): bool => str_contains($entry['query'], '"articles"')
+                && stripos($entry['query'], 'count(') !== false,
+        );
+        DB::disableQueryLog();
+
+        $this->assertSame([], array_values($articleCounts), 'Related-article panel ran a COUNT query');
     }
 
     private function createKanji(int $id, string $kanji): void
