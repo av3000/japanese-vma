@@ -118,7 +118,7 @@ class AuthV1Test extends TestCase
 
     public function test_register_requires_a_confirmed_password(): void
     {
-        $this->postJson('/api/v1/register', $this->registrationPayload(['password_confirmation' => self::VALID_PASSWORD . 'mismatch']))
+        $this->postJson('/api/v1/register', $this->registrationPayload(['password_confirmation' => self::VALID_PASSWORD.'mismatch']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('password');
     }
