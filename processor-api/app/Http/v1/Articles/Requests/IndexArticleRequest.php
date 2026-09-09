@@ -5,22 +5,13 @@ namespace App\Http\v1\Articles\Requests;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Domain\Shared\ValueObjects\SearchTerm;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class IndexArticleRequest extends FormRequest
 {
-    /**
-     * Shortest accepted search string. SearchTerm enforces the same floor but throws
-     * a plain InvalidArgumentException, which the exception handler does not map, so
-     * a one-character q would surface as a 500. Bound it at the HTTP edge instead.
-     */
-    public const MIN_SEARCH_LENGTH = 2;
-
-    /** Longest accepted search string. */
-    public const MAX_SEARCH_LENGTH = 200;
-
     /** Cap on unique values in any one multi-value filter. */
     public const MAX_FILTER_VALUES = 20;
 
@@ -49,7 +40,8 @@ class IndexArticleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => 'sometimes|string|min:'.self::MIN_SEARCH_LENGTH.'|max:'.self::MAX_SEARCH_LENGTH,
+            // Bounds are SearchTerm's, so the request and the value object cannot drift.
+            'q' => 'sometimes|string|min:'.SearchTerm::MIN_LENGTH.'|max:'.SearchTerm::MAX_LENGTH,
             'jlpt_levels' => 'sometimes|array|max:'.self::MAX_FILTER_VALUES,
             'jlpt_levels.*' => [Rule::in(ArticleJlptLevel::values())],
             'hashtag_ids' => 'sometimes|array|max:'.self::MAX_FILTER_VALUES,
@@ -75,7 +67,7 @@ class IndexArticleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'q.max' => 'Search may not be longer than '.self::MAX_SEARCH_LENGTH.' characters',
+            'q.max' => 'Search may not be longer than '.SearchTerm::MAX_LENGTH.' characters',
             'jlpt_levels.*.in' => 'JLPT level must be one of: '.implode(', ', ArticleJlptLevel::values()),
             'jlpt_levels.max' => 'At most '.self::MAX_FILTER_VALUES.' JLPT levels may be supplied',
             'hashtag_ids.max' => 'At most '.self::MAX_FILTER_VALUES.' hashtags may be supplied',

@@ -8,9 +8,17 @@ const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResour
 	items: [],
 	// Always present, empty when facets were not requested.
 	facets: [],
-	query: {
+	applied: {
 		q: null,
-		filters: { jlpt_levels: [], hashtag_ids: [], kanji_ids: [], word_ids: [], author_uid: null },
+		filters: {
+			jlpt_levels: [],
+			hashtag_ids: [],
+			kanji_ids: [],
+			word_ids: [],
+			author_uid: null,
+			created_from: null,
+			created_to: null,
+		},
 		sort: '-created_at',
 	},
 	pagination: {

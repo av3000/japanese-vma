@@ -87,10 +87,12 @@ class ArticleListServiceTest extends TestCase
             $this->neverCalledHashtagService(),
         );
 
-        $page = $service->list($this->criteria(), $includes)->getData();
+        $criteria = $this->criteria();
+        $page = $service->list($criteria, $includes)->getData();
 
         $this->assertSame([], $page->items);
         $this->assertSame($includes, $page->includes);
+        $this->assertSame($criteria, $page->criteria);
         $this->assertSame(1, $page->pagination->page);
         $this->assertSame(20, $page->pagination->perPage);
         $this->assertSame(0, $page->pagination->total);

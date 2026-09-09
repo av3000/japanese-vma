@@ -54,8 +54,8 @@ final readonly class ArticleListService implements ArticleListServiceInterface
             items: $this->enrich($page->articles, $includes),
             pagination: $page->pagination,
             includes: $includes,
+            criteria: $criteria,
             facets: $facets,
-            query: $criteria->toCanonicalArray(),
         ));
     }
 

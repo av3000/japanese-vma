@@ -101,44 +101,4 @@ final readonly class ArticleQueryCriteria
     {
         return $this->search !== null && $this->search->value !== '';
     }
-
-    /**
-     * The canonical echo of user intent, for the `query` response field.
-     * Never includes visibility.
-     *
-     * @return array{q: ?string, filters: array<string, mixed>, sort: string}
-     */
-    public function toCanonicalArray(): array
-    {
-        $filters = [];
-
-        if ($this->jlptLevels !== []) {
-            $filters['jlpt_levels'] = array_map(
-                static fn (ArticleJlptLevel $level): string => $level->value,
-                $this->jlptLevels,
-            );
-        }
-
-        if ($this->hashtagIds !== []) {
-            $filters['hashtag_ids'] = $this->hashtagIds;
-        }
-
-        if ($this->kanjiIds !== []) {
-            $filters['kanji_ids'] = $this->kanjiIds;
-        }
-
-        if ($this->wordIds !== []) {
-            $filters['word_ids'] = $this->wordIds;
-        }
-
-        if ($this->authorUid !== null) {
-            $filters['author_uid'] = $this->authorUid;
-        }
-
-        return [
-            'q' => $this->hasSearch() ? $this->search->value : null,
-            'filters' => $filters,
-            'sort' => $this->sort->toSigned(),
-        ];
-    }
 }

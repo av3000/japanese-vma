@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Articles\Resources;
 
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * URL. It carries user intent only: the mandatory visibility scope is never echoed,
  * because telling a caller which scope was applied tells them something about data
  * they cannot see.
+ *
+ * @property ArticleQueryCriteria $resource
  */
 class ArticleAppliedCriteriaResource extends JsonResource
 {
@@ -26,10 +29,12 @@ class ArticleAppliedCriteriaResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $criteria = $this->resource;
+
         return [
-            'q' => $this->resource['q'] ?? null,
-            'filters' => new ArticleAppliedFiltersResource($this->resource['filters'] ?? []),
-            'sort' => (string) ($this->resource['sort'] ?? ''),
+            'q' => $criteria->hasSearch() ? $criteria->search->value : null,
+            'filters' => new ArticleAppliedFiltersResource($criteria),
+            'sort' => $criteria->sort->toSigned(),
         ];
     }
 }

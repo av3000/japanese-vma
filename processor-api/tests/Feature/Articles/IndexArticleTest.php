@@ -473,7 +473,7 @@ class IndexArticleTest extends TestCase
         $this->assertSame(1, $n5['count'], 'A private Article leaked through the facet count');
     }
 
-    public function test_the_query_echo_contains_canonical_intent_only(): void
+    public function test_the_applied_echo_contains_canonical_intent_only(): void
     {
         $this->createArticle($this->createUser(), ['title_jp' => 'Any', 'n5' => 1]);
 
@@ -484,9 +484,24 @@ class IndexArticleTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertSame('Any', $response->json('query.q'));
-        $this->assertSame(['n5'], $response->json('query.filters.jlpt_levels'));
-        $this->assertSame('created_at', $response->json('query.sort'));
+        $this->assertSame('Any', $response->json('applied.q'));
+        $this->assertSame(['n5'], $response->json('applied.filters.jlpt_levels'));
+        $this->assertSame('created_at', $response->json('applied.sort'));
+        $this->assertNull($response->json('applied.filters.created_from'));
+    }
+
+    public function test_the_applied_echo_includes_the_date_range(): void
+    {
+        $this->createArticle($this->createUser(), ['title_jp' => 'Any']);
+
+        $response = $this->json('GET', '/api/v1/articles', [
+            'created_from' => '2026-01-01',
+            'created_to' => '2026-06-30',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertSame('2026-01-01', $response->json('applied.filters.created_from'));
+        $this->assertSame('2026-06-30', $response->json('applied.filters.created_to'));
     }
 
     /**
@@ -511,11 +526,11 @@ class IndexArticleTest extends TestCase
         ];
     }
 
-    public function test_the_query_echo_never_contains_visibility(): void
+    public function test_the_applied_echo_never_contains_visibility(): void
     {
         $this->createArticle($this->createUser(), ['title_jp' => 'Any']);
 
-        $echo = $this->json('GET', '/api/v1/articles')->json('query');
+        $echo = $this->json('GET', '/api/v1/articles')->json('applied');
 
         $flattened = json_encode($echo);
         $this->assertStringNotContainsString('publicity', $flattened);

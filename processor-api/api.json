@@ -1,13 +1,13 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Laravel",
+        "title": "JapaneseVMA",
         "version": "0.0.1",
         "description": "API for Japanese learning application with articles, kanjis, and lists"
     },
     "servers": [
         {
-            "url": "http://localhost/api/v1"
+            "url": "http://localhost:8080/api/v1"
         }
     ],
     "paths": {
@@ -119,10 +119,11 @@
                     {
                         "name": "q",
                         "in": "query",
+                        "description": "Bounds are SearchTerm's, so the request and the value object cannot drift.",
                         "schema": {
                             "type": "string",
                             "minLength": 2,
-                            "maxLength": 200
+                            "maxLength": 255
                         }
                     },
                     {
@@ -4106,6 +4107,86 @@
     },
     "components": {
         "schemas": {
+            "ArticleAppliedCriteriaResource": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "filters": {
+                        "$ref": "#/components/schemas/ArticleAppliedFiltersResource"
+                    },
+                    "sort": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "q",
+                    "filters",
+                    "sort"
+                ],
+                "title": "ArticleAppliedCriteriaResource"
+            },
+            "ArticleAppliedFiltersResource": {
+                "type": "object",
+                "properties": {
+                    "jlpt_levels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "hashtag_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "kanji_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "word_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "author_uid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "jlpt_levels",
+                    "hashtag_ids",
+                    "kanji_ids",
+                    "word_ids",
+                    "author_uid",
+                    "created_from",
+                    "created_to"
+                ],
+                "title": "ArticleAppliedFiltersResource"
+            },
             "ArticleDetailResource": {
                 "type": "object",
                 "properties": {
@@ -4300,8 +4381,8 @@
                             "$ref": "#/components/schemas/ArticleFacetResource"
                         }
                     },
-                    "query": {
-                        "$ref": "#/components/schemas/ArticleQueryEchoResource"
+                    "applied": {
+                        "$ref": "#/components/schemas/ArticleAppliedCriteriaResource"
                     },
                     "pagination": {
                         "$ref": "#/components/schemas/PaginationResource"
@@ -4310,7 +4391,7 @@
                 "required": [
                     "items",
                     "facets",
-                    "query",
+                    "applied",
                     "pagination"
                 ],
                 "title": "ArticleListResource"
@@ -4375,64 +4456,6 @@
                     "pagination"
                 ],
                 "title": "ArticleModerationListResource"
-            },
-            "ArticleQueryEchoResource": {
-                "type": "object",
-                "properties": {
-                    "q": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "filters": {
-                        "$ref": "#/components/schemas/ArticleQueryFiltersResource"
-                    },
-                    "sort": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "q",
-                    "filters",
-                    "sort"
-                ],
-                "title": "ArticleQueryEchoResource"
-            },
-            "ArticleQueryFiltersResource": {
-                "type": "object",
-                "properties": {
-                    "jlpt_levels": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "hashtag_ids": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "kanji_ids": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "word_ids": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "author_uid": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                },
-                "required": [
-                    "jlpt_levels",
-                    "hashtag_ids",
-                    "kanji_ids",
-                    "word_ids",
-                    "author_uid"
-                ],
-                "title": "ArticleQueryFiltersResource"
             },
             "ArticleResource": {
                 "type": "object",

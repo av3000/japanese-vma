@@ -23,7 +23,7 @@ class ArticleListResource extends JsonResource
      * @return array{
      *     items: array<int, ArticleResource>,
      *     facets: array<int, ArticleFacetResource>,
-     *     query: ArticleAppliedCriteriaResource,
+     *     applied: ArticleAppliedCriteriaResource,
      *     pagination: PaginationResource
      * }
      */
@@ -57,7 +57,7 @@ class ArticleListResource extends JsonResource
             'items' => $items,
             /** @var array<int, ArticleFacetResource> */
             'facets' => $facets,
-            'query' => new ArticleAppliedCriteriaResource($this->resource->query),
+            'applied' => new ArticleAppliedCriteriaResource($this->resource->criteria),
             'pagination' => new PaginationResource($this->resource->pagination->toArray()),
         ];
     }
