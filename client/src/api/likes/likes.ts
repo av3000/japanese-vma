@@ -1,25 +1,168 @@
-import axios from '@/services/axios';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { QueryClient, QueryKey, UseMutationOptions } from '@tanstack/react-query';
+import { likeLikeInstance } from '@/api/generated/like/like';
+import type { LikeLikeInstanceMutationError } from '@/api/generated/like/like';
+import { LikeTargetType } from '@/api/generated/model/likeTargetType';
+import type { LikeToggleResource } from '@/api/generated/model/likeToggleResource';
+import { ObjectTemplateType } from '@/shared/constants/enums';
 
-export interface LikeRequestPayload {
-	objectType: string;
-	objectTypeId: number;
-	instanceId: number;
+/**
+ * The likeable subset of `ObjectTemplateType`, bridged to the numeric `template_id` the wire wants.
+ *
+ * This cannot just index `ObjectTemplateTypeLegacyId`: that table is declared
+ * `satisfies Record<ObjectTemplateType, number>`, so its values widen to `number` and reusing it
+ * would need an unchecked `as LikeTargetType`. Naming the generated enum members instead means the
+ * compiler proves each value is one the contract still accepts.
+ */
+export const LIKE_TARGET_TYPES = {
+	[ObjectTemplateType.ARTICLE]: LikeTargetType.NUMBER_1,
+	[ObjectTemplateType.LIST]: LikeTargetType.NUMBER_8,
+	[ObjectTemplateType.POST]: LikeTargetType.NUMBER_9,
+	[ObjectTemplateType.COMMENT]: LikeTargetType.NUMBER_10,
+} as const satisfies Partial<Record<ObjectTemplateType, LikeTargetType>>;
+
+/**
+ * Only these four templates can reach the seam. A non-likeable template is a compile error at the
+ * call site, so no runtime guard is needed - every caller passes one of these literals.
+ */
+export type LikeTargetTemplate = keyof typeof LIKE_TARGET_TYPES;
+
+/**
+ * `real_object_id` addresses a loaded row, never a route parameter.
+ *
+ * Detail routes are keyed by UUID, so the tempting shortcut is to reuse the URL segment here.
+ * `Number('a4b78a83-...')` is `NaN`, which would serialize as `null` and silently like nothing, so
+ * this rejects anything that is not already a positive integer read off a loaded record.
+ */
+const assertLikeInstanceId = (instanceId: unknown): number => {
+	if (typeof instanceId !== 'number' || !Number.isInteger(instanceId) || instanceId < 1) {
+		throw new Error(`Like target id must be a loaded positive integer, received ${JSON.stringify(instanceId)}.`);
+	}
+
+	return instanceId;
+};
+
+/**
+ * The like facts a cached record can hold. Identical in shape to the toggle response, so the
+ * authoritative server state can be written back through the same binding as an optimistic guess.
+ */
+export type LikeState = LikeToggleResource;
+
+export type LikeToggleError = LikeLikeInstanceMutationError;
+
+/**
+ * How one domain's cache stores the like state for a target.
+ *
+ * The shared seam owns the request, the mutation key, the optimistic flip and the rollback; the
+ * domain owns the shape of its own cache entry. `read` returning `undefined` means the domain has
+ * nothing to flip optimistically - the cache is then only moved by the authoritative response.
+ */
+export interface LikeCacheBinding<TCached> {
+	queryKey: QueryKey;
+	read: (cached: TCached, instanceId: number) => LikeState | undefined;
+	write: (cached: TCached, instanceId: number, next: LikeState) => TCached;
 }
 
-export interface LikeResponse {
-	is_liked: boolean;
-	likes_count: number;
+/**
+ * Mutation key for every Like toggle of one target kind, so pending Like traffic is addressable
+ * without each domain inventing its own string.
+ */
+export const getLikeInstanceMutationKey = (template: LikeTargetTemplate): QueryKey => ['like-instance', template];
+
+export interface LikeToggleContext<TCached> {
+	previous: TCached | undefined;
 }
 
-// Shared legacy-named wrapper over the generic v1 `like-instance` endpoint. Callers currently
-// include comments, articles, and catalogues, so the helper name should reflect the endpoint
-// contract rather than a single content type.
-// TODO(LIKE-FE-01): replace with the Orval-generated hook now that the endpoint emits a typed model.
-export const toggleInstanceLike = async (requestPayload: LikeRequestPayload): Promise<LikeResponse> => {
-	const response = await axios.post<LikeResponse>(`/v1/like-instance`, {
-		template_id: requestPayload.objectTypeId,
-		real_object_id: requestPayload.instanceId,
-	});
+/**
+ * The toggle is a flip, so the optimistic guess is the inverse of what the cache already holds.
+ * The count is floored because a stale zero must not render as `-1` while the request is in flight.
+ */
+const flipLikeState = ({ is_liked, likes_count }: LikeState): LikeState => ({
+	is_liked: !is_liked,
+	likes_count: Math.max(0, likes_count + (is_liked ? -1 : 1)),
+});
 
-	return response.data;
+interface LikeToggleMutationOptionsArgs<TCached> {
+	queryClient: QueryClient;
+	template: LikeTargetTemplate;
+	binding: LikeCacheBinding<TCached>;
+}
+
+/**
+ * Built separately from the hook so the cache behaviour can be exercised against a real
+ * `QueryClient` without rendering a component.
+ */
+export const buildLikeToggleMutationOptions = <TCached>({
+	queryClient,
+	template,
+	binding,
+}: LikeToggleMutationOptionsArgs<TCached>): UseMutationOptions<
+	LikeToggleResource,
+	LikeToggleError,
+	number,
+	LikeToggleContext<TCached>
+> => ({
+	mutationKey: getLikeInstanceMutationKey(template),
+
+	// `async` so a rejected contract guard surfaces as a mutation error rather than a synchronous
+	// throw out of the click handler.
+	mutationFn: async (instanceId) =>
+		likeLikeInstance({
+			template_id: LIKE_TARGET_TYPES[template],
+			real_object_id: assertLikeInstanceId(instanceId),
+		}),
+
+	onMutate: async (instanceId) => {
+		// An in-flight read would otherwise land after the optimistic write and undo it.
+		await queryClient.cancelQueries({ queryKey: binding.queryKey });
+
+		const previous = queryClient.getQueryData<TCached>(binding.queryKey);
+		const current = previous === undefined ? undefined : binding.read(previous, instanceId);
+
+		if (previous !== undefined && current !== undefined) {
+			queryClient.setQueryData<TCached>(
+				binding.queryKey,
+				binding.write(previous, instanceId, flipLikeState(current)),
+			);
+		}
+
+		return { previous };
+	},
+
+	onError: (_error, _instanceId, context) => {
+		// Restore the exact snapshot rather than flipping back, so a concurrent server value that
+		// arrived between the click and the failure is not reconstructed from a stale guess.
+		if (context?.previous !== undefined) {
+			queryClient.setQueryData<TCached>(binding.queryKey, context.previous);
+		}
+	},
+
+	onSuccess: (result, instanceId) => {
+		queryClient.setQueryData<TCached>(binding.queryKey, (cached) =>
+			cached === undefined ? cached : binding.write(cached, instanceId, result),
+		);
+	},
+});
+
+/**
+ * The single Like mutation seam. Every Like caller in the app goes through here.
+ *
+ * The target id is the mutation variable rather than a hook argument so one hook can serve a list
+ * of targets - a comment thread - while still reporting which one is mid-flight.
+ */
+export const useToggleLikeMutation = <TCached>({
+	template,
+	binding,
+}: Omit<LikeToggleMutationOptionsArgs<TCached>, 'queryClient'>) => {
+	const queryClient = useQueryClient();
+	const mutation = useMutation(buildLikeToggleMutationOptions<TCached>({ queryClient, template, binding }));
+
+	return {
+		...mutation,
+		/**
+		 * Duplicate-click guard. A second click on the same target while the first is in flight would
+		 * flip the optimistic state back and leave the UI showing the opposite of the final response.
+		 */
+		isTogglingInstance: (instanceId: number) => mutation.isPending && mutation.variables === instanceId,
+	};
 };

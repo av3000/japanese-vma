@@ -13,6 +13,10 @@ import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDet
 import CatalogueContent from './CatalogueContent';
 
 const useNavigateMock = vi.fn();
+const likeMutateMock = vi.fn();
+let likeIsToggling = false;
+let isAuthenticatedMock = true;
+const capturedLikeButtonProps: Array<{ onClick?: () => void; disabled?: boolean; 'aria-pressed'?: boolean }> = [];
 const setQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const catalogueDestroyMutateMock = vi.fn();
@@ -72,12 +76,16 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
 		user: { id: 7, isAdmin: false },
-		isAuthenticated: true,
+		isAuthenticated: isAuthenticatedMock,
 	}),
 }));
 
 vi.mock('@/api/catalogues/details', () => ({
-	useLikeCatalogueMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+	useLikeCatalogueMutation: vi.fn(() => ({
+		mutate: likeMutateMock,
+		isPending: false,
+		isTogglingInstance: () => likeIsToggling,
+	})),
 }));
 
 vi.mock('@/components/shared/Icon', () => ({
@@ -85,13 +93,28 @@ vi.mock('@/components/shared/Icon', () => ({
 }));
 
 vi.mock('@/components/shared/Button', () => ({
-	Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => {
+	Button: ({
+		children,
+		onClick,
+		disabled,
+		...rest
+	}: {
+		children: ReactNode;
+		onClick?: () => void;
+		disabled?: boolean;
+		'aria-label'?: string;
+		'aria-pressed'?: boolean;
+	}) => {
 		if (isValidElement<{ name?: string }>(children) && children.props.name === 'filePdfSolid') {
 			capturedPdfButtonProps.push({ onClick });
 		}
 
+		if (rest['aria-label']?.endsWith('this catalogue')) {
+			capturedLikeButtonProps.push({ onClick, disabled, 'aria-pressed': rest['aria-pressed'] });
+		}
+
 		return (
-			<button type="button" onClick={onClick}>
+			<button type="button" onClick={onClick} disabled={disabled}>
 				{children}
 			</button>
 		);
@@ -150,6 +173,9 @@ describe('CatalogueContent', () => {
 		capturedCatalogueItemsProps.length = 0;
 		capturedDeleteModalProps.length = 0;
 		capturedPdfButtonProps.length = 0;
+		capturedLikeButtonProps.length = 0;
+		likeIsToggling = false;
+		isAuthenticatedMock = true;
 		createObjectUrlMock.mockReturnValue('blob:catalogue-pdf');
 		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
 		vi.stubGlobal('window', { open: windowOpenMock });
@@ -163,6 +189,53 @@ describe('CatalogueContent', () => {
 
 		expect(html).toContain('thumbsUpSolid');
 		expect(html).not.toContain('thumbsUpRegular');
+		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
+	});
+
+	it('renders the unfilled like icon for a catalogue the viewer has not liked', () => {
+		const html = renderToStaticMarkup(
+			<CatalogueContent
+				catalogue={
+					createCatalogue({
+						engagement: {
+							likes_count: 4,
+							views_count: 8,
+							downloads_count: 2,
+							comments_count: 1,
+							is_liked_by_viewer: false,
+						},
+					}) as any
+				}
+			/>,
+		);
+
+		expect(html).toContain('thumbsUpRegular');
+		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(false);
+	});
+
+	it('likes through the loaded numeric catalogue id rather than the uuid route parameter', () => {
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		capturedLikeButtonProps[0].onClick?.();
+
+		expect(likeMutateMock).toHaveBeenCalledWith(55);
+	});
+
+	it('sends an anonymous reader to login instead of a like the endpoint would reject', () => {
+		isAuthenticatedMock = false;
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		capturedLikeButtonProps[0].onClick?.();
+
+		expect(likeMutateMock).not.toHaveBeenCalled();
+		expect(useNavigateMock).toHaveBeenCalledWith('/login');
+	});
+
+	it('blocks a duplicate like while the toggle for this catalogue is in flight', () => {
+		likeIsToggling = true;
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		expect(capturedLikeButtonProps[0].disabled).toBe(true);
 	});
 
 	it('removes catalogue items through the direct v1 catalogue item endpoint and updates the detail cache', async () => {

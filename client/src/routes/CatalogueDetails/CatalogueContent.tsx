@@ -100,6 +100,17 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 
 	const isLiked = catalogue.engagement?.is_liked_by_viewer ?? false;
 
+	const handleLikeClick = () => {
+		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
+		// rather than as error handling after a pointless request.
+		if (!isAuthenticated) {
+			navigate('/login');
+			return;
+		}
+
+		likeMutation.mutate(catalogue.id);
+	};
+
 	return (
 		<div className="container pb-5">
 			<div className="row justify-content-center">
@@ -170,14 +181,10 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							<Button
 								variant="ghost"
 								hasOnlyIcon
-								onClick={() => {
-									if (!isAuthenticated) {
-										navigate('/login');
-										return;
-									}
-
-									likeMutation.mutate(catalogue.id);
-								}}
+								aria-label={isLiked ? 'Unlike this catalogue' : 'Like this catalogue'}
+								aria-pressed={isLiked}
+								disabled={likeMutation.isTogglingInstance(catalogue.id)}
+								onClick={handleLikeClick}
 							>
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
