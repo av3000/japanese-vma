@@ -16,6 +16,8 @@ use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
  */
 interface ArticleProcessingStateReaderInterface
 {
+    public function latestKanjiExtractionState(string $articleUuid): ?ArticleProcessingStateDTO;
+
     /**
      * @param array<int, string> $articleUuids
      *

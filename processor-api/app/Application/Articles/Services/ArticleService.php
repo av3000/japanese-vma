@@ -3,6 +3,7 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Jobs\ProcessArticleWordsJob;
@@ -16,7 +17,6 @@ use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
@@ -48,7 +48,7 @@ class ArticleService implements ArticleServiceInterface
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
         private EngagementServiceInterface $engagementService,
-        private LastOperationServiceInterface $lastOperationService,
+        private ArticleProcessingStateReaderInterface $processingStateReader,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
@@ -163,10 +163,7 @@ class ArticleService implements ArticleServiceInterface
             ObjectTemplateType::ARTICLE
         );
 
-        $lastOperation = $this->lastOperationService->getLatestState(
-            $article->getUid(),
-            'kanji_extraction'
-        );
+        $processingState = $this->processingStateReader->latestKanjiExtractionState($article->getUid()->value());
 
         // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
         // once detail payload should stop carrying full lists.
@@ -176,7 +173,7 @@ class ArticleService implements ArticleServiceInterface
             kanjis: $article->getKanjis(),
             words: $article->getWords(),
             hashtags: $hashtags,
-            lastOperation: $lastOperation,
+            processingState: $processingState,
         ));
     }
 
