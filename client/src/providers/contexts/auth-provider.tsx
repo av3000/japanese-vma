@@ -1,6 +1,12 @@
 import React, { createContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '@/services/axios';
+import {
+	AUTH_TOKEN_STORAGE_KEY,
+	fetchCurrentUser,
+	loginSession,
+	registerSession,
+	revokeSession,
+} from '@/api/auth/session';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -21,7 +27,7 @@ interface AuthContextType {
 		password: string;
 		password_confirmation: string;
 	}) => Promise<void>;
-	logout: () => void;
+	logout: () => Promise<void>;
 	clearSessionExpired: () => void;
 }
 
@@ -32,7 +38,7 @@ interface AuthProviderProps {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-	const initialToken = useMemo(() => localStorage.getItem('token'), []);
+	const initialToken = useMemo(() => localStorage.getItem(AUTH_TOKEN_STORAGE_KEY), []);
 	const [user, setUser] = useState<User | null>(null);
 	const [token, setToken] = useState<string | null>(initialToken);
 	const [isLoading, setIsLoading] = useState(Boolean(initialToken));
@@ -42,59 +48,75 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	const isAuthenticated = Boolean(user);
 
 	const login = useCallback(async (loginPayload) => {
-		const response = await axiosInstance.post('/v1/login', loginPayload);
-		const { access_token, ...userData } = response.data.data;
+		const session = await loginSession(loginPayload);
 
-		localStorage.setItem('token', access_token);
-		setToken(access_token);
-		setUser({ isAdmin: userData.is_admin, ...userData });
+		localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, session.accessToken);
+		setToken(session.accessToken);
+		setUser(session.user);
 		setIsLoading(false);
 		setSessionExpired(false);
 	}, []);
 
 	const register = useCallback(async (registerPayload) => {
-		const response = await axiosInstance.post('/v1/register', registerPayload);
-		const { access_token, ...userData } = response.data.data;
+		const session = await registerSession(registerPayload);
 
-		localStorage.setItem('token', access_token);
-		setToken(access_token);
-		setUser({ isAdmin: userData.is_admin, ...userData });
+		localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, session.accessToken);
+		setToken(session.accessToken);
+		setUser(session.user);
 		setIsLoading(false);
 		setSessionExpired(false);
 	}, []);
 
-	const logout = useCallback(() => {
-		localStorage.removeItem('token');
+	/**
+	 * Dropping the credentials is the part that must never be skipped, so it lives on its own and
+	 * every sign-out path ends here regardless of what the server did.
+	 */
+	const clearSession = useCallback(() => {
+		localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 		setToken(null);
 		setUser(null);
 		setIsLoading(false);
 		navigate('/login');
 	}, [navigate]);
 
+	// `logout` reads the token from storage rather than from state so that a sign-out triggered
+	// before the restore effect settles still knows there is something to revoke.
+	const logout = useCallback(async () => {
+		try {
+			if (localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)) {
+				await revokeSession();
+			}
+		} finally {
+			clearSession();
+		}
+	}, [clearSession]);
+
 	const clearSessionExpired = useCallback(() => {
 		setSessionExpired(false);
 	}, []);
 
 	useEffect(() => {
+		// A 401 means the token is already dead, so calling the revocation endpoint with it would
+		// only produce a second 401. This path clears locally and skips the server round trip.
 		const handleUnauthorized = () => {
 			setSessionExpired(true);
-			logout();
+			clearSession();
 		};
 
 		window.addEventListener('auth:unauthorized', handleUnauthorized);
 		return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
-	}, [logout]);
+	}, [clearSession]);
 
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === 'token' && !e.newValue) {
+			if (e.key === AUTH_TOKEN_STORAGE_KEY && !e.newValue) {
 				setToken(null);
 				setUser(null);
 				setIsLoading(false);
 				navigate('/login');
 			}
 
-			if (e.key === 'token' && e.newValue) {
+			if (e.key === AUTH_TOKEN_STORAGE_KEY && e.newValue) {
 				setToken(e.newValue);
 				setUser(null);
 				setIsLoading(true);
@@ -120,20 +142,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 		const verifyToken = async () => {
 			try {
-				const response = await axiosInstance.get('/v1/me');
+				const currentUser = await fetchCurrentUser();
 
 				if (!isActive) {
 					return;
 				}
 
-				setUser({ isAdmin: response.data.data.is_admin, ...response.data.data });
+				setUser(currentUser);
 			} catch (error) {
 				if (!isActive) {
 					return;
 				}
 
 				console.error('Auth check failed:', error);
-				localStorage.removeItem('token');
+				localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 				setToken(null);
 				setUser(null);
 			} finally {
