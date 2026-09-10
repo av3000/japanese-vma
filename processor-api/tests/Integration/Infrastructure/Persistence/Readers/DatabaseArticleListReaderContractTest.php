@@ -302,8 +302,8 @@ class DatabaseArticleListReaderContractTest extends TestCase
     public function test_list_without_total_returns_the_same_rows_in_the_same_order_as_search(): void
     {
         $author = User::factory()->create();
-        foreach (['A', 'B', 'C'] as $title) {
-            PersistenceArticle::factory()->byUser($author)->create(['title_jp' => $title]);
+        foreach (['Alpha', 'Bravo', 'Charlie'] as $title) {
+            $this->createArticle($author, ['title_jp' => $title]);
         }
 
         $criteria = ArticleQueryCriteria::forListing(
@@ -316,7 +316,7 @@ class DatabaseArticleListReaderContractTest extends TestCase
         $page = $this->reader->search($criteria, $scope, ArticleListIncludes::itemsOnly());
         $rows = $this->reader->listWithoutTotal($criteria, $scope, ArticleListIncludes::itemsOnly());
 
-        $this->assertSame(['A', 'B'], $this->titles($page));
+        $this->assertSame(['Alpha', 'Bravo'], $this->titles($page));
         $this->assertSame(
             $this->titles($page),
             array_map(static fn (DomainArticle $article): string => $article->getTitleJp()->value, $rows),
