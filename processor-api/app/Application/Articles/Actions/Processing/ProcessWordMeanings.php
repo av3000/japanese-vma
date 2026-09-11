@@ -10,14 +10,14 @@ class ProcessWordMeanings
 {
     public function execute($article): void //TODO: add proper ARticle type
     {
-        Log::info('Words count: ' . $article->words->count());
+        Log::info('Words count: '.$article->words->count());
         $start = microtime(true);
 
         $words = $article->words;
 
         foreach ($words as $index => $word) {
             if ($index % 100 === 0) {
-                Log::info("Processing word $index, time: " . round(microtime(true) - $start, 2) . 's');
+                Log::info("Processing word $index, time: ".round(microtime(true) - $start, 2).'s');
             }
             $senseData = json_decode($word->sense, true);
             $meanings = [];
@@ -34,7 +34,7 @@ class ProcessWordMeanings
             $word->meaning = implode(', ', array_slice($meanings, 0, 3));
         }
 
-        Log::info('Word processing completed in: ' . round(microtime(true) - $start, 2) . 's');
+        Log::info('Word processing completed in: '.round(microtime(true) - $start, 2).'s');
 
         $article->words = $words;
     }

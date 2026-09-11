@@ -29,9 +29,11 @@ axiosInstance.interceptors.request.use(
  * any of these to `auth:unauthorized` would replace the caller's message with a spurious
  * "session expired" bounce.
  *
- * Matching on the final path segment keeps this working regardless of how much version prefix the
- * caller carries: the generated clients send a bare path against a versioned base URL, while legacy
- * callers still put the version in the path itself.
+ * Matching on the final path segment rather than the whole URL keeps this working regardless of how
+ * much version prefix the caller carries. The generated clients send a bare path against a
+ * versioned base URL, so `login` arrives here as `/login` on one call site and `/v1/login` on
+ * another depending on how the base URL is composed; a prefix-sensitive check would silently stop
+ * suppressing one of them.
  */
 const SELF_HANDLED_401_ENDPOINTS = ['login', 'register', 'logout'];
 

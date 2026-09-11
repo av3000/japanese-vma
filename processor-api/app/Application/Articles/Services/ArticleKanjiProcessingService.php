@@ -8,8 +8,8 @@ use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiReposit
 use App\Domain\Articles\Enums\ArticleStatus;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Models\Article as DomainArticle;
-use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Jobs\ProcessArticleKanjis;
 
 // TODO: probably to be refactored or decommisioned. See in ArticleService how the job is being called
@@ -19,7 +19,8 @@ class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInte
         private ArticleRepositoryInterface $articleRepository,
         private KanjiRepositoryInterface $kanjiRepository,
         private ExtractKanjisAction $extractKanjis
-    ) {}
+    ) {
+    }
 
     public function queueKanjiProcessing(EntityId $articleUid): void
     {
@@ -66,7 +67,7 @@ class ArticleKanjiProcessingService implements ArticleKanjiProcessingServiceInte
         foreach ($kanjis as $kanji) {
             $jlptLevel = $kanji->getJlptLevel();
             if (in_array($jlptLevel, ['1', '2', '3', '4', '5'])) {
-                $levels['n' . $jlptLevel]++;
+                $levels['n'.$jlptLevel]++;
             } else {
                 $levels['uncommon']++;
             }

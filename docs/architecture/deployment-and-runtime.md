@@ -63,6 +63,25 @@ Backend Compose commands run from `processor-api/`; frontend Compose commands ru
 
 The backend Compose topology provides the application/web services plus dedicated database and test-runner services. Backend database tests must use the isolated `db-test` and `test-runner` lane rather than host PHP, the development database, or SQLite substitutes.
 
+## Retained Operational Endpoints
+
+Session authentication is served only by `api/v1/*` (`register`, `login`, `logout`, `me`). The
+unversioned legacy session routes were retired in RET-AUTH-01, and `api/testing` went with them — it
+pointed at a controller method that never existed and answered 500 on every request.
+
+Two endpoints remain registered under the unversioned `api` prefix. Neither is a session endpoint,
+neither has a v1 successor, and both are retained deliberately rather than pending migration:
+
+| Endpoint | Defined in | Role | Owner | Revisit when |
+| --- | --- | --- | --- | --- |
+| `GET api/health` | `processor-api/routes/api.php` | Container and orchestrator liveness probe. Consumed by the Compose healthchecks and the Render/GCP runtime, not by the frontend. | Deployment/runtime | The hosting platform stops polling it, or a versioned health contract is introduced for it. Changing its path or payload is a deploy-configuration change, not an API change. |
+| `POST api/broadcasting/auth` | `processor-api/app/Providers/BroadcastServiceProvider.php` | Laravel Echo private-channel authorization for the `App.User.{id}` and `last_operations.{uuid}` channels in `routes/channels.php`. Authorizes channel subscriptions, not sessions. | Async processing/broadcasting | Broadcasting is removed, or the channel authorization moves behind a versioned route. Its `auth:api` middleware is shared with the rest of the API, so Passport guard changes must consider it. |
+
+Because `Broadcast::routes()` registers its route from the service provider, edits to
+`routes/api.php` cannot remove it — but they also cannot be relied on to reveal it. Both endpoints
+are asserted registered by `processor-api/tests/Feature/Routes/LegacyAuthRouteRetirementTest.php`,
+and the health payload is asserted by `processor-api/tests/Feature/OperationalRoutesTest.php`.
+
 ## Verification Boundaries
 
 Repository evidence supports these checks:
@@ -96,4 +115,5 @@ Provider-level verification remains an operational action. A documentation revie
 - `processor-api/docker-compose.yml`
 - `client/docker-compose.yml`
 - `processor-api/tests/Feature/OperationalRoutesTest.php`
+- `processor-api/tests/Feature/Routes/LegacyAuthRouteRetirementTest.php`
 - `processor-api/tests/Feature/Console/VerifyQueueWorkerCommandTest.php`

@@ -1,8 +1,9 @@
 <?php
+
 namespace App\Application\Articles\Actions\Deletion;
 
-use Illuminate\Support\Facades\DB;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use Illuminate\Support\Facades\DB;
 
 class CleanupArticleCustomListsAction
 {

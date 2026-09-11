@@ -2,7 +2,11 @@
 
 namespace App\Application\Articles\Actions\Retrieval;
 
-use App\Http\Models\{Like, Download, View, Comment, ObjectTemplate};
+use App\Http\Models\Comment;
+use App\Http\Models\Download;
+use App\Http\Models\Like;
+use App\Http\Models\ObjectTemplate;
+use App\Http\Models\View;
 
 class LoadArticleStats
 {
@@ -19,14 +23,14 @@ class LoadArticleStats
         // Calculate kanji stats
         $article->jlptcommon = $article->kanjis->where('jlpt', '-')->count();
         $article->kanjiTotal = collect(['n1', 'n2', 'n3', 'n4', 'n5'])
-            ->sum(fn($level) => $article->$level) + $article->jlptcommon;
+            ->sum(fn ($level) => $article->$level) + $article->jlptcommon;
     }
 
     private function getCount(string $model, int $templateId, int $objectId): int
     {
         return $model::where([
             'template_id' => $templateId,
-            'real_object_id' => $objectId
+            'real_object_id' => $objectId,
         ])->count();
     }
 }

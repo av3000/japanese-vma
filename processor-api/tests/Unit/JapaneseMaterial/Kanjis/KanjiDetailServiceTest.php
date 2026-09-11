@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\JapaneseMaterial\Kanjis;
 
-use App\Application\Articles\Services\ArticleServiceInterface;
+use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
@@ -12,8 +12,8 @@ use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\DTOs\ArticleListResultDTO;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailIncludes;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
@@ -34,7 +34,7 @@ class KanjiDetailServiceTest extends TestCase
 
     private SentenceServiceInterface&MockObject $sentenceService;
 
-    private ArticleServiceInterface&MockObject $articleService;
+    private ArticleListServiceInterface&MockObject $articleListService;
 
     private KanjiDetailService $service;
 
@@ -43,7 +43,7 @@ class KanjiDetailServiceTest extends TestCase
         $this->kanjiService = $this->createMock(KanjiServiceInterface::class);
         $this->wordService = $this->createMock(WordServiceInterface::class);
         $this->sentenceService = $this->createMock(SentenceServiceInterface::class);
-        $this->articleService = $this->createMock(ArticleServiceInterface::class);
+        $this->articleListService = $this->createMock(ArticleListServiceInterface::class);
 
         $catalogueRepository = $this->createMock(CatalogueRepositoryInterface::class);
         $catalogueItemRepository = $this->createMock(CatalogueItemRepositoryInterface::class);
@@ -52,7 +52,7 @@ class KanjiDetailServiceTest extends TestCase
             kanjiService: $this->kanjiService,
             wordService: $this->wordService,
             sentenceService: $this->sentenceService,
-            articleService: $this->articleService,
+            articleListService: $this->articleListService,
             viewerCatalogueStateService: new ViewerCatalogueStateService(
                 $catalogueRepository,
                 $catalogueItemRepository,
@@ -67,7 +67,7 @@ class KanjiDetailServiceTest extends TestCase
     {
         $this->wordService->expects($this->never())->method('find');
         $this->sentenceService->expects($this->never())->method('find');
-        $this->articleService->expects($this->never())->method('getArticlesList');
+        $this->articleListService->expects($this->never())->method('listItems');
 
         $result = $this->service->findByIdentifier(
             '水',
@@ -97,13 +97,15 @@ class KanjiDetailServiceTest extends TestCase
             ))
             ->willReturn(Result::success($this->emptySentenceListResult()));
 
-        $this->articleService->expects($this->once())
-            ->method('getArticlesList')
+        $this->articleListService->expects($this->once())
+            ->method('listItems')
             ->with(
-                $this->callback(fn (ArticleListDTO $dto): bool => $dto->kanji_id === 88),
+                // The canonical plural filter, not the retired singular kanji_id.
+                $this->callback(fn (ArticleQueryCriteria $criteria): bool => $criteria->kanjiIds === [88]),
+                $this->isInstanceOf(ArticleListIncludes::class),
                 null,
             )
-            ->willReturn($this->emptyArticleListResult());
+            ->willReturn(Result::success([]));
 
         $result = $this->service->findByIdentifier(
             'kanji-uuid',
@@ -141,11 +143,6 @@ class KanjiDetailServiceTest extends TestCase
     private function emptySentenceListResult(): SentenceListResultDTO
     {
         return new SentenceListResultDTO([], $this->emptyPagination());
-    }
-
-    private function emptyArticleListResult(): ArticleListResultDTO
-    {
-        return new ArticleListResultDTO([], $this->emptyPagination(), true, true);
     }
 
     /**

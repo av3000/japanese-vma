@@ -8,7 +8,8 @@ class ExtractKanjisAction
 {
     public function __construct(
         private KanjiRepositoryInterface $kanjiRepository
-    ) {}
+    ) {
+    }
 
     public function execute(string $text): array
     {

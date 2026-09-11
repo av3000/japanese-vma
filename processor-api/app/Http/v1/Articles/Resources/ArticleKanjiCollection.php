@@ -11,7 +11,7 @@ class ArticleKanjiCollection extends ResourceCollection
         return [
             'success' => true,
             'kanjis' => $this->collection,
-            'message' => 'Article kanjis fetched'
+            'message' => 'Article kanjis fetched',
         ];
     }
 }

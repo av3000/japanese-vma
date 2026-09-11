@@ -2,13 +2,14 @@
 
 namespace App\Application\Articles\Actions\Processing;
 
-use App\Infrastructure\Persistence\Models\Article;;
+use App\Infrastructure\Persistence\Models\Article;
 
 class UpdateJLPTLevelsAction
 {
     public function __construct(
         private CalculateJLPTLevels $calculateLevels
-    ) {}
+    ) {
+    }
 
     /**
      * Calculate and update JLPT levels for the article.

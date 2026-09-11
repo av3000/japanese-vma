@@ -2,7 +2,6 @@
 
 namespace App\Application\Articles\Interfaces\Repositories;
 
-use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\Models\Article as DomainArticle;
@@ -52,19 +51,6 @@ interface ArticleRepositoryInterface
 
     public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator;
 
-    /**
-     * Find articles matching complex criteria with filters, search, sorting, and pagination.
-     *
-     * @param ArticleCriteriaDTO
-     * $criteria Complete filter criteria including:
-     *
-     * @throws \Illuminate\Database\QueryException On database failure
-     *
-     * @return Articles
-     *                  Domain collection containing:
-     */
-    public function findByCriteria(ArticleCriteriaDTO $criteria): Articles;
-
     public function findModerationQueue(Pagination $pagination): Articles;
 
     public function updateStatus(EntityId $articleUuid, ArticleStatus $status): ?ArticleStatus;
@@ -95,8 +81,6 @@ interface ArticleRepositoryInterface
      * @throws \Illuminate\Database\QueryException On database failure
      *
      * @return array<array> Array of article arrays (not domain models, raw Eloquent arrays)
-     *
-     * @todo Potentially not needed, as findByCriteria can be sufficient
      */
     public function findByUserId(UserId $authorId, int $limit = 10): array;
 

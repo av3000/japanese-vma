@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Jobs;
 
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionService;
+use App\Application\LastOperations\Services\LastOperationService;
+use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Shared\ValueObjects\EntityId;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Application\JapaneseMaterial\Kanjis\Services\{KanjiExtractionService, KanjiAttachmentService};
-use App\Application\LastOperations\Services\LastOperationService;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use Illuminate\Support\Facades\Log;
 
 class ProcessArticleKanjisJob implements ShouldQueue
@@ -20,12 +21,14 @@ class ProcessArticleKanjisJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 120;
 
     public function __construct(
         private readonly string $articleUuid,
         private readonly string $articleContentJp
-    ) {}
+    ) {
+    }
 
     public function handle(
         KanjiExtractionService $kanjiExtractionService,
@@ -84,13 +87,12 @@ class ProcessArticleKanjisJob implements ShouldQueue
                 'kanji_count' => $kanjiCount,
             ]);
 
-
             $lastOperationService->updateStatus(
                 $operationStateId,
                 LastOperationStatus::COMPLETED,
                 [
                     'kanji_count' => $kanjiCount,
-                    'message' => "Attached {$kanjiCount} kanjis."
+                    'message' => "Attached {$kanjiCount} kanjis.",
                 ]
             );
         } catch (\Exception $e) {

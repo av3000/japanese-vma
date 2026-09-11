@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
+// Statically imported: a dynamic import here raced the first-run transform and
+// intermittently blew the 5s default timeout without testing anything extra.
+import * as articlesModule from './useInfiniteArticles';
 
 const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResource => ({
 	items: [],
+	// Always present, empty when facets were not requested.
+	facets: [],
+	applied: {
+		q: null,
+		filters: {
+			jlpt_levels: [],
+			hashtag_ids: [],
+			kanji_ids: [],
+			word_ids: [],
+			author_uid: null,
+			created_from: null,
+			created_to: null,
+		},
+		sort: '-created_at',
+	},
 	pagination: {
 		page: 2,
 		per_page: 12,
@@ -14,8 +32,8 @@ const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResour
 });
 
 describe('useInfiniteArticles helpers', () => {
-	it('derives the next numeric page from typed pagination metadata', async () => {
-		const module = await import('./useInfiniteArticles');
+	it('derives the next numeric page from typed pagination metadata', () => {
+		const module = articlesModule;
 
 		expect(module.getNextArticlesPageParam(createPage())).toBe(3);
 		expect(
@@ -33,8 +51,8 @@ describe('useInfiniteArticles helpers', () => {
 		).toBeUndefined();
 	});
 
-	it('reads the total from the top-level pagination resource', async () => {
-		const module = await import('./useInfiniteArticles');
+	it('reads the total from the top-level pagination resource', () => {
+		const module = articlesModule;
 
 		expect(module.getArticlesTotal([createPage()])).toBe(42);
 		expect(module.getArticlesTotal([])).toBe(0);

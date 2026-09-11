@@ -8,7 +8,8 @@ const HOMEPAGE_ARTICLE_SKELETON_COUNT = 4;
 
 const ExploreArticleList: React.FC = () => {
 	const { articles, total, error, isPending, isError } = useInfiniteArticles({
-		filters: { per_page: 4 },
+		// No facet controls here, so do not make the server aggregate them.
+		filters: { per_page: 4, include_facets: false },
 	});
 
 	if (isPending) {

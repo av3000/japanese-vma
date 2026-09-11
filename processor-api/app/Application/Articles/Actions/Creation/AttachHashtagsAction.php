@@ -2,8 +2,8 @@
 
 namespace App\Application\Articles\Actions\Creation;
 
-use App\Infrastructure\Persistence\Models\Article;
 use App\Http\Models\ObjectTemplate;
+use App\Infrastructure\Persistence\Models\Article;
 
 class AttachHashtagsAction
 {

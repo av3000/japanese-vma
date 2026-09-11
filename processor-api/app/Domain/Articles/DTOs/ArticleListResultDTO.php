@@ -4,17 +4,27 @@ declare(strict_types=1);
 
 namespace App\Domain\Articles\DTOs;
 
-readonly class ArticleListResultDTO
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+
+/**
+ * An enriched Article list page, ready for an API resource.
+ *
+ * ArticlePageDTO is the raw reader output; this is what the list use case returns
+ * after batching stats, hashtags, processing state and facets onto it.
+ */
+final readonly class ArticleListResultDTO
 {
     /**
      * @param array<int, ArticleListItemDTO> $items
-     * @param array{page: int, per_page: int, total: int, last_page: int, has_more: bool} $pagination
+     * @param array<int, ArticleFacetDTO> $facets empty when facets were not requested
+     * @param ArticleQueryCriteria $criteria the user intent that produced this page, echoed back as `applied`
      */
     public function __construct(
         public array $items,
-        public array $pagination,
-        public bool $include_hashtags,
-        public bool $include_stats,
+        public ArticlePaginationDTO $pagination,
+        public ArticleListIncludes $includes,
+        public ArticleQueryCriteria $criteria,
+        public array $facets = [],
     ) {
     }
 }

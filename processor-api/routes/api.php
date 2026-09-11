@@ -16,10 +16,10 @@ require __DIR__.'/api_v1.php';
 |
 */
 
-// Route::middleware('auth:api')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
-
+// Operational endpoint, deliberately retained by RET-AUTH-01: this is the container liveness probe
+// (see docs/architecture/deployment-and-runtime.md), not part of the session surface. The
+// broadcasting authentication endpoint is the other retained exception, and it lives in
+// BroadcastServiceProvider rather than here.
 Route::get('health', function () {
     return response()->json(['ok' => true], 200);
 });
@@ -28,9 +28,6 @@ Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
     'middleware' => 'auth:api',
 ], function () {
-    Route::get('logout', 'UserController@logout');
-    Route::get('user', 'UserController@user');
-
     // Articles CUD
     Route::post('article', 'ArticleController@store');
     Route::put('article/{id}', 'ArticleController@update');
@@ -117,10 +114,32 @@ Route::group([
     );
 });
 
-// Authentication routes
-Route::post('/register', 'UserController@register');
-Route::post('/login', 'UserController@login');
-Route::get('/testing', 'UserController@testing');
+// Authentication - retired, nothing left to register here.
+//
+// The legacy session routes were retired here (RET-AUTH-01) once every one of them had an exact v1
+// replacement and zero routed React callers:
+//
+//   POST register    -> POST v1/register
+//   POST login       -> POST v1/login
+//   GET  logout      -> POST v1/logout
+//   GET  user        -> GET  v1/me
+//   GET  testing     -> nothing; see below
+//
+// `GET testing` had no replacement because it had no implementation: it pointed at
+// UserController@testing, a method that never existed, so every request to it raised
+// BadMethodCallException and answered 500. There was no behaviour to preserve.
+//
+// UserController is gone with these routes - they were its only callers, so the class became
+// unreachable. Its default-catalogue side effect on registration now belongs to
+// RegisterUserAction, which creates the same four "Known" catalogues inside a transaction.
+//
+// Retained on purpose and covered by the guarding test: `health` above, and the broadcasting
+// authentication route that BroadcastServiceProvider registers under this same `api` prefix.
+// Neither is a session endpoint. The `user/...` routes elsewhere in this file are also unaffected -
+// only the exact `user` path was retired.
+//
+// Guarded by tests/Feature/Routes/LegacyAuthRouteRetirementTest.php, with the v1 contract itself
+// pinned by tests/Feature/Auth/AuthV1Test.php.
 
 // Articles
 Route::get('articles', 'ArticleController@index');

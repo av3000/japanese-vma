@@ -3,7 +3,8 @@
 namespace App\Application\Articles\Actions\Updates;
 
 // use App\Domain\Articles\Http\Models\Article;
-use App\Http\Models\{ObjectTemplate, Uniquehashtag};
+use App\Http\Models\ObjectTemplate;
+use App\Http\Models\Uniquehashtag;
 use Illuminate\Support\Facades\DB;
 
 class UpdateArticleHashtagsAction
@@ -14,7 +15,7 @@ class UpdateArticleHashtagsAction
 
         $this->removeHashtags($article->id, $objectTemplateId);
 
-        if (!empty($tags)) {
+        if (! empty($tags)) {
             $this->attachHashtags($article, $tags, $objectTemplateId);
         }
     }
@@ -40,7 +41,7 @@ class UpdateArticleHashtagsAction
                 'entity_id' => $article->id,
                 'user_id' => $article->user_id,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
     }
@@ -48,6 +49,7 @@ class UpdateArticleHashtagsAction
     private function extractHashtags(string $string): array
     {
         preg_match_all("/(#\w+)/u", $string, $matches);
+
         return $matches ? array_keys(array_count_values($matches[0])) : [];
     }
 

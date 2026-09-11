@@ -7,7 +7,6 @@ use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterfa
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Engagement\DTOs\DownloadFilterDTO;
 use App\Domain\Engagement\DTOs\EngagementSummary;
@@ -69,28 +68,27 @@ class EngagementService implements EngagementServiceInterface
         ));
     }
 
-    public function enhanceArticlesWithStatsCounts(Articles $articles): array
+    public function getArticleStatsByIds(array $articleIds): array
     {
-        if ($articles->isEmpty()) {
+        if ($articleIds === []) {
             return [];
         }
 
-        $articleIds = array_map(fn ($article) => $article->getIdValue(), $articles->getItems());
         $statsData = $this->loadStats->batchLoadStatsById(
             ObjectTemplateType::ARTICLE->getLegacyId(),
             $articleIds
         );
 
         $statsMap = [];
-        foreach ($articles->getItems() as $article) {
-            $stats = $statsData[$article->getIdValue()] ?? [
+        foreach ($articleIds as $articleId) {
+            $stats = $statsData[$articleId] ?? [
                 'likes' => 0,
                 'downloads' => 0,
                 'views' => 0,
                 'comments' => 0,
             ];
 
-            $statsMap[$article->getIdValue()] = new ArticleStats(
+            $statsMap[$articleId] = new ArticleStats(
                 $stats['likes'],
                 $stats['downloads'],
                 $stats['views'],

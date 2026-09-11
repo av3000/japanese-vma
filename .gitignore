@@ -2,3 +2,17 @@
 
 docs/plans/
 docs/superpowers/
+docs/jvma-containerized-testing*
+.claude/worktrees/
+docs/career/
+
+# Local-only architecture/design notes. These contain third-party comparison
+# material that must never reach this public repository. Keep them on disk,
+# out of git.
+docs/adr/
+docs/architecture/async-processing/
+docs/architecture/chat-assistant/
+docs/architecture/filtering/
+docs/architecture/frontend-styling-exit.md
+docs/career/
+docs/design/
