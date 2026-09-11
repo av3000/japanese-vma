@@ -10,6 +10,7 @@ use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use RuntimeException;
 
@@ -37,6 +38,16 @@ class FailsAfterDescendantDeleteCommentRepository implements CommentRepositoryIn
     public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments
     {
         return $this->inner->findByCriteriaForEntity($criteria, $viewerUserId);
+    }
+
+    public function findRepliesForRoots(array $rootIds, int $limitPerRoot, ?int $viewerUserId): array
+    {
+        return $this->inner->findRepliesForRoots($rootIds, $limitPerRoot, $viewerUserId);
+    }
+
+    public function findRepliesByRoot(int $rootId, Pagination $pagination, ?int $viewerUserId): Comments
+    {
+        return $this->inner->findRepliesByRoot($rootId, $pagination, $viewerUserId);
     }
 
     public function findByUuid(EntityId $commentUuid): ?DomainComment

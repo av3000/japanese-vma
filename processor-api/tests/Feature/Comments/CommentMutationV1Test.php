@@ -57,7 +57,7 @@ class CommentMutationV1Test extends TestCase
             ->assertJsonMissingPath('data')
             ->assertJsonPath('uuid', $comment->uuid)
             ->assertJsonPath('content', 'Edited content.')
-            ->assertJsonPath('author_id', $owner->id);
+            ->assertJsonPath('author.id', $owner->id);
 
         $this->assertDatabaseHas('comments', [
             'id' => $comment->id,
@@ -452,7 +452,7 @@ class CommentMutationV1Test extends TestCase
 
         $this->postJson('/api/v1/comments', $payload)
             ->assertCreated()
-            ->assertJsonPath('entity_type', 'post');
+            ->assertJsonPath('entity_type_uuid', ObjectTemplateType::POST->value);
     }
 
     /**

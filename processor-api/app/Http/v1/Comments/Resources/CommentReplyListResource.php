@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\v1\Comments\Resources;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
@@ -11,11 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * One page of top-level comments. `pagination` counts conversations, not rows:
- * replies travel inside their parent's `replies`, never as page entries.
+ * One page of a single comment's subtree.
+ *
+ * Same envelope as CommentListResource, different item type: a reply carries no
+ * replies of its own, so documenting these items as CommentResource would
+ * promise a `replies` array that is always empty.
  *
  * @property array{
- *     items: array<int, CommentResource>,
+ *     items: array<int, CommentReplyResource>,
  *     pagination: array{
  *         page: int,
  *         per_page: int,
@@ -25,26 +30,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     }
  * } $resource
  */
-class CommentListResource extends JsonResource
+class CommentReplyListResource extends JsonResource
 {
     public static $wrap = null;
 
     public static function fromPaginated(
-        Comments $comments,
+        Comments $replies,
         ?AuthenticatedUser $viewer = null,
         ?CommentPolicy $policy = null,
     ): self {
-        $paginator = $comments->getPaginator();
+        $paginator = $replies->getPaginator();
         $resolvedPolicy = $policy ?? new CommentPolicy;
 
         return new self([
             'items' => array_map(
-                static fn (Comment $comment) => new CommentResource(
-                    comment: $comment,
-                    viewer: $viewer,
-                    policy: $resolvedPolicy,
-                ),
-                $comments->getItems(),
+                static fn (Comment $reply) => new CommentReplyResource($reply, $viewer, $resolvedPolicy),
+                $replies->getItems(),
             ),
             'pagination' => [
                 'page' => $paginator->currentPage(),
@@ -58,14 +59,14 @@ class CommentListResource extends JsonResource
 
     /**
      * @return array{
-     *     items: array<int, CommentResource>,
+     *     items: array<int, CommentReplyResource>,
      *     pagination: PaginationResource
      * }
      */
     public function toArray(Request $request): array
     {
         return [
-            /** @var array<int, CommentResource> */
+            /** @var array<int, CommentReplyResource> */
             'items' => $this->resource['items'],
             'pagination' => new PaginationResource($this->resource['pagination']),
         ];

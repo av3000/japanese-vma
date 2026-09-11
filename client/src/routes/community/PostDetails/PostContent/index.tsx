@@ -8,7 +8,6 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { Badge } from '@/components/ui/badge';
-import { ObjectTemplateType } from '@/shared/constants/enums';
 
 interface PostContentProps {
 	post: MappedPostDetail;
@@ -82,14 +81,7 @@ const PostContent: React.FC<PostContentProps> = ({ post }) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock
-						readObjectType="post"
-						readObjectUuid={post.uuid}
-						entityId={post.id}
-						entityType={ObjectTemplateType.POST}
-						entityUuid={post.uuid}
-						isLocked={post.locked}
-					/>
+					<CommentsBlock parent="post" entityId={post.id} entityUuid={post.uuid} isLocked={post.locked} />
 				</div>
 			</div>
 		</div>

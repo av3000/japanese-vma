@@ -80,6 +80,11 @@ Route::prefix('v1')->group(function () {
         ->whereUuid('uuid');
     Route::get('sentences/{uuid}/comments', [CommentController::class, 'getSentenceComments'])
         ->whereUuid('uuid');
+    // Thread reads carry a bounded reply preview plus `replies_count`; this
+    // serves the rest of one comment's subtree on demand. `whereUuid` for the
+    // same reason as the routes above.
+    Route::get('comments/{uuid}/replies', [CommentController::class, 'replies'])
+        ->whereUuid('uuid');
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);

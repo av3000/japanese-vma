@@ -21,6 +21,8 @@ class CommentMapper
             );
         }
 
+        $authorUuid = $entity->user?->uuid;
+
         return new DomainComment(
             $entity->id,
             EntityId::from($entity->uuid),
@@ -30,13 +32,18 @@ class CommentMapper
             // Left null for comments whose author row is gone; the response
             // contract keeps the field rather than dropping the comment.
             $entity->user?->name,
+            $authorUuid !== null ? EntityId::from($authorUuid) : null,
             new UserId($entity->user_id),
             $entity->content,
             $entity->parent_comment_id,
             (int) ($entity->likes_count ?? 0),
             (bool) ($entity->is_liked_by_viewer ?? false),
             $entity->created_at->toDateTimeImmutable(),
-            $entity->updated_at->toDateTimeImmutable()
+            $entity->updated_at->toDateTimeImmutable(),
+            // Replies are counted and attached by the repository after the
+            // batched subtree read, not per row here.
+            0,
+            [],
         );
     }
 }
