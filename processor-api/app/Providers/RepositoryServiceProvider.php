@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
+
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
@@ -20,6 +22,8 @@ use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositor
 use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
+use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueRepository;
@@ -46,6 +50,18 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             ArticleRepositoryInterface::class,
             ArticleRepository::class
+        );
+
+        // Article list read ports. Swapping in a search-engine reader later means
+        // rebinding ArticleListReaderInterface here and nothing else.
+        $this->app->singleton(
+            ArticleListReaderInterface::class,
+            DatabaseArticleListReader::class
+        );
+
+        $this->app->singleton(
+            ArticleProcessingStateReaderInterface::class,
+            DatabaseArticleProcessingStateReader::class
         );
 
         $this->app->singleton(

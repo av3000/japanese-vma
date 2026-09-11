@@ -99,7 +99,7 @@ class KanjiDetailResource extends JsonResource
         if ($this->resource->articles !== null) {
             $payload['articles'] = array_map(
                 static fn (ArticleListItemDTO $article): array => (new RelatedArticleSummaryResource($article))->resolve($request),
-                $this->resource->articles->items,
+                $this->resource->articles,
             );
         }
 

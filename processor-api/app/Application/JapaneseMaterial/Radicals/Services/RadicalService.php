@@ -14,7 +14,8 @@ class RadicalService implements RadicalServiceInterface
 {
     public function __construct(
         private readonly RadicalRepositoryInterface $radicalRepository,
-    ) {}
+    ) {
+    }
 
     public function find(RadicalQueryCriteria $criteria): Result
     {

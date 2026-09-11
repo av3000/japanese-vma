@@ -117,17 +117,50 @@
                 ],
                 "parameters": [
                     {
-                        "name": "category",
+                        "name": "q",
                         "in": "query",
+                        "description": "Bounds are SearchTerm's, so the request and the value object cannot drift.",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 255
                         }
                     },
                     {
-                        "name": "search",
+                        "name": "jlpt_levels[]",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "enum": [
+                                "n5",
+                                "n4",
+                                "n3",
+                                "n2",
+                                "n1",
+                                "uncommon"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "n5",
+                                    "n4",
+                                    "n3",
+                                    "n2",
+                                    "n1",
+                                    "uncommon"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "name": "hashtag_ids[]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
                         }
                     },
                     {
@@ -139,31 +172,75 @@
                         }
                     },
                     {
-                        "name": "sort_by",
+                        "name": "kanji_ids[]",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
                         }
                     },
                     {
-                        "name": "sort_dir",
+                        "name": "word_ids[]",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        }
+                    },
+                    {
+                        "name": "created_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "created_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "-created_at",
+                                "updated_at",
+                                "-updated_at",
+                                "title_jp",
+                                "-title_jp",
+                                "title_en",
+                                "-title_en"
+                            ]
                         }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
                         }
                     },
                     {
                         "name": "page",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1
                         }
                     },
                     {
@@ -174,7 +251,28 @@
                         }
                     },
                     {
+                        "name": "include_hashtags",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "include_kanjis",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "include_words",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "include_facets",
                         "in": "query",
                         "schema": {
                             "type": "boolean"
@@ -4197,6 +4295,86 @@
     },
     "components": {
         "schemas": {
+            "ArticleAppliedCriteriaResource": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "filters": {
+                        "$ref": "#/components/schemas/ArticleAppliedFiltersResource"
+                    },
+                    "sort": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "q",
+                    "filters",
+                    "sort"
+                ],
+                "title": "ArticleAppliedCriteriaResource"
+            },
+            "ArticleAppliedFiltersResource": {
+                "type": "object",
+                "properties": {
+                    "jlpt_levels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "hashtag_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "kanji_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "word_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "author_uid": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "jlpt_levels",
+                    "hashtag_ids",
+                    "kanji_ids",
+                    "word_ids",
+                    "author_uid",
+                    "created_from",
+                    "created_to"
+                ],
+                "title": "ArticleAppliedFiltersResource"
+            },
             "ArticleDetailResource": {
                 "type": "object",
                 "properties": {
@@ -4325,6 +4503,57 @@
                 ],
                 "title": "ArticleDetailResource"
             },
+            "ArticleFacetResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleFacetValueResource"
+                        }
+                    }
+                },
+                "required": [
+                    "key",
+                    "label",
+                    "type",
+                    "values"
+                ],
+                "title": "ArticleFacetResource"
+            },
+            "ArticleFacetValueResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer"
+                    },
+                    "selected": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "key",
+                    "label",
+                    "count",
+                    "selected"
+                ],
+                "title": "ArticleFacetValueResource"
+            },
             "ArticleListResource": {
                 "type": "object",
                 "properties": {
@@ -4334,12 +4563,23 @@
                             "$ref": "#/components/schemas/ArticleResource"
                         }
                     },
+                    "facets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ArticleFacetResource"
+                        }
+                    },
+                    "applied": {
+                        "$ref": "#/components/schemas/ArticleAppliedCriteriaResource"
+                    },
                     "pagination": {
                         "$ref": "#/components/schemas/PaginationResource"
                     }
                 },
                 "required": [
                     "items",
+                    "facets",
+                    "applied",
                     "pagination"
                 ],
                 "title": "ArticleListResource"

@@ -9,7 +9,8 @@ class AttachKanjisAction
 {
     public function __construct(
         private ExtractKanjisAction $extractKanjis
-    ) {}
+    ) {
+    }
 
     /**
      * Extract kanjis from text and attach them to the article.

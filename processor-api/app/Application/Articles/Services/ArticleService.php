@@ -3,6 +3,7 @@
 namespace App\Application\Articles\Services;
 
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
 use App\Application\Articles\Jobs\ProcessArticleWordsJob;
@@ -16,14 +17,9 @@ use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
-use App\Domain\Articles\DTOs\ArticleListItemDTO;
-use App\Domain\Articles\DTOs\ArticleListResultDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
@@ -32,17 +28,14 @@ use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Models\LastOperationState;
 use App\Shared\Results\Result;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -55,7 +48,7 @@ class ArticleService implements ArticleServiceInterface
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
         private EngagementServiceInterface $engagementService,
-        private LastOperationServiceInterface $lastOperationService,
+        private ArticleProcessingStateReaderInterface $processingStateReader,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
         private CleanupArticleCustomListsAction $cleanupCustomLists,
@@ -170,10 +163,7 @@ class ArticleService implements ArticleServiceInterface
             ObjectTemplateType::ARTICLE
         );
 
-        $lastOperation = $this->lastOperationService->getLatestState(
-            $article->getUid(),
-            'kanji_extraction'
-        );
+        $processingState = $this->processingStateReader->latestKanjiExtractionState($article->getUid()->value());
 
         // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
         // once detail payload should stop carrying full lists.
@@ -183,7 +173,7 @@ class ArticleService implements ArticleServiceInterface
             kanjis: $article->getKanjis(),
             words: $article->getWords(),
             hashtags: $hashtags,
-            lastOperation: $lastOperation,
+            processingState: $processingState,
         ));
     }
 
@@ -204,80 +194,6 @@ class ArticleService implements ArticleServiceInterface
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Get filtered, sorted, paginated list of articles with permission-based visibility.
-     *
-     * @param ArticleListDTO $dto Filter criteria
-     *
-     * @return ArticleListResultDTO Shaped domain collection with pagination metadata
-     */
-    public function getArticlesList(ArticleListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): ArticleListResultDTO
-    {
-        // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
-        // TODO: ArticleListDTO or ArticleCriteriaDTO should not contain any default values, it is spilling business logic. Ensure consistency between 2 for now.
-        $criteriaDTO = new ArticleCriteriaDTO(
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
-            sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
-            categoryId: $dto->category,
-            authorUid: $dto->author_uid,
-            visibilityRules: $this->articlePolicy->getVisibilityCriteria($authenticatedUser),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_kanjis: $dto->include_kanjis,
-            include_words: $dto->include_words,
-            kanjiId: $dto->kanji_id,
-            wordId: $dto->word_id,
-        );
-
-        $paginatedArticles = $this->articleRepository->findByCriteria($criteriaDTO);
-        $articles = $paginatedArticles->getItems();
-        $articleIds = array_map(
-            static fn (DomainArticle $article): int => $article->getIdValue(),
-            $articles,
-        );
-        $articleUuids = array_map(
-            static fn (DomainArticle $article): string => $article->getUid()->value(),
-            $articles,
-        );
-
-        $statsMap = $dto->include_stats_counts
-            ? $this->engagementService->enhanceArticlesWithStatsCounts($paginatedArticles)
-            : [];
-
-        // TODO: IndexArticleRequest still does not validate/normalize include_hashtags,
-        // so article-list hashtags remain effectively always-on until a follow-up cleanup.
-        $hashtagsMap = $dto->include_hashtags
-            ? $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE)
-            : [];
-
-        /** @var array<string, LastOperationState> $lastOperationsMap */
-        $lastOperationsMap = $articleUuids === []
-            ? []
-            : $this->lastOperationService->getBatchLatestStates($articleUuids, 'kanji_extraction');
-
-        $paginator = $paginatedArticles->getPaginator();
-
-        return new ArticleListResultDTO(
-            items: array_map(
-                static fn (DomainArticle $article): ArticleListItemDTO => new ArticleListItemDTO(
-                    article: $article,
-                    stats: $statsMap[$article->getIdValue()] ?? null,
-                    hashtags: $hashtagsMap[$article->getIdValue()] ?? [],
-                    lastOperation: $lastOperationsMap[$article->getUid()->value()] ?? null,
-                ),
-                $articles,
-            ),
-            pagination: [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
-            include_hashtags: $dto->include_hashtags,
-            include_stats: $dto->include_stats_counts,
-        );
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\v1\Articles\Controllers;
 
+use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Articles\Services\ArticlePdfExportServiceInterface;
 use App\Application\Articles\Services\ArticleServiceInterface;
@@ -9,10 +10,11 @@ use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
-
+use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -49,6 +51,7 @@ class ArticleController extends Controller
 {
     public function __construct(
         private readonly ArticleServiceInterface $articleService,
+        private readonly ArticleListServiceInterface $articleListService,
         private readonly ArticleModerationServiceInterface $articleModerationService,
         private readonly ArticlePdfExportServiceInterface $articlePdfExportService,
         private readonly PdfResponseFactory $pdfResponseFactory,
@@ -62,12 +65,19 @@ class ArticleController extends Controller
     #[Response(type: 'ArticleListResource')]
     public function index(IndexArticleRequest $request): JsonResponse|JsonResource
     {
-        $listDTO = ArticleListDTO::fromRequest($request->validated());
-        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $validated = $request->validated();
 
-        return new ArticleListResource(
-            $this->articleService->getArticlesList($listDTO, $authenticatedUser)
+        $result = $this->articleListService->list(
+            ArticleQueryCriteria::fromValidated($validated),
+            ArticleListIncludes::fromValidated($validated),
+            $this->currentUserProvider->currentAuthenticatedUser(),
         );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return new ArticleListResource($result->getData());
     }
 
     /**

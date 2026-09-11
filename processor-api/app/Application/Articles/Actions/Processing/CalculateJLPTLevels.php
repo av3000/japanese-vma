@@ -21,7 +21,7 @@ class CalculateJLPTLevels
             $jlptLevel = $kanji->jlpt;
 
             if (in_array($jlptLevel, ['1', '2', '3', '4', '5'])) {
-                $field = 'n' . $jlptLevel;
+                $field = 'n'.$jlptLevel;
                 $levels[$field]++;
             } else {
                 $levels['uncommon']++;

@@ -1,32 +1,34 @@
 <?php
+
 namespace App\Domain\Shared\ValueObjects;
 
-use InvalidArgumentException;
+use App\Domain\Shared\Exceptions\ValueObjectValidationException;
 
 readonly class SearchTerm
 {
-    private const MIN_LENGTH = 2;
-    private const MAX_LENGTH = 255;
+    public const MIN_LENGTH = 2;
+
+    public const MAX_LENGTH = 255;
 
     public function __construct(public string $value)
     {
         if (strlen($this->value) < self::MIN_LENGTH) {
-            throw new InvalidArgumentException('Search term must be at least ' . self::MIN_LENGTH . ' characters');
+            throw ValueObjectValidationException::forField('q', 'Search term must be at least '.self::MIN_LENGTH.' characters');
         }
 
         if (strlen($this->value) > self::MAX_LENGTH) {
-            throw new InvalidArgumentException('Search term cannot exceed ' . self::MAX_LENGTH . ' characters');
+            throw ValueObjectValidationException::forField('q', 'Search term cannot exceed '.self::MAX_LENGTH.' characters');
         }
     }
 
     public static function fromInput(?string $input): ?self
     {
-        if($input === null)
-        {
+        if ($input === null) {
             return null;
         }
 
         $trimmed = trim($input);
+
         return new self($trimmed);
     }
 

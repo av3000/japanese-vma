@@ -4,6 +4,7 @@ namespace App\Application\Articles\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Shared\Enums\PublicityStatus;
 
 class ArticlePolicy
@@ -14,32 +15,22 @@ class ArticlePolicy
     }
 
     /**
-     * Business rule: Determine what visibility criteria apply to a user
-     * Returns domain concepts, not database queries
+     * Derive the mandatory Article visibility scope from the actor.
+     *
+     * The scope is the only thing allowed to decide eligibility, and it is built
+     * from the authenticated actor alone, so no request parameter can widen it.
      */
-    public function getVisibilityCriteria(?AuthenticatedUser $authenticatedUser): array
+    public function scopeFor(?AuthenticatedUser $authenticatedUser): ArticleVisibilityScope
     {
         if ($authenticatedUser === null) {
-            // Anonymous users can only see public articles
-            return [
-                'publicity' => [PublicityStatus::PUBLIC],
-                'user_id' => null,
-            ];
+            return ArticleVisibilityScope::publicOnly();
         }
 
         if ($authenticatedUser->isAdmin) {
-            return [
-                'publicity' => 'all',
-                'user_id' => 'all',
-            ];
+            return ArticleVisibilityScope::unrestricted();
         }
 
-        // Regular users can see public articles and their own private articles
-        return [
-            'publicity' => [PublicityStatus::PUBLIC, PublicityStatus::PRIVATE],
-            'user_id' => $authenticatedUser->id->value(),
-            'access_own_private' => true,
-        ];
+        return ArticleVisibilityScope::publicOrOwnedBy($authenticatedUser->id->value());
     }
 
     /**

@@ -39,5 +39,7 @@ class StoreArticleRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation(): void {}
+    protected function prepareForValidation(): void
+    {
+    }
 }
