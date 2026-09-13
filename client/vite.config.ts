@@ -24,8 +24,7 @@ export default defineConfig(({ mode }) => {
 
 		if (
 			id.includes('/@radix-ui/') ||
-			id.includes('/classnames/') ||
-			id.includes('/clsx/')
+			id.includes('/classnames/')
 		) {
 			return 'ui';
 		}

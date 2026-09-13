@@ -11,7 +11,7 @@
 - TanStack React Query 5
 - Redux Toolkit
 - Axios
-- CSS Modules with design tokens in `src/styles` (Bootstrap is being retired; see Styling)
+- CSS Modules with design tokens in `src/styles` (see Styling)
 - Storybook 8
 - Vitest
 - Sentry
@@ -109,8 +109,7 @@ Rules:
 
 - No Bootstrap, Tailwind, or other utility-class frameworks. Layout belongs in CSS Modules or the shared layout primitives, not in `className` strings.
 - `npm run style:audit` reports remaining Bootstrap/Tailwind class tokens and Sass files; `npm run style:audit -- --check` fails when usage exceeds `style-budget.json`. Lower the budget as you migrate files, never raise it.
-- ESLint blocks new `react-bootstrap`, `react-router-bootstrap`, and `bootstrap` imports.
-- `src/styles/legacy/bootstrap-compat.css` is a temporary, self-hosted subset of Bootstrap 4 kept only for consumers that are not migrated yet. Do not add rules to it; delete it when the audit reports zero Bootstrap tokens.
+- ESLint blocks imports of the retired `react-bootstrap`, `react-router-bootstrap`, `bootstrap`, `tailwindcss`, `tailwind-merge`, `class-variance-authority`, and `tw-animate-css` packages.
 - Supported browsers are set by `build.target` in `vite.config.ts` (Baseline "widely available"). The `browserslist` block in `package.json` is not used by Vite.
 
 ## CI And Delivery
@@ -122,7 +121,7 @@ That workflow currently:
 - uses Node 24 from `client/.nvmrc`
 - installs dependencies with `npm ci`
 - regenerates the Orval client from tracked `processor-api/api.json`
-- runs `npm run typecheck`
+- runs `npm run typecheck`, `npm run test:unit` and `npm run style:audit -- --check`
 - runs a production build with the required `VITE_*` variables
 - smoke-tests the production image
 - publishes the frontend image
