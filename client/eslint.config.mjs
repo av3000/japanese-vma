@@ -56,21 +56,6 @@ export default [
   // Bootstrap packages are an error. Class-name usage is tracked by scripts/style-audit.mjs.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: [
-      // Legacy consumers still being migrated. Remove entries as files are converted.
-      "src/components/features/Header/index.tsx",
-      "src/components/features/SocketStatusIndicator/index.tsx",
-      "src/components/features/SearchBar/index.tsx",
-      "src/components/features/dashboard/DashboardArticleItem.tsx",
-      "src/components/features/dashboard/DashboardListItem.tsx",
-      "src/components/features/catalogues/CatalogueItems/CatalogueKanjiItems.tsx",
-      "src/components/features/catalogues/CatalogueItems/CatalogueRadicalItems.tsx",
-      "src/components/features/catalogues/CatalogueItems/CatalogueSentenceItems.tsx",
-      "src/components/features/catalogues/CatalogueItems/CatalogueWordItems.tsx",
-      "src/routes/community/PostsList/PostsSearchBar/index.tsx",
-      "src/routes/japanese/SentencesList/SearchBarSentences/index.tsx",
-      "src/routes/japanese/WordsList/SearchBarWords/index.tsx",
-    ],
     rules: {
       "no-restricted-imports": [
         "error",

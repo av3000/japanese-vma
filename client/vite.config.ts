@@ -24,8 +24,6 @@ export default defineConfig(({ mode }) => {
 		}
 
 		if (
-			id.includes('/react-bootstrap/') ||
-			id.includes('/bootstrap/') ||
 			id.includes('/@radix-ui/') ||
 			id.includes('/classnames/') ||
 			id.includes('/clsx/') ||

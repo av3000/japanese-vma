@@ -1,8 +1,9 @@
 import React, { FormEvent } from 'react';
-import { Col, Form, Row } from 'react-bootstrap';
 import { Button } from '@/components/shared/Button';
+import { Input, Select } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
-import styles from './SearchBar.module.scss';
+import { Grid } from '@/components/shared/layout';
+import styles from './SearchBar.module.css';
 
 interface SearchQuery {
 	keyword: string;
@@ -15,6 +16,36 @@ interface SearchbarProps {
 	searchType: 'posts' | 'articles' | 'lists' | string;
 }
 
+const FILTER_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
+	posts: [
+		{ value: '20', label: 'All' },
+		{ value: '1', label: 'Content-related' },
+		{ value: '2', label: 'Off-topic' },
+		{ value: '3', label: 'FAQ' },
+		{ value: '4', label: 'Technical' },
+		{ value: '5', label: 'Bug' },
+		{ value: '6', label: 'Feedback' },
+		{ value: '7', label: 'Announcement' },
+	],
+	articles: [
+		{ value: '20', label: 'All' },
+		{ value: '1', label: 'N1' },
+		{ value: '2', label: 'N2' },
+		{ value: '3', label: 'N3' },
+		{ value: '4', label: 'N4' },
+		{ value: '5', label: 'N5' },
+		{ value: '6', label: 'Uncommon' },
+	],
+	lists: [
+		{ value: '20', label: 'All' },
+		{ value: '5', label: 'Radicals' },
+		{ value: '6', label: 'Kanjis' },
+		{ value: '7', label: 'Words' },
+		{ value: '8', label: 'Sentences' },
+		{ value: '9', label: 'Articles' },
+	],
+};
+
 const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 	const [keyword, setKeyword] = React.useState<string>('');
 	const [sortByWhat, setSortByWhat] = React.useState<string>('new');
@@ -22,115 +53,59 @@ const Searchbar: React.FC<SearchbarProps> = ({ fetchQuery, searchType }) => {
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		const data: SearchQuery = {
-			keyword,
-			sortByWhat,
-			filterType,
-		};
-		fetchQuery(data);
+		fetchQuery({ keyword, sortByWhat, filterType });
 	};
 
-	const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setKeyword(e.target.value);
-	};
-
-	const handleSortChange = (e: React.ChangeEvent<HTMLElement>) => {
-		const target = e.target as HTMLSelectElement;
-		setSortByWhat(target.value);
-	};
-
-	const handleFilterChange = (e: React.ChangeEvent<HTMLElement>) => {
-		const target = e.target as HTMLSelectElement;
-		setFilterType(target.value);
-	};
+	const filterOptions = FILTER_OPTIONS[searchType];
 
 	return (
-		<Form onSubmit={handleSubmit} className={styles.searchWrapper}>
-			<Row>
-				<Col lg={4} md={6} sm={12} classNames="mt-3">
-					<Form.Control
+		<form onSubmit={handleSubmit} className={styles.form} role="search">
+			<Grid columns={12} gap="sm">
+				<Grid.Item span={{ base: 12, sm: 6, md: 4 }}>
+					<Input
 						type="text"
 						placeholder="Ex.: title, text, #tag"
 						aria-label="Search"
 						name="keyword"
 						value={keyword}
-						onChange={handleKeywordChange}
-						className={styles.searchInputHeight}
+						onChange={(event) => setKeyword(event.target.value)}
 					/>
-				</Col>
-				<Col lg={4} md={4} sm={12} classNames="mt-3">
-					{searchType === 'posts' && (
-						<Form.Control
-							as="select"
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 6, md: 4 }}>
+					{filterOptions && (
+						<Select
 							name="filterType"
+							aria-label="Filter"
 							value={filterType}
-							onChange={handleFilterChange}
-							className={styles.searchInputHeight}
+							onChange={(event) => setFilterType(event.target.value)}
 						>
-							<option value="20">All</option>
-							<option value="1">Content-related</option>
-							<option value="2">Off-topic</option>
-							<option value="3">FAQ</option>
-							<option value="4">Technical</option>
-							<option value="5">Bug</option>
-							<option value="6">Feedback</option>
-							<option value="7">Announcement</option>
-						</Form.Control>
+							{filterOptions.map((option) => (
+								<option key={option.value} value={option.value}>
+									{option.label}
+								</option>
+							))}
+						</Select>
 					)}
-					{searchType === 'articles' && (
-						<Form.Control
-							as="select"
-							name="filterType"
-							value={filterType}
-							onChange={handleFilterChange}
-							className={styles.searchInputHeight}
-						>
-							<option value="20">All</option>
-							<option value="1">N1</option>
-							<option value="2">N2</option>
-							<option value="3">N3</option>
-							<option value="4">N4</option>
-							<option value="5">N5</option>
-							<option value="6">Uncommon</option>
-						</Form.Control>
-					)}
-					{searchType === 'lists' && (
-						<Form.Control
-							as="select"
-							name="filterType"
-							value={filterType}
-							onChange={handleFilterChange}
-							className={styles.searchInputHeight}
-						>
-							<option value="20">All</option>
-							<option value="5">Radicals</option>
-							<option value="6">Kanjis</option>
-							<option value="7">Words</option>
-							<option value="8">Sentences</option>
-							<option value="9">Articles</option>
-						</Form.Control>
-					)}
-				</Col>
-				<Col lg={2} md={2} sm={4} classNames="mt-3">
-					<Form.Control
-						as="select"
+				</Grid.Item>
+				<Grid.Item span={{ base: 6, sm: 3, md: 2 }}>
+					<Select
 						name="sortByWhat"
+						aria-label="Sort by"
 						value={sortByWhat}
-						onChange={handleSortChange}
-						className={styles.searchInputHeight}
+						onChange={(event) => setSortByWhat(event.target.value)}
 					>
 						<option value="new">Newest</option>
 						<option value="pop">Popular</option>
-					</Form.Control>
-				</Col>
-				<Col lg={2} md={3} sm={4} classNames="mt-3">
-					<Button type="submit" variant="secondary-outline" aria-hidden="true" isFullWidth>
+					</Select>
+				</Grid.Item>
+				<Grid.Item span={{ base: 6, sm: 3, md: 2 }}>
+					<Button type="submit" variant="secondary-outline" isFullWidth>
 						<Icon name="searchSolid" size="sm" />
-						<span className="ml-2">Search</span>
+						<span className={styles.submitLabel}>Search</span>
 					</Button>
-				</Col>
-			</Row>
-		</Form>
+				</Grid.Item>
+			</Grid>
+		</form>
 	);
 };
 

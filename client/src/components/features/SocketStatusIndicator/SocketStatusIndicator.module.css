@@ -1,0 +1,65 @@
+.trigger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--size-xl);
+	height: var(--size-xl);
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.trigger:hover {
+	background: var(--color-neutral-100-alpha);
+}
+
+.trigger:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.dot {
+	--dot-color: var(--color-neutral-500);
+	display: block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--dot-color);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-color) 25%, transparent);
+}
+
+.success {
+	--dot-color: var(--color-success);
+}
+
+.pending {
+	--dot-color: var(--color-warning);
+}
+
+.destructive {
+	--dot-color: var(--color-error);
+}
+
+.content {
+	width: 18rem;
+	max-width: calc(100vw - var(--spacing-lg));
+}
+
+.details {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: var(--spacing-3xs) var(--spacing-xs);
+	margin: 0;
+	font-size: var(--font-size-body-sm);
+}
+
+.details dt {
+	font-weight: var(--font-weight-semibold);
+}
+
+.details dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}

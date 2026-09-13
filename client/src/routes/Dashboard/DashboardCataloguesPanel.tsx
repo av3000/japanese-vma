@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
+import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
 import { Button } from '@/components/shared/Button';
 import type { User } from '@/types';
 import SearchBarDashboard from './SearchBarDashboard';
@@ -88,9 +89,11 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isA
 						<div className="alert alert-danger">{errorMessage}</div>
 					) : catalogues.length ? (
 						<>
-							{catalogues.map((catalogue) => (
-								<DashboardListItem key={catalogue.id} {...catalogue} />
-							))}
+							<ul className={dashboardRowStyles.list}>
+								{catalogues.map((catalogue) => (
+									<DashboardListItem key={catalogue.id} {...catalogue} />
+								))}
+							</ul>
 							<div className="row justify-content-center mt-4 mb-2">
 								{isFetchingNextPage ? (
 									<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />

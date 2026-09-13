@@ -1,96 +1,150 @@
-import React from 'react';
-import { Button, Dropdown, Nav, NavDropdown, Navbar } from 'react-bootstrap';
-import { Link, NavLink } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import * as React from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import classNames from 'classnames';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
-import './header.scss';
+import { Button } from '@/components/shared/Button';
+import { useAuth } from '@/hooks/useAuth';
+import styles from './Header.module.css';
+import { NavGroup } from './NavGroup';
+
+const MENU_ID = 'primary-navigation';
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) => classNames(styles.link, isActive && styles.linkActive);
 
 const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
+	const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+	const { pathname } = useLocation();
 
-	const handleLogout = () => {
-		logout();
-	};
+	React.useEffect(() => {
+		setIsMenuOpen(false);
+	}, [pathname]);
 
 	return (
-		<Navbar expand="lg">
-			<Navbar.Brand as={Link} to="/">
-				JPLearning
-			</Navbar.Brand>
-			<Navbar.Toggle aria-controls="basic-navbar-nav" />
-			<Navbar.Collapse id="basic-navbar-nav">
-				<Nav className="mx-auto">
-					<Nav.Link as={Link} to="/articles">
-						Articles
-					</Nav.Link>
-					<Nav.Link as={Link} to="/catalogues">
-						Catalogues
-					</Nav.Link>
-					<NavDropdown title="Japanese Material" id="material-nav-dropdown">
-						<Dropdown.Item as={Link} to="/radicals">
-							Radicals
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/kanjis">
-							Kanjis
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/words">
-							Words
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/sentences">
-							Sentences
-						</Dropdown.Item>
-					</NavDropdown>
-					<Nav.Link as={Link} to="/community">
-						Community
-					</Nav.Link>
-					{isAuthenticated && (
-						<>
-							<Nav.Link as={Link} to="/dashboard">
-								Dashboard
-							</Nav.Link>
-							<NavDropdown title="New" id="new-nav-dropdown">
-								<Dropdown.Item as={Link} to="/newarticle">
-									Article
-								</Dropdown.Item>
-								<Dropdown.Item as={Link} to="/catalogues/new">
-									Catalogue
-								</Dropdown.Item>
-								<Dropdown.Divider />
-								<Dropdown.Item as={Link} to="/newpost">
-									Community Post
-								</Dropdown.Item>
-							</NavDropdown>
-						</>
+		<header className={styles.header}>
+			<nav className={styles.nav} aria-label="Main">
+				<Link to="/" className={styles.brand}>
+					JPLearning
+				</Link>
+
+				<button
+					type="button"
+					className={styles.toggle}
+					aria-expanded={isMenuOpen}
+					aria-controls={MENU_ID}
+					aria-label={isMenuOpen ? 'Close navigation' : 'Open navigation'}
+					onClick={() => setIsMenuOpen((open) => !open)}
+				>
+					<span className={styles.toggleBars} aria-hidden="true" />
+				</button>
+
+				<div id={MENU_ID} className={classNames(styles.menu, isMenuOpen && styles.menuOpen)}>
+					<ul className={classNames(styles.list, styles.primary)}>
+						<li>
+							<NavLink className={navLinkClass} to="/articles">
+								Articles
+							</NavLink>
+						</li>
+						<li>
+							<NavLink className={navLinkClass} to="/catalogues">
+								Catalogues
+							</NavLink>
+						</li>
+						<NavGroup label="Japanese Material" id="material-nav-group">
+							<li>
+								<NavLink className={navLinkClass} to="/radicals">
+									Radicals
+								</NavLink>
+							</li>
+							<li>
+								<NavLink className={navLinkClass} to="/kanjis">
+									Kanjis
+								</NavLink>
+							</li>
+							<li>
+								<NavLink className={navLinkClass} to="/words">
+									Words
+								</NavLink>
+							</li>
+							<li>
+								<NavLink className={navLinkClass} to="/sentences">
+									Sentences
+								</NavLink>
+							</li>
+						</NavGroup>
+						<li>
+							<NavLink className={navLinkClass} to="/community">
+								Community
+							</NavLink>
+						</li>
+						{isAuthenticated && (
+							<>
+								<li>
+									<NavLink className={navLinkClass} to="/dashboard">
+										Dashboard
+									</NavLink>
+								</li>
+								<NavGroup label="New" id="new-nav-group">
+									<li>
+										<NavLink className={navLinkClass} to="/newarticle">
+											Article
+										</NavLink>
+									</li>
+									<li>
+										<NavLink className={navLinkClass} to="/catalogues/new">
+											Catalogue
+										</NavLink>
+									</li>
+									<li role="separator" className={styles.divider} />
+									<li>
+										<NavLink className={navLinkClass} to="/newpost">
+											Community Post
+										</NavLink>
+									</li>
+								</NavGroup>
+							</>
+						)}
+					</ul>
+
+					{isLoading ? (
+						<ul className={classNames(styles.list, styles.account)} aria-label="Account status">
+							<li>
+								<span className={styles.authPending} aria-label="Checking account status" />
+							</li>
+						</ul>
+					) : isAuthenticated && user ? (
+						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
+							<li className={styles.socket}>
+								<SocketStatusIndicator />
+							</li>
+							<li>
+								<NavLink className={navLinkClass} to="/dashboard">
+									Logged in as <strong className={styles.userName}>{user.name}</strong>
+								</NavLink>
+							</li>
+							<li>
+								<Button type="button" variant="outline" size="sm" onClick={() => logout()}>
+									Logout
+								</Button>
+							</li>
+						</ul>
+					) : (
+						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
+							<li>
+								<NavLink className={navLinkClass} to="/register">
+									Sign Up
+								</NavLink>
+							</li>
+							<li>
+								<NavLink className={navLinkClass} to="/login">
+									Log In
+								</NavLink>
+							</li>
+						</ul>
 					)}
-				</Nav>
-				{isLoading ? (
-					<Nav aria-label="Account status">
-						<span className="header-auth-pending" aria-label="Checking account status" />
-					</Nav>
-				) : isAuthenticated && user ? (
-					<Nav>
-						<div className="d-flex align-items-center mr-2">
-							<SocketStatusIndicator />
-						</div>
-						<Nav.Link as={Link} to="/dashboard">
-							Logged in as <strong>{user.name}</strong>
-						</Nav.Link>
-						<Button variant="outline-danger" onClick={handleLogout} className="ml-2">
-							Logout
-						</Button>
-					</Nav>
-				) : (
-					<Nav>
-						<NavLink className="nav-link" to="/register">
-							Sign Up
-						</NavLink>
-						<NavLink className="nav-link" to="/login">
-							Log In
-						</NavLink>
-					</Nav>
-				)}
-			</Navbar.Collapse>
-		</Navbar>
+				</div>
+			</nav>
+		</header>
 	);
 };
 

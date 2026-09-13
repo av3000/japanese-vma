@@ -5,6 +5,7 @@ import { usePendingArticles } from '@/api/articles/moderation';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
+import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
@@ -190,19 +191,23 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 									{deferredTrackedUuids.map((uuid) => (
 										<ArticleSubscription key={uuid} uuid={uuid} />
 									))}
-									{articles.map((article) => (
-										<DashboardArticleItem
-											key={article.id}
-											uuid={article.uuid}
-											created_at={article.created_at}
-											title_jp={article.title_jp}
-											status={article.status}
-											commentsTotal={toDisplayCount(article.engagement?.stats?.comments_count)}
-											likesTotal={toDisplayCount(article.engagement?.stats?.likes_count)}
-											viewsTotal={toDisplayCount(article.engagement?.stats?.views_count)}
-											hashtags={article.hashtags}
-										/>
-									))}
+									<ul className={dashboardRowStyles.list}>
+										{articles.map((article) => (
+											<DashboardArticleItem
+												key={article.id}
+												uuid={article.uuid}
+												created_at={article.created_at}
+												title_jp={article.title_jp}
+												status={article.status}
+												commentsTotal={toDisplayCount(
+													article.engagement?.stats?.comments_count,
+												)}
+												likesTotal={toDisplayCount(article.engagement?.stats?.likes_count)}
+												viewsTotal={toDisplayCount(article.engagement?.stats?.views_count)}
+												hashtags={article.hashtags}
+											/>
+										))}
+									</ul>
 									<div className="row justify-content-center mt-4 mb-2">
 										{isFetchingNextPage ? (
 											<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />

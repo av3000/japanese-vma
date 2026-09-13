@@ -1,7 +1,7 @@
 {
-  "reactBootstrapImports": 12,
+  "reactBootstrapImports": 0,
   "tailwindImports": 2,
-  "bootstrapClassTokens": 1172,
-  "tailwindClassTokens": 134,
-  "scssFiles": 67
+  "bootstrapClassTokens": 1091,
+  "tailwindClassTokens": 126,
+  "scssFiles": 65
 }

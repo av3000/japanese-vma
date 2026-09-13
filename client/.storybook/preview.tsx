@@ -7,6 +7,7 @@ import '@/assets/font-awesome/css/all.min.css';
 import '@/styles/tailwind.css';
 import '@/styles/App.scss';
 import '@/styles/index.scss';
+import '@/styles/99-utilities/text.css';
 
 const preview: Preview = {
 	decorators: [

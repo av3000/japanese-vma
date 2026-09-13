@@ -63,7 +63,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 
 ## 5) Modal And Dialog Composition
 
-- Prefer the shared native-dialog primitives over new `react-bootstrap` modal usage on touched or migrated code.
+- Use the shared native-dialog primitives for every modal. Bootstrap and React-Bootstrap are removed from the client; ESLint rejects their imports.
   - `src/components/shared/DialogModal`
   - `src/components/shared/Modal`
   - `src/hooks/useModal.ts`
@@ -73,7 +73,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - `src/components/shared/modals/ConfirmModal.tsx`
   - `src/components/features/catalogues/CatalogueBookmarkModal`
 - `src/routes/ArticleDetails/ArticleContent/index.tsx` is the best current example of composing multiple modal controllers in one feature without pushing modal markup into unrelated route branches.
-- If you touch a migrated surface, do not introduce fresh `react-bootstrap` `Modal` usage there.
+- Style with CSS Modules and the shared layout primitives in `src/components/shared/layout` (`Container`, `Stack`, `Cluster`, `Grid`); do not add Bootstrap- or Tailwind-style utility classes to `className`. `npm run style:audit` reports what is left to migrate.
 
 ## 6) Type Mapping And Display Labels
 
