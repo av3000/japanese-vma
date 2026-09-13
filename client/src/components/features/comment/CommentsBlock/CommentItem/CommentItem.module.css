@@ -1,0 +1,34 @@
+.item {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-md);
+	padding-block: var(--spacing-md);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.avatar {
+	flex: 0 0 auto;
+	border-radius: 50%;
+}
+
+.body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.author {
+	margin: 0;
+}
+
+.content {
+	margin: var(--spacing-xs) 0 var(--spacing-md);
+	overflow-wrap: anywhere;
+}
+
+.footer {
+	color: var(--color-neutral-600);
+}
+
+.date {
+	margin-left: auto;
+}

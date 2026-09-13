@@ -4,10 +4,13 @@ import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalog
 import Spinner from '@/assets/images/spinner.gif';
 import SearchBar from '@/components/features/SearchBar';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container, Grid, Stack } from '@/components/shared/layout';
 import { isCustomCatalogueType } from '@/shared/constants/catalogues';
 import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkeleton';
+import styles from './CataloguesList.module.css';
 
 export const DEFAULT_PER_PAGE = 12;
 
@@ -51,38 +54,48 @@ const CataloguesListPage: React.FC = () => {
 	}
 
 	if (isError) {
-		return <div className="text-danger">Error: {error.message}</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Error: {error.message}</Alert>
+			</Container>
+		);
 	}
 
 	return (
-		<div className="container">
-			<SearchBar fetchQuery={setFilters} searchType="lists" />
+		<Container className={styles.page}>
+			<Stack gap="md">
+				<SearchBar fetchQuery={setFilters} searchType="lists" />
 
-			{searchHeading && <h4>{searchHeading}</h4>}
-			<div className="mb-3 text-muted">
-				Showing {catalogues.length} of {total}
-			</div>
+				{searchHeading && <h4 className={styles.heading}>{searchHeading}</h4>}
+				<p className={styles.summary}>
+					Showing {catalogues.length} of {total}
+				</p>
 
-			<div className="row">
 				{catalogues.length === 0 ? (
 					<p>No catalogues found.</p>
 				) : (
-					catalogues.map((catalogue) => <CatalogueCard key={catalogue.uuid} catalogue={catalogue} />)
+					<Grid as="ul" columns={12} gap="lg" className={styles.cards}>
+						{catalogues.map((catalogue) => (
+							<Grid.Item as="li" key={catalogue.uuid} span={{ base: 6, sm: 4, md: 3 }}>
+								<CatalogueCard catalogue={catalogue} />
+							</Grid.Item>
+						))}
+					</Grid>
 				)}
-			</div>
 
-			<div className="row justify-content-center mt-4 mb-5">
-				{isFetchingNextPage ? (
-					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-				) : hasNextPage ? (
-					<Button variant="secondary-outline" className="w-50" onClick={() => fetchNextPage()}>
-						Load More
-					</Button>
-				) : (
-					<span className="text-muted">No more results</span>
-				)}
-			</div>
-		</div>
+				<div className={styles.pager}>
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
+					) : hasNextPage ? (
+						<Button variant="secondary-outline" className={styles.loadMore} onClick={() => fetchNextPage()}>
+							Load More
+						</Button>
+					) : (
+						<span className={styles.muted}>No more results</span>
+					)}
+				</div>
+			</Stack>
+		</Container>
 	);
 };
 

@@ -1,10 +1,11 @@
 import { useSearchParams } from 'react-router-dom';
-import {
-	type RadicalListFilters,
-	useInfiniteRadicals,
-} from '@/api/radicals/hooks/useInfiniteRadicals';
+import { type RadicalListFilters, useInfiniteRadicals } from '@/api/radicals/hooks/useInfiniteRadicals';
 import RadicalItem from '@/components/features/japanese/radical/RadicalItem';
+import { Alert } from '@/components/shared/Alert';
+import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
+import styles from '../japaneseListPage.module.css';
 import SearchBarRadicals from './SearchBarRadicals';
 
 const DEFAULT_PER_PAGE = 10;
@@ -13,8 +14,11 @@ const RadicalsList = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const keyword = searchParams.get('keyword')?.trim() ?? '';
 	const filters: RadicalListFilters = { per_page: DEFAULT_PER_PAGE, ...(keyword ? { keyword } : {}) };
-	const { radicals, total, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =
-		useInfiniteRadicals({ filters });
+	const { radicals, total, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } = useInfiniteRadicals(
+		{
+			filters,
+		},
+	);
 
 	const handleSearch = (nextKeyword: string) => {
 		const nextParams = new URLSearchParams();
@@ -33,21 +37,15 @@ const RadicalsList = () => {
 	const searchTotal = `Results total: '${total}'`;
 
 	return (
-		<div className="container mt-5">
-			<div className="row justify-content-center">
+		<Container className={styles.page}>
+			<Stack gap="2xl">
 				<SearchBarRadicals defaultKeyword={keyword} onSearch={handleSearch} />
-			</div>
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<h4>{searchTotal}</h4>
-				</div>
-				{isError && (
-					<div className="row justify-content-center">
-						<p>Unable to load radicals.</p>
-					</div>
-				)}
-				<div className="row">
-					<div className="col-lg-8 col-md-10 mx-auto">
+				<Stack as="section" gap="md" className={styles.results}>
+					<Cluster justify="center">
+						<h4 className={styles.heading}>{searchTotal}</h4>
+					</Cluster>
+					{isError && <Alert tone="danger">Unable to load radicals.</Alert>}
+					<ul className={styles.list}>
 						{radicals.map((radical) => (
 							<RadicalItem
 								key={radical.uuid}
@@ -59,24 +57,25 @@ const RadicalsList = () => {
 								hiragana={radical.hiragana}
 							/>
 						))}
-						{radicals.length === 0 && !isError && <p>No radicals found.</p>}
-					</div>
-				</div>
-			</div>
-			<div className="row justify-content-center">
-				{hasNextPage ? (
-					<button
-						className="btn btn-outline-primary brand-button w-50"
-						onClick={() => void fetchNextPage()}
-						disabled={isFetchingNextPage}
-					>
-						{isFetchingNextPage ? 'Loading...' : 'Load More'}
-					</button>
-				) : (
-					'no more results...'
-				)}
-			</div>
-		</div>
+					</ul>
+					{radicals.length === 0 && !isError && <p>No radicals found.</p>}
+				</Stack>
+				<Cluster justify="center">
+					{hasNextPage ? (
+						<Button
+							variant="outline"
+							className={styles.loadMore}
+							onClick={() => void fetchNextPage()}
+							disabled={isFetchingNextPage}
+						>
+							{isFetchingNextPage ? 'Loading...' : 'Load More'}
+						</Button>
+					) : (
+						'no more results...'
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 

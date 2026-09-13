@@ -1,0 +1,15 @@
+/*
+ * Shared page shell for the Sentence create and edit routes.
+ */
+
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+/* Centred form column (was `row justify-content-lg-center text-center`). */
+.formArea {
+	width: 100%;
+	max-width: var(--container-sm);
+	margin-inline: auto;
+	text-align: center;
+}

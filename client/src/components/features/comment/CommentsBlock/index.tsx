@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { addComment, deleteComment, fetchComments, getCommentsQueryKey, useLikeCommentMutation } from '@/api/comments';
 import type { ObjectTemplateType as CommentEntityType } from '@/api/generated/model/objectTemplateType';
 import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
+import { Alert } from '@/components/shared/Alert';
 import { useAuth } from '@/hooks/useAuth';
 import CommentForm from './CommentForm/CommentForm';
 import CommentList from './CommentList/CommentList';
@@ -93,7 +94,9 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({
 		<div>
 			<hr />
 			{isLocked ? (
-				<h6 className="alert alert-warning">This post is locked and new comments are not allowed.</h6>
+				<Alert tone="warning" role="status">
+					This post is locked and new comments are not allowed.
+				</Alert>
 			) : isAuthenticated && user ? (
 				<>
 					<h6>Share what's on your mind</h6>

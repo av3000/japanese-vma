@@ -166,7 +166,7 @@ describe('KanjiDetails', () => {
 		expect(html).toContain('水の記事');
 		expect(html).toContain('Likes: 2 · Views: 3 · Comments: 1');
 		expect(html).toContain('/articles/article-uuid');
-		expect(html.match(/post-preview d-flex justify-content-between/g)).toHaveLength(3);
+		expect(html.match(/relatedList/g)).toHaveLength(3);
 		expect(html.match(/relatedResource/g)).toHaveLength(3);
 	});
 

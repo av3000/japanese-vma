@@ -1,9 +1,13 @@
 import { useSearchParams } from 'react-router-dom';
 import { useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
 import SentenceItem from '@/components/features/japanese/sentence/SentenceItem';
+import { Alert } from '@/components/shared/Alert';
+import { Button } from '@/components/shared/Button';
 import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from '../japaneseListPage.module.css';
 import SearchBarSentences from './SearchBarSentences';
 
 const DEFAULT_PER_PAGE = 10;
@@ -20,15 +24,11 @@ const SentencesList = () => {
 	const filters = getSentenceListFilters(searchParams);
 	const keyword = filters.keyword ?? '';
 
-	const {
-		sentences,
-		total,
-		isLoading,
-		isFetchingNextPage,
-		hasNextPage,
-		fetchNextPage,
-		error,
-	} = useInfiniteSentences({ filters });
+	const { sentences, total, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error } = useInfiniteSentences(
+		{
+			filters,
+		},
+	);
 
 	const handleSearch = (nextKeyword: string) => {
 		const nextParams = new URLSearchParams();
@@ -48,36 +48,29 @@ const SentencesList = () => {
 
 	if (error) {
 		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<p>Sentences could not be loaded.</p>
-				</div>
-			</div>
+			<Container className={styles.page}>
+				<Alert tone="danger">Sentences could not be loaded.</Alert>
+			</Container>
 		);
 	}
 
 	return (
-		<div className="container mt-5">
-			<div className="row justify-content-center">
+		<Container className={styles.page}>
+			<Stack gap="2xl">
 				<SearchBarSentences defaultKeyword={keyword} onSearch={handleSearch} />
-			</div>
 
-			{isAuthenticated && (
-				<div className="row justify-content-center mt-3">
-					<Link to="/sentences/new" className="tag-link">
-						Create sentence
-					</Link>
-				</div>
-			)}
+				{isAuthenticated && (
+					<Cluster justify="center">
+						<Link to="/sentences/new">Create sentence</Link>
+					</Cluster>
+				)}
 
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					{keyword ? <h4>keyword: {keyword}</h4> : null}
-					&nbsp;
-					<h4>Results total: '{total}'</h4>
-				</div>
-				<div className="row">
-					<div className="col-lg-8 col-md-10 mx-auto">
+				<Stack as="section" gap="md" className={styles.results}>
+					<Cluster justify="center" align="baseline" gap="md">
+						{keyword ? <h4 className={styles.heading}>keyword: {keyword}</h4> : null}
+						<h4 className={styles.heading}>Results total: '{total}'</h4>
+					</Cluster>
+					<ul className={styles.list}>
 						{sentences.map((sentence) => (
 							<SentenceItem
 								key={sentence.uuid}
@@ -87,24 +80,25 @@ const SentencesList = () => {
 								sentence={sentence.content}
 							/>
 						))}
-					</div>
-				</div>
-			</div>
+					</ul>
+				</Stack>
 
-			<div className="row justify-content-center">
-				{hasNextPage ? (
-					<button
-						className="btn btn-outline-primary brand-button w-50"
-						onClick={() => void fetchNextPage()}
-						disabled={isFetchingNextPage}
-					>
-						{isFetchingNextPage ? 'Loading...' : 'Load More'}
-					</button>
-				) : (
-					'no more results...'
-				)}
-			</div>
-		</div>
+				<Cluster justify="center">
+					{hasNextPage ? (
+						<Button
+							variant="outline"
+							className={styles.loadMore}
+							onClick={() => void fetchNextPage()}
+							disabled={isFetchingNextPage}
+						>
+							{isFetchingNextPage ? 'Loading...' : 'Load More'}
+						</Button>
+					) : (
+						'no more results...'
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 

@@ -1,7 +1,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import classNames from 'classnames';
 import { useKanjiQuery } from '@/api/kanjis/details';
+import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container, Stack } from '@/components/shared/layout';
+import styles from '../japaneseDetailPage.module.css';
 import KanjiContent from './KanjiContent';
 
 const KanjiDetails: React.FC = () => {
@@ -14,12 +18,14 @@ const KanjiDetails: React.FC = () => {
 
 	if (isError || !kanji) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Kanji not found.</p>
-				<a href="/kanjis" className="btn btn-link">
-					Back to all Kanjis
-				</a>
-			</div>
+			<Container className={classNames(styles.page, styles.centered)}>
+				<Stack gap="md" align="center">
+					<p className={styles.lead}>Kanji not found.</p>
+					<Button variant="linkButton" href="/kanjis">
+						Back to all Kanjis
+					</Button>
+				</Stack>
+			</Container>
 		);
 	}
 

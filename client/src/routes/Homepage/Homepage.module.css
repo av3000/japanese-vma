@@ -1,0 +1,91 @@
+/* Hero ------------------------------------------------------------------- */
+
+.hero {
+	display: flex;
+	height: 95vh;
+}
+
+.heroMain {
+	flex: 5;
+	background: url('../../assets/images/adrian-Xft-JdC-Jbc-unsplash-mid.jpg') no-repeat center;
+	background-size: cover;
+}
+
+.heroAside {
+	background-color: var(--main-brand-color);
+}
+
+.heroColumn {
+	display: flex;
+	height: 100%;
+	flex-wrap: wrap;
+	align-content: space-between;
+}
+
+.heroHeader {
+	margin-top: 10%;
+	margin-right: 30%;
+	margin-left: 10%;
+}
+
+.heroTitle {
+	font-size: var(--font-size-heading-1);
+}
+
+/* sm */
+@media (min-width: 768px) {
+	.heroTitle {
+		font-size: calc(var(--font-size-heading-1) * 1.4);
+	}
+}
+
+.heroText {
+	font-size: var(--font-size-heading-3);
+	text-align: left;
+}
+
+.brand {
+	color: var(--main-brand-color);
+	text-shadow: 0 0 1px var(--main-text-color);
+}
+
+.heroExplore {
+	width: 100%;
+	margin-right: 5%;
+	margin-bottom: 3%;
+	text-align: right;
+	font-weight: var(--font-weight-semibold);
+	text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.heroExploreLink {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	font-size: var(--font-size-heading-2);
+	color: var(--main-brand-color);
+}
+
+.heroExploreLink:hover {
+	color: var(--main-brand-color);
+	opacity: 0.9;
+	text-decoration: none;
+}
+
+.socialLinks {
+	margin: var(--spacing-xs);
+}
+
+.socialLinks a:hover {
+	opacity: 0.7;
+}
+
+/* Sections --------------------------------------------------------------- */
+
+.readings {
+	padding-top: var(--spacing-lg);
+}
+
+.feedTitle {
+	text-align: center;
+}

@@ -8,31 +8,30 @@ interface KanjiRelatedArticlesProps {
 }
 
 const KanjiRelatedArticles = ({ items, total }: KanjiRelatedArticlesProps) => (
-	<section className="mt-5 mb-5">
+	<section>
 		<h2>Found in ({total}) articles</h2>
 		{items.length === 0 ? (
 			<p>No related articles found.</p>
 		) : (
-			items.map((article) => (
-				<div
-					className={`${styles.relatedResource} post-preview d-flex justify-content-between align-items-start`}
-					key={article.uuid}
-				>
-					<div>
-						<h3>{article.title_jp}</h3>
-						{article.hashtags.length > 0 && (
-							<p>{article.hashtags.map((hashtag) => hashtag.content).join(' ')}</p>
-						)}
-						<p>
-							Likes: {article.likes_total} · Views: {article.views_total} · Comments:{' '}
-							{article.comments_total}
-						</p>
-					</div>
-					<Link className="ml-3 flex-shrink-0" to={`/articles/${article.uuid}`}>
-						Open
-					</Link>
-				</div>
-			))
+			<ul className={styles.relatedList}>
+				{items.map((article) => (
+					<li className={styles.relatedResource} key={article.uuid}>
+						<div>
+							<h3>{article.title_jp}</h3>
+							{article.hashtags.length > 0 && (
+								<p>{article.hashtags.map((hashtag) => hashtag.content).join(' ')}</p>
+							)}
+							<p>
+								Likes: {article.likes_total} · Views: {article.views_total} · Comments:{' '}
+								{article.comments_total}
+							</p>
+						</div>
+						<Link className={styles.openLink} to={`/articles/${article.uuid}`}>
+							Open
+						</Link>
+					</li>
+				))}
+			</ul>
 		)}
 	</section>
 );

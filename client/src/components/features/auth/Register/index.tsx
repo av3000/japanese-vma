@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Alert } from '@/components/shared/Alert';
+import { Button } from '@/components/shared/Button';
+import { Field, Input, Label } from '@/components/shared/FormControls';
+import { Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from './Register.module.css';
 
 interface RegisterFormProps {
 	heading: string;
@@ -44,80 +49,48 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ heading, buttonText }) => {
 	};
 
 	return (
-		<div className="container">
-			<div className="row justify-content-md-center text-center mt-5">
-				<div className="col-md-6">
-					<form onSubmit={handleSubmit}>
-						<h2>{heading}</h2>
-						<h6 className="mb-5">
-							Already have an account? <Link to="/login">Login.</Link>
-						</h6>
+		<Container size="xs" as="section" className={styles.card}>
+			<form onSubmit={handleSubmit}>
+				<Stack gap="md">
+					<h2 className={styles.title}>{heading}</h2>
+					<h6 className={styles.intro}>
+						Already have an account? <Link to="/login">Login.</Link>
+					</h6>
 
-						{error && <div className="alert alert-danger">{error}</div>}
+					{error && <Alert tone="danger">{error}</Alert>}
 
-						<label className="mt-3" htmlFor="name">
-							Username:
-						</label>
-						<input
-							className="form-control"
-							id="name"
-							name="name"
-							type="text"
-							required
-							autoComplete="username"
-						/>
+					<Field>
+						<Label htmlFor="name">Username:</Label>
+						<Input id="name" name="name" type="text" required autoComplete="username" />
+					</Field>
 
-						<label className="mt-3" htmlFor="email">
-							Email:
-						</label>
-						<input
-							className="form-control"
-							id="email"
-							name="email"
-							type="email"
-							required
-							autoComplete="email"
-						/>
+					<Field>
+						<Label htmlFor="email">Email:</Label>
+						<Input id="email" name="email" type="email" required autoComplete="email" />
+					</Field>
 
-						<label className="mt-3" htmlFor="password">
-							Password:
-						</label>
-						<input
-							className="form-control"
-							id="password"
-							name="password"
-							type="password"
-							required
-							autoComplete="new-password"
-						/>
+					<Field>
+						<Label htmlFor="password">Password:</Label>
+						<Input id="password" name="password" type="password" required autoComplete="new-password" />
+					</Field>
 
-						<label className="mt-3" htmlFor="password_confirmation">
-							Confirm password:
-						</label>
-						<input
-							className="form-control"
+					<Field>
+						<Label htmlFor="password_confirmation">Confirm password:</Label>
+						<Input
 							id="password_confirmation"
 							name="password_confirmation"
 							type="password"
 							required
 							autoComplete="new-password"
 						/>
+					</Field>
 
-						<button
-							type="submit"
-							className="btn btn-outline-primary col-md-3 brand-button mt-5"
-							disabled={isLoading}
-						>
-							{isLoading ? (
-								<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-							) : (
-								buttonText
-							)}
-						</button>
-					</form>
-				</div>
-			</div>
-		</div>
+					<Button type="submit" variant="outline" className={styles.submit} isLoading={isLoading}>
+						{buttonText}
+					</Button>
+				</Stack>
+			</form>
+		</Container>
 	);
 };
 

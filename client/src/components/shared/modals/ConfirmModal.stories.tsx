@@ -40,7 +40,7 @@ const Template = (args: Partial<ComponentProps<typeof ConfirmModal>>) => {
 				title={args.title ?? 'Delete item'}
 				onConfirm={handleConfirm}
 			>
-				{args.children ?? <p className="mb-0">This action cannot be undone.</p>}
+				{args.children ?? <p style={{ margin: 0 }}>This action cannot be undone.</p>}
 			</ConfirmModal>
 		</>
 	);

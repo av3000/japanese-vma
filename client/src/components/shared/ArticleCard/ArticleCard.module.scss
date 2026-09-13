@@ -46,11 +46,29 @@
 	font-size: var(--font-size-heading-5);
 }
 
+.cardLink,
+.cardLink:hover,
+.cardLink:focus-visible {
+	text-decoration: none;
+}
+
 .chipList {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: var(--spacing-3xs);
 	margin-top: var(--spacing-3xs);
+}
+
+.levelRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.level {
+	font-size: var(--font-size-heading-4);
 }
 
 .childrenWrapper {

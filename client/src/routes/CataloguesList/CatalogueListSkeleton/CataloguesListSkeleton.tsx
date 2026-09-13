@@ -1,54 +1,45 @@
 import classNames from 'classnames';
 import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
 import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.scss';
+import { Container, Grid, Stack } from '@/components/shared/layout';
+import styles from './CataloguesListSkeleton.module.css';
 
 const CATALOGUES_LIST_SKELETON_COUNT = 12;
 
+// Mirrors the column spans of the SearchBar controls (keyword, filter, sort, submit).
 const SEARCH_PLACEHOLDERS = [
-	{ className: 'col-lg-4 col-md-6 col-sm-12 mt-3', width: '100%' },
-	{ className: 'col-lg-4 col-md-4 col-sm-12 mt-3', width: '100%' },
-	{ className: 'col-lg-2 col-md-2 col-sm-4 mt-3', width: '100%' },
-	{ className: 'col-lg-2 mt-3', width: '7rem' },
+	{ key: 'keyword', span: { base: 12, sm: 6, md: 4 } },
+	{ key: 'filter', span: { base: 12, sm: 6, md: 4 } },
+	{ key: 'sort', span: { base: 6, sm: 3, md: 2 } },
+	{ key: 'submit', span: { base: 6, sm: 3, md: 2 } },
 ];
 
-const SearchControlSkeleton = ({ width }: { width: string }) => (
-	<span
-		className={classNames(skeletonStyles.block, skeletonStyles.line)}
-		style={{
-			display: 'block',
-			height: '38px',
-			width,
-		}}
-	/>
+const SearchControlSkeleton = () => (
+	<span className={classNames(skeletonStyles.block, skeletonStyles.line, styles.control)} />
 );
 
 const CataloguesListSkeleton = () => (
-	<div className="container" data-testid="catalogues-list-skeleton" aria-hidden="true">
-		<div className="u-container">
-			<div className="row">
+	<Container data-testid="catalogues-list-skeleton" aria-hidden="true">
+		<Stack gap="md">
+			<Grid columns={12} gap="sm">
 				{SEARCH_PLACEHOLDERS.map((placeholder) => (
-					<div key={placeholder.className} className={placeholder.className}>
-						<SearchControlSkeleton width={placeholder.width} />
-					</div>
+					<Grid.Item key={placeholder.key} span={placeholder.span}>
+						<SearchControlSkeleton />
+					</Grid.Item>
 				))}
-			</div>
-		</div>
+			</Grid>
 
-		<span
-			className={classNames('mb-3 mt-3', skeletonStyles.block, skeletonStyles.line)}
-			style={{
-				display: 'block',
-				height: '1rem',
-				width: '9rem',
-			}}
-		/>
+			<span className={classNames(skeletonStyles.block, skeletonStyles.line, styles.summary)} />
 
-		<div className="row">
-			{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }).map((_, index) => (
-				<CatalogueCardSkeleton key={index} />
-			))}
-		</div>
-	</div>
+			<Grid columns={12} gap="lg">
+				{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }).map((_, index) => (
+					<Grid.Item key={index} span={{ base: 6, sm: 4, md: 3 }}>
+						<CatalogueCardSkeleton />
+					</Grid.Item>
+				))}
+			</Grid>
+		</Stack>
+	</Container>
 );
 
 export default CataloguesListSkeleton;

@@ -1,6 +1,9 @@
 import React, { ChangeEvent, FormEvent, useState } from 'react';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Textarea } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
+import { Stack } from '@/components/shared/layout';
 
 const MAX_CHAR_LIMIT = 1000;
 
@@ -38,24 +41,24 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading }) => {
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<div className="form-group">
-				<textarea
+		<Stack as="form" gap="sm" onSubmit={handleSubmit}>
+			<Field>
+				<Textarea
 					onChange={handleChange}
 					value={message}
-					className="form-control"
 					placeholder="Your Comment"
+					aria-label="Your Comment"
 					name="message"
 					rows={5}
 					maxLength={MAX_CHAR_LIMIT}
 					disabled={isLoading}
 				/>
-				<small className="form-text text-muted">{MAX_CHAR_LIMIT - message.length} characters remaining</small>
-			</div>
+				<FieldMessage>{MAX_CHAR_LIMIT - message.length} characters remaining</FieldMessage>
+			</Field>
 
-			{error && <div className="alert alert-danger">{error}</div>}
+			{error && <Alert tone="danger">{error}</Alert>}
 
-			<div className="form-group">
+			<div>
 				<Button
 					type="submit"
 					disabled={isLoading || !message.trim()}
@@ -67,7 +70,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ onSubmit, isLoading }) => {
 					<Icon name="paperPlane" size="sm" />
 				</Button>
 			</div>
-		</form>
+		</Stack>
 	);
 };
 

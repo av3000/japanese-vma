@@ -3,3 +3,11 @@
 	align-items: center;
 	gap: var(--spacing-sm);
 }
+
+.learned {
+	color: var(--color-success);
+}
+
+.notLearned {
+	color: var(--color-neutral-600);
+}

@@ -66,6 +66,7 @@ $color-border-default-dark: $color-neutral-0; // White in dark mode
 	--color-primary-300: #{$color-primary-300};
 	--color-primary-400: #{$color-primary-400};
 	--color-primary: #{$color-primary};
+	--color-primary-500: #{$color-primary}; // alias so the semantic text tokens below resolve
 	--color-primary-hover: #{$color-primary-hover};
 	--color-primary-disabled: #{$color-primary-disabled};
 	--color-secondary-100: #{$color-secondary-100};
@@ -95,6 +96,7 @@ $color-border-default-dark: $color-neutral-0; // White in dark mode
 
 	--color-text-neutral-hover: var(--color-neutral-700);
 	--color-text-neutral-default: var(--color-neutral-900);
+	--color-text-neutral-active: var(--color-neutral-600);
 	--color-text-primary: #{$color-neutral-900};
 	--color-text-primary-default: var(--color-primary-500);
 	--color-text-primary-hover: var(--color-primary-400);

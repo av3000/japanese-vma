@@ -2,6 +2,7 @@ import { ARTICLE_MODERATION_CHOICES } from '@/api/articles/moderation';
 import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
+import { Select } from '@/components/shared/FormControls';
 import type { ModalController } from '@/hooks/useModal';
 
 interface ArticleReviewModalProps {
@@ -44,8 +45,8 @@ export const ArticleReviewModal = ({
 			</DialogModal.Header>
 			<DialogModal.Body>
 				<p>{description}</p>
-				<select
-					className="form-control"
+				<Select
+					aria-label="Article status"
 					value={status}
 					onChange={(e) => onStatusChange(Number(e.target.value) as ArticleStatus)}
 				>
@@ -54,7 +55,7 @@ export const ArticleReviewModal = ({
 							{choice.label}
 						</option>
 					))}
-				</select>
+				</Select>
 			</DialogModal.Body>
 			<DialogModal.Footer>
 				<Button variant="secondary" onClick={controller.close}>

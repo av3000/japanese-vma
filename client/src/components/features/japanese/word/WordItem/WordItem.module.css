@@ -1,0 +1,10 @@
+.item {
+	padding-block: var(--spacing-lg);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+/* Heading-sized reading (was the Bootstrap `.h2` helper). */
+.reading {
+	font-size: var(--font-size-heading-2);
+	line-height: var(--line-height-md);
+}

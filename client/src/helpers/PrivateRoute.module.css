@@ -1,0 +1,12 @@
+.page {
+	padding-block: var(--spacing-lg);
+}
+
+/* Loading bar shown while the session is being checked. */
+.placeholder {
+	display: block;
+	width: 50%;
+	height: var(--size-xl);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-200);
+}

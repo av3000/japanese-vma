@@ -16,9 +16,12 @@ import {
 	type CatalogueFormSubmitMeta,
 	type CatalogueFormValues,
 } from '@/components/features/catalogues/CatalogueForm';
+import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container } from '@/components/shared/layout';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import styles from './CatalogueEdit.module.css';
 
 const CatalogueEditPage = () => {
 	const navigate = useNavigate();
@@ -82,34 +85,32 @@ const CatalogueEditPage = () => {
 
 	if (isError || !catalogue) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Catalogue not found or was deleted.</p>
-				<a href={CATALOGUE_ROUTES.list} className="btn btn-link">
+			<Container as="section" className={styles.notFound}>
+				<p className="u-text-lead">Catalogue not found or was deleted.</p>
+				<Button variant="linkButton" href={CATALOGUE_ROUTES.list}>
 					Back to all Catalogues
-				</a>
-			</div>
+				</Button>
+			</Container>
 		);
 	}
 
 	return (
-		<div className="container">
-			<div className="row justify-content-lg-center text-center">
-				<CatalogueForm
-					initialValues={initialValues}
-					isSubmitting={updateMutation.isPending}
-					submitLabel="Update Catalogue"
-					serverErrors={serverErrors}
-					statusMessage={status}
-					disableSubmitWhenUnchanged
-					onSubmit={(values, meta: CatalogueFormSubmitMeta) => {
-						const payload = buildUpdateCataloguePayload(values, meta.dirtyKeys);
-						setStatus(null);
-						setServerErrors(null);
-						updateMutation.mutate({ uuid: catalogueId, payload });
-					}}
-				/>
-			</div>
-		</div>
+		<Container as="section" className={styles.page}>
+			<CatalogueForm
+				initialValues={initialValues}
+				isSubmitting={updateMutation.isPending}
+				submitLabel="Update Catalogue"
+				serverErrors={serverErrors}
+				statusMessage={status}
+				disableSubmitWhenUnchanged
+				onSubmit={(values, meta: CatalogueFormSubmitMeta) => {
+					const payload = buildUpdateCataloguePayload(values, meta.dirtyKeys);
+					setStatus(null);
+					setServerErrors(null);
+					updateMutation.mutate({ uuid: catalogueId, payload });
+				}}
+			/>
+		</Container>
 	);
 };
 

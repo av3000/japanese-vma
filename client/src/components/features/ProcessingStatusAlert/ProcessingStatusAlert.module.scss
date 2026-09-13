@@ -1,6 +1,10 @@
 .alert {
 	display: flex;
 	align-items: center;
+	margin-top: var(--spacing-md);
+	padding: var(--spacing-xs) var(--spacing-sm);
+	border: var(--border-size-sm) solid transparent;
+	border-radius: var(--border-radius-md);
 }
 
 .content {
@@ -11,9 +15,22 @@
 	gap: var(--spacing-sm);
 }
 
+.message {
+	margin: 0;
+	font-size: var(--font-size-body-sm);
+}
+
 .status {
 	display: flex;
 	align-items: center;
+	gap: var(--spacing-sm);
+}
+
+.spinner {
+	display: inline-flex;
+	flex: 0 0 auto;
+	width: var(--icon-size-sm);
+	height: var(--icon-size-sm);
 }
 
 .popoverTrigger {
@@ -23,4 +40,35 @@
 	display: inline-flex;
 	align-items: center;
 	cursor: pointer;
+}
+
+/* Popover body ----------------------------------------------------------- */
+
+.details {
+	display: grid;
+	gap: var(--spacing-xs);
+	margin: 0;
+}
+
+.detailRow {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+	font-size: var(--font-size-body-sm);
+}
+
+.detailLabel {
+	margin: 0;
+	font-weight: inherit;
+	color: var(--color-neutral-600);
+}
+
+.detailValue {
+	margin: 0;
+}
+
+.detailNote {
+	margin: 0;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
 }

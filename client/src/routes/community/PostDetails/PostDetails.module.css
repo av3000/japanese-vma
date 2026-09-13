@@ -1,0 +1,9 @@
+.notFound {
+	padding-block: var(--spacing-2xl);
+	text-align: center;
+}
+
+.lead {
+	margin: 0;
+	font-size: var(--font-size-body-lg);
+}

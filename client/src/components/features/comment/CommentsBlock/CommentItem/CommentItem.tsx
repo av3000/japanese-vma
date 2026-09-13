@@ -3,6 +3,8 @@ import { ApiComment as Comment } from '@/api/comments';
 import DefaultAvatar from '@/assets/images/avatar-man.svg';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster } from '@/components/shared/layout';
+import styles from './CommentItem.module.css';
 
 interface CommentItemProps {
 	comment: Comment;
@@ -17,21 +19,20 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelet
 	const canDelete = currentUser && (currentUser.id === comment.author_id || currentUser.is_admin);
 
 	return (
-		<div className="media">
-			<img className="d-flex mr-3 rounder-circle" src={DefaultAvatar} alt="default-avatar" />
-			<div className="media-body">
-				<div className="d-flex justify-content-between align-items-center">
-					<h5>@{comment.author_name}</h5>
+		<li className={styles.item}>
+			<img className={styles.avatar} src={DefaultAvatar} alt="default-avatar" />
+			<div className={styles.body}>
+				<Cluster justify="between">
+					<h5 className={styles.author}>@{comment.author_name}</h5>
 					{canDelete && (
-						<Button onClick={onDelete} variant="ghost" size="sm">
+						<Button onClick={onDelete} variant="ghost" size="sm" aria-label="Delete this comment">
 							<Icon size="sm" name="trashbinSolid" />
 						</Button>
 					)}
-				</div>
-				<div>{comment.content}</div>
-				<br />
-				<div className="text-muted d-flex align-items-center">
-					<span className="mx-2">{comment.likes_count} likes</span>
+				</Cluster>
+				<p className={styles.content}>{comment.content}</p>
+				<Cluster gap="xs" className={styles.footer}>
+					<span>{comment.likes_count} likes</span>
 					<Button
 						onClick={onLike}
 						variant="ghost"
@@ -42,11 +43,10 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, currentUser, onDelet
 					>
 						<Icon size="sm" name={comment.is_liked_by_viewer ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 					</Button>
-					<p className="ml-auto mb-0">{comment.created_at}</p>
-				</div>
-				<hr />
+					<span className={styles.date}>{comment.created_at}</span>
+				</Cluster>
 			</div>
-		</div>
+		</li>
 	);
 };
 

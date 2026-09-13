@@ -1,0 +1,33 @@
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.title {
+	margin: 0;
+}
+
+.meta {
+	color: var(--color-neutral-600);
+}
+
+.body {
+	margin: 0;
+	font-size: var(--font-size-body-lg);
+}
+
+.divider {
+	width: 100%;
+	margin: 0;
+}
+
+.avatar {
+	border-radius: 50%;
+}
+
+.author {
+	margin: 0;
+}
+
+.comments {
+	margin-top: var(--spacing-2xl);
+}

@@ -15,6 +15,11 @@ vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
 
+const must = <T,>(element: T | null): T => {
+	if (element === null) throw new Error('Expected element to be rendered');
+	return element;
+};
+
 let container: HTMLDivElement;
 let root: Root;
 
@@ -61,8 +66,8 @@ describe('Header navigation semantics', () => {
 	});
 
 	it('opens and closes a navigation group as a disclosure', () => {
-		const button = container.querySelector<HTMLButtonElement>('button[aria-controls="material-nav-group"]')!;
-		const list = container.querySelector<HTMLUListElement>('#material-nav-group')!;
+		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="material-nav-group"]'));
+		const list = must(container.querySelector<HTMLUListElement>('#material-nav-group'));
 
 		expect(button.getAttribute('aria-expanded')).toBe('false');
 		expect(list.hidden).toBe(true);
@@ -78,9 +83,9 @@ describe('Header navigation semantics', () => {
 	});
 
 	it('closes an open group on Escape and returns focus to its button', () => {
-		const button = container.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]')!;
+		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]'));
 		click(button);
-		const firstLink = container.querySelector<HTMLAnchorElement>('#new-nav-group a')!;
+		const firstLink = must(container.querySelector<HTMLAnchorElement>('#new-nav-group a'));
 		firstLink.focus();
 
 		keydown(firstLink, 'Escape');
@@ -90,7 +95,7 @@ describe('Header navigation semantics', () => {
 	});
 
 	it('closes an open group when clicking outside of it', () => {
-		const button = container.querySelector<HTMLButtonElement>('button[aria-controls="material-nav-group"]')!;
+		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="material-nav-group"]'));
 		click(button);
 		expect(button.getAttribute('aria-expanded')).toBe('true');
 
@@ -102,7 +107,7 @@ describe('Header navigation semantics', () => {
 	});
 
 	it('toggles the collapsed mobile menu through an aria-expanded button', () => {
-		const toggle = container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]')!;
+		const toggle = must(container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]'));
 		expect(toggle.getAttribute('aria-expanded')).toBe('false');
 
 		click(toggle);

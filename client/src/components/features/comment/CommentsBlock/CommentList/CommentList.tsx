@@ -1,6 +1,9 @@
 import React from 'react';
 import { ApiComment as Comment } from '@/api/comments';
+import { Alert } from '@/components/shared/Alert';
+import { Badge } from '@/components/ui/badge';
 import CommentItem from '../CommentItem/CommentItem';
+import styles from './CommentList.module.css';
 
 interface User {
 	id: string | number;
@@ -20,25 +23,29 @@ interface CommentListProps {
 const CommentList: React.FC<CommentListProps> = ({ comments, currentUser, onDelete, onLike, isLikePending }) => {
 	return (
 		<div>
-			<h5 className="text-muted mb-4 mt-4">
-				<span className="badge badge-secondary">{comments.length}</span>
+			<h5 className={styles.heading}>
+				<Badge variant="secondary">{comments.length}</Badge>
 				{'  '}
 				Comment{comments.length !== 1 ? 's' : ''}
 			</h5>
 
 			{comments.length === 0 ? (
-				<div className="alert text-center alert-info">Be the first to comment</div>
+				<Alert tone="info" className={styles.empty}>
+					Be the first to comment
+				</Alert>
 			) : (
-				comments.map((comment) => (
-					<CommentItem
-						key={comment.id}
-						comment={comment}
-						currentUser={currentUser}
-						onDelete={() => onDelete(comment.id)}
-						onLike={() => onLike(comment.id)}
-						isLikePending={isLikePending(comment.id)}
-					/>
-				))
+				<ul className={styles.items}>
+					{comments.map((comment) => (
+						<CommentItem
+							key={comment.id}
+							comment={comment}
+							currentUser={currentUser}
+							onDelete={() => onDelete(comment.id)}
+							onLike={() => onLike(comment.id)}
+							isLikePending={isLikePending(comment.id)}
+						/>
+					))}
+				</ul>
 			)}
 		</div>
 	);

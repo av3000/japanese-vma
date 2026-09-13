@@ -13,8 +13,10 @@ import {
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
+import styles from './PostOwnerActions.module.css';
 
 interface PostOwnerActionsProps {
 	postId: number;
@@ -77,7 +79,7 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 	};
 
 	return (
-		<div className="d-flex align-items-center">
+		<Cluster gap="xs">
 			{canLock && (
 				<Button
 					onClick={handleLock}
@@ -112,7 +114,7 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 			)}
 
 			{status && (
-				<span role="alert" className="text-danger ml-2">
+				<span role="alert" className={styles.error}>
 					{status}
 				</span>
 			)}
@@ -126,7 +128,7 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 					ariaLabel="Delete post"
 				/>
 			)}
-		</div>
+		</Cluster>
 	);
 };
 

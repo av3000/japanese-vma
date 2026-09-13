@@ -1,0 +1,32 @@
+.page {
+	padding-bottom: var(--spacing-2xl);
+}
+
+.heading {
+	margin: 0;
+}
+
+.summary {
+	margin: 0;
+	color: var(--color-neutral-600);
+}
+
+.pager {
+	display: flex;
+	justify-content: center;
+	margin-top: var(--spacing-xs);
+}
+
+.loadMore {
+	width: 50%;
+}
+
+.muted {
+	color: var(--color-neutral-600);
+}
+
+.cards {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}

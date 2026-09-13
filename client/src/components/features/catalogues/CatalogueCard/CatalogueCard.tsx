@@ -4,6 +4,7 @@ import styles from '@/components/shared/ArticleCard/ArticleCard.module.scss';
 import { Card, CardTag } from '@/components/shared/Card';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { Stack } from '@/components/shared/layout';
 import { CATALOGUE_ROUTES, resolveCatalogueTypeLabel } from '@/shared/constants/catalogues';
 
 interface CatalogueCardProps {
@@ -18,21 +19,21 @@ export const CatalogueCard = ({ catalogue }: CatalogueCardProps) => {
 	const downloads = catalogue.engagement?.downloads_count ?? 0;
 
 	return (
-		<div className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
-			<Card
-				title={catalogue.title}
-				image={{ url: DefaultListImg, title: catalogue.title, alt: catalogue.title }}
-				url={CATALOGUE_ROUTES.detail(catalogue.uuid)}
-				date={catalogue.created_at}
-				tags={catalogue.hashtags.map(
-					(tag) =>
-						({
-							content: tag.content,
-							id: String(tag.id),
-						}) as CardTag,
-				)}
-			>
-				<div className="mb-4">
+		<Card
+			title={catalogue.title}
+			image={{ url: DefaultListImg, title: catalogue.title, alt: catalogue.title }}
+			url={CATALOGUE_ROUTES.detail(catalogue.uuid)}
+			date={catalogue.created_at}
+			tags={catalogue.hashtags.map(
+				(tag) =>
+					({
+						content: tag.content,
+						id: String(tag.id),
+					}) as CardTag,
+			)}
+		>
+			<Stack gap="lg">
+				<div>
 					<Chip readonly variant="outline">
 						{typeLabel}
 					</Chip>
@@ -60,7 +61,7 @@ export const CatalogueCard = ({ catalogue }: CatalogueCardProps) => {
 						<span>{downloads}</span>
 					</div>
 				</div>
-			</Card>
-		</div>
+			</Stack>
+		</Card>
 	);
 };

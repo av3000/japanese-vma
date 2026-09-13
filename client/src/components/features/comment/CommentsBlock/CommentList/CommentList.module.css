@@ -1,0 +1,14 @@
+.heading {
+	margin-block: var(--spacing-lg);
+	color: var(--color-neutral-600);
+}
+
+.items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.empty {
+	text-align: center;
+}

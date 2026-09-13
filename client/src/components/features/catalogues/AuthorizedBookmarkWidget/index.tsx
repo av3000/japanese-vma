@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import classNames from 'classnames';
 import {
 	deriveCatalogueWidgetState,
 	optimisticApplyCatalogueForItemAction,
@@ -156,9 +157,9 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			<div className={styles.widgetWrapper}>
 				{isKnownType &&
 					(isKnown ? (
-						<i className="fas fa-check-circle text-success"> Learned</i>
+						<i className={classNames('fas fa-check-circle', styles.learned)}> Learned</i>
 					) : (
-						<i className="fas fa-check-circle text-secondary"> Not learned</i>
+						<i className={classNames('fas fa-check-circle', styles.notLearned)}> Not learned</i>
 					))}
 				<Button
 					onClick={openBookmarkModal}

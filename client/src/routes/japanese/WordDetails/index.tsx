@@ -1,7 +1,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import classNames from 'classnames';
 import { useWordQuery } from '@/api/words/details';
 import Spinner from '@/assets/images/spinner.gif';
+import { Alert } from '@/components/shared/Alert';
+import { Container } from '@/components/shared/layout';
+import styles from '../japaneseDetailPage.module.css';
 import WordContent from './WordContent';
 
 const WordDetails: React.FC = () => {
@@ -10,14 +14,18 @@ const WordDetails: React.FC = () => {
 
 	if (isLoading) {
 		return (
-			<div className="container text-center mt-5">
+			<Container className={classNames(styles.page, styles.centered)}>
 				<img src={Spinner} alt="Loading..." />
-			</div>
+			</Container>
 		);
 	}
 
 	if (isError || !word) {
-		return <div className="container mt-5 text-danger">Unable to load word.</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Unable to load word.</Alert>
+			</Container>
+		);
 	}
 
 	return <WordContent word={word} />;

@@ -3,6 +3,8 @@ import type { ArticleFacetResource } from '@/api/generated/model/articleFacetRes
 import type { ArticleIndexJlptLevelsItem } from '@/api/generated/model/articleIndexJlptLevelsItem';
 import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Input, Label, Select } from '@/components/shared/FormControls';
+import { Cluster, Grid, Stack } from '@/components/shared/layout';
 import {
 	DEFAULT_SORT,
 	JLPT_LEVELS,
@@ -10,6 +12,7 @@ import {
 	SORT_OPTIONS,
 	type ArticleListFilterState,
 } from '@/routes/ArticlesList/articleListSearchParams';
+import styles from './ArticleFilters.module.css';
 
 /**
  * Articles-specific filter controls.
@@ -67,58 +70,62 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 		state.q !== '' || state.jlptLevels.length > 0 || state.hashtagIds.length > 0 || state.sort !== DEFAULT_SORT;
 
 	return (
-		<div className="mb-4">
-			<form className="row g-2 align-items-center mb-3" onSubmit={handleSubmit} role="search">
-				<div className="col-md-6">
-					<label className="visually-hidden" htmlFor="article-search">
-						Search articles
-					</label>
-					<input
-						id="article-search"
-						type="search"
-						className="form-control"
-						placeholder="Search article titles"
-						value={draftSearch}
-						onChange={(event) => setDraftSearch(event.target.value)}
-					/>
-					{searchTooShort && (
-						<small className="text-muted">Enter at least {MIN_SEARCH_LENGTH} characters.</small>
-					)}
-				</div>
+		<Stack gap="md">
+			<Grid as="form" columns={12} gap="xs" align="start" onSubmit={handleSubmit} role="search">
+				<Grid.Item span={{ base: 12, sm: 6 }}>
+					<Field>
+						<Label className="u-hide-visually" htmlFor="article-search">
+							Search articles
+						</Label>
+						<Input
+							id="article-search"
+							type="search"
+							placeholder="Search article titles"
+							value={draftSearch}
+							onChange={(event) => setDraftSearch(event.target.value)}
+						/>
+						{searchTooShort && (
+							<FieldMessage tone="hint">Enter at least {MIN_SEARCH_LENGTH} characters.</FieldMessage>
+						)}
+					</Field>
+				</Grid.Item>
 
-				<div className="col-md-4">
-					<label className="visually-hidden" htmlFor="article-sort">
-						Sort articles
-					</label>
-					<select
-						id="article-sort"
-						className="form-select"
-						value={state.sort}
-						onChange={(event) => onSortChange(event.target.value as ArticleIndexSort)}
-					>
-						{SORT_OPTIONS.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				</div>
+				<Grid.Item span={{ base: 12, sm: 4 }}>
+					<Field>
+						<Label className="u-hide-visually" htmlFor="article-sort">
+							Sort articles
+						</Label>
+						<Select
+							id="article-sort"
+							value={state.sort}
+							onChange={(event) => onSortChange(event.target.value as ArticleIndexSort)}
+						>
+							{SORT_OPTIONS.map((option) => (
+								<option key={option.value} value={option.value}>
+									{option.label}
+								</option>
+							))}
+						</Select>
+					</Field>
+				</Grid.Item>
 
-				<div className="col-md-2 d-flex gap-2">
-					<Button type="submit" variant="primary" disabled={searchTooShort}>
-						Search
-					</Button>
-					{hasActiveFilters && (
-						<Button type="button" variant="secondary-outline" onClick={onReset}>
-							Reset
+				<Grid.Item span={{ base: 12, sm: 2 }}>
+					<Cluster gap="xs">
+						<Button type="submit" variant="primary" disabled={searchTooShort}>
+							Search
 						</Button>
-					)}
-				</div>
-			</form>
+						{hasActiveFilters && (
+							<Button type="button" variant="secondary-outline" onClick={onReset}>
+								Reset
+							</Button>
+						)}
+					</Cluster>
+				</Grid.Item>
+			</Grid>
 
-			<fieldset className="mb-3">
-				<legend className="fs-6 text-muted">{jlptFacet?.label ?? 'JLPT level'}</legend>
-				<div className="d-flex flex-wrap gap-2">
+			<fieldset>
+				<legend className={styles.legend}>{jlptFacet?.label ?? 'JLPT level'}</legend>
+				<Cluster gap="xs">
 					{JLPT_LEVELS.map((level) => {
 						// Counts come from the server when facets were requested; the control
 						// still works without them so the list is usable either way.
@@ -138,13 +145,13 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 							</Button>
 						);
 					})}
-				</div>
+				</Cluster>
 			</fieldset>
 
 			{hashtagFacet && hashtagFacet.values.length > 0 && (
 				<fieldset>
-					<legend className="fs-6 text-muted">{hashtagFacet.label}</legend>
-					<div className="d-flex flex-wrap gap-2">
+					<legend className={styles.legend}>{hashtagFacet.label}</legend>
+					<Cluster gap="xs">
 						{hashtagFacet.values.map((value) => (
 							<Button
 								key={value.key}
@@ -156,10 +163,10 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 								#{value.label} ({value.count})
 							</Button>
 						))}
-					</div>
+					</Cluster>
 				</fieldset>
 			)}
-		</div>
+		</Stack>
 	);
 };
 

@@ -36,6 +36,7 @@
 }
 
 .date {
+	margin-top: var(--spacing-xs);
 	font-size: var(--font-size-body-sm);
 	color: var(--color-neutral-600);
 
@@ -124,8 +125,9 @@
 .chipList {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: var(--spacing-3xs);
-	margin-top: var(--spacing-3xs);
+	margin-top: var(--spacing-xs);
 
 	& * {
 		.wrapper:hover & {
@@ -135,7 +137,6 @@
 	}
 
 	@include media.mq('sm') {
-		margin-top: var(--spacing-2xs);
 		gap: var(--spacing-2xs);
 	}
 }

@@ -1,0 +1,4 @@
+.page {
+	padding-block: var(--spacing-2xl);
+	text-align: center;
+}

@@ -1,0 +1,46 @@
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.title {
+	margin: 0;
+}
+
+.muted {
+	color: var(--color-neutral-600);
+}
+
+.cover {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	border-radius: var(--border-radius-md);
+}
+
+.description {
+	margin: 0;
+	font-size: var(--font-size-body-lg);
+	line-height: var(--line-height-lg);
+}
+
+.tagList {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.divider {
+	width: 100%;
+	margin: var(--spacing-xs) 0;
+	border: 0;
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.avatar {
+	border-radius: 50%;
+}
+
+.text {
+	margin: 0;
+}

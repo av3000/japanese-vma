@@ -11,7 +11,9 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from './PostsList.module.css';
 import PostsSearchBar from './PostsSearchBar';
 
 const PostsList = () => {
@@ -39,19 +41,17 @@ const PostsList = () => {
 
 	if (isError && posts.length === 0) {
 		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<p>Posts could not be loaded. {error?.message}</p>
-				</div>
-			</div>
+			<Container size="md" className={styles.page}>
+				<p className={styles.centered}>Posts could not be loaded. {error?.message}</p>
+			</Container>
 		);
 	}
 
 	const isBackgroundRefreshing = isFetching && !isFetchingNextPage;
 
 	return (
-		<div className="container mt-3">
-			<div className="row justify-content-center">
+		<Container size="md" className={styles.page}>
+			<Stack gap="md">
 				<PostsSearchBar
 					// Remount the control when the URL changes so its inputs follow back/forward navigation.
 					key={searchParams.toString()}
@@ -62,43 +62,39 @@ const PostsList = () => {
 					}}
 					onSearch={handleSearch}
 				/>
-			</div>
 
-			{isAuthenticated && (
-				<div className="row justify-content-center mt-3">
-					<Link to={POST_ROUTES.create} className="tag-link">
-						Create post
-					</Link>
-				</div>
-			)}
+				{isAuthenticated && (
+					<div className={styles.centered}>
+						<Link to={POST_ROUTES.create} className="tag-link">
+							Create post
+						</Link>
+					</div>
+				)}
 
-			<div className="mt-2">
-				<div className="col-10">
+				<Stack gap="xs" align="start" className={styles.results}>
 					{hasActiveFilters && (
 						<>
 							<Button variant="ghost" onClick={clearSearch}>
 								<Icon name="broomSolid" /> Clear search
 							</Button>
-							<br />
 							{filters.keyword && <h4>Results for: {filters.keyword}</h4>}
 							{filters.hashtag && <h4>Tagged: #{filters.hashtag}</h4>}
 						</>
 					)}
 					<h4>Results total: {total}</h4>
 					{isBackgroundRefreshing && (
-						<p role="status" className="text-muted">
+						<p role="status" className={styles.muted}>
 							Refreshing results...
 						</p>
 					)}
-				</div>
+				</Stack>
 
-				<div className="my-3 p-3 bg-white rounded box-shadow">
-					<hr />
-					<div className="col-lg-12 col-md-10 mx-auto">
-						{posts.length === 0 ? (
-							<p>No posts found.</p>
-						) : (
-							posts.map((post) => (
+				<section className={styles.panel}>
+					{posts.length === 0 ? (
+						<p className={styles.empty}>No posts found.</p>
+					) : (
+						<ul className={styles.list}>
+							{posts.map((post) => (
 								<PostItem
 									key={post.uuid}
 									detailIdentifier={post.uuid}
@@ -112,27 +108,27 @@ const PostsList = () => {
 									hashtags={post.hashtags.slice(0, 3)}
 									isLocked={post.locked}
 								/>
-							))
-						)}
-					</div>
-				</div>
-			</div>
+							))}
+						</ul>
+					)}
+				</section>
 
-			<div className="row justify-content-center">
-				{hasNextPage ? (
-					<Button
-						variant="outline"
-						className="w-50"
-						onClick={() => void fetchNextPage()}
-						disabled={isFetchingNextPage}
-					>
-						{isFetchingNextPage ? 'Loading more...' : 'Load More'}
-					</Button>
-				) : (
-					<span className="text-muted">no more results...</span>
-				)}
-			</div>
-		</div>
+				<Cluster justify="center">
+					{hasNextPage ? (
+						<Button
+							variant="outline"
+							className={styles.loadMore}
+							onClick={() => void fetchNextPage()}
+							disabled={isFetchingNextPage}
+						>
+							{isFetchingNextPage ? 'Loading more...' : 'Load More'}
+						</Button>
+					) : (
+						<span className={styles.muted}>no more results...</span>
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 
