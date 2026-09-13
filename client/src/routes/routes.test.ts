@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 describe('lazy route loading coverage', () => {
 	const source = readFileSync(fileURLToPath(new URL('./routes.tsx', import.meta.url)), 'utf8');
 
-	it('constructs all 25 lazy page modules through createLazyRoute', () => {
-		expect(source.match(/createLazyRoute\s*\(/g)).toHaveLength(25);
+	it('constructs all 27 lazy page modules through createLazyRoute', () => {
+		expect(source.match(/createLazyRoute\s*\(/g)).toHaveLength(27);
 	});
 
 	it('does not permit a direct lazy page or the nullable SuspenseWrapper', () => {
