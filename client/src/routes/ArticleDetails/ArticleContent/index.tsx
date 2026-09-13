@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { ObjectTemplateType, SavedListType } from '@/shared/constants/enums';
 import ArticleEditModal from '../ArticleEditModal';
-import styles from './ArticleContent.module.scss';
+import styles from './ArticleContent.module.css';
 
 interface ArticleContentProps {
 	article: MappedArticle;

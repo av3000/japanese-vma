@@ -5,7 +5,7 @@ import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Container } from '@/components/shared/layout';
 import ArticleContent from './ArticleContent';
-import styles from './ArticleDetails.module.scss';
+import styles from './ArticleDetails.module.css';
 import ArticleDetailsSkeleton from './ArticleDetailsSkeleton';
 
 const ArticleDetails: React.FC = () => {

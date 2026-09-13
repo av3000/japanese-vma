@@ -6,7 +6,7 @@ import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { Cluster } from '@/components/shared/layout';
 import { User } from '@/types';
-import sharedStyles from './CatalogueItems.module.scss';
+import sharedStyles from './CatalogueItems.module.css';
 
 interface CatalogueArticleItemsProps {
 	editMode: boolean;

@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { ButtonBaseProps } from '@/components/shared/Button/types';
 import { Icon } from '@/components/shared/Icon';
-import styles from './Chip.module.scss';
+import styles from './Chip.module.css';
 
 interface ChipProps {
 	/**

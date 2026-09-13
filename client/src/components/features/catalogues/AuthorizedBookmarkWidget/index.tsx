@@ -13,7 +13,7 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
-import styles from './AuthorizedBookmarkWidget.module.scss';
+import styles from './AuthorizedBookmarkWidget.module.css';
 
 // TODO: For lists it shouldnt fetch per instance, need to figure cheaper way to get it on list get request.
 interface AuthorizedBookmarkWidgetProps {

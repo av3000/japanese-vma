@@ -1,6 +1,6 @@
 import type { Catalogue } from '@/api/catalogues/catalogues';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
-import styles from '@/components/shared/ArticleCard/ArticleCard.module.scss';
+import styles from '@/components/shared/ArticleCard/ArticleCard.module.css';
 import { Card, CardTag } from '@/components/shared/Card';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';

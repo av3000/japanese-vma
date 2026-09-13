@@ -1,0 +1,37 @@
+/* =================================
+   index.css
+   Global styles, layered (settings → generic → elements → utilities).
+   Component styles live next to their components as CSS Modules.
+   ================================= */
+
+@font-face {
+	font-family: Arial;
+	src: local('Arial');
+	size-adjust: 107%;
+}
+
+@import './00-settings/box-shadow.css';
+@import './00-settings/colors.css';
+@import './00-settings/motion.css';
+@import './00-settings/opacity.css';
+@import './00-settings/sizes.css';
+@import './00-settings/spacing.css';
+@import './00-settings/typography.css';
+@import './00-settings/z-index.css';
+@import './02-generic/box-sizing.css';
+@import './02-generic/normalize.css';
+@import './02-generic/outline.css';
+@import './02-generic/reset.css';
+@import './03-elements/form-field.css';
+@import './03-elements/headings.css';
+@import './03-elements/image.css';
+@import './03-elements/list.css';
+@import './03-elements/page.css';
+@import './99-utilities/container.css';
+@import './99-utilities/ellipsis.css';
+@import './99-utilities/grid.css';
+@import './99-utilities/hide.css';
+@import './99-utilities/scroll-wrapper.css';
+@import './99-utilities/spacings.css';
+@import './99-utilities/spinner.css';
+@import './99-utilities/titles.css';

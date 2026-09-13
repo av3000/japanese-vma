@@ -16,7 +16,7 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { STATUS_VARIANT_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
-import styles from './ProcessingStatusAlert.module.scss';
+import styles from './ProcessingStatusAlert.module.css';
 
 export const STATUS_CONFIG: Record<LastOperationStatusType, { message: string }> = {
 	pending: {

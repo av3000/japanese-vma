@@ -11,7 +11,7 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { formatDate } from '@/helpers';
-import styles from './ArticleCard.module.scss';
+import styles from './ArticleCard.module.css';
 
 export interface ArticleCardProps {
 	article: ArticleResource;

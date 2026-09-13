@@ -3,7 +3,7 @@ import React from 'react';
 import { icons } from '@/assets/icons';
 import { Icon, IconName } from '@/components/shared/Icon';
 
-import styles from './IconGetter.module.scss';
+import styles from './IconGetter.module.css';
 
 export const IconGetter: React.FunctionComponent = () => (
   <ul className={styles.list}>

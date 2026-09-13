@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import skeletonStyles from './ArticleCardSkeleton.module.scss';
+import skeletonStyles from './ArticleCardSkeleton.module.css';
 
 const ARTICLE_LEVEL_PLACEHOLDERS = ['n1', 'n2', 'n3', 'n4', 'n5', 'na'];
 const ARTICLE_META_PLACEHOLDERS = ['views', 'comments', 'likes'];

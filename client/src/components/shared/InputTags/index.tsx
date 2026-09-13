@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { Chip } from '@/components/shared/Chip';
 import { FieldMessage } from '@/components/shared/FormControls';
-import styles from './InputTags.module.scss';
+import styles from './InputTags.module.css';
 
 export interface InputTagsProps {
 	defaultTags?: string[];

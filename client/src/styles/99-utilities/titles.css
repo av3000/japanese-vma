@@ -1,0 +1,150 @@
+/* =================================
+   #TITLES
+
+   Utility classes to set titles on elements based on the way
+   they are used semantically instead of the html element
+   in the markup.
+   ================================= */
+/**
+ * Utility classes to set titles on elements based on the way
+ * they are used semantically instead of the html element
+ * in the markup.
+ *
+ * Examples use:
+ *
+ * <h2 className="u-page-title">Some title</h3>
+ * or
+ * <h4 className="u-group-title">Some title</h4>
+ */
+.u-page-title {
+	--font-size: clamp(var(--font-size-heading-6), 8.5vw, var(--font-size-heading-1));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+.u-page-title:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	.u-page-title:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+.u-page-title {
+	font-size: var(--font-size);
+}
+
+.u-main-section-title {
+	--font-size: clamp(var(--font-size-heading-6), 7.5vw, var(--font-size-heading-2));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+.u-main-section-title:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	.u-main-section-title:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+.u-main-section-title {
+	font-size: var(--font-size);
+}
+
+.u-section-title {
+	--font-size: clamp(var(--font-size-heading-6), 6.5vw, var(--font-size-heading-3));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+.u-section-title:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	.u-section-title:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+.u-section-title {
+	font-size: var(--font-size);
+}
+
+.u-sub-section-title {
+	--font-size: clamp(var(--font-size-heading-6), 5.5vw, var(--font-size-heading-4));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+.u-sub-section-title:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	.u-sub-section-title:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+.u-sub-section-title {
+	font-size: var(--font-size);
+}
+
+.u-group-title {
+	--font-size: clamp(var(--font-size-heading-6), 4.5vw, var(--font-size-heading-6));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+.u-group-title:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	.u-group-title:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+.u-group-title {
+	font-size: var(--font-size);
+}
+.u-group-title {
+	font-weight: var(--font-weight-regular);
+}

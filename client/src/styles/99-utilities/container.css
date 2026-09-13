@@ -1,0 +1,51 @@
+/* =================================
+   #CONTAINER
+   ================================= */
+/**
+ * Utility classes for constraining widths of elements and centering them
+ */
+.u-container-xs {
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: 400px;
+	margin-inline: auto;
+}
+@media only screen and (min-width: 1320px) {
+	.u-container-xs {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+.u-container-sm {
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: 800px;
+	margin-inline: auto;
+}
+@media only screen and (min-width: 1320px) {
+	.u-container-sm {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+.u-container,
+.u-container-md {
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: 1440px;
+	margin-inline: auto;
+}
+@media only screen and (min-width: 1320px) {
+	.u-container,
+	.u-container-md {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+.u-container-lg {
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: 1440px;
+	margin-inline: auto;
+}
+@media only screen and (min-width: 1320px) {
+	.u-container-lg {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}

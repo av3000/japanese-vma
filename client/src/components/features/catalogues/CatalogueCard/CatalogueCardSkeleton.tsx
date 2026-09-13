@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import skeletonStyles from './CatalogueCardSkeleton.module.scss';
+import skeletonStyles from './CatalogueCardSkeleton.module.css';
 
 const CATALOGUE_META_PLACEHOLDERS = ['items', 'views', 'comments', 'likes', 'downloads'];
 

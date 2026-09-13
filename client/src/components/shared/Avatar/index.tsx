@@ -1,7 +1,7 @@
 import React from 'react';
 import DefaultImage from '@/assets/images/default-avatar.svg';
 import Image from '../Image';
-import styles from './Avatar.module.scss';
+import styles from './Avatar.module.css';
 
 export interface AvatarProps {
 	/* eslint-disable */

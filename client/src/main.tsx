@@ -6,8 +6,8 @@ import App from './App';
 import './assets/font-awesome/css/fontawesome.min.css';
 import './assets/font-awesome/css/regular.min.css';
 import './assets/font-awesome/css/solid.min.css';
-import './styles/App.scss';
-import './styles/index.scss';
+import './styles/App.css';
+import './styles/index.css';
 import './styles/99-utilities/text.css';
 
 const rootElement = document.getElementById('root');

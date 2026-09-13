@@ -1,6 +1,6 @@
 import { Avatar, AvatarProps } from '../Avatar';
 import { Badge, BadgeColorType } from '../Badge';
-import styles from './AvatarWithStatus.module.scss';
+import styles from './AvatarWithStatus.module.css';
 
 const AvatarWithStatus = ({
 	userId,

@@ -1,0 +1,420 @@
+/* =================================
+   #GRID
+
+   Utility classes to create a grid layout
+
+   Inspired by tailwindcss -
+   https://tailwindcss.com/docs/grid-template-columns
+   ================================= */
+/**
+ * An example of how to create a 3 column layout:
+ *
+ *	<div class="u-grid u-grid-cols-3 u-grid-gap-lg">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ *
+ * An example of how to create a layout of auto columns with auto width:
+ *
+ *  <div class="u-grid u-grid-gap-y-xl u-grid-flow-col u-grid-auto-cols-max">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ */
+.u-grid {
+	display: grid;
+	grid-gap: var(--spacing-xs);
+}
+
+/**
+ * Utility classes to use custom gap in the grid (which is different than the default). The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-gap-none {}
+ *   .u-grid-gap-lg {}
+ *   .u-grid-gap-x-sm {}
+ *   .u-grid-gap-y-xl {}
+ */
+.u-grid-gap-3xs {
+	gap: 4px !important;
+}
+
+.u-grid-gap-x-3xs {
+	column-gap: 4px !important;
+}
+
+.u-grid-gap-y-3xs {
+	row-gap: 4px !important;
+}
+
+.u-grid-gap-2xs {
+	gap: 4px !important;
+}
+
+.u-grid-gap-x-2xs {
+	column-gap: 4px !important;
+}
+
+.u-grid-gap-y-2xs {
+	row-gap: 4px !important;
+}
+
+.u-grid-gap-xs {
+	gap: 8px !important;
+}
+
+.u-grid-gap-x-xs {
+	column-gap: 8px !important;
+}
+
+.u-grid-gap-y-xs {
+	row-gap: 8px !important;
+}
+
+.u-grid-gap-sm {
+	gap: 12px !important;
+}
+
+.u-grid-gap-x-sm {
+	column-gap: 12px !important;
+}
+
+.u-grid-gap-y-sm {
+	row-gap: 12px !important;
+}
+
+.u-grid-gap-md {
+	gap: 16px !important;
+}
+
+.u-grid-gap-x-md {
+	column-gap: 16px !important;
+}
+
+.u-grid-gap-y-md {
+	row-gap: 16px !important;
+}
+
+.u-grid-gap-lg {
+	gap: 24px !important;
+}
+
+.u-grid-gap-x-lg {
+	column-gap: 24px !important;
+}
+
+.u-grid-gap-y-lg {
+	row-gap: 24px !important;
+}
+
+.u-grid-gap-xl {
+	gap: 32px !important;
+}
+
+.u-grid-gap-x-xl {
+	column-gap: 32px !important;
+}
+
+.u-grid-gap-y-xl {
+	row-gap: 32px !important;
+}
+
+.u-grid-gap-2xl {
+	gap: 40px !important;
+}
+
+.u-grid-gap-x-2xl {
+	column-gap: 40px !important;
+}
+
+.u-grid-gap-y-2xl {
+	row-gap: 40px !important;
+}
+
+.u-grid-gap-3xl {
+	gap: 64px !important;
+}
+
+.u-grid-gap-x-3xl {
+	column-gap: 64px !important;
+}
+
+.u-grid-gap-y-3xl {
+	row-gap: 64px !important;
+}
+
+.u-grid-gap-4xl {
+	gap: 128px !important;
+}
+
+.u-grid-gap-x-4xl {
+	column-gap: 128px !important;
+}
+
+.u-grid-gap-y-4xl {
+	row-gap: 128px !important;
+}
+
+.u-grid-gap-none {
+	gap: 0 !important;
+}
+
+.u-grid-gap-x-none {
+	column-gap: 0 !important;
+}
+
+.u-grid-gap-y-none {
+	row-gap: 0 !important;
+}
+
+/**
+ * Utility classes to create number of columns in a grid. The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-cols-3 {}
+ *   .u-grid-cols-8 {}
+ */
+.u-grid-cols-1 {
+	grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.u-grid-cols-2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.u-grid-cols-3 {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.u-grid-cols-4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.u-grid-cols-5 {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.u-grid-cols-6 {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.u-grid-cols-7 {
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.u-grid-cols-8 {
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.u-grid-cols-9 {
+	grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.u-grid-cols-10 {
+	grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.u-grid-cols-11 {
+	grid-template-columns: repeat(11, minmax(0, 1fr));
+}
+
+.u-grid-cols-12 {
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.u-grid-cols-13 {
+	grid-template-columns: repeat(13, minmax(0, 1fr));
+}
+
+.u-grid-cols-14 {
+	grid-template-columns: repeat(14, minmax(0, 1fr));
+}
+
+.u-grid-cols-15 {
+	grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+
+.u-grid-cols-16 {
+	grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
+.u-grid-cols-17 {
+	grid-template-columns: repeat(17, minmax(0, 1fr));
+}
+
+.u-grid-cols-18 {
+	grid-template-columns: repeat(18, minmax(0, 1fr));
+}
+
+.u-grid-cols-19 {
+	grid-template-columns: repeat(19, minmax(0, 1fr));
+}
+
+.u-grid-cols-20 {
+	grid-template-columns: repeat(20, minmax(0, 1fr));
+}
+
+.u-grid-cols-21 {
+	grid-template-columns: repeat(21, minmax(0, 1fr));
+}
+
+.u-grid-cols-22 {
+	grid-template-columns: repeat(22, minmax(0, 1fr));
+}
+
+.u-grid-cols-23 {
+	grid-template-columns: repeat(23, minmax(0, 1fr));
+}
+
+.u-grid-cols-24 {
+	grid-template-columns: repeat(24, minmax(0, 1fr));
+}
+
+/**
+ * Define custom columns in a grid with a min-width,
+ * where number of columns depends on the container width.
+ * Usage example:
+ *
+ * To create responsive columns, with a min-width of 240px:
+ *
+ *	<div class="u-grid u-grid-cols-custom" style="-cols-min: 240px">
+ *	  <div>1</div>
+ *	  <!-- ... -->
+ *	  <div>9</div>
+ *	</div>
+ */
+.u-grid-cols-custom {
+	--cols-min: 240px;
+	grid-template-columns: repeat(auto-fit, minmax(var(--cols-min), 1fr));
+}
+
+/**
+ * Utility classes to create custom span (width) for a specific column. The below loop
+ * will generate us a suite of classes like:
+ *
+ *   .u-grid-col-span-3 {}
+ *
+ * Example use:
+ *	<div class="u-grid u-grid-cols-3">
+ *	  <div class="...">1</div>
+ *	  <div class="...">2</div>
+ *	  <div class="...">3</div>
+ *	  <div class="u-grid-col-span-2 ...">4</div>
+ *	  <div class="...">5</div>
+ *	  <div class="...">6</div>
+ *	  <div class="u-grid-col-span-2 ...">7</div>
+ *	</div>
+ */
+.u-grid-col-span-1 {
+	grid-column: span 1 / span 1;
+}
+
+.u-grid-col-span-2 {
+	grid-column: span 2 / span 2;
+}
+
+.u-grid-col-span-3 {
+	grid-column: span 3 / span 3;
+}
+
+.u-grid-col-span-4 {
+	grid-column: span 4 / span 4;
+}
+
+.u-grid-col-span-5 {
+	grid-column: span 5 / span 5;
+}
+
+.u-grid-col-span-6 {
+	grid-column: span 6 / span 6;
+}
+
+.u-grid-col-span-7 {
+	grid-column: span 7 / span 7;
+}
+
+.u-grid-col-span-8 {
+	grid-column: span 8 / span 8;
+}
+
+.u-grid-col-span-9 {
+	grid-column: span 9 / span 9;
+}
+
+.u-grid-col-span-10 {
+	grid-column: span 10 / span 10;
+}
+
+.u-grid-col-span-11 {
+	grid-column: span 11 / span 11;
+}
+
+.u-grid-col-span-12 {
+	grid-column: span 12 / span 12;
+}
+
+.u-grid-col-span-13 {
+	grid-column: span 13 / span 13;
+}
+
+.u-grid-col-span-14 {
+	grid-column: span 14 / span 14;
+}
+
+.u-grid-col-span-15 {
+	grid-column: span 15 / span 15;
+}
+
+.u-grid-col-span-16 {
+	grid-column: span 16 / span 16;
+}
+
+.u-grid-col-span-17 {
+	grid-column: span 17 / span 17;
+}
+
+.u-grid-col-span-18 {
+	grid-column: span 18 / span 18;
+}
+
+.u-grid-col-span-19 {
+	grid-column: span 19 / span 19;
+}
+
+.u-grid-col-span-20 {
+	grid-column: span 20 / span 20;
+}
+
+.u-grid-col-span-21 {
+	grid-column: span 21 / span 21;
+}
+
+.u-grid-col-span-22 {
+	grid-column: span 22 / span 22;
+}
+
+.u-grid-col-span-23 {
+	grid-column: span 23 / span 23;
+}
+
+.u-grid-col-span-24 {
+	grid-column: span 24 / span 24;
+}
+
+/**
+ * Utility class to display children as columns
+ * without having to define nr of columns
+ */
+.u-grid-flow-col {
+	grid-auto-flow: column;
+}
+
+/**
+ * Utility class to give columns auto width
+ */
+.u-grid-auto-cols-max {
+	grid-auto-columns: -webkit-max-content;
+	grid-auto-columns: max-content;
+}

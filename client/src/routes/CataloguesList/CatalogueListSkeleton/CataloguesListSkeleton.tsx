@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
-import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.scss';
+import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.css';
 import { Container, Grid, Stack } from '@/components/shared/layout';
 import styles from './CataloguesListSkeleton.module.css';
 

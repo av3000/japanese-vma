@@ -5,7 +5,7 @@ import { Link } from '@/components/shared/Link';
 import { ConfirmModal } from '@/components/shared/modals';
 import { useModal } from '@/hooks/useModal';
 import { User } from '@/types';
-import sharedStyles from './CatalogueItems.module.scss';
+import sharedStyles from './CatalogueItems.module.css';
 
 interface Word {
 	id: string | number;

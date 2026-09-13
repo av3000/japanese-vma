@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { formatDate } from '@/helpers';
 import { Chip } from '../Chip';
 import { Link } from '../Link';
-import styles from './Card.module.scss';
+import styles from './Card.module.css';
 
 export interface CardImage {
 	url: string;

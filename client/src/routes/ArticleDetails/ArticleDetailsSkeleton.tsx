@@ -1,7 +1,7 @@
 import classNames from 'classnames';
-import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.scss';
+import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.css';
 import { Container } from '@/components/shared/layout';
-import styles from './ArticleDetailsSkeleton.module.scss';
+import styles from './ArticleDetailsSkeleton.module.css';
 
 const ARTICLE_PARAGRAPH_LINES = [
 	styles.paragraphLineFull,

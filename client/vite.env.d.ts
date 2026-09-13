@@ -11,7 +11,7 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-declare module "*.module.scss" {
+declare module "*.module.css" {
   const styleClasses: { [key: string]: string };
   export default styleClasses;
 }

@@ -1,6 +1,6 @@
 import type { MappedKanji } from '@/api/kanjis/details';
 import { Link } from '@/components/shared/Link';
-import styles from './KanjiRelatedResources.module.scss';
+import styles from './KanjiRelatedResources.module.css';
 
 interface KanjiRelatedWordsProps {
 	items: MappedKanji['related']['words'];

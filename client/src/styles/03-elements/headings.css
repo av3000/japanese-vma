@@ -1,0 +1,155 @@
+h1 {
+	--font-size: clamp(var(--font-size-heading-6), 8.5vw, var(--font-size-heading-1));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h1:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h1:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h1 {
+	font-size: var(--font-size);
+}
+
+h2 {
+	--font-size: clamp(var(--font-size-heading-6), 7.5vw, var(--font-size-heading-2));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h2:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h2:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h2 {
+	font-size: var(--font-size);
+}
+
+h3 {
+	--font-size: clamp(var(--font-size-heading-6), 6.5vw, var(--font-size-heading-3));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h3:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h3:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h3 {
+	font-size: var(--font-size);
+}
+
+h4 {
+	--font-size: clamp(var(--font-size-heading-6), 5.5vw, var(--font-size-heading-4));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h4:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h4:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h4 {
+	font-size: var(--font-size);
+}
+
+h5 {
+	--font-size: clamp(var(--font-size-heading-6), 5vw, var(--font-size-heading-5));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h5:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h5:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h5 {
+	font-size: var(--font-size);
+}
+
+h6 {
+	--font-size: clamp(var(--font-size-heading-6), 4.5vw, var(--font-size-heading-6));
+	min-height: calc(var(--font-size) * var(--line-height-md));
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+}
+h6:not(.no-hyphen) {
+	word-break: break-all;
+	word-break: break-word;
+	hyphens: auto;
+	hyphenate-limit-chars: 10 4 3;
+	hyphenate-limit-lines: 2;
+	hyphenate-limit-last: always;
+	hyphenate-limit-zone: 10%;
+}
+@supports (hyphens: auto) {
+	h6:not(.no-hyphen) {
+		word-break: normal;
+	}
+}
+h6 {
+	font-size: var(--font-size);
+}
