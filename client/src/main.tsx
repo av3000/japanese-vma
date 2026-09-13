@@ -3,6 +3,7 @@
 import { createRoot } from 'react-dom/client';
 import { captureRenderError, initSentry } from '@/lib/monitoring/sentry';
 import App from './App';
+import './styles/legacy/bootstrap-compat.css';
 import './assets/font-awesome/css/fontawesome.min.css';
 import './assets/font-awesome/css/regular.min.css';
 import './assets/font-awesome/css/solid.min.css';

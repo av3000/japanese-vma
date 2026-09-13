@@ -11,7 +11,7 @@
 - TanStack React Query 5
 - Redux Toolkit
 - Axios
-- Bootstrap and React Bootstrap
+- CSS Modules with design tokens in `src/styles` (Bootstrap is being retired; see Styling)
 - Storybook 8
 - Vitest
 - Sentry
@@ -100,6 +100,18 @@ If you are new to the frontend, these files are the best starting points:
 - `src/routes/routes.tsx` for route structure and lazy loading
 - `src/services/axios.ts` for shared HTTP configuration
 - `src/store/store.jsx` for remaining Redux-managed state
+
+## Styling
+
+Styling is browser-native CSS: design tokens as custom properties in `src/styles/00-settings`, global element styles in `src/styles`, and one CSS Module per component. Radix powers non-modal primitives such as popovers; `<dialog>` powers modals via `src/components/shared/DialogModal`.
+
+Rules:
+
+- No Bootstrap, Tailwind, or other utility-class frameworks. Layout belongs in CSS Modules or the shared layout primitives, not in `className` strings.
+- `npm run style:audit` reports remaining Bootstrap/Tailwind class tokens and Sass files; `npm run style:audit -- --check` fails when usage exceeds `style-budget.json`. Lower the budget as you migrate files, never raise it.
+- ESLint blocks new `react-bootstrap`, `react-router-bootstrap`, and `bootstrap` imports.
+- `src/styles/legacy/bootstrap-compat.css` is a temporary, self-hosted subset of Bootstrap 4 kept only for consumers that are not migrated yet. Do not add rules to it; delete it when the audit reports zero Bootstrap tokens.
+- Supported browsers are set by `build.target` in `vite.config.ts` (Baseline "widely available"). The `browserslist` block in `package.json` is not used by Vite.
 
 ## CI And Delivery
 

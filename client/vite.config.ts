@@ -88,6 +88,10 @@ export default defineConfig(({ mode }) => {
 		},
 		build: {
 			outDir: 'build',
+			// Supported-browser policy (STYLING-01). Matches Baseline "widely available":
+			// current Chromium, Firefox and WebKit releases from the last ~30 months.
+			// `browserslist` in package.json is not read by Vite; this is the source of truth.
+			target: ['es2022', 'chrome107', 'edge107', 'firefox104', 'safari16'],
 			cssCodeSplit: true,
 			sourcemap: !isProduction,
 			rollupOptions: {

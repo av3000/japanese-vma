@@ -27,6 +27,8 @@
     "prettier": "prettier --loglevel error --write ./**/*.{js,jsx,ts,tsx,scss}",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "style:audit": "node scripts/style-audit.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
