@@ -1,6 +1,7 @@
 import { useArgs } from '@storybook/preview-api';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from './popover';
+import storyStyles from './stories.module.css';
 
 type PopoverStoryArgs = {
 	open: boolean;
@@ -48,11 +49,7 @@ export default meta;
 type TriggerButtonProps = React.ComponentProps<'button'> & { children: React.ReactNode };
 
 const TriggerButton = ({ children, ...props }: TriggerButtonProps) => (
-	<button
-		type="button"
-		className="inline-flex items-center rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
-		{...props}
-	>
+	<button type="button" className={storyStyles.triggerButton} {...props}>
 		{children}
 	</button>
 );
@@ -70,7 +67,7 @@ export const Interactive: Story = {
 					<PopoverTitle>Popover</PopoverTitle>
 					<PopoverDescription>Small contextual content anchored to a trigger.</PopoverDescription>
 				</PopoverHeader>
-				<div className="text-sm">This is the popover body.</div>
+				<div>This is the popover body.</div>
 			</PopoverContent>
 		</Popover>
 	),
@@ -96,7 +93,7 @@ export const Playground: Story = {
 						<PopoverTitle>Playground</PopoverTitle>
 						<PopoverDescription>Use Controls to change props.</PopoverDescription>
 					</PopoverHeader>
-					<div className="text-sm">Click the trigger or toggle the `open` control.</div>
+					<div>Click the trigger or toggle the `open` control.</div>
 				</PopoverContent>
 			</Popover>
 		);
@@ -114,7 +111,7 @@ export const DefaultOpen: Story = {
 					<PopoverTitle>Default open</PopoverTitle>
 					<PopoverDescription>Useful for docs/snapshots.</PopoverDescription>
 				</PopoverHeader>
-				<div className="text-sm">Popover content is visible immediately.</div>
+				<div>Popover content is visible immediately.</div>
 			</PopoverContent>
 		</Popover>
 	),
@@ -131,14 +128,14 @@ export const WithHeader: Story = {
 					<PopoverTitle>Processing details</PopoverTitle>
 					<PopoverDescription>Times are shown in your local timezone.</PopoverDescription>
 				</PopoverHeader>
-				<div className="d-grid gap-2">
-					<div className="d-flex justify-content-between gap-3">
-						<span className="text-muted-foreground text-sm">Created</span>
-						<span className="text-sm">2026-02-07 20:15</span>
+				<div className={storyStyles.details}>
+					<div className={storyStyles.detailRow}>
+						<span className={storyStyles.muted}>Created</span>
+						<span>2026-02-07 20:15</span>
 					</div>
-					<div className="d-flex justify-content-between gap-3">
-						<span className="text-muted-foreground text-sm">Duration</span>
-						<span className="text-sm">12s</span>
+					<div className={storyStyles.detailRow}>
+						<span className={storyStyles.muted}>Duration</span>
+						<span>12s</span>
 					</div>
 				</div>
 			</PopoverContent>
@@ -148,13 +145,13 @@ export const WithHeader: Story = {
 
 export const Alignments: Story = {
 	render: () => (
-		<div className="d-flex gap-3 flex-wrap align-items-center">
+		<div className={storyStyles.row}>
 			<Popover>
 				<PopoverTrigger asChild>
 					<TriggerButton>Align start</TriggerButton>
 				</PopoverTrigger>
 				<PopoverContent align="start">
-					<div className="text-sm">Aligned start</div>
+					<div>Aligned start</div>
 				</PopoverContent>
 			</Popover>
 
@@ -163,7 +160,7 @@ export const Alignments: Story = {
 					<TriggerButton>Align center</TriggerButton>
 				</PopoverTrigger>
 				<PopoverContent align="center">
-					<div className="text-sm">Aligned center</div>
+					<div>Aligned center</div>
 				</PopoverContent>
 			</Popover>
 
@@ -172,7 +169,7 @@ export const Alignments: Story = {
 					<TriggerButton>Align end</TriggerButton>
 				</PopoverTrigger>
 				<PopoverContent align="end">
-					<div className="text-sm">Aligned end</div>
+					<div>Aligned end</div>
 				</PopoverContent>
 			</Popover>
 		</div>

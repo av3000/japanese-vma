@@ -74,6 +74,22 @@ export default [
               name: "bootstrap",
               message: "Bootstrap is retired. Use tokens from src/styles and CSS Modules.",
             },
+            {
+              name: "tailwind-merge",
+              message: "Tailwind is retired. Compose classes with classnames and CSS Modules.",
+            },
+            {
+              name: "class-variance-authority",
+              message: "Tailwind is retired. Map variants to CSS Module classes explicitly (see src/components/ui/badge.tsx).",
+            },
+            {
+              name: "tw-animate-css",
+              message: "Tailwind is retired. Use CSS Module keyframes with a prefers-reduced-motion guard.",
+            },
+            {
+              name: "tailwindcss",
+              message: "Tailwind is retired.",
+            },
           ],
           patterns: [
             {

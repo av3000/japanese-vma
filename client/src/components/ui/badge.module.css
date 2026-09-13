@@ -1,0 +1,131 @@
+.badge {
+	--badge-hover-bg: transparent;
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-2xs);
+	width: fit-content;
+	padding: 2px var(--spacing-xs);
+	flex-shrink: 0;
+	overflow: hidden;
+	border: var(--border-size-sm) solid transparent;
+	border-radius: 9999px;
+	background-color: transparent;
+	color: var(--color-neutral-900);
+	font-size: var(--font-size-body-sm);
+	font-weight: 500;
+	line-height: var(--line-height-lg);
+	white-space: nowrap;
+	transition:
+		color var(--duration-sm) var(--ease-base),
+		background-color var(--duration-sm) var(--ease-base),
+		box-shadow var(--duration-sm) var(--ease-base);
+}
+
+.badge > svg {
+	width: 12px;
+	height: 12px;
+	pointer-events: none;
+}
+
+.badge:hover:not(.ghost):not(.link):not(.outline) {
+	background-color: var(--badge-hover-bg);
+}
+
+.badge.ghost:hover,
+.badge.outline:hover {
+	background-color: var(--color-neutral-100);
+}
+
+.badge:focus-visible {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
+}
+
+.badge[aria-invalid='true'] {
+	border-color: var(--color-error);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
+/* Variants -----------------------------------------------------------------
+   Each variant sets background and colour directly so the status classes
+   (.success, .pending, .destructive) also work on plain elements. */
+
+.default {
+	--badge-hover-bg: var(--color-primary-hover);
+	background-color: var(--color-primary);
+	color: var(--color-neutral-0);
+}
+
+.secondary {
+	--badge-hover-bg: var(--color-secondary-hover);
+	background-color: var(--color-secondary);
+	color: var(--color-neutral-0);
+}
+
+.success {
+	--badge-hover-bg: var(--color-success-hover);
+	background-color: var(--color-success);
+	color: var(--color-neutral-0);
+}
+
+.destructive {
+	--badge-hover-bg: var(--color-error-hover);
+	background-color: var(--color-error);
+	color: var(--color-neutral-0);
+}
+
+.destructive:focus-visible {
+	border-color: var(--color-error);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
+.pending {
+	--badge-hover-bg: var(--color-warning-hover);
+	background-color: var(--color-warning);
+	color: var(--color-neutral-900);
+}
+
+.outline {
+	--badge-hover-bg: var(--color-neutral-100);
+	border-color: var(--color-neutral-200);
+	color: var(--color-neutral-900);
+}
+
+.ghost {
+	--badge-hover-bg: var(--color-neutral-100);
+}
+
+.link {
+	color: var(--color-primary);
+	text-underline-offset: 4px;
+}
+
+.link:hover {
+	text-decoration: underline;
+}
+
+/* Icon-only ---------------------------------------------------------------- */
+
+.iconOnly {
+	width: var(--size-2xl);
+	height: var(--size-2xl);
+	padding: 0;
+	gap: 0;
+	justify-content: center;
+	border-radius: 50%;
+}
+
+.iconOnly > svg {
+	width: var(--icon-size-sm);
+	height: var(--icon-size-sm);
+	margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.badge {
+		transition: none;
+	}
+}

@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -26,9 +25,7 @@ export default defineConfig(({ mode }) => {
 		if (
 			id.includes('/@radix-ui/') ||
 			id.includes('/classnames/') ||
-			id.includes('/clsx/') ||
-			id.includes('/class-variance-authority/') ||
-			id.includes('/tailwind-merge/')
+			id.includes('/clsx/')
 		) {
 			return 'ui';
 		}
@@ -48,7 +45,6 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [
-			tailwindcss(),
 			checker({
 				typescript: true,
 				eslint: {

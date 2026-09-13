@@ -10,7 +10,6 @@ import './assets/font-awesome/css/solid.min.css';
 import './styles/App.scss';
 import './styles/index.scss';
 import './styles/99-utilities/text.css';
-import './styles/tailwind.css';
 
 const rootElement = document.getElementById('root');
 
