@@ -4,12 +4,6 @@
    Component styles live next to their components as CSS Modules.
    ================================= */
 
-@font-face {
-	font-family: Arial;
-	src: local('Arial');
-	size-adjust: 107%;
-}
-
 @import './00-settings/box-shadow.css';
 @import './00-settings/colors.css';
 @import './00-settings/motion.css';
@@ -35,3 +29,10 @@
 @import './99-utilities/spacings.css';
 @import './99-utilities/spinner.css';
 @import './99-utilities/titles.css';
+
+/* Adjust the fallback font so the swap to the web font shifts layout less. Must follow the imports. */
+@font-face {
+	font-family: Arial;
+	src: local('Arial');
+	size-adjust: 107%;
+}
