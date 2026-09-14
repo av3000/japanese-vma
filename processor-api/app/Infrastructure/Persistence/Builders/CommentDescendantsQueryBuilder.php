@@ -106,8 +106,31 @@ final readonly class CommentDescendantsQueryBuilder
 
         return [
             'ids' => array_map(static fn (object $row): int => (int) $row->id, $rows),
-            'total' => (int) ($rows[0]->total ?? 0),
+            // The window count only rides along on rows this page returned, so a
+            // page past the end would otherwise report a total of zero and tell
+            // the caller the thread is empty. Ask for the size directly instead.
+            'total' => $rows === []
+                ? $this->countDescendants($rootId)
+                : (int) $rows[0]->total,
         ];
+    }
+
+    /**
+     * Size of one root's subtree, at every depth within the cap.
+     */
+    public function countDescendants(int $rootId): int
+    {
+        $cte = $this->descendantsCte(1);
+
+        $rows = DB::select(
+            <<<SQL
+            {$cte}
+            SELECT COUNT(*) AS total FROM descendants
+            SQL,
+            [$rootId, self::MAX_REPLY_DEPTH],
+        );
+
+        return (int) ($rows[0]->total ?? 0);
     }
 
     /**
