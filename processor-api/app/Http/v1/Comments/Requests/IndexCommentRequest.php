@@ -2,7 +2,7 @@
 
 namespace App\Http\v1\Comments\Requests;
 
-use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Comments\DTOs\CommentListIncludes;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexCommentRequest extends FormRequest
@@ -18,7 +18,7 @@ class IndexCommentRequest extends FormRequest
             'page' => 'sometimes|integer|min:1',
             'per_page' => 'sometimes|integer|min:1|max:100',
             'include_replies' => 'sometimes|boolean',
-            'replies_limit' => 'sometimes|integer|min:0|max:'.CommentListDTO::MAX_REPLIES_LIMIT,
+            'replies_limit' => 'sometimes|integer|min:0|max:'.CommentListIncludes::MAX_REPLIES_LIMIT,
             'sort_by' => 'sometimes|string|in:created_at,updated_at',
             'sort_dir' => 'sometimes|string|in:asc,desc',
         ];
@@ -31,7 +31,7 @@ class IndexCommentRequest extends FormRequest
             'per_page.min' => 'Per page must be at least 1',
             'per_page.max' => 'Per page cannot exceed 100',
             'replies_limit.min' => 'Replies limit cannot be negative',
-            'replies_limit.max' => 'Replies limit cannot exceed '.CommentListDTO::MAX_REPLIES_LIMIT,
+            'replies_limit.max' => 'Replies limit cannot exceed '.CommentListIncludes::MAX_REPLIES_LIMIT,
             'sort_by.in' => 'Sort field must be either created_at or updated_at',
             'sort_dir.in' => 'Sort direction must be either asc or desc',
             'include_replies.boolean' => 'Include replies must be a boolean value',

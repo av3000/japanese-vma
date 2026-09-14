@@ -7,10 +7,12 @@ use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Comments\Policies\CommentPolicy;
 use App\Application\Comments\Services\CommentServiceInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Comments\DTOs\CommentListIncludes;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
+use App\Domain\Comments\DTOs\CommentListResultDTO;
+use App\Domain\Comments\DTOs\CommentPageDTO;
 use App\Domain\Comments\DTOs\CommentUpdateDTO;
-use App\Domain\Comments\Models\Comment;
-use App\Domain\Comments\Models\Comments;
+use App\Domain\Comments\Queries\CommentQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
@@ -109,10 +111,10 @@ class CommentController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        /** @var Comments $replies */
+        /** @var CommentPageDTO $replies */
         $replies = $result->getData();
 
-        return CommentReplyListResource::fromPaginated($replies, $viewer, $this->commentPolicy);
+        return CommentReplyListResource::fromPage($replies, $viewer, $this->commentPolicy);
     }
 
     /**
@@ -134,13 +136,13 @@ class CommentController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        /** @var Comment $comment */
-        $comment = $result->getData();
+        /** @var CommentListItemDTO $item */
+        $item = $result->getData();
 
         // A freshly created comment has no replies yet, so `replies_count` is 0
         // and `replies` is empty - the same shape a read returns, which is what
         // lets a client drop the response straight into its thread cache.
-        return (new CommentResource($comment, $author, $this->commentPolicy))
+        return (new CommentResource($item, $author, $this->commentPolicy))
             ->response()
             ->setStatusCode(201);
     }
@@ -165,13 +167,13 @@ class CommentController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        /** @var Comment $comment */
-        $comment = $result->getData();
+        /** @var CommentListItemDTO $item */
+        $item = $result->getData();
 
         // `replies_count` is accurate here; `replies` is empty because an edit
         // does not re-read the subtree. A caller patches the edited row into
         // its cached thread and keeps the replies it already has.
-        return new CommentResource($comment, $actor, $this->commentPolicy);
+        return new CommentResource($item, $actor, $this->commentPolicy);
     }
 
     #[Response(204, description: 'Comment and every reply beneath it were deleted')]
@@ -198,10 +200,13 @@ class CommentController extends Controller
     ): JsonResponse|JsonResource {
         $viewer = $this->currentUserProvider->currentAuthenticatedUser();
 
+        $validated = $request->validated();
+
         $result = $this->commentService->getCommentsForEntity(
             entityType: $entityType,
             entityUuid: EntityId::from($uuid),
-            dto: CommentListDTO::fromRequest($request->validated()),
+            criteria: CommentQueryCriteria::fromValidated($validated),
+            includes: CommentListIncludes::fromValidated($validated),
             viewer: $viewer,
         );
 
@@ -209,10 +214,10 @@ class CommentController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        /** @var Comments $comments */
+        /** @var CommentListResultDTO $comments */
         $comments = $result->getData();
 
-        return CommentListResource::fromPaginated($comments, $viewer, $this->commentPolicy);
+        return CommentListResource::fromResult($comments, $viewer, $this->commentPolicy);
     }
 
     private function requiredAuthenticatedUser(): AuthenticatedUser

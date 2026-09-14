@@ -4,8 +4,8 @@ namespace App\Http\v1\Comments\Resources;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Policies\CommentPolicy;
-use App\Domain\Comments\Models\Comment;
-use App\Domain\Comments\Models\Comments;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
+use App\Domain\Comments\DTOs\CommentListResultDTO;
 use App\Http\v1\Shared\Resources\PaginationResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,30 +29,23 @@ class CommentListResource extends JsonResource
 {
     public static $wrap = null;
 
-    public static function fromPaginated(
-        Comments $comments,
+    public static function fromResult(
+        CommentListResultDTO $result,
         ?AuthenticatedUser $viewer = null,
         ?CommentPolicy $policy = null,
     ): self {
-        $paginator = $comments->getPaginator();
         $resolvedPolicy = $policy ?? new CommentPolicy;
 
         return new self([
             'items' => array_map(
-                static fn (Comment $comment) => new CommentResource(
-                    comment: $comment,
+                static fn (CommentListItemDTO $item) => new CommentResource(
+                    item: $item,
                     viewer: $viewer,
                     policy: $resolvedPolicy,
                 ),
-                $comments->getItems(),
+                $result->items,
             ),
-            'pagination' => [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
+            'pagination' => $result->pagination->toArray(),
         ]);
     }
 

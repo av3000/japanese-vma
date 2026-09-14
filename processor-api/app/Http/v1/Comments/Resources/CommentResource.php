@@ -6,6 +6,7 @@ namespace App\Http\v1\Comments\Resources;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Policies\CommentPolicy;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
 use App\Domain\Comments\Models\Comment;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\v1\Shared\Resources\AuthorResource;
@@ -29,18 +30,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * `entity_type_label` is the human-facing counterpart and stays an open string -
  * pinning it as an enum would break clients whenever a template is added.
  *
- * @property-read Comment $resource
+ * @property-read CommentListItemDTO $resource
  */
 class CommentResource extends JsonResource
 {
     public static $wrap = null;
 
     public function __construct(
-        Comment $comment,
+        CommentListItemDTO $item,
         private readonly ?AuthenticatedUser $viewer = null,
         private readonly ?CommentPolicy $policy = null,
     ) {
-        parent::__construct($comment);
+        parent::__construct($item);
     }
 
     /**
@@ -64,8 +65,9 @@ class CommentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var Comment $comment */
-        $comment = $this->resource;
+        /** @var CommentListItemDTO $item */
+        $item = $this->resource;
+        $comment = $item->comment;
 
         $policy = $this->policy ?? new CommentPolicy;
         $authorUuid = $comment->getAuthorUuid();
@@ -73,7 +75,7 @@ class CommentResource extends JsonResource
         /** @var array<int, CommentReplyResource> $replies */
         $replies = array_map(
             fn (Comment $reply): CommentReplyResource => new CommentReplyResource($reply, $this->viewer, $policy),
-            $comment->getReplies(),
+            $item->replyPreviews,
         );
 
         return [
@@ -94,7 +96,7 @@ class CommentResource extends JsonResource
             'is_reply' => $comment->isReply(),
             'likes_count' => $comment->getLikesCount(),
             'viewer' => new CommentViewerResource($comment, $this->viewer, $policy),
-            'replies_count' => $comment->getRepliesCount(),
+            'replies_count' => $item->repliesCount,
             /** @var array<int, CommentReplyResource> */
             'replies' => $replies,
             'created_at' => $comment->getCreatedAt()->format('c'),

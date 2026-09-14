@@ -4,8 +4,9 @@ namespace App\Application\Comments\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Comments\DTOs\CommentListIncludes;
 use App\Domain\Comments\DTOs\CommentUpdateDTO;
+use App\Domain\Comments\Queries\CommentQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
@@ -17,12 +18,13 @@ interface CommentServiceInterface
      * One page of an entity's top-level comments, each carrying its subtree
      * size and - when the caller asked for them - a bounded reply preview.
      *
-     * @return Result Success payload is a Comments paginated collection.
+     * @return Result Success payload is a CommentListResultDTO.
      */
     public function getCommentsForEntity(
         ObjectTemplateType $entityType,
         EntityId $entityUuid,
-        CommentListDTO $dto,
+        CommentQueryCriteria $criteria,
+        CommentListIncludes $includes,
         ?AuthenticatedUser $viewer,
     ): Result;
 
@@ -32,7 +34,7 @@ interface CommentServiceInterface
      * This is what a "show all replies" control reads; the thread endpoint
      * deliberately returns only a preview.
      *
-     * @return Result Success payload is a Comments paginated collection.
+     * @return Result Success payload is a CommentPageDTO.
      */
     public function getRepliesForComment(
         EntityId $commentUuid,
@@ -41,12 +43,12 @@ interface CommentServiceInterface
     ): Result;
 
     /**
-     * @return Result Success payload is the created Comment.
+     * @return Result Success payload is a CommentListItemDTO for the created Comment.
      */
     public function createComment(CommentCreateDTO $dto, AuthenticatedUser $author): Result;
 
     /**
-     * @return Result Success payload is the updated Comment.
+     * @return Result Success payload is a CommentListItemDTO for the updated Comment.
      */
     public function updateComment(
         EntityId $commentUuid,

@@ -9,11 +9,12 @@ use App\Domain\Shared\ValueObjects\UserId;
 class Comment
 {
     /**
-     * `$replies` is the loaded subtree, oldest first, and is empty when the
-     * caller did not ask for replies. A top-level comment with
-     * `repliesCount > 0` and an empty `replies` is a valid, expected state.
+     * Every field is filled from the comment's own row.
      *
-     * @param Comment[] $replies
+     * How many replies hang off this comment, and which of them were loaded,
+     * are facts about a query result rather than about the row - they live on
+     * CommentListItemDTO. Keeping them off the entity is what stops a Comment
+     * read by identity from reporting `replies_count: 0` for a busy thread.
      */
     public function __construct(
         private ?int $id,
@@ -30,8 +31,6 @@ class Comment
         private bool $isLikedByViewer,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
-        private int $repliesCount = 0,
-        private array $replies = [],
     ) {
     }
 
@@ -131,40 +130,5 @@ class Comment
     public function isAuthoredBy(UserId $userId): bool
     {
         return $this->authorId->equals($userId);
-    }
-
-    /**
-     * Size of the whole subtree beneath this comment, at every depth.
-     *
-     * Independent of how many replies were actually loaded: a caller that asked
-     * for three of forty still gets forty here, because that is the number a
-     * "show all replies" control renders.
-     */
-    public function getRepliesCount(): int
-    {
-        return $this->repliesCount;
-    }
-
-    /**
-     * @return Comment[]
-     */
-    public function getReplies(): array
-    {
-        return $this->replies;
-    }
-
-    /**
-     * Replies are attached after the comment is mapped, because they are read
-     * in one batched query for the whole page rather than per comment.
-     *
-     * @param Comment[] $replies
-     */
-    public function withReplies(array $replies, int $repliesCount): self
-    {
-        $clone = clone $this;
-        $clone->replies = $replies;
-        $clone->repliesCount = $repliesCount;
-
-        return $clone;
     }
 }

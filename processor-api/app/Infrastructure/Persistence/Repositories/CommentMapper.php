@@ -40,10 +40,6 @@ class CommentMapper
             (bool) ($entity->is_liked_by_viewer ?? false),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
-            // Replies are counted and attached by the repository after the
-            // batched subtree read, not per row here.
-            0,
-            [],
         );
     }
 }
