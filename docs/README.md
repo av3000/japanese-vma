@@ -56,6 +56,7 @@ The [evidence manifest](./ai/evidence-manifest.md) maps important claims to thei
 - [Application boundaries](./architecture/application-boundaries.md)
 - [Deployment and runtime](./architecture/deployment-and-runtime.md)
 - [Data and integrations](./architecture/data-and-integrations.md)
+- [Architecture comparison backlog](./architecture/architecture-comparison-backlog.md) — open pattern questions against the two reference solutions, triaged into ADRs or `AGENTS.md` rules
 
 ## Feature Packets
 
