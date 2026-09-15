@@ -134,6 +134,7 @@ Keep responsibilities separated by layer:
   - Do not leak HTTP requests, responses, Eloquent models, or raw query builders into this layer.
   - Never import `App\Application`, `App\Infrastructure` or `App\Http` here; `tests/Unit/Architecture/DomainLayerDependencyTest` fails the build if you do.
   - Name shapes after their siblings: `*QueryCriteria` for list input (`Domain/{Module}/Queries`), `*Includes` for optional-enrichment flags, `*PageDTO` for raw reader output, `*ListResultDTO` for the enriched envelope, `*SortCriteria` for sort. Do not introduce `*Query`, `*Projection` or `*Page` for these roles.
+  - Domain models are constructed complete by their mapper, from their own row. Per-read enrichment - counts, previews, page totals - belongs on a `*ListItemDTO` beside the model, never as defaulted constructor arguments filled in later by a `with*()` wither. A model that can be handed out half-populated gives every reader a value it cannot tell apart from the truth; see `docs/adr/0001-read-enrichment-lives-beside-the-entity.md`.
 - `app/Application`
   - Put use-case orchestration, policies, actions, jobs, and repository interfaces here.
   - Keep business rules here instead of controllers.
