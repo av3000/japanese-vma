@@ -41,7 +41,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - writes should use generated v1 catalogue item clients (`catalogueAddItem`, `catalogueRemoveItem`) either directly from the route or through a small helper in that same module
   - `elementBelongsToList` is legacy debt; new or touched code should prefer generated for-item fields such as `contains_item`
 - Do not route new catalogue-for-item writes through `src/api/catalogues/actions.ts` when a generated v1 client already exists and works.
-- If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw `apiCall(...)` usage through route trees.
+- If generated endpoints are not ready, isolate legacy calls behind a temporary adapter module instead of scattering raw endpoint strings through route trees. Such an adapter is the only place `@/services/axios` may be imported directly; everywhere else, go through a generated client.
 - Temporary adapters are for true transition states only. `actions.ts`-style wrappers are acceptable when the endpoint is intentionally legacy, undocumented, or the generated client is actually unusable. If Orval already generates a stable callable client for a documented v1 endpoint, prefer that generated client instead of adding a parallel wrapper.
 - `deleteCatalogue` and legacy PDF export are current examples of acceptable transitional adapters. Catalogue item add/remove are not.
 - If backend-generated query params are awkward or unstable, hide that wire-shape behind the shared adapter boundary instead of leaking it into route code.
@@ -98,7 +98,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
   - class components
   - `componentWillMount`
   - `props.match` / `props.history`
-  - raw `apiCall` strings embedded in routes
+  - raw endpoint strings embedded in routes
   - component-owned pagination/search state for server data
   - duplicated list type labels and magic numbers
   - legacy comment props that do not match the current `CommentsBlock` contract
@@ -139,7 +139,7 @@ This file defines **frontend-specific** guidance for changes under `client/`.
 - `props.match`, `props.history`, or other React Router v5 route props
 - reviving Redux patterns for new client state
 - page-owned pagination/search state where React Query is the natural fit
-- raw string endpoints spread across route trees via `apiCall`
+- raw string endpoints spread across route trees, or direct `@/services/axios` calls outside a named transitional adapter
 - copy-pasted label/type arrays inside components
 - numeric type branching directly in JSX when a typed mapper/helper can own it
 

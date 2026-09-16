@@ -44,7 +44,7 @@ Look for friction:
 - feature UI modules accumulating repeated server mutations or side effects
 - wrappers that only rename generated clients
 - temporary adapters without target endpoint, removal condition, or issue status
-- legacy `apiCall(...)`, `@ts-nocheck`, class components, route-owned server pagination, or magic numbers copied forward
+- raw endpoint strings on the shared axios instance, `@ts-nocheck`, class components, route-owned server pagination, or magic numbers copied forward
 - tests that reach past the module interface instead of testing the seam where behavior lives
 - scalability risks: low locality, high coordination cost, unstable data boundaries, broad provider rerenders, public routes coupled to private/auth state, or feature additions that grow the initial bundle
 

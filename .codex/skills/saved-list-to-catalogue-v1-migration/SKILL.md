@@ -35,7 +35,7 @@ Move the surface to catalogue-v1 when any of these are true:
 - the legacy route is manually tracking `next_page_url`, `isLoading`, or POST-based search state
 - the UI is branching on raw numeric SavedList types
 
-If a needed backend capability is still missing, add a typed temporary adapter with a TODO naming the intended v1 replacement. Do not expand route-level `apiCall` usage instead.
+If a needed backend capability is still missing, add a typed temporary adapter with a TODO naming the intended v1 replacement. Do not hand-write endpoint strings against the shared axios instance in route code instead.
 
 ## Migration Order
 
