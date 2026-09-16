@@ -231,6 +231,34 @@ describe('CommentsBlock', () => {
 		expect(capturedListProps[0].canReply).toBe(false);
 	});
 
+	// The backend closes a locked parent to new comments only; CommentPolicy never
+	// consults the lock. Withholding edit or delete here would strand an author on
+	// their own words, so the lock must not reach past the write affordances.
+	it('keeps editing and deleting available on a locked parent', async () => {
+		render({ isLocked: true });
+
+		await capturedListProps[0].onEdit(comment(), 'edited');
+		expect(updateMutateAsync).toHaveBeenCalledWith({ uuid: 'comment-11', content: 'edited' });
+
+		capturedListProps[0].onDelete(comment());
+		expect(deleteMutateAsync).toHaveBeenCalledWith({
+			id: 11,
+			uuid: 'comment-11',
+			parentCommentId: null,
+		});
+	});
+
+	// Post and Sentence share one mapping; the parent name is the only thing that
+	// differs between them, and it has to select the read key on its own.
+	it('reads a sentence thread through the same seam as an article', () => {
+		const sentenceUuid = '2b0b3a3f-5d19-4a23-9e0a-3a5f6a1c9e77';
+
+		renderToStaticMarkup(<CommentsBlock parent="sentence" entityId={77} entityUuid={sentenceUuid} />);
+
+		expect(capturedQueryOptions[0].queryKey).toEqual(getCommentsQueryKey('sentence', sentenceUuid));
+		expect(capturedQueryOptions[0].queryKey).not.toEqual(getCommentsQueryKey('article', sentenceUuid));
+	});
+
 	it('prompts an anonymous reader to log in and offers no reply affordance', () => {
 		isAuthenticated = false;
 

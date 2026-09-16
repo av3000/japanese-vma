@@ -6,6 +6,7 @@ import SentenceDetails from './index';
 
 const useSentenceQueryMock = vi.fn();
 const authorizedWidgetProps: Array<Record<string, unknown>> = [];
+const commentsBlockProps: Array<Record<string, unknown>> = [];
 const deleteMutate = vi.fn();
 const navigate = vi.fn();
 
@@ -41,6 +42,12 @@ vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
 		return <div>Bookmark</div>;
 	},
 }));
+vi.mock('@/components/features/comment/CommentsBlock', () => ({
+	default: (props: Record<string, unknown>) => {
+		commentsBlockProps.push(props);
+		return <div>Comments</div>;
+	},
+}));
 
 const sentenceData = {
 	id: 77,
@@ -54,13 +61,14 @@ const sentenceData = {
 describe('SentenceDetails', () => {
 	beforeEach(() => {
 		authorizedWidgetProps.length = 0;
+		commentsBlockProps.length = 0;
 		deleteMutate.mockReset();
 		navigate.mockClear();
 		currentUser = null;
 		useSentenceQueryMock.mockReturnValue({ data: sentenceData, isLoading: false, isError: false });
 	});
 
-	it('uses the UUID route and response id without comments or word behavior', () => {
+	it('uses the UUID route and response id without word behavior', () => {
 		const html = renderToStaticMarkup(<SentenceDetails />);
 
 		expect(useSentenceQueryMock).toHaveBeenCalledWith('sentence-route-uuid');
@@ -71,7 +79,27 @@ describe('SentenceDetails', () => {
 		});
 		expect(html).toContain('/kanji/kanji-uuid');
 		expect(html).toContain('7777');
-		expect(html).not.toContain('Comments');
+	});
+
+	// The route segment is a uuid and the entity's numeric id is a different value,
+	// so a seam that confused the two would still render - these two assertions are
+	// what tell them apart.
+	it('composes comments through the shared seam on the sentence parent', () => {
+		renderToStaticMarkup(<SentenceDetails />);
+
+		expect(commentsBlockProps).toHaveLength(1);
+		expect(commentsBlockProps[0]).toEqual({
+			parent: 'sentence',
+			entityId: 77,
+			entityUuid: 'sentence-uuid',
+		});
+	});
+
+	it('takes the comment entity id from the loaded response, never from the route', () => {
+		renderToStaticMarkup(<SentenceDetails />);
+
+		expect(commentsBlockProps[0]).toMatchObject({ entityId: sentenceData.id });
+		expect(commentsBlockProps[0]).not.toMatchObject({ entityUuid: 'sentence-route-uuid' });
 	});
 
 	it('renders loading and failure states', () => {
