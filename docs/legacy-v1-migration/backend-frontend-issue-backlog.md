@@ -723,11 +723,11 @@ Remove remaining production usage of `client/src/services/api.ts` after feature 
 
 **Acceptance criteria:**
 
-- [ ] `rg -n "apiCall" client/src` has no production route/component callers.
-- [ ] Any remaining legacy endpoint access lives in a named typed adapter with target v1 replacement and removal condition.
-- [ ] Console request/response logging from `apiCall` is gone from production paths.
-- [ ] Tests no longer mock `apiCall` for migrated behavior.
-- [ ] `npm run typecheck` passes.
+- [x] `rg -n "apiCall" client/src` has no production route/component callers. (#146 — the helper itself is deleted.)
+- [x] Any remaining legacy endpoint access lives in a named typed adapter with target v1 replacement and removal condition. (#146 — none remain; `services/orval-mutator.ts` is the only direct axios caller.)
+- [x] Console request/response logging from `apiCall` is gone from production paths. (#146)
+- [x] Tests no longer mock `apiCall` for migrated behavior. (#146 — no test ever mocked it.)
+- [x] `npm run typecheck` passes. (#146)
 
 ### B13: Audit And Retire Unused Legacy Backend Routes By Domain
 

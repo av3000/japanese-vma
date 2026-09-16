@@ -36,11 +36,14 @@ Articles and catalogues contain the strongest current precedents in `client/src/
 
 ```text
 route or class component
-  -> raw apiCall endpoint string
+  -> raw endpoint string on the shared axios instance
   -> legacy Laravel controller
 ```
 
-Community post routes and parts of the Japanese-resource detail surface still exhibit this shape. Existing code may remain until its replacement contract is ready, but new work should not spread it.
+The shared `apiCall` helper that used to sit in the middle of this flow is gone, and no production
+module outside `client/src/services/orval-mutator.ts` calls axios directly. New work should not
+reintroduce the shape; if a v1 contract is genuinely missing, put the legacy call in a named
+transitional adapter that states its replacement.
 
 ## Backend
 

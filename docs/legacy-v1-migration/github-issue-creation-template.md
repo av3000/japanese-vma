@@ -244,7 +244,7 @@ Track migration at two levels:
 - v1 route exists and is covered by backend feature tests.
 - `processor-api/api.json` includes the v1 contract.
 - Orval generated a usable client.
-- frontend route no longer uses `apiCall`.
+- frontend route no longer hand-writes endpoint strings against the shared axios instance.
 - frontend route no longer has `@ts-nocheck`.
 - legacy route has no production caller.
 - legacy route was removed or intentionally kept as compatibility.
@@ -258,7 +258,7 @@ Do not mark a legacy route `Retired` until a grep confirms no production fronten
 Use these commands during tracking reviews:
 
 ```powershell
-rg -n "apiCall" client/src
+rg -n "from '@/services/axios'" client/src --glob '!client/src/api/generated/**'
 rg -n "@ts-nocheck|componentWillMount|props\\.match|props\\.history" client/src/routes client/src/components/features
 rg -n "Route::" processor-api/routes/api.php processor-api/routes/api_v1.php
 rg -n "/api/" client/src

@@ -81,7 +81,7 @@ Debt markers:
 - class components
 - `componentWillMount`
 - `props.match` / `props.history`
-- raw `apiCall(...)`
+- raw endpoint strings on the shared axios instance
 - route-owned pagination/search state
 - duplicated type-label arrays
 - numeric type branching in JSX
