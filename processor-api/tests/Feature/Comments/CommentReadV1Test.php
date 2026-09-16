@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Comments;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
@@ -52,9 +53,15 @@ class CommentReadV1Test extends TestCase
             ->assertJsonMissingPath('data')
             ->assertJsonPath('items.0.id', $comment->id)
             ->assertJsonPath('items.0.uuid', $comment->uuid)
-            ->assertJsonPath('items.0.entity_type', 'article')
+            ->assertJsonPath('items.0.entity_type_uuid', ObjectTemplateType::ARTICLE->value)
+            ->assertJsonPath('items.0.entity_type_label', 'Article')
+            ->assertJsonPath('items.0.author.id', $author->id)
+            ->assertJsonPath('items.0.author.uuid', $author->uuid)
+            ->assertJsonPath('items.0.replies_count', 0)
             ->assertJsonPath('items.0.likes_count', 0)
-            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+            ->assertJsonPath('items.0.viewer.is_liked', false)
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
     }
 
     public function test_authenticated_viewer_gets_personalized_like_state_for_article_comments(): void
@@ -78,7 +85,7 @@ class CommentReadV1Test extends TestCase
         $response->assertOk()
             ->assertJsonPath('items.0.id', $comment->id)
             ->assertJsonPath('items.0.likes_count', 1)
-            ->assertJsonPath('items.0.is_liked_by_viewer', true);
+            ->assertJsonPath('items.0.viewer.is_liked', true);
     }
 
     public function test_guest_can_fetch_list_comments_by_catalogue_uuid(): void
@@ -94,9 +101,12 @@ class CommentReadV1Test extends TestCase
             ->assertJsonMissingPath('data')
             ->assertJsonPath('items.0.id', $comment->id)
             ->assertJsonPath('items.0.entity_uuid', $catalogue->uuid)
-            ->assertJsonPath('items.0.entity_type', 'list')
+            ->assertJsonPath('items.0.entity_type_uuid', ObjectTemplateType::LIST->value)
+            ->assertJsonPath('items.0.entity_type_label', 'List')
             ->assertJsonPath('items.0.likes_count', 0)
-            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+            ->assertJsonPath('items.0.viewer.is_liked', false)
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
     }
 
     public function test_unknown_article_uuid_returns_not_found_for_article_comments(): void
@@ -177,10 +187,12 @@ class CommentReadV1Test extends TestCase
             ->assertJsonPath('items.0.id', $comment->id)
             ->assertJsonPath('items.0.uuid', $comment->uuid)
             ->assertJsonPath('items.0.entity_uuid', $post->uuid)
-            ->assertJsonPath('items.0.entity_type', 'post')
-            ->assertJsonPath('items.0.author_id', $author->id)
+            ->assertJsonPath('items.0.entity_type_uuid', ObjectTemplateType::POST->value)
+            ->assertJsonPath('items.0.author.id', $author->id)
             ->assertJsonPath('items.0.likes_count', 0)
-            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+            ->assertJsonPath('items.0.viewer.is_liked', false)
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
     }
 
     public function test_authenticated_viewer_gets_personalized_like_state_for_post_comments(): void
@@ -202,7 +214,7 @@ class CommentReadV1Test extends TestCase
         $this->getJson("/api/v1/posts/{$post->uuid}/comments")
             ->assertOk()
             ->assertJsonPath('items.0.likes_count', 1)
-            ->assertJsonPath('items.0.is_liked_by_viewer', true);
+            ->assertJsonPath('items.0.viewer.is_liked', true);
     }
 
     public function test_guest_can_fetch_sentence_comments_with_safe_viewer_defaults(): void
@@ -218,9 +230,11 @@ class CommentReadV1Test extends TestCase
             ->assertJsonMissingPath('data')
             ->assertJsonPath('items.0.id', $comment->id)
             ->assertJsonPath('items.0.entity_uuid', $sentence->uuid)
-            ->assertJsonPath('items.0.entity_type', 'sentence')
+            ->assertJsonPath('items.0.entity_type_uuid', ObjectTemplateType::SENTENCE->value)
             ->assertJsonPath('items.0.likes_count', 0)
-            ->assertJsonPath('items.0.is_liked_by_viewer', false);
+            ->assertJsonPath('items.0.viewer.is_liked', false)
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
     }
 
     public function test_authenticated_viewer_gets_personalized_like_state_for_sentence_comments(): void
@@ -242,18 +256,18 @@ class CommentReadV1Test extends TestCase
         $this->getJson("/api/v1/sentences/{$sentence->uuid}/comments")
             ->assertOk()
             ->assertJsonPath('items.0.likes_count', 1)
-            ->assertJsonPath('items.0.is_liked_by_viewer', true);
+            ->assertJsonPath('items.0.viewer.is_liked', true);
     }
 
+    // ========================================
+    // Replies
+    // ========================================
+
     /**
-     * Post threads inherit the shared Comment read shape as it stands: replies
-     * come back in the same flat page as their parent, each carrying its
-     * `parent_comment_id`, and `replies` is always empty. Nesting is an open
-     * TODO in CommentRepository::findByCriteriaForEntity() and is explicitly
-     * out of scope here - this pins the behavior a Post thread actually has so
-     * the client is not written against a shape the API does not serve.
+     * A page holds conversations, not rows. A reply is reachable only through
+     * the comment it answers, so it can never be paginated away from it.
      */
-    public function test_post_comment_replies_are_served_flat_alongside_their_parent(): void
+    public function test_thread_pages_hold_top_level_comments_and_nest_their_replies(): void
     {
         $author = User::factory()->create();
         $post = PersistencePost::factory()->create(['user_id' => $author->id]);
@@ -266,18 +280,225 @@ class CommentReadV1Test extends TestCase
             ['parent_comment_id' => $parent->id, 'content' => 'A post reply.'],
         );
 
-        $response = $this->getJson("/api/v1/posts/{$post->uuid}/comments?include_replies=1")
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments?include_replies=1")
             ->assertOk()
-            ->assertJsonCount(2, 'items')
-            ->assertJsonPath('pagination.total', 2);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('pagination.total', 1)
+            ->assertJsonPath('items.0.id', $parent->id)
+            ->assertJsonPath('items.0.is_reply', false)
+            ->assertJsonPath('items.0.replies_count', 1)
+            ->assertJsonCount(1, 'items.0.replies')
+            ->assertJsonPath('items.0.replies.0.content', 'A post reply.')
+            ->assertJsonPath('items.0.replies.0.parent_comment_id', $parent->id)
+            ->assertJsonPath('items.0.replies.0.is_reply', true);
+    }
 
-        $reply = collect($response->json('items'))
-            ->firstWhere('content', 'A post reply.');
+    /**
+     * The count is what a "show all replies" control renders, so it has to be
+     * right even when no replies were asked for. Reporting zero here would be a
+     * value the client cannot tell apart from an empty thread.
+     */
+    public function test_reply_counts_are_reported_even_when_previews_were_not_requested(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $parent = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
 
-        $this->assertNotNull($reply);
-        $this->assertSame($parent->id, $reply['parent_comment_id']);
-        $this->assertTrue($reply['is_reply']);
-        $this->assertSame([], $reply['replies']);
+        foreach (range(1, 3) as $index) {
+            $this->createComment(
+                ObjectTemplateType::POST,
+                $post->id,
+                $post->uuid,
+                $author,
+                ['parent_comment_id' => $parent->id, 'content' => "Reply {$index}."],
+            );
+        }
+
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.replies_count', 3)
+            ->assertJsonPath('items.0.replies', []);
+    }
+
+    public function test_reply_previews_are_truncated_without_distorting_the_count(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $parent = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+
+        foreach (range(1, 5) as $index) {
+            $this->createComment(
+                ObjectTemplateType::POST,
+                $post->id,
+                $post->uuid,
+                $author,
+                ['parent_comment_id' => $parent->id, 'content' => "Reply {$index}."],
+            );
+        }
+
+        $this->getJson("/api/v1/posts/{$post->uuid}/comments?include_replies=1&replies_limit=2")
+            ->assertOk()
+            ->assertJsonCount(2, 'items.0.replies')
+            ->assertJsonPath('items.0.replies_count', 5);
+    }
+
+    /**
+     * Storage allows unlimited nesting; the contract deliberately does not. A
+     * reply to a reply joins the same flat subtree as its siblings rather than
+     * hiding one level further down.
+     */
+    public function test_a_reply_to_a_reply_joins_the_same_flat_subtree(): void
+    {
+        $author = User::factory()->create();
+        $post = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $parent = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+        $firstLevel = $this->createComment(
+            ObjectTemplateType::POST,
+            $post->id,
+            $post->uuid,
+            $author,
+            ['parent_comment_id' => $parent->id, 'content' => 'First level.'],
+        );
+        $secondLevel = $this->createComment(
+            ObjectTemplateType::POST,
+            $post->id,
+            $post->uuid,
+            $author,
+            ['parent_comment_id' => $firstLevel->id, 'content' => 'Second level.'],
+        );
+
+        $response = $this->getJson("/api/v1/posts/{$post->uuid}/comments?include_replies=1&replies_limit=10")
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.replies_count', 2)
+            ->assertJsonCount(2, 'items.0.replies');
+
+        $replies = $response->json('items.0.replies');
+
+        // Oldest first, and the deeper reply still points at its own parent.
+        self::assertSame(['First level.', 'Second level.'], array_column($replies, 'content'));
+        self::assertSame($firstLevel->id, $replies[1]['parent_comment_id']);
+        self::assertSame($secondLevel->id, $replies[1]['id']);
+    }
+
+    public function test_reply_enrichment_does_not_grow_with_nesting_depth(): void
+    {
+        $author = User::factory()->create();
+        $shallowPost = PersistencePost::factory()->create(['user_id' => $author->id]);
+        $deepPost = PersistencePost::factory()->create(['user_id' => $author->id]);
+
+        $this->buildReplyChain($shallowPost, $author, 2);
+        $this->buildReplyChain($deepPost, $author, 5);
+
+        $shallow = $this->countQueriesFor("/api/v1/posts/{$shallowPost->uuid}/comments?include_replies=1&replies_limit=10");
+        $deep = $this->countQueriesFor("/api/v1/posts/{$deepPost->uuid}/comments?include_replies=1&replies_limit=10");
+
+        $this->assertSame($shallow, $deep, 'The reply walk issues one query per nesting level.');
+    }
+
+    public function test_sort_parameters_reorder_the_thread(): void
+    {
+        $author = User::factory()->create();
+        $article = PersistenceArticle::factory()->create(['user_id' => $author->id]);
+
+        foreach (range(1, 3) as $index) {
+            $this->createComment(
+                ObjectTemplateType::ARTICLE,
+                $article->id,
+                $article->uuid,
+                $author,
+                ['content' => "Comment number {$index}."],
+            );
+        }
+
+        $newestFirst = $this->getJson("/api/v1/articles/{$article->uuid}/comments")
+            ->assertOk()
+            ->json('items.*.content');
+
+        $oldestFirst = $this->getJson("/api/v1/articles/{$article->uuid}/comments?sort_by=created_at&sort_dir=asc")
+            ->assertOk()
+            ->json('items.*.content');
+
+        self::assertSame(array_reverse($newestFirst), $oldestFirst);
+    }
+
+    // ========================================
+    // Viewer capabilities
+    // ========================================
+
+    public function test_the_author_may_edit_and_delete_their_own_comment(): void
+    {
+        $author = User::factory()->create();
+        $article = PersistenceArticle::factory()->create(['user_id' => $author->id]);
+        $this->createComment(ObjectTemplateType::ARTICLE, $article->id, $article->uuid, $author);
+
+        Passport::actingAs($author, ['*'], 'api');
+
+        $this->getJson("/api/v1/articles/{$article->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.viewer.can_edit', true)
+            ->assertJsonPath('items.0.viewer.can_delete', true);
+    }
+
+    /**
+     * The admin branch of CommentPolicy::canDelete had no client-visible
+     * evidence, and the frontend's re-implementation of it silently never
+     * fired. It is reported by the API now, and pinned here.
+     */
+    public function test_an_admin_may_delete_but_not_edit_someone_elses_comment(): void
+    {
+        $author = User::factory()->create();
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::ADMIN->value);
+        $article = PersistenceArticle::factory()->create(['user_id' => $author->id]);
+        $this->createComment(ObjectTemplateType::ARTICLE, $article->id, $article->uuid, $author);
+
+        Passport::actingAs($admin, ['*'], 'api');
+
+        $this->getJson("/api/v1/articles/{$article->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', true);
+    }
+
+    public function test_an_unrelated_reader_may_neither_edit_nor_delete(): void
+    {
+        $author = User::factory()->create();
+        $stranger = User::factory()->create();
+        $article = PersistenceArticle::factory()->create(['user_id' => $author->id]);
+        $this->createComment(ObjectTemplateType::ARTICLE, $article->id, $article->uuid, $author);
+
+        Passport::actingAs($stranger, ['*'], 'api');
+
+        $this->getJson("/api/v1/articles/{$article->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
+    }
+
+    /**
+     * A comment outlives its author's account. Dropping the whole `author`
+     * object is the honest encoding - a name-shaped hole would make the client
+     * render an empty attribution.
+     */
+    public function test_a_comment_whose_author_row_is_gone_is_still_served(): void
+    {
+        // The article owner and the commenter are different people on purpose:
+        // only the commenter's row is removed, so the article survives to be
+        // read back.
+        $articleOwner = User::factory()->create();
+        $commenter = User::factory()->create();
+        $article = PersistenceArticle::factory()->create(['user_id' => $articleOwner->id]);
+        $comment = $this->createComment(ObjectTemplateType::ARTICLE, $article->id, $article->uuid, $commenter);
+
+        DB::table('users')->where('id', $commenter->id)->delete();
+
+        $this->getJson("/api/v1/articles/{$article->uuid}/comments")
+            ->assertOk()
+            ->assertJsonPath('items.0.id', $comment->id)
+            ->assertJsonPath('items.0.author', null)
+            ->assertJsonPath('items.0.viewer.can_edit', false)
+            ->assertJsonPath('items.0.viewer.can_delete', false);
     }
 
     public function test_post_comment_reads_honour_pagination_parameters(): void
@@ -425,8 +646,8 @@ class CommentReadV1Test extends TestCase
             ->assertJsonMissingPath('success')
             ->assertJsonMissingPath('data')
             ->assertJsonPath('entity_uuid', $article->uuid)
-            ->assertJsonPath('entity_type', 'article')
-            ->assertJsonPath('author_id', $author->id)
+            ->assertJsonPath('entity_type_uuid', ObjectTemplateType::ARTICLE->value)
+            ->assertJsonPath('author.id', $author->id)
             ->assertJsonPath('content', 'New v1 article comment.')
             ->assertJsonPath('is_reply', false);
 
@@ -452,7 +673,7 @@ class CommentReadV1Test extends TestCase
             'entity_uuid' => $catalogue->uuid,
             'content' => 'New v1 catalogue comment.',
         ])->assertCreated()
-            ->assertJsonPath('entity_type', 'list');
+            ->assertJsonPath('entity_type_uuid', ObjectTemplateType::LIST->value);
 
         $this->getJson("/api/v1/catalogues/{$catalogue->uuid}/comments")
             ->assertOk()
@@ -471,7 +692,7 @@ class CommentReadV1Test extends TestCase
             'entity_uuid' => $post->uuid,
             'content' => 'New v1 post comment.',
         ])->assertCreated()
-            ->assertJsonPath('entity_type', 'post')
+            ->assertJsonPath('entity_type_uuid', ObjectTemplateType::POST->value)
             ->assertJsonPath('entity_uuid', $post->uuid);
 
         $this->assertDatabaseHas('comments', [
@@ -668,6 +889,25 @@ class CommentReadV1Test extends TestCase
             ->assertJsonPath('title', 'Parent comment belongs to another entity');
 
         $this->assertDatabaseCount('comments', 1);
+    }
+
+    /**
+     * One top-level comment with a chain of replies `$depth` levels deep.
+     */
+    private function buildReplyChain(PersistencePost $post, User $author, int $depth): void
+    {
+        $parent = $this->createComment(ObjectTemplateType::POST, $post->id, $post->uuid, $author);
+        $parentId = $parent->id;
+
+        foreach (range(1, $depth) as $level) {
+            $parentId = $this->createComment(
+                ObjectTemplateType::POST,
+                $post->id,
+                $post->uuid,
+                $author,
+                ['parent_comment_id' => $parentId, 'content' => "Level {$level}."],
+            )->id;
+        }
     }
 
     private function createSentence(User $author): PersistenceSentence

@@ -8,6 +8,14 @@ use App\Domain\Shared\ValueObjects\UserId;
 
 class Comment
 {
+    /**
+     * Every field is filled from the comment's own row.
+     *
+     * How many replies hang off this comment, and which of them were loaded,
+     * are facts about a query result rather than about the row - they live on
+     * CommentListItemDTO. Keeping them off the entity is what stops a Comment
+     * read by identity from reporting `replies_count: 0` for a busy thread.
+     */
     public function __construct(
         private ?int $id,
         private EntityId $uuid,
@@ -15,19 +23,20 @@ class Comment
         private ?EntityId $entityUuid,
         private ObjectTemplateType $entityType,
         private ?string $authorName,
+        private ?EntityId $authorUuid,
         private UserId $authorId,
         private string $content,
         private ?int $parentCommentId,
         private int $likesCount,
         private bool $isLikedByViewer,
         private \DateTimeImmutable $createdAt,
-        private \DateTimeImmutable $updatedAt
+        private \DateTimeImmutable $updatedAt,
     ) {
     }
 
     public function getIdValue(): int
     {
-        return $this->id;
+        return (int) $this->id;
     }
 
     public function getUuid(): EntityId
@@ -72,6 +81,15 @@ class Comment
     public function getAuthorName(): ?string
     {
         return $this->authorName;
+    }
+
+    /**
+     * Null when the author row is gone. The response drops the whole `author`
+     * object in that case rather than emitting a name-shaped hole.
+     */
+    public function getAuthorUuid(): ?EntityId
+    {
+        return $this->authorUuid;
     }
 
     public function getContent(): string

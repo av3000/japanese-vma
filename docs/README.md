@@ -18,6 +18,7 @@ Read these sources in order before changing the repository:
 |---|---|
 | Mandatory contributor and agent rules | Root and scoped `AGENTS.md` files |
 | Accepted domain language and architecture direction | `CONTEXT.md` |
+| Architecture decisions and the reasoning behind them | [`docs/adr/`](./adr/) |
 | Cross-project synthesis and traceability | [`docs/ai/`](./ai/) |
 | System, application, deployment, and integration views | [`docs/architecture/`](./architecture/) |
 | User-visible behavior and feature migration | [`docs/feature-artifacts/`](./feature-artifacts/) |
@@ -56,6 +57,13 @@ The [evidence manifest](./ai/evidence-manifest.md) maps important claims to thei
 - [Application boundaries](./architecture/application-boundaries.md)
 - [Deployment and runtime](./architecture/deployment-and-runtime.md)
 - [Data and integrations](./architecture/data-and-integrations.md)
+- [Architecture comparison backlog](./architecture/architecture-comparison-backlog.md) — open pattern questions against the two reference solutions, triaged into ADRs or `AGENTS.md` rules
+
+## Architecture Decisions
+
+Records of decisions that are hard to reverse, surprising without context, and the result of a real trade-off. Numbered sequentially; a decision that is merely an enforceable rule belongs in the owning `AGENTS.md` instead.
+
+- [ADR 0001 — Read enrichment lives beside the entity, not on it](./adr/0001-read-enrichment-lives-beside-the-entity.md)
 
 ## Feature Packets
 

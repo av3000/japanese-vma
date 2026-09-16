@@ -4,57 +4,24 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
-use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Comment as PersistenceComment;
 use App\Infrastructure\Persistence\Models\Like;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+/**
+ * Identity reads and writes for Comments.
+ *
+ * Listing a thread - roots, reply previews, a subtree page - belongs to
+ * CommentThreadReaderInterface. A Comment returned from here describes its own
+ * row and nothing else; subtree sizes are attached by the list use case.
+ */
 class CommentRepository implements CommentRepositoryInterface
 {
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments
-    {
-        $query = PersistenceComment::with(['user'])
-            ->where('template_id', $criteria->entityType->getLegacyId())
-            ->where('real_object_id', $criteria->entityId)
-            ->orderBy('created_at', 'DESC');
-
-        $query->withCount('likes');
-
-        if ($viewerUserId !== null) {
-            $query->withExists(['likes as is_liked_by_viewer' => function ($q) use ($viewerUserId) {
-                $q->where('user_id', $viewerUserId);
-            }]);
-        }
-
-        $pagination = $criteria->pagination ?? Pagination::default();
-
-        $paginatedResults = $query->paginate(
-            $pagination->per_page,
-            ['*'],
-            'page',
-            $pagination->page
-        );
-
-        // TODO: Implement include_replies
-        // if ($parentOnly) {
-        //     $query->whereNull('parent_comment_id');
-        // }
-        $domainComments = $paginatedResults->getCollection()->map(function ($persistenceComment) {
-            return CommentMapper::mapToDomain($persistenceComment);
-        });
-
-        $paginatedResults->setCollection($domainComments);
-
-        return Comments::fromEloquentPaginator($paginatedResults);
-    }
-
     public function findByUuid(EntityId $commentUuid): ?DomainComment
     {
         $entity = PersistenceComment::with('user')
@@ -87,7 +54,7 @@ class CommentRepository implements CommentRepositoryInterface
             'content' => $dto->content,
         ]);
 
-        return CommentMapper::mapToDomain($this->reload($persistenceComment->id));
+        return $this->reload($persistenceComment->id);
     }
 
     public function updateContent(int $commentId, string $content): DomainComment
@@ -101,12 +68,17 @@ class CommentRepository implements CommentRepositoryInterface
         $persistenceComment->content = $content;
         $persistenceComment->save();
 
-        return CommentMapper::mapToDomain($this->reload($commentId));
+        return $this->reload($commentId);
     }
 
     /**
      * Breadth-first walk of the reply tree, returning deepest levels first so
      * callers can delete children before their parents.
+     *
+     * Deliberately not routed through CommentDescendantsQueryBuilder: that walk
+     * is depth-capped to bound a read, and a delete that stopped at the cap
+     * would orphan every row below it. Deletion has to reach the whole subtree,
+     * however deep it goes.
      *
      * @return int[]
      */
@@ -168,10 +140,19 @@ class CommentRepository implements CommentRepositoryInterface
         $this->deleteWithLikesByIds($commentIds);
     }
 
-    private function reload(int $commentId): PersistenceComment
+    /**
+     * Re-read a comment after a write.
+     *
+     * The subtree size a write response reports is attached by the list use
+     * case from the thread reader, so both the read and write paths get it from
+     * the same query and cannot disagree.
+     */
+    private function reload(int $commentId): DomainComment
     {
-        return PersistenceComment::with('user')
+        $entity = PersistenceComment::with('user')
             ->withCount('likes')
             ->findOrFail($commentId);
+
+        return CommentMapper::mapToDomain($entity);
     }
 }

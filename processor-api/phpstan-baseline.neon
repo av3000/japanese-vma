@@ -274,12 +274,6 @@ parameters:
 			path: app/Domain/Catalogues/Support/CatalogueTagParser.php
 
 		-
-			message: '#^Deprecated in PHP 8\.1\: Required parameter \$entityType follows optional parameter \$entityId\.$#'
-			identifier: parameter.requiredAfterOptional
-			count: 1
-			path: app/Domain/Comments/DTOs/CommentCriteriaDTO.php
-
-		-
 			message: '#^Deprecated in PHP 8\.0\: Required parameter \$createdAt follows optional parameter \$isLikedByViewer\.$#'
 			identifier: parameter.requiredAfterOptional
 			count: 1
@@ -296,18 +290,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Domain/Comments/Models/Comment.php
-
-		-
-			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Domain/Comments/Models/Comments.php
-
-		-
-			message: '#^Template type U of method App\\Domain\\Comments\\Models\\Comments\:\:transform\(\) is not referenced in a parameter\.$#'
-			identifier: method.templateTypeNotInParameter
-			count: 1
-			path: app/Domain/Comments/Models/Comments.php
 
 		-
 			message: '#^Instanceof between App\\Shared\\Utils\\Paginator\<mixed\> and App\\Shared\\Utils\\Paginator will always evaluate to true\.$#'
@@ -1528,18 +1510,6 @@ parameters:
 			path: app/Http/v1/Comments/Controllers/CommentController.php
 
 		-
-			message: '#^Property App\\Http\\v1\\Comments\\Resources\\CommentResource\:\:\$include_likes is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: app/Http/v1/Comments/Resources/CommentResource.php
-
-		-
-			message: '#^Property App\\Http\\v1\\Comments\\Resources\\CommentResource\:\:\$likes is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: app/Http/v1/Comments/Resources/CommentResource.php
-
-		-
 			message: '#^Call to an undefined method App\\Http\\v1\\JapaneseMaterial\\Kanjis\\Resources\\KanjiCollectionResource\:\:currentPage\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -1755,20 +1725,20 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Comment\:\:\$user\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Infrastructure/Persistence/Repositories/CommentMapper.php
 
 		-
-			message: '#^Access to an undefined property App\\Infrastructure\\Persistence\\Models\\Comment\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 2
+			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Comment model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
 			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Infrastructure\\Persistence\\Models\\Comment model\.$#'
 			identifier: larastan.relationExistence
-			count: 4
-			path: app/Infrastructure/Persistence/Repositories/CommentRepository.php
+			count: 2
+			path: app/Infrastructure/Persistence/Readers/DatabaseCommentThreadReader.php
 
 		-
 			message: '#^Access to an undefined property App\\Domain\\Engagement\\DTOs\\DownloadFilterDTO\:\:\$likeValue\.$#'

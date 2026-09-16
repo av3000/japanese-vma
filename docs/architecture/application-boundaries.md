@@ -1,8 +1,8 @@
 # Application Boundaries
 
 > **Status:** Baseline; verified current and target flows separated
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Last reviewed:** 2026-09-15
+> **Evidence baseline:** Repository working tree inspected on 2026-08-18; layer table refreshed 2026-09-15 for the read-port split
 > **Audience:** Frontend and backend engineers, reviewers, and AI-assisted contributors
 
 ## Boundary Principle
@@ -52,8 +52,9 @@ route
   -> request validation
   -> DTO or value object
   -> application service, action, or policy
-  -> repository interface
-  -> infrastructure repository, mapper, or builder
+  -> repository interface (identity reads, writes)
+     or reader interface (filtered, paginated reads)
+  -> infrastructure repository, reader, mapper, or builder
   -> resource
   -> TypedResults
 ```
@@ -64,9 +65,21 @@ Responsibilities:
 |---|---|---|
 | HTTP | Transport validation, identity extraction, mapping, and response selection | Business orchestration or persistence queries |
 | Application | Use-case orchestration, authorization, transactions, side effects, and repository interfaces | HTTP requests/responses or Eloquent leakage |
+| Application read ports | Filtered, sorted, paginated reads behind a `*ReaderInterface`, returning domain models plus scalar pagination | Writes, and any paginator or query-builder type in the contract |
 | Domain | DTOs, models, value objects, enums, invariants, and typed errors | Laravel transport or persistence types |
-| Infrastructure | Eloquent models, queries, repositories, mappers, and external adapters | Presentation decisions |
+| Infrastructure | Eloquent models, queries, repositories, readers, mappers, and external adapters | Presentation decisions |
 | Shared v1 result layer | Consistent success/failure mapping | Feature-specific business rules |
+
+### Read and write ports
+
+A repository is the write model's data access: load one aggregate by identity, save it. Reads that filter, sort, count or paginate go through a separate `*ReaderInterface` in `Application/{Module}/Interfaces/Readers`, implemented under `Infrastructure/Persistence/Readers`.
+
+Two rules make the split worth having, and the first matters more than the second:
+
+- A domain model is constructed complete from its own row. Per-read enrichment - counts, previews, totals - travels on a `*ListItemDTO` beside it, never as defaulted constructor arguments corrected later. See [ADR 0001](../adr/0001-read-enrichment-lives-beside-the-entity.md).
+- A reader returns domain models and scalar pagination, never a Laravel paginator, so a future implementation over different storage can satisfy the same contract.
+
+Articles and Comments are the current implementations. The split is a direction rather than a finished state: some repositories still expose paginated reads.
 
 ### Representative article write
 

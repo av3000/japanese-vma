@@ -23,7 +23,7 @@ import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { ObjectTemplateType, SavedListType } from '@/shared/constants/enums';
+import { SavedListType } from '@/shared/constants/enums';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.scss';
 
@@ -240,13 +240,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
-					<CommentsBlock
-						readObjectType="article"
-						readObjectUuid={article.uuid}
-						entityId={article.id}
-						entityType={ObjectTemplateType.ARTICLE}
-						entityUuid={article.uuid}
-					/>
+					<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
 				</div>
 			</div>
 

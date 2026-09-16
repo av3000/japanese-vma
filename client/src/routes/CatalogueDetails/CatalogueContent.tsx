@@ -26,7 +26,6 @@ import {
 	isCataloguePdfExportSupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
-import { ObjectTemplateType } from '@/shared/constants/enums';
 
 interface CatalogueContentProps {
 	catalogue: MappedCatalogue;
@@ -233,13 +232,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
 					<Suspense fallback={null}>
-						<LazyCommentsBlock
-							readObjectType="catalogue"
-							readObjectUuid={catalogue.uuid}
-							entityId={catalogue.id}
-							entityType={ObjectTemplateType.LIST}
-							entityUuid={catalogue.uuid}
-						/>
+						<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
 					</Suspense>
 				</div>
 			</div>
