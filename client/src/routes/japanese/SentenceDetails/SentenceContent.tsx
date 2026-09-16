@@ -4,6 +4,7 @@ import { canMutateSentence, readSentenceWriteError, useDeleteSentenceMutation } 
 import type { MappedSentenceDetail } from '@/api/sentences/details';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
@@ -102,6 +103,13 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 						</div>
 					</div>
 				))}
+			</div>
+
+			{/* A sentence cannot be locked, so no `isLocked` is passed; the gate exists only for Post. */}
+			<div className="row justify-content-center mt-5">
+				<div className="col-md-8">
+					<CommentsBlock parent="sentence" entityId={sentence.id} entityUuid={sentence.uuid} />
+				</div>
 			</div>
 
 			<DeleteInstanceModal
