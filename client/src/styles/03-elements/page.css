@@ -21,7 +21,6 @@ html {
 	color: var(--color-text-primary);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	background: var(--color-neutral-100);
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow-y: auto;

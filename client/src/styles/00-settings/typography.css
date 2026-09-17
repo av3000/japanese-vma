@@ -12,7 +12,15 @@
 }
 
 :root {
-	--font-family: Georgia, 'Inter', Arial, sans-serif;
+	/* Aeonik is a licensed font (CoType Foundry) and is not bundled yet; until its files are
+	   added under src/assets/fonts with an @font-face, the stack renders Helvetica/Arial. */
+	--font-family: Aeonik, Helvetica, Arial, sans-serif;
+	--font-family-serif: Georgia, 'Times New Roman', serif;
+	/* Japanese stacks; put lang="ja" on Japanese content so browsers pick Japanese glyph forms. */
+	--font-family-ja:
+		'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, 'Noto Sans JP', var(--font-family);
+	--font-family-ja-serif:
+		'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', 'MS PMincho', var(--font-family-serif);
 	--font-weight-regular: 400;
 	--font-weight-semibold: 600;
 	--line-height-sm: 1;

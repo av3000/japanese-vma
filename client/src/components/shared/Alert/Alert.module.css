@@ -16,7 +16,7 @@
 }
 
 .info {
-	--alert-accent: var(--secondary-brand-color, #3058a4);
+	--alert-accent: var(--color-primary);
 }
 
 .success {

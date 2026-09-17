@@ -8,14 +8,33 @@
 	--color-error: #dc3545;
 	--color-error-hover: #a71d2a;
 	--color-error-disabled: #f29ba5;
-	--color-primary-100: #f9d7b5;
-	--color-primary-200: #f4b87d;
-	--color-primary-300: #ef9845;
-	--color-primary-400: #ea7d22;
-	--color-primary: #e67e22;
-	--color-primary-500: #e67e22;
-	--color-primary-hover: #c4661b;
-	--color-primary-disabled: #f4c6a0;
+	/* Primary: ai (藍) indigo. Palette 6 in docs/design/visual-directions/palette-lab.html.
+	   White on --color-primary is 7.09:1; on --color-primary-hover 10.2:1. */
+	--color-primary-100: #dfe9ef;
+	--color-primary-200: #a7c3d3;
+	--color-primary-300: #4b87a8;
+	--color-primary-400: #2b7092; /* interpolated between 300 and 500 */
+	--color-primary: #165e83;
+	--color-primary-500: #165e83;
+	--color-primary-600: #0f4460;
+	--color-primary-hover: #0f4460;
+	--color-primary-disabled: #a7c3d3;
+	--color-primary-tint: #dfe9ef;
+	/* Pills on indigo */
+	--color-pill-bg: #e8f0f5;
+	--color-pill-fg: #0f4460;
+	--color-pill-border: #c2d6e2;
+
+	/* Accent: shu (朱) vermilion. Reserved for level badges, glyph covers and the JLPT bar;
+	   interaction uses --color-accent (4.55:1 with white), --color-accent-glyph is surface-only (3.31:1). */
+	--color-accent-100: #fbe3d8;
+	--color-accent-200: #f4b49c;
+	--color-accent-glyph: #eb6238;
+	--color-accent: #d2451e;
+	--color-accent-hover: #a83618;
+	--color-accent-900: #8f2e14;
+	--color-badge-accent-bg: #fbe3d8;
+	--color-badge-accent-fg: #a83618;
 	--color-secondary-100: #f2f4f2;
 	--color-secondary-200: #e5e8e5;
 	--color-secondary-300: #d8ddd8;
@@ -42,12 +61,15 @@
 	--color-text-neutral-hover: var(--color-neutral-700);
 	--color-text-neutral-default: var(--color-neutral-900);
 	--color-text-neutral-active: var(--color-neutral-600);
-	--color-text-primary: #212121;
-	--color-text-primary-default: var(--color-primary-500);
-	--color-text-primary-hover: var(--color-primary-400);
+	--color-text-primary: #1c1c1c; /* sumi (墨) ink */
+	--color-text-primary-default: var(--color-primary);
+	--color-text-primary-hover: var(--color-primary-hover);
 	--color-text-primary-focus: var(--color-primary-300);
 	--color-text-primary-active: var(--color-primary-200);
-	--page-background-color: #f5f5f5;
+	--color-link: var(--color-primary);
+	--color-link-hover: var(--color-primary-hover);
+	--color-link-visited: var(--color-primary-600);
+	--page-background-color: #fbfaf5; /* kinari (生成り), undyed */
 }
 
 @media (prefers-color-scheme: dark) {
