@@ -18,10 +18,12 @@ class ArticleFactory extends Factory
 
     public function definition(): array
     {
+        $japanese = fake('ja_JP');
+
         return [
-            'title_jp' => '記事タイトル'.fake()->numberBetween(1, 99999),
+            'title_jp' => $japanese->realTextBetween(20, 80),
             'title_en' => fake()->sentence(4),
-            'content_jp' => '日本語の本文です。'.fake()->paragraph(),
+            'content_jp' => $japanese->realTextBetween(300, 700),
             'content_en' => fake()->paragraphs(2, true),
             'source_link' => fake()->url(),
             'publicity' => PublicityStatus::PUBLIC,
