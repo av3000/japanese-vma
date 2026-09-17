@@ -137,22 +137,17 @@ class LegacyArticleRouteRetirementTest extends TestCase
     }
 
     /**
-     * These share a prefix or a shape with something RET-ART-01 removed and belong to the Catalogue
-     * and Post lanes, which this slice does not touch. `api/user/lists` in particular sits one path
-     * segment away from the retired `api/user/articles`.
+     * These share a prefix or a shape with something RET-ART-01 removed and belong to the Post and
+     * Sentence lanes, which that slice did not touch. The Catalogue witnesses that used to stand
+     * here - `api/user/lists` in particular, one path segment from the retired `api/user/articles` -
+     * were retired in turn by RET-CAT-01, and LegacyCatalogueRouteRetirementTest now owns that line.
      */
     public function test_sibling_legacy_routes_in_other_domains_are_still_registered(): void
     {
         $retained = [
-            ['GET', 'api/user/lists'],
-            ['POST', 'api/user/lists/contain'],
-            ['POST', 'api/user/list/contain'],
-            ['GET', 'api/user/1/lists'],
-            ['GET', 'api/lists'],
-            ['GET', 'api/list/1'],
-            ['POST', 'api/lists/search'],
-            ['POST', 'api/list/1/comment'],
-            ['POST', 'api/list/1/comment/1/like'],
+            ['POST', 'api/sentence'],
+            ['POST', 'api/sentence/1/comment'],
+            ['POST', 'api/sentence/1/comment/1/like'],
             ['GET', 'api/posts'],
             ['GET', 'api/post/1'],
             ['POST', 'api/posts/search'],

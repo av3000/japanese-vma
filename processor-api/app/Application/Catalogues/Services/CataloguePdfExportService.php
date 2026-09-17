@@ -39,9 +39,10 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::WORDS);
     }
 
-    // TODO: Recreate radical and sentence PDF exports here as v1 service-backed
+    // TODO(#303): Recreate radical and sentence PDF exports here as v1 service-backed
     // exports when those kinds are supported; do not route them through
     // CustomListController or any renderer facade.
+    // https://github.com/av3000/japanese-vma/issues/303
     private function export(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser, PdfExportKind $kind): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($catalogueUuid);
