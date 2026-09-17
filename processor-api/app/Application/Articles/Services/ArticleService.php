@@ -35,7 +35,6 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
-use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Shared\Results\Result;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -374,26 +373,6 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::deletionFailed());
         }
-    }
-
-    /**
-     * Get paginated kanjis for article.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator
-     */
-    public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
-    {
-        $pagination = new Pagination($page, $perPage);
-        $article = PersistenceArticle::findOrFail($articleId);
-
-        return $article->kanjis()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
     }
 
     /**

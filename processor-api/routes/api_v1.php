@@ -131,10 +131,14 @@ Route::prefix('v1')->group(function () {
         Route::delete('articles/{uuid}', [ArticleController::class, 'destroy']);
         Route::get('articles/{uuid}/kanjis-pdf', [ArticleController::class, 'exportKanjisPdf']);
         Route::get('articles/{uuid}/words-pdf', [ArticleController::class, 'exportWordsPdf']);
-        Route::post('articles/{id}/toggle-publicity', [ArticleController::class, 'togglePublicity']); // TODO: implement
-
-        // User's Own Articles
-        Route::get('user/articles', [ArticleController::class, 'userArticles']); // TODO: implement
+        // Publicity is a field on PUT articles/{uuid}, not an endpoint. A
+        // `toggle-publicity` route was registered here against a
+        // togglePublicity method that does not exist on this controller, so
+        // every request answered 500; RET-ART-01 removed it along with the
+        // legacy route it shadowed. `user/articles` went the same way -
+        // GET articles?author_uid= already serves it, and the dashboard calls
+        // that today. Guarded by
+        // tests/Feature/Routes/LegacyArticleRouteRetirementTest.php.
 
         // Sentences - Authenticated Actions
         Route::post('sentences', [SentenceController::class, 'store']);
