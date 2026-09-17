@@ -6,7 +6,6 @@ use App\Application\Pdf\PdfRendererInterface;
 use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Http\Models\Article;
 use App\Http\Models\CustomList;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +16,12 @@ use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
+/**
+ * The legacy Article half of this test went with the routes in RET-ART-01; the v1 exports are
+ * covered by tests/Feature/Articles/ArticlePdfExportV1Test.php. The Catalogue routes below are
+ * still registered, and they are the reason this file stays: they share the project PDF renderer
+ * with v1, so a change to that seam has to keep answering for them too.
+ */
 class LegacyPdfExportTest extends TestCase
 {
     use RefreshDatabase;
@@ -31,59 +36,15 @@ class LegacyPdfExportTest extends TestCase
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'api']);
 
         DB::table('objecttemplates')->insert([
-            [
-                'id' => ObjectTemplateType::ARTICLE->getLegacyId(),
-                'title' => ObjectTemplateType::ARTICLE->getTitle(),
-                'entity_type_uuid' => ObjectTemplateType::ARTICLE->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => ObjectTemplateType::LIST->getLegacyId(),
-                'title' => ObjectTemplateType::LIST->getTitle(),
-                'entity_type_uuid' => ObjectTemplateType::LIST->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            'id' => ObjectTemplateType::LIST->getLegacyId(),
+            'title' => ObjectTemplateType::LIST->getTitle(),
+            'entity_type_uuid' => ObjectTemplateType::LIST->value,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->renderer = new LegacyCapturingPdfRenderer;
         $this->app->instance(PdfRendererInterface::class, $this->renderer);
-    }
-
-    public function test_legacy_article_pdf_route_uses_project_pdf_renderer(): void
-    {
-        $author = $this->createUser();
-        $article = new Article([
-            'user_id' => $author->id,
-            'title_jp' => '記事',
-            'title_en' => 'Article',
-            'content_jp' => '本文',
-            'content_en' => 'Body',
-            'source_link' => 'https://example.com/source',
-            'publicity' => 1,
-            'status' => 3,
-        ]);
-        $article->uuid = (string) Str::uuid();
-        $article->entity_type_uuid = ObjectTemplateType::ARTICLE->value;
-        $article->save();
-
-        $this->attachKanjiToArticle($article);
-
-        Passport::actingAs($author, ['*'], 'api');
-
-        $response = $this->get("/api/article/{$article->id}/kanjis-pdf");
-
-        $response->assertOk();
-        $this->assertStringStartsWith('%PDF', $response->getContent());
-        $this->assertStringContainsString('inline', $response->headers->get('content-disposition'));
-        $this->assertStringContainsString('article-kanjis.pdf', $response->headers->get('content-disposition'));
-
-        $document = $this->renderer->lastDocument();
-
-        $this->assertSame('pdf.kanjis.article-kanjis', $document->view);
-        $this->assertSame('article-kanjis.pdf', $document->filename);
-        $this->assertSame($article->id, $document->data['article_id']);
     }
 
     public function test_legacy_list_pdf_route_uses_project_pdf_renderer(): void
@@ -125,16 +86,6 @@ class LegacyPdfExportTest extends TestCase
             'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
-        ]);
-    }
-
-    private function attachKanjiToArticle(Article $article): void
-    {
-        $kanjiId = $this->createKanji();
-
-        DB::table('article_kanji')->insert([
-            'article_id' => $article->id,
-            'kanji_id' => $kanjiId,
         ]);
     }
 

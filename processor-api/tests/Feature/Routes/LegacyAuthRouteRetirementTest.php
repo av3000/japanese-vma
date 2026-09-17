@@ -44,7 +44,9 @@ class LegacyAuthRouteRetirementTest extends TestCase
     public function test_sibling_user_prefixed_routes_are_still_registered(): void
     {
         $retained = [
-            ['GET', 'api/user/articles'],
+            // `api/user/articles` belonged here until RET-ART-01 retired it with the rest of the
+            // Article family. The point this test makes is unchanged: retiring the exact `user`
+            // path never touched its prefix-sharing neighbours.
             ['GET', 'api/user/lists'],
             ['POST', 'api/user/lists/contain'],
             ['POST', 'api/user/list/contain'],

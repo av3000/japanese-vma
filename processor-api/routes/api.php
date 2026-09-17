@@ -28,25 +28,6 @@ Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
     'middleware' => 'auth:api',
 ], function () {
-    // Articles CUD
-    Route::post('article', 'ArticleController@store');
-    Route::put('article/{id}', 'ArticleController@update');
-    Route::delete('article/{id}', 'ArticleController@delete');
-    Route::get('user/articles', 'ArticleController@getUserArticles');
-    Route::post('article/{id}/like', 'ArticleController@likeArticle');
-    Route::post('article/{id}/unlike', 'ArticleController@unlikeArticle');
-    Route::post('article/{id}/checklike', 'ArticleController@checkIfLikedArticle');
-    Route::get('article/{id}/kanjis-pdf', 'ArticleController@generateKanjisPdf');
-    Route::get('article/{id}/words-pdf', 'ArticleController@generateWordsPdf');
-    Route::post('article/{id}/togglepublicity', 'ArticleController@togglePublicity');
-    // Article Comment
-    Route::post('article/{id}/comment', 'ArticleController@storeComment');
-    Route::delete('article/comment/{commentid}', 'ArticleController@deleteComment');
-    Route::put('article/{id}/comment/{commentid}', 'ArticleController@updateComment');
-    Route::post('article/{id}/comment/{commentid}/like', 'ArticleController@likeComment');
-    Route::post('article/{id}/comment/{commentid}/unlike', 'ArticleController@unlikeComment');
-    // Route::post('article/{id}/comment/{commentid}/checklike', 'ArticleController@checkIfLikedComment');
-
     // Lists CUD
     Route::post('list', 'CustomListController@store');
     Route::put('list/{id}', 'CustomListController@update');
@@ -106,9 +87,6 @@ Route::group([
             'middleware' => 'checkRole:admin',
         ],
         function () {
-            Route::post('article/{id}/setstatus', 'ArticleController@setStatus');
-            Route::get('article/{id}/getstatus', 'ArticleController@getStatus');
-            Route::get('articles/pendinglist', 'ArticleController@getArticlesPending');
             Route::post('post/{id}/togglelock', 'PostController@toggleLock');
         }
     );
@@ -141,12 +119,43 @@ Route::group([
 // Guarded by tests/Feature/Routes/LegacyAuthRouteRetirementTest.php, with the v1 contract itself
 // pinned by tests/Feature/Auth/AuthV1Test.php.
 
-// Articles
-Route::get('articles', 'ArticleController@index');
-Route::get('article/{id}', 'ArticleController@show');
-Route::get('article/{id}/kanjis', 'ArticleController@articleKanjis');
-Route::get('article/{id}/words', 'ArticleController@articleWords');
-Route::post('articles/search', 'ArticleController@generateQuery');
+// Articles - retired, nothing left to register here.
+//
+// The whole legacy Article family was retired here (RET-ART-01) once every route had a v1
+// replacement and zero routed React callers:
+//
+//   articles, article/{id}                -> GET  v1/articles, GET v1/articles/{id}
+//   articles/search                       -> GET  v1/articles query filters (AFM-01..AFM-07)
+//   article/{id}/words                    -> GET  v1/articles/{id}/words
+//   article (POST), article/{id} (PUT)    -> POST v1/articles, PUT v1/articles/{uuid}
+//   article/{id} (DELETE)                 -> DELETE v1/articles/{uuid}
+//   article/{id}/kanjis-pdf|words-pdf     -> GET  v1/articles/{uuid}/kanjis-pdf|words-pdf
+//   article/{id}/like|unlike              -> POST v1/like-instance, one idempotent toggle
+//   article/{id}/comment...               -> POST/PUT/DELETE v1/comments
+//   comment like|unlike                   -> POST v1/like-instance
+//   article/{id}/setstatus                -> POST v1/articles/{uuid}/status
+//   articles/pendinglist                  -> GET  v1/articles/pending
+//
+// Four had no same-shaped v1 endpoint because the answer is already on a payload the caller
+// fetches anyway, not because the migration is unfinished:
+//
+//   article/{id}/checklike -> `engagement` on the v1 article detail
+//   article/{id}/getstatus -> `status` on the v1 article detail
+//   article/{id}/kanjis    -> `kanjis` on the detail, `include_kanjis` on the index
+//   user/articles          -> GET v1/articles?author_uid=, which the dashboard already calls
+//
+// `article/{id}/togglepublicity` is replaced by PUT v1/articles/{uuid}, which takes the desired
+// state instead of toggling - the same correction the post lock route made. That also drops a
+// guard that never worked: the legacy check rejected when the caller was not the owner OR not an
+// admin, so an ordinary owner could never reach their own article.
+//
+// ArticleController is gone with these routes - they were its only callers, so the class became
+// unreachable, and App\Http\Requests\Articles\ArticleStoreRequest went with its one route. The
+// global impression and hashtag helpers stay: the Catalogue and Post controllers still route
+// through them. So do the per-class `sortByViewsTotal` and `incrementDownload` copies on those
+// two controllers, which were never shared with this one.
+//
+// Guarded by tests/Feature/Routes/LegacyArticleRouteRetirementTest.php.
 
 // Japanese Resources - public reads retired, nothing left to register here.
 //

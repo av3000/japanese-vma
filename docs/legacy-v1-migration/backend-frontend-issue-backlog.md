@@ -161,8 +161,8 @@ Replace legacy article admin calls in the article detail review UI and dashboard
 
 **Acceptance criteria:**
 
-- [ ] Article status review no longer calls `article/{id}/setstatus`.
-- [ ] Dashboard pending articles no longer calls `articles/pendinglist`.
+- [x] Article status review no longer calls `article/{id}/setstatus`.
+- [x] Dashboard pending articles no longer calls `articles/pendinglist`.
 - [ ] The frontend uses generated v1 clients or a feature API hook that adds real behavior.
 - [ ] No new wrapper is added only to rename a generated client.
 - [ ] Existing article review and dashboard behavior is preserved.
