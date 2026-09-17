@@ -14,7 +14,7 @@ interface SentenceItemProps {
 const SentenceItem: React.FC<SentenceItemProps> = ({ detailIdentifier, sentence, tatoeba_entry, userId }) => {
 	return (
 		<li className={styles.item}>
-			<h3>{sentence}</h3>
+			<h3 lang="ja">{sentence}</h3>
 			<Cluster justify="between" align="start" gap="md">
 				{userId ? (
 					<p>UserAuthor - {userId}</p>

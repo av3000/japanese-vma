@@ -61,14 +61,14 @@
 	--color-text-neutral-hover: var(--color-neutral-700);
 	--color-text-neutral-default: var(--color-neutral-900);
 	--color-text-neutral-active: var(--color-neutral-600);
-	--color-text-primary: #1c1c1c; /* sumi (墨) ink */
+	--color-text-primary: #1e1f21; /* default text, including links */
 	--color-text-primary-default: var(--color-primary);
 	--color-text-primary-hover: var(--color-primary-hover);
 	--color-text-primary-focus: var(--color-primary-300);
 	--color-text-primary-active: var(--color-primary-200);
-	--color-link: var(--color-primary);
-	--color-link-hover: var(--color-primary-hover);
-	--color-link-visited: var(--color-primary-600);
+	--color-link: var(--color-text-primary);
+	--color-link-hover: var(--color-text-primary);
+	--color-link-visited: var(--color-text-primary);
 	--page-background-color: #fbfaf5; /* kinari (生成り), undyed */
 }
 

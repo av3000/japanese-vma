@@ -22,7 +22,8 @@
 		box-shadow 0.2s ease;
 }
 @media (hover: hover) {
-	.button:hover(:not(.variantLinkButton)) {
+	.button:not(.variantLinkButton):hover {
+		text-decoration: none;
 		background: var(--color-primary-hover);
 		transform: translateY(-1px);
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -262,21 +263,13 @@
 	border-color: transparent;
 	color: var(--color-primary);
 }
-.variantLinkButton::after {
-	content: '';
-	width: 100%;
-	height: var(--border-size-sm);
-	position: absolute;
-	top: calc(50% + var(--button-font-size) - 6px);
-	left: 0;
-	background-color: currentColor;
-}
 @media (hover: hover) {
 	.variantLinkButton:hover {
 		background-color: transparent;
 		border-color: transparent;
 		color: var(--color-primary-hover);
-		text-decoration: none;
+		text-decoration: underline;
+		text-underline-offset: 0.15em;
 	}
 }
 .variantLinkButton:active {
@@ -291,10 +284,6 @@
 .variantLinkButton:disabled,
 .variantLinkButton.disabled {
 	color: var(--color-primary-disabled);
-}
-.variantLinkButton:disabled::after,
-.variantLinkButton.disabled::after {
-	opacity: 0.5;
 }
 
 .variantDanger {

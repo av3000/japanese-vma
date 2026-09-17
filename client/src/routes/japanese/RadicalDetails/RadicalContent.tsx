@@ -21,7 +21,7 @@ const RadicalContent = ({ radical }: RadicalContentProps) => {
 				</div>
 				<Grid columns={12} gap="lg">
 					<Grid.Item span={{ base: 12, sm: 6 }}>
-						<h1>
+						<h1 lang="ja">
 							{radical.radical} <br /> {radical.hiragana}
 						</h1>
 					</Grid.Item>
@@ -44,7 +44,7 @@ const RadicalContent = ({ radical }: RadicalContentProps) => {
 						<ul className={styles.relatedList}>
 							{radical.kanjis.map((kanji) => (
 								<li className={styles.relatedRow} key={kanji.uuid}>
-									<h3>{kanji.character}</h3>
+									<h3 lang="ja">{kanji.character}</h3>
 									<span>{kanji.meanings.join(', ')}</span>
 									<Link to={`/kanji/${kanji.uuid}`} className={styles.rowAction}>
 										Open

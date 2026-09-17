@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { ConfirmModal } from '@/components/shared/modals';
 import { useModal } from '@/hooks/useModal';
@@ -61,7 +62,9 @@ const CatalogueKanjiItems: React.FC<CatalogueKanjiItemsProps> = ({
 					<div key={kanji.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
 							<div className={classNames(sharedStyles.characterDisplay, sharedStyles.large)}>
-								<Link to={`/kanji/${kanji.id}`}>{kanji.kanji}</Link>
+								<Link to={`/kanji/${kanji.id}`} lang="ja">
+									{kanji.kanji}
+								</Link>
 							</div>
 
 							{currentUser.id === ownerId && editMode && (
@@ -96,11 +99,7 @@ const CatalogueKanjiItems: React.FC<CatalogueKanjiItemsProps> = ({
 						</div>
 
 						<div className={sharedStyles.metaInfo}>
-							{kanji.jlpt && (
-								<div className={sharedStyles.badge}>
-									<span>N{kanji.jlpt}</span>
-								</div>
-							)}
+							{kanji.jlpt && <LevelBadge level={kanji.jlpt} size="sm" />}
 
 							{kanji.frequency && (
 								<div className={classNames(sharedStyles.badge, sharedStyles.primary)}>

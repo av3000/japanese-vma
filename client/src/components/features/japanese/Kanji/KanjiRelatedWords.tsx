@@ -18,7 +18,9 @@ const KanjiRelatedWords = ({ items, total }: KanjiRelatedWordsProps) => (
 					<li className={styles.relatedResource} key={word.uuid}>
 						<div>
 							<h3>
-								{word.word} <small>{word.furigana}</small>
+								<span lang="ja">
+									{word.word} <small>{word.furigana}</small>
+								</span>
 							</h3>
 							<h3>{word.meanings.slice(0, 3).join(', ')}</h3>
 							{word.jlpt && word.jlpt !== '-' && <p>JLPT: {word.jlpt}</p>}

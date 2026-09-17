@@ -12,8 +12,8 @@
 }
 
 :root {
-	/* Aeonik is a licensed font (CoType Foundry) and is not bundled yet; until its files are
-	   added under src/assets/fonts with an @font-face, the stack renders Helvetica/Arial. */
+	/* Aeonik: drop the woff2 files into public/fonts/ and the @font-face block at the bottom of
+	   this file picks them up. Until then the stack renders Helvetica/Arial. */
 	--font-family: Aeonik, Helvetica, Arial, sans-serif;
 	--font-family-serif: Georgia, 'Times New Roman', serif;
 	/* Japanese stacks; put lang="ja" on Japanese content so browsers pick Japanese glyph forms. */
@@ -28,3 +28,12 @@
 	--line-height-lg: 1.4;
 	--line-height-japanese-article-text: 2.5;
 }
+
+/*
+ * Aeonik web font. Uncomment once the files exist in client/public/fonts/:
+ *   Aeonik-Regular.woff2, Aeonik-Medium.woff2, Aeonik-Bold.woff2
+ *
+ * @font-face { font-family: Aeonik; font-weight: 400; font-display: swap; src: url(/fonts/Aeonik-Regular.woff2) format(woff2); }
+ * @font-face { font-family: Aeonik; font-weight: 500; font-display: swap; src: url(/fonts/Aeonik-Medium.woff2) format(woff2); }
+ * @font-face { font-family: Aeonik; font-weight: 700; font-display: swap; src: url(/fonts/Aeonik-Bold.woff2) format(woff2); }
+ */

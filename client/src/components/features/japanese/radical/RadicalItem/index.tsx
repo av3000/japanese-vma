@@ -16,8 +16,8 @@ interface RadicalItemProps {
 const RadicalItem: React.FC<RadicalItemProps> = ({ detailIdentifier, radical, strokes, meaning, hiragana }) => {
 	return (
 		<li className={styles.item}>
-			<h1>{radical ?? ''}</h1>
-			<h3>{hiragana ?? ''}</h3>
+			<h1 lang="ja">{radical ?? ''}</h1>
+			<h3 lang="ja">{hiragana ?? ''}</h3>
 			<Cluster justify="between" align="start" gap="md">
 				<p>
 					meaning: {meaning ?? ''}, strokes: {strokes ?? ''}

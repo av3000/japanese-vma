@@ -1,20 +1,18 @@
 /* ==========================================================================
    #LINKS
+
+   Links share the default text colour and reveal themselves on hover with an
+   underline. Buttons never underline on hover; link-style buttons do.
    ========================================================================== */
 
 a {
 	color: var(--color-link);
-	text-decoration: underline;
-	text-decoration-thickness: from-font;
-	text-underline-offset: 0.15em;
-}
-
-a:visited {
-	color: var(--color-link-visited);
+	text-decoration: none;
 }
 
 a:hover {
 	color: var(--color-link-hover);
+	text-decoration: underline;
+	text-decoration-thickness: from-font;
+	text-underline-offset: 0.15em;
 }
-
-/* Component links (buttons, cards, nav) opt out of the underline through their own classes. */

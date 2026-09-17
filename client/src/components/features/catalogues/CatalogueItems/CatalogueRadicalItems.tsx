@@ -54,7 +54,9 @@ const CatalogueRadicalItems: React.FC<CatalogueRadicalItemsProps> = ({
 					<div key={radical.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
 							<div className={sharedStyles.characterDisplay}>
-								<Link to={`/radical/${radical.id}`}>{radical.radical}</Link>
+								<Link to={`/radical/${radical.id}`} lang="ja">
+									{radical.radical}
+								</Link>
 							</div>
 
 							{currentUser.id === ownerId && editMode && (

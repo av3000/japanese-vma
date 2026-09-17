@@ -139,7 +139,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 				<ProcessingStatusAlert processing_status={article.processing_status} />
 
-				<h1 className={styles.title}>{article.title_jp}</h1>
+				<h1 className={styles.title} lang="ja">
+					{article.title_jp}
+				</h1>
 
 				<Cluster justify="between" className={styles.meta}>
 					<div>
@@ -186,7 +188,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				</Cluster>
 
 				<img className={styles.cover} src={DefaultArticleImg} alt="Cover" />
-				<p className={styles.articleParagraph}>{article.content_jp}</p>
+				<p className={styles.articleParagraph} lang="ja">
+					{article.content_jp}
+				</p>
 
 				<Cluster as="section" gap="2xs" aria-label="Tags">
 					{article.hashtags?.map((tag) => (

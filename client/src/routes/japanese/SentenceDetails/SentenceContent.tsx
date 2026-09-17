@@ -50,7 +50,7 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 				</div>
 				<Grid columns={12} gap="lg" align="start">
 					<Grid.Item span={{ base: 12, sm: 8 }}>
-						<h4>{sentence.content}</h4>
+						<h4 lang="ja">{sentence.content}</h4>
 						{sentence.user_id ? (
 							<p>User Author - {sentence.user_id}</p>
 						) : (
@@ -101,7 +101,7 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 					<ul className={styles.relatedList}>
 						{sentence.kanjis.map((kanji) => (
 							<li className={styles.relatedRow} key={kanji.uuid}>
-								<h3>{kanji.character}</h3>
+								<h3 lang="ja">{kanji.character}</h3>
 								<span>{kanji.meanings.slice(0, 3).join(', ')}</span>
 								<Link to={`/kanji/${kanji.uuid}`} className={styles.rowAction}>
 									Open

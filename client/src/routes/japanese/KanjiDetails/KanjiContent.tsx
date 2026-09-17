@@ -24,9 +24,13 @@ const KanjiContent = ({ kanji }: KanjiContentProps) => {
 				</div>
 				<Grid columns={12} gap="lg">
 					<Grid.Item span={{ base: 12, sm: 4 }}>
-						<h1>{kanji.character}</h1>
-						<p>Kunyomi: {kanji.display.kunyomi}</p>
-						<p>Onyomi: {kanji.display.onyomi}</p>
+						<h1 lang="ja">{kanji.character}</h1>
+						<p>
+							Kunyomi: <span lang="ja">{kanji.display.kunyomi}</span>
+						</p>
+						<p>
+							Onyomi: <span lang="ja">{kanji.display.onyomi}</span>
+						</p>
 					</Grid.Item>
 					<Grid.Item span={{ base: 12, sm: 4 }}>
 						<h2>{kanji.display.meaning}</h2>

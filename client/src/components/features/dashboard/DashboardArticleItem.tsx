@@ -30,7 +30,9 @@ const DashboardArticleItem: React.FC<DashboardArticleItemProps> = ({
 }) => (
 	<li className={styles.row}>
 		<div>
-			<p className={styles.title}>{title_jp}</p>
+			<p className={styles.title} lang="ja">
+				{title_jp}
+			</p>
 			<Cluster gap="xs">
 				<span className={styles.label}>Tags:</span>
 				<Cluster as="span" gap="3xs">

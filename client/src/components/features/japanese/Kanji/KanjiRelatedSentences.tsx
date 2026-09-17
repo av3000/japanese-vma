@@ -17,7 +17,7 @@ const KanjiRelatedSentences = ({ items, total }: KanjiRelatedSentencesProps) => 
 				{items.map((sentence) => (
 					<li className={styles.relatedResource} key={sentence.uuid}>
 						<div>
-							<p>{sentence.content}</p>
+							<p lang="ja">{sentence.content}</p>
 							{sentence.tatoeba_entry !== null && (
 								<a
 									href={`https://tatoeba.org/en/sentences/show/${sentence.tatoeba_entry}`}

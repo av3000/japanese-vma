@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { Cluster, Grid } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,7 +43,7 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 
 	return (
 		<li className={styles.item}>
-			<h1>{character}</h1>
+			<h1 lang="ja">{character}</h1>
 			<h3>{meaning}</h3>
 			<Grid columns={12} gap="md">
 				<Grid.Item span={{ base: 12, sm: 6 }}>
@@ -51,7 +52,9 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 				</Grid.Item>
 				<Grid.Item span={{ base: 12, sm: 3 }}>
 					<div>frequency: {frequency},</div>
-					<div>jlpt: {jlpt}</div>
+					<div>
+						jlpt: <LevelBadge level={jlpt} size="sm" />
+					</div>
 				</Grid.Item>
 				<Grid.Item span={{ base: 12, sm: 3 }}>
 					<div>parts: {parts},</div>

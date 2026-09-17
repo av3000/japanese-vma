@@ -8,14 +8,6 @@
 	box-shadow: 0 -0.5px 3px rgba(0, 0, 0, 0.1);
 }
 
-.footer a {
-	color: var(--color-text-primary-default);
-}
-
-.footer a:hover {
-	color: var(--color-text-neutral-hover);
-}
-
 .brand {
 	display: inline-block;
 	text-decoration: none;

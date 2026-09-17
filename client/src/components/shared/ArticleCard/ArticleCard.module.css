@@ -66,10 +66,6 @@
 	gap: var(--spacing-xs);
 }
 
-.level {
-	font-size: var(--font-size-heading-4);
-}
-
 .childrenWrapper {
 	height: 100%;
 	display: flex;

@@ -23,8 +23,10 @@ const WordContent = ({ word }: WordContentProps) => {
 				</div>
 				<Grid columns={12} gap="lg">
 					<Grid.Item span={{ base: 12, sm: 4 }}>
-						<h1>{word.word}</h1>
-						<p>Furigana: {word.furigana}</p>
+						<h1 lang="ja">{word.word}</h1>
+						<p>
+							Furigana: <span lang="ja">{word.furigana}</span>
+						</p>
 					</Grid.Item>
 					<Grid.Item span={{ base: 12, sm: 4 }}>
 						<p>Type: {word.word_type}</p>
@@ -49,7 +51,7 @@ const WordContent = ({ word }: WordContentProps) => {
 					<ul className={styles.relatedList}>
 						{word.kanjis.map((kanji) => (
 							<li className={styles.relatedRow} key={kanji.uuid}>
-								<h3>{kanji.character}</h3>
+								<h3 lang="ja">{kanji.character}</h3>
 								<span>{kanji.meanings.slice(0, 3).join(', ')}</span>
 								<Link to={`/kanji/${kanji.uuid}`} className={styles.rowAction}>
 									Open
@@ -65,7 +67,7 @@ const WordContent = ({ word }: WordContentProps) => {
 						{word.articles.map((article) => (
 							<li className={classNames(styles.relatedRow, styles.relatedRowWide)} key={article.uuid}>
 								<div>
-									<h3>{article.title_jp}</h3>
+									<h3 lang="ja">{article.title_jp}</h3>
 									<Cluster gap="2xs">
 										{article.hashtags.map((tag) => (
 											<Chip readonly key={tag.id} title={tag.content} name={tag.content}>

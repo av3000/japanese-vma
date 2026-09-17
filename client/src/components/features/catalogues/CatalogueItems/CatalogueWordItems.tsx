@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { ConfirmModal } from '@/components/shared/modals';
 import { useModal } from '@/hooks/useModal';
@@ -86,11 +87,7 @@ const CatalogueWordItems: React.FC<CatalogueWordItemsProps> = ({
 						</div>
 
 						<div className={sharedStyles.metaInfo}>
-							{word.jlpt && (
-								<div className={sharedStyles.badge}>
-									<span>{word.jlpt}</span>
-								</div>
-							)}
+							{word.jlpt && <LevelBadge level={word.jlpt} size="sm" />}
 
 							{word.word_type && (
 								<div className={sharedStyles.badge}>

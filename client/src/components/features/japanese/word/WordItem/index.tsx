@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { Grid } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,7 +37,7 @@ const WordItem: React.FC<WordItemProps> = ({
 	return (
 		<li className={styles.item}>
 			<Link to={`/word/${detailIdentifier}`}>
-				<ruby className={styles.reading}>
+				<ruby className={styles.reading} lang="ja">
 					{word}
 					<rp>(</rp>
 					<rt>{furigana}</rt>
@@ -50,7 +51,9 @@ const WordItem: React.FC<WordItemProps> = ({
 				<Grid.Item span={{ base: 12, sm: 6 }}>
 					<div>
 						<div>meaning: {meaning}</div>
-						<div>jlpt: {jlpt}</div>
+						<div>
+							jlpt: <LevelBadge level={jlpt} size="sm" />
+						</div>
 					</div>
 					<div>
 						{isAuthenticated && (

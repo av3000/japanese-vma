@@ -30,7 +30,6 @@
 .brand:hover,
 .brand:focus-visible {
 	color: var(--main-brand-color);
-	text-decoration: none;
 }
 
 /* Mobile toggle ---------------------------------------------------------- */
@@ -129,7 +128,8 @@
 
 .link:hover {
 	color: var(--link-hover-color);
-	text-decoration: none;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
 }
 
 .link:focus-visible {

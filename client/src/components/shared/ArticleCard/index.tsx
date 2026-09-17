@@ -9,6 +9,7 @@ import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.j
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { formatDate } from '@/helpers';
 import styles from './ArticleCard.module.css';
@@ -18,14 +19,7 @@ export interface ArticleCardProps {
 	className?: string;
 }
 
-const JLPT_LEVELS: Array<{ key: keyof ArticleResource['jlpt_levels']; label: string }> = [
-	{ key: 'n1', label: 'N1' },
-	{ key: 'n2', label: 'N2' },
-	{ key: 'n3', label: 'N3' },
-	{ key: 'n4', label: 'N4' },
-	{ key: 'n5', label: 'N5' },
-	{ key: 'uncommon', label: 'NA' },
-];
+const JLPT_LEVELS: Array<keyof ArticleResource['jlpt_levels']> = ['n1', 'n2', 'n3', 'n4', 'n5', 'uncommon'];
 
 const shouldShowProcessingBadge = (status: string | undefined): status is LastOperationStatusType => {
 	if (!status || status === LastOperationStatus.completed) return false;
@@ -59,7 +53,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 			<div className={styles.date}>{formatDate(article.created_at, 'ja', true)}</div>
 
 			<Link to={url} title={article.title_jp} className={styles.cardLink}>
-				<p className={styles.title}>{article.title_jp}</p>
+				<p className={styles.title} lang="ja">
+					{article.title_jp}
+				</p>
 			</Link>
 
 			{article.hashtags?.length ? (
@@ -75,14 +71,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 			<div className={styles.childrenWrapper}>
 				<div className={styles.levelRow}>
 					{JLPT_LEVELS.map((level) => (
-						<ruby key={level.key} className={styles.level}>
-							{article.jlpt_levels[level.key]}
-							<rp>(</rp>
-							<rt>
-								<strong>{level.label}</strong>
-							</rt>
-							<rp>)</rp>
-						</ruby>
+						<LevelBadge key={level} level={level} count={article.jlpt_levels[level]} size="sm" />
 					))}
 				</div>
 

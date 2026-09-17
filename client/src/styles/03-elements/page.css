@@ -16,7 +16,7 @@
 html {
 	background-color: var(--page-background-color);
 	font-family: var(--font-family);
-	font-size: var(--font-size-body-md);
+	font-size: var(--font-size-body-lg);
 	line-height: var(--line-height-lg);
 	color: var(--color-text-primary);
 	-webkit-font-smoothing: antialiased;
@@ -33,4 +33,12 @@ html::-webkit-scrollbar {
 html::-webkit-scrollbar-track {
 	background-color: transparent;
 	border: none;
+}
+
+/**
+ * Japanese content. Mark it with lang="ja" so browsers pick Japanese rather than
+ * Chinese glyph forms and use the Japanese font stack.
+ */
+[lang='ja'] {
+	font-family: var(--font-family-ja);
 }

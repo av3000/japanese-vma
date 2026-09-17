@@ -17,7 +17,7 @@ const KanjiRelatedArticles = ({ items, total }: KanjiRelatedArticlesProps) => (
 				{items.map((article) => (
 					<li className={styles.relatedResource} key={article.uuid}>
 						<div>
-							<h3>{article.title_jp}</h3>
+							<h3 lang="ja">{article.title_jp}</h3>
 							{article.hashtags.length > 0 && (
 								<p>{article.hashtags.map((hashtag) => hashtag.content).join(' ')}</p>
 							)}
