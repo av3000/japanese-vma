@@ -59,7 +59,6 @@ class LegacyJapaneseReadRouteRetirementTest extends TestCase
             ['DELETE', 'api/sentence/1/comment/2'],
             ['POST', 'api/sentence/1/comment/2/like'],
             ['POST', 'api/sentence/1/comment/2/unlike'],
-            ['POST', 'api/user/list/contain'],
         ];
 
         foreach ($retained as [$method, $uri]) {
@@ -110,7 +109,7 @@ class LegacyJapaneseReadRouteRetirementTest extends TestCase
 
     public function test_helpers_the_retained_writes_depend_on_survive(): void
     {
-        $kept = ['mb_str_split', 'getKanjiIdsFromText', 'getWordIdsFromText', 'checkIfBelongToList'];
+        $kept = ['mb_str_split', 'getKanjiIdsFromText', 'getWordIdsFromText'];
 
         foreach ($kept as $method) {
             $this->assertTrue(

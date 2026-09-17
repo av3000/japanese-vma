@@ -204,8 +204,8 @@ Replace `client/src/api/catalogues/legacyCatalogues.ts` raw `/list/{id}` lookup 
 
 **Acceptance criteria:**
 
-- [ ] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
-- [ ] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
+- [x] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
+- [x] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
 - [ ] Failed resolution still shows the current "not found or deleted" UX.
 - [ ] Focused frontend tests cover successful legacy redirect and failed resolution.
 - [ ] `npm run typecheck` passes.

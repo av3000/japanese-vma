@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Models\Comment;
-use App\Http\Models\CustomList;
 use App\Http\Models\Kanji;
 use App\Http\Models\Like;
 use App\Http\Models\ObjectTemplate;
 use App\Http\Models\Sentence;
 use App\Http\Models\Word;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class JapaneseDataController extends Controller
@@ -457,43 +455,5 @@ class JapaneseDataController extends Controller
         }
 
         return response()->json(['success' => true, 'word_message' => 'Words were attached to the sentence!']);
-    }
-
-    public function checkIfBelongToList($itemId, $list)
-    {
-        $foundRows = DB::table('customlist_object')->where('list_id', $list->id)->get();
-        foreach ($foundRows as $row) {
-            if ($row->entity_id == $itemId) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function getUserListAndCheckIfListHasItem(Request $request)
-    {
-        $objects = $request->get('objects');
-        $listTypeId = $request->get('listTypeId');
-
-        return response()->json([
-            'objects' => $objects,
-        ]);
-
-        if (auth()->user() !== null) {
-            $list = CustomList::where('user_id', auth()->user()->id)->where('type', $listTypeId)->first();
-            if (! isset($list)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'list not found',
-                ]);
-            }
-
-            foreach ($objects as $object) {
-                $object->isLearned = $this->checkIfBelongToList($object->id, $list);
-            }
-        }
-
-        return $objects;
     }
 }

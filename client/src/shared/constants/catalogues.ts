@@ -11,8 +11,9 @@ export type CataloguePdfExportKind = 'kanji' | 'words';
 
 const CATALOGUE_KANJI_PDF_TYPES = [2, 6] as const;
 const CATALOGUE_WORDS_PDF_TYPES = [3, 7] as const;
-// TODO: Recreate radical and sentence PDF support through generated v1 catalogue
+// TODO(#303): Recreate radical and sentence PDF support through generated v1 catalogue
 // export clients once backend v1 routes/services exist for those export kinds.
+// https://github.com/av3000/japanese-vma/issues/303
 
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
