@@ -22,12 +22,6 @@ parameters:
 			path: app/Application/Articles/Interfaces/Repositories/ArticleRepositoryInterface.php
 
 		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: app/Application/Articles/Jobs/ProcessArticleKanjisJob.php
-
-		-
 			message: '#^Access to constant PROCESSED on an unknown class App\\Domain\\Articles\\Enums\\ArticleStatus\.$#'
 			identifier: class.notFound
 			count: 1
@@ -938,12 +932,6 @@ parameters:
 			identifier: property.phpDocType
 			count: 1
 			path: app/Http/Middleware/EncryptCookies.php
-
-		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 2
-			path: app/Http/Middleware/EnsureHorizonBasicAuth.php
 
 		-
 			message: '#^PHPDoc type array of property App\\Http\\Middleware\\TrimStrings\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\TrimStrings\:\:\$except\.$#'
