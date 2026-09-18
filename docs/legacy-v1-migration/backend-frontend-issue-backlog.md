@@ -451,7 +451,7 @@ Rewrite sentence list/detail read behavior to use generated v1 sentence clients 
 **Acceptance criteria:**
 
 - [ ] `SentencesList` no longer uses `@ts-nocheck`, class state, `next_page_url`, or `apiCall`.
-- [ ] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
+- [x] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
 - [ ] Sentence detail preserves approved related kanjis/words display.
 - [ ] Comment wiring is not expanded in this issue except to avoid breaking the page.
 - [ ] Focused tests cover list and detail read behavior.

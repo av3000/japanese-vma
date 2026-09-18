@@ -176,18 +176,18 @@ class LegacyCatalogueRouteRetirementTest extends TestCase
     }
 
     /**
-     * These share a prefix or a shape with something RET-CAT-01 removed and belong to the Sentence
-     * and Post lanes, which this slice does not touch. The Post comment routes in particular are
-     * line-for-line the same shape as the List comment routes this slice removed.
+     * These share a prefix or a shape with something RET-CAT-01 removed and belong to the Post
+     * lane, which this slice does not touch. The Post comment routes in particular are
+     * line-for-line the same shape as the List comment routes this slice removed. The Sentence
+     * witnesses that used to stand here were retired by RET-SEN-01, and
+     * LegacySentenceRouteRetirementTest now owns that line.
      */
     public function test_sibling_legacy_routes_in_other_domains_are_still_registered(): void
     {
         $retained = [
-            ['POST', 'api/sentence'],
-            ['PUT', 'api/sentence/1'],
-            ['DELETE', 'api/sentence/1'],
-            ['POST', 'api/sentence/1/comment'],
-            ['POST', 'api/sentence/1/comment/1/like'],
+            ['POST', 'api/post'],
+            ['PUT', 'api/post/1'],
+            ['DELETE', 'api/post/1'],
             ['GET', 'api/posts'],
             ['GET', 'api/post/1'],
             ['POST', 'api/posts/search'],

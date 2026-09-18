@@ -24,7 +24,7 @@
 | Like/unlike comment | Legacy article/list/sentence/post controllers | Shared typed engagement boundary. |
 | Create/update/delete post | Legacy PostController | Feature-local v1 post read/write modules. |
 | Lock/unlock post | Legacy admin/moderation route | Authorized v1 moderation contract. |
-| Sentence comment writes | Legacy JapaneseDataController | Generic comment contract after target identity decisions. |
+| Sentence comment writes | Generic v1 comment contract (`POST v1/comments` with `entity_type=sentence`); the legacy JapaneseDataController routes retired in RET-SEN-01. | Reached. |
 
 ## Side Effects and Cache Behavior
 
