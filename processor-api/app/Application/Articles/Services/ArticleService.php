@@ -95,18 +95,13 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                ProcessArticleKanjisJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp
-                );
-
-                ProcessArticleWordsJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $this->articleWordProcessingText($createdDomainArticle),
-                );
-
                 return $createdDomainArticle;
             });
+
+            // Dispatched after the transaction closure so the worker cannot observe the
+            // article before it is committed. The queue connections also set
+            // `after_commit`, so a dispatch inside an outer transaction is still deferred.
+            $this->dispatchContentProcessing($article, reprocessKanjis: true, reprocessWords: true);
 
             return Result::success($article);
         } catch (\Exception $e) {
@@ -247,19 +242,11 @@ class ArticleService implements ArticleServiceInterface
                 return $updatedDomainArticle;
             });
 
-            if ($shouldReprocessContent) {
-                ProcessArticleKanjisJob::dispatch(
-                    $updatedDomainArticle->getUid()->value(),
-                    $dto->content_jp
-                );
-            }
-
-            if ($shouldReprocessWords) {
-                ProcessArticleWordsJob::dispatch(
-                    $updatedDomainArticle->getUid()->value(),
-                    $this->articleWordProcessingText($updatedDomainArticle),
-                );
-            }
+            $this->dispatchContentProcessing(
+                $updatedDomainArticle,
+                reprocessKanjis: $shouldReprocessContent,
+                reprocessWords: $shouldReprocessWords,
+            );
 
             return Result::success(
                 new ArticleUpdateResultDTO(
@@ -278,6 +265,32 @@ class ArticleService implements ArticleServiceInterface
             ]);
 
             return Result::failure(ArticleErrors::updateFailed($e->getMessage()));
+        }
+    }
+
+    /**
+     * Dispatch the content-processing jobs for an article.
+     *
+     * Must be called after the write transaction has returned, never inside the closure,
+     * so create and update dispatch from the same place relative to the commit.
+     */
+    private function dispatchContentProcessing(
+        DomainArticle $article,
+        bool $reprocessKanjis,
+        bool $reprocessWords,
+    ): void {
+        if ($reprocessKanjis) {
+            ProcessArticleKanjisJob::dispatch(
+                $article->getUid()->value(),
+                $article->getContentJp()->value,
+            );
+        }
+
+        if ($reprocessWords) {
+            ProcessArticleWordsJob::dispatch(
+                $article->getUid()->value(),
+                $this->articleWordProcessingText($article),
+            );
         }
     }
 
