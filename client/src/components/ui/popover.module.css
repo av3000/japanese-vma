@@ -8,7 +8,8 @@
 	z-index: var(--z-index-overlay-full);
 	background-color: var(--color-neutral-0);
 	color: var(--color-neutral-900);
-	border: var(--border-size-sm) solid color-mix(in srgb, var(--color-neutral-900) 10%, transparent);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-color: color-mix(in srgb, var(--color-neutral-900) 10%, transparent);
 	border-radius: var(--border-radius-md);
 	box-shadow: var(--box-shadow-default);
 	font-size: var(--font-size-body-md);

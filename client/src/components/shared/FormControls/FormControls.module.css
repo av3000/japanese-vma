@@ -154,3 +154,11 @@
 	margin: 0;
 	accent-color: var(--color-primary);
 }
+
+.checkboxInvalid {
+	color: var(--color-error);
+}
+
+.checkboxInvalid input {
+	outline: var(--border-size-sm) solid var(--color-error);
+}

@@ -101,15 +101,17 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function 
 export type CheckboxProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & {
 	label: React.ReactNode;
 	wrapperClassName?: string;
+	/** Marks the checkbox invalid (`aria-invalid`, red label). */
+	isInvalid?: boolean;
 };
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
-	{ label, wrapperClassName, ...rest },
+	{ label, wrapperClassName, isInvalid, ...rest },
 	ref,
 ) {
 	return (
-		<label className={classNames(styles.checkbox, wrapperClassName)}>
-			<input ref={ref} type="checkbox" {...rest} />
+		<label className={classNames(styles.checkbox, isInvalid && styles.checkboxInvalid, wrapperClassName)}>
+			<input ref={ref} type="checkbox" aria-invalid={isInvalid || undefined} {...rest} />
 			<span>{label}</span>
 		</label>
 	);

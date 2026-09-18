@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { useOnClickAway } from '@/hooks/useOnClickAway';
 import styles from './Header.module.css';
 import { NavGroup } from './NavGroup';
 
@@ -15,19 +16,40 @@ const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 	const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 	const { pathname } = useLocation();
+	const navRef = React.useRef<HTMLElement>(null);
+	const toggleRef = React.useRef<HTMLButtonElement>(null);
 
 	React.useEffect(() => {
 		setIsMenuOpen(false);
 	}, [pathname]);
 
+	const closeMenu = React.useCallback(() => setIsMenuOpen(false), []);
+	useOnClickAway(navRef, closeMenu, isMenuOpen);
+
+	// Escape closes the collapsed (mobile) menu and returns focus to its toggle.
+	React.useEffect(() => {
+		if (!isMenuOpen) return;
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			const target = event.target as Node | null;
+			if (target && navRef.current?.contains(target)) {
+				setIsMenuOpen(false);
+				toggleRef.current?.focus();
+			}
+		};
+		document.addEventListener('keydown', handleKeyDown);
+		return () => document.removeEventListener('keydown', handleKeyDown);
+	}, [isMenuOpen]);
+
 	return (
 		<header className={styles.header}>
-			<nav className={styles.nav} aria-label="Main">
+			<nav ref={navRef} className={styles.nav} aria-label="Main">
 				<Link to="/" className={styles.brand}>
 					JPLearning
 				</Link>
 
 				<button
+					ref={toggleRef}
 					type="button"
 					className={styles.toggle}
 					aria-expanded={isMenuOpen}

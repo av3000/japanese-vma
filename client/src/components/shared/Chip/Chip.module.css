@@ -11,3 +11,7 @@
 	max-width: 150px;
 	font-size: var(--font-size-body-sm);
 }
+
+.removeIcon {
+	margin-left: var(--spacing-2xs);
+}

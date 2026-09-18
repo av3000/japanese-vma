@@ -6,9 +6,11 @@
 	gap: var(--spacing-sm);
 	align-items: flex-start;
 	padding: var(--spacing-sm) var(--spacing-md);
-	border: var(--border-size-sm) solid color-mix(in srgb, var(--alert-accent) 35%, transparent);
+	border: var(--border-size-sm) solid var(--alert-accent);
+	border-color: color-mix(in srgb, var(--alert-accent) 35%, transparent);
 	border-left-width: var(--size-xs);
 	border-radius: var(--border-radius-sm);
+	background-color: var(--color-neutral-100);
 	background-color: color-mix(in srgb, var(--alert-accent) 12%, var(--color-neutral-0));
 	color: var(--alert-color);
 	font-size: var(--font-size-body-md);

@@ -8,6 +8,7 @@
 	padding: 0 var(--button-padding-x);
 	position: relative;
 	cursor: pointer;
+	text-decoration: none;
 	background-color: var(--color-primary);
 	border: var(--border-size-sm) solid transparent;
 	border-radius: var(--border-radius-md);

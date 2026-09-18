@@ -41,11 +41,13 @@
 .badge:focus-visible {
 	outline: none;
 	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px var(--color-primary-200);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
 .badge[aria-invalid='true'] {
 	border-color: var(--color-error);
+	box-shadow: 0 0 0 3px var(--color-error-disabled);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
 }
 
@@ -79,6 +81,7 @@
 
 .destructive:focus-visible {
 	border-color: var(--color-error);
+	box-shadow: 0 0 0 3px var(--color-error-disabled);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
 }
 

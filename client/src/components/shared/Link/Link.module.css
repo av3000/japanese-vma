@@ -1,6 +1,7 @@
 .link {
 	display: inline-flex;
 	align-items: center;
+	text-decoration: none;
 	transition: var(--ease-base) var(--duration-sm) color;
 }
 .link:focus-visible {
@@ -18,6 +19,7 @@
 
 .richTextLink {
 	color: var(--color-text-primary-default);
+	display: inline;
 	text-decoration: underline;
 	transition: color var(--ease-base) var(--duration-sm);
 }
@@ -60,4 +62,8 @@
 
 .weightBold {
 	font-weight: var(--font-weight-semibold);
+}
+
+.externalIcon {
+	margin-left: var(--spacing-3xs);
 }

@@ -12,9 +12,9 @@
 }
 
 :root {
-	/* Aeonik files are supplied per machine in public/fonts (see its README); the @font-face
-	   rules are at the bottom of this file. Without the files the stack renders Helvetica/Arial. */
-	--font-family: Aeonik, Helvetica, Arial, sans-serif;
+	/* IBM Plex Mono (OFL) is bundled through @fontsource/ibm-plex-mono, imported in main.tsx and the
+	   Storybook preview, so every build ships the same font. Fallbacks are metric-compatible monospaces. */
+	--font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 	--font-family-serif: Georgia, 'Times New Roman', serif;
 	/* Japanese stacks; put lang="ja" on Japanese content so browsers pick Japanese glyph forms. */
 	--font-family-ja:
@@ -27,26 +27,4 @@
 	--line-height-md: 1.2;
 	--line-height-lg: 1.4;
 	--line-height-japanese-article-text: 2.5;
-}
-
-/* Aeonik web font. Files live in public/fonts (gitignored, licensed per machine). */
-@font-face {
-	font-family: Aeonik;
-	font-weight: 400;
-	font-display: swap;
-	src: url('/fonts/Aeonik-Regular.woff2') format('woff2');
-}
-
-@font-face {
-	font-family: Aeonik;
-	font-weight: 500;
-	font-display: swap;
-	src: url('/fonts/Aeonik-Medium.woff2') format('woff2');
-}
-
-@font-face {
-	font-family: Aeonik;
-	font-weight: 700;
-	font-display: swap;
-	src: url('/fonts/Aeonik-Bold.woff2') format('woff2');
 }

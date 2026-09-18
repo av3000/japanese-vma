@@ -71,7 +71,7 @@ export const Chip: React.FunctionComponent<ChipProps> = ({
 			onClick={handleClick}
 		>
 			<div className={classNames(styles.chipTitle, 'u-ellipsis')}>{children}</div>
-			{!readonly && <Icon className={'u-ml-2xs'} name={'removeSolid'} size={'sm'} />}
+			{!readonly && <Icon className={styles.removeIcon} name={'removeSolid'} size={'sm'} />}
 		</Button>
 	);
 };

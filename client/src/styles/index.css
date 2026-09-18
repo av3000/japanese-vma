@@ -22,18 +22,7 @@
 @import './03-elements/links.css';
 @import './03-elements/list.css';
 @import './03-elements/page.css';
-@import './99-utilities/container.css';
 @import './99-utilities/ellipsis.css';
-@import './99-utilities/grid.css';
 @import './99-utilities/hide.css';
-@import './99-utilities/scroll-wrapper.css';
-@import './99-utilities/spacings.css';
 @import './99-utilities/spinner.css';
-@import './99-utilities/titles.css';
-
-/* Adjust the fallback font so the swap to the web font shifts layout less. Must follow the imports. */
-@font-face {
-	font-family: Arial;
-	src: local('Arial');
-	size-adjust: 107%;
-}
+@import './99-utilities/text.css';

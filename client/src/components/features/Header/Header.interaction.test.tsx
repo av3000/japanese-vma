@@ -117,4 +117,21 @@ describe('Header navigation semantics', () => {
 		click(toggle);
 		expect(toggle.getAttribute('aria-expanded')).toBe('false');
 	});
+
+	it('closes the mobile menu on Escape (focus back to the toggle) and on outside click', () => {
+		const toggle = must(container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]'));
+		click(toggle);
+		const firstLink = must(container.querySelector<HTMLAnchorElement>('#primary-navigation a'));
+		firstLink.focus();
+		keydown(firstLink, 'Escape');
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		expect(document.activeElement).toBe(toggle);
+
+		click(toggle);
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		act(() => {
+			document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+		});
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+	});
 });

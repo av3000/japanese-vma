@@ -8,8 +8,11 @@
 	--color-error: #dc3545;
 	--color-error-hover: #a71d2a;
 	--color-error-disabled: #f29ba5;
-	/* Primary: ai (藍) indigo. Palette 6 in docs/design/visual-directions/palette-lab.html.
-	   White on --color-primary is 7.09:1; on --color-primary-hover 10.2:1. */
+	/* Primary: ai (藍) indigo, from a two-colour scheme with shu (朱) vermilion below.
+	   Chosen over the previous orange (#e67e22, 2.85:1 white-on-button, failed AA) and over the single-red
+	   candidates because indigo carries navigation and buttons with room to spare while the red stays a
+	   deliberate accent. Contrast, white text on: --color-primary 7.09:1, --color-primary-hover 10.2:1.
+	   The 100..600 steps are the tint/shade ladder of the same hue; 400 is interpolated. */
 	--color-primary-100: #dfe9ef;
 	--color-primary-200: #a7c3d3;
 	--color-primary-300: #4b87a8;
@@ -25,8 +28,9 @@
 	--color-pill-fg: #0f4460;
 	--color-pill-border: #c2d6e2;
 
-	/* Accent: shu (朱) vermilion. Reserved for level badges, glyph covers and the JLPT bar;
-	   interaction uses --color-accent (4.55:1 with white), --color-accent-glyph is surface-only (3.31:1). */
+	/* Accent: shu (朱) vermilion, the torii-gate red. Reserved for JLPT level badges, glyph covers and the
+	   JLPT bar so it always means "level". White on --color-accent 4.55:1 (AA); --color-accent-glyph is a
+	   surface colour only (3.31:1, large text or fills). --color-accent-hover 7.2:1 doubles as badge text. */
 	--color-accent-100: #fbe3d8;
 	--color-accent-200: #f4b49c;
 	--color-accent-glyph: #eb6238;
@@ -44,8 +48,8 @@
 	--color-secondary-disabled: #b5bcc2;
 	--color-neutral-0: #ffffff;
 	--color-neutral-100: #f8f9fa;
-	--color-neutral-100-alpha: rgba(33, 33, 33, 0.0509803922);
-	--color-neutral-200-alpha: rgba(33, 33, 33, 0.1019607843);
+	--color-neutral-100-alpha: rgba(33, 33, 33, 0.05);
+	--color-neutral-200-alpha: rgba(33, 33, 33, 0.1);
 	--color-neutral-200: #e9ecef;
 	--color-neutral-300: #dee2e6;
 	--color-neutral-400: #ced4da;
@@ -69,7 +73,7 @@
 	--color-link: var(--color-text-primary);
 	--color-link-hover: var(--color-text-primary);
 	--color-link-visited: var(--color-text-primary);
-	--page-background-color: #fbfaf5; /* kinari (生成り), undyed */
+	--page-background-color: #fbfaf5; /* kinari (生成り), undyed cloth: warm white instead of the cool #f8f9fa */
 }
 
 @media (prefers-color-scheme: dark) {
