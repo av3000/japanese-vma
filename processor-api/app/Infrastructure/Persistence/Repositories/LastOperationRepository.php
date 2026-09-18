@@ -6,6 +6,7 @@ use App\Application\LastOperations\Interfaces\Repositories\LastOperationReposito
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\LastOperationState;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 
@@ -47,6 +48,37 @@ class LastOperationRepository implements LastOperationRepositoryInterface
             ->unique('processable_id'); // Laravel collection method to keep only the first (latest) per ID
     }
 
+    public function getLatestRetryable(EntityId $entityId, string $taskType): ?LastOperationState
+    {
+        return LastOperationState::where('processable_id', $entityId->value())
+            ->where('task_type', $taskType)
+            ->whereIn('status', [
+                LastOperationStatus::PENDING->value,
+                LastOperationStatus::PROCESSING->value,
+                LastOperationStatus::FAILED->value,
+            ])
+            ->latest('id')
+            ->first();
+    }
+
+    public function getLatestNonTerminal(EntityId $entityId, string $taskType): ?LastOperationState
+    {
+        return LastOperationState::where('processable_id', $entityId->value())
+            ->where('task_type', $taskType)
+            ->whereIn('status', LastOperationStatus::nonTerminalValues())
+            ->latest('id')
+            ->first();
+    }
+
+    public function getStaleNonTerminal(DateTimeInterface $before): Collection
+    {
+        return LastOperationState::query()
+            ->whereIn('status', LastOperationStatus::nonTerminalValues())
+            ->where('updated_at', '<', $before)
+            ->orderBy('id')
+            ->get();
+    }
+
     public function findById(int $id): ?LastOperationState
     {
         return LastOperationState::find($id);
@@ -56,7 +88,7 @@ class LastOperationRepository implements LastOperationRepositoryInterface
     {
         $state->update([
             'status' => $status,
-            'metadata' => array_merge($state->metadata ?? [], $metadata) // Merge new metadata with old
+            'metadata' => array_merge($state->metadata ?? [], $metadata), // Merge new metadata with old
         ]);
     }
 }
