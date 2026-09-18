@@ -34,6 +34,8 @@
 }
 
 .date {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
 	font-size: var(--font-size-body-sm);
 	color: var(--color-neutral-600);
 	margin-top: var(--spacing-2xs);
@@ -75,6 +77,8 @@
 }
 
 .metaInfo {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
 	display: flex;
 	justify-content: center;
 	flex-wrap: wrap;

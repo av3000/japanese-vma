@@ -1,4 +1,6 @@
 .badge {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-3xs);

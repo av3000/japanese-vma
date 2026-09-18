@@ -84,6 +84,8 @@
 }
 
 .metaInfo {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--size-sm);
@@ -153,6 +155,8 @@
 }
 
 .statItem {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
 	display: flex;
 	align-items: center;
 	color: var(--color-neutral-600);

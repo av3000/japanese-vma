@@ -12,13 +12,17 @@
 }
 
 :root {
-	/* IBM Plex Mono (OFL) is bundled through @fontsource/ibm-plex-mono, imported in main.tsx and the
-	   Storybook preview, so every build ships the same font. Fallbacks are metric-compatible monospaces. */
-	--font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+	/* IBM Plex (OFL) is bundled through @fontsource, imported in main.tsx and the Storybook preview, so
+	   every build ships the same fonts. Sans for body text; Mono for counts, dates and readings. */
+	--font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+	--font-family-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 	--font-family-serif: Georgia, 'Times New Roman', serif;
 	/* Japanese stacks; put lang="ja" on Japanese content so browsers pick Japanese glyph forms. */
+	/* Plex Mono has no kana or kanji, so it is listed first only to render Latin letters and digits inside
+	   Japanese text in mono; the Japanese glyphs come from the system stacks that follow. */
 	--font-family-ja:
-		'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, 'Noto Sans JP', var(--font-family);
+		'IBM Plex Mono', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, 'Noto Sans JP',
+		var(--font-family-mono);
 	--font-family-ja-serif:
 		'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', 'MS PMincho', var(--font-family-serif);
 	--font-weight-regular: 400;
