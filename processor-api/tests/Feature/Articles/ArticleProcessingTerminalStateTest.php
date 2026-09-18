@@ -104,8 +104,8 @@ class ArticleProcessingTerminalStateTest extends TestCase
 
         Event::assertDispatched(
             AsyncLastOperationStatusUpdated::class,
-            fn (AsyncLastOperationStatusUpdated $event): bool => $event->operationState->is($row)
-                && $event->operationState->status === LastOperationStatus::FAILED,
+            fn (AsyncLastOperationStatusUpdated $event): bool => $event->snapshot['id'] === $row->id
+                && $event->status() === LastOperationStatus::FAILED,
         );
     }
 

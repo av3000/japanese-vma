@@ -29,11 +29,16 @@ class LastOperationService implements LastOperationServiceInterface
     // TODO: taskType should be typed values from consts list of actions that can be done with specific instance. For example, 'article' entityType can have 'kanji_extraction', 'words_extraction' or other possible actions which will be queable and takes longer time of period than simple update of entity metadata.
     public function startOperation(EntityId $entityId, string $entityType, string $taskType): LastOperationState
     {
-        return $this->repository->start(
+        $state = $this->repository->start(
             $entityId,
             $entityType,
             $taskType
         );
+
+        // Clients should see `pending` too, not only the transitions that follow.
+        AsyncLastOperationStatusUpdated::dispatch(...self::snapshotArguments($state));
+
+        return $state;
     }
 
     public function updateStatus(int $id, LastOperationStatus $status, array $metadata = []): void
@@ -93,15 +98,26 @@ class LastOperationService implements LastOperationServiceInterface
         return $stale->count();
     }
 
+    /**
+     * One UPDATE, then broadcast a snapshot of the in-memory model. Eloquent already applies the
+     * new status, merged metadata and `updated_at` to the instance on save, so no re-read is needed
+     * and the payload cannot drift from what was just written.
+     */
     private function transition(LastOperationState $state, LastOperationStatus $status, array $metadata): void
     {
         $this->repository->update($state, $status, $metadata);
 
-        // Refresh model to get latest timestamp/data
-        $state->refresh();
+        AsyncLastOperationStatusUpdated::dispatch(...self::snapshotArguments($state));
+    }
 
-        // Fire WebSocket Event
-        AsyncLastOperationStatusUpdated::dispatch($state);
+    /**
+     * @return array{entityUuid: string, snapshot: array<string, mixed>}
+     */
+    private static function snapshotArguments(LastOperationState $state): array
+    {
+        $event = AsyncLastOperationStatusUpdated::fromState($state);
+
+        return ['entityUuid' => $event->entityUuid, 'snapshot' => $event->snapshot];
     }
 
     /**
