@@ -3,6 +3,7 @@
 namespace Tests\Unit\Pdf;
 
 use Illuminate\Support\Facades\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -27,9 +28,7 @@ class PdfFontAvailabilityTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider pdfLayoutProvider
-     */
+    #[DataProvider('pdfLayoutProvider')]
     public function test_pdf_layout_font_faces_resolve_to_files_on_disk(string $layout): void
     {
         $paths = $this->fontFaceSourcePaths($layout);
