@@ -7,8 +7,7 @@ namespace Tests\Feature\Console;
 use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
 use App\Console\Commands\SweepStaleArticleProcessing;
 use App\Domain\Shared\Enums\LastOperationStatus;
-use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Models\LastOperationState;
+use App\Infrastructure\Persistence\Models\ProcessingState;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,13 +39,14 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
         foreach ([$staleProcessing, $stalePending] as $swept) {
             $swept->refresh();
             $this->assertSame(LastOperationStatus::FAILED, $swept->status);
-            $this->assertSame('stale', $swept->metadata['error']);
+            $this->assertSame('stale', $swept->error_code);
+            $this->assertSame('no heartbeat', $swept->error_message);
             $this->assertSame('no heartbeat', $swept->metadata['reason']);
         }
 
         $this->assertSame(LastOperationStatus::PROCESSING, $freshProcessing->refresh()->status);
         $this->assertSame(LastOperationStatus::COMPLETED, $oldCompleted->refresh()->status);
-        $this->assertSame([], $oldFailed->refresh()->metadata, 'Already-failed rows must not be rewritten.');
+        $this->assertNull($oldFailed->refresh()->error_code, 'Already-failed rows must not be rewritten.');
 
         Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 2);
     }
@@ -76,18 +76,19 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
         $this->assertGreaterThan(120 + config('queue.connections.redis.retry_after'), SweepStaleArticleProcessing::DEFAULT_OLDER_THAN_SECONDS);
     }
 
-    private function insertOperation(LastOperationStatus $status, int $ageSeconds): LastOperationState
+    private function insertOperation(LastOperationStatus $status, int $ageSeconds): ProcessingState
     {
-        $row = LastOperationState::create([
-            'processable_id' => (string) Str::uuid(),
-            'processable_type' => PersistenceArticle::class,
-            'task_type' => 'kanji_extraction',
+        $row = ProcessingState::create([
+            'entity_type' => 'article',
+            'entity_id' => (string) Str::uuid(),
+            'task_type' => 'article_content_processing',
             'status' => $status,
+            'content_version' => 1,
             'metadata' => [],
         ]);
 
         // Eloquent refreshes updated_at on save, so age the row with a raw update.
-        DB::table('last_operations')
+        DB::table('processing_states')
             ->where('id', $row->id)
             ->update(['updated_at' => now()->subSeconds($ageSeconds)]);
 

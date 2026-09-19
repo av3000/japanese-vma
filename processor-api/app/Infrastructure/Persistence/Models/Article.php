@@ -63,6 +63,7 @@ class Article extends Model
         'n4',
         'n5',
         'uncommon',
+        'content_version',
     ];
 
     protected $casts = [
@@ -74,6 +75,7 @@ class Article extends Model
         'n4' => 'integer',
         'n5' => 'integer',
         'uncommon' => 'integer',
+        'content_version' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

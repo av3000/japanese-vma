@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Application\LastOperations\Events;
 
+use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
-use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Pushed to clients every time an operation row is written.
+ * Pushed to clients every time a processing-state row is written.
  *
- * Broadcast synchronously from a snapshot taken at write time. The previous queued variant
- * re-hydrated the Eloquent model when the broadcast job ran, which on a single worker process
- * meant clients received the final status twice and the intermediate ones never (audit F-08).
+ * Broadcast synchronously from a snapshot taken at write time (audit F-08). Alias and channel
+ * are unchanged from the pre-ADR-0001 event so the frontend needs no change; P4-1 versions it.
  *
  * @phpstan-type Snapshot array{
  *     id: int,
@@ -41,19 +40,27 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     ) {
     }
 
-    public static function fromState(LastOperationState $state): self
+    public static function fromDto(ArticleProcessingStateDTO $state): self
     {
-        return new self(
-            entityUuid: (string) $state->processable_id,
-            snapshot: [
-                'id' => (int) $state->id,
-                'type' => (string) $state->task_type,
+        return new self(...self::argumentsFromDto($state));
+    }
+
+    /**
+     * @return array{entityUuid: string, snapshot: Snapshot}
+     */
+    public static function argumentsFromDto(ArticleProcessingStateDTO $state): array
+    {
+        return [
+            'entityUuid' => $state->entityId,
+            'snapshot' => [
+                'id' => $state->id,
+                'type' => $state->taskType,
                 'status' => $state->status,
                 'metadata' => $state->metadata ?? [],
-                'created_at' => $state->created_at?->toIso8601String(),
-                'updated_at' => $state->updated_at?->toIso8601String(),
+                'created_at' => $state->createdAt?->format('c'),
+                'updated_at' => $state->updatedAt?->format('c'),
             ],
-        );
+        ];
     }
 
     public function status(): LastOperationStatus
@@ -62,7 +69,7 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     }
 
     /**
-     * Channel: "private-last_operations.{article uuid}".
+     * Channel: "private-last_operations.{entity uuid}".
      *
      * @return array<int, PrivateChannel>
      */

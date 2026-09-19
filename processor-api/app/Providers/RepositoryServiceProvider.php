@@ -7,8 +7,8 @@ use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInte
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
-
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
+
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
@@ -20,7 +20,7 @@ use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiReposit
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
-use App\Application\LastOperations\Interfaces\Repositories\LastOperationRepositoryInterface;
+use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
@@ -33,10 +33,10 @@ use App\Infrastructure\Persistence\Repositories\CommentRepository;
 use App\Infrastructure\Persistence\Repositories\DownloadRepository;
 use App\Infrastructure\Persistence\Repositories\HashtagRepository;
 use App\Infrastructure\Persistence\Repositories\KanjiRepository;
-use App\Infrastructure\Persistence\Repositories\LastOperationRepository;
 use App\Infrastructure\Persistence\Repositories\LikeRepository;
 use App\Infrastructure\Persistence\Repositories\LikeTargetRepository;
 use App\Infrastructure\Persistence\Repositories\PostRepository;
+use App\Infrastructure\Persistence\Repositories\ProcessingStateRepository;
 use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 use App\Infrastructure\Persistence\Repositories\RoleRepository;
 use App\Infrastructure\Persistence\Repositories\SentenceRepository;
@@ -49,6 +49,8 @@ class RepositoryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(ProcessingStateRepositoryInterface::class, ProcessingStateRepository::class);
+
         $this->app->singleton(
             ArticleRepositoryInterface::class,
             ArticleRepository::class
@@ -69,11 +71,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             PostRepositoryInterface::class,
             PostRepository::class
-        );
-
-        $this->app->singleton(
-            LastOperationRepositoryInterface::class,
-            LastOperationRepository::class
         );
 
         $this->app->singleton(

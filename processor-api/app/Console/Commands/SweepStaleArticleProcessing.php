@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use Illuminate\Console\Command;
 
 class SweepStaleArticleProcessing extends Command
@@ -20,11 +20,11 @@ class SweepStaleArticleProcessing extends Command
 
     protected $description = 'Mark article processing operations that stopped reporting progress as failed so clients never wait forever';
 
-    public function handle(LastOperationServiceInterface $lastOperations): int
+    public function handle(ProcessingStateServiceInterface $states): int
     {
         $olderThan = max(1, (int) $this->option('older-than'));
 
-        $swept = $lastOperations->sweepStale($olderThan);
+        $swept = $states->sweepStale($olderThan);
 
         $this->info("Swept {$swept} stale processing operation(s) older than {$olderThan} seconds.");
 

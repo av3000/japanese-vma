@@ -106,7 +106,7 @@ class ArticleListServiceTest extends TestCase
     public function test_it_skips_processing_state_when_not_included(): void
     {
         $processingStates = $this->createMock(ArticleProcessingStateReaderInterface::class);
-        $processingStates->expects($this->never())->method('latestKanjiExtractionStates');
+        $processingStates->expects($this->never())->method('currentStates');
 
         // relatedPanel() still wants stats and hashtags; only processing state is off.
         $engagement = $this->createMock(EngagementServiceInterface::class);
@@ -204,7 +204,7 @@ class ArticleListServiceTest extends TestCase
     private function neverCalledProcessingStateReader(): ArticleProcessingStateReaderInterface
     {
         $reader = $this->createMock(ArticleProcessingStateReaderInterface::class);
-        $reader->method('latestKanjiExtractionStates')->willReturn([]);
+        $reader->method('currentStates')->willReturn([]);
 
         return $reader;
     }

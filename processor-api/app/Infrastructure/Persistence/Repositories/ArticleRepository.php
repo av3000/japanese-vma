@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
+use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -367,6 +368,40 @@ class ArticleRepository implements ArticleRepositoryInterface
                     DB::table('article_word')->insert($chunk);
                 }
             }
+        });
+    }
+
+    public function findProcessingSource(EntityId $articleUuid): ?ArticleProcessingSourceDTO
+    {
+        $row = PersistenceArticle::query()
+            ->where('uuid', $articleUuid->value())
+            ->first(['id', 'uuid', 'content_version', 'title_jp', 'content_jp']);
+
+        if ($row === null) {
+            return null;
+        }
+
+        return new ArticleProcessingSourceDTO(
+            id: (int) $row->id,
+            uuid: (string) $row->uuid,
+            contentVersion: (int) $row->content_version,
+            titleJp: (string) $row->title_jp,
+            contentJp: (string) $row->content_jp,
+        );
+    }
+
+    public function bumpContentVersion(int $articleId): int
+    {
+        PersistenceArticle::query()->whereKey($articleId)->increment('content_version');
+
+        return (int) PersistenceArticle::query()->whereKey($articleId)->value('content_version');
+    }
+
+    public function syncContentProcessing(int $articleId, array $kanjiIds, array $wordIds, JlptLevels $jlptLevels): void
+    {
+        DB::transaction(function () use ($articleId, $kanjiIds, $wordIds, $jlptLevels): void {
+            $this->syncKanjis($articleId, $kanjiIds, $jlptLevels);
+            $this->syncWords($articleId, $wordIds);
         });
     }
 }

@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Terminal-state guarantee for article processing (issue #245): a job killed by a
-        // timeout, OOM or worker restart cannot update its last_operations row itself.
+        // timeout, OOM or worker restart cannot update its processing_states row itself.
         $schedule->command('article-processing:sweep-stale')
             ->everyFiveMinutes()
             ->withoutOverlapping();

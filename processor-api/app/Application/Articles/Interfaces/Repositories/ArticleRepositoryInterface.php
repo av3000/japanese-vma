@@ -4,6 +4,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
+use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -117,4 +118,24 @@ interface ArticleRepositoryInterface
      * @param int[] $wordIds An array of Word internal IDs to attach.
      */
     public function syncWords(int $articleId, array $wordIds): void;
+
+    /**
+     * The fields the content-processing job runs over, plus the version it must match.
+     */
+    public function findProcessingSource(EntityId $articleUuid): ?ArticleProcessingSourceDTO;
+
+    /**
+     * Increment `content_version` and return the new value. Call inside the write transaction
+     * that changed `title_jp` or `content_jp`.
+     */
+    public function bumpContentVersion(int $articleId): int;
+
+    /**
+     * Replace kanji attachments, word attachments and JLPT counters atomically. Empty id lists
+     * clear the corresponding attachments (#257).
+     *
+     * @param int[] $kanjiIds
+     * @param int[] $wordIds
+     */
+    public function syncContentProcessing(int $articleId, array $kanjiIds, array $wordIds, JlptLevels $jlptLevels): void;
 }

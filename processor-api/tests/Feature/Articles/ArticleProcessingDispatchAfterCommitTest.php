@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Articles;
 
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\Articles\Jobs\ProcessArticleWordsJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -57,7 +56,7 @@ class ArticleProcessingDispatchAfterCommitTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_create_dispatches_both_jobs_only_after_the_transaction_commits(): void
+    public function test_create_dispatches_the_job_only_after_the_transaction_commits(): void
     {
         $user = User::factory()->create();
         Passport::actingAs($user, ['*'], 'api');
@@ -79,12 +78,12 @@ class ArticleProcessingDispatchAfterCommitTest extends TestCase
         DB::commit();
 
         $this->assertSame(
-            [ProcessArticleKanjisJob::class, ProcessArticleWordsJob::class],
+            [ProcessArticleContentJob::class],
             $this->queuedJobClasses(),
         );
     }
 
-    public function test_update_dispatches_both_jobs_only_after_the_transaction_commits(): void
+    public function test_update_dispatches_the_job_only_after_the_transaction_commits(): void
     {
         $user = User::factory()->create();
         $article = $this->createArticle($user);
@@ -101,17 +100,16 @@ class ArticleProcessingDispatchAfterCommitTest extends TestCase
         DB::commit();
 
         $this->assertSame(
-            [ProcessArticleKanjisJob::class, ProcessArticleWordsJob::class],
+            [ProcessArticleContentJob::class],
             $this->queuedJobClasses(),
         );
     }
 
     /**
-     * Negative control: with `after_commit` disabled the same request queues the jobs while the
-     * transaction is still open. This shows the positive tests are observing the deferral and
-     * not, for example, an empty queue caused by a broken driver.
+     * The job implements ShouldQueueAfterCommit, so it is deferred even when the connection's
+     * `after_commit` flag is off: the guarantee no longer rests on configuration alone.
      */
-    public function test_without_after_commit_jobs_are_queued_inside_the_open_transaction(): void
+    public function test_job_is_deferred_even_with_after_commit_disabled_on_the_connection(): void
     {
         config(['queue.connections.database.after_commit' => false]);
 
@@ -129,9 +127,11 @@ class ArticleProcessingDispatchAfterCommitTest extends TestCase
             'publicity' => true,
         ])->assertCreated();
 
-        $this->assertSame(2, DB::table('jobs')->count());
+        $this->assertSame(0, DB::table('jobs')->count(), 'ShouldQueueAfterCommit defers regardless of the connection flag.');
 
-        DB::rollBack();
+        DB::commit();
+
+        $this->assertSame([ProcessArticleContentJob::class], $this->queuedJobClasses());
     }
 
     /**

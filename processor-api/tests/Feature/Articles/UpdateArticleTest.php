@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Articles;
 
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\Articles\Jobs\ProcessArticleWordsJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
-use ReflectionClass;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -196,7 +195,7 @@ class UpdateArticleTest extends TestCase
         $this->assertSame(['#legacy'], $this->getHashtagContents($article));
     }
 
-    public function test_update_content_jp_dispatches_job(): void
+    public function test_update_content_jp_dispatches_one_job_with_the_bumped_version(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
@@ -208,10 +207,17 @@ class UpdateArticleTest extends TestCase
             'content_jp' => 'Updated Japanese content text.',
         ])->assertStatus(200);
 
-        Bus::assertDispatched(ProcessArticleKanjisJob::class);
+        $this->assertDispatchedOnceFor($article->uuid, version: 2);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 2]);
+        $this->assertDatabaseHas('processing_states', [
+            'entity_id' => $article->uuid,
+            'task_type' => 'article_content_processing',
+            'status' => LastOperationStatus::PENDING->value,
+            'content_version' => 2,
+        ]);
     }
 
-    public function test_update_title_jp_dispatches_word_job_only(): void
+    public function test_update_title_jp_alone_dispatches_the_job(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user, [
@@ -222,46 +228,50 @@ class UpdateArticleTest extends TestCase
         Passport::actingAs($user, ['*'], 'api');
         Bus::fake();
 
-        $newTitle = '新しいタイトル';
-
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'title_jp' => $newTitle,
+            'title_jp' => '新しいタイトル',
         ])->assertStatus(200);
 
-        Bus::assertNotDispatched(ProcessArticleKanjisJob::class);
-        Bus::assertDispatched(
-            ProcessArticleWordsJob::class,
-            fn (ProcessArticleWordsJob $job): bool => $this->readJobProperty($job, 'articleUuid') === $article->uuid
-                && $this->readJobProperty($job, 'articleText') === $newTitle.$article->content_jp
-        );
+        $this->assertDispatchedOnceFor($article->uuid, version: 2);
     }
 
-    public function test_update_content_jp_dispatches_kanji_and_word_jobs(): void
+    public function test_each_content_edit_bumps_the_version_again(): void
     {
         $user = $this->createUser();
-        $article = $this->createArticle($user, [
-            'title_jp' => '学校の話',
-            'content_jp' => '古い本文です。日本語の本文です。',
-        ]);
+        $article = $this->createArticle($user);
 
         Passport::actingAs($user, ['*'], 'api');
         Bus::fake();
 
-        $newContent = '更新された日本語本文です。学校で勉強します。';
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", ['content_jp' => '一回目の更新です。日本語の本文です。'])->assertStatus(200);
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", ['content_jp' => '二回目の更新です。日本語の本文です。'])->assertStatus(200);
 
-        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
-            'content_jp' => $newContent,
-        ])->assertStatus(200);
-
-        Bus::assertDispatched(ProcessArticleKanjisJob::class);
-        Bus::assertDispatched(
-            ProcessArticleWordsJob::class,
-            fn (ProcessArticleWordsJob $job): bool => $this->readJobProperty($job, 'articleUuid') === $article->uuid
-                && $this->readJobProperty($job, 'articleText') === $article->title_jp.$newContent
-        );
+        Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 2);
+        Bus::assertDispatched(ProcessArticleContentJob::class, fn (ProcessArticleContentJob $job): bool => $job->contentVersion === 2);
+        Bus::assertDispatched(ProcessArticleContentJob::class, fn (ProcessArticleContentJob $job): bool => $job->contentVersion === 3);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 3]);
     }
 
-    public function test_update_metadata_only_does_not_dispatch_word_or_kanji_jobs(): void
+    public function test_unchanged_japanese_fields_do_not_dispatch_or_bump(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'title_jp' => $article->title_jp,
+            'content_jp' => $article->content_jp,
+            'source_link' => 'https://example.com/updated-source',
+        ])->assertStatus(200);
+
+        Bus::assertNotDispatched(ProcessArticleContentJob::class);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 1]);
+        $this->assertDatabaseMissing('processing_states', ['entity_id' => $article->uuid]);
+    }
+
+    public function test_update_metadata_only_does_not_dispatch(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
@@ -273,16 +283,15 @@ class UpdateArticleTest extends TestCase
             'source_link' => 'https://example.com/updated-source',
         ])->assertStatus(200);
 
-        Bus::assertNotDispatched(ProcessArticleKanjisJob::class);
-        Bus::assertNotDispatched(ProcessArticleWordsJob::class);
+        Bus::assertNotDispatched(ProcessArticleContentJob::class);
     }
 
-    private function readJobProperty(object $job, string $property): mixed
+    private function assertDispatchedOnceFor(string $articleUuid, int $version): void
     {
-        $reflection = new ReflectionClass($job);
-        $jobProperty = $reflection->getProperty($property);
-        $jobProperty->setAccessible(true);
-
-        return $jobProperty->getValue($job);
+        Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 1);
+        Bus::assertDispatched(
+            ProcessArticleContentJob::class,
+            fn (ProcessArticleContentJob $job): bool => $job->articleUuid === $articleUuid && $job->contentVersion === $version,
+        );
     }
 }
