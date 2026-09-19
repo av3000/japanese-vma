@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $task_type
  * @property ProcessingStatus $status
  * @property int $attempt
+ * @property int $sequence
  * @property int $max_attempts
  * @property int $content_version
  * @property \Illuminate\Support\Carbon|null $started_at
@@ -37,6 +38,7 @@ class ProcessingState extends Model
         'entity_type' => ProcessingEntityType::class,
         'status' => ProcessingStatus::class,
         'attempt' => 'integer',
+        'sequence' => 'integer',
         'max_attempts' => 'integer',
         'content_version' => 'integer',
         'metadata' => 'array',

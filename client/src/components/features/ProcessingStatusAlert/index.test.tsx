@@ -18,10 +18,12 @@ vi.mock('@/components/ui/popover', () => ({
 	PopoverDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const status = (value: ProcessingStatus): ProcessingStatusResource => ({
+const status = (value: ProcessingStatus, attempt = 1): ProcessingStatusResource => ({
 	id: 1,
 	entity_id: 'entity-uuid',
-	attempt: 1,
+	attempt,
+	max_attempts: 3,
+	sequence: 1,
 	type: 'article_content_processing',
 	status: value,
 	metadata: {},
@@ -29,12 +31,12 @@ const status = (value: ProcessingStatus): ProcessingStatusResource => ({
 	updated_at: '2026-09-20T10:00:05+00:00',
 });
 
-const render = (value: ProcessingStatus, isConnected = false) => {
+const render = (value: ProcessingStatus, isConnected = false, attempt = 1) => {
 	vi.mocked(useWebSocket).mockReturnValue({
 		isConnected,
 		connectionStatus: isConnected ? 'connected' : 'disconnected',
 	} as never);
-	return renderToStaticMarkup(<ProcessingStatusAlert processing_status={status(value)} />);
+	return renderToStaticMarkup(<ProcessingStatusAlert processing_status={status(value, attempt)} />);
 };
 
 describe('ProcessingStatusAlert', () => {
@@ -57,6 +59,11 @@ describe('ProcessingStatusAlert', () => {
 	it('renders nothing without a status', () => {
 		vi.mocked(useWebSocket).mockReturnValue({ isConnected: false, connectionStatus: 'disconnected' } as never);
 		expect(renderToStaticMarkup(<ProcessingStatusAlert processing_status={null} />)).toBe('');
+	});
+
+	it('shows retry progress only once processing is past its first attempt', () => {
+		expect(render(ProcessingStatus.processing, false, 1)).not.toContain('Attempt');
+		expect(render(ProcessingStatus.processing, false, 2)).toContain('Attempt 2 of 3');
 	});
 
 	it('promises live updates only while the socket is connected', () => {

@@ -25,6 +25,7 @@ final readonly class ProcessingStateDTO
         public string $taskType,
         public ProcessingStatus $status,
         public int $attempt,
+        public int $sequence,
         public int $maxAttempts,
         public int $contentVersion,
         public ?array $metadata,

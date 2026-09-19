@@ -15,10 +15,13 @@ import {
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
 const OTHER_UUID = 'b2b2b2b2-0000-4000-8000-000000000002';
 
-const status = (value: ProcessingStatus, id = 1): ProcessingStatusResource => ({
-	id,
+/** Seeded cache entries hold sequence 1, so an incoming event defaults to the newer 2. */
+const status = (value: ProcessingStatus, sequence = 2): ProcessingStatusResource => ({
+	id: 1,
 	entity_id: 'entity-uuid',
 	attempt: 1,
+	max_attempts: 3,
+	sequence,
 	type: 'kanji_extraction',
 	status: value,
 	metadata: {},
@@ -47,13 +50,13 @@ const seed = () => {
 
 	queryClient.setQueryData<InfiniteData<ArticleListResource>>(listKey, {
 		pageParams: [1],
-		pages: [listPage([listItem(UUID, status(ProcessingStatus.pending)), listItem(OTHER_UUID, null)])],
+		pages: [listPage([listItem(UUID, status(ProcessingStatus.pending, 1)), listItem(OTHER_UUID, null)])],
 	});
 	queryClient.setQueryData<InfiniteData<ArticleListResource>>(otherListKey, {
 		pageParams: [1],
-		pages: [listPage([listItem(UUID, status(ProcessingStatus.pending))])],
+		pages: [listPage([listItem(UUID, status(ProcessingStatus.pending, 1))])],
 	});
-	queryClient.setQueryData(articleKeys.detail(UUID), detail(status(ProcessingStatus.pending)));
+	queryClient.setQueryData(articleKeys.detail(UUID), detail(status(ProcessingStatus.pending, 1)));
 
 	return { queryClient, listKey, otherListKey };
 };
@@ -85,13 +88,13 @@ describe('applyProcessingStatus', () => {
 		const { queryClient } = seed();
 		const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 
-		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.processing));
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.processing, 2));
 		expect(invalidate).not.toHaveBeenCalled();
 
-		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.completed));
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.completed, 3));
 		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.detail(UUID) });
 
-		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.failed));
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.failed, 4));
 		expect(invalidate).toHaveBeenCalledTimes(2);
 	});
 
@@ -102,6 +105,36 @@ describe('applyProcessingStatus', () => {
 
 		expect(queryClient.getQueryData(articleKeys.detail(UUID))).toBeUndefined();
 		expect(queryClient.getQueryCache().findAll({ queryKey: articleKeys.lists() })).toHaveLength(0);
+	});
+
+	it('ignores an event that is not newer than what the cache already holds', () => {
+		const { queryClient, listKey } = seed();
+		const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+		// Seeded at sequence 1; a replayed or reordered completion carrying sequence 1 is old news.
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.completed, 1));
+
+		expect(
+			queryClient.getQueryData<ArticleDetailResource>(articleKeys.detail(UUID))?.processing_status?.status,
+		).toBe(ProcessingStatus.pending);
+
+		const item = queryClient
+			.getQueryData<InfiniteData<ArticleListResource>>(listKey)
+			?.pages[0].items.find((entry) => entry.uuid === UUID);
+		expect(item?.processing_status?.status).toBe(ProcessingStatus.pending);
+		expect(invalidate).not.toHaveBeenCalled();
+	});
+
+	it('compares against the list entry when no detail is loaded', () => {
+		const { queryClient, listKey } = seed();
+		queryClient.removeQueries({ queryKey: articleKeys.detail(UUID) });
+
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.failed, 1));
+
+		const item = queryClient
+			.getQueryData<InfiniteData<ArticleListResource>>(listKey)
+			?.pages[0].items.find((entry) => entry.uuid === UUID);
+		expect(item?.processing_status?.status).toBe(ProcessingStatus.pending);
 	});
 
 	it('never writes under the legacy hand-written keys', () => {

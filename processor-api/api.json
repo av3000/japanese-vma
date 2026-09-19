@@ -6488,7 +6488,13 @@
                     "status": {
                         "$ref": "#/components/schemas/ProcessingStatus"
                     },
+                    "sequence": {
+                        "type": "integer"
+                    },
                     "attempt": {
+                        "type": "integer"
+                    },
+                    "max_attempts": {
                         "type": "integer"
                     },
                     "metadata": {
@@ -6506,7 +6512,9 @@
                     "entity_id",
                     "type",
                     "status",
+                    "sequence",
                     "attempt",
+                    "max_attempts",
                     "metadata",
                     "created_at",
                     "updated_at"

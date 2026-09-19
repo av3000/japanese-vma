@@ -44,6 +44,8 @@ describe('ArticleCreatePage', () => {
 			id: 1,
 			entity_id: 'entity-uuid',
 			attempt: 1,
+			max_attempts: 3,
+			sequence: 1,
 			type: 'article_content_processing',
 			status: ProcessingStatus.pending,
 			metadata: {},

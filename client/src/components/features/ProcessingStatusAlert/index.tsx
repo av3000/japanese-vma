@@ -90,6 +90,11 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	const isTerminal = status === ProcessingStatus.completed || status === ProcessingStatus.failed;
 
+	// A first attempt is the normal case and says nothing worth the space; a retry does (#261).
+	const attempt = processing_status?.attempt ?? 0;
+	const maxAttempts = processing_status?.max_attempts ?? 0;
+	const attemptText = attempt > 1 ? `Attempt ${attempt}${maxAttempts > 0 ? ` of ${maxAttempts}` : ''}` : null;
+
 	let durationText: string | null = null;
 	if (isTerminal && createdAtMs !== null && updatedAtMs !== null) {
 		durationText = formatDurationCompact(updatedAtMs - createdAtMs);
@@ -142,6 +147,13 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 									<span className="text-muted small">Duration</span>
 									<span className="small">{durationText ?? '—'}</span>
 								</div>
+
+								{attemptText && (
+									<div className="d-flex justify-content-between gap-3">
+										<span className="text-muted small">Retry</span>
+										<span className="small">{attemptText}</span>
+									</div>
+								)}
 
 								{!hasValidTiming && (
 									<div className="small text-muted mt-2">Timing data unavailable.</div>

@@ -25,12 +25,15 @@ const payload = (
 	entityId: string,
 	status: ProcessingStatus,
 	type = 'article_content_processing',
+	sequence = 1,
 ): ProcessingStatusResource => ({
 	id: 3,
 	entity_id: entityId,
 	type,
 	status,
 	attempt: 1,
+	max_attempts: 3,
+	sequence,
 	metadata: {},
 	created_at: '2026-09-20T10:00:00+00:00',
 	updated_at: '2026-09-20T10:00:05+00:00',
@@ -93,7 +96,7 @@ describe('useOwnerProcessingSubscription', () => {
 	it('patches the list item named by entity_id and leaves the others alone', () => {
 		const { listener, statusOf } = useHarness();
 
-		listener(payload(B, ProcessingStatus.completed));
+		listener(payload(B, ProcessingStatus.completed, 'article_content_processing', 2));
 
 		expect(statusOf(B)).toBe(ProcessingStatus.completed);
 		expect(statusOf(A)).toBe(ProcessingStatus.pending);
@@ -102,7 +105,7 @@ describe('useOwnerProcessingSubscription', () => {
 	it('ignores events of another task type', () => {
 		const { listener, statusOf } = useHarness();
 
-		listener(JSON.stringify(payload(A, ProcessingStatus.completed, 'kanji_extraction')));
+		listener(JSON.stringify(payload(A, ProcessingStatus.completed, 'kanji_extraction', 2)));
 
 		expect(statusOf(A)).toBe(ProcessingStatus.pending);
 	});

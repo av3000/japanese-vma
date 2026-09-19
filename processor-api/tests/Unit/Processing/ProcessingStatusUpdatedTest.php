@@ -97,6 +97,7 @@ class ProcessingStatusUpdatedTest extends TestCase
             entityId: self::UUID,
             taskType: 'article_content_processing',
             status: ProcessingStatus::PROCESSING,
+            sequence: 7,
             attempt: 2,
             maxAttempts: 3,
             contentVersion: 4,

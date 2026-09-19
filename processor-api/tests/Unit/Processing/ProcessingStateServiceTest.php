@@ -253,6 +253,29 @@ class ProcessingStateServiceTest extends TestCase
         Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 4, 'A completed row is left alone.');
     }
 
+    public function test_sequence_strictly_increases_across_the_lifecycle_of_one_row(): void
+    {
+        $sequences = [];
+
+        $sequences[] = $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1)->sequence;
+        $sequences[] = $this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1)->sequence;
+        $sequences[] = $this->service->markCompleted(ProcessingEntityType::Article, $this->id, self::TASK, [])->sequence;
+        // A second run of the same row continues the counter instead of restarting it.
+        $sequences[] = $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 2)->sequence;
+        $sequences[] = $this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1)->sequence;
+
+        $sorted = $sequences;
+        sort($sorted);
+
+        $this->assertSame($sorted, $sequences, 'Sequence must never go backwards.');
+        $this->assertSame(count($sequences), count(array_unique($sequences)), 'Sequence must never repeat.');
+
+        Event::assertDispatched(
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => $event->snapshot['sequence'] === end($sequences),
+        );
+    }
+
     public function test_sweep_stale_fails_old_non_terminal_rows_with_the_stale_code(): void
     {
         $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);

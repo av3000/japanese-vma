@@ -25,11 +25,17 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         int $contentVersion,
         int $maxAttempts = 3,
     ): ProcessingStateDTO {
+        $existing = $this->find($entityType, $entityId, $task);
+
         $state = ProcessingState::query()->updateOrCreate(
             self::key($entityType, $entityId, $task),
             [
                 'status' => ProcessingStatus::PENDING,
                 'attempt' => 0,
+                // A rerun of the same row continues the sequence rather than restarting it:
+                // a client comparing against the previous run's last event must still see
+                // this one as newer (#261).
+                'sequence' => ($existing->sequence ?? 0) + 1,
                 'max_attempts' => $maxAttempts,
                 'content_version' => $contentVersion,
                 'started_at' => null,
@@ -107,6 +113,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
 
         $state->fill([
             'status' => ProcessingStatus::SUPERSEDED,
+            'sequence' => $state->sequence + 1,
             'finished_at' => now(),
             'error_code' => null,
             'error_message' => null,
@@ -170,7 +177,10 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
     ): ProcessingStateDTO {
         $state = $this->findOrFail($entityType, $entityId, $task);
 
-        $state->fill($attributes)->save();
+        // Read-modify-write is safe here: one job per entity holds the WithoutOverlapping lock,
+        // and the only other writer is the sweeper, which touches rows nothing has written to
+        // for minutes.
+        $state->fill($attributes + ['sequence' => $state->sequence + 1])->save();
 
         return self::toDto($state);
     }
@@ -221,6 +231,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
             taskType: (string) $state->task_type,
             status: $state->status,
             attempt: (int) $state->attempt,
+            sequence: (int) $state->sequence,
             maxAttempts: (int) $state->max_attempts,
             contentVersion: (int) $state->content_version,
             metadata: $state->metadata,

@@ -20,12 +20,19 @@ vi.mock('@/lib/echo', () => ({
 
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
 
-const payload = (status: ProcessingStatus, type = 'article_content_processing'): ProcessingStatusResource => ({
+/** Cache seeds use sequence 1; an event the hook should apply carries a higher one. */
+const payload = (
+	status: ProcessingStatus,
+	type = 'article_content_processing',
+	sequence = 1,
+): ProcessingStatusResource => ({
 	id: 9,
 	entity_id: UUID,
 	type,
 	status,
 	attempt: 1,
+	max_attempts: 3,
+	sequence,
 	metadata: { attempts: 1 },
 	created_at: '2026-09-19T10:00:00+00:00',
 	updated_at: '2026-09-19T10:00:05+00:00',
@@ -87,7 +94,7 @@ describe('useArticleSubscription', () => {
 			processing_status: payload(ProcessingStatus.pending),
 		} as unknown as ArticleDetailResource);
 
-		listener(payload(ProcessingStatus.processing));
+		listener(payload(ProcessingStatus.processing, 'article_content_processing', 2));
 
 		expect(
 			queryClient.getQueryData<ArticleDetailResource>(articleKeys.detail(UUID))?.processing_status?.status,
@@ -107,7 +114,7 @@ describe('useArticleSubscription', () => {
 		} as unknown as ArticleDetailResource;
 		queryClient.setQueryData(articleKeys.detail(UUID), before);
 
-		listener(payload(ProcessingStatus.completed, 'kanji_extraction'));
+		listener(payload(ProcessingStatus.completed, 'kanji_extraction', 2));
 
 		expect(queryClient.getQueryData(articleKeys.detail(UUID))).toBe(before);
 		expect(invalidate).not.toHaveBeenCalled();
@@ -121,7 +128,7 @@ describe('useArticleSubscription', () => {
 			processing_status: null,
 		} as unknown as ArticleDetailResource);
 
-		listener(JSON.stringify(payload(ProcessingStatus.completed)));
+		listener(JSON.stringify(payload(ProcessingStatus.completed, 'article_content_processing', 2)));
 
 		expect(
 			queryClient.getQueryData<ArticleDetailResource>(articleKeys.detail(UUID))?.processing_status?.status,

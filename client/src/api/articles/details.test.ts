@@ -119,6 +119,8 @@ describe('mapArticleDetail', () => {
 					id: 10,
 					entity_id: 'entity-uuid',
 					attempt: 1,
+					max_attempts: 3,
+					sequence: 1,
 					type: 'kanji_extraction',
 					status: ProcessingStatus.completed,
 					metadata: {

@@ -33,7 +33,9 @@ class ProcessingStatusResource extends JsonResource
      *     entity_id: string,
      *     type: string,
      *     status: ProcessingStatus,
+     *     sequence: int,
      *     attempt: int,
+     *     max_attempts: int,
      *     metadata: object,
      *     created_at: ?string,
      *     updated_at: ?string
@@ -46,7 +48,9 @@ class ProcessingStatusResource extends JsonResource
             'entity_id' => $this->resource->entityId,
             'type' => $this->resource->taskType,
             'status' => $this->status(),
+            'sequence' => $this->sequence(),
             'attempt' => $this->attempt(),
+            'max_attempts' => $this->maxAttempts(),
             'metadata' => $this->metadata(),
             'created_at' => $this->resource->createdAt?->format('c'),
             'updated_at' => $this->resource->updatedAt?->format('c'),
@@ -58,9 +62,19 @@ class ProcessingStatusResource extends JsonResource
         return $this->resource->id;
     }
 
+    private function sequence(): int
+    {
+        return $this->resource->sequence;
+    }
+
     private function attempt(): int
     {
         return $this->resource->attempt;
+    }
+
+    private function maxAttempts(): int
+    {
+        return $this->resource->maxAttempts;
     }
 
     private function status(): ProcessingStatus
