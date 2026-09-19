@@ -23,6 +23,18 @@ import { toArray } from '../util';
  */
 const channelsByInstance = new WeakMap<Echo<BroadcastDriver>, Map<string, ChannelData<BroadcastDriver>>>();
 
+/**
+ * Releases are deferred to a microtask. React StrictMode runs effect, cleanup, effect for a
+ * mount in one synchronous pass; without the deferral the cleanup would leave the channel and
+ * the second effect would open a second subscription. A re-acquire inside the same task
+ * cancels the pending release, so every acquire still pairs with exactly one leave (#255).
+ */
+const pendingReleases = new WeakMap<Echo<BroadcastDriver>, Set<string>>();
+
+/** Test seam: how many channels the registry currently holds for an instance. */
+export const channelRegistrySizeFor = (instance: Echo<BroadcastDriver>): number =>
+	channelsByInstance.get(instance)?.size ?? 0;
+
 const channelsFor = (instance: Echo<BroadcastDriver>): Map<string, ChannelData<BroadcastDriver>> => {
 	let channels = channelsByInstance.get(instance);
 
@@ -79,6 +91,7 @@ const acquireChannel = <T extends BroadcastDriver>(
 
 	if (existing) {
 		existing.count += 1;
+		pendingReleases.get(instance)?.delete(channel.id);
 
 		return existing.connection as Connection<T>;
 	}
@@ -89,7 +102,7 @@ const acquireChannel = <T extends BroadcastDriver>(
 	return connection;
 };
 
-const releaseChannel = (instance: Echo<BroadcastDriver>, channel: Channel, leaveAll: boolean): void => {
+const releaseChannel = (instance: Echo<BroadcastDriver>, channel: Channel): void => {
 	const channels = channelsFor(instance);
 	const entry = channels.get(channel.id);
 
@@ -103,13 +116,28 @@ const releaseChannel = (instance: Echo<BroadcastDriver>, channel: Channel, leave
 		return;
 	}
 
-	if (leaveAll) {
-		instance.leave(channel.name);
-	} else {
-		instance.leaveChannel(channel.id);
+	let pending = pendingReleases.get(instance);
+	if (!pending) {
+		pending = new Set();
+		pendingReleases.set(instance, pending);
 	}
+	pending.add(channel.id);
 
-	channels.delete(channel.id);
+	queueMicrotask(() => {
+		if (!pending.has(channel.id)) {
+			return; // re-acquired before the release ran
+		}
+
+		pending.delete(channel.id);
+
+		const current = channels.get(channel.id);
+		if (!current || current.count > 0) {
+			return;
+		}
+
+		channels.delete(channel.id);
+		instance.leave(channel.name);
+	});
 };
 
 export function useEcho<
@@ -123,7 +151,7 @@ export function useEcho<
 	dependencies?: DependencyList,
 	visibility?: TVisibility,
 ): {
-	leaveChannel: (leaveAll?: boolean) => void;
+	leaveChannel: () => void;
 	leave: () => void;
 	stopListening: () => void;
 	listen: () => void;
@@ -141,7 +169,7 @@ export function useEcho<
 	dependencies?: DependencyList,
 	visibility?: TVisibility,
 ): {
-	leaveChannel: (leaveAll?: boolean) => void;
+	leaveChannel: () => void;
 	leave: () => void;
 	stopListening: () => void;
 	listen: () => void;
@@ -211,21 +239,18 @@ export function useEcho<
 		listening.current = true;
 	}, [events, callbackFunc]);
 
-	const tearDown = useCallback(
-		(leaveAll: boolean = false) => {
-			stopListening();
+	const tearDown = useCallback(() => {
+		stopListening();
 
-			if (echo && subscription.current) {
-				releaseChannel(echo as Echo<BroadcastDriver>, channel, leaveAll);
-			}
+		if (echo && subscription.current) {
+			releaseChannel(echo as Echo<BroadcastDriver>, channel);
+		}
 
-			subscription.current = null;
-		},
-		[stopListening, echo, channel],
-	);
+		subscription.current = null;
+	}, [stopListening, echo, channel]);
 
 	const leave = useCallback(() => {
-		tearDown(true);
+		tearDown();
 	}, [tearDown]);
 
 	useEffect(() => {
@@ -237,7 +262,7 @@ export function useEcho<
 		listen();
 
 		return () => {
-			tearDown(false);
+			tearDown();
 		};
 		// `generation` is intentionally a dependency: a new instance of the same identity must
 		// still resubscribe.
@@ -245,7 +270,7 @@ export function useEcho<
 
 	return useMemo(
 		() => ({
-			leaveChannel: tearDown,
+			leaveChannel: () => tearDown(),
 			leave,
 			stopListening,
 			listen,
