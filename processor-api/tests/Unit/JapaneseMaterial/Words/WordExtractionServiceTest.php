@@ -53,10 +53,37 @@ class WordExtractionServiceTest extends TestCase
 
         $this->assertSame([], $service->extractWordIds('かなだけ'));
     }
+
+    public function test_looks_up_each_accepted_candidate_once_and_never_again_after_the_loop(): void
+    {
+        $repository = new FakeWordRepository([
+            '学' => 1,
+            '学校' => 2,
+            '勉強' => 3,
+        ]);
+        $service = new WordExtractionService($repository);
+
+        $this->assertSame([2, 3], $service->extractWordIds('学校で勉強'));
+
+        // Candidate steps that pass hasWordStartingWith: 学, 学校, 学校で(no) | で(no) | 勉, 勉強.
+        // 学校で and で are rejected by the prefix check before any id lookup.
+        $this->assertSame(['学', '学校', '勉', '勉強'], $repository->findIdByWordCalls);
+        $this->assertSame(
+            count($repository->hasWordStartingWithCalls) - 2,
+            count($repository->findIdByWordCalls),
+            'Exactly one findIdByWord per accepted prefix, none for the two rejected prefixes, none after the loop.',
+        );
+    }
 }
 
 final class FakeWordRepository implements WordRepositoryInterface
 {
+    /** @var list<string> */
+    public array $hasWordStartingWithCalls = [];
+
+    /** @var list<string> */
+    public array $findIdByWordCalls = [];
+
     /**
      * @param array<string, int> $idsByWord
      */
@@ -66,6 +93,8 @@ final class FakeWordRepository implements WordRepositoryInterface
 
     public function hasWordStartingWith(string $prefix): bool
     {
+        $this->hasWordStartingWithCalls[] = $prefix;
+
         foreach (array_keys($this->idsByWord) as $word) {
             if (str_starts_with($word, $prefix)) {
                 return true;
@@ -77,6 +106,8 @@ final class FakeWordRepository implements WordRepositoryInterface
 
     public function findIdByWord(string $word): ?int
     {
+        $this->findIdByWordCalls[] = $word;
+
         return $this->idsByWord[$word] ?? null;
     }
 

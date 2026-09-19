@@ -26,6 +26,7 @@ class WordExtractionService implements WordExtractionServiceInterface
 
         while ($cursorStart < $characterCount) {
             $bestWord = null;
+            $bestWordId = null;
             $candidate = '';
             $cursor = $cursorStart;
 
@@ -36,19 +37,22 @@ class WordExtractionService implements WordExtractionServiceInterface
                     break;
                 }
 
-                if ($this->wordRepository->findIdByWord($candidate) !== null) {
+                // Greedy longest match: remember the id of the longest candidate that is a real
+                // word so the winner does not need a second lookup after the loop.
+                $candidateId = $this->wordRepository->findIdByWord($candidate);
+
+                if ($candidateId !== null) {
                     $bestWord = $candidate;
+                    $bestWordId = $candidateId;
                 }
 
                 $cursor++;
             }
 
-            if ($bestWord !== null) {
-                $wordId = $this->wordRepository->findIdByWord($bestWord);
-
-                if ($wordId !== null && ! isset($matchedWords[$bestWord])) {
+            if ($bestWord !== null && $bestWordId !== null) {
+                if (! isset($matchedWords[$bestWord])) {
                     $matchedWords[$bestWord] = true;
-                    $matchedIds[] = $wordId;
+                    $matchedIds[] = $bestWordId;
                 }
 
                 $cursorStart += mb_strlen($bestWord, 'UTF-8');

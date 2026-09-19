@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Console;
+
+use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Console\Commands\SweepStaleArticleProcessing;
+use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Models\LastOperationState;
+use Illuminate\Console\Scheduling\Event as ScheduledEvent;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class SweepStaleArticleProcessingCommandTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_sweeper_fails_stale_non_terminal_rows_and_leaves_fresh_and_terminal_rows_alone(): void
+    {
+        $staleProcessing = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 400);
+        $stalePending = $this->insertOperation(LastOperationStatus::PENDING, ageSeconds: 400);
+        $freshProcessing = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 60);
+        $oldCompleted = $this->insertOperation(LastOperationStatus::COMPLETED, ageSeconds: 4000);
+        $oldFailed = $this->insertOperation(LastOperationStatus::FAILED, ageSeconds: 4000);
+
+        Event::fake([AsyncLastOperationStatusUpdated::class]);
+
+        $exitCode = Artisan::call('article-processing:sweep-stale');
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Swept 2 stale processing operation(s) older than 330 seconds.', Artisan::output());
+
+        foreach ([$staleProcessing, $stalePending] as $swept) {
+            $swept->refresh();
+            $this->assertSame(LastOperationStatus::FAILED, $swept->status);
+            $this->assertSame('stale', $swept->metadata['error']);
+            $this->assertSame('no heartbeat', $swept->metadata['reason']);
+        }
+
+        $this->assertSame(LastOperationStatus::PROCESSING, $freshProcessing->refresh()->status);
+        $this->assertSame(LastOperationStatus::COMPLETED, $oldCompleted->refresh()->status);
+        $this->assertSame([], $oldFailed->refresh()->metadata, 'Already-failed rows must not be rewritten.');
+
+        Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 2);
+    }
+
+    public function test_older_than_option_overrides_the_threshold(): void
+    {
+        $row = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 30);
+
+        Artisan::call('article-processing:sweep-stale', ['--older-than' => 10]);
+
+        $this->assertSame(LastOperationStatus::FAILED, $row->refresh()->status);
+    }
+
+    public function test_sweeper_is_scheduled_every_five_minutes_without_overlapping(): void
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn (ScheduledEvent $event): bool => str_contains($event->command ?? '', 'article-processing:sweep-stale'));
+
+        $this->assertNotNull($event, 'article-processing:sweep-stale is not registered in the scheduler.');
+        $this->assertSame('*/5 * * * *', $event->expression);
+        $this->assertTrue($event->withoutOverlapping, 'The sweeper should not overlap itself.');
+    }
+
+    public function test_default_threshold_covers_timeout_plus_retry_after(): void
+    {
+        $this->assertSame(330, SweepStaleArticleProcessing::DEFAULT_OLDER_THAN_SECONDS);
+        $this->assertGreaterThan(120 + config('queue.connections.redis.retry_after'), SweepStaleArticleProcessing::DEFAULT_OLDER_THAN_SECONDS);
+    }
+
+    private function insertOperation(LastOperationStatus $status, int $ageSeconds): LastOperationState
+    {
+        $row = LastOperationState::create([
+            'processable_id' => (string) Str::uuid(),
+            'processable_type' => PersistenceArticle::class,
+            'task_type' => 'kanji_extraction',
+            'status' => $status,
+            'metadata' => [],
+        ]);
+
+        // Eloquent refreshes updated_at on save, so age the row with a raw update.
+        DB::table('last_operations')
+            ->where('id', $row->id)
+            ->update(['updated_at' => now()->subSeconds($ageSeconds)]);
+
+        return $row->refresh();
+    }
+}

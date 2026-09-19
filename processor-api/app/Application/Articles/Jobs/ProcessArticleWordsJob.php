@@ -25,9 +25,17 @@ class ProcessArticleWordsJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public const TASK_TYPE = 'words_extraction';
+
     public int $tries = 3;
 
     public int $timeout = 120;
+
+    /**
+     * Id of the last_operations row this attempt is working on. Set before any work starts so
+     * failed() can find it even when handle() is killed by a timeout or worker restart.
+     */
+    public ?int $operationStateId = null;
 
     public function __construct(
         private readonly string $articleUuid,
@@ -40,17 +48,14 @@ class ProcessArticleWordsJob implements ShouldQueue
         WordAttachmentService $wordAttachmentService,
         LastOperationService $lastOperationService,
     ): void {
-        $operationState = $lastOperationService->startOperation(
+        $operationState = $lastOperationService->beginAttempt(
             new EntityId($this->articleUuid),
             'article',
-            'words_extraction',
+            self::TASK_TYPE,
+            $this->attempts(),
         );
+        $this->operationStateId = $operationState->id;
         $operationStateId = $operationState->id;
-
-        $lastOperationService->updateStatus(
-            $operationStateId,
-            LastOperationStatus::PROCESSING
-        );
 
         try {
             $wordIds = $wordExtractionService->extractWordIds($this->articleText);
@@ -100,5 +105,22 @@ class ProcessArticleWordsJob implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * Called by the worker once the job will not be retried again: after the last attempt, or
+     * when the attempt was killed (timeout, out of memory, worker restart) rather than throwing.
+     * Guarantees the operation row reaches a terminal status. The exception is not swallowed;
+     * the worker has already recorded it in failed_jobs.
+     */
+    public function failed(Throwable $exception): void
+    {
+        app(LastOperationService::class)->recordFailure(
+            new EntityId($this->articleUuid),
+            self::TASK_TYPE,
+            $this->operationStateId,
+            $exception,
+            $this->attempts(),
+        );
     }
 }

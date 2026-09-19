@@ -15,14 +15,23 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProcessArticleKanjisJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public const TASK_TYPE = 'kanji_extraction';
+
     public int $tries = 3;
 
     public int $timeout = 120;
+
+    /**
+     * Id of the last_operations row this attempt is working on. Set before any work starts so
+     * failed() can find it even when handle() is killed by a timeout or worker restart.
+     */
+    public ?int $operationStateId = null;
 
     public function __construct(
         private readonly string $articleUuid,
@@ -35,27 +44,14 @@ class ProcessArticleKanjisJob implements ShouldQueue
         KanjiAttachmentService $kanjiAttachmentService,
         LastOperationService $lastOperationService
     ): void {
-
-        $operationState = $lastOperationService->startOperation(
+        $operationState = $lastOperationService->beginAttempt(
             new EntityId($this->articleUuid),
             'article',
-            'kanji_extraction'
+            self::TASK_TYPE,
+            $this->attempts(),
         );
+        $this->operationStateId = $operationState->id;
         $operationStateId = $operationState->id;
-
-        $lastOperationService->updateStatus(
-            $operationStateId,
-            LastOperationStatus::PROCESSING
-        );
-
-        $delaySeconds = (int) env('KANJI_JOB_DELAY_SECONDS', 0);
-        if ($delaySeconds > 0) {
-            Log::info('Delaying kanji processing job', [
-                'article_uuid' => $this->articleUuid,
-                'delay_seconds' => $delaySeconds,
-            ]);
-            sleep($delaySeconds);
-        }
 
         try {
             $uniqueKanjiCharacters = $kanjiExtractionService->extractUniqueKanjis($this->articleContentJp);
@@ -110,5 +106,22 @@ class ProcessArticleKanjisJob implements ShouldQueue
             // Re-throw to make Laravel retry the job if configured, or move to failed jobs
             throw $e;
         }
+    }
+
+    /**
+     * Called by the worker once the job will not be retried again: after the last attempt, or
+     * when the attempt was killed (timeout, out of memory, worker restart) rather than throwing.
+     * Guarantees the operation row reaches a terminal status. The exception is not swallowed;
+     * the worker has already recorded it in failed_jobs.
+     */
+    public function failed(Throwable $exception): void
+    {
+        app(LastOperationService::class)->recordFailure(
+            new EntityId($this->articleUuid),
+            self::TASK_TYPE,
+            $this->operationStateId,
+            $exception,
+            $this->attempts(),
+        );
     }
 }
