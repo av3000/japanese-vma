@@ -1,4 +1,4 @@
-export { configureEcho, echo, echoIsConfigured } from './config/index';
+export { createEcho } from './config/index';
 export {
 	useConnectionStatus,
 	useEcho,

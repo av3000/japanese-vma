@@ -24,6 +24,15 @@ services:
       REDIS_HOST: 'redis'
       REDIS_PORT: '${REDIS_PORT}'
       REDIS_PASSWORD: '${REDIS_PASSWORD}'
+      # The web process broadcasts `pending` itself since ADR 0001, so it needs the same
+      # Reverb target the queue worker has (#254).
+      BROADCAST_DRIVER: '${BROADCAST_DRIVER}'
+      REVERB_HOST: 'reverb_server'
+      REVERB_PORT: '${REVERB_PORT}'
+      REVERB_SCHEME: 'http'
+      REVERB_APP_ID: '${REVERB_APP_ID}'
+      REVERB_APP_KEY: '${REVERB_APP_KEY}'
+      REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
     volumes:
       - ./:/var/www/html
       - /var/www/html/vendor # Anonymous vendor volume to use container vendors instead of copying local ones.
