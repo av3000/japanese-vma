@@ -49,6 +49,19 @@ jobs:
             exit 1
           fi
 
+          # Real-time transport (ADR 0002, #262). Without these the provider never connects
+          # and every user silently falls back to polling.
+          for name in VITE_REVERB_APP_KEY VITE_REVERB_HOST; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              echo "$name repository variable is required."
+              exit 1
+            fi
+          done
+        env:
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+
       - name: Setup Node.js
         id: setup-node
         uses: actions/setup-node@v6
@@ -90,6 +103,10 @@ jobs:
       - name: Typecheck
         env:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+          VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT || '443' }}
+          VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME || 'https' }}
         run: npm run typecheck
 
       # No separate `npm run build` here: the production image build below runs
@@ -119,6 +136,10 @@ jobs:
             VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
             VITE_SENTRY_ENVIRONMENT=ci
             VITE_SENTRY_RELEASE=${{ github.sha }}
+            VITE_REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
+            VITE_REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+            VITE_REVERB_PORT=${{ vars.VITE_REVERB_PORT || '443' }}
+            VITE_REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME || 'https' }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -175,10 +196,21 @@ jobs:
             exit 1
           fi
 
+          for name in VITE_REVERB_APP_KEY VITE_REVERB_HOST; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              echo "$name repository variable is required."
+              exit 1
+            fi
+          done
+
           if [ -z "${{ vars.RENDER_DEPLOY_HOOK_URL }}" ]; then
             echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
             exit 1
           fi
+        env:
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
 
       # No Node setup or npm install here. The only reason this job needed them
       # was to regenerate the Orval client into the Docker build context, and
@@ -210,6 +242,10 @@ jobs:
             VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
             VITE_SENTRY_ENVIRONMENT=production
             VITE_SENTRY_RELEASE=${{ github.sha }}
+            VITE_REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
+            VITE_REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+            VITE_REVERB_PORT=${{ vars.VITE_REVERB_PORT || '443' }}
+            VITE_REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME || 'https' }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

@@ -86,12 +86,15 @@ return [
                     // Same default as config/broadcasting.php so the two never disagree (#254).
                     'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
                 ],
-                // Comma-separated list of origins allowed to open a socket; `*` only for local
-                // development. Set REVERB_ALLOWED_ORIGINS to the frontend origin in production.
-                'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '*'))))),
+                // Comma-separated list of origins allowed to open a socket. Defaults to `*`
+                // outside production so local and CI stacks just work, and to an empty list in
+                // production so a missing REVERB_ALLOWED_ORIGINS refuses every browser instead
+                // of admitting all of them (#262).
+                'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', env('APP_ENV') === 'production' ? '' : '*'))))),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
-                'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),
+                // Bounded so one runaway client cannot exhaust the always-on instance.
+                'max_connections' => (int) env('REVERB_APP_MAX_CONNECTIONS', 500),
                 'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000),
             ],
         ],
