@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getArticleDetailQueryKey, MappedArticle } from '@/api/articles/details';
+import { articleKeys } from '@/api/articles/keys';
 import { articleUpdate } from '@/api/generated/article/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
@@ -59,7 +60,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 			setStatus(null);
 			setServerErrors(null);
 			queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(article.uuid) });
-			queryClient.invalidateQueries({ queryKey: ['articles'] });
+			queryClient.invalidateQueries({ queryKey: articleKeys.lists() });
 			controller.close();
 		},
 		onError: (err: any) => {

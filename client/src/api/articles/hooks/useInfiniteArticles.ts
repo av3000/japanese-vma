@@ -1,9 +1,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article/article';
+import { articleIndex } from '@/api/generated/article/article';
 import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
+import { articleKeys } from '../keys';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -12,7 +13,7 @@ type UseInfiniteArticlesOptions = {
 	filters?: ArticleListFilters;
 };
 
-export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => getArticleIndexQueryKey(filters);
+export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => articleKeys.list(filters);
 
 export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;

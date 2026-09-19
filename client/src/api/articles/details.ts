@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { articleShow, getArticleShowQueryKey } from '@/api/generated/article/article';
+import { articleShow } from '@/api/generated/article/article';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
 import '@/shared/constants';
 import { ObjectTemplateType } from '@/shared/constants/enums';
+import { articleKeys } from './keys';
 
 export interface MappedArticle extends ArticleDetailResource {
 	displayName: string;
@@ -19,14 +20,11 @@ export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => 
 });
 
 /**
- * Single source for the article detail cache key.
- *
- * Everything that reads or reconciles a single article - the detail query, the like
- * mutation, the processing-status subscription, the edit modal and the moderation
- * status mutation - must go through here so no handwritten key can drift away from
- * the generated transport.
+ * Article detail cache key. Delegates to `articleKeys.detail` so the detail query, the like
+ * mutation, the processing-status writes, the edit modal and the moderation status mutation
+ * all agree on one key.
  */
-export const getArticleDetailQueryKey = (uuid: string) => getArticleShowQueryKey(uuid);
+export const getArticleDetailQueryKey = (uuid: string) => articleKeys.detail(uuid);
 
 export const useArticleQuery = (uuid: string | undefined) => {
 	return useQuery({
