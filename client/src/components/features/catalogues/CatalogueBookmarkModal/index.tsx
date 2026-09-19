@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import type { CatalogueForItem, CatalogueForItemAction } from '@/api/catalogues/cataloguesForItem';
 import { Button } from '@/components/shared/Button';
 import { DialogModal, type DialogModalSize } from '@/components/shared/DialogModal';
+import { Cluster, Stack } from '@/components/shared/layout';
 import type { ModalController } from '@/hooks/useModal';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import styles from './CatalogueBookmarkModal.module.css';
 
 interface CatalogueBookmarkModalProps {
 	controller: ModalController;
@@ -43,37 +45,35 @@ export const CatalogueBookmarkModal = ({
 				<DialogModal.Title>{title}</DialogModal.Title>
 			</DialogModal.Header>
 			<DialogModal.Body>
-				{lists.length === 0 && <p className="text-muted">{emptyText}</p>}
-				{lists.map((list) => {
-					const isActive = list.contains_item;
-					const action: CatalogueForItemAction = isActive ? 'remove' : 'add';
-					const isLoading = loadingListIds.includes(list.id);
+				{lists.length === 0 ? (
+					<p className={styles.empty}>{emptyText}</p>
+				) : (
+					<Stack as="ul" gap="xs" className={styles.list}>
+						{lists.map((list) => {
+							const isActive = list.contains_item;
+							const action: CatalogueForItemAction = isActive ? 'remove' : 'add';
+							const isLoading = loadingListIds.includes(list.id);
 
-					return (
-						<div key={list.id} className="d-flex justify-content-between align-items-center mb-2">
-							<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
-							<Button
-								variant={isActive ? 'danger' : 'primary'}
-								size="sm"
-								onClick={() => onListAction(list, action)}
-								disabled={isLoading}
-							>
-								{isLoading ? (
-									<span className="spinner-border spinner-border-sm" />
-								) : isActive ? (
-									'Remove'
-								) : (
-									'Add'
-								)}
-							</Button>
-						</div>
-					);
-				})}
-				<div className="mt-3 text-right">
-					<Link to={createListHref} className="small">
-						+ Create a new list
-					</Link>
-				</div>
+							return (
+								<Cluster as="li" key={list.id} justify="between" gap="sm">
+									<Link to={CATALOGUE_ROUTES.detail(list.uuid)}>{list.title}</Link>
+									<Button
+										variant={isActive ? 'danger' : 'primary'}
+										size="sm"
+										onClick={() => onListAction(list, action)}
+										disabled={isLoading}
+										isLoading={isLoading}
+									>
+										{isActive ? 'Remove' : 'Add'}
+									</Button>
+								</Cluster>
+							);
+						})}
+					</Stack>
+				)}
+				<p className={styles.createLink}>
+					<Link to={createListHref}>+ Create a new list</Link>
+				</p>
 			</DialogModal.Body>
 		</DialogModal>
 	);

@@ -1,7 +1,9 @@
 import { Button } from '@/components/shared/Button';
 import { DialogModal, type DialogModalSize } from '@/components/shared/DialogModal';
 import { Icon } from '@/components/shared/Icon';
+import { Stack } from '@/components/shared/layout';
 import type { ModalController } from '@/hooks/useModal';
+import styles from './ArticlePdfModal.module.css';
 
 interface ArticlePdfModalProps {
 	controller: ModalController;
@@ -31,20 +33,23 @@ export const ArticlePdfModal = ({
 			size={size}
 			ariaLabel={ariaLabel}
 		>
-			<div className="text-center p-4">
-				<h5 className="mb-4">{title}</h5>
-				<Button
-					variant="ghost"
-					className="w-100 mb-2 border"
-					disabled={!isDownloadEnabled}
-					onClick={() => onDownload('kanji')}
-				>
-					Kanji List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-				</Button>
-				<Button variant="ghost" className="w-100 border" onClick={() => onDownload('words')}>
-					Vocabulary List <Icon size="sm" name="filePdfSolid" className="ml-2" />
-				</Button>
-			</div>
+			<Stack gap="lg" className={styles.body}>
+				<h5 className={styles.title}>{title}</h5>
+				<Stack gap="xs">
+					<Button
+						variant="ghost"
+						isFullWidth
+						className={styles.action}
+						disabled={!isDownloadEnabled}
+						onClick={() => onDownload('kanji')}
+					>
+						Kanji List <Icon size="sm" name="filePdfSolid" className={styles.actionIcon} />
+					</Button>
+					<Button variant="ghost" isFullWidth className={styles.action} onClick={() => onDownload('words')}>
+						Vocabulary List <Icon size="sm" name="filePdfSolid" className={styles.actionIcon} />
+					</Button>
+				</Stack>
+			</Stack>
 		</DialogModal>
 	);
 };

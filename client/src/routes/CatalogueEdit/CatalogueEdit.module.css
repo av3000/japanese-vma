@@ -1,0 +1,8 @@
+.page {
+	text-align: center;
+}
+
+.notFound {
+	padding-top: var(--spacing-2xl);
+	text-align: center;
+}

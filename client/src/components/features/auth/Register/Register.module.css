@@ -1,0 +1,18 @@
+.card {
+	padding-block: var(--spacing-2xl);
+	text-align: center;
+}
+
+.title {
+	margin: 0;
+}
+
+.intro {
+	margin: 0 0 var(--spacing-lg);
+}
+
+.submit {
+	align-self: center;
+	min-width: 25%;
+	margin-top: var(--spacing-lg);
+}

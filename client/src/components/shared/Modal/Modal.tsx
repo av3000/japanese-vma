@@ -2,7 +2,7 @@ import * as React from 'react';
 import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
-import styles from './Modal.module.scss';
+import styles from './Modal.module.css';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'fullscreen';
 

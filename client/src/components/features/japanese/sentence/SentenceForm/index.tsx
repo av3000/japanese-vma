@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import {
-	MAX_SENTENCE_LENGTH,
-	sentenceFormSchema,
-	type SentenceFormValues,
-} from './sentenceFormSchema';
+import { Field, FieldMessage, Textarea } from '@/components/shared/FormControls';
+import Spinner from '@/components/shared/Spinner';
+import { Stack } from '@/components/shared/layout';
+import styles from './SentenceForm.module.css';
+import { MAX_SENTENCE_LENGTH, sentenceFormSchema, type SentenceFormValues } from './sentenceFormSchema';
 
 export type { SentenceFormValues } from './sentenceFormSchema';
 
@@ -90,47 +91,44 @@ export function SentenceForm({
 		onChange: () => clearErrors(['content', 'root'] as never),
 	});
 
-	return (
-		<form onSubmit={handleSubmit(onSubmit)} className="col-12">
-			<h4>Sentence</h4>
-			<textarea
-				className="form-control resize-none"
-				rows={4}
-				maxLength={MAX_SENTENCE_LENGTH}
-				aria-label="Sentence"
-				{...contentField}
-				onFocus={() => setIsFocused(true)}
-				onBlur={(event) => {
-					contentField.onBlur(event);
-					setIsFocused(false);
-				}}
-				required
-			/>
-			<small
-				className={`d-block text-end ${
-					contentValue.length >= MAX_SENTENCE_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{contentValue.length}/{MAX_SENTENCE_LENGTH}
-			</small>
-			{visibleContentError && <div className="text-danger">{visibleContentError}</div>}
+	const isAtMaxLength = contentValue.length >= MAX_SENTENCE_LENGTH;
 
-			<div className="mt-4">
+	return (
+		<Stack as="form" gap="lg" onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+			<Field>
+				<h4>Sentence</h4>
+				<Textarea
+					rows={4}
+					maxLength={MAX_SENTENCE_LENGTH}
+					aria-label="Sentence"
+					noResize
+					isInvalid={Boolean(visibleContentError)}
+					{...contentField}
+					onFocus={() => setIsFocused(true)}
+					onBlur={(event) => {
+						contentField.onBlur(event);
+						setIsFocused(false);
+					}}
+					required
+				/>
+				<FieldMessage alignEnd tone={isAtMaxLength ? 'error' : 'hint'}>
+					{contentValue.length}/{MAX_SENTENCE_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{visibleContentError}</FieldMessage>
+			</Field>
+
+			<div>
 				<Button
 					type="submit"
 					variant="outline"
 					disabled={isSubmitting || (disableSubmitWhenUnchanged && !isDirty) || !isValid}
 				>
-					{isSubmitting ? (
-						<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-					) : (
-						submitLabel
-					)}
+					{isSubmitting ? <Spinner size="sm" /> : submitLabel}
 				</Button>
 			</div>
 
-			{statusMessage && <div className="text-danger mt-3">{statusMessage}</div>}
-			{generalErrorMessage && <div className="text-danger mt-3">{generalErrorMessage}</div>}
-		</form>
+			{statusMessage && <Alert tone="danger">{statusMessage}</Alert>}
+			{generalErrorMessage && <Alert tone="danger">{generalErrorMessage}</Alert>}
+		</Stack>
 	);
 }

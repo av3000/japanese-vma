@@ -1,56 +1,46 @@
 import React from 'react';
-import { ListGroup } from 'react-bootstrap';
 import type { Catalogue } from '@/api/catalogues/catalogues';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster } from '@/components/shared/layout';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import styles from './DashboardRow.module.css';
 
-const DashboardListItem: React.FC<Catalogue> = ({
-	uuid,
-	hashtags,
-	title,
-	engagement,
-	type_label,
-	created_at,
-}) => (
-	<div className="row border-bottom border-gray">
-		<div className="col-md-8 ">
-			<p className="text-muted">{title}</p>
-			<div className="d-flex align-items-center mt-3">
-				<span className="text-muted">Tags:</span>
-				<section className="mt-2 d-flex align-items-center flex-wrap">
+const DashboardListItem: React.FC<Catalogue> = ({ uuid, hashtags, title, engagement, type_label, created_at }) => (
+	<li className={styles.row}>
+		<div>
+			<p className={styles.title}>{title}</p>
+			<Cluster gap="xs">
+				<span className={styles.label}>Tags:</span>
+				<Cluster as="span" gap="3xs">
 					{hashtags.map((tag) => (
-						<Chip
-							className="mr-1"
-							readonly
-							key={tag.id + tag.content}
-							title={tag.content}
-							name={tag.content}
-						>
+						<Chip readonly key={tag.id + tag.content} title={tag.content} name={tag.content}>
 							{tag.content}
 						</Chip>
 					))}
-				</section>
-			</div>
+				</Cluster>
+			</Cluster>
 		</div>
-		<div className="col-md-4">
-			<ListGroup variant="flush" className="text-muted">
-				<ListGroup.Item className="p-0 d-flex justify-content-between align-items-center">
-					<span>{engagement?.comments_count} Comments</span>
-					<span>{engagement?.views_count} Views</span>
-					<span>{engagement?.likes_count} Likes</span>
-					<Button to={CATALOGUE_ROUTES.detail(uuid)} variant="ghost" size="sm" type="button">
-						<Icon name="externalLink" size="sm" />
-					</Button>
-				</ListGroup.Item>
-				<small>ListType: {type_label}</small>
-				<ListGroup.Item className="p-0">
-					<small>{created_at}</small>
-				</ListGroup.Item>
-			</ListGroup>
+		<div>
+			<Cluster justify="between" gap="xs" className={styles.stats}>
+				<span>{engagement?.comments_count} Comments</span>
+				<span>{engagement?.views_count} Views</span>
+				<span>{engagement?.likes_count} Likes</span>
+				<Button
+					to={CATALOGUE_ROUTES.detail(uuid)}
+					variant="ghost"
+					size="sm"
+					type="button"
+					aria-label="Open list"
+				>
+					<Icon name="externalLink" size="sm" />
+				</Button>
+			</Cluster>
+			<small className={styles.meta}>ListType: {type_label}</small>
+			<small className={styles.meta}>{created_at}</small>
 		</div>
-	</div>
+	</li>
 );
 
 export default DashboardListItem;

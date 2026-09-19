@@ -1,0 +1,19 @@
+/* ==========================================================================
+   #LINKS
+
+   Links in content are always underlined: colour alone is not a reliable cue
+   (WCAG 1.4.1, colour-blind readers). Navigation, cards and buttons opt out
+   through their own module classes and reveal an underline on hover instead.
+   ========================================================================== */
+
+a {
+	color: var(--color-link);
+	text-decoration: underline;
+	text-decoration-thickness: from-font;
+	text-underline-offset: 0.15em;
+}
+
+a:hover {
+	color: var(--color-link-hover);
+	text-decoration-thickness: 2px;
+}

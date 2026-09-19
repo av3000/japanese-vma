@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { POST_ROUTES, usePostQuery } from '@/api/posts/reads';
+import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container, Stack } from '@/components/shared/layout';
 import PostContent from './PostContent';
+import styles from './PostDetails.module.css';
 
 /**
  * The contract resolves a transitional numeric identifier and always answers with the UUID, so a
@@ -43,12 +46,14 @@ const PostDetails: React.FC = () => {
 
 	if (isError || !post) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Post not found or was deleted.</p>
-				<a href={POST_ROUTES.list} className="btn btn-link">
-					Back to Community
-				</a>
-			</div>
+			<Container size="sm" className={styles.notFound}>
+				<Stack gap="md" align="center">
+					<p className={styles.lead}>Post not found or was deleted.</p>
+					<Button href={POST_ROUTES.list} variant="linkButton">
+						Back to Community
+					</Button>
+				</Stack>
+			</Container>
 		);
 	}
 

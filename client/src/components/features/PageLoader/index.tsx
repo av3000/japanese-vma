@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import styles from './PageLoader.module.scss';
+import styles from './PageLoader.module.css';
 
 interface ApplicationState {
   loading: boolean;

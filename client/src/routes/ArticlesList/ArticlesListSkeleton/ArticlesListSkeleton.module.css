@@ -1,0 +1,25 @@
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.control {
+	display: block;
+	width: 100%;
+	height: var(--input-height-md);
+}
+
+.controlShort {
+	width: 7rem;
+}
+
+.countLine {
+	display: block;
+	width: 9rem;
+	height: 1rem;
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}

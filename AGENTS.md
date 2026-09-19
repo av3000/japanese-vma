@@ -38,7 +38,6 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - ESLint + Prettier extensions for frontend lint/format feedback.
   - EditorConfig support.
   - PHP Intelephense (or equivalent) for Laravel navigation.
-  - Tailwind CSS IntelliSense for utility-class workflows.
 - **Before opening PRs:**
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.

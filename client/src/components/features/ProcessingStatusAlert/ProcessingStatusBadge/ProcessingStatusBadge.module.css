@@ -1,0 +1,9 @@
+.isOnlyIcon {
+	border-radius: 9999px;
+}
+.isOnlyIcon.sizeSm {
+	border-radius: 9999px;
+}
+.isOnlyIcon.sizeLg {
+	border-radius: 9999px;
+}

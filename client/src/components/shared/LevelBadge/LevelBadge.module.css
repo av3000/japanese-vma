@@ -1,0 +1,35 @@
+.badge {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3xs);
+	min-height: var(--size-lg);
+	padding: 0 var(--spacing-xs);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-badge-accent-bg);
+	color: var(--color-badge-accent-fg);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+
+/* "Uncommon" (outside the JLPT lists) is informational, not a level. */
+.neutral {
+	background-color: var(--color-neutral-200);
+	color: var(--color-neutral-700);
+}
+
+.count {
+	font-weight: var(--font-weight-regular);
+	color: inherit;
+	opacity: 0.85;
+}
+
+.sm {
+	min-height: var(--size-md);
+	padding: 0 var(--spacing-2xs);
+	font-size: var(--font-size-body-xs);
+}

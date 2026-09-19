@@ -1,7 +1,10 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useWordQuery } from '@/api/words/details';
-import Spinner from '@/assets/images/spinner.gif';
+import { Alert } from '@/components/shared/Alert';
+import { PageLoading } from '@/components/shared/PageLoading';
+import { Container } from '@/components/shared/layout';
+import styles from '../japaneseDetailPage.module.css';
 import WordContent from './WordContent';
 
 const WordDetails: React.FC = () => {
@@ -9,15 +12,15 @@ const WordDetails: React.FC = () => {
 	const { data: word, isLoading, isError } = useWordQuery(word_id);
 
 	if (isLoading) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" />;
 	}
 
 	if (isError || !word) {
-		return <div className="container mt-5 text-danger">Unable to load word.</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Unable to load word.</Alert>
+			</Container>
+		);
 	}
 
 	return <WordContent word={word} />;

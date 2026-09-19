@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { capitalize } from '@/helpers';
 
 import { getElemCSSVars } from '../settingsGetter';
-import styles from './SettingGroup.module.scss';
+import styles from './SettingGroup.module.css';
 
 interface SettingGroupProps {
   variables: string;

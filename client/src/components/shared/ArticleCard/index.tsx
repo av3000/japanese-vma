@@ -9,14 +9,17 @@ import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.j
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
 import { formatDate } from '@/helpers';
-import styles from './ArticleCard.module.scss';
+import styles from './ArticleCard.module.css';
 
 export interface ArticleCardProps {
 	article: ArticleResource;
 	className?: string;
 }
+
+const JLPT_LEVELS: Array<keyof ArticleResource['jlpt_levels']> = ['n1', 'n2', 'n3', 'n4', 'n5', 'uncommon'];
 
 const shouldShowProcessingBadge = (status: string | undefined): status is LastOperationStatusType => {
 	if (!status || status === LastOperationStatus.completed) return false;
@@ -34,7 +37,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 
 	return (
 		<article className={classNames(styles.wrapper, className)}>
-			<Link to={url} title={article.title_jp} className="text-decoration-none">
+			<Link to={url} title={article.title_jp} className={styles.cardLink}>
 				<div className={styles.imgWrapper}>
 					<img src={DefaultArticleImg} alt={article.title_jp} className={styles.image} />
 
@@ -49,14 +52,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 
 			<div className={styles.date}>{formatDate(article.created_at, 'ja', true)}</div>
 
-			<Link to={url} title={article.title_jp} className="text-decoration-none">
-				<p className={styles.title}>{article.title_jp}</p>
+			<Link to={url} title={article.title_jp} className={styles.cardLink}>
+				<p className={styles.title} lang="ja">
+					{article.title_jp}
+				</p>
 			</Link>
 
 			{article.hashtags?.length ? (
-				<div className={classNames(styles.chipList, 'd-flex align-items-center flex-wrap')}>
+				<div className={styles.chipList}>
 					{article.hashtags.map((tag) => (
-						<Chip className="mr-1" key={tag.id} readonly title={tag.content}>
+						<Chip key={tag.id} readonly title={tag.content}>
 							{tag.content}
 						</Chip>
 					))}
@@ -64,55 +69,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 			) : null}
 
 			<div className={styles.childrenWrapper}>
-				<div className="d-flex justify-content-between align-items-center">
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.n1}
-						<rp>(</rp>
-						<rt>
-							<strong>N1</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.n2}
-						<rp>(</rp>
-						<rt>
-							<strong>N2</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.n3}
-						<rp>(</rp>
-						<rt>
-							<strong>N3</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.n4}
-						<rp>(</rp>
-						<rt>
-							<strong>N4</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.n5}
-						<rp>(</rp>
-						<rt>
-							<strong>N5</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
-					<ruby className="h4 mr-2">
-						{article.jlpt_levels.uncommon}
-						<rp>(</rp>
-						<rt>
-							<strong>NA</strong>
-						</rt>
-						<rp>)</rp>
-					</ruby>
+				<div className={styles.levelRow}>
+					{JLPT_LEVELS.map((level) => (
+						<LevelBadge key={level} level={level} count={article.jlpt_levels[level]} size="sm" />
+					))}
 				</div>
 
 				<div className={styles.metaInfo}>

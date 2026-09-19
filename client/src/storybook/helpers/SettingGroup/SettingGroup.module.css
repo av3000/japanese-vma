@@ -1,0 +1,39 @@
+.wrapper:not(:first-child) {
+	margin-top: var(--spacing-lg);
+}
+
+.itemRow {
+	height: var(--button-height-sm);
+}
+.itemRow td {
+	padding-bottom: var(--spacing-2xs);
+	padding-right: var(--spacing-md);
+}
+.itemRow td:last-child {
+	padding-right: 0;
+}
+
+.extraCell {
+	--size: 50px;
+	width: var(--size);
+	height: var(--size);
+	/* Modifiers */
+}
+.variantColor .extraCell,
+.variantRadius .extraCell {
+	border: var(--border-size-sm) solid var(--color-border-default);
+	border-radius: var(--radius);
+	background-color: var(--bg-color);
+}
+.variantSpacing .extraCell {
+	background: var(--color-background-primary-default);
+}
+.variantTypography .extraCell {
+	width: auto;
+	height: auto;
+	font-size: var(--font-size);
+}
+
+.errorText {
+	color: var(--color-text-system-danger);
+}

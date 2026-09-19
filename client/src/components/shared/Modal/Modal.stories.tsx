@@ -2,6 +2,8 @@ import type { ComponentProps } from 'react';
 import { useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/FormControls';
+import { Stack } from '@/components/shared/layout';
 import { useDialog } from '@/hooks/useDialog';
 import { Modal } from './Modal';
 
@@ -37,8 +39,12 @@ const DefaultTemplate = (args: Partial<ComponentProps<typeof Modal>>) => {
 						<Modal.Title>Invite collaborators</Modal.Title>
 					</Modal.Header>
 					<Modal.Body>
-						<p className="mb-3">Share this article with your teammates by adding their email addresses.</p>
-						<input className="form-control" placeholder="alex@example.com" />
+						<Stack gap="md">
+							<p style={{ margin: 0 }}>
+								Share this article with your teammates by adding their email addresses.
+							</p>
+							<Input placeholder="alex@example.com" />
+						</Stack>
 					</Modal.Body>
 					<Modal.Footer>
 						<Button variant="secondary" onClick={handleClose}>
@@ -86,7 +92,7 @@ const OptionalSectionsTemplate = (args: Partial<ComponentProps<typeof Modal>>) =
 					ariaLabel="Confirm action"
 				>
 					<Modal.Body>
-						<p className="mb-0">
+						<p style={{ margin: 0 }}>
 							This modal skips the header entirely. Provide an \`ariaLabel\` when there is no title.
 						</p>
 					</Modal.Body>
@@ -140,7 +146,7 @@ const ModalOnlyInfo = (args: Partial<ComponentProps<typeof Modal>>) => {
 						<Modal.Title>Information to read</Modal.Title>
 					</Modal.Header>
 					<Modal.Body>
-						<p className="mb-0">
+						<p style={{ margin: 0 }}>
 							This modal skips the footer entirely. Provide an \`ariaLabel\` when there is no title. Lorem
 							ipsum dolor sit amet consectetur adipisicing elit. Esse corporis labore dignissimos
 							molestias libero repellat, unde eos corrupti, dolore reprehenderit facere in aliquid quis

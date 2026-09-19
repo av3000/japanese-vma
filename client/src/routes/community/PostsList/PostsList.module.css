@@ -1,0 +1,39 @@
+.page {
+	padding-block: var(--spacing-md) var(--spacing-2xl);
+}
+
+.centered {
+	margin: 0;
+	text-align: center;
+}
+
+.results h4,
+.results p {
+	margin: 0;
+}
+
+.muted {
+	margin: 0;
+	color: var(--color-neutral-600);
+}
+
+.panel {
+	padding: var(--spacing-md);
+	background: var(--color-neutral-0);
+	border-radius: var(--border-radius-md);
+	box-shadow: var(--box-shadow-default);
+}
+
+.empty {
+	margin: 0;
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.loadMore {
+	min-width: 50%;
+}

@@ -7,10 +7,12 @@ import { PostForm, type PostFormSubmitMeta, type PostFormValues } from '@/compon
 import { buildPostUpdatePayload } from '@/components/features/community/PostForm/postFormSchema';
 import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from './PostEdit.module.css';
 
 const BackToCommunity = () => (
-	<div className="mt-4">
+	<div>
 		<Link to={POST_ROUTES.list} className="tag-link">
 			Back to Community
 		</Link>
@@ -49,10 +51,12 @@ export default function PostEditPage() {
 
 	if (isError || !post) {
 		return (
-			<div className="container mt-5">
-				<p className="text-danger">Post could not be loaded.</p>
-				<BackToCommunity />
-			</div>
+			<Container size="md" className={styles.page}>
+				<Stack gap="lg">
+					<p className={styles.error}>Post could not be loaded.</p>
+					<BackToCommunity />
+				</Stack>
+			</Container>
 		);
 	}
 
@@ -60,10 +64,12 @@ export default function PostEditPage() {
 	// refused here exactly as the server would refuse the PUT.
 	if (!canUpdatePost(user, post.author.id)) {
 		return (
-			<div className="container mt-5">
-				<p className="text-danger">You do not have permission to edit this post.</p>
-				<BackToCommunity />
-			</div>
+			<Container size="md" className={styles.page}>
+				<Stack gap="lg">
+					<p className={styles.error}>You do not have permission to edit this post.</p>
+					<BackToCommunity />
+				</Stack>
+			</Container>
 		);
 	}
 
@@ -91,10 +97,10 @@ export default function PostEditPage() {
 	};
 
 	return (
-		<div className="container">
-			<BackToCommunity />
-			<h2 className="mt-4">Edit post</h2>
-			<div className="row justify-content-lg-center text-center">
+		<Container size="md" className={styles.page}>
+			<Stack gap="lg">
+				<BackToCommunity />
+				<h2 className={styles.heading}>Edit post</h2>
 				<PostForm
 					initialValues={initialValues}
 					onSubmit={handleSubmit}
@@ -104,7 +110,7 @@ export default function PostEditPage() {
 					statusMessage={status}
 					disableSubmitWhenUnchanged
 				/>
-			</div>
-		</div>
+			</Stack>
+		</Container>
 	);
 }

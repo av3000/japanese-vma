@@ -1,8 +1,11 @@
 import React from 'react';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
+import { Grid } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { SavedListType } from '@/shared/constants/enums';
+import styles from './WordItem.module.css';
 
 interface WordItemProps {
 	entityId: number;
@@ -32,23 +35,25 @@ const WordItem: React.FC<WordItemProps> = ({
 	const { isAuthenticated } = useAuth();
 
 	return (
-		<div className="post-preview">
-			<Link className="tag-link" to={`/word/${detailIdentifier}`}>
-				<ruby className="h2 mr-2">
+		<li className={styles.item}>
+			<Link to={`/word/${detailIdentifier}`}>
+				<ruby className={styles.reading} lang="ja">
 					{word}
 					<rp>(</rp>
 					<rt>{furigana}</rt>
 					<rp>)</rp>
 				</ruby>
 			</Link>
-			<div className="row">
-				<div className="col-md-6">
+			<Grid columns={12} gap="md">
+				<Grid.Item span={{ base: 12, sm: 6 }}>
 					<p>type: {word_type}</p>
-				</div>
-				<div className="col-md-6">
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 6 }}>
 					<div>
 						<div>meaning: {meaning}</div>
-						<div>jlpt: {jlpt}</div>
+						<div>
+							jlpt: <LevelBadge level={jlpt} size="sm" />
+						</div>
 					</div>
 					<div>
 						{isAuthenticated && (
@@ -64,10 +69,9 @@ const WordItem: React.FC<WordItemProps> = ({
 							/>
 						)}
 					</div>
-				</div>
-			</div>
-			<hr />
-		</div>
+				</Grid.Item>
+			</Grid>
+		</li>
 	);
 };
 

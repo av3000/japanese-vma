@@ -2,7 +2,7 @@ import * as React from 'react';
 import classNames from 'classnames';
 import { icons } from '@/assets/icons';
 import { capitalize } from '@/helpers';
-import styles from './Icon.module.scss';
+import styles from './Icon.module.css';
 
 export const iconNames = Object.keys(icons);
 export type IconName = keyof typeof icons;

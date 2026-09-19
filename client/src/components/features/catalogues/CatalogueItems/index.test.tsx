@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import { ObjectTemplates } from '@/shared/constants';
 import type { User } from '@/types';
@@ -49,7 +50,15 @@ const articleItem = {
 	},
 } as unknown as CatalogueArticleItem;
 
-const kanjiItem = { id: 88, kanji: '語', onyomi: 'ゴ', kunyomi: 'かた|る', meaning: 'language|word', jlpt: '3', frequency: 301 };
+const kanjiItem = {
+	id: 88,
+	kanji: '語',
+	onyomi: 'ゴ',
+	kunyomi: 'かた|る',
+	meaning: 'language|word',
+	jlpt: '3',
+	frequency: 301,
+};
 const radicalItem = { id: 12, radical: '氵', strokes: 3, meaning: 'water', hiragana: 'みず' };
 const wordItem = { id: 55, word: '言葉', furigana: 'ことば', meaning: 'word', jlpt: '3', word_type: 'noun' };
 const sentenceItem = { id: 63, content: 'これは文です。', tatoeba_entry: 9876 };
@@ -84,10 +93,13 @@ describe('CatalogueItems', () => {
 		['kanji', ObjectTemplates.KANJIS, ObjectTemplates.KNOWNKANJIS, kanjiItem, '/kanji/88'],
 		['radical', ObjectTemplates.RADICALS, ObjectTemplates.KNOWNRADICALS, radicalItem, '/radical/12'],
 		['word', ObjectTemplates.WORDS, ObjectTemplates.KNOWNWORDS, wordItem, '/word/55'],
-	])('renders %s items with their id detail link for both the plain and known type', (_label, type, knownType, item, href) => {
-		expect(renderItems({ catalogueType: type, items: [item] })).toContain(`href="${href}"`);
-		expect(renderItems({ catalogueType: knownType, items: [item] })).toContain(`href="${href}"`);
-	});
+	])(
+		'renders %s items with their id detail link for both the plain and known type',
+		(_label, type, knownType, item, href) => {
+			expect(renderItems({ catalogueType: type, items: [item] })).toContain(`href="${href}"`);
+			expect(renderItems({ catalogueType: knownType, items: [item] })).toContain(`href="${href}"`);
+		},
+	);
 
 	it('renders sentence items with their Tatoeba source link', () => {
 		const html = renderItems({ catalogueType: ObjectTemplates.SENTENCES, items: [sentenceItem] });

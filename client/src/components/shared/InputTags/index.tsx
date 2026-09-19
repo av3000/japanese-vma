@@ -1,7 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
 import { Chip } from '@/components/shared/Chip';
-import styles from './InputTags.module.scss';
+import { FieldMessage } from '@/components/shared/FormControls';
+import styles from './InputTags.module.css';
 
 export interface InputTagsProps {
 	defaultTags?: string[];
@@ -186,13 +187,9 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 				/>
 			</div>
 			{showTagLengthCounter && maxTagLength !== undefined && (
-				<small
-					className={`d-block text-end ${
-						inputValue.length >= maxTagLength ? 'text-danger' : 'text-muted'
-					}`}
-				>
+				<FieldMessage tone={inputValue.length >= maxTagLength ? 'error' : 'hint'} alignEnd>
 					{inputValue.length}/{maxTagLength}
-				</small>
+				</FieldMessage>
 			)}
 		</div>
 	);

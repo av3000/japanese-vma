@@ -92,6 +92,15 @@ jobs:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
         run: npm run typecheck
 
+      # Unit project only: the `storybook` Vitest project needs Playwright browsers.
+      - name: Unit tests
+        run: npm run test:unit
+
+      # Styling guardrail (STYLING-01): fails when Bootstrap/Tailwind/Sass usage grows
+      # beyond client/style-budget.json. Lower the budget as files are migrated.
+      - name: Style audit
+        run: npm run style:audit -- --check
+
       # No separate `npm run build` here: the production image build below runs
       # the same `vite build`, and vite-plugin-checker runs TypeScript and ESLint
       # during it. The native build produced an artifact nothing consumed.

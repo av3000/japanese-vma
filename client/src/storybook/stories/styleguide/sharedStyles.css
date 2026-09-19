@@ -1,0 +1,19 @@
+html:not(.is-component) .sbdocs-wrapper {
+	background: transparent !important;
+}
+
+.is-component .docs-story {
+	background-color: var(--page-background-color);
+}
+
+ul:not([class]) {
+	padding-inline-start: calc(1em + var(--spacing-2xs));
+}
+ul:not([class]) li {
+	margin-top: var(--spacing-2xs);
+	list-style-type: disc;
+}
+
+.richTextWrapper {
+	font-size: var(--font-size-body-md);
+}

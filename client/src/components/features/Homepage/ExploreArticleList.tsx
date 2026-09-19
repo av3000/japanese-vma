@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import ArticleCard from '@/components/shared/ArticleCard';
 import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
+import { Cluster, Grid } from '@/components/shared/layout';
+import styles from './ExploreList.module.css';
 
 const HOMEPAGE_ARTICLE_SKELETON_COUNT = 4;
+
+/** Bootstrap `col-6 col-md-4 col-lg-3` → 2 / 3 / 4 cards per row. */
+const CARD_COLUMNS = { base: 2, sm: 3, md: 4 };
 
 const ExploreArticleList: React.FC = () => {
 	const { articles, total, error, isPending, isError } = useInfiniteArticles({
@@ -15,54 +20,48 @@ const ExploreArticleList: React.FC = () => {
 	if (isPending) {
 		return (
 			<>
-				<div className="d-flex justify-content-between align-items-center w-100 my-3">
-					<h3>Latest Articles</h3>
-					<div>
-						<Link to="/articles" className="homepage-section-title">
-							Read All Articles
-						</Link>
-					</div>
-				</div>
-				<div className="row">
+				<Cluster justify="between" className={styles.header}>
+					<h3 className={styles.title}>Latest Articles</h3>
+					<Link to="/articles" className={styles.sectionLink}>
+						Read All Articles
+					</Link>
+				</Cluster>
+				<Grid as="ul" columns={CARD_COLUMNS} gap="lg" className={styles.cards}>
 					{Array.from({ length: HOMEPAGE_ARTICLE_SKELETON_COUNT }).map((_, index) => (
-						<div key={index} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+						<Grid.Item as="li" span="auto" key={index}>
 							<ArticleCardSkeleton />
-						</div>
+						</Grid.Item>
 					))}
-				</div>
+				</Grid>
 			</>
 		);
 	}
 
 	if (isError) {
-		return <div className="text-danger">Error: {error.message}</div>;
+		return <p className={styles.error}>Error: {error.message}</p>;
 	}
 
 	return (
 		<>
-			<div className="d-flex justify-content-between align-items-center w-100 my-3">
-				<h3>
+			<Cluster justify="between" className={styles.header}>
+				<h3 className={styles.title}>
 					Latest Articles {articles.length} of {total}
 				</h3>
-				<div>
-					<Link to="/articles" className="homepage-section-title">
-						Read All Articles
-					</Link>
-				</div>
-			</div>
-			<div className="row">
-				{articles.length === 0 ? (
-					<p>No articles found.</p>
-				) : (
-					<>
-						{articles.map((article) => (
-							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
-								<ArticleCard article={article} />
-							</div>
-						))}
-					</>
-				)}
-			</div>
+				<Link to="/articles" className={styles.sectionLink}>
+					Read All Articles
+				</Link>
+			</Cluster>
+			{articles.length === 0 ? (
+				<p>No articles found.</p>
+			) : (
+				<Grid as="ul" columns={CARD_COLUMNS} gap="lg" className={styles.cards}>
+					{articles.map((article) => (
+						<Grid.Item as="li" span="auto" key={article.id}>
+							<ArticleCard article={article} />
+						</Grid.Item>
+					))}
+				</Grid>
+			)}
 		</>
 	);
 };

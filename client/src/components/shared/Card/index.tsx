@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { formatDate } from '@/helpers';
 import { Chip } from '../Chip';
 import { Link } from '../Link';
-import styles from './Card.module.scss';
+import styles from './Card.module.css';
 
 export interface CardImage {
 	url: string;
@@ -46,16 +46,16 @@ export const Card: React.FC<CardProps> = ({ title, image, date, tags, url, child
 					</Link>
 				)}
 
-				{date && <div className={classNames(styles.date, 'mt-2')}>{formatDate(date, 'ja', true)}</div>}
+				{date && <div className={styles.date}>{formatDate(date, 'ja', true)}</div>}
 
 				<Link className={styles.primaryCardAction} to={url ?? ''} title={title}>
-					{title && <p className={classNames(styles.title)}>{title}</p>}
+					{title && <p className={styles.title}>{title}</p>}
 				</Link>
 
 				{tags && tags.length > 0 && (
-					<div className={classNames(styles.chipList, 'mt-2 d-flex align-items-center flex-wrap')}>
+					<div className={styles.chipList}>
 						{tags.map((tag) => (
-							<Chip className="mr-1" key={tag.id} readonly title={tag.content}>
+							<Chip key={tag.id} readonly title={tag.content}>
 								{tag.content}
 							</Chip>
 						))}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import classNames from 'classnames';
 import {
 	deriveCatalogueWidgetState,
 	optimisticApplyCatalogueForItemAction,
@@ -12,7 +13,7 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
-import styles from './AuthorizedBookmarkWidget.module.scss';
+import styles from './AuthorizedBookmarkWidget.module.css';
 
 // TODO: For lists it shouldnt fetch per instance, need to figure cheaper way to get it on list get request.
 interface AuthorizedBookmarkWidgetProps {
@@ -156,9 +157,9 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			<div className={styles.widgetWrapper}>
 				{isKnownType &&
 					(isKnown ? (
-						<i className="fas fa-check-circle text-success"> Learned</i>
+						<i className={classNames('fas fa-check-circle', styles.learned)}> Learned</i>
 					) : (
-						<i className="fas fa-check-circle text-secondary"> Not learned</i>
+						<i className={classNames('fas fa-check-circle', styles.notLearned)}> Not learned</i>
 					))}
 				<Button
 					onClick={openBookmarkModal}

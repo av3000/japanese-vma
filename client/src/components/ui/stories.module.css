@@ -1,0 +1,46 @@
+/* Helpers used only by the UI stories. */
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-sm);
+}
+
+.triggerButton {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	padding: var(--spacing-xs) var(--spacing-sm);
+	background: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-sm);
+	color: var(--color-neutral-900);
+	font-size: var(--font-size-body-md);
+	cursor: pointer;
+}
+
+.dot {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	width: 10px;
+	height: 10px;
+	padding: 0;
+}
+
+.details {
+	display: grid;
+	gap: var(--spacing-xs);
+}
+
+.detailRow {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+}
+
+.muted {
+	color: var(--color-neutral-600);
+}

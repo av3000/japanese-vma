@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import styles from './PageLoading.module.scss';
+import styles from './PageLoading.module.css';
 
 export const PAGE_LOADING_FAMILIES = ['list', 'detail', 'form', 'dashboard', 'generic'] as const;
 export type PageLoadingFamily = (typeof PAGE_LOADING_FAMILIES)[number];

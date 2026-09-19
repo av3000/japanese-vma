@@ -1,0 +1,16 @@
+.empty {
+	margin: 0;
+	color: var(--color-neutral-600);
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.createLink {
+	margin: var(--spacing-md) 0 0;
+	text-align: end;
+	font-size: var(--font-size-body-sm);
+}

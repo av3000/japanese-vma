@@ -1,0 +1,10 @@
+.control {
+	display: block;
+	height: var(--input-height-md);
+}
+
+.summary {
+	display: block;
+	height: var(--font-size-body-md);
+	width: 9rem;
+}

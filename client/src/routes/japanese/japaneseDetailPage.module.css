@@ -1,0 +1,55 @@
+/*
+ * Shared page shell for the Kanji, Word, Sentence and Radical detail routes:
+ * back link, a summary grid, then sections listing related entities.
+ */
+
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.centered {
+	text-align: center;
+}
+
+.lead {
+	font-size: var(--font-size-body-lg);
+	line-height: var(--line-height-lg);
+}
+
+/* Related-entity section, separated by a rule (was `<hr />`). */
+.section {
+	padding-top: var(--spacing-lg);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.relatedList {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* One related entity: title | meaning | action (was `col-md-6 / col-md-4 / col-md-2`). */
+.relatedRow {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--spacing-xs) var(--spacing-lg);
+	align-items: center;
+	padding-block: var(--spacing-md);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+/* sm */
+@media (min-width: 768px) {
+	.relatedRow {
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+	}
+
+	/* Wider first column for article rows (was `col-md-8 / col-md-2 / col-md-2`). */
+	.relatedRowWide {
+		grid-template-columns: minmax(0, 4fr) minmax(0, 1fr) auto;
+	}
+}
+
+.rowAction {
+	justify-self: end;
+}

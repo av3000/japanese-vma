@@ -1,8 +1,11 @@
 import React from 'react';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
+import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
+import { Cluster, Grid } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { SavedListType } from '@/shared/constants/enums';
+import styles from './KanjiItem.module.css';
 
 interface KanjiItemProps {
 	id: string | number;
@@ -39,28 +42,26 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 	const entityId = Number(id);
 
 	return (
-		<div className="post-preview">
-			<div className="post-title">
-				<h1>{character}</h1>
-			</div>
-			<div className="post-subtitle">
-				<h3>{meaning}</h3>
-			</div>
-			<div className="row">
-				<div className="col-md-6">
+		<li className={styles.item}>
+			<h1 lang="ja">{character}</h1>
+			<h3>{meaning}</h3>
+			<Grid columns={12} gap="md">
+				<Grid.Item span={{ base: 12, sm: 6 }}>
 					<div>onyomi: {onyomi},</div>
 					<div>kunyomi: {kunyomi}</div>
-				</div>
-				<div className="col-md-3">
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 3 }}>
 					<div>frequency: {frequency},</div>
-					<div>jlpt: {jlpt}</div>
-				</div>
-				<div className="col-md-3">
+					<div>
+						jlpt: <LevelBadge level={jlpt} size="sm" />
+					</div>
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 3 }}>
 					<div>parts: {parts},</div>
 					<div>stroke_count: {strokeCount}</div>
-					<div className="float-right">
+					<Cluster justify="end">
 						<Link to={`/kanji/${uuid}`}>Open</Link>
-					</div>
+					</Cluster>
 					{isAuthenticated && (
 						<AuthorizedBookmarkWidget
 							instanceObjectType={SavedListType.KANJIS}
@@ -73,10 +74,9 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 							onStateChange={onBookmarkStateChange}
 						/>
 					)}
-				</div>
-			</div>
-			<hr />
-		</div>
+				</Grid.Item>
+			</Grid>
+		</li>
 	);
 };
 

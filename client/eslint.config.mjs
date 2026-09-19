@@ -51,6 +51,56 @@ export default [
       "react/no-unescaped-entities": "off",
     },
   },
+  // Styling architecture guardrail (STYLING-01): Bootstrap is being retired in favour of
+  // CSS Modules and the shared primitives under src/components/shared. New imports of the
+  // Bootstrap packages are an error. Class-name usage is tracked by scripts/style-audit.mjs.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "react-bootstrap",
+              message:
+                "React-Bootstrap is retired. Use the shared primitives (Button, DialogModal, ConfirmModal, layout, FormControls) with CSS Modules.",
+            },
+            {
+              name: "react-router-bootstrap",
+              message: "react-router-bootstrap is retired. Use react-router-dom Link/NavLink or the shared Button with `to`.",
+            },
+            {
+              name: "bootstrap",
+              message: "Bootstrap is retired. Use tokens from src/styles and CSS Modules.",
+            },
+            {
+              name: "tailwind-merge",
+              message: "Tailwind is retired. Compose classes with classnames and CSS Modules.",
+            },
+            {
+              name: "class-variance-authority",
+              message: "Tailwind is retired. Map variants to CSS Module classes explicitly (see src/components/ui/badge.tsx).",
+            },
+            {
+              name: "tw-animate-css",
+              message: "Tailwind is retired. Use CSS Module keyframes with a prefers-reduced-motion guard.",
+            },
+            {
+              name: "tailwindcss",
+              message: "Tailwind is retired.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["react-bootstrap/*", "bootstrap/*"],
+              message: "Bootstrap is retired. Use the shared primitives and CSS Modules.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     plugins: {
       // Should be updated to the new syntax once https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/978 is resolved.

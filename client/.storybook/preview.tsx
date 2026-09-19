@@ -1,11 +1,17 @@
 import { BrowserRouter } from 'react-router-dom';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
+import '@fontsource/ibm-plex-mono/700.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-sans/700.css';
 import type { Preview } from '@storybook/react';
-
 // Storybook doesn't render `src/main.tsx`, so we must explicitly load the app's global styles here.
 import '@/assets/font-awesome/css/all.min.css';
-import '@/styles/tailwind.css';
-import '@/styles/App.scss';
-import '@/styles/index.scss';
+import '@/styles/App.css';
+import '@/styles/index.css';
 
 const preview: Preview = {
 	decorators: [

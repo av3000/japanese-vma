@@ -1,8 +1,10 @@
 import React, { FormEvent } from 'react';
-import { Col, Form, Row } from 'react-bootstrap';
 import { POST_TOPIC_OPTIONS, type PostListFilterInput } from '@/api/posts/reads';
 import { Button } from '@/components/shared/Button';
+import { Input, Select } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
+import { Grid } from '@/components/shared/layout';
+import styles from './PostsSearchBar.module.css';
 
 const ALL_TOPICS = '';
 
@@ -29,10 +31,10 @@ const PostsSearchBar: React.FC<PostsSearchBarProps> = ({ defaults, onSearch }) =
 	};
 
 	return (
-		<Form onSubmit={handleSubmit} className="col-lg-12">
-			<Row>
-				<Col lg={4} md={6} sm={12}>
-					<Form.Control
+		<form onSubmit={handleSubmit} className={styles.form} role="search">
+			<Grid columns={12} gap="sm">
+				<Grid.Item span={{ base: 12, sm: 6, md: 4 }}>
+					<Input
 						type="text"
 						placeholder="Ex.: title, text, #tag"
 						aria-label="Search posts"
@@ -40,10 +42,9 @@ const PostsSearchBar: React.FC<PostsSearchBarProps> = ({ defaults, onSearch }) =
 						value={keyword}
 						onChange={(event) => setKeyword(event.target.value)}
 					/>
-				</Col>
-				<Col lg={4} md={4} sm={12}>
-					<Form.Control
-						as="select"
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 6, md: 4 }}>
+					<Select
 						name="topic"
 						aria-label="Filter by topic"
 						value={topic}
@@ -55,11 +56,10 @@ const PostsSearchBar: React.FC<PostsSearchBarProps> = ({ defaults, onSearch }) =
 								{option.label}
 							</option>
 						))}
-					</Form.Control>
-				</Col>
-				<Col lg={2} md={2} sm={4}>
-					<Form.Control
-						as="select"
+					</Select>
+				</Grid.Item>
+				<Grid.Item span={{ base: 6, sm: 3, md: 2 }}>
+					<Select
 						name="sort"
 						aria-label="Sort posts"
 						value={sort}
@@ -67,16 +67,16 @@ const PostsSearchBar: React.FC<PostsSearchBarProps> = ({ defaults, onSearch }) =
 					>
 						<option value="newest">Newest</option>
 						<option value="popular">Popular</option>
-					</Form.Control>
-				</Col>
-				<Col lg={2} md={3} sm={4}>
+					</Select>
+				</Grid.Item>
+				<Grid.Item span={{ base: 6, sm: 3, md: 2 }}>
 					<Button type="submit" variant="secondary-outline" isFullWidth>
 						<Icon name="searchSolid" size="sm" />
-						<span className="ml-2">Search</span>
+						<span className={styles.submitLabel}>Search</span>
 					</Button>
-				</Col>
-			</Row>
-		</Form>
+				</Grid.Item>
+			</Grid>
+		</form>
 	);
 };
 

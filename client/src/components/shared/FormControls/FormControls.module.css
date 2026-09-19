@@ -1,0 +1,164 @@
+/*
+ * Native form controls. Replaces Bootstrap `.form-control`, `.form-group`,
+ * `.form-text`, `.input-group` and React-Bootstrap `Form.*`.
+ */
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xs);
+	min-width: 0;
+}
+
+.label {
+	display: inline-block;
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-neutral-default);
+}
+
+.control {
+	--control-height: var(--input-height-md);
+	--control-padding-x: var(--spacing-sm);
+	--control-font-size: var(--font-size-body-lg);
+
+	display: block;
+	width: 100%;
+	min-height: var(--control-height);
+	padding: 0 var(--control-padding-x);
+	font: inherit;
+	font-size: var(--control-font-size);
+	line-height: var(--line-height-lg);
+	color: var(--color-neutral-700);
+	background-color: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border-radius: var(--border-radius-sm);
+	transition:
+		border-color var(--duration-sm) var(--ease-base),
+		box-shadow var(--duration-sm) var(--ease-base);
+}
+
+.control::placeholder {
+	color: var(--color-neutral-500);
+	opacity: 1;
+}
+
+.control:hover:not(:disabled) {
+	border-color: var(--color-neutral-600);
+}
+
+.control:focus-visible {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+}
+
+.control:disabled {
+	background-color: var(--color-neutral-100);
+	color: var(--color-neutral-500);
+	cursor: not-allowed;
+}
+
+.controlSm {
+	--control-height: var(--input-height-sm);
+	--control-padding-x: var(--spacing-xs);
+	--control-font-size: var(--font-size-body-md);
+}
+
+.controlInvalid,
+.controlInvalid:hover:not(:disabled) {
+	border-color: var(--color-error);
+}
+
+.controlInvalid:focus-visible {
+	border-color: var(--color-error);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-error-disabled);
+}
+
+.textarea {
+	min-height: calc(var(--control-height) * 2.5);
+	padding-block: var(--spacing-xs);
+	resize: vertical;
+}
+
+.textareaNoResize {
+	resize: none;
+}
+
+.select {
+	padding-right: calc(var(--control-padding-x) * 2 + var(--icon-size-sm));
+	appearance: none;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23495057' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m3 6 5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--control-padding-x) center;
+	background-size: var(--icon-size-sm);
+}
+
+.select:disabled {
+	background-image: none;
+}
+
+.message {
+	margin: 0;
+	font-size: var(--font-size-body-sm);
+	line-height: var(--line-height-lg);
+}
+
+.messageHint {
+	color: var(--color-neutral-600);
+}
+
+.messageError {
+	color: var(--color-error);
+}
+
+.messageEnd {
+	text-align: end;
+}
+
+/* Input group: control with an attached addon (button or text). */
+
+.group {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+}
+
+.group > .control {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.group > .control:not(:last-child) {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.group > :not(.control):not(:first-child) {
+	margin-left: calc(var(--border-size-sm) * -1);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	font-size: var(--font-size-body-md);
+	cursor: pointer;
+}
+
+.checkbox input {
+	width: var(--size-md);
+	height: var(--size-md);
+	margin: 0;
+	accent-color: var(--color-primary);
+}
+
+.checkboxInvalid {
+	color: var(--color-error);
+}
+
+.checkboxInvalid input {
+	outline: var(--border-size-sm) solid var(--color-error);
+}

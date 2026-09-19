@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Button } from '@/components/shared/Button';
+import type { ButtonVariant } from '@/components/shared/Button/types';
 import { DialogModal, type DialogModalSize } from '@/components/shared/DialogModal';
 import type { ModalController } from '@/hooks/useModal';
 
@@ -8,6 +9,8 @@ interface ConfirmModalProps {
 	title: string;
 	children?: ReactNode;
 	confirmLabel?: string;
+	/** Visual variant of the confirm button. Use `danger` for destructive confirmations. */
+	confirmVariant?: ButtonVariant;
 	cancelLabel?: string;
 	onConfirm: () => void;
 	onCancel?: () => void;
@@ -22,6 +25,7 @@ export const ConfirmModal = ({
 	title,
 	children,
 	confirmLabel = 'Confirm',
+	confirmVariant = 'primary',
 	cancelLabel = 'Cancel',
 	onConfirm,
 	onCancel,
@@ -55,7 +59,7 @@ export const ConfirmModal = ({
 				<Button variant="secondary" onClick={handleCancel}>
 					{cancelLabel}
 				</Button>
-				<Button variant="primary" onClick={onConfirm} disabled={isConfirmLoading}>
+				<Button variant={confirmVariant} onClick={onConfirm} disabled={isConfirmLoading}>
 					{isConfirmLoading ? 'Working...' : confirmLabel}
 				</Button>
 			</DialogModal.Footer>

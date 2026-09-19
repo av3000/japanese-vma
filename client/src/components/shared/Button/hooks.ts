@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import styles from './Button.module.scss';
+import styles from './Button.module.css';
 import { ButtonBaseProps } from './types';
 
 const capitalize = (word: string): string => (word.length > 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word);

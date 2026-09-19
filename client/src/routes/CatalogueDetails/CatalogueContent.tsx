@@ -18,6 +18,7 @@ import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems'
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { formatDate } from '@/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
@@ -26,6 +27,7 @@ import {
 	isCataloguePdfExportSupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
+import styles from './CatalogueContent.module.css';
 
 interface CatalogueContentProps {
 	catalogue: MappedCatalogue;
@@ -111,19 +113,19 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	};
 
 	return (
-		<div className="container pb-5">
-			<div className="row justify-content-center">
-				<div className="col-lg-8">
-					<span className="row mt-4">
+		<Container size="sm" className={styles.page}>
+			<Stack gap="2xl">
+				<Stack as="section" gap="md">
+					<div>
 						<Link to={CATALOGUE_ROUTES.list} className="tag-link">
 							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Back to Catalogues
 						</Link>
-					</span>
+					</div>
 
-					<h1 className="mt-4">{catalogue.title}</h1>
+					<h1 className={styles.title}>{catalogue.title}</h1>
 
-					<div className="row text-muted w-100 mb-3 justify-content-between align-items-center">
-						<div className="col">
+					<Cluster justify="between" gap="sm" className={styles.muted}>
+						<div>
 							{formatDate(catalogue.created_at, 'ja')} <br />
 							<span>{viewsCount} views</span>
 							{isOwner && <span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>}
@@ -131,52 +133,54 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							<strong>{catalogue.type_label}</strong>
 						</div>
 
-						<div className="d-flex align-items-center">
-							{isOwner && (
-								<div className="d-flex ml-2">
-									<Button
-										onClick={deleteModal.open}
-										variant="ghost"
-										hasOnlyIcon
-										aria-controls={deleteModal.id}
-										aria-expanded={deleteModal.isOpen}
-									>
-										<Icon name="trashbinSolid" size="md" />
-									</Button>
-									<Button
-										onClick={() => navigate(CATALOGUE_ROUTES.edit(catalogue.uuid))}
-										variant="ghost"
-										hasOnlyIcon
-									>
-										<Icon name="penSolid" size="md" />
-									</Button>
-								</div>
-							)}
-						</div>
-					</div>
+						{isOwner && (
+							<Cluster gap="2xs">
+								<Button
+									onClick={deleteModal.open}
+									variant="ghost"
+									hasOnlyIcon
+									aria-controls={deleteModal.id}
+									aria-expanded={deleteModal.isOpen}
+								>
+									<Icon name="trashbinSolid" size="md" />
+								</Button>
+								<Button
+									onClick={() => navigate(CATALOGUE_ROUTES.edit(catalogue.uuid))}
+									variant="ghost"
+									hasOnlyIcon
+								>
+									<Icon name="penSolid" size="md" />
+								</Button>
+							</Cluster>
+						)}
+					</Cluster>
 
-					<img className="img-fluid rounded mb-3 w-100" src={DefaultListImg} alt="Cover" />
-					<p className="lead">{catalogue.description ?? 'No description yet.'}</p>
+					<img className={styles.cover} src={DefaultListImg} alt="Cover" />
+					<p className={styles.description}>{catalogue.description ?? 'No description yet.'}</p>
 
-					<section className="mt-2 d-flex align-items-center flex-wrap">
-						{catalogue.hashtags?.map((tag) => (
-							<Chip className="mr-1 mb-1" readonly key={tag.id} title={tag.content}>
-								{tag.content}
-							</Chip>
-						))}
-					</section>
+					{catalogue.hashtags && catalogue.hashtags.length > 0 && (
+						<Cluster as="ul" gap="2xs" className={styles.tagList}>
+							{catalogue.hashtags.map((tag) => (
+								<li key={tag.id}>
+									<Chip readonly title={tag.content}>
+										{tag.content}
+									</Chip>
+								</li>
+							))}
+						</Cluster>
+					)}
 
-					<hr className="my-4" />
+					<hr className={styles.divider} />
 
-					<div className="d-flex justify-content-between align-items-center">
-						<div className="d-flex align-items-center">
-							<img src={AvatarImg} alt="user" width="40" className="rounded-circle" />
-							<p className="ml-3 mb-0">
+					<Cluster justify="between" gap="sm">
+						<Cluster gap="md">
+							<img src={AvatarImg} alt="user" width="40" className={styles.avatar} />
+							<p className={styles.text}>
 								Created by <strong>{catalogue.owner.name}</strong>
 							</p>
-						</div>
-						<div className="d-flex align-items-center">
-							<p className="mb-0 mr-2">{likesCount}</p>
+						</Cluster>
+						<Cluster gap="xs">
+							<p className={styles.text}>{likesCount}</p>
 							<Button
 								variant="ghost"
 								hasOnlyIcon
@@ -192,18 +196,16 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 									<Icon size="md" name="filePdfSolid" />
 								</Button>
 							)}
-							{downloadCount > 0 && <span className="ml-2 text-muted">{downloadCount} downloads</span>}
-						</div>
-					</div>
-				</div>
-			</div>
+							{downloadCount > 0 && <span className={styles.muted}>{downloadCount} downloads</span>}
+						</Cluster>
+					</Cluster>
+				</Stack>
 
-			<div className="row justify-content-center mt-5">
-				<div className="col-lg-8">
+				<Stack as="section" gap="xs">
 					{catalogue.items.length > 0 ? (
 						<>
 							{isOwner && (
-								<div className="mt-3 mb-2">
+								<div>
 									<Button
 										onClick={() => setEditMode((current) => !current)}
 										size="sm"
@@ -224,18 +226,16 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							/>
 						</>
 					) : (
-						<p className="text-muted">This catalogue has no items yet.</p>
+						<p className={styles.muted}>This catalogue has no items yet.</p>
 					)}
-				</div>
-			</div>
+				</Stack>
 
-			<div className="row justify-content-center mt-5">
-				<div className="col-lg-8">
+				<section>
 					<Suspense fallback={null}>
 						<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
 					</Suspense>
-				</div>
-			</div>
+				</section>
+			</Stack>
 
 			<DeleteInstanceModal
 				controller={deleteModal}
@@ -245,7 +245,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 				deleteLabel="Yes, Delete Catalogue"
 				ariaLabel="Delete catalogue"
 			/>
-		</div>
+		</Container>
 	);
 };
 

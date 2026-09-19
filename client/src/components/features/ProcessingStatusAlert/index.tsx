@@ -6,6 +6,7 @@ import {
 } from '@/api/generated/model/lastOperationStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
+import Spinner from '@/components/shared/Spinner';
 import {
 	Popover,
 	PopoverContent,
@@ -14,8 +15,8 @@ import {
 	PopoverTitle,
 	PopoverTrigger,
 } from '@/components/ui/popover';
-import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
-import styles from './ProcessingStatusAlert.module.scss';
+import { STATUS_VARIANT_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
+import styles from './ProcessingStatusAlert.module.css';
 
 export const STATUS_CONFIG: Record<LastOperationStatusType, { message: string }> = {
 	pending: {
@@ -87,20 +88,21 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 				? 'destructive'
 				: 'pending';
 
+	const details: Array<{ label: string; value: string | null }> = [
+		{ label: 'Created', value: createdAtText },
+		{ label: 'Updated', value: updatedAtText },
+		{ label: 'Duration', value: durationText },
+	];
+
 	return (
-		<div
-			className={classNames(
-				'mt-3 rounded-md border border-transparent px-3 py-2',
-				STATUS_VARIANT_BASE_CLASSES[statusVariant],
-				styles.alert,
-				className,
-			)}
-		>
+		<div className={classNames(styles.alert, STATUS_VARIANT_CLASSES[statusVariant], className)}>
 			<div className={styles.content}>
-				<div className="small">{config.message}</div>
+				<p className={styles.message}>{config.message}</p>
 				<div className={styles.status}>
 					{(status === LastOperationStatus.pending || status === LastOperationStatus.processing) && (
-						<span className="spinner-border spinner-border-sm mr-3" />
+						<span className={styles.spinner} aria-hidden="true">
+							<Spinner size="sm" />
+						</span>
 					)}
 					<Popover>
 						<PopoverTrigger asChild>
@@ -108,29 +110,20 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 								<ProcessingStatusBadge status={status} />
 							</button>
 						</PopoverTrigger>
-						<PopoverContent align="end" className="w-80">
+						<PopoverContent align="end">
 							<PopoverHeader>
 								<PopoverTitle>Processing details</PopoverTitle>
 								<PopoverDescription>Times are shown in your local timezone.</PopoverDescription>
 							</PopoverHeader>
-							<div className="mt-3 d-grid gap-2">
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Created</span>
-									<span className="small">{createdAtText ?? '—'}</span>
-								</div>
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Updated</span>
-									<span className="small">{updatedAtText ?? '—'}</span>
-								</div>
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Duration</span>
-									<span className="small">{durationText ?? '—'}</span>
-								</div>
-
-								{!hasValidTiming && (
-									<div className="small text-muted mt-2">Timing data unavailable.</div>
-								)}
-							</div>
+							<dl className={styles.details}>
+								{details.map(({ label, value }) => (
+									<div key={label} className={styles.detailRow}>
+										<dt className={styles.detailLabel}>{label}</dt>
+										<dd className={styles.detailValue}>{value ?? '—'}</dd>
+									</div>
+								))}
+							</dl>
+							{!hasValidTiming && <p className={styles.detailNote}>Timing data unavailable.</p>}
 						</PopoverContent>
 					</Popover>
 				</div>

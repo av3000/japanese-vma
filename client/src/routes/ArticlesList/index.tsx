@@ -7,9 +7,12 @@ import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
 import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import ArticleFilters from '@/components/features/articles/ArticleFilters';
+import { Alert } from '@/components/shared/Alert';
 import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Grid, Stack } from '@/components/shared/layout';
+import styles from './ArticlesList.module.css';
 import ArticlesListSkeleton from './ArticlesListSkeleton/ArticlesListSkeleton';
 import {
 	mapArticleFiltersToGeneratedParams,
@@ -98,57 +101,65 @@ const ArticleList: React.FC = () => {
 	}
 
 	if (isError) {
-		return <div className="text-danger">Error: {error.message}</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Error: {error.message}</Alert>
+			</Container>
+		);
 	}
 
 	return (
-		<div className="container">
+		<Container className={styles.page}>
 			{deferredTrackedArticleUuids.map((uuid) => (
 				<ArticleSubscription key={uuid} uuid={uuid} />
 			))}
 
-			<ArticleFilters
-				state={filterState}
-				facets={facets}
-				onSearch={handleSearch}
-				onToggleJlptLevel={handleToggleJlptLevel}
-				onToggleHashtag={handleToggleHashtag}
-				onSortChange={handleSortChange}
-				onReset={handleReset}
-			/>
+			<Stack gap="md">
+				<ArticleFilters
+					state={filterState}
+					facets={facets}
+					onSearch={handleSearch}
+					onToggleJlptLevel={handleToggleJlptLevel}
+					onToggleHashtag={handleToggleHashtag}
+					onSortChange={handleSortChange}
+					onReset={handleReset}
+				/>
 
-			{filterState.q !== '' && <h4>Results for: {filterState.q}</h4>}
+				{filterState.q !== '' && <h4 className={styles.resultsHeading}>Results for: {filterState.q}</h4>}
 
-			<div className="mb-3 text-muted">
-				Showing {articles.length} of {total}
-			</div>
+				<p className={styles.muted}>
+					Showing {articles.length} of {total}
+				</p>
 
-			<div className="row">
 				{articles.length === 0 ? (
 					<p>No articles found.</p>
 				) : (
-					<>
+					<Grid as="ul" columns={{ base: 2, sm: 3, md: 4 }} gap="lg" className={styles.list}>
 						{articles.map((article) => (
-							<div key={article.id} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+							<Grid.Item as="li" span="auto" key={article.id}>
 								<ArticleCard article={article} />
-							</div>
+							</Grid.Item>
 						))}
-					</>
+					</Grid>
 				)}
-			</div>
 
-			<div className="row justify-content-center mt-4 mb-5">
-				{isFetchingNextPage ? (
-					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-				) : hasNextPage ? (
-					<Button variant="secondary-outline" className="w-50" onClick={() => fetchNextPage()}>
-						Load More
-					</Button>
-				) : (
-					<span className="text-muted">No more results</span>
-				)}
-			</div>
-		</div>
+				<Cluster justify="center" className={styles.loadMore}>
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
+					) : hasNextPage ? (
+						<Button
+							variant="secondary-outline"
+							className={styles.loadMoreButton}
+							onClick={() => fetchNextPage()}
+						>
+							Load More
+						</Button>
+					) : (
+						<span className={styles.muted}>No more results</span>
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 

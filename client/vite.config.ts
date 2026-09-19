@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -24,13 +23,8 @@ export default defineConfig(({ mode }) => {
 		}
 
 		if (
-			id.includes('/react-bootstrap/') ||
-			id.includes('/bootstrap/') ||
 			id.includes('/@radix-ui/') ||
-			id.includes('/classnames/') ||
-			id.includes('/clsx/') ||
-			id.includes('/class-variance-authority/') ||
-			id.includes('/tailwind-merge/')
+			id.includes('/classnames/')
 		) {
 			return 'ui';
 		}
@@ -50,7 +44,6 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [
-			tailwindcss(),
 			checker({
 				typescript: true,
 				eslint: {
@@ -88,6 +81,10 @@ export default defineConfig(({ mode }) => {
 		},
 		build: {
 			outDir: 'build',
+			// Supported-browser policy (STYLING-01). Matches Baseline "widely available":
+			// current Chromium, Firefox and WebKit releases from the last ~30 months.
+			// `browserslist` in package.json is not read by Vite; this is the source of truth.
+			target: ['es2022', 'chrome107', 'edge107', 'firefox104', 'safari16'],
 			cssCodeSplit: true,
 			sourcemap: !isProduction,
 			rollupOptions: {

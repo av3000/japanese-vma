@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useCommentRepliesQuery, type ApiComment, type ApiCommentReply } from '@/api/comments';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Badge } from '@/components/ui/badge';
 import CommentItem, { type CommentActionState } from '../CommentItem/CommentItem';
+import styles from './CommentList.module.css';
 
 interface CommentListProps {
 	comments: ApiComment[];
@@ -66,11 +69,16 @@ const CommentThread: React.FC<{
 			))}
 
 			{hiddenReplies > 0 && (
-				<div className="ml-5 mb-3">
-					<Button onClick={() => setShowAllReplies(true)} variant="ghost" size="sm" isLoading={isLoadingReplies}>
+				<li className={styles.moreReplies}>
+					<Button
+						onClick={() => setShowAllReplies(true)}
+						variant="ghost"
+						size="sm"
+						isLoading={isLoadingReplies}
+					>
 						Show {hiddenReplies} more {hiddenReplies === 1 ? 'reply' : 'replies'}
 					</Button>
-				</div>
+				</li>
 			)}
 		</>
 	);
@@ -89,31 +97,35 @@ const CommentList: React.FC<CommentListProps> = ({
 }) => {
 	return (
 		<div>
-			<h5 className="text-muted mb-4 mt-4">
-				<span className="badge badge-secondary">{total}</span>
+			<h5 className={styles.heading}>
+				<Badge variant="secondary">{total}</Badge>
 				{'  '}
 				Comment{total !== 1 ? 's' : ''}
 			</h5>
 
 			{comments.length === 0 ? (
-				<div className="alert text-center alert-info">Be the first to comment</div>
+				<Alert tone="info" className={styles.empty}>
+					Be the first to comment
+				</Alert>
 			) : (
 				<>
-					{comments.map((comment) => (
-						<CommentThread
-							key={comment.id}
-							comment={comment}
-							canReply={canReply}
-							stateFor={stateFor}
-							onLike={onLike}
-							onDelete={onDelete}
-							onEdit={onEdit}
-							onReply={onReply}
-						/>
-					))}
+					<ul className={styles.items}>
+						{comments.map((comment) => (
+							<CommentThread
+								key={comment.id}
+								comment={comment}
+								canReply={canReply}
+								stateFor={stateFor}
+								onLike={onLike}
+								onDelete={onDelete}
+								onEdit={onEdit}
+								onReply={onReply}
+							/>
+						))}
+					</ul>
 
 					{hasMore && (
-						<p className="text-muted text-center">
+						<p className={styles.showing}>
 							Showing {comments.length} of {total} comments
 						</p>
 					)}

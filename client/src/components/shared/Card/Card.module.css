@@ -1,0 +1,124 @@
+.wrapper.wrapper {
+	--card-radius: var(--border-radius-md);
+	--ease: var(--ease-base);
+	--duration: var(--duration-sm);
+	--card-padding: var(--spacing-2xs);
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	border-radius: var(--card-radius);
+}
+@media only screen and (min-width: 1024px) {
+	.wrapper.wrapper {
+		--card-padding: var(--spacing-xs);
+	}
+}
+
+.imgWrapper {
+	width: 100%;
+	overflow: hidden;
+	aspect-ratio: var(--aspect-ratio-square);
+	position: relative;
+	background-color: var(--color-background-neutral-weaker);
+	border-radius: inherit;
+	transition: background-color var(--ease) var(--duration);
+}
+
+.img {
+	width: 100%;
+	object-fit: cover;
+	transition: transform var(--ease) var(--duration);
+}
+
+.date {
+	margin-top: var(--spacing-xs);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+@media only screen and (min-width: 768px) {
+	.date {
+		font-size: var(--font-size-body-md);
+	}
+}
+
+.title {
+	font-weight: var(--font-weight-semibold);
+	flex-shrink: 0;
+	margin: var(--spacing-3xs) 0;
+	font-size: var(--font-size-heading-5);
+}
+@media only screen and (min-width: 768px) {
+	.title {
+		margin: var(--spacing-2xs) 0;
+	}
+}
+@media only screen and (min-width: 1024px) {
+	.title {
+		font-size: var(--font-size-heading-4);
+	}
+}
+.wrapper:hover .title {
+	text-decoration: underline;
+}
+
+.primaryCardAction.primaryCardAction {
+	--text-content-padding: var(--spacing-xs);
+	--text-height: calc(var(--font-size-body-sm) * var(--line-height-lg));
+	--text-spacing: var(--spacing-2xs);
+	text-decoration: none;
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: unset;
+	width: 100%;
+	min-height: calc(var(--text-height) * 2 + var(--text-spacing));
+	padding-top: var(--card-padding);
+}
+@media only screen and (min-width: 768px) {
+	.primaryCardAction.primaryCardAction {
+		--text-height: calc(var(--font-size-body-md) * var(--line-height-lg));
+		--text-spacing: calc(var(--spacing-2xs) * 2);
+		--price-text-height: calc(var(--font-size-body-md) * var(--line-height-lg));
+		min-height: calc(
+			var(--text-content-padding) + var(--text-height) * 2 + var(--price-text-height) + var(--text-spacing)
+		);
+	}
+}
+@media only screen and (min-width: 1320px) {
+	.primaryCardAction.primaryCardAction {
+		--text-content-padding: var(--spacing-sm);
+		padding-top: var(--spacing-xs);
+	}
+}
+
+.chipList {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-3xs);
+	margin-top: var(--spacing-xs);
+}
+.wrapper:hover .chipList * {
+	color: inherit;
+	text-decoration: none;
+}
+@media only screen and (min-width: 768px) {
+	.chipList {
+		gap: var(--spacing-2xs);
+	}
+}
+
+.childrenWrapper {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: end;
+	margin-top: var(--spacing-2xs);
+}
+@media only screen and (min-width: 768px) {
+	.childrenWrapper {
+		margin-top: var(--spacing-xs);
+	}
+}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLikePostMutation } from '@/api/posts/likes';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 
 interface PostLikeButtonProps {
@@ -39,8 +40,8 @@ const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifie
 	};
 
 	return (
-		<div className="d-flex align-items-center">
-			<p className="mb-0 mr-2">{likesCount} likes</p>
+		<Cluster gap="xs">
+			<span>{likesCount} likes</span>
 			<Button
 				variant="ghost"
 				hasOnlyIcon
@@ -51,7 +52,7 @@ const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifie
 			>
 				<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 			</Button>
-		</div>
+		</Cluster>
 	);
 };
 

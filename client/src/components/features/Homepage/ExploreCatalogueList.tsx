@@ -4,8 +4,13 @@ import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useCatalogueIndex } from '@/api/generated/catalogue/catalogue';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
 import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
+import { Cluster, Grid } from '@/components/shared/layout';
+import styles from './ExploreList.module.css';
 
 const HOMEPAGE_CATALOGUE_SKELETON_COUNT = 4;
+
+/** Bootstrap `col-6 col-md-4 col-lg-3` → 2 / 3 / 4 cards per row. */
+const CARD_COLUMNS = { base: 2, sm: 3, md: 4 };
 
 export const HOMEPAGE_CATALOGUE_FILTERS: FetchCataloguesFilters = {
 	per_page: 3,
@@ -26,19 +31,19 @@ const ExploreCatalogueList: React.FC = () => {
 	if (isPending) {
 		return (
 			<>
-				<div className="d-flex justify-content-between align-items-center w-100 my-3">
-					<h3>Latest Catalogues</h3>
-					<div>
-						<Link to="/catalogues" className="homepage-section-title">
-							Read All Catalogues
-						</Link>
-					</div>
-				</div>
-				<div className="row">
+				<Cluster justify="between" className={styles.header}>
+					<h3 className={styles.title}>Latest Catalogues</h3>
+					<Link to="/catalogues" className={styles.sectionLink}>
+						Read All Catalogues
+					</Link>
+				</Cluster>
+				<Grid as="ul" columns={CARD_COLUMNS} gap="lg" className={styles.cards}>
 					{Array.from({ length: HOMEPAGE_CATALOGUE_SKELETON_COUNT }).map((_, index) => (
-						<CatalogueCardSkeleton key={index} />
+						<Grid.Item as="li" span="auto" key={index}>
+							<CatalogueCardSkeleton />
+						</Grid.Item>
 					))}
-				</div>
+				</Grid>
 			</>
 		);
 	}
@@ -46,24 +51,24 @@ const ExploreCatalogueList: React.FC = () => {
 	if (isError) {
 		const errorMessage = error instanceof Error ? error.message : 'Failed to load catalogues';
 
-		return <div className="text-danger">Error: {errorMessage}</div>;
+		return <p className={styles.error}>Error: {errorMessage}</p>;
 	}
 
 	return (
 		<>
-			<div className="d-flex justify-content-between align-items-center w-100 my-3">
-				<h3>Latest Catalogues total of {totalLists}</h3>
-				<div>
-					<Link to="/catalogues" className="homepage-section-title">
-						Read All Catalogues
-					</Link>
-				</div>
-			</div>
-			<div className="row">
+			<Cluster justify="between" className={styles.header}>
+				<h3 className={styles.title}>Latest Catalogues total of {totalLists}</h3>
+				<Link to="/catalogues" className={styles.sectionLink}>
+					Read All Catalogues
+				</Link>
+			</Cluster>
+			<Grid as="ul" columns={CARD_COLUMNS} gap="lg" className={styles.cards}>
 				{lists.map((catalogue) => (
-					<CatalogueCard key={catalogue.uuid} catalogue={catalogue} />
+					<Grid.Item as="li" span="auto" key={catalogue.uuid}>
+						<CatalogueCard catalogue={catalogue} />
+					</Grid.Item>
 				))}
-			</div>
+			</Grid>
 		</>
 	);
 };

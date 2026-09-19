@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import React, { useRef, useState } from 'react';
 import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { ConfirmModal } from '@/components/shared/modals';
+import { useModal } from '@/hooks/useModal';
 import { User } from '@/types';
-import sharedStyles from './CatalogueItems.module.scss';
+import sharedStyles from './CatalogueItems.module.css';
 
 interface Radical {
 	id: string | number;
@@ -30,19 +31,20 @@ const CatalogueRadicalItems: React.FC<CatalogueRadicalItemsProps> = ({
 	ownerId,
 	editMode = false,
 }) => {
-	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
+	const [pendingRemovalId, setPendingRemovalId] = useState<number | string | null>(null);
+	const dialogRef = useRef<HTMLDialogElement>(null);
+	const confirmRemoval = useModal(dialogRef, { onClose: () => setPendingRemovalId(null) });
 
-	const handleDeleteModalClose = () => {
-		setShowDeleteModal(null);
+	const openModal = (id: number | string) => {
+		setPendingRemovalId(id);
+		confirmRemoval.open();
 	};
 
-	const handleDeleteConfirm = (id: number | string) => {
-		handleDeleteModalClose();
-		onRemoveItem(id);
-	};
-
-	const openModal = (modalId: number | string) => {
-		setShowDeleteModal(modalId);
+	const handleDeleteConfirm = () => {
+		if (pendingRemovalId !== null) {
+			onRemoveItem(pendingRemovalId);
+		}
+		confirmRemoval.close();
 	};
 
 	return (
@@ -52,7 +54,9 @@ const CatalogueRadicalItems: React.FC<CatalogueRadicalItemsProps> = ({
 					<div key={radical.id} className={sharedStyles.itemCard}>
 						<div className={sharedStyles.itemHeader}>
 							<div className={sharedStyles.characterDisplay}>
-								<Link to={`/radical/${radical.id}`}>{radical.radical}</Link>
+								<Link to={`/radical/${radical.id}`} lang="ja">
+									{radical.radical}
+								</Link>
 							</div>
 
 							{currentUser.id === ownerId && editMode && (
@@ -88,25 +92,20 @@ const CatalogueRadicalItems: React.FC<CatalogueRadicalItemsProps> = ({
 								</span>
 							</div>
 						</div>
-
-						<Modal
-							show={showDeleteModal === radical.id}
-							onHide={handleDeleteModalClose}
-							title="Are You Sure?"
-							footer={
-								<>
-									<Button variant="secondary" onClick={handleDeleteModalClose}>
-										Cancel
-									</Button>
-									<Button variant="danger" onClick={() => handleDeleteConfirm(radical.id)}>
-										Yes, delete
-									</Button>
-								</>
-							}
-						/>
 					</div>
 				);
 			})}
+
+			<ConfirmModal
+				controller={confirmRemoval}
+				title="Are you sure?"
+				confirmLabel="Yes, delete"
+				confirmVariant="danger"
+				ariaLabel="Remove radical from catalogue"
+				onConfirm={handleDeleteConfirm}
+			>
+				This removes the radical from the catalogue. You can add it again later.
+			</ConfirmModal>
 
 			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>

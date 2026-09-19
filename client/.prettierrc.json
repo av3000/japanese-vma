@@ -6,7 +6,7 @@
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "overrides": [
     {
-      "files": ["**/*.js", "**/*.cjs", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.scss"],
+      "files": ["**/*.js", "**/*.cjs", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.css"],
       "options": {
         "singleQuote": true,
         "tabWidth": 4,

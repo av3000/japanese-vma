@@ -1,0 +1,22 @@
+.header {
+	padding-block: var(--spacing-md);
+}
+
+.title {
+	margin: 0;
+}
+
+.sectionLink:hover {
+	color: var(--link-hover-color);
+	text-decoration: none;
+}
+
+.cards {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.error {
+	color: var(--color-error);
+}

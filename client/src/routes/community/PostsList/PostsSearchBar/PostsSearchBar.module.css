@@ -1,0 +1,7 @@
+.form {
+	width: 100%;
+}
+
+.submitLabel {
+	margin-left: var(--spacing-2xs);
+}

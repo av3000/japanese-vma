@@ -1,0 +1,10 @@
+.form {
+	width: 100%;
+	max-width: var(--container-sm);
+	margin-inline: auto;
+	padding-block: var(--spacing-md);
+}
+
+.submitLabel {
+	margin-left: var(--spacing-2xs);
+}
