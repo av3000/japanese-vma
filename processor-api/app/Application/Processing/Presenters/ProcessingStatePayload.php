@@ -13,8 +13,10 @@ use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
  *
  * @phpstan-type Payload array{
  *     id: int,
+ *     entity_id: string,
  *     type: string,
  *     status: string,
+ *     attempt: int,
  *     metadata: object,
  *     created_at: ?string,
  *     updated_at: ?string
@@ -29,8 +31,12 @@ final class ProcessingStatePayload
     {
         return [
             'id' => $state->id,
+            // Lets a subscriber on a channel that carries many entities (the owner channel)
+            // patch the right cache entry.
+            'entity_id' => $state->entityId,
             'type' => $state->taskType,
             'status' => $state->status->value,
+            'attempt' => $state->attempt,
             // An empty array must serialise as `{}`, not `[]`, to keep the client type stable.
             'metadata' => (object) ($state->metadata ?? []),
             'created_at' => $state->createdAt?->format('c'),

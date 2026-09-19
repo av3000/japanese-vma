@@ -1,8 +1,7 @@
-import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
-import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import React, { useCallback, useState } from 'react';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
+import { OwnerProcessingSubscription } from '@/api/articles/hooks/useOwnerProcessingSubscription';
 import { usePendingArticles } from '@/api/articles/moderation';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
 import { Button } from '@/components/shared/Button';
@@ -55,18 +54,6 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 		dashboardView === DASHBOARD_TYPES.ADMIN && isAuthenticated && !!currentUser?.isAdmin;
 
 	const pendingArticlesQuery = usePendingArticles({ enabled: shouldFetchPendingArticles });
-
-	const trackedArticleUuids = useMemo(() => {
-		return articles
-			.filter(
-				(article) =>
-					article.processing_status?.status !== undefined &&
-					article.processing_status?.status !== LastOperationStatus.completed,
-			)
-			.map((article) => article.uuid);
-	}, [articles]);
-	// TODO: should rather use startTransition to deprioritize displaying the articles while filtering
-	const deferredTrackedUuids = useDeferredValue(trackedArticleUuids);
 
 	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
 		const keyword = newFilters.keyword.trim();
@@ -187,9 +174,8 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 								<div className="alert alert-danger">{articleErrorMessage}</div>
 							) : articles.length ? (
 								<>
-									{deferredTrackedUuids.map((uuid) => (
-										<ArticleSubscription key={uuid} uuid={uuid} />
-									))}
+									{/* One channel for every article the owner lists (#263); polling covers the rest. */}
+									{currentUser && <OwnerProcessingSubscription userUuid={currentUser.uuid} />}
 									{articles.map((article) => (
 										<DashboardArticleItem
 											key={article.id}
@@ -237,10 +223,5 @@ const LoadingState: React.FC<{ altText: string }> = ({ altText }) => (
 		</div>
 	</div>
 );
-
-const ArticleSubscription: React.FC<{ uuid: string }> = ({ uuid }) => {
-	useArticleSubscription(uuid);
-	return null;
-};
 
 export default DashboardArticlesPanel;

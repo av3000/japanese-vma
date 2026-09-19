@@ -42,6 +42,8 @@ describe('ArticleCreatePage', () => {
 		uuid: 'new-uuid',
 		processing_status: {
 			id: 1,
+			entity_id: 'entity-uuid',
+			attempt: 1,
 			type: 'article_content_processing',
 			status: LastOperationStatus.pending,
 			metadata: {},

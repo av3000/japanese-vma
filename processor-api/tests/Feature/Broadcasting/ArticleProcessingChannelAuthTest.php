@@ -101,15 +101,33 @@ class ArticleProcessingChannelAuthTest extends TestCase
         $this->authorise('not-a-uuid')->assertForbidden();
     }
 
-    public function test_the_legacy_per_user_channel_is_gone(): void
+    public function test_owner_channel_admits_only_its_owner(): void
     {
-        $user = User::factory()->create();
-        Passport::actingAs($user, ['*'], 'api');
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::ADMIN->value);
 
-        $this->postJson('/api/broadcasting/auth', [
+        Passport::actingAs($owner, ['*'], 'api');
+        $this->authoriseChannel("private-App.User.{$owner->uuid}")->assertOk();
+
+        Passport::actingAs($other, ['*'], 'api');
+        $this->authoriseChannel("private-App.User.{$owner->uuid}")->assertForbidden();
+
+        Passport::actingAs($admin, ['*'], 'api');
+        $this->authoriseChannel("private-App.User.{$owner->uuid}")->assertForbidden();
+
+        // The numeric-id form from before #263 is no longer a channel.
+        Passport::actingAs($owner, ['*'], 'api');
+        $this->authoriseChannel("private-App.User.{$owner->id}")->assertForbidden();
+    }
+
+    private function authoriseChannel(string $channelName): \Illuminate\Testing\TestResponse
+    {
+        return $this->postJson('/api/broadcasting/auth', [
             'socket_id' => '1234.5678',
-            'channel_name' => "private-App.User.{$user->id}",
-        ])->assertForbidden();
+            'channel_name' => $channelName,
+        ]);
     }
 
     private function authorise(string $uuid): \Illuminate\Testing\TestResponse

@@ -20,6 +20,8 @@ vi.mock('@/components/ui/popover', () => ({
 
 const status = (value: LastOperationStatus): ProcessingStatusResource => ({
 	id: 1,
+	entity_id: 'entity-uuid',
+	attempt: 1,
 	type: 'article_content_processing',
 	status: value,
 	metadata: {},

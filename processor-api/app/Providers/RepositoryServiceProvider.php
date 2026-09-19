@@ -20,12 +20,14 @@ use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiReposit
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
+use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueRepository;
@@ -50,6 +52,7 @@ class RepositoryServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ProcessingStateRepositoryInterface::class, ProcessingStateRepository::class);
+        $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
 
         $this->app->singleton(
             ArticleRepositoryInterface::class,
