@@ -94,8 +94,6 @@ jobs:
 
       # Unit project only: the `storybook` Vitest project needs Playwright browsers.
       - name: Unit tests
-        env:
-          VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
         run: npm run test:unit
 
       # Styling guardrail (STYLING-01): fails when Bootstrap/Tailwind/Sass usage grows
