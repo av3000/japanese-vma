@@ -83,9 +83,12 @@ return [
                     // 'scheme' => env('REVERB_SCHEME', 'https'),
                     'port' => env('REVERB_PORT', 8081),
                     'scheme' => env('REVERB_SCHEME', 'http'),
-                    'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                    // Same default as config/broadcasting.php so the two never disagree (#254).
+                    'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                // Comma-separated list of origins allowed to open a socket; `*` only for local
+                // development. Set REVERB_ALLOWED_ORIGINS to the frontend origin in production.
+                'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '*'))))),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),
