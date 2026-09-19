@@ -4,15 +4,17 @@ This is the only index for the consolidated skill. Rule details live in the four
 
 ## Priority Order
 
-1. **Startup and bundle:** remove app-wide boot blockers, split route bundles, defer non-critical third parties.
-2. **Async and server state:** eliminate request waterfalls, use one cache owner, make query keys and invalidation explicit.
-3. **Rerender and state:** reduce Context blast radius, fix component boundaries, memoize measured hotspots only.
-4. **Rendering and browser:** avoid layout thrashing, duplicate listeners, sync storage hot paths, and wasteful list work.
+1. **Components, state, and effects:** keep authoritative state minimal; derive the rest and synchronize external systems deliberately.
+2. **Startup and bundle:** remove app-wide boot blockers, split route bundles, defer non-critical third parties.
+3. **Async and server state:** eliminate request waterfalls, use one cache owner, make query keys and invalidation explicit.
+4. **Rerender and state:** reduce Context blast radius, fix component boundaries, memoize measured hotspots only.
+5. **Rendering and browser:** avoid layout thrashing, duplicate listeners, sync storage hot paths, and wasteful list work.
 
 ## Rule Categories
 
 | Category              | File                   | Use when                                                                                                     |
 | --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Components, state, effects | `components-state-effects.md` | component APIs, derived/local/URL state, forms, effects, cleanup, manual fetches, or custom hooks |
 | Startup and bundle    | `bundle-startup.md`    | first paint, initial chunk size, Vite build output, route splitting, lazy imports, third-party scripts       |
 | Async and data        | `async-data.md`        | duplicate fetches, stale data, query waterfalls, TanStack Query ownership, invalidation, Suspense boundaries |
 | Rerender and state    | `rerender-state.md`    | broad rerenders, Context updates, unstable props, expensive derived values, transitions, deferred input      |
