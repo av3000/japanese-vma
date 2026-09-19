@@ -17,9 +17,20 @@ interface WordRepositoryInterface
 
     public function findBySurface(string $surface): ?Word;
 
-    public function hasWordStartingWith(string $prefix): bool;
+    /**
+     * Character length of the longest dictionary entry; 0 when the dictionary is empty.
+     * Word extraction uses it to bound how far a candidate substring can grow.
+     */
+    public function maxWordLength(): int;
 
-    public function findIdByWord(string $word): ?int;
+    /**
+     * Resolve many surfaces in one go, for callers that know their whole candidate set up front.
+     *
+     * @param list<string> $words
+     *
+     * @return array<string, int> Surface to lowest matching word id, missing surfaces omitted.
+     */
+    public function findIdsByWords(array $words): array;
 
     /** @return array<int, \App\Domain\JapaneseMaterial\Kanjis\Models\Kanji> */
     public function findRelatedKanjis(int $wordId, int $limit): array;
