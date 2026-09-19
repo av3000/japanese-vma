@@ -2,15 +2,16 @@
 
 namespace Tests\Feature\Articles;
 
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
-use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionService;
-use App\Application\LastOperations\Services\LastOperationService;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -149,12 +150,13 @@ class ShowArticleTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('last_operations')->insert([
-            'processable_id' => $article->uuid,
-            'processable_type' => 'article',
-            'task_type' => 'kanji_extraction',
+        DB::table('processing_states')->insert([
+            'entity_type' => 'article',
+            'entity_id' => $article->uuid,
+            'task_type' => 'article_content_processing',
             'status' => LastOperationStatus::COMPLETED->value,
-            'metadata' => json_encode(['source' => 'test'], JSON_THROW_ON_ERROR),
+            'content_version' => 1,
+            'metadata' => json_encode(['kanji_count' => 1, 'word_count' => 0], JSON_THROW_ON_ERROR),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -165,7 +167,7 @@ class ShowArticleTest extends TestCase
             ->assertJsonPath('uid', $article->uuid)
             ->assertJsonPath('hashtags.0.content', '#grammar')
             ->assertJsonPath('engagement.likes_count', 0)
-            ->assertJsonPath('processing_status.type', 'kanji_extraction')
+            ->assertJsonPath('processing_status.type', 'article_content_processing')
             ->assertJsonPath('processing_status.status', LastOperationStatus::COMPLETED->value)
             ->assertJsonMissingPath('article');
     }
@@ -233,20 +235,24 @@ class ShowArticleTest extends TestCase
             ->assertJsonPath('kanjis.0.character', '水');
     }
 
-    public function test_show_exposes_jlpt_counters_computed_by_the_kanji_job(): void
+    public function test_show_exposes_jlpt_counters_and_the_consolidated_processing_status(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user, ['content_jp' => '水を飲みます。日本語の本文です。']);
         $this->attachKanji($article, '水');
 
-        (new ProcessArticleKanjisJob($article->uuid, $article->content_jp))->handle(
-            app(KanjiExtractionService::class),
-            app(KanjiAttachmentService::class),
-            app(LastOperationService::class),
+        app(ProcessingStateServiceInterface::class)->startOrReset(
+            ProcessingEntityType::Article,
+            EntityId::from($article->uuid),
+            ProcessingTaskType::ArticleContentProcessing,
+            1,
         );
+        dispatch_sync(new ProcessArticleContentJob($article->uuid, 1));
 
         $this->json('GET', "/api/v1/articles/{$article->uuid}")
             ->assertStatus(200)
+            ->assertJsonPath('processing_status.type', 'article_content_processing')
+            ->assertJsonPath('processing_status.status', 'completed')
             ->assertJsonPath('jlpt_levels.n5', 1)
             ->assertJsonPath('jlpt_levels.uncommon', 0);
     }

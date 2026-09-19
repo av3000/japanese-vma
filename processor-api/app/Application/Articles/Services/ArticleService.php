@@ -5,8 +5,7 @@ namespace App\Application\Articles\Services;
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\Articles\Jobs\ProcessArticleWordsJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
@@ -17,7 +16,9 @@ use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
@@ -30,6 +31,8 @@ use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -43,6 +46,9 @@ use Illuminate\Support\Facades\Log;
 
 class ArticleService implements ArticleServiceInterface
 {
+    /** Value of `articles.content_version` on a freshly created row (column default). */
+    private const INITIAL_CONTENT_VERSION = 1;
+
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
@@ -55,7 +61,8 @@ class ArticleService implements ArticleServiceInterface
         private ViewRepositoryInterface $viewRepository,
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository
+        private CommentRepositoryInterface $commentRepository,
+        private ProcessingStateServiceInterface $processingStates,
     ) {
     }
 
@@ -70,7 +77,8 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $article = DB::transaction(function () use ($dto, $authenticatedUser) {
+            /** @var ArticleCreateResultDTO $created */
+            $created = DB::transaction(function () use ($dto, $authenticatedUser): ArticleCreateResultDTO {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
@@ -95,15 +103,23 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                return $createdDomainArticle;
+                // The processing row exists as `pending` before the response is sent, in the same
+                // transaction as the article itself (ADR 0001, point 4).
+                $processingState = $this->processingStates->startOrReset(
+                    ProcessingEntityType::Article,
+                    $createdDomainArticle->getUid(),
+                    ProcessingTaskType::ArticleContentProcessing,
+                    self::INITIAL_CONTENT_VERSION,
+                );
+
+                return new ArticleCreateResultDTO($createdDomainArticle, $processingState);
             });
 
-            // Dispatched after the transaction closure so the worker cannot observe the
-            // article before it is committed. The queue connections also set
-            // `after_commit`, so a dispatch inside an outer transaction is still deferred.
-            $this->dispatchContentProcessing($article, reprocessKanjis: true, reprocessWords: true);
+            // ShouldQueueAfterCommit plus `after_commit` on the queue connections: the worker can
+            // never observe the article before it is committed.
+            ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
 
-            return Result::success($article);
+            return Result::success($created);
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
                 'user_id' => $authenticatedUser->id->value(),
@@ -157,7 +173,7 @@ class ArticleService implements ArticleServiceInterface
             ObjectTemplateType::ARTICLE
         );
 
-        $processingState = $this->processingStateReader->latestKanjiExtractionState($article->getUid()->value());
+        $processingState = $this->processingStateReader->currentState($article->getUid()->value());
 
         // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
         // once detail payload should stop carrying full lists.
@@ -215,13 +231,13 @@ class ArticleService implements ArticleServiceInterface
                 return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
             }
 
-            $shouldReprocessContent = $dto->content_jp !== null
-                && $dto->content_jp !== $domainArticle->getContentJp()->value;
-
-            $shouldReprocessWords = $shouldReprocessContent
+            // Kanji come from the content, words from title + content: either field changing
+            // means the derived data is stale and one consolidated run is needed.
+            $shouldReprocess = ($dto->content_jp !== null && $dto->content_jp !== $domainArticle->getContentJp()->value)
                 || ($dto->title_jp !== null && $dto->title_jp !== $domainArticle->getTitleJp()->value);
 
-            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser) {
+            /** @var array{0: DomainArticle, 1: int|null} $outcome */
+            $outcome = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser, $shouldReprocess): array {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
                 $this->articleRepository->update($updatedDomainArticle);
@@ -239,14 +255,27 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                return $updatedDomainArticle;
+                $contentVersion = null;
+
+                if ($shouldReprocess) {
+                    $contentVersion = $this->articleRepository->bumpContentVersion($domainArticle->getIdValue());
+
+                    $this->processingStates->startOrReset(
+                        ProcessingEntityType::Article,
+                        $updatedDomainArticle->getUid(),
+                        ProcessingTaskType::ArticleContentProcessing,
+                        $contentVersion,
+                    );
+                }
+
+                return [$updatedDomainArticle, $contentVersion];
             });
 
-            $this->dispatchContentProcessing(
-                $updatedDomainArticle,
-                reprocessKanjis: $shouldReprocessContent,
-                reprocessWords: $shouldReprocessWords,
-            );
+            [$updatedDomainArticle, $contentVersion] = $outcome;
+
+            if ($contentVersion !== null) {
+                ProcessArticleContentJob::dispatch($updatedDomainArticle->getUid()->value(), $contentVersion);
+            }
 
             return Result::success(
                 new ArticleUpdateResultDTO(
@@ -255,6 +284,7 @@ class ArticleService implements ArticleServiceInterface
                         $updatedDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE
                     ),
+                    processingState: $this->processingStateReader->currentState($updatedDomainArticle->getUid()->value()),
                 )
             );
         } catch (\Exception $e) {
@@ -266,37 +296,6 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::updateFailed($e->getMessage()));
         }
-    }
-
-    /**
-     * Dispatch the content-processing jobs for an article.
-     *
-     * Must be called after the write transaction has returned, never inside the closure,
-     * so create and update dispatch from the same place relative to the commit.
-     */
-    private function dispatchContentProcessing(
-        DomainArticle $article,
-        bool $reprocessKanjis,
-        bool $reprocessWords,
-    ): void {
-        if ($reprocessKanjis) {
-            ProcessArticleKanjisJob::dispatch(
-                $article->getUid()->value(),
-                $article->getContentJp()->value,
-            );
-        }
-
-        if ($reprocessWords) {
-            ProcessArticleWordsJob::dispatch(
-                $article->getUid()->value(),
-                $this->articleWordProcessingText($article),
-            );
-        }
-    }
-
-    private function articleWordProcessingText(DomainArticle $article): string
-    {
-        return $article->getTitleJp()->value.$article->getContentJp()->value;
     }
 
     /**
@@ -336,7 +335,7 @@ class ArticleService implements ArticleServiceInterface
                 ? ($dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE)
                 : $article->getPublicity(),
             $article->getStatus(),
-            $article->getJlptLevels(), // Recomputed by ProcessArticleKanjisJob when content changes
+            $article->getJlptLevels(), // Recomputed by ProcessArticleContentJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
         );

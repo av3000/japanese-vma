@@ -26,6 +26,8 @@ const STATUS_CONFIG: Record<
 	processing: { variant: 'pending', icon: 'minusSolid', label: 'Processing' },
 	completed: { variant: 'success', icon: 'checkSolid', label: 'Completed' },
 	failed: { variant: 'destructive', icon: 'removeSolid', label: 'Failed' },
+	// Terminal and normally hidden by callers; kept so every status has a rendering.
+	superseded: { variant: 'pending', icon: 'minusSolid', label: 'Superseded' },
 };
 
 const ProcessingStatusBadge: React.FC<ProcessingStatusBadgeProps> = ({

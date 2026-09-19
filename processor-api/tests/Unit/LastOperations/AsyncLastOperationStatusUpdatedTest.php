@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\LastOperations;
 
 use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
-use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use ReflectionClass;
 use ReflectionNamedType;
 use Tests\TestCase;
@@ -47,35 +47,35 @@ class AsyncLastOperationStatusUpdatedTest extends TestCase
         $this->assertSame(LastOperationStatus::PROCESSING, $event->status());
     }
 
-    public function test_from_state_snapshots_the_model_at_construction_time(): void
+    public function test_from_dto_snapshots_the_row(): void
     {
-        Carbon::setTestNow('2026-09-18 12:00:00');
+        $dto = new ArticleProcessingStateDTO(
+            id: 42,
+            entityType: ProcessingEntityType::Article,
+            entityId: self::UUID,
+            taskType: 'article_content_processing',
+            status: LastOperationStatus::PROCESSING,
+            attempt: 2,
+            maxAttempts: 3,
+            contentVersion: 4,
+            metadata: ['kanji_count' => 3],
+            errorCode: null,
+            errorMessage: null,
+            startedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
+            finishedAt: null,
+            createdAt: new \DateTimeImmutable('2026-09-18 11:59:00+00:00'),
+            updatedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
+        );
 
-        $state = new LastOperationState([
-            'id' => 42,
-            'processable_id' => self::UUID,
-            'task_type' => 'kanji_extraction',
-            'status' => LastOperationStatus::PROCESSING,
-            'metadata' => ['attempts' => 2],
-        ]);
-        $state->created_at = Carbon::now()->subMinute();
-        $state->updated_at = Carbon::now();
-
-        $event = AsyncLastOperationStatusUpdated::fromState($state);
-
-        // Mutating the model afterwards must not leak into the event.
-        $state->status = LastOperationStatus::COMPLETED;
-        $state->metadata = ['attempts' => 3];
+        $event = AsyncLastOperationStatusUpdated::fromDto($dto);
 
         $this->assertSame(self::UUID, $event->entityUuid);
         $this->assertSame(42, $event->snapshot['id']);
-        $this->assertSame('kanji_extraction', $event->snapshot['type']);
+        $this->assertSame('article_content_processing', $event->snapshot['type']);
         $this->assertSame(LastOperationStatus::PROCESSING, $event->snapshot['status']);
-        $this->assertSame(['attempts' => 2], $event->snapshot['metadata']);
+        $this->assertSame(['kanji_count' => 3], $event->snapshot['metadata']);
         $this->assertSame('2026-09-18T11:59:00+00:00', $event->snapshot['created_at']);
         $this->assertSame('2026-09-18T12:00:00+00:00', $event->snapshot['updated_at']);
-
-        Carbon::setTestNow();
     }
 
     public function test_event_no_longer_carries_an_eloquent_model_or_serializes_models(): void

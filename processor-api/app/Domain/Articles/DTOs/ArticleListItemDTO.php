@@ -11,7 +11,7 @@ use App\Domain\Articles\Models\ArticleStats;
  * One enriched row of an Article list page.
  *
  * Replaces the Domain DTO of the same name, which imported the Eloquent
- * LastOperationState model straight into the domain layer.
+ * Eloquent processing-state model straight into the domain layer.
  */
 final readonly class ArticleListItemDTO
 {

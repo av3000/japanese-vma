@@ -94,7 +94,7 @@ final readonly class ArticleListService implements ArticleListServiceInterface
             : [];
 
         $processingStates = $includes->includeProcessingState
-            ? $this->processingStateReader->latestKanjiExtractionStates(array_map(
+            ? $this->processingStateReader->currentStates(array_map(
                 static fn (DomainArticle $article): string => $article->getUid()->value(),
                 $articles,
             ))
