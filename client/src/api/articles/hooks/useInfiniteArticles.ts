@@ -5,6 +5,7 @@ import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
 import { articleKeys } from '../keys';
+import { listHasNonTerminalProcessing, useProcessingRefetchInterval } from './useProcessingPolling';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -21,6 +22,9 @@ export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
 export const getArticlesTotal = (pages: ArticleListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfiniteArticlesOptions = {}) => {
+	// Polls while any loaded item is still processing and the socket is not connected (#251).
+	const refetchInterval = useProcessingRefetchInterval(listHasNonTerminalProcessing);
+
 	const query = useInfiniteQuery<
 		ArticleListResource,
 		ArticleIndexQueryError,
@@ -33,6 +37,7 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		initialPageParam: 1,
 		getNextPageParam: getNextArticlesPageParam,
 		enabled,
+		refetchInterval,
 	});
 
 	const pages = query.data?.pages as ArticleListResource[] | undefined;

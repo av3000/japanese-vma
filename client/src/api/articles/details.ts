@@ -4,6 +4,7 @@ import type { ArticleDetailResource } from '@/api/generated/model/articleDetailR
 import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
 import '@/shared/constants';
 import { ObjectTemplateType } from '@/shared/constants/enums';
+import { detailHasNonTerminalProcessing, useProcessingRefetchInterval } from './hooks/useProcessingPolling';
 import { articleKeys } from './keys';
 
 export interface MappedArticle extends ArticleDetailResource {
@@ -27,6 +28,9 @@ export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => 
 export const getArticleDetailQueryKey = (uuid: string) => articleKeys.detail(uuid);
 
 export const useArticleQuery = (uuid: string | undefined) => {
+	// Polls while this article is still processing and the socket is not connected (#251).
+	const refetchInterval = useProcessingRefetchInterval(detailHasNonTerminalProcessing);
+
 	return useQuery({
 		queryKey: getArticleDetailQueryKey(uuid as string),
 		queryFn: async () => {
@@ -35,6 +39,7 @@ export const useArticleQuery = (uuid: string | undefined) => {
 		enabled: !!uuid,
 		retry: false,
 		select: mapArticleDetail,
+		refetchInterval,
 	});
 };
 
