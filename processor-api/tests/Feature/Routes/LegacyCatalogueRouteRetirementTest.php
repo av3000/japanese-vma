@@ -151,26 +151,20 @@ class LegacyCatalogueRouteRetirementTest extends TestCase
     }
 
     /**
-     * Legacy radical and sentence catalogue PDF exports have no v1 equivalent yet: the frontend
-     * dropped the capability in CAT-CLEAN-FE-01, so these two routes had no caller either, and
-     * CAT-PDF-01 (#303) tracks recreating them as v1 service-backed exports. The two supported
-     * kinds must keep working in the meantime.
+     * Every legacy catalogue PDF export now has a v1 replacement. Radicals and sentences were the
+     * one capability RET-CAT-01 left without one - CAT-CLEAN-FE-01 had already dropped the
+     * frontend half, so the legacy routes had no caller - and CAT-PDF-01 (#303) recreated them as
+     * service-backed v1 exports. The legacy `api/list/{id}/*-pdf` routes stay gone; the witnesses
+     * for that are in the retired-routes list above.
      */
-    public function test_only_the_two_supported_pdf_export_kinds_exist_at_v1(): void
+    public function test_every_catalogue_pdf_export_kind_exists_at_v1(): void
     {
         $uuid = '11111111-2222-4333-8444-555555555555';
 
-        foreach (['kanjis', 'words'] as $kind) {
+        foreach (['kanjis', 'words', 'radicals', 'sentences'] as $kind) {
             $this->assertNotNull(
                 $this->matchRoute('GET', "api/v1/catalogues/{$uuid}/{$kind}-pdf"),
                 "The v1 catalogue {$kind} PDF export is missing; it replaced the legacy route."
-            );
-        }
-
-        foreach (['radicals', 'sentences'] as $kind) {
-            $this->assertNull(
-                $this->matchRoute('GET', "api/v1/catalogues/{$uuid}/{$kind}-pdf"),
-                "A v1 catalogue {$kind} PDF route exists; CAT-PDF-01 (#303) should retire this assertion with it."
             );
         }
     }
