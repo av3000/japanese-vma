@@ -123,7 +123,7 @@ class ProcessingStateServiceTest extends TestCase
         Event::assertDispatched(
             AsyncLastOperationStatusUpdated::class,
             fn (AsyncLastOperationStatusUpdated $event): bool => $event->status() === LastOperationStatus::FAILED
-                && $event->snapshot['metadata'] === ['reason' => 'no heartbeat'],
+                && (array) $event->snapshot['metadata'] === ['reason' => 'no heartbeat'],
         );
         $this->assertSame(0, $this->service->sweepStale(300), 'A swept row is terminal and not swept again.');
     }

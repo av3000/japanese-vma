@@ -23,7 +23,7 @@ class AsyncLastOperationStatusUpdatedTest extends TestCase
 
     public function test_broadcasts_immediately_on_the_private_article_channel_with_the_stable_alias(): void
     {
-        $event = new AsyncLastOperationStatusUpdated(self::UUID, $this->snapshot());
+        $event = AsyncLastOperationStatusUpdated::fromDto($this->dto());
 
         $this->assertInstanceOf(ShouldBroadcastNow::class, $event);
 
@@ -35,45 +35,28 @@ class AsyncLastOperationStatusUpdatedTest extends TestCase
         $this->assertSame('OperationStatusUpdated', $event->broadcastAs());
     }
 
-    public function test_broadcast_payload_equals_the_processing_status_resource_for_the_snapshot(): void
+    public function test_broadcast_payload_is_byte_for_byte_the_rest_processing_status(): void
     {
-        $snapshot = $this->snapshot();
-        $event = new AsyncLastOperationStatusUpdated(self::UUID, $snapshot);
+        $dto = $this->dto();
+        $event = AsyncLastOperationStatusUpdated::fromDto($dto);
 
-        $this->assertEquals(
-            (new ProcessingStatusResource($snapshot))->resolve(),
-            $event->broadcastWith(),
+        $this->assertSame(
+            json_encode((new ProcessingStatusResource($dto))->resolve(), JSON_THROW_ON_ERROR),
+            json_encode($event->broadcastWith(), JSON_THROW_ON_ERROR),
         );
         $this->assertSame(LastOperationStatus::PROCESSING, $event->status());
+        $this->assertSame('{}', json_encode($event->broadcastWith()['metadata']), 'Empty metadata is an object, never a list.');
     }
 
-    public function test_from_dto_snapshots_the_row(): void
+    public function test_from_dto_snapshots_the_row_as_a_plain_payload(): void
     {
-        $dto = new ArticleProcessingStateDTO(
-            id: 42,
-            entityType: ProcessingEntityType::Article,
-            entityId: self::UUID,
-            taskType: 'article_content_processing',
-            status: LastOperationStatus::PROCESSING,
-            attempt: 2,
-            maxAttempts: 3,
-            contentVersion: 4,
-            metadata: ['kanji_count' => 3],
-            errorCode: null,
-            errorMessage: null,
-            startedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
-            finishedAt: null,
-            createdAt: new \DateTimeImmutable('2026-09-18 11:59:00+00:00'),
-            updatedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
-        );
-
-        $event = AsyncLastOperationStatusUpdated::fromDto($dto);
+        $event = AsyncLastOperationStatusUpdated::fromDto($this->dto(metadata: ['kanji_count' => 3]));
 
         $this->assertSame(self::UUID, $event->entityUuid);
         $this->assertSame(42, $event->snapshot['id']);
         $this->assertSame('article_content_processing', $event->snapshot['type']);
-        $this->assertSame(LastOperationStatus::PROCESSING, $event->snapshot['status']);
-        $this->assertSame(['kanji_count' => 3], $event->snapshot['metadata']);
+        $this->assertSame('processing', $event->snapshot['status']);
+        $this->assertSame(['kanji_count' => 3], (array) $event->snapshot['metadata']);
         $this->assertSame('2026-09-18T11:59:00+00:00', $event->snapshot['created_at']);
         $this->assertSame('2026-09-18T12:00:00+00:00', $event->snapshot['updated_at']);
     }
@@ -102,17 +85,26 @@ class AsyncLastOperationStatusUpdatedTest extends TestCase
     }
 
     /**
-     * @return array{id: int, type: string, status: LastOperationStatus, metadata: array<string, mixed>, created_at: ?string, updated_at: ?string}
+     * @param array<string, mixed> $metadata
      */
-    private function snapshot(): array
+    private function dto(array $metadata = []): ArticleProcessingStateDTO
     {
-        return [
-            'id' => 7,
-            'type' => 'words_extraction',
-            'status' => LastOperationStatus::PROCESSING,
-            'metadata' => ['attempts' => 1],
-            'created_at' => '2026-09-18T11:59:00+00:00',
-            'updated_at' => '2026-09-18T12:00:00+00:00',
-        ];
+        return new ArticleProcessingStateDTO(
+            id: 42,
+            entityType: ProcessingEntityType::Article,
+            entityId: self::UUID,
+            taskType: 'article_content_processing',
+            status: LastOperationStatus::PROCESSING,
+            attempt: 2,
+            maxAttempts: 3,
+            contentVersion: 4,
+            metadata: $metadata,
+            errorCode: null,
+            errorMessage: null,
+            startedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
+            finishedAt: null,
+            createdAt: new \DateTimeImmutable('2026-09-18 11:59:00+00:00'),
+            updatedAt: new \DateTimeImmutable('2026-09-18 12:00:00+00:00'),
+        );
     }
 }

@@ -25,18 +25,9 @@ class ArticleCreatedResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $state = $this->resource->processingState;
-
         return [
             'uuid' => $this->resource->article->getUid()->value(),
-            'processing_status' => new ProcessingStatusResource([
-                'id' => $state->id,
-                'type' => $state->taskType,
-                'status' => $state->status,
-                'metadata' => $state->metadata,
-                'created_at' => $state->createdAt?->format('c'),
-                'updated_at' => $state->updatedAt?->format('c'),
-            ]),
+            'processing_status' => new ProcessingStatusResource($this->resource->processingState),
         ];
     }
 
