@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Application\Articles\Services\ArticleKanjiProcessingService;
-use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 use App\Application\Articles\Services\ArticleListService;
 use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Articles\Services\ArticleModerationService;
@@ -58,7 +56,6 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(ArticleServiceInterface::class, ArticleService::class);
         $this->app->bind(ArticleListServiceInterface::class, ArticleListService::class);
         $this->app->bind(ArticleModerationServiceInterface::class, ArticleModerationService::class);
-        $this->app->bind(ArticleKanjiProcessingServiceInterface::class, ArticleKanjiProcessingService::class);
         $this->app->bind(ArticlePdfExportServiceInterface::class, ArticlePdfExportService::class);
         $this->app->bind(CataloguePdfExportServiceInterface::class, CataloguePdfExportService::class);
         $this->app->bind(CatalogueServiceInterface::class, CatalogueService::class);

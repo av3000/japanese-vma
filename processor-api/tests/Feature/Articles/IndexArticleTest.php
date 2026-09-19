@@ -2,6 +2,10 @@
 
 namespace Tests\Feature\Articles;
 
+use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionService;
+use App\Application\LastOperations\Services\LastOperationService;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -548,5 +552,29 @@ class IndexArticleTest extends TestCase
                 'items' => [['id', 'uuid', 'title_jp']],
                 'pagination' => ['page', 'per_page', 'total', 'last_page', 'has_more'],
             ]);
+    }
+
+    public function test_index_exposes_jlpt_counters_computed_by_the_kanji_job(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'title_jp' => '水の記事',
+            'content_jp' => '水を飲みます。日本語の本文です。',
+        ]);
+        $this->attachKanji($article, '水');
+
+        (new ProcessArticleKanjisJob($article->uuid, $article->content_jp))->handle(
+            app(KanjiExtractionService::class),
+            app(KanjiAttachmentService::class),
+            app(LastOperationService::class),
+        );
+
+        $response = $this->json('GET', '/api/v1/articles');
+
+        $response->assertStatus(200);
+        $item = collect($response->json('items'))->firstWhere('uuid', $article->uuid);
+        $this->assertNotNull($item);
+        $this->assertSame(1, $item['jlpt_levels']['n5']);
+        $this->assertSame(0, $item['jlpt_levels']['uncommon']);
     }
 }
