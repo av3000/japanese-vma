@@ -85,6 +85,48 @@ class ProcessingStateServiceTest extends TestCase
         $this->assertSame(['stage' => 'kanji', 'exception' => RuntimeException::class], $state?->metadata);
     }
 
+    public function test_database_exceptions_never_leak_sql_into_the_payload(): void
+    {
+        $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+
+        $query = new \Illuminate\Database\QueryException(
+            'pgsql',
+            'insert into "article_kanji" ("article_id", "kanji_id") values (?, ?)',
+            [7, 9],
+            new \PDOException('SQLSTATE[23505]: Unique violation'),
+        );
+
+        $state = $this->service->markFailed(ProcessingEntityType::Article, $this->id, self::TASK, 'persist', $query, ['stage' => 'persist']);
+
+        $this->assertSame('Database error', $state?->errorMessage);
+        Event::assertDispatched(
+            AsyncLastOperationStatusUpdated::class,
+            function (AsyncLastOperationStatusUpdated $event): bool {
+                $json = json_encode($event->broadcastWith(), JSON_THROW_ON_ERROR);
+
+                return $event->status() === LastOperationStatus::FAILED
+                    && ! str_contains($json, 'insert into')
+                    && ! str_contains($json, 'SQLSTATE')
+                    && ! str_contains($json, '#0 ');
+            },
+        );
+    }
+
+    public function test_a_trailing_sql_fragment_is_stripped_from_other_exceptions(): void
+    {
+        $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+
+        $state = $this->service->markFailed(
+            ProcessingEntityType::Article,
+            $this->id,
+            self::TASK,
+            'words',
+            new RuntimeException("Lookup failed (SQL: select * from japanese_word_bank_long where word like '学%')"),
+        );
+
+        $this->assertSame('Lookup failed', $state?->errorMessage);
+    }
+
     public function test_transitions_without_a_row_broadcast_nothing(): void
     {
         $this->assertNull($this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1));

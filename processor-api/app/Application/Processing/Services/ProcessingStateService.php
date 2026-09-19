@@ -10,7 +10,10 @@ use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PDOException;
 use Throwable;
 
 final class ProcessingStateService implements ProcessingStateServiceInterface
@@ -57,10 +60,21 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         Throwable|string $error,
         array $metadata = [],
     ): ?ArticleProcessingStateDTO {
-        $message = $error instanceof Throwable ? $error->getMessage() : $error;
+        $message = $error instanceof Throwable ? self::publicMessageFor($error) : $error;
 
         if ($error instanceof Throwable) {
             $metadata += ['exception' => $error::class];
+
+            // The full detail belongs in the logs (and Sentry via the exception handler when
+            // the job rethrows), never in a payload that reaches every subscriber.
+            Log::error('Processing failed', [
+                'entity_type' => $entityType->value,
+                'entity_id' => $entityId->value(),
+                'task_type' => $task->value,
+                'error_code' => $errorCode,
+                'exception' => $error::class,
+                'message' => $error->getMessage(),
+            ]);
         }
 
         return $this->broadcastIfAny($this->repository->markFailed(
@@ -126,6 +140,20 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         AsyncLastOperationStatusUpdated::dispatch(...AsyncLastOperationStatusUpdated::argumentsFromDto($state));
 
         return $state;
+    }
+
+    /**
+     * What a subscriber may learn about a failure. Database exceptions carry the SQL and its
+     * bindings in their message, so they are replaced wholesale; anything else is stripped of
+     * a trailing SQL fragment as a belt-and-braces measure.
+     */
+    private static function publicMessageFor(Throwable $error): string
+    {
+        if ($error instanceof QueryException || $error instanceof PDOException) {
+            return 'Database error';
+        }
+
+        return (string) preg_replace('/\s*\(SQL:.*$/su', '', $error->getMessage());
     }
 
     /**

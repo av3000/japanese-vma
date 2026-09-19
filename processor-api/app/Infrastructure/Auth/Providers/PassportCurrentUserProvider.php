@@ -49,11 +49,21 @@ final class PassportCurrentUserProvider implements CurrentUserProviderInterface
             return null;
         }
 
-        return $this->authenticatedUser = new AuthenticatedUser(
+        return $this->authenticatedUser = self::authenticatedUserFor($user);
+    }
+
+    /**
+     * Map a persistence principal to the application-level user. Public so places that
+     * receive the principal from the framework directly (broadcast channel classes) share
+     * the one mapping.
+     */
+    public static function authenticatedUserFor(PersistenceUser $user): AuthenticatedUser
+    {
+        return new AuthenticatedUser(
             id: new UserId((int) $user->id),
             uuid: new EntityId((string) $user->uuid),
             name: new UserName((string) $user->name),
-            isAdmin: $this->isAdmin($user),
+            isAdmin: self::isAdmin($user),
         );
     }
 
@@ -94,7 +104,7 @@ final class PassportCurrentUserProvider implements CurrentUserProviderInterface
         return $this->principal = $principal;
     }
 
-    private function isAdmin(PersistenceUser $user): bool
+    private static function isAdmin(PersistenceUser $user): bool
     {
         if ($user->relationLoaded('roles')) {
             return $user->roles->contains(

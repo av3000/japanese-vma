@@ -1,5 +1,7 @@
 <?php
 
+use App\Application\Processing\Authorization\ArticleProcessingChannelAuthorizer;
+use App\Infrastructure\Auth\Broadcasting\ArticleProcessingChannel;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -7,16 +9,12 @@ use Illuminate\Support\Facades\Broadcast;
 | Broadcast Channels
 |--------------------------------------------------------------------------
 |
-| Here you may register all of the event broadcasting channels that your
-| application supports. The given channel authorization callbacks are
-| used to check if an authenticated user can listen to the channel.
+| Channel authorisation. Requests reach here through the `auth:api` middleware registered in
+| BroadcastServiceProvider, so an anonymous request is a 401 before any channel class runs;
+| a class returning false is a 403.
 |
 */
 
-Broadcast::channel('App.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
-});
-
-Broadcast::channel('last_operations.{uuid}', function ($user, $uuid) {
-    return (bool) $user;
-});
+// Article processing status: exactly the users who may view the article (issue #252).
+// The principal is read from the `api` guard; the default `web` guard is never populated here.
+Broadcast::channel(ArticleProcessingChannelAuthorizer::CHANNEL, ArticleProcessingChannel::class, ['guards' => ['api']]);
