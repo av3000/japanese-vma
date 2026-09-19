@@ -8,6 +8,7 @@ use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepository
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
+use App\Domain\Processing\Exceptions\ProcessingStateNotFoundException;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -91,15 +92,28 @@ class ProcessingStateRepositoryTest extends TestCase
         $this->assertSame(['stage' => 'words'], $failed?->metadata);
     }
 
-    public function test_transitions_return_null_when_no_row_exists(): void
+    public function test_transitions_throw_when_no_row_exists(): void
     {
         $id = EntityId::from((string) Str::uuid());
 
-        $this->assertNull($this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1));
-        $this->assertNull($this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, []));
-        $this->assertNull($this->repository->markFailed(ProcessingEntityType::Article, $id, self::TASK, 'x', 'y'));
-        $this->assertNull($this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1));
+        // A read may legitimately find nothing; a write may not (#267).
         $this->assertNull($this->repository->getCurrent(ProcessingEntityType::Article, $id, self::TASK));
+
+        $transitions = [
+            fn () => $this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1),
+            fn () => $this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, []),
+            fn () => $this->repository->markFailed(ProcessingEntityType::Article, $id, self::TASK, 'x', 'y'),
+            fn () => $this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1),
+        ];
+
+        foreach ($transitions as $index => $transition) {
+            try {
+                $transition();
+                $this->fail("Transition {$index} silently accepted a missing row.");
+            } catch (ProcessingStateNotFoundException $exception) {
+                $this->assertStringContainsString($id->value(), $exception->getMessage());
+            }
+        }
     }
 
     public function test_mark_superseded_only_touches_an_in_flight_row_for_that_version(): void

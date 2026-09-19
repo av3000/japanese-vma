@@ -9,6 +9,7 @@ use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
+use App\Domain\Processing\Exceptions\ProcessingStateNotFoundException;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use DateTimeImmutable;
@@ -47,7 +48,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
             'status' => ProcessingStatus::PROCESSING,
             'attempt' => $attempt,
@@ -63,7 +64,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
             'status' => ProcessingStatus::COMPLETED,
             'finished_at' => now(),
@@ -80,7 +81,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         string $errorCode,
         string $errorMessage,
         array $metadata = [],
-    ): ?ProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
             'status' => ProcessingStatus::FAILED,
             'finished_at' => now(),
@@ -96,11 +97,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ProcessingTaskType $task,
         int $staleContentVersion,
     ): ?ProcessingStateDTO {
-        $state = $this->find($entityType, $entityId, $task);
-
-        if ($state === null) {
-            return null;
-        }
+        $state = $this->findOrFail($entityType, $entityId, $task);
 
         // A newer run may already own the row; only an in-flight run for this version is stale.
         // Nothing changed means nothing to broadcast, hence null rather than the untouched row.
@@ -170,16 +167,21 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $attributes,
-    ): ?ProcessingStateDTO {
-        $state = $this->find($entityType, $entityId, $task);
-
-        if ($state === null) {
-            return null;
-        }
+    ): ProcessingStateDTO {
+        $state = $this->findOrFail($entityType, $entityId, $task);
 
         $state->fill($attributes)->save();
 
         return self::toDto($state);
+    }
+
+    private function findOrFail(
+        ProcessingEntityType $entityType,
+        EntityId $entityId,
+        ProcessingTaskType $task,
+    ): ProcessingState {
+        return $this->find($entityType, $entityId, $task)
+            ?? throw ProcessingStateNotFoundException::for($entityType, $entityId, $task);
     }
 
     private function find(ProcessingEntityType $entityType, EntityId $entityId, ProcessingTaskType $task): ?ProcessingState

@@ -34,7 +34,7 @@ interface ProcessingStateRepositoryInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata counts only; no free text
@@ -44,7 +44,7 @@ interface ProcessingStateRepositoryInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -56,7 +56,7 @@ interface ProcessingStateRepositoryInterface
         string $errorCode,
         string $errorMessage,
         array $metadata = [],
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * The entity's content moved on while this run was queued; the run's result is discarded.

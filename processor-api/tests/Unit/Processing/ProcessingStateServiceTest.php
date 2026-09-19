@@ -10,10 +10,12 @@ use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
+use App\Domain\Processing\Exceptions\ProcessingStateNotFoundException;
 use App\Domain\Shared\ValueObjects\EntityId;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
@@ -161,12 +163,74 @@ class ProcessingStateServiceTest extends TestCase
         $this->assertSame('Lookup failed', $state?->errorMessage);
     }
 
-    public function test_transitions_without_a_row_broadcast_nothing(): void
+    public function test_a_transition_on_an_unknown_row_throws_instead_of_losing_the_update(): void
     {
-        $this->assertNull($this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1));
+        $this->expectException(ProcessingStateNotFoundException::class);
+        $this->expectExceptionMessage($this->id->value());
+
+        $this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+    }
+
+    /**
+     * @return list<array{string, callable(ProcessingStateServiceInterface, EntityId): mixed}>
+     */
+    public static function unknownRowTransitions(): array
+    {
+        $task = self::TASK;
+
+        return [
+            'markProcessing' => [fn (ProcessingStateServiceInterface $service, EntityId $id) => $service
+                ->markProcessing(ProcessingEntityType::Article, $id, $task, 1)],
+            'markCompleted' => [fn (ProcessingStateServiceInterface $service, EntityId $id) => $service
+                ->markCompleted(ProcessingEntityType::Article, $id, $task, [])],
+            'markFailed' => [fn (ProcessingStateServiceInterface $service, EntityId $id) => $service
+                ->markFailed(ProcessingEntityType::Article, $id, $task, 'boom', 'boom')],
+            'markSuperseded' => [fn (ProcessingStateServiceInterface $service, EntityId $id) => $service
+                ->markSuperseded(ProcessingEntityType::Article, $id, $task, 1)],
+        ];
+    }
+
+    #[DataProvider('unknownRowTransitions')]
+    public function test_every_transition_on_an_unknown_row_throws(callable $transition): void
+    {
+        $this->expectException(ProcessingStateNotFoundException::class);
+
+        $transition($this->service, $this->id);
+    }
+
+    public function test_nothing_to_supersede_is_a_silent_no_op_rather_than_an_error(): void
+    {
+        // The row exists but already finished: a late superseded run has nothing to write, and
+        // that is not the missing-row case #267 made loud.
+        $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+        $this->service->markCompleted(ProcessingEntityType::Article, $this->id, self::TASK, []);
+
         $this->assertNull($this->service->markSuperseded(ProcessingEntityType::Article, $this->id, self::TASK, 1));
 
-        Event::assertNotDispatched(ProcessingStatusUpdated::class);
+        Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 2);
+    }
+
+    public function test_metadata_from_a_failed_attempt_does_not_survive_into_the_completed_state(): void
+    {
+        $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+        $this->service->markFailed(ProcessingEntityType::Article, $this->id, self::TASK, 'words', 'boom', ['stage' => 'words']);
+
+        $completed = $this->service->markCompleted(ProcessingEntityType::Article, $this->id, self::TASK, [
+            'kanji_count' => 3,
+            'word_count' => 7,
+        ]);
+
+        $this->assertSame(['kanji_count' => 3, 'word_count' => 7], $completed->metadata);
+        $this->assertArrayNotHasKey('stage', (array) $completed->metadata);
+        $this->assertArrayNotHasKey('exception', (array) $completed->metadata);
+        $this->assertNull($completed->errorCode);
+        $this->assertNull($completed->errorMessage);
+
+        Event::assertDispatched(
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => $event->status() === ProcessingStatus::COMPLETED
+                && (array) $event->snapshot['metadata'] === ['kanji_count' => 3, 'word_count' => 7],
+        );
     }
 
     public function test_record_failure_fails_only_a_non_terminal_row(): void

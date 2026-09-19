@@ -13,6 +13,10 @@ use Throwable;
 /**
  * Application seam over the processing-state repository. Every transition that changes a row
  * is broadcast to clients from a write-time snapshot, so callers never need to remember to.
+ *
+ * Transitions throw ProcessingStateNotFoundException when the row does not exist rather than
+ * returning silently (#267); every transition follows a `startOrReset` that created one, so a
+ * missing row is a caller bug, not a state the system should absorb.
  */
 interface ProcessingStateServiceInterface
 {
@@ -28,7 +32,7 @@ interface ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -38,7 +42,7 @@ interface ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -50,7 +54,7 @@ interface ProcessingStateServiceInterface
         string $errorCode,
         Throwable|string $error,
         array $metadata = [],
-    ): ?ProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     public function markSuperseded(
         ProcessingEntityType $entityType,
