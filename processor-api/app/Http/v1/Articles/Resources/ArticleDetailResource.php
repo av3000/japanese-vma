@@ -89,14 +89,7 @@ class ArticleDetailResource extends JsonResource
             'engagement' => new EngagementResource($detail->engagement),
             'kanjis' => KanjiResource::collection($detail->kanjis),
             'words' => ArticleWordResource::collection($detail->words),
-            'processing_status' => $detail->processingState ? new ProcessingStatusResource([
-                'id' => $detail->processingState->id,
-                'type' => $detail->processingState->taskType,
-                'status' => $detail->processingState->status,
-                'metadata' => $detail->processingState->metadata,
-                'created_at' => $detail->processingState->createdAt?->format('c'),
-                'updated_at' => $detail->processingState->updatedAt?->format('c'),
-            ]) : null,
+            'processing_status' => $detail->processingState ? new ProcessingStatusResource($detail->processingState) : null,
         ];
     }
 }

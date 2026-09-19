@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
-import { applyProcessingStatus } from '../processingStatusCache';
+import { applyProcessingStatus, isArticleContentProcessingPayload } from '../processingStatusCache';
 
 const normalizePayload = (payload: ProcessingStatusResource | string): ProcessingStatusResource =>
 	typeof payload === 'string' ? (JSON.parse(payload) as ProcessingStatusResource) : payload;
@@ -21,6 +21,10 @@ export const useArticleSubscription = (articleUuid: string) => {
 
 			if (import.meta.env.DEV) {
 				console.log('OperationStatusUpdated', normalizedPayload);
+			}
+
+			if (!isArticleContentProcessingPayload(normalizedPayload)) {
+				return;
 			}
 
 			applyProcessingStatus(queryClient, articleUuid, normalizedPayload);

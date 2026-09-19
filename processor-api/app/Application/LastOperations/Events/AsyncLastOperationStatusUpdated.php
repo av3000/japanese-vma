@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\LastOperations\Events;
 
+use App\Application\Processing\Presenters\ProcessingStatePayload;
 use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Shared\Enums\LastOperationStatus;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -18,21 +18,14 @@ use Illuminate\Foundation\Events\Dispatchable;
  * Broadcast synchronously from a snapshot taken at write time (audit F-08). Alias and channel
  * are unchanged from the pre-ADR-0001 event so the frontend needs no change; P4-1 versions it.
  *
- * @phpstan-type Snapshot array{
- *     id: int,
- *     type: string,
- *     status: LastOperationStatus,
- *     metadata: array<string, mixed>,
- *     created_at: ?string,
- *     updated_at: ?string
- * }
+ * @phpstan-import-type Payload from ProcessingStatePayload
  */
 class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
     /**
-     * @param Snapshot $snapshot
+     * @param Payload $snapshot
      */
     public function __construct(
         public readonly string $entityUuid,
@@ -46,26 +39,19 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     }
 
     /**
-     * @return array{entityUuid: string, snapshot: Snapshot}
+     * @return array{entityUuid: string, snapshot: Payload}
      */
     public static function argumentsFromDto(ArticleProcessingStateDTO $state): array
     {
         return [
             'entityUuid' => $state->entityId,
-            'snapshot' => [
-                'id' => $state->id,
-                'type' => $state->taskType,
-                'status' => $state->status,
-                'metadata' => $state->metadata ?? [],
-                'created_at' => $state->createdAt?->format('c'),
-                'updated_at' => $state->updatedAt?->format('c'),
-            ],
+            'snapshot' => ProcessingStatePayload::fromDto($state),
         ];
     }
 
     public function status(): LastOperationStatus
     {
-        return $this->snapshot['status'];
+        return LastOperationStatus::from($this->snapshot['status']);
     }
 
     /**
@@ -89,12 +75,13 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     }
 
     /**
-     * Same shape as the REST `processing_status` field. Keep the two in sync via the resource.
+     * Same shape as the REST `processing_status` field, by construction: both come from
+     * ProcessingStatePayload.
      *
-     * @return array<string, mixed>
+     * @return Payload
      */
     public function broadcastWith(): array
     {
-        return (new ProcessingStatusResource($this->snapshot))->resolve();
+        return $this->snapshot;
     }
 }
