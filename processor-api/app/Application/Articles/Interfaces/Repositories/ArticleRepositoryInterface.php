@@ -8,6 +8,7 @@ use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -99,12 +100,14 @@ interface ArticleRepositoryInterface
 
     /**
      * Syncs a list of Kanji IDs to an article.
-     * This replaces any existing kanjis attached to the article.
+     * This replaces any existing kanjis attached to the article. When JLPT counters are given
+     * they are written on the article row in the same transaction as the pivot sync, so the
+     * two can never disagree (#250).
      *
      * @param int $articleId The internal ID of the article.
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
      */
-    public function syncKanjis(int $articleId, array $kanjiIds): void;
+    public function syncKanjis(int $articleId, array $kanjiIds, ?JlptLevels $jlptLevels = null): void;
 
     /**
      * Syncs a list of Word IDs to an article.

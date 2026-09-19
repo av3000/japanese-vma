@@ -2,6 +2,10 @@
 
 namespace Tests\Feature\Articles;
 
+use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiAttachmentService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiExtractionService;
+use App\Application\LastOperations\Services\LastOperationService;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -227,5 +231,23 @@ class ShowArticleTest extends TestCase
         $this->getJson("/api/v1/articles/{$article->uuid}")
             ->assertOk()
             ->assertJsonPath('kanjis.0.character', '水');
+    }
+
+    public function test_show_exposes_jlpt_counters_computed_by_the_kanji_job(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, ['content_jp' => '水を飲みます。日本語の本文です。']);
+        $this->attachKanji($article, '水');
+
+        (new ProcessArticleKanjisJob($article->uuid, $article->content_jp))->handle(
+            app(KanjiExtractionService::class),
+            app(KanjiAttachmentService::class),
+            app(LastOperationService::class),
+        );
+
+        $this->json('GET', "/api/v1/articles/{$article->uuid}")
+            ->assertStatus(200)
+            ->assertJsonPath('jlpt_levels.n5', 1)
+            ->assertJsonPath('jlpt_levels.uncommon', 0);
     }
 }

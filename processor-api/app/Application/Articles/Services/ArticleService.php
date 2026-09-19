@@ -336,7 +336,7 @@ class ArticleService implements ArticleServiceInterface
                 ? ($dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE)
                 : $article->getPublicity(),
             $article->getStatus(),
-            $article->getJlptLevels(), // TODO: Recalculate if content changed
+            $article->getJlptLevels(), // Recomputed by ProcessArticleKanjisJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
         );

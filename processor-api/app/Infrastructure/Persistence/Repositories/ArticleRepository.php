@@ -9,6 +9,7 @@ use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
@@ -295,7 +296,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      * @param int $articleId The internal ID of the article.
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
      */
-    public function syncKanjis(int $articleId, array $kanjiIds): void
+    public function syncKanjis(int $articleId, array $kanjiIds, ?JlptLevels $jlptLevels = null): void
     {
         $existingKanjiIds = DB::table('article_kanji')
             ->where('article_id', $articleId)
@@ -305,7 +306,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         $kanjiIdsToAdd = array_diff($kanjiIds, $existingKanjiIds);
         $kanjiIdsToRemove = array_diff($existingKanjiIds, $kanjiIds);
 
-        DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove) {
+        DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove, $jlptLevels) {
             if (! empty($kanjiIdsToRemove)) {
                 DB::table('article_kanji')
                     ->where('article_id', $articleId)
@@ -322,6 +323,12 @@ class ArticleRepository implements ArticleRepositoryInterface
                 foreach (array_chunk($pivotRecords, 1000) as $chunk) {
                     DB::table('article_kanji')->insert($chunk);
                 }
+            }
+
+            if ($jlptLevels !== null) {
+                PersistenceArticle::query()
+                    ->whereKey($articleId)
+                    ->update($jlptLevels->toArray());
             }
         });
     }
