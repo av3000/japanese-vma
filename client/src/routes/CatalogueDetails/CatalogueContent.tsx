@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
 import {
 	catalogueExportKanjisPdf,
+	catalogueExportRadicalsPdf,
+	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
 	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
@@ -15,15 +17,18 @@ import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { formatDate } from '@/helpers';
+import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import {
 	CATALOGUE_ROUTES,
+	type CataloguePdfExportKind,
 	isCataloguePdfExportSupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
@@ -35,11 +40,22 @@ interface CatalogueContentProps {
 
 const LazyCommentsBlock = lazy(() => import('@/components/features/comment/CommentsBlock'));
 
+// A lookup rather than a ternary: a kind added to CataloguePdfExportKind without a client
+// here is a type error, where a ternary would quietly export it as words.
+const pdfExportClients: Record<CataloguePdfExportKind, typeof catalogueExportKanjisPdf> = {
+	kanji: catalogueExportKanjisPdf,
+	words: catalogueExportWordsPdf,
+	radicals: catalogueExportRadicalsPdf,
+	sentences: catalogueExportSentencesPdf,
+};
+
 const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
 	const [editMode, setEditMode] = useState(false);
+	const [isPdfPending, setIsPdfPending] = useState(false);
+	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteModal = useModal(deleteDialogRef, { id: 'catalogue-delete-modal' });
 	const isOwner = currentUser?.id === catalogue.owner.id;
@@ -87,15 +103,19 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			return;
 		}
 
+		setIsPdfPending(true);
+		setPdfErrorMessage(null);
+
 		try {
-			const response =
-				pdfKind === 'kanji'
-					? await catalogueExportKanjisPdf(catalogue.uuid, { responseType: 'blob' })
-					: await catalogueExportWordsPdf(catalogue.uuid, { responseType: 'blob' });
+			const response = await pdfExportClients[pdfKind](catalogue.uuid, { responseType: 'blob' });
 			const file = new Blob([response], { type: 'application/pdf' });
-			window.open(URL.createObjectURL(file));
+
+			downloadFile(toDownloadFileName(catalogue.title, `catalogue-${pdfKind}`, 'pdf'), file);
 		} catch (error) {
 			console.error('Catalogue PDF download failed', error);
+			setPdfErrorMessage('The PDF could not be generated. Please try again.');
+		} finally {
+			setIsPdfPending(false);
 		}
 	};
 
@@ -192,13 +212,20 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
 							</Button>
 							{isPdfExportSupported && (
-								<Button variant="ghost" hasOnlyIcon onClick={handleDownloadPdf}>
+								<Button
+									variant="ghost"
+									hasOnlyIcon
+									aria-label="Download this catalogue as PDF"
+									isLoading={isPdfPending}
+									onClick={handleDownloadPdf}
+								>
 									<Icon size="md" name="filePdfSolid" />
 								</Button>
 							)}
 							{downloadCount > 0 && <span className={styles.muted}>{downloadCount} downloads</span>}
 						</Cluster>
 					</Cluster>
+					{pdfErrorMessage && <Alert tone="danger">{pdfErrorMessage}</Alert>}
 				</Stack>
 
 				<Stack as="section" gap="xs">
