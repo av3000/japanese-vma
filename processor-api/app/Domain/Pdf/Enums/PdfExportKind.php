@@ -6,6 +6,8 @@ enum PdfExportKind: string
 {
     case KANJIS = 'kanjis';
     case WORDS = 'words';
+    case RADICALS = 'radicals';
+    case SENTENCES = 'sentences';
 
     /**
      * The kind is the value that crosses the wire and the download ledger, so it owns the

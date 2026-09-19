@@ -160,6 +160,10 @@ Route::prefix('v1')->group(function () {
             ->whereUuid('uuid');
         Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf'])
             ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/radicals-pdf', [CatalogueController::class, 'exportRadicalsPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/sentences-pdf', [CatalogueController::class, 'exportSentencesPdf'])
+            ->whereUuid('uuid');
 
         // Community Posts - Authenticated Actions
         // `whereUuid` for the same reason as the catalogues routes: without it a

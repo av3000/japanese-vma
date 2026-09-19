@@ -11,4 +11,8 @@ interface CataloguePdfExportServiceInterface
     public function exportKanjis(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result;
 
     public function exportWords(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result;
+
+    public function exportRadicals(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result;
+
+    public function exportSentences(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result;
 }

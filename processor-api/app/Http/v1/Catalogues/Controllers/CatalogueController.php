@@ -260,6 +260,22 @@ class CatalogueController extends Controller
         ));
     }
 
+    public function exportRadicalsPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportRadicals(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
+    public function exportSentencesPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportSentences(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
     private function pdfResult(Result $result): JsonResponse|LaravelResponse
     {
         if ($result->isFailure()) {

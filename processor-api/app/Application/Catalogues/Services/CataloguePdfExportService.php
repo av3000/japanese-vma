@@ -12,6 +12,8 @@ use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Pdf\DTOs\CatalogueKanjisPdfDTO;
 use App\Domain\Pdf\DTOs\CataloguePdfHeaderDTO;
 use App\Domain\Pdf\DTOs\CataloguePdfViewDataInterface;
+use App\Domain\Pdf\DTOs\CatalogueRadicalsPdfDTO;
+use App\Domain\Pdf\DTOs\CatalogueSentencesPdfDTO;
 use App\Domain\Pdf\DTOs\CatalogueWordsPdfDTO;
 use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Domain\Pdf\Enums\PdfExportKind;
@@ -41,6 +43,16 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
     public function exportWords(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
     {
         return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::WORDS);
+    }
+
+    public function exportRadicals(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::RADICALS);
+    }
+
+    public function exportSentences(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::SENTENCES);
     }
 
     private function export(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser, PdfExportKind $kind): Result
@@ -95,6 +107,8 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return match ($kind) {
             PdfExportKind::KANJIS => in_array($catalogue->getType(), [SavedListType::KANJIS, SavedListType::KNOWNKANJIS], true),
             PdfExportKind::WORDS => in_array($catalogue->getType(), [SavedListType::WORDS, SavedListType::KNOWNWORDS], true),
+            PdfExportKind::RADICALS => in_array($catalogue->getType(), [SavedListType::RADICALS, SavedListType::KNOWNRADICALS], true),
+            PdfExportKind::SENTENCES => in_array($catalogue->getType(), [SavedListType::SENTENCES, SavedListType::KNOWNSENTENCES], true),
         };
     }
 
@@ -109,6 +123,8 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return match ($kind) {
             PdfExportKind::KANJIS => new CatalogueKanjisPdfDTO($frontendUrl, $header, $this->normalizeKanjis($items)),
             PdfExportKind::WORDS => new CatalogueWordsPdfDTO($frontendUrl, $header, $this->normalizeWords($items)),
+            PdfExportKind::RADICALS => new CatalogueRadicalsPdfDTO($frontendUrl, $header, $this->normalizeRadicals($items)),
+            PdfExportKind::SENTENCES => new CatalogueSentencesPdfDTO($frontendUrl, $header, $this->normalizeSentences($items)),
         };
     }
 
@@ -140,6 +156,39 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
 
             return $word;
         }, $words);
+    }
+
+    /**
+     * Radical meanings are a single plain column, not the pipe-joined lists the kanji bank
+     * stores, so there is nothing to split here.
+     *
+     * @param array<int, array<string, mixed>> $radicals
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeRadicals(array $radicals): array
+    {
+        return array_map(static function (array $radical): array {
+            $radical['meaning'] = trim((string) ($radical['meaning'] ?? ''));
+            $radical['hiragana'] = trim((string) ($radical['hiragana'] ?? ''));
+
+            return $radical;
+        }, $radicals);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $sentences
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeSentences(array $sentences): array
+    {
+        return array_map(static function (array $sentence): array {
+            $sentence['content'] = trim((string) ($sentence['content'] ?? ''));
+            $sentence['tatoeba_entry'] = trim((string) ($sentence['tatoeba_entry'] ?? ''));
+
+            return $sentence;
+        }, $sentences);
     }
 
     private function firstPipeValues(string $value): string
