@@ -15,20 +15,31 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
+import { useWebSocket } from '@/providers/contexts/socket-provider';
 import styles from './ProcessingStatusAlert.module.scss';
 
-export const STATUS_CONFIG: Record<LastOperationStatusType, { message: string }> = {
+/**
+ * Copy per status. `live` is true when the socket is connected and events arrive as they
+ * happen; otherwise the query is polling (#251) and the page should promise only that.
+ */
+export const STATUS_CONFIG: Record<LastOperationStatusType, { message: (live: boolean) => string }> = {
 	pending: {
-		message: 'Instance queued for processing. This page will update automatically.',
+		message: (live) =>
+			live
+				? 'Instance queued for processing. This page will update automatically.'
+				: 'Instance queued for processing. Checking for updates.',
 	},
 	processing: {
-		message: 'Instance background processing. Please wait, this page will update automatically.',
+		message: (live) =>
+			live
+				? 'Instance background processing. Please wait, this page will update automatically.'
+				: 'Instance background processing. Checking for updates.',
 	},
 	completed: {
-		message: 'Instance processing complete.',
+		message: () => 'Instance processing complete.',
 	},
 	failed: {
-		message: 'Instance processing failed. Please try again later.',
+		message: () => 'Instance processing failed. Please try again later.',
 	},
 };
 
@@ -55,11 +66,12 @@ const formatDurationCompact = (ms: number): string => {
 // probably saving the last state on browser storage.
 // Or change UI presentation for smarter UX
 const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processing_status, className }) => {
+	const { isConnected } = useWebSocket();
 	const status = processing_status?.status;
 
 	if (!status) return null;
 
-	const config = STATUS_CONFIG[status];
+	const message = STATUS_CONFIG[status].message(isConnected);
 
 	const createdAt = processing_status?.created_at ? new Date(processing_status.created_at) : null;
 	const updatedAt = processing_status?.updated_at ? new Date(processing_status.updated_at) : null;
@@ -97,7 +109,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 			)}
 		>
 			<div className={styles.content}>
-				<div className="small">{config.message}</div>
+				<div className="small">{message}</div>
 				<div className={styles.status}>
 					{(status === LastOperationStatus.pending || status === LastOperationStatus.processing) && (
 						<span className="spinner-border spinner-border-sm mr-3" />

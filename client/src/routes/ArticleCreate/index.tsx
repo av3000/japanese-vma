@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { articleKeys } from '@/api/articles/keys';
 import { articleStore } from '@/api/generated/article/article';
 import type { UuidCreatedResource } from '@/api/generated/model';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
@@ -33,9 +34,9 @@ export default function ArticleCreatePage() {
 			setStatus(null);
 			setServerErrors(null);
 
-			// make lists refetch so the new article appears
-			// TODO: is there a need to invalidate if we navigate and then fetch articles on navigation?
-			qc.invalidateQueries({ queryKey: ['articles'] });
+			// Every cached list variant (homepage, dashboard, discovery) must refetch so the new
+			// article shows up regardless of which one the user lands on next.
+			qc.invalidateQueries({ queryKey: articleKeys.lists() });
 
 			navigate(`/articles/${uuid}`);
 		},
