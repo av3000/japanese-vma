@@ -6114,18 +6114,6 @@
                 ],
                 "title": "KanjiResource"
             },
-            "LastOperationStatus": {
-                "type": "string",
-                "description": "| |\n|---|\n| `pending` <br/>  |\n| `processing` <br/>  |\n| `completed` <br/>  |\n| `failed` <br/>  |\n| `superseded` <br/> The article content changed after this run was queued; its result was never applied. |",
-                "enum": [
-                    "pending",
-                    "processing",
-                    "completed",
-                    "failed",
-                    "superseded"
-                ],
-                "title": "LastOperationStatus"
-            },
             "LikeInstanceRequest": {
                 "type": "object",
                 "properties": {
@@ -6473,6 +6461,18 @@
                 ],
                 "title": "ProblemDetailsResource"
             },
+            "ProcessingStatus": {
+                "type": "string",
+                "description": "| |\n|---|\n| `pending` <br/>  |\n| `processing` <br/>  |\n| `completed` <br/>  |\n| `failed` <br/>  |\n| `superseded` <br/> The article content changed after this run was queued; its result was never applied. |",
+                "enum": [
+                    "pending",
+                    "processing",
+                    "completed",
+                    "failed",
+                    "superseded"
+                ],
+                "title": "ProcessingStatus"
+            },
             "ProcessingStatusResource": {
                 "type": "object",
                 "properties": {
@@ -6486,7 +6486,7 @@
                         "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/LastOperationStatus"
+                        "$ref": "#/components/schemas/ProcessingStatus"
                     },
                     "attempt": {
                         "type": "integer"

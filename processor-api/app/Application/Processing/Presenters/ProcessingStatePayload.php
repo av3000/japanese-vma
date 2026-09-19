@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Processing\Presenters;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 /**
  * The one definition of the public `processing_status` shape. The HTTP resource and the
@@ -27,7 +27,7 @@ final class ProcessingStatePayload
     /**
      * @return Payload
      */
-    public static function fromDto(ArticleProcessingStateDTO $state): array
+    public static function fromDto(ProcessingStateDTO $state): array
     {
         return [
             'id' => $state->id,

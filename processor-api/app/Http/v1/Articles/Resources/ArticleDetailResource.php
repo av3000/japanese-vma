@@ -6,7 +6,7 @@ use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Http\v1\Engagement\Resources\EngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Processing\Resources\ProcessingStatusResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

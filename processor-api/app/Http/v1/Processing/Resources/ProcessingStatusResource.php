@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\v1\LastOperations\Resources;
+namespace App\Http\v1\Processing\Resources;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,11 +18,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * from these expression types, and the enum accessor is what keeps the generated client's
  * `status` an enumeration (issue #259).
  *
- * @property ArticleProcessingStateDTO $resource
+ * @property ProcessingStateDTO $resource
  */
 class ProcessingStatusResource extends JsonResource
 {
-    public function __construct(ArticleProcessingStateDTO $state)
+    public function __construct(ProcessingStateDTO $state)
     {
         parent::__construct($state);
     }
@@ -32,7 +32,7 @@ class ProcessingStatusResource extends JsonResource
      *     id: int,
      *     entity_id: string,
      *     type: string,
-     *     status: LastOperationStatus,
+     *     status: ProcessingStatus,
      *     attempt: int,
      *     metadata: object,
      *     created_at: ?string,
@@ -63,7 +63,7 @@ class ProcessingStatusResource extends JsonResource
         return $this->resource->attempt;
     }
 
-    private function status(): LastOperationStatus
+    private function status(): ProcessingStatus
     {
         return $this->resource->status;
     }

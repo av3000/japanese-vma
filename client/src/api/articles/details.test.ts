@@ -3,8 +3,8 @@ import type { UseMutationOptions } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { likeLikeInstance } from '@/api/generated/like/like';
 import { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import { LikeTargetType } from '@/api/generated/model/likeTargetType';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { LikeToggleContext } from '@/api/likes/likes';
 import { getArticleDetailQueryKey, mapArticleDetail, useLikeArticleMutation } from './details';
 
@@ -120,7 +120,7 @@ describe('mapArticleDetail', () => {
 					entity_id: 'entity-uuid',
 					attempt: 1,
 					type: 'kanji_extraction',
-					status: LastOperationStatus.completed,
+					status: ProcessingStatus.completed,
 					metadata: {
 						message: 'Attached 76 kanjis.',
 						kanji_count: 76,
@@ -131,7 +131,7 @@ describe('mapArticleDetail', () => {
 			}),
 		);
 
-		expect(article.processing_status?.status).toBe(LastOperationStatus.completed);
+		expect(article.processing_status?.status).toBe(ProcessingStatus.completed);
 		expect(article.processing_status?.metadata?.kanji_count).toBe(76);
 	});
 });

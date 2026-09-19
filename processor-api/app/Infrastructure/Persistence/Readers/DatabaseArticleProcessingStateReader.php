@@ -6,7 +6,7 @@ namespace App\Infrastructure\Persistence\Readers;
 
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -18,7 +18,7 @@ final readonly class DatabaseArticleProcessingStateReader implements ArticleProc
     ) {
     }
 
-    public function currentState(string $articleUuid): ?ArticleProcessingStateDTO
+    public function currentState(string $articleUuid): ?ProcessingStateDTO
     {
         return $this->states->getCurrent(
             ProcessingEntityType::Article,

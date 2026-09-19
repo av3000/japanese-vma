@@ -7,7 +7,7 @@ import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscript
 import { useArticleStatusMutation } from '@/api/articles/moderation';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -262,7 +262,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<ArticlePdfModal
 				controller={pdfModal}
 				onDownload={handleDownloadPdf}
-				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
+				isDownloadEnabled={article?.processing_status?.status === ProcessingStatus.completed}
 			/>
 
 			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}

@@ -2,7 +2,7 @@ import type { InfiniteData, QueryClient } from '@tanstack/react-query';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
 import type { ArticleResource } from '@/api/generated/model/articleResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { articleKeys } from './keys';
 
@@ -30,13 +30,13 @@ export const isArticleContentProcessingPayload = (payload: ProcessingStatusResou
 export const normalizeProcessingPayload = (payload: ProcessingStatusResource | string): ProcessingStatusResource =>
 	typeof payload === 'string' ? (JSON.parse(payload) as ProcessingStatusResource) : payload;
 
-export const isTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
-	status === LastOperationStatus.completed ||
-	status === LastOperationStatus.failed ||
-	status === LastOperationStatus.superseded;
+export const isTerminalProcessingStatus = (status: ProcessingStatus | null | undefined): boolean =>
+	status === ProcessingStatus.completed ||
+	status === ProcessingStatus.failed ||
+	status === ProcessingStatus.superseded;
 
-export const isNonTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
-	status === LastOperationStatus.pending || status === LastOperationStatus.processing;
+export const isNonTerminalProcessingStatus = (status: ProcessingStatus | null | undefined): boolean =>
+	status === ProcessingStatus.pending || status === ProcessingStatus.processing;
 
 const mergeStatus = (
 	current: ProcessingStatusResource | null | undefined,

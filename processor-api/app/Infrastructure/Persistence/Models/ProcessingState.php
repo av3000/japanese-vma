@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Processing\Enums\ProcessingEntityType;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property ProcessingEntityType $entity_type
  * @property string $entity_id
  * @property string $task_type
- * @property LastOperationStatus $status
+ * @property ProcessingStatus $status
  * @property int $attempt
  * @property int $max_attempts
  * @property int $content_version
@@ -35,7 +35,7 @@ class ProcessingState extends Model
 
     protected $casts = [
         'entity_type' => ProcessingEntityType::class,
-        'status' => LastOperationStatus::class,
+        'status' => ProcessingStatus::class,
         'attempt' => 'integer',
         'max_attempts' => 'integer',
         'content_version' => 'integer',

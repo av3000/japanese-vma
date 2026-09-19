@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Processing\Services;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -21,14 +21,14 @@ interface ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $contentVersion,
-    ): ArticleProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     public function markProcessing(
         ProcessingEntityType $entityType,
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -38,7 +38,7 @@ interface ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -50,14 +50,14 @@ interface ProcessingStateServiceInterface
         string $errorCode,
         Throwable|string $error,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     public function markSuperseded(
         ProcessingEntityType $entityType,
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     /**
      * From a job's failed() hook: fail the row only if it is still non-terminal, so a run that

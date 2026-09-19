@@ -3,8 +3,8 @@
 namespace Tests\Feature\Articles;
 
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -207,7 +207,7 @@ class UpdateArticleTest extends TestCase
             'content_jp' => 'Updated Japanese content text.',
         ])
             ->assertStatus(200)
-            ->assertJsonPath('processing_status.status', LastOperationStatus::PENDING->value)
+            ->assertJsonPath('processing_status.status', ProcessingStatus::PENDING->value)
             ->assertJsonPath('processing_status.type', 'article_content_processing');
 
         $this->assertDispatchedOnceFor($article->uuid, version: 2);
@@ -215,7 +215,7 @@ class UpdateArticleTest extends TestCase
         $this->assertDatabaseHas('processing_states', [
             'entity_id' => $article->uuid,
             'task_type' => 'article_content_processing',
-            'status' => LastOperationStatus::PENDING->value,
+            'status' => ProcessingStatus::PENDING->value,
             'content_version' => 2,
         ]);
     }

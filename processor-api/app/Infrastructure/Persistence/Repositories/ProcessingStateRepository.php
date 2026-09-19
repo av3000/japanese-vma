@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use DateTimeImmutable;
@@ -23,11 +23,11 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ProcessingTaskType $task,
         int $contentVersion,
         int $maxAttempts = 3,
-    ): ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         $state = ProcessingState::query()->updateOrCreate(
             self::key($entityType, $entityId, $task),
             [
-                'status' => LastOperationStatus::PENDING,
+                'status' => ProcessingStatus::PENDING,
                 'attempt' => 0,
                 'max_attempts' => $maxAttempts,
                 'content_version' => $contentVersion,
@@ -47,9 +47,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::PROCESSING,
+            'status' => ProcessingStatus::PROCESSING,
             'attempt' => $attempt,
             'started_at' => now(),
             'finished_at' => null,
@@ -63,9 +63,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::COMPLETED,
+            'status' => ProcessingStatus::COMPLETED,
             'finished_at' => now(),
             'error_code' => null,
             'error_message' => null,
@@ -80,9 +80,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         string $errorCode,
         string $errorMessage,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::FAILED,
+            'status' => ProcessingStatus::FAILED,
             'finished_at' => now(),
             'error_code' => mb_substr($errorCode, 0, 64),
             'error_message' => mb_substr($errorMessage, 0, 300),
@@ -95,7 +95,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         $state = $this->find($entityType, $entityId, $task);
 
         if ($state === null) {
@@ -109,7 +109,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         }
 
         $state->fill([
-            'status' => LastOperationStatus::SUPERSEDED,
+            'status' => ProcessingStatus::SUPERSEDED,
             'finished_at' => now(),
             'error_code' => null,
             'error_message' => null,
@@ -122,7 +122,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ProcessingEntityType $entityType,
         EntityId $entityId,
         ProcessingTaskType $task,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         $state = $this->find($entityType, $entityId, $task);
 
         return $state === null ? null : self::toDto($state);
@@ -154,7 +154,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
     public function getStaleNonTerminal(DateTimeInterface $before): array
     {
         return ProcessingState::query()
-            ->whereIn('status', LastOperationStatus::nonTerminalValues())
+            ->whereIn('status', ProcessingStatus::nonTerminalValues())
             ->where('updated_at', '<', $before)
             ->orderBy('id')
             ->get()
@@ -170,7 +170,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $attributes,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         $state = $this->find($entityType, $entityId, $task);
 
         if ($state === null) {
@@ -210,9 +210,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ];
     }
 
-    public static function toDto(ProcessingState $state): ArticleProcessingStateDTO
+    public static function toDto(ProcessingState $state): ProcessingStateDTO
     {
-        return new ArticleProcessingStateDTO(
+        return new ProcessingStateDTO(
             id: (int) $state->id,
             entityType: $state->entity_type,
             entityId: (string) $state->entity_id,

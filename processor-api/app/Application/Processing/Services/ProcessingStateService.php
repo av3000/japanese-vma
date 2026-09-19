@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Processing\Services;
 
-use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Events\ProcessingStatusUpdated;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -32,7 +32,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $contentVersion,
-    ): ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->broadcast($this->repository->startOrReset($entityType, $entityId, $task, $contentVersion));
     }
 
@@ -41,7 +41,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->broadcastIfAny($this->repository->markProcessing($entityType, $entityId, $task, $attempt));
     }
 
@@ -50,7 +50,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->broadcastIfAny($this->repository->markCompleted($entityType, $entityId, $task, $metadata));
     }
 
@@ -61,7 +61,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         string $errorCode,
         Throwable|string $error,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         $message = $error instanceof Throwable ? self::publicMessageFor($error) : $error;
 
         if ($error instanceof Throwable) {
@@ -94,7 +94,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->broadcastIfAny($this->repository->markSuperseded($entityType, $entityId, $task, $staleContentVersion));
     }
 
@@ -132,16 +132,16 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         return count($stale);
     }
 
-    private function broadcastIfAny(?ArticleProcessingStateDTO $state): ?ArticleProcessingStateDTO
+    private function broadcastIfAny(?ProcessingStateDTO $state): ?ProcessingStateDTO
     {
         return $state === null ? null : $this->broadcast($state);
     }
 
-    private function broadcast(ArticleProcessingStateDTO $state): ArticleProcessingStateDTO
+    private function broadcast(ProcessingStateDTO $state): ProcessingStateDTO
     {
         $ownerUuid = $this->owners->ownerUuid($state->entityType, EntityId::from($state->entityId));
 
-        AsyncLastOperationStatusUpdated::dispatch(...AsyncLastOperationStatusUpdated::argumentsFromDto($state, $ownerUuid));
+        ProcessingStatusUpdated::dispatch(...ProcessingStatusUpdated::argumentsFromDto($state, $ownerUuid));
 
         return $state;
     }

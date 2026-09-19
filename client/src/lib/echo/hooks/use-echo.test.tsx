@@ -40,7 +40,7 @@ const fakeEcho = () => {
 };
 
 const Subscriber = ({ onEvent = () => {} }: { onEvent?: (payload: unknown) => void }) => {
-	useEcho('last_operations.abc', '.OperationStatusUpdated', onEvent, [], 'private');
+	useEcho('processing_states.abc', '.ProcessingStatusUpdated', onEvent, [], 'private');
 	return null;
 };
 
@@ -75,12 +75,12 @@ describe('useEcho is reactive to the provider configuring Echo', () => {
 		});
 
 		expect(spies.private).toHaveBeenCalledTimes(1);
-		expect(spies.private).toHaveBeenCalledWith('last_operations.abc');
-		expect(channel.listen).toHaveBeenCalledWith('.OperationStatusUpdated', expect.any(Function));
+		expect(spies.private).toHaveBeenCalledWith('processing_states.abc');
+		expect(channel.listen).toHaveBeenCalledWith('.ProcessingStatusUpdated', expect.any(Function));
 
 		await rendered.unmount();
-		expect(channel.stopListening).toHaveBeenCalledWith('.OperationStatusUpdated', expect.any(Function));
-		expect(spies.leave).toHaveBeenCalledWith('last_operations.abc');
+		expect(channel.stopListening).toHaveBeenCalledWith('.ProcessingStatusUpdated', expect.any(Function));
+		expect(spies.leave).toHaveBeenCalledWith('processing_states.abc');
 	});
 
 	it('shares one subscription between two listeners on the same channel', async () => {

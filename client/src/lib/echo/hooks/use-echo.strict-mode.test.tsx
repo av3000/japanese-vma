@@ -24,7 +24,7 @@ const fakeEcho = () => {
 };
 
 const Listener = ({ tick }: { tick: number }) => {
-	useEcho('last_operations.shared', '.OperationStatusUpdated', () => {}, [tick], 'private');
+	useEcho('processing_states.shared', '.ProcessingStatusUpdated', () => {}, [tick], 'private');
 
 	return <span data-tick={tick} />;
 };
@@ -60,6 +60,6 @@ describe('useEcho refcount under React.StrictMode', () => {
 
 		expect(channelRegistrySizeFor(instance as never)).toBe(0);
 		expect(spies.leave).toHaveBeenCalledTimes(1);
-		expect(spies.leave).toHaveBeenCalledWith('last_operations.shared');
+		expect(spies.leave).toHaveBeenCalledWith('processing_states.shared');
 	});
 });

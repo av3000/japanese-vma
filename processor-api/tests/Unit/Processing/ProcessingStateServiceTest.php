@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Processing;
 
-use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Events\ProcessingStatusUpdated;
 use App\Application\Processing\Services\ProcessingStateService;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -39,7 +39,7 @@ class ProcessingStateServiceTest extends TestCase
         $this->seedBaselineData();
         $this->service = app(ProcessingStateServiceInterface::class);
         $this->id = EntityId::from((string) Str::uuid());
-        Event::fake([AsyncLastOperationStatusUpdated::class]);
+        Event::fake([ProcessingStatusUpdated::class]);
     }
 
     public function test_a_transition_is_pushed_on_the_article_channel_and_the_owner_channel(): void
@@ -55,9 +55,9 @@ class ProcessingStateServiceTest extends TestCase
         $this->service->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1);
 
         Event::assertDispatched(
-            AsyncLastOperationStatusUpdated::class,
-            fn (AsyncLastOperationStatusUpdated $event): bool => array_map('strval', $event->broadcastOn()) === [
-                "private-last_operations.{$article->uuid}",
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => array_map('strval', $event->broadcastOn()) === [
+                "private-processing_states.{$article->uuid}",
                 "private-App.User.{$owner->uuid}",
             ] && $event->snapshot['entity_id'] === $article->uuid
                 && $event->snapshot['attempt'] === 1,
@@ -69,8 +69,8 @@ class ProcessingStateServiceTest extends TestCase
         $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
 
         Event::assertDispatched(
-            AsyncLastOperationStatusUpdated::class,
-            fn (AsyncLastOperationStatusUpdated $event): bool => count($event->broadcastOn()) === 1,
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => count($event->broadcastOn()) === 1,
         );
     }
 
@@ -85,17 +85,17 @@ class ProcessingStateServiceTest extends TestCase
         $this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1);
         $this->service->markCompleted(ProcessingEntityType::Article, $this->id, self::TASK, ['kanji_count' => 1, 'word_count' => 2]);
 
-        Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 3);
+        Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 3);
 
         $statuses = [];
-        Event::assertDispatched(AsyncLastOperationStatusUpdated::class, function (AsyncLastOperationStatusUpdated $event) use (&$statuses): bool {
+        Event::assertDispatched(ProcessingStatusUpdated::class, function (ProcessingStatusUpdated $event) use (&$statuses): bool {
             $statuses[] = $event->status();
 
             return $event->entityUuid === $this->id->value()
                 && $event->snapshot['type'] === self::TASK->value;
         });
         $this->assertSame(
-            [LastOperationStatus::PENDING, LastOperationStatus::PROCESSING, LastOperationStatus::COMPLETED],
+            [ProcessingStatus::PENDING, ProcessingStatus::PROCESSING, ProcessingStatus::COMPLETED],
             $statuses,
         );
     }
@@ -113,7 +113,7 @@ class ProcessingStateServiceTest extends TestCase
             ['stage' => 'kanji'],
         );
 
-        $this->assertSame(LastOperationStatus::FAILED, $state?->status);
+        $this->assertSame(ProcessingStatus::FAILED, $state?->status);
         $this->assertSame('kanji', $state?->errorCode);
         $this->assertSame('Job exceeded the 120 second timeout', $state?->errorMessage);
         $this->assertSame(['stage' => 'kanji', 'exception' => RuntimeException::class], $state?->metadata);
@@ -134,11 +134,11 @@ class ProcessingStateServiceTest extends TestCase
 
         $this->assertSame('Database error', $state?->errorMessage);
         Event::assertDispatched(
-            AsyncLastOperationStatusUpdated::class,
-            function (AsyncLastOperationStatusUpdated $event): bool {
+            ProcessingStatusUpdated::class,
+            function (ProcessingStatusUpdated $event): bool {
                 $json = json_encode($event->broadcastWith(), JSON_THROW_ON_ERROR);
 
-                return $event->status() === LastOperationStatus::FAILED
+                return $event->status() === ProcessingStatus::FAILED
                     && ! str_contains($json, 'insert into')
                     && ! str_contains($json, 'SQLSTATE')
                     && ! str_contains($json, '#0 ');
@@ -166,27 +166,27 @@ class ProcessingStateServiceTest extends TestCase
         $this->assertNull($this->service->markProcessing(ProcessingEntityType::Article, $this->id, self::TASK, 1));
         $this->assertNull($this->service->markSuperseded(ProcessingEntityType::Article, $this->id, self::TASK, 1));
 
-        Event::assertNotDispatched(AsyncLastOperationStatusUpdated::class);
+        Event::assertNotDispatched(ProcessingStatusUpdated::class);
     }
 
     public function test_record_failure_fails_only_a_non_terminal_row(): void
     {
         $this->service->recordFailure(ProcessingEntityType::Article, $this->id, self::TASK, new RuntimeException('no row'), 1);
-        Event::assertNotDispatched(AsyncLastOperationStatusUpdated::class);
+        Event::assertNotDispatched(ProcessingStatusUpdated::class);
 
         $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
         $this->service->recordFailure(ProcessingEntityType::Article, $this->id, self::TASK, new RuntimeException('killed'), 3);
         Event::assertDispatched(
-            AsyncLastOperationStatusUpdated::class,
-            fn (AsyncLastOperationStatusUpdated $event): bool => $event->status() === LastOperationStatus::FAILED,
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => $event->status() === ProcessingStatus::FAILED,
         );
 
         $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 2);
         $this->service->markCompleted(ProcessingEntityType::Article, $this->id, self::TASK, []);
-        Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 4);
+        Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 4);
 
         $this->service->recordFailure(ProcessingEntityType::Article, $this->id, self::TASK, new RuntimeException('late'), 3);
-        Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 4, 'A completed row is left alone.');
+        Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 4, 'A completed row is left alone.');
     }
 
     public function test_sweep_stale_fails_old_non_terminal_rows_with_the_stale_code(): void
@@ -197,8 +197,8 @@ class ProcessingStateServiceTest extends TestCase
         $this->assertSame(1, $this->service->sweepStale(300));
 
         Event::assertDispatched(
-            AsyncLastOperationStatusUpdated::class,
-            fn (AsyncLastOperationStatusUpdated $event): bool => $event->status() === LastOperationStatus::FAILED
+            ProcessingStatusUpdated::class,
+            fn (ProcessingStatusUpdated $event): bool => $event->status() === ProcessingStatus::FAILED
                 && (array) $event->snapshot['metadata'] === ['reason' => 'no heartbeat'],
         );
         $this->assertSame(0, $this->service->sweepStale(300), 'A swept row is terminal and not swept again.');

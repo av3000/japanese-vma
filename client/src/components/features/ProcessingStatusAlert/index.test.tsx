@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
 import ProcessingStatusAlert from './index';
@@ -18,7 +18,7 @@ vi.mock('@/components/ui/popover', () => ({
 	PopoverDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const status = (value: LastOperationStatus): ProcessingStatusResource => ({
+const status = (value: ProcessingStatus): ProcessingStatusResource => ({
 	id: 1,
 	entity_id: 'entity-uuid',
 	attempt: 1,
@@ -29,7 +29,7 @@ const status = (value: LastOperationStatus): ProcessingStatusResource => ({
 	updated_at: '2026-09-20T10:00:05+00:00',
 });
 
-const render = (value: LastOperationStatus, isConnected = false) => {
+const render = (value: ProcessingStatus, isConnected = false) => {
 	vi.mocked(useWebSocket).mockReturnValue({
 		isConnected,
 		connectionStatus: isConnected ? 'connected' : 'disconnected',
@@ -39,10 +39,10 @@ const render = (value: LastOperationStatus, isConnected = false) => {
 
 describe('ProcessingStatusAlert', () => {
 	it.each([
-		[LastOperationStatus.pending, 'queued'],
-		[LastOperationStatus.processing, 'Extracting kanji and vocabulary'],
-		[LastOperationStatus.completed, 'are ready'],
-		[LastOperationStatus.failed, 'extraction failed'],
+		[ProcessingStatus.pending, 'queued'],
+		[ProcessingStatus.processing, 'Extracting kanji and vocabulary'],
+		[ProcessingStatus.completed, 'are ready'],
+		[ProcessingStatus.failed, 'extraction failed'],
 	])('renders %s with article-specific copy', (value, fragment) => {
 		const html = render(value);
 
@@ -51,7 +51,7 @@ describe('ProcessingStatusAlert', () => {
 	});
 
 	it('renders nothing for superseded, which is terminal and carries no result', () => {
-		expect(render(LastOperationStatus.superseded)).toBe('');
+		expect(render(ProcessingStatus.superseded)).toBe('');
 	});
 
 	it('renders nothing without a status', () => {
@@ -60,7 +60,7 @@ describe('ProcessingStatusAlert', () => {
 	});
 
 	it('promises live updates only while the socket is connected', () => {
-		expect(render(LastOperationStatus.processing, true)).toContain('update automatically');
-		expect(render(LastOperationStatus.processing, false)).toContain('Checking for updates');
+		expect(render(ProcessingStatus.processing, true)).toContain('update automatically');
+		expect(render(ProcessingStatus.processing, false)).toContain('Checking for updates');
 	});
 });

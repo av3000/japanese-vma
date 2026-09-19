@@ -6,6 +6,7 @@ namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 /**
  * One enriched row of an Article list page.
@@ -22,7 +23,7 @@ final readonly class ArticleListItemDTO
         public Article $article,
         public ?ArticleStats $stats,
         public array $hashtags,
-        public ?ArticleProcessingStateDTO $processingState,
+        public ?ProcessingStateDTO $processingState,
     ) {
     }
 }

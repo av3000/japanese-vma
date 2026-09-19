@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { articleIndex } from '@/api/generated/article/article';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { renderWithAct } from '@/test/renderWithAct';
 import { useInfiniteArticles } from './useInfiniteArticles';
 import { PROCESSING_POLL_FAST_MS } from './useProcessingPolling';
@@ -21,7 +21,7 @@ vi.mock('@/api/generated/article/article', async () => {
  * No socket provider is mounted, so `useWebSocket` yields its default context: not configured,
  * `disconnected`. That is exactly the anonymous visitor on the public list.
  */
-const page = (status: LastOperationStatus | null): ArticleListResource =>
+const page = (status: ProcessingStatus | null): ArticleListResource =>
 	({
 		items: [
 			{
@@ -72,21 +72,21 @@ describe('processing status polling for an anonymous list reader', () => {
 
 	it('shows the badge change after the server moves processing to completed', async () => {
 		vi.mocked(articleIndex)
-			.mockResolvedValueOnce(page(LastOperationStatus.processing))
-			.mockResolvedValueOnce(page(LastOperationStatus.completed));
+			.mockResolvedValueOnce(page(ProcessingStatus.processing))
+			.mockResolvedValueOnce(page(ProcessingStatus.completed));
 
 		const { badge, flush, unmount, queryClient } = await mount();
 		await flush(async () => {
 			await vi.advanceTimersByTimeAsync(0);
 		});
-		expect(badge()).toBe(LastOperationStatus.processing);
+		expect(badge()).toBe(ProcessingStatus.processing);
 		expect(articleIndex).toHaveBeenCalledTimes(1);
 
 		await flush(async () => {
 			await vi.advanceTimersByTimeAsync(PROCESSING_POLL_FAST_MS + 50);
 		});
 		expect(articleIndex).toHaveBeenCalledTimes(2);
-		expect(badge()).toBe(LastOperationStatus.completed);
+		expect(badge()).toBe(ProcessingStatus.completed);
 
 		// Terminal now: a further window must not fetch again.
 		await flush(async () => {
@@ -99,13 +99,13 @@ describe('processing status polling for an anonymous list reader', () => {
 	});
 
 	it('does not poll at all in a 20 second window when nothing is non-terminal', async () => {
-		vi.mocked(articleIndex).mockResolvedValue(page(LastOperationStatus.completed));
+		vi.mocked(articleIndex).mockResolvedValue(page(ProcessingStatus.completed));
 
 		const { badge, flush, unmount, queryClient } = await mount();
 		await flush(async () => {
 			await vi.advanceTimersByTimeAsync(0);
 		});
-		expect(badge()).toBe(LastOperationStatus.completed);
+		expect(badge()).toBe(ProcessingStatus.completed);
 
 		await flush(async () => {
 			await vi.advanceTimersByTimeAsync(20_000);

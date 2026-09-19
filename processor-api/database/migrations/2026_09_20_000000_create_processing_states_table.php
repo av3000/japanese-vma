@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('entity_type', 32);
             $table->uuid('entity_id');
             $table->string('task_type', 64);
-            $table->string('status', 16)->default(LastOperationStatus::PENDING->value);
+            $table->string('status', 16)->default(ProcessingStatus::PENDING->value);
             $table->unsignedSmallInteger('attempt')->default(0);
             $table->unsignedSmallInteger('max_attempts')->default(3);
             $table->unsignedInteger('content_version')->default(1);
@@ -74,7 +74,7 @@ return new class extends Migration
             $inserts = $rows->map(function (object $row): array {
                 $metadata = is_string($row->metadata) ? json_decode($row->metadata, true) : null;
                 $metadata = is_array($metadata) ? $metadata : [];
-                $status = LastOperationStatus::tryFrom((string) $row->status) ?? LastOperationStatus::FAILED;
+                $status = ProcessingStatus::tryFrom((string) $row->status) ?? ProcessingStatus::FAILED;
 
                 return [
                     'entity_type' => ProcessingEntityType::Article->value,
@@ -86,7 +86,7 @@ return new class extends Migration
                     'content_version' => 1,
                     'started_at' => $row->created_at,
                     'finished_at' => $status->isTerminal() ? $row->updated_at : null,
-                    'error_code' => $status === LastOperationStatus::FAILED ? 'legacy' : null,
+                    'error_code' => $status === ProcessingStatus::FAILED ? 'legacy' : null,
                     'error_message' => isset($metadata['error']) ? mb_substr((string) $metadata['error'], 0, 300) : null,
                     'metadata' => json_encode(
                         array_intersect_key($metadata, array_flip(['kanji_count', 'word_count'])),

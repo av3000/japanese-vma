@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
+import { articleProcessingChannel, PROCESSING_STATUS_EVENT } from '../processingChannels';
 import {
 	applyProcessingStatus,
 	isArticleContentProcessingPayload,
@@ -16,13 +17,13 @@ export const useArticleSubscription = (articleUuid: string) => {
 	const queryClient = useQueryClient();
 
 	useEcho<ProcessingStatusResource | string>(
-		`last_operations.${articleUuid}`,
-		'.OperationStatusUpdated',
+		articleProcessingChannel(articleUuid),
+		PROCESSING_STATUS_EVENT,
 		(payload) => {
 			const normalizedPayload = normalizeProcessingPayload(payload);
 
 			if (import.meta.env.DEV) {
-				console.log('OperationStatusUpdated', normalizedPayload);
+				console.log('ProcessingStatusUpdated', normalizedPayload);
 			}
 
 			if (!isArticleContentProcessingPayload(normalizedPayload)) {

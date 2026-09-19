@@ -9,7 +9,7 @@ use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\User as PersistenceUser;
 
 /**
- * Class-based channel for `last_operations.{uuid}`. Laravel hands the resolved persistence
+ * Class-based channel for `processing_states.{uuid}`. Laravel hands the resolved persistence
  * principal to join(); this adapter maps it to the application user and lets the
  * Application-layer authorizer decide, so the article policy remains the only place
  * visibility is defined.

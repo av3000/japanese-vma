@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Interfaces\Readers;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 /**
  * Read access to an Article's current content-processing state, keyed by Article UUID.
@@ -14,12 +14,12 @@ use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
  */
 interface ArticleProcessingStateReaderInterface
 {
-    public function currentState(string $articleUuid): ?ArticleProcessingStateDTO;
+    public function currentState(string $articleUuid): ?ProcessingStateDTO;
 
     /**
      * @param array<int, string> $articleUuids
      *
-     * @return array<string, ArticleProcessingStateDTO> keyed by Article UUID
+     * @return array<string, ProcessingStateDTO> keyed by Article UUID
      */
     public function currentStates(array $articleUuids): array;
 }
