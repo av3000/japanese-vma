@@ -23,7 +23,7 @@ import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { ObjectTemplateType, SavedListType } from '@/shared/constants/enums';
+import { SavedListType } from '@/shared/constants/enums';
 import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.css';
 
@@ -243,13 +243,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			</Stack>
 
 			<div className={styles.comments}>
-				<CommentsBlock
-					readObjectType="article"
-					readObjectUuid={article.uuid}
-					entityId={article.id}
-					entityType={ObjectTemplateType.ARTICLE}
-					entityUuid={article.uuid}
-				/>
+				<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
 			</div>
 
 			<ArticleReviewModal

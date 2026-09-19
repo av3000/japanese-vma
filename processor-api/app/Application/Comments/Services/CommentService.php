@@ -3,18 +3,21 @@
 namespace App\Application\Comments\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Comments\Policies\CommentPolicy;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentCriteriaDTO;
-use App\Domain\Comments\DTOs\CommentListDTO;
+use App\Domain\Comments\DTOs\CommentListIncludes;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
+use App\Domain\Comments\DTOs\CommentListResultDTO;
+use App\Domain\Comments\DTOs\CommentRepliesPreviewDTO;
 use App\Domain\Comments\DTOs\CommentUpdateDTO;
 use App\Domain\Comments\Errors\CommentErrors;
 use App\Domain\Comments\Models\Comment;
+use App\Domain\Comments\Queries\CommentQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +26,7 @@ class CommentService implements CommentServiceInterface
 {
     public function __construct(
         private readonly CommentRepositoryInterface $commentRepository,
+        private readonly CommentThreadReaderInterface $commentThreadReader,
         private readonly CommentEntityResolver $commentEntityResolver,
         private readonly CommentPolicy $commentPolicy,
     ) {
@@ -31,7 +35,8 @@ class CommentService implements CommentServiceInterface
     public function getCommentsForEntity(
         ObjectTemplateType $entityType,
         EntityId $entityUuid,
-        CommentListDTO $dto,
+        CommentQueryCriteria $criteria,
+        CommentListIncludes $includes,
         ?AuthenticatedUser $viewer,
     ): Result {
         $entityResult = $this->commentEntityResolver->resolveByUuid($entityType, $entityUuid);
@@ -43,20 +48,88 @@ class CommentService implements CommentServiceInterface
         /** @var int $entityId */
         $entityId = $entityResult->getData();
 
-        $criteriaDTO = new CommentCriteriaDTO(
+        $viewerUserId = $viewer?->id->value();
+
+        $page = $this->commentThreadReader->rootPage(
             entityId: $entityId,
             entityType: $entityType,
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_replies: $dto->include_replies,
-            include_author: $dto->include_author,
+            criteria: $criteria,
+            viewerUserId: $viewerUserId,
         );
 
+        return Result::success(new CommentListResultDTO(
+            items: $this->attachReplies($page->comments, $includes, $viewerUserId),
+            pagination: $page->pagination,
+        ));
+    }
+
+    public function getRepliesForComment(
+        EntityId $commentUuid,
+        Pagination $pagination,
+        ?AuthenticatedUser $viewer,
+    ): Result {
+        $comment = $this->commentRepository->findByUuid($commentUuid);
+
+        if ($comment === null) {
+            return Result::failure(CommentErrors::notFound($commentUuid->value()));
+        }
+
         return Result::success(
-            $this->commentRepository->findByCriteriaForEntity(
-                criteria: $criteriaDTO,
+            $this->commentThreadReader->replyPage(
+                rootId: $comment->getIdValue(),
+                pagination: $pagination,
                 viewerUserId: $viewer?->id->value(),
             )
+        );
+    }
+
+    /**
+     * Subtree sizes are attached whether or not previews were requested: a
+     * reader needs to know a comment has forty replies before deciding to load
+     * them, and the count costs the same query either way.
+     *
+     * @param array<int, Comment> $roots
+     *
+     * @return array<int, CommentListItemDTO>
+     */
+    private function attachReplies(array $roots, CommentListIncludes $includes, ?int $viewerUserId): array
+    {
+        if ($roots === []) {
+            return [];
+        }
+
+        $previews = $this->commentThreadReader->replyPreviews(
+            rootIds: array_map(static fn (Comment $root): int => $root->getIdValue(), $roots),
+            limitPerRoot: $includes->previewLimit(),
+            viewerUserId: $viewerUserId,
+        );
+
+        return array_map(
+            static fn (Comment $root): CommentListItemDTO => CommentListItemDTO::fromPreview(
+                $root,
+                $previews[$root->getIdValue()] ?? CommentRepliesPreviewDTO::empty(),
+            ),
+            $roots,
+        );
+    }
+
+    /**
+     * A write response reports the same subtree size a read would, so a client
+     * can drop it straight into its cached thread. Previews are left empty: an
+     * edit does not re-read the subtree, and the caller keeps the replies it
+     * already has.
+     */
+    private function withThreadSize(Comment $comment): CommentListItemDTO
+    {
+        $previews = $this->commentThreadReader->replyPreviews(
+            rootIds: [$comment->getIdValue()],
+            limitPerRoot: 0,
+            viewerUserId: null,
+        );
+
+        return CommentListItemDTO::fromPreview(
+            $comment,
+            $previews[$comment->getIdValue()] ?? CommentRepliesPreviewDTO::empty(),
         );
     }
 
@@ -84,9 +157,11 @@ class CommentService implements CommentServiceInterface
         }
 
         try {
-            return Result::success(
-                $this->commentRepository->createForEntity(dto: $dto, authorId: $author->id)
-            );
+            $created = $this->commentRepository->createForEntity(dto: $dto, authorId: $author->id);
+
+            // A comment that has just been created has nothing beneath it, so the
+            // subtree size is known without asking the database for it.
+            return Result::success(new CommentListItemDTO($created, 0, []));
         } catch (\Exception $e) {
             Log::error('Comment creation failed', [
                 'entity_type' => $dto->entity_type->getTitle(),
@@ -116,7 +191,9 @@ class CommentService implements CommentServiceInterface
 
         try {
             return Result::success(
-                $this->commentRepository->updateContent($comment->getIdValue(), $dto->content)
+                $this->withThreadSize(
+                    $this->commentRepository->updateContent($comment->getIdValue(), $dto->content)
+                )
             );
         } catch (\Exception $e) {
             Log::error('Comment update failed', [

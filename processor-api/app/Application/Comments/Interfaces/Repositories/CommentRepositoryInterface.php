@@ -3,16 +3,19 @@
 namespace App\Application\Comments\Interfaces\Repositories;
 
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
-use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 
+/**
+ * Identity reads and writes for Comments.
+ *
+ * Paginated thread reads live on CommentThreadReaderInterface. A Comment from
+ * this port describes its own row only: it carries no subtree size and no reply
+ * previews, so there is no state here that a caller could read as stale.
+ */
 interface CommentRepositoryInterface
 {
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments;
-
     public function findByUuid(EntityId $commentUuid): ?DomainComment;
 
     /**

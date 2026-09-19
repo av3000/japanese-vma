@@ -83,7 +83,7 @@ This scales when route files stay thin, React Query owns server state, generated
 
 ## Scaling Risks To Call Out
 
-- legacy `apiCall(...)`, `@ts-nocheck`, class components, route-owned pagination/search, and copied label/type logic
+- raw endpoint strings on the shared axios instance, `@ts-nocheck`, class components, route-owned pagination/search, and copied label/type logic
 - generated-client wrappers that only rename Orval functions
 - temporary adapters that lack a removal target
 - public homepage/list data coupled to auth shell state

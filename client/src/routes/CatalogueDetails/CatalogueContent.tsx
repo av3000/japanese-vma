@@ -27,7 +27,6 @@ import {
 	isCataloguePdfExportSupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
-import { ObjectTemplateType } from '@/shared/constants/enums';
 import styles from './CatalogueContent.module.css';
 
 interface CatalogueContentProps {
@@ -233,13 +232,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 
 				<section>
 					<Suspense fallback={null}>
-						<LazyCommentsBlock
-							readObjectType="catalogue"
-							readObjectUuid={catalogue.uuid}
-							entityId={catalogue.id}
-							entityType={ObjectTemplateType.LIST}
-							entityUuid={catalogue.uuid}
-						/>
+						<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
 					</Suspense>
 				</section>
 			</Stack>

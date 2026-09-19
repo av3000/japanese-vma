@@ -2,13 +2,18 @@
 
 namespace App\Http\v1\Comments\Resources;
 
-use App\Domain\Comments\Models\Comment;
-use App\Domain\Comments\Models\Comments;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Comments\Policies\CommentPolicy;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
+use App\Domain\Comments\DTOs\CommentListResultDTO;
 use App\Http\v1\Shared\Resources\PaginationResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
+ * One page of top-level comments. `pagination` counts conversations, not rows:
+ * replies travel inside their parent's `replies`, never as page entries.
+ *
  * @property array{
  *     items: array<int, CommentResource>,
  *     pagination: array{
@@ -24,25 +29,23 @@ class CommentListResource extends JsonResource
 {
     public static $wrap = null;
 
-    public static function fromPaginated(Comments $comments, bool $includeReplies = false): self
-    {
-        $paginator = $comments->getPaginator();
+    public static function fromResult(
+        CommentListResultDTO $result,
+        ?AuthenticatedUser $viewer = null,
+        ?CommentPolicy $policy = null,
+    ): self {
+        $resolvedPolicy = $policy ?? new CommentPolicy;
 
         return new self([
             'items' => array_map(
-                static fn (Comment $comment) => new CommentResource(
-                    comment: $comment,
-                    include_replies: $includeReplies,
+                static fn (CommentListItemDTO $item) => new CommentResource(
+                    item: $item,
+                    viewer: $viewer,
+                    policy: $resolvedPolicy,
                 ),
-                $comments->getItems(),
+                $result->items,
             ),
-            'pagination' => [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
+            'pagination' => $result->pagination->toArray(),
         ]);
     }
 

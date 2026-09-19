@@ -1,30 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\v1\Comments\Resources;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Comments\Policies\CommentPolicy;
+use App\Domain\Comments\DTOs\CommentListItemDTO;
 use App\Domain\Comments\Models\Comment;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Comment $resource
+ * A top-level comment, plus a bounded preview of its reply subtree.
+ *
+ * `replies_count` is the size of the whole subtree at every depth and is always
+ * present; `replies` holds at most `replies_limit` of them, oldest first, and is
+ * empty when the caller did not ask for previews. A comment with
+ * `replies_count: 40` and `replies: []` is a normal response, not a truncation
+ * bug - `GET /comments/{uuid}/replies` serves the rest.
+ *
+ * `entity_type_uuid` carries the ObjectTemplateType case rather than its title.
+ * The create request already takes `entity_type` as an ObjectTemplateType uuid;
+ * answering with the title made request and response describe one concept in
+ * two vocabularies and generated two client enums for it. The enum instance is
+ * returned so the schema references the shared type instead of a bare string.
+ * `entity_type_label` is the human-facing counterpart and stays an open string -
+ * pinning it as an enum would break clients whenever a template is added.
+ *
+ * @property-read CommentListItemDTO $resource
  */
 class CommentResource extends JsonResource
 {
     public static $wrap = null;
 
-    private bool $include_replies;
-
-    private array $replies;
-
     public function __construct(
-        Comment $comment,
-        bool $include_replies = false,
-        array $replies = []
+        CommentListItemDTO $item,
+        private readonly ?AuthenticatedUser $viewer = null,
+        private readonly ?CommentPolicy $policy = null,
     ) {
-        parent::__construct($comment);
-        $this->include_replies = $include_replies;
-        $this->replies = $replies;
+        parent::__construct($item);
     }
 
     /**
@@ -32,45 +49,58 @@ class CommentResource extends JsonResource
      *     id: int,
      *     uuid: string,
      *     entity_uuid: string|null,
-     *     entity_type: string,
-     *     author_name: string|null,
-     *     author_id: int,
+     *     entity_type_uuid: string,
+     *     entity_type_label: string,
+     *     author: AuthorResource|null,
      *     content: string,
      *     parent_comment_id: int|null,
      *     is_reply: bool,
-     *     created_at: string,
-     *     updated_at: string,
      *     likes_count: int,
-     *     is_liked_by_viewer: bool,
-     *     replies: array<int, CommentResource>
+     *     viewer: CommentViewerResource,
+     *     replies_count: int,
+     *     replies: array<int, CommentReplyResource>,
+     *     created_at: string,
+     *     updated_at: string
      * }
      */
     public function toArray(Request $request): array
     {
-        /** @var Comment $comment */
-        $comment = $this->resource;
+        /** @var CommentListItemDTO $item */
+        $item = $this->resource;
+        $comment = $item->comment;
 
-        $data = [
-            'id' => (int) $comment->getIdValue(),
+        $policy = $this->policy ?? new CommentPolicy;
+        $authorUuid = $comment->getAuthorUuid();
+
+        /** @var array<int, CommentReplyResource> $replies */
+        $replies = array_map(
+            fn (Comment $reply): CommentReplyResource => new CommentReplyResource($reply, $this->viewer, $policy),
+            $item->replyPreviews,
+        );
+
+        return [
+            'id' => $comment->getIdValue(),
             'uuid' => $comment->getUuid()->value(),
             'entity_uuid' => $comment->getEntityUuidValue(),
-            'entity_type' => $comment->getEntityType()->getTitle(),
-            'author_name' => $comment->getAuthorName(),
-            'author_id' => (int) $comment->getAuthorId()->value(),
+            /** @var ObjectTemplateType */
+            'entity_type_uuid' => $comment->getEntityType(),
+            /** @var string */
+            'entity_type_label' => $comment->getEntityType()->label(),
+            'author' => $authorUuid === null ? null : new AuthorResource([
+                'id' => $comment->getAuthorId()->value(),
+                'name' => (string) $comment->getAuthorName(),
+                'uuid' => $authorUuid->value(),
+            ]),
             'content' => $comment->getContent(),
             'parent_comment_id' => $comment->getParentCommentId(),
             'is_reply' => $comment->isReply(),
+            'likes_count' => $comment->getLikesCount(),
+            'viewer' => new CommentViewerResource($comment, $this->viewer, $policy),
+            'replies_count' => $item->repliesCount,
+            /** @var array<int, CommentReplyResource> */
+            'replies' => $replies,
             'created_at' => $comment->getCreatedAt()->format('c'),
             'updated_at' => $comment->getUpdatedAt()->format('c'),
-            'likes_count' => $comment->getLikesCount(),
-            'is_liked_by_viewer' => $comment->isLikedByViewer(),
-            'replies' => [],
         ];
-
-        if ($this->include_replies && ! $comment->isReply()) {
-            $data['replies'] = CommentResource::collection($this->replies);
-        }
-
-        return $data;
     }
 }

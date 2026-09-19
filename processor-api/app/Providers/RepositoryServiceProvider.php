@@ -8,6 +8,7 @@ use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 
+use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
@@ -24,6 +25,7 @@ use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
+use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueRepository;
@@ -97,6 +99,13 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             CommentRepositoryInterface::class,
             CommentRepository::class
+        );
+
+        // Comment thread read port. The repository keeps identity reads and
+        // writes; everything paginated goes through here.
+        $this->app->singleton(
+            CommentThreadReaderInterface::class,
+            DatabaseCommentThreadReader::class
         );
 
         $this->app->singleton(

@@ -57,19 +57,6 @@ interface ArticleServiceInterface
     public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result;
 
     /**
-     * Get paginated kanjis for an article.
-     *
-     * @param int $articleId Article integer ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator with kanji models
-     *
-     * @todo Return domain models instead of Eloquent models
-     */
-    public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
-
-    /**
      * Get paginated words for an article with typed failure handling.
      *
      * @param int $articleId Article integer ID

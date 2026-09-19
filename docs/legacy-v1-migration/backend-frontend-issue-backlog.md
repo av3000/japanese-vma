@@ -161,8 +161,8 @@ Replace legacy article admin calls in the article detail review UI and dashboard
 
 **Acceptance criteria:**
 
-- [ ] Article status review no longer calls `article/{id}/setstatus`.
-- [ ] Dashboard pending articles no longer calls `articles/pendinglist`.
+- [x] Article status review no longer calls `article/{id}/setstatus`.
+- [x] Dashboard pending articles no longer calls `articles/pendinglist`.
 - [ ] The frontend uses generated v1 clients or a feature API hook that adds real behavior.
 - [ ] No new wrapper is added only to rename a generated client.
 - [ ] Existing article review and dashboard behavior is preserved.
@@ -204,8 +204,8 @@ Replace `client/src/api/catalogues/legacyCatalogues.ts` raw `/list/{id}` lookup 
 
 **Acceptance criteria:**
 
-- [ ] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
-- [ ] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
+- [x] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
+- [x] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
 - [ ] Failed resolution still shows the current "not found or deleted" UX.
 - [ ] Focused frontend tests cover successful legacy redirect and failed resolution.
 - [ ] `npm run typecheck` passes.
@@ -451,7 +451,7 @@ Rewrite sentence list/detail read behavior to use generated v1 sentence clients 
 **Acceptance criteria:**
 
 - [ ] `SentencesList` no longer uses `@ts-nocheck`, class state, `next_page_url`, or `apiCall`.
-- [ ] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
+- [x] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
 - [ ] Sentence detail preserves approved related kanjis/words display.
 - [ ] Comment wiring is not expanded in this issue except to avoid breaking the page.
 - [ ] Focused tests cover list and detail read behavior.
@@ -723,11 +723,11 @@ Remove remaining production usage of `client/src/services/api.ts` after feature 
 
 **Acceptance criteria:**
 
-- [ ] `rg -n "apiCall" client/src` has no production route/component callers.
-- [ ] Any remaining legacy endpoint access lives in a named typed adapter with target v1 replacement and removal condition.
-- [ ] Console request/response logging from `apiCall` is gone from production paths.
-- [ ] Tests no longer mock `apiCall` for migrated behavior.
-- [ ] `npm run typecheck` passes.
+- [x] `rg -n "apiCall" client/src` has no production route/component callers. (#146 — the helper itself is deleted.)
+- [x] Any remaining legacy endpoint access lives in a named typed adapter with target v1 replacement and removal condition. (#146 — none remain; `services/orval-mutator.ts` is the only direct axios caller.)
+- [x] Console request/response logging from `apiCall` is gone from production paths. (#146)
+- [x] Tests no longer mock `apiCall` for migrated behavior. (#146 — no test ever mocked it.)
+- [x] `npm run typecheck` passes. (#146)
 
 ### B13: Audit And Retire Unused Legacy Backend Routes By Domain
 

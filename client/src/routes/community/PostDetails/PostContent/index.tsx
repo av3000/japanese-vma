@@ -9,7 +9,6 @@ import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { Badge } from '@/components/ui/badge';
-import { ObjectTemplateType } from '@/shared/constants/enums';
 import styles from './PostContent.module.css';
 
 interface PostContentProps {
@@ -81,14 +80,7 @@ const PostContent: React.FC<PostContentProps> = ({ post }) => {
 			</Stack>
 
 			<section className={styles.comments}>
-				<CommentsBlock
-					readObjectType="post"
-					readObjectUuid={post.uuid}
-					entityId={post.id}
-					entityType={ObjectTemplateType.POST}
-					entityUuid={post.uuid}
-					isLocked={post.locked}
-				/>
+				<CommentsBlock parent="post" entityId={post.id} entityUuid={post.uuid} isLocked={post.locked} />
 			</section>
 		</Container>
 	);

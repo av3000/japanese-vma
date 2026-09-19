@@ -6,9 +6,7 @@ namespace Tests\Feature\Comments;
 
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
-use App\Domain\Comments\DTOs\CommentCriteriaDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
-use App\Domain\Comments\Models\Comments;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use RuntimeException;
@@ -32,11 +30,6 @@ class FailsAfterDescendantDeleteCommentRepository implements CommentRepositoryIn
         $this->inner->deleteWithLikesByIds($descendantIds);
 
         throw new RuntimeException('Simulated failure after descendant cleanup');
-    }
-
-    public function findByCriteriaForEntity(CommentCriteriaDTO $criteria, ?int $viewerUserId): Comments
-    {
-        return $this->inner->findByCriteriaForEntity($criteria, $viewerUserId);
     }
 
     public function findByUuid(EntityId $commentUuid): ?DomainComment

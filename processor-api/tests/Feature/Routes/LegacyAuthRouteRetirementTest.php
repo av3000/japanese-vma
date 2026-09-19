@@ -38,19 +38,17 @@ class LegacyAuthRouteRetirementTest extends TestCase
     }
 
     /**
-     * `Route::get('user', ...)` only ever matched the exact `api/user` path. Everything below shares
-     * the prefix and belongs to the Articles and Catalogue lanes, which this slice does not touch.
+     * `Route::get('user', ...)` only ever matched the exact `api/user` path, and retiring it never
+     * touched its prefix-sharing neighbours. Those neighbours have since been retired by their own
+     * slices - `api/user/articles` by RET-ART-01, the whole `api/user/list...` family by
+     * RET-CAT-01 - so the surviving witnesses to the same point are the v1 `users` routes, which
+     * share the prefix and answer today.
      */
     public function test_sibling_user_prefixed_routes_are_still_registered(): void
     {
         $retained = [
-            ['GET', 'api/user/articles'],
-            ['GET', 'api/user/lists'],
-            ['POST', 'api/user/lists/contain'],
-            ['POST', 'api/user/list/contain'],
-            ['POST', 'api/user/list/removeitemwhileaway'],
-            ['POST', 'api/user/list/additemwhileaway'],
-            ['GET', 'api/user/1/lists'],
+            ['GET', 'api/v1/users'],
+            ['GET', 'api/v1/users/11111111-2222-4333-8444-555555555555'],
         ];
 
         foreach ($retained as [$method, $uri]) {

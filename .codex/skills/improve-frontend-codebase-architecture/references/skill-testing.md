@@ -22,7 +22,7 @@ Failure to prevent: adding `domain/`, `useCases/`, `Service`, `Manager`, or broa
 
 Prompt: migrate a SavedList-like route while preserving behavior.
 
-Failure to prevent: modernizing legacy shape in place, copying `apiCall(...)`, route-owned pagination, magic labels, or temporary adapters without targets.
+Failure to prevent: modernizing legacy shape in place, hand-writing endpoint strings against the shared axios instance, route-owned pagination, magic labels, or temporary adapters without targets.
 
 ### Scenario 4: Provider/Startup Growth
 

@@ -5,6 +5,7 @@ namespace Tests\Feature\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;
@@ -109,5 +110,65 @@ class DestroyArticleTest extends TestCase
         $this->json('DELETE', "/api/v1/articles/{$article->uuid}")
             ->assertStatus(403)
             ->assertJsonPath('success', false);
+    }
+
+    /**
+     * RET-ART-01 parity. Legacy ArticleController::removeArticleFromLists keyed
+     * `customlist_object.listtype_id` off its own ARTICLES = 9 constant, which is
+     * SavedListType. CleanupArticleCustomListsAction reached for
+     * ObjectTemplateType::ARTICLE->value instead - a UUID string against a column
+     * holding "9" - so it matched nothing and every deleted article left its
+     * catalogue rows behind. Nothing asserted the cleanup, which is why the two
+     * taxonomies were free to drift.
+     */
+    public function test_destroy_removes_the_article_from_every_catalogue_that_saved_it(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        $catalogueId = DB::table('customlists')->insertGetId([
+            'user_id' => $user->id,
+            'uuid' => (string) Str::uuid(),
+            'title' => 'Saved articles',
+            'description' => 'Catalogue holding the article under test.',
+            'type' => SavedListType::ARTICLES->value,
+            'publicity' => PublicityStatus::PRIVATE,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogueId,
+            'listtype_id' => SavedListType::ARTICLES->value,
+            'real_object_id' => $article->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // A same-id row under a different list type must survive: `real_object_id`
+        // is only unique within a taxonomy, so a cleanup that ignores
+        // `listtype_id` would delete an unrelated user's saved word.
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogueId,
+            'listtype_id' => SavedListType::WORDS->value,
+            'real_object_id' => $article->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('DELETE', "/api/v1/articles/{$article->uuid}")
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('customlist_object', [
+            'real_object_id' => $article->id,
+            'listtype_id' => SavedListType::ARTICLES->value,
+        ]);
+
+        $this->assertDatabaseHas('customlist_object', [
+            'real_object_id' => $article->id,
+            'listtype_id' => SavedListType::WORDS->value,
+        ]);
     }
 }

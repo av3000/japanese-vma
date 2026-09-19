@@ -9,7 +9,11 @@ docs/career/
 # Local-only architecture/design notes. These contain third-party comparison
 # material that must never reach this public repository. Keep them on disk,
 # out of git.
-docs/adr/
+#
+# docs/adr/ is deliberately NOT in this list: decision records are a durable
+# repo artifact and docs/agents/domain.md points readers at them. An ADR may
+# cite the reference solutions only as Project K and Project B, described by
+# layer and abstraction - never a real name, namespace, vendor or ticket key.
 docs/architecture/async-processing/
 docs/architecture/chat-assistant/
 docs/architecture/filtering/
