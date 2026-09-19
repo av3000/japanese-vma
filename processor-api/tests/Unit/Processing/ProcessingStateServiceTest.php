@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
 /**
@@ -23,7 +24,7 @@ use Tests\TestCase;
  */
 class ProcessingStateServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsBaselineData;
 
     private const TASK = ProcessingTaskType::ArticleContentProcessing;
 
@@ -35,9 +36,42 @@ class ProcessingStateServiceTest extends TestCase
     {
         parent::setUp();
 
+        $this->seedBaselineData();
         $this->service = app(ProcessingStateServiceInterface::class);
         $this->id = EntityId::from((string) Str::uuid());
         Event::fake([AsyncLastOperationStatusUpdated::class]);
+    }
+
+    public function test_a_transition_is_pushed_on_the_article_channel_and_the_owner_channel(): void
+    {
+        $owner = \App\Infrastructure\Persistence\Models\User::factory()->create();
+        $article = \App\Infrastructure\Persistence\Models\Article::factory()->byUser($owner)->create([
+            'title_jp' => '学校の話',
+            'content_jp' => '学校で勉強します。日本語の本文です。',
+        ]);
+        $id = EntityId::from($article->uuid);
+
+        $this->service->startOrReset(ProcessingEntityType::Article, $id, self::TASK, 1);
+        $this->service->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1);
+
+        Event::assertDispatched(
+            AsyncLastOperationStatusUpdated::class,
+            fn (AsyncLastOperationStatusUpdated $event): bool => array_map('strval', $event->broadcastOn()) === [
+                "private-last_operations.{$article->uuid}",
+                "private-App.User.{$owner->uuid}",
+            ] && $event->snapshot['entity_id'] === $article->uuid
+                && $event->snapshot['attempt'] === 1,
+        );
+    }
+
+    public function test_an_entity_without_a_resolvable_owner_is_pushed_on_the_article_channel_only(): void
+    {
+        $this->service->startOrReset(ProcessingEntityType::Article, $this->id, self::TASK, 1);
+
+        Event::assertDispatched(
+            AsyncLastOperationStatusUpdated::class,
+            fn (AsyncLastOperationStatusUpdated $event): bool => count($event->broadcastOn()) === 1,
+        );
     }
 
     public function test_is_bound_to_the_concrete_service(): void

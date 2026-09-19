@@ -17,6 +17,8 @@ const OTHER_UUID = 'b2b2b2b2-0000-4000-8000-000000000002';
 
 const status = (value: LastOperationStatus, id = 1): ProcessingStatusResource => ({
 	id,
+	entity_id: 'entity-uuid',
+	attempt: 1,
 	type: 'kanji_extraction',
 	status: value,
 	metadata: {},

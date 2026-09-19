@@ -30,8 +30,10 @@ class ProcessingStatusResource extends JsonResource
     /**
      * @return array{
      *     id: int,
+     *     entity_id: string,
      *     type: string,
      *     status: LastOperationStatus,
+     *     attempt: int,
      *     metadata: object,
      *     created_at: ?string,
      *     updated_at: ?string
@@ -41,8 +43,10 @@ class ProcessingStatusResource extends JsonResource
     {
         return [
             'id' => $this->id(),
+            'entity_id' => $this->resource->entityId,
             'type' => $this->resource->taskType,
             'status' => $this->status(),
+            'attempt' => $this->attempt(),
             'metadata' => $this->metadata(),
             'created_at' => $this->resource->createdAt?->format('c'),
             'updated_at' => $this->resource->updatedAt?->format('c'),
@@ -52,6 +56,11 @@ class ProcessingStatusResource extends JsonResource
     private function id(): int
     {
         return $this->resource->id;
+    }
+
+    private function attempt(): int
+    {
+        return $this->resource->attempt;
     }
 
     private function status(): LastOperationStatus

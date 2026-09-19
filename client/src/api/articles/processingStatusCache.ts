@@ -26,6 +26,10 @@ export const ARTICLE_CONTENT_PROCESSING_TASK = 'article_content_processing';
 export const isArticleContentProcessingPayload = (payload: ProcessingStatusResource): boolean =>
 	payload.type === ARTICLE_CONTENT_PROCESSING_TASK;
 
+/** Echo may hand the event over as a JSON string depending on the broadcaster. */
+export const normalizeProcessingPayload = (payload: ProcessingStatusResource | string): ProcessingStatusResource =>
+	typeof payload === 'string' ? (JSON.parse(payload) as ProcessingStatusResource) : payload;
+
 export const isTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
 	status === LastOperationStatus.completed ||
 	status === LastOperationStatus.failed ||

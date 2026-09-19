@@ -54,6 +54,8 @@ class AsyncLastOperationStatusUpdatedTest extends TestCase
 
         $this->assertSame(self::UUID, $event->entityUuid);
         $this->assertSame(42, $event->snapshot['id']);
+        $this->assertSame(self::UUID, $event->snapshot['entity_id']);
+        $this->assertSame(2, $event->snapshot['attempt']);
         $this->assertSame('article_content_processing', $event->snapshot['type']);
         $this->assertSame('processing', $event->snapshot['status']);
         $this->assertSame(['kanji_count' => 3], (array) $event->snapshot['metadata']);

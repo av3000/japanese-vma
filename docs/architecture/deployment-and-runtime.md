@@ -14,6 +14,7 @@ The production topology is intentionally cross-system:
 | Frontend verification and deploy | GitHub Actions |
 | Backend image build and orchestration | GitLab CI |
 | Backend web service | Render |
+| Real-time transport (Laravel Reverb) | Render, always-on web service `japanese-vma-reverb` running the backend image with `php artisan reverb:start --host=0.0.0.0 --port=$PORT` (ADR 0002) |
 | Queue worker | Docker Compose on a GCP VM |
 | Shared Redis queue/cache coordination | Upstash Redis |
 | Primary application persistence | PostgreSQL database configuration |
@@ -30,6 +31,7 @@ sequenceDiagram
     participant Registry as Container registry
     participant GCP as GCP worker VM
     participant Render as Render web service
+    participant Reverb as Render Reverb service
     participant Redis as Upstash Redis
 
     Git->>GHA: frontend workflow trigger
@@ -41,13 +43,32 @@ sequenceDiagram
     GL->>GCP: deploy worker over SSH
     GCP->>Redis: start worker against shared queue
     GL->>GCP: verify worker
+    GL->>Reverb: verify Reverb answers (verify_reverb)
     GL->>Render: trigger backend web deploy
     Render->>Redis: use shared cache/queue configuration
+    GCP-->>Reverb: broadcast processing status (worker)
+    Render-->>Reverb: broadcast pending status (web)
+    Reverb-->>Browser: private channel events
 ```
+
+### Real-time transport
+
+Processing status reaches the browser over Laravel Reverb (ADR 0002). Producers are the queue worker (every status transition) and the web service (`pending`, written in the create/update transaction). The browser subscribes to `private-last_operations.{article uuid}` on the detail page and to `private-App.User.{user uuid}` on the owner dashboard; public lists poll. Polling remains the correctness baseline, so a Reverb outage degrades to the 5 s / 15 s polling cadence rather than breaking the UI.
+
+Configuration lives in platform variables, never in the repository:
+
+| Where | Variables |
+|---|---|
+| Render Reverb service | `APP_KEY`, `APP_ENV=production`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_SERVER_HOST=0.0.0.0`, `REVERB_SERVER_PORT=$PORT`, `REVERB_ALLOWED_ORIGINS=<frontend origin>`, `REVERB_SCALING_ENABLED=false` |
+| Render API web service | `BROADCAST_DRIVER=reverb`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_HOST=<reverb hostname>`, `REVERB_PORT=443`, `REVERB_SCHEME=https`, and `QUEUE_CONNECTION=redis` |
+| GitLab CI (worker) | the same `REVERB_*` values; `prepare_queue_runtime_env` fails when any is missing |
+| GitHub repository variables (frontend) | `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https`; the workflow fails when the first two are missing |
+
+In production `allowed_origins` defaults to an empty list, so a Reverb service without `REVERB_ALLOWED_ORIGINS` refuses every browser rather than admitting all of them.
 
 ## Deployment Ordering
 
-The configured backend sequence deploys and verifies the worker before triggering the Render web deployment. That ordering reduces the chance that newly deployed web code enqueues jobs that no compatible worker can consume.
+The configured backend sequence deploys and verifies the worker, then verifies the Reverb service answers, before triggering the Render web deployment. That ordering reduces the chance that newly deployed web code enqueues jobs that no compatible worker can consume.
 
 Any production change involving jobs, serialization, queue names, Redis behavior, or environment variables must be reviewed across:
 

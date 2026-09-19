@@ -80,7 +80,7 @@ describe('useEcho is reactive to the provider configuring Echo', () => {
 
 		await rendered.unmount();
 		expect(channel.stopListening).toHaveBeenCalledWith('.OperationStatusUpdated', expect.any(Function));
-		expect(spies.leaveChannel).toHaveBeenCalledWith('private-last_operations.abc');
+		expect(spies.leave).toHaveBeenCalledWith('last_operations.abc');
 	});
 
 	it('shares one subscription between two listeners on the same channel', async () => {
@@ -96,7 +96,7 @@ describe('useEcho is reactive to the provider configuring Echo', () => {
 		expect(spies.private).toHaveBeenCalledTimes(1);
 
 		await rendered.unmount();
-		expect(spies.leaveChannel).toHaveBeenCalledTimes(1);
+		expect(spies.leave).toHaveBeenCalledTimes(1);
 	});
 
 	it('a token change disconnects the old instance and subscribes the new one exactly once', async () => {

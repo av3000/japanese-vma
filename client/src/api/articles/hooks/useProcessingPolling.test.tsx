@@ -34,6 +34,8 @@ vi.mock('@/providers/contexts/socket-provider', () => ({
 
 const status = (value: LastOperationStatus): ProcessingStatusResource => ({
 	id: 1,
+	entity_id: 'entity-uuid',
+	attempt: 1,
 	type: 'kanji_extraction',
 	status: value,
 	metadata: {},

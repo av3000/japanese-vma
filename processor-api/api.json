@@ -6479,11 +6479,17 @@
                     "id": {
                         "type": "integer"
                     },
+                    "entity_id": {
+                        "type": "string"
+                    },
                     "type": {
                         "type": "string"
                     },
                     "status": {
                         "$ref": "#/components/schemas/LastOperationStatus"
+                    },
+                    "attempt": {
+                        "type": "integer"
                     },
                     "metadata": {
                         "type": "object"
@@ -6497,8 +6503,10 @@
                 },
                 "required": [
                     "id",
+                    "entity_id",
                     "type",
                     "status",
+                    "attempt",
                     "metadata",
                     "created_at",
                     "updated_at"

@@ -27,25 +27,34 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     /**
      * @param Payload $snapshot
      */
+    public const OWNER_CHANNEL_PREFIX = 'App.User.';
+
+    /**
+     * @param ?string $ownerUuid when known, the event is also pushed on the owner's private
+     *                           channel so an owner dashboard needs one subscription for
+     *                           every article it lists (ADR 0002 point 5)
+     */
     public function __construct(
         public readonly string $entityUuid,
         public readonly array $snapshot,
+        public readonly ?string $ownerUuid = null,
     ) {
     }
 
-    public static function fromDto(ArticleProcessingStateDTO $state): self
+    public static function fromDto(ArticleProcessingStateDTO $state, ?string $ownerUuid = null): self
     {
-        return new self(...self::argumentsFromDto($state));
+        return new self(...self::argumentsFromDto($state, $ownerUuid));
     }
 
     /**
-     * @return array{entityUuid: string, snapshot: Payload}
+     * @return array{entityUuid: string, snapshot: Payload, ownerUuid: ?string}
      */
-    public static function argumentsFromDto(ArticleProcessingStateDTO $state): array
+    public static function argumentsFromDto(ArticleProcessingStateDTO $state, ?string $ownerUuid = null): array
     {
         return [
             'entityUuid' => $state->entityId,
             'snapshot' => ProcessingStatePayload::fromDto($state),
+            'ownerUuid' => $ownerUuid,
         ];
     }
 
@@ -55,15 +64,20 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     }
 
     /**
-     * Channel: "private-last_operations.{entity uuid}".
+     * Channels: "private-last_operations.{entity uuid}" always; "private-App.User.{owner uuid}"
+     * when the owner is known.
      *
      * @return array<int, PrivateChannel>
      */
     public function broadcastOn(): array
     {
-        return [
-            new PrivateChannel('last_operations.'.$this->entityUuid),
-        ];
+        $channels = [new PrivateChannel('last_operations.'.$this->entityUuid)];
+
+        if ($this->ownerUuid !== null) {
+            $channels[] = new PrivateChannel(self::OWNER_CHANNEL_PREFIX.$this->ownerUuid);
+        }
+
+        return $channels;
     }
 
     /**

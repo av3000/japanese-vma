@@ -1,14 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
-import { applyProcessingStatus, isArticleContentProcessingPayload } from '../processingStatusCache';
-
-const normalizePayload = (payload: ProcessingStatusResource | string): ProcessingStatusResource =>
-	typeof payload === 'string' ? (JSON.parse(payload) as ProcessingStatusResource) : payload;
+import {
+	applyProcessingStatus,
+	isArticleContentProcessingPayload,
+	normalizeProcessingPayload,
+} from '../processingStatusCache';
 
 /**
- * Fast path for processing status: listens on the article's private channel and writes each
- * event into the same cache entries the polling fallback refreshes.
+ * Fast path for one article's processing status: listens on the article's private channel and
+ * writes each event into the same cache entries the polling fallback refreshes. Used by the
+ * detail page only; lists never open a channel per article (#263).
  */
 export const useArticleSubscription = (articleUuid: string) => {
 	const queryClient = useQueryClient();
@@ -17,7 +19,7 @@ export const useArticleSubscription = (articleUuid: string) => {
 		`last_operations.${articleUuid}`,
 		'.OperationStatusUpdated',
 		(payload) => {
-			const normalizedPayload = normalizePayload(payload);
+			const normalizedPayload = normalizeProcessingPayload(payload);
 
 			if (import.meta.env.DEV) {
 				console.log('OperationStatusUpdated', normalizedPayload);

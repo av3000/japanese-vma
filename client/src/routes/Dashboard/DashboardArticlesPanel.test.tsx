@@ -23,8 +23,8 @@ vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 	}),
 }));
 
-vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
-	useArticleSubscription: vi.fn(),
+vi.mock('@/api/articles/hooks/useOwnerProcessingSubscription', () => ({
+	OwnerProcessingSubscription: () => null,
 }));
 
 vi.mock('./SearchBarDashboard', () => ({

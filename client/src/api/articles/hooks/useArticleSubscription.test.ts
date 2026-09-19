@@ -21,8 +21,10 @@ const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
 
 const payload = (status: LastOperationStatus, type = 'article_content_processing'): ProcessingStatusResource => ({
 	id: 9,
+	entity_id: UUID,
 	type,
 	status,
+	attempt: 1,
 	metadata: { attempts: 1 },
 	created_at: '2026-09-19T10:00:00+00:00',
 	updated_at: '2026-09-19T10:00:05+00:00',

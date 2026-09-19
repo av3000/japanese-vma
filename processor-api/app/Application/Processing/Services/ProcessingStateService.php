@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Processing\Services;
 
 use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
@@ -22,6 +23,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
 
     public function __construct(
         private readonly ProcessingStateRepositoryInterface $repository,
+        private readonly ProcessingOwnerResolverInterface $owners,
     ) {
     }
 
@@ -137,7 +139,9 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
 
     private function broadcast(ArticleProcessingStateDTO $state): ArticleProcessingStateDTO
     {
-        AsyncLastOperationStatusUpdated::dispatch(...AsyncLastOperationStatusUpdated::argumentsFromDto($state));
+        $ownerUuid = $this->owners->ownerUuid($state->entityType, EntityId::from($state->entityId));
+
+        AsyncLastOperationStatusUpdated::dispatch(...AsyncLastOperationStatusUpdated::argumentsFromDto($state, $ownerUuid));
 
         return $state;
     }

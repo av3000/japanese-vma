@@ -37,6 +37,19 @@ class ReverbTlsConfigTest extends TestCase
         $this->assertSame($expected, $broadcasting['connections']['reverb']['options']['useTLS']);
     }
 
+    public function test_allowed_origins_default_to_none_in_production_and_any_elsewhere(): void
+    {
+        $this->withEnv('REVERB_ALLOWED_ORIGINS', null);
+
+        $this->withEnv('APP_ENV', 'production');
+        $this->assertSame([], (require base_path('config/reverb.php'))['apps']['apps'][0]['allowed_origins']);
+
+        $this->withEnv('APP_ENV', 'local');
+        $this->assertSame(['*'], (require base_path('config/reverb.php'))['apps']['apps'][0]['allowed_origins']);
+
+        $this->withEnv('APP_ENV', 'testing');
+    }
+
     public function test_allowed_origins_are_read_from_the_environment(): void
     {
         $this->withEnv('REVERB_ALLOWED_ORIGINS', 'https://app.example.com, https://staging.example.com');

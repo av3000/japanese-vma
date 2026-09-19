@@ -1,5 +1,6 @@
 export { createEcho } from './config/index';
 export {
+	channelRegistrySizeFor,
 	useConnectionStatus,
 	useEcho,
 	useEchoModel,
