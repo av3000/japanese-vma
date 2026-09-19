@@ -56,7 +56,14 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
             ->assertJsonPath('articles.0.hashtags.0.content', '#kanji-tag');
     }
 
-    public function test_legacy_post_search_filters_by_hashtag_using_hashtag_id_column(): void
+    /**
+     * The legacy `POST api/posts/search` this used to exercise was retired in
+     * RET-POST-01. As with the kanji case above, the column-level compatibility
+     * is unchanged, so the assertion moved to the v1 list filter that replaced
+     * it - `hashtag=` still resolves through `hashtag_entity.hashtag_id`, and
+     * the list item still carries the tag it was matched on.
+     */
+    public function test_post_list_filters_by_hashtag_using_hashtag_id_column(): void
     {
         $userId = $this->createUser();
         $postId = $this->createPost($userId);
@@ -71,13 +78,11 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->postJson('/api/posts/search', [
-            'keyword' => '#post-tag',
-        ]);
+        $response = $this->getJson('/api/v1/posts?hashtag=post-tag');
 
         $response->assertOk()
-            ->assertJsonPath('posts.data.0.id', $postId)
-            ->assertJsonPath('posts.data.0.hashtags.0.content', '#post-tag');
+            ->assertJsonPath('items.0.id', $postId)
+            ->assertJsonPath('items.0.hashtags.0.content', '#post-tag');
     }
 
     private function seedObjectTemplate(ObjectTemplateType $type): void

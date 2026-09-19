@@ -7,7 +7,7 @@
 
 | Term | Meaning |
 |---|---|
-| **Post** | Community-authored discussion content, currently served primarily by legacy routes. |
+| **Post** | Community-authored discussion content with a topic, hashtags, and an admin-controlled lock, served by the v1 `posts` routes. |
 | **Comment** | User-authored response attached to a supported entity. |
 | **Reply** | Comment whose parent comment ID references another comment. |
 | **Root comment** | Comment with no parent comment. Only root comments are page entries in a thread read; use this rather than "top-level" or "parent" in prose. |

@@ -1,8 +1,8 @@
 # Community and Engagement — User Stories
 
-> **Status:** Baseline stories grouped by verified and target capability
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Status:** Stories grouped by verified and target capability; community posts verified on v1
+> **Last reviewed:** 2026-09-19
+> **Evidence baseline:** Repository working tree inspected on 2026-08-18; Post retirement (RET-POST-01) reflected 2026-09-19
 > **Audience:** Product-minded engineers, QA, and planners
 
 ## Verified Current Stories
@@ -17,9 +17,10 @@
 
 ### Community posts
 
-- As a visitor, I can browse community posts and open post details through the current legacy flow.
-- As an authenticated contributor, I can create or edit a post where the legacy contract authorizes it.
-- As an administrator, I can perform the existing post lock/moderation action.
+- As a visitor, I can browse community posts with keyword, hashtag, topic and sort filters, and open a post detail by UUID or by an old numeric link that is rewritten to the UUID.
+- As an authenticated contributor, I can create a post, edit my own post, and delete my own post; deleting removes its comments, likes, views and hashtag links together.
+- As an administrator, I can delete another user's post and lock or unlock a post with an explicit state, but I cannot edit another user's post.
+- As a reader of a locked post, I can still read its comments; as a commenter I receive a conflict when I try to add a root comment or a reply until the post is unlocked.
 
 ### Cross-feature engagement
 
@@ -28,11 +29,7 @@
 
 ## Target Stories
 
-- As a user, I can update or delete my comment through a typed, authorized v1 contract.
-- As a reader, reply inclusion behaves consistently and is covered by focused tests.
-- As a community user, post list/detail reads use v1 contracts and React Query.
-- As a post author or moderator, write and moderation actions use explicit v1 authorization.
-- As a frontend maintainer, all generic likes and comments share generated contract types and stable invalidation rules.
+The stories that used to sit here - typed comment update/delete, consistent reply inclusion, v1 post reads and writes, explicit moderation authorization, and shared generated like/comment contracts - are all verified above. No community or engagement target story is open; new capability requests belong in a fresh issue rather than this list.
 
 ## Requirement Links
 

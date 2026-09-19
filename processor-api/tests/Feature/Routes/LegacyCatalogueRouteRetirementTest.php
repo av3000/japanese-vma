@@ -176,32 +176,17 @@ class LegacyCatalogueRouteRetirementTest extends TestCase
     }
 
     /**
-     * These share a prefix or a shape with something RET-CAT-01 removed and belong to the Post
-     * lane, which this slice does not touch. The Post comment routes in particular are
-     * line-for-line the same shape as the List comment routes this slice removed. The Sentence
-     * witnesses that used to stand here were retired by RET-SEN-01, and
-     * LegacySentenceRouteRetirementTest now owns that line.
+     * The operational route that shares the `api` prefix with everything RET-CAT-01 removed. The
+     * Sentence witnesses that used to stand here were retired by RET-SEN-01 and the Post witnesses
+     * - line-for-line the same shape as the List comment routes this slice removed - by
+     * RET-POST-01; their own retirement tests now own those lines.
      */
-    public function test_sibling_legacy_routes_in_other_domains_are_still_registered(): void
+    public function test_operational_route_is_still_registered(): void
     {
-        $retained = [
-            ['POST', 'api/post'],
-            ['PUT', 'api/post/1'],
-            ['DELETE', 'api/post/1'],
-            ['GET', 'api/posts'],
-            ['GET', 'api/post/1'],
-            ['POST', 'api/posts/search'],
-            ['POST', 'api/post/1/comment'],
-            ['POST', 'api/post/1/comment/1/like'],
-            ['GET', 'api/health'],
-        ];
-
-        foreach ($retained as [$method, $uri]) {
-            $this->assertNotNull(
-                $this->matchRoute($method, $uri),
-                "Route [{$method} {$uri}] disappeared; RET-CAT-01 retires the List family only."
-            );
-        }
+        $this->assertNotNull(
+            $this->matchRoute('GET', 'api/health'),
+            'Route [GET api/health] disappeared; RET-CAT-01 retires the List family only.'
+        );
     }
 
     public function test_legacy_list_controller_and_its_request_are_gone(): void

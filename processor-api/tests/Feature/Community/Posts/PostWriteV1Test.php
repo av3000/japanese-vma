@@ -14,7 +14,6 @@ use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\SeedsBaselineData;
@@ -428,49 +427,6 @@ class PostWriteV1Test extends TestCase
 
         $this->putJson('/api/v1/posts/'.Str::uuid().'/lock', ['locked' => true])
             ->assertNotFound();
-    }
-
-    // ============================================
-    // Compatibility
-    // ============================================
-
-    public function test_legacy_post_routes_are_still_registered(): void
-    {
-        // The legacy transport stays until POST-WRITE-FE-01 migrates the client,
-        // so this slice must not remove or shadow any of it.
-        //
-        // Only registration is asserted for the write routes. Legacy creation is
-        // already broken on develop and not by this slice: App\Http\Models\Post
-        // never generates a uuid, and 2025_10_05_201410_add_required_uuid_to_tables
-        // made posts.uuid NOT NULL, so PostController::store() has been throwing a
-        // not-null violation since that migration. Asserting a 200 here would be
-        // asserting a bug is fixed that this slice does not touch.
-        $routes = collect(Route::getRoutes()->getRoutes())
-            ->map(static fn ($route): string => $route->methods()[0].' '.$route->uri())
-            ->all();
-
-        foreach ([
-            'POST api/post',
-            'PUT api/post/{id}',
-            'DELETE api/post/{id}',
-            // The two duplicate lock paths differ only in the case of one
-            // letter. v1 replaces both with a single explicit-state route.
-            'POST api/post/{id}/toggleLock',
-            'POST api/post/{id}/togglelock',
-            'GET api/posts',
-            'GET api/post/{id}',
-        ] as $expected) {
-            self::assertContains($expected, $routes, "legacy route {$expected} must survive this slice");
-        }
-    }
-
-    public function test_legacy_post_read_still_responds(): void
-    {
-        $post = $this->createPost();
-
-        $this->getJson("/api/post/{$post->id}")
-            ->assertOk()
-            ->assertJsonPath('success', true);
     }
 
     // ============================================

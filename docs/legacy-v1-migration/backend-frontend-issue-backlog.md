@@ -534,7 +534,7 @@ Rewrite `PostsList` and post detail read loading to use generated v1 post client
 **Acceptance criteria:**
 
 - [ ] `PostsList` no longer uses `@ts-nocheck`, class state, `next_page_url`, or `apiCall`.
-- [ ] `PostDetails` no longer calls `/api/post/{id}` for the base detail.
+- [x] `PostDetails` no longer calls `/api/post/{id}` for the base detail. (The route itself was retired in RET-POST-01.)
 - [ ] Search/filter and pagination behavior remains available.
 - [ ] Post detail renders current read-only fields from the v1 shape.
 - [ ] Focused frontend tests cover list and detail read behavior.

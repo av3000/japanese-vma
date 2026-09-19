@@ -100,32 +100,16 @@ class LegacySentenceRouteRetirementTest extends TestCase
     }
 
     /**
-     * These sit in the same `auth:api` group as the removed routes and are the same shape. They
-     * belong to the Post lane, which RET-POST-01 retires, not this slice.
+     * The operational route that shares the `api` prefix with everything RET-SEN-01 removed. The
+     * Post witnesses that used to stand here - the same shape, in the same `auth:api` group - were
+     * retired by RET-POST-01, and LegacyPostRouteRetirementTest now owns that line.
      */
-    public function test_sibling_legacy_post_routes_are_still_registered(): void
+    public function test_operational_route_is_still_registered(): void
     {
-        $retained = [
-            ['POST', 'api/post'],
-            ['PUT', 'api/post/1'],
-            ['DELETE', 'api/post/1'],
-            ['POST', 'api/post/1/comment'],
-            ['PUT', 'api/post/1/comment/2'],
-            ['DELETE', 'api/post/1/comment/2'],
-            ['POST', 'api/post/1/comment/2/like'],
-            ['POST', 'api/post/1/comment/2/unlike'],
-            ['GET', 'api/posts'],
-            ['GET', 'api/post/1'],
-            ['POST', 'api/posts/search'],
-            ['GET', 'api/health'],
-        ];
-
-        foreach ($retained as [$method, $uri]) {
-            $this->assertNotNull(
-                $this->matchRoute($method, $uri),
-                "Route [{$method} {$uri}] disappeared; RET-SEN-01 retires the Sentence family only."
-            );
-        }
+        $this->assertNotNull(
+            $this->matchRoute('GET', 'api/health'),
+            'Route [GET api/health] disappeared; RET-SEN-01 retires the Sentence family only.'
+        );
     }
 
     private function matchRoute(string $method, string $uri): ?Route
