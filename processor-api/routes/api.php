@@ -28,17 +28,6 @@ Route::group([
     // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
     'middleware' => 'auth:api',
 ], function () {
-    // Sentences CUD
-    Route::post('sentence', 'JapaneseDataController@storeSentence');
-    Route::put('sentence/{id}', 'JapaneseDataController@updateSentence');
-    Route::delete('sentence/{id}', 'JapaneseDataController@deleteSentence');
-    // Sentences Comment
-    Route::post('sentence/{id}/comment', 'JapaneseDataController@storeComment');
-    Route::delete('sentence/{id}/comment/{commentid}', 'JapaneseDataController@deleteComment');
-    Route::put('sentence/{id}/comment/{commentid}', 'JapaneseDataController@updateComment');
-    Route::post('sentence/{id}/comment/{commentid}/like', 'JapaneseDataController@likeComment');
-    Route::post('sentence/{id}/comment/{commentid}/unlike', 'JapaneseDataController@unlikeComment');
-
     // Posts
     Route::post('post', 'PostController@store');
     Route::put('post/{id}', 'PostController@update');
@@ -130,7 +119,7 @@ Route::group([
 //
 // Guarded by tests/Feature/Routes/LegacyArticleRouteRetirementTest.php.
 
-// Japanese Resources - public reads retired, nothing left to register here.
+// Japanese Resources - retired, nothing left to register here.
 //
 // The public Kanji/Radical/Word/Sentence read, search and relation routes were
 // retired here (RET-JPN-READ-01) once every one of them had an exact v1
@@ -149,11 +138,37 @@ Route::group([
 //
 // Guarded by tests/Feature/Routes/LegacyJapaneseReadRouteRetirementTest.php.
 //
-// JapaneseDataController is still routed for the writes it has no v1 owner for
-// yet - Sentence store/update/delete and the Sentence comment endpoints above,
-// both retired by RET-SEN-01. Those keep mb_str_split/getKanjiIdsFromText/
-// getWordIdsFromText alive in the controller; the read-only helpers went with the
-// routes, and checkIfBelongToList went with `user/list/contain` in RET-CAT-01.
+// The Sentence writes and the Sentence comment endpoints that shared the controller
+// with those reads were retired here (RET-SEN-01) once every one of them had an exact
+// v1 replacement and zero routed React callers:
+//
+//   sentence (POST), sentence/{id} (PUT)  -> POST v1/sentences, PUT v1/sentences/{uuid}
+//   sentence/{id} (DELETE)                -> DELETE v1/sentences/{uuid}
+//   sentence/{id}/comment...              -> POST/PUT/DELETE v1/comments
+//   comment like|unlike                   -> POST v1/like-instance, one idempotent toggle
+//
+// Two things the legacy writes did are recorded here so nobody goes looking for them
+// in v1:
+//
+// - `POST sentence` and `PUT sentence/{id}` never completed. getWordIdsFromText was
+//   pasted from the Article helper and still read `$article->content`, a variable that
+//   did not exist in the method, so every call raised ErrorException after the kanji
+//   pass. Word attachment through this controller never ran; v1 SentenceController
+//   synchronises both relations inside one transaction.
+// - `PUT sentence/{id}` and `DELETE sentence/{id}` did `Sentence::find($id)` with no
+//   owner, admin or imported check, so any signed-in user could rewrite or delete any
+//   sentence, imported ones included. v1 restricts writes to the owner or an admin and
+//   keeps imported sentences immutable for everyone. That is a correction, not a
+//   behaviour to preserve.
+//
+// JapaneseDataController is gone with these routes - they were its last callers, so
+// the class became unreachable. Its mb_str_split/getKanjiIdsFromText/getWordIdsFromText
+// copies went with it; the same-named global functions in app/Helpers are Article-typed
+// and still serve the seeders.
+//
+// Guarded by tests/Feature/Routes/LegacySentenceRouteRetirementTest.php, with the v1
+// contract itself pinned by tests/Feature/JapaneseMaterial/Sentences and
+// tests/Feature/Comments.
 
 // Custom Lists - retired, nothing left to register here.
 //
