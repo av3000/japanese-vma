@@ -38,6 +38,12 @@ export const renderWithAct = async (ui: ReactElement) => {
 
 	return {
 		container,
+		/** Renders a new element tree into the same root, so context and prop changes apply in place. */
+		rerender: async (next: ReactElement) => {
+			await act(async () => {
+				root.render(next);
+			});
+		},
 		/** Runs `callback` and flushes every state update and microtask it schedules. */
 		flush: async (callback: () => void | Promise<void>) => {
 			await act(async () => {
