@@ -312,11 +312,11 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "`UuidCreatedResource`",
+                        "description": "`ArticleCreatedResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UuidCreatedResource"
+                                    "$ref": "#/components/schemas/ArticleCreatedResource"
                                 }
                             }
                         }
@@ -4473,6 +4473,22 @@
                 ],
                 "title": "ArticleAppliedFiltersResource"
             },
+            "ArticleCreatedResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "processing_status": {
+                        "$ref": "#/components/schemas/ProcessingStatusResource"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "processing_status"
+                ],
+                "title": "ArticleCreatedResource"
+            },
             "ArticleDetailResource": {
                 "type": "object",
                 "properties": {
@@ -6100,11 +6116,13 @@
             },
             "LastOperationStatus": {
                 "type": "string",
+                "description": "| |\n|---|\n| `pending` <br/>  |\n| `processing` <br/>  |\n| `completed` <br/>  |\n| `failed` <br/>  |\n| `superseded` <br/> The article content changed after this run was queued; its result was never applied. |",
                 "enum": [
                     "pending",
                     "processing",
                     "completed",
-                    "failed"
+                    "failed",
+                    "superseded"
                 ],
                 "title": "LastOperationStatus"
             },

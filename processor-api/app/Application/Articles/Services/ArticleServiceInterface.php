@@ -22,6 +22,9 @@ interface ArticleServiceInterface
      *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
+    /**
+     * Success data: ArticleCreateResultDTO (article plus its pending processing state).
+     */
     public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result;
 
     public function getArticleIdByUuid(EntityId $uuid): ?int;

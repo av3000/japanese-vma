@@ -116,6 +116,8 @@ describe('status predicates', () => {
 	it('classify the four statuses', () => {
 		expect(isTerminalProcessingStatus(LastOperationStatus.completed)).toBe(true);
 		expect(isTerminalProcessingStatus(LastOperationStatus.failed)).toBe(true);
+		expect(isTerminalProcessingStatus(LastOperationStatus.superseded)).toBe(true);
+		expect(isNonTerminalProcessingStatus(LastOperationStatus.superseded)).toBe(false);
 		expect(isTerminalProcessingStatus(LastOperationStatus.pending)).toBe(false);
 		expect(isNonTerminalProcessingStatus(LastOperationStatus.pending)).toBe(true);
 		expect(isNonTerminalProcessingStatus(LastOperationStatus.processing)).toBe(true);

@@ -205,7 +205,10 @@ class UpdateArticleTest extends TestCase
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
             'content_jp' => 'Updated Japanese content text.',
-        ])->assertStatus(200);
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('processing_status.status', LastOperationStatus::PENDING->value)
+            ->assertJsonPath('processing_status.type', 'article_content_processing');
 
         $this->assertDispatchedOnceFor($article->uuid, version: 2);
         $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 2]);

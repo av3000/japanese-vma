@@ -18,6 +18,7 @@ use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
@@ -76,7 +77,8 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $article = DB::transaction(function () use ($dto, $authenticatedUser) {
+            /** @var ArticleCreateResultDTO $created */
+            $created = DB::transaction(function () use ($dto, $authenticatedUser): ArticleCreateResultDTO {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
@@ -103,21 +105,21 @@ class ArticleService implements ArticleServiceInterface
 
                 // The processing row exists as `pending` before the response is sent, in the same
                 // transaction as the article itself (ADR 0001, point 4).
-                $this->processingStates->startOrReset(
+                $processingState = $this->processingStates->startOrReset(
                     ProcessingEntityType::Article,
                     $createdDomainArticle->getUid(),
                     ProcessingTaskType::ArticleContentProcessing,
                     self::INITIAL_CONTENT_VERSION,
                 );
 
-                return $createdDomainArticle;
+                return new ArticleCreateResultDTO($createdDomainArticle, $processingState);
             });
 
             // ShouldQueueAfterCommit plus `after_commit` on the queue connections: the worker can
             // never observe the article before it is committed.
-            ProcessArticleContentJob::dispatch($article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
+            ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
 
-            return Result::success($article);
+            return Result::success($created);
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
                 'user_id' => $authenticatedUser->id->value(),
@@ -282,6 +284,7 @@ class ArticleService implements ArticleServiceInterface
                         $updatedDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE
                     ),
+                    processingState: $this->processingStateReader->currentState($updatedDomainArticle->getUid()->value()),
                 )
             );
         } catch (\Exception $e) {

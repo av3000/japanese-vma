@@ -47,8 +47,15 @@ class StoreArticleTest extends TestCase
         $response->assertCreated()
             ->assertJson(fn (AssertableJson $json): AssertableJson => $json
                 ->whereType('uuid', 'string')
+                ->where('processing_status.status', LastOperationStatus::PENDING->value)
+                ->where('processing_status.type', 'article_content_processing')
                 ->etc());
         $articleUuid = $response->json('uuid');
+
+        // The row was opened inside the create transaction, so the very next read already has it.
+        $this->json('GET', "/api/v1/articles/{$articleUuid}")
+            ->assertOk()
+            ->assertJsonPath('processing_status.status', LastOperationStatus::PENDING->value);
 
         $this->assertDatabaseHas('articles', [
             'uuid' => $articleUuid,

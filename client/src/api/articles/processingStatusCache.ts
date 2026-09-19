@@ -13,8 +13,14 @@ import { articleKeys } from './keys';
  * real `QueryClient` in tests.
  */
 
+/**
+ * `superseded` is terminal too (ADR 0001): the run's result was discarded because the content
+ * moved on, and a newer run owns the row from then on.
+ */
 export const isTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
-	status === LastOperationStatus.completed || status === LastOperationStatus.failed;
+	status === LastOperationStatus.completed ||
+	status === LastOperationStatus.failed ||
+	status === LastOperationStatus.superseded;
 
 export const isNonTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
 	status === LastOperationStatus.pending || status === LastOperationStatus.processing;

@@ -9,6 +9,7 @@ use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
@@ -28,13 +29,13 @@ use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 
+use App\Http\v1\Articles\Resources\ArticleCreatedResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleModerationListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleStatusResource;
 use App\Http\v1\Articles\Resources\ArticleWordCollection;
-use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
@@ -123,9 +124,9 @@ class ArticleController extends Controller
     }
 
     /**
-     * @response UuidCreatedResource
+     * @response ArticleCreatedResource
      */
-    #[Response(201, type: 'UuidCreatedResource')]
+    #[Response(201, type: 'ArticleCreatedResource')]
     public function store(StoreArticleRequest $request): JsonResponse|JsonResource
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
@@ -136,11 +137,10 @@ class ArticleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->getData();
+        /** @var ArticleCreateResultDTO $created */
+        $created = $result->getData();
 
-        return new UuidCreatedResource([
-            'uuid' => $article->getUid()->value(),
-        ]);
+        return new ArticleCreatedResource($created);
     }
 
     /**
@@ -191,6 +191,7 @@ class ArticleController extends Controller
         return new ArticleResource(
             article: $updateResult->article,
             hashtags: $updateResult->hashtags,
+            processingState: $updateResult->processingState,
         );
     }
 

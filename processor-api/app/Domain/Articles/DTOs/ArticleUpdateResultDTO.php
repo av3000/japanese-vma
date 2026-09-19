@@ -15,6 +15,7 @@ readonly class ArticleUpdateResultDTO
     public function __construct(
         public Article $article,
         public array $hashtags,
+        public ?ArticleProcessingStateDTO $processingState = null,
     ) {
     }
 }

@@ -41,6 +41,9 @@ export const STATUS_CONFIG: Record<LastOperationStatusType, { message: (live: bo
 	failed: {
 		message: () => 'Instance processing failed. Please try again later.',
 	},
+	superseded: {
+		message: () => 'Content changed while processing; the newer version has been processed instead.',
+	},
 };
 
 interface ProcessingStatusAlertProps {
@@ -69,7 +72,8 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 	const { isConnected } = useWebSocket();
 	const status = processing_status?.status;
 
-	if (!status) return null;
+	// Superseded is terminal and carries no result of its own (ADR 0001): nothing to show.
+	if (!status || status === LastOperationStatus.superseded) return null;
 
 	const message = STATUS_CONFIG[status].message(isConnected);
 
