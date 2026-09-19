@@ -24,36 +24,6 @@ Route::get('health', function () {
     return response()->json(['ok' => true], 200);
 });
 
-Route::group([
-    // https://medium.com/modulr/create-api-authentication-with-passport-of-laravel-5-6-1dc2d400a7f
-    'middleware' => 'auth:api',
-], function () {
-    // Posts
-    Route::post('post', 'PostController@store');
-    Route::put('post/{id}', 'PostController@update');
-    Route::delete('post/{id}', 'PostController@delete');
-    Route::post('post/{id}/like', 'PostController@likePost');
-    Route::post('post/{id}/unlike', 'PostController@unlikePost');
-    Route::post('post/{id}/checklike', 'PostController@checkIfLikedPost');
-    Route::post('post/{id}/toggleLock', 'PostController@toggleLock');
-    // Posts Comment
-    Route::post('post/{id}/comment', 'PostController@storeComment');
-    Route::delete('post/{id}/comment/{commentid}', 'PostController@deleteComment');
-    Route::put('post/{id}/comment/{commentid}', 'PostController@updateComment');
-    Route::post('post/{id}/comment/{commentid}/like', 'PostController@likeComment');
-    Route::post('post/{id}/comment/{commentid}/unlike', 'PostController@unlikeComment');
-
-    // Admin example route
-    Route::group(
-        [
-            'middleware' => 'checkRole:admin',
-        ],
-        function () {
-            Route::post('post/{id}/togglelock', 'PostController@toggleLock');
-        }
-    );
-});
-
 // Authentication - retired, nothing left to register here.
 //
 // The legacy session routes were retired here (RET-AUTH-01) once every one of them had an exact v1
@@ -220,7 +190,48 @@ Route::group([
 // Guarded by tests/Feature/Routes/LegacyCatalogueRouteRetirementTest.php, with the v1 contract
 // itself pinned by the tests under tests/Feature/Catalogues.
 
-// Posts
-Route::get('posts', 'PostController@index');
-Route::get('post/{id}', 'PostController@show');
-Route::post('posts/search', 'PostController@generateQuery');
+// Posts - retired, nothing left to register here.
+//
+// The whole legacy Community Post family was retired here (RET-POST-01) once every route had a v1
+// replacement and zero routed React callers. It was the last legacy family in this file:
+//
+//   posts, post/{id}                       -> GET  v1/posts, GET v1/posts/{identifier}
+//   posts/search                           -> GET  v1/posts query filters: keyword, hashtag, topic, sort
+//   post (POST), post/{id} (PUT)           -> POST v1/posts, PUT v1/posts/{uuid}
+//   post/{id} (DELETE)                     -> DELETE v1/posts/{uuid}
+//   post/{id}/toggleLock, togglelock       -> PUT  v1/posts/{uuid}/lock
+//   post/{id}/like|unlike                  -> POST v1/like-instance, one idempotent toggle
+//   post/{id}/comment...                   -> POST/PUT/DELETE v1/comments
+//   comment like|unlike                    -> POST v1/like-instance
+//
+// One had no same-shaped v1 endpoint because the answer is already on a payload the caller
+// fetches anyway, not because the migration is unfinished:
+//
+//   post/{id}/checklike -> `engagement` on the v1 post detail
+//
+// `GET v1/posts/{identifier}` still accepts a positive legacy id transitionally and always answers
+// with the canonical UUID; the React detail route rewrites a numeric URL to the UUID on first
+// render. Comment reads and every write are UUID-only.
+//
+// Three things the legacy routes did are recorded here so nobody goes looking for them in v1:
+//
+// - `POST post` never completed on develop. App\Http\Models\Post never generated a uuid, and
+//   2025_10_05_201410_add_required_uuid_to_tables made posts.uuid NOT NULL, so PostController@store
+//   had raised a not-null violation on every call since that migration. There was no working
+//   create to preserve.
+// - `post/{id}/toggleLock` sat in the plain `auth:api` group with no role check, so any signed-in
+//   user could lock or unlock any post. Only the lower-case `togglelock` duplicate carried the
+//   admin guard. v1 keeps one admin-only route that takes the desired state instead of toggling -
+//   the same correction the Article and List publicity routes made.
+// - `PUT post/{id}` was owner-only; an admin could not edit another user's post. v1 keeps that
+//   rule (PostWriteV1Test::test_admin_cannot_update_another_users_post). Delete stays owner-or-admin.
+//
+// PostController is gone with these routes - they were its only callers, so the class became
+// unreachable, and App\Http\Requests\PostStoreRequest went with its one route. The `whereLike`
+// Eloquent Builder macro in AppServiceProvider went too: PostController@generateQuery was its
+// only caller, and v1 keyword search lives in PostQueryCriteria. The legacy models under
+// App\Http\Models and the global impression/hashtag helpers stay; the Article actions and
+// App\Http\User still route through them.
+//
+// Guarded by tests/Feature/Routes/LegacyPostRouteRetirementTest.php, with the v1 contract itself
+// pinned by tests/Feature/Community/Posts, tests/Feature/Comments and tests/Feature/Engagement.
