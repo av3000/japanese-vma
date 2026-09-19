@@ -44,10 +44,19 @@ describe('catalogue constants', () => {
 		expect(resolveCataloguePdfExportKind(6)).toBe('kanji');
 		expect(resolveCataloguePdfExportKind(3)).toBe('words');
 		expect(resolveCataloguePdfExportKind(7)).toBe('words');
-		expect(resolveCataloguePdfExportKind(5)).toBeNull();
-		expect(resolveCataloguePdfExportKind(8)).toBeNull();
-		expect(resolveCataloguePdfExportKind(9)).toBeNull();
+		expect(resolveCataloguePdfExportKind(1)).toBe('radicals');
+		expect(resolveCataloguePdfExportKind(5)).toBe('radicals');
+		expect(resolveCataloguePdfExportKind(4)).toBe('sentences');
+		expect(resolveCataloguePdfExportKind(8)).toBe('sentences');
 		expect(isCataloguePdfExportSupported(6)).toBe(true);
+		expect(isCataloguePdfExportSupported(5)).toBe(true);
+	});
+
+	it('leaves catalogue types the backend has no export kind for unsupported', () => {
+		// Articles, lyrics and artists: CataloguePdfExportService has no matching PdfExportKind.
+		expect(resolveCataloguePdfExportKind(9)).toBeNull();
+		expect(resolveCataloguePdfExportKind(10)).toBeNull();
+		expect(resolveCataloguePdfExportKind(11)).toBeNull();
 		expect(isCataloguePdfExportSupported(9)).toBe(false);
 	});
 

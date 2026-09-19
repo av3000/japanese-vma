@@ -5,6 +5,8 @@ WORKDIR /var/www/html
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     autoconf \
+    fonts-hanazono \
+    fonts-ipafont-gothic \
     fonts-noto-cjk \
     g++ \
     git \

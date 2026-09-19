@@ -21,6 +21,7 @@ import { Icon } from '@/components/shared/Icon';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
+import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
@@ -37,6 +38,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const { user: currentUser, isAuthenticated } = useAuth();
 
 	const [tempStatus, setTempStatus] = useState<ArticleStatusValue>(article.status as ArticleStatusValue);
+	const [pdfPendingType, setPdfPendingType] = useState<'kanji' | 'words' | null>(null);
+	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
@@ -89,15 +92,23 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	// TODO: Lift this query up and create query function to be reused, with pending state to avoid multi calls
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
+
+		setPdfPendingType(type);
+		setPdfErrorMessage(null);
+
 		try {
 			const res =
 				type === 'kanji'
 					? await articleExportKanjisPdf(article.uuid, { responseType: 'blob' })
 					: await articleExportWordsPdf(article.uuid, { responseType: 'blob' });
 			const file = new Blob([res], { type: 'application/pdf' });
-			window.open(URL.createObjectURL(file));
+
+			downloadFile(toDownloadFileName(article.title_jp, `article-${type}`, 'pdf'), file);
 		} catch (error) {
 			console.error('PDF Download failed', error);
+			setPdfErrorMessage('The PDF could not be generated. Please try again.');
+		} finally {
+			setPdfPendingType(null);
 		}
 	};
 
@@ -264,6 +275,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<ArticlePdfModal
 				controller={pdfModal}
 				onDownload={handleDownloadPdf}
+				pendingType={pdfPendingType}
+				errorMessage={pdfErrorMessage}
 				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
 			/>
 

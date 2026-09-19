@@ -9,6 +9,12 @@ use App\Application\Engagement\Actions\RecordDownloadAction;
 use App\Application\Pdf\PdfRendererInterface;
 use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Pdf\DTOs\CatalogueKanjisPdfDTO;
+use App\Domain\Pdf\DTOs\CataloguePdfHeaderDTO;
+use App\Domain\Pdf\DTOs\CataloguePdfViewDataInterface;
+use App\Domain\Pdf\DTOs\CatalogueRadicalsPdfDTO;
+use App\Domain\Pdf\DTOs\CatalogueSentencesPdfDTO;
+use App\Domain\Pdf\DTOs\CatalogueWordsPdfDTO;
 use App\Domain\Pdf\DTOs\PdfDocument;
 use App\Domain\Pdf\Enums\PdfExportKind;
 use App\Domain\Pdf\Errors\PdfExportErrors;
@@ -39,10 +45,16 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::WORDS);
     }
 
-    // TODO(#303): Recreate radical and sentence PDF exports here as v1 service-backed
-    // exports when those kinds are supported; do not route them through
-    // CustomListController or any renderer facade.
-    // https://github.com/av3000/japanese-vma/issues/303
+    public function exportRadicals(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::RADICALS);
+    }
+
+    public function exportSentences(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        return $this->export($catalogueUuid, $authenticatedUser, PdfExportKind::SENTENCES);
+    }
+
     private function export(EntityId $catalogueUuid, AuthenticatedUser $authenticatedUser, PdfExportKind $kind): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($catalogueUuid);
@@ -65,9 +77,9 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         $items = $this->catalogueItemService->getItems($catalogue);
 
         $document = new PdfDocument(
-            view: $kind === PdfExportKind::KANJIS ? 'pdf.catalogues.kanjis' : 'pdf.catalogues.words',
-            data: $this->buildViewData($catalogue, $kind, $items),
-            filename: $kind === PdfExportKind::KANJIS ? 'catalogue-kanjis.pdf' : 'catalogue-words.pdf',
+            view: $kind->view(),
+            data: $this->buildViewData($catalogue, $kind, $items)->toViewData(),
+            filename: $kind->filename(),
         );
 
         try {
@@ -95,30 +107,25 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
         return match ($kind) {
             PdfExportKind::KANJIS => in_array($catalogue->getType(), [SavedListType::KANJIS, SavedListType::KNOWNKANJIS], true),
             PdfExportKind::WORDS => in_array($catalogue->getType(), [SavedListType::WORDS, SavedListType::KNOWNWORDS], true),
+            PdfExportKind::RADICALS => in_array($catalogue->getType(), [SavedListType::RADICALS, SavedListType::KNOWNRADICALS], true),
+            PdfExportKind::SENTENCES => in_array($catalogue->getType(), [SavedListType::SENTENCES, SavedListType::KNOWNSENTENCES], true),
         };
     }
 
     /**
      * @param array<int, array<string, mixed>> $items
-     *
-     * @return array<string, mixed>
      */
-    private function buildViewData(Catalogue $catalogue, PdfExportKind $kind, array $items): array
+    private function buildViewData(Catalogue $catalogue, PdfExportKind $kind, array $items): CataloguePdfViewDataInterface
     {
-        return [
-            'frontend_url' => config('app.frontend_url'),
-            'catalogue' => [
-                'id' => $catalogue->getIdValue(),
-                'uuid' => $catalogue->getUid()->value(),
-                'title' => $catalogue->getTitle()->value,
-                'type_label' => $catalogue->getTypeLabel(),
-                'author' => $catalogue->getOwnerName()->value(),
-                'user_id' => $catalogue->getOwnerId()->value(),
-                'date' => $catalogue->getCreatedAt(),
-            ],
-            'kanjis' => $kind === PdfExportKind::KANJIS ? $this->normalizeKanjis($items) : [],
-            'words' => $kind === PdfExportKind::WORDS ? $this->normalizeWords($items) : [],
-        ];
+        $frontendUrl = (string) config('app.frontend_url');
+        $header = CataloguePdfHeaderDTO::fromCatalogue($catalogue);
+
+        return match ($kind) {
+            PdfExportKind::KANJIS => new CatalogueKanjisPdfDTO($frontendUrl, $header, $this->normalizeKanjis($items)),
+            PdfExportKind::WORDS => new CatalogueWordsPdfDTO($frontendUrl, $header, $this->normalizeWords($items)),
+            PdfExportKind::RADICALS => new CatalogueRadicalsPdfDTO($frontendUrl, $header, $this->normalizeRadicals($items)),
+            PdfExportKind::SENTENCES => new CatalogueSentencesPdfDTO($frontendUrl, $header, $this->normalizeSentences($items)),
+        };
     }
 
     /**
@@ -149,6 +156,39 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
 
             return $word;
         }, $words);
+    }
+
+    /**
+     * Radical meanings are a single plain column, not the pipe-joined lists the kanji bank
+     * stores, so there is nothing to split here.
+     *
+     * @param array<int, array<string, mixed>> $radicals
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeRadicals(array $radicals): array
+    {
+        return array_map(static function (array $radical): array {
+            $radical['meaning'] = trim((string) ($radical['meaning'] ?? ''));
+            $radical['hiragana'] = trim((string) ($radical['hiragana'] ?? ''));
+
+            return $radical;
+        }, $radicals);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $sentences
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeSentences(array $sentences): array
+    {
+        return array_map(static function (array $sentence): array {
+            $sentence['content'] = trim((string) ($sentence['content'] ?? ''));
+            $sentence['tatoeba_entry'] = trim((string) ($sentence['tatoeba_entry'] ?? ''));
+
+            return $sentence;
+        }, $sentences);
     }
 
     private function firstPipeValues(string $value): string

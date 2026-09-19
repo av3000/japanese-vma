@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	catalogueExportKanjisPdf,
+	catalogueExportRadicalsPdf,
+	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
 	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
@@ -10,6 +12,7 @@ import {
 	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
+import { downloadFile } from '@/helpers/downloadFile';
 import CatalogueContent from './CatalogueContent';
 
 const useNavigateMock = vi.fn();
@@ -29,8 +32,6 @@ const capturedDeleteModalProps: Array<{
 const capturedPdfButtonProps: Array<{
 	onClick?: () => void;
 }> = [];
-const createObjectUrlMock = vi.fn();
-const windowOpenMock = vi.fn();
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -65,11 +66,21 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 		...actual,
 		catalogueExportKanjisPdf: vi.fn(),
 		catalogueExportWordsPdf: vi.fn(),
+		catalogueExportRadicalsPdf: vi.fn(),
+		catalogueExportSentencesPdf: vi.fn(),
 		catalogueRemoveItem: vi.fn(),
 		useCatalogueDestroy: vi.fn(() => ({
 			mutate: catalogueDestroyMutateMock,
 			isPending: false,
 		})),
+	};
+});
+
+vi.mock('@/helpers/downloadFile', async () => {
+	const actual = await vi.importActual<typeof import('@/helpers/downloadFile')>('@/helpers/downloadFile');
+	return {
+		...actual,
+		downloadFile: vi.fn(),
 	};
 });
 
@@ -142,7 +153,8 @@ vi.mock('@/components/features/DeleteInstanceModal', () => ({
 const createCatalogue = (overrides: Partial<CatalogueDetailResource> = {}): CatalogueDetailResource => ({
 	id: 55,
 	uuid: 'catalogue-uuid',
-	type: 5,
+	// Article catalogues have no PDF export, so the default fixture renders no download button.
+	type: 9,
 	type_label: 'Articles' as CatalogueDetailResource['type_label'],
 	title: 'Useful Articles',
 	description: 'Saved for study',
@@ -176,11 +188,10 @@ describe('CatalogueContent', () => {
 		capturedLikeButtonProps.length = 0;
 		likeIsToggling = false;
 		isAuthenticatedMock = true;
-		createObjectUrlMock.mockReturnValue('blob:catalogue-pdf');
-		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
-		vi.stubGlobal('window', { open: windowOpenMock });
 		vi.mocked(catalogueExportKanjisPdf).mockResolvedValue('%PDF-kanji' as never);
 		vi.mocked(catalogueExportWordsPdf).mockResolvedValue('%PDF-words' as never);
+		vi.mocked(catalogueExportRadicalsPdf).mockResolvedValue('%PDF-radicals' as never);
+		vi.mocked(catalogueExportSentencesPdf).mockResolvedValue('%PDF-sentences' as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
@@ -296,30 +307,49 @@ describe('CatalogueContent', () => {
 		expect(useNavigateMock).toHaveBeenCalledWith('/catalogues');
 	});
 
-	it('downloads kanji catalogue pdf through the generated v1 endpoint', async () => {
-		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 6 }) as any} />);
+	it.each([
+		['kanji', 6, catalogueExportKanjisPdf],
+		['kanji', 2, catalogueExportKanjisPdf],
+		['words', 7, catalogueExportWordsPdf],
+		['words', 3, catalogueExportWordsPdf],
+		['radicals', 5, catalogueExportRadicalsPdf],
+		['radicals', 1, catalogueExportRadicalsPdf],
+		['sentences', 8, catalogueExportSentencesPdf],
+		['sentences', 4, catalogueExportSentencesPdf],
+	])('downloads a %s catalogue (type %i) through its own generated v1 endpoint', async (_kind, type, client) => {
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: type as any }) as any} />);
 
 		await capturedPdfButtonProps[0].onClick?.();
 
-		expect(catalogueExportKanjisPdf).toHaveBeenCalledWith('catalogue-uuid', { responseType: 'blob' });
-		expect(catalogueExportWordsPdf).not.toHaveBeenCalled();
-		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
-		expect(windowOpenMock).toHaveBeenCalledWith('blob:catalogue-pdf');
+		expect(client).toHaveBeenCalledWith('catalogue-uuid', { responseType: 'blob' });
+
+		const otherClients = [
+			catalogueExportKanjisPdf,
+			catalogueExportWordsPdf,
+			catalogueExportRadicalsPdf,
+			catalogueExportSentencesPdf,
+		].filter((candidate) => candidate !== client);
+
+		otherClients.forEach((candidate) => expect(candidate).not.toHaveBeenCalled());
+		expect(downloadFile).toHaveBeenCalledWith('Useful Articles.pdf', expect.any(Blob));
 	});
 
-	it('downloads word catalogue pdf through the generated v1 endpoint', async () => {
-		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 7 }) as any} />);
+	it('surfaces a failed export instead of only logging it', async () => {
+		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.mocked(catalogueExportSentencesPdf).mockRejectedValue(new Error('boom') as never);
+
+		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 8 }) as any} />);
 
 		await capturedPdfButtonProps[0].onClick?.();
 
-		expect(catalogueExportWordsPdf).toHaveBeenCalledWith('catalogue-uuid', { responseType: 'blob' });
-		expect(catalogueExportKanjisPdf).not.toHaveBeenCalled();
-		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
-		expect(windowOpenMock).toHaveBeenCalledWith('blob:catalogue-pdf');
+		expect(downloadFile).not.toHaveBeenCalled();
+		expect(consoleErrorSpy).toHaveBeenCalled();
+
+		consoleErrorSpy.mockRestore();
 	});
 
 	it('does not render a pdf download button for unsupported catalogue types', () => {
-		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 5 }) as any} />);
+		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 9 }) as any} />);
 
 		expect(html).not.toContain('filePdfSolid');
 		expect(capturedPdfButtonProps).toHaveLength(0);
