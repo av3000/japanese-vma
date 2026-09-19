@@ -26,20 +26,20 @@ export const STATUS_CONFIG: Record<LastOperationStatusType, { message: (live: bo
 	pending: {
 		message: (live) =>
 			live
-				? 'Instance queued for processing. This page will update automatically.'
-				: 'Instance queued for processing. Checking for updates.',
+				? 'Kanji and vocabulary for this article are queued. This page will update automatically.'
+				: 'Kanji and vocabulary for this article are queued. Checking for updates.',
 	},
 	processing: {
 		message: (live) =>
 			live
-				? 'Instance background processing. Please wait, this page will update automatically.'
-				: 'Instance background processing. Checking for updates.',
+				? 'Extracting kanji and vocabulary for this article. This page will update automatically.'
+				: 'Extracting kanji and vocabulary for this article. Checking for updates.',
 	},
 	completed: {
-		message: () => 'Instance processing complete.',
+		message: () => 'Kanji and vocabulary for this article are ready.',
 	},
 	failed: {
-		message: () => 'Instance processing failed. Please try again later.',
+		message: () => 'Kanji and vocabulary extraction failed for this article. Please try again later.',
 	},
 	superseded: {
 		message: () => 'Content changed while processing; the newer version has been processed instead.',

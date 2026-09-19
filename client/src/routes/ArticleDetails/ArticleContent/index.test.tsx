@@ -16,6 +16,7 @@ const capturedModalProps: Array<{
 }> = [];
 const capturedPdfModalProps: Array<{
 	onDownload: (type: 'kanji' | 'words') => Promise<void>;
+	isDownloadEnabled: boolean;
 }> = [];
 const capturedReviewModalProps: Array<{
 	status: number;
@@ -229,6 +230,7 @@ const createArticle = (engagementOverrides: Record<string, unknown> = {}) =>
 		},
 		hashtags: [],
 		processing_status: {
+			type: 'article_content_processing',
 			status: 'completed',
 		},
 	}) as any;
@@ -288,6 +290,24 @@ describe('ArticleContent', () => {
 
 		expect(catalogueRemoveItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', 321);
 		expect(catalogueAddItem).not.toHaveBeenCalled();
+	});
+
+	it.each(['pending', 'processing', 'failed', 'superseded'])(
+		'does not offer PDF downloads while the consolidated status is %s',
+		(status) => {
+			const article = createArticle();
+			article.processing_status = { type: 'article_content_processing', status };
+
+			renderToStaticMarkup(<ArticleContent article={article} />);
+
+			expect(capturedPdfModalProps[0].isDownloadEnabled).toBe(false);
+		},
+	);
+
+	it('offers both PDF downloads once the consolidated status is completed', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(capturedPdfModalProps[0].isDownloadEnabled).toBe(true);
 	});
 
 	it('downloads article kanji pdf through the generated v1 article endpoint', async () => {

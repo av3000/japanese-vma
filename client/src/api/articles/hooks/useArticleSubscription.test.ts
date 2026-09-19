@@ -19,9 +19,9 @@ vi.mock('@/lib/echo', () => ({
 
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
 
-const payload = (status: LastOperationStatus): ProcessingStatusResource => ({
+const payload = (status: LastOperationStatus, type = 'article_content_processing'): ProcessingStatusResource => ({
 	id: 9,
-	type: 'words_extraction',
+	type,
 	status,
 	metadata: { attempts: 1 },
 	created_at: '2026-09-19T10:00:00+00:00',
@@ -93,6 +93,21 @@ describe('useArticleSubscription', () => {
 			queryClient.getQueryData<InfiniteData<ArticleListResource>>(listKey)?.pages[0].items[0].processing_status
 				?.status,
 		).toBe(LastOperationStatus.processing);
+	});
+
+	it('ignores an event whose type is not the consolidated task', () => {
+		const { queryClient, listener } = useSubscriptionHarness();
+		const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+		const before = {
+			uid: UUID,
+			processing_status: payload(LastOperationStatus.pending),
+		} as unknown as ArticleDetailResource;
+		queryClient.setQueryData(articleKeys.detail(UUID), before);
+
+		listener(payload(LastOperationStatus.completed, 'kanji_extraction'));
+
+		expect(queryClient.getQueryData(articleKeys.detail(UUID))).toBe(before);
+		expect(invalidate).not.toHaveBeenCalled();
 	});
 
 	it('accepts a JSON string payload and invalidates the detail on a terminal status', () => {

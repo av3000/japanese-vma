@@ -17,6 +17,15 @@ import { articleKeys } from './keys';
  * `superseded` is terminal too (ADR 0001): the run's result was discarded because the content
  * moved on, and a newer run owns the row from then on.
  */
+/**
+ * The one task type the backend reports for an article since ADR 0001. Events carrying any
+ * other type are ignored so a stray legacy payload cannot corrupt the cache.
+ */
+export const ARTICLE_CONTENT_PROCESSING_TASK = 'article_content_processing';
+
+export const isArticleContentProcessingPayload = (payload: ProcessingStatusResource): boolean =>
+	payload.type === ARTICLE_CONTENT_PROCESSING_TASK;
+
 export const isTerminalProcessingStatus = (status: LastOperationStatus | null | undefined): boolean =>
 	status === LastOperationStatus.completed ||
 	status === LastOperationStatus.failed ||
