@@ -2,21 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Articles\DTOs;
+namespace App\Domain\Processing\DTOs;
 
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use DateTimeImmutable;
 
 /**
  * The current processing state of one entity for one task: a plain snapshot of a
  * processing_states row, so nothing above the persistence layer touches Eloquent.
- *
- * Name kept from the pre-ADR-0001 shape so the HTTP resources need no change; P4-1 renames the
- * vocabulary in one sweep.
  */
-final readonly class ArticleProcessingStateDTO
+final readonly class ProcessingStateDTO
 {
     /**
      * @param array<string, mixed>|null $metadata
@@ -26,8 +23,9 @@ final readonly class ArticleProcessingStateDTO
         public ProcessingEntityType $entityType,
         public string $entityId,
         public string $taskType,
-        public LastOperationStatus $status,
+        public ProcessingStatus $status,
         public int $attempt,
+        public int $sequence,
         public int $maxAttempts,
         public int $contentVersion,
         public ?array $metadata,

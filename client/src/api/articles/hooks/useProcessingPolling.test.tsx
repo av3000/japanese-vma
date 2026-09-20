@@ -5,7 +5,7 @@ import { useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-q
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import type { ConnectionStatus } from '@/lib/echo/types';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
@@ -32,10 +32,12 @@ vi.mock('@/providers/contexts/socket-provider', () => ({
 	useWebSocket: vi.fn(),
 }));
 
-const status = (value: LastOperationStatus): ProcessingStatusResource => ({
+const status = (value: ProcessingStatus): ProcessingStatusResource => ({
 	id: 1,
 	entity_id: 'entity-uuid',
 	attempt: 1,
+	max_attempts: 3,
+	sequence: 1,
 	type: 'kanji_extraction',
 	status: value,
 	metadata: {},
@@ -43,10 +45,10 @@ const status = (value: LastOperationStatus): ProcessingStatusResource => ({
 	updated_at: '2026-09-19T10:00:05+00:00',
 });
 
-const detail = (value: LastOperationStatus | null): ArticleDetailResource =>
+const detail = (value: ProcessingStatus | null): ArticleDetailResource =>
 	({ uid: 'u', processing_status: value ? status(value) : null }) as unknown as ArticleDetailResource;
 
-const list = (...values: Array<LastOperationStatus | null>): InfiniteData<ArticleListResource> => ({
+const list = (...values: Array<ProcessingStatus | null>): InfiniteData<ArticleListResource> => ({
 	pageParams: [1],
 	pages: [
 		{
@@ -110,15 +112,15 @@ describe('resolveProcessingRefetchInterval', () => {
 
 describe('non-terminal detectors', () => {
 	it('read the detail and any list page', () => {
-		expect(detailHasNonTerminalProcessing(detail(LastOperationStatus.pending))).toBe(true);
-		expect(detailHasNonTerminalProcessing(detail(LastOperationStatus.completed))).toBe(false);
+		expect(detailHasNonTerminalProcessing(detail(ProcessingStatus.pending))).toBe(true);
+		expect(detailHasNonTerminalProcessing(detail(ProcessingStatus.completed))).toBe(false);
 		expect(detailHasNonTerminalProcessing(detail(null))).toBe(false);
 		expect(detailHasNonTerminalProcessing(undefined)).toBe(false);
 
-		expect(
-			listHasNonTerminalProcessing(list(null, LastOperationStatus.completed, LastOperationStatus.processing)),
-		).toBe(true);
-		expect(listHasNonTerminalProcessing(list(null, LastOperationStatus.completed))).toBe(false);
+		expect(listHasNonTerminalProcessing(list(null, ProcessingStatus.completed, ProcessingStatus.processing))).toBe(
+			true,
+		);
+		expect(listHasNonTerminalProcessing(list(null, ProcessingStatus.completed))).toBe(false);
 		expect(listHasNonTerminalProcessing(undefined)).toBe(false);
 	});
 });
@@ -183,11 +185,11 @@ describe('article queries wire the polling interval', () => {
 
 	it('detail: pending + disconnected polls, completed does not, connected does not', async () => {
 		const disconnected = await captureDetailInterval('disconnected');
-		expect(disconnected({ state: { data: detail(LastOperationStatus.pending) } })).toBeGreaterThan(0);
-		expect(disconnected({ state: { data: detail(LastOperationStatus.completed) } })).toBe(false);
+		expect(disconnected({ state: { data: detail(ProcessingStatus.pending) } })).toBeGreaterThan(0);
+		expect(disconnected({ state: { data: detail(ProcessingStatus.completed) } })).toBe(false);
 
 		const connected = await captureDetailInterval('connected');
-		expect(connected({ state: { data: detail(LastOperationStatus.pending) } })).toBe(false);
+		expect(connected({ state: { data: detail(ProcessingStatus.pending) } })).toBe(false);
 	});
 
 	it('list: polls when any loaded item is non-terminal and the socket is disconnected', async () => {
@@ -205,9 +207,9 @@ describe('article queries wire the polling interval', () => {
 		const { unmount } = await renderWithAct(<Probe />);
 		await unmount();
 
-		expect(refetchInterval({ state: { data: list(null, LastOperationStatus.processing) } })).toBe(
+		expect(refetchInterval({ state: { data: list(null, ProcessingStatus.processing) } })).toBe(
 			PROCESSING_POLL_FAST_MS,
 		);
-		expect(refetchInterval({ state: { data: list(null, LastOperationStatus.completed) } })).toBe(false);
+		expect(refetchInterval({ state: { data: list(null, ProcessingStatus.completed) } })).toBe(false);
 	});
 });

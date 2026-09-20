@@ -20,7 +20,7 @@ use InvalidArgumentException;
  */
 final readonly class ArticleProcessingChannelAuthorizer
 {
-    public const CHANNEL = 'last_operations.{uuid}';
+    public const CHANNEL = 'processing_states.{uuid}';
 
     public function __construct(
         private ArticleRepositoryInterface $articles,

@@ -4,7 +4,7 @@ import type { UseMutationOptions } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { articleKeys } from '@/api/articles/keys';
 import type { ArticleCreatedResource } from '@/api/generated/model/articleCreatedResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import ArticleCreatePage from './index';
 
@@ -44,8 +44,10 @@ describe('ArticleCreatePage', () => {
 			id: 1,
 			entity_id: 'entity-uuid',
 			attempt: 1,
+			max_attempts: 3,
+			sequence: 1,
 			type: 'article_content_processing',
-			status: LastOperationStatus.pending,
+			status: ProcessingStatus.pending,
 			metadata: {},
 			created_at: '2026-09-20T10:00:00+00:00',
 			updated_at: '2026-09-20T10:00:00+00:00',

@@ -7,11 +7,12 @@ import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscript
 import { useArticleStatusMutation } from '@/api/articles/moderation';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
@@ -240,6 +241,12 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 			<div className="row justify-content-center mt-5">
 				<div className="col-lg-8">
+					<ArticleAttachments articleUuid={article.uuid} />
+				</div>
+			</div>
+
+			<div className="row justify-content-center mt-5">
+				<div className="col-lg-8">
 					<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
 				</div>
 			</div>
@@ -262,7 +269,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<ArticlePdfModal
 				controller={pdfModal}
 				onDownload={handleDownloadPdf}
-				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
+				isDownloadEnabled={article?.processing_status?.status === ProcessingStatus.completed}
 			/>
 
 			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}

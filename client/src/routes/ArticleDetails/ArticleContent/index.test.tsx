@@ -158,6 +158,10 @@ vi.mock('@/components/features/articles/ArticleReviewModal', () => ({
 	},
 }));
 
+vi.mock('@/components/features/articles/ArticleAttachments', () => ({
+	ArticleAttachments: ({ articleUuid }: { articleUuid: string }) => <div data-attachments={articleUuid} />,
+}));
+
 vi.mock('@/components/features/comment/CommentsBlock', () => ({
 	default: () => <div>Comments</div>,
 }));

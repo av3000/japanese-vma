@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
 import { describe, expect, it, vi } from 'vitest';
 import { usePendingArticles } from '@/api/articles/moderation';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
 import { renderWithAct } from '@/test/renderWithAct';
 import type { User } from '@/types';
@@ -24,7 +24,7 @@ const pendingArticles = Array.from({ length: 10 }, (_, index) => ({
 		id: index,
 		entity_id: `article-${index}`,
 		type: 'article_content_processing',
-		status: LastOperationStatus.pending,
+		status: ProcessingStatus.pending,
 		attempt: 0,
 		metadata: {},
 		created_at: '2026-09-20T10:00:00+00:00',

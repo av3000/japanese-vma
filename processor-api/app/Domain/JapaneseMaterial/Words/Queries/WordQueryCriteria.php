@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\JapaneseMaterial\Words\Queries;
 
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 
 final readonly class WordQueryCriteria
@@ -17,6 +18,8 @@ final readonly class WordQueryCriteria
         public ?string $furigana = null,
         public ?string $jlpt = null,
         public ?int $kanjiId = null,
+        /** Words attached to one article, the list behind the article detail page (#268). */
+        public ?EntityId $articleId = null,
     ) {
     }
 
@@ -28,6 +31,7 @@ final readonly class WordQueryCriteria
         ?string $furigana = null,
         ?string $jlpt = null,
         ?int $kanjiId = null,
+        ?EntityId $articleId = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -36,6 +40,7 @@ final readonly class WordQueryCriteria
             furigana: $furigana,
             jlpt: $jlpt,
             kanjiId: $kanjiId,
+            articleId: $articleId,
         );
     }
 }

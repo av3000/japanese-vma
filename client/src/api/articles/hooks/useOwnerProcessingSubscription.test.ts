@@ -1,11 +1,12 @@
 import { QueryClient, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
 import { articleKeys } from '../keys';
-import { ownerProcessingChannel, useOwnerProcessingSubscription } from './useOwnerProcessingSubscription';
+import { ownerProcessingChannel, PROCESSING_STATUS_EVENT } from '../processingChannels';
+import { useOwnerProcessingSubscription } from './useOwnerProcessingSubscription';
 
 vi.mock('@tanstack/react-query', async () => {
 	const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
@@ -22,14 +23,17 @@ const B = 'b2b2b2b2-0000-4000-8000-000000000002';
 
 const payload = (
 	entityId: string,
-	status: LastOperationStatus,
+	status: ProcessingStatus,
 	type = 'article_content_processing',
+	sequence = 1,
 ): ProcessingStatusResource => ({
 	id: 3,
 	entity_id: entityId,
 	type,
 	status,
 	attempt: 1,
+	max_attempts: 3,
+	sequence,
 	metadata: {},
 	created_at: '2026-09-20T10:00:00+00:00',
 	updated_at: '2026-09-20T10:00:05+00:00',
@@ -53,8 +57,8 @@ const useHarness = () => {
 		pages: [
 			{
 				items: [
-					{ uuid: A, processing_status: payload(A, LastOperationStatus.pending) },
-					{ uuid: B, processing_status: payload(B, LastOperationStatus.pending) },
+					{ uuid: A, processing_status: payload(A, ProcessingStatus.pending) },
+					{ uuid: B, processing_status: payload(B, ProcessingStatus.pending) },
 				],
 				facets: [],
 				applied: {},
@@ -82,7 +86,7 @@ describe('useOwnerProcessingSubscription', () => {
 		expect(useEcho).toHaveBeenCalledTimes(1);
 		expect(useEcho).toHaveBeenCalledWith(
 			ownerProcessingChannel(OWNER),
-			'.OperationStatusUpdated',
+			PROCESSING_STATUS_EVENT,
 			expect.any(Function),
 			expect.any(Array),
 			'private',
@@ -92,17 +96,17 @@ describe('useOwnerProcessingSubscription', () => {
 	it('patches the list item named by entity_id and leaves the others alone', () => {
 		const { listener, statusOf } = useHarness();
 
-		listener(payload(B, LastOperationStatus.completed));
+		listener(payload(B, ProcessingStatus.completed, 'article_content_processing', 2));
 
-		expect(statusOf(B)).toBe(LastOperationStatus.completed);
-		expect(statusOf(A)).toBe(LastOperationStatus.pending);
+		expect(statusOf(B)).toBe(ProcessingStatus.completed);
+		expect(statusOf(A)).toBe(ProcessingStatus.pending);
 	});
 
 	it('ignores events of another task type', () => {
 		const { listener, statusOf } = useHarness();
 
-		listener(JSON.stringify(payload(A, LastOperationStatus.completed, 'kanji_extraction')));
+		listener(JSON.stringify(payload(A, ProcessingStatus.completed, 'kanji_extraction', 2)));
 
-		expect(statusOf(A)).toBe(LastOperationStatus.pending);
+		expect(statusOf(A)).toBe(ProcessingStatus.pending);
 	});
 });

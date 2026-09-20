@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Articles;
 
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -47,7 +47,7 @@ class StoreArticleTest extends TestCase
         $response->assertCreated()
             ->assertJson(fn (AssertableJson $json): AssertableJson => $json
                 ->whereType('uuid', 'string')
-                ->where('processing_status.status', LastOperationStatus::PENDING->value)
+                ->where('processing_status.status', ProcessingStatus::PENDING->value)
                 ->where('processing_status.type', 'article_content_processing')
                 ->etc());
         $articleUuid = $response->json('uuid');
@@ -55,7 +55,7 @@ class StoreArticleTest extends TestCase
         // The row was opened inside the create transaction, so the very next read already has it.
         $this->json('GET', "/api/v1/articles/{$articleUuid}")
             ->assertOk()
-            ->assertJsonPath('processing_status.status', LastOperationStatus::PENDING->value);
+            ->assertJsonPath('processing_status.status', ProcessingStatus::PENDING->value);
 
         $this->assertDatabaseHas('articles', [
             'uuid' => $articleUuid,
@@ -73,7 +73,7 @@ class StoreArticleTest extends TestCase
             'entity_type' => 'article',
             'entity_id' => $articleUuid,
             'task_type' => 'article_content_processing',
-            'status' => LastOperationStatus::PENDING->value,
+            'status' => ProcessingStatus::PENDING->value,
             'content_version' => 1,
         ]);
     }

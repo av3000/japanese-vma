@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Application\LastOperations\Events;
+namespace App\Application\Processing\Events;
 
 use App\Application\Processing\Presenters\ProcessingStatePayload;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -15,12 +15,15 @@ use Illuminate\Foundation\Events\Dispatchable;
 /**
  * Pushed to clients every time a processing-state row is written.
  *
- * Broadcast synchronously from a snapshot taken at write time (audit F-08). Alias and channel
- * are unchanged from the pre-ADR-0001 event so the frontend needs no change; P4-1 versions it.
+ * Broadcast synchronously from a snapshot taken at write time (audit F-08). The alias and the
+ * channel were versioned with the ADR 0001 vocabulary in #266: `OperationStatusUpdated` on
+ * `last_operations.{uuid}` became `ProcessingStatusUpdated` on `processing_states.{uuid}`. A
+ * browser tab loaded before that deploy hears nothing on the new channel and falls back to
+ * polling until it reloads.
  *
  * @phpstan-import-type Payload from ProcessingStatePayload
  */
-class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
+class ProcessingStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
@@ -41,7 +44,7 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     ) {
     }
 
-    public static function fromDto(ArticleProcessingStateDTO $state, ?string $ownerUuid = null): self
+    public static function fromDto(ProcessingStateDTO $state, ?string $ownerUuid = null): self
     {
         return new self(...self::argumentsFromDto($state, $ownerUuid));
     }
@@ -49,7 +52,7 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
     /**
      * @return array{entityUuid: string, snapshot: Payload, ownerUuid: ?string}
      */
-    public static function argumentsFromDto(ArticleProcessingStateDTO $state, ?string $ownerUuid = null): array
+    public static function argumentsFromDto(ProcessingStateDTO $state, ?string $ownerUuid = null): array
     {
         return [
             'entityUuid' => $state->entityId,
@@ -58,20 +61,20 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
         ];
     }
 
-    public function status(): LastOperationStatus
+    public function status(): ProcessingStatus
     {
-        return LastOperationStatus::from($this->snapshot['status']);
+        return ProcessingStatus::from($this->snapshot['status']);
     }
 
     /**
-     * Channels: "private-last_operations.{entity uuid}" always; "private-App.User.{owner uuid}"
+     * Channels: "private-processing_states.{entity uuid}" always; "private-App.User.{owner uuid}"
      * when the owner is known.
      *
      * @return array<int, PrivateChannel>
      */
     public function broadcastOn(): array
     {
-        $channels = [new PrivateChannel('last_operations.'.$this->entityUuid)];
+        $channels = [new PrivateChannel('processing_states.'.$this->entityUuid)];
 
         if ($this->ownerUuid !== null) {
             $channels[] = new PrivateChannel(self::OWNER_CHANNEL_PREFIX.$this->ownerUuid);
@@ -85,7 +88,7 @@ class AsyncLastOperationStatusUpdated implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'OperationStatusUpdated';
+        return 'ProcessingStatusUpdated';
     }
 
     /**

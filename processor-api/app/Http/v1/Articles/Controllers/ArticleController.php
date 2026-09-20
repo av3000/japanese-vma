@@ -27,15 +27,14 @@ use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\IndexPendingArticlesRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
-use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 
+use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 use App\Http\v1\Articles\Resources\ArticleCreatedResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleModerationListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleStatusResource;
-use App\Http\v1\Articles\Resources\ArticleWordCollection;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
@@ -44,7 +43,6 @@ use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Auth\AuthenticationException;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response as HttpResponse;
 
@@ -216,26 +214,6 @@ class ArticleController extends Controller
             'success' => true,
             'message' => 'Article deleted successfully',
         ]);
-    }
-
-    // TODO: refactor to clean architecture
-    /**
-     * @response ArticleWordCollection
-     */
-    #[Response(type: 'ArticleWordCollection')]
-    public function words(Request $request, int $id): JsonResponse
-    {
-        $result = $this->articleService->getArticleWordsResult(
-            $id,
-            $request->get('page'),
-            $request->get('per_page')
-        );
-
-        if ($result->isFailure()) {
-            return $this->legacyFailure($result);
-        }
-
-        return response()->json(new ArticleWordCollection($result->getData()));
     }
 
     public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse

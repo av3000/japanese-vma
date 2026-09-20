@@ -2,10 +2,11 @@ import { QueryClient, useQueryClient, type InfiniteData } from '@tanstack/react-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
 import { articleKeys } from '../keys';
+import { articleProcessingChannel, PROCESSING_STATUS_EVENT } from '../processingChannels';
 import { useArticleSubscription } from './useArticleSubscription';
 
 vi.mock('@tanstack/react-query', async () => {
@@ -19,12 +20,19 @@ vi.mock('@/lib/echo', () => ({
 
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
 
-const payload = (status: LastOperationStatus, type = 'article_content_processing'): ProcessingStatusResource => ({
+/** Cache seeds use sequence 1; an event the hook should apply carries a higher one. */
+const payload = (
+	status: ProcessingStatus,
+	type = 'article_content_processing',
+	sequence = 1,
+): ProcessingStatusResource => ({
 	id: 9,
 	entity_id: UUID,
 	type,
 	status,
 	attempt: 1,
+	max_attempts: 3,
+	sequence,
 	metadata: { attempts: 1 },
 	created_at: '2026-09-19T10:00:00+00:00',
 	updated_at: '2026-09-19T10:00:05+00:00',
@@ -54,12 +62,12 @@ describe('useArticleSubscription', () => {
 		vi.mocked(useEcho).mockReset();
 	});
 
-	it('listens on the private last_operations channel for the aliased event', () => {
+	it('listens on the private processing channel for the aliased event', () => {
 		useSubscriptionHarness();
 
 		expect(useEcho).toHaveBeenCalledWith(
-			`last_operations.${UUID}`,
-			'.OperationStatusUpdated',
+			articleProcessingChannel(UUID),
+			PROCESSING_STATUS_EVENT,
 			expect.any(Function),
 			expect.any(Array),
 			'private',
@@ -74,7 +82,7 @@ describe('useArticleSubscription', () => {
 			pageParams: [1],
 			pages: [
 				{
-					items: [{ uuid: UUID, processing_status: payload(LastOperationStatus.pending) }],
+					items: [{ uuid: UUID, processing_status: payload(ProcessingStatus.pending) }],
 					facets: [],
 					applied: {},
 					pagination: { page: 1, has_more: false, total: 1 },
@@ -83,18 +91,18 @@ describe('useArticleSubscription', () => {
 		});
 		queryClient.setQueryData(articleKeys.detail(UUID), {
 			uid: UUID,
-			processing_status: payload(LastOperationStatus.pending),
+			processing_status: payload(ProcessingStatus.pending),
 		} as unknown as ArticleDetailResource);
 
-		listener(payload(LastOperationStatus.processing));
+		listener(payload(ProcessingStatus.processing, 'article_content_processing', 2));
 
 		expect(
 			queryClient.getQueryData<ArticleDetailResource>(articleKeys.detail(UUID))?.processing_status?.status,
-		).toBe(LastOperationStatus.processing);
+		).toBe(ProcessingStatus.processing);
 		expect(
 			queryClient.getQueryData<InfiniteData<ArticleListResource>>(listKey)?.pages[0].items[0].processing_status
 				?.status,
-		).toBe(LastOperationStatus.processing);
+		).toBe(ProcessingStatus.processing);
 	});
 
 	it('ignores an event whose type is not the consolidated task', () => {
@@ -102,11 +110,11 @@ describe('useArticleSubscription', () => {
 		const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 		const before = {
 			uid: UUID,
-			processing_status: payload(LastOperationStatus.pending),
+			processing_status: payload(ProcessingStatus.pending),
 		} as unknown as ArticleDetailResource;
 		queryClient.setQueryData(articleKeys.detail(UUID), before);
 
-		listener(payload(LastOperationStatus.completed, 'kanji_extraction'));
+		listener(payload(ProcessingStatus.completed, 'kanji_extraction', 2));
 
 		expect(queryClient.getQueryData(articleKeys.detail(UUID))).toBe(before);
 		expect(invalidate).not.toHaveBeenCalled();
@@ -120,11 +128,11 @@ describe('useArticleSubscription', () => {
 			processing_status: null,
 		} as unknown as ArticleDetailResource);
 
-		listener(JSON.stringify(payload(LastOperationStatus.completed)));
+		listener(JSON.stringify(payload(ProcessingStatus.completed, 'article_content_processing', 2)));
 
 		expect(
 			queryClient.getQueryData<ArticleDetailResource>(articleKeys.detail(UUID))?.processing_status?.status,
-		).toBe(LastOperationStatus.completed);
+		).toBe(ProcessingStatus.completed);
 		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.detail(UUID) });
 	});
 });

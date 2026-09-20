@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Console;
 
-use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Events\ProcessingStatusUpdated;
 use App\Console\Commands\SweepStaleArticleProcessing;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 use Illuminate\Console\Scheduling\Schedule;
@@ -23,13 +23,13 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
 
     public function test_sweeper_fails_stale_non_terminal_rows_and_leaves_fresh_and_terminal_rows_alone(): void
     {
-        $staleProcessing = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 400);
-        $stalePending = $this->insertOperation(LastOperationStatus::PENDING, ageSeconds: 400);
-        $freshProcessing = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 60);
-        $oldCompleted = $this->insertOperation(LastOperationStatus::COMPLETED, ageSeconds: 4000);
-        $oldFailed = $this->insertOperation(LastOperationStatus::FAILED, ageSeconds: 4000);
+        $staleProcessing = $this->insertOperation(ProcessingStatus::PROCESSING, ageSeconds: 400);
+        $stalePending = $this->insertOperation(ProcessingStatus::PENDING, ageSeconds: 400);
+        $freshProcessing = $this->insertOperation(ProcessingStatus::PROCESSING, ageSeconds: 60);
+        $oldCompleted = $this->insertOperation(ProcessingStatus::COMPLETED, ageSeconds: 4000);
+        $oldFailed = $this->insertOperation(ProcessingStatus::FAILED, ageSeconds: 4000);
 
-        Event::fake([AsyncLastOperationStatusUpdated::class]);
+        Event::fake([ProcessingStatusUpdated::class]);
 
         $exitCode = Artisan::call('article-processing:sweep-stale');
 
@@ -38,26 +38,26 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
 
         foreach ([$staleProcessing, $stalePending] as $swept) {
             $swept->refresh();
-            $this->assertSame(LastOperationStatus::FAILED, $swept->status);
+            $this->assertSame(ProcessingStatus::FAILED, $swept->status);
             $this->assertSame('stale', $swept->error_code);
             $this->assertSame('no heartbeat', $swept->error_message);
             $this->assertSame('no heartbeat', $swept->metadata['reason']);
         }
 
-        $this->assertSame(LastOperationStatus::PROCESSING, $freshProcessing->refresh()->status);
-        $this->assertSame(LastOperationStatus::COMPLETED, $oldCompleted->refresh()->status);
+        $this->assertSame(ProcessingStatus::PROCESSING, $freshProcessing->refresh()->status);
+        $this->assertSame(ProcessingStatus::COMPLETED, $oldCompleted->refresh()->status);
         $this->assertNull($oldFailed->refresh()->error_code, 'Already-failed rows must not be rewritten.');
 
-        Event::assertDispatchedTimes(AsyncLastOperationStatusUpdated::class, 2);
+        Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 2);
     }
 
     public function test_older_than_option_overrides_the_threshold(): void
     {
-        $row = $this->insertOperation(LastOperationStatus::PROCESSING, ageSeconds: 30);
+        $row = $this->insertOperation(ProcessingStatus::PROCESSING, ageSeconds: 30);
 
         Artisan::call('article-processing:sweep-stale', ['--older-than' => 10]);
 
-        $this->assertSame(LastOperationStatus::FAILED, $row->refresh()->status);
+        $this->assertSame(ProcessingStatus::FAILED, $row->refresh()->status);
     }
 
     public function test_sweeper_is_scheduled_every_five_minutes_without_overlapping(): void
@@ -76,7 +76,7 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
         $this->assertGreaterThan(120 + config('queue.connections.redis.retry_after'), SweepStaleArticleProcessing::DEFAULT_OLDER_THAN_SECONDS);
     }
 
-    private function insertOperation(LastOperationStatus $status, int $ageSeconds): ProcessingState
+    private function insertOperation(ProcessingStatus $status, int $ageSeconds): ProcessingState
     {
         $row = ProcessingState::create([
             'entity_type' => 'article',

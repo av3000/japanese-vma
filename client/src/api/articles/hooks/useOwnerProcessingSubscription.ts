@@ -2,13 +2,14 @@ import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useEcho } from '@/lib/echo';
+import { ownerProcessingChannel, PROCESSING_STATUS_EVENT } from '../processingChannels';
 import {
 	applyProcessingStatus,
 	isArticleContentProcessingPayload,
 	normalizeProcessingPayload,
 } from '../processingStatusCache';
 
-export const ownerProcessingChannel = (userUuid: string) => `App.User.${userUuid}`;
+export { ownerProcessingChannel };
 
 /**
  * One subscription for everything the signed-in user owns (ADR 0002 point 5, #263). The
@@ -21,7 +22,7 @@ export const useOwnerProcessingSubscription = (userUuid: string) => {
 
 	useEcho<ProcessingStatusResource | string>(
 		ownerProcessingChannel(userUuid),
-		'.OperationStatusUpdated',
+		PROCESSING_STATUS_EVENT,
 		(payload) => {
 			const normalizedPayload = normalizeProcessingPayload(payload);
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Processing\Resources\ProcessingStatusResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

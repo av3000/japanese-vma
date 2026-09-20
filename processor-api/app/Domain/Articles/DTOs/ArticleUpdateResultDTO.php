@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\Models\Article;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 readonly class ArticleUpdateResultDTO
 {
@@ -15,7 +16,7 @@ readonly class ArticleUpdateResultDTO
     public function __construct(
         public Article $article,
         public array $hashtags,
-        public ?ArticleProcessingStateDTO $processingState = null,
+        public ?ProcessingStateDTO $processingState = null,
     ) {
     }
 }

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\Exceptions\ProcessingStateNotFoundException;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use DateTimeImmutable;
@@ -23,12 +24,18 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ProcessingTaskType $task,
         int $contentVersion,
         int $maxAttempts = 3,
-    ): ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
+        $existing = $this->find($entityType, $entityId, $task);
+
         $state = ProcessingState::query()->updateOrCreate(
             self::key($entityType, $entityId, $task),
             [
-                'status' => LastOperationStatus::PENDING,
+                'status' => ProcessingStatus::PENDING,
                 'attempt' => 0,
+                // A rerun of the same row continues the sequence rather than restarting it:
+                // a client comparing against the previous run's last event must still see
+                // this one as newer (#261).
+                'sequence' => ($existing->sequence ?? 0) + 1,
                 'max_attempts' => $maxAttempts,
                 'content_version' => $contentVersion,
                 'started_at' => null,
@@ -47,9 +54,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::PROCESSING,
+            'status' => ProcessingStatus::PROCESSING,
             'attempt' => $attempt,
             'started_at' => now(),
             'finished_at' => null,
@@ -63,9 +70,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::COMPLETED,
+            'status' => ProcessingStatus::COMPLETED,
             'finished_at' => now(),
             'error_code' => null,
             'error_message' => null,
@@ -80,9 +87,9 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         string $errorCode,
         string $errorMessage,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->transition($entityType, $entityId, $task, [
-            'status' => LastOperationStatus::FAILED,
+            'status' => ProcessingStatus::FAILED,
             'finished_at' => now(),
             'error_code' => mb_substr($errorCode, 0, 64),
             'error_message' => mb_substr($errorMessage, 0, 300),
@@ -95,12 +102,8 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO {
-        $state = $this->find($entityType, $entityId, $task);
-
-        if ($state === null) {
-            return null;
-        }
+    ): ?ProcessingStateDTO {
+        $state = $this->findOrFail($entityType, $entityId, $task);
 
         // A newer run may already own the row; only an in-flight run for this version is stale.
         // Nothing changed means nothing to broadcast, hence null rather than the untouched row.
@@ -109,7 +112,8 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         }
 
         $state->fill([
-            'status' => LastOperationStatus::SUPERSEDED,
+            'status' => ProcessingStatus::SUPERSEDED,
+            'sequence' => $state->sequence + 1,
             'finished_at' => now(),
             'error_code' => null,
             'error_message' => null,
@@ -122,7 +126,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ProcessingEntityType $entityType,
         EntityId $entityId,
         ProcessingTaskType $task,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         $state = $this->find($entityType, $entityId, $task);
 
         return $state === null ? null : self::toDto($state);
@@ -154,7 +158,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
     public function getStaleNonTerminal(DateTimeInterface $before): array
     {
         return ProcessingState::query()
-            ->whereIn('status', LastOperationStatus::nonTerminalValues())
+            ->whereIn('status', ProcessingStatus::nonTerminalValues())
             ->where('updated_at', '<', $before)
             ->orderBy('id')
             ->get()
@@ -170,16 +174,24 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         EntityId $entityId,
         ProcessingTaskType $task,
         array $attributes,
-    ): ?ArticleProcessingStateDTO {
-        $state = $this->find($entityType, $entityId, $task);
+    ): ProcessingStateDTO {
+        $state = $this->findOrFail($entityType, $entityId, $task);
 
-        if ($state === null) {
-            return null;
-        }
-
-        $state->fill($attributes)->save();
+        // Read-modify-write is safe here: one job per entity holds the WithoutOverlapping lock,
+        // and the only other writer is the sweeper, which touches rows nothing has written to
+        // for minutes.
+        $state->fill($attributes + ['sequence' => $state->sequence + 1])->save();
 
         return self::toDto($state);
+    }
+
+    private function findOrFail(
+        ProcessingEntityType $entityType,
+        EntityId $entityId,
+        ProcessingTaskType $task,
+    ): ProcessingState {
+        return $this->find($entityType, $entityId, $task)
+            ?? throw ProcessingStateNotFoundException::for($entityType, $entityId, $task);
     }
 
     private function find(ProcessingEntityType $entityType, EntityId $entityId, ProcessingTaskType $task): ?ProcessingState
@@ -210,15 +222,16 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
         ];
     }
 
-    public static function toDto(ProcessingState $state): ArticleProcessingStateDTO
+    public static function toDto(ProcessingState $state): ProcessingStateDTO
     {
-        return new ArticleProcessingStateDTO(
+        return new ProcessingStateDTO(
             id: (int) $state->id,
             entityType: $state->entity_type,
             entityId: (string) $state->entity_id,
             taskType: (string) $state->task_type,
             status: $state->status,
             attempt: (int) $state->attempt,
+            sequence: (int) $state->sequence,
             maxAttempts: (int) $state->max_attempts,
             contentVersion: (int) $state->content_version,
             metadata: $state->metadata,

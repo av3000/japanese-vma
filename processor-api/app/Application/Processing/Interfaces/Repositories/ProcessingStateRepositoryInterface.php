@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Processing\Interfaces\Repositories;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -26,7 +26,7 @@ interface ProcessingStateRepositoryInterface
         ProcessingTaskType $task,
         int $contentVersion,
         int $maxAttempts = 3,
-    ): ArticleProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /** Returns null when no row exists for the entity and task. */
     public function markProcessing(
@@ -34,7 +34,7 @@ interface ProcessingStateRepositoryInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata counts only; no free text
@@ -44,7 +44,7 @@ interface ProcessingStateRepositoryInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * @param array<string, mixed> $metadata
@@ -56,7 +56,7 @@ interface ProcessingStateRepositoryInterface
         string $errorCode,
         string $errorMessage,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO;
+    ): ProcessingStateDTO;
 
     /**
      * The entity's content moved on while this run was queued; the run's result is discarded.
@@ -68,20 +68,20 @@ interface ProcessingStateRepositoryInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     public function getCurrent(
         ProcessingEntityType $entityType,
         EntityId $entityId,
         ProcessingTaskType $task,
-    ): ?ArticleProcessingStateDTO;
+    ): ?ProcessingStateDTO;
 
     /**
      * One query, exactly one row per entity that has one.
      *
      * @param list<string> $entityIds
      *
-     * @return array<string, ArticleProcessingStateDTO> keyed by entity id
+     * @return array<string, ProcessingStateDTO> keyed by entity id
      */
     public function getCurrentBatch(
         ProcessingEntityType $entityType,
@@ -92,7 +92,7 @@ interface ProcessingStateRepositoryInterface
     /**
      * Non-terminal rows not updated since the given instant, oldest first.
      *
-     * @return list<ArticleProcessingStateDTO>
+     * @return list<ProcessingStateDTO>
      */
     public function getStaleNonTerminal(DateTimeInterface $before): array;
 }

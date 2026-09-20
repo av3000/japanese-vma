@@ -101,7 +101,7 @@ class ArticleListServiceTest extends TestCase
 
     /**
      * Related-Article panels never render processing_status, so they must not pay
-     * the last_operations query for it.
+     * the processing_states query for it.
      */
     public function test_it_skips_processing_state_when_not_included(): void
     {

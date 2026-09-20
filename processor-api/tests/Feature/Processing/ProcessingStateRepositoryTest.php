@@ -6,8 +6,9 @@ namespace Tests\Feature\Processing;
 
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
+use App\Domain\Processing\Exceptions\ProcessingStateNotFoundException;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -46,7 +47,7 @@ class ProcessingStateRepositoryTest extends TestCase
 
         $this->assertSame($first->id, $second->id, 'The row is reused, never duplicated.');
         $this->assertSame(1, ProcessingState::count());
-        $this->assertSame(LastOperationStatus::PENDING, $second->status);
+        $this->assertSame(ProcessingStatus::PENDING, $second->status);
         $this->assertSame(0, $second->attempt);
         $this->assertSame(2, $second->contentVersion);
         $this->assertNull($second->errorCode);
@@ -73,33 +74,46 @@ class ProcessingStateRepositoryTest extends TestCase
         $this->repository->startOrReset(ProcessingEntityType::Article, $id, self::TASK, 1);
 
         $processing = $this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1);
-        $this->assertSame(LastOperationStatus::PROCESSING, $processing?->status);
+        $this->assertSame(ProcessingStatus::PROCESSING, $processing?->status);
         $this->assertSame(1, $processing?->attempt);
         $this->assertNotNull($processing?->startedAt);
         $this->assertNull($processing?->finishedAt);
 
         $completed = $this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, ['kanji_count' => 2, 'word_count' => 5]);
-        $this->assertSame(LastOperationStatus::COMPLETED, $completed?->status);
+        $this->assertSame(ProcessingStatus::COMPLETED, $completed?->status);
         $this->assertNotNull($completed?->finishedAt);
         $this->assertSame(['kanji_count' => 2, 'word_count' => 5], $completed?->metadata);
 
         $this->repository->startOrReset(ProcessingEntityType::Article, $id, self::TASK, 2);
         $failed = $this->repository->markFailed(ProcessingEntityType::Article, $id, self::TASK, 'words', str_repeat('x', 400), ['stage' => 'words']);
-        $this->assertSame(LastOperationStatus::FAILED, $failed?->status);
+        $this->assertSame(ProcessingStatus::FAILED, $failed?->status);
         $this->assertSame('words', $failed?->errorCode);
         $this->assertSame(300, mb_strlen((string) $failed?->errorMessage), 'Error text is bounded at the column width.');
         $this->assertSame(['stage' => 'words'], $failed?->metadata);
     }
 
-    public function test_transitions_return_null_when_no_row_exists(): void
+    public function test_transitions_throw_when_no_row_exists(): void
     {
         $id = EntityId::from((string) Str::uuid());
 
-        $this->assertNull($this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1));
-        $this->assertNull($this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, []));
-        $this->assertNull($this->repository->markFailed(ProcessingEntityType::Article, $id, self::TASK, 'x', 'y'));
-        $this->assertNull($this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1));
+        // A read may legitimately find nothing; a write may not (#267).
         $this->assertNull($this->repository->getCurrent(ProcessingEntityType::Article, $id, self::TASK));
+
+        $transitions = [
+            fn () => $this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1),
+            fn () => $this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, []),
+            fn () => $this->repository->markFailed(ProcessingEntityType::Article, $id, self::TASK, 'x', 'y'),
+            fn () => $this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1),
+        ];
+
+        foreach ($transitions as $index => $transition) {
+            try {
+                $transition();
+                $this->fail("Transition {$index} silently accepted a missing row.");
+            } catch (ProcessingStateNotFoundException $exception) {
+                $this->assertStringContainsString($id->value(), $exception->getMessage());
+            }
+        }
     }
 
     public function test_mark_superseded_only_touches_an_in_flight_row_for_that_version(): void
@@ -109,7 +123,7 @@ class ProcessingStateRepositoryTest extends TestCase
         $this->repository->markProcessing(ProcessingEntityType::Article, $id, self::TASK, 1);
 
         $stale = $this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1);
-        $this->assertSame(LastOperationStatus::SUPERSEDED, $stale?->status);
+        $this->assertSame(ProcessingStatus::SUPERSEDED, $stale?->status);
         $this->assertNotNull($stale?->finishedAt);
         $this->assertTrue($stale?->isTerminal());
 
@@ -117,13 +131,13 @@ class ProcessingStateRepositoryTest extends TestCase
         $this->repository->startOrReset(ProcessingEntityType::Article, $id, self::TASK, 2);
         $this->assertNull($this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 1));
         $current = $this->repository->getCurrent(ProcessingEntityType::Article, $id, self::TASK);
-        $this->assertSame(LastOperationStatus::PENDING, $current?->status);
+        $this->assertSame(ProcessingStatus::PENDING, $current?->status);
         $this->assertSame(2, $current?->contentVersion);
 
         // Nor may it rewrite a run that already finished.
         $this->repository->markCompleted(ProcessingEntityType::Article, $id, self::TASK, []);
         $this->assertNull($this->repository->markSuperseded(ProcessingEntityType::Article, $id, self::TASK, 2));
-        $this->assertSame(LastOperationStatus::COMPLETED, $this->repository->getCurrent(ProcessingEntityType::Article, $id, self::TASK)?->status);
+        $this->assertSame(ProcessingStatus::COMPLETED, $this->repository->getCurrent(ProcessingEntityType::Article, $id, self::TASK)?->status);
     }
 
     public function test_get_current_batch_returns_one_row_per_entity_in_one_query(): void
@@ -140,8 +154,8 @@ class ProcessingStateRepositoryTest extends TestCase
         DB::disableQueryLog();
 
         $this->assertEqualsCanonicalizing([$ids[0], $ids[1]], array_keys($batch));
-        $this->assertSame(LastOperationStatus::PENDING, $batch[$ids[0]]->status);
-        $this->assertSame(LastOperationStatus::COMPLETED, $batch[$ids[1]]->status);
+        $this->assertSame(ProcessingStatus::PENDING, $batch[$ids[0]]->status);
+        $this->assertSame(ProcessingStatus::COMPLETED, $batch[$ids[1]]->status);
         $this->assertSame([], $this->repository->getCurrentBatch(ProcessingEntityType::Article, [], self::TASK));
     }
 
@@ -186,13 +200,13 @@ class ProcessingStateRepositoryTest extends TestCase
 
         $collapsed = $rows[$article];
         $this->assertSame('article_content_processing', $collapsed->task_type);
-        $this->assertSame(LastOperationStatus::COMPLETED, $collapsed->status, 'The newest row wins.');
+        $this->assertSame(ProcessingStatus::COMPLETED, $collapsed->status, 'The newest row wins.');
         $this->assertSame(1, $collapsed->attempt);
         $this->assertSame(1, $collapsed->content_version);
         $this->assertSame(['word_count' => 7], $collapsed->metadata, 'Only counts survive; free text does not.');
         $this->assertNotNull($collapsed->finished_at);
 
-        $this->assertSame(LastOperationStatus::PROCESSING, $rows[$other]->status);
+        $this->assertSame(ProcessingStatus::PROCESSING, $rows[$other]->status);
         $this->assertNull($rows[$other]->finished_at);
 
         $this->assertEqualsCanonicalizing(

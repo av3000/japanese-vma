@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\Processing\Services;
 
-use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Events\ProcessingStatusUpdated;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -32,7 +32,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $contentVersion,
-    ): ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         return $this->broadcast($this->repository->startOrReset($entityType, $entityId, $task, $contentVersion));
     }
 
@@ -41,8 +41,8 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $attempt,
-    ): ?ArticleProcessingStateDTO {
-        return $this->broadcastIfAny($this->repository->markProcessing($entityType, $entityId, $task, $attempt));
+    ): ProcessingStateDTO {
+        return $this->broadcast($this->repository->markProcessing($entityType, $entityId, $task, $attempt));
     }
 
     public function markCompleted(
@@ -50,8 +50,8 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         array $metadata,
-    ): ?ArticleProcessingStateDTO {
-        return $this->broadcastIfAny($this->repository->markCompleted($entityType, $entityId, $task, $metadata));
+    ): ProcessingStateDTO {
+        return $this->broadcast($this->repository->markCompleted($entityType, $entityId, $task, $metadata));
     }
 
     public function markFailed(
@@ -61,7 +61,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         string $errorCode,
         Throwable|string $error,
         array $metadata = [],
-    ): ?ArticleProcessingStateDTO {
+    ): ProcessingStateDTO {
         $message = $error instanceof Throwable ? self::publicMessageFor($error) : $error;
 
         if ($error instanceof Throwable) {
@@ -79,7 +79,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
             ]);
         }
 
-        return $this->broadcastIfAny($this->repository->markFailed(
+        return $this->broadcast($this->repository->markFailed(
             $entityType,
             $entityId,
             $task,
@@ -94,7 +94,7 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         EntityId $entityId,
         ProcessingTaskType $task,
         int $staleContentVersion,
-    ): ?ArticleProcessingStateDTO {
+    ): ?ProcessingStateDTO {
         return $this->broadcastIfAny($this->repository->markSuperseded($entityType, $entityId, $task, $staleContentVersion));
     }
 
@@ -107,7 +107,20 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
     ): void {
         $current = $this->repository->getCurrent($entityType, $entityId, $task);
 
-        if ($current === null || $current->isTerminal()) {
+        if ($current === null) {
+            // The only transition allowed to tolerate a missing row: this runs from the queue's
+            // failed() hook, where throwing would replace the failure being reported. Loud in
+            // the logs instead of silent (#267).
+            Log::warning('No processing state to fail', [
+                'entity_type' => $entityType->value,
+                'entity_id' => $entityId->value(),
+                'task_type' => $task->value,
+            ]);
+
+            return;
+        }
+
+        if ($current->isTerminal()) {
             return;
         }
 
@@ -132,16 +145,20 @@ final class ProcessingStateService implements ProcessingStateServiceInterface
         return count($stale);
     }
 
-    private function broadcastIfAny(?ArticleProcessingStateDTO $state): ?ArticleProcessingStateDTO
+    /**
+     * Only `markSuperseded` still has a legitimate null: the run it would supersede already
+     * finished, or a newer version owns the row, so there is nothing to write or broadcast.
+     */
+    private function broadcastIfAny(?ProcessingStateDTO $state): ?ProcessingStateDTO
     {
         return $state === null ? null : $this->broadcast($state);
     }
 
-    private function broadcast(ArticleProcessingStateDTO $state): ArticleProcessingStateDTO
+    private function broadcast(ProcessingStateDTO $state): ProcessingStateDTO
     {
         $ownerUuid = $this->owners->ownerUuid($state->entityType, EntityId::from($state->entityId));
 
-        AsyncLastOperationStatusUpdated::dispatch(...AsyncLastOperationStatusUpdated::argumentsFromDto($state, $ownerUuid));
+        ProcessingStatusUpdated::dispatch(...ProcessingStatusUpdated::argumentsFromDto($state, $ownerUuid));
 
         return $state;
     }

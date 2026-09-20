@@ -1,9 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
 import {
-	LastOperationStatus,
-	type LastOperationStatus as LastOperationStatusType,
-} from '@/api/generated/model/lastOperationStatus';
+	ProcessingStatus,
+	type ProcessingStatus as ProcessingStatusType,
+} from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import {
@@ -22,7 +22,7 @@ import styles from './ProcessingStatusAlert.module.scss';
  * Copy per status. `live` is true when the socket is connected and events arrive as they
  * happen; otherwise the query is polling (#251) and the page should promise only that.
  */
-export const STATUS_CONFIG: Record<LastOperationStatusType, { message: (live: boolean) => string }> = {
+export const STATUS_CONFIG: Record<ProcessingStatusType, { message: (live: boolean) => string }> = {
 	pending: {
 		message: (live) =>
 			live
@@ -73,7 +73,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 	const status = processing_status?.status;
 
 	// Superseded is terminal and carries no result of its own (ADR 0001): nothing to show.
-	if (!status || status === LastOperationStatus.superseded) return null;
+	if (!status || status === ProcessingStatus.superseded) return null;
 
 	const message = STATUS_CONFIG[status].message(isConnected);
 
@@ -88,7 +88,12 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	const hasValidTiming = createdAtMs !== null && updatedAtMs !== null;
 
-	const isTerminal = status === LastOperationStatus.completed || status === LastOperationStatus.failed;
+	const isTerminal = status === ProcessingStatus.completed || status === ProcessingStatus.failed;
+
+	// A first attempt is the normal case and says nothing worth the space; a retry does (#261).
+	const attempt = processing_status?.attempt ?? 0;
+	const maxAttempts = processing_status?.max_attempts ?? 0;
+	const attemptText = attempt > 1 ? `Attempt ${attempt}${maxAttempts > 0 ? ` of ${maxAttempts}` : ''}` : null;
 
 	let durationText: string | null = null;
 	if (isTerminal && createdAtMs !== null && updatedAtMs !== null) {
@@ -97,9 +102,9 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	// TODO: not sure about this class mapping if it is the clean way.
 	const statusVariant: StatusVariant =
-		status === LastOperationStatus.completed
+		status === ProcessingStatus.completed
 			? 'success'
-			: status === LastOperationStatus.failed
+			: status === ProcessingStatus.failed
 				? 'destructive'
 				: 'pending';
 
@@ -115,7 +120,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 			<div className={styles.content}>
 				<div className="small">{message}</div>
 				<div className={styles.status}>
-					{(status === LastOperationStatus.pending || status === LastOperationStatus.processing) && (
+					{(status === ProcessingStatus.pending || status === ProcessingStatus.processing) && (
 						<span className="spinner-border spinner-border-sm mr-3" />
 					)}
 					<Popover>
@@ -142,6 +147,13 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 									<span className="text-muted small">Duration</span>
 									<span className="small">{durationText ?? '—'}</span>
 								</div>
+
+								{attemptText && (
+									<div className="d-flex justify-content-between gap-3">
+										<span className="text-muted small">Retry</span>
+										<span className="small">{attemptText}</span>
+									</div>
+								)}
 
 								{!hasValidTiming && (
 									<div className="small text-muted mt-2">Timing data unavailable.</div>

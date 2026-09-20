@@ -6,11 +6,11 @@ namespace Tests\Feature\Articles;
 
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\JapaneseMaterial\Words\Services\WordExtractionServiceInterface;
-use App\Application\LastOperations\Events\AsyncLastOperationStatusUpdated;
+use App\Application\Processing\Events\ProcessingStatusUpdated;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\ProcessingState;
@@ -58,7 +58,7 @@ class ProcessArticleContentJobTest extends TestCase
         $this->assertSame(0, $article->uncommon);
 
         $row = $this->row($article);
-        $this->assertSame(LastOperationStatus::COMPLETED, $row->status);
+        $this->assertSame(ProcessingStatus::COMPLETED, $row->status);
         $this->assertSame(1, $row->attempt);
         $this->assertSame(['kanji_count' => 1, 'word_count' => 1], $row->metadata);
         $this->assertNotNull($row->started_at);
@@ -93,7 +93,7 @@ class ProcessArticleContentJobTest extends TestCase
         $article->update(['content_version' => 3]);
         $this->openRow($article, version: 3);
 
-        Event::fake([AsyncLastOperationStatusUpdated::class]);
+        Event::fake([ProcessingStatusUpdated::class]);
 
         $this->runJob($article, version: 2);
 
@@ -103,9 +103,9 @@ class ProcessArticleContentJobTest extends TestCase
 
         $row = $this->row($article);
         // The row belongs to version 3, which is still pending; the stale run must not touch it.
-        $this->assertSame(LastOperationStatus::PENDING, $row->status);
+        $this->assertSame(ProcessingStatus::PENDING, $row->status);
         $this->assertSame(3, $row->content_version);
-        Event::assertNotDispatched(AsyncLastOperationStatusUpdated::class);
+        Event::assertNotDispatched(ProcessingStatusUpdated::class);
     }
 
     public function test_stale_version_supersedes_its_own_in_flight_row(): void
@@ -117,7 +117,7 @@ class ProcessArticleContentJobTest extends TestCase
         $this->runJob($article, version: 1);
 
         $row = $this->row($article);
-        $this->assertSame(LastOperationStatus::SUPERSEDED, $row->status);
+        $this->assertSame(ProcessingStatus::SUPERSEDED, $row->status);
         $this->assertNotNull($row->finished_at);
     }
 
@@ -141,7 +141,7 @@ class ProcessArticleContentJobTest extends TestCase
         }
 
         $row = $this->row($article);
-        $this->assertSame(LastOperationStatus::FAILED, $row->status);
+        $this->assertSame(ProcessingStatus::FAILED, $row->status);
         $this->assertSame(ProcessArticleContentJob::STAGE_KANJI, $row->error_code);
         $this->assertSame('kanji service down', $row->error_message);
         $this->assertSame(ProcessArticleContentJob::STAGE_KANJI, $row->metadata['stage']);
@@ -164,7 +164,7 @@ class ProcessArticleContentJobTest extends TestCase
             $this->runJob($article);
         } finally {
             $row = $this->row($article);
-            $this->assertSame(LastOperationStatus::FAILED, $row->status);
+            $this->assertSame(ProcessingStatus::FAILED, $row->status);
             $this->assertSame(ProcessArticleContentJob::STAGE_WORDS, $row->error_code);
             $this->assertSame([], $this->pivot('article_kanji', 'kanji_id', $article), 'Nothing is persisted unless every stage succeeds.');
             $this->assertSame(0, $article->refresh()->n5);
@@ -178,7 +178,7 @@ class ProcessArticleContentJobTest extends TestCase
             'entity_type' => 'article',
             'entity_id' => $uuid,
             'task_type' => 'article_content_processing',
-            'status' => LastOperationStatus::PENDING,
+            'status' => ProcessingStatus::PENDING,
             'content_version' => 1,
         ]);
 
@@ -188,7 +188,7 @@ class ProcessArticleContentJobTest extends TestCase
             dispatch_sync(new ProcessArticleContentJob($uuid, 1));
         } finally {
             $row = ProcessingState::query()->where('entity_id', $uuid)->firstOrFail();
-            $this->assertSame(LastOperationStatus::FAILED, $row->status);
+            $this->assertSame(ProcessingStatus::FAILED, $row->status);
             $this->assertSame('article_not_found', $row->error_code);
         }
     }
@@ -201,14 +201,14 @@ class ProcessArticleContentJobTest extends TestCase
 
         $job->failed(new RuntimeException('killed by timeout'));
         $row = $this->row($article);
-        $this->assertSame(LastOperationStatus::FAILED, $row->status);
+        $this->assertSame(ProcessingStatus::FAILED, $row->status);
         $this->assertSame('job_failed', $row->error_code);
         $this->assertSame('killed by timeout', $row->error_message);
 
         $this->openRow($article);
         $this->runJob($article);
         $job->failed(new RuntimeException('late signal'));
-        $this->assertSame(LastOperationStatus::COMPLETED, $this->row($article)->status, 'A completed row is never rewritten by failed().');
+        $this->assertSame(ProcessingStatus::COMPLETED, $this->row($article)->status, 'A completed row is never rewritten by failed().');
     }
 
     public function test_job_is_serialised_around_the_article_and_queued_after_commit(): void

@@ -36,11 +36,8 @@ use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -175,8 +172,8 @@ class ArticleService implements ArticleServiceInterface
 
         $processingState = $this->processingStateReader->currentState($article->getUid()->value());
 
-        // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
-        // once detail payload should stop carrying full lists.
+        // kanjis and words are opt-in since #268; unasked-for they come back empty, and the
+        // caller reads articles/{uuid}/kanjis and articles/{uuid}/words a page at a time.
         return Result::success(new ArticleDetailResultDTO(
             article: $article,
             engagement: $engagement,
@@ -385,56 +382,5 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::deletionFailed());
         }
-    }
-
-    /**
-     * Get paginated words for article with typed failure handling.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
-     */
-    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result
-    {
-        try {
-            $pagination = Pagination::fromInputOrDefault($page, $perPage);
-            $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
-
-            if ($paginator === null) {
-                return Result::failure(ArticleErrors::notFound((string) $articleId));
-            }
-
-            return Result::success($paginator);
-        } catch (\Exception $e) {
-            Log::error('Article words fetch failed', [
-                'article_id' => $articleId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return Result::failure(ArticleErrors::wordsFetchFailed());
-        }
-    }
-
-    /**
-     * Get paginated words for article.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator
-     */
-    public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
-    {
-        $pagination = Pagination::fromInputOrDefault($page, $perPage);
-        $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
-
-        if ($paginator === null) {
-            throw new ModelNotFoundException;
-        }
-
-        return $paginator;
     }
 }

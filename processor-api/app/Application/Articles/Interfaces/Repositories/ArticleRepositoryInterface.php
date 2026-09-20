@@ -12,7 +12,6 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleRepositoryInterface
 {
@@ -50,8 +49,6 @@ interface ArticleRepositoryInterface
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $dto = null): ?DomainArticle;
 
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData;
-
-    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator;
 
     public function findModerationQueue(Pagination $pagination): Articles;
 

@@ -7,6 +7,7 @@ namespace App\Domain\Articles\DTOs;
 use App\Domain\Articles\Models\Article;
 use App\Domain\Engagement\DTOs\EngagementSummary;
 use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 readonly class ArticleDetailResultDTO
 {
@@ -21,7 +22,7 @@ readonly class ArticleDetailResultDTO
         public array $kanjis,
         public array $words,
         public array $hashtags,
-        public ?ArticleProcessingStateDTO $processingState,
+        public ?ProcessingStateDTO $processingState,
     ) {
     }
 }

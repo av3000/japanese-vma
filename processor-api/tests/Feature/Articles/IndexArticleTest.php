@@ -5,9 +5,9 @@ namespace Tests\Feature\Articles;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -304,7 +304,7 @@ class IndexArticleTest extends TestCase
             'entity_type' => 'article',
             'entity_id' => $article->uuid,
             'task_type' => 'article_content_processing',
-            'status' => LastOperationStatus::COMPLETED->value,
+            'status' => ProcessingStatus::COMPLETED->value,
             'content_version' => 1,
             'metadata' => json_encode(['kanji_count' => 1, 'word_count' => 0], JSON_THROW_ON_ERROR),
             'created_at' => now(),
@@ -317,7 +317,7 @@ class IndexArticleTest extends TestCase
             ->assertJsonPath('items.0.hashtags.0.content', '#grammar')
             ->assertJsonPath('items.0.engagement.stats.likes_count', 0)
             ->assertJsonPath('items.0.processing_status.type', 'article_content_processing')
-            ->assertJsonPath('items.0.processing_status.status', LastOperationStatus::COMPLETED->value);
+            ->assertJsonPath('items.0.processing_status.status', ProcessingStatus::COMPLETED->value);
     }
 
     public function test_index_suppresses_stats_when_include_stats_counts_is_false(): void

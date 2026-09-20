@@ -2,9 +2,9 @@ import React from 'react';
 import classNames from 'classnames';
 import type { ArticleResource } from '@/api/generated/model/articleResource';
 import {
-	LastOperationStatus,
-	type LastOperationStatus as LastOperationStatusType,
-} from '@/api/generated/model/lastOperationStatus';
+	ProcessingStatus,
+	type ProcessingStatus as ProcessingStatusType,
+} from '@/api/generated/model/processingStatus';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import { Chip } from '@/components/shared/Chip';
@@ -18,13 +18,13 @@ export interface ArticleCardProps {
 	className?: string;
 }
 
-const shouldShowProcessingBadge = (status: string | undefined): status is LastOperationStatusType => {
-	if (!status || status === LastOperationStatus.completed) return false;
+const shouldShowProcessingBadge = (status: string | undefined): status is ProcessingStatusType => {
+	if (!status || status === ProcessingStatus.completed) return false;
 
 	return (
-		status === LastOperationStatus.pending ||
-		status === LastOperationStatus.processing ||
-		status === LastOperationStatus.failed
+		status === ProcessingStatus.pending ||
+		status === ProcessingStatus.processing ||
+		status === ProcessingStatus.failed
 	);
 };
 

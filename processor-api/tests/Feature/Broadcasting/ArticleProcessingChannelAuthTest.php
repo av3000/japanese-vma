@@ -134,7 +134,7 @@ class ArticleProcessingChannelAuthTest extends TestCase
     {
         return $this->postJson('/api/broadcasting/auth', [
             'socket_id' => '1234.5678',
-            'channel_name' => "private-last_operations.{$uuid}",
+            'channel_name' => "private-processing_states.{$uuid}",
         ]);
     }
 

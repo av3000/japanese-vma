@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
 import ProcessingStatusAlert from './index';
@@ -18,10 +18,12 @@ vi.mock('@/components/ui/popover', () => ({
 	PopoverDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const status = (value: LastOperationStatus): ProcessingStatusResource => ({
+const status = (value: ProcessingStatus, attempt = 1): ProcessingStatusResource => ({
 	id: 1,
 	entity_id: 'entity-uuid',
-	attempt: 1,
+	attempt,
+	max_attempts: 3,
+	sequence: 1,
 	type: 'article_content_processing',
 	status: value,
 	metadata: {},
@@ -29,20 +31,20 @@ const status = (value: LastOperationStatus): ProcessingStatusResource => ({
 	updated_at: '2026-09-20T10:00:05+00:00',
 });
 
-const render = (value: LastOperationStatus, isConnected = false) => {
+const render = (value: ProcessingStatus, isConnected = false, attempt = 1) => {
 	vi.mocked(useWebSocket).mockReturnValue({
 		isConnected,
 		connectionStatus: isConnected ? 'connected' : 'disconnected',
 	} as never);
-	return renderToStaticMarkup(<ProcessingStatusAlert processing_status={status(value)} />);
+	return renderToStaticMarkup(<ProcessingStatusAlert processing_status={status(value, attempt)} />);
 };
 
 describe('ProcessingStatusAlert', () => {
 	it.each([
-		[LastOperationStatus.pending, 'queued'],
-		[LastOperationStatus.processing, 'Extracting kanji and vocabulary'],
-		[LastOperationStatus.completed, 'are ready'],
-		[LastOperationStatus.failed, 'extraction failed'],
+		[ProcessingStatus.pending, 'queued'],
+		[ProcessingStatus.processing, 'Extracting kanji and vocabulary'],
+		[ProcessingStatus.completed, 'are ready'],
+		[ProcessingStatus.failed, 'extraction failed'],
 	])('renders %s with article-specific copy', (value, fragment) => {
 		const html = render(value);
 
@@ -51,7 +53,7 @@ describe('ProcessingStatusAlert', () => {
 	});
 
 	it('renders nothing for superseded, which is terminal and carries no result', () => {
-		expect(render(LastOperationStatus.superseded)).toBe('');
+		expect(render(ProcessingStatus.superseded)).toBe('');
 	});
 
 	it('renders nothing without a status', () => {
@@ -59,8 +61,13 @@ describe('ProcessingStatusAlert', () => {
 		expect(renderToStaticMarkup(<ProcessingStatusAlert processing_status={null} />)).toBe('');
 	});
 
+	it('shows retry progress only once processing is past its first attempt', () => {
+		expect(render(ProcessingStatus.processing, false, 1)).not.toContain('Attempt');
+		expect(render(ProcessingStatus.processing, false, 2)).toContain('Attempt 2 of 3');
+	});
+
 	it('promises live updates only while the socket is connected', () => {
-		expect(render(LastOperationStatus.processing, true)).toContain('update automatically');
-		expect(render(LastOperationStatus.processing, false)).toContain('Checking for updates');
+		expect(render(ProcessingStatus.processing, true)).toContain('update automatically');
+		expect(render(ProcessingStatus.processing, false)).toContain('Checking for updates');
 	});
 });

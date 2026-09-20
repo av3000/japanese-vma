@@ -5,9 +5,9 @@ namespace Tests\Feature\Articles;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
@@ -154,7 +154,7 @@ class ShowArticleTest extends TestCase
             'entity_type' => 'article',
             'entity_id' => $article->uuid,
             'task_type' => 'article_content_processing',
-            'status' => LastOperationStatus::COMPLETED->value,
+            'status' => ProcessingStatus::COMPLETED->value,
             'content_version' => 1,
             'metadata' => json_encode(['kanji_count' => 1, 'word_count' => 0], JSON_THROW_ON_ERROR),
             'created_at' => now(),
@@ -168,71 +168,61 @@ class ShowArticleTest extends TestCase
             ->assertJsonPath('hashtags.0.content', '#grammar')
             ->assertJsonPath('engagement.likes_count', 0)
             ->assertJsonPath('processing_status.type', 'article_content_processing')
-            ->assertJsonPath('processing_status.status', LastOperationStatus::COMPLETED->value)
+            ->assertJsonPath('processing_status.status', ProcessingStatus::COMPLETED->value)
             ->assertJsonMissingPath('article');
     }
 
-    public function test_show_returns_words_by_default_when_article_has_attached_words(): void
+    public function test_show_leaves_the_attached_lists_empty_unless_they_are_asked_for(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user, [
             'publicity' => PublicityStatus::PUBLIC,
         ]);
         $this->attachWord($article, '勉強');
+        $this->attachKanji($article, '水');
 
-        $response = $this->json('GET', "/api/v1/articles/{$article->uuid}");
-
-        $response->assertStatus(200)
+        // The lists moved to articles/{uuid}/words and articles/{uuid}/kanjis (#268); the keys
+        // stay so the generated client type does not change shape between requests.
+        $this->json('GET', "/api/v1/articles/{$article->uuid}")
+            ->assertStatus(200)
             ->assertJsonPath('uid', $article->uuid)
+            ->assertJsonPath('words', [])
+            ->assertJsonPath('kanjis', [])
+            ->assertJsonMissingPath('article');
+    }
+
+    public function test_show_still_embeds_the_lists_for_a_caller_that_asks(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'publicity' => PublicityStatus::PUBLIC,
+        ]);
+        $this->attachWord($article, '勉強');
+        $this->attachKanji($article, '水');
+
+        $this->json('GET', "/api/v1/articles/{$article->uuid}?include_words=true&include_kanjis=true")
+            ->assertStatus(200)
             ->assertJsonPath('words.0.word', '勉強')
             ->assertJsonPath('words.0.word_type', 'noun')
             ->assertJsonPath('words.0.word_k_ele', '勉強')
             ->assertJsonPath('words.0.furigana_r_ele', 'べんきょう')
             ->assertJsonPath('words.0.sense', 'study')
-            ->assertJsonMissingPath('article');
+            ->assertJsonPath('kanjis.0.character', '水');
     }
 
-    public function test_show_suppresses_words_when_include_words_is_false(): void
+    public function test_show_suppresses_the_lists_when_the_flags_are_explicitly_false(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user, [
             'publicity' => PublicityStatus::PUBLIC,
         ]);
         $this->attachWord($article, '勉強');
-
-        $response = $this->json('GET', "/api/v1/articles/{$article->uuid}?include_words=false");
-
-        $response->assertStatus(200)
-            ->assertJsonPath('uid', $article->uuid)
-            ->assertJsonPath('words', []);
-    }
-
-    public function test_show_suppresses_kanjis_when_include_kanjis_is_false(): void
-    {
-        $user = $this->createUser();
-        $article = $this->createArticle($user, [
-            'publicity' => PublicityStatus::PUBLIC,
-        ]);
         $this->attachKanji($article, '水');
 
-        $response = $this->json('GET', "/api/v1/articles/{$article->uuid}?include_kanjis=false");
-
-        $response->assertStatus(200)
-            ->assertJsonPath('uid', $article->uuid)
+        $this->json('GET', "/api/v1/articles/{$article->uuid}?include_words=false&include_kanjis=false")
+            ->assertStatus(200)
+            ->assertJsonPath('words', [])
             ->assertJsonPath('kanjis', []);
-    }
-
-    public function test_show_returns_attached_kanjis_by_default(): void
-    {
-        $user = $this->createUser();
-        $article = $this->createArticle($user, [
-            'publicity' => PublicityStatus::PUBLIC,
-        ]);
-        $this->attachKanji($article, '水');
-
-        $this->getJson("/api/v1/articles/{$article->uuid}")
-            ->assertOk()
-            ->assertJsonPath('kanjis.0.character', '水');
     }
 
     public function test_show_exposes_jlpt_counters_and_the_consolidated_processing_status(): void
