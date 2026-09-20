@@ -11,7 +11,6 @@ use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleServiceInterface
 {
@@ -58,26 +57,4 @@ interface ArticleServiceInterface
      * @return Result Success data: null (void), Failure data: ResultError (notFound, accessDenied)
      */
     public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result;
-
-    /**
-     * Get paginated words for an article with typed failure handling.
-     *
-     * @param int $articleId Article integer ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
-     */
-    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result;
-
-    /**
-     * Get paginated words for an article.
-     *
-     * @param int $articleId Article integer ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Paginator with domain word models
-     */
-    public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
 }

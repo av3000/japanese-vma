@@ -4,6 +4,7 @@ import type { ArticleListResource } from '@/api/generated/model/articleListResou
 import type { ArticleResource } from '@/api/generated/model/articleResource';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
+import { articleKanjisQueryKey, articleWordsQueryKey } from './attachments';
 import { articleKeys } from './keys';
 
 /**
@@ -117,6 +118,12 @@ export const applyProcessingStatus = (
 	});
 
 	if (isTerminalProcessingStatus(payload.status)) {
+		// Processing changed the article itself, not just the status row: attached kanji and
+		// words, and the JLPT counters on the detail. Refetch the detail summary and the two
+		// attachment lists the detail page reads, and only while they are on screen — the
+		// payload saving from taking these lists out of the detail is the point (#268).
 		void queryClient.invalidateQueries({ queryKey: articleKeys.detail(articleUuid) });
+		void queryClient.invalidateQueries({ queryKey: articleKanjisQueryKey(articleUuid), refetchType: 'active' });
+		void queryClient.invalidateQueries({ queryKey: articleWordsQueryKey(articleUuid), refetchType: 'active' });
 	}
 };

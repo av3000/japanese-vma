@@ -69,7 +69,10 @@ class LegacyArticleRouteRetirementTest extends TestCase
         $replacements = [
             ['GET', 'api/v1/articles'],
             ['GET', 'api/v1/articles/1'],
-            ['GET', 'api/v1/articles/1/words'],
+            // The words replacement is the word index filtered by article (#268): one query
+            // path per resource, rather than a second article-scoped route beside it.
+            ['GET', 'api/v1/words'],
+            ['GET', 'api/v1/kanjis'],
             ['POST', 'api/v1/articles'],
             ['PUT', "api/v1/articles/{$uuid}"],
             ['DELETE', "api/v1/articles/{$uuid}"],

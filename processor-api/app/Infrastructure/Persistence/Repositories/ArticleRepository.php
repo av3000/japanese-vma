@@ -15,7 +15,6 @@ use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
@@ -185,28 +184,6 @@ class ArticleRepository implements ArticleRepositoryInterface
             kanjis: $includeKanjis ? $this->mapKanjisForPdf($persistenceArticle) : [],
             words: $includeWords ? $this->mapWordsForPdf($persistenceArticle) : [],
         );
-    }
-
-    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator
-    {
-        $article = PersistenceArticle::find($articleId);
-
-        if ($article === null) {
-            return null;
-        }
-
-        $paginator = $article->words()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
-
-        $paginator->setCollection(
-            $paginator->getCollection()->map(
-                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
-            )
-        );
-
-        return $paginator;
     }
 
     public function findModerationQueue(Pagination $pagination): Articles
