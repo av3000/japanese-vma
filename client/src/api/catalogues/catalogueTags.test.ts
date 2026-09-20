@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stringifyCatalogueTags } from './legacyCatalogues';
+import { stringifyCatalogueTags } from './catalogueTags';
 
 describe('catalogue tag serialization', () => {
 	it('serializes form tags into the backend hashtag string format', () => {
