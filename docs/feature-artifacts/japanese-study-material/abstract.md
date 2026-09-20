@@ -45,7 +45,7 @@ Japanese study material turns reference data into browsable, searchable learning
 
 ## Current Shape
 
-All four resource families have public v1 list/detail routes and focused backend tests. Frontend migration depth varies: kanji has a stronger current typed route precedent, while several radical, word, sentence, and detail paths still contain legacy calls or transitional contracts.
+All four resource families have public v1 list/detail routes and focused backend tests. Every list and detail route in the React client reads through the generated v1 clients; the legacy public read and search routes were retired in RET-JPN-READ-01 (#147), and the Sentence writes followed in RET-SEN-01 (#151).
 
 The baseline does not combine these resources into one domain entity. They share a packet because learners navigate them together, while each keeps its own query criteria and response shape.
 

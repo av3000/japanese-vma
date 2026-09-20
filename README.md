@@ -45,7 +45,7 @@ The backend is a Laravel 11 modular monolith moving toward a layered structure:
 - `app/Application` contains services, actions, policies, jobs, and repository interfaces
 - `app/Infrastructure/Persistence` contains Eloquent-backed repositories, mappers, and persistence models
 
-The repo currently contains both legacy routes in `processor-api/routes/api.php` and newer `v1` routes in `processor-api/routes/api_v1.php`. The docs describe this current state rather than pretending the migration is finished.
+Every HTTP contract lives in `processor-api/routes/api_v1.php`. `processor-api/routes/api.php` holds only the `api/health` probe plus a retirement ledger per legacy route family, recording each route's v1 replacement. The legacy-to-v1 migration closed with #125; the retained operational and compatibility endpoints are listed in `docs/architecture/deployment-and-runtime.md`.
 
 ### Deployment And Runtime
 

@@ -49,7 +49,7 @@ For newer `v1` endpoints, the current request flow is generally:
 6. Repository interface call into persistence implementation
 7. Resource or typed result returned as the HTTP response
 
-This flow exists alongside legacy routes and controllers that still live in `routes/api.php` and older Laravel-style controller code. Contributor docs should treat both as real until migration is finished.
+This is the only request flow. The legacy controllers under `app/Http/Controllers` were removed with their routes in the RET-* retirement slices (#147 to #152); the ledger comments in `routes/api.php` record each route's v1 replacement. The Eloquent models under `app/Http/Models` remain because Article actions and helpers still use them, which is persistence debt rather than a second HTTP surface.
 
 ### Current patterns in use
 
@@ -62,7 +62,7 @@ This flow exists alongside legacy routes and controllers that still live in `rou
 ## Routing And API Surface
 
 -   `routes/api_v1.php` contains the newer versioned API surface under `/api/v1`.
--   `routes/api.php` still contains legacy endpoints and the `/api/health` endpoint.
+-   `routes/api.php` contains the `/api/health` endpoint and the retirement ledger comments; no legacy endpoints remain.
 -   Scramble generates API docs for the `api/v1` path at `http://localhost:8080/docs/api`.
 
 ## Local Setup

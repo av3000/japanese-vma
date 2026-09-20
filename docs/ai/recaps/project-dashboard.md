@@ -4,6 +4,7 @@
 > **Last reviewed:** 2026-08-18
 > **Evidence baseline:** Repository working tree inspected on 2026-08-18
 > **Audience:** Maintainers, technical leads, planners, and reviewers
+> **Staleness note (2026-09-20):** The migration rows below predate the RET-* route retirements merged on 2026-09-19. No legacy HTTP route or legacy frontend transport remains; see #125 for the closed state and `docs/architecture/deployment-and-runtime.md` for the retained compatibility endpoints.
 
 ## Snapshot
 
