@@ -9,9 +9,9 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleServiceInterface
 {
@@ -60,24 +60,24 @@ interface ArticleServiceInterface
     public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result;
 
     /**
-     * Get paginated words for an article with typed failure handling.
+     * One page of the words attached to an article, under the article's own visibility.
      *
-     * @param int $articleId Article integer ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
+     * @return Result success: ArticleWordListResultDTO, failure: ResultError
      */
-    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result;
+    public function getArticleWordsPage(
+        EntityId $articleUid,
+        Pagination $pagination,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result;
 
     /**
-     * Get paginated words for an article.
+     * One page of the kanji attached to an article, under the article's own visibility.
      *
-     * @param int $articleId Article integer ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Paginator with domain word models
+     * @return Result success: ArticleKanjiListResultDTO, failure: ResultError
      */
-    public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator;
+    public function getArticleKanjisPage(
+        EntityId $articleUid,
+        Pagination $pagination,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result;
 }

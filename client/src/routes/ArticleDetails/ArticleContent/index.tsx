@@ -12,6 +12,7 @@ import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
@@ -235,6 +236,12 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							</Button>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			<div className="row justify-content-center mt-5">
+				<div className="col-lg-8">
+					<ArticleAttachments articleUuid={article.uuid} />
 				</div>
 			</div>
 

@@ -95,7 +95,22 @@ describe('applyProcessingStatus', () => {
 		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.detail(UUID) });
 
 		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.failed, 4));
-		expect(invalidate).toHaveBeenCalledTimes(2);
+		// Three invalidations per terminal event: detail, kanji pages, word pages (#268).
+		expect(invalidate).toHaveBeenCalledTimes(6);
+	});
+
+	it('refetches the detail and the attachment lists once processing reaches a terminal state', () => {
+		const { queryClient } = seed();
+		const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+		applyProcessingStatus(queryClient, UUID, status(ProcessingStatus.completed, 5));
+
+		// Processing attaches kanji and words and moves the JLPT counters, so the lists the
+		// detail page reads have to be refetched too — but only their active pages (#268).
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.detail(UUID) });
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.kanjis(UUID), refetchType: 'active' });
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.words(UUID), refetchType: 'active' });
+		expect(invalidate).toHaveBeenCalledTimes(3);
 	});
 
 	it('leaves caches alone when nothing is loaded yet', () => {

@@ -4,8 +4,11 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
+use App\Domain\Articles\DTOs\ArticleKanjiListResultDTO;
+use App\Domain\Articles\DTOs\ArticlePaginationDTO;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
+use App\Domain\Articles\DTOs\ArticleWordListResultDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -23,6 +26,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function __construct(
         private readonly ArticleMapper $articleMapper,
         private readonly WordMapper $wordMapper,
+        private readonly KanjiMapper $kanjiMapper,
         // private readonly KanjiRelationQueryBuilder $kanjiRelationQueryBuilder
     ) {
     }
@@ -187,26 +191,66 @@ class ArticleRepository implements ArticleRepositoryInterface
         );
     }
 
-    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator
+    public function findWordPage(EntityId $articleUuid, Pagination $pagination): ?ArticleWordListResultDTO
     {
-        $article = PersistenceArticle::find($articleId);
+        $article = $this->findPersistenceByUuid($articleUuid);
 
         if ($article === null) {
             return null;
         }
 
-        $paginator = $article->words()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
+        $paginator = $article->words()
+            ->orderBy('japanese_word_bank_long.id')
+            ->paginate(perPage: $pagination->per_page, page: $pagination->page);
 
-        $paginator->setCollection(
-            $paginator->getCollection()->map(
-                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
-            )
+        return new ArticleWordListResultDTO(
+            items: $paginator->getCollection()
+                ->map(fn ($word) => $this->wordMapper->mapToDomain($word))
+                ->all(),
+            pagination: self::paginationOf($paginator),
         );
+    }
 
-        return $paginator;
+    public function findKanjiPage(EntityId $articleUuid, Pagination $pagination): ?ArticleKanjiListResultDTO
+    {
+        $article = $this->findPersistenceByUuid($articleUuid);
+
+        if ($article === null) {
+            return null;
+        }
+
+        $paginator = $article->kanjis()
+            ->orderBy('japanese_kanji_bank_long.id')
+            ->paginate(perPage: $pagination->per_page, page: $pagination->page);
+
+        return new ArticleKanjiListResultDTO(
+            items: $paginator->getCollection()
+                ->map(fn ($kanji) => $this->kanjiMapper->mapToDomain($kanji))
+                ->all(),
+            pagination: self::paginationOf($paginator),
+        );
+    }
+
+    private function findPersistenceByUuid(EntityId $articleUuid): ?PersistenceArticle
+    {
+        /** @var PersistenceArticle|null $article */
+        $article = PersistenceArticle::query()->where('uuid', $articleUuid->value())->first();
+
+        return $article;
+    }
+
+    /**
+     * @param LengthAwarePaginator<int, mixed> $paginator
+     */
+    private static function paginationOf(LengthAwarePaginator $paginator): ArticlePaginationDTO
+    {
+        return new ArticlePaginationDTO(
+            page: $paginator->currentPage(),
+            perPage: $paginator->perPage(),
+            total: $paginator->total(),
+            lastPage: $paginator->lastPage(),
+            hasMore: $paginator->hasMorePages(),
+        );
     }
 
     public function findModerationQueue(Pagination $pagination): Articles

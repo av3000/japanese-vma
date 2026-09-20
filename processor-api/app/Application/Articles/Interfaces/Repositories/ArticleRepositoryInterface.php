@@ -3,8 +3,10 @@
 namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
+use App\Domain\Articles\DTOs\ArticleKanjiListResultDTO;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
+use App\Domain\Articles\DTOs\ArticleWordListResultDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -12,7 +14,6 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ArticleRepositoryInterface
 {
@@ -51,7 +52,15 @@ interface ArticleRepositoryInterface
 
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData;
 
-    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator;
+    /**
+     * One page of the words attached to an article, or null when the article does not exist.
+     */
+    public function findWordPage(EntityId $articleUuid, Pagination $pagination): ?ArticleWordListResultDTO;
+
+    /**
+     * One page of the kanji attached to an article, or null when the article does not exist.
+     */
+    public function findKanjiPage(EntityId $articleUuid, Pagination $pagination): ?ArticleKanjiListResultDTO;
 
     public function findModerationQueue(Pagination $pagination): Articles;
 

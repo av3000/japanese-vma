@@ -117,6 +117,13 @@ export const applyProcessingStatus = (
 	});
 
 	if (isTerminalProcessingStatus(payload.status)) {
+		// Processing changed the article itself, not just the status row: attached kanji and
+		// words, and the JLPT counters on the detail. Refetch the detail summary and only the
+		// first page of each attachment list — pages the reader has scrolled to are refetched
+		// when they are next viewed, and invalidating them all would undo the payload saving
+		// that moving these lists out of the detail bought (#268).
 		void queryClient.invalidateQueries({ queryKey: articleKeys.detail(articleUuid) });
+		void queryClient.invalidateQueries({ queryKey: articleKeys.kanjis(articleUuid), refetchType: 'active' });
+		void queryClient.invalidateQueries({ queryKey: articleKeys.words(articleUuid), refetchType: 'active' });
 	}
 };

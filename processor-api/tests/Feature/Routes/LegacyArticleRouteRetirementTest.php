@@ -69,7 +69,9 @@ class LegacyArticleRouteRetirementTest extends TestCase
         $replacements = [
             ['GET', 'api/v1/articles'],
             ['GET', 'api/v1/articles/1'],
-            ['GET', 'api/v1/articles/1/words'],
+            // The words replacement moved to uuid addressing with the kanji sibling (#268).
+            ['GET', "api/v1/articles/{$uuid}/words"],
+            ['GET', "api/v1/articles/{$uuid}/kanjis"],
             ['POST', 'api/v1/articles'],
             ['PUT', "api/v1/articles/{$uuid}"],
             ['DELETE', "api/v1/articles/{$uuid}"],

@@ -454,7 +454,7 @@
                 }
             }
         },
-        "/articles/{id}/words": {
+        "/articles/{uid}/words": {
             "get": {
                 "operationId": "article.words",
                 "tags": [
@@ -462,46 +462,94 @@
                 ],
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "uid",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
                         "name": "page",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "integer",
+                            "minimum": 1
                         }
                     },
                     {
                         "name": "per_page",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "`ArticleWordCollection`",
+                        "description": "`ArticleWordListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ArticleWordCollection"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
+                                    "$ref": "#/components/schemas/ArticleWordListResource"
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/articles/{uid}/kanjis": {
+            "get": {
+                "operationId": "article.kanjis",
+                "tags": [
+                    "Article"
+                ],
+                "parameters": [
+                    {
+                        "name": "uid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ArticleKanjiListResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleKanjiListResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4668,6 +4716,25 @@
                 ],
                 "title": "ArticleFacetValueResource"
             },
+            "ArticleKanjiListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "ArticleKanjiListResource"
+            },
             "ArticleListResource": {
                 "type": "object",
                 "properties": {
@@ -4918,29 +4985,24 @@
                 ],
                 "title": "ArticleStatusResource"
             },
-            "ArticleWordCollection": {
+            "ArticleWordListResource": {
                 "type": "object",
                 "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "words": {
+                    "items": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/ArticleWordResource"
                         }
                     },
-                    "message": {
-                        "type": "string",
-                        "const": "Article words fetched"
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
                     }
                 },
                 "required": [
-                    "success",
-                    "words",
-                    "message"
+                    "items",
+                    "pagination"
                 ],
-                "title": "ArticleWordCollection"
+                "title": "ArticleWordListResource"
             },
             "ArticleWordResource": {
                 "type": "object",
