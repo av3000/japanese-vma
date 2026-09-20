@@ -61,8 +61,8 @@ flowchart LR
 
 ### Verified current
 
-- The React client calls both generated v1 clients and legacy API adapters.
-- The Laravel backend exposes both `processor-api/routes/api_v1.php` and `processor-api/routes/api.php`.
+- The React client calls generated v1 clients only; the shared `apiCall` transport and every legacy API adapter were retired (#146).
+- The Laravel backend exposes `processor-api/routes/api_v1.php` plus two unversioned operational endpoints, `api/health` and `api/broadcasting/auth`, documented in `deployment-and-runtime.md`. `processor-api/routes/api.php` otherwise holds only retirement ledger comments.
 - PostgreSQL is the dedicated database in the Docker development and test topology.
 - Redis supports cache, queue, and realtime coordination according to backend configuration.
 - Article processing jobs and PDF services are explicit application boundaries.

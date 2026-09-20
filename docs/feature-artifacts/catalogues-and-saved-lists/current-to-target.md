@@ -28,7 +28,7 @@
 
 ## Leading Follow-Up
 
-The next compatibility slice is a focused v1 legacy-ID resolver followed by migration of `client/src/api/catalogues/legacyCatalogues.ts`. SavedList route deletion and renderer rehoming should follow only after redirect and import verification.
+The compatibility slice has shipped: `GET v1/catalogues/legacy/{id}` (CAT-ID-BE-01, #130) resolves a numeric id to its canonical UUID, and `client/src/routes/CatalogueLegacyRedirects` rewrites the `/lists`, `/list/:id`, `/newlist`, and `/list/edit/:id` browser paths through it (CAT-ID-FE-01, #131). SavedList files and renderers were rehomed in CAT-CLEAN-FE-01 (#132). The resolver and redirect page are retained compatibility, with owner and revisit condition recorded in `docs/architecture/deployment-and-runtime.md`.
 
 ## Evidence
 

@@ -201,38 +201,40 @@ Use this status vocabulary:
 
 Update this table whenever issues are created or completed.
 
+> **Closed out 2026-09-20.** Every slice below is published and closed; #125 is the parent and its checklist is the authoritative status. Slices marked "Completed before #125" were delivered by earlier PRDs and are listed here only so the legacy-remaining column resolves. Retained compatibility paths and their owners are in `docs/architecture/deployment-and-runtime.md`.
+
 | Slice | Track | GitHub Issue | Status | Blocked By | Migrated Evidence | Legacy Remaining |
 | --- | --- | --- | --- | --- | --- | --- |
-| A0 Migration sequencing and skill preflight | HITL |  | Not published | None |  | Entire backlog unpublished |
-| B1 Article admin/status backend | Backend |  | Not published | A0 |  | Legacy pending/status endpoints |
-| F1 Article admin/dashboard frontend | Frontend |  | Not published | B1 |  | `setArticleStatus`, pending dashboard legacy call |
-| B2 Catalogue legacy identity backend | Backend |  | Not published | A0 |  | `/api/list/{id}` compatibility lookup |
-| F2 Catalogue legacy redirects frontend | Frontend |  | Not published | B2 |  | `legacyCatalogues.ts` raw lookup |
-| F3 SavedList cleanup and item renderer rehome | Frontend |  | Not published | F2 |  | SavedList-named route/components |
-| B3 Kanji schema correction backend | Backend |  | Not published | A0 |  | Generated kanji client typed as weak shape |
-| F4 Kanji list frontend | Frontend |  | Not published | B3 |  | `KanjisList` legacy route |
-| H1 Kanji detail aggregate decision | HITL |  | Not published | F4 |  | Detail aggregate unresolved |
-| B4 Kanji detail aggregate backend | Backend |  | Not published | H1 |  | Legacy kanji detail aggregate |
-| F5 Kanji detail frontend | Frontend |  | Not published | B4 |  | `KanjiDetails` legacy route |
-| B5 Radicals backend | Backend |  | Not published | A0 |  | No v1 radical routes |
-| F6 Radicals frontend | Frontend |  | Not published | B5 |  | Radical list/detail legacy routes |
-| B6 Public words backend | Backend |  | Not published | A0 |  | No public v1 word routes |
-| F7 Public words frontend | Frontend |  | Not published | B6 |  | Word list/detail legacy routes |
-| B7 Sentences read/detail backend | Backend |  | Not published | A0 |  | No v1 sentence read/detail routes |
-| F8 Sentences read/detail frontend | Frontend |  | Not published | B7 |  | Sentence list/detail legacy reads |
-| B8 Sentence comments backend | Backend |  | Not published | B7 |  | No v1 sentence comment reads |
-| F9 Sentence comments frontend | Frontend |  | Not published | B8 |  | Old sentence comment props/calls |
-| B9 Post read backend | Backend |  | Not published | A0 |  | No v1 post read routes |
-| F10 Post read frontend | Frontend |  | Not published | B9 |  | `PostsList`/post detail legacy reads |
-| B10 Post write/moderation backend | Backend |  | Not published | B9 |  | Legacy post writes/lock |
-| F11 Post write/moderation frontend | Frontend |  | Not published | B10, F10 |  | Post form/edit/delete/lock legacy UI |
-| B11 Post comments backend | Backend |  | Not published | B9 |  | No v1 post comment reads |
-| F12 Post comments frontend | Frontend |  | Not published | B11, F10 |  | Old post comment props/calls |
-| B12 Comment delete/update backend | Backend |  | Not published | B8, B11 |  | Legacy comment delete/update routes |
-| F13 Comment API cleanup frontend | Frontend |  | Not published | B12, F9, F12 |  | `comments.ts` custom/legacy URL construction |
-| F14 Generic like generated-client cleanup | Frontend |  | Not published | Caller-specific backend readiness |  | Raw axios like wrapper |
-| F15 `apiCall` retirement | Frontend |  | Not published | F1, F2, F4, F5, F6, F7, F8, F10, F11, F13 |  | `apiCall` production callers |
-| B13 Legacy route retirement audit | Backend |  | Not published | F15 |  | `routes/api.php` legacy endpoints |
+| A0 Migration sequencing and skill preflight | HITL | #125 | Published as parent issue; closed 2026-09 | None |  | Entire backlog unpublished |
+| B1 Article admin/status backend | Backend | #128 | Done as ART-MOD-BE-01 | A0 |  | Legacy pending/status endpoints |
+| F1 Article admin/dashboard frontend | Frontend | #129 | Done as ART-MOD-FE-01 | B1 |  | `setArticleStatus`, pending dashboard legacy call |
+| B2 Catalogue legacy identity backend | Backend | #130 | Done as CAT-ID-BE-01 | A0 |  | `/api/list/{id}` compatibility lookup |
+| F2 Catalogue legacy redirects frontend | Frontend | #131 | Done as CAT-ID-FE-01 | B2 |  | `legacyCatalogues.ts` raw lookup |
+| F3 SavedList cleanup and item renderer rehome | Frontend | #132 | Done as CAT-CLEAN-FE-01 | F2 |  | SavedList-named route/components |
+| B3 Kanji schema correction backend | Backend |  | Completed before #125 (kanji v1 reads); legacy route retired by #147 | A0 |  | Generated kanji client typed as weak shape |
+| F4 Kanji list frontend | Frontend |  | Completed before #125; legacy route retired by #147 | B3 |  | `KanjisList` legacy route |
+| H1 Kanji detail aggregate decision | HITL |  | Resolved before #125 (kanji detail aggregate shipped) | F4 |  | Detail aggregate unresolved |
+| B4 Kanji detail aggregate backend | Backend |  | Completed before #125; legacy route retired by #147 | H1 |  | Legacy kanji detail aggregate |
+| F5 Kanji detail frontend | Frontend |  | Completed before #125; legacy route retired by #147 | B4 |  | `KanjiDetails` legacy route |
+| B5 Radicals backend | Backend | #117 | Completed before #125 (radicals PRD); legacy route retired by #147 | A0 |  | No v1 radical routes |
+| F6 Radicals frontend | Frontend |  | Completed before #125; legacy route retired by #147 | B5 |  | Radical list/detail legacy routes |
+| B6 Public words backend | Backend |  | Completed before #125 (public words v1); legacy route retired by #147 | A0 |  | No public v1 word routes |
+| F7 Public words frontend | Frontend |  | Completed before #125; legacy route retired by #147 | B6 |  | Word list/detail legacy routes |
+| B7 Sentences read/detail backend | Backend | #119 | Completed before #125 (sentences PRD); legacy route retired by #147 | A0 |  | No v1 sentence read/detail routes |
+| F8 Sentences read/detail frontend | Frontend |  | Completed before #125; legacy route retired by #147 | B7 |  | Sentence list/detail legacy reads |
+| B8 Sentence comments backend | Backend | #140 | Done as COM-PARENT-BE-01 | B7 |  | No v1 sentence comment reads |
+| F9 Sentence comments frontend | Frontend | #142 | Done as COM-PARENT-FE-01 | B8 |  | Old sentence comment props/calls |
+| B9 Post read backend | Backend | #135 | Done as POST-READ-BE-01 | A0 |  | No v1 post read routes |
+| F10 Post read frontend | Frontend | #136 | Done as POST-READ-FE-01 | B9 |  | `PostsList`/post detail legacy reads |
+| B10 Post write/moderation backend | Backend | #137 | Done as POST-WRITE-BE-01 | B9 |  | Legacy post writes/lock |
+| F11 Post write/moderation frontend | Frontend | #138 | Done as POST-WRITE-FE-01 | B10, F10 |  | Post form/edit/delete/lock legacy UI |
+| B11 Post comments backend | Backend | #140 | Done as COM-PARENT-BE-01 | B9 |  | No v1 post comment reads |
+| F12 Post comments frontend | Frontend | #142 | Done as COM-PARENT-FE-01 | B11, F10 |  | Old post comment props/calls |
+| B12 Comment delete/update backend | Backend | #139 | Done as COM-CORE-BE-01 | B8, B11 |  | Legacy comment delete/update routes |
+| F13 Comment API cleanup frontend | Frontend | #141 | Done as COM-CORE-FE-01 | B12, F9, F12 |  | `comments.ts` custom/legacy URL construction |
+| F14 Generic like generated-client cleanup | Frontend | #144 | Done as LIKE-FE-01 (backend contract in #143 LIKE-BE-01) | Caller-specific backend readiness |  | Raw axios like wrapper |
+| F15 `apiCall` retirement | Frontend | #146 | Done as LEGACY-CLIENT-01 | F1, F2, F4, F5, F6, F7, F8, F10, F11, F13 |  | `apiCall` production callers |
+| B13 Legacy route retirement audit | Backend | #147, #148, #149, #150, #151, #152 | Done as RET-JPN-READ-01, RET-AUTH-01, RET-ART-01, RET-CAT-01, RET-SEN-01, RET-POST-01 | F15 |  | `routes/api.php` legacy endpoints |
 
 ## How To Track What Is Migrated
 
