@@ -3,10 +3,8 @@
 namespace App\Application\Articles\Interfaces\Repositories;
 
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
-use App\Domain\Articles\DTOs\ArticleKanjiListResultDTO;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
-use App\Domain\Articles\DTOs\ArticleWordListResultDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -51,16 +49,6 @@ interface ArticleRepositoryInterface
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $dto = null): ?DomainArticle;
 
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData;
-
-    /**
-     * One page of the words attached to an article, or null when the article does not exist.
-     */
-    public function findWordPage(EntityId $articleUuid, Pagination $pagination): ?ArticleWordListResultDTO;
-
-    /**
-     * One page of the kanji attached to an article, or null when the article does not exist.
-     */
-    public function findKanjiPage(EntityId $articleUuid, Pagination $pagination): ?ArticleKanjiListResultDTO;
 
     public function findModerationQueue(Pagination $pagination): Articles;
 

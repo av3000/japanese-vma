@@ -454,106 +454,6 @@
                 }
             }
         },
-        "/articles/{uid}/words": {
-            "get": {
-                "operationId": "article.words",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "uid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ArticleWordListResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ArticleWordListResource"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/articles/{uid}/kanjis": {
-            "get": {
-                "operationId": "article.kanjis",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "uid",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 100
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ArticleKanjiListResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ArticleKanjiListResource"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
         "/articles/{uuid}": {
             "delete": {
                 "operationId": "article.destroy",
@@ -3918,6 +3818,17 @@
                 ],
                 "parameters": [
                     {
+                        "name": "article_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -4716,25 +4627,6 @@
                 ],
                 "title": "ArticleFacetValueResource"
             },
-            "ArticleKanjiListResource": {
-                "type": "object",
-                "properties": {
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/KanjiResource"
-                        }
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/PaginationResource"
-                    }
-                },
-                "required": [
-                    "items",
-                    "pagination"
-                ],
-                "title": "ArticleKanjiListResource"
-            },
             "ArticleListResource": {
                 "type": "object",
                 "properties": {
@@ -4984,25 +4876,6 @@
                     "status_label"
                 ],
                 "title": "ArticleStatusResource"
-            },
-            "ArticleWordListResource": {
-                "type": "object",
-                "properties": {
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ArticleWordResource"
-                        }
-                    },
-                    "pagination": {
-                        "$ref": "#/components/schemas/PaginationResource"
-                    }
-                },
-                "required": [
-                    "items",
-                    "pagination"
-                ],
-                "title": "ArticleWordListResource"
             },
             "ArticleWordResource": {
                 "type": "object",

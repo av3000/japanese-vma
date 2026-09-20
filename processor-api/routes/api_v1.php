@@ -64,9 +64,6 @@ Route::prefix('v1')->group(function () {
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);
-    // Attached kanji and words are paged rather than embedded in the detail response (#268).
-    Route::get('articles/{uid}/words', [ArticleController::class, 'words'])->whereUuid('uid');
-    Route::get('articles/{uid}/kanjis', [ArticleController::class, 'kanjis'])->whereUuid('uid');
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);

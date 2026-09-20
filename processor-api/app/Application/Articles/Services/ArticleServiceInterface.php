@@ -9,7 +9,6 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
 
@@ -58,26 +57,4 @@ interface ArticleServiceInterface
      * @return Result Success data: null (void), Failure data: ResultError (notFound, accessDenied)
      */
     public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result;
-
-    /**
-     * One page of the words attached to an article, under the article's own visibility.
-     *
-     * @return Result success: ArticleWordListResultDTO, failure: ResultError
-     */
-    public function getArticleWordsPage(
-        EntityId $articleUid,
-        Pagination $pagination,
-        ?AuthenticatedUser $authenticatedUser = null,
-    ): Result;
-
-    /**
-     * One page of the kanji attached to an article, under the article's own visibility.
-     *
-     * @return Result success: ArticleKanjiListResultDTO, failure: ResultError
-     */
-    public function getArticleKanjisPage(
-        EntityId $articleUid,
-        Pagination $pagination,
-        ?AuthenticatedUser $authenticatedUser = null,
-    ): Result;
 }

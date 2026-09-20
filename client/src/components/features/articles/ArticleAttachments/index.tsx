@@ -1,17 +1,19 @@
 import React from 'react';
-import {
-	useInfiniteArticleKanjis,
-	useInfiniteArticleWords,
-} from '@/api/articles/hooks/useInfiniteArticleAttachments';
+import { articleKanjiFilters, articleWordFilters } from '@/api/articles/attachments';
+import { useInfiniteKanjis } from '@/api/kanjis/hooks/useInfiniteKanjis';
+import { useInfiniteWords } from '@/api/words/hooks/useInfiniteWords';
 import { Button } from '@/components/shared/Button';
 import styles from './ArticleAttachments.module.scss';
 
 /**
  * The kanji and vocabulary processing found in an article.
  *
- * Both lists are paged (#268). They used to ride along inside the article detail response,
- * which made every detail read, and every refetch the processing socket triggered, carry every
- * word the article had ever matched — for lists nothing on the page was showing.
+ * Both lists are the ordinary kanji and word indexes filtered by `article_uuid` (#268), not an
+ * article-scoped endpoint: the indexes already page, filter and can carry viewer catalogue
+ * state, so a second route would only have duplicated them. They used to ride along inside the
+ * article detail response, which made every detail read — and every refetch the processing
+ * socket triggered — carry every word the article had ever matched, for lists nothing on the
+ * page was showing.
  */
 
 interface ArticleAttachmentsProps {
@@ -74,8 +76,8 @@ const AttachmentSection: React.FC<AttachmentSectionProps> = ({
 };
 
 export const ArticleAttachments: React.FC<ArticleAttachmentsProps> = ({ articleUuid }) => {
-	const kanjis = useInfiniteArticleKanjis(articleUuid);
-	const words = useInfiniteArticleWords(articleUuid);
+	const kanjis = useInfiniteKanjis({ filters: articleKanjiFilters(articleUuid), enabled: Boolean(articleUuid) });
+	const words = useInfiniteWords({ filters: articleWordFilters(articleUuid), enabled: Boolean(articleUuid) });
 
 	return (
 		<div className={styles.attachments}>

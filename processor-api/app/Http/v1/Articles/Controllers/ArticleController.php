@@ -22,7 +22,6 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
-use App\Http\v1\Articles\Requests\ArticleAttachmentListRequest;
 use App\Http\v1\Articles\Requests\ArticleDetailRequest;
 use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\IndexPendingArticlesRequest;
@@ -32,12 +31,10 @@ use App\Http\v1\Articles\Requests\UpdateArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 use App\Http\v1\Articles\Resources\ArticleCreatedResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
-use App\Http\v1\Articles\Resources\ArticleKanjiListResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleModerationListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleStatusResource;
-use App\Http\v1\Articles\Resources\ArticleWordListResource;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
@@ -217,44 +214,6 @@ class ArticleController extends Controller
             'success' => true,
             'message' => 'Article deleted successfully',
         ]);
-    }
-
-    /**
-     * @response ArticleWordListResource
-     */
-    #[Response(type: 'ArticleWordListResource')]
-    public function words(string $uid, ArticleAttachmentListRequest $request): JsonResponse|JsonResource
-    {
-        $result = $this->articleService->getArticleWordsPage(
-            EntityId::from($uid),
-            $request->pagination(),
-            $this->currentUserProvider->currentAuthenticatedUser(),
-        );
-
-        if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
-        }
-
-        return new ArticleWordListResource($result->getData());
-    }
-
-    /**
-     * @response ArticleKanjiListResource
-     */
-    #[Response(type: 'ArticleKanjiListResource')]
-    public function kanjis(string $uid, ArticleAttachmentListRequest $request): JsonResponse|JsonResource
-    {
-        $result = $this->articleService->getArticleKanjisPage(
-            EntityId::from($uid),
-            $request->pagination(),
-            $this->currentUserProvider->currentAuthenticatedUser(),
-        );
-
-        if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
-        }
-
-        return new ArticleKanjiListResource($result->getData());
     }
 
     public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse

@@ -12,11 +12,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class ArticleWordsTest extends TestCase
+class ArticleAttachmentFilterTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -68,14 +67,14 @@ class ArticleWordsTest extends TestCase
         ], $overrides));
     }
 
-    private function attachWord(PersistenceArticle $article, string $word = '勉強'): void
+    private function attachWord(PersistenceArticle $article, string $word = '勉強', string $jlpt = 'N5'): void
     {
         $wordId = DB::table('japanese_word_bank_long')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'entry_sequence' => '1001',
             'word' => $word,
             'furigana' => 'べんきょう',
-            'jlpt' => 'N5',
+            'jlpt' => $jlpt,
             'word_type' => 'noun',
             'word_k_ele' => $word,
             'furigana_r_ele' => 'べんきょう',
@@ -111,43 +110,37 @@ class ArticleWordsTest extends TestCase
         ]);
     }
 
-    public function test_words_page_returns_the_v1_list_envelope(): void
+    public function test_the_word_index_returns_only_the_words_attached_to_the_article(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
-        $this->attachWord($article);
+        $other = $this->createArticle($user);
+        $this->attachWord($article, '勉強');
+        $this->attachWord($other, '学校');
 
-        $this->json('GET', "/api/v1/articles/{$article->uuid}/words")
+        $this->json('GET', "/api/v1/words?article_uuid={$article->uuid}")
             ->assertStatus(200)
             ->assertJsonPath('items.0.word', '勉強')
-            ->assertJsonPath('items.0.word_type', 'noun')
-            ->assertJsonPath('items.0.word_k_ele', '勉強')
-            ->assertJsonPath('items.0.furigana_r_ele', 'べんきょう')
-            ->assertJsonPath('items.0.sense', 'study')
-            ->assertJsonPath('pagination.page', 1)
-            ->assertJsonPath('pagination.total', 1)
-            ->assertJsonPath('pagination.has_more', false)
-            ->assertJsonMissingPath('success')
-            ->assertJsonMissingPath('words');
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('pagination.total', 1);
     }
 
-    public function test_kanjis_page_returns_the_same_envelope(): void
+    public function test_the_kanji_index_returns_only_the_kanji_attached_to_the_article(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
-        $this->attachKanji($article);
+        $other = $this->createArticle($user);
+        $this->attachKanji($article, '勉');
+        $this->attachKanji($other, '水');
 
-        $this->json('GET', "/api/v1/articles/{$article->uuid}/kanjis")
+        $this->json('GET', "/api/v1/kanjis?article_uuid={$article->uuid}")
             ->assertStatus(200)
             ->assertJsonPath('items.0.character', '勉')
-            ->assertJsonPath('pagination.page', 1)
-            ->assertJsonPath('pagination.per_page', 20)
-            ->assertJsonPath('pagination.total', 1)
-            ->assertJsonPath('pagination.last_page', 1)
-            ->assertJsonPath('pagination.has_more', false);
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('pagination.total', 1);
     }
 
-    public function test_pages_report_what_is_left_and_stay_stable_across_pages(): void
+    public function test_the_article_filter_pages_like_every_other_v1_list(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
@@ -156,78 +149,62 @@ class ArticleWordsTest extends TestCase
             $this->attachWord($article, $word);
         }
 
-        $first = $this->json('GET', "/api/v1/articles/{$article->uuid}/words?per_page=2")
+        $first = $this->json('GET', "/api/v1/words?article_uuid={$article->uuid}&per_page=2")
             ->assertStatus(200)
             ->assertJsonPath('pagination.total', 3)
             ->assertJsonPath('pagination.last_page', 2)
             ->assertJsonPath('pagination.has_more', true)
             ->assertJsonCount(2, 'items');
 
-        $second = $this->json('GET', "/api/v1/articles/{$article->uuid}/words?per_page=2&page=2")
+        $second = $this->json('GET', "/api/v1/words?article_uuid={$article->uuid}&per_page=2&page=2")
             ->assertStatus(200)
             ->assertJsonPath('pagination.page', 2)
             ->assertJsonPath('pagination.has_more', false)
             ->assertJsonCount(1, 'items');
 
-        $firstPageIds = array_column($first->json('items'), 'id');
-        $secondPageIds = array_column($second->json('items'), 'id');
-
-        $this->assertSame([], array_intersect($firstPageIds, $secondPageIds), 'Pages must not overlap.');
+        $this->assertSame(
+            [],
+            array_intersect(array_column($first->json('items'), 'id'), array_column($second->json('items'), 'id')),
+            'Pages must not overlap.',
+        );
     }
 
-    public function test_pages_reject_a_per_page_beyond_the_ceiling(): void
+    public function test_the_article_filter_combines_with_the_other_list_filters(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+        $this->attachWord($article, '勉強');
+        $this->attachWord($article, '学校', jlpt: 'N4');
+
+        $this->json('GET', "/api/v1/words?article_uuid={$article->uuid}&jlpt=N4")
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.word', '学校');
+    }
+
+    public function test_an_unknown_article_uuid_returns_an_empty_page_rather_than_an_error(): void
+    {
+        // The filter narrows a public catalogue of words; an article nobody can see simply has
+        // no words in it, which is not the same thing as a bad request.
+        $this->json('GET', '/api/v1/words?article_uuid='.Str::uuid())
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'items')
+            ->assertJsonPath('pagination.total', 0);
+    }
+
+    public function test_a_malformed_article_uuid_is_rejected(): void
+    {
+        $this->json('GET', '/api/v1/words?article_uuid=not-a-uuid')->assertStatus(422);
+        $this->json('GET', '/api/v1/kanjis?article_uuid=not-a-uuid')->assertStatus(422);
+    }
+
+    public function test_the_article_scoped_routes_are_gone(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
 
-        $this->json('GET', "/api/v1/articles/{$article->uuid}/words?per_page=500")->assertStatus(422);
-        $this->json('GET', "/api/v1/articles/{$article->uuid}/kanjis?page=0")->assertStatus(422);
-    }
-
-    public function test_pages_of_a_private_article_are_refused_to_a_stranger(): void
-    {
-        $owner = $this->createUser();
-        $private = $this->createArticle($owner, ['publicity' => PublicityStatus::PRIVATE]);
-        $this->attachWord($private);
-        $this->attachKanji($private);
-
-        $this->json('GET', "/api/v1/articles/{$private->uuid}/words")->assertStatus(403);
-        $this->json('GET', "/api/v1/articles/{$private->uuid}/kanjis")->assertStatus(403);
-    }
-
-    public function test_the_owner_reads_the_pages_of_their_own_private_article(): void
-    {
-        $owner = $this->createUser();
-        $private = $this->createArticle($owner, ['publicity' => PublicityStatus::PRIVATE]);
-        $this->attachWord($private);
-        $this->attachKanji($private);
-
-        // The api guard resolves once per test process, so the principal has to be set before
-        // the first request rather than part way through one test.
-        Passport::actingAs($owner, ['*'], 'api');
-
-        $this->json('GET', "/api/v1/articles/{$private->uuid}/words")
-            ->assertStatus(200)
-            ->assertJsonPath('items.0.word', '勉強');
-
-        $this->json('GET', "/api/v1/articles/{$private->uuid}/kanjis")
-            ->assertStatus(200)
-            ->assertJsonPath('items.0.character', '勉');
-    }
-
-    public function test_unknown_article_is_a_404_on_both_pages(): void
-    {
-        $missing = (string) Str::uuid();
-
-        $this->json('GET', "/api/v1/articles/{$missing}/words")->assertStatus(404);
-        $this->json('GET', "/api/v1/articles/{$missing}/kanjis")->assertStatus(404);
-    }
-
-    public function test_a_numeric_id_no_longer_addresses_these_routes(): void
-    {
-        $user = $this->createUser();
-        $article = $this->createArticle($user);
-
-        $this->json('GET', "/api/v1/articles/{$article->id}/words")->assertStatus(404);
+        // #268 settled on one query path per resource: the resource's own index, filtered.
+        $this->json('GET', "/api/v1/articles/{$article->uuid}/words")->assertStatus(404);
+        $this->json('GET', "/api/v1/articles/{$article->uuid}/kanjis")->assertStatus(404);
     }
 }

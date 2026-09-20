@@ -5,6 +5,7 @@ import type { ArticleListResource } from '@/api/generated/model/articleListResou
 import type { ArticleResource } from '@/api/generated/model/articleResource';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
+import { articleKanjisQueryKey, articleWordsQueryKey } from './attachments';
 import { articleKeys } from './keys';
 import {
 	applyProcessingStatus,
@@ -108,8 +109,8 @@ describe('applyProcessingStatus', () => {
 		// Processing attaches kanji and words and moves the JLPT counters, so the lists the
 		// detail page reads have to be refetched too — but only their active pages (#268).
 		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.detail(UUID) });
-		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.kanjis(UUID), refetchType: 'active' });
-		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKeys.words(UUID), refetchType: 'active' });
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleKanjisQueryKey(UUID), refetchType: 'active' });
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: articleWordsQueryKey(UUID), refetchType: 'active' });
 		expect(invalidate).toHaveBeenCalledTimes(3);
 	});
 

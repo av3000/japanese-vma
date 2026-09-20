@@ -10,6 +10,7 @@ use App\Application\JapaneseMaterial\Words\Services\WordDetailServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
 use App\Http\v1\JapaneseMaterial\Words\Requests\IndexWordRequest;
@@ -66,6 +67,9 @@ class WordController extends Controller
             word: $validated['word'] ?? null,
             furigana: $validated['furigana'] ?? null,
             jlpt: $validated['jlpt'] ?? null,
+            articleId: isset($validated['article_uuid'])
+                ? EntityId::from($validated['article_uuid'])
+                : null,
         );
 
         $result = $this->wordService->find($criteria);

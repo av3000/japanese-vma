@@ -36,7 +36,6 @@ use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
@@ -383,68 +382,5 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::deletionFailed());
         }
-    }
-
-    /**
-     * One page of the words attached to an article.
-     *
-     * Visibility is the article's own: the page is readable exactly when the detail is, so the
-     * article is loaded and run through the policy before any word is read (issue #268).
-     */
-    public function getArticleWordsPage(
-        EntityId $articleUid,
-        Pagination $pagination,
-        ?AuthenticatedUser $authenticatedUser = null,
-    ): Result {
-        $denial = $this->denyUnlessViewable($articleUid, $authenticatedUser);
-
-        if ($denial !== null) {
-            return $denial;
-        }
-
-        $page = $this->articleRepository->findWordPage($articleUid, $pagination);
-
-        return $page === null
-            ? Result::failure(ArticleErrors::notFound($articleUid->value()))
-            : Result::success($page);
-    }
-
-    /**
-     * One page of the kanji attached to an article, under the article's own visibility.
-     */
-    public function getArticleKanjisPage(
-        EntityId $articleUid,
-        Pagination $pagination,
-        ?AuthenticatedUser $authenticatedUser = null,
-    ): Result {
-        $denial = $this->denyUnlessViewable($articleUid, $authenticatedUser);
-
-        if ($denial !== null) {
-            return $denial;
-        }
-
-        $page = $this->articleRepository->findKanjiPage($articleUid, $pagination);
-
-        return $page === null
-            ? Result::failure(ArticleErrors::notFound($articleUid->value()))
-            : Result::success($page);
-    }
-
-    /**
-     * @return Result|null null when this viewer may read the article
-     */
-    private function denyUnlessViewable(EntityId $articleUid, ?AuthenticatedUser $authenticatedUser): ?Result
-    {
-        $article = $this->articleRepository->findByPublicUid($articleUid);
-
-        if (! $article) {
-            return Result::failure(ArticleErrors::notFound($articleUid->value()));
-        }
-
-        if (! $this->articlePolicy->canView($authenticatedUser, $article)) {
-            return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
-        }
-
-        return null;
     }
 }

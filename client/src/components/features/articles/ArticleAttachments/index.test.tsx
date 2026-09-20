@@ -3,22 +3,21 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { articleKanjis, articleWords } from '@/api/generated/article/article';
-import type { ArticleKanjiListResource } from '@/api/generated/model/articleKanjiListResource';
-import type { ArticleWordListResource } from '@/api/generated/model/articleWordListResource';
+import { kanjiIndex } from '@/api/generated/kanji/kanji';
+import type { KanjiIndex200 } from '@/api/generated/model/kanjiIndex200';
+import type { WordIndex200 } from '@/api/generated/model/wordIndex200';
+import { wordIndex } from '@/api/generated/word/word';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { ArticleAttachments } from './index';
 
-vi.mock('@/api/generated/article/article', () => ({
-	articleKanjis: vi.fn(),
-	articleWords: vi.fn(),
-	getArticleIndexQueryKey: (params?: unknown) => ['/articles', ...(params ? [params] : [])],
-	getArticleShowQueryKey: (uid: string, params?: unknown) => [`/articles/${uid}`, ...(params ? [params] : [])],
-	getArticleKanjisQueryKey: (uid: string, params?: unknown) => [
-		`/articles/${uid}/kanjis`,
-		...(params ? [params] : []),
-	],
-	getArticleWordsQueryKey: (uid: string, params?: unknown) => [`/articles/${uid}/words`, ...(params ? [params] : [])],
+vi.mock('@/api/generated/kanji/kanji', () => ({
+	kanjiIndex: vi.fn(),
+	getKanjiIndexQueryKey: (params?: unknown) => ['/kanjis', ...(params ? [params] : [])],
+}));
+
+vi.mock('@/api/generated/word/word', () => ({
+	wordIndex: vi.fn(),
+	getWordIndexQueryKey: (params?: unknown) => ['/words', ...(params ? [params] : [])],
 }));
 
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -40,7 +39,7 @@ const kanjiPage = (characters: string[], page = 1, total = characters.length, ha
 			meanings: 'water',
 		})),
 		pagination: pagination(page, total, hasMore),
-	}) as unknown as ArticleKanjiListResource;
+	}) as unknown as KanjiIndex200;
 
 const wordPage = (surfaces: string[], page = 1, total = surfaces.length, hasMore = false) =>
 	({
@@ -51,7 +50,7 @@ const wordPage = (surfaces: string[], page = 1, total = surfaces.length, hasMore
 			furigana: 'べんきょう',
 		})),
 		pagination: pagination(page, total, hasMore),
-	}) as unknown as ArticleWordListResource;
+	}) as unknown as WordIndex200;
 
 const renderAttachments = async () => {
 	const queryClient = new QueryClient({
@@ -75,8 +74,8 @@ describe('ArticleAttachments', () => {
 	});
 
 	it('says so plainly when processing has attached nothing', async () => {
-		vi.mocked(articleKanjis).mockResolvedValue(kanjiPage([]));
-		vi.mocked(articleWords).mockResolvedValue(wordPage([]));
+		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage([]));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
 
 		const { container, unmount } = await renderAttachments();
 
@@ -90,8 +89,8 @@ describe('ArticleAttachments', () => {
 	});
 
 	it('renders the first page and its totals', async () => {
-		vi.mocked(articleKanjis).mockResolvedValue(kanjiPage(['水', '火']));
-		vi.mocked(articleWords).mockResolvedValue(wordPage(['勉強']));
+		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(['水', '火']));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage(['勉強']));
 
 		const { container, unmount } = await renderAttachments();
 
@@ -101,16 +100,20 @@ describe('ArticleAttachments', () => {
 		expect(container.textContent).toContain('火');
 		expect(container.textContent).toContain('勉強');
 		expect(container.querySelectorAll('li')).toHaveLength(3);
-		expect(articleKanjis).toHaveBeenCalledWith(UUID, { page: 1, per_page: 20 }, undefined, expect.anything());
+		expect(kanjiIndex).toHaveBeenCalledWith(
+			{ article_uuid: UUID, per_page: 20, page: 1 },
+			undefined,
+			expect.anything(),
+		);
 
 		await unmount();
 	});
 
 	it('asks for the next page only when the server says there is one', async () => {
-		vi.mocked(articleKanjis)
+		vi.mocked(kanjiIndex)
 			.mockResolvedValueOnce(kanjiPage(['水'], 1, 2, true))
 			.mockResolvedValueOnce(kanjiPage(['火'], 2, 2, false));
-		vi.mocked(articleWords).mockResolvedValue(wordPage([]));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
 
 		const { container, flush, unmount } = await renderAttachments();
 
@@ -125,10 +128,9 @@ describe('ArticleAttachments', () => {
 			loadMore.click();
 		});
 
-		expect(articleKanjis).toHaveBeenNthCalledWith(
+		expect(kanjiIndex).toHaveBeenNthCalledWith(
 			2,
-			UUID,
-			{ page: 2, per_page: 20 },
+			{ article_uuid: UUID, per_page: 20, page: 2 },
 			undefined,
 			expect.anything(),
 		);
@@ -141,8 +143,8 @@ describe('ArticleAttachments', () => {
 	});
 
 	it('reports a failed page instead of pretending the article has none', async () => {
-		vi.mocked(articleKanjis).mockRejectedValue(new Error('network'));
-		vi.mocked(articleWords).mockResolvedValue(wordPage(['勉強']));
+		vi.mocked(kanjiIndex).mockRejectedValue(new Error('network'));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage(['勉強']));
 
 		const { container, unmount } = await renderAttachments();
 
