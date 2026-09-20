@@ -70,7 +70,7 @@ This polymorphic boundary requires careful validation: numeric IDs, UUIDs, and o
 | GCP worker VM | Pipeline and repository guidance | Configuration verified; VM state open |
 | Upstash Redis | Repository guidance and environment/config references | Intended production dependency; live connection open |
 | Sentry | Frontend provider/dependency references | Client integration present; project ingestion open |
-| Laravel Reverb | Backend/frontend dependencies and integration code | Implementation present; live channel health open |
+| Laravel Reverb | `processor-api/routes/channels.php`, `App\Application\Processing\Events\ProcessingStatusUpdated`, `client/src/lib/echo/`, `.gitlab-ci.yml` (`verify_reverb`) | Application and pipeline wiring verified; Render service and `REVERB_*` variables not yet provisioned (#262), so live channel health remains open |
 
 ## Integrity Rules
 
