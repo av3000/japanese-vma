@@ -1,8 +1,8 @@
 # Deployment and Runtime
 
 > **Status:** Baseline; repository configuration verified, provider state unverified
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Last reviewed:** 2026-09-20
+> **Evidence baseline:** Repository working tree and `.gitlab-ci.yml` inspected on 2026-09-20; provider dashboards not inspected
 > **Audience:** Engineers, operators, incident responders, and reviewers
 
 ## Runtime Topology
@@ -20,6 +20,12 @@ The production topology is intentionally cross-system:
 | Primary application persistence | PostgreSQL database configuration |
 
 This review verified repository configuration and contributor guidance. It did not inspect provider dashboards or make live requests.
+
+**The Reverb row is a target, not a verified deployment.** The application code, the channel
+authorisation, the CI wiring and the `verify_reverb` job are all in the repository, but the
+Render service and the platform variables it needs have not been created yet (issue #262). Until
+they are, the backend pipeline fails deliberately on the missing `REVERB_*` variables rather
+than deploying a worker that cannot broadcast, and every client falls back to polling.
 
 ## Deployment Flow
 
@@ -53,7 +59,7 @@ sequenceDiagram
 
 ### Real-time transport
 
-Processing status reaches the browser over Laravel Reverb (ADR 0002). Producers are the queue worker (every status transition) and the web service (`pending`, written in the create/update transaction). The browser subscribes to `private-last_operations.{article uuid}` on the detail page and to `private-App.User.{user uuid}` on the owner dashboard; public lists poll. Polling remains the correctness baseline, so a Reverb outage degrades to the 5 s / 15 s polling cadence rather than breaking the UI.
+Processing status reaches the browser over Laravel Reverb (ADR 0002). Producers are the queue worker (every status transition) and the web service (`pending`, written in the create/update transaction). The browser subscribes to `private-processing_states.{article uuid}` on the detail page and to `private-App.User.{user uuid}` on the owner dashboard; public lists poll. Polling remains the correctness baseline, so a Reverb outage degrades to the 5 s / 15 s polling cadence rather than breaking the UI.
 
 Configuration lives in platform variables, never in the repository:
 
