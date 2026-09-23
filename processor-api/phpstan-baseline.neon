@@ -22,36 +22,6 @@ parameters:
 			path: app/Application/Articles/Interfaces/Repositories/ArticleRepositoryInterface.php
 
 		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: app/Application/Articles/Jobs/ProcessArticleKanjisJob.php
-
-		-
-			message: '#^Access to constant PROCESSED on an unknown class App\\Domain\\Articles\\Enums\\ArticleStatus\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Call to an undefined method App\\Application\\Articles\\Interfaces\\Repositories\\ArticleRepositoryInterface\:\:findByUid\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Call to an undefined method App\\Application\\Articles\\Interfaces\\Repositories\\ArticleRepositoryInterface\:\:saveWithKanjis\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
-			message: '#^Class App\\Domain\\Articles\\Models\\Article constructor invoked with 13 parameters, 16\-17 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: app/Application/Articles/Services/ArticleKanjiProcessingService.php
-
-		-
 			message: '#^PHPDoc tag @param references unknown parameter\: \$articleUid$#'
 			identifier: parameter.notFound
 			count: 1
@@ -458,12 +428,6 @@ parameters:
 			identifier: property.phpDocType
 			count: 1
 			path: app/Http/Middleware/EncryptCookies.php
-
-		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 2
-			path: app/Http/Middleware/EnsureHorizonBasicAuth.php
 
 		-
 			message: '#^PHPDoc type array of property App\\Http\\Middleware\\TrimStrings\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\TrimStrings\:\:\$except\.$#'
@@ -977,12 +941,6 @@ parameters:
 			identifier: property.notFound
 			count: 1
 			path: app/Infrastructure/Persistence/Repositories/ViewRepository.php
-
-		-
-			message: '#^Parameter \#1 \$articleUid of method App\\Application\\Articles\\Services\\ArticleKanjiProcessingService\:\:processArticleKanjis\(\) expects App\\Domain\\Shared\\ValueObjects\\EntityId, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Jobs/ProcessArticleKanjis.php
 
 		-
 			message: '#^Function array_wrap not found\.$#'

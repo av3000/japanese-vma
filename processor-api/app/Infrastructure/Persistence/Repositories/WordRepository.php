@@ -14,6 +14,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 class WordRepository implements WordRepositoryInterface
 {
+    /**
+     * Surfaces per batched lookup. Comfortably under the PostgreSQL bind parameter ceiling,
+     * and large enough that a long article needs a couple of hundred queries rather than
+     * a couple of hundred thousand.
+     */
+    private const WORD_LOOKUP_CHUNK = 1000;
+
     public function __construct(
         private readonly WordMapper $wordMapper,
         private readonly KanjiMapper $kanjiMapper,
@@ -68,20 +75,40 @@ class WordRepository implements WordRepositoryInterface
         return $word ? $this->wordMapper->mapToDomain($word) : null;
     }
 
-    public function hasWordStartingWith(string $prefix): bool
+    public function maxWordLength(): int
     {
-        return PersistenceWord::query()
-            ->where('word', 'like', $prefix.'%')
-            ->exists();
+        $length = PersistenceWord::query()
+            ->selectRaw('max(char_length(word)) as length')
+            ->value('length');
+
+        return $length === null ? 0 : (int) $length;
     }
 
-    public function findIdByWord(string $word): ?int
+    /**
+     * @param list<string> $words
+     *
+     * @return array<string, int>
+     */
+    public function findIdsByWords(array $words): array
     {
-        $id = PersistenceWord::query()
-            ->where('word', $word)
-            ->value('id');
+        $idsByWord = [];
 
-        return $id !== null ? (int) $id : null;
+        // Chunked so a whole article's candidate set stays well inside the driver's bind
+        // parameter limit; each chunk is one indexed lookup over the dictionary.
+        foreach (array_chunk($words, self::WORD_LOOKUP_CHUNK) as $chunk) {
+            $rows = PersistenceWord::query()
+                ->toBase()
+                ->selectRaw('word, min(id) as id')
+                ->whereIn('word', $chunk)
+                ->groupBy('word')
+                ->get();
+
+            foreach ($rows as $row) {
+                $idsByWord[(string) $row->word] = (int) $row->id;
+            }
+        }
+
+        return $idsByWord;
     }
 
     public function findRelatedKanjis(int $wordId, int $limit): array
@@ -122,6 +149,12 @@ class WordRepository implements WordRepositoryInterface
 
         if ($criteria->jlpt !== null && $criteria->jlpt !== '') {
             $query->where('jlpt', $criteria->jlpt);
+        }
+
+        if ($criteria->articleId !== null) {
+            $query->whereHas('articles', function (Builder $articleQuery) use ($criteria): void {
+                $articleQuery->where('uuid', $criteria->articleId->value());
+            });
         }
 
         if ($criteria->kanjiId !== null) {

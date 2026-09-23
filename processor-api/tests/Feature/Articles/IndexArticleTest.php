@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Articles;
 
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Shared\Enums\LastOperationStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -295,12 +300,13 @@ class IndexArticleTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('last_operations')->insert([
-            'processable_id' => $article->uuid,
-            'processable_type' => 'article',
-            'task_type' => 'kanji_extraction',
-            'status' => LastOperationStatus::COMPLETED->value,
-            'metadata' => json_encode(['source' => 'test'], JSON_THROW_ON_ERROR),
+        DB::table('processing_states')->insert([
+            'entity_type' => 'article',
+            'entity_id' => $article->uuid,
+            'task_type' => 'article_content_processing',
+            'status' => ProcessingStatus::COMPLETED->value,
+            'content_version' => 1,
+            'metadata' => json_encode(['kanji_count' => 1, 'word_count' => 0], JSON_THROW_ON_ERROR),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -310,8 +316,8 @@ class IndexArticleTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('items.0.hashtags.0.content', '#grammar')
             ->assertJsonPath('items.0.engagement.stats.likes_count', 0)
-            ->assertJsonPath('items.0.processing_status.type', 'kanji_extraction')
-            ->assertJsonPath('items.0.processing_status.status', LastOperationStatus::COMPLETED->value);
+            ->assertJsonPath('items.0.processing_status.type', 'article_content_processing')
+            ->assertJsonPath('items.0.processing_status.status', ProcessingStatus::COMPLETED->value);
     }
 
     public function test_index_suppresses_stats_when_include_stats_counts_is_false(): void
@@ -548,5 +554,33 @@ class IndexArticleTest extends TestCase
                 'items' => [['id', 'uuid', 'title_jp']],
                 'pagination' => ['page', 'per_page', 'total', 'last_page', 'has_more'],
             ]);
+    }
+
+    public function test_index_exposes_jlpt_counters_and_the_consolidated_processing_status(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'title_jp' => '水の記事',
+            'content_jp' => '水を飲みます。日本語の本文です。',
+        ]);
+        $this->attachKanji($article, '水');
+
+        app(ProcessingStateServiceInterface::class)->startOrReset(
+            ProcessingEntityType::Article,
+            EntityId::from($article->uuid),
+            ProcessingTaskType::ArticleContentProcessing,
+            1,
+        );
+        dispatch_sync(new ProcessArticleContentJob($article->uuid, 1));
+
+        $response = $this->json('GET', '/api/v1/articles');
+
+        $response->assertStatus(200);
+        $item = collect($response->json('items'))->firstWhere('uuid', $article->uuid);
+        $this->assertNotNull($item);
+        $this->assertSame(1, $item['jlpt_levels']['n5']);
+        $this->assertSame(0, $item['jlpt_levels']['uncommon']);
+        $this->assertSame('article_content_processing', $item['processing_status']['type']);
+        $this->assertSame('completed', $item['processing_status']['status']);
     }
 }

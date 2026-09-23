@@ -2,13 +2,13 @@
 
 namespace App\Http\v1\Articles\Resources;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Processing\Resources\ProcessingStatusResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -37,7 +37,7 @@ class ArticleResource extends JsonResource
         ?array $options = null,
         ?ArticleStats $stats = null,
         array $hashtags = [],
-        private ?ArticleProcessingStateDTO $processingState = null
+        private ?ProcessingStateDTO $processingState = null
     ) {
         parent::__construct($article);
         $this->options = $options;
@@ -109,14 +109,7 @@ class ArticleResource extends JsonResource
             'updated_at' => $article->getUpdatedAt()->format('c'),
             'engagement' => new EngagementStatsSummaryResource($includeStats ? $this->stats : null),
             'kanjis' => KanjiResource::collection($article->getKanjis()),
-            'processing_status' => $this->processingState ? new ProcessingStatusResource([
-                'id' => $this->processingState->id,
-                'type' => $this->processingState->taskType,
-                'status' => $this->processingState->status,
-                'metadata' => $this->processingState->metadata,
-                'created_at' => $this->processingState->createdAt?->format('c'),
-                'updated_at' => $this->processingState->updatedAt?->format('c'),
-            ]) : null,
+            'processing_status' => $this->processingState ? new ProcessingStatusResource($this->processingState) : null,
         ];
     }
 }

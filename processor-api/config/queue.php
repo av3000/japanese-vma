@@ -32,6 +32,7 @@ return [
 
         'sync' => [
             'driver' => 'sync',
+            'after_commit' => true,
         ],
 
         'database' => [
@@ -39,6 +40,7 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => 90,
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [
@@ -65,6 +67,7 @@ return [
             'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => (int) env('QUEUE_RETRY_AFTER', 180),
             'block_for' => env('QUEUE_BLOCK_FOR') !== null ? (int) env('QUEUE_BLOCK_FOR') : null,
+            'after_commit' => true,
         ],
 
     ],

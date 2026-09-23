@@ -1,10 +1,8 @@
-import React, { useCallback, useDeferredValue, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import type { ArticleIndexJlptLevelsItem } from '@/api/generated/model/articleIndexJlptLevelsItem';
 import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
 import Spinner from '@/assets/images/spinner.gif';
 import ArticleFilters from '@/components/features/articles/ArticleFilters';
 import { Alert } from '@/components/shared/Alert';
@@ -83,19 +81,6 @@ const ArticleList: React.FC = () => {
 
 	const handleReset = useCallback(() => setSearchParams(new URLSearchParams()), [setSearchParams]);
 
-	const trackedArticleUuids = useMemo(
-		() =>
-			articles
-				.filter(
-					(article) =>
-						article.processing_status?.status !== undefined &&
-						article.processing_status?.status !== LastOperationStatus.completed,
-				)
-				.map((article) => article.uuid),
-		[articles],
-	);
-	const deferredTrackedArticleUuids = useDeferredValue(trackedArticleUuids);
-
 	if (isPending && articles.length === 0) {
 		return <PageLoading family="list" visual={<ArticlesListSkeleton />} />;
 	}
@@ -110,10 +95,7 @@ const ArticleList: React.FC = () => {
 
 	return (
 		<Container className={styles.page}>
-			{deferredTrackedArticleUuids.map((uuid) => (
-				<ArticleSubscription key={uuid} uuid={uuid} />
-			))}
-
+			{/* No per-article sockets here (#263): the polling fallback keeps badges current. */}
 			<Stack gap="md">
 				<ArticleFilters
 					state={filterState}
@@ -161,11 +143,6 @@ const ArticleList: React.FC = () => {
 			</Stack>
 		</Container>
 	);
-};
-
-const ArticleSubscription: React.FC<{ uuid: string }> = ({ uuid }) => {
-	useArticleSubscription(uuid);
-	return null;
 };
 
 export default ArticleList;

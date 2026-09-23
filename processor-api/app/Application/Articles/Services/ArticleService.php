@@ -5,8 +5,7 @@ namespace App\Application\Articles\Services;
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\Articles\Jobs\ProcessArticleWordsJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
@@ -17,7 +16,9 @@ use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
@@ -30,19 +31,21 @@ use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ArticleService implements ArticleServiceInterface
 {
+    /** Value of `articles.content_version` on a freshly created row (column default). */
+    private const INITIAL_CONTENT_VERSION = 1;
+
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
@@ -55,7 +58,8 @@ class ArticleService implements ArticleServiceInterface
         private ViewRepositoryInterface $viewRepository,
         private LikeRepositoryInterface $likeRepository,
         private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository
+        private CommentRepositoryInterface $commentRepository,
+        private ProcessingStateServiceInterface $processingStates,
     ) {
     }
 
@@ -70,7 +74,8 @@ class ArticleService implements ArticleServiceInterface
     public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $article = DB::transaction(function () use ($dto, $authenticatedUser) {
+            /** @var ArticleCreateResultDTO $created */
+            $created = DB::transaction(function () use ($dto, $authenticatedUser): ArticleCreateResultDTO {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
@@ -95,20 +100,23 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                ProcessArticleKanjisJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp
+                // The processing row exists as `pending` before the response is sent, in the same
+                // transaction as the article itself (ADR 0001, point 4).
+                $processingState = $this->processingStates->startOrReset(
+                    ProcessingEntityType::Article,
+                    $createdDomainArticle->getUid(),
+                    ProcessingTaskType::ArticleContentProcessing,
+                    self::INITIAL_CONTENT_VERSION,
                 );
 
-                ProcessArticleWordsJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $this->articleWordProcessingText($createdDomainArticle),
-                );
-
-                return $createdDomainArticle;
+                return new ArticleCreateResultDTO($createdDomainArticle, $processingState);
             });
 
-            return Result::success($article);
+            // ShouldQueueAfterCommit plus `after_commit` on the queue connections: the worker can
+            // never observe the article before it is committed.
+            ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
+
+            return Result::success($created);
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
                 'user_id' => $authenticatedUser->id->value(),
@@ -162,10 +170,10 @@ class ArticleService implements ArticleServiceInterface
             ObjectTemplateType::ARTICLE
         );
 
-        $processingState = $this->processingStateReader->latestKanjiExtractionState($article->getUid()->value());
+        $processingState = $this->processingStateReader->currentState($article->getUid()->value());
 
-        // TODO: move article kanji/word loading to separate paginated uuid-based endpoints
-        // once detail payload should stop carrying full lists.
+        // kanjis and words are opt-in since #268; unasked-for they come back empty, and the
+        // caller reads articles/{uuid}/kanjis and articles/{uuid}/words a page at a time.
         return Result::success(new ArticleDetailResultDTO(
             article: $article,
             engagement: $engagement,
@@ -220,13 +228,13 @@ class ArticleService implements ArticleServiceInterface
                 return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
             }
 
-            $shouldReprocessContent = $dto->content_jp !== null
-                && $dto->content_jp !== $domainArticle->getContentJp()->value;
-
-            $shouldReprocessWords = $shouldReprocessContent
+            // Kanji come from the content, words from title + content: either field changing
+            // means the derived data is stale and one consolidated run is needed.
+            $shouldReprocess = ($dto->content_jp !== null && $dto->content_jp !== $domainArticle->getContentJp()->value)
                 || ($dto->title_jp !== null && $dto->title_jp !== $domainArticle->getTitleJp()->value);
 
-            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser) {
+            /** @var array{0: DomainArticle, 1: int|null} $outcome */
+            $outcome = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser, $shouldReprocess): array {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
                 $this->articleRepository->update($updatedDomainArticle);
@@ -244,21 +252,26 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                return $updatedDomainArticle;
+                $contentVersion = null;
+
+                if ($shouldReprocess) {
+                    $contentVersion = $this->articleRepository->bumpContentVersion($domainArticle->getIdValue());
+
+                    $this->processingStates->startOrReset(
+                        ProcessingEntityType::Article,
+                        $updatedDomainArticle->getUid(),
+                        ProcessingTaskType::ArticleContentProcessing,
+                        $contentVersion,
+                    );
+                }
+
+                return [$updatedDomainArticle, $contentVersion];
             });
 
-            if ($shouldReprocessContent) {
-                ProcessArticleKanjisJob::dispatch(
-                    $updatedDomainArticle->getUid()->value(),
-                    $dto->content_jp
-                );
-            }
+            [$updatedDomainArticle, $contentVersion] = $outcome;
 
-            if ($shouldReprocessWords) {
-                ProcessArticleWordsJob::dispatch(
-                    $updatedDomainArticle->getUid()->value(),
-                    $this->articleWordProcessingText($updatedDomainArticle),
-                );
+            if ($contentVersion !== null) {
+                ProcessArticleContentJob::dispatch($updatedDomainArticle->getUid()->value(), $contentVersion);
             }
 
             return Result::success(
@@ -268,6 +281,7 @@ class ArticleService implements ArticleServiceInterface
                         $updatedDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE
                     ),
+                    processingState: $this->processingStateReader->currentState($updatedDomainArticle->getUid()->value()),
                 )
             );
         } catch (\Exception $e) {
@@ -279,11 +293,6 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::updateFailed($e->getMessage()));
         }
-    }
-
-    private function articleWordProcessingText(DomainArticle $article): string
-    {
-        return $article->getTitleJp()->value.$article->getContentJp()->value;
     }
 
     /**
@@ -323,7 +332,7 @@ class ArticleService implements ArticleServiceInterface
                 ? ($dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE)
                 : $article->getPublicity(),
             $article->getStatus(),
-            $article->getJlptLevels(), // TODO: Recalculate if content changed
+            $article->getJlptLevels(), // Recomputed by ProcessArticleContentJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
         );
@@ -373,56 +382,5 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::deletionFailed());
         }
-    }
-
-    /**
-     * Get paginated words for article with typed failure handling.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return Result Success data: LengthAwarePaginator, Failure data: ResultError
-     */
-    public function getArticleWordsResult(int $articleId, ?int $page = null, ?int $perPage = null): Result
-    {
-        try {
-            $pagination = Pagination::fromInputOrDefault($page, $perPage);
-            $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
-
-            if ($paginator === null) {
-                return Result::failure(ArticleErrors::notFound((string) $articleId));
-            }
-
-            return Result::success($paginator);
-        } catch (\Exception $e) {
-            Log::error('Article words fetch failed', [
-                'article_id' => $articleId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return Result::failure(ArticleErrors::wordsFetchFailed());
-        }
-    }
-
-    /**
-     * Get paginated words for article.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator
-     */
-    public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
-    {
-        $pagination = Pagination::fromInputOrDefault($page, $perPage);
-        $paginator = $this->articleRepository->findWordPaginatorByArticleId($articleId, $pagination);
-
-        if ($paginator === null) {
-            throw new ModelNotFoundException;
-        }
-
-        return $paginator;
     }
 }

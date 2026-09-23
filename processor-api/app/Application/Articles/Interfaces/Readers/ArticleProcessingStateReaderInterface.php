@@ -4,24 +4,22 @@ declare(strict_types=1);
 
 namespace App\Application\Articles\Interfaces\Readers;
 
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 /**
- * Batch access to Article background-processing state, keyed by Article UUID.
+ * Read access to an Article's current content-processing state, keyed by Article UUID.
  *
- * LastOperationServiceInterface returns the Eloquent LastOperationState model, so
- * consuming it directly would pull a persistence type into the application layer.
- * This narrow port keeps that leak on the infrastructure side of the boundary.
- * Widening it to the whole LastOperations module is out of scope here.
+ * A narrow port for the two read paths (detail and list) so they do not depend on the whole
+ * processing module. One task type per article since ADR 0001, hence "current" not "latest".
  */
 interface ArticleProcessingStateReaderInterface
 {
-    public function latestKanjiExtractionState(string $articleUuid): ?ArticleProcessingStateDTO;
+    public function currentState(string $articleUuid): ?ProcessingStateDTO;
 
     /**
      * @param array<int, string> $articleUuids
      *
-     * @return array<string, ArticleProcessingStateDTO> keyed by Article UUID
+     * @return array<string, ProcessingStateDTO> keyed by Article UUID
      */
-    public function latestKanjiExtractionStates(array $articleUuids): array;
+    public function currentStates(array $articleUuids): array;
 }

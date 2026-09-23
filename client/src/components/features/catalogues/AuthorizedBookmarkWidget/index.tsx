@@ -31,7 +31,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	entityId,
 	instanceObjectType,
 	isKnownType,
-	modalTitle = 'Choose Instance List to add',
+	modalTitle = 'Choose a list to add this to',
 	initialIsBookmarked = false,
 	initialIsKnown = false,
 	loadOnMount = true,

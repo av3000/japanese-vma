@@ -9,6 +9,7 @@ use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleListIncludes;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
@@ -26,15 +27,14 @@ use App\Http\v1\Articles\Requests\IndexArticleRequest;
 use App\Http\v1\Articles\Requests\IndexPendingArticlesRequest;
 use App\Http\v1\Articles\Requests\StoreArticleRequest;
 use App\Http\v1\Articles\Requests\UpdateArticleRequest;
-use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
 
+use App\Http\v1\Articles\Requests\UpdateArticleStatusRequest;
+use App\Http\v1\Articles\Resources\ArticleCreatedResource;
 use App\Http\v1\Articles\Resources\ArticleDetailResource;
 use App\Http\v1\Articles\Resources\ArticleListResource;
 use App\Http\v1\Articles\Resources\ArticleModerationListResource;
 use App\Http\v1\Articles\Resources\ArticleResource;
 use App\Http\v1\Articles\Resources\ArticleStatusResource;
-use App\Http\v1\Articles\Resources\ArticleWordCollection;
-use App\Http\v1\Shared\Resources\UuidCreatedResource;
 use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
 use App\Shared\Results\Result;
@@ -43,7 +43,6 @@ use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Auth\AuthenticationException;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response as HttpResponse;
 
@@ -123,9 +122,9 @@ class ArticleController extends Controller
     }
 
     /**
-     * @response UuidCreatedResource
+     * @response ArticleCreatedResource
      */
-    #[Response(201, type: 'UuidCreatedResource')]
+    #[Response(201, type: 'ArticleCreatedResource')]
     public function store(StoreArticleRequest $request): JsonResponse|JsonResource
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
@@ -136,11 +135,10 @@ class ArticleController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        $article = $result->getData();
+        /** @var ArticleCreateResultDTO $created */
+        $created = $result->getData();
 
-        return new UuidCreatedResource([
-            'uuid' => $article->getUid()->value(),
-        ]);
+        return new ArticleCreatedResource($created);
     }
 
     /**
@@ -191,6 +189,7 @@ class ArticleController extends Controller
         return new ArticleResource(
             article: $updateResult->article,
             hashtags: $updateResult->hashtags,
+            processingState: $updateResult->processingState,
         );
     }
 
@@ -215,26 +214,6 @@ class ArticleController extends Controller
             'success' => true,
             'message' => 'Article deleted successfully',
         ]);
-    }
-
-    // TODO: refactor to clean architecture
-    /**
-     * @response ArticleWordCollection
-     */
-    #[Response(type: 'ArticleWordCollection')]
-    public function words(Request $request, int $id): JsonResponse
-    {
-        $result = $this->articleService->getArticleWordsResult(
-            $id,
-            $request->get('page'),
-            $request->get('per_page')
-        );
-
-        if ($result->isFailure()) {
-            return $this->legacyFailure($result);
-        }
-
-        return response()->json(new ArticleWordCollection($result->getData()));
     }
 
     public function exportKanjisPdf(string $uuid): JsonResponse|HttpResponse

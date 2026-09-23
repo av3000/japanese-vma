@@ -6,12 +6,13 @@ namespace App\Domain\Articles\DTOs;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
 
 /**
  * One enriched row of an Article list page.
  *
  * Replaces the Domain DTO of the same name, which imported the Eloquent
- * LastOperationState model straight into the domain layer.
+ * Eloquent processing-state model straight into the domain layer.
  */
 final readonly class ArticleListItemDTO
 {
@@ -22,7 +23,7 @@ final readonly class ArticleListItemDTO
         public Article $article,
         public ?ArticleStats $stats,
         public array $hashtags,
-        public ?ArticleProcessingStateDTO $processingState,
+        public ?ProcessingStateDTO $processingState,
     ) {
     }
 }

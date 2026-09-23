@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { articleKeys } from '@/api/articles/keys';
+import { applyProcessingStatus } from '@/api/articles/processingStatusCache';
 import { articleStore } from '@/api/generated/article/article';
-import type { UuidCreatedResource } from '@/api/generated/model';
+import type { ArticleCreatedResource } from '@/api/generated/model/articleCreatedResource';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';
 import { Container } from '@/components/shared/layout';
@@ -29,15 +31,21 @@ export default function ArticleCreatePage() {
 	}, []);
 
 	// TODO: add upload image feature
-	const mutation = useMutation<UuidCreatedResource, unknown, StoreArticleRequest>({
+	const mutation = useMutation<ArticleCreatedResource, unknown, StoreArticleRequest>({
 		mutationFn: (payload) => articleStore(payload),
-		onSuccess: ({ uuid }) => {
+		onSuccess: ({ uuid, processing_status }) => {
 			setStatus(null);
 			setServerErrors(null);
 
-			// make lists refetch so the new article appears
-			// TODO: is there a need to invalidate if we navigate and then fetch articles on navigation?
-			qc.invalidateQueries({ queryKey: ['articles'] });
+			// The server opened the `pending` row inside the create transaction (#258), so the
+			// first detail fetch already carries it. Write it into whatever cache entries exist
+			// through the shared status path; a partial detail object is deliberately NOT seeded,
+			// because the detail page renders the full resource and would break on one.
+			applyProcessingStatus(qc, uuid, processing_status);
+
+			// Every cached list variant (homepage, dashboard, discovery) must refetch so the new
+			// article shows up regardless of which one the user lands on next.
+			qc.invalidateQueries({ queryKey: articleKeys.lists() });
 
 			navigate(`/articles/${uuid}`);
 		},

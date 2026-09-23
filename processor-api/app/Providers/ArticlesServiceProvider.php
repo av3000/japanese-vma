@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Application\Articles\Services\ArticleKanjiProcessingService;
-use App\Application\Articles\Services\ArticleKanjiProcessingServiceInterface;
 use App\Application\Articles\Services\ArticleListService;
 use App\Application\Articles\Services\ArticleListServiceInterface;
 use App\Application\Articles\Services\ArticleModerationService;
@@ -42,8 +40,8 @@ use App\Application\JapaneseMaterial\Words\Services\WordExtractionService;
 use App\Application\JapaneseMaterial\Words\Services\WordExtractionServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordService;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
-use App\Application\LastOperations\Services\LastOperationService;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
+use App\Application\Processing\Services\ProcessingStateService;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Application\Users\Services\RoleService;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Application\Users\Services\UserService;
@@ -58,7 +56,6 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(ArticleServiceInterface::class, ArticleService::class);
         $this->app->bind(ArticleListServiceInterface::class, ArticleListService::class);
         $this->app->bind(ArticleModerationServiceInterface::class, ArticleModerationService::class);
-        $this->app->bind(ArticleKanjiProcessingServiceInterface::class, ArticleKanjiProcessingService::class);
         $this->app->bind(ArticlePdfExportServiceInterface::class, ArticlePdfExportService::class);
         $this->app->bind(CataloguePdfExportServiceInterface::class, CataloguePdfExportService::class);
         $this->app->bind(CatalogueServiceInterface::class, CatalogueService::class);
@@ -78,6 +75,6 @@ class ArticlesServiceProvider extends ServiceProvider
 
         $this->app->bind(KanjiExtractionServiceInterface::class, KanjiExtractionService::class);
         $this->app->bind(WordExtractionServiceInterface::class, WordExtractionService::class);
-        $this->app->bind(LastOperationServiceInterface::class, LastOperationService::class);
+        $this->app->bind(ProcessingStateServiceInterface::class, ProcessingStateService::class);
     }
 }

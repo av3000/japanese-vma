@@ -6,7 +6,7 @@ use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Http\v1\Engagement\Resources\EngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Processing\Resources\ProcessingStatusResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -89,14 +89,7 @@ class ArticleDetailResource extends JsonResource
             'engagement' => new EngagementResource($detail->engagement),
             'kanjis' => KanjiResource::collection($detail->kanjis),
             'words' => ArticleWordResource::collection($detail->words),
-            'processing_status' => $detail->processingState ? new ProcessingStatusResource([
-                'id' => $detail->processingState->id,
-                'type' => $detail->processingState->taskType,
-                'status' => $detail->processingState->status,
-                'metadata' => $detail->processingState->metadata,
-                'created_at' => $detail->processingState->createdAt?->format('c'),
-                'updated_at' => $detail->processingState->updatedAt?->format('c'),
-            ]) : null,
+            'processing_status' => $detail->processingState ? new ProcessingStatusResource($detail->processingState) : null,
         ];
     }
 }

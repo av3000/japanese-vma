@@ -3,8 +3,15 @@ import type Echo from 'laravel-echo';
 import { useAuth } from '@/hooks/useAuth';
 import type { ConnectionStatus } from '@/lib/echo/types';
 
-interface SocketContextType {
+export interface SocketContextType {
+	/** The live Echo instance, or null until the provider has configured one. */
 	echo: Echo<'reverb'> | null;
+	/**
+	 * Incremented every time a new instance is created (first configure, token change).
+	 * Subscribers key their subscriptions on it so a fresh instance always gets fresh
+	 * subscriptions and a stale one is never reused (#253).
+	 */
+	generation: number;
 	isConnected: boolean;
 	isConfigured: boolean;
 	connectionStatus: ConnectionStatus;
@@ -23,15 +30,18 @@ export const shouldStartWebSocket = ({
 	token: string | null;
 }) => Boolean(isConfigured && isAuthenticated && token);
 
-const SocketContext = createContext<SocketContextType>({
+export const DEFAULT_SOCKET_CONTEXT: SocketContextType = {
 	echo: null,
+	generation: 0,
 	isConnected: false,
 	isConfigured: false,
 	connectionStatus: 'disconnected',
 	lastError: null,
 	connectionInfo: { host: 'localhost', port: 8081, scheme: 'ws', appKey: '' },
 	hasAttemptedConnection: false,
-});
+};
+
+export const SocketContext = createContext<SocketContextType>(DEFAULT_SOCKET_CONTEXT);
 
 export const useWebSocket = () => useContext(SocketContext);
 
@@ -61,34 +71,34 @@ const safeStringify = (value: unknown): string => {
 	}
 };
 
+/**
+ * Reads the client-side Reverb target. `VITE_REVERB_HOST` is the browser-facing host and is
+ * documented in `client/.env.example`; it is no longer the backend's bind address (#254).
+ */
+const readConnectionInfo = (): SocketContextType['connectionInfo'] => {
+	const host = import.meta.env.VITE_REVERB_HOST || 'localhost';
+	const parsedPort = import.meta.env.VITE_REVERB_PORT ? parseInt(import.meta.env.VITE_REVERB_PORT, 10) : 8081;
+	const port = Number.isFinite(parsedPort) ? parsedPort : 8081;
+	const appKey = import.meta.env.VITE_REVERB_APP_KEY ?? '';
+	const scheme: 'ws' | 'wss' = import.meta.env.VITE_REVERB_SCHEME === 'https' ? 'wss' : 'ws';
+
+	return { host, port, scheme, appKey };
+};
+
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [echoClient, setEchoClient] = useState<Echo<'reverb'> | null>(null);
+	const [generation, setGeneration] = useState(0);
 	const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 	const [lastError, setLastError] = useState<string | null>(null);
 	const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false);
 	const { isAuthenticated, token } = useAuth();
 
-	const connectionInfo = useMemo(() => {
-		const envHost = import.meta.env.VITE_REVERB_HOST;
-		const host = !envHost || envHost === '0.0.0.0' ? window.location.hostname : envHost;
-		const parsedPort = import.meta.env.VITE_REVERB_PORT ? parseInt(import.meta.env.VITE_REVERB_PORT, 10) : 8081;
-		const port = Number.isFinite(parsedPort) ? parsedPort : 8081;
-		const appKey = import.meta.env.VITE_REVERB_APP_KEY ?? '';
-		const scheme: 'ws' | 'wss' = import.meta.env.VITE_REVERB_SCHEME === 'https' ? 'wss' : 'ws';
-
-		return { host, port, scheme, appKey };
-	}, []);
+	const connectionInfo = useMemo(readConnectionInfo, []);
 
 	const isConfigured = connectionInfo.appKey.trim().length > 0;
 
 	useEffect(() => {
-		if (
-			!shouldStartWebSocket({
-				isConfigured,
-				isAuthenticated,
-				token,
-			})
-		) {
+		if (!shouldStartWebSocket({ isConfigured, isAuthenticated, token })) {
 			setEchoClient(null);
 			setHasAttemptedConnection(false);
 			setConnectionStatus('disconnected');
@@ -96,44 +106,38 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 			return;
 		}
 
-		const wsHost = connectionInfo.host;
-		const wsPort = connectionInfo.port;
 		let isActive = true;
 		let echoInstance: Echo<'reverb'> | null = null;
 		let cleanupConnection: (() => void) | null = null;
 
-		const authHeaders: Record<string, string> = {
-			Accept: 'application/json',
-		};
-
-		authHeaders.Authorization = `Bearer ${token}`;
-
 		const connect = async () => {
-			const { configureEcho, echo } = await import('@/lib/echo/config/index');
+			// Dynamic import keeps laravel-echo and pusher-js in their own chunk.
+			const { createEcho } = await import('@/lib/echo/config/index');
 
 			if (!isActive) {
 				return;
 			}
 
-			configureEcho({
+			echoInstance = createEcho<'reverb'>({
 				broadcaster: 'reverb',
-				key: import.meta.env.VITE_REVERB_APP_KEY,
-				wsHost,
-				wsPort,
-				wssPort: wsPort,
-				forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
+				key: connectionInfo.appKey,
+				wsHost: connectionInfo.host,
+				wsPort: connectionInfo.port,
+				wssPort: connectionInfo.port,
+				forceTLS: connectionInfo.scheme === 'wss',
 				enabledTransports: ['ws', 'wss'],
 				disableStats: true,
-				cluster: 'mt1',
 				authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
 				auth: {
-					headers: authHeaders,
+					headers: {
+						Accept: 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
 				},
 			});
 
-			echoInstance = echo<'reverb'>();
-
 			setEchoClient(echoInstance);
+			setGeneration((current) => current + 1);
 			setHasAttemptedConnection(true);
 
 			const connector = echoInstance.connector as unknown;
@@ -200,23 +204,32 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 			setEchoClient(null);
 			setConnectionStatus('disconnected');
 		};
-	}, [isAuthenticated, token, connectionInfo.host, connectionInfo.port, isConfigured]);
+	}, [isAuthenticated, token, connectionInfo, isConfigured]);
 
 	const isConnected = connectionStatus === 'connected';
 
-	return (
-		<SocketContext.Provider
-			value={{
-				echo: echoClient,
-				isConnected,
-				isConfigured,
-				connectionStatus,
-				lastError,
-				connectionInfo,
-				hasAttemptedConnection,
-			}}
-		>
-			{children}
-		</SocketContext.Provider>
+	const value = useMemo<SocketContextType>(
+		() => ({
+			echo: echoClient,
+			generation,
+			isConnected,
+			isConfigured,
+			connectionStatus,
+			lastError,
+			connectionInfo,
+			hasAttemptedConnection,
+		}),
+		[
+			echoClient,
+			generation,
+			isConnected,
+			isConfigured,
+			connectionStatus,
+			lastError,
+			connectionInfo,
+			hasAttemptedConnection,
+		],
 	);
+
+	return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

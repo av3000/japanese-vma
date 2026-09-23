@@ -6,11 +6,12 @@ import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscript
 import { useArticleStatusMutation } from '@/api/articles/moderation';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
@@ -253,6 +254,10 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				</Cluster>
 			</Stack>
 
+			<div className={styles.attachments}>
+				<ArticleAttachments articleUuid={article.uuid} />
+			</div>
+
 			<div className={styles.comments}>
 				<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
 			</div>
@@ -277,7 +282,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				onDownload={handleDownloadPdf}
 				pendingType={pdfPendingType}
 				errorMessage={pdfErrorMessage}
-				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
+				isDownloadEnabled={article?.processing_status?.status === ProcessingStatus.completed}
 			/>
 
 			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}

@@ -1,9 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
 import {
-	LastOperationStatus,
-	type LastOperationStatus as LastOperationStatusType,
-} from '@/api/generated/model/lastOperationStatus';
+	ProcessingStatus,
+	type ProcessingStatus as ProcessingStatusType,
+} from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import Spinner from '@/components/shared/Spinner';
@@ -16,20 +16,34 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { STATUS_VARIANT_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
+import { useWebSocket } from '@/providers/contexts/socket-provider';
 import styles from './ProcessingStatusAlert.module.css';
 
-export const STATUS_CONFIG: Record<LastOperationStatusType, { message: string }> = {
+/**
+ * Copy per status. `live` is true when the socket is connected and events arrive as they
+ * happen; otherwise the query is polling (#251) and the page should promise only that.
+ */
+export const STATUS_CONFIG: Record<ProcessingStatusType, { message: (live: boolean) => string }> = {
 	pending: {
-		message: 'Instance queued for processing. This page will update automatically.',
+		message: (live) =>
+			live
+				? 'Kanji and vocabulary for this article are queued. This page will update automatically.'
+				: 'Kanji and vocabulary for this article are queued. Checking for updates.',
 	},
 	processing: {
-		message: 'Instance background processing. Please wait, this page will update automatically.',
+		message: (live) =>
+			live
+				? 'Extracting kanji and vocabulary for this article. This page will update automatically.'
+				: 'Extracting kanji and vocabulary for this article. Checking for updates.',
 	},
 	completed: {
-		message: 'Instance processing complete.',
+		message: () => 'Kanji and vocabulary for this article are ready.',
 	},
 	failed: {
-		message: 'Instance processing failed. Please try again later.',
+		message: () => 'Kanji and vocabulary extraction failed for this article. Please try again later.',
+	},
+	superseded: {
+		message: () => 'Content changed while processing; the newer version has been processed instead.',
 	},
 };
 
@@ -56,11 +70,13 @@ const formatDurationCompact = (ms: number): string => {
 // probably saving the last state on browser storage.
 // Or change UI presentation for smarter UX
 const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processing_status, className }) => {
+	const { isConnected } = useWebSocket();
 	const status = processing_status?.status;
 
-	if (!status) return null;
+	// Superseded is terminal and carries no result of its own (ADR 0001): nothing to show.
+	if (!status || status === ProcessingStatus.superseded) return null;
 
-	const config = STATUS_CONFIG[status];
+	const message = STATUS_CONFIG[status].message(isConnected);
 
 	const createdAt = processing_status?.created_at ? new Date(processing_status.created_at) : null;
 	const updatedAt = processing_status?.updated_at ? new Date(processing_status.updated_at) : null;
@@ -73,7 +89,12 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	const hasValidTiming = createdAtMs !== null && updatedAtMs !== null;
 
-	const isTerminal = status === LastOperationStatus.completed || status === LastOperationStatus.failed;
+	const isTerminal = status === ProcessingStatus.completed || status === ProcessingStatus.failed;
+
+	// A first attempt is the normal case and says nothing worth the space; a retry does (#261).
+	const attempt = processing_status?.attempt ?? 0;
+	const maxAttempts = processing_status?.max_attempts ?? 0;
+	const attemptText = attempt > 1 ? `Attempt ${attempt}${maxAttempts > 0 ? ` of ${maxAttempts}` : ''}` : null;
 
 	let durationText: string | null = null;
 	if (isTerminal && createdAtMs !== null && updatedAtMs !== null) {
@@ -82,9 +103,9 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 
 	// TODO: not sure about this class mapping if it is the clean way.
 	const statusVariant: StatusVariant =
-		status === LastOperationStatus.completed
+		status === ProcessingStatus.completed
 			? 'success'
-			: status === LastOperationStatus.failed
+			: status === ProcessingStatus.failed
 				? 'destructive'
 				: 'pending';
 
@@ -92,14 +113,15 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 		{ label: 'Created', value: createdAtText },
 		{ label: 'Updated', value: updatedAtText },
 		{ label: 'Duration', value: durationText },
+		...(attemptText ? [{ label: 'Retry', value: attemptText }] : []),
 	];
 
 	return (
 		<div className={classNames(styles.alert, STATUS_VARIANT_CLASSES[statusVariant], className)}>
 			<div className={styles.content}>
-				<p className={styles.message}>{config.message}</p>
+				<p className={styles.message}>{message}</p>
 				<div className={styles.status}>
-					{(status === LastOperationStatus.pending || status === LastOperationStatus.processing) && (
+					{(status === ProcessingStatus.pending || status === ProcessingStatus.processing) && (
 						<span className={styles.spinner} aria-hidden="true">
 							<Spinner size="sm" />
 						</span>

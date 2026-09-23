@@ -38,6 +38,10 @@
 	border-radius: 50%;
 }
 
+.attachments {
+	margin-top: var(--spacing-2xl);
+}
+
 .comments {
 	margin-top: var(--spacing-2xl);
 }

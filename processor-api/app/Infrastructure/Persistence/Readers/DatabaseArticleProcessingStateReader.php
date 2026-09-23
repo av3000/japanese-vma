@@ -5,49 +5,38 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Readers;
 
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
-use App\Application\LastOperations\Services\LastOperationServiceInterface;
-use App\Domain\Articles\DTOs\ArticleProcessingStateDTO;
+use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\LastOperationState;
-use DateTimeImmutable;
 
 final readonly class DatabaseArticleProcessingStateReader implements ArticleProcessingStateReaderInterface
 {
-    private const TASK_TYPE = 'kanji_extraction';
-
     public function __construct(
-        private LastOperationServiceInterface $lastOperationService,
+        private ProcessingStateRepositoryInterface $states,
     ) {
     }
 
-    public function latestKanjiExtractionState(string $articleUuid): ?ArticleProcessingStateDTO
+    public function currentState(string $articleUuid): ?ProcessingStateDTO
     {
-        $state = $this->lastOperationService->getLatestState(EntityId::from($articleUuid), self::TASK_TYPE);
-
-        return $state === null ? null : self::toDto($state);
+        return $this->states->getCurrent(
+            ProcessingEntityType::Article,
+            EntityId::from($articleUuid),
+            ProcessingTaskType::ArticleContentProcessing,
+        );
     }
 
-    public function latestKanjiExtractionStates(array $articleUuids): array
+    public function currentStates(array $articleUuids): array
     {
         if ($articleUuids === []) {
             return [];
         }
 
-        /** @var array<string, LastOperationState> $states */
-        $states = $this->lastOperationService->getBatchLatestStates($articleUuids, self::TASK_TYPE);
-
-        return array_map(self::toDto(...), $states);
-    }
-
-    private static function toDto(LastOperationState $state): ArticleProcessingStateDTO
-    {
-        return new ArticleProcessingStateDTO(
-            id: (int) $state->id,
-            taskType: (string) $state->task_type,
-            status: $state->status,
-            metadata: $state->metadata,
-            createdAt: $state->created_at ? DateTimeImmutable::createFromInterface($state->created_at) : null,
-            updatedAt: $state->updated_at ? DateTimeImmutable::createFromInterface($state->updated_at) : null,
+        return $this->states->getCurrentBatch(
+            ProcessingEntityType::Article,
+            array_values($articleUuids),
+            ProcessingTaskType::ArticleContentProcessing,
         );
     }
 }

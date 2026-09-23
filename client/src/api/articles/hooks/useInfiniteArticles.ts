@@ -1,9 +1,11 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { articleIndex, getArticleIndexQueryKey } from '@/api/generated/article/article';
+import { articleIndex } from '@/api/generated/article/article';
 import type { ArticleIndexQueryError } from '@/api/generated/article/article';
 import type { ArticleIndexParams } from '@/api/generated/model/articleIndexParams';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
+import { articleKeys } from '../keys';
+import { listHasNonTerminalProcessing, useProcessingRefetchInterval } from './useProcessingPolling';
 
 export type ArticleListFilters = Omit<ArticleIndexParams, 'page'>;
 
@@ -12,7 +14,7 @@ type UseInfiniteArticlesOptions = {
 	filters?: ArticleListFilters;
 };
 
-export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => getArticleIndexQueryKey(filters);
+export const getInfiniteArticlesQueryKey = (filters: ArticleListFilters = {}) => articleKeys.list(filters);
 
 export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
@@ -20,6 +22,9 @@ export const getNextArticlesPageParam = (lastPage: ArticleListResource) =>
 export const getArticlesTotal = (pages: ArticleListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfiniteArticlesOptions = {}) => {
+	// Polls while any loaded item is still processing and the socket is not connected (#251).
+	const refetchInterval = useProcessingRefetchInterval(listHasNonTerminalProcessing);
+
 	const query = useInfiniteQuery<
 		ArticleListResource,
 		ArticleIndexQueryError,
@@ -32,6 +37,7 @@ export const useInfiniteArticles = ({ enabled = true, filters = {} }: UseInfinit
 		initialPageParam: 1,
 		getNextPageParam: getNextArticlesPageParam,
 		enabled,
+		refetchInterval,
 	});
 
 	const pages = query.data?.pages as ArticleListResource[] | undefined;

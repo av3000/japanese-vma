@@ -19,12 +19,15 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Terminal-state guarantee for article processing (issue #245): a job killed by a
+        // timeout, OOM or worker restart cannot update its processing_states row itself.
+        $schedule->command('article-processing:sweep-stale')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
     }
 
     /**

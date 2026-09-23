@@ -64,7 +64,6 @@ Route::prefix('v1')->group(function () {
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);
-    Route::get('articles/{id}/words', [ArticleController::class, 'words']);
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);

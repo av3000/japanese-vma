@@ -41,7 +41,7 @@ class ArticleListDatabaseBudgetTest extends TestCase
      *   8  comments aggregate
      *   9  objecttemplates id lookup
      *   10 hashtag_entity links
-     *   11 last_operations processing state
+     *   11 processing_states processing state
      *
      * Two reductions are available and both sit outside Article filtering:
      * queries 5-8 are four separate aggregates in the Engagement module that could be

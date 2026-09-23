@@ -60,6 +60,13 @@ variables:
   trap 'rm -f "$RUNTIME_ENV_FILE"' EXIT
 
 .prepare_queue_runtime_env: &prepare_queue_runtime_env |
+  # The worker broadcasts processing status to the Reverb service (ADR 0002, #262). Every
+  # value comes from a CI variable; a missing one fails the job instead of silently falling
+  # back to the null broadcaster, which is how production ran without real-time updates.
+  for required in REVERB_APP_ID REVERB_APP_KEY REVERB_APP_SECRET REVERB_HOST; do
+    eval "value=\${$required:-}"
+    [ -n "$value" ] || { echo "$required is required for the worker broadcast target."; exit 1; }
+  done
   QUEUE_RUNTIME_ENV_FILE="$(mktemp)"
   export QUEUE_RUNTIME_ENV_FILE
   printf '%s\n' \
@@ -104,6 +111,13 @@ variables:
     "HORIZON_BALANCE_COOLDOWN=${HORIZON_BALANCE_COOLDOWN:-3}" \
     "TELESCOPE_ENABLED=${TELESCOPE_ENABLED:false}" \
     "QUEUE_CONNECTION=redis" \
+    "BROADCAST_DRIVER=reverb" \
+    "REVERB_APP_ID=$REVERB_APP_ID" \
+    "REVERB_APP_KEY=$REVERB_APP_KEY" \
+    "REVERB_APP_SECRET=$REVERB_APP_SECRET" \
+    "REVERB_HOST=$REVERB_HOST" \
+    "REVERB_PORT=${REVERB_PORT:-443}" \
+    "REVERB_SCHEME=${REVERB_SCHEME:-https}" \
     "QUEUE_FAILED_DRIVER=${QUEUE_FAILED_DRIVER:-database}" \
     "QUEUE_RETRY_AFTER=${QUEUE_RETRY_AFTER:-180}" \
     "QUEUE_BLOCK_FOR=${QUEUE_BLOCK_FOR:-10}" \
@@ -334,6 +348,35 @@ verify_worker:
     - *prepare_queue_runtime_env
     - docker run --rm --env-file "$QUEUE_RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan horizon:status
     - docker run --rm --env-file "$QUEUE_RUNTIME_ENV_FILE" "$IMAGE_NAME" php artisan app:verify-queue-worker --queue="${REDIS_QUEUE:-default}" --timeout=30 --ttl=120 --poll=1
+
+verify_reverb:
+  stage: release
+  image: alpine:3.20
+  needs:
+    - verify_worker
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes: *backend_changes
+  allow_failure: false
+  before_script:
+    - apk add --no-cache curl
+  script:
+    # Reverb answers the Pusher-protocol HTTP surface on the app path. A reachable service
+    # returns a JSON body (a 200 with a usage document or a 4xx with a JSON error); a
+    # sleeping, missing or misrouted service does not answer at all (#262).
+    - |
+      [ -n "${REVERB_HOST:-}" ] || { echo "REVERB_HOST is required."; exit 1; }
+      url="${REVERB_SCHEME:-https}://${REVERB_HOST}:${REVERB_PORT:-443}/apps/${REVERB_APP_ID}/channels"
+      for attempt in $(seq 1 12); do
+        status_code="$(curl -s -o verify-reverb.txt -w "%{http_code}" --max-time 10 "$url" || true)"
+        if [ "$status_code" != "000" ]; then
+          echo "Reverb answered with HTTP $status_code at $url"
+          exit 0
+        fi
+        sleep 5
+      done
+      echo "Reverb did not answer at $url"
+      exit 1
 
 deploy_render:
   stage: release

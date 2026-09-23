@@ -312,11 +312,11 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "`UuidCreatedResource`",
+                        "description": "`ArticleCreatedResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UuidCreatedResource"
+                                    "$ref": "#/components/schemas/ArticleCreatedResource"
                                 }
                             }
                         }
@@ -450,58 +450,6 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "/articles/{id}/words": {
-            "get": {
-                "operationId": "article.words",
-                "tags": [
-                    "Article"
-                ],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ArticleWordCollection`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ArticleWordCollection"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -3960,6 +3908,17 @@
                 ],
                 "parameters": [
                     {
+                        "name": "article_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -4563,6 +4522,22 @@
                 ],
                 "title": "ArticleAppliedFiltersResource"
             },
+            "ArticleCreatedResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "processing_status": {
+                        "$ref": "#/components/schemas/ProcessingStatusResource"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "processing_status"
+                ],
+                "title": "ArticleCreatedResource"
+            },
             "ArticleDetailResource": {
                 "type": "object",
                 "properties": {
@@ -4991,30 +4966,6 @@
                     "status_label"
                 ],
                 "title": "ArticleStatusResource"
-            },
-            "ArticleWordCollection": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "words": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/ArticleWordResource"
-                        }
-                    },
-                    "message": {
-                        "type": "string",
-                        "const": "Article words fetched"
-                    }
-                },
-                "required": [
-                    "success",
-                    "words",
-                    "message"
-                ],
-                "title": "ArticleWordCollection"
             },
             "ArticleWordResource": {
                 "type": "object",
@@ -6188,16 +6139,6 @@
                 ],
                 "title": "KanjiResource"
             },
-            "LastOperationStatus": {
-                "type": "string",
-                "enum": [
-                    "pending",
-                    "processing",
-                    "completed",
-                    "failed"
-                ],
-                "title": "LastOperationStatus"
-            },
             "LikeInstanceRequest": {
                 "type": "object",
                 "properties": {
@@ -6545,17 +6486,41 @@
                 ],
                 "title": "ProblemDetailsResource"
             },
+            "ProcessingStatus": {
+                "type": "string",
+                "description": "| |\n|---|\n| `pending` <br/>  |\n| `processing` <br/>  |\n| `completed` <br/>  |\n| `failed` <br/>  |\n| `superseded` <br/> The article content changed after this run was queued; its result was never applied. |",
+                "enum": [
+                    "pending",
+                    "processing",
+                    "completed",
+                    "failed",
+                    "superseded"
+                ],
+                "title": "ProcessingStatus"
+            },
             "ProcessingStatusResource": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "integer"
                     },
+                    "entity_id": {
+                        "type": "string"
+                    },
                     "type": {
                         "type": "string"
                     },
                     "status": {
-                        "$ref": "#/components/schemas/LastOperationStatus"
+                        "$ref": "#/components/schemas/ProcessingStatus"
+                    },
+                    "sequence": {
+                        "type": "integer"
+                    },
+                    "attempt": {
+                        "type": "integer"
+                    },
+                    "max_attempts": {
+                        "type": "integer"
                     },
                     "metadata": {
                         "type": "object"
@@ -6569,8 +6534,12 @@
                 },
                 "required": [
                     "id",
+                    "entity_id",
                     "type",
                     "status",
+                    "sequence",
+                    "attempt",
+                    "max_attempts",
                     "metadata",
                     "created_at",
                     "updated_at"

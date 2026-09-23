@@ -5,15 +5,16 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
+use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
@@ -185,28 +186,6 @@ class ArticleRepository implements ArticleRepositoryInterface
         );
     }
 
-    public function findWordPaginatorByArticleId(int $articleId, Pagination $pagination): ?LengthAwarePaginator
-    {
-        $article = PersistenceArticle::find($articleId);
-
-        if ($article === null) {
-            return null;
-        }
-
-        $paginator = $article->words()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
-
-        $paginator->setCollection(
-            $paginator->getCollection()->map(
-                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
-            )
-        );
-
-        return $paginator;
-    }
-
     public function findModerationQueue(Pagination $pagination): Articles
     {
         $paginator = PersistenceArticle::query()
@@ -295,7 +274,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      * @param int $articleId The internal ID of the article.
      * @param int[] $kanjiIds An array of Kanji internal IDs to attach.
      */
-    public function syncKanjis(int $articleId, array $kanjiIds): void
+    public function syncKanjis(int $articleId, array $kanjiIds, ?JlptLevels $jlptLevels = null): void
     {
         $existingKanjiIds = DB::table('article_kanji')
             ->where('article_id', $articleId)
@@ -305,7 +284,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         $kanjiIdsToAdd = array_diff($kanjiIds, $existingKanjiIds);
         $kanjiIdsToRemove = array_diff($existingKanjiIds, $kanjiIds);
 
-        DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove) {
+        DB::transaction(function () use ($articleId, $kanjiIdsToAdd, $kanjiIdsToRemove, $jlptLevels) {
             if (! empty($kanjiIdsToRemove)) {
                 DB::table('article_kanji')
                     ->where('article_id', $articleId)
@@ -322,6 +301,12 @@ class ArticleRepository implements ArticleRepositoryInterface
                 foreach (array_chunk($pivotRecords, 1000) as $chunk) {
                     DB::table('article_kanji')->insert($chunk);
                 }
+            }
+
+            if ($jlptLevels !== null) {
+                PersistenceArticle::query()
+                    ->whereKey($articleId)
+                    ->update($jlptLevels->toArray());
             }
         });
     }
@@ -360,6 +345,40 @@ class ArticleRepository implements ArticleRepositoryInterface
                     DB::table('article_word')->insert($chunk);
                 }
             }
+        });
+    }
+
+    public function findProcessingSource(EntityId $articleUuid): ?ArticleProcessingSourceDTO
+    {
+        $row = PersistenceArticle::query()
+            ->where('uuid', $articleUuid->value())
+            ->first(['id', 'uuid', 'content_version', 'title_jp', 'content_jp']);
+
+        if ($row === null) {
+            return null;
+        }
+
+        return new ArticleProcessingSourceDTO(
+            id: (int) $row->id,
+            uuid: (string) $row->uuid,
+            contentVersion: (int) $row->content_version,
+            titleJp: (string) $row->title_jp,
+            contentJp: (string) $row->content_jp,
+        );
+    }
+
+    public function bumpContentVersion(int $articleId): int
+    {
+        PersistenceArticle::query()->whereKey($articleId)->increment('content_version');
+
+        return (int) PersistenceArticle::query()->whereKey($articleId)->value('content_version');
+    }
+
+    public function syncContentProcessing(int $articleId, array $kanjiIds, array $wordIds, JlptLevels $jlptLevels): void
+    {
+        DB::transaction(function () use ($articleId, $kanjiIds, $wordIds, $jlptLevels): void {
+            $this->syncKanjis($articleId, $kanjiIds, $jlptLevels);
+            $this->syncWords($articleId, $wordIds);
         });
     }
 }

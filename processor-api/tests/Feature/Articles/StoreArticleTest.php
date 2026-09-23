@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Articles;
 
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
-use App\Application\Articles\Jobs\ProcessArticleWordsJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Passport\Passport;
-use ReflectionClass;
 use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
 
@@ -26,7 +25,7 @@ class StoreArticleTest extends TestCase
         $this->seedBaselineData();
     }
 
-    public function test_store_article_dispatches_kanji_and_word_processing_jobs(): void
+    public function test_store_article_dispatches_one_content_processing_job_and_opens_a_pending_row(): void
     {
         $user = User::factory()->create();
         Passport::actingAs($user, ['*'], 'api');
@@ -48,28 +47,34 @@ class StoreArticleTest extends TestCase
         $response->assertCreated()
             ->assertJson(fn (AssertableJson $json): AssertableJson => $json
                 ->whereType('uuid', 'string')
+                ->where('processing_status.status', ProcessingStatus::PENDING->value)
+                ->where('processing_status.type', 'article_content_processing')
                 ->etc());
         $articleUuid = $response->json('uuid');
+
+        // The row was opened inside the create transaction, so the very next read already has it.
+        $this->json('GET', "/api/v1/articles/{$articleUuid}")
+            ->assertOk()
+            ->assertJsonPath('processing_status.status', ProcessingStatus::PENDING->value);
 
         $this->assertDatabaseHas('articles', [
             'uuid' => $articleUuid,
             'user_id' => $user->id,
         ]);
 
-        Bus::assertDispatched(ProcessArticleKanjisJob::class);
+        Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 1);
         Bus::assertDispatched(
-            ProcessArticleWordsJob::class,
-            fn (ProcessArticleWordsJob $job): bool => $this->readJobProperty($job, 'articleUuid') === $articleUuid
-                && $this->readJobProperty($job, 'articleText') === $titleJp.$contentJp
+            ProcessArticleContentJob::class,
+            fn (ProcessArticleContentJob $job): bool => $job->articleUuid === $articleUuid && $job->contentVersion === 1,
         );
-    }
 
-    private function readJobProperty(object $job, string $property): mixed
-    {
-        $reflection = new ReflectionClass($job);
-        $jobProperty = $reflection->getProperty($property);
-        $jobProperty->setAccessible(true);
-
-        return $jobProperty->getValue($job);
+        $this->assertDatabaseHas('articles', ['uuid' => $articleUuid, 'content_version' => 1]);
+        $this->assertDatabaseHas('processing_states', [
+            'entity_type' => 'article',
+            'entity_id' => $articleUuid,
+            'task_type' => 'article_content_processing',
+            'status' => ProcessingStatus::PENDING->value,
+            'content_version' => 1,
+        ]);
     }
 }

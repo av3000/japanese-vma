@@ -1,8 +1,8 @@
 # Articles — Behavior
 
 > **Status:** Baseline; verified behavior and incomplete administration separated
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Last reviewed:** 2026-09-20
+> **Evidence baseline:** Repository working tree inspected on 2026-09-20; processing behaviour re-read against the epic #241 remediation
 > **Audience:** Frontend, backend, QA, and product-minded contributors
 
 ## Public Reads
@@ -22,16 +22,61 @@ Delete is an authenticated, authorized operation and removes the article through
 
 ## Processing Behavior
 
-Create dispatches kanji and word processing jobs. Updates dispatch processing only when relevant Japanese title/content input changes. The initial write response is therefore distinct from completed extraction.
+Create dispatches **one** consolidated operation, `article_content_processing`, which extracts
+kanji and words together. Updates dispatch it only when Japanese title or content actually
+changed. The job is dispatched after the database transaction commits, so it can never run
+against a row that was rolled back. The initial write response is therefore distinct from
+completed extraction.
 
-Processing state uses these values:
+State is one current row per `(entity_type, entity_id, task_type)` in `processing_states`,
+updated in place rather than appended:
 
 ```text
 pending -> processing -> completed
                       -> failed
+                      -> superseded
 ```
 
-The frontend subscription/query boundary can update cached article state when processing events arrive.
+`superseded` is terminal and means the article content changed while this run was in flight, so
+its result was discarded and a newer run owns the row. Nothing is shown to the reader for a
+superseded run; the newer run's status replaces it.
+
+Terminal states carry their own detail: `completed` writes `kanji_count` and `word_count` into
+`metadata`, `failed` writes `error_code` and a sanitised single-line `error_message`. Metadata is
+replaced on each transition, never merged, so a failure from an earlier attempt cannot survive
+into a later success.
+
+A row that stops reporting — worker timeout, OOM, restart — is failed by the
+`article-processing:sweep-stale` command, scheduled every five minutes, once it has gone 330
+seconds without an update. That threshold is the job timeout plus the queue `retry_after` plus
+margin, so a row is only swept when no attempt could still write to it.
+
+### How the browser finds out
+
+Two paths, in this order:
+
+1. **Socket.** Each transition broadcasts `.ProcessingStatusUpdated` on
+   `private-processing_states.{article uuid}`, and on `private-App.User.{owner uuid}` when the
+   owner is known, so an owner's dashboard needs one subscription rather than one per article.
+   The payload carries `entity_id`, `status`, `sequence`, `attempt`, `max_attempts` and
+   `metadata`, and is the same shape as the REST `processing_status` field by construction.
+2. **Polling fallback.** When the socket is not connected, the article detail and list queries
+   poll every 5 s, dropping to 15 s after a minute of waiting. Polling is the correctness
+   baseline: a transport outage degrades the experience without breaking it.
+
+`sequence` increases on every transition and never resets, so a replayed or out-of-order event
+is dropped rather than overwriting fresher state.
+
+On a terminal event the client refetches the article detail and the first page of the attached
+kanji and word lists, because processing changes the article itself (attachments, JLPT
+counters) and not just the status row.
+
+### Attached kanji and words
+
+The detail response does not embed the attached lists. `include_kanjis` and `include_words`
+default to false; a caller that wants them inline asks. The detail page reads them from the
+ordinary kanji and word indexes filtered by `article_uuid`, a page at a time, so an article with
+hundreds of matches no longer makes every detail read carry all of them.
 
 ## Visibility and Moderation
 
