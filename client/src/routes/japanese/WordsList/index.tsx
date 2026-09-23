@@ -1,7 +1,7 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
 	WORD_VIEWER_CATALOGUE_INCLUDE,
 	applyWordViewerCatalogueState,
@@ -11,8 +11,11 @@ import {
 import type { WordListFilters, WordListResponse, WordViewerCatalogueState } from '@/api/words/hooks/useInfiniteWords';
 import Spinner from '@/assets/images/spinner.gif';
 import WordItem from '@/components/features/japanese/word/WordItem';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
+import styles from '../japaneseListPage.module.css';
 import SearchBarWords from './SearchBarWords';
 import type { WordSearchFilters } from './SearchBarWords';
 
@@ -54,8 +57,7 @@ const WordsList: React.FC = () => {
 		);
 	};
 
-	const searchHeading =
-		keyword ? `Results for: ${keyword}` : '';
+	const searchHeading = keyword ? `Results for: ${keyword}` : '';
 
 	if (isPending && words.length === 0) {
 		return <PageLoading family="list" />;
@@ -64,28 +66,29 @@ const WordsList: React.FC = () => {
 	if (isError) {
 		const message = error instanceof Error ? error.message : 'Unable to load words.';
 
-		return <div className="container mt-5 text-danger">Error: {message}</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Error: {message}</Alert>
+			</Container>
+		);
 	}
 
 	return (
-		<div className="container mt-5">
-			<div className="row justify-content-center">
+		<Container className={styles.page}>
+			<Stack gap="2xl">
 				<SearchBarWords defaultKeyword={keyword} onSearch={handleApplyFilters} />
-			</div>
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					{searchHeading && <h4>{searchHeading}</h4>}
-					&nbsp;
-					<h4>
-						Showing {words.length} of {total}
-					</h4>
-				</div>
-				<div className="row">
-					<div className="col-lg-8 col-md-10 mx-auto">
-						{words.length === 0 ? (
-							<p>No words found.</p>
-						) : (
-							words.map((word) => (
+				<Stack as="section" gap="md" className={styles.results}>
+					<Cluster justify="center" align="baseline" gap="md">
+						{searchHeading && <h4 className={styles.heading}>{searchHeading}</h4>}
+						<h4 className={styles.heading}>
+							Showing {words.length} of {total}
+						</h4>
+					</Cluster>
+					{words.length === 0 ? (
+						<p>No words found.</p>
+					) : (
+						<ul className={styles.list}>
+							{words.map((word) => (
 								<WordItem
 									key={word.uuid}
 									entityId={word.id}
@@ -104,23 +107,23 @@ const WordsList: React.FC = () => {
 										})
 									}
 								/>
-							))
-						)}
-					</div>
-				</div>
-			</div>
-			<div className="row justify-content-center">
-				{isFetchingNextPage ? (
-					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-				) : hasNextPage ? (
-					<Button variant="secondary-outline" className="w-50" onClick={() => fetchNextPage()}>
-						Load More
-					</Button>
-				) : (
-					<span className="text-muted">No more results</span>
-				)}
-			</div>
-		</div>
+							))}
+						</ul>
+					)}
+				</Stack>
+				<Cluster justify="center">
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." className={styles.loadingMore} />
+					) : hasNextPage ? (
+						<Button variant="secondary-outline" className={styles.loadMore} onClick={() => fetchNextPage()}>
+							Load More
+						</Button>
+					) : (
+						<span className={styles.muted}>No more results</span>
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 

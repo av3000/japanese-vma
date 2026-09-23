@@ -4,11 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
 import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
+import { downloadFile } from '@/helpers/downloadFile';
 import ArticleContent from './index';
 
 const fetchCataloguesForItemMock = vi.fn();
-const windowOpenMock = vi.fn();
-const createObjectUrlMock = vi.fn();
 const capturedModalProps: Array<{
 	lists: CatalogueForItem[];
 	loadingListIds: number[];
@@ -100,6 +99,14 @@ vi.mock('@/api/articles/moderation', () => ({
 		return { mutate: statusMutateMock, isPending: statusMutationIsPending };
 	},
 }));
+
+vi.mock('@/helpers/downloadFile', async () => {
+	const actual = await vi.importActual<typeof import('@/helpers/downloadFile')>('@/helpers/downloadFile');
+	return {
+		...actual,
+		downloadFile: vi.fn(),
+	};
+});
 
 vi.mock('@/api/generated/article/article', () => ({
 	articleDestroy: vi.fn(),
@@ -250,9 +257,6 @@ describe('ArticleContent', () => {
 		statusMutationIsPending = false;
 		likeIsToggling = false;
 		isAuthenticatedMock = true;
-		createObjectUrlMock.mockReturnValue('blob:article-kanjis');
-		vi.stubGlobal('URL', { createObjectURL: createObjectUrlMock });
-		vi.stubGlobal('window', { open: windowOpenMock });
 		fetchCataloguesForItemMock.mockResolvedValue(cataloguesForItemLists);
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
@@ -321,8 +325,7 @@ describe('ArticleContent', () => {
 
 		expect(articleExportKanjisPdf).toHaveBeenCalledWith('article-uuid', { responseType: 'blob' });
 		expect(articleExportWordsPdf).not.toHaveBeenCalled();
-		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
-		expect(windowOpenMock).toHaveBeenCalledWith('blob:article-kanjis');
+		expect(downloadFile).toHaveBeenCalledWith('Study Article.pdf', expect.any(Blob));
 	});
 
 	it('downloads article words pdf through the generated v1 article endpoint', async () => {
@@ -332,8 +335,7 @@ describe('ArticleContent', () => {
 
 		expect(articleExportWordsPdf).toHaveBeenCalledWith('article-uuid', { responseType: 'blob' });
 		expect(articleExportKanjisPdf).not.toHaveBeenCalled();
-		expect(createObjectUrlMock).toHaveBeenCalledWith(expect.any(Blob));
-		expect(windowOpenMock).toHaveBeenCalledWith('blob:article-kanjis');
+		expect(downloadFile).toHaveBeenCalledWith('Study Article.pdf', expect.any(Blob));
 	});
 
 	it('moderates through the UUID-keyed status seam rather than numeric identity', () => {

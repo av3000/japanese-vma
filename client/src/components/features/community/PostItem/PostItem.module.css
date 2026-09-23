@@ -1,0 +1,40 @@
+.row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--spacing-xs) var(--spacing-lg);
+	padding-block: var(--spacing-md);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+/* md */
+@media (min-width: 1024px) {
+	.row {
+		grid-template-columns: minmax(0, 5fr) minmax(0, 1fr);
+	}
+}
+
+.byline {
+	margin: 0;
+}
+
+/* Strong neutral text: the author name and topic label that used to rely on the dead `text-gray-dark`. */
+.strongText {
+	display: block;
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-neutral-800);
+}
+
+.title {
+	margin: var(--spacing-2xs) 0;
+	overflow-wrap: anywhere;
+}
+
+.meta {
+	margin: 0 0 var(--spacing-xs);
+}
+
+.stats {
+	display: flex;
+	flex-direction: column;
+	font-size: var(--font-size-body-sm);
+}

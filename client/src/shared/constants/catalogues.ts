@@ -7,12 +7,17 @@ export const CATALOGUE_TYPE_LABELS = {
 } as const;
 
 export type CustomCatalogueType = keyof typeof CATALOGUE_TYPE_LABELS;
-export type CataloguePdfExportKind = 'kanji' | 'words';
+export type CataloguePdfExportKind = 'kanji' | 'words' | 'radicals' | 'sentences';
 
-const CATALOGUE_KANJI_PDF_TYPES = [2, 6] as const;
-const CATALOGUE_WORDS_PDF_TYPES = [3, 7] as const;
-// TODO: Recreate radical and sentence PDF support through generated v1 catalogue
-// export clients once backend v1 routes/services exist for those export kinds.
+// Each group pairs a SavedListType with its "known" variant, mirroring
+// CataloguePdfExportService::supportsCatalogueType on the backend: a type the client offers
+// the download for but the backend rejects would surface as a 422 the user cannot act on.
+const CATALOGUE_PDF_TYPES: ReadonlyArray<readonly [CataloguePdfExportKind, readonly number[]]> = [
+	['kanji', [2, 6]],
+	['words', [3, 7]],
+	['radicals', [1, 5]],
+	['sentences', [4, 8]],
+];
 
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
@@ -47,15 +52,7 @@ export const resolveCatalogueTypeLabel = (value: number) => {
 };
 
 export const resolveCataloguePdfExportKind = (value: number): CataloguePdfExportKind | null => {
-	if ((CATALOGUE_KANJI_PDF_TYPES as readonly number[]).includes(value)) {
-		return 'kanji';
-	}
-
-	if ((CATALOGUE_WORDS_PDF_TYPES as readonly number[]).includes(value)) {
-		return 'words';
-	}
-
-	return null;
+	return CATALOGUE_PDF_TYPES.find(([, types]) => types.includes(value))?.[0] ?? null;
 };
 
 export const isCataloguePdfExportSupported = (value: number) => resolveCataloguePdfExportKind(value) !== null;

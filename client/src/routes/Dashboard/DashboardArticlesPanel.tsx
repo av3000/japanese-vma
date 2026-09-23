@@ -4,11 +4,15 @@ import { OwnerProcessingSubscription } from '@/api/articles/hooks/useOwnerProces
 import { usePendingArticles } from '@/api/articles/moderation';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
+import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { Cluster, Stack } from '@/components/shared/layout';
 import type { User } from '@/types';
+import styles from './Dashboard.module.css';
 import SearchBarDashboard from './SearchBarDashboard';
 import type { SearchFilters } from './SearchBarDashboard';
 import { DASHBOARD_TYPES, type DashboardType } from './dashboard.constants';
@@ -68,114 +72,102 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	const pendingArticles = shouldFetchPendingArticles ? pendingArticlesQuery.pendingArticles : [];
 
 	return (
-		<>
-			<div className="ml-3 mt-2">
+		<Stack gap="md">
+			<div className={styles.toolbar}>
 				<SearchBarDashboard searchType="articles" filterResults={handleFilterResults} />
 			</div>
 
-			<div className="my-3 p-3 bg-white rounded box-shadow">
+			<Stack as="section" gap="md" className={styles.panel}>
 				{dashboardView === DASHBOARD_TYPES.ADMIN ? (
 					<>
-						<div className="d-flex justify-content-between align-items-center mb-3">
-							<h4>Pending Articles - Admin view</h4>
+						<Cluster justify="between">
+							<h4 className={styles.panelTitle}>Pending Articles - Admin view</h4>
 							<Button variant="ghost" onClick={onToggleDashboardView}>
 								User View <Icon name="chevron" rotate="270" />
 							</Button>
-						</div>
-						<div className="col-lg-12 col-md-12 mx-auto">
-							{shouldFetchPendingArticles && pendingArticlesQuery.isPending ? (
-								<LoadingState altText="Loading pending articles..." />
-							) : shouldFetchPendingArticles && pendingArticlesQuery.isError ? (
-								<div className="alert alert-danger">{pendingArticlesErrorMessage}</div>
-							) : pendingArticles.length ? (
-								<>
+						</Cluster>
+						{shouldFetchPendingArticles && pendingArticlesQuery.isPending ? (
+							<LoadingState altText="Loading pending articles..." />
+						) : shouldFetchPendingArticles && pendingArticlesQuery.isError ? (
+							<Alert tone="danger">{pendingArticlesErrorMessage}</Alert>
+						) : pendingArticles.length ? (
+							<>
+								<ul className={styles.queue}>
 									{pendingArticles.map((article) => (
-										<div
-											className="row pb-3 mb-0 mt-3 border-bottom border-gray"
-											key={article.uuid}
-										>
-											<div className="col-lg-6">
-												<h4>
+										<li className={styles.queueRow} key={article.uuid}>
+											<div>
+												<h4 className={styles.queueTitle}>
 													<Link to={`/articles/${article.uuid}`}>{article.title_jp}</Link>
 												</h4>
-												tags:{' '}
-												<section className="mt-2 d-flex align-items-center flex-wrap">
-													{article.hashtags.map((tag) => (
-														<Chip
-															className="mr-1"
-															readonly
-															key={tag.id + tag.content}
-															title={tag.content}
-															name={tag.content}
-														>
-															{tag.content}
-														</Chip>
-													))}
-												</section>
+												<Cluster gap="xs">
+													<span className={styles.label}>tags:</span>
+													<Cluster as="span" gap="3xs">
+														{article.hashtags.map((tag) => (
+															<Chip
+																readonly
+																key={tag.id + tag.content}
+																title={tag.content}
+																name={tag.content}
+															>
+																{tag.content}
+															</Chip>
+														))}
+													</Cluster>
+												</Cluster>
 											</div>
-											<div className="col-lg-4 col-12-sm pt-3">
-												<small className="text-muted">
-													{article.created_at}
-													<br />
-													duration from now(?) {article.created_at}
-												</small>
-											</div>
-											<div className="col-lg-2">
+											<small className={styles.meta}>
+												{article.created_at}
+												<br />
+												duration from now(?) {article.created_at}
+											</small>
+											<div>
 												<strong>{article.status_label}</strong>
 											</div>
-										</div>
+										</li>
 									))}
-									<div className="row justify-content-center mt-4 mb-2">
-										{pendingArticlesQuery.isFetchingNextPage ? (
-											<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-										) : pendingArticlesQuery.hasNextPage ? (
-											<Button
-												variant="secondary-outline"
-												className="w-50"
-												onClick={() => pendingArticlesQuery.fetchNextPage()}
-											>
-												Load More
-											</Button>
-										) : (
-											<span className="text-muted">No more results</span>
-										)}
-									</div>
-								</>
-							) : (
-								<div className="alert text-center alert-info">There are no articles to review.</div>
-							)}
-						</div>
+								</ul>
+								<LoadMore
+									isFetchingNextPage={pendingArticlesQuery.isFetchingNextPage}
+									hasNextPage={pendingArticlesQuery.hasNextPage}
+									onLoadMore={() => pendingArticlesQuery.fetchNextPage()}
+								/>
+							</>
+						) : (
+							<Alert tone="info" className={styles.emptyState}>
+								There are no articles to review.
+							</Alert>
+						)}
 					</>
 				) : (
 					<>
-						<div className="d-flex justify-content-between align-items-center mb-3">
-							<h4>My Articles - User view</h4>
+						<Cluster justify="between">
+							<h4 className={styles.panelTitle}>My Articles - User view</h4>
 							<Button variant="ghost" onClick={onToggleDashboardView}>
 								Admin View <Icon name="chevron" rotate="270" />
 							</Button>
+						</Cluster>
+						<p className={styles.summary}>
+							Showing {articles.length} of {total}
+						</p>
+						<div className={styles.columnHeadings}>
+							<Cluster justify="between">
+								<span>Title and Tags</span>
+								<span>Status</span>
+							</Cluster>
+							<Cluster justify="between">
+								<span>Stats</span>
+								<span>Date and Action</span>
+							</Cluster>
 						</div>
-						<div className="col-lg-12 col-md-10 mx-auto">
-							<div className="mb-3 text-muted">
-								Showing {articles.length} of {total}
-							</div>
-							<div className="row d-none d-md-flex pb-2 mb-3 border-bottom border-gray small text-uppercase text-muted">
-								<div className="col-md-8 d-flex justify-content-between">
-									<span>Title and Tags</span>
-									<span>Status</span>
-								</div>
-								<div className="col-md-4 d-flex justify-content-between">
-									<span>Stats</span>
-									<span>Date and Action</span>
-								</div>
-							</div>
-							{status === 'pending' ? (
-								<LoadingState altText="Loading articles..." />
-							) : status === 'error' ? (
-								<div className="alert alert-danger">{articleErrorMessage}</div>
-							) : articles.length ? (
-								<>
-									{/* One channel for every article the owner lists (#263); polling covers the rest. */}
-									{currentUser && <OwnerProcessingSubscription userUuid={currentUser.uuid} />}
+						{status === 'pending' ? (
+							<LoadingState altText="Loading articles..." />
+						) : status === 'error' ? (
+							<Alert tone="danger">{articleErrorMessage}</Alert>
+						) : articles.length ? (
+							<>
+								{/* One channel for every article the owner lists (#263); polling covers the rest. */}
+								{currentUser && <OwnerProcessingSubscription userUuid={currentUser.uuid} />}
+								<ul className={dashboardRowStyles.list}>
 									{articles.map((article) => (
 										<DashboardArticleItem
 											key={article.id}
@@ -189,39 +181,47 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 											hashtags={article.hashtags}
 										/>
 									))}
-									<div className="row justify-content-center mt-4 mb-2">
-										{isFetchingNextPage ? (
-											<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-										) : hasNextPage ? (
-											<Button
-												variant="secondary-outline"
-												className="w-50"
-												onClick={() => fetchNextPage()}
-											>
-												Load More
-											</Button>
-										) : (
-											<span className="text-muted">No more results</span>
-										)}
-									</div>
-								</>
-							) : (
-								<div className="alert text-center alert-info">You have no articles yet.</div>
-							)}
-						</div>
+								</ul>
+								<LoadMore
+									isFetchingNextPage={isFetchingNextPage}
+									hasNextPage={hasNextPage}
+									onLoadMore={() => fetchNextPage()}
+								/>
+							</>
+						) : (
+							<Alert tone="info" className={styles.emptyState}>
+								You have no articles yet.
+							</Alert>
+						)}
 					</>
 				)}
-			</div>
-		</>
+			</Stack>
+		</Stack>
 	);
 };
 
 const LoadingState: React.FC<{ altText: string }> = ({ altText }) => (
-	<div className="container mt-5">
-		<div className="row justify-content-center">
-			<img src={Spinner} alt={altText} />
-		</div>
-	</div>
+	<Cluster justify="center" className={styles.loading}>
+		<img src={Spinner} alt={altText} />
+	</Cluster>
+);
+
+const LoadMore: React.FC<{ isFetchingNextPage: boolean; hasNextPage: boolean; onLoadMore: () => void }> = ({
+	isFetchingNextPage,
+	hasNextPage,
+	onLoadMore,
+}) => (
+	<Cluster justify="center" className={styles.loadMore}>
+		{isFetchingNextPage ? (
+			<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
+		) : hasNextPage ? (
+			<Button variant="secondary-outline" className={styles.loadMoreButton} onClick={onLoadMore}>
+				Load More
+			</Button>
+		) : (
+			<span className={styles.label}>No more results</span>
+		)}
+	</Cluster>
 );
 
 export default DashboardArticlesPanel;

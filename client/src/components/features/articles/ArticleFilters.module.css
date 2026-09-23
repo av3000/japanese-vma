@@ -1,0 +1,5 @@
+.legend {
+	margin-bottom: var(--spacing-xs);
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-600);
+}

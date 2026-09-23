@@ -1,6 +1,6 @@
 import type { MappedKanji } from '@/api/kanjis/details';
 import { Link } from '@/components/shared/Link';
-import styles from './KanjiRelatedResources.module.scss';
+import styles from './KanjiRelatedResources.module.css';
 
 interface KanjiRelatedSentencesProps {
 	items: MappedKanji['related']['sentences'];
@@ -8,33 +8,32 @@ interface KanjiRelatedSentencesProps {
 }
 
 const KanjiRelatedSentences = ({ items, total }: KanjiRelatedSentencesProps) => (
-	<section className="mt-5">
+	<section>
 		<h2>Found in ({total}) sentences</h2>
 		{items.length === 0 ? (
 			<p>No related sentences found.</p>
 		) : (
-			items.map((sentence) => (
-				<div
-					className={`${styles.relatedResource} post-preview d-flex justify-content-between align-items-start`}
-					key={sentence.uuid}
-				>
-					<div>
-						<p>{sentence.content}</p>
-						{sentence.tatoeba_entry !== null && (
-							<a
-								href={`https://tatoeba.org/en/sentences/show/${sentence.tatoeba_entry}`}
-								target="_blank"
-								rel="noreferrer"
-							>
-								Tatoeba
-							</a>
-						)}
-					</div>
-					<Link className="ml-3 flex-shrink-0" to={`/sentence/${sentence.uuid}`}>
-						Open
-					</Link>
-				</div>
-			))
+			<ul className={styles.relatedList}>
+				{items.map((sentence) => (
+					<li className={styles.relatedResource} key={sentence.uuid}>
+						<div>
+							<p lang="ja">{sentence.content}</p>
+							{sentence.tatoeba_entry !== null && (
+								<a
+									href={`https://tatoeba.org/en/sentences/show/${sentence.tatoeba_entry}`}
+									target="_blank"
+									rel="noreferrer"
+								>
+									Tatoeba
+								</a>
+							)}
+						</div>
+						<Link className={styles.openLink} to={`/sentence/${sentence.uuid}`}>
+							Open
+						</Link>
+					</li>
+				))}
+			</ul>
 		)}
 	</section>
 );

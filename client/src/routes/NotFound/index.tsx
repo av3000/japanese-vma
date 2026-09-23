@@ -1,13 +1,13 @@
 import React from 'react';
+import { Container } from '@/components/shared/layout';
+import styles from './NotFound.module.css';
 
 const PageNotFound: React.FC = () => {
-  return (
-    <div className="container">
-      <div className="row justify-content-center m-5">
-        <h2>Yeah, page doesnt exist... it sucks!</h2>
-      </div>
-    </div>
-  );
+	return (
+		<Container className={styles.page}>
+			<h2>Yeah, page doesnt exist... it sucks!</h2>
+		</Container>
+	);
 };
 
 export default PageNotFound;

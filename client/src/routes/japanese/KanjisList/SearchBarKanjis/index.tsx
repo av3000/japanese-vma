@@ -1,7 +1,9 @@
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-
 import { Button } from '@/components/shared/Button';
+import { Field, Input, Label, Select } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
+import { Grid } from '@/components/shared/layout';
+import styles from './SearchBarKanjis.module.css';
 
 export interface KanjiSearchFilters {
 	keyword: string;
@@ -37,33 +39,26 @@ const SearchBarKanjis: React.FC<SearchBarKanjisProps> = ({ defaultKeyword, defau
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="col-lg-12">
-			<div className="row justify-content-center">
-				<div className="col-lg-4 col-md-5 col-sm-12 mb-2">
-					<label htmlFor="kanji-keyword">Keyword:</label>
-					<div className="input-group input-group-sm">
-						<input
+		<form onSubmit={handleSubmit} className={styles.form} role="search">
+			<Grid columns={12} gap="sm" align="end">
+				<Grid.Item span={{ base: 12, sm: 5 }}>
+					<Field>
+						<Label htmlFor="kanji-keyword">Keyword:</Label>
+						<Input
 							id="kanji-keyword"
 							type="text"
+							size="sm"
 							placeholder="Search"
-							aria-label="Search"
 							name="keyword"
 							value={keyword}
 							onChange={handleKeywordChange}
-							className="form-control form-control-sm"
 						/>
-					</div>
-				</div>
-				<div className="col-lg-3 col-md-4 col-sm-12 mb-2">
-					<label htmlFor="kanji-jlpt">JLPT:</label>
-					<div className="input-group input-group-sm">
-						<select
-							id="kanji-jlpt"
-							name="jlpt"
-							value={jlpt}
-							onChange={handleJlptChange}
-							className="form-control form-control-sm"
-						>
+					</Field>
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 4 }}>
+					<Field>
+						<Label htmlFor="kanji-jlpt">JLPT:</Label>
+						<Select id="kanji-jlpt" name="jlpt" size="sm" value={jlpt} onChange={handleJlptChange}>
 							<option value="">All</option>
 							<option value="1">N1</option>
 							<option value="2">N2</option>
@@ -71,18 +66,16 @@ const SearchBarKanjis: React.FC<SearchBarKanjisProps> = ({ defaultKeyword, defau
 							<option value="4">N4</option>
 							<option value="5">N5</option>
 							<option value="-">Uncommon</option>
-						</select>
-					</div>
-				</div>
-			</div>
-			<div className="row justify-content-center">
-				<div className="col-lg-2 col-md-3 col-sm-4 text-center">
-					<Button type="submit" variant="outline" size="md">
+						</Select>
+					</Field>
+				</Grid.Item>
+				<Grid.Item span={{ base: 12, sm: 3 }}>
+					<Button type="submit" variant="outline" size="sm" isFullWidth>
 						<Icon name="searchSolid" size="sm" />
-						<span className="ml-2">Search</span>
+						<span className={styles.submitLabel}>Search</span>
 					</Button>
-				</div>
-			</div>
+				</Grid.Item>
+			</Grid>
 		</form>
 	);
 };

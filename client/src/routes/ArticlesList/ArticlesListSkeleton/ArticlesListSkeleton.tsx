@@ -1,56 +1,46 @@
 import classNames from 'classnames';
 import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
-import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.scss';
+import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.css';
+import { Container, Grid, Stack, type Responsive } from '@/components/shared/layout';
+import styles from './ArticlesListSkeleton.module.css';
 
 const ARTICLES_LIST_SKELETON_COUNT = 12;
 
-const SEARCH_PLACEHOLDERS = [
-	{ className: 'col-lg-4 col-md-6 col-sm-12 mt-3', width: '100%' },
-	{ className: 'col-lg-4 col-md-4 col-sm-12 mt-3', width: '100%' },
-	{ className: 'col-lg-2 col-md-2 col-sm-4 mt-3', width: '100%' },
-	{ className: 'col-lg-2 mt-3', width: '7rem' },
+const SEARCH_PLACEHOLDERS: Array<{ key: string; span: Responsive<number>; short?: boolean }> = [
+	{ key: 'search', span: { base: 12, sm: 6, md: 4 } },
+	{ key: 'filter', span: { base: 12, sm: 4, md: 4 } },
+	{ key: 'sort', span: { base: 4, sm: 2, md: 2 } },
+	{ key: 'submit', span: { base: 12, md: 2 }, short: true },
 ];
 
-const SearchControlSkeleton = ({ width }: { width: string }) => (
+const SearchControlSkeleton = ({ short }: { short?: boolean }) => (
 	<span
-		className={classNames(skeletonStyles.block, skeletonStyles.line)}
-		style={{
-			display: 'block',
-			height: '38px',
-			width,
-		}}
+		className={classNames(styles.control, short && styles.controlShort, skeletonStyles.block, skeletonStyles.line)}
 	/>
 );
 
 const ArticlesListSkeleton = () => (
-	<div className="container" data-testid="articles-list-skeleton" aria-hidden="true">
-		<div className="u-container">
-			<div className="row">
+	<Container className={styles.page} data-testid="articles-list-skeleton" aria-hidden="true">
+		<Stack gap="md">
+			<Grid columns={12} gap="sm">
 				{SEARCH_PLACEHOLDERS.map((placeholder) => (
-					<div key={placeholder.className} className={placeholder.className}>
-						<SearchControlSkeleton width={placeholder.width} />
-					</div>
+					<Grid.Item key={placeholder.key} span={placeholder.span}>
+						<SearchControlSkeleton short={placeholder.short} />
+					</Grid.Item>
 				))}
-			</div>
-		</div>
+			</Grid>
 
-		<span
-			className={classNames('mb-3 mt-3', skeletonStyles.block, skeletonStyles.line)}
-			style={{
-				display: 'block',
-				height: '1rem',
-				width: '9rem',
-			}}
-		/>
+			<span className={classNames(styles.countLine, skeletonStyles.block, skeletonStyles.line)} />
 
-		<div className="row">
-			{Array.from({ length: ARTICLES_LIST_SKELETON_COUNT }).map((_, index) => (
-				<div key={index} className="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
-					<ArticleCardSkeleton />
-				</div>
-			))}
-		</div>
-	</div>
+			<Grid as="ul" columns={{ base: 2, sm: 3, md: 4 }} gap="lg" className={styles.list}>
+				{Array.from({ length: ARTICLES_LIST_SKELETON_COUNT }).map((_, index) => (
+					<Grid.Item as="li" span="auto" key={index}>
+						<ArticleCardSkeleton />
+					</Grid.Item>
+				))}
+			</Grid>
+		</Stack>
+	</Container>
 );
 
 export default ArticlesListSkeleton;

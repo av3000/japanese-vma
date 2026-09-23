@@ -1,7 +1,10 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useSentenceQuery } from '@/api/sentences/details';
+import { Alert } from '@/components/shared/Alert';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container } from '@/components/shared/layout';
+import styles from '../japaneseDetailPage.module.css';
 import SentenceContent from './SentenceContent';
 
 const SentenceDetails: React.FC = () => {
@@ -13,7 +16,11 @@ const SentenceDetails: React.FC = () => {
 	}
 
 	if (isError || !sentence) {
-		return <div className="container mt-5 text-danger">Sentence could not be loaded.</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Sentence could not be loaded.</Alert>
+			</Container>
+		);
 	}
 
 	return <SentenceContent sentence={sentence} />;

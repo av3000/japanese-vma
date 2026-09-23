@@ -1,0 +1,36 @@
+.footer {
+	width: 100%;
+	margin-top: auto;
+	padding: var(--spacing-md);
+	background-color: var(--alternative-text-color);
+	color: var(--color-text-neutral-default);
+	text-align: center;
+	box-shadow: 0 -0.5px 3px rgba(0, 0, 0, 0.1);
+}
+
+.brand {
+	display: inline-block;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.brand h4 {
+	margin: 0;
+}
+
+.socialLinks {
+	margin-bottom: var(--spacing-xs);
+}
+
+.socialLinks a {
+	text-decoration: none;
+}
+
+.socialLinks a:hover {
+	opacity: 0.7;
+}
+
+.legal {
+	margin: 0;
+	color: var(--color-neutral-600);
+}

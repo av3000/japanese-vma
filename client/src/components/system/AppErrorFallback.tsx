@@ -1,10 +1,13 @@
+import { Container } from '@/components/shared/layout';
+import styles from './AppErrorFallback.module.css';
+
 const AppErrorFallback = () => (
 	<div className="app-wrapper">
 		<main className="main-content">
-			<div className="container py-5">
-				<h1 className="mb-3">Something went wrong</h1>
-				<p className="mb-0">The error has been captured. Refresh the page and try again.</p>
-			</div>
+			<Container className={styles.page}>
+				<h1 className={styles.title}>Something went wrong</h1>
+				<p className={styles.message}>The error has been captured. Refresh the page and try again.</p>
+			</Container>
 		</main>
 	</div>
 );

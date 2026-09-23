@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import classNames from 'classnames';
 import type { ApiComment, ApiCommentReply } from '@/api/comments';
 import DefaultAvatar from '@/assets/images/avatar-man.svg';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster } from '@/components/shared/layout';
 import CommentForm from '../CommentForm/CommentForm';
+import styles from './CommentItem.module.css';
 
 /** A comment outlives its author's account; the API drops `author` when the row is gone. */
 const DELETED_AUTHOR_NAME = 'Deleted user';
@@ -61,12 +65,12 @@ const CommentItem: React.FC<CommentItemProps> = ({
 	};
 
 	return (
-		<div className={`media ${isReply ? 'ml-5' : ''}`}>
-			<img className="d-flex mr-3 rounder-circle" src={DefaultAvatar} alt="default-avatar" />
-			<div className="media-body">
-				<div className="d-flex justify-content-between align-items-center">
-					<h5>@{comment.author?.name ?? DELETED_AUTHOR_NAME}</h5>
-					<div className="d-flex align-items-center">
+		<li className={classNames(styles.item, isReply && styles.reply)}>
+			<img className={styles.avatar} src={DefaultAvatar} alt="" width="40" height="40" />
+			<div className={styles.body}>
+				<Cluster justify="between">
+					<h5 className={styles.author}>@{comment.author?.name ?? DELETED_AUTHOR_NAME}</h5>
+					<Cluster gap="2xs">
 						{canEdit && !isEditing && (
 							<Button
 								onClick={() => setIsEditing(true)}
@@ -89,8 +93,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
 								<Icon size="sm" name="trashbinSolid" />
 							</Button>
 						)}
-					</div>
-				</div>
+					</Cluster>
+				</Cluster>
 
 				{isEditing ? (
 					<CommentForm
@@ -101,14 +105,13 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						onCancel={() => setIsEditing(false)}
 					/>
 				) : (
-					<div>{comment.content}</div>
+					<p className={styles.content}>{comment.content}</p>
 				)}
 
-				{state.error && <div className="alert alert-danger mt-2">{state.error}</div>}
+				{state.error && <Alert tone="danger">{state.error}</Alert>}
 
-				<br />
-				<div className="text-muted d-flex align-items-center">
-					<span className="mx-2">{comment.likes_count} likes</span>
+				<Cluster gap="xs" className={styles.footer}>
+					<span>{comment.likes_count} likes</span>
 					<Button
 						onClick={onLike}
 						variant="ghost"
@@ -126,8 +129,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						</Button>
 					)}
 
-					<p className="ml-auto mb-0">{comment.created_at}</p>
-				</div>
+					<span className={styles.date}>{comment.created_at}</span>
+				</Cluster>
 
 				{isReplying && onReply && (
 					<CommentForm
@@ -138,10 +141,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						onCancel={() => setIsReplying(false)}
 					/>
 				)}
-
-				<hr />
 			</div>
-		</div>
+		</li>
 	);
 };
 

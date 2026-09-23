@@ -5,62 +5,61 @@ import ExploreArticleList from '@/components/features/Homepage/ExploreArticleLis
 import ExploreCatalogueList from '@/components/features/Homepage/ExploreCatalogueList';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { Cluster, Container } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
-import './Homepage.scss';
+import styles from './Homepage.module.css';
 
 const Homepage: React.FC = () => {
 	const { isAuthenticated } = useAuth();
 
 	if (!isAuthenticated) {
 		return (
-			<div className="fullpage">
-				<div className="homepage">
-					<div className="homepage-upper-page">
-						<div className="homepage-left">
-							<div className="homepage-left-column">
-								<div className="home-hero-header">
-									<h1>
-										Learn <span className="text-brand">japanese</span> in the natural context{' '}
-									</h1>
-									<p>
-										JPLearning is the unique community and language learning environment{' '}
-										<span className="text-brand">for you</span> to find &amp; share readings and
-										material of your interest
-									</p>
-								</div>
-								<div className="home-hero-explore">
-									<a href="#readings" className="home-hero-explore-link">
-										Explore <Icon size="md" name="chevron" />
-									</a>
-								</div>
+			<>
+				<section className={styles.hero}>
+					<div className={styles.heroMain}>
+						<div className={styles.heroColumn}>
+							<div className={styles.heroHeader}>
+								<h1 className={styles.heroTitle}>
+									Learn <span className={styles.brand}>japanese</span> in the natural context{' '}
+								</h1>
+								<p className={styles.heroText}>
+									JPLearning is the unique community and language learning environment{' '}
+									<span className={styles.brand}>for you</span> to find &amp; share readings and
+									material of your interest
+								</p>
 							</div>
-						</div>
-						<div className="homepage-right">
-							<div className="home-hero-social-links float-right m-2">
-								<Link to="https://www.facebook.com/" className="mr-2">
-									<img src={FacebookIcon} alt="facebook-social-icon" />
-								</Link>
-								<Link to="https://www.instagram.com/">
-									<img src={InstagramIcon} alt="instagram-social-icon" />
-								</Link>
+							<div className={styles.heroExplore}>
+								<a href="#readings" className={styles.heroExploreLink}>
+									Explore <Icon size="md" name="chevron" />
+								</a>
 							</div>
 						</div>
 					</div>
-				</div>
-				<div className="container mt-4" id="readings">
+					<div className={styles.heroAside}>
+						<Cluster gap="xs" justify="end" className={styles.socialLinks}>
+							<Link to="https://www.facebook.com/">
+								<img src={FacebookIcon} alt="facebook-social-icon" />
+							</Link>
+							<Link to="https://www.instagram.com/">
+								<img src={InstagramIcon} alt="instagram-social-icon" />
+							</Link>
+						</Cluster>
+					</div>
+				</section>
+				<Container as="section" id="readings" className={styles.readings}>
 					<ExploreArticleList />
 					<ExploreCatalogueList />
-				</div>
-			</div>
+				</Container>
+			</>
 		);
 	}
 
 	return (
-		<div className="container mt-4">
-			<h1 className="text-center">Welcome to your feed!</h1>
+		<Container as="section" className={styles.readings}>
+			<h1 className={styles.feedTitle}>Welcome to your feed!</h1>
 			<ExploreArticleList />
 			<ExploreCatalogueList />
-		</div>
+		</Container>
 	);
 };
 

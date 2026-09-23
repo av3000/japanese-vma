@@ -106,7 +106,7 @@ describe('DashboardArticlesPanel admin moderation queue', () => {
 
 		const html = renderAdminPanel();
 
-		expect(html).toContain('alert-danger');
+		expect(html).toContain('role="alert"');
 		expect(html).toContain('Moderation queue unavailable');
 	});
 

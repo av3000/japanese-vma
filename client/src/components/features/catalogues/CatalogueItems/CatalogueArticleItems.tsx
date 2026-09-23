@@ -4,8 +4,9 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
+import { Cluster } from '@/components/shared/layout';
 import { User } from '@/types';
-import sharedStyles from './CatalogueItems.module.scss';
+import sharedStyles from './CatalogueItems.module.css';
 
 interface CatalogueArticleItemsProps {
 	editMode: boolean;
@@ -37,22 +38,20 @@ const CatalogueArticleItems: React.FC<CatalogueArticleItemsProps> = ({
 						</div>
 
 						<div className={sharedStyles.itemDetails}>
-							<section className="mt-2 d-flex align-items-center flex-wrap">
-								{article.hashtags.map((tag) => (
-									<Chip
-										className="mr-1"
-										readonly
-										key={tag.id + tag.content}
-										title={tag.content}
-										name={tag.content}
-									>
-										{tag.content}
-									</Chip>
-								))}
-							</section>
+							{article.hashtags.length > 0 && (
+								<Cluster as="ul" gap="2xs" className={sharedStyles.tagList}>
+									{article.hashtags.map((tag) => (
+										<li key={tag.id + tag.content}>
+											<Chip readonly title={tag.content} name={tag.content}>
+												{tag.content}
+											</Chip>
+										</li>
+									))}
+								</Cluster>
+							)}
 						</div>
 
-						<div className={'d-flex justify-between p-1'}>
+						<Cluster justify="between" gap="sm" className={sharedStyles.itemFooter}>
 							<div className={sharedStyles.metaInfo}>
 								<div className={sharedStyles.statItem}>
 									<Icon size="sm" name="eyeRegular" className={sharedStyles.statIcon} />
@@ -88,7 +87,7 @@ const CatalogueArticleItems: React.FC<CatalogueArticleItemsProps> = ({
 									<Icon size="sm" name="minusSolid" />
 								</Button>
 							)}
-						</div>
+						</Cluster>
 					</div>
 				);
 			})}

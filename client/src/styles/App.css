@@ -1,0 +1,21 @@
+/* Legacy app-level variables. They now alias the tokens in 00-settings so there is one colour
+   source; prefer the --color-* tokens in new code. */
+:root {
+	--main-text-color: var(--color-text-primary);
+	--main-background-color: #191e27;
+	--alternative-text-color: var(--color-neutral-0);
+	--link-hover-color: var(--color-link-hover);
+	--main-brand-color: var(--color-primary);
+	--secondary-brand-color: var(--color-accent);
+}
+
+.app-wrapper {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+.main-content {
+	flex: 1;
+}

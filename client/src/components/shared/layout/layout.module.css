@@ -1,0 +1,116 @@
+/*
+ * Layout primitives: Container, Stack, Cluster, Grid.
+ *
+ * Responsive values are driven by custom properties set inline by the
+ * components, so no per-breakpoint class explosion is needed.
+ * Breakpoints follow src/styles/00-settings/breakpoints:
+ *   sm 768px, md 1024px, lg 1320px
+ */
+
+/* Container ---------------------------------------------------------- */
+
+.container {
+	--container-max: var(--container-lg);
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: var(--container-max);
+	margin-inline: auto;
+}
+
+@media (min-width: 1320px) {
+	.container {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+.containerXs {
+	--container-max: var(--container-xs);
+}
+
+.containerSm {
+	--container-max: var(--container-sm);
+}
+
+.containerMd {
+	--container-max: var(--container-md);
+}
+
+.containerLg {
+	--container-max: var(--container-lg);
+}
+
+.containerFluid {
+	--container-max: none;
+}
+
+/* Stack ----------------------------------------------------------------- */
+
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--layout-gap, var(--spacing-md));
+	align-items: var(--layout-align, stretch);
+}
+
+/* Cluster --------------------------------------------------------------- */
+
+.cluster {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--layout-gap, var(--spacing-xs));
+	align-items: var(--layout-align, center);
+	justify-content: var(--layout-justify, flex-start);
+}
+
+.clusterNoWrap {
+	flex-wrap: nowrap;
+}
+
+/* Grid ------------------------------------------------------------------ */
+
+.grid {
+	--grid-cols: var(--grid-cols-base, 12);
+	display: grid;
+	gap: var(--layout-gap, var(--spacing-lg));
+	grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+	align-items: var(--layout-align, stretch);
+}
+
+.gridItem {
+	--span: var(--span-base, var(--grid-cols));
+	grid-column: span var(--span) / span var(--span);
+	min-width: 0;
+}
+
+.gridItemAuto {
+	grid-column: auto;
+}
+
+@media (min-width: 768px) {
+	.grid {
+		--grid-cols: var(--grid-cols-sm, var(--grid-cols-base, 12));
+	}
+
+	.gridItem {
+		--span: var(--span-sm, var(--span-base, var(--grid-cols)));
+	}
+}
+
+@media (min-width: 1024px) {
+	.grid {
+		--grid-cols: var(--grid-cols-md, var(--grid-cols-sm, var(--grid-cols-base, 12)));
+	}
+
+	.gridItem {
+		--span: var(--span-md, var(--span-sm, var(--span-base, var(--grid-cols))));
+	}
+}
+
+@media (min-width: 1320px) {
+	.grid {
+		--grid-cols: var(--grid-cols-lg, var(--grid-cols-md, var(--grid-cols-sm, var(--grid-cols-base, 12))));
+	}
+
+	.gridItem {
+		--span: var(--span-lg, var(--span-md, var(--span-sm, var(--span-base, var(--grid-cols)))));
+	}
+}

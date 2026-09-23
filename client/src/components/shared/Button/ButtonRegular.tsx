@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import classNames from 'classnames';
 
-import styles from './Button.module.scss';
+import styles from './Button.module.css';
 import { useButtonClassNames } from './hooks';
 import { ButtonBaseProps } from './types';
 

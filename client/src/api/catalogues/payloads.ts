@@ -1,7 +1,7 @@
 import type { StoreCatalogueRequest } from '@/api/generated/model/storeCatalogueRequest';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
 import type { CatalogueFormValues } from '@/components/features/catalogues/CatalogueForm';
-import { stringifyCatalogueTags } from './legacyCatalogues';
+import { stringifyCatalogueTags } from './catalogueTags';
 
 type CatalogueFormField = Extract<keyof CatalogueFormValues, string>;
 

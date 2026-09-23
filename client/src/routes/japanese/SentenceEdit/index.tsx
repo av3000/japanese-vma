@@ -9,15 +9,16 @@ import {
 import { useSentenceQuery } from '@/api/sentences/details';
 import { SentenceForm, type SentenceFormValues } from '@/components/features/japanese/sentence/SentenceForm';
 import { buildSentenceWritePayload } from '@/components/features/japanese/sentence/SentenceForm/sentenceFormSchema';
+import { Alert } from '@/components/shared/Alert';
 import { Link } from '@/components/shared/Link';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from '../japaneseFormPage.module.css';
 
 const BackToSentences = () => (
-	<div className="mt-4">
-		<Link to="/sentences" className="tag-link">
-			Back
-		</Link>
+	<div>
+		<Link to="/sentences">Back</Link>
 	</div>
 );
 
@@ -44,24 +45,32 @@ export default function SentenceEditPage() {
 	}
 
 	if (isError || !sentence) {
-		return <div className="container mt-5 text-danger">Sentence could not be loaded.</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Sentence could not be loaded.</Alert>
+			</Container>
+		);
 	}
 
 	if (isImportedSentence(sentence)) {
 		return (
-			<div className="container mt-5">
-				<p className="text-danger">Imported sentences cannot be edited.</p>
-				<BackToSentences />
-			</div>
+			<Container className={styles.page}>
+				<Stack gap="lg">
+					<Alert tone="danger">Imported sentences cannot be edited.</Alert>
+					<BackToSentences />
+				</Stack>
+			</Container>
 		);
 	}
 
 	if (!canMutateSentence(user, sentence)) {
 		return (
-			<div className="container mt-5">
-				<p className="text-danger">You do not have permission to edit this sentence.</p>
-				<BackToSentences />
-			</div>
+			<Container className={styles.page}>
+				<Stack gap="lg">
+					<Alert tone="danger">You do not have permission to edit this sentence.</Alert>
+					<BackToSentences />
+				</Stack>
+			</Container>
 		);
 	}
 
@@ -81,20 +90,22 @@ export default function SentenceEditPage() {
 	};
 
 	return (
-		<div className="container">
-			<BackToSentences />
-			<h2 className="mt-4">Edit sentence</h2>
-			<div className="row justify-content-lg-center text-center">
-				<SentenceForm
-					initialValues={initialValues}
-					onSubmit={handleSubmit}
-					isSubmitting={updateMutation.isPending}
-					submitLabel="Update"
-					serverErrors={serverErrors}
-					statusMessage={status}
-					disableSubmitWhenUnchanged
-				/>
-			</div>
-		</div>
+		<Container className={styles.page}>
+			<Stack gap="lg">
+				<BackToSentences />
+				<h2>Edit sentence</h2>
+				<div className={styles.formArea}>
+					<SentenceForm
+						initialValues={initialValues}
+						onSubmit={handleSubmit}
+						isSubmitting={updateMutation.isPending}
+						submitLabel="Update"
+						serverErrors={serverErrors}
+						statusMessage={status}
+						disableSubmitWhenUnchanged
+					/>
+				</div>
+			</Stack>
+		</Container>
 	);
 }

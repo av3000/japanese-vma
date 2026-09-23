@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Badge } from './badge';
+import storyStyles from './stories.module.css';
 
 const meta = {
 	title: 'UI/Badge',
@@ -13,12 +14,12 @@ const meta = {
 		children: {
 			control: 'text',
 		},
-	asChild: {
-		control: 'boolean',
-	},
-	isOnlyIcon: {
-		control: 'boolean',
-	},
+		asChild: {
+			control: 'boolean',
+		},
+		isOnlyIcon: {
+			control: 'boolean',
+		},
 	},
 	args: {
 		variant: 'default',
@@ -118,28 +119,14 @@ Use \`asChild\` to render the badge as another element (e.g. an anchor) while ke
 export const NotificationIndicator: Story = {
 	render: () => (
 		<div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-			<button
-				type="button"
-				className="relative inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
-			>
+			<button type="button" className={storyStyles.triggerButton}>
 				Notifications
-				<Badge
-					aria-label="New notifications"
-					className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full p-0"
-					variant="destructive"
-				/>
+				<Badge aria-label="New notifications" className={storyStyles.dot} variant="destructive" />
 			</button>
 
-			<button
-				type="button"
-				className="relative inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
-			>
+			<button type="button" className={storyStyles.triggerButton}>
 				Messages
-				<Badge
-					aria-label="New messages"
-					className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full p-0"
-					variant="pending"
-				/>
+				<Badge aria-label="New messages" className={storyStyles.dot} variant="pending" />
 			</button>
 		</div>
 	),
@@ -150,9 +137,9 @@ export const NotificationIndicator: Story = {
 Attach a small dot badge to a button for unread/new indicators.
 
 \`\`\`tsx
-<button className="relative">
+<button className={styles.trigger}> {/* position: relative */}
   Notifications
-  <Badge className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full p-0" variant="destructive" />
+  <Badge className={styles.dot} variant="destructive" /> {/* position: absolute; top/right: -4px; 10px round */}
 </button>
 \`\`\`
 `,
@@ -182,10 +169,7 @@ export const IconOnly: Story = {
 			</Badge>
 			<Badge isOnlyIcon variant="success" aria-label="Success icon badge">
 				<svg viewBox="0 0 24 24" aria-hidden="true">
-					<path
-						fill="currentColor"
-						d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
-					/>
+					<path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z" />
 				</svg>
 			</Badge>
 			<Badge isOnlyIcon variant="pending" aria-label="Pending icon badge">

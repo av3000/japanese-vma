@@ -188,13 +188,6 @@ class PostReadV1Test extends TestCase
             ->count());
     }
 
-    public function test_legacy_post_routes_still_respond(): void
-    {
-        $this->createPost();
-
-        $this->getJson('/api/posts')->assertOk()->assertJsonPath('success', true);
-    }
-
     /**
      * @param array<string, mixed> $overrides
      */

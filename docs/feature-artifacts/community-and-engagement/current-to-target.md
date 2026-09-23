@@ -1,8 +1,8 @@
 # Community and Engagement — Current to Target
 
-> **Status:** Migration map; post and comment work intentionally sliced
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Status:** Migration map; every row reached, legacy routes retired
+> **Last reviewed:** 2026-09-19
+> **Evidence baseline:** Repository working tree inspected on 2026-08-18; Post retirement (RET-POST-01) reflected 2026-09-19
 > **Audience:** Implementers, planners, and reviewers
 
 ## Flow Comparison
@@ -12,18 +12,21 @@
 | Article/catalogue comment reads | Public v1 UUID routes with paginated resources. | Keep resource-specific reads behind typed feature hooks. | Active detail routes use generated v1 read clients. |
 | Comment create | Generic authenticated v1 write. | Keep shared enum/tuple contract or replace it only through an explicit contract decision. | All supported callers use the generated model and focused mutation tests. |
 | Reply reads | Include shape exists; controller records incomplete behavior. | Implement and test explicit reply inclusion semantics. | Pagination and nesting behavior are contract-tested. |
-| Comment update/delete | v1 controller stubs; legacy resource routes active. | Generic authorized v1 update/delete operations. | Legacy callers are migrated and stubs become tested operations. |
-| Likes | Generic v1 toggle exists beside resource-specific legacy routes. | One shared typed mutation and viewer-state contract. | Active routes contain no resource-specific legacy like calls. |
-| Posts | Legacy backend and raw frontend calls. | Separate v1 read, write/moderation, and comment slices. | Each slice has backend contracts/tests and frontend query/mutation coverage. |
+| Comment update/delete | Generic authorized v1 update/delete by comment UUID; legacy resource routes retired (RET-ART-01, RET-CAT-01, RET-SEN-01, RET-POST-01). | Reached. | `CommentMutationV1Test` pins owner/admin rules and the locked-post gate. |
+| Likes | One generic v1 toggle; every resource-specific legacy like/unlike/checklike route retired. | Reached. | `LikeInstanceV1Test`; the retirement tests assert no v1 unlike route exists. |
+| Posts | v1 read, write/moderation, and comment contracts with generated frontend clients; the legacy `PostController` family retired (RET-POST-01). | Reached. | `PostReadV1Test`, `PostWriteV1Test`, `LegacyPostRouteRetirementTest`, and the focused client tests under `client/src/routes/community/`. |
 | Hashtags/views/downloads | Shared actions/repositories enrich migrated resources. | Keep feature orchestration local while reusing narrow engagement actions. | No generic service absorbs feature-specific business rules. |
 
 ## Migration Order
 
-1. Complete post list/detail v1 reads and migrate frontend read callers.
-2. Complete post create/update/delete/moderation contracts and migrate forms/actions.
-3. Complete post comment reads/writes where they differ from the generic contract.
-4. Add generic comment update/delete contracts and migrate article, catalogue, sentence, and post callers.
-5. Retire legacy like/comment routes only after active-caller verification.
+Completed in this order; kept as the record of how the slices were cut:
+
+1. Post list/detail v1 reads and frontend read callers (POST-READ-BE-01, POST-READ-FE-01).
+2. Post create/update/delete/moderation contracts and forms/actions (POST-WRITE-BE-01, POST-WRITE-FE-01).
+3. Post and sentence comment reads on the generic contract (COM-PARENT-BE-01, COM-PARENT-FE-01).
+4. Generic comment update/delete and reply reads for article, catalogue, sentence, and post callers (COM-CORE-BE-01, COM-CORE-FE-01).
+5. Like callers onto the single toggle (LIKE-BE-01, LIKE-FE-01).
+6. Legacy route retirement after active-caller verification, one family per slice, with the Post family last (RET-POST-01).
 
 ## Constraints
 

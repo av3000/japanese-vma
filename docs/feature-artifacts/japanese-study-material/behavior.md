@@ -42,7 +42,7 @@ The sentence index supports pagination plus keyword, content, Tatoeba entry, and
 
 The route layer should map URL/search state to generated v1 query parameters once, then let React Query own server state. Filters remain resource-specific; a shared packet does not justify a generic all-resource query abstraction.
 
-Current route maturity differs. Kanji list/detail has typed v1 work and tests in the current checkout. Other resources include a mixture of migrated list behavior, legacy detail calls, and transitional catalogue/comment behavior.
+All four resources read list and detail data through generated v1 clients. Kanji list/detail set the typed-route precedent; radical, word, and sentence routes followed it, and the legacy detail calls they once carried were removed with the RET-JPN-READ-01 route retirement (#147).
 
 ## Failure Behavior
 

@@ -104,18 +104,16 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 				<DialogModal.Title>Edit Article</DialogModal.Title>
 			</DialogModal.Header>
 			<DialogModal.Body>
-				<div className="row justify-content-lg-center text-center">
-					<ArticleForm
-						initialValues={initialValues}
-						onSubmit={handleSubmit}
-						isSubmitting={updateMutation.isPending}
-						submitLabel="Update"
-						serverErrors={serverErrors}
-						statusMessage={status}
-						requireEnglishTitle
-						disableSubmitWhenUnchanged
-					/>
-				</div>
+				<ArticleForm
+					initialValues={initialValues}
+					onSubmit={handleSubmit}
+					isSubmitting={updateMutation.isPending}
+					submitLabel="Update"
+					serverErrors={serverErrors}
+					statusMessage={status}
+					requireEnglishTitle
+					disableSubmitWhenUnchanged
+				/>
 			</DialogModal.Body>
 		</DialogModal>
 	) : null;

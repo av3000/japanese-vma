@@ -1,0 +1,26 @@
+.heading {
+	margin-block: var(--spacing-lg);
+	color: var(--color-neutral-600);
+}
+
+.items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.empty {
+	text-align: center;
+}
+
+.moreReplies {
+	margin-left: var(--spacing-2xl);
+	padding-block: var(--spacing-xs);
+	list-style: none;
+}
+
+.showing {
+	margin: var(--spacing-md) 0 0;
+	color: var(--color-neutral-600);
+	text-align: center;
+}

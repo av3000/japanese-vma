@@ -1,6 +1,9 @@
 import React from 'react';
+import { Alert } from '@/components/shared/Alert';
+import { Container } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
+import styles from './SocketConnectionBanner.module.css';
 
 /**
  * Admin-only diagnostic strip for the real-time transport. Informational: when the socket is
@@ -15,23 +18,22 @@ const SocketConnectionBanner: React.FC = () => {
 		return null;
 	}
 
-	const isTransient = connectionStatus === 'connecting' || connectionStatus === 'reconnecting';
-	const variantClass = isTransient ? 'alert-warning' : 'alert-danger';
+	const isWarning = connectionStatus === 'connecting' || connectionStatus === 'reconnecting';
 
 	return (
-		<div className={`alert ${variantClass} mb-0`} role="status">
-			<div className="container py-1">
-				<div>
+		<Alert tone={isWarning ? 'warning' : 'danger'} className={styles.banner}>
+			<Container>
+				<p className={styles.line}>
 					<strong>WebSocket:</strong> {connectionStatus}
-				</div>
-				<div className="small">
+				</p>
+				<p className={styles.detail}>
 					Target: {connectionInfo.scheme}://{connectionInfo.host}:{connectionInfo.port} (app key{' '}
 					{connectionInfo.appKey || 'n/a'})
-				</div>
-				{lastError && <div className="small">Last error: {lastError}</div>}
-				<div className="small">Live updates are unavailable; processing status is polled instead.</div>
-			</div>
-		</div>
+				</p>
+				{lastError && <p className={styles.detail}>Last error: {lastError}</p>}
+				<p className={styles.detail}>Live updates are unavailable; processing status is polled instead.</p>
+			</Container>
+		</Alert>
 	);
 };
 

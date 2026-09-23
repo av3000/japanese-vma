@@ -1,6 +1,9 @@
 import React, { ChangeEvent, FormEvent, useState } from 'react';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Textarea } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
+import { Cluster, Stack } from '@/components/shared/layout';
 
 const MAX_CHAR_LIMIT = 1000;
 
@@ -61,25 +64,32 @@ const CommentForm: React.FC<CommentFormProps> = ({
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<div className="form-group">
-				<textarea
+		<Stack as="form" gap="sm" onSubmit={handleSubmit}>
+			<Field>
+				<Textarea
 					onChange={handleChange}
 					value={message}
-					className="form-control"
 					placeholder={placeholder}
+					aria-label={placeholder}
 					name="message"
 					rows={5}
 					maxLength={MAX_CHAR_LIMIT}
 					disabled={isSubmitting}
+					isInvalid={!!error}
 				/>
-				<small className="form-text text-muted">{MAX_CHAR_LIMIT - message.length} characters remaining</small>
-			</div>
+				<FieldMessage alignEnd>{MAX_CHAR_LIMIT - message.length} characters remaining</FieldMessage>
+			</Field>
 
-			{error && <div className="alert alert-danger">{error}</div>}
+			{error && <Alert tone="danger">{error}</Alert>}
 
-			<div className="form-group d-flex align-items-center">
-				<Button type="submit" disabled={isSubmitting || isTooShort} variant="outline" isLoading={isSubmitting} size="sm">
+			<Cluster gap="xs">
+				<Button
+					type="submit"
+					disabled={isSubmitting || isTooShort}
+					variant="outline"
+					isLoading={isSubmitting}
+					size="sm"
+				>
 					{submitLabel}
 					<Icon name="paperPlane" size="sm" />
 				</Button>
@@ -89,8 +99,8 @@ const CommentForm: React.FC<CommentFormProps> = ({
 						Cancel
 					</Button>
 				)}
-			</div>
-		</form>
+			</Cluster>
+		</Stack>
 	);
 };
 

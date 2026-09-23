@@ -1,8 +1,8 @@
 # Community and Engagement — Abstract
 
-> **Status:** Baseline; partial v1 engagement with legacy-heavy community posts
-> **Last reviewed:** 2026-08-18
-> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Status:** v1 community posts and engagement; every legacy Post, Comment and Like route retired
+> **Last reviewed:** 2026-09-19
+> **Evidence baseline:** Repository working tree inspected on 2026-08-18; Post retirement (RET-POST-01) reflected 2026-09-19
 > **Audience:** Product-minded engineers, reviewers, and AI-assisted contributors
 
 ## Goal
@@ -20,9 +20,9 @@ Community and engagement let users discuss content and express interaction acros
 
 ## Current Shape
 
-The v1 backend includes public article/catalogue comment reads, generic authenticated comment creation, and generic instance-like toggling. Shared engagement actions load stats, comments, hashtags, views, and downloads for migrated resources.
+The v1 backend owns public article/catalogue/post/sentence comment reads with reply previews, generic authenticated comment create/update/delete, generic instance-like toggling, and the full community Post lifecycle: list with keyword/hashtag/topic/sort filters, UUID detail with transitional numeric resolution and view recording, owner create/update, owner-or-admin delete with transactional cleanup, and admin lock with an explicit state. Shared engagement actions load stats, comments, hashtags, views, and downloads for every migrated resource.
 
-Community posts, comment update/delete, post moderation, sentence comments, and several like flows remain legacy. The v1 comment controller contains unimplemented update/delete methods, and reply inclusion is not yet a completed read capability.
+No legacy community or engagement route remains. The last family, the `PostController` routes in `routes/api.php`, was retired in RET-POST-01 (#152); the ledger comment in that file records each route's v1 replacement, and `tests/Feature/Routes/LegacyPostRouteRetirementTest.php` guards the boundary.
 
 ## Important Boundaries
 

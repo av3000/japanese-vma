@@ -1,0 +1,38 @@
+/*
+ * Shared page shell for the Kanji, Word, Sentence and Radical list routes:
+ * search form on top, a centred summary line, the result list, and a pager.
+ */
+
+.page {
+	padding-block: var(--spacing-2xl);
+}
+
+/* Result column (was `col-lg-8 col-md-10 mx-auto`). */
+.results {
+	width: 100%;
+	max-width: var(--container-sm);
+	margin-inline: auto;
+}
+
+.heading {
+	margin: 0;
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.loadMore {
+	width: 100%;
+	max-width: var(--container-xs);
+}
+
+.loadingMore {
+	height: var(--size-3xl);
+}
+
+.muted {
+	color: var(--color-neutral-600);
+}

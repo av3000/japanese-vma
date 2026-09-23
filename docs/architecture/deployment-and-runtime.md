@@ -109,6 +109,17 @@ Because `Broadcast::routes()` registers its route from the service provider, edi
 are asserted registered by `processor-api/tests/Feature/Routes/LegacyAuthRouteRetirementTest.php`,
 and the health payload is asserted by `processor-api/tests/Feature/OperationalRoutesTest.php`.
 
+## Retained Compatibility Paths
+
+Two v1 paths still accept the pre-migration numeric identifiers. They exist so bookmarks and
+external links from before the UUID cut-over keep resolving; they are compatibility, not the
+canonical identity, and new callers must use UUIDs.
+
+| Path | Defined in | Role | Owner | Revisit when |
+| --- | --- | --- | --- | --- |
+| `GET api/v1/posts/{identifier}` with a positive integer | `processor-api/routes/api_v1.php`, `App\Http\v1\Community\Posts\Controllers\PostController@show` | Resolves a legacy numeric post id and answers with the canonical UUID payload; the React `/community/:post_id` route rewrites the URL on first render. Comment reads and every write are UUID-only. | Community | The removal condition in `docs/legacy-v1-migration/specs/community-post-reads-backend.md` §13 is already met (#136, #138, #142, #144, #146, #152 are closed). Retire it in its own slice with a redirect audit: RET-POST-02 (#325). |
+| `GET api/v1/catalogues/legacy/{id}` and the React paths `/lists`, `/list/:catalogueId`, `/newlist`, `/list/edit/:catalogueId` | `processor-api/routes/api_v1.php`, `App\Http\v1\Catalogues\Controllers\CatalogueController@resolveLegacyId`, `client/src/routes/CatalogueLegacyRedirects` | Lean numeric-to-UUID resolver (no view recorded, private catalogues answer 404) plus the client-side redirect page that consumes it. | Catalogues | No numeric catalogue URL is observed in access logs for one release cycle, or bookmark compatibility for pre-UUID list links is declared unsupported. Retire resolver and redirect page together. |
+
 ## Verification Boundaries
 
 Repository evidence supports these checks:

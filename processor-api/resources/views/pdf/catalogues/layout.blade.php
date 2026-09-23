@@ -70,6 +70,16 @@
             width: 100%;
         }
 
+        /* A catalogue table is as long as the catalogue: repeat the header on every page
+           and keep a row from being split across a page boundary. */
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
         th {
             border-bottom: 1px solid #9ca3af;
             text-align: left;

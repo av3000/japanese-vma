@@ -6,6 +6,8 @@ import { readPostWriteError, useCreatePostMutation } from '@/api/posts/writes';
 import { PostForm, type PostFormValues } from '@/components/features/community/PostForm';
 import { buildPostCreatePayload } from '@/components/features/community/PostForm/postFormSchema';
 import { Link } from '@/components/shared/Link';
+import { Container, Stack } from '@/components/shared/layout';
+import styles from './PostForm.module.css';
 
 export default function PostFormPage() {
 	const navigate = useNavigate();
@@ -38,14 +40,14 @@ export default function PostFormPage() {
 	};
 
 	return (
-		<div className="container">
-			<div className="mt-4">
-				<Link to={POST_ROUTES.list} className="tag-link">
-					Back to Community
-				</Link>
-			</div>
-			<h2 className="mt-4">New post</h2>
-			<div className="row justify-content-lg-center text-center">
+		<Container size="md" className={styles.page}>
+			<Stack gap="lg">
+				<div>
+					<Link to={POST_ROUTES.list} className="tag-link">
+						Back to Community
+					</Link>
+				</div>
+				<h2 className={styles.heading}>New post</h2>
 				<PostForm
 					initialValues={initialValues}
 					onSubmit={handleSubmit}
@@ -54,7 +56,7 @@ export default function PostFormPage() {
 					serverErrors={serverErrors}
 					statusMessage={status}
 				/>
-			</div>
-		</div>
+			</Stack>
+		</Container>
 	);
 }

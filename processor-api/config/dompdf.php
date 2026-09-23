@@ -80,6 +80,11 @@ return [
          */
         'chroot' => [
             realpath(base_path()),
+            // The PDF layouts declare their CJK faces by absolute path, so dompdf has to be
+            // allowed to read them. The packages that put them there are installed in both
+            // .docker/Dockerfile and .docker/Dockerfile.ci - keep those two in step, or the
+            // @font-face src resolves to nothing and Japanese text renders with a glyph-less
+            // fallback. tests/Unit/Pdf/PdfFontAvailabilityTest.php guards that.
             '/usr/share/fonts',
         ],
 

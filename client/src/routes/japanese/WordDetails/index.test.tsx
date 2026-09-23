@@ -75,7 +75,7 @@ describe('WordDetails', () => {
 
 	it('renders loading and error states distinctly', () => {
 		useWordQueryMock.mockReturnValueOnce({ isLoading: true, isError: false });
-		expect(renderToStaticMarkup(<WordDetails />)).toContain('Loading...');
+		expect(renderToStaticMarkup(<WordDetails />)).toContain('Loading page.');
 
 		useWordQueryMock.mockReturnValueOnce({ isLoading: false, isError: true });
 		expect(renderToStaticMarkup(<WordDetails />)).toContain('Unable to load word.');

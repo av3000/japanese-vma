@@ -6,6 +6,7 @@ import {
 } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
+import Spinner from '@/components/shared/Spinner';
 import {
 	Popover,
 	PopoverContent,
@@ -14,9 +15,9 @@ import {
 	PopoverTitle,
 	PopoverTrigger,
 } from '@/components/ui/popover';
-import { STATUS_VARIANT_BASE_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
+import { STATUS_VARIANT_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
-import styles from './ProcessingStatusAlert.module.scss';
+import styles from './ProcessingStatusAlert.module.css';
 
 /**
  * Copy per status. `live` is true when the socket is connected and events arrive as they
@@ -108,20 +109,22 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 				? 'destructive'
 				: 'pending';
 
+	const details: Array<{ label: string; value: string | null }> = [
+		{ label: 'Created', value: createdAtText },
+		{ label: 'Updated', value: updatedAtText },
+		{ label: 'Duration', value: durationText },
+		...(attemptText ? [{ label: 'Retry', value: attemptText }] : []),
+	];
+
 	return (
-		<div
-			className={classNames(
-				'mt-3 rounded-md border border-transparent px-3 py-2',
-				STATUS_VARIANT_BASE_CLASSES[statusVariant],
-				styles.alert,
-				className,
-			)}
-		>
+		<div className={classNames(styles.alert, STATUS_VARIANT_CLASSES[statusVariant], className)}>
 			<div className={styles.content}>
-				<div className="small">{message}</div>
+				<p className={styles.message}>{message}</p>
 				<div className={styles.status}>
 					{(status === ProcessingStatus.pending || status === ProcessingStatus.processing) && (
-						<span className="spinner-border spinner-border-sm mr-3" />
+						<span className={styles.spinner} aria-hidden="true">
+							<Spinner size="sm" />
+						</span>
 					)}
 					<Popover>
 						<PopoverTrigger asChild>
@@ -129,36 +132,20 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 								<ProcessingStatusBadge status={status} />
 							</button>
 						</PopoverTrigger>
-						<PopoverContent align="end" className="w-80">
+						<PopoverContent align="end">
 							<PopoverHeader>
 								<PopoverTitle>Processing details</PopoverTitle>
 								<PopoverDescription>Times are shown in your local timezone.</PopoverDescription>
 							</PopoverHeader>
-							<div className="mt-3 d-grid gap-2">
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Created</span>
-									<span className="small">{createdAtText ?? '—'}</span>
-								</div>
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Updated</span>
-									<span className="small">{updatedAtText ?? '—'}</span>
-								</div>
-								<div className="d-flex justify-content-between gap-3">
-									<span className="text-muted small">Duration</span>
-									<span className="small">{durationText ?? '—'}</span>
-								</div>
-
-								{attemptText && (
-									<div className="d-flex justify-content-between gap-3">
-										<span className="text-muted small">Retry</span>
-										<span className="small">{attemptText}</span>
+							<dl className={styles.details}>
+								{details.map(({ label, value }) => (
+									<div key={label} className={styles.detailRow}>
+										<dt className={styles.detailLabel}>{label}</dt>
+										<dd className={styles.detailValue}>{value ?? '—'}</dd>
 									</div>
-								)}
-
-								{!hasValidTiming && (
-									<div className="small text-muted mt-2">Timing data unavailable.</div>
-								)}
-							</div>
+								))}
+							</dl>
+							{!hasValidTiming && <p className={styles.detailNote}>Timing data unavailable.</p>}
 						</PopoverContent>
 					</Popover>
 				</div>

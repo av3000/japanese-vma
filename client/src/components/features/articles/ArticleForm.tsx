@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Input, Label, Select, Textarea } from '@/components/shared/FormControls';
 import { InputTags } from '@/components/shared/InputTags';
+import Spinner from '@/components/shared/Spinner';
+import { Stack } from '@/components/shared/layout';
 import {
 	buildArticleFormSchema,
 	MAX_CONTENT_LENGTH,
@@ -63,6 +66,8 @@ export function ArticleForm({
 	const schema = useMemo(() => buildArticleFormSchema({ requireEnglishTitle }), [requireEnglishTitle]);
 
 	const [focusedField, setFocusedField] = useState<ArticleFormField | null>(null);
+	const idPrefix = useId();
+	const fieldId = (field: ArticleFormField) => `${idPrefix}-${field}`;
 
 	const {
 		register,
@@ -157,175 +162,178 @@ export function ArticleForm({
 	const sourceLinkField = register('source_link', { onChange: () => clearFieldAndRootErrors('source_link') });
 
 	return (
-		<form onSubmit={handleSubmit(onValidSubmit)} className="col-12">
-			<h4>Title (JP)</h4>
-			<input
-				className="form-control"
-				maxLength={MAX_TITLE_LENGTH}
-				{...titleJpField}
-				onFocus={() => setFocusedField('title_jp')}
-				onBlur={(e) => {
-					titleJpField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireTitleContent}
-			/>
-			<small
-				className={`d-block text-end ${titleJpValue.length >= MAX_TITLE_LENGTH ? 'text-danger' : 'text-muted'}`}
-			>
-				{titleJpValue.length}/{MAX_TITLE_LENGTH}
-			</small>
-			{titleJpError && <div className="text-danger">{titleJpError}</div>}
+		<Stack as="form" gap="md" onSubmit={handleSubmit(onValidSubmit)}>
+			<Field>
+				<Label htmlFor={fieldId('title_jp')}>Title (JP)</Label>
+				<Input
+					id={fieldId('title_jp')}
+					maxLength={MAX_TITLE_LENGTH}
+					isInvalid={Boolean(titleJpError)}
+					{...titleJpField}
+					onFocus={() => setFocusedField('title_jp')}
+					onBlur={(e) => {
+						titleJpField.onBlur(e);
+						setFocusedField(null);
+					}}
+					required={requireTitleContent}
+				/>
+				<FieldMessage tone={titleJpValue.length >= MAX_TITLE_LENGTH ? 'error' : 'hint'} alignEnd>
+					{titleJpValue.length}/{MAX_TITLE_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{titleJpError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Title (EN)</h4>
-			<input
-				className="form-control"
-				maxLength={MAX_TITLE_LENGTH}
-				{...titleEnField}
-				onFocus={() => setFocusedField('title_en')}
-				onBlur={(e) => {
-					titleEnField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireEnglishTitle}
-			/>
-			<small
-				className={`d-block text-end ${titleEnValue.length >= MAX_TITLE_LENGTH ? 'text-danger' : 'text-muted'}`}
-			>
-				{titleEnValue.length}/{MAX_TITLE_LENGTH}
-			</small>
-			{titleEnError && <div className="text-danger">{titleEnError}</div>}
+			<Field>
+				<Label htmlFor={fieldId('title_en')}>Title (EN)</Label>
+				<Input
+					id={fieldId('title_en')}
+					maxLength={MAX_TITLE_LENGTH}
+					isInvalid={Boolean(titleEnError)}
+					{...titleEnField}
+					onFocus={() => setFocusedField('title_en')}
+					onBlur={(e) => {
+						titleEnField.onBlur(e);
+						setFocusedField(null);
+					}}
+					required={requireEnglishTitle}
+				/>
+				<FieldMessage tone={titleEnValue.length >= MAX_TITLE_LENGTH ? 'error' : 'hint'} alignEnd>
+					{titleEnValue.length}/{MAX_TITLE_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{titleEnError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Content (JP)</h4>
-			<textarea
-				className="form-control resize-none"
-				rows={7}
-				maxLength={MAX_CONTENT_LENGTH}
-				{...contentJpField}
-				onFocus={() => setFocusedField('content_jp')}
-				onBlur={(e) => {
-					contentJpField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireTitleContent}
-			/>
-			<small
-				className={`d-block text-end ${
-					contentJpValue.length >= MAX_CONTENT_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{contentJpValue.length}/{MAX_CONTENT_LENGTH}
-			</small>
-			{contentJpError && <div className="text-danger">{contentJpError}</div>}
+			<Field>
+				<Label htmlFor={fieldId('content_jp')}>Content (JP)</Label>
+				<Textarea
+					id={fieldId('content_jp')}
+					noResize
+					rows={7}
+					maxLength={MAX_CONTENT_LENGTH}
+					isInvalid={Boolean(contentJpError)}
+					{...contentJpField}
+					onFocus={() => setFocusedField('content_jp')}
+					onBlur={(e) => {
+						contentJpField.onBlur(e);
+						setFocusedField(null);
+					}}
+					required={requireTitleContent}
+				/>
+				<FieldMessage tone={contentJpValue.length >= MAX_CONTENT_LENGTH ? 'error' : 'hint'} alignEnd>
+					{contentJpValue.length}/{MAX_CONTENT_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{contentJpError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Content (EN)</h4>
-			<textarea
-				className="form-control resize-none"
-				rows={5}
-				maxLength={MAX_CONTENT_LENGTH}
-				{...contentEnField}
-				onFocus={() => setFocusedField('content_en')}
-				onBlur={(e) => {
-					contentEnField.onBlur(e);
-					setFocusedField(null);
-				}}
-			/>
-			<small
-				className={`d-block text-end ${
-					contentEnValue.length >= MAX_CONTENT_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{contentEnValue.length}/{MAX_CONTENT_LENGTH}
-			</small>
-			{contentEnError && <div className="text-danger">{contentEnError}</div>}
+			<Field>
+				<Label htmlFor={fieldId('content_en')}>Content (EN)</Label>
+				<Textarea
+					id={fieldId('content_en')}
+					noResize
+					rows={5}
+					maxLength={MAX_CONTENT_LENGTH}
+					isInvalid={Boolean(contentEnError)}
+					{...contentEnField}
+					onFocus={() => setFocusedField('content_en')}
+					onBlur={(e) => {
+						contentEnField.onBlur(e);
+						setFocusedField(null);
+					}}
+				/>
+				<FieldMessage tone={contentEnValue.length >= MAX_CONTENT_LENGTH ? 'error' : 'hint'} alignEnd>
+					{contentEnValue.length}/{MAX_CONTENT_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{contentEnError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Source Link</h4>
-			<input
-				className="form-control"
-				placeholder="https://www3.nhk.or.jp/news/easy/..."
-				maxLength={MAX_SOURCE_LINK_LENGTH}
-				{...sourceLinkField}
-				onFocus={() => setFocusedField('source_link')}
-				onBlur={(e) => {
-					sourceLinkField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireSourceLink}
-			/>
-			<small
-				className={`d-block text-end ${
-					sourceLinkValue.length >= MAX_SOURCE_LINK_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{sourceLinkValue.length}/{MAX_SOURCE_LINK_LENGTH}
-			</small>
-			{sourceLinkError && <div className="text-danger">{sourceLinkError}</div>}
+			<Field>
+				<Label htmlFor={fieldId('source_link')}>Source Link</Label>
+				<Input
+					id={fieldId('source_link')}
+					placeholder="https://www3.nhk.or.jp/news/easy/..."
+					maxLength={MAX_SOURCE_LINK_LENGTH}
+					isInvalid={Boolean(sourceLinkError)}
+					{...sourceLinkField}
+					onFocus={() => setFocusedField('source_link')}
+					onBlur={(e) => {
+						sourceLinkField.onBlur(e);
+						setFocusedField(null);
+					}}
+					required={requireSourceLink}
+				/>
+				<FieldMessage tone={sourceLinkValue.length >= MAX_SOURCE_LINK_LENGTH ? 'error' : 'hint'} alignEnd>
+					{sourceLinkValue.length}/{MAX_SOURCE_LINK_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{sourceLinkError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Tags</h4>
-			<div onFocus={() => setFocusedField('tags')} onBlur={() => setFocusedField(null)}>
+			<Field>
+				<Label htmlFor={fieldId('tags')}>Tags</Label>
+				<div onFocus={() => setFocusedField('tags')} onBlur={() => setFocusedField(null)}>
+					<Controller
+						control={control}
+						name="tags"
+						render={({ field }) => (
+							<InputTags
+								id={fieldId('tags')}
+								value={field.value}
+								onChange={(newTags) => {
+									clearFieldAndRootErrors('tags');
+									field.onChange(newTags);
+									field.onBlur();
+								}}
+								hideLabel
+								label="Tags"
+								maxTags={MAX_TAG_QUANTITY}
+								maxTagLength={MAX_TAG_LENGTH}
+								showTagLengthCounter
+							/>
+						)}
+					/>
+				</div>
+				<FieldMessage tone="error">{tagsError}</FieldMessage>
+			</Field>
+
+			<Field>
+				<Label htmlFor={fieldId('publicity')}>Publicity</Label>
 				<Controller
 					control={control}
-					name="tags"
+					name="publicity"
 					render={({ field }) => (
-						<InputTags
-							value={field.value}
-							onChange={(newTags) => {
-								clearFieldAndRootErrors('tags');
-								field.onChange(newTags);
-								field.onBlur();
+						<Select
+							id={fieldId('publicity')}
+							isInvalid={Boolean(publicityError)}
+							value={field.value ? '1' : '0'}
+							onFocus={() => setFocusedField('publicity')}
+							onChange={(e) => {
+								clearFieldAndRootErrors('publicity');
+								field.onChange(e.target.value === '1');
 							}}
-							hideLabel
-							label="Tags"
-							maxTags={MAX_TAG_QUANTITY}
-							maxTagLength={MAX_TAG_LENGTH}
-							showTagLengthCounter
-						/>
+							onBlur={() => {
+								field.onBlur();
+								setFocusedField(null);
+							}}
+						>
+							<option value="1">Public</option>
+							<option value="0">Private</option>
+						</Select>
 					)}
 				/>
-			</div>
-			{tagsError && <div className="text-danger">{tagsError}</div>}
+				<FieldMessage tone="error">{publicityError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Publicity</h4>
-			<Controller
-				control={control}
-				name="publicity"
-				render={({ field }) => (
-					<select
-						className="form-control"
-						value={field.value ? '1' : '0'}
-						onFocus={() => setFocusedField('publicity')}
-						onChange={(e) => {
-							clearFieldAndRootErrors('publicity');
-							field.onChange(e.target.value === '1');
-						}}
-						onBlur={(e) => {
-							field.onBlur();
-							setFocusedField(null);
-						}}
-					>
-						<option value="1">Public</option>
-						<option value="0">Private</option>
-					</select>
-				)}
-			/>
-			{publicityError && <div className="text-danger">{publicityError}</div>}
-
-			<div className="mt-4">
+			<div>
 				<Button
 					type="submit"
 					variant="outline"
 					disabled={isSubmitting || (disableSubmitWhenUnchanged && !isDirty) || !isValid}
 				>
-					{isSubmitting ? (
-						<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-					) : (
-						submitLabel
-					)}
+					{isSubmitting ? <Spinner size="sm" /> : submitLabel}
 				</Button>
 			</div>
 
-			{statusMessage && <div className="text-danger mt-3">{statusMessage}</div>}
-			{generalErrorMessage && <div className="text-danger mt-3">{generalErrorMessage}</div>}
-		</form>
+			<FieldMessage tone="error">{statusMessage}</FieldMessage>
+			<FieldMessage tone="error">{generalErrorMessage}</FieldMessage>
+		</Stack>
 	);
 }

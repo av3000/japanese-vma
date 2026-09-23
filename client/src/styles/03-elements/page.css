@@ -1,0 +1,44 @@
+@charset "UTF-8";
+/* ==========================================================================
+   #PAGE
+   ========================================================================== */
+/**
+ * Simple page-level setup.
+ *
+ * 1. Set the default `font-size` and `line-height` for the entire project,
+ *    sourced from our default variables. The `font-size` is calculated to exist
+ *    in ems, the `line-height` is calculated to exist unitlessly.
+ * 2. Force scrollbars to always be visible to prevent awkward ‘jumps’ when
+ *    navigating between pages that do/do not have enough content to produce
+ *    scrollbars naturally.
+ * 3. Ensure the page always fills at least the entire height of the viewport.
+ */
+html {
+	background-color: var(--page-background-color);
+	font-family: var(--font-family);
+	font-size: var(--font-size-body-lg);
+	line-height: var(--line-height-lg);
+	color: var(--color-text-primary);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-scrollbar-thumb) transparent;
+}
+html::-webkit-scrollbar {
+	width: 12px;
+}
+html::-webkit-scrollbar-track {
+	background-color: transparent;
+	border: none;
+}
+
+/**
+ * Japanese content. Mark it with lang="ja" so browsers pick Japanese rather than
+ * Chinese glyph forms and use the Japanese font stack.
+ */
+[lang='ja'] {
+	font-family: var(--font-family-ja);
+}

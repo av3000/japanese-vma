@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import React, { useRef, useState } from 'react';
 import classNames from 'classnames';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { ConfirmModal } from '@/components/shared/modals';
+import { useModal } from '@/hooks/useModal';
 import { User } from '@/types';
-import sharedStyles from './CatalogueItems.module.scss';
+import sharedStyles from './CatalogueItems.module.css';
 
 interface Sentence {
 	id: string | number;
@@ -27,19 +28,20 @@ const CatalogueSentenceItems: React.FC<CatalogueSentenceItemsProps> = ({
 	ownerId,
 	editMode = false,
 }) => {
-	const [showDeleteModal, setShowDeleteModal] = useState<number | string | null>(null);
+	const [pendingRemovalId, setPendingRemovalId] = useState<number | string | null>(null);
+	const dialogRef = useRef<HTMLDialogElement>(null);
+	const confirmRemoval = useModal(dialogRef, { onClose: () => setPendingRemovalId(null) });
 
-	const handleDeleteModalClose = () => {
-		setShowDeleteModal(null);
+	const openModal = (id: number | string) => {
+		setPendingRemovalId(id);
+		confirmRemoval.open();
 	};
 
-	const handleDeleteConfirm = (id: number | string) => {
-		handleDeleteModalClose();
-		onRemoveItem(id);
-	};
-
-	const openModal = (modalId: number | string) => {
-		setShowDeleteModal(modalId);
+	const handleDeleteConfirm = () => {
+		if (pendingRemovalId !== null) {
+			onRemoveItem(pendingRemovalId);
+		}
+		confirmRemoval.close();
 	};
 
 	return (
@@ -79,25 +81,20 @@ const CatalogueSentenceItems: React.FC<CatalogueSentenceItemsProps> = ({
 								<span className={sharedStyles.badge}>Local</span>
 							)}
 						</div>
-
-						<Modal
-							show={showDeleteModal === sentence.id}
-							onHide={handleDeleteModalClose}
-							title="Are You Sure?"
-							footer={
-								<>
-									<Button variant="secondary" onClick={handleDeleteModalClose}>
-										Cancel
-									</Button>
-									<Button variant="danger" onClick={() => handleDeleteConfirm(sentence.id)}>
-										Yes, delete
-									</Button>
-								</>
-							}
-						/>
 					</div>
 				);
 			})}
+
+			<ConfirmModal
+				controller={confirmRemoval}
+				title="Are you sure?"
+				confirmLabel="Yes, delete"
+				confirmVariant="danger"
+				ariaLabel="Remove sentence from catalogue"
+				onConfirm={handleDeleteConfirm}
+			>
+				This removes the sentence from the catalogue. You can add it again later.
+			</ConfirmModal>
 
 			{items.length === 0 && (
 				<div className={sharedStyles.emptyState}>

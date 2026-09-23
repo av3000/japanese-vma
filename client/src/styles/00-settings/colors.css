@@ -1,0 +1,83 @@
+:root {
+	--color-success: #28a745;
+	--color-success-hover: #1e7e34;
+	--color-success-disabled: #94d7a1;
+	--color-warning: #ffc107;
+	--color-warning-hover: #c69500;
+	--color-warning-disabled: #ffe08a;
+	--color-error: #dc3545;
+	--color-error-hover: #a71d2a;
+	--color-error-disabled: #f29ba5;
+	/* Primary: ai (藍) indigo, from a two-colour scheme with shu (朱) vermilion below.
+	   Chosen over the previous orange (#e67e22, 2.85:1 white-on-button, failed AA) and over the single-red
+	   candidates because indigo carries navigation and buttons with room to spare while the red stays a
+	   deliberate accent. Contrast, white text on: --color-primary 7.09:1, --color-primary-hover 10.2:1.
+	   The 100..600 steps are the tint/shade ladder of the same hue; 400 is interpolated. */
+	--color-primary-100: #dfe9ef;
+	--color-primary-200: #a7c3d3;
+	--color-primary-300: #4b87a8;
+	--color-primary-400: #2b7092; /* interpolated between 300 and 500 */
+	--color-primary: #165e83;
+	--color-primary-500: #165e83;
+	--color-primary-600: #0f4460;
+	--color-primary-hover: #0f4460;
+	--color-primary-disabled: #a7c3d3;
+	--color-primary-tint: #dfe9ef;
+	/* Pills on indigo */
+	--color-pill-bg: #e8f0f5;
+	--color-pill-fg: #0f4460;
+	--color-pill-border: #c2d6e2;
+
+	/* Accent: shu (朱) vermilion, the torii-gate red. Reserved for JLPT level badges, glyph covers and the
+	   JLPT bar so it always means "level". White on --color-accent 4.55:1 (AA); --color-accent-glyph is a
+	   surface colour only (3.31:1, large text or fills). --color-accent-hover 7.2:1 doubles as badge text. */
+	--color-accent-100: #fbe3d8;
+	--color-accent-200: #f4b49c;
+	--color-accent-glyph: #eb6238;
+	--color-accent: #d2451e;
+	--color-accent-hover: #a83618;
+	--color-accent-900: #8f2e14;
+	--color-badge-accent-bg: #fbe3d8;
+	--color-badge-accent-fg: #a83618;
+	--color-secondary-100: #f2f4f2;
+	--color-secondary-200: #e5e8e5;
+	--color-secondary-300: #d8ddd8;
+	--color-secondary-400: #cbd1cb;
+	--color-secondary: #6c757d;
+	--color-secondary-hover: #494f54;
+	--color-secondary-disabled: #b5bcc2;
+	--color-neutral-0: #ffffff;
+	--color-neutral-100: #f8f9fa;
+	--color-neutral-100-alpha: rgba(33, 33, 33, 0.05);
+	--color-neutral-200-alpha: rgba(33, 33, 33, 0.1);
+	--color-neutral-200: #e9ecef;
+	--color-neutral-300: #dee2e6;
+	--color-neutral-400: #ced4da;
+	--color-neutral-500: #adb5bd;
+	--color-neutral-600: #6c757d;
+	--color-neutral-700: #495057;
+	--color-neutral-800: #343a40;
+	--color-neutral-900: #212121;
+	--color-border-default: #ffffff;
+	--color-scrollbar-track: var(--color-neutral-800);
+	--color-scrollbar-thumb: var(--color-neutral-500);
+	--color-scrollbar-border: var(--color-neutral-900);
+	--color-text-neutral-hover: var(--color-neutral-700);
+	--color-text-neutral-default: var(--color-neutral-900);
+	--color-text-neutral-active: var(--color-neutral-600);
+	--color-text-primary: #1e1f21; /* default text, including links */
+	--color-text-primary-default: var(--color-primary);
+	--color-text-primary-hover: var(--color-primary-hover);
+	--color-text-primary-focus: var(--color-primary-300);
+	--color-text-primary-active: var(--color-primary-200);
+	--color-link: var(--color-text-primary);
+	--color-link-hover: var(--color-text-primary);
+	--color-link-visited: var(--color-text-primary);
+	--page-background-color: #fbfaf5; /* kinari (生成り), undyed cloth: warm white instead of the cool #f8f9fa */
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-border-default: #212121;
+	}
+}

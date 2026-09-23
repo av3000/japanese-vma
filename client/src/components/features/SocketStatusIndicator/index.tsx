@@ -1,22 +1,27 @@
-import React, { useMemo } from 'react';
-import { OverlayTrigger, Popover } from 'react-bootstrap';
-import { Badge } from '@/components/ui/badge';
+import * as React from 'react';
+import classNames from 'classnames';
+import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from '@/components/ui/popover';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
+import styles from './SocketStatusIndicator.module.css';
+
+type StatusVariant = 'success' | 'pending' | 'destructive';
 
 const SocketStatusIndicator: React.FC = () => {
 	const { connectionStatus, lastError, connectionInfo, hasAttemptedConnection, isConfigured } = useWebSocket();
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [isPinned, setIsPinned] = React.useState(false);
 
-	const { variant, label } = useMemo(() => {
+	const { variant, label } = React.useMemo<{ variant: StatusVariant; label: string }>(() => {
 		switch (connectionStatus) {
 			case 'connected':
-				return { variant: 'success' as const, label: 'connected' };
+				return { variant: 'success', label: 'connected' };
 			case 'connecting':
 			case 'reconnecting':
-				return { variant: 'pending' as const, label: connectionStatus };
+				return { variant: 'pending', label: connectionStatus };
 			case 'failed':
 			case 'disconnected':
 			default:
-				return { variant: 'destructive' as const, label: connectionStatus };
+				return { variant: 'destructive', label: connectionStatus };
 		}
 	}, [connectionStatus]);
 
@@ -24,41 +29,60 @@ const SocketStatusIndicator: React.FC = () => {
 		return null;
 	}
 
-	const popover = (
-		<Popover id="socket-status-popover">
-			<Popover.Header as="h3">WebSocket</Popover.Header>
-			<Popover.Body>
-				<div className="mb-1">
-					<strong>Status:</strong> {hasAttemptedConnection ? label : 'initializing'}
-				</div>
-				<div className="small mb-1">
-					<strong>Target:</strong> {connectionInfo.scheme}://{connectionInfo.host}:{connectionInfo.port}
-				</div>
-				{lastError && (
-					<div className="small">
-						<strong>Last error:</strong> {lastError}
-					</div>
-				)}
-			</Popover.Body>
-		</Popover>
-	);
+	const statusText = hasAttemptedConnection ? label : 'initializing';
+
+	// Hover and focus preview the popover; click (or keyboard activation) pins it open
+	// so the details can be read or copied. Radix handles Escape and outside clicks.
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		if (!open) setIsPinned(false);
+	};
 
 	return (
-		<OverlayTrigger
-			trigger={['hover', 'focus', 'click']}
-			placement="bottom"
-			overlay={popover}
-			rootClose
-			container={typeof document !== 'undefined' ? document.body : undefined}
-		>
-			<button
-				type="button"
-				aria-label={`WebSocket ${hasAttemptedConnection ? label : 'initializing'}`}
-				className="relative inline-flex items-center justify-center rounded-full p-1"
+		<Popover open={isOpen} onOpenChange={handleOpenChange}>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					className={styles.trigger}
+					aria-label={`WebSocket ${statusText}`}
+					onPointerEnter={() => setIsOpen(true)}
+					onPointerLeave={() => !isPinned && setIsOpen(false)}
+					onFocus={() => setIsOpen(true)}
+					onBlur={() => !isPinned && setIsOpen(false)}
+					onClick={() => {
+						setIsPinned((pinned) => !pinned);
+						setIsOpen(true);
+					}}
+				>
+					<span aria-hidden="true" className={classNames(styles.dot, styles[variant])} />
+				</button>
+			</PopoverTrigger>
+			<PopoverContent
+				align="end"
+				className={styles.content}
+				onOpenAutoFocus={(event) => event.preventDefault()}
+				onPointerEnter={() => setIsOpen(true)}
+				onPointerLeave={() => !isPinned && setIsOpen(false)}
 			>
-				<Badge aria-hidden="true" className="h-2.5 w-2.5 rounded-full p-0" variant={variant} />
-			</button>
-		</OverlayTrigger>
+				<PopoverHeader>
+					<PopoverTitle>WebSocket</PopoverTitle>
+				</PopoverHeader>
+				<dl className={styles.details}>
+					<dt>Status</dt>
+					<dd>{statusText}</dd>
+					<dt>Target</dt>
+					<dd>
+						{connectionInfo.scheme}://{connectionInfo.host}:{connectionInfo.port}
+					</dd>
+					{lastError && (
+						<>
+							<dt>Last error</dt>
+							<dd>{lastError}</dd>
+						</>
+					)}
+				</dl>
+			</PopoverContent>
+		</Popover>
 	);
 };
 

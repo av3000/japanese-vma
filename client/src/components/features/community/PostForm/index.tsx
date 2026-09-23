@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { POST_TOPIC_OPTIONS, isPostTopic } from '@/api/posts/reads';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Input, Label, Select, Textarea } from '@/components/shared/FormControls';
 import { InputTags } from '@/components/shared/InputTags';
+import Spinner from '@/components/shared/Spinner';
+import { Stack } from '@/components/shared/layout';
 import {
 	MAX_CONTENT_LENGTH,
 	MAX_TAG_LENGTH,
@@ -54,6 +57,12 @@ export function PostForm({
 	disableSubmitWhenUnchanged = false,
 }: PostFormProps) {
 	const [focusedField, setFocusedField] = useState<PostFormField | null>(null);
+
+	const idPrefix = useId();
+	const titleId = `${idPrefix}-title`;
+	const contentId = `${idPrefix}-content`;
+	const topicId = `${idPrefix}-topic`;
+	const tagsLabelId = `${idPrefix}-tags-label`;
 
 	const {
 		register,
@@ -134,122 +143,128 @@ export function PostForm({
 	const contentField = register('content', { onChange: () => clearFieldAndRootErrors('content') });
 
 	return (
-		<form onSubmit={handleSubmit(onValidSubmit)} className="col-12">
-			<h4 className="mt-3">Title</h4>
-			<input
-				className="form-control"
-				placeholder="Post title text"
-				maxLength={MAX_TITLE_LENGTH}
-				aria-label="Title"
-				{...titleField}
-				onFocus={() => setFocusedField('title')}
-				onBlur={(event) => {
-					titleField.onBlur(event);
-					setFocusedField(null);
-				}}
-				required
-			/>
-			<small
-				className={`d-block text-end ${titleValue.length >= MAX_TITLE_LENGTH ? 'text-danger' : 'text-muted'}`}
-			>
-				{titleValue.length}/{MAX_TITLE_LENGTH}
-			</small>
-			{titleError && <div className="text-danger">{titleError}</div>}
+		<Stack as="form" gap="md" onSubmit={handleSubmit(onValidSubmit)}>
+			<Field>
+				<Label htmlFor={titleId}>Title</Label>
+				<Input
+					id={titleId}
+					placeholder="Post title text"
+					maxLength={MAX_TITLE_LENGTH}
+					isInvalid={Boolean(titleError)}
+					{...titleField}
+					onFocus={() => setFocusedField('title')}
+					onBlur={(event) => {
+						titleField.onBlur(event);
+						setFocusedField(null);
+					}}
+					required
+				/>
+				<FieldMessage tone={titleValue.length >= MAX_TITLE_LENGTH ? 'error' : 'hint'} alignEnd>
+					{titleValue.length}/{MAX_TITLE_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{titleError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Content</h4>
-			<textarea
-				className="form-control resize-none"
-				placeholder="Post body text"
-				rows={7}
-				maxLength={MAX_CONTENT_LENGTH}
-				aria-label="Content"
-				{...contentField}
-				onFocus={() => setFocusedField('content')}
-				onBlur={(event) => {
-					contentField.onBlur(event);
-					setFocusedField(null);
-				}}
-				required
-			/>
-			<small
-				className={`d-block text-end ${contentValue.length >= MAX_CONTENT_LENGTH ? 'text-danger' : 'text-muted'}`}
-			>
-				{contentValue.length}/{MAX_CONTENT_LENGTH}
-			</small>
-			{contentError && <div className="text-danger">{contentError}</div>}
+			<Field>
+				<Label htmlFor={contentId}>Content</Label>
+				<Textarea
+					id={contentId}
+					noResize
+					placeholder="Post body text"
+					rows={7}
+					maxLength={MAX_CONTENT_LENGTH}
+					isInvalid={Boolean(contentError)}
+					{...contentField}
+					onFocus={() => setFocusedField('content')}
+					onBlur={(event) => {
+						contentField.onBlur(event);
+						setFocusedField(null);
+					}}
+					required
+				/>
+				<FieldMessage tone={contentValue.length >= MAX_CONTENT_LENGTH ? 'error' : 'hint'} alignEnd>
+					{contentValue.length}/{MAX_CONTENT_LENGTH}
+				</FieldMessage>
+				<FieldMessage tone="error">{contentError}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Topic</h4>
-			<Controller
-				control={control}
-				name="topic"
-				render={({ field }) => (
-					<select
-						className="form-control"
-						aria-label="Topic"
-						value={String(field.value)}
-						onFocus={() => setFocusedField('topic')}
-						onChange={(event) => {
-							clearFieldAndRootErrors('topic');
-							const next = Number(event.target.value);
-							// A non-topic value can only come from a tampered DOM; the schema rejects it either way.
-							field.onChange(isPostTopic(next) ? next : event.target.value);
-						}}
-						onBlur={() => {
-							field.onBlur();
-							setFocusedField(null);
-						}}
-					>
-						{POST_TOPIC_OPTIONS.map((option) => (
-							<option key={option.value} value={String(option.value)}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				)}
-			/>
-			{topicError && <div className="text-danger">{topicError}</div>}
-
-			<h4 className="mt-3">Tags</h4>
-			<div onFocus={() => setFocusedField('tags')} onBlur={() => setFocusedField(null)}>
+			<Field>
+				<Label htmlFor={topicId}>Topic</Label>
 				<Controller
 					control={control}
-					name="tags"
+					name="topic"
 					render={({ field }) => (
-						<InputTags
-							value={field.value}
-							onChange={(nextTags) => {
-								clearFieldAndRootErrors('tags');
-								field.onChange(nextTags);
-								field.onBlur();
+						<Select
+							id={topicId}
+							isInvalid={Boolean(topicError)}
+							value={String(field.value)}
+							onFocus={() => setFocusedField('topic')}
+							onChange={(event) => {
+								clearFieldAndRootErrors('topic');
+								const next = Number(event.target.value);
+								// A non-topic value can only come from a tampered DOM; the schema rejects it either way.
+								field.onChange(isPostTopic(next) ? next : event.target.value);
 							}}
-							placeholder="uimistake suggestion howto"
-							hideLabel
-							label="Tags"
-							maxTags={MAX_TAG_QUANTITY}
-							maxTagLength={MAX_TAG_LENGTH}
-							showTagLengthCounter
-						/>
+							onBlur={() => {
+								field.onBlur();
+								setFocusedField(null);
+							}}
+						>
+							{POST_TOPIC_OPTIONS.map((option) => (
+								<option key={option.value} value={String(option.value)}>
+									{option.label}
+								</option>
+							))}
+						</Select>
 					)}
 				/>
-			</div>
-			{tagsError && <div className="text-danger">{tagsError}</div>}
+				<FieldMessage tone="error">{topicError}</FieldMessage>
+			</Field>
 
-			<div className="mt-4">
+			<Field>
+				<Label id={tagsLabelId}>Tags</Label>
+				<div onFocus={() => setFocusedField('tags')} onBlur={() => setFocusedField(null)}>
+					<Controller
+						control={control}
+						name="tags"
+						render={({ field }) => (
+							<InputTags
+								value={field.value}
+								onChange={(nextTags) => {
+									clearFieldAndRootErrors('tags');
+									field.onChange(nextTags);
+									field.onBlur();
+								}}
+								placeholder="uimistake suggestion howto"
+								hideLabel
+								label="Tags"
+								aria-labelledby={tagsLabelId}
+								maxTags={MAX_TAG_QUANTITY}
+								maxTagLength={MAX_TAG_LENGTH}
+								showTagLengthCounter
+							/>
+						)}
+					/>
+				</div>
+				<FieldMessage tone="error">{tagsError}</FieldMessage>
+			</Field>
+
+			<div>
 				<Button
 					type="submit"
 					variant="outline"
 					disabled={isSubmitting || (disableSubmitWhenUnchanged && !isDirty) || !isValid}
 				>
-					{isSubmitting ? (
-						<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-					) : (
-						submitLabel
-					)}
+					{isSubmitting ? <Spinner size="sm" /> : submitLabel}
 				</Button>
 			</div>
 
-			{statusMessage && <div className="text-danger mt-3">{statusMessage}</div>}
-			{generalErrorMessage && <div className="text-danger mt-3">{generalErrorMessage}</div>}
-		</form>
+			<FieldMessage tone="error" role="alert">
+				{statusMessage}
+			</FieldMessage>
+			<FieldMessage tone="error" role="alert">
+				{generalErrorMessage}
+			</FieldMessage>
+		</Stack>
 	);
 }

@@ -5,12 +5,11 @@ import { buildCreateCataloguePayload } from '@/api/catalogues/payloads';
 import { catalogueStore, getCatalogueIndexQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { StoreCatalogueRequest } from '@/api/generated/model/storeCatalogueRequest';
 import type { UuidCreatedResource } from '@/api/generated/model/uuidCreatedResource';
-import {
-	CatalogueForm,
-	type CatalogueFormValues,
-} from '@/components/features/catalogues/CatalogueForm';
+import { CatalogueForm, type CatalogueFormValues } from '@/components/features/catalogues/CatalogueForm';
+import { Container } from '@/components/shared/layout';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
+import styles from './CatalogueCreate.module.css';
 
 const CatalogueCreatePage = () => {
 	const navigate = useNavigate();
@@ -52,22 +51,20 @@ const CatalogueCreatePage = () => {
 	});
 
 	return (
-		<div className="container">
-			<div className="row justify-content-lg-center text-center">
-				<CatalogueForm
-					initialValues={initialValues}
-					isSubmitting={mutation.isPending}
-					submitLabel="Create Catalogue"
-					serverErrors={serverErrors}
-					statusMessage={status}
-					onSubmit={(values) => {
-						setStatus(null);
-						setServerErrors(null);
-						mutation.mutate(buildCreateCataloguePayload(values));
-					}}
-				/>
-			</div>
-		</div>
+		<Container as="section" className={styles.page}>
+			<CatalogueForm
+				initialValues={initialValues}
+				isSubmitting={mutation.isPending}
+				submitLabel="Create Catalogue"
+				serverErrors={serverErrors}
+				statusMessage={status}
+				onSubmit={(values) => {
+					setStatus(null);
+					setServerErrors(null);
+					mutation.mutate(buildCreateCataloguePayload(values));
+				}}
+			/>
+		</Container>
 	);
 };
 

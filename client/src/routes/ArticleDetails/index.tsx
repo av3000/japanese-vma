@@ -1,8 +1,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useArticleQuery } from '@/api/articles/details';
+import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Container } from '@/components/shared/layout';
 import ArticleContent from './ArticleContent';
+import styles from './ArticleDetails.module.css';
 import ArticleDetailsSkeleton from './ArticleDetailsSkeleton';
 
 const ArticleDetails: React.FC = () => {
@@ -16,12 +19,12 @@ const ArticleDetails: React.FC = () => {
 
 	if (isError || !article) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Article not found or was deleted.</p>
-				<a href="/articles" className="btn btn-link">
+			<Container size="sm" as="section" className={styles.notFound}>
+				<p className={styles.lead}>Article not found or was deleted.</p>
+				<Button href="/articles" variant="linkButton">
 					Back to all Articles
-				</a>
-			</div>
+				</Button>
+			</Container>
 		);
 	}
 

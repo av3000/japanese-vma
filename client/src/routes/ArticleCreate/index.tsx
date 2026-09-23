@@ -7,7 +7,9 @@ import { articleStore } from '@/api/generated/article/article';
 import type { ArticleCreatedResource } from '@/api/generated/model/articleCreatedResource';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';
+import { Container } from '@/components/shared/layout';
 import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
+import styles from './ArticleCreate.module.css';
 
 export default function ArticleCreatePage() {
 	const qc = useQueryClient();
@@ -80,21 +82,19 @@ export default function ArticleCreatePage() {
 	};
 
 	return (
-		<div className="container">
-			<div className="row justify-content-lg-center text-center">
-				{/* TODO: Step forward would be generic reusable form, accepting fields configs with field types */}
-				<ArticleForm
-					initialValues={initialValues}
-					onSubmit={onSubmit}
-					isSubmitting={mutation.isPending}
-					submitLabel="Create"
-					serverErrors={serverErrors}
-					statusMessage={status}
-					requireTitleContent
-					requireEnglishTitle
-					requireSourceLink
-				/>
-			</div>
-		</div>
+		<Container size="sm" as="section" className={styles.page}>
+			{/* TODO: Step forward would be generic reusable form, accepting fields configs with field types */}
+			<ArticleForm
+				initialValues={initialValues}
+				onSubmit={onSubmit}
+				isSubmitting={mutation.isPending}
+				submitLabel="Create"
+				serverErrors={serverErrors}
+				statusMessage={status}
+				requireTitleContent
+				requireEnglishTitle
+				requireSourceLink
+			/>
+		</Container>
 	);
 }

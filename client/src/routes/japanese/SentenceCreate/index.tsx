@@ -4,6 +4,8 @@ import { readSentenceWriteError, useCreateSentenceMutation } from '@/api/sentenc
 import { SentenceForm, type SentenceFormValues } from '@/components/features/japanese/sentence/SentenceForm';
 import { buildSentenceWritePayload } from '@/components/features/japanese/sentence/SentenceForm/sentenceFormSchema';
 import { Link } from '@/components/shared/Link';
+import { Container, Stack } from '@/components/shared/layout';
+import styles from '../japaneseFormPage.module.css';
 
 export default function SentenceCreatePage() {
 	const navigate = useNavigate();
@@ -31,23 +33,23 @@ export default function SentenceCreatePage() {
 	};
 
 	return (
-		<div className="container">
-			<div className="mt-4">
-				<Link to="/sentences" className="tag-link">
-					Back
-				</Link>
-			</div>
-			<h2 className="mt-4">New sentence</h2>
-			<div className="row justify-content-lg-center text-center">
-				<SentenceForm
-					initialValues={initialValues}
-					onSubmit={handleSubmit}
-					isSubmitting={createMutation.isPending}
-					submitLabel="Create"
-					serverErrors={serverErrors}
-					statusMessage={status}
-				/>
-			</div>
-		</div>
+		<Container className={styles.page}>
+			<Stack gap="lg">
+				<div>
+					<Link to="/sentences">Back</Link>
+				</div>
+				<h2>New sentence</h2>
+				<div className={styles.formArea}>
+					<SentenceForm
+						initialValues={initialValues}
+						onSubmit={handleSubmit}
+						isSubmitting={createMutation.isPending}
+						submitLabel="Create"
+						serverErrors={serverErrors}
+						statusMessage={status}
+					/>
+				</div>
+			</Stack>
+		</Container>
 	);
 }

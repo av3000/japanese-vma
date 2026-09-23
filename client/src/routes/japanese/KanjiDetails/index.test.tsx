@@ -128,13 +128,15 @@ describe('KanjiDetails', () => {
 	it('renders migrated v1 kanji detail data', () => {
 		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		expect(html).toContain('<h1>水</h1>');
-		expect(html).toContain('Kunyomi: みず');
-		expect(html).toContain('Onyomi: スイ');
+		expect(html).toContain('<h1 lang="ja">水</h1>');
+		expect(html).toContain('Kunyomi: <span lang="ja">みず</span>');
+		expect(html).toContain('Onyomi: <span lang="ja">スイ</span>');
 		expect(html).toContain('<h2>water, river</h2>');
 		expect(html).toContain('JLPT: 5');
-		expect(html.indexOf('Kunyomi: みず')).toBeLessThan(html.indexOf('Onyomi: スイ'));
-		expect(html.indexOf('Onyomi: スイ')).toBeLessThan(html.indexOf('<h2>water, river</h2>'));
+		expect(html.indexOf('Kunyomi: <span lang="ja">みず</span>')).toBeLessThan(
+			html.indexOf('Onyomi: <span lang="ja">スイ</span>'),
+		);
+		expect(html.indexOf('Onyomi: <span lang="ja">スイ</span>')).toBeLessThan(html.indexOf('<h2>water, river</h2>'));
 	});
 
 	it('uses numeric kanji id for catalogue actions', () => {
@@ -166,7 +168,7 @@ describe('KanjiDetails', () => {
 		expect(html).toContain('水の記事');
 		expect(html).toContain('Likes: 2 · Views: 3 · Comments: 1');
 		expect(html).toContain('/articles/article-uuid');
-		expect(html.match(/post-preview d-flex justify-content-between/g)).toHaveLength(3);
+		expect(html.match(/relatedList/g)).toHaveLength(3);
 		expect(html.match(/relatedResource/g)).toHaveLength(3);
 	});
 

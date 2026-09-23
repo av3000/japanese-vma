@@ -1,4 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import { getKanjiDisplayValues } from '@/api/kanjis/display';
 import {
@@ -12,8 +14,11 @@ import {
 } from '@/api/kanjis/hooks/useInfiniteKanjis';
 import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster, Container, Stack } from '@/components/shared/layout';
+import styles from '../japaneseListPage.module.css';
 import SearchBarKanjis from './SearchBarKanjis';
 import type { KanjiSearchFilters } from './SearchBarKanjis';
 
@@ -77,34 +82,33 @@ const KanjisList = () => {
 		return <PageLoading family="list" />;
 	}
 
-	// TODO: create generic error component, perhaps creating simple alert component with variants (info, success, error, warning), accept message
 	if (isError) {
 		const message = error instanceof Error ? error.message : 'Unable to load kanjis.';
 
-		return <div className="container mt-5 text-danger">Error: {message}</div>;
+		return (
+			<Container className={styles.page}>
+				<Alert tone="danger">Error: {message}</Alert>
+			</Container>
+		);
 	}
 
 	return (
-		<div className="container mt-5">
-			<div className="row justify-content-center">
+		<Container className={styles.page}>
+			<Stack gap="2xl">
 				<SearchBarKanjis defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
-			</div>
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					{keyword && <h4>keyword: {keyword}</h4>}
-					&nbsp;
-					{jlpt && <h4>JLPT: {jlpt === '-' ? 'Uncommon' : `N${jlpt}`}</h4>}
-					&nbsp;
-					<h4>
-						Showing {kanjis.length} of {total}
-					</h4>
-				</div>
-				<div className="row">
-					<div className="col-lg-8 col-md-10 mx-auto">
-						{kanjis.length === 0 ? (
-							<p>No kanjis found.</p>
-						) : (
-							kanjis.map((kanji) => {
+				<Stack as="section" gap="md" className={styles.results}>
+					<Cluster justify="center" align="baseline" gap="md">
+						{keyword && <h4 className={styles.heading}>keyword: {keyword}</h4>}
+						{jlpt && <h4 className={styles.heading}>JLPT: {jlpt === '-' ? 'Uncommon' : `N${jlpt}`}</h4>}
+						<h4 className={styles.heading}>
+							Showing {kanjis.length} of {total}
+						</h4>
+					</Cluster>
+					{kanjis.length === 0 ? (
+						<p>No kanjis found.</p>
+					) : (
+						<ul className={styles.list}>
+							{kanjis.map((kanji) => {
 								const display = getKanjiDisplayValues(kanji);
 
 								return (
@@ -130,26 +134,24 @@ const KanjisList = () => {
 										}
 									/>
 								);
-							})
-						)}
-					</div>
-				</div>
-			</div>
-			<div className="row justify-content-center">
-				{isFetchingNextPage ? (
-					<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-				) : hasNextPage ? (
-					<Button variant="secondary-outline" className="w-50" onClick={() => fetchNextPage()}>
-						Load More
-					</Button>
-				) : (
-					<span className="text-muted">No more results</span>
-				)}
-			</div>
-		</div>
+							})}
+						</ul>
+					)}
+				</Stack>
+				<Cluster justify="center">
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." className={styles.loadingMore} />
+					) : hasNextPage ? (
+						<Button variant="secondary-outline" className={styles.loadMore} onClick={() => fetchNextPage()}>
+							Load More
+						</Button>
+					) : (
+						<span className={styles.muted}>No more results</span>
+					)}
+				</Cluster>
+			</Stack>
+		</Container>
 	);
 };
 
 export default KanjisList;
-import { useQueryClient } from '@tanstack/react-query';
-import type { InfiniteData } from '@tanstack/react-query';

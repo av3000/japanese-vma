@@ -14,9 +14,12 @@ import {
 	type ApiCommentReply,
 	type CommentParent,
 } from '@/api/comments';
+import { Alert } from '@/components/shared/Alert';
+import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import CommentForm from './CommentForm/CommentForm';
 import CommentList from './CommentList/CommentList';
+import styles from './CommentsBlock.module.css';
 
 interface CommentsBlockProps {
 	/**
@@ -77,41 +80,45 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 	};
 
 	const handleReply = (rootCommentId: number, content: string) =>
-		runOnRow(rootCommentId, () =>
-			createMutation.mutateAsync({ content, parent_comment_id: rootCommentId }),
-		).then(() => undefined);
+		runOnRow(rootCommentId, () => createMutation.mutateAsync({ content, parent_comment_id: rootCommentId })).then(
+			() => undefined,
+		);
 
 	const stateFor = (commentId: number) => ({
 		isLikePending: likeMutation.isTogglingInstance(commentId),
-		isEditPending: updateMutation.isPending && updateMutation.variables?.uuid === findUuid(thread?.items, commentId),
+		isEditPending:
+			updateMutation.isPending && updateMutation.variables?.uuid === findUuid(thread?.items, commentId),
 		isDeletePending: deleteMutation.isPending && deleteMutation.variables?.id === commentId,
 		isReplyPending: createMutation.isPending && createMutation.variables?.parent_comment_id === commentId,
 		error: rowError?.commentId === commentId ? rowError.message : undefined,
 	});
 
 	return (
-		<div>
-			<hr />
+		<Stack as="section" gap="md" className={styles.block} aria-label="Comments">
 			{isLocked ? (
-				<h6 className="alert alert-warning">This post is locked and new comments are not allowed.</h6>
+				<Alert tone="warning" role="status">
+					This post is locked and new comments are not allowed.
+				</Alert>
 			) : isAuthenticated && user ? (
 				<>
-					<h6>Share what's on your mind</h6>
+					<h6 className={styles.prompt}>Share what's on your mind</h6>
 					<CommentForm
 						onSubmit={(content) => createMutation.mutateAsync({ content }).then(() => undefined)}
 						isSubmitting={createMutation.isPending && createMutation.variables?.parent_comment_id == null}
 					/>
 				</>
 			) : (
-				<h6>
+				<h6 className={styles.prompt}>
 					You need to <Link to="/login">login</Link> to comment
 				</h6>
 			)}
 
 			{isLoading ? (
-				<p className="text-muted mt-4">Loading comments…</p>
+				<p className={styles.hint} role="status">
+					Loading comments…
+				</p>
 			) : isError ? (
-				<div className="alert alert-danger mt-4">Comments could not be loaded. Please try again.</div>
+				<Alert tone="danger">Comments could not be loaded. Please try again.</Alert>
 			) : (
 				<CommentList
 					comments={thread?.items ?? []}
@@ -127,7 +134,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 					onReply={handleReply}
 				/>
 			)}
-		</div>
+		</Stack>
 	);
 };
 

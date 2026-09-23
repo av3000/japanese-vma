@@ -2,6 +2,8 @@ import type { ComponentProps } from 'react';
 import { useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/FormControls';
+import { Stack } from '@/components/shared/layout';
 import { useModal } from '@/hooks/useModal';
 import { DialogModal } from './DialogModal';
 
@@ -42,8 +44,12 @@ const DefaultTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => {
 						<DialogModal.Title>Invite collaborators</DialogModal.Title>
 					</DialogModal.Header>
 					<DialogModal.Body>
-						<p className="mb-3">Share this article with your teammates by adding their email addresses.</p>
-						<input className="form-control" placeholder="alex@example.com" />
+						<Stack gap="md">
+							<p style={{ margin: 0 }}>
+								Share this article with your teammates by adding their email addresses.
+							</p>
+							<Input placeholder="alex@example.com" />
+						</Stack>
 					</DialogModal.Body>
 					<DialogModal.Footer>
 						<Button variant="secondary" onClick={controller.close}>
@@ -89,7 +95,7 @@ const BodyOnlyTemplate = (args: Partial<ComponentProps<typeof DialogModal>>) => 
 					onClose={controller.close}
 					ariaLabel="Confirm action"
 				>
-					<p className="mb-0">This dialog uses body-only mode with no Header/Footer.</p>
+					<p style={{ margin: 0 }}>This dialog uses body-only mode with no Header/Footer.</p>
 				</DialogModal>
 			)}
 		</>

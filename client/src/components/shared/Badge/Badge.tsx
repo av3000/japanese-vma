@@ -1,6 +1,6 @@
 // Badge.tsx
 import React, { useState, useEffect } from 'react';
-import styles from './Badge.module.scss';
+import styles from './Badge.module.css';
 import { BaseBadgeProps } from './types';
 
 export interface BadgeProps extends BaseBadgeProps {

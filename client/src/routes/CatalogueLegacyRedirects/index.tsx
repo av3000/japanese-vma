@@ -3,7 +3,10 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useCatalogueResolveLegacyId } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueLegacyIdentityResource } from '@/api/generated/model/catalogueLegacyIdentityResource';
 import Spinner from '@/assets/images/spinner.gif';
+import { Button } from '@/components/shared/Button';
+import { Container } from '@/components/shared/layout';
 import { CATALOGUE_ROUTES, parseCatalogueLegacyId } from '@/shared/constants/catalogues';
+import styles from './CatalogueLegacyRedirects.module.css';
 
 const CatalogueStaticRedirect = ({ to }: { to: string }) => {
 	const navigate = useNavigate();
@@ -67,19 +70,19 @@ const CatalogueIdentityRedirect = ({ to }: { to: (catalogueUuid: string) => stri
 
 	if (resolution.status === 'failed') {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Catalogue not found or was deleted.</p>
-				<a href={CATALOGUE_ROUTES.list} className="btn btn-link">
+			<Container as="section" className={styles.page}>
+				<p className="u-text-lead">Catalogue not found or was deleted.</p>
+				<Button variant="linkButton" href={CATALOGUE_ROUTES.list}>
 					Back to all Catalogues
-				</a>
-			</div>
+				</Button>
+			</Container>
 		);
 	}
 
 	return (
-		<div className="container text-center mt-5">
+		<Container as="section" className={styles.page}>
 			<img src={Spinner} alt="Loading..." />
-		</div>
+		</Container>
 	);
 };
 

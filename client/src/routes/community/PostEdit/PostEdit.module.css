@@ -1,0 +1,12 @@
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.heading {
+	margin: 0;
+}
+
+.error {
+	margin: 0;
+	color: var(--color-error);
+}

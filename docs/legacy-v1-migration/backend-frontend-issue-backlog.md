@@ -204,8 +204,8 @@ Replace `client/src/api/catalogues/legacyCatalogues.ts` raw `/list/{id}` lookup 
 
 **Acceptance criteria:**
 
-- [ ] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
-- [ ] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
+- [x] `CatalogueLegacyRedirects` no longer depends on `/api/list/{id}`.
+- [x] `legacyCatalogues.ts` is deleted or becomes a thin generated-client module with a removal condition.
 - [ ] Failed resolution still shows the current "not found or deleted" UX.
 - [ ] Focused frontend tests cover successful legacy redirect and failed resolution.
 - [ ] `npm run typecheck` passes.
@@ -451,7 +451,7 @@ Rewrite sentence list/detail read behavior to use generated v1 sentence clients 
 **Acceptance criteria:**
 
 - [ ] `SentencesList` no longer uses `@ts-nocheck`, class state, `next_page_url`, or `apiCall`.
-- [ ] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
+- [x] `SentenceDetails` no longer calls `/api/sentence/{id}` for the base detail.
 - [ ] Sentence detail preserves approved related kanjis/words display.
 - [ ] Comment wiring is not expanded in this issue except to avoid breaking the page.
 - [ ] Focused tests cover list and detail read behavior.
@@ -534,7 +534,7 @@ Rewrite `PostsList` and post detail read loading to use generated v1 post client
 **Acceptance criteria:**
 
 - [ ] `PostsList` no longer uses `@ts-nocheck`, class state, `next_page_url`, or `apiCall`.
-- [ ] `PostDetails` no longer calls `/api/post/{id}` for the base detail.
+- [x] `PostDetails` no longer calls `/api/post/{id}` for the base detail. (The route itself was retired in RET-POST-01.)
 - [ ] Search/filter and pagination behavior remains available.
 - [ ] Post detail renders current read-only fields from the v1 shape.
 - [ ] Focused frontend tests cover list and detail read behavior.

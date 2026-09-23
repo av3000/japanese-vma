@@ -105,6 +105,89 @@ class CataloguePdfExportV1Test extends TestCase
         $this->assertSame('school', $document->data['words'][0]['meaning']);
     }
 
+    public function test_authenticated_user_can_export_catalogue_radicals_pdf_from_v1_route(): void
+    {
+        $owner = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, [
+            'title' => '日本語の部首',
+            'type' => SavedListType::RADICALS,
+        ]);
+        $this->attachRadical($catalogue);
+
+        Passport::actingAs($owner, ['*'], 'api');
+
+        $response = $this->get("/api/v1/catalogues/{$catalogue->uuid}/radicals-pdf");
+
+        $response->assertOk();
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $this->assertStringStartsWith('application/pdf', $response->headers->get('content-type'));
+        $this->assertStringContainsString('inline', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('catalogue-radicals.pdf', $response->headers->get('content-disposition'));
+
+        $document = $this->renderer->lastDocument();
+
+        $this->assertSame('pdf.catalogues.radicals', $document->view);
+        $this->assertSame('catalogue-radicals.pdf', $document->filename);
+        $this->assertSame('日本語の部首', $document->data['catalogue']['title']);
+        $this->assertSame('水', $document->data['radicals'][0]['radical']);
+        $this->assertSame('みず', $document->data['radicals'][0]['hiragana']);
+        $this->assertSame(config('app.frontend_url'), $document->data['frontend_url']);
+        $this->assertDatabaseHas('downloads', [
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'user_id' => $owner->id,
+        ]);
+    }
+
+    public function test_authenticated_user_can_export_catalogue_sentences_pdf_from_v1_route(): void
+    {
+        $owner = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, [
+            'title' => '日本語の文',
+            'type' => SavedListType::SENTENCES,
+        ]);
+        $this->attachSentence($catalogue);
+
+        Passport::actingAs($owner, ['*'], 'api');
+
+        $response = $this->get("/api/v1/catalogues/{$catalogue->uuid}/sentences-pdf");
+
+        $response->assertOk();
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $this->assertStringContainsString('catalogue-sentences.pdf', $response->headers->get('content-disposition'));
+
+        $document = $this->renderer->lastDocument();
+
+        $this->assertSame('pdf.catalogues.sentences', $document->view);
+        $this->assertSame('catalogue-sentences.pdf', $document->filename);
+        $this->assertSame('日本語の文', $document->data['catalogue']['title']);
+        $this->assertSame('水を飲みます。', $document->data['sentences'][0]['content']);
+        $this->assertSame('123456', $document->data['sentences'][0]['tatoeba_entry']);
+        $this->assertDatabaseHas('downloads', [
+            'template_id' => ObjectTemplateType::LIST->getLegacyId(),
+            'real_object_id' => $catalogue->id,
+            'user_id' => $owner->id,
+        ]);
+    }
+
+    /**
+     * Every export kind is reachable on every catalogue by URL, so the type gate is the only
+     * thing stopping a radical export of a kanji catalogue from rendering an empty table.
+     */
+    public function test_catalogue_pdf_export_returns_v1_error_for_a_kind_the_catalogue_type_does_not_support(): void
+    {
+        $owner = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, ['type' => SavedListType::KANJIS]);
+
+        Passport::actingAs($owner, ['*'], 'api');
+
+        foreach (['radicals-pdf', 'sentences-pdf'] as $path) {
+            $this->getJson("/api/v1/catalogues/{$catalogue->uuid}/{$path}")
+                ->assertStatus(422)
+                ->assertJsonPath('title', 'Unsupported catalogue PDF export');
+        }
+    }
+
     public function test_catalogue_pdf_export_requires_authentication(): void
     {
         $owner = $this->createUser();
@@ -185,6 +268,38 @@ class CataloguePdfExportV1Test extends TestCase
             'list_id' => $catalogue->id,
             'real_object_id' => $kanjiId,
             'listtype_id' => SavedListType::KANJIS->value,
+        ]);
+    }
+
+    private function attachRadical(Catalogue $catalogue): void
+    {
+        $radicalId = DB::table('japanese_radicals_bank_long')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'radical' => '水',
+            'hiragana' => 'みず',
+            'strokes' => 4,
+            'meaning' => 'water',
+        ]);
+
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogue->id,
+            'real_object_id' => $radicalId,
+            'listtype_id' => SavedListType::RADICALS->value,
+        ]);
+    }
+
+    private function attachSentence(Catalogue $catalogue): void
+    {
+        $sentenceId = DB::table('japanese_tatoeba_sentences')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'content' => '水を飲みます。',
+            'tatoeba_entry' => '123456',
+        ]);
+
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogue->id,
+            'real_object_id' => $sentenceId,
+            'listtype_id' => SavedListType::SENTENCES->value,
         ]);
     }
 

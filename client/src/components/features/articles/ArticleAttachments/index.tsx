@@ -3,7 +3,7 @@ import { articleKanjiFilters, articleWordFilters } from '@/api/articles/attachme
 import { useInfiniteKanjis } from '@/api/kanjis/hooks/useInfiniteKanjis';
 import { useInfiniteWords } from '@/api/words/hooks/useInfiniteWords';
 import { Button } from '@/components/shared/Button';
-import styles from './ArticleAttachments.module.scss';
+import styles from './ArticleAttachments.module.css';
 
 /**
  * The kanji and vocabulary processing found in an article.

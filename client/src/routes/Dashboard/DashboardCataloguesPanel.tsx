@@ -2,8 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
+import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Cluster, Stack } from '@/components/shared/layout';
 import type { User } from '@/types';
+import styles from './Dashboard.module.css';
 import SearchBarDashboard from './SearchBarDashboard';
 import type { SearchFilters } from './SearchBarDashboard';
 
@@ -69,59 +73,59 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isA
 	const errorMessage = error instanceof Error ? error.message : 'Failed to load lists.';
 
 	return (
-		<>
-			<div className="ml-3 mt-2">
+		<Stack gap="md">
+			<div className={styles.toolbar}>
 				<SearchBarDashboard searchType="lists" filterResults={handleFilterResults} />
 			</div>
 
-			<div className="my-3 p-3 bg-white rounded box-shadow">
-				<div className="d-flex justify-content-between align-items-center mb-3">
-					<h4 className="border-bottom border-gray pb-2 mb-0">My Lists</h4>
-				</div>
-				<div className="col-lg-12 col-md-10 mx-auto">
-					<div className="mb-3 text-muted">
-						Showing {catalogues.length} of {total}
-					</div>
-					{isPending ? (
-						<LoadingState altText="Loading lists..." />
-					) : isError ? (
-						<div className="alert alert-danger">{errorMessage}</div>
-					) : catalogues.length ? (
-						<>
+			<Stack as="section" gap="md" className={styles.panel}>
+				<Cluster justify="between">
+					<h4 className={`${styles.panelTitle} ${styles.panelTitleUnderlined}`}>My Lists</h4>
+				</Cluster>
+				<p className={styles.summary}>
+					Showing {catalogues.length} of {total}
+				</p>
+				{isPending ? (
+					<LoadingState altText="Loading lists..." />
+				) : isError ? (
+					<Alert tone="danger">{errorMessage}</Alert>
+				) : catalogues.length ? (
+					<>
+						<ul className={dashboardRowStyles.list}>
 							{catalogues.map((catalogue) => (
 								<DashboardListItem key={catalogue.id} {...catalogue} />
 							))}
-							<div className="row justify-content-center mt-4 mb-2">
-								{isFetchingNextPage ? (
-									<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
-								) : hasNextPage ? (
-									<Button
-										variant="secondary-outline"
-										className="w-50"
-										onClick={() => fetchNextPage()}
-									>
-										Load More
-									</Button>
-								) : (
-									<span className="text-muted">No more results</span>
-								)}
-							</div>
-						</>
-					) : (
-						<div className="alert text-center alert-info">You have no Lists yet.</div>
-					)}
-				</div>
-			</div>
-		</>
+						</ul>
+						<Cluster justify="center" className={styles.loadMore}>
+							{isFetchingNextPage ? (
+								<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
+							) : hasNextPage ? (
+								<Button
+									variant="secondary-outline"
+									className={styles.loadMoreButton}
+									onClick={() => fetchNextPage()}
+								>
+									Load More
+								</Button>
+							) : (
+								<span className={styles.label}>No more results</span>
+							)}
+						</Cluster>
+					</>
+				) : (
+					<Alert tone="info" className={styles.emptyState}>
+						You have no Lists yet.
+					</Alert>
+				)}
+			</Stack>
+		</Stack>
 	);
 };
 
 const LoadingState: React.FC<{ altText: string }> = ({ altText }) => (
-	<div className="container mt-5">
-		<div className="row justify-content-center">
-			<img src={Spinner} alt={altText} />
-		</div>
-	</div>
+	<Cluster justify="center" className={styles.loading}>
+		<img src={Spinner} alt={altText} />
+	</Cluster>
 );
 
 export default DashboardCataloguesPanel;

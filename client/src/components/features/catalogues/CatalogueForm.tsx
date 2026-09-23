@@ -1,8 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useId, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/shared/Button';
+import { Field, FieldMessage, Input, Label, Select } from '@/components/shared/FormControls';
 import { InputTags } from '@/components/shared/InputTags';
+import { Stack } from '@/components/shared/layout';
 import { CATALOGUE_TYPE_OPTIONS } from '@/shared/constants/catalogues';
 import {
 	buildCatalogueFormSchema,
@@ -44,6 +46,11 @@ export const CatalogueForm = ({
 	disableSubmitWhenUnchanged = false,
 }: CatalogueFormProps) => {
 	const schema = useMemo(() => buildCatalogueFormSchema(), []);
+	const fieldId = useId();
+	const titleId = `${fieldId}-title`;
+	const typeId = `${fieldId}-type`;
+	const tagsId = `${fieldId}-tags`;
+	const publicityId = `${fieldId}-publicity`;
 	const {
 		register,
 		control,
@@ -95,76 +102,90 @@ export const CatalogueForm = ({
 	});
 
 	return (
-		<form onSubmit={handleSubmit(onValidSubmit)} className="col-12">
-			<h4>Title</h4>
-			<input className="form-control" maxLength={MAX_CATALOGUE_TITLE_LENGTH} {...titleField} />
-			{errors.title?.message && <div className="text-danger mt-2">{errors.title.message}</div>}
+		<Stack as="form" gap="md" onSubmit={handleSubmit(onValidSubmit)}>
+			<Field>
+				<Label htmlFor={titleId}>Title</Label>
+				<Input
+					id={titleId}
+					maxLength={MAX_CATALOGUE_TITLE_LENGTH}
+					isInvalid={Boolean(errors.title)}
+					{...titleField}
+				/>
+				<FieldMessage tone="error">{errors.title?.message}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Type</h4>
-			<Controller
-				control={control}
-				name="type"
-				render={({ field }) => (
-					<select
-						className="form-control"
-						value={field.value}
-						onChange={(event) => {
-							clearErrors(['type', 'root'] as never);
-							field.onChange(Number(event.target.value));
-						}}
-					>
-						{CATALOGUE_TYPE_OPTIONS.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				)}
-			/>
-			{errors.type?.message && <div className="text-danger mt-2">{errors.type.message}</div>}
+			<Field>
+				<Label htmlFor={typeId}>Type</Label>
+				<Controller
+					control={control}
+					name="type"
+					render={({ field }) => (
+						<Select
+							id={typeId}
+							isInvalid={Boolean(errors.type)}
+							value={field.value}
+							onChange={(event) => {
+								clearErrors(['type', 'root'] as never);
+								field.onChange(Number(event.target.value));
+							}}
+						>
+							{CATALOGUE_TYPE_OPTIONS.map((option) => (
+								<option key={option.value} value={option.value}>
+									{option.label}
+								</option>
+							))}
+						</Select>
+					)}
+				/>
+				<FieldMessage tone="error">{errors.type?.message}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Tags</h4>
-			<Controller
-				control={control}
-				name="tags"
-				render={({ field }) => (
-					<InputTags
-						value={field.value}
-						onChange={(nextTags) => {
-							clearErrors(['tags', 'root'] as never);
-							field.onChange(nextTags);
-						}}
-						hideLabel
-						label="Tags"
-						maxTags={MAX_CATALOGUE_TAGS}
-						maxTagLength={MAX_CATALOGUE_TAG_LENGTH}
-						showTagLengthCounter
-					/>
-				)}
-			/>
-			{errors.tags?.message && <div className="text-danger mt-2">{errors.tags.message}</div>}
+			<Field>
+				<Label htmlFor={tagsId}>Tags</Label>
+				<Controller
+					control={control}
+					name="tags"
+					render={({ field }) => (
+						<InputTags
+							id={tagsId}
+							value={field.value}
+							onChange={(nextTags) => {
+								clearErrors(['tags', 'root'] as never);
+								field.onChange(nextTags);
+							}}
+							maxTags={MAX_CATALOGUE_TAGS}
+							maxTagLength={MAX_CATALOGUE_TAG_LENGTH}
+							showTagLengthCounter
+						/>
+					)}
+				/>
+				<FieldMessage tone="error">{errors.tags?.message}</FieldMessage>
+			</Field>
 
-			<h4 className="mt-3">Publicity</h4>
-			<Controller
-				control={control}
-				name="publicity"
-				render={({ field }) => (
-					<select
-						className="form-control"
-						value={field.value ? '1' : '0'}
-						onChange={(event) => {
-							clearErrors(['publicity', 'root'] as never);
-							field.onChange(event.target.value === '1');
-						}}
-					>
-						<option value="1">Public</option>
-						<option value="0">Private</option>
-					</select>
-				)}
-			/>
-			{errors.publicity?.message && <div className="text-danger mt-2">{errors.publicity.message}</div>}
+			<Field>
+				<Label htmlFor={publicityId}>Publicity</Label>
+				<Controller
+					control={control}
+					name="publicity"
+					render={({ field }) => (
+						<Select
+							id={publicityId}
+							isInvalid={Boolean(errors.publicity)}
+							value={field.value ? '1' : '0'}
+							onChange={(event) => {
+								clearErrors(['publicity', 'root'] as never);
+								field.onChange(event.target.value === '1');
+							}}
+						>
+							<option value="1">Public</option>
+							<option value="0">Private</option>
+						</Select>
+					)}
+				/>
+				<FieldMessage tone="error">{errors.publicity?.message}</FieldMessage>
+			</Field>
 
-			<div className="mt-4">
+			<div>
 				<Button
 					type="submit"
 					variant="outline"
@@ -174,8 +195,8 @@ export const CatalogueForm = ({
 				</Button>
 			</div>
 
-			{statusMessage && <div className="text-danger mt-3">{statusMessage}</div>}
-			{errors.root?.message && <div className="text-danger mt-3">{errors.root.message}</div>}
-		</form>
+			<FieldMessage tone="error">{statusMessage}</FieldMessage>
+			<FieldMessage tone="error">{errors.root?.message}</FieldMessage>
+		</Stack>
 	);
 };

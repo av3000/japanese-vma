@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 import { capitalize } from '@/helpers';
-import styles from './Link.module.scss';
+import styles from './Link.module.css';
 import { LinkBaseProps, LinkColor, LinkSize, LinkWeightType } from './types';
 
 export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {

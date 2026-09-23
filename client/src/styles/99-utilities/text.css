@@ -1,0 +1,45 @@
+/* =================================
+   #TEXT
+
+   Token-backed text helpers for the few cases where a one-off
+   CSS Module class would be noise (alignment, tone, size).
+   ================================= */
+
+.u-text-center {
+	text-align: center !important;
+}
+
+.u-text-end {
+	text-align: end !important;
+}
+
+.u-text-muted {
+	color: var(--color-neutral-600) !important;
+}
+
+.u-text-danger {
+	color: var(--color-error) !important;
+}
+
+.u-text-success {
+	color: var(--color-success) !important;
+}
+
+.u-text-sm {
+	font-size: var(--font-size-body-sm) !important;
+}
+
+.u-text-lead {
+	font-size: var(--font-size-body-lg);
+	line-height: var(--line-height-lg);
+}
+
+.u-text-nowrap {
+	white-space: nowrap !important;
+}
+
+.u-text-truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
