@@ -9,6 +9,17 @@ export default defineConfig(({ mode }) => {
 	const isAnalyze = mode === 'analyze';
 	const isProduction = mode === 'production';
 
+	// Docker Desktop on Windows does not deliver filesystem events through the bind mount, so
+	// the container sets CHOKIDAR_USEPOLLING and the watcher has to stat the tree instead. One
+	// sweep of src/ costs ~8s over that mount, and chokidar's 100 ms default asks for it
+	// continuously - the poller then starves the same event loop that serves module transforms,
+	// which turned a cold page load into ~200s of 5-second modules. At 3 s the poller is cheap
+	// enough that cold loads match a non-polling server (11.9s vs 13.1s for 40 modules) and
+	// edits are still picked up within ~3s. Outside Docker this is all skipped: native file
+	// events are instant and free.
+	const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true';
+	const pollInterval = Number(process.env.VITE_POLL_INTERVAL) || 3000;
+
 	const manualChunks = (id: string) => {
 		if (!id.includes('node_modules')) {
 			return;
@@ -94,6 +105,13 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		server: {
+			watch: usePolling
+				? {
+						usePolling: true,
+						interval: pollInterval,
+						binaryInterval: pollInterval * 3,
+					}
+				: undefined,
 			proxy: {
 				'/api': {
 					target: 'http://host.docker.internal:8080',

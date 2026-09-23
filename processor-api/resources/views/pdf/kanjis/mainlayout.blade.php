@@ -56,7 +56,9 @@
         }
 
         tr {
-            page-break-after: always;
+            /* Not `page-break-after: always`: that put every single row on its own page, so a
+               171-kanji export came out 171 pages long. Deliberate breaks are what
+               `.page-break` is for (see article-kanjis.blade.php). */
             page-break-inside: avoid;
         }
 
