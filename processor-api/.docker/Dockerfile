@@ -34,6 +34,15 @@ RUN apt-get update && apt-get install -y \
 
 RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/zz-memory-limit.ini
 
+# `app/`, `config/` and `routes/` are bind-mounted from the host for live code reload (see
+# docker-compose.yml), unlike `vendor/`, which has its own container-local volume. On Windows,
+# Docker Desktop's WSL2 file sharing makes stat() on bind-mounted files expensive, and opcache's
+# default timestamp validation stat()s nearly every included file on every request - this alone
+# was costing ~2.5-3s per API request. Disabling it trades automatic hot-reload for a ~3-4x
+# request speedup: after editing PHP code, run `docker compose restart laravel-app` (~9s) to pick
+# up the change. CLI (artisan, queue workers, Horizon) is unaffected - opcache.enable_cli is off.
+RUN echo "opcache.validate_timestamps=0" > /usr/local/etc/php/conf.d/zz-opcache-dev.ini
+
 # Install PHP extensions
 RUN docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl
 

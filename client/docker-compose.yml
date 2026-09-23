@@ -10,6 +10,10 @@ services:
       - ./:/app
       - react_app_node_modules:/app/node_modules
     environment:
+      # Required: Docker Desktop on Windows does not deliver filesystem events through the
+      # bind mount, so without this an edit on the host is never noticed. It is expensive -
+      # vite.config.ts pairs it with a 3s poll interval, because chokidar's 100ms default
+      # starves the dev server. Read the comment there before changing either one.
       - CHOKIDAR_USEPOLLING=true
       - ORVAL_OPENAPI_URL=http://host.docker.internal:8080/docs/api.json
     networks:
