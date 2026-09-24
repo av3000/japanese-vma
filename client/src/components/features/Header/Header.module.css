@@ -1,8 +1,8 @@
 .header {
 	position: relative;
 	z-index: var(--z-index-header);
-	background-color: var(--alternative-text-color);
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	background-color: var(--color-neutral-0);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
 }
 
 .nav {
@@ -123,13 +123,14 @@
 	font-size: var(--font-size-body-md);
 	color: var(--main-text-color);
 	text-decoration: none;
+	text-underline-offset: 0.4em;
+	white-space: nowrap;
 	cursor: pointer;
 }
 
 .link:hover {
 	color: var(--link-hover-color);
-	text-decoration: underline;
-	text-underline-offset: 0.15em;
+	text-decoration: underline var(--border-size-sm);
 }
 
 .link:focus-visible {
@@ -137,9 +138,12 @@
 	outline-offset: 2px;
 }
 
-.linkActive {
+/* Weight plus a 2px underline, so the current page is not marked by colour alone. */
+.linkActive,
+.linkActive:hover {
 	font-weight: var(--font-weight-semibold);
 	color: var(--main-brand-color);
+	text-decoration: underline var(--border-size-md) var(--color-primary);
 }
 
 .chevron {
@@ -163,10 +167,30 @@
 	display: none;
 }
 
+/* "Japanese Material" is laid out flat in the mobile menu and on wide screens: the button goes
+   and its links join the surrounding list. It is a disclosure only in the middle band (below),
+   where the full row does not fit. */
+.materialGroup,
+.materialGroup > .groupList,
+.materialGroup > .groupList[hidden] {
+	display: contents;
+}
+
+.materialGroup > .groupButton {
+	display: none;
+}
+
 .divider {
 	height: var(--border-size-sm);
 	margin: var(--spacing-2xs) var(--spacing-sm);
 	background: var(--color-neutral-200);
+}
+
+/* A router-link Button also gets the shared Link's default text colour, which would put dark
+   text on the filled primary button; two classes keep the button's own white text. */
+.account .signUp,
+.account .signUp:hover {
+	color: var(--color-neutral-0);
 }
 
 .userName {
@@ -189,22 +213,32 @@
 
 /* Desktop ---------------------------------------------------------------- */
 
+/* The collapse breakpoint, set here only: below it the menu sits behind the toggle.
+   #336 (UI-HOME-00) confirms the value. */
 @media (min-width: 1024px) {
 	.toggle {
 		display: none;
 	}
 
+	/* Wrap rather than scroll sideways if unusually long content (a long user name) overflows. */
 	.menu {
 		display: flex;
 		flex: 1 1 auto;
 		flex-direction: row;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--spacing-md);
+		min-width: 0;
 	}
 
 	.list {
 		flex-direction: row;
 		align-items: center;
+	}
+
+	/* Tighter in the middle band so the signed-in row fits from 1024px; restored at 1320px. */
+	.link {
+		padding-inline: var(--spacing-xs);
 	}
 
 	.primary {
@@ -224,12 +258,52 @@
 		box-shadow: var(--box-shadow-default);
 	}
 
+	/* "+ New" sits near the right edge, so its panel opens leftwards. */
+	.account .groupList {
+		right: 0;
+		left: auto;
+	}
+
 	.groupList .link {
 		width: 100%;
 	}
 
 	.divider {
 		margin: var(--spacing-2xs) 0;
+	}
+
+	.materialGroup {
+		display: block;
+	}
+
+	.materialGroup > .groupButton {
+		display: inline-flex;
+	}
+
+	.materialGroup > .groupList {
+		display: flex;
+	}
+
+	.materialGroup > .groupList[hidden] {
+		display: none;
+	}
+}
+
+/* The flat breakpoint, set here only: from this width the whole signed-in row fits (measured at
+   ~1182px with a six-letter name), so "Japanese Material" is laid out flat again. */
+@media (min-width: 1320px) {
+	.link {
+		padding-inline: var(--spacing-sm);
+	}
+
+	.materialGroup,
+	.materialGroup > .groupList,
+	.materialGroup > .groupList[hidden] {
+		display: contents;
+	}
+
+	.materialGroup > .groupButton {
+		display: none;
 	}
 }
 
