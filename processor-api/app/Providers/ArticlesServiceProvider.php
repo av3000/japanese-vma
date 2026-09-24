@@ -34,6 +34,8 @@ use App\Application\JapaneseMaterial\Radicals\Services\RadicalService;
 use App\Application\JapaneseMaterial\Radicals\Services\RadicalServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceService;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
+use App\Application\JapaneseMaterial\Stats\Services\CorpusStatsService;
+use App\Application\JapaneseMaterial\Stats\Services\CorpusStatsServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordDetailService;
 use App\Application\JapaneseMaterial\Words\Services\WordDetailServiceInterface;
 use App\Application\JapaneseMaterial\Words\Services\WordExtractionService;
@@ -70,6 +72,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(KanjiDetailServiceInterface::class, KanjiDetailService::class);
         $this->app->bind(RadicalServiceInterface::class, RadicalService::class);
         $this->app->bind(SentenceServiceInterface::class, SentenceService::class);
+        $this->app->bind(CorpusStatsServiceInterface::class, CorpusStatsService::class);
         $this->app->bind(WordServiceInterface::class, WordService::class);
         $this->app->bind(WordDetailServiceInterface::class, WordDetailService::class);
 

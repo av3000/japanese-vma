@@ -11,6 +11,7 @@ use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
 use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
 use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
+use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
@@ -103,6 +104,10 @@ Route::prefix('v1')->group(function () {
     // Sentences
     Route::get('sentences', [SentenceController::class, 'index']);
     Route::get('sentences/{identifier}', [SentenceController::class, 'show']);
+
+    // Corpus totals for the landing page: cached for an hour server-side, five minutes in the browser.
+    Route::get('japanese-material/stats', [CorpusStatsController::class, 'show'])
+        ->middleware('cache.headers:public;max_age=300');
 
     // Community Posts - Public Read Access
     // `identifier` is a UUID (canonical) or, transitionally, a positive legacy id.

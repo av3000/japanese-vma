@@ -2109,6 +2109,28 @@
                 }
             }
         },
+        "/japanese-material/stats": {
+            "get": {
+                "operationId": "corpusStats.show",
+                "description": "Public and cached: up to an hour server-side, five minutes in the browser.",
+                "summary": "Corpus totals for the landing page",
+                "tags": [
+                    "CorpusStats"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CorpusStatsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CorpusStatsResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/kanjis": {
             "get": {
                 "operationId": "kanji.index",
@@ -5583,6 +5605,30 @@
                     "can_delete"
                 ],
                 "title": "CommentViewerResource"
+            },
+            "CorpusStatsResource": {
+                "type": "object",
+                "properties": {
+                    "radicals": {
+                        "type": "integer"
+                    },
+                    "kanjis": {
+                        "type": "integer"
+                    },
+                    "words": {
+                        "type": "integer"
+                    },
+                    "sentences": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "radicals",
+                    "kanjis",
+                    "words",
+                    "sentences"
+                ],
+                "title": "CorpusStatsResource"
             },
             "CreateRoleRequest": {
                 "type": "object",
