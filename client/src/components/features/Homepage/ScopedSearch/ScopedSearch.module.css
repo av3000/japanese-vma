@@ -1,0 +1,99 @@
+/* Mobile first: the scopes get their own scrollable row above the input and the button. */
+.form {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		'scopes scopes'
+		'query submit';
+	align-items: center;
+	gap: var(--spacing-xs);
+	width: 100%;
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Segmented control ------------------------------------------------------ */
+
+.scopes {
+	grid-area: scopes;
+	display: flex;
+	gap: var(--spacing-3xs);
+	min-width: 0;
+	margin: 0;
+	padding: var(--spacing-3xs);
+	overflow-x: auto;
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-100);
+	scrollbar-width: thin;
+}
+
+.scope {
+	position: relative;
+	flex: none;
+	margin: 0;
+}
+
+/* Visually hidden but still a real, focusable radio: arrow keys move between scopes natively. */
+.scopeInput {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.scopeLabel {
+	display: flex;
+	align-items: center;
+	min-height: calc(var(--input-height-md) - 2 * var(--spacing-3xs) - 2 * var(--border-size-sm));
+	padding: 0 var(--spacing-sm);
+	border-radius: var(--border-radius-sm);
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+	white-space: nowrap;
+}
+
+.scopeInput:hover + .scopeLabel {
+	color: var(--color-neutral-900);
+	background-color: var(--color-neutral-200);
+}
+
+/* Fill plus weight, so the selected scope does not rely on colour alone. */
+.scopeInput:checked + .scopeLabel {
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-neutral-0);
+	background-color: var(--color-primary);
+}
+
+.scopeInput:focus-visible + .scopeLabel {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+/* Input and button ------------------------------------------------------- */
+
+.query {
+	grid-area: query;
+	min-width: 0;
+}
+
+.submit {
+	grid-area: submit;
+}
+
+@media (min-width: 768px) {
+	.form {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas: 'scopes query submit';
+	}
+}
