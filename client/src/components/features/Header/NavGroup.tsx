@@ -6,12 +6,14 @@ import { useOnClickAway } from '@/hooks/useOnClickAway';
 import styles from './Header.module.css';
 
 interface NavGroupProps {
-	/** Visible button text. */
-	label: string;
+	/** Visible button content; becomes the button's accessible name. */
+	label: React.ReactNode;
 	/** DOM id for the disclosed list; wired to `aria-controls`. */
 	id: string;
 	/** `<li>` children. */
 	children: React.ReactNode;
+	/** Extra class on the wrapping `<li>`, e.g. to lay the group out flat at some widths. */
+	className?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ interface NavGroupProps {
  * button with `aria-expanded` controlling a list. Closes on Escape (returning
  * focus to the button), on outside click, and on route change.
  */
-export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children }) => {
+export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children, className }) => {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const wrapperRef = React.useRef<HTMLLIElement>(null);
 	const buttonRef = React.useRef<HTMLButtonElement>(null);
@@ -51,7 +53,7 @@ export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children }) => {
 	}, [isOpen]);
 
 	return (
-		<li ref={wrapperRef} className={styles.group}>
+		<li ref={wrapperRef} className={classNames(styles.group, className)}>
 			<button
 				ref={buttonRef}
 				type="button"

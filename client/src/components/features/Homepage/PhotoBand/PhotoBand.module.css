@@ -1,0 +1,53 @@
+/* The height is fixed per breakpoint, so nothing moves when the lazy image arrives. */
+.band {
+	position: relative;
+	height: 96px;
+	overflow: hidden;
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-300);
+}
+
+/* The files are a 5:1 crop with the summit centred horizontally, ~18% from the top. Narrow bands
+   trim the sides; wide bands trim top and bottom, anchored high enough to keep the summit. */
+.image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: 50% 25%;
+}
+
+.credit {
+	position: absolute;
+	right: var(--spacing-xs);
+	bottom: var(--spacing-xs);
+	padding: var(--spacing-3xs) var(--spacing-xs);
+	border-radius: var(--border-radius-xs);
+	background-color: rgba(0, 0, 0, 0.6);
+	font-size: var(--font-size-body-sm);
+	line-height: 1.4;
+	color: var(--color-neutral-0);
+	text-decoration: none;
+}
+
+.credit:hover {
+	color: var(--color-neutral-0);
+	text-decoration: underline;
+}
+
+.credit:focus-visible {
+	outline: var(--outline-size) solid var(--color-neutral-0);
+	outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+	.band {
+		height: 112px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.band {
+		height: 130px;
+	}
+}

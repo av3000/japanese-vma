@@ -40,6 +40,7 @@ describe('Header', () => {
 
 		expect(html).toContain('Articles');
 		expect(html).toContain('Catalogues');
+		expect(html).toContain('href="/kanjis"');
 		expect(html).toContain('Japanese Material');
 		expect(html).toContain('aria-label="Checking account status"');
 		expect(html).not.toContain('Sign Up');
@@ -47,6 +48,7 @@ describe('Header', () => {
 		expect(html).not.toContain('Dashboard');
 		expect(html).not.toContain('Logged in as');
 		expect(html).not.toContain('Logout');
+		expect(html).not.toContain('new-nav-group');
 	});
 
 	it('renders guest auth actions when auth is anonymous', () => {
@@ -59,10 +61,12 @@ describe('Header', () => {
 
 		const html = renderHeader();
 
-		expect(html).toContain('Sign Up');
-		expect(html).toContain('Log In');
+		expect(html).toMatch(/<a[^>]*href="\/login"[^>]*>Log In<\/a>/);
+		expect(html).toMatch(/<a[^>]*href="\/register"[^>]*>Sign Up<\/a>/);
+		expect(html.indexOf('Log In')).toBeLessThan(html.indexOf('Sign Up'));
 		expect(html).not.toContain('Logged in as');
 		expect(html).not.toContain('Logout');
+		expect(html).not.toContain('new-nav-group');
 	});
 
 	it('renders logged-in controls when auth is authenticated', () => {
@@ -86,6 +90,8 @@ describe('Header', () => {
 		expect(html).toContain('Logged in as');
 		expect(html).toContain('Alana');
 		expect(html).toContain('Logout');
+		expect(html).toContain('Socket status');
+		expect(html).toContain('aria-controls="new-nav-group"');
 		expect(html).not.toContain('Sign Up');
 		expect(html).not.toContain('Log In');
 	});
