@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\JapaneseDataImport;
 
+use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Console\Commands\ImportJapaneseData;
 use App\Support\JapaneseDataImport\JapaneseDataImporter;
 use App\Support\JapaneseDataImport\LegacySqlInsertParser;
@@ -12,7 +13,7 @@ class ImportJapaneseDataWiringTest extends TestCase
     public function testImporterAndCommandCanBeInstantiated(): void
     {
         $importer = new JapaneseDataImporter(new LegacySqlInsertParser());
-        $command = new ImportJapaneseData($importer);
+        $command = new ImportJapaneseData($importer, $this->createStub(CorpusStatsCacheInterface::class));
 
         $this->assertInstanceOf(JapaneseDataImporter::class, $importer);
         $this->assertInstanceOf(ImportJapaneseData::class, $command);

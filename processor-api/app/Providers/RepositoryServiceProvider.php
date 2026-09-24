@@ -19,14 +19,18 @@ use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
+use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
+use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
+use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
@@ -95,6 +99,18 @@ class RepositoryServiceProvider extends ServiceProvider
             WordRepositoryInterface::class,
             WordRepository::class
         );
+
+        // Corpus totals for the landing page. One cached instance serves both the read port and
+        // the invalidation port, so the import command clears exactly the key the reader fills.
+        $this->app->singleton(
+            CachedCorpusStatsReader::class,
+            fn ($app): CachedCorpusStatsReader => new CachedCorpusStatsReader(
+                new DatabaseCorpusStatsReader(),
+                $app->make('cache.store'),
+            )
+        );
+        $this->app->alias(CachedCorpusStatsReader::class, CorpusStatsReaderInterface::class);
+        $this->app->alias(CachedCorpusStatsReader::class, CorpusStatsCacheInterface::class);
 
         $this->app->singleton(
             CommentRepositoryInterface::class,

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Support\JapaneseDataImport\JapaneseDataImporter;
 use Illuminate\Console\Command;
 use Throwable;
@@ -16,6 +17,7 @@ class ImportJapaneseData extends Command
 
     public function __construct(
         private readonly JapaneseDataImporter $importer,
+        private readonly CorpusStatsCacheInterface $corpusStatsCache,
     ) {
         parent::__construct();
     }
@@ -51,6 +53,9 @@ class ImportJapaneseData extends Command
         foreach ($result['datasets'] as $table => $count) {
             $this->info("Imported {$count} rows into {$table}.");
         }
+
+        // The landing-page corpus totals are cached for an hour; a finished import makes them stale.
+        $this->corpusStatsCache->forget();
 
         $this->info('Japanese data import completed successfully.');
 
