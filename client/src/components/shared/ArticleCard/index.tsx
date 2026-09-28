@@ -8,7 +8,7 @@ import {
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
-import { LevelBadge } from '@/components/shared/LevelBadge';
+import { JlptBar } from '@/components/shared/JlptBar';
 import { Link } from '@/components/shared/Link';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { formatDate } from '@/helpers';
@@ -18,8 +18,6 @@ export interface ArticleCardProps {
 	article: ArticleResource;
 	className?: string;
 }
-
-const JLPT_LEVELS: Array<keyof ArticleResource['jlpt_levels']> = ['n1', 'n2', 'n3', 'n4', 'n5', 'uncommon'];
 
 const shouldShowProcessingBadge = (status: string | undefined): status is ProcessingStatusType => {
 	if (!status || status === ProcessingStatus.completed) return false;
@@ -69,11 +67,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 			) : null}
 
 			<div className={styles.childrenWrapper}>
-				<div className={styles.levelRow}>
-					{JLPT_LEVELS.map((level) => (
-						<LevelBadge key={level} level={level} count={article.jlpt_levels[level]} size="sm" />
-					))}
-				</div>
+				<JlptBar size="compact" levels={article.jlpt_levels} />
 
 				<div className={styles.metaInfo}>
 					<div className={styles.statItem}>

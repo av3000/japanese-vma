@@ -19,6 +19,7 @@ import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { JlptBar } from '@/components/shared/JlptBar';
 import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { Badge } from '@/components/ui/badge';
@@ -165,6 +166,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							)}
 							{(isOwner || isAdmin) && <StatusPill {...articleStatusPill(article.status)} />}
 						</Cluster>
+						<JlptBar levels={article.jlpt_levels} className={styles.levels} />
 					</div>
 
 					<Cluster gap="xs">

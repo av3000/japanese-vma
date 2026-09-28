@@ -61,18 +61,12 @@
 	margin-top: var(--spacing-3xs);
 }
 
-.levelRow {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: var(--spacing-xs);
-}
-
 .childrenWrapper {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 	justify-content: end;
+	gap: var(--spacing-xs);
 	margin-top: var(--spacing-2xs);
 }
 
