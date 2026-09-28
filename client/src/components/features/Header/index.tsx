@@ -10,6 +10,13 @@ import { NavGroup } from './NavGroup';
 
 const MENU_ID = 'primary-navigation';
 
+const MATERIAL_LINKS = [
+	{ to: '/radicals', label: 'Radicals' },
+	{ to: '/kanjis', label: 'Kanji' },
+	{ to: '/words', label: 'Words' },
+	{ to: '/sentences', label: 'Sentences' },
+] as const;
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) => classNames(styles.link, isActive && styles.linkActive);
 
 const Header: React.FC = () => {
@@ -72,27 +79,16 @@ const Header: React.FC = () => {
 								Catalogues
 							</NavLink>
 						</li>
-						<NavGroup label="Japanese Material" id="material-nav-group">
-							<li>
-								<NavLink className={navLinkClass} to="/radicals">
-									Radicals
-								</NavLink>
-							</li>
-							<li>
-								<NavLink className={navLinkClass} to="/kanjis">
-									Kanjis
-								</NavLink>
-							</li>
-							<li>
-								<NavLink className={navLinkClass} to="/words">
-									Words
-								</NavLink>
-							</li>
-							<li>
-								<NavLink className={navLinkClass} to="/sentences">
-									Sentences
-								</NavLink>
-							</li>
+						{/* Flat in the mobile menu and on wide screens; a disclosure only where the full
+						    row does not fit (see Header.module.css). */}
+						<NavGroup label="Japanese Material" id="material-nav-group" className={styles.materialGroup}>
+							{MATERIAL_LINKS.map(({ to, label }) => (
+								<li key={to}>
+									<NavLink className={navLinkClass} to={to}>
+										{label}
+									</NavLink>
+								</li>
+							))}
 						</NavGroup>
 						<li>
 							<NavLink className={navLinkClass} to="/community">
@@ -100,31 +96,11 @@ const Header: React.FC = () => {
 							</NavLink>
 						</li>
 						{isAuthenticated && (
-							<>
-								<li>
-									<NavLink className={navLinkClass} to="/dashboard">
-										Dashboard
-									</NavLink>
-								</li>
-								<NavGroup label="New" id="new-nav-group">
-									<li>
-										<NavLink className={navLinkClass} to="/newarticle">
-											Article
-										</NavLink>
-									</li>
-									<li>
-										<NavLink className={navLinkClass} to="/catalogues/new">
-											Catalogue
-										</NavLink>
-									</li>
-									<li role="separator" className={styles.divider} />
-									<li>
-										<NavLink className={navLinkClass} to="/newpost">
-											Community Post
-										</NavLink>
-									</li>
-								</NavGroup>
-							</>
+							<li>
+								<NavLink className={navLinkClass} to="/dashboard">
+									Dashboard
+								</NavLink>
+							</li>
 						)}
 					</ul>
 
@@ -136,6 +112,31 @@ const Header: React.FC = () => {
 						</ul>
 					) : isAuthenticated && user ? (
 						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
+							<NavGroup
+								label={
+									<span>
+										<span aria-hidden="true">+</span> New
+									</span>
+								}
+								id="new-nav-group"
+							>
+								<li>
+									<NavLink className={navLinkClass} to="/newarticle">
+										Article
+									</NavLink>
+								</li>
+								<li>
+									<NavLink className={navLinkClass} to="/catalogues/new">
+										Catalogue
+									</NavLink>
+								</li>
+								<li role="separator" className={styles.divider} />
+								<li>
+									<NavLink className={navLinkClass} to="/newpost">
+										Community Post
+									</NavLink>
+								</li>
+							</NavGroup>
 							<li className={styles.socket}>
 								<SocketStatusIndicator />
 							</li>
@@ -153,14 +154,14 @@ const Header: React.FC = () => {
 					) : (
 						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
 							<li>
-								<NavLink className={navLinkClass} to="/register">
-									Sign Up
-								</NavLink>
-							</li>
-							<li>
 								<NavLink className={navLinkClass} to="/login">
 									Log In
 								</NavLink>
+							</li>
+							<li>
+								<Button to="/register" variant="primary" size="sm" className={styles.signUp}>
+									Sign Up
+								</Button>
 							</li>
 						</ul>
 					)}

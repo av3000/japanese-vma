@@ -1,0 +1,55 @@
+.bar {
+	--jlpt-bar-height: 8px;
+
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	width: 100%;
+	min-width: 0;
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	color: var(--color-neutral-700);
+}
+
+.compact {
+	--jlpt-bar-height: 6px;
+
+	gap: var(--spacing-3xs);
+	font-size: var(--font-size-body-sm);
+}
+
+/* Width comes from the inline `flex-grow` (the kanji count); the numbers keep their own width. */
+.segment {
+	flex-shrink: 1;
+	flex-basis: 0;
+	min-width: var(--spacing-2xs);
+	height: var(--jlpt-bar-height);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-500);
+}
+
+/* The only use of shu in the bar: it always means "this is the article's level". */
+.dominant {
+	background-color: var(--color-accent);
+}
+
+.uncommon {
+	background-color: var(--color-neutral-300);
+}
+
+.count {
+	flex: none;
+	padding-inline-end: var(--spacing-2xs);
+}
+
+.count:last-child {
+	padding-inline-end: 0;
+}
+
+/* Weight as well as colour, so the dominant level does not rely on colour alone. */
+.countDominant {
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-neutral-900);
+}
