@@ -113,6 +113,16 @@
 	font-size: 1.125rem;
 }
 
+/* Rendered as an anchor, a filled button would take the global `a:hover` text colour, which is
+   dark on these dark fills. Two-part selectors beat it, and the colour is the one they rest in. */
+.variantPrimary:hover,
+.variantSecondary:hover,
+.variantSuccess:hover,
+.variantDanger:hover,
+.variantPending:hover {
+	color: var(--color-neutral-0);
+}
+
 .variantPrimary {
 	background-color: var(--color-primary);
 	color: var(--color-neutral-0);
