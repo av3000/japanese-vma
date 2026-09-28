@@ -1,0 +1,40 @@
+.header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xs);
+	min-width: 0;
+}
+
+/* Below 768px the action sits under the title instead of squeezing it. */
+.row {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-sm);
+}
+
+.title {
+	min-width: 0;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.action {
+	flex: 0 0 auto;
+}
+
+.meta {
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+	.row {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--spacing-md);
+	}
+}

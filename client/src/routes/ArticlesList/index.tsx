@@ -8,8 +8,10 @@ import ArticleFilters from '@/components/features/articles/ArticleFilters';
 import { Alert } from '@/components/shared/Alert';
 import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Cluster, Container, Grid, Stack } from '@/components/shared/layout';
+import { useAuth } from '@/hooks/useAuth';
 import styles from './ArticlesList.module.css';
 import ArticlesListSkeleton from './ArticlesListSkeleton/ArticlesListSkeleton';
 import {
@@ -31,6 +33,7 @@ import {
  */
 const ArticleList: React.FC = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const { isAuthenticated } = useAuth();
 
 	const filterState = useMemo(() => parseArticleListSearchParams(searchParams), [searchParams]);
 
@@ -81,22 +84,44 @@ const ArticleList: React.FC = () => {
 
 	const handleReset = useCallback(() => setSearchParams(new URLSearchParams()), [setSearchParams]);
 
+	const newArticleAction = isAuthenticated ? (
+		<Button to="/newarticle" variant="primary">
+			New article
+		</Button>
+	) : undefined;
+
 	if (isPending && articles.length === 0) {
-		return <PageLoading family="list" visual={<ArticlesListSkeleton />} />;
+		return (
+			<Container className={styles.page}>
+				<Stack gap="md">
+					<PageHeader title="Articles" action={newArticleAction} />
+					<PageLoading family="list" visual={<ArticlesListSkeleton />} />
+				</Stack>
+			</Container>
+		);
 	}
 
 	if (isError) {
 		return (
 			<Container className={styles.page}>
-				<Alert tone="danger">Error: {error.message}</Alert>
+				<Stack gap="md">
+					<PageHeader title="Articles" action={newArticleAction} />
+					<Alert tone="danger">Error: {error.message}</Alert>
+				</Stack>
 			</Container>
 		);
 	}
+
+	const meta = [`Showing ${articles.length} of ${total}`, filterState.q !== '' && `Results for: ${filterState.q}`]
+		.filter(Boolean)
+		.join(' · ');
 
 	return (
 		<Container className={styles.page}>
 			{/* No per-article sockets here (#263): the polling fallback keeps badges current. */}
 			<Stack gap="md">
+				<PageHeader title="Articles" meta={meta} action={newArticleAction} />
+
 				<ArticleFilters
 					state={filterState}
 					facets={facets}
@@ -106,12 +131,6 @@ const ArticleList: React.FC = () => {
 					onSortChange={handleSortChange}
 					onReset={handleReset}
 				/>
-
-				{filterState.q !== '' && <h4 className={styles.resultsHeading}>Results for: {filterState.q}</h4>}
-
-				<p className={styles.muted}>
-					Showing {articles.length} of {total}
-				</p>
 
 				{articles.length === 0 ? (
 					<p>No articles found.</p>

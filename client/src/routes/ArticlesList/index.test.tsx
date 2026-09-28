@@ -5,6 +5,7 @@ import ArticleList from './index';
 
 let queryState: Record<string, unknown>;
 let capturedFilters: Record<string, unknown> | undefined;
+let isAuthenticated = false;
 
 vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 	useInfiniteArticles: ({ filters }: { filters?: Record<string, unknown> }) => {
@@ -12,6 +13,10 @@ vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 
 		return queryState;
 	},
+}));
+
+vi.mock('@/hooks/useAuth', () => ({
+	useAuth: () => ({ isAuthenticated }),
 }));
 
 vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
@@ -38,6 +43,7 @@ const renderAt = (url: string) =>
 describe('ArticleList', () => {
 	beforeEach(() => {
 		capturedFilters = undefined;
+		isAuthenticated = false;
 		queryState = {
 			articles: [],
 			total: 0,
@@ -122,6 +128,39 @@ describe('ArticleList', () => {
 
 		expect(capturedFilters).toMatchObject({ sort: '-created_at' });
 		expect(capturedFilters).not.toHaveProperty('jlpt_levels[]');
+	});
+
+	it('renders the page heading as the only h1, with the count in its meta line', () => {
+		queryState = {
+			...queryState,
+			articles: [{ id: 1, uuid: 'article-uuid', title: 'Cached article' }],
+			total: 4,
+			isPending: false,
+		};
+
+		const html = renderAt('/articles');
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Articles<\/h1>/);
+		expect(html).toContain('Showing 1 of 4');
+	});
+
+	it('shows the heading with its title only while the list is loading', () => {
+		const html = renderAt('/articles');
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Articles<\/h1>/);
+		expect(html).not.toContain('Showing');
+	});
+
+	it('offers "New article" to signed-in users only', () => {
+		queryState = { ...queryState, isPending: false };
+
+		expect(renderAt('/articles')).not.toContain('New article');
+
+		isAuthenticated = true;
+
+		expect(renderAt('/articles')).toContain('New article');
 	});
 
 	it('renders the search term from the URL', () => {

@@ -2,3 +2,8 @@
 	padding-block: var(--spacing-lg);
 	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
 }
+
+/* Each kanji heads its own row, under the page's h1. It keeps the size it had as an h1. */
+.character {
+	--font-size: clamp(var(--font-size-heading-6), 8.5vw, var(--font-size-heading-1));
+}

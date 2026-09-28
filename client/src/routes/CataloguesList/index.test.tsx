@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import CataloguesListPage, { mapSearchFiltersToCatalogueParams } from './index';
 
 let queryState: Record<string, unknown>;
+let isAuthenticated = false;
+
+vi.mock('@/hooks/useAuth', () => ({
+	useAuth: () => ({ isAuthenticated }),
+}));
 
 vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 	useInfiniteCatalogues: () => queryState,
@@ -66,6 +71,7 @@ describe('catalogue filter mapping', () => {
 
 describe('CataloguesListPage', () => {
 	beforeEach(() => {
+		isAuthenticated = false;
 		queryState = {
 			catalogues: [],
 			total: 0,
@@ -86,5 +92,38 @@ describe('CataloguesListPage', () => {
 		expect(html).toContain('Loading page.');
 		expect(html).toContain('data-loading-family="list"');
 		expect(html).toContain('data-testid="catalogues-list-skeleton"');
+	});
+
+	it('shows the heading with its title only while the list is loading', () => {
+		const html = renderToStaticMarkup(<CataloguesListPage />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Catalogues<\/h1>/);
+		expect(html).not.toContain('Showing');
+	});
+
+	it('renders the page heading as the only h1, with the count in its meta line', () => {
+		queryState = {
+			...queryState,
+			catalogues: [{ uuid: 'catalogue-uuid', title: 'Travel words' }],
+			total: 5,
+			isPending: false,
+		};
+
+		const html = renderToStaticMarkup(<CataloguesListPage />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Catalogues<\/h1>/);
+		expect(html).toContain('Showing 1 of 5');
+	});
+
+	it('offers "New catalogue" to signed-in users only', () => {
+		queryState = { ...queryState, isPending: false };
+
+		expect(renderToStaticMarkup(<CataloguesListPage />)).not.toContain('New catalogue');
+
+		isAuthenticated = true;
+
+		expect(renderToStaticMarkup(<CataloguesListPage />)).toContain('New catalogue');
 	});
 });

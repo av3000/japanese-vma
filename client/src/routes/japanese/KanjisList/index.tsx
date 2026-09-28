@@ -16,6 +16,7 @@ import Spinner from '@/assets/images/spinner.gif';
 import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import styles from '../japaneseListPage.module.css';
@@ -79,7 +80,14 @@ const KanjisList = () => {
 
 	// TODO: have loading indicator like skeleton or something else
 	if (isPending && kanjis.length === 0) {
-		return <PageLoading family="list" />;
+		return (
+			<Container className={styles.page}>
+				<Stack gap="2xl">
+					<PageHeader title="Kanji" />
+					<PageLoading family="list" />
+				</Stack>
+			</Container>
+		);
 	}
 
 	if (isError) {
@@ -87,23 +95,28 @@ const KanjisList = () => {
 
 		return (
 			<Container className={styles.page}>
-				<Alert tone="danger">Error: {message}</Alert>
+				<Stack gap="2xl">
+					<PageHeader title="Kanji" />
+					<Alert tone="danger">Error: {message}</Alert>
+				</Stack>
 			</Container>
 		);
 	}
 
+	const meta = [
+		`Showing ${kanjis.length} of ${total}`,
+		keyword !== '' && `keyword: ${keyword}`,
+		jlpt !== '' && `JLPT: ${jlpt === '-' ? 'Uncommon' : `N${jlpt}`}`,
+	]
+		.filter(Boolean)
+		.join(' · ');
+
 	return (
 		<Container className={styles.page}>
 			<Stack gap="2xl">
+				<PageHeader title="Kanji" meta={meta} />
 				<SearchBarKanjis defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
 				<Stack as="section" gap="md" className={styles.results}>
-					<Cluster justify="center" align="baseline" gap="md">
-						{keyword && <h4 className={styles.heading}>keyword: {keyword}</h4>}
-						{jlpt && <h4 className={styles.heading}>JLPT: {jlpt === '-' ? 'Uncommon' : `N${jlpt}`}</h4>}
-						<h4 className={styles.heading}>
-							Showing {kanjis.length} of {total}
-						</h4>
-					</Cluster>
 					{kanjis.length === 0 ? (
 						<p>No kanjis found.</p>
 					) : (

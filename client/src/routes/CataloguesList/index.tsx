@@ -6,9 +6,11 @@ import SearchBar from '@/components/features/SearchBar';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Container, Grid, Stack } from '@/components/shared/layout';
-import { isCustomCatalogueType } from '@/shared/constants/catalogues';
+import { useAuth } from '@/hooks/useAuth';
+import { CATALOGUE_ROUTES, isCustomCatalogueType } from '@/shared/constants/catalogues';
 import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkeleton';
 import styles from './CataloguesList.module.css';
 
@@ -39,6 +41,7 @@ export const mapSearchFiltersToCatalogueParams = (
 };
 
 const CataloguesListPage: React.FC = () => {
+	const { isAuthenticated } = useAuth();
 	const [filters, setFilters] = useState<CatalogueSearchFilters | Record<string, never>>({});
 	const queryFilters = useMemo(() => mapSearchFiltersToCatalogueParams(filters), [filters]);
 	const { catalogues, total, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, error, isError } =
@@ -46,30 +49,46 @@ const CataloguesListPage: React.FC = () => {
 			filters: queryFilters,
 		});
 
-	const searchHeading =
-		typeof filters.keyword === 'string' && filters.keyword.trim() ? `Results for: ${filters.keyword.trim()}` : '';
+	const keyword = typeof filters.keyword === 'string' ? filters.keyword.trim() : '';
+
+	const newCatalogueAction = isAuthenticated ? (
+		<Button to={CATALOGUE_ROUTES.create} variant="primary">
+			New catalogue
+		</Button>
+	) : undefined;
 
 	if (isPending && catalogues.length === 0) {
-		return <PageLoading family="list" visual={<CataloguesListSkeleton />} />;
+		return (
+			<Container className={styles.page}>
+				<Stack gap="md">
+					<PageHeader title="Catalogues" action={newCatalogueAction} />
+					<PageLoading family="list" visual={<CataloguesListSkeleton />} />
+				</Stack>
+			</Container>
+		);
 	}
 
 	if (isError) {
 		return (
 			<Container className={styles.page}>
-				<Alert tone="danger">Error: {error.message}</Alert>
+				<Stack gap="md">
+					<PageHeader title="Catalogues" action={newCatalogueAction} />
+					<Alert tone="danger">Error: {error.message}</Alert>
+				</Stack>
 			</Container>
 		);
 	}
 
+	const meta = [`Showing ${catalogues.length} of ${total}`, keyword !== '' && `Results for: ${keyword}`]
+		.filter(Boolean)
+		.join(' · ');
+
 	return (
 		<Container className={styles.page}>
 			<Stack gap="md">
-				<SearchBar fetchQuery={setFilters} searchType="lists" />
+				<PageHeader title="Catalogues" meta={meta} action={newCatalogueAction} />
 
-				{searchHeading && <h4 className={styles.heading}>{searchHeading}</h4>}
-				<p className={styles.summary}>
-					Showing {catalogues.length} of {total}
-				</p>
+				<SearchBar fetchQuery={setFilters} searchType="lists" />
 
 				{catalogues.length === 0 ? (
 					<p>No catalogues found.</p>
