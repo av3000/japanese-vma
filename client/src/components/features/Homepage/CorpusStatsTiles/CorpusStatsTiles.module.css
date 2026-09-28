@@ -1,0 +1,75 @@
+.tiles {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Loaded tiles and skeletons share this box, so the row does not move when the counts arrive. */
+.tile {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: var(--spacing-3xs);
+	min-height: var(--size-6xl);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+	color: var(--color-text-neutral-default);
+	text-decoration: none;
+}
+
+a.tile:hover {
+	border-color: var(--color-primary-200);
+	color: var(--color-text-neutral-default);
+	text-decoration: none;
+}
+
+a.tile:hover .label {
+	text-decoration: underline;
+}
+
+a.tile:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.count {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-heading-3);
+	font-weight: var(--font-weight-semibold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1.2;
+}
+
+.label {
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.skeleton {
+	border-color: transparent;
+	background: linear-gradient(
+		90deg,
+		var(--color-neutral-200) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-neutral-200) 100%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton {
+		animation: none;
+	}
+}
