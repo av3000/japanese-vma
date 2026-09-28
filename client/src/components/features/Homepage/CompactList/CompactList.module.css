@@ -1,0 +1,134 @@
+.section {
+	--compact-row-height: 84px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-5);
+	font-weight: var(--font-weight-semibold);
+}
+
+.allLink {
+	flex: none;
+	font-size: var(--font-size-body-md);
+	color: var(--color-primary);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.allLink:hover {
+	color: var(--color-primary-hover);
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+/* Every row, loaded or skeleton, has the same minimum height, so the list does not move. */
+.row {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: var(--spacing-2xs);
+	min-height: var(--compact-row-height);
+	padding: var(--spacing-sm) 0;
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.row:has(.rowLink:hover) {
+	background-color: var(--color-neutral-100);
+}
+
+.rowLink {
+	color: var(--color-text-neutral-default);
+	text-decoration: none;
+}
+
+.rowLink:hover {
+	color: var(--color-text-neutral-default);
+	text-decoration: underline;
+}
+
+.rowLink::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.rowLink:focus-visible {
+	outline: none;
+}
+
+.rowLink:focus-visible::after {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: -2px;
+	border-radius: var(--border-radius-xs);
+}
+
+.message {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-sm);
+	margin: 0;
+	padding: var(--spacing-sm) 0;
+	color: var(--color-neutral-700);
+}
+
+.message p {
+	margin: 0;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.skeleton {
+	display: block;
+	height: var(--spacing-sm);
+	border-radius: var(--border-radius-xs);
+	background: linear-gradient(
+		90deg,
+		var(--color-neutral-200) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-neutral-200) 100%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeletonTitle {
+	width: 70%;
+	height: var(--spacing-md);
+}
+
+.skeletonMeta {
+	width: 40%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton {
+		animation: none;
+	}
+}
