@@ -206,8 +206,9 @@ vi.mock('@/components/shared/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>,
 }));
 
-vi.mock('@/components/ui/article-status', () => ({
-	default: () => <div>Article status</div>,
+vi.mock('@/components/shared/StatusPill', () => ({
+	articleStatusPill: () => ({ tone: 'neutral', label: 'Article status' }),
+	StatusPill: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
 vi.mock('@/components/ui/badge', () => ({

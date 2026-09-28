@@ -6,11 +6,11 @@ import {
 	type ProcessingStatus as ProcessingStatusType,
 } from '@/api/generated/model/processingStatus';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
-import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Link } from '@/components/shared/Link';
+import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { formatDate } from '@/helpers';
 import styles from './ArticleCard.module.css';
 
@@ -44,7 +44,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 					{shouldShowProcessingBadge(status) && (
 						<div className={styles.statusOverlay}>
 							{/* TODO: should show estimated delivery time on popover click when backend will support estimation */}
-							<ProcessingStatusBadge status={status} />
+							<StatusPill {...processingStatusPill(status)} />
 						</div>
 					)}
 				</div>

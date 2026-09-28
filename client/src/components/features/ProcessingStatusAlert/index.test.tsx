@@ -52,6 +52,20 @@ describe('ProcessingStatusAlert', () => {
 		expect(html).not.toContain('Instance');
 	});
 
+	it.each([
+		[ProcessingStatus.pending, 'Pending'],
+		[ProcessingStatus.processing, 'Processing'],
+		[ProcessingStatus.completed, 'Completed'],
+		[ProcessingStatus.failed, 'Failed'],
+	])('shows %s as a status pill labelled "%s"', (value, label) => {
+		expect(render(value)).toContain(`>${label}</span>`);
+	});
+
+	it('spins inside the pill for processing only', () => {
+		expect(render(ProcessingStatus.processing).match(/data-icon="spinner"/g)).toHaveLength(1);
+		expect(render(ProcessingStatus.pending)).not.toContain('data-icon="spinner"');
+	});
+
 	it('renders nothing for superseded, which is terminal and carries no result', () => {
 		expect(render(ProcessingStatus.superseded)).toBe('');
 	});

@@ -5,8 +5,8 @@ import {
 	type ProcessingStatus as ProcessingStatusType,
 } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
-import ProcessingStatusBadge from '@/components/features/ProcessingStatusAlert/ProcessingStatusBadge';
 import Spinner from '@/components/shared/Spinner';
+import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import {
 	Popover,
 	PopoverContent,
@@ -121,7 +121,8 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 			<div className={styles.content}>
 				<p className={styles.message}>{message}</p>
 				<div className={styles.status}>
-					{(status === ProcessingStatus.pending || status === ProcessingStatus.processing) && (
+					{/* The pill spins for processing on its own; a queued article gets the alert's spinner. */}
+					{status === ProcessingStatus.pending && (
 						<span className={styles.spinner} aria-hidden="true">
 							<Spinner size="sm" />
 						</span>
@@ -129,7 +130,7 @@ const ProcessingStatusAlert: React.FC<ProcessingStatusAlertProps> = ({ processin
 					<Popover>
 						<PopoverTrigger asChild>
 							<button type="button" className={styles.popoverTrigger}>
-								<ProcessingStatusBadge status={status} />
+								<StatusPill {...processingStatusPill(status)} />
 							</button>
 						</PopoverTrigger>
 						<PopoverContent align="end">

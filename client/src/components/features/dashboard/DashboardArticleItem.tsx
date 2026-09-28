@@ -3,8 +3,8 @@ import type { HashtagResource } from '@/api/generated/model';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { Cluster } from '@/components/shared/layout';
-import ArticleStatus from '../../ui/article-status';
 import styles from './DashboardRow.module.css';
 
 interface DashboardArticleItemProps {
@@ -43,7 +43,7 @@ const DashboardArticleItem: React.FC<DashboardArticleItemProps> = ({
 					))}
 				</Cluster>
 				<span className={styles.label}>Status:</span>
-				<ArticleStatus status={status} />
+				<StatusPill {...articleStatusPill(status)} />
 			</Cluster>
 		</div>
 		<div>
