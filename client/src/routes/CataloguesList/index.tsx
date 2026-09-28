@@ -2,8 +2,12 @@ import React, { useMemo, useState } from 'react';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
-import SearchBar from '@/components/features/SearchBar';
 import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
+import {
+	CatalogueFilters,
+	DEFAULT_CATALOGUE_SEARCH_FILTERS,
+	type CatalogueSearchFilters,
+} from '@/components/features/catalogues/CatalogueFilters';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -15,12 +19,6 @@ import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkelet
 import styles from './CataloguesList.module.css';
 
 export const DEFAULT_PER_PAGE = 12;
-
-type CatalogueSearchFilters = {
-	keyword: string;
-	sortByWhat: string;
-	filterType: string;
-};
 
 export const mapSearchFiltersToCatalogueParams = (
 	filters: CatalogueSearchFilters | Record<string, never>,
@@ -42,6 +40,8 @@ export const mapSearchFiltersToCatalogueParams = (
 
 const CataloguesListPage: React.FC = () => {
 	const { isAuthenticated } = useAuth();
+	// `draft` is what the form edits; `filters` is what the last submit applied.
+	const [draft, setDraft] = useState<CatalogueSearchFilters>(DEFAULT_CATALOGUE_SEARCH_FILTERS);
 	const [filters, setFilters] = useState<CatalogueSearchFilters | Record<string, never>>({});
 	const queryFilters = useMemo(() => mapSearchFiltersToCatalogueParams(filters), [filters]);
 	const { catalogues, total, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, error, isError } =
@@ -88,7 +88,7 @@ const CataloguesListPage: React.FC = () => {
 			<Stack gap="md">
 				<PageHeader title="Catalogues" meta={meta} action={newCatalogueAction} />
 
-				<SearchBar fetchQuery={setFilters} searchType="lists" />
+				<CatalogueFilters value={draft} onChange={setDraft} onSubmit={() => setFilters(draft)} />
 
 				{catalogues.length === 0 ? (
 					<p>No catalogues found.</p>

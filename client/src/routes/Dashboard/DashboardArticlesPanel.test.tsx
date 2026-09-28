@@ -27,10 +27,6 @@ vi.mock('@/api/articles/hooks/useOwnerProcessingSubscription', () => ({
 	OwnerProcessingSubscription: () => null,
 }));
 
-vi.mock('./SearchBarDashboard', () => ({
-	default: () => <div>Search bar</div>,
-}));
-
 vi.mock('@/components/features/dashboard/DashboardArticleItem', () => ({
 	default: () => <div>Dashboard article item</div>,
 }));

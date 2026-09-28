@@ -13,10 +13,6 @@ vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 	useInfiniteCatalogues: () => queryState,
 }));
 
-vi.mock('@/components/features/SearchBar', () => ({
-	default: () => <div>Catalogue search</div>,
-}));
-
 vi.mock('@/components/features/catalogues/CatalogueCard/CatalogueCard', () => ({
 	CatalogueCard: ({ catalogue }: { catalogue: { title: string } }) => <article>{catalogue.title}</article>,
 }));

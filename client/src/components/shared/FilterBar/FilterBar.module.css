@@ -1,0 +1,65 @@
+/* One responsive layout for every list's filters. Children keep the order the page gives them;
+   below 768px they stack, above it they wrap in rows. */
+.bar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	width: 100%;
+}
+
+.search {
+	min-width: 0;
+}
+
+.filters {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.select {
+	min-width: 0;
+}
+
+/* Defined here rather than reusing a global utility: the label stays in the accessibility tree. */
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (min-width: 768px) {
+	.bar {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: flex-end;
+	}
+
+	.search {
+		flex: 2 1 16rem;
+	}
+
+	.filters {
+		flex: 0 1 auto;
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: flex-end;
+	}
+
+	/* A group that owns a whole row, such as facet chips. */
+	.filtersFullWidth {
+		flex: 1 1 100%;
+	}
+
+	.select {
+		flex: 1 1 10rem;
+		max-width: 16rem;
+	}
+}

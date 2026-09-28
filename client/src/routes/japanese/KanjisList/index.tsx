@@ -20,8 +20,8 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import styles from '../japaneseListPage.module.css';
-import SearchBarKanjis from './SearchBarKanjis';
-import type { KanjiSearchFilters } from './SearchBarKanjis';
+import KanjiFilters from './KanjiFilters';
+import type { KanjiSearchFilters } from './KanjiFilters';
 
 const DEFAULT_PER_PAGE = 10;
 const VALID_JLPT_FILTERS = new Set<string>(Object.values(KanjiIndexJlpt));
@@ -115,7 +115,7 @@ const KanjisList = () => {
 		<Container className={styles.page}>
 			<Stack gap="2xl">
 				<PageHeader title="Kanji" meta={meta} />
-				<SearchBarKanjis defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
+				<KanjiFilters defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
 				<Stack as="section" gap="md" className={styles.results}>
 					{kanjis.length === 0 ? (
 						<p>No kanjis found.</p>
