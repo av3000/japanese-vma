@@ -206,8 +206,9 @@ vi.mock('@/components/shared/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>,
 }));
 
-vi.mock('@/components/ui/article-status', () => ({
-	default: () => <div>Article status</div>,
+vi.mock('@/components/shared/StatusPill', () => ({
+	articleStatusPill: () => ({ tone: 'neutral', label: 'Article status' }),
+	StatusPill: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -225,6 +226,7 @@ const createArticle = (engagementOverrides: Record<string, unknown> = {}) =>
 		title_jp: 'Study Article',
 		content_jp: 'Body',
 		status: 1,
+		jlpt_levels: { n1: 0, n2: 2, n3: 9, n4: 3, n5: 6, uncommon: 1 },
 		formattedDate: '2026-05-04',
 		displayName: 'Aki',
 		publicity: 1,
@@ -298,6 +300,19 @@ describe('ArticleContent', () => {
 
 		expect(catalogueRemoveItem).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', 321);
 		expect(catalogueAddItem).not.toHaveBeenCalled();
+	});
+
+	it('shows the JLPT level bar in the meta area', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html).toContain('aria-label="Mostly N3: N5 6, N4 3, N3 9, N2 2, uncommon 1"');
+	});
+
+	it('shows no JLPT level bar while every count is 0', () => {
+		const article = createArticle();
+		article.jlpt_levels = { n1: 0, n2: 0, n3: 0, n4: 0, n5: 0, uncommon: 0 };
+
+		expect(renderToStaticMarkup(<ArticleContent article={article} />)).not.toContain('role="img"');
 	});
 
 	it.each(['pending', 'processing', 'failed', 'superseded'])(

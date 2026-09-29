@@ -1,0 +1,65 @@
+.pill {
+	--pill-bg: var(--color-neutral-200);
+	--pill-fg: var(--color-neutral-700);
+
+	display: inline-flex;
+	align-items: flex-start;
+	gap: var(--spacing-2xs);
+	max-width: 100%;
+	padding: var(--spacing-3xs) var(--spacing-xs);
+	border-radius: var(--border-radius-lg);
+	background-color: var(--pill-bg);
+	color: var(--pill-fg);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--line-height-lg);
+}
+
+/* Tone colours are token mixes with a solid fallback, all at 4.5:1 or better for the text on the
+   tint. The shu accent is not used here: it is reserved for JLPT levels. */
+.neutral {
+	--pill-bg: var(--color-neutral-200);
+	--pill-fg: var(--color-neutral-700);
+}
+
+.success {
+	--pill-bg: #eaf6ec;
+	--pill-bg: color-mix(in srgb, var(--color-success) 10%, var(--color-neutral-0));
+	--pill-fg: var(--color-success-hover);
+}
+
+.warning {
+	--pill-bg: #fff1c8;
+	--pill-bg: color-mix(in srgb, var(--color-warning) 22%, var(--color-neutral-0));
+	--pill-fg: var(--color-neutral-900);
+}
+
+.info {
+	--pill-bg: var(--color-primary-tint);
+	--pill-fg: var(--color-primary-hover);
+}
+
+.danger {
+	--pill-bg: #fbe7e9;
+	--pill-bg: color-mix(in srgb, var(--color-error) 12%, var(--color-neutral-0));
+	--pill-fg: var(--color-error-hover);
+}
+
+/* The icon box is one line tall, so it stays with the first line when a long label wraps. */
+.icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	width: var(--icon-size-sm);
+	height: calc(var(--font-size-body-sm) * var(--line-height-lg));
+}
+
+.icon > i {
+	width: 100%;
+	height: var(--icon-size-sm);
+}
+
+.label {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}

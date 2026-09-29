@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import { OwnerProcessingSubscription } from '@/api/articles/hooks/useOwnerProcessingSubscription';
 import { usePendingArticles } from '@/api/articles/moderation';
@@ -8,18 +8,17 @@ import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.mod
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { Icon } from '@/components/shared/Icon';
 import { Link } from '@/components/shared/Link';
 import { Cluster, Stack } from '@/components/shared/layout';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { User } from '@/types';
 import styles from './Dashboard.module.css';
-import SearchBarDashboard from './SearchBarDashboard';
-import type { SearchFilters } from './SearchBarDashboard';
 import { DASHBOARD_TYPES, type DashboardType } from './dashboard.constants';
 
-type DashboardArticleFilters = {
-	search?: string;
-};
+/** How long the dashboard waits after the last keystroke before it searches. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface DashboardArticlesPanelProps {
 	dashboardView: DashboardType;
@@ -40,13 +39,16 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	currentUser,
 	onToggleDashboardView,
 }) => {
-	const [filters, setFilters] = useState<DashboardArticleFilters>({});
+	// The dashboard searches as the user types; Enter or the button catches up at once.
+	const [keyword, setKeyword] = useState('');
+	const [searchKeyword, applyKeyword] = useDebouncedValue(keyword, SEARCH_DEBOUNCE_MS);
+	const search = searchKeyword.trim();
 	const { articles, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteArticles({
 		filters: {
 			author_uid: currentUser?.uuid,
 			// Canonical `q`, not the legacy `search` alias, so AFM-07 can retire it.
 			// The backend rejects a one-character search, so do not send one.
-			...(filters.search && filters.search.trim().length >= 2 ? { q: filters.search.trim() } : {}),
+			...(search.length >= 2 ? { q: search } : {}),
 			include_stats_counts: true,
 			// The dashboard renders no facet controls.
 			include_facets: false,
@@ -59,11 +61,6 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 
 	const pendingArticlesQuery = usePendingArticles({ enabled: shouldFetchPendingArticles });
 
-	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
-		const keyword = newFilters.keyword.trim();
-		setFilters(keyword ? { search: keyword } : {});
-	}, []);
-
 	const articleErrorMessage = error instanceof Error ? error.message : 'Failed to load articles.';
 	const pendingArticlesErrorMessage =
 		pendingArticlesQuery.error instanceof Error
@@ -74,7 +71,14 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
 	return (
 		<Stack gap="md">
 			<div className={styles.toolbar}>
-				<SearchBarDashboard searchType="articles" filterResults={handleFilterResults} />
+				<FilterBar onSubmit={applyKeyword} label="Article filters">
+					<FilterBar.Search
+						label="Search your articles"
+						placeholder="Ex.: title, text, #tag"
+						value={keyword}
+						onChange={setKeyword}
+					/>
+				</FilterBar>
 			</div>
 
 			<Stack as="section" gap="md" className={styles.panel}>

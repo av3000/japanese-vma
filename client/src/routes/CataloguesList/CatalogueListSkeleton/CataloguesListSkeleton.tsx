@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
 import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.css';
-import { Container, Grid, Stack } from '@/components/shared/layout';
+import { Grid, Stack } from '@/components/shared/layout';
 import styles from './CataloguesListSkeleton.module.css';
 
 const CATALOGUES_LIST_SKELETON_COUNT = 12;
@@ -19,27 +19,23 @@ const SearchControlSkeleton = () => (
 );
 
 const CataloguesListSkeleton = () => (
-	<Container data-testid="catalogues-list-skeleton" aria-hidden="true">
-		<Stack gap="md">
-			<Grid columns={12} gap="sm">
-				{SEARCH_PLACEHOLDERS.map((placeholder) => (
-					<Grid.Item key={placeholder.key} span={placeholder.span}>
-						<SearchControlSkeleton />
-					</Grid.Item>
-				))}
-			</Grid>
+	<Stack gap="md" data-testid="catalogues-list-skeleton" aria-hidden="true">
+		<Grid columns={12} gap="sm">
+			{SEARCH_PLACEHOLDERS.map((placeholder) => (
+				<Grid.Item key={placeholder.key} span={placeholder.span}>
+					<SearchControlSkeleton />
+				</Grid.Item>
+			))}
+		</Grid>
 
-			<span className={classNames(skeletonStyles.block, skeletonStyles.line, styles.summary)} />
-
-			<Grid columns={12} gap="lg">
-				{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }).map((_, index) => (
-					<Grid.Item key={index} span={{ base: 6, sm: 4, md: 3 }}>
-						<CatalogueCardSkeleton />
-					</Grid.Item>
-				))}
-			</Grid>
-		</Stack>
-	</Container>
+		<Grid columns={12} gap="lg">
+			{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }).map((_, index) => (
+				<Grid.Item key={index} span={{ base: 6, sm: 4, md: 3 }}>
+					<CatalogueCardSkeleton />
+				</Grid.Item>
+			))}
+		</Grid>
+	</Stack>
 );
 
 export default CataloguesListSkeleton;

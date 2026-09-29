@@ -128,6 +128,29 @@ describe('KanjisList', () => {
 		expect(html).toContain('Showing 1 of 1');
 	});
 
+	it('renders the page heading as the only h1, with the count in its meta line', () => {
+		const html = renderToStaticMarkup(<KanjisList />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Kanji<\/h1>/);
+		expect(html).toMatch(/<p[^>]*>Showing 1 of 1<\/p>/);
+	});
+
+	it('shows the heading with its title only while the list is loading', () => {
+		queryState = { ...queryState, kanjis: [], total: 0, isPending: true };
+
+		const html = renderToStaticMarkup(<KanjisList />);
+
+		expect(html).toMatch(/<h1[^>]*>Kanji<\/h1>/);
+		expect(html).not.toContain('Showing');
+	});
+
+	it('has no page-level action', () => {
+		isAuthenticated = true;
+
+		expect(renderToStaticMarkup(<KanjisList />)).not.toContain('New ');
+	});
+
 	it('renders URL-derived filters', () => {
 		searchParams = new URLSearchParams('keyword=water&jlpt=5');
 

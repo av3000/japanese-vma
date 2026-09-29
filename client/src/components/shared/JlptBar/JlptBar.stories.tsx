@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, within } from '@storybook/test';
 import type { ArticleResourceJlptLevels } from '@/api/generated/model/articleResourceJlptLevels';
 import { JlptBar } from './';
 
@@ -9,7 +10,7 @@ const uncommonHeavy: ArticleResourceJlptLevels = { n1: 2, n2: 1, n3: 4, n4: 0, n
 const tie: ArticleResourceJlptLevels = { n1: 0, n2: 10, n3: 0, n4: 4, n5: 10, uncommon: 0 };
 
 const meta = {
-	title: 'Components/JlptBar',
+	title: 'Shared/JlptBar',
 	component: JlptBar,
 	tags: ['autodocs'],
 	args: { levels: typicalArticle, size: 'default' },
@@ -29,12 +30,21 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const TypicalArticle: Story = {};
+export const TypicalArticle: Story = {
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('img', { name: /Mostly N3/ })).toBeVisible();
+	},
+};
 
 export const SingleLevel: Story = { args: { levels: singleLevel } };
 
 /** Renders nothing: an article that is still processing has no counts yet. */
-export const AllZero: Story = { args: { levels: allZero } };
+export const AllZero: Story = {
+	args: { levels: allZero },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).queryByRole('img')).not.toBeInTheDocument();
+	},
+};
 
 export const UncommonHeavy: Story = { args: { levels: uncommonHeavy } };
 

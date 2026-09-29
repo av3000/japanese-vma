@@ -1,15 +1,10 @@
 import classNames from 'classnames';
 import skeletonStyles from './ArticleCardSkeleton.module.css';
 
-const ARTICLE_LEVEL_PLACEHOLDERS = ['n1', 'n2', 'n3', 'n4', 'n5', 'na'];
 const ARTICLE_META_PLACEHOLDERS = ['views', 'comments', 'likes'];
 
 export const ArticleCardSkeleton = () => (
-	<article
-		aria-hidden="true"
-		className={skeletonStyles.wrapper}
-		data-testid="article-card-skeleton"
-	>
+	<article aria-hidden="true" className={skeletonStyles.wrapper} data-testid="article-card-skeleton">
 		<div
 			className={classNames(skeletonStyles.block, skeletonStyles.image)}
 			data-testid="article-card-skeleton-image"
@@ -36,15 +31,10 @@ export const ArticleCardSkeleton = () => (
 		</div>
 
 		<div className={skeletonStyles.children}>
-			<div className={skeletonStyles.levelRow}>
-				{ARTICLE_LEVEL_PLACEHOLDERS.map((level) => (
-					<span
-						key={level}
-						className={classNames(skeletonStyles.block, skeletonStyles.level)}
-						data-testid="article-card-skeleton-level"
-					/>
-				))}
-			</div>
+			<span
+				className={classNames(skeletonStyles.block, skeletonStyles.jlptBar)}
+				data-testid="article-card-skeleton-jlpt-bar"
+			/>
 
 			<div className={skeletonStyles.metaRow}>
 				{ARTICLE_META_PLACEHOLDERS.map((item) => (

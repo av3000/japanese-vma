@@ -2,10 +2,6 @@
 	padding-block: var(--spacing-lg) var(--spacing-2xl);
 }
 
-.resultsHeading {
-	margin: 0;
-}
-
 .muted {
 	margin: 0;
 	color: var(--color-neutral-600);

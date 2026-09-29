@@ -1,7 +1,3 @@
-.page {
-	padding-block: var(--spacing-lg) var(--spacing-2xl);
-}
-
 .control {
 	display: block;
 	width: 100%;
@@ -10,12 +6,6 @@
 
 .controlShort {
 	width: 7rem;
-}
-
-.countLine {
-	display: block;
-	width: 9rem;
-	height: 1rem;
 }
 
 .list {

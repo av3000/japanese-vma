@@ -3,8 +3,8 @@ import type { ArticleFacetResource } from '@/api/generated/model/articleFacetRes
 import type { ArticleIndexJlptLevelsItem } from '@/api/generated/model/articleIndexJlptLevelsItem';
 import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
 import { Button } from '@/components/shared/Button';
-import { Field, FieldMessage, Input, Label, Select } from '@/components/shared/FormControls';
-import { Cluster, Grid, Stack } from '@/components/shared/layout';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { Cluster } from '@/components/shared/layout';
 import {
 	DEFAULT_SORT,
 	JLPT_LEVELS,
@@ -15,11 +15,8 @@ import {
 import styles from './ArticleFilters.module.css';
 
 /**
- * Articles-specific filter controls.
- *
- * Deliberately not the shared SearchBar: that component still serves Posts and
- * Lists, and its control set no longer matches the v1 Article contract. Changing it
- * to fit Articles would have meant changing those routes as collateral.
+ * Articles-specific composition of the shared FilterBar: search, sort, reset, and the facet
+ * chips with server counts. The URL owns the state; this only maps it onto the bar's slots.
  */
 
 type ArticleFiltersProps = {
@@ -56,9 +53,7 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 
 	const searchTooShort = draftSearch.trim().length === 1;
 
-	const handleSubmit = (event: React.FormEvent) => {
-		event.preventDefault();
-
+	const handleSubmit = () => {
 		if (searchTooShort) {
 			return;
 		}
@@ -70,103 +65,75 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 		state.q !== '' || state.jlptLevels.length > 0 || state.hashtagIds.length > 0 || state.sort !== DEFAULT_SORT;
 
 	return (
-		<Stack gap="md">
-			<Grid as="form" columns={12} gap="xs" align="start" onSubmit={handleSubmit} role="search">
-				<Grid.Item span={{ base: 12, sm: 6 }}>
-					<Field>
-						<Label className="u-hide-visually" htmlFor="article-search">
-							Search articles
-						</Label>
-						<Input
-							id="article-search"
-							type="search"
-							placeholder="Search article titles"
-							value={draftSearch}
-							onChange={(event) => setDraftSearch(event.target.value)}
-						/>
-						{searchTooShort && (
-							<FieldMessage tone="hint">Enter at least {MIN_SEARCH_LENGTH} characters.</FieldMessage>
-						)}
-					</Field>
-				</Grid.Item>
+		<FilterBar onSubmit={handleSubmit} label="Article filters">
+			<FilterBar.Search
+				id="article-search"
+				label="Search articles"
+				placeholder="Search article titles"
+				value={draftSearch}
+				onChange={setDraftSearch}
+				hint={searchTooShort ? `Enter at least ${MIN_SEARCH_LENGTH} characters.` : undefined}
+				submitDisabled={searchTooShort}
+			/>
 
-				<Grid.Item span={{ base: 12, sm: 4 }}>
-					<Field>
-						<Label className="u-hide-visually" htmlFor="article-sort">
-							Sort articles
-						</Label>
-						<Select
-							id="article-sort"
-							value={state.sort}
-							onChange={(event) => onSortChange(event.target.value as ArticleIndexSort)}
-						>
-							{SORT_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</Select>
-					</Field>
-				</Grid.Item>
+			<FilterBar.Sort
+				id="article-sort"
+				label="Sort articles"
+				value={state.sort}
+				options={SORT_OPTIONS}
+				onChange={onSortChange}
+			/>
 
-				<Grid.Item span={{ base: 12, sm: 2 }}>
-					<Cluster gap="xs">
-						<Button type="submit" variant="primary" disabled={searchTooShort}>
-							Search
-						</Button>
-						{hasActiveFilters && (
-							<Button type="button" variant="secondary-outline" onClick={onReset}>
-								Reset
-							</Button>
-						)}
-					</Cluster>
-				</Grid.Item>
-			</Grid>
+			<FilterBar.Reset active={hasActiveFilters} onClick={onReset} />
 
-			<fieldset>
-				<legend className={styles.legend}>{jlptFacet?.label ?? 'JLPT level'}</legend>
-				<Cluster gap="xs">
-					{JLPT_LEVELS.map((level) => {
-						// Counts come from the server when facets were requested; the control
-						// still works without them so the list is usable either way.
-						const facetValue = jlptFacet?.values.find((value) => value.key === level);
-						const selected = state.jlptLevels.includes(level);
-
-						return (
-							<Button
-								key={level}
-								type="button"
-								variant={selected ? 'primary' : 'secondary-outline'}
-								aria-pressed={selected}
-								onClick={() => onToggleJlptLevel(level)}
-							>
-								{facetValue?.label ?? level.toUpperCase()}
-								{facetValue ? ` (${facetValue.count})` : ''}
-							</Button>
-						);
-					})}
-				</Cluster>
-			</fieldset>
-
-			{hashtagFacet && hashtagFacet.values.length > 0 && (
+			<FilterBar.Filters fullWidth>
 				<fieldset>
-					<legend className={styles.legend}>{hashtagFacet.label}</legend>
+					<legend className={styles.legend}>{jlptFacet?.label ?? 'JLPT level'}</legend>
 					<Cluster gap="xs">
-						{hashtagFacet.values.map((value) => (
-							<Button
-								key={value.key}
-								type="button"
-								variant={value.selected ? 'primary' : 'secondary-outline'}
-								aria-pressed={value.selected}
-								onClick={() => onToggleHashtag(Number(value.key))}
-							>
-								#{value.label} ({value.count})
-							</Button>
-						))}
+						{JLPT_LEVELS.map((level) => {
+							// Counts come from the server when facets were requested; the control
+							// still works without them so the list is usable either way.
+							const facetValue = jlptFacet?.values.find((value) => value.key === level);
+							const selected = state.jlptLevels.includes(level);
+
+							return (
+								<Button
+									key={level}
+									type="button"
+									variant={selected ? 'primary' : 'secondary-outline'}
+									aria-pressed={selected}
+									onClick={() => onToggleJlptLevel(level)}
+								>
+									{facetValue?.label ?? level.toUpperCase()}
+									{facetValue ? ` (${facetValue.count})` : ''}
+								</Button>
+							);
+						})}
 					</Cluster>
 				</fieldset>
+			</FilterBar.Filters>
+
+			{hashtagFacet && hashtagFacet.values.length > 0 && (
+				<FilterBar.Filters fullWidth>
+					<fieldset>
+						<legend className={styles.legend}>{hashtagFacet.label}</legend>
+						<Cluster gap="xs">
+							{hashtagFacet.values.map((value) => (
+								<Button
+									key={value.key}
+									type="button"
+									variant={value.selected ? 'primary' : 'secondary-outline'}
+									aria-pressed={value.selected}
+									onClick={() => onToggleHashtag(Number(value.key))}
+								>
+									#{value.label} ({value.count})
+								</Button>
+							))}
+						</Cluster>
+					</fieldset>
+				</FilterBar.Filters>
 			)}
-		</Stack>
+		</FilterBar>
 	);
 };
 

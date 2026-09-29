@@ -44,7 +44,6 @@ vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 	}),
 }));
 
-vi.mock('./SearchBarDashboard', () => ({ default: () => <div>Search bar</div> }));
 vi.mock('@/components/features/dashboard/DashboardArticleItem', () => ({ default: () => <div>item</div> }));
 vi.mock('@/components/shared/Link', () => ({
 	Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,

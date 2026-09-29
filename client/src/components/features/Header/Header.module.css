@@ -186,13 +186,6 @@
 	background: var(--color-neutral-200);
 }
 
-/* A router-link Button also gets the shared Link's default text colour, which would put dark
-   text on the filled primary button; two classes keep the button's own white text. */
-.account .signUp,
-.account .signUp:hover {
-	color: var(--color-neutral-0);
-}
-
 .userName {
 	font-weight: var(--font-weight-semibold);
 }

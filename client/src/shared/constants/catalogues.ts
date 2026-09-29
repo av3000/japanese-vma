@@ -24,6 +24,15 @@ export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(
 	label,
 }));
 
+/** The type filter's "All" choice. Not a catalogue type, so it sends no `type` param. */
+export const CATALOGUE_TYPE_FILTER_ALL = '';
+
+/** Options for a catalogue type filter: "All", then every custom type as a string select value. */
+export const CATALOGUE_TYPE_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+	{ value: CATALOGUE_TYPE_FILTER_ALL, label: 'All' },
+	...CATALOGUE_TYPE_OPTIONS.map(({ value, label }) => ({ value: String(value), label })),
+];
+
 export const CATALOGUE_ROUTES = {
 	list: '/catalogues',
 	detail: (catalogueId: string) => `/catalogues/${catalogueId}`,

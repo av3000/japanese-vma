@@ -19,8 +19,9 @@ import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
+import { JlptBar } from '@/components/shared/JlptBar';
+import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
-import ArticleStatus from '@/components/ui/article-status';
 import { Badge } from '@/components/ui/badge';
 import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
 import { useAuth } from '@/hooks/useAuth';
@@ -163,8 +164,9 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							{(isOwner || isAdmin) && (
 								<Badge variant="secondary">{article.publicity === 1 ? 'Public' : 'Private'}</Badge>
 							)}
-							{(isOwner || isAdmin) && <ArticleStatus status={article.status} />}
+							{(isOwner || isAdmin) && <StatusPill {...articleStatusPill(article.status)} />}
 						</Cluster>
+						<JlptBar levels={article.jlpt_levels} className={styles.levels} />
 					</div>
 
 					<Cluster gap="xs">

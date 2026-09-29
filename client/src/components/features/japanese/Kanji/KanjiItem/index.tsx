@@ -43,7 +43,9 @@ const KanjiItem: React.FC<KanjiItemProps> = ({
 
 	return (
 		<li className={styles.item}>
-			<h1 lang="ja">{character}</h1>
+			<h2 lang="ja" className={styles.character}>
+				{character}
+			</h2>
 			<h3>{meaning}</h3>
 			<Grid columns={12} gap="md">
 				<Grid.Item span={{ base: 12, sm: 6 }}>

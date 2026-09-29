@@ -5,24 +5,12 @@ import type { ArticlePendingQueryError } from '@/api/generated/article/article';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import type { ArticleModerationListResource } from '@/api/generated/model/articleModerationListResource';
 import type { ArticlePendingParams } from '@/api/generated/model/articlePendingParams';
-import { ArticleStatus } from '@/api/generated/model/articleStatus';
+import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import type { ArticleStatusResource } from '@/api/generated/model/articleStatusResource';
+import { ARTICLE_STATUS } from './articleStatus';
 import { getArticleDetailQueryKey } from './details';
 
-/**
- * Named vocabulary for the generated `ArticleStatus` enum, which orval emits as
- * `NUMBER_0 .. NUMBER_4`. `satisfies` keeps the values pinned to the contract: if the
- * backend enum loses a member, this stops compiling.
- *
- * Mirrors `App\Domain\Shared\Enums\ArticleStatus`.
- */
-export const ARTICLE_STATUS = {
-	PENDING: ArticleStatus.NUMBER_0,
-	PROCESSED: ArticleStatus.NUMBER_1,
-	REVIEWING: ArticleStatus.NUMBER_2,
-	REJECTED: ArticleStatus.NUMBER_3,
-	APPROVED: ArticleStatus.NUMBER_4,
-} as const satisfies Record<string, ArticleStatus>;
+export { ARTICLE_STATUS } from './articleStatus';
 
 /**
  * The statuses `ArticleRepository::findModerationQueue` selects on. An article whose

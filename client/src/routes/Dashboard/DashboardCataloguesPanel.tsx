@@ -1,15 +1,20 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
+import {
+	CatalogueFilters,
+	DEFAULT_CATALOGUE_SEARCH_FILTERS,
+	type CatalogueSearchFilters,
+} from '@/components/features/catalogues/CatalogueFilters';
 import DashboardListItem from '@/components/features/dashboard/DashboardListItem';
 import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Cluster, Stack } from '@/components/shared/layout';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { isCustomCatalogueType } from '@/shared/constants/catalogues';
 import type { User } from '@/types';
 import styles from './Dashboard.module.css';
-import SearchBarDashboard from './SearchBarDashboard';
-import type { SearchFilters } from './SearchBarDashboard';
 
 type DashboardCatalogueFilters = {
 	search?: string;
@@ -24,10 +29,12 @@ interface DashboardCataloguesPanelProps {
 	currentUser: User | null;
 }
 
-// TODO: these not supposed to be magical numbers, use some const typed values
-const LIST_FILTER_TYPES = new Set([5, 6, 7, 8, 9]);
+/** How long the dashboard waits after the last keystroke before it searches. */
+const SEARCH_DEBOUNCE_MS = 300;
 
-export const mapDashboardSearchFiltersToCatalogueFilters = (filters: SearchFilters): DashboardCatalogueFilters => {
+export const mapDashboardSearchFiltersToCatalogueFilters = (
+	filters: CatalogueSearchFilters,
+): DashboardCatalogueFilters => {
 	const keyword = filters.keyword.trim();
 	const parsedType = Number(filters.filterType);
 
@@ -35,15 +42,15 @@ export const mapDashboardSearchFiltersToCatalogueFilters = (filters: SearchFilte
 		search: keyword || undefined,
 		sort_by: filters.sortByWhat === 'pop' ? 'views' : 'created_at',
 		sort_dir: 'desc',
-		type: LIST_FILTER_TYPES.has(parsedType) ? parsedType : undefined,
+		type: isCustomCatalogueType(parsedType) ? parsedType : undefined,
 	};
 };
 
 const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isAuthenticated, currentUser }) => {
-	const [filters, setFilters] = useState<DashboardCatalogueFilters>({
-		sort_by: 'created_at',
-		sort_dir: 'desc',
-	});
+	// The dashboard searches as the user types; Enter or the button catches up at once.
+	const [draft, setDraft] = useState<CatalogueSearchFilters>(DEFAULT_CATALOGUE_SEARCH_FILTERS);
+	const [searchFilters, applyDraft] = useDebouncedValue(draft, SEARCH_DEBOUNCE_MS);
+	const filters = useMemo(() => mapDashboardSearchFiltersToCatalogueFilters(searchFilters), [searchFilters]);
 
 	const queryFilters = useMemo(
 		() => ({
@@ -66,16 +73,12 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ isA
 			enabled: isAuthenticated && !!currentUser?.uuid,
 		});
 
-	const handleFilterResults = useCallback((newFilters: SearchFilters) => {
-		setFilters(mapDashboardSearchFiltersToCatalogueFilters(newFilters));
-	}, []);
-
 	const errorMessage = error instanceof Error ? error.message : 'Failed to load lists.';
 
 	return (
 		<Stack gap="md">
 			<div className={styles.toolbar}>
-				<SearchBarDashboard searchType="lists" filterResults={handleFilterResults} />
+				<CatalogueFilters value={draft} onChange={setDraft} onSubmit={applyDraft} />
 			</div>
 
 			<Stack as="section" gap="md" className={styles.panel}>

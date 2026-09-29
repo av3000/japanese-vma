@@ -16,6 +16,11 @@
 	margin: 0;
 }
 
+.levels {
+	max-width: 24rem;
+	margin-top: var(--spacing-xs);
+}
+
 .cover {
 	display: block;
 	width: 100%;

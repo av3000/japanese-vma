@@ -75,15 +75,9 @@
 	margin-top: var(--skeleton-gap-xs);
 }
 
-.levelRow {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.level {
-	height: 2.25rem;
-	width: 2.25rem;
+.jlptBar {
+	display: block;
+	height: 0.875rem;
 	border-radius: 999px;
 }
 

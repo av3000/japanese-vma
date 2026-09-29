@@ -159,7 +159,7 @@ const Header: React.FC = () => {
 								</NavLink>
 							</li>
 							<li>
-								<Button to="/register" variant="primary" size="sm" className={styles.signUp}>
+								<Button to="/register" variant="primary" size="sm">
 									Sign Up
 								</Button>
 							</li>
