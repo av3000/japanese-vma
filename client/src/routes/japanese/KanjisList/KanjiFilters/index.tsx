@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FilterBar } from '@/components/shared/FilterBar';
 
 export interface KanjiSearchFilters {
@@ -25,16 +25,11 @@ const JLPT_OPTIONS = [
 /**
  * Kanji-specific composition of the shared FilterBar: keyword plus a JLPT level. The URL owns the
  * applied filters (`defaultKeyword`, `defaultJlpt`); the form edits a draft until it is submitted.
+ * The draft starts from those values, so the parent re-keys this component when they change.
  */
 const KanjiFilters: React.FC<KanjiFiltersProps> = ({ defaultKeyword, defaultJlpt, onSearch }) => {
 	const [keyword, setKeyword] = useState(defaultKeyword);
 	const [jlpt, setJlpt] = useState(defaultJlpt);
-
-	// A back/forward navigation or a shared link has to win over whatever is sitting in the form.
-	useEffect(() => {
-		setKeyword(defaultKeyword);
-		setJlpt(defaultJlpt);
-	}, [defaultKeyword, defaultJlpt]);
 
 	return (
 		<FilterBar onSubmit={() => onSearch({ keyword: keyword.trim(), jlpt })} label="Kanji filters">

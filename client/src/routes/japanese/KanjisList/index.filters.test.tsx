@@ -121,6 +121,17 @@ describe('KanjisList filters', () => {
 		expect(appliedParams()).toBe('');
 	});
 
+	it('resets the form to the URL when it changes, such as on browser back', async () => {
+		await mount('keyword=water&jlpt=5');
+		await view.flush(() => typeInto(controlLabelled(view.container, 'Search kanji by keyword'), 'half typed'));
+
+		searchParams = new URLSearchParams('keyword=fire&jlpt=4');
+		await view.rerender(<KanjisList />);
+
+		expect(controlLabelled<HTMLInputElement>(view.container, 'Search kanji by keyword').value).toBe('fire');
+		expect(controlLabelled<HTMLSelectElement>(view.container, 'JLPT level').value).toBe('4');
+	});
+
 	it('fills the form from the URL and sends the same request params', async () => {
 		await mount('keyword=water&jlpt=5');
 

@@ -115,7 +115,12 @@ const KanjisList = () => {
 		<Container className={styles.page}>
 			<Stack gap="2xl">
 				<PageHeader title="Kanji" meta={meta} />
-				<KanjiFilters defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
+				<KanjiFilters
+					key={`${keyword}|${jlpt}`}
+					defaultKeyword={keyword}
+					defaultJlpt={jlpt}
+					onSearch={handleSearch}
+				/>
 				<Stack as="section" gap="md" className={styles.results}>
 					{kanjis.length === 0 ? (
 						<p>No kanjis found.</p>
