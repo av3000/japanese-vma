@@ -22,7 +22,8 @@
 	min-width: 0;
 }
 
-/* Defined here rather than reusing a global utility: the label stays in the accessibility tree. */
+/* Local on purpose: components define their own hidden-label class instead of using the global
+   `u-hide-visually` utility. The label stays in the accessibility tree. */
 .visuallyHidden {
 	position: absolute;
 	width: 1px;

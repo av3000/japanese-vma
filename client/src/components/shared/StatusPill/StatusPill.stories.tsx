@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, within } from '@storybook/test';
-import { ARTICLE_STATUS } from '@/api/articles/moderation';
+import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { articleStatusPill, processingStatusPill, STATUS_TONES, StatusPill } from './';
 

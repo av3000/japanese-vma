@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ARTICLE_STATUS } from '@/api/articles/moderation';
+import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { articleStatusPill, processingStatusPill, STATUS_TONES, StatusPill } from './';
 

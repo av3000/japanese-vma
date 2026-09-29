@@ -3,12 +3,7 @@ import classNames from 'classnames';
 import { Icon, type IconName } from '@/components/shared/Icon';
 import Spinner from '@/components/shared/Spinner';
 import styles from './StatusPill.module.css';
-
-export const STATUS_TONES = ['neutral', 'success', 'warning', 'info', 'danger'] as const;
-export type StatusTone = (typeof STATUS_TONES)[number];
-
-/** An icon from the shared set, or `spinner` for work that is still running. */
-export type StatusPillIcon = IconName | 'spinner';
+import type { StatusPillIcon, StatusTone } from './tones';
 
 export interface StatusPillProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> {
 	tone: StatusTone;
@@ -43,6 +38,8 @@ export const StatusPill: React.FC<StatusPillProps> = ({ tone, label, icon, class
 	);
 };
 
+export { STATUS_TONES } from './tones';
+export type { StatusPillIcon, StatusTone } from './tones';
 export { articleStatusPill, processingStatusPill } from './statusPills';
 export type { ArticleStatusPill, ProcessingStatusPill } from './statusPills';
 

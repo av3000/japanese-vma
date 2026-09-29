@@ -1,7 +1,7 @@
-import { ARTICLE_STATUS } from '@/api/articles/moderation';
+import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
-import type { StatusPillIcon, StatusTone } from './';
+import type { StatusPillIcon, StatusTone } from './tones';
 
 export interface ArticleStatusPill {
 	tone: StatusTone;
