@@ -73,14 +73,26 @@ describe('CataloguesList filters', () => {
 		]);
 	});
 
-	it('requests nothing new until the form is submitted', async () => {
-		await view.flush(() => {
-			typeInto(controlLabelled(view.container, 'Search catalogues'), 'tokyo');
-			choose(controlLabelled(view.container, 'Catalogue type'), '7');
-			choose(controlLabelled(view.container, 'Sort by'), 'pop');
-		});
+	it('waits for Enter or the button before applying a typed keyword', async () => {
+		await view.flush(() => typeInto(controlLabelled(view.container, 'Search catalogues'), 'tokyo'));
 
-		expect(capturedFilters).toMatchObject({ search: undefined, sort_by: 'created_at', type: undefined });
+		expect(capturedFilters).toMatchObject({ search: undefined });
+
+		await view.flush(() => submitForm(form()));
+
+		expect(capturedFilters).toMatchObject({ search: 'tokyo' });
+	});
+
+	it('applies a type or sort change at once, along with the keyword already typed', async () => {
+		await view.flush(() => choose(controlLabelled(view.container, 'Catalogue type'), '7'));
+		expect(capturedFilters).toMatchObject({ search: undefined, type: 7, sort_by: 'created_at' });
+
+		await view.flush(() => choose(controlLabelled(view.container, 'Sort by'), 'pop'));
+		expect(capturedFilters).toMatchObject({ type: 7, sort_by: 'views' });
+
+		await view.flush(() => typeInto(controlLabelled(view.container, 'Search catalogues'), 'tokyo'));
+		await view.flush(() => choose(controlLabelled(view.container, 'Catalogue type'), '9'));
+		expect(capturedFilters).toMatchObject({ search: 'tokyo', type: 9, sort_by: 'views' });
 	});
 
 	it('maps a keyword, a type and a sort onto the same request params as before on submit', async () => {
@@ -105,16 +117,10 @@ describe('CataloguesList filters', () => {
 	});
 
 	it('sends no type when the filter goes back to All', async () => {
-		await view.flush(() => {
-			choose(controlLabelled(view.container, 'Catalogue type'), '9');
-			submitForm(form());
-		});
+		await view.flush(() => choose(controlLabelled(view.container, 'Catalogue type'), '9'));
 		expect(capturedFilters).toMatchObject({ type: 9 });
 
-		await view.flush(() => {
-			choose(controlLabelled(view.container, 'Catalogue type'), '');
-			submitForm(form());
-		});
+		await view.flush(() => choose(controlLabelled(view.container, 'Catalogue type'), ''));
 		expect(capturedFilters).toMatchObject({ type: undefined });
 	});
 });

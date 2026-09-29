@@ -98,6 +98,34 @@ describe('KanjisList filters', () => {
 		expect(appliedParams()).toBe('keyword=water&jlpt=5');
 	});
 
+	it('applies a JLPT level at once, without waiting for the button', async () => {
+		await mount();
+
+		await view.flush(() => choose(controlLabelled(view.container, 'JLPT level'), '3'));
+
+		expect(setSearchParamsMock).toHaveBeenCalledTimes(1);
+		expect(appliedParams()).toBe('jlpt=3');
+	});
+
+	it('applies a typed keyword only on Enter or the button', async () => {
+		await mount();
+
+		await view.flush(() => typeInto(controlLabelled(view.container, 'Search kanji by keyword'), 'water'));
+		expect(setSearchParamsMock).not.toHaveBeenCalled();
+
+		await view.flush(() => submitForm(form()));
+		expect(appliedParams()).toBe('keyword=water');
+	});
+
+	it('keeps a typed keyword when a level is chosen', async () => {
+		await mount();
+
+		await view.flush(() => typeInto(controlLabelled(view.container, 'Search kanji by keyword'), 'water'));
+		await view.flush(() => choose(controlLabelled(view.container, 'JLPT level'), '5'));
+
+		expect(appliedParams()).toBe('keyword=water&jlpt=5');
+	});
+
 	it('writes the Uncommon level as "-"', async () => {
 		await mount();
 

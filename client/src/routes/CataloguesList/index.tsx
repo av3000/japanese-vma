@@ -49,6 +49,16 @@ const CataloguesListPage: React.FC = () => {
 			filters: queryFilters,
 		});
 
+	// A type or sort change applies at once, along with whatever keyword is typed; the keyword alone
+	// waits for Enter or the button.
+	const handleFiltersChange = (next: CatalogueSearchFilters) => {
+		setDraft(next);
+
+		if (next.filterType !== draft.filterType || next.sortByWhat !== draft.sortByWhat) {
+			setFilters(next);
+		}
+	};
+
 	const keyword = typeof filters.keyword === 'string' ? filters.keyword.trim() : '';
 
 	const newCatalogueAction = isAuthenticated ? (
@@ -88,7 +98,7 @@ const CataloguesListPage: React.FC = () => {
 			<Stack gap="md">
 				<PageHeader title="Catalogues" meta={meta} action={newCatalogueAction} />
 
-				<CatalogueFilters value={draft} onChange={setDraft} onSubmit={() => setFilters(draft)} />
+				<CatalogueFilters value={draft} onChange={handleFiltersChange} onSubmit={() => setFilters(draft)} />
 
 				{catalogues.length === 0 ? (
 					<p>No catalogues found.</p>

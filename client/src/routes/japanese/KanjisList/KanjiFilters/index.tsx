@@ -24,8 +24,9 @@ const JLPT_OPTIONS = [
 
 /**
  * Kanji-specific composition of the shared FilterBar: keyword plus a JLPT level. The URL owns the
- * applied filters (`defaultKeyword`, `defaultJlpt`); the form edits a draft until it is submitted.
- * The draft starts from those values, so the parent re-keys this component when they change.
+ * applied filters (`defaultKeyword`, `defaultJlpt`). Choosing a level applies at once, along with
+ * whatever keyword is typed; the keyword alone waits for Enter or the button. The draft starts from
+ * the applied values, so the parent re-keys this component when they change.
  */
 const KanjiFilters: React.FC<KanjiFiltersProps> = ({ defaultKeyword, defaultJlpt, onSearch }) => {
 	const [keyword, setKeyword] = useState(defaultKeyword);
@@ -46,7 +47,10 @@ const KanjiFilters: React.FC<KanjiFiltersProps> = ({ defaultKeyword, defaultJlpt
 					name="jlpt"
 					value={jlpt}
 					options={JLPT_OPTIONS}
-					onChange={setJlpt}
+					onChange={(nextJlpt) => {
+						setJlpt(nextJlpt);
+						onSearch({ keyword: keyword.trim(), jlpt: nextJlpt });
+					}}
 				/>
 			</FilterBar.Filters>
 		</FilterBar>
