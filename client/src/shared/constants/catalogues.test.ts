@@ -6,6 +6,7 @@ import {
 	isCatalogueRouteUuid,
 	parseCatalogueLegacyId,
 	isCustomCatalogueType,
+	resolveCatalogueFamily,
 	resolveCataloguePdfExportKind,
 	resolveCatalogueTypeLabel,
 } from './catalogues';
@@ -58,6 +59,26 @@ describe('catalogue constants', () => {
 		expect(resolveCataloguePdfExportKind(10)).toBeNull();
 		expect(resolveCataloguePdfExportKind(11)).toBeNull();
 		expect(isCataloguePdfExportSupported(9)).toBe(false);
+	});
+
+	it.each([
+		[1, 'radicals'],
+		[5, 'radicals'],
+		[2, 'kanji'],
+		[6, 'kanji'],
+		[3, 'words'],
+		[7, 'words'],
+		[4, 'sentences'],
+		[8, 'sentences'],
+		[9, 'articles'],
+	] as const)('folds catalogue type %i into the %s family', (type, family) => {
+		expect(resolveCatalogueFamily(type)).toBe(family);
+	});
+
+	it('has no family for lyrics, artists or an unknown type', () => {
+		expect(resolveCatalogueFamily(10)).toBeNull();
+		expect(resolveCatalogueFamily(11)).toBeNull();
+		expect(resolveCatalogueFamily(0)).toBeNull();
 	});
 
 	it('treats UUID-like params as canonical identifiers and numeric params as legacy aliases', () => {

@@ -16,6 +16,7 @@ const meta = {
 	args: { levels: typicalArticle, size: 'default' },
 	argTypes: {
 		size: { control: 'inline-radio', options: ['default', 'compact'] },
+		counts: { control: 'inline-radio', options: ['kanji', 'words'] },
 	},
 	decorators: [
 		(Story) => (
@@ -33,6 +34,14 @@ type Story = StoryObj<typeof meta>;
 export const TypicalArticle: Story = {
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByRole('img', { name: /Mostly N3/ })).toBeVisible();
+	},
+};
+
+/** A Words or Sentences catalogue: the accessible name says it counts words. */
+export const CountsWords: Story = {
+	args: { counts: 'words' },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('img', { name: /^Mostly N3 words:/ })).toBeVisible();
 	},
 };
 

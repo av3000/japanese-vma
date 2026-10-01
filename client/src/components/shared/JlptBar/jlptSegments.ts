@@ -50,11 +50,25 @@ export const toJlptSegments = (levels: ArticleResourceJlptLevels): JlptSegment[]
 		.filter((segment) => segment.count > 0);
 };
 
-/** e.g. `Mostly N3: N5 12, N4 8, N3 15, uncommon 2`. */
-export const jlptBarLabel = (segments: JlptSegment[], dominant: JlptLevel | null): string => {
+/** What the bar counts. Articles and Kanji catalogues count kanji; Words and Sentences catalogues count words. */
+export type JlptBarCounts = 'kanji' | 'words';
+
+/**
+ * e.g. `Mostly N3: N5 12, N4 8, N3 15, uncommon 2`. Kanji keeps its original wording, so the
+ * article callers read exactly as before; words say so: `Mostly N3 words: …`.
+ */
+export const jlptBarLabel = (
+	segments: JlptSegment[],
+	dominant: JlptLevel | null,
+	counts: JlptBarCounts = 'kanji',
+): string => {
 	const parts = segments
 		.map((segment) => `${segment.level === 'uncommon' ? 'uncommon' : segment.label} ${segment.count}`)
 		.join(', ');
+
+	if (counts === 'words') {
+		return dominant ? `Mostly ${dominant} words: ${parts}` : `Words by JLPT level: ${parts}`;
+	}
 
 	return dominant ? `Mostly ${dominant}: ${parts}` : `Kanji by JLPT level: ${parts}`;
 };
