@@ -93,6 +93,7 @@ const createCatalogue = (overrides: Partial<CatalogueDetailResource> = {}): Cata
 		is_liked_by_viewer: true,
 	},
 	items: [],
+	jlpt_levels: null,
 	created_at: '2026-04-01T12:00:00.000Z',
 	updated_at: '2026-04-02T12:00:00.000Z',
 	...overrides,

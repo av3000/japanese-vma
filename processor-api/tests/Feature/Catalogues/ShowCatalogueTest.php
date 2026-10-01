@@ -89,6 +89,8 @@ class ShowCatalogueTest extends TestCase
             ->assertJsonPath('engagement.downloads_count', 0)
             ->assertJsonPath('engagement.comments_count', 0)
             ->assertJsonPath('engagement.is_liked_by_viewer', false)
+            // Radicals carry no JLPT data (#386).
+            ->assertJsonPath('jlpt_levels', null)
             ->assertJsonPath('items', []);
 
         $payload = $response->json();
@@ -105,6 +107,7 @@ class ShowCatalogueTest extends TestCase
             'items_count',
             'hashtags',
             'engagement',
+            'jlpt_levels',
             'items',
             'created_at',
             'updated_at',

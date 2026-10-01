@@ -34,6 +34,7 @@ class CatalogueDetailResource extends JsonResource
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
      *     engagement: CatalogueDetailEngagementResource|null,
+     *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int}|null,
      *     items: array<int, mixed>,
      *     created_at: string,
      *     updated_at: string
@@ -61,6 +62,7 @@ class CatalogueDetailResource extends JsonResource
             'items_count' => $detail->itemsCount,
             'hashtags' => HashtagResource::collection($detail->hashtags),
             'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),
+            'jlpt_levels' => CatalogueResource::jlptLevels($detail->jlptLevels),
             // TODO: add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type.
             'items' => $detail->items,
             'created_at' => $catalogue->getCreatedAt()->format('c'),

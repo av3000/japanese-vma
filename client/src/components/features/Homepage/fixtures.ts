@@ -64,6 +64,7 @@ export const makeCatalogue = (overrides: Partial<CatalogueResource> = {}): Catal
 	items_count: 42,
 	hashtags: [],
 	engagement: { likes_count: '12', views_count: '1532', downloads_count: '3', comments_count: '2' },
+	jlpt_levels: null,
 	created_at: '2026-09-01T09:00:00Z',
 	updated_at: '2026-09-01T09:00:00Z',
 	...overrides,
