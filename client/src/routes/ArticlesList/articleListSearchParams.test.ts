@@ -143,6 +143,14 @@ describe('mapArticleFiltersToGeneratedParams', () => {
 			mapArticleFiltersToGeneratedParams(emptyArticleListFilterState(), { includeFacets: true }).include_facets,
 		).toBe(true);
 	});
+
+	/** No card reads them, and each article's kanji list weighed about 38 KB on the wire (#385). */
+	it('never asks for the attached kanji or word lists', () => {
+		const params = mapArticleFiltersToGeneratedParams(emptyArticleListFilterState(), { includeFacets: true });
+
+		expect(params).not.toHaveProperty('include_kanjis');
+		expect(params).not.toHaveProperty('include_words');
+	});
 });
 
 describe('filter transitions', () => {

@@ -155,7 +155,6 @@ export const mapArticleFiltersToGeneratedParams = (
 	sort: state.sort,
 	per_page: DEFAULT_PER_PAGE,
 	include_stats_counts: true,
-	include_kanjis: true,
 	include_facets: options.includeFacets ?? false,
 });
 
