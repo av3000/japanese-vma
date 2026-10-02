@@ -13,7 +13,8 @@ const initialValues: PostFormValues = {
 const baseProps = {
 	initialValues,
 	onSubmit: () => {},
-	submitLabel: 'Create Post',
+	submitLabel: 'Publish post',
+	cancel: <a href="/community">Cancel</a>,
 };
 
 describe('PostForm', () => {
@@ -31,8 +32,8 @@ describe('PostForm', () => {
 
 		// react-hook-form applies defaultValues through the field ref, so a static render leaves the
 		// inputs empty; the counters are what prove the values reached form state.
-		expect(html).toContain('25/255');
-		expect(html).toContain('39/15000');
+		expect(html).toContain('25 / 255');
+		expect(html).toContain('39 / 15000');
 		// The tags control renders its value directly.
 		expect(html).toContain('howto');
 	});
@@ -46,19 +47,22 @@ describe('PostForm', () => {
 	it('disables submit while a write is in flight, so a second submit cannot start', () => {
 		const html = renderToStaticMarkup(<PostForm {...baseProps} isSubmitting />);
 
-		expect(html).toContain('disabled');
-		expect(html).not.toContain('>Create Post<');
+		expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled=""/);
 	});
 
-	it('disables submit on a pristine edit form, which would otherwise send an empty update body', () => {
-		const html = renderToStaticMarkup(<PostForm {...baseProps} submitLabel="Update Post" disableSubmitWhenUnchanged />);
+	it('keeps submit enabled on a pristine edit form; the form says "No changes to save." instead', () => {
+		const html = renderToStaticMarkup(<PostForm {...baseProps} submitLabel="Save changes" requireChanges />);
 
-		expect(html).toContain('disabled');
+		expect(html).toMatch(/<button[^>]*type="submit"/);
+		expect(html).not.toMatch(/<button[^>]*type="submit"[^>]*disabled/);
 	});
 
-	it('renders a status message from a rejected write', () => {
-		const html = renderToStaticMarkup(<PostForm {...baseProps} statusMessage="This post is not yours." />);
+	it('puts topic and tags in a Settings card after the title and text', () => {
+		const html = renderToStaticMarkup(<PostForm {...baseProps} />);
 
-		expect(html).toContain('This post is not yours.');
+		expect(html).toMatch(/<h2[^>]*>Settings<\/h2>/);
+		expect(html.indexOf('>Text<')).toBeLessThan(html.indexOf('>Settings<'));
+		expect(html.indexOf('>Settings<')).toBeLessThan(html.indexOf('>Topic<'));
+		expect(html).toContain('Be kind. Posts can be locked by moderators.');
 	});
 });

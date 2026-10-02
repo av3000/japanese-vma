@@ -58,7 +58,7 @@ describe('PostForm route', () => {
 		expect(render()).toContain('PostForm');
 		expect(capturedProps[0]).toMatchObject({
 			initialValues: { title: '', content: '', topic: 1, tags: [] },
-			submitLabel: 'Create Post',
+			submitLabel: 'Publish post',
 		});
 	});
 
