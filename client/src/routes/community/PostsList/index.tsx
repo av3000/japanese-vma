@@ -9,7 +9,7 @@ import {
 import PostItem from '@/components/features/community/PostItem';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
-import { Link } from '@/components/shared/Link';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,16 +33,32 @@ const PostsList = () => {
 		setSearchParams(new URLSearchParams());
 	};
 
+	const newPostAction = isAuthenticated ? (
+		<Button to={POST_ROUTES.create} variant="primary">
+			New post
+		</Button>
+	) : undefined;
+
 	// Only the very first load has nothing to show. Filter changes and background refetches keep the
 	// previous page rendered instead of dropping back to this loader.
 	if (isPending && posts.length === 0) {
-		return <PageLoading family="list" />;
+		return (
+			<Container size="md" className={styles.page}>
+				<Stack gap="md">
+					<PageHeader title="Community" action={newPostAction} />
+					<PageLoading family="list" />
+				</Stack>
+			</Container>
+		);
 	}
 
 	if (isError && posts.length === 0) {
 		return (
 			<Container size="md" className={styles.page}>
-				<p className={styles.centered}>Posts could not be loaded. {error?.message}</p>
+				<Stack gap="md">
+					<PageHeader title="Community" action={newPostAction} />
+					<p className={styles.centered}>Posts could not be loaded. {error?.message}</p>
+				</Stack>
 			</Container>
 		);
 	}
@@ -52,6 +68,7 @@ const PostsList = () => {
 	return (
 		<Container size="md" className={styles.page}>
 			<Stack gap="md">
+				<PageHeader title="Community" action={newPostAction} />
 				<PostsSearchBar
 					// Remount the control when the URL changes so its inputs follow back/forward navigation.
 					key={searchParams.toString()}
@@ -62,14 +79,6 @@ const PostsList = () => {
 					}}
 					onSearch={handleSearch}
 				/>
-
-				{isAuthenticated && (
-					<div className={styles.centered}>
-						<Link to={POST_ROUTES.create} className="tag-link">
-							Create post
-						</Link>
-					</div>
-				)}
 
 				<Stack gap="xs" align="start" className={styles.results}>
 					{hasActiveFilters && (
