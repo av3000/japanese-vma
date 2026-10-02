@@ -1,0 +1,33 @@
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  <url>
+    <loc>https://news.web.nhk/newsweb/na/nd-20261002de00002</loc>
+    <lastmod>2026-10-02T21:10+09:00</lastmod>
+    <news:news>
+      <news:publication><news:name>NHK NEWS WEB</news:name><news:language>ja</news:language></news:publication>
+      <news:publication_date>2026-10-02T21:10+09:00</news:publication_date>
+      <news:title>図書館で夜の読書会 若者の参加が増える</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://news.web.nhk/newsweb/na/nd-20261002de00003</loc>
+    <lastmod>2026-10-02T22:30+09:00</lastmod>
+    <news:news>
+      <news:publication><news:name>NHK NEWS WEB</news:name><news:language>ja</news:language></news:publication>
+      <news:publication_date>2026-10-02T22:30+09:00</news:publication_date>
+      <news:title>新しい路面電車 来春から試験運行へ</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://news.web.nhk/newsweb/na/nd-20261002de00001</loc>
+    <lastmod>2026-10-02T18:00+09:00</lastmod>
+    <news:news>
+      <news:publication><news:name>NHK NEWS WEB</news:name><news:language>ja</news:language></news:publication>
+      <news:publication_date>2026-10-02T18:00+09:00</news:publication_date>
+      <news:title>山あいの村で米の収穫祭</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://news.web.nhk/newsweb/live/some-live-page</loc>
+    <lastmod>2026-10-02T23:00+09:00</lastmod>
+  </url>
+</urlset>

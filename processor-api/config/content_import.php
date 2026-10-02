@@ -38,6 +38,31 @@ return [
         'excluded_genres' => [],
     ],
 
-    'sources' => [],
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP manners
+    |--------------------------------------------------------------------------
+    */
+
+    'http' => [
+        'request_interval_ms' => (int) env('CONTENT_IMPORT_REQUEST_INTERVAL_MS', 1000),
+        'timeout_seconds' => 15,
+    ],
+
+    'sources' => [
+
+        // NHK News: excerpt only (headline, NHK's own lead, link). Read from the Google News
+        // sitemap and each page's NewsArticle JSON-LD on news.web.nhk; api.web.nhk is off limits
+        // because its robots.txt disallows every user agent.
+        'nhk-news' => [
+            'adapter' => App\Infrastructure\ContentImport\Sources\Nhk\NhkNewsAdapter::class,
+            'sitemap_url' => 'https://news.web.nhk/sitemap/sitemap-news-nationwide-article.xml',
+            // NHK truncates its leads at about 100 characters, so the bar for "too short to be
+            // more than a bulletin" sits lower than the default.
+            'min_lead_length' => 40,
+            'excluded_genres' => ['気象・災害'],
+        ],
+
+    ],
 
 ];

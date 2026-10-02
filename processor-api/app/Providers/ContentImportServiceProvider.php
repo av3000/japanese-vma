@@ -14,10 +14,15 @@ use App\Application\ContentImport\Services\ContentImportService;
 use App\Application\ContentImport\Services\ContentImportServiceInterface;
 use App\Infrastructure\ContentImport\ConfigContentSourceAdapterRegistry;
 use App\Infrastructure\ContentImport\DatabaseSystemAuthorProvider;
+use App\Infrastructure\ContentImport\Http\PoliteHttpClient;
+use App\Infrastructure\ContentImport\Http\RobotsTxtPolicy;
+use App\Infrastructure\ContentImport\Sources\Nhk\NhkArticlePageParser;
+use App\Infrastructure\ContentImport\Sources\Nhk\NhkNewsAdapter;
 use App\Infrastructure\ContentImport\Tagging\NullArticleTagger;
 use App\Infrastructure\Persistence\Readers\DatabaseImportedArticleReader;
 use App\Infrastructure\Persistence\Repositories\ContentSourceRepository;
 use App\Infrastructure\Persistence\Repositories\ImportRunRepository;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -34,5 +39,24 @@ class ContentImportServiceProvider extends ServiceProvider
         $this->app->bind(SystemAuthorProviderInterface::class, DatabaseSystemAuthorProvider::class);
         $this->app->bind(ContentSourceAdapterRegistryInterface::class, ConfigContentSourceAdapterRegistry::class);
         $this->app->bind(ArticleTaggerInterface::class, NullArticleTagger::class);
+
+        $this->app->bind(PoliteHttpClient::class, fn ($app): PoliteHttpClient => new PoliteHttpClient(
+            $app->make(HttpFactory::class),
+            (int) config('content_import.http.request_interval_ms', 1000),
+            (int) config('content_import.http.timeout_seconds', 15),
+        ));
+
+        $this->app->bind(NhkNewsAdapter::class, function ($app): NhkNewsAdapter {
+            // One client per adapter, shared with its robots policy: a run has one throttle and
+            // one robots.txt cache across all of its requests.
+            $http = $app->make(PoliteHttpClient::class);
+
+            return new NhkNewsAdapter(
+                $http,
+                new RobotsTxtPolicy($http),
+                $app->make(NhkArticlePageParser::class),
+                (string) config('content_import.sources.'.NhkNewsAdapter::KEY.'.sitemap_url'),
+            );
+        });
     }
 }
