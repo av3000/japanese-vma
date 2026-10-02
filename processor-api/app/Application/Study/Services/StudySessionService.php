@@ -102,7 +102,9 @@ final class StudySessionService implements StudySessionServiceInterface
         /** @var StudySession $session */
         $session = $sessionResult->getData();
 
-        if ($session->isCompleted()) {
+        // The score is fixed once the first pass is complete, so no more first-pass answers.
+        // "Retry missed" rounds (attempt_no 2 and up) happen after that and are still history.
+        if ($session->isCompleted() && $attempt->attemptNo === 1) {
             return Result::failure(StudyErrors::sessionCompleted($sessionUuid->value()));
         }
 

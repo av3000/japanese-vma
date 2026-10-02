@@ -214,7 +214,7 @@ class StudySessionV1Test extends TestCase
         $this->assertSame(0, StudyAttempt::query()->count());
     }
 
-    public function test_attempt_after_completion_is_a_conflict(): void
+    public function test_first_pass_attempt_after_completion_is_a_conflict_but_retry_rounds_are_kept(): void
     {
         $user = User::factory()->create();
         $session = StudySession::factory()->byUser($user)->completed()->create();
@@ -223,6 +223,11 @@ class StudySessionV1Test extends TestCase
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())
             ->assertStatus(409)
             ->assertJsonPath('title', 'Study session already completed');
+
+        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['attempt_no' => 2]))
+            ->assertStatus(201);
+
+        $this->assertDatabaseHas('study_attempts', ['session_id' => $session->id, 'attempt_no' => 2]);
     }
 
     public function test_attempt_validation(): void

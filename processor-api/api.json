@@ -3536,7 +3536,7 @@
         "/study/sessions/{uuid}/attempts": {
             "post": {
                 "operationId": "studySession.storeAttempt",
-                "summary": "Record one answer. 201 when stored, 200 when the same `(item_id, attempt_no)` was\nalready recorded, so a retried request is harmless. 409 once the session is complete",
+                "summary": "Record one answer. 201 when stored, 200 when the same `(item_id, attempt_no)` was\nalready recorded, so a retried request is harmless. 409 for a first-pass answer\n(`attempt_no` 1) once the session is complete; \"retry missed\" rounds are still accepted",
                 "tags": [
                     "StudySession"
                 ],

@@ -56,7 +56,8 @@ class StudySessionController extends Controller
 
     /**
      * Record one answer. 201 when stored, 200 when the same `(item_id, attempt_no)` was
-     * already recorded, so a retried request is harmless. 409 once the session is complete.
+     * already recorded, so a retried request is harmless. 409 for a first-pass answer
+     * (`attempt_no` 1) once the session is complete; "retry missed" rounds are still accepted.
      *
      * @response array{}
      */

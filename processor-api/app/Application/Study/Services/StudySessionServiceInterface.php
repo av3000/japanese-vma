@@ -23,7 +23,9 @@ interface StudySessionServiceInterface
 
     /**
      * A session that is not the caller's answers Study.SessionNotFound, never 403: the
-     * endpoint must not confirm that someone else's session uuid exists.
+     * endpoint must not confirm that someone else's session uuid exists. A first-pass
+     * attempt (attempt_no 1) on a completed session is Study.SessionCompleted; retry rounds
+     * (attempt_no 2 and up) are accepted after completion.
      *
      * @return Result<bool> true when a row was written, false when the attempt already existed.
      */
