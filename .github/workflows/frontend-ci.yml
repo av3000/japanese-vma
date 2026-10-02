@@ -212,7 +212,6 @@ jobs:
           fi
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        env:
           VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
           VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
 

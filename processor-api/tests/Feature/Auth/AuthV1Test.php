@@ -122,6 +122,39 @@ class AuthV1Test extends TestCase
             ->assertJsonValidationErrors('password');
     }
 
+    /**
+     * The register form shows these messages under the password field, so a missing translation
+     * would put `validation.password.mixed` on screen. Laravel skips the breach check once another
+     * rule fails, so this request never leaves the test.
+     */
+    public function test_register_explains_every_broken_password_rule_in_words(): void
+    {
+        $response = $this->postJson('/api/v1/register', $this->registrationPayload(['password' => '!!!!!!!!', 'password_confirmation' => '!!!!!!!!']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('password');
+
+        $messages = $response->json('errors.password');
+
+        self::assertContains('The password field must contain at least one letter.', $messages);
+        self::assertContains('The password field must contain at least one uppercase and one lowercase letter.', $messages);
+        self::assertContains('The password field must contain at least one number.', $messages);
+
+        foreach ($messages as $message) {
+            self::assertStringStartsNotWith('validation.', $message);
+        }
+    }
+
+    /**
+     * The breach check needs the network, so its message is pinned through the translator instead
+     * of a live request.
+     */
+    public function test_every_password_rule_message_has_a_translation(): void
+    {
+        foreach (['letters', 'mixed', 'numbers', 'symbols', 'uncompromised'] as $rule) {
+            self::assertNotSame("validation.password.{$rule}", __("validation.password.{$rule}"));
+        }
+    }
+
     public function test_register_requires_a_confirmed_password(): void
     {
         $this->postJson('/api/v1/register', $this->registrationPayload(['password_confirmation' => self::VALID_PASSWORD.'mismatch']))
