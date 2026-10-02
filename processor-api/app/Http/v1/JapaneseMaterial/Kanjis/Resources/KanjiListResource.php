@@ -40,8 +40,9 @@ class KanjiListResource extends JsonResource
         $result = $this->resource;
 
         return [
+            /** @var array<int, KanjiResource> */
             'items' => array_map(
-                fn(Kanji $kanji): KanjiResource => (new KanjiResource($kanji))
+                fn (Kanji $kanji): KanjiResource => (new KanjiResource($kanji))
                     ->withViewerCatalogueState(
                         $this->viewerCatalogueStates[$kanji->getIdValue()] ?? null,
                     ),

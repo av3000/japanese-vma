@@ -2,14 +2,14 @@ import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
+import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
+import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
 import { getKanjiDisplayValues } from '@/api/kanjis/display';
 import {
 	KANJI_VIEWER_CATALOGUE_INCLUDE,
 	applyKanjiViewerCatalogueState,
 	getInfiniteKanjisQueryKey,
 	type KanjiListFilters,
-	type KanjiListResponse,
-	type KanjiViewerCatalogueState,
 	useInfiniteKanjis,
 } from '@/api/kanjis/hooks/useInfiniteKanjis';
 import Spinner from '@/assets/images/spinner.gif';
@@ -72,8 +72,8 @@ const KanjisList = () => {
 		setSearchParams(nextParams);
 	};
 
-	const handleKanjiBookmarkStateChange = (kanjiId: number, state: KanjiViewerCatalogueState) => {
-		queryClient.setQueryData<InfiniteData<KanjiListResponse>>(getInfiniteKanjisQueryKey(filters), (data) =>
+	const handleKanjiBookmarkStateChange = (kanjiId: number, state: ViewerCatalogueStateResource) => {
+		queryClient.setQueryData<InfiniteData<KanjiListResource>>(getInfiniteKanjisQueryKey(filters), (data) =>
 			applyKanjiViewerCatalogueState(data, kanjiId, state),
 		);
 	};

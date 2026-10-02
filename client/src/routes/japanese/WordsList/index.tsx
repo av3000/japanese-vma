@@ -8,7 +8,9 @@ import {
 	getInfiniteWordsQueryKey,
 	useInfiniteWords,
 } from '@/api/words/hooks/useInfiniteWords';
-import type { WordListFilters, WordListResponse, WordViewerCatalogueState } from '@/api/words/hooks/useInfiniteWords';
+import type { WordListFilters } from '@/api/words/hooks/useInfiniteWords';
+import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
+import type { WordListResource } from '@/api/generated/model/wordListResource';
 import Spinner from '@/assets/images/spinner.gif';
 import WordItem from '@/components/features/japanese/word/WordItem';
 import { Alert } from '@/components/shared/Alert';
@@ -51,8 +53,8 @@ const WordsList: React.FC = () => {
 		setSearchParams(nextParams);
 	};
 
-	const handleWordBookmarkStateChange = (wordId: number, state: WordViewerCatalogueState) => {
-		queryClient.setQueryData<InfiniteData<WordListResponse>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
+	const handleWordBookmarkStateChange = (wordId: number, state: ViewerCatalogueStateResource) => {
+		queryClient.setQueryData<InfiniteData<WordListResource>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
 			applyWordViewerCatalogueState(data, wordId, state),
 		);
 	};

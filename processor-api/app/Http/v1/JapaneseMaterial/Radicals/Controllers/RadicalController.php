@@ -8,11 +8,9 @@ use App\Application\JapaneseMaterial\Radicals\Services\RadicalServiceInterface;
 use App\Domain\JapaneseMaterial\Radicals\Queries\RadicalQueryCriteria;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\JapaneseMaterial\Radicals\Requests\IndexRadicalRequest;
 use App\Http\v1\JapaneseMaterial\Radicals\Resources\RadicalListResource;
 use App\Http\v1\JapaneseMaterial\Radicals\Resources\RadicalResource;
-use App\Http\v1\Shared\Resources\PaginationResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
@@ -22,22 +20,10 @@ class RadicalController extends Controller
 {
     public function __construct(
         private readonly RadicalServiceInterface $radicalService,
-    ) {}
+    ) {
+    }
 
-    /**
-     * @response array{
-     *     items: array<int, array{
-     *         id: int,
-     *         uuid: string,
-     *         radical: string|null,
-     *         strokes: int|null,
-     *         meaning: string|null,
-     *         hiragana: string|null
-     *     }>,
-     *     pagination: PaginationResource
-     * }
-     */
-    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, radical: string|null, strokes: int|null, meaning: string|null, hiragana: string|null}>, pagination: PaginationResource}')]
+    #[Response(type: 'RadicalListResource')]
     public function index(IndexRadicalRequest $request): JsonResponse|JsonResource
     {
         $validated = $request->validated();
@@ -61,18 +47,7 @@ class RadicalController extends Controller
         return new RadicalListResource($result->getData());
     }
 
-    /**
-     * @response array{
-     *     id: int,
-     *     uuid: string,
-     *     radical: string|null,
-     *     strokes: int|null,
-     *     meaning: string|null,
-     *     hiragana: string|null,
-     *     kanjis: array<int, KanjiResource>
-     * }
-     */
-    #[Response(type: 'array{id: int, uuid: string, radical: string|null, strokes: int|null, meaning: string|null, hiragana: string|null, kanjis: array<int, KanjiResource>}')]
+    #[Response(type: 'RadicalResource')]
     public function show(string $identifier): JsonResponse|JsonResource
     {
         $result = $this->radicalService->findByIdentifier($identifier, withKanjis: true);

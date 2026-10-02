@@ -10,6 +10,13 @@ use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * The class-level `@property` lets Scramble resolve `$this->resource` when it infers this
+ * component; without it every property degrades to `string`. Same pattern as `KanjiResource`
+ * and `SentenceResource`.
+ *
+ * @property DomainRadical $resource
+ */
 class RadicalResource extends JsonResource
 {
     public static $wrap = null;
@@ -17,8 +24,7 @@ class RadicalResource extends JsonResource
     public function __construct(
         DomainRadical $resource,
         private readonly bool $includeKanjis = false,
-    )
-    {
+    ) {
         parent::__construct($resource);
     }
 
@@ -38,22 +44,24 @@ class RadicalResource extends JsonResource
         /** @var DomainRadical $radical */
         $radical = $this->resource;
 
-        $payload = [
+        // `kanjis` goes through `when` rather than a conditional assignment: Scramble then
+        // documents the key as optional and types its items, where the assignment left it
+        // untyped and required.
+        return [
             'id' => $radical->getIdValue(),
             'uuid' => $radical->getUuid()->value(),
             'radical' => $radical->getRadical(),
             'strokes' => $radical->getStrokes(),
             'meaning' => $radical->getMeaning(),
             'hiragana' => $radical->getHiragana(),
+            /** @var array<int, KanjiResource> */
+            'kanjis' => $this->when(
+                $this->includeKanjis,
+                fn (): array => array_map(
+                    fn (DomainKanji $kanji): KanjiResource => new KanjiResource($kanji),
+                    $radical->getKanjis(),
+                ),
+            ),
         ];
-
-        if ($this->includeKanjis) {
-            $payload['kanjis'] = array_map(
-                fn (DomainKanji $kanji): KanjiResource => new KanjiResource($kanji),
-                $radical->getKanjis(),
-            );
-        }
-
-        return $payload;
     }
 }

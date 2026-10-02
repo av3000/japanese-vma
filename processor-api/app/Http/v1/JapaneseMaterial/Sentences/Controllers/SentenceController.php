@@ -18,7 +18,6 @@ use App\Http\v1\JapaneseMaterial\Sentences\Requests\StoreSentenceRequest;
 use App\Http\v1\JapaneseMaterial\Sentences\Requests\UpdateSentenceRequest;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceListResource;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceResource;
-use App\Http\v1\Shared\Resources\PaginationResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Auth\AuthenticationException;
@@ -33,19 +32,7 @@ class SentenceController extends Controller
     ) {
     }
 
-    /**
-     * @response array{
-     *     items: array<int, array{
-     *         id: int,
-     *         uuid: string,
-     *         user_id: int|null,
-     *         tatoeba_entry: string|null,
-     *         content: string
-     *     }>,
-     *     pagination: PaginationResource
-     * }
-     */
-    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, user_id: int|null, tatoeba_entry: string|null, content: string}>, pagination: PaginationResource}')]
+    #[Response(type: 'SentenceListResource')]
     public function index(IndexSentenceRequest $request): JsonResponse|JsonResource
     {
         $validated = $request->validated();

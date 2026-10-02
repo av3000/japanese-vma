@@ -17,24 +17,34 @@ class WordDetailResource extends JsonResource
 {
     public static $wrap = null;
 
+    /**
+     * The word's own fields come from `WordResource` through `merge`, and the optional
+     * includes through `when`, so the documented schema is derived from the same code that
+     * builds the payload instead of a second, hand-written shape.
+     */
     public function toArray(Request $request): array
     {
-        $payload = (new WordResource($this->resource->word))->resolve($request);
+        $kanjis = $this->resource->kanjis;
+        $articles = $this->resource->articles;
 
-        if ($this->resource->kanjis !== null) {
-            $payload['kanjis'] = array_map(
-                static fn (Kanji $kanji): array => (new KanjiResource($kanji))->resolve($request),
-                $this->resource->kanjis,
-            );
-        }
-
-        if ($this->resource->articles !== null) {
-            $payload['articles'] = array_map(
-                static fn (ArticleListItemDTO $article): array => (new RelatedArticleSummaryResource($article))->resolve($request),
-                $this->resource->articles,
-            );
-        }
-
-        return $payload;
+        return [
+            $this->merge((new WordResource($this->resource->word))->toArray($request)),
+            /** @var array<int, KanjiResource> */
+            'kanjis' => $this->when(
+                $kanjis !== null,
+                static fn (): array => array_map(
+                    static fn (Kanji $kanji): KanjiResource => new KanjiResource($kanji),
+                    $kanjis ?? [],
+                ),
+            ),
+            /** @var array<int, RelatedArticleSummaryResource> */
+            'articles' => $this->when(
+                $articles !== null,
+                static fn (): array => array_map(
+                    static fn (ArticleListItemDTO $article): RelatedArticleSummaryResource => new RelatedArticleSummaryResource($article),
+                    $articles ?? [],
+                ),
+            ),
+        ];
     }
 }

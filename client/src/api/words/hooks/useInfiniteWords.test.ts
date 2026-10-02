@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { WordIndex200 } from '@/api/generated/model/wordIndex200';
+import type { WordListResource } from '@/api/generated/model/wordListResource';
 import {
 	applyWordViewerCatalogueState,
 	getInfiniteWordsQueryKey,
 	getNextWordsPageParam,
 	getWordsTotal,
-	type WordListResponse,
 } from './useInfiniteWords';
 
-const createWordListResponse = (overrides: Partial<WordListResponse> = {}): WordListResponse => ({
+const createWordListResponse = (overrides: Partial<WordListResource> = {}): WordListResource => ({
 	items: [
 		{
 			id: 1,
@@ -67,7 +66,7 @@ describe('useInfiniteWords helpers', () => {
 	});
 
 	it('reads total from the first page', () => {
-		expect(getWordsTotal([createWordListResponse() as WordIndex200])).toBe(11);
+		expect(getWordsTotal([createWordListResponse() as WordListResource])).toBe(11);
 	});
 
 	it('returns zero total before pages load', () => {
