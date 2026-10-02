@@ -2131,6 +2131,87 @@
                 }
             }
         },
+        "/catalogues/{uuid}/flashcards": {
+            "get": {
+                "operationId": "flashcardDeck.show",
+                "description": "Public for public catalogues; private catalogues answer 403 to anyone but the owner\nor an admin. The deck is shuffled with `seed` and cut to `count`; the same seed\nreproduces the same deck, which is how \"retry missed\" works.",
+                "summary": "Read a catalogue as a flashcard deck",
+                "tags": [
+                    "FlashcardDeck"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prompt",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/FlashcardField"
+                        }
+                    },
+                    {
+                        "name": "answer",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/FlashcardField"
+                        }
+                    },
+                    {
+                        "name": "mode",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/AnswerMode"
+                        }
+                    },
+                    {
+                        "name": "script",
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/ScriptStrictness"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "seed",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 2147483647
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FlashcardDeckResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FlashcardDeckResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/kanjis": {
             "get": {
                 "operationId": "kanji.index",
@@ -4464,6 +4545,15 @@
     },
     "components": {
         "schemas": {
+            "AnswerMode": {
+                "type": "string",
+                "description": "| |\n|---|\n| `options` <br/> Four options, one correct. |\n| `typed` <br/> The learner types the answer; graded by the client. |",
+                "enum": [
+                    "options",
+                    "typed"
+                ],
+                "title": "AnswerMode"
+            },
             "ArticleAppliedCriteriaResource": {
                 "type": "object",
                 "properties": {
@@ -5721,6 +5811,194 @@
                 ],
                 "title": "EngagementStatsSummaryResource"
             },
+            "FlashcardDeckResource": {
+                "type": "object",
+                "properties": {
+                    "catalogue": {
+                        "type": "object",
+                        "properties": {
+                            "uuid": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "integer"
+                            },
+                            "type_label": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "uuid",
+                            "title",
+                            "type",
+                            "type_label"
+                        ]
+                    },
+                    "config": {
+                        "type": "object",
+                        "properties": {
+                            "prompt": {
+                                "$ref": "#/components/schemas/FlashcardField"
+                            },
+                            "answer": {
+                                "$ref": "#/components/schemas/FlashcardField"
+                            },
+                            "mode": {
+                                "$ref": "#/components/schemas/AnswerMode"
+                            },
+                            "script": {
+                                "$ref": "#/components/schemas/ScriptStrictness"
+                            },
+                            "count": {
+                                "type": "integer"
+                            },
+                            "seed": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "prompt",
+                            "answer",
+                            "mode",
+                            "script",
+                            "count",
+                            "seed"
+                        ]
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FlashcardResource"
+                        }
+                    },
+                    "total_items": {
+                        "type": "integer"
+                    },
+                    "eligible_items": {
+                        "type": "integer"
+                    },
+                    "excluded": {
+                        "type": "object",
+                        "properties": {
+                            "empty_answer_field": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "empty_answer_field"
+                        ]
+                    }
+                },
+                "required": [
+                    "catalogue",
+                    "config",
+                    "cards",
+                    "total_items",
+                    "eligible_items",
+                    "excluded"
+                ],
+                "title": "FlashcardDeckResource"
+            },
+            "FlashcardField": {
+                "type": "string",
+                "description": "What a flashcard shows (prompt) or asks for (answer). The same vocabulary serves both sides; a valid card uses two different fields, see FlashcardConfig.\n| |\n|---|\n| `character` <br/> The kanji glyph, the radical glyph, or the word's written surface. |\n| `meaning` <br/> English meaning(s). |\n| `onyomi` <br/> Kanji on'yomi, stored in katakana. |\n| `kunyomi` <br/> Kanji kun'yomi, stored in hiragana with a dot before the okurigana. |\n| `reading` <br/> Word furigana or radical reading. |",
+                "enum": [
+                    "character",
+                    "meaning",
+                    "onyomi",
+                    "kunyomi",
+                    "reading"
+                ],
+                "title": "FlashcardField"
+            },
+            "FlashcardResource": {
+                "type": "object",
+                "properties": {
+                    "item_id": {
+                        "type": "integer"
+                    },
+                    "item_uuid": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "object",
+                        "properties": {
+                            "text": {
+                                "type": "string"
+                            },
+                            "hint": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "text",
+                            "hint"
+                        ]
+                    },
+                    "accepted_answers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "display_answer": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "jlpt": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "grade": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "strokes": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "jlpt",
+                            "grade",
+                            "strokes"
+                        ]
+                    }
+                },
+                "required": [
+                    "item_id",
+                    "item_uuid",
+                    "prompt",
+                    "accepted_answers",
+                    "display_answer",
+                    "options",
+                    "meta"
+                ],
+                "title": "FlashcardResource"
+            },
             "HashtagResource": {
                 "type": "object",
                 "properties": {
@@ -6646,6 +6924,15 @@
                     "is_system_role"
                 ],
                 "title": "RoleResource"
+            },
+            "ScriptStrictness": {
+                "type": "string",
+                "description": "Whether a typed kana answer must be in the script the field is defined by. On'yomi is katakana and kun'yomi is hiragana; `strict` holds the learner to that, `lenient` accepts either script. Word and radical readings are always lenient.\n",
+                "enum": [
+                    "strict",
+                    "lenient"
+                ],
+                "title": "ScriptStrictness"
             },
             "SentenceResource": {
                 "type": "object",

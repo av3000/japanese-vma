@@ -197,6 +197,24 @@ class CatalogueService implements CatalogueServiceInterface
     }
 
     /**
+     * @return Result<Catalogue>
+     */
+    public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result
+    {
+        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+        if (! $catalogue) {
+            return Result::failure(CatalogueErrors::notFound($uuid->value()));
+        }
+
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
+            return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+        }
+
+        return Result::success($catalogue);
+    }
+
+    /**
      * @return Result<CatalogueLegacyIdentityDTO>
      */
     public function resolveLegacyIdentity(int $legacyId, ?AuthenticatedUser $authenticatedUser = null): Result

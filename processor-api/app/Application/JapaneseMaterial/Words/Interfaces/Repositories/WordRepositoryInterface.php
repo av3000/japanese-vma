@@ -18,6 +18,12 @@ interface WordRepositoryInterface
     public function findBySurface(string $surface): ?Word;
 
     /**
+     * @param  int[]  $ids
+     * @return list<Word> Domain models, in no particular order.
+     */
+    public function findByIds(array $ids): array;
+
+    /**
      * Character length of the longest dictionary entry; 0 when the dictionary is empty.
      * Word extraction uses it to bound how far a candidate substring can grow.
      */
