@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ScopedSearch, scopedSearchUrl } from './index';
+import { ScopedSearch } from './index';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -18,30 +18,6 @@ const must = <T,>(element: T | null): T => {
 	if (element === null) throw new Error('Expected element to be rendered');
 	return element;
 };
-
-describe('scopedSearchUrl', () => {
-	it.each([
-		['articles', '/articles?q=%E6%B0%B4'],
-		['kanji', '/kanjis?keyword=%E6%B0%B4'],
-		['words', '/words?keyword=%E6%B0%B4'],
-		['sentences', '/sentences?keyword=%E6%B0%B4'],
-		['radicals', '/radicals?keyword=%E6%B0%B4'],
-	] as const)('sends %s to its list with the trimmed keyword', (scope, url) => {
-		expect(scopedSearchUrl(scope, '  水 ')).toBe(url);
-	});
-
-	it.each(['articles', 'kanji', 'words', 'sentences', 'radicals'] as const)(
-		'opens the %s list unfiltered for an empty or whitespace-only keyword',
-		(scope) => {
-			expect(scopedSearchUrl(scope, '')).not.toContain('?');
-			expect(scopedSearchUrl(scope, '   ')).not.toContain('?');
-		},
-	);
-
-	it('passes a short Articles keyword through; the list enforces its own minimum', () => {
-		expect(scopedSearchUrl('articles', 'a')).toBe('/articles?q=a');
-	});
-});
 
 describe('ScopedSearch', () => {
 	let container: HTMLDivElement;

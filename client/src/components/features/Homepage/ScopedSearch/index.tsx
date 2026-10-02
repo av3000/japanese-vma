@@ -1,18 +1,16 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
-import { Button } from '@/components/shared/Button';
-import { Input, Label } from '@/components/shared/FormControls';
-import styles from './ScopedSearch.module.css';
 import {
 	DEFAULT_SEARCH_SCOPE,
 	findSearchScope,
 	SEARCH_SCOPES,
 	scopedSearchUrl,
 	type SearchScope,
-} from './scopedSearchUrl';
-
-export { DEFAULT_SEARCH_SCOPE, SEARCH_SCOPES, scopedSearchUrl, type SearchScope } from './scopedSearchUrl';
+} from '@/components/features/HeaderSearch/searchScopes';
+import { Button } from '@/components/shared/Button';
+import { Input, Label } from '@/components/shared/FormControls';
+import styles from './ScopedSearch.module.css';
 
 export interface ScopedSearchProps {
 	/** Scope selected on first render. Not persisted; defaults to Articles. */
@@ -30,7 +28,7 @@ export const ScopedSearch: React.FC<ScopedSearchProps> = ({ defaultScope = DEFAU
 	const [keyword, setKeyword] = React.useState('');
 	const id = React.useId();
 	const inputId = `${id}-keyword`;
-	const current = findSearchScope(scope);
+	const placeholder = `Search ${findSearchScope(scope).label.toLowerCase()}`;
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -58,14 +56,14 @@ export const ScopedSearch: React.FC<ScopedSearchProps> = ({ defaultScope = DEFAU
 
 			<div className={styles.query}>
 				<Label htmlFor={inputId} className={styles.visuallyHidden}>
-					{current.placeholder}
+					{placeholder}
 				</Label>
 				<Input
 					id={inputId}
 					type="search"
 					name="keyword"
 					autoComplete="off"
-					placeholder={current.placeholder}
+					placeholder={placeholder}
 					value={keyword}
 					onChange={(event) => setKeyword(event.target.value)}
 				/>
