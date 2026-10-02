@@ -16,6 +16,7 @@ use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleAuthor;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -129,7 +130,8 @@ class ArticleController extends Controller
     {
         $createDTO = ArticleCreateDTO::fromRequest($request->validated());
 
-        $result = $this->articleService->createArticle($createDTO, $this->requiredAuthenticatedUser());
+        $user = $this->requiredAuthenticatedUser();
+        $result = $this->articleService->createArticle($createDTO, new ArticleAuthor($user->id, $user->name, $user->uuid));
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());

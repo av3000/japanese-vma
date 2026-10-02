@@ -1,0 +1,5 @@
+User-agent: GPTBot
+User-agent: ClaudeBot
+Disallow: /
+
+Sitemap: https://news.web.nhk/sitemap.xml

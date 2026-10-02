@@ -54,4 +54,19 @@ describe('ArticleCard', () => {
 
 		expect(html).not.toContain('data-icon=');
 	});
+	it('credits the source of an imported article with a text badge', () => {
+		const html = render(
+			makeArticle({
+				origin: 'imported',
+				source: { key: 'nhk-news', name: 'NHK News', homepage_url: 'https://news.web.nhk/newsweb' },
+			}),
+		);
+
+		expect(html).toContain('title="Imported from NHK News"');
+		expect(html).toContain('>NHK News<');
+	});
+
+	it('shows no source badge on an article a person wrote', () => {
+		expect(render(makeArticle())).not.toContain('Imported from');
+	});
 });

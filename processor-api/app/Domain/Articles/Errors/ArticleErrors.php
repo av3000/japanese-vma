@@ -73,6 +73,17 @@ class ArticleErrors
         );
     }
 
+    public static function alreadyImported(string $externalId): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.AlreadyImported',
+            status: HttpStatus::CONFLICT,
+            description: 'Article already imported',
+            detail: "An article with external id {$externalId} already exists for this content source",
+            errorMessage: "An article with external id {$externalId} already exists for this content source",
+        );
+    }
+
     public static function creationFailed(): ResultError
     {
         return new ResultError(

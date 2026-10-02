@@ -90,3 +90,7 @@
 	margin-right: var(--size-xs);
 	text-align: center;
 }
+
+.sourceBadge {
+	margin-inline-start: var(--spacing-xs);
+}
