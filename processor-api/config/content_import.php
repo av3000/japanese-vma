@@ -26,6 +26,7 @@ return [
     | max_listed       Listed articles one run may look at, filtered or not.
     | min_lead_length  Leads shorter than this (characters) are one-line bulletins; skipped.
     | excluded_genres  An article is skipped only when every one of its genres is listed here.
+    | stalled_after_runs  Warn when this many successful runs in a row created nothing.
     |
     | A source entry overrides any of these and names its adapter class.
     |
@@ -36,6 +37,7 @@ return [
         'max_listed' => 100,
         'min_lead_length' => 60,
         'excluded_genres' => [],
+        'stalled_after_runs' => 3,
     ],
 
     /*

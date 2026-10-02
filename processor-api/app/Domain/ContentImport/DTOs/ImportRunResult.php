@@ -22,6 +22,8 @@ final readonly class ImportRunResult
         public bool $dryRun,
         public array $items,
         public ?string $error = null,
+        // True when this and the runs before it created nothing for the configured number of runs.
+        public bool $stalled = false,
     ) {
     }
 

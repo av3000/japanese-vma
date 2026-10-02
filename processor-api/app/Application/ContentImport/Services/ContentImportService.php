@@ -110,15 +110,48 @@ class ContentImportService implements ContentImportServiceInterface
 
         $result = new ImportRunResult($sourceKey, $status, $dryRun, $items, $error);
 
-        if ($runId !== null) {
-            $this->runs->finish($runId, $result);
+        if ($runId === null) {
+            return Result::success($result);
         }
 
-        return Result::success($result);
+        $this->runs->finish($runId, $result);
+
+        return Result::success(new ImportRunResult(
+            $sourceKey,
+            $status,
+            $dryRun,
+            $items,
+            $error,
+            $this->hasStalled($source, $settings['stalled_after_runs']),
+        ));
     }
 
     /**
-     * @param array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>} $settings
+     * An unofficial source rarely breaks with an error; it breaks by quietly yielding nothing.
+     * Several successful runs in a row that created nothing are reported as a warning.
+     */
+    private function hasStalled(ContentSourceDTO $source, int $runs): bool
+    {
+        if ($runs < 1) {
+            return false;
+        }
+
+        $counts = $this->runs->recentCreatedCounts($source->id, $runs);
+
+        if (count($counts) < $runs || array_sum($counts) > 0) {
+            return false;
+        }
+
+        Log::warning('Content import has created nothing for several runs', [
+            'source' => $source->key,
+            'runs' => $runs,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * @param array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>, stalled_after_runs: int} $settings
      */
     private function importOne(
         ContentSourceDTO $source,
@@ -188,7 +221,7 @@ class ContentImportService implements ContentImportServiceInterface
     }
 
     /**
-     * @return array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>}
+     * @return array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>, stalled_after_runs: int}
      */
     private function settings(string $sourceKey): array
     {
@@ -201,6 +234,7 @@ class ContentImportService implements ContentImportServiceInterface
             'max_listed' => (int) ($merged['max_listed'] ?? 100),
             'min_lead_length' => (int) ($merged['min_lead_length'] ?? 60),
             'excluded_genres' => array_values((array) ($merged['excluded_genres'] ?? [])),
+            'stalled_after_runs' => (int) ($merged['stalled_after_runs'] ?? 3),
         ];
     }
 }
