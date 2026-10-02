@@ -9,4 +9,5 @@ export {
 	TextLink,
 } from './cells';
 export { DICTIONARY_PER_PAGE, DictionaryListPage, LoadMore, emptySearch, showingCount } from './DictionaryListPage';
+export { KeywordFilters } from './KeywordFilters';
 export { presentRank, presentText, presentValues, toJlptLevel } from './listValues';

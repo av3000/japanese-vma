@@ -88,4 +88,9 @@
 	.glyph {
 		font-size: 36px;
 	}
+
+	/* Stacked rows are narrower than 14em at 320px: the cell width is the cap there. */
+	.whole {
+		max-width: 100%;
+	}
 }
