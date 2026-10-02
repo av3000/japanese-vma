@@ -3493,6 +3493,168 @@
                 }
             }
         },
+        "/study/sessions": {
+            "post": {
+                "operationId": "studySession.store",
+                "summary": "Start a study session for a catalogue the caller may see",
+                "tags": [
+                    "StudySession"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStudySessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`UuidCreatedResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UuidCreatedResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/study/sessions/{uuid}/attempts": {
+            "post": {
+                "operationId": "studySession.storeAttempt",
+                "summary": "Record one answer. 201 when stored, 200 when the same `(item_id, attempt_no)` was\nalready recorded, so a retried request is harmless. 409 once the session is complete",
+                "tags": [
+                    "StudySession"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStudyAttemptRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "minItems": 0,
+                                    "maxItems": 0,
+                                    "additionalItems": false
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "minItems": 0,
+                                    "maxItems": 0,
+                                    "additionalItems": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/study/sessions/{uuid}/complete": {
+            "post": {
+                "operationId": "studySession.complete",
+                "summary": "Close the session with its final score. Idempotent",
+                "tags": [
+                    "StudySession"
+                ],
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CompleteStudySessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StudySessionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StudySessionResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/users/{uuid}": {
             "get": {
                 "operationId": "user.show",
@@ -5696,6 +5858,20 @@
                 ],
                 "title": "CommentViewerResource"
             },
+            "CompleteStudySessionRequest": {
+                "type": "object",
+                "properties": {
+                    "correct_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    }
+                },
+                "required": [
+                    "correct_count"
+                ],
+                "title": "CompleteStudySessionRequest"
+            },
             "CorpusStatsResource": {
                 "type": "object",
                 "properties": {
@@ -7182,6 +7358,151 @@
                     "content"
                 ],
                 "title": "StoreSentenceRequest"
+            },
+            "StoreStudyAttemptRequest": {
+                "type": "object",
+                "properties": {
+                    "item_id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "attempt_no": {
+                        "type": "integer",
+                        "description": "1 for the first pass, 2 for \"retry missed\" within the same session, and so on.",
+                        "minimum": 1,
+                        "maximum": 20
+                    },
+                    "given_answer": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "is_correct": {
+                        "type": "boolean"
+                    },
+                    "response_ms": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 3600000
+                    },
+                    "expected_answers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 500
+                        },
+                        "minItems": 1,
+                        "maxItems": 50
+                    }
+                },
+                "required": [
+                    "item_id",
+                    "is_correct",
+                    "expected_answers"
+                ],
+                "title": "StoreStudyAttemptRequest"
+            },
+            "StoreStudySessionRequest": {
+                "type": "object",
+                "properties": {
+                    "catalogue_uuid": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "prompt": {
+                        "$ref": "#/components/schemas/FlashcardField"
+                    },
+                    "answer": {
+                        "$ref": "#/components/schemas/FlashcardField"
+                    },
+                    "mode": {
+                        "$ref": "#/components/schemas/AnswerMode"
+                    },
+                    "script": {
+                        "$ref": "#/components/schemas/ScriptStrictness"
+                    },
+                    "card_count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                    }
+                },
+                "required": [
+                    "catalogue_uuid",
+                    "prompt",
+                    "answer",
+                    "mode",
+                    "card_count"
+                ],
+                "title": "StoreStudySessionRequest"
+            },
+            "StudySessionResource": {
+                "type": "object",
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "catalogue_uuid": {
+                        "type": "string"
+                    },
+                    "catalogue_type": {
+                        "type": "integer"
+                    },
+                    "config": {
+                        "type": "object",
+                        "properties": {
+                            "prompt": {
+                                "$ref": "#/components/schemas/FlashcardField"
+                            },
+                            "answer": {
+                                "$ref": "#/components/schemas/FlashcardField"
+                            },
+                            "mode": {
+                                "$ref": "#/components/schemas/AnswerMode"
+                            },
+                            "script": {
+                                "$ref": "#/components/schemas/ScriptStrictness"
+                            }
+                        },
+                        "required": [
+                            "prompt",
+                            "answer",
+                            "mode",
+                            "script"
+                        ]
+                    },
+                    "card_count": {
+                        "type": "integer"
+                    },
+                    "correct_count": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "started_at": {
+                        "type": "string"
+                    },
+                    "completed_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "uuid",
+                    "catalogue_uuid",
+                    "catalogue_type",
+                    "config",
+                    "card_count",
+                    "correct_count",
+                    "started_at",
+                    "completed_at"
+                ],
+                "title": "StudySessionResource"
             },
             "UpdateArticleRequest": {
                 "type": "object",

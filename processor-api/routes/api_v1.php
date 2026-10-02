@@ -14,6 +14,7 @@ use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
 use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
 use App\Http\v1\Study\Controllers\FlashcardDeckController;
+use App\Http\v1\Study\Controllers\StudySessionController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -198,6 +199,15 @@ Route::prefix('v1')->group(function () {
 
         // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
+
+        // Study sessions (epic #413): what a signed-in learner did with a deck. Visitors
+        // play public decks without any of these. A session that is not the caller's
+        // answers 404, not 403, so the endpoint cannot confirm foreign session uuids.
+        Route::post('study/sessions', [StudySessionController::class, 'store']);
+        Route::post('study/sessions/{uuid}/attempts', [StudySessionController::class, 'storeAttempt'])
+            ->whereUuid('uuid');
+        Route::post('study/sessions/{uuid}/complete', [StudySessionController::class, 'complete'])
+            ->whereUuid('uuid');
 
         // ============================================
         // ADMIN-ONLY ROUTES
