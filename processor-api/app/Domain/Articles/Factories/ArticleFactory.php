@@ -41,7 +41,7 @@ class ArticleFactory
             jlptLevels: JlptLevels::empty(),
             createdAt: new \DateTimeImmutable(),
             updatedAt: new \DateTimeImmutable(),
-            provenance: ArticleProvenance::user(),
+            provenance: $dto->provenance ?? ArticleProvenance::user(),
         );
     }
 }
