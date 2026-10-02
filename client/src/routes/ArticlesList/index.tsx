@@ -4,13 +4,14 @@ import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
 import type { ArticleIndexJlptLevelsItem } from '@/api/generated/model/articleIndexJlptLevelsItem';
 import type { ArticleIndexSort } from '@/api/generated/model/articleIndexSort';
 import Spinner from '@/assets/images/spinner.gif';
+import ArticleCard from '@/components/features/LibraryCards/ArticleCard';
+import { LibraryCardGrid, LibraryEmptyState, LibraryPage } from '@/components/features/LibraryCards/LibraryLayout';
 import ArticleFilters from '@/components/features/articles/ArticleFilters';
 import { Alert } from '@/components/shared/Alert';
-import ArticleCard from '@/components/shared/ArticleCard';
 import { Button } from '@/components/shared/Button';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { Cluster, Container, Grid, Stack } from '@/components/shared/layout';
+import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import styles from './ArticlesList.module.css';
 import ArticlesListSkeleton from './ArticlesListSkeleton/ArticlesListSkeleton';
@@ -23,6 +24,19 @@ import {
 	toggleJlptLevel,
 	type ArticleListFilterState,
 } from './articleListSearchParams';
+
+/** What the empty list says: a search, other filters, or no articles at all. */
+const emptyState = (state: ArticleListFilterState) => {
+	if (state.q !== '') {
+		return { title: 'No articles match', term: state.q, hint: 'Try a shorter search, or clear the filters.' };
+	}
+
+	if (state.jlptLevels.length > 0 || state.hashtagIds.length > 0) {
+		return { title: 'No articles match these filters', hint: 'Try fewer filters, or clear them.' };
+	}
+
+	return { title: 'No articles yet', hint: 'Articles you and others publish appear here.' };
+};
 
 /**
  * Article discovery.
@@ -92,23 +106,19 @@ const ArticleList: React.FC = () => {
 
 	if (isPending && articles.length === 0) {
 		return (
-			<Container className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Articles" action={newArticleAction} />
-					<PageLoading family="list" visual={<ArticlesListSkeleton />} />
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Articles" action={newArticleAction} />
+				<PageLoading family="list" visual={<ArticlesListSkeleton />} />
+			</LibraryPage>
 		);
 	}
 
 	if (isError) {
 		return (
-			<Container className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Articles" action={newArticleAction} />
-					<Alert tone="danger">Error: {error.message}</Alert>
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Articles" action={newArticleAction} />
+				<Alert tone="danger">Error: {error.message}</Alert>
+			</LibraryPage>
 		);
 	}
 
@@ -116,34 +126,35 @@ const ArticleList: React.FC = () => {
 		.filter(Boolean)
 		.join(' · ');
 
+	const empty = emptyState(filterState);
+
 	return (
-		<Container className={styles.page}>
-			{/* No per-article sockets here (#263): the polling fallback keeps badges current. */}
-			<Stack gap="md">
-				<PageHeader title="Articles" meta={meta} action={newArticleAction} />
+		// No per-article sockets here (#263): the polling fallback keeps badges current.
+		<LibraryPage>
+			<PageHeader title="Articles" meta={meta} action={newArticleAction} />
 
-				<ArticleFilters
-					state={filterState}
-					facets={facets}
-					onSearch={handleSearch}
-					onToggleJlptLevel={handleToggleJlptLevel}
-					onToggleHashtag={handleToggleHashtag}
-					onSortChange={handleSortChange}
-					onReset={handleReset}
-				/>
+			<ArticleFilters
+				state={filterState}
+				facets={facets}
+				onSearch={handleSearch}
+				onToggleJlptLevel={handleToggleJlptLevel}
+				onToggleHashtag={handleToggleHashtag}
+				onSortChange={handleSortChange}
+				onReset={handleReset}
+			/>
 
-				{articles.length === 0 ? (
-					<p>No articles found.</p>
-				) : (
-					<Grid as="ul" columns={{ base: 2, sm: 3, md: 4 }} gap="lg" className={styles.list}>
-						{articles.map((article) => (
-							<Grid.Item as="li" span="auto" key={article.id}>
-								<ArticleCard article={article} />
-							</Grid.Item>
-						))}
-					</Grid>
-				)}
+			{articles.length === 0 ? (
+				<LibraryEmptyState {...empty} />
+			) : (
+				<LibraryCardGrid>
+					{articles.map((article) => (
+						<ArticleCard key={article.id} article={article} />
+					))}
+				</LibraryCardGrid>
+			)}
 
+			{/* The empty state already says there is nothing; "No more results" under it is noise. */}
+			{articles.length > 0 && (
 				<Cluster justify="center" className={styles.loadMore}>
 					{isFetchingNextPage ? (
 						<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
@@ -159,8 +170,8 @@ const ArticleList: React.FC = () => {
 						<span className={styles.muted}>No more results</span>
 					)}
 				</Cluster>
-			</Stack>
-		</Container>
+			)}
+		</LibraryPage>
 	);
 };
 

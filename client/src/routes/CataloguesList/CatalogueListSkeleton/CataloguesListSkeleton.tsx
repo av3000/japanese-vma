@@ -1,6 +1,7 @@
 import classNames from 'classnames';
-import { CatalogueCardSkeleton } from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton';
-import skeletonStyles from '@/components/features/catalogues/CatalogueCard/CatalogueCardSkeleton.module.css';
+import { CatalogueCardSkeleton } from '@/components/features/LibraryCards/CatalogueCard/CatalogueCardSkeleton';
+import skeletonStyles from '@/components/features/LibraryCards/LibraryCardSkeleton.module.css';
+import { LibraryCardGrid } from '@/components/features/LibraryCards/LibraryLayout';
 import { Grid, Stack } from '@/components/shared/layout';
 import styles from './CataloguesListSkeleton.module.css';
 
@@ -28,13 +29,11 @@ const CataloguesListSkeleton = () => (
 			))}
 		</Grid>
 
-		<Grid columns={12} gap="lg">
-			{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }).map((_, index) => (
-				<Grid.Item key={index} span={{ base: 6, sm: 4, md: 3 }}>
-					<CatalogueCardSkeleton />
-				</Grid.Item>
+		<LibraryCardGrid>
+			{Array.from({ length: CATALOGUES_LIST_SKELETON_COUNT }, (_, index) => (
+				<CatalogueCardSkeleton key={index} />
 			))}
-		</Grid>
+		</LibraryCardGrid>
 	</Stack>
 );
 

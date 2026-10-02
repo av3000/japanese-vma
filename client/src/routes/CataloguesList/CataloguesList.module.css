@@ -1,23 +1,17 @@
-.page {
-	padding-block: var(--spacing-lg) var(--spacing-2xl);
-}
-
 .pager {
 	display: flex;
 	justify-content: center;
-	margin-top: var(--spacing-xs);
+	padding-block: var(--spacing-sm) var(--spacing-lg);
 }
 
 .loadMore {
-	width: 50%;
+	min-width: 50%;
+}
+
+.loadMoreSpinner {
+	height: var(--size-3xl);
 }
 
 .muted {
 	color: var(--color-neutral-600);
-}
-
-.cards {
-	margin: 0;
-	padding: 0;
-	list-style: none;
 }

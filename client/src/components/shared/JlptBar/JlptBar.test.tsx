@@ -71,6 +71,21 @@ describe('JlptBar', () => {
 		expect(html).toContain('aria-label="Kanji by JLPT level: uncommon 4"');
 	});
 
+	it('says it counts words when told to, in both label forms', () => {
+		expect(renderToStaticMarkup(<JlptBar counts="words" levels={levels({ n5: 4, n3: 9 })} />)).toContain(
+			'aria-label="Mostly N3 words: N5 4, N3 9"',
+		);
+		expect(renderToStaticMarkup(<JlptBar counts="words" levels={levels({ uncommon: 4 })} />)).toContain(
+			'aria-label="Words by JLPT level: uncommon 4"',
+		);
+	});
+
+	it('keeps the kanji wording when told it counts kanji', () => {
+		expect(renderToStaticMarkup(<JlptBar counts="kanji" levels={levels({ n5: 4, n3: 9 })} />)).toContain(
+			'aria-label="Mostly N3: N5 4, N3 9"',
+		);
+	});
+
 	it('hides segments and printed counts from assistive technology, in display order', () => {
 		const html = renderToStaticMarkup(<JlptBar levels={levels({ n1: 3, n5: 7, uncommon: 1 })} />);
 
