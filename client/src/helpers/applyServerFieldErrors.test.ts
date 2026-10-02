@@ -67,4 +67,11 @@ describe('fieldErrorMessages', () => {
 			'B.',
 		]);
 	});
+
+	it('collects per-item and whole-list errors of an array field', () => {
+		expect(fieldErrorMessages([undefined, { type: 'too_big', message: 'Too long.' }])).toEqual(['Too long.']);
+		expect(fieldErrorMessages({ root: { type: 'too_big', message: 'Too many tags.' } })).toEqual([
+			'Too many tags.',
+		]);
+	});
 });

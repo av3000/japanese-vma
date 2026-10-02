@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getArticleDetailQueryKey, MappedArticle } from '@/api/articles/details';
 import { articleKeys } from '@/api/articles/keys';
+import { readArticleWriteError, type ArticleWriteFailure } from '@/api/articles/writes';
 import { articleUpdate } from '@/api/generated/article/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
@@ -9,8 +10,8 @@ import {
 	type ArticleFormSubmitMeta,
 	type ArticleFormValues,
 } from '@/components/features/articles/ArticleForm';
+import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
-import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
 import type { ModalController } from '@/hooks/useModal';
 
 interface ArticleEditModalProps {
@@ -38,8 +39,7 @@ const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): U
 
 export default function ArticleEditModal({ article, controller }: ArticleEditModalProps) {
 	const queryClient = useQueryClient();
-	const [status, setStatus] = useState<string | null>(null);
-	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
+	const [failure, setFailure] = useState<ArticleWriteFailure | null>(null);
 
 	const initialValues: ArticleFormValues = useMemo(
 		() => ({
@@ -57,34 +57,17 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 	const updateMutation = useMutation({
 		mutationFn: (payload: UpdateArticleRequest) => articleUpdate(article.uuid, payload),
 		onSuccess: () => {
-			setStatus(null);
-			setServerErrors(null);
+			setFailure(null);
 			queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(article.uuid) });
 			queryClient.invalidateQueries({ queryKey: articleKeys.lists() });
 			controller.close();
 		},
-		onError: (err: any) => {
-			const data = err?.response?.data;
-			if (isHttpValidationProblemDetails(data)) {
-				setServerErrors(data.errors);
-				setStatus(data.title ?? 'Validation failed');
-				return;
-			}
-
-			setServerErrors(null);
-			setStatus('Something went wrong. Please try again.');
-			console.error(err);
-		},
+		onError: (error) => setFailure(readArticleWriteError(error)),
 	});
 
+	// The form refuses an unchanged submit itself (`requireChanges`), so dirtyKeys is never empty here.
 	const handleSubmit = (values: ArticleFormValues, meta: ArticleFormSubmitMeta) => {
-		setStatus(null);
-		setServerErrors(null);
-
-		if (meta.dirtyKeys.length === 0) {
-			setStatus('No changes to update.');
-			return;
-		}
+		setFailure(null);
 
 		const payload = buildUpdatePayload(values, meta.dirtyKeys);
 
@@ -108,11 +91,17 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 					initialValues={initialValues}
 					onSubmit={handleSubmit}
 					isSubmitting={updateMutation.isPending}
-					submitLabel="Update"
-					serverErrors={serverErrors}
-					statusMessage={status}
+					submitLabel="Save changes"
+					failure={failure}
 					requireEnglishTitle
-					disableSubmitWhenUnchanged
+					requireChanges
+					stacked
+					note={<p>Changing the Japanese title or text runs the kanji and word analysis again.</p>}
+					cancel={
+						<Button variant="ghost" type="button" onClick={controller.close}>
+							Cancel
+						</Button>
+					}
 				/>
 			</DialogModal.Body>
 		</DialogModal>

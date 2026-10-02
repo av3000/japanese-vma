@@ -49,13 +49,20 @@ export function applyServerFieldErrors<TValues extends FieldValues>(
 
 /**
  * Every message on a field, for `FormField`'s `error`. Server errors set by `applyServerFieldErrors`
- * carry all their messages under `types`; a client error carries one `message`.
+ * carry all their messages under `types`; a client error carries one `message`. An array field
+ * (tags) can also carry one error per item, or one for the whole list under `root`.
  */
-export const fieldErrorMessages = (error: FieldError | undefined): string[] => {
-	if (!error) return [];
-	if (!error.types) return error.message ? [error.message] : [];
+export const fieldErrorMessages = (error: unknown): string[] => {
+	if (!error || typeof error !== 'object') return [];
+	if (Array.isArray(error)) return [...new Set(error.flatMap(fieldErrorMessages))];
 
-	return Object.values(error.types).flatMap((value) =>
-		typeof value === 'string' ? [value] : Array.isArray(value) ? value : [],
-	);
+	const { message, types, root } = error as Partial<FieldError> & { root?: FieldError };
+	if (types) {
+		return Object.values(types).flatMap((value) =>
+			typeof value === 'string' ? [value] : Array.isArray(value) ? value : [],
+		);
+	}
+	if (typeof message === 'string' && message) return [message];
+
+	return fieldErrorMessages(root);
 };
