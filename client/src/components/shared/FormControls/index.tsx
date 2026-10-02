@@ -150,6 +150,64 @@ export const FieldMessage: React.FC<FieldMessageProps> = ({
 	);
 };
 
+/* FormField -------------------------------------------------------------- */
+
+/** Props a `FormField` hands to its control. Spread them onto `Input`, `Textarea` or `Select`. */
+export interface FormFieldControlProps {
+	id: string;
+	'aria-describedby'?: string;
+	isInvalid: boolean;
+}
+
+export interface FormFieldProps {
+	label: React.ReactNode;
+	/** Muted helper text under the control. Stays visible when an error shows. */
+	hint?: React.ReactNode;
+	/** One message or several; each renders on its own line. Empty values count as no error. */
+	error?: string | string[];
+	/** Control id. Defaults to a generated one. */
+	id?: string;
+	className?: string;
+	children: (control: FormFieldControlProps) => React.ReactNode;
+}
+
+const toMessages = (error: FormFieldProps['error']): string[] =>
+	(Array.isArray(error) ? error : [error]).filter((message): message is string => Boolean(message));
+
+/**
+ * Label, control, hint and error with the ids wired up: the label points at the control, and the
+ * control's `aria-describedby` lists the hint and then the error, so assistive technology reads why
+ * a field is invalid. The control is a render prop so `react-hook-form`'s `register()` spreads
+ * alongside the wiring.
+ */
+export const FormField: React.FC<FormFieldProps> = ({ label, hint, error, id, className, children }) => {
+	const generatedId = React.useId();
+	const controlId = id ?? generatedId;
+	const hintId = `${controlId}-hint`;
+	const errorId = `${controlId}-error`;
+	const messages = toMessages(error);
+	const hasHint = hint !== undefined && hint !== null && hint !== false && hint !== '';
+	const isInvalid = messages.length > 0;
+	const describedBy = [hasHint && hintId, isInvalid && errorId].filter(Boolean).join(' ') || undefined;
+
+	return (
+		<Field className={className}>
+			<Label htmlFor={controlId}>{label}</Label>
+			{children({ id: controlId, 'aria-describedby': describedBy, isInvalid })}
+			{hasHint ? <FieldMessage id={hintId}>{hint}</FieldMessage> : null}
+			{isInvalid ? (
+				<div id={errorId}>
+					{messages.map((message) => (
+						<FieldMessage key={message} tone="error">
+							{message}
+						</FieldMessage>
+					))}
+				</div>
+			) : null}
+		</Field>
+	);
+};
+
 /* InputGroup ------------------------------------------------------------- */
 
 export type InputGroupProps = React.HTMLAttributes<HTMLDivElement>;
