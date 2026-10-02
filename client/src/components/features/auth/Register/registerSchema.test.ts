@@ -83,6 +83,14 @@ describe('registerSchema', () => {
 		]);
 	});
 
+	it('only asks for a value when username or email is empty', () => {
+		const empty = { name: '', email: '', password: '', password_confirmation: '' };
+
+		expect(messagesFor(empty, 'name')).toEqual(['Choose a username.']);
+		expect(messagesFor(empty, 'email')).toEqual(['Enter your email.']);
+		expect(messagesFor(empty, 'password_confirmation')).toEqual(['Repeat your password.']);
+	});
+
 	it('asks for a password rather than listing rules when it is empty', () => {
 		expect(messagesFor({ ...valid, password: '', password_confirmation: '' }, 'password')).toEqual([
 			'Choose a password.',

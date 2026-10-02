@@ -4,6 +4,20 @@
 	background-color: var(--color-neutral-100);
 }
 
+/*
+ * Stretch the band down to the footer on tall screens. Only the app shell's main element that
+ * holds this band becomes a flex column, so no other page's layout changes. Browsers without
+ * `:has()` (Firefox before 121) drop the rule and show white below the band, as before.
+ */
+:global(.main-content):has(> .page) {
+	display: flex;
+	flex-direction: column;
+}
+
+:global(.main-content) > .page {
+	flex: 1 0 auto;
+}
+
 .card {
 	max-inline-size: var(--container-xs);
 	margin-inline: auto;

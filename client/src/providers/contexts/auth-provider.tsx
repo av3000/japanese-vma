@@ -71,13 +71,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	 * Dropping the credentials is the part that must never be skipped, so it lives on its own and
 	 * every sign-out path ends here regardless of what the server did.
 	 */
-	const clearSession = useCallback(() => {
-		localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-		setToken(null);
-		setUser(null);
-		setIsLoading(false);
-		navigate('/login');
-	}, [navigate]);
+	const clearSession = useCallback(
+		(loginState?: { from: { pathname: string; search: string; hash: string } }) => {
+			localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+			setToken(null);
+			setUser(null);
+			setIsLoading(false);
+			if (loginState) {
+				navigate('/login', { state: loginState });
+			} else {
+				navigate('/login');
+			}
+		},
+		[navigate],
+	);
 
 	// `logout` reads the token from storage rather than from state so that a sign-out triggered
 	// before the restore effect settles still knows there is something to revoke.
@@ -98,9 +105,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	useEffect(() => {
 		// A 401 means the token is already dead, so calling the revocation endpoint with it would
 		// only produce a second 401. This path clears locally and skips the server round trip.
+		// The user did not choose to leave, so Login gets the page they were on as `from` and returns
+		// them there after signing in again. Read from `window.location` at the moment of the 401 so
+		// the provider does not re-render on every route change just to know it.
 		const handleUnauthorized = () => {
+			const { pathname, search, hash } = window.location;
+
 			setSessionExpired(true);
-			clearSession();
+			clearSession({ from: { pathname, search, hash } });
 		};
 
 		window.addEventListener('auth:unauthorized', handleUnauthorized);

@@ -37,6 +37,10 @@ export const passwordProblems = (password: string): string[] => {
 	return problems;
 };
 
+// The form reports every broken rule at once, so format checks skip an empty value: an empty
+// field should only ask for a value, not also call it malformed.
+const isEmail = (value: string) => z.string().email().safeParse(value).success;
+
 export const registerSchema = z
 	.object({
 		name: z
@@ -44,13 +48,16 @@ export const registerSchema = z
 			.trim()
 			.min(1, 'Choose a username.')
 			.max(255, 'Use at most 255 characters.')
-			.regex(USERNAME_PATTERN, 'Username can only contain letters, numbers, underscores, and hyphens.'),
+			.refine(
+				(name) => name === '' || USERNAME_PATTERN.test(name),
+				'Username can only contain letters, numbers, underscores, and hyphens.',
+			),
 		email: z
 			.string()
 			.trim()
 			.min(1, 'Enter your email.')
 			.max(255, 'Use at most 255 characters.')
-			.email('Enter a valid email address.'),
+			.refine((email) => email === '' || isEmail(email), 'Enter a valid email address.'),
 		password: z.string().superRefine((password, context) => {
 			if (password === '') {
 				context.addIssue({ code: z.ZodIssueCode.custom, message: 'Choose a password.' });

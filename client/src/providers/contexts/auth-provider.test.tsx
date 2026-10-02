@@ -248,6 +248,8 @@ describe('AuthProvider', () => {
 			localStorage.setItem('token', 'stored-token');
 			vi.mocked(authMe).mockResolvedValue({ success: true, data: authUser() });
 
+			window.history.pushState({}, '', '/dashboard?tab=articles#top');
+
 			const view = await renderAuthProvider();
 			await view.flush(() => {
 				window.dispatchEvent(new CustomEvent('auth:unauthorized'));
@@ -256,7 +258,11 @@ describe('AuthProvider', () => {
 			expect(latest().sessionExpired).toBe(true);
 			expect(latest().isAuthenticated).toBe(false);
 			expect(localStorage.getItem('token')).toBeNull();
-			expect(navigate).toHaveBeenCalledWith('/login');
+			// Login returns the user to where the session died.
+			expect(navigate).toHaveBeenCalledWith('/login', {
+				state: { from: { pathname: '/dashboard', search: '?tab=articles', hash: '#top' } },
+			});
+			window.history.pushState({}, '', '/');
 			// The token that produced the 401 is already dead; revoking it would just 401 again.
 			expect(authLogout).not.toHaveBeenCalled();
 
