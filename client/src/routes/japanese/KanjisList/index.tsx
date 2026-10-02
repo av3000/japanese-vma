@@ -4,7 +4,6 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
 import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
 import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
-import { getKanjiDisplayValues } from '@/api/kanjis/display';
 import {
 	KANJI_VIEWER_CATALOGUE_INCLUDE,
 	applyKanjiViewerCatalogueState,
@@ -12,18 +11,19 @@ import {
 	type KanjiListFilters,
 	useInfiniteKanjis,
 } from '@/api/kanjis/hooks/useInfiniteKanjis';
-import Spinner from '@/assets/images/spinner.gif';
-import KanjiItem from '@/components/features/japanese/Kanji/KanjiItem';
+import { KanjiTable } from '@/components/features/japanese/Kanji/KanjiTable';
+import {
+	DICTIONARY_PER_PAGE,
+	DictionaryListPage,
+	LoadMore,
+	emptySearch,
+	showingCount,
+} from '@/components/features/japanese/dictionaryList';
 import { Alert } from '@/components/shared/Alert';
-import { Button } from '@/components/shared/Button';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { PageLoading } from '@/components/shared/PageLoading';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
-import styles from '../japaneseListPage.module.css';
+import { useAuth } from '@/hooks/useAuth';
 import KanjiFilters from './KanjiFilters';
 import type { KanjiSearchFilters } from './KanjiFilters';
 
-const DEFAULT_PER_PAGE = 10;
 const VALID_JLPT_FILTERS = new Set<string>(Object.values(KanjiIndexJlpt));
 
 const getJlptFilter = (value: string | undefined) => {
@@ -39,7 +39,7 @@ const getKanjiListFilters = (searchParams: URLSearchParams): KanjiListFilters =>
 	const jlpt = getJlptFilter(searchParams.get('jlpt')?.trim());
 
 	return {
-		per_page: DEFAULT_PER_PAGE,
+		per_page: DICTIONARY_PER_PAGE,
 		include: KANJI_VIEWER_CATALOGUE_INCLUDE,
 		...(keyword ? { keyword } : {}),
 		...(jlpt ? { jlpt } : {}),
@@ -48,6 +48,7 @@ const getKanjiListFilters = (searchParams: URLSearchParams): KanjiListFilters =>
 
 const KanjisList = () => {
 	const queryClient = useQueryClient();
+	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const filters = getKanjiListFilters(searchParams);
 	const keyword = filters.keyword ?? '';
@@ -78,97 +79,49 @@ const KanjisList = () => {
 		);
 	};
 
-	// TODO: have loading indicator like skeleton or something else
-	if (isPending && kanjis.length === 0) {
-		return (
-			<Container className={styles.page}>
-				<Stack gap="2xl">
-					<PageHeader title="Kanji" />
-					<PageLoading family="list" />
-				</Stack>
-			</Container>
-		);
-	}
+	const isInitialLoading = isPending && kanjis.length === 0;
+
+	const meta = isInitialLoading
+		? undefined
+		: [
+				showingCount(kanjis.length, total),
+				keyword !== '' && `keyword: ${keyword}`,
+				jlpt !== '' && `JLPT: ${jlpt === '-' ? 'Uncommon' : `N${jlpt}`}`,
+			]
+				.filter(Boolean)
+				.join(' · ');
+
+	const filterBar = (
+		<KanjiFilters key={`${keyword}|${jlpt}`} defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
+	);
 
 	if (isError) {
 		const message = error instanceof Error ? error.message : 'Unable to load kanjis.';
 
 		return (
-			<Container className={styles.page}>
-				<Stack gap="2xl">
-					<PageHeader title="Kanji" />
-					<Alert tone="danger">Error: {message}</Alert>
-				</Stack>
-			</Container>
+			<DictionaryListPage title="Kanji" filters={filterBar}>
+				<Alert tone="danger">Error: {message}</Alert>
+			</DictionaryListPage>
 		);
 	}
 
-	const meta = [
-		`Showing ${kanjis.length} of ${total}`,
-		keyword !== '' && `keyword: ${keyword}`,
-		jlpt !== '' && `JLPT: ${jlpt === '-' ? 'Uncommon' : `N${jlpt}`}`,
-	]
-		.filter(Boolean)
-		.join(' · ');
-
 	return (
-		<Container className={styles.page}>
-			<Stack gap="2xl">
-				<PageHeader title="Kanji" meta={meta} />
-				<KanjiFilters
-					key={`${keyword}|${jlpt}`}
-					defaultKeyword={keyword}
-					defaultJlpt={jlpt}
-					onSearch={handleSearch}
+		<DictionaryListPage title="Kanji" meta={meta} filters={filterBar}>
+			<KanjiTable
+				kanjis={kanjis}
+				loading={isInitialLoading}
+				showSave={isAuthenticated}
+				empty={emptySearch('kanji', keyword, jlpt !== '')}
+				onBookmarkStateChange={handleKanjiBookmarkStateChange}
+			/>
+			{isInitialLoading || kanjis.length === 0 ? null : (
+				<LoadMore
+					hasNextPage={hasNextPage}
+					isFetchingNextPage={isFetchingNextPage}
+					onLoadMore={() => void fetchNextPage()}
 				/>
-				<Stack as="section" gap="md" className={styles.results}>
-					{kanjis.length === 0 ? (
-						<p>No kanjis found.</p>
-					) : (
-						<ul className={styles.list}>
-							{kanjis.map((kanji) => {
-								const display = getKanjiDisplayValues(kanji);
-
-								return (
-									<KanjiItem
-										id={kanji.id}
-										key={kanji.uuid}
-										uuid={kanji.uuid}
-										character={kanji.character}
-										strokeCount={kanji.stroke_count}
-										onyomi={display.onyomi}
-										kunyomi={display.kunyomi}
-										meaning={display.meaning}
-										frequency={display.frequency}
-										jlpt={display.jlpt}
-										parts={display.radicalParts}
-										isSaved={kanji.viewer_catalogue_state?.is_saved ?? false}
-										isKnown={kanji.viewer_catalogue_state?.is_known ?? false}
-										onBookmarkStateChange={(state) =>
-											handleKanjiBookmarkStateChange(kanji.id, {
-												is_saved: state.isBookmarked,
-												is_known: state.isKnown,
-											})
-										}
-									/>
-								);
-							})}
-						</ul>
-					)}
-				</Stack>
-				<Cluster justify="center">
-					{isFetchingNextPage ? (
-						<img src={Spinner} alt="Loading more..." className={styles.loadingMore} />
-					) : hasNextPage ? (
-						<Button variant="secondary-outline" className={styles.loadMore} onClick={() => fetchNextPage()}>
-							Load More
-						</Button>
-					) : (
-						<span className={styles.muted}>No more results</span>
-					)}
-				</Cluster>
-			</Stack>
-		</Container>
+			)}
+		</DictionaryListPage>
 	);
 };
 
