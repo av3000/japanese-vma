@@ -283,6 +283,10 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
+            if ($this->changesTypeOfNonEmptyCatalogue($catalogue, $dto)) {
+                return Result::failure(CatalogueErrors::typeLockedByItems($uuid->value()));
+            }
+
             $updatedCatalogue = DB::transaction(function () use ($catalogue, $dto, $authenticatedUser) {
                 $updatedCatalogue = $this->applyUpdates($catalogue, $dto);
 
@@ -484,6 +488,21 @@ class CatalogueService implements CatalogueServiceInterface
         }
 
         return $statsMap;
+    }
+
+    /**
+     * Sending the current type again is a no-op, and an empty catalogue may change type freely.
+     */
+    private function changesTypeOfNonEmptyCatalogue(Catalogue $catalogue, CatalogueUpdateDTO $dto): bool
+    {
+        if ($dto->type === null || $dto->type === $catalogue->getType()) {
+            return false;
+        }
+
+        $catalogueId = $catalogue->getIdValue();
+        $itemsCount = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogueId])[$catalogueId] ?? 0;
+
+        return $itemsCount > 0;
     }
 
     private function applyUpdates(Catalogue $catalogue, CatalogueUpdateDTO $dto): Catalogue
