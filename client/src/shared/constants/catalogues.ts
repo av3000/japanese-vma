@@ -19,6 +19,13 @@ const CATALOGUE_PDF_TYPES: ReadonlyArray<readonly [CataloguePdfExportKind, reado
 	['sentences', [4, 8]],
 ];
 
+// Mirrors FlashcardConfig::supportsType on the backend (epic #413): the three dictionary
+// families and their "known" variants. Sentences have no translation column and articles are
+// not cards, so a Study action for them would only ever surface a 422.
+const CATALOGUE_STUDY_TYPES: readonly number[] = [1, 2, 3, 5, 6, 7];
+
+export const isCatalogueStudySupported = (value: number) => CATALOGUE_STUDY_TYPES.includes(value);
+
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
 	label,
@@ -38,6 +45,7 @@ export const CATALOGUE_ROUTES = {
 	detail: (catalogueId: string) => `/catalogues/${catalogueId}`,
 	create: '/catalogues/new',
 	edit: (catalogueId: string) => `/catalogues/${catalogueId}/edit`,
+	study: (catalogueId: string) => `/catalogues/${catalogueId}/study`,
 	legacyList: '/lists',
 	legacyDetail: (catalogueId: string) => `/list/${catalogueId}`,
 	legacyCreate: '/newlist',

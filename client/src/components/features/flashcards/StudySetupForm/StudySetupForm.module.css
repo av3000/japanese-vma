@@ -1,0 +1,29 @@
+.form {
+	padding: var(--spacing-lg);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-lg);
+	background: var(--color-neutral-0);
+}
+
+.legend {
+	margin: 0;
+	font-size: var(--font-size-heading-4);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+	.grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.preview {
+	margin: 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+}

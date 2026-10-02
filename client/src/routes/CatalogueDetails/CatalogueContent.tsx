@@ -30,6 +30,7 @@ import {
 	CATALOGUE_ROUTES,
 	type CataloguePdfExportKind,
 	isCataloguePdfExportSupported,
+	isCatalogueStudySupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
 import styles from './CatalogueContent.module.css';
@@ -64,6 +65,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
 	const isPdfExportSupported = isCataloguePdfExportSupported(catalogue.type);
+	// Visible to visitors too: a public deck can be played without an account (epic #413).
+	const isStudySupported = isCatalogueStudySupported(catalogue.type);
 
 	const deleteMutation = useCatalogueDestroy({
 		mutation: {
@@ -200,6 +203,11 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							</p>
 						</Cluster>
 						<Cluster gap="xs">
+							{isStudySupported && (
+								<Button to={CATALOGUE_ROUTES.study(catalogue.uuid)} variant="primary" size="sm">
+									Study
+								</Button>
+							)}
 							<p className={styles.text}>{likesCount}</p>
 							<Button
 								variant="ghost"
