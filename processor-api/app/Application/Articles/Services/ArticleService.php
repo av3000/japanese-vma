@@ -335,6 +335,7 @@ class ArticleService implements ArticleServiceInterface
             $article->getJlptLevels(), // Recomputed by ProcessArticleContentJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
+            $article->getProvenance(), // Provenance never changes after creation
         );
     }
 
