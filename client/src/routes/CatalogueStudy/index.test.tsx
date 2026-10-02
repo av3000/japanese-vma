@@ -31,6 +31,10 @@ vi.mock('@/api/flashcards/deck', async () => {
 	};
 });
 
+vi.mock('@/components/features/flashcards/StudySession', () => ({
+	StudySession: ({ deck }: { deck: { cards: unknown[] } }) => <div>Session with {deck.cards.length} cards</div>,
+}));
+
 vi.mock('@/components/shared/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>,
 }));
@@ -50,6 +54,7 @@ const loadedCatalogue = (type = 6) =>
 const readyDeck = (cards = 10) =>
 	vi.mocked(useStudyDeck).mockReturnValue({
 		data: {
+			config: { seed: 7 },
 			cards: Array.from({ length: cards }, (_, index) => ({ itemId: index + 1 })),
 			totalItems: 12,
 			eligibleItems: 10,
@@ -138,7 +143,7 @@ describe('CatalogueStudyPage', () => {
 
 		const html = renderToStaticMarkup(<CatalogueStudyPage />);
 
-		expect(html).toContain('<strong>7</strong> cards ready');
+		expect(html).toContain('Session with 7 cards');
 		expect(html).not.toContain('Start studying');
 	});
 

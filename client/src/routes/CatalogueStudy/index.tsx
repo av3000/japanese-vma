@@ -8,6 +8,7 @@ import {
 	useStudyDeck,
 	type StudyConfig,
 } from '@/api/flashcards/deck';
+import { StudySession } from '@/components/features/flashcards/StudySession';
 import { StudySetupForm, type StudyDeckStatus } from '@/components/features/flashcards/StudySetupForm';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
@@ -83,16 +84,13 @@ const CatalogueStudyPage = () => {
 				/>
 
 				{isPlaying && deckQuery.data ? (
-					<Stack as="section" gap="md" aria-label="Study session">
-						<p className={styles.lead}>
-							Deck of <strong>{deckQuery.data.cards.length}</strong> cards ready.
-						</p>
-						<div>
-							<Button variant="ghost" onClick={() => writeConfig(config, false)}>
-								Back to setup
-							</Button>
-						</div>
-					</Stack>
+					<StudySession
+						// Remount on a new deck (another seed or config), so the run starts from card one.
+						key={`${deckQuery.data.config.seed ?? 'seedless'}-${deckQuery.data.cards.length}`}
+						deck={deckQuery.data}
+						catalogueHref={CATALOGUE_ROUTES.detail(catalogue.uuid)}
+						onChangeSetup={() => writeConfig(config, false)}
+					/>
 				) : (
 					<StudySetupForm
 						catalogueType={catalogue.type}

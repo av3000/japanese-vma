@@ -1,0 +1,69 @@
+.feedback {
+	padding: var(--spacing-md);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-left-width: var(--size-2xs, 4px);
+	border-radius: var(--border-radius-md);
+	background: var(--color-neutral-0);
+}
+
+.correct {
+	border-left-color: var(--color-success);
+}
+
+.wrong {
+	border-left-color: var(--color-error);
+}
+
+.verdict {
+	margin: 0;
+	font-size: var(--font-size-body-lg);
+	font-weight: var(--font-weight-semibold);
+}
+
+.mark {
+	font-family: var(--font-family-mono);
+}
+
+.correct .mark {
+	color: var(--color-success);
+}
+
+.wrong .mark {
+	color: var(--color-error);
+}
+
+.given {
+	color: var(--color-neutral-700);
+	font-weight: var(--font-weight-regular);
+}
+
+.label {
+	margin: 0 0 var(--spacing-2xs);
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.answers {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.answer {
+	padding: var(--spacing-3xs) var(--spacing-xs);
+	border-radius: var(--border-radius-sm);
+	background: var(--color-neutral-100);
+	overflow-wrap: anywhere;
+}
+
+.answer[lang='ja'] {
+	font-family: var(--font-family-ja);
+	font-size: var(--font-size-body-lg);
+}
+
+.matched {
+	outline: var(--border-size-md) solid var(--color-success);
+	outline-offset: -2px;
+}
