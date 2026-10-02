@@ -13,7 +13,7 @@ vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 	useInfiniteCatalogues: () => queryState,
 }));
 
-vi.mock('@/components/features/catalogues/CatalogueCard/CatalogueCard', () => ({
+vi.mock('@/components/features/LibraryCards/CatalogueCard', () => ({
 	CatalogueCard: ({ catalogue }: { catalogue: { title: string } }) => <article>{catalogue.title}</article>,
 }));
 
@@ -41,6 +41,7 @@ describe('catalogue filter mapping', () => {
 			custom_only: true,
 			include_stats_counts: true,
 			include_hashtags: true,
+			include_jlpt_levels: true,
 		});
 	});
 
@@ -61,6 +62,7 @@ describe('catalogue filter mapping', () => {
 			custom_only: true,
 			include_stats_counts: true,
 			include_hashtags: true,
+			include_jlpt_levels: true,
 		});
 	});
 });

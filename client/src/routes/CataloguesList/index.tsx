@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
-import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
+import { CatalogueCard } from '@/components/features/LibraryCards/CatalogueCard';
 import {
 	CatalogueFilters,
 	DEFAULT_CATALOGUE_SEARCH_FILTERS,
@@ -35,6 +35,8 @@ export const mapSearchFiltersToCatalogueParams = (
 		custom_only: true,
 		include_stats_counts: true,
 		include_hashtags: true,
+		// The cards render a JLPT bar (#388); the backend computes it only when asked.
+		include_jlpt_levels: true,
 	};
 };
 

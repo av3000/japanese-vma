@@ -23,7 +23,7 @@ vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
 	useArticleSubscription: vi.fn(),
 }));
 
-vi.mock('@/components/shared/ArticleCard', () => ({
+vi.mock('@/components/features/LibraryCards/ArticleCard', () => ({
 	default: ({ article }: { article: { title: string } }) => <article>{article.title}</article>,
 }));
 

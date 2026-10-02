@@ -1,0 +1,91 @@
+@keyframes skeletonShimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+/* Shared placeholder fills; also used by the list and Article detail skeletons. */
+.block {
+	background: linear-gradient(
+		90deg,
+		var(--color-neutral-200) 0%,
+		var(--color-neutral-100) 50%,
+		var(--color-neutral-200) 100%
+	);
+	background-size: 200% 100%;
+	animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+.line {
+	display: block;
+	border-radius: 999px;
+}
+
+.card {
+	pointer-events: none;
+}
+
+/* Same footprint as CardCover: a 112px-tall column below 768px, 2:1 on top from 768px. */
+.cover {
+	min-height: 112px;
+}
+
+.date {
+	height: 0.875rem;
+	width: 38%;
+}
+
+.title {
+	height: 1.25rem;
+	width: 82%;
+}
+
+.subtitle {
+	height: 0.875rem;
+	width: 64%;
+}
+
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-3xs);
+}
+
+.tag {
+	height: 1.25rem;
+	width: 4.5rem;
+	border-radius: var(--border-radius-xs);
+}
+
+.bar {
+	height: 6px;
+}
+
+.stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-md);
+	margin-top: auto;
+	padding-top: var(--spacing-2xs);
+}
+
+.stat {
+	height: 0.875rem;
+	width: 2.75rem;
+}
+
+@media (min-width: 768px) {
+	.cover {
+		aspect-ratio: 2 / 1;
+		min-height: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.block {
+		animation: none;
+	}
+}

@@ -1,6 +1,6 @@
 import classNames from 'classnames';
-import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
-import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.css';
+import ArticleCardSkeleton from '@/components/features/LibraryCards/ArticleCard/ArticleCardSkeleton';
+import skeletonStyles from '@/components/features/LibraryCards/LibraryCardSkeleton.module.css';
 import { Grid, Stack, type Responsive } from '@/components/shared/layout';
 import styles from './ArticlesListSkeleton.module.css';
 

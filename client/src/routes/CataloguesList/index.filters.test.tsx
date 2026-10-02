@@ -113,6 +113,7 @@ describe('CataloguesList filters', () => {
 			custom_only: true,
 			include_stats_counts: true,
 			include_hashtags: true,
+			include_jlpt_levels: true,
 		});
 	});
 
