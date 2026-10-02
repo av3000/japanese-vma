@@ -10,6 +10,7 @@ use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\Study\Actions\BuildDistractorsAction;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Radicals\Models\Radical;
@@ -17,6 +18,7 @@ use App\Domain\JapaneseMaterial\Words\Models\Word;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Study\DTOs\FlashcardDeckDTO;
+use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Errors\StudyErrors;
 use App\Domain\Study\Factories\FlashcardFactory;
 use App\Domain\Study\Models\Flashcard;
@@ -34,6 +36,7 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
         private readonly WordRepositoryInterface $wordRepository,
         private readonly RadicalRepositoryInterface $radicalRepository,
         private readonly FlashcardFactory $flashcardFactory,
+        private readonly BuildDistractorsAction $buildDistractors,
     ) {
     }
 
@@ -70,12 +73,18 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
         }
 
         $randomizer = new Randomizer(new Mt19937($config->seed));
-        $deck = array_slice($randomizer->shuffleArray($cards), 0, $config->count);
+        $deck = array_values(array_slice($randomizer->shuffleArray($cards), 0, $config->count));
+
+        if ($config->mode === AnswerMode::OPTIONS) {
+            /** @var SavedListType $baseType */
+            $baseType = FlashcardConfig::baseType($type);
+            $deck = $this->buildDistractors->execute($deck, $cards, $config, $baseType, $itemIds, $randomizer);
+        }
 
         return Result::success(new FlashcardDeckDTO(
             catalogue: $catalogue,
             config: $config,
-            cards: array_values($deck),
+            cards: $deck,
             totalItems: count($itemIds),
             eligibleItems: count($cards),
             excludedEmptyAnswerField: count($itemIds) - count($cards),

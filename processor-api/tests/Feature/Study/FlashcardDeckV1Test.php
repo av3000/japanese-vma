@@ -123,7 +123,7 @@ class FlashcardDeckV1Test extends TestCase
             ->assertJsonPath('cards.0.prompt.text', '亜')
             ->assertJsonPath('cards.0.accepted_answers', ['Asia', 'rank next', 'come after', '-ous'])
             ->assertJsonPath('cards.0.display_answer', 'Asia')
-            ->assertJsonPath('cards.0.options', null)
+            ->assertJsonPath('cards.0.options.0', 'Asia')
             ->assertJsonPath('cards.0.meta.jlpt', '1')
             ->assertJsonPath('cards.0.meta.grade', '1')
             ->assertJsonPath('cards.0.meta.strokes', 8)
