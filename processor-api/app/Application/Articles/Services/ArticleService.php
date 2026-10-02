@@ -122,7 +122,7 @@ class ArticleService implements ArticleServiceInterface
         } catch (UniqueConstraintViolationException $e) {
             // For an import this is the (content_source_id, external_id) pair: another run created
             // the same external article first. Anything else is an ordinary creation failure.
-            if ($dto->provenance?->isImported()) {
+            if ($dto->provenance?->isImported() && str_contains($e->getMessage(), 'articles_content_source_external_id_unique')) {
                 return Result::failure(ArticleErrors::alreadyImported((string) $dto->provenance->externalId));
             }
 

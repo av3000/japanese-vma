@@ -183,6 +183,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         App\Providers\ArticlesServiceProvider::class,
+        App\Providers\ContentImportServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
         App\Providers\PdfServiceProvider::class,
     ],
