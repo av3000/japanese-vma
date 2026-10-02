@@ -182,6 +182,20 @@ class ContentImportServiceTest extends TestCase
         self::assertSame(1, $run->created);
     }
 
+    public function test_an_unexpected_adapter_error_still_closes_the_run_as_failed(): void
+    {
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];
+        $this->adapter->crashWith = new \TypeError('boom');
+
+        $result = $this->runImport();
+
+        self::assertSame(ImportRunStatus::Failed, $result->status);
+        $run = ContentImportRun::query()->sole();
+        self::assertSame(ImportRunStatus::Failed, $run->status);
+        self::assertNotNull($run->finished_at);
+        self::assertSame('TypeError: boom', $run->error);
+    }
+
     public function test_a_dry_run_writes_nothing(): void
     {
         $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];

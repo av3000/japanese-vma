@@ -106,6 +106,13 @@ class ContentImportService implements ContentImportServiceInterface
             $error = $e->getMessage();
 
             Log::warning('Content import run failed', ['source' => $sourceKey, 'error' => $error]);
+        } catch (Throwable $e) {
+            // Anything else is a bug, not an unreadable source, but the run row must still be
+            // closed: a row left `running` would hide every later run's state.
+            $status = ImportRunStatus::Failed;
+            $error = $e::class.': '.$e->getMessage();
+
+            Log::error('Content import run crashed', ['source' => $sourceKey, 'exception' => $e]);
         }
 
         $result = new ImportRunResult($sourceKey, $status, $dryRun, $items, $error);

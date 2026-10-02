@@ -18,6 +18,8 @@ class FakeContentSourceAdapter implements ContentSourceAdapterInterface
 
     public ?string $failWith = null;
 
+    public ?\Throwable $crashWith = null;
+
     public int $yielded = 0;
 
     public function __construct(private readonly string $key = 'fake-source')
@@ -39,6 +41,10 @@ class FakeContentSourceAdapter implements ContentSourceAdapterInterface
             $this->yielded++;
 
             yield $article;
+        }
+
+        if ($this->crashWith !== null) {
+            throw $this->crashWith;
         }
 
         if ($this->failWith !== null) {
