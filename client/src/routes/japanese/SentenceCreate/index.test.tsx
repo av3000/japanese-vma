@@ -52,7 +52,7 @@ describe('SentenceCreate', () => {
 	it('starts from an empty form', () => {
 		render();
 
-		expect(capturedProps[0]).toMatchObject({ initialValues: { content: '' }, submitLabel: 'Create' });
+		expect(capturedProps[0]).toMatchObject({ initialValues: { content: '' }, submitLabel: 'Create sentence' });
 	});
 
 	it('sends a trimmed payload and navigates to the UUID the server returned', () => {
@@ -67,7 +67,9 @@ describe('SentenceCreate', () => {
 
 	it('passes field errors to the form and does not navigate on a 422', () => {
 		mutate.mockImplementation((_payload, { onError }) =>
-			onError({ response: { data: { status: 422, title: 'Validation failed', errors: { content: ['Too short.'] } } } }),
+			onError({
+				response: { data: { status: 422, title: 'Validation failed', errors: { content: ['Too short.'] } } },
+			}),
 		);
 
 		render();
