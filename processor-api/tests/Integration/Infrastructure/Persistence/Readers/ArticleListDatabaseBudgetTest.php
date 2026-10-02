@@ -129,7 +129,9 @@ class ArticleListDatabaseBudgetTest extends TestCase
         DB::flushQueryLog();
         DB::enableQueryLog();
 
-        $this->json('GET', '/api/v1/articles', array_merge(['per_page' => $perPage], $params))
+        // Every enrichment on by default, so the budget covers the most expensive listing.
+        // include_kanjis is opt-in since #384; a caller that asks still pays one batched query.
+        $this->json('GET', '/api/v1/articles', array_merge(['per_page' => $perPage, 'include_kanjis' => true], $params))
             ->assertStatus(200);
 
         $count = count(DB::getQueryLog());

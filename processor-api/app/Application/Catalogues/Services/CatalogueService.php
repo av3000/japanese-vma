@@ -3,6 +3,7 @@
 namespace App\Application\Catalogues\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
@@ -58,6 +59,7 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly CommentRepositoryInterface $commentRepository,
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
+        private readonly LoadCatalogueJlptLevelsAction $loadJlptLevels,
     ) {
     }
 
@@ -141,6 +143,8 @@ class CatalogueService implements CatalogueServiceInterface
         $hashtagsMap = $dto->include_hashtags
             ? $this->hashtagService->getBatchHashtags($catalogueIds, ObjectTemplateType::LIST)
             : [];
+        // Opt-in, unlike stats and hashtags: callers that render no bar do not pay for it.
+        $jlptLevelsMap = $dto->include_jlpt_levels ? $this->loadJlptLevels->execute($catalogues) : [];
 
         $paginator = $paginatedCatalogues->getPaginator();
 
@@ -151,6 +155,7 @@ class CatalogueService implements CatalogueServiceInterface
                     stats: $statsMap[$catalogue->getIdValue()] ?? null,
                     hashtags: $hashtagsMap[$catalogue->getIdValue()] ?? [],
                     itemsCount: $itemsCountMap[$catalogue->getIdValue()] ?? 0,
+                    jlptLevels: $jlptLevelsMap[$catalogue->getIdValue()] ?? null,
                 ),
                 $catalogues,
             ),
@@ -257,6 +262,7 @@ class CatalogueService implements CatalogueServiceInterface
                 stats: $stats,
                 hashtags: $hashtags,
                 isLikedByViewer: $isLikedByViewer,
+                jlptLevels: $this->loadJlptLevels->execute([$catalogue])[$catalogueId],
             )
         );
     }
