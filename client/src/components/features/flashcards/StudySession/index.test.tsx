@@ -11,6 +11,7 @@ vi.mock('react-router-dom', async () => {
 	return {
 		...actual,
 		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+		useLocation: () => ({ pathname: '/catalogues/c-1/study', search: '?play=1', hash: '', state: null, key: 'k' }),
 	};
 });
 
@@ -30,12 +31,14 @@ describe('StudySession', () => {
 
 	it('runs an options deck from the first card to the summary', async () => {
 		const onComplete = vi.fn();
+		const onAnswer = vi.fn();
 		const rendered = await renderWithAct(
 			<StudySession
 				deck={kanjiOptionsDeck}
 				catalogueHref="/catalogues/c-1"
 				onChangeSetup={vi.fn()}
-				onComplete={onComplete}
+				onAnswer={onAnswer}
+				onRoundComplete={onComplete}
 			/>,
 		);
 		unmount = rendered.unmount;
@@ -72,6 +75,24 @@ describe('StudySession', () => {
 			false,
 			true,
 		]);
+		expect(onComplete.mock.calls[0][1]).toBe(1);
+		expect(onAnswer).toHaveBeenCalledTimes(3);
+		expect(onAnswer.mock.calls[1][0].card.promptText).toBe('水');
+		expect(onAnswer.mock.calls[1][1]).toBe(1);
+
+		// Retry missed: only 水, as round 2.
+		click(buttonNamed(container, 'Retry missed (1)'));
+		expect(container.textContent).toContain('水');
+		expect(container.textContent).not.toContain('学');
+		expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuemax')).toBe('1');
+		click(buttonNamed(container, 'water'));
+		expect(onAnswer).toHaveBeenLastCalledWith(expect.objectContaining({ correct: true }), 2);
+		click(buttonNamed(container, 'See results'));
+
+		expect(container.textContent).toContain('1 of 1 correct');
+		expect(container.textContent).toContain('retry round 1');
+		expect(onComplete).toHaveBeenCalledTimes(2);
+		expect(onComplete.mock.calls[1][1]).toBe(2);
 	});
 
 	it('grades typed answers through the grading rules', async () => {

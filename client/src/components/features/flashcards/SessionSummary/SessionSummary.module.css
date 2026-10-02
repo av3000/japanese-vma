@@ -55,3 +55,19 @@
 	color: var(--color-neutral-700);
 	font-size: var(--font-size-body-sm);
 }
+
+.round {
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-regular);
+}
+
+.save {
+	margin: var(--spacing-xs) 0 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+}
+
+.bookmark {
+	justify-self: start;
+}

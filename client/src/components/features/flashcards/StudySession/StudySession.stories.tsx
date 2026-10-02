@@ -18,7 +18,8 @@ const meta = {
 		deck: kanjiOptionsDeck,
 		catalogueHref: '/catalogues/c-1',
 		onChangeSetup: fn(),
-		onComplete: fn(),
+		onAnswer: fn(),
+		onRoundComplete: fn(),
 	},
 	argTypes: { deck: { control: false } },
 } satisfies Meta<typeof StudySession>;

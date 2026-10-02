@@ -32,7 +32,28 @@ vi.mock('@/api/flashcards/deck', async () => {
 });
 
 vi.mock('@/components/features/flashcards/StudySession', () => ({
-	StudySession: ({ deck }: { deck: { cards: unknown[] } }) => <div>Session with {deck.cards.length} cards</div>,
+	StudySession: ({ deck, saveStatus }: { deck: { cards: unknown[] }; saveStatus: string }) => (
+		<div>
+			Session with {deck.cards.length} cards ({saveStatus})
+		</div>
+	),
+}));
+
+let isAuthenticatedMock = false;
+
+vi.mock('@/hooks/useAuth', () => ({
+	useAuth: () => ({ isAuthenticated: isAuthenticatedMock, isLoading: false, user: null }),
+}));
+
+const recorderStartMock = vi.fn();
+
+vi.mock('@/api/flashcards/sessions', () => ({
+	useSessionRecorder: (enabled: boolean) => ({
+		status: enabled ? 'recording' : 'disabled',
+		start: recorderStartMock,
+		recordAttempt: vi.fn(),
+		complete: vi.fn(),
+	}),
 }));
 
 vi.mock('@/components/shared/Icon', () => ({
@@ -68,6 +89,7 @@ const readyDeck = (cards = 10) =>
 describe('CatalogueStudyPage', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		isAuthenticatedMock = false;
 		searchParams = new URLSearchParams();
 		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
 	});
@@ -143,8 +165,19 @@ describe('CatalogueStudyPage', () => {
 
 		const html = renderToStaticMarkup(<CatalogueStudyPage />);
 
-		expect(html).toContain('Session with 7 cards');
+		expect(html).toContain('Session with 7 cards (disabled)');
 		expect(html).not.toContain('Start studying');
+	});
+
+	it('hands a signed-in learner a recording session', () => {
+		loadedCatalogue();
+		readyDeck(3);
+		searchParams = new URLSearchParams('play=1');
+		isAuthenticatedMock = true;
+
+		const html = renderToStaticMarkup(<CatalogueStudyPage />);
+
+		expect(html).toContain('Session with 3 cards (recording)');
 	});
 
 	it('shows the not-found state when the catalogue cannot be loaded', () => {
