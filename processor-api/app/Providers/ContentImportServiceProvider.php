@@ -10,18 +10,20 @@ use App\Application\ContentImport\Interfaces\Providers\SystemAuthorProviderInter
 use App\Application\ContentImport\Interfaces\Readers\ImportedArticleReaderInterface;
 use App\Application\ContentImport\Interfaces\Repositories\ContentSourceRepositoryInterface;
 use App\Application\ContentImport\Interfaces\Repositories\ImportRunRepositoryInterface;
+use App\Application\ContentImport\Interfaces\Repositories\SourceTagMappingRepositoryInterface;
 use App\Application\ContentImport\Services\ContentImportService;
 use App\Application\ContentImport\Services\ContentImportServiceInterface;
+use App\Application\ContentImport\Tagging\MappingArticleTagger;
 use App\Infrastructure\ContentImport\ConfigContentSourceAdapterRegistry;
 use App\Infrastructure\ContentImport\DatabaseSystemAuthorProvider;
 use App\Infrastructure\ContentImport\Http\PoliteHttpClient;
 use App\Infrastructure\ContentImport\Http\RobotsTxtPolicy;
 use App\Infrastructure\ContentImport\Sources\Nhk\NhkArticlePageParser;
 use App\Infrastructure\ContentImport\Sources\Nhk\NhkNewsAdapter;
-use App\Infrastructure\ContentImport\Tagging\NullArticleTagger;
 use App\Infrastructure\Persistence\Readers\DatabaseImportedArticleReader;
 use App\Infrastructure\Persistence\Repositories\ContentSourceRepository;
 use App\Infrastructure\Persistence\Repositories\ImportRunRepository;
+use App\Infrastructure\Persistence\Repositories\SourceTagMappingRepository;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,7 +40,8 @@ class ContentImportServiceProvider extends ServiceProvider
         $this->app->bind(ImportedArticleReaderInterface::class, DatabaseImportedArticleReader::class);
         $this->app->bind(SystemAuthorProviderInterface::class, DatabaseSystemAuthorProvider::class);
         $this->app->bind(ContentSourceAdapterRegistryInterface::class, ConfigContentSourceAdapterRegistry::class);
-        $this->app->bind(ArticleTaggerInterface::class, NullArticleTagger::class);
+        $this->app->bind(SourceTagMappingRepositoryInterface::class, SourceTagMappingRepository::class);
+        $this->app->bind(ArticleTaggerInterface::class, MappingArticleTagger::class);
 
         $this->app->bind(PoliteHttpClient::class, fn ($app): PoliteHttpClient => new PoliteHttpClient(
             $app->make(HttpFactory::class),
