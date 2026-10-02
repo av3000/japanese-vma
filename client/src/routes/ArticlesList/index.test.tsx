@@ -195,4 +195,26 @@ describe('ArticleList', () => {
 
 		expect(html).toContain('N5 (12)');
 	});
+
+	it.each([
+		['/articles', 'No articles yet', 'Articles you and others publish appear here.'],
+		['/articles?q=%E6%B0%BE%E6%BF%AB', 'No articles match “氾濫”', 'Try a shorter search, or clear the filters.'],
+		['/articles?jlpt_levels[]=n2', 'No articles match these filters', 'Try fewer filters, or clear them.'],
+	])('explains an empty list at %s', (url, title, hint) => {
+		queryState = { ...queryState, isPending: false };
+
+		const html = renderAt(url);
+
+		expect(html.match(/<h2[^>]*>(.*?)<\/h2>/)?.[1].replace(/<[^>]+>/g, '')).toBe(title);
+		expect(html).toContain(`>${hint}</p>`);
+		expect(html).not.toContain('No more results');
+	});
+
+	it('marks only the Japanese search term in the empty state as Japanese', () => {
+		queryState = { ...queryState, isPending: false };
+
+		const html = renderAt('/articles?q=%E6%B0%BE%E6%BF%AB');
+
+		expect(html).toMatch(/<h2[^>]*>No articles match “<span lang="ja">氾濫<\/span>”<\/h2>/);
+	});
 });

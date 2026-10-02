@@ -125,3 +125,31 @@ describe('CataloguesList filters', () => {
 		expect(capturedFilters).toMatchObject({ type: undefined });
 	});
 });
+
+describe('CataloguesList filters in the URL', () => {
+	const renderAt = async (url: string) => {
+		await view.unmount();
+		capturedFilters = undefined;
+		view = await renderWithAct(
+			<MemoryRouter initialEntries={[url]}>
+				<CataloguesListPage />
+			</MemoryRouter>,
+		);
+	};
+
+	it('restores keyword, type and sort from the URL into the form and the request', async () => {
+		await renderAt('/catalogues?q=tokyo&type=7&sort=pop');
+
+		expect(capturedFilters).toMatchObject({ search: 'tokyo', type: 7, sort_by: 'views' });
+		expect(controlLabelled<HTMLInputElement>(view.container, 'Search catalogues').value).toBe('tokyo');
+		expect(controlLabelled<HTMLSelectElement>(view.container, 'Catalogue type').value).toBe('7');
+		expect(controlLabelled<HTMLSelectElement>(view.container, 'Sort by').value).toBe('pop');
+	});
+
+	it('ignores a type the list does not offer', async () => {
+		await renderAt('/catalogues?type=20');
+
+		expect(capturedFilters).toMatchObject({ type: undefined });
+		expect(controlLabelled<HTMLSelectElement>(view.container, 'Catalogue type').value).toBe('');
+	});
+});
