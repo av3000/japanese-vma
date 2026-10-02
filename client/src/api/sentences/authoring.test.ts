@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
+import { WRITE_FAILURE_MESSAGES } from '@/api/writeFailure';
 import {
 	canMutateSentence,
 	evictSentenceCaches,
@@ -103,15 +104,15 @@ describe('readSentenceWriteError', () => {
 
 		expect(failure).toEqual({
 			kind: 'validation',
-			message: 'Validation failed',
+			message: WRITE_FAILURE_MESSAGES.validation,
 			errors: { content: ['Content is too short.'] },
 		});
 	});
 
-	it('distinguishes the problem-details failures the write endpoints return', () => {
+	it('maps problem-details failures to user-written messages, never the server title', () => {
 		expect(readSentenceWriteError(axiosError(403, { title: 'Imported.' }))).toEqual({
 			kind: 'forbidden',
-			message: 'Imported.',
+			message: WRITE_FAILURE_MESSAGES.forbidden,
 		});
 		expect(readSentenceWriteError(axiosError(404, { title: 'Not found.' })).kind).toBe('notFound');
 		expect(readSentenceWriteError(axiosError(401, { title: 'Unauthenticated.' })).kind).toBe('unauthenticated');

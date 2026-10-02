@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
+import { WRITE_FAILURE_MESSAGES } from '@/api/writeFailure';
 import {
 	applyPostLockToCaches,
 	canDeletePost,
@@ -144,15 +145,15 @@ describe('readPostWriteError', () => {
 
 		expect(failure).toEqual({
 			kind: 'validation',
-			message: 'Validation failed',
+			message: WRITE_FAILURE_MESSAGES.validation,
 			errors: { title: ['Title is too short.'] },
 		});
 	});
 
-	it('distinguishes the problem-details failures the write endpoints return', () => {
+	it('maps problem-details failures to user-written messages, never the server title', () => {
 		expect(readPostWriteError(axiosError(403, { title: 'This post is not yours.' }))).toEqual({
 			kind: 'forbidden',
-			message: 'This post is not yours.',
+			message: WRITE_FAILURE_MESSAGES.forbidden,
 		});
 		expect(readPostWriteError(axiosError(404, { title: 'Not found.' })).kind).toBe('notFound');
 		expect(readPostWriteError(axiosError(401, { title: 'Unauthenticated.' })).kind).toBe('unauthenticated');
