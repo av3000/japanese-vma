@@ -12,8 +12,10 @@ interface NavGroupProps {
 	id: string;
 	/** `<li>` children. */
 	children: React.ReactNode;
-	/** Extra class on the wrapping `<li>`, e.g. to lay the group out flat at some widths. */
+	/** Extra class on the wrapping `<li>`. */
 	className?: string;
+	/** Extra class on the disclosure button, e.g. the bordered account button. */
+	buttonClassName?: string;
 }
 
 /**
@@ -23,7 +25,7 @@ interface NavGroupProps {
  * button with `aria-expanded` controlling a list. Closes on Escape (returning
  * focus to the button), on outside click, and on route change.
  */
-export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children, className }) => {
+export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children, className, buttonClassName }) => {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const wrapperRef = React.useRef<HTMLLIElement>(null);
 	const buttonRef = React.useRef<HTMLButtonElement>(null);
@@ -57,7 +59,7 @@ export const NavGroup: React.FC<NavGroupProps> = ({ label, id, children, classNa
 			<button
 				ref={buttonRef}
 				type="button"
-				className={classNames(styles.link, styles.groupButton)}
+				className={classNames(styles.link, styles.groupButton, buttonClassName)}
 				aria-expanded={isOpen}
 				aria-controls={id}
 				onClick={() => setIsOpen((open) => !open)}

@@ -7,7 +7,6 @@ const authState = vi.hoisted(() => ({ value: { isAuthenticated: false, isLoading
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => authState.value }));
 
-vi.mock('@/components/features/Homepage/ScopedSearch', () => ({ ScopedSearch: () => <div>[scoped-search]</div> }));
 vi.mock('@/components/features/Homepage/CorpusStatsTiles', () => ({
 	CorpusStatsTiles: () => <div>[corpus-tiles]</div>,
 }));
@@ -19,7 +18,7 @@ vi.mock('@/components/features/Homepage/PopularCatalogues', () => ({
 	PopularCatalogues: () => <div>[popular-catalogues]</div>,
 }));
 
-const SECTIONS = ['[scoped-search]', '[corpus-tiles]', '[photo-band]', '[latest-articles]', '[popular-catalogues]'];
+const SECTIONS = ['[corpus-tiles]', '[photo-band]', '[latest-articles]', '[popular-catalogues]'];
 
 const render = () =>
 	renderToStaticMarkup(
@@ -49,6 +48,13 @@ describe('Homepage', () => {
 		authState.value = { isAuthenticated: true, isLoading: false, user: { id: 1, name: 'Hanako' } };
 
 		expect(render()).toBe(guest);
+	});
+
+	it('has exactly one h1 and no search of its own: search lives in the Header', () => {
+		const html = render();
+
+		expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
+		expect(html).not.toContain('role="search"');
 	});
 
 	it('has no sign-up call to action and no feed greeting in the page body', () => {

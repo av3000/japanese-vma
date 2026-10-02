@@ -1,0 +1,26 @@
+/* The UA keeps a closed dialog at display: none; only the open one becomes a column. */
+.drawer {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	max-width: 100%;
+	height: 100%;
+	height: 100dvh;
+	max-height: 100%;
+	max-height: 100dvh;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	background-color: var(--color-neutral-0);
+	color: var(--color-text-neutral-default);
+}
+
+.drawer[open] {
+	display: flex;
+	flex-direction: column;
+}
+
+.drawer::backdrop {
+	background: transparent;
+}
