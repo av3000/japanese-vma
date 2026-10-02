@@ -139,7 +139,7 @@ final class StudySessionService implements StudySessionServiceInterface
     }
 
     /**
-     * @return Result<StudySession>
+     * @return Result Success data: StudySession.
      */
     private function ownSession(EntityId $sessionUuid, AuthenticatedUser $user): Result
     {

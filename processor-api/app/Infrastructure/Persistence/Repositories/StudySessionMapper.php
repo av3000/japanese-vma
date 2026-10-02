@@ -17,7 +17,7 @@ class StudySessionMapper
 {
     public function mapToDomain(PersistenceStudySession $entity): DomainStudySession
     {
-        $catalogueUuid = $entity->relationLoaded('catalogue') ? $entity->catalogue?->uuid : null;
+        $catalogueUuid = $entity->relationLoaded('catalogue') ? $entity->catalogue?->getAttribute('uuid') : null;
 
         return new DomainStudySession(
             id: (int) $entity->id,

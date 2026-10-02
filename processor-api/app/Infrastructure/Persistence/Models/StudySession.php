@@ -44,16 +44,19 @@ class StudySession extends Model
         'updated_at' => 'immutable_datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Catalogue, $this> */
     public function catalogue(): BelongsTo
     {
         return $this->belongsTo(Catalogue::class, 'catalogue_id');
     }
 
+    /** @return HasMany<StudyAttempt, $this> */
     public function attempts(): HasMany
     {
         return $this->hasMany(StudyAttempt::class, 'session_id');

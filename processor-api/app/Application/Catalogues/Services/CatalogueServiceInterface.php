@@ -36,7 +36,7 @@ interface CatalogueServiceInterface
      * items, stats or hashtags are assembled. For modules that need the catalogue as an
      * input (the Study deck builder) rather than as a page.
      *
-     * @return Result<Catalogue> Catalogues.NotFound or Catalogues.AccessDenied on failure.
+     * @return Result Success data: Catalogue. Catalogues.NotFound or Catalogues.AccessDenied on failure.
      */
     public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result;
 

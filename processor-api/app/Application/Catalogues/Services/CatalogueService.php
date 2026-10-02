@@ -197,7 +197,7 @@ class CatalogueService implements CatalogueServiceInterface
     }
 
     /**
-     * @return Result<Catalogue>
+     * @return Result Success data: Catalogue.
      */
     public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result
     {

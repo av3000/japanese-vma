@@ -19,7 +19,7 @@ interface FlashcardDeckServiceInterface
      * admin. Failures: Catalogues.NotFound, Catalogues.AccessDenied,
      * Study.CatalogueTypeNotSupported, Study.InvalidFieldCombination, Study.NoEligibleCards.
      *
-     * @return Result<FlashcardDeckDTO>
+     * @return Result Success data: FlashcardDeckDTO.
      */
     public function buildDeck(EntityId $catalogueUuid, FlashcardConfig $config, ?AuthenticatedUser $viewer): Result;
 }

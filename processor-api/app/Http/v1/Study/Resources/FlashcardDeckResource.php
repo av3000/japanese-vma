@@ -9,6 +9,7 @@ use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Enums\ScriptStrictness;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -32,7 +33,7 @@ class FlashcardDeckResource extends JsonResource
      * @return array{
      *     catalogue: array{uuid: string, title: string, type: int, type_label: string},
      *     config: array{prompt: FlashcardField, answer: FlashcardField, mode: AnswerMode, script: ScriptStrictness, count: int, seed: int},
-     *     cards: array<int, FlashcardResource>,
+     *     cards: AnonymousResourceCollection<int, FlashcardResource>,
      *     total_items: int,
      *     eligible_items: int,
      *     excluded: array{empty_answer_field: int}

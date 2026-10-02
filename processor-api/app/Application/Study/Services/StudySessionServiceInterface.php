@@ -17,7 +17,7 @@ interface StudySessionServiceInterface
      * Failures: Catalogues.NotFound, Catalogues.AccessDenied, Study.CatalogueTypeNotSupported,
      * Study.InvalidFieldCombination, Study.SessionCreationFailed.
      *
-     * @return Result<StudySession>
+     * @return Result Success data: StudySession.
      */
     public function createSession(StudySessionCreateDTO $dto, AuthenticatedUser $user): Result;
 
@@ -27,14 +27,14 @@ interface StudySessionServiceInterface
      * attempt (attempt_no 1) on a completed session is Study.SessionCompleted; retry rounds
      * (attempt_no 2 and up) are accepted after completion.
      *
-     * @return Result<bool> true when a row was written, false when the attempt already existed.
+     * @return Result Success data: bool, true when a row was written, false when the attempt already existed.
      */
     public function recordAttempt(EntityId $sessionUuid, StudyAttemptDTO $attempt, AuthenticatedUser $user): Result;
 
     /**
      * Idempotent: completing a completed session returns it unchanged.
      *
-     * @return Result<StudySession>
+     * @return Result Success data: StudySession.
      */
     public function completeSession(EntityId $sessionUuid, int $correctCount, AuthenticatedUser $user): Result;
 }

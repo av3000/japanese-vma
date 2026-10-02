@@ -74,7 +74,7 @@ final class StudySessionRepository implements StudySessionRepositoryInterface
     {
         $entity = PersistenceStudySession::query()->with('catalogue')->findOrFail($sessionId);
         $entity->correct_count = $correctCount;
-        $entity->completed_at = now();
+        $entity->completed_at = now()->toImmutable();
         $entity->save();
 
         return $this->mapper->mapToDomain($entity);

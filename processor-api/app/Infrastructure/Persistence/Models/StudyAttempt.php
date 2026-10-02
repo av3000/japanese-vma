@@ -41,6 +41,7 @@ class StudyAttempt extends Model
         'answered_at' => 'immutable_datetime',
     ];
 
+    /** @return BelongsTo<StudySession, $this> */
     public function session(): BelongsTo
     {
         return $this->belongsTo(StudySession::class, 'session_id');
