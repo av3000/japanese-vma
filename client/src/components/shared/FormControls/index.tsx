@@ -165,11 +165,18 @@ export interface FormFieldProps {
 	hint?: React.ReactNode;
 	/** One message or several; each renders on its own line. Empty values count as no error. */
 	error?: string | string[];
+	/**
+	 * End-aligned on the hint row, e.g. `12 / 255`. Deliberately left out of `aria-describedby` and not
+	 * live, so screen readers don't announce every keystroke; state the limit itself in `hint`.
+	 */
+	counter?: React.ReactNode;
 	/** Control id. Defaults to a generated one. */
 	id?: string;
 	className?: string;
 	children: (control: FormFieldControlProps) => React.ReactNode;
 }
+
+const isPresent = (node: React.ReactNode) => node !== undefined && node !== null && node !== false && node !== '';
 
 const toMessages = (error: FormFieldProps['error']): string[] =>
 	(Array.isArray(error) ? error : [error]).filter((message): message is string => Boolean(message));
@@ -180,33 +187,172 @@ const toMessages = (error: FormFieldProps['error']): string[] =>
  * a field is invalid. The control is a render prop so `react-hook-form`'s `register()` spreads
  * alongside the wiring.
  */
-export const FormField: React.FC<FormFieldProps> = ({ label, hint, error, id, className, children }) => {
+export const FormField: React.FC<FormFieldProps> = ({ label, hint, error, counter, id, className, children }) => {
 	const generatedId = React.useId();
 	const controlId = id ?? generatedId;
 	const hintId = `${controlId}-hint`;
 	const errorId = `${controlId}-error`;
 	const messages = toMessages(error);
-	const hasHint = hint !== undefined && hint !== null && hint !== false && hint !== '';
+	const hasHint = isPresent(hint);
 	const isInvalid = messages.length > 0;
 	const describedBy = [hasHint && hintId, isInvalid && errorId].filter(Boolean).join(' ') || undefined;
+	const hintMessage = hasHint ? <FieldMessage id={hintId}>{hint}</FieldMessage> : null;
 
 	return (
 		<Field className={className}>
 			<Label htmlFor={controlId}>{label}</Label>
 			{children({ id: controlId, 'aria-describedby': describedBy, isInvalid })}
-			{hasHint ? <FieldMessage id={hintId}>{hint}</FieldMessage> : null}
-			{isInvalid ? (
-				<div id={errorId}>
-					{messages.map((message) => (
-						<FieldMessage key={message} tone="error">
-							{message}
-						</FieldMessage>
-					))}
+			{isPresent(counter) ? (
+				<div className={styles.messageRow}>
+					{hintMessage}
+					<FieldMessage alignEnd className={styles.counter}>
+						{counter}
+					</FieldMessage>
 				</div>
-			) : null}
+			) : (
+				hintMessage
+			)}
+			<FieldErrors id={errorId} messages={messages} />
 		</Field>
 	);
 };
+
+const FieldErrors: React.FC<{ id: string; messages: string[] }> = ({ id, messages }) =>
+	messages.length > 0 ? (
+		<div id={id}>
+			{messages.map((message) => (
+				<FieldMessage key={message} tone="error">
+					{message}
+				</FieldMessage>
+			))}
+		</div>
+	) : null;
+
+/* ChoiceGroup ------------------------------------------------------------ */
+
+export interface ChoiceOption<T extends string | number> {
+	value: T;
+	label: string;
+	/** One line under the label that spells out what the choice means. */
+	description?: React.ReactNode;
+	/** A Japanese character shown above the label. Decorative: the label carries the name. */
+	glyph?: string;
+}
+
+export interface ChoiceGroupProps<T extends string | number> {
+	legend: React.ReactNode;
+	name: string;
+	options: ReadonlyArray<ChoiceOption<T>>;
+	value: T | undefined;
+	onChange: (value: T) => void;
+	onBlur?: () => void;
+	/** Muted helper text under the choices; also the place to say why a group is disabled. */
+	hint?: React.ReactNode;
+	/** One message or several; each renders on its own line. */
+	error?: string | string[];
+	disabled?: boolean;
+	/** Attached to the checked radio, or the first one when none is checked, so a form can focus the group. */
+	inputRef?: React.Ref<HTMLInputElement>;
+	/** Base for the generated ids. */
+	id?: string;
+	className?: string;
+}
+
+/**
+ * A labelled group of native radios drawn as tiles. An error is announced through the fieldset's
+ * description (radios do not support `aria-invalid`) and shown with a red border on every tile. Native inputs keep arrow-key movement, form
+ * reset and screen-reader announcements without script. The checked tile shows the radio dot and a
+ * heavier border and label, so the state never rests on colour alone.
+ */
+export function ChoiceGroup<T extends string | number>({
+	legend,
+	name,
+	options,
+	value,
+	onChange,
+	onBlur,
+	hint,
+	error,
+	disabled,
+	inputRef,
+	id,
+	className,
+}: ChoiceGroupProps<T>) {
+	const generatedId = React.useId();
+	const baseId = id ?? generatedId;
+	const hintId = `${baseId}-hint`;
+	const errorId = `${baseId}-error`;
+	const messages = toMessages(error);
+	const hasHint = isPresent(hint);
+	const isInvalid = messages.length > 0;
+	const describedBy = [hasHint && hintId, isInvalid && errorId].filter(Boolean).join(' ') || undefined;
+	const refIndex = Math.max(
+		0,
+		options.findIndex((option) => option.value === value),
+	);
+
+	return (
+		<fieldset
+			className={classNames(styles.choiceGroup, className)}
+			aria-describedby={describedBy}
+			disabled={disabled}
+		>
+			<legend className={styles.legend}>{legend}</legend>
+			<div className={styles.choices}>
+				{options.map((option, index) => {
+					const optionId = `${baseId}-${index}`;
+					const labelId = `${optionId}-label`;
+					const descriptionId = `${optionId}-description`;
+					const isChecked = option.value === value;
+
+					return (
+						<label
+							key={String(option.value)}
+							htmlFor={optionId}
+							className={classNames(
+								styles.choice,
+								isChecked && styles.choiceChecked,
+								isInvalid && styles.choiceInvalid,
+							)}
+						>
+							<input
+								ref={index === refIndex ? inputRef : undefined}
+								id={optionId}
+								type="radio"
+								name={name}
+								value={String(option.value)}
+								checked={isChecked}
+								onChange={() => onChange(option.value)}
+								onBlur={onBlur}
+								// The tile's text includes the description; name the radio by its label alone.
+								aria-labelledby={labelId}
+								aria-describedby={isPresent(option.description) ? descriptionId : undefined}
+								className={styles.choiceInput}
+							/>
+							<span className={styles.choiceText}>
+								{option.glyph ? (
+									<span className={styles.choiceGlyph} aria-hidden="true">
+										{option.glyph}
+									</span>
+								) : null}
+								<span id={labelId} className={styles.choiceLabel}>
+									{option.label}
+								</span>
+								{isPresent(option.description) ? (
+									<span id={descriptionId} className={styles.choiceDescription}>
+										{option.description}
+									</span>
+								) : null}
+							</span>
+						</label>
+					);
+				})}
+			</div>
+			{hasHint ? <FieldMessage id={hintId}>{hint}</FieldMessage> : null}
+			<FieldErrors id={errorId} messages={messages} />
+		</fieldset>
+	);
+}
 
 /* InputGroup ------------------------------------------------------------- */
 
