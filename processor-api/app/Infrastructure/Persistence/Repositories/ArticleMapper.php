@@ -6,6 +6,7 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleProvenance;
+use App\Domain\Articles\ValueObjects\ArticleSource;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -102,7 +103,16 @@ class ArticleMapper
 
     private function mapProvenance(PersistenceArticle $entity): ArticleProvenance
     {
-        return ArticleProvenance::fromStored($entity->origin, $entity->content_source_id, $entity->external_id);
+        $source = $entity->content_source_id !== null && $entity->relationLoaded('contentSource')
+            ? $entity->contentSource
+            : null;
+
+        return ArticleProvenance::fromStored(
+            $entity->origin,
+            $entity->content_source_id,
+            $entity->external_id,
+            $source === null ? null : new ArticleSource($source->key, $source->name, $source->homepage_url),
+        );
     }
 
     // TODO: shouldnt retun type be persistence article?

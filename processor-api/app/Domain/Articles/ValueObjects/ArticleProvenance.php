@@ -20,6 +20,9 @@ final readonly class ArticleProvenance
         public ArticleOrigin $origin,
         public ?int $contentSourceId,
         public ?string $externalId,
+        // Loaded with the article for attribution; null for user articles and for an import
+        // whose source row was deleted.
+        public ?ArticleSource $source = null,
     ) {
     }
 
@@ -49,9 +52,13 @@ final readonly class ArticleProvenance
      * Rebuild from a stored row. A row that claims to be imported but lost its source (the
      * source row was deleted, which nulls the foreign key) still reads as imported.
      */
-    public static function fromStored(ArticleOrigin $origin, ?int $contentSourceId, ?string $externalId): self
-    {
-        return new self($origin, $contentSourceId, $externalId);
+    public static function fromStored(
+        ArticleOrigin $origin,
+        ?int $contentSourceId,
+        ?string $externalId,
+        ?ArticleSource $source = null,
+    ): self {
+        return new self($origin, $contentSourceId, $externalId, $source);
     }
 
     public function isImported(): bool

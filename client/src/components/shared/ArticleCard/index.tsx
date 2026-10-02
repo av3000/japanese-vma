@@ -10,6 +10,7 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { JlptBar } from '@/components/shared/JlptBar';
 import { Link } from '@/components/shared/Link';
+import { importedSourceOf, SourceBadge } from '@/components/shared/SourceBadge';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { formatDate } from '@/helpers';
 import styles from './ArticleCard.module.css';
@@ -32,6 +33,7 @@ const shouldShowProcessingBadge = (status: string | undefined): status is Proces
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) => {
 	const url = `/articles/${article.uuid}`;
 	const status = article.processing_status?.status;
+	const source = importedSourceOf(article);
 
 	return (
 		<article className={classNames(styles.wrapper, className)}>
@@ -48,7 +50,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 				</div>
 			</Link>
 
-			<div className={styles.date}>{formatDate(article.created_at, 'ja', true)}</div>
+			<div className={styles.date}>
+				{formatDate(article.created_at, 'ja', true)}
+				{source && <SourceBadge source={source} className={styles.sourceBadge} />}
+			</div>
 
 			<Link to={url} title={article.title_jp} className={styles.cardLink}>
 				<p className={styles.title} lang="ja">

@@ -40,7 +40,7 @@ class ArticleRepository implements ArticleRepositoryInterface
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
         $entityArticle = PersistenceArticle::create($mappedArticle);
-        $entityArticle->load('user');
+        $entityArticle->load(['user', 'contentSource']);
 
         return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }
@@ -54,7 +54,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function update(DomainArticle $article): void
     {
-        $entityArticle = PersistenceArticle::with('user')
+        $entityArticle = PersistenceArticle::with(['user', 'contentSource'])
             ->where('uuid', $article->getUid()->value())
             ->firstOrFail();
 
@@ -104,7 +104,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findByUserId(UserId $userId, int $limit = 10): array
     {
         return PersistenceArticle::where('user_id', $userId->value())
-            ->with(['user', 'kanjis'])
+            ->with(['user', 'contentSource', 'kanjis'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
@@ -141,7 +141,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $options = null): ?DomainArticle
     {
         $query = PersistenceArticle::query()
-            ->with(['user'])
+            ->with(['user', 'contentSource'])
             ->where('uuid', $articleUuid->value());
 
         if ($options?->includeKanjis()) {
@@ -162,7 +162,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData
     {
         $query = PersistenceArticle::query()
-            ->with(['user'])
+            ->with(['user', 'contentSource'])
             ->where('uuid', $articleUuid->value());
 
         if ($includeKanjis) {
@@ -189,7 +189,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findModerationQueue(Pagination $pagination): Articles
     {
         $paginator = PersistenceArticle::query()
-            ->with('user')
+            ->with(['user', 'contentSource'])
             ->whereIn('status', [ArticleStatus::PENDING->value, ArticleStatus::REVIEWING->value])
             ->orderByDesc('created_at')
             ->orderByDesc('id')

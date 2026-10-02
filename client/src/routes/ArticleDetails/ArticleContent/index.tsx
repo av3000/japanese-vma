@@ -12,6 +12,7 @@ import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.j
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
+import { ArticleAttribution } from '@/components/features/articles/ArticleAttribution';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
@@ -20,6 +21,7 @@ import { Button } from '@/components/shared/Button';
 import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { JlptBar } from '@/components/shared/JlptBar';
+import { importedSourceOf, SourceBadge } from '@/components/shared/SourceBadge';
 import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { Badge } from '@/components/ui/badge';
@@ -116,6 +118,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 	const isLiked = article.engagement?.is_liked_by_viewer ?? false;
 	const isOwner = currentUser?.id === article.author.id;
+	const importedSource = importedSourceOf(article);
 	const isAdmin = currentUser?.isAdmin;
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
 
@@ -161,6 +164,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						<p className={styles.inlineText}>Posted on {article.formattedDate}</p>
 						<Cluster gap="xs">
 							<span>{article.engagement?.views_count || 0} views | </span>
+							{importedSource && <SourceBadge source={importedSource} />}
 							{(isOwner || isAdmin) && (
 								<Badge variant="secondary">{article.publicity === 1 ? 'Public' : 'Private'}</Badge>
 							)}
@@ -205,6 +209,8 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				<p className={styles.articleParagraph} lang="ja">
 					{article.content_jp}
 				</p>
+
+				{importedSource && <ArticleAttribution source={importedSource} sourceLink={article.source_link} />}
 
 				<Cluster as="section" gap="2xs" aria-label="Tags">
 					{article.hashtags?.map((tag) => (
