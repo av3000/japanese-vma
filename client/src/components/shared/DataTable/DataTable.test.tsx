@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { DataTable, type DataTableColumn, type DataTableProps } from './';
+import { DataTable, type DataTableColumn, type DataTableProps, assertDataTableColumns } from './';
 
 type Row = { id: string; name: string; count: number | null };
 
@@ -90,5 +90,46 @@ describe('DataTable', () => {
 
 		expect(html).toContain('<table');
 		expect(count(html, /<tr role="row"/g)).toBe(1);
+	});
+
+	it('lets the caller choose the heading level of the empty state', () => {
+		const html = render({ rows: [], empty: { title: 'Nothing here', headingLevel: 3 } });
+
+		expect(html).toMatch(/<h3[^>]*>Nothing here<\/h3>/);
+		expect(html).not.toContain('<h2');
+	});
+});
+
+describe('assertDataTableColumns', () => {
+	const cell = () => null;
+
+	it('accepts exactly one row header with unique grid-area ids', () => {
+		expect(() => assertDataTableColumns(columns)).not.toThrow();
+	});
+
+	it('rejects a table without a row header, or with two', () => {
+		const withoutRowHeader = columns.map((column) => ({ ...column, rowHeader: false }));
+		const twoRowHeaders = columns.map((column) => ({ ...column, rowHeader: true }));
+
+		expect(() => assertDataTableColumns(withoutRowHeader)).toThrow('exactly one rowHeader column, got 0');
+		expect(() => assertDataTableColumns(twoRowHeaders)).toThrow('exactly one rowHeader column, got 4');
+	});
+
+	it('rejects ids that cannot be grid-area names, and duplicates', () => {
+		expect(() => assertDataTableColumns([{ id: 'on yomi', header: 'On', rowHeader: true, cell }])).toThrow(
+			'is not a valid grid-area name',
+		);
+		expect(() =>
+			assertDataTableColumns([
+				{ id: 'name', header: 'Name', rowHeader: true, cell },
+				{ id: 'name', header: 'Again', cell },
+			]),
+		).toThrow('"name" is used twice');
+	});
+
+	it('runs on render in development', () => {
+		expect(() => render({ columns: columns.map((column) => ({ ...column, rowHeader: false })) })).toThrow(
+			'exactly one rowHeader column',
+		);
 	});
 });

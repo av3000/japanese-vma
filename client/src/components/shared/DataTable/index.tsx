@@ -35,6 +35,8 @@ export interface DataTableStackedLayout {
 export interface DataTableEmpty {
 	title: React.ReactNode;
 	hint?: React.ReactNode;
+	/** Heading level of the title, so the caller fits it into its own outline. Defaults to 2. */
+	headingLevel?: 2 | 3 | 4 | 5 | 6;
 }
 
 export interface DataTableProps<Row> {
@@ -70,18 +72,56 @@ const columnClasses = <Row,>(column: DataTableColumn<Row>) =>
 		column.width && widthClass[column.width],
 	);
 
+/** A column id doubles as a CSS `grid-area` name, so it must be a plain identifier. */
+const GRID_AREA_NAME = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+/**
+ * The column contract the types cannot express: exactly one row header, and unique ids that are
+ * valid grid-area names. Checked in development only, where a wrong definition should fail loudly.
+ */
+export const assertDataTableColumns = <Row,>(columns: ReadonlyArray<DataTableColumn<Row>>): void => {
+	const rowHeaders = columns.filter((column) => column.rowHeader).length;
+
+	if (rowHeaders !== 1) {
+		throw new Error(`DataTable needs exactly one rowHeader column, got ${rowHeaders}.`);
+	}
+
+	const ids = new Set<string>();
+
+	for (const { id } of columns) {
+		if (!GRID_AREA_NAME.test(id)) {
+			throw new Error(`DataTable column id "${id}" is not a valid grid-area name.`);
+		}
+
+		if (ids.has(id)) {
+			throw new Error(`DataTable column id "${id}" is used twice.`);
+		}
+
+		ids.add(id);
+	}
+};
+
 /**
  * One header cell. Sorting (#426) will hang off this: a sortable column renders its header as a
  * button with `aria-sort`, and nothing else in the table changes.
  */
-const HeaderCell = <Row,>({ column }: { column: DataTableColumn<Row> }) => (
-	<th role="columnheader" scope="col" className={columnClasses(column)}>
+const HeaderCell = <Row,>({ column, className }: { column: DataTableColumn<Row>; className: string }) => (
+	<th role="columnheader" scope="col" className={className}>
 		{column.headerHidden ? <span className={styles.visuallyHidden}>{column.header}</span> : column.header}
 	</th>
 );
 
-const BodyCell = <Row,>({ column, children }: { column: DataTableColumn<Row>; children: React.ReactNode }) => {
-	const className = classNames(columnClasses(column), column.cellClassName);
+const BodyCell = <Row,>({
+	column,
+	className: columnClassName,
+	children,
+}: {
+	column: DataTableColumn<Row>;
+	/** The column's classes, computed once per column rather than once per cell. */
+	className: string;
+	children: React.ReactNode;
+}) => {
+	const className = classNames(columnClassName, column.cellClassName);
 	const style = { gridArea: column.id };
 	const content = (
 		<>
@@ -125,10 +165,18 @@ export const DataTable = <Row,>({
 	stacked,
 	className,
 }: DataTableProps<Row>) => {
+	if (import.meta.env.DEV) {
+		assertDataTableColumns(columns);
+	}
+
+	const columnClassNames = React.useMemo(() => columns.map((column) => columnClasses(column)), [columns]);
+
 	if (!loading && rows.length === 0 && empty) {
+		const Heading = `h${empty.headingLevel ?? 2}` as const;
+
 		return (
 			<div className={classNames(styles.empty, className)} role="status">
-				<h2 className={styles.emptyTitle}>{empty.title}</h2>
+				<Heading className={styles.emptyTitle}>{empty.title}</Heading>
 				{empty.hint ? <p className={styles.emptyHint}>{empty.hint}</p> : null}
 			</div>
 		);
@@ -145,18 +193,22 @@ export const DataTable = <Row,>({
 			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- explicit roles survive the stacked layout, see DataTable */}
 			<thead role="rowgroup" className={styles.head}>
 				<tr role="row">
-					{columns.map((column) => (
-						<HeaderCell key={column.id} column={column} />
+					{columns.map((column, index) => (
+						<HeaderCell key={column.id} column={column} className={columnClassNames[index]} />
 					))}
 				</tr>
 			</thead>
 			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- see thead */}
 			<tbody role="rowgroup">
 				{loading
-					? Array.from({ length: loadingRowCount }, (_, index) => (
-							<tr role="row" key={`loading-${index}`} aria-hidden="true" className={styles.loadingRow}>
-								{columns.map((column) => (
-									<BodyCell key={column.id} column={{ ...column, mobileLabel: undefined }}>
+					? Array.from({ length: loadingRowCount }, (_, rowIndex) => (
+							<tr role="row" key={`loading-${rowIndex}`} aria-hidden="true" className={styles.loadingRow}>
+								{columns.map((column, index) => (
+									<BodyCell
+										key={column.id}
+										column={{ ...column, mobileLabel: undefined }}
+										className={columnClassNames[index]}
+									>
 										<span className={column.rowHeader ? styles.skeletonHead : styles.skeleton} />
 									</BodyCell>
 								))}
@@ -164,8 +216,8 @@ export const DataTable = <Row,>({
 						))
 					: rows.map((row) => (
 							<tr role="row" key={getRowKey(row)}>
-								{columns.map((column) => (
-									<BodyCell key={column.id} column={column}>
+								{columns.map((column, index) => (
+									<BodyCell key={column.id} column={column} className={columnClassNames[index]}>
 										{column.cell(row)}
 									</BodyCell>
 								))}
