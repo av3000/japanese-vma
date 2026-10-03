@@ -22,6 +22,11 @@ interface KanjiRepositoryInterface
 
     public function findIdsByCharacters(array $characters): array;
 
+    /**
+     * @param int[] $ids
+     *
+     * @return list<Kanji> Domain models, in no particular order.
+     */
     public function findByIds(array $ids): array;
 
     public function findByCharacters(array $characters): array;

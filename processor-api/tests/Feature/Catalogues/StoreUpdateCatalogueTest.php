@@ -9,6 +9,8 @@ use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Download;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
 use App\Infrastructure\Persistence\Models\Like;
+use App\Infrastructure\Persistence\Models\StudyAttempt;
+use App\Infrastructure\Persistence\Models\StudySession;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
@@ -360,10 +362,19 @@ class StoreUpdateCatalogueTest extends TestCase
             'value' => 1,
         ]);
 
+        // A learner's study history outlives the catalogue it was built from (epic #413).
+        $session = StudySession::factory()->forCatalogue($catalogue)->create();
+        StudyAttempt::factory()->for($session, 'session')->create();
+
         Passport::actingAs($user, ['*'], 'api');
 
         $this->json('DELETE', "/api/v1/catalogues/{$catalogue->uuid}")
             ->assertNoContent();
+
+        $session->refresh();
+        $this->assertNull($session->catalogue_id);
+        $this->assertSame($catalogue->type->value, $session->catalogue_type);
+        $this->assertSame(1, StudyAttempt::where('session_id', $session->id)->count());
 
         $this->assertNull(PersistenceCatalogue::find($catalogue->id));
         $this->assertSame(0, DB::table('customlist_object')->where('list_id', $catalogue->id)->count());

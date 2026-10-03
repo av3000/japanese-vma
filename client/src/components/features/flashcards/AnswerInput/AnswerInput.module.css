@@ -1,0 +1,14 @@
+.form {
+	display: grid;
+	gap: var(--spacing-xs);
+}
+
+.input {
+	flex: 1 1 12rem;
+	min-width: 0;
+	font-size: var(--font-size-body-lg);
+}
+
+.input[lang='ja'] {
+	font-family: var(--font-family-ja);
+}

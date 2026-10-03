@@ -13,6 +13,8 @@ use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
 use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
 use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
+use App\Http\v1\Study\Controllers\FlashcardDeckController;
+use App\Http\v1\Study\Controllers\StudySessionController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -117,6 +119,14 @@ Route::prefix('v1')->group(function () {
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
 
+    // Study - a catalogue read as a flashcard deck (epic #413). Public for public
+    // catalogues; the service answers 403 for a private one. Nested under the uuid, so
+    // it neither shadows `catalogues/legacy/{id}` and `catalogues/for-item` nor is
+    // swallowed by `catalogues/{uuid}` below. `whereUuid` for the same reason as the
+    // comment routes: a malformed segment must be a 404, not an unmapped exception.
+    Route::get('catalogues/{uuid}/flashcards', [FlashcardDeckController::class, 'show'])
+        ->whereUuid('uuid');
+
     // ============================================
     // AUTHENTICATED ROUTES
     // ============================================
@@ -189,6 +199,15 @@ Route::prefix('v1')->group(function () {
 
         // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
+
+        // Study sessions (epic #413): what a signed-in learner did with a deck. Visitors
+        // play public decks without any of these. A session that is not the caller's
+        // answers 404, not 403, so the endpoint cannot confirm foreign session uuids.
+        Route::post('study/sessions', [StudySessionController::class, 'store']);
+        Route::post('study/sessions/{uuid}/attempts', [StudySessionController::class, 'storeAttempt'])
+            ->whereUuid('uuid');
+        Route::post('study/sessions/{uuid}/complete', [StudySessionController::class, 'complete'])
+            ->whereUuid('uuid');
 
         // ============================================
         // ADMIN-ONLY ROUTES

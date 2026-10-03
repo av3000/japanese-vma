@@ -1,3 +1,5 @@
+import { SavedListType } from '@/shared/constants/enums';
+
 export const CATALOGUE_TYPE_LABELS = {
 	5: 'Radicals',
 	6: 'Kanjis',
@@ -30,6 +32,34 @@ const CATALOGUE_FAMILIES: ReadonlyArray<readonly [CatalogueFamily, readonly numb
 	['articles', [9]],
 ];
 
+/**
+ * The families flashcards can be built from (epic #413). Sentences have no translation
+ * column and articles are not cards, so a Study action for them would only surface a 422.
+ * Mirrors FlashcardQuestion::baseType on the backend.
+ */
+export type StudyFamily = Extract<CatalogueFamily, 'kanji' | 'words' | 'radicals'>;
+
+const STUDY_FAMILIES: ReadonlySet<CatalogueFamily> = new Set<CatalogueFamily>(['kanji', 'words', 'radicals']);
+
+export const studyFamilyFor = (catalogueType: number): StudyFamily | null => {
+	const family = resolveCatalogueFamily(catalogueType);
+	return family !== null && STUDY_FAMILIES.has(family) ? (family as StudyFamily) : null;
+};
+
+export const isCatalogueStudySupported = (value: number) => studyFamilyFor(value) !== null;
+
+const BOOKMARK_TYPE_BY_FAMILY: Record<StudyFamily, SavedListType> = {
+	kanji: SavedListType.KANJIS,
+	words: SavedListType.WORDS,
+	radicals: SavedListType.RADICALS,
+};
+
+/** The custom catalogue type a studied item can be saved into from the summary. */
+export const studyBookmarkTypeFor = (catalogueType: number): SavedListType | null => {
+	const family = studyFamilyFor(catalogueType);
+	return family ? BOOKMARK_TYPE_BY_FAMILY[family] : null;
+};
+
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
 	label,
@@ -49,6 +79,7 @@ export const CATALOGUE_ROUTES = {
 	detail: (catalogueId: string) => `/catalogues/${catalogueId}`,
 	create: '/catalogues/new',
 	edit: (catalogueId: string) => `/catalogues/${catalogueId}/edit`,
+	study: (catalogueId: string) => `/catalogues/${catalogueId}/study`,
 	legacyList: '/lists',
 	legacyDetail: (catalogueId: string) => `/list/${catalogueId}`,
 	legacyCreate: '/newlist',

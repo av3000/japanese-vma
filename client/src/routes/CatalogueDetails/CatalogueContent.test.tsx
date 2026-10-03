@@ -204,6 +204,20 @@ describe('CatalogueContent', () => {
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
 	});
 
+	it('offers Study for kanji, words and radicals catalogues only', () => {
+		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 6 }) as any} />)).toContain(
+			'Study',
+		);
+		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 3 }) as any} />)).toContain(
+			'Study',
+		);
+		// The default fixture is an Articles catalogue; sentences have no cards either.
+		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />)).not.toContain('Study');
+		expect(
+			renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 8 }) as any} />),
+		).not.toContain('Study');
+	});
+
 	it('renders the unfilled like icon for a catalogue the viewer has not liked', () => {
 		const html = renderToStaticMarkup(
 			<CatalogueContent
