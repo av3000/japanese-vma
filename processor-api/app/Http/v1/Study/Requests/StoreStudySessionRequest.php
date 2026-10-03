@@ -10,6 +10,7 @@ use App\Domain\Study\Enums\ScriptStrictness;
 use App\Domain\Study\ValueObjects\FlashcardConfig;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreStudySessionRequest extends FormRequest
 {
@@ -31,5 +32,15 @@ class StoreStudySessionRequest extends FormRequest
             'script' => ['sometimes', Rule::enum(ScriptStrictness::class)],
             'card_count' => ['required', 'integer', 'min:'.FlashcardConfig::MIN_COUNT, 'max:'.FlashcardConfig::MAX_COUNT],
         ];
+    }
+
+    /** A character answer cannot be typed; the type-specific rules are the service's. */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($this->input('mode') === AnswerMode::TYPED->value && $this->input('answer') === FlashcardField::CHARACTER->value) {
+                $validator->errors()->add('mode', 'A character answer cannot be typed; use options.');
+            }
+        });
     }
 }

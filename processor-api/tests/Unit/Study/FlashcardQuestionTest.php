@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Study;
 
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Enums\ScriptStrictness;
 use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-class FlashcardConfigTest extends TestCase
+class FlashcardQuestionTest extends TestCase
 {
     /**
      * @return iterable<string, array{SavedListType, FlashcardField, FlashcardField, AnswerMode, bool}>
@@ -61,14 +63,14 @@ class FlashcardConfigTest extends TestCase
     #[DataProvider('combinations')]
     public function test_combination_table(SavedListType $type, FlashcardField $prompt, FlashcardField $answer, AnswerMode $mode, bool $valid): void
     {
-        $config = new FlashcardConfig($prompt, $answer, $mode, ScriptStrictness::STRICT, 20, 1);
+        $question = new FlashcardQuestion($prompt, $answer, $mode, ScriptStrictness::STRICT);
 
-        $this->assertSame($valid, $config->isValidFor($type));
+        $this->assertSame($valid, $question->isValidFor($type));
     }
 
     public function test_supported_types_are_the_three_families_and_their_known_variants(): void
     {
-        $supported = array_values(array_filter(SavedListType::cases(), FlashcardConfig::supportsType(...)));
+        $supported = array_values(array_filter(SavedListType::cases(), FlashcardQuestion::supportsType(...)));
 
         $this->assertEqualsCanonicalizing([
             SavedListType::KNOWNRADICALS,
@@ -80,25 +82,26 @@ class FlashcardConfigTest extends TestCase
         ], $supported);
     }
 
+    public function test_item_type_follows_the_family(): void
+    {
+        $this->assertSame(ObjectTemplateType::KANJI, FlashcardQuestion::itemTypeFor(SavedListType::KNOWNKANJIS));
+        $this->assertSame(ObjectTemplateType::WORD, FlashcardQuestion::itemTypeFor(SavedListType::WORDS));
+        $this->assertSame(ObjectTemplateType::RADICAL, FlashcardQuestion::itemTypeFor(SavedListType::RADICALS));
+        $this->assertNull(FlashcardQuestion::itemTypeFor(SavedListType::SENTENCES));
+    }
+
     public function test_prompt_and_answer_must_differ(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new FlashcardConfig(FlashcardField::CHARACTER, FlashcardField::CHARACTER, AnswerMode::OPTIONS, ScriptStrictness::STRICT, 20, 1);
+        new FlashcardQuestion(FlashcardField::CHARACTER, FlashcardField::CHARACTER, AnswerMode::OPTIONS, ScriptStrictness::STRICT);
     }
 
     public function test_a_character_answer_cannot_be_typed(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new FlashcardConfig(FlashcardField::MEANING, FlashcardField::CHARACTER, AnswerMode::TYPED, ScriptStrictness::STRICT, 20, 1);
-    }
-
-    public function test_count_is_bounded(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        new FlashcardConfig(FlashcardField::CHARACTER, FlashcardField::MEANING, AnswerMode::OPTIONS, ScriptStrictness::STRICT, FlashcardConfig::MAX_COUNT + 1, 1);
+        new FlashcardQuestion(FlashcardField::MEANING, FlashcardField::CHARACTER, AnswerMode::TYPED, ScriptStrictness::STRICT);
     }
 
     public function test_only_character_is_not_typeable(): void
@@ -108,5 +111,16 @@ class FlashcardConfigTest extends TestCase
         foreach ([FlashcardField::MEANING, FlashcardField::ONYOMI, FlashcardField::KUNYOMI, FlashcardField::READING] as $field) {
             $this->assertTrue($field->isTypeable(), $field->value);
         }
+    }
+
+    public function test_the_deck_cut_is_bounded(): void
+    {
+        $question = new FlashcardQuestion(FlashcardField::CHARACTER, FlashcardField::MEANING, AnswerMode::OPTIONS, ScriptStrictness::STRICT);
+
+        $config = new FlashcardConfig($question, FlashcardConfig::MAX_COUNT, FlashcardConfig::MAX_SEED);
+        $this->assertSame(FlashcardConfig::MAX_COUNT, $config->count);
+
+        $this->expectException(InvalidArgumentException::class);
+        new FlashcardConfig($question, FlashcardConfig::MAX_COUNT + 1, 1);
     }
 }

@@ -10,10 +10,10 @@ use App\Domain\JapaneseMaterial\Words\Models\Word;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Models\Flashcard;
-use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 
 /**
- * Turns a dictionary item into a card for a given configuration, or null when the item has
+ * Turns a dictionary item into a card for a given question, or null when the item has
  * nothing to answer with. Pure: the only knowledge here is how each item type stores its
  * fields (`-` means empty, radical readings are `かな / romaji`, kana-only words have no
  * separate reading).
@@ -24,7 +24,7 @@ final class FlashcardFactory
 
     private const RADICAL_READING_SEPARATOR = ' / ';
 
-    public function fromKanji(Kanji $kanji, FlashcardConfig $config): ?Flashcard
+    public function fromKanji(Kanji $kanji, FlashcardQuestion $question): ?Flashcard
     {
         $fields = [
             FlashcardField::CHARACTER->value => [$kanji->getCharacter()->value()],
@@ -37,7 +37,7 @@ final class FlashcardFactory
             $kanji->getIdValue(),
             $kanji->getUuid()->value(),
             $fields,
-            $config,
+            $question,
             hint: null,
             jlpt: $kanji->getJlpt()?->value(),
             grade: $kanji->getGrade()?->value(),
@@ -45,7 +45,7 @@ final class FlashcardFactory
         );
     }
 
-    public function fromWord(Word $word, FlashcardConfig $config): ?Flashcard
+    public function fromWord(Word $word, FlashcardQuestion $question): ?Flashcard
     {
         $surface = $word->getSurface();
         $furigana = trim($word->getFurigana());
@@ -66,7 +66,7 @@ final class FlashcardFactory
             $word->getIdValue(),
             $word->getUuid()->value(),
             $fields,
-            $config,
+            $question,
             hint: $word->getWordTypes()[0] ?? null,
             jlpt: ($jlpt === null || $jlpt === self::EMPTY_MARKER) ? null : $jlpt,
             grade: null,
@@ -74,7 +74,7 @@ final class FlashcardFactory
         );
     }
 
-    public function fromRadical(Radical $radical, FlashcardConfig $config): ?Flashcard
+    public function fromRadical(Radical $radical, FlashcardQuestion $question): ?Flashcard
     {
         $glyph = $radical->getRadical();
 
@@ -92,7 +92,7 @@ final class FlashcardFactory
             $radical->getIdValue(),
             $radical->getUuid()->value(),
             $fields,
-            $config,
+            $question,
             hint: null,
             jlpt: null,
             grade: null,
@@ -107,14 +107,14 @@ final class FlashcardFactory
         int $itemId,
         string $itemUuid,
         array $fields,
-        FlashcardConfig $config,
+        FlashcardQuestion $question,
         ?string $hint,
         ?string $jlpt,
         ?string $grade,
         ?int $strokes,
     ): ?Flashcard {
-        $promptValues = $fields[$config->prompt->value] ?? [];
-        $answerValues = $fields[$config->answer->value] ?? [];
+        $promptValues = $fields[$question->prompt->value] ?? [];
+        $answerValues = $fields[$question->answer->value] ?? [];
 
         if ($promptValues === [] || $answerValues === []) {
             return null;

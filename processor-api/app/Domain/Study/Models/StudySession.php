@@ -112,6 +112,15 @@ final readonly class StudySession
         return $this->completedAt !== null;
     }
 
+    /**
+     * The score is fixed once the first pass is complete, so no more first-pass answers;
+     * "retry missed" rounds (attempt 2 and up) happen after that and are still history.
+     */
+    public function acceptsAttempt(int $attemptNo): bool
+    {
+        return ! $this->isCompleted() || $attemptNo > 1;
+    }
+
     public function isOwnedBy(UserId $userId): bool
     {
         return $this->userId->equals($userId);

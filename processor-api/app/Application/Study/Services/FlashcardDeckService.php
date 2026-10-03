@@ -17,12 +17,14 @@ use App\Domain\JapaneseMaterial\Radicals\Models\Radical;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Study\DTOs\EligibleCardsDTO;
 use App\Domain\Study\DTOs\FlashcardDeckDTO;
 use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Errors\StudyErrors;
 use App\Domain\Study\Factories\FlashcardFactory;
 use App\Domain\Study\Models\Flashcard;
 use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use App\Shared\Results\Result;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
@@ -51,34 +53,34 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
         /** @var Catalogue $catalogue */
         $catalogue = $catalogueResult->getData();
         $type = $catalogue->getType();
+        $question = $config->question;
+        $baseType = FlashcardQuestion::baseType($type);
 
-        if (! FlashcardConfig::supportsType($type)) {
+        if ($baseType === null) {
             return Result::failure(StudyErrors::catalogueTypeNotSupported($catalogueUuid->value(), $type->label()));
         }
 
-        if (! $config->isValidFor($type)) {
+        if (! $question->isValidFor($type)) {
             return Result::failure(StudyErrors::invalidFieldCombination(
                 $catalogueUuid->value(),
-                $config->prompt->value,
-                $config->answer->value,
-                $config->mode->value,
+                $question->prompt->value,
+                $question->answer->value,
+                $question->mode->value,
             ));
         }
 
         $itemIds = $this->catalogueItemRepository->findItemIdsByCatalogueId($catalogue->getIdValue());
-        $cards = $this->mapCards($type, $itemIds, $config);
+        $source = new EligibleCardsDTO($baseType, $this->mapCards($baseType, $itemIds, $question), $itemIds);
 
-        if ($cards === []) {
-            return Result::failure(StudyErrors::noEligibleCards($catalogueUuid->value(), $config->answer->value));
+        if ($source->cards === []) {
+            return Result::failure(StudyErrors::noEligibleCards($catalogueUuid->value(), $question->answer->value));
         }
 
         $randomizer = new Randomizer(new Mt19937($config->seed));
-        $deck = array_values(array_slice($randomizer->shuffleArray($cards), 0, $config->count));
+        $deck = array_values(array_slice($randomizer->shuffleArray($source->cards), 0, $config->count));
 
-        if ($config->mode === AnswerMode::OPTIONS) {
-            /** @var SavedListType $baseType */
-            $baseType = FlashcardConfig::baseType($type);
-            $deck = $this->buildDistractors->execute($deck, $cards, $config, $baseType, $itemIds, $randomizer);
+        if ($question->mode === AnswerMode::OPTIONS) {
+            $deck = $this->buildDistractors->execute($deck, $source, $question, $config->seed);
         }
 
         return Result::success(new FlashcardDeckDTO(
@@ -86,8 +88,8 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
             config: $config,
             cards: $deck,
             totalItems: count($itemIds),
-            eligibleItems: count($cards),
-            excludedEmptyAnswerField: count($itemIds) - count($cards),
+            eligibleItems: count($source->cards),
+            excludedEmptyAnswerField: count($itemIds) - count($source->cards),
         ));
     }
 
@@ -96,23 +98,23 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
      *
      * @return list<Flashcard>
      */
-    private function mapCards(SavedListType $type, array $itemIds, FlashcardConfig $config): array
+    private function mapCards(SavedListType $baseType, array $itemIds, FlashcardQuestion $question): array
     {
         if ($itemIds === []) {
             return [];
         }
 
-        $cards = match (FlashcardConfig::baseType($type)) {
+        $cards = match ($baseType) {
             SavedListType::KANJIS => array_map(
-                fn (Kanji $kanji): ?Flashcard => $this->flashcardFactory->fromKanji($kanji, $config),
+                fn (Kanji $kanji): ?Flashcard => $this->flashcardFactory->fromKanji($kanji, $question),
                 $this->kanjiRepository->findByIds($itemIds),
             ),
             SavedListType::WORDS => array_map(
-                fn (Word $word): ?Flashcard => $this->flashcardFactory->fromWord($word, $config),
+                fn (Word $word): ?Flashcard => $this->flashcardFactory->fromWord($word, $question),
                 $this->wordRepository->findByIds($itemIds),
             ),
             SavedListType::RADICALS => array_map(
-                fn (Radical $radical): ?Flashcard => $this->flashcardFactory->fromRadical($radical, $config),
+                fn (Radical $radical): ?Flashcard => $this->flashcardFactory->fromRadical($radical, $question),
                 $this->radicalRepository->findByIds($itemIds),
             ),
             default => [],

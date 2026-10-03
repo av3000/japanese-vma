@@ -5,26 +5,25 @@ declare(strict_types=1);
 namespace App\Application\Study\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Study\DTOs\StudyAttemptDTO;
 use App\Domain\Study\DTOs\StudySessionCreateDTO;
 use App\Domain\Study\Errors\StudyErrors;
 use App\Domain\Study\Models\StudySession;
-use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use App\Shared\Results\Result;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 
 final class StudySessionService implements StudySessionServiceInterface
 {
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
+        private readonly CatalogueItemRepositoryInterface $catalogueItems,
         private readonly StudySessionRepositoryInterface $sessions,
     ) {
     }
@@ -41,23 +40,16 @@ final class StudySessionService implements StudySessionServiceInterface
         $catalogue = $catalogueResult->getData();
         $type = $catalogue->getType();
 
-        if (! FlashcardConfig::supportsType($type)) {
+        if (! FlashcardQuestion::supportsType($type)) {
             return Result::failure(StudyErrors::catalogueTypeNotSupported($dto->catalogueUuid->value(), $type->label()));
         }
 
-        try {
-            // The seed is irrelevant to a session; the value object only needs it to be in range.
-            $config = new FlashcardConfig($dto->prompt, $dto->answer, $dto->mode, $dto->script, $dto->cardCount, 0);
-        } catch (InvalidArgumentException) {
-            $config = null;
-        }
-
-        if ($config === null || ! $config->isValidFor($type)) {
+        if (! $dto->question->isValidFor($type)) {
             return Result::failure(StudyErrors::invalidFieldCombination(
                 $dto->catalogueUuid->value(),
-                $dto->prompt->value,
-                $dto->answer->value,
-                $dto->mode->value,
+                $dto->question->prompt->value,
+                $dto->question->answer->value,
+                $dto->question->mode->value,
             ));
         }
 
@@ -69,10 +61,10 @@ final class StudySessionService implements StudySessionServiceInterface
                 catalogueId: $catalogue->getIdValue(),
                 catalogueUuid: $catalogue->getUid(),
                 catalogueType: $type,
-                prompt: $dto->prompt,
-                answer: $dto->answer,
-                mode: $dto->mode,
-                script: $dto->script,
+                prompt: $dto->question->prompt,
+                answer: $dto->question->answer,
+                mode: $dto->question->mode,
+                script: $dto->question->script,
                 cardCount: $dto->cardCount,
                 correctCount: null,
                 startedAt: new DateTimeImmutable,
@@ -102,16 +94,22 @@ final class StudySessionService implements StudySessionServiceInterface
         /** @var StudySession $session */
         $session = $sessionResult->getData();
 
-        // The score is fixed once the first pass is complete, so no more first-pass answers.
-        // "Retry missed" rounds (attempt_no 2 and up) happen after that and are still history.
-        if ($session->isCompleted() && $attempt->attemptNo === 1) {
+        if (! $session->acceptsAttempt($attempt->attemptNo)) {
             return Result::failure(StudyErrors::sessionCompleted($sessionUuid->value()));
         }
 
-        $itemType = self::itemTypeFor($session->getCatalogueType());
+        $itemType = FlashcardQuestion::itemTypeFor($session->getCatalogueType());
 
         if ($itemType === null) {
             return Result::failure(StudyErrors::catalogueTypeNotSupported($sessionUuid->value(), $session->getCatalogueType()->label()));
+        }
+
+        // Phase 2 reads per-item statistics by (type, item); keep junk ids out while the
+        // catalogue still exists to check against. A deleted catalogue leaves no reference.
+        $catalogueId = $session->getCatalogueId();
+
+        if ($catalogueId !== null && ! $this->catalogueItems->containsItem($catalogueId, $attempt->itemId)) {
+            return Result::failure(StudyErrors::itemNotInCatalogue($sessionUuid->value(), $attempt->itemId));
         }
 
         return Result::success($this->sessions->recordAttempt($session->getIdValue(), $itemType, $attempt));
@@ -151,16 +149,5 @@ final class StudySessionService implements StudySessionServiceInterface
         }
 
         return Result::success($session);
-    }
-
-    /** The engagement vocabulary's id for the items a session's cards are built from. */
-    public static function itemTypeFor(SavedListType $catalogueType): ?ObjectTemplateType
-    {
-        return match (FlashcardConfig::baseType($catalogueType)) {
-            SavedListType::KANJIS => ObjectTemplateType::KANJI,
-            SavedListType::WORDS => ObjectTemplateType::WORD,
-            SavedListType::RADICALS => ObjectTemplateType::RADICAL,
-            default => null,
-        };
     }
 }

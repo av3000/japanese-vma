@@ -70,21 +70,21 @@ class FlashcardDeckResource extends JsonResource
 
     private function prompt(): FlashcardField
     {
-        return $this->resource->config->prompt;
+        return $this->resource->config->question->prompt;
     }
 
     private function answer(): FlashcardField
     {
-        return $this->resource->config->answer;
+        return $this->resource->config->question->answer;
     }
 
     private function mode(): AnswerMode
     {
-        return $this->resource->config->mode;
+        return $this->resource->config->question->mode;
     }
 
     private function script(): ScriptStrictness
     {
-        return $this->resource->config->script;
+        return $this->resource->config->question->script;
     }
 }

@@ -9,7 +9,7 @@ use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Factories\FlashcardFactory;
 use App\Domain\Study\Models\Flashcard;
-use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
 use App\Infrastructure\Persistence\Models\Radical as PersistenceRadical;
 use App\Infrastructure\Persistence\Models\Word as PersistenceWord;
@@ -41,7 +41,8 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
 
     public function sample(
         SavedListType $baseType,
-        FlashcardConfig $config,
+        FlashcardQuestion $question,
+        int $seed,
         array $excludeItemIds,
         ?string $preferJlpt,
         ?int $preferStrokes,
@@ -51,14 +52,14 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
             return [];
         }
 
-        $preferred = $this->fetch($baseType, $config, $excludeItemIds, $preferJlpt, $preferStrokes, $limit);
+        $preferred = $this->fetch($baseType, $question, $seed, $excludeItemIds, $preferJlpt, $preferStrokes, $limit);
 
         if (count($preferred) >= $limit || ($preferJlpt === null && $preferStrokes === null)) {
             return array_slice($preferred, 0, $limit);
         }
 
         $taken = array_map(static fn (Flashcard $card): int => $card->itemId, $preferred);
-        $rest = $this->fetch($baseType, $config, [...$excludeItemIds, ...$taken], null, null, $limit - count($preferred));
+        $rest = $this->fetch($baseType, $question, $seed, [...$excludeItemIds, ...$taken], null, null, $limit - count($preferred));
 
         return [...$preferred, ...$rest];
     }
@@ -70,16 +71,17 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
      */
     private function fetch(
         SavedListType $baseType,
-        FlashcardConfig $config,
+        FlashcardQuestion $question,
+        int $seed,
         array $excludeItemIds,
         ?string $jlpt,
         ?int $strokes,
         int $limit,
     ): array {
         $query = match ($baseType) {
-            SavedListType::KANJIS => $this->kanjiQuery($config->answer, $jlpt),
-            SavedListType::WORDS => $this->wordQuery($config->answer, $jlpt),
-            SavedListType::RADICALS => $this->radicalQuery($config->answer, $strokes),
+            SavedListType::KANJIS => $this->kanjiQuery($question->answer, $jlpt),
+            SavedListType::WORDS => $this->wordQuery($question->answer, $jlpt),
+            SavedListType::RADICALS => $this->radicalQuery($question->answer, $strokes),
             default => null,
         };
 
@@ -94,14 +96,14 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
         // The factory may still reject a row the column filter let through (a `sense` with
         // no gloss, say), so read a little more than asked and cut after mapping.
         $rows = $query
-            ->orderByRaw('md5(id::text || ?)', [(string) $config->seed])
+            ->orderByRaw('md5(id::text || ?)', [(string) $seed])
             ->limit($limit * 2)
             ->get();
 
         $cards = [];
 
         foreach ($rows as $row) {
-            $card = $this->toCard($baseType, $row, $config);
+            $card = $this->toCard($baseType, $row, $question);
 
             if ($card !== null) {
                 $cards[] = $card;
@@ -181,12 +183,12 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
         return $query;
     }
 
-    private function toCard(SavedListType $baseType, Model $row, FlashcardConfig $config): ?Flashcard
+    private function toCard(SavedListType $baseType, Model $row, FlashcardQuestion $question): ?Flashcard
     {
         return match (true) {
-            $row instanceof PersistenceKanji => $this->flashcardFactory->fromKanji($this->kanjiMapper->mapToDomain($row), $config),
-            $row instanceof PersistenceWord => $this->flashcardFactory->fromWord($this->wordMapper->mapToDomain($row), $config),
-            $row instanceof PersistenceRadical => $this->flashcardFactory->fromRadical($this->radicalMapper->mapToDomain($row), $config),
+            $row instanceof PersistenceKanji => $this->flashcardFactory->fromKanji($this->kanjiMapper->mapToDomain($row), $question),
+            $row instanceof PersistenceWord => $this->flashcardFactory->fromWord($this->wordMapper->mapToDomain($row), $question),
+            $row instanceof PersistenceRadical => $this->flashcardFactory->fromRadical($this->radicalMapper->mapToDomain($row), $question),
             default => null,
         };
     }

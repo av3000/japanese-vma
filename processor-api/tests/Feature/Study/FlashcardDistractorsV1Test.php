@@ -10,7 +10,7 @@ use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Enums\ScriptStrictness;
 use App\Domain\Study\Models\Flashcard;
-use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -301,10 +301,10 @@ class FlashcardDistractorsV1Test extends TestCase
         $excluded = [$this->insertKanji('一', 'one|'), $this->insertKanji('二', 'two|')];
         $this->insertKanji('三', 'three|');
 
-        $config = new FlashcardConfig(FlashcardField::CHARACTER, FlashcardField::MEANING, AnswerMode::OPTIONS, ScriptStrictness::STRICT, 20, 1);
+        $question = new FlashcardQuestion(FlashcardField::CHARACTER, FlashcardField::MEANING, AnswerMode::OPTIONS, ScriptStrictness::STRICT);
 
         $pool = $this->app->make(DistractorPoolReaderInterface::class)
-            ->sample(SavedListType::KANJIS, $config, $excluded, null, null, 10);
+            ->sample(SavedListType::KANJIS, $question, 1, $excluded, null, null, 10);
 
         $this->assertSame(['three'], array_map(static fn (Flashcard $card): string => $card->displayAnswer, $pool));
     }

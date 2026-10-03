@@ -58,6 +58,17 @@ class StudyErrors
         );
     }
 
+    public static function itemNotInCatalogue(string $sessionUid, int $itemId): ResultError
+    {
+        return new ResultError(
+            code: 'Study.ItemNotInCatalogue',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Item is not in the studied catalogue',
+            detail: "Item {$itemId} is not part of the catalogue study session {$sessionUid} was built from",
+            errorMessage: "Item {$itemId} is not part of the catalogue study session {$sessionUid} was built from",
+        );
+    }
+
     public static function sessionCreationFailed(): ResultError
     {
         return new ResultError(

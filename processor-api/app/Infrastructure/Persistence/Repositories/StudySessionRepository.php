@@ -40,16 +40,8 @@ final class StudySessionRepository implements StudySessionRepositoryInterface
 
     public function recordAttempt(int $sessionId, ObjectTemplateType $itemType, StudyAttemptDTO $attempt): bool
     {
-        $exists = StudyAttempt::query()
-            ->where('session_id', $sessionId)
-            ->where('item_id', $attempt->itemId)
-            ->where('attempt_no', $attempt->attemptNo)
-            ->exists();
-
-        if ($exists) {
-            return false;
-        }
-
+        // The unique (session, item, attempt_no) constraint is the duplicate check; a
+        // pre-read would be a second round trip per answer for the same answer.
         try {
             StudyAttempt::create([
                 'session_id' => $sessionId,
@@ -63,7 +55,7 @@ final class StudySessionRepository implements StudySessionRepositoryInterface
                 'answered_at' => now(),
             ]);
         } catch (UniqueConstraintViolationException) {
-            // Two retries of the same answer raced past the existence check; the row is there.
+            // A retried request: the row is already there, and the first verdict stands.
             return false;
         }
 

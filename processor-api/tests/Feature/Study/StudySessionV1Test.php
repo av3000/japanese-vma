@@ -11,6 +11,7 @@ use App\Infrastructure\Persistence\Models\StudyAttempt;
 use App\Infrastructure\Persistence\Models\StudySession;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\SeedsBaselineData;
@@ -19,6 +20,8 @@ use Tests\TestCase;
 class StudySessionV1Test extends TestCase
 {
     use RefreshDatabase, SeedsBaselineData;
+
+    private const ITEM_ID = 42;
 
     protected function setUp(): void
     {
@@ -33,6 +36,26 @@ class StudySessionV1Test extends TestCase
             ->byUser($owner ?? User::factory()->create())
             ->ofType($type)
             ->create(['publicity' => $public]);
+    }
+
+    private function attach(Catalogue $catalogue, int $itemId): void
+    {
+        DB::table('customlist_object')->insert([
+            'list_id' => $catalogue->id,
+            'real_object_id' => $itemId,
+            'listtype_id' => $catalogue->type->value,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /** A session over a catalogue of `$type` owned by `$user`, with ITEM_ID attached to it. */
+    private function sessionFor(User $user, SavedListType $type = SavedListType::KANJIS, array $overrides = []): StudySession
+    {
+        $catalogue = $this->catalogue($type, owner: $user);
+        $this->attach($catalogue, self::ITEM_ID);
+
+        return StudySession::factory()->forCatalogue($catalogue)->create($overrides);
     }
 
     /**
@@ -53,7 +76,7 @@ class StudySessionV1Test extends TestCase
     private function attempt(array $overrides = []): array
     {
         return array_merge([
-            'item_id' => 42,
+            'item_id' => self::ITEM_ID,
             'attempt_no' => 1,
             'given_answer' => 'study',
             'expected_answers' => ['study', 'learning'],
@@ -128,9 +151,10 @@ class StudySessionV1Test extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('title', 'Invalid flashcard configuration');
 
+        // A typed character answer is rejected by the request itself, before the service.
         $this->postJson('/api/v1/study/sessions', $this->payload($this->catalogue(), ['prompt' => 'meaning', 'answer' => 'character', 'mode' => 'typed']))
             ->assertStatus(422)
-            ->assertJsonPath('title', 'Invalid flashcard configuration');
+            ->assertJsonValidationErrors(['mode']);
 
         $this->postJson('/api/v1/study/sessions', $this->payload($this->catalogue(), ['answer' => 'character']))
             ->assertStatus(422)
@@ -149,7 +173,7 @@ class StudySessionV1Test extends TestCase
     public function test_attempt_is_stored_with_the_item_type_of_the_catalogue(): void
     {
         $user = User::factory()->create();
-        $session = StudySession::factory()->byUser($user)->create();
+        $session = $this->sessionFor($user);
         Passport::actingAs($user, ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['is_correct' => false, 'given_answer' => 'fire']))
@@ -157,7 +181,7 @@ class StudySessionV1Test extends TestCase
 
         $attempt = StudyAttempt::query()->where('session_id', $session->id)->firstOrFail();
 
-        $this->assertSame(42, $attempt->item_id);
+        $this->assertSame(self::ITEM_ID, $attempt->item_id);
         $this->assertSame(ObjectTemplateType::KANJI->value, $attempt->entity_type_uuid);
         $this->assertSame(1, $attempt->attempt_no);
         $this->assertSame('fire', $attempt->given_answer);
@@ -169,8 +193,7 @@ class StudySessionV1Test extends TestCase
     public function test_attempt_on_a_words_session_uses_the_word_item_type(): void
     {
         $user = User::factory()->create();
-        $catalogue = $this->catalogue(SavedListType::KNOWNWORDS, owner: $user);
-        $session = StudySession::factory()->forCatalogue($catalogue)->create([
+        $session = $this->sessionFor($user, SavedListType::KNOWNWORDS, [
             'answer_field' => 'reading',
             'answer_mode' => 'typed',
         ]);
@@ -184,10 +207,35 @@ class StudySessionV1Test extends TestCase
         ]);
     }
 
+    public function test_attempt_for_an_item_outside_the_catalogue_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionFor($user);
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['item_id' => 999]))
+            ->assertStatus(422)
+            ->assertJsonPath('title', 'Item is not in the studied catalogue');
+
+        $this->assertSame(0, StudyAttempt::query()->count());
+    }
+
+    public function test_attempt_is_still_accepted_once_the_catalogue_is_gone(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionFor($user);
+        // What the catalogue delete leaves behind (StoreUpdateCatalogueTest proves the nulling itself).
+        $session->update(['catalogue_id' => null]);
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['item_id' => 999]))
+            ->assertStatus(201);
+    }
+
     public function test_repeating_an_attempt_is_idempotent(): void
     {
         $user = User::factory()->create();
-        $session = StudySession::factory()->byUser($user)->create();
+        $session = $this->sessionFor($user);
         Passport::actingAs($user, ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())->assertStatus(201);
@@ -204,7 +252,7 @@ class StudySessionV1Test extends TestCase
 
     public function test_attempt_on_another_users_session_is_not_found(): void
     {
-        $session = StudySession::factory()->create();
+        $session = $this->sessionFor(User::factory()->create());
         Passport::actingAs(User::factory()->create(), ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())
@@ -217,7 +265,7 @@ class StudySessionV1Test extends TestCase
     public function test_first_pass_attempt_after_completion_is_a_conflict_but_retry_rounds_are_kept(): void
     {
         $user = User::factory()->create();
-        $session = StudySession::factory()->byUser($user)->completed()->create();
+        $session = $this->sessionFor($user, overrides: ['correct_count' => 7, 'completed_at' => now()]);
         Passport::actingAs($user, ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())
@@ -233,7 +281,7 @@ class StudySessionV1Test extends TestCase
     public function test_attempt_validation(): void
     {
         $user = User::factory()->create();
-        $session = StudySession::factory()->byUser($user)->create();
+        $session = $this->sessionFor($user);
         Passport::actingAs($user, ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['is_correct' => 'yes']))
@@ -253,15 +301,15 @@ class StudySessionV1Test extends TestCase
     public function test_complete_stores_the_score_and_is_idempotent(): void
     {
         $user = User::factory()->create();
-        $catalogue = $this->catalogue(owner: $user);
-        $session = StudySession::factory()->forCatalogue($catalogue)->create(['card_count' => 10]);
+        $session = $this->sessionFor($user, overrides: ['card_count' => 10]);
+        $catalogueUuid = Catalogue::query()->findOrFail($session->catalogue_id)->uuid;
         Passport::actingAs($user, ['*'], 'api');
 
         $first = $this->postJson("/api/v1/study/sessions/{$session->uuid}/complete", ['correct_count' => 7]);
 
         $first->assertOk()
             ->assertJsonPath('uuid', $session->uuid)
-            ->assertJsonPath('catalogue_uuid', $catalogue->uuid)
+            ->assertJsonPath('catalogue_uuid', $catalogueUuid)
             ->assertJsonPath('catalogue_type', SavedListType::KANJIS->value)
             ->assertJsonPath('config.prompt', 'character')
             ->assertJsonPath('config.answer', 'meaning')
@@ -285,7 +333,7 @@ class StudySessionV1Test extends TestCase
     public function test_complete_caps_the_score_at_the_card_count(): void
     {
         $user = User::factory()->create();
-        $session = StudySession::factory()->byUser($user)->create(['card_count' => 5]);
+        $session = $this->sessionFor($user, overrides: ['card_count' => 5]);
         Passport::actingAs($user, ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/complete", ['correct_count' => 9])
@@ -295,7 +343,7 @@ class StudySessionV1Test extends TestCase
 
     public function test_complete_on_another_users_session_is_not_found(): void
     {
-        $session = StudySession::factory()->create();
+        $session = $this->sessionFor(User::factory()->create());
         Passport::actingAs(User::factory()->create(), ['*'], 'api');
 
         $this->postJson("/api/v1/study/sessions/{$session->uuid}/complete", ['correct_count' => 1])->assertStatus(404);

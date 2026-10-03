@@ -8,6 +8,7 @@ use App\Domain\Study\Enums\AnswerMode;
 use App\Domain\Study\Enums\FlashcardField;
 use App\Domain\Study\Enums\ScriptStrictness;
 use App\Domain\Study\ValueObjects\FlashcardConfig;
+use App\Domain\Study\ValueObjects\FlashcardQuestion;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -57,10 +58,12 @@ class FlashcardDeckRequest extends FormRequest
         $validated = $this->validated();
 
         return new FlashcardConfig(
-            prompt: FlashcardField::from($validated['prompt'] ?? FlashcardField::CHARACTER->value),
-            answer: FlashcardField::from($validated['answer'] ?? FlashcardField::MEANING->value),
-            mode: AnswerMode::from($validated['mode'] ?? AnswerMode::OPTIONS->value),
-            script: ScriptStrictness::from($validated['script'] ?? ScriptStrictness::STRICT->value),
+            question: new FlashcardQuestion(
+                prompt: FlashcardField::from($validated['prompt'] ?? FlashcardField::CHARACTER->value),
+                answer: FlashcardField::from($validated['answer'] ?? FlashcardField::MEANING->value),
+                mode: AnswerMode::from($validated['mode'] ?? AnswerMode::OPTIONS->value),
+                script: ScriptStrictness::from($validated['script'] ?? ScriptStrictness::STRICT->value),
+            ),
             count: (int) ($validated['count'] ?? FlashcardConfig::DEFAULT_COUNT),
             seed: (int) ($validated['seed'] ?? random_int(0, FlashcardConfig::MAX_SEED)),
         );
