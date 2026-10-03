@@ -18,7 +18,8 @@ interface WordRepositoryInterface
     public function findBySurface(string $surface): ?Word;
 
     /**
-     * @param  int[]  $ids
+     * @param int[] $ids
+     *
      * @return list<Word> Domain models, in no particular order.
      */
     public function findByIds(array $ids): array;

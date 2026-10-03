@@ -22,7 +22,7 @@ interface DistractorPoolReaderInterface
      *
      * @param int[] $excludeItemIds
      *
-     * @return list<Flashcard> In random order; may be shorter than `$limit`.
+     * @return list<Flashcard> In a pseudo-random order fixed by the config's seed; may be shorter than `$limit`.
      */
     public function sample(
         SavedListType $baseType,

@@ -16,6 +16,8 @@ export interface StudySessionProps {
 	deck: StudyDeck;
 	catalogueHref: string;
 	onChangeSetup: () => void;
+	/** "Study again". When given, the parent restarts (and may start a new saved session). */
+	onRestart?: () => void;
 	/** Fires for every answer, with the round it belongs to (1 = first pass). */
 	onAnswer?: (answer: SessionAnswer, attemptNo: number) => void;
 	/** Fires once per round, when its last card has been answered. */
@@ -50,6 +52,7 @@ export const StudySession = ({
 	deck,
 	catalogueHref,
 	onChangeSetup,
+	onRestart,
 	onAnswer,
 	onRoundComplete,
 	saveStatus = 'disabled',
@@ -105,7 +108,10 @@ export const StudySession = ({
 		setPhase({ kind: 'question', index: 0 });
 	}, []);
 
-	const restart = useCallback(() => startRound(deck.cards, 1), [deck.cards, startRound]);
+	const restart = useCallback(
+		() => (onRestart ? onRestart() : startRound(deck.cards, 1)),
+		[onRestart, deck.cards, startRound],
+	);
 
 	const retryMissed = useCallback(() => {
 		const missed = answers.filter((answer) => !answer.correct).map((answer) => answer.card);

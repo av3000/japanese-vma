@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useCatalogueQuery } from '@/api/catalogues/details';
 import {
+	isTypeableField,
 	parseStudyConfig,
 	readDeckFailure,
 	studyConfigToSearchParams,
@@ -17,33 +18,26 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
-import { CATALOGUE_ROUTES, isCatalogueStudySupported } from '@/shared/constants/catalogues';
-import { SavedListType } from '@/shared/constants/enums';
+import { CATALOGUE_ROUTES, isCatalogueStudySupported, studyBookmarkTypeFor } from '@/shared/constants/catalogues';
 import styles from './CatalogueStudy.module.css';
 
 const PLAY_PARAM = 'play';
 
-/** The custom catalogue type a missed item of this catalogue can be saved into. */
-const bookmarkTypeFor = (catalogueType: number): SavedListType | null => {
-	switch (catalogueType) {
-		case SavedListType.KANJIS:
-		case SavedListType.KNOWNKANJIS:
-			return SavedListType.KANJIS;
-		case SavedListType.WORDS:
-		case SavedListType.KNOWNWORDS:
-			return SavedListType.WORDS;
-		case SavedListType.RADICALS:
-		case SavedListType.KNOWNRADICALS:
-			return SavedListType.RADICALS;
-		default:
-			return null;
-	}
-};
+/**
+ * The setup form only needs the counts, which depend on prompt and answer alone. One card
+ * in the cheapest mode keeps the preview from rebuilding a full deck with distractors on
+ * every keystroke in "Cards per run"; the real deck is requested on Start.
+ */
+const previewConfigFor = (config: StudyConfig): StudyConfig => ({
+	...config,
+	count: 1,
+	mode: isTypeableField(config.answer) ? 'typed' : 'options',
+});
 
 /**
  * `/catalogues/:catalogueId/study` (epic #413). Public: visitors can play a public deck.
- * The study configuration lives in the URL, so a drill is a link; `play=1` switches from
- * the setup form to the session.
+ * The study configuration, seed included, lives in the URL, so a drill is a link and a
+ * reload resumes the same deck; `play=1` switches from the setup form to the session.
  */
 const CatalogueStudyPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
@@ -53,27 +47,39 @@ const CatalogueStudyPage = () => {
 	const catalogueType = catalogue?.type;
 	const isSupported = catalogueType !== undefined && isCatalogueStudySupported(catalogueType);
 	const isPlaying = searchParams.get(PLAY_PARAM) === '1';
+	// "Study again" is a new run of the same deck: a new session on the server, a fresh component.
+	const [runNo, setRunNo] = useState(0);
 
 	const config = useMemo(() => parseStudyConfig(searchParams, catalogueType), [searchParams, catalogueType]);
-	const deckQuery = useStudyDeck(catalogueId, config, isSupported);
+	const previewQuery = useStudyDeck(catalogueId, previewConfigFor(config), isSupported && !isPlaying);
+	const deckQuery = useStudyDeck(catalogueId, config, isSupported && isPlaying);
 	const deck = deckQuery.data;
-	const deckKey = deck ? `${deck.config.seed ?? 'seedless'}-${deck.cards.length}` : null;
+	const deckKey = deck ? `${deck.config.seed}-${deck.cards.length}-${runNo}` : null;
 	const recorder = useSessionRecorder(isAuthenticated, deckKey);
 
-	// One saved session per played deck: start it when the session mounts (play=1 with a deck).
-	// The recorder is keyed by the deck and starts only once, so re-renders are harmless.
+	const writeConfig = useCallback(
+		(next: StudyConfig, play: boolean, replace = !play) => {
+			setSearchParams(studyConfigToSearchParams(next, play ? { [PLAY_PARAM]: '1' } : {}), { replace });
+		},
+		[setSearchParams],
+	);
+
+	// The first deck the server builds picks the seed; pin it in the URL so every later
+	// request (reload, refocus, Start, back button) reproduces the same shuffle.
+	const seededConfig = (deckQuery.data ?? previewQuery.data)?.config;
+	useEffect(() => {
+		if (config.seed === undefined && seededConfig?.seed !== undefined) {
+			writeConfig({ ...config, seed: seededConfig.seed }, isPlaying, true);
+		}
+	}, [config, seededConfig, isPlaying, writeConfig]);
+
+	// One saved session per run: start it when the session mounts (play=1 with a deck).
+	// The recorder is keyed by deck and run and starts only once, so re-renders are harmless.
 	useEffect(() => {
 		if (isPlaying && deck && catalogueId) {
 			recorder.start(catalogueId, deck.config, deck.cards.length);
 		}
 	}, [isPlaying, deck, catalogueId, recorder]);
-
-	const writeConfig = useCallback(
-		(next: StudyConfig, play: boolean) => {
-			setSearchParams(studyConfigToSearchParams(next, play ? { [PLAY_PARAM]: '1' } : {}), { replace: !play });
-		},
-		[setSearchParams],
-	);
 
 	if (!catalogueId || (isPending && !catalogue)) {
 		return <PageLoading family="form" />;
@@ -90,14 +96,14 @@ const CatalogueStudyPage = () => {
 		);
 	}
 
-	const deckStatus: StudyDeckStatus = deckQuery.isError
-		? { kind: 'error', ...readDeckFailure(deckQuery.error) }
-		: deckQuery.data
+	const deckStatus: StudyDeckStatus = previewQuery.isError
+		? { kind: 'error', ...readDeckFailure(previewQuery.error) }
+		: previewQuery.data
 			? {
 					kind: 'ready',
-					totalItems: deckQuery.data.totalItems,
-					eligibleItems: deckQuery.data.eligibleItems,
-					excludedEmptyAnswerField: deckQuery.data.excludedEmptyAnswerField,
+					totalItems: previewQuery.data.totalItems,
+					eligibleItems: previewQuery.data.eligibleItems,
+					excludedEmptyAnswerField: previewQuery.data.excludedEmptyAnswerField,
 				}
 			: { kind: 'loading' };
 
@@ -115,23 +121,35 @@ const CatalogueStudyPage = () => {
 					meta={`${catalogue.type_label} · ${catalogue.items_count} items`}
 				/>
 
-				{isPlaying && deck ? (
-					<StudySession
-						// Remount on a new deck (another seed or config), so the run starts from card one.
-						key={deckKey ?? undefined}
-						deck={deck}
-						catalogueHref={CATALOGUE_ROUTES.detail(catalogue.uuid)}
-						onChangeSetup={() => writeConfig(config, false)}
-						onAnswer={recorder.recordAttempt}
-						onRoundComplete={(answers, attemptNo) => {
-							// The score is the first pass; retry rounds are recorded as attempts only.
-							if (attemptNo === 1) {
-								void recorder.complete(answers.filter((answer) => answer.correct).length);
-							}
-						}}
-						saveStatus={recorder.status}
-						bookmarkCatalogueType={bookmarkTypeFor(catalogue.type)}
-					/>
+				{isPlaying ? (
+					deck ? (
+						<StudySession
+							key={deckKey ?? undefined}
+							deck={deck}
+							catalogueHref={CATALOGUE_ROUTES.detail(catalogue.uuid)}
+							onChangeSetup={() => writeConfig(config, false)}
+							onRestart={() => setRunNo((current) => current + 1)}
+							onAnswer={recorder.recordAttempt}
+							onRoundComplete={(answers, attemptNo) => {
+								// The score is the first pass; retry rounds are recorded as attempts only.
+								if (attemptNo === 1) {
+									void recorder.complete(answers.filter((answer) => answer.correct).length);
+								}
+							}}
+							saveStatus={recorder.status}
+							bookmarkCatalogueType={studyBookmarkTypeFor(catalogue.type)}
+						/>
+					) : deckQuery.isError ? (
+						<StudySetupForm
+							catalogueType={catalogue.type}
+							value={config}
+							onChange={(next) => writeConfig(next, false)}
+							onStart={(next) => writeConfig(next, true)}
+							deckStatus={{ kind: 'error', ...readDeckFailure(deckQuery.error) }}
+						/>
+					) : (
+						<PageLoading family="form" />
+					)
 				) : (
 					<StudySetupForm
 						catalogueType={catalogue.type}

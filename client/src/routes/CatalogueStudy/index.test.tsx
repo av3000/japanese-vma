@@ -112,10 +112,16 @@ describe('CatalogueStudyPage', () => {
 		expect(html).toContain('Study: N5 kanji');
 		expect(html).toContain('Back to N5 kanji');
 		expect(html).toContain('<strong>10</strong> of 12 items can be asked this way');
+		// The preview asks for one card in the cheapest mode; the real deck waits for Start.
+		expect(useStudyDeck).toHaveBeenCalledWith(
+			'd453be67-1519-43e2-94ab-af85b79aeb31',
+			expect.objectContaining({ prompt: 'character', answer: 'meaning', mode: 'typed', count: 1 }),
+			true,
+		);
 		expect(useStudyDeck).toHaveBeenCalledWith(
 			'd453be67-1519-43e2-94ab-af85b79aeb31',
 			expect.objectContaining({ prompt: 'character', answer: 'meaning', mode: 'options', count: 20 }),
-			true,
+			false,
 		);
 	});
 
@@ -129,7 +135,7 @@ describe('CatalogueStudyPage', () => {
 		expect(useStudyDeck).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({ prompt: 'character', answer: 'meaning', mode: 'options', count: 5, seed: 3 }),
-			true,
+			false,
 		);
 	});
 
@@ -140,7 +146,7 @@ describe('CatalogueStudyPage', () => {
 		const html = renderToStaticMarkup(<CatalogueStudyPage />);
 
 		expect(html).toContain('This catalogue cannot be studied');
-		expect(useStudyDeck).toHaveBeenCalledWith(expect.any(String), expect.anything(), false);
+		expect(useStudyDeck).not.toHaveBeenCalledWith(expect.any(String), expect.anything(), true);
 	});
 
 	it('renders the backend refusal as an alert instead of crashing', () => {

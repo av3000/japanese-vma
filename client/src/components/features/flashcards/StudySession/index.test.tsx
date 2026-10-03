@@ -120,6 +120,28 @@ describe('StudySession', () => {
 		expect(container.textContent).toContain('1 of 2 correct');
 	});
 
+	it('hands "Study again" to the parent when asked to, so a new run can be a new session', async () => {
+		const onRestart = vi.fn();
+		const rendered = await renderWithAct(
+			<StudySession
+				deck={{ ...kanjiOptionsDeck, cards: [kanjiOptionsDeck.cards[0]] }}
+				catalogueHref="/c"
+				onChangeSetup={vi.fn()}
+				onRestart={onRestart}
+			/>,
+		);
+		unmount = rendered.unmount;
+		const { container } = rendered;
+
+		click(buttonNamed(container, 'fire'));
+		click(buttonNamed(container, 'See results'));
+		click(buttonNamed(container, 'Study again'));
+
+		expect(onRestart).toHaveBeenCalledTimes(1);
+		// Still on the summary: the parent remounts the session when it wants a fresh run.
+		expect(container.textContent).toContain('0 of 1 correct');
+	});
+
 	it('restarts from the first card with a clean score', async () => {
 		const rendered = await renderWithAct(
 			<StudySession

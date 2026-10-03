@@ -235,6 +235,22 @@ class FlashcardDistractorsV1Test extends TestCase
         $this->assertNotSame($first, $other);
     }
 
+    public function test_pool_distractors_are_reproducible_for_the_same_seed(): void
+    {
+        $catalogue = $this->createCatalogue(SavedListType::KANJIS);
+        $this->attach($catalogue, $this->insertKanji('一', 'one|'));
+
+        foreach (['二' => 'two|', '三' => 'three|', '四' => 'four|', '五' => 'five|', '六' => 'six|', '七' => 'seven|', '八' => 'eight|', '九' => 'nine|'] as $glyph => $meaning) {
+            $this->insertKanji($glyph, $meaning);
+        }
+
+        [$first] = $this->cards($catalogue, ['seed' => 5]);
+        [$second] = $this->cards($catalogue, ['seed' => 5]);
+
+        $this->assertFourDistinctOptionsIncludingTheAnswer($first);
+        $this->assertSame($first['options'], $second['options'], 'pool distractors must follow the seed too');
+    }
+
     public function test_typed_mode_has_no_options(): void
     {
         $catalogue = $this->createCatalogue(SavedListType::KANJIS);

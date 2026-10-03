@@ -105,7 +105,8 @@ export const createSessionRecorder = (client: SessionRecorderClient = defaultCli
 			});
 		},
 		recordAttempt(answer, attemptNo) {
-			if (!started) return;
+			// After completion the server answers 409 to first-pass attempts; do not even ask.
+			if (!started || (status === 'completed' && attemptNo === 1)) return;
 			enqueue(async () => {
 				await started;
 				if (!sessionUuid) return;

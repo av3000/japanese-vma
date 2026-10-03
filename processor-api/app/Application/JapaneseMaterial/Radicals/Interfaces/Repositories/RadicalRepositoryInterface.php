@@ -18,7 +18,8 @@ interface RadicalRepositoryInterface
     public function findByLegacyId(int $id, bool $withKanjis = false): ?Radical;
 
     /**
-     * @param  int[]  $ids
+     * @param int[] $ids
+     *
      * @return list<Radical> Domain models without their kanji, in no particular order.
      */
     public function findByIds(array $ids): array;

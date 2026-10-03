@@ -117,6 +117,19 @@ describe('createSessionRecorder', () => {
 		expect(client.store).toHaveBeenCalledTimes(1);
 	});
 
+	it('drops first-pass attempts after completion instead of asking the server for a 409', async () => {
+		const client = makeClient();
+		const recorder = createSessionRecorder(client);
+
+		recorder.start('c-1', defaultStudyConfig(), 1);
+		recorder.recordAttempt(answer(0, true), 1);
+		await recorder.complete(1);
+		recorder.recordAttempt(answer(0, false), 1);
+		await recorder.complete(1);
+
+		expect(client.storeAttempt).toHaveBeenCalledTimes(1);
+	});
+
 	it('posts retry rounds with their attempt number after completion', async () => {
 		const client = makeClient();
 		const recorder = createSessionRecorder(client);

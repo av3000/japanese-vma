@@ -1,3 +1,5 @@
+import { SavedListType } from '@/shared/constants/enums';
+
 export const CATALOGUE_TYPE_LABELS = {
 	5: 'Radicals',
 	6: 'Kanjis',
@@ -19,12 +21,41 @@ const CATALOGUE_PDF_TYPES: ReadonlyArray<readonly [CataloguePdfExportKind, reado
 	['sentences', [4, 8]],
 ];
 
-// Mirrors FlashcardConfig::supportsType on the backend (epic #413): the three dictionary
-// families and their "known" variants. Sentences have no translation column and articles are
-// not cards, so a Study action for them would only ever surface a 422.
-const CATALOGUE_STUDY_TYPES: readonly number[] = [1, 2, 3, 5, 6, 7];
+/** The dictionary family a catalogue's items belong to; null for types without cards. */
+export type StudyFamily = 'kanji' | 'words' | 'radicals';
 
-export const isCatalogueStudySupported = (value: number) => CATALOGUE_STUDY_TYPES.includes(value);
+// Mirrors FlashcardConfig::baseType on the backend (epic #413): the three dictionary families
+// and their "known" variants. Sentences have no translation column and articles are not cards,
+// so a Study action for them would only ever surface a 422.
+export const studyFamilyFor = (catalogueType: number): StudyFamily | null => {
+	switch (catalogueType) {
+		case SavedListType.KANJIS:
+		case SavedListType.KNOWNKANJIS:
+			return 'kanji';
+		case SavedListType.WORDS:
+		case SavedListType.KNOWNWORDS:
+			return 'words';
+		case SavedListType.RADICALS:
+		case SavedListType.KNOWNRADICALS:
+			return 'radicals';
+		default:
+			return null;
+	}
+};
+
+export const isCatalogueStudySupported = (value: number) => studyFamilyFor(value) !== null;
+
+const BOOKMARK_TYPE_BY_FAMILY: Record<StudyFamily, SavedListType> = {
+	kanji: SavedListType.KANJIS,
+	words: SavedListType.WORDS,
+	radicals: SavedListType.RADICALS,
+};
+
+/** The custom catalogue type a studied item can be saved into from the summary. */
+export const studyBookmarkTypeFor = (catalogueType: number): SavedListType | null => {
+	const family = studyFamilyFor(catalogueType);
+	return family ? BOOKMARK_TYPE_BY_FAMILY[family] : null;
+};
 
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,

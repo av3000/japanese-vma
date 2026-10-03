@@ -5,13 +5,14 @@ import type { FlashcardDeckShowParams } from '@/api/generated/model/flashcardDec
 import { FlashcardField } from '@/api/generated/model/flashcardField';
 import type { FlashcardResource } from '@/api/generated/model/flashcardResource';
 import { ScriptStrictness } from '@/api/generated/model/scriptStrictness';
-import { SavedListType } from '@/shared/constants/enums';
+import { studyFamilyFor, type StudyFamily } from '@/shared/constants/catalogues';
 
 /**
- * Deck access for the Study route (epic #413). The configuration lives in the URL so a
- * specific drill is a link; this module parses it, serialises it, and knows which fields a
- * catalogue type allows. The allowed-fields table mirrors the backend's
- * `FlashcardConfig::fieldsFor` and must change together with it.
+ * Deck access for the Study route (epic #413). The configuration lives in the URL, seed
+ * included once the first deck has chosen one, so a specific drill is a link; this module
+ * parses it, serialises it, and knows which fields a catalogue type allows. The
+ * allowed-fields table mirrors the backend's `FlashcardConfig::fieldsFor` and must change
+ * together with it.
  */
 
 export const STUDY_DEFAULT_COUNT = 20;
@@ -28,24 +29,7 @@ export interface StudyConfig {
 	seed?: number;
 }
 
-export type StudyFamily = 'kanji' | 'words' | 'radicals';
-
-/** Catalogue type → the family its cards are built from; null for types that cannot be studied. */
-export const studyFamilyFor = (catalogueType: number): StudyFamily | null => {
-	switch (catalogueType) {
-		case SavedListType.KANJIS:
-		case SavedListType.KNOWNKANJIS:
-			return 'kanji';
-		case SavedListType.WORDS:
-		case SavedListType.KNOWNWORDS:
-			return 'words';
-		case SavedListType.RADICALS:
-		case SavedListType.KNOWNRADICALS:
-			return 'radicals';
-		default:
-			return null;
-	}
-};
+export { studyFamilyFor, type StudyFamily };
 
 const FIELDS_BY_FAMILY: Record<StudyFamily, readonly FlashcardField[]> = {
 	kanji: [FlashcardField.character, FlashcardField.meaning, FlashcardField.onyomi, FlashcardField.kunyomi],
@@ -225,8 +209,11 @@ export const useStudyDeck = (catalogueUuid: string | undefined, config: StudyCon
 		query: {
 			enabled: Boolean(catalogueUuid) && enabled,
 			retry: false,
-			// A deck is a pure function of catalogue and config; keep it while the learner plays.
-			staleTime: 5 * 60 * 1000,
+			// A deck is a pure function of catalogue, config and seed; the route pins the seed in
+			// the URL, and nothing may swap the deck under a running session.
+			staleTime: Infinity,
+			refetchOnWindowFocus: false,
+			refetchOnReconnect: false,
 			select: mapStudyDeck,
 		},
 	});

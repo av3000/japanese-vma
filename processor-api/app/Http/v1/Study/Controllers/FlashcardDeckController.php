@@ -29,7 +29,7 @@ class FlashcardDeckController extends Controller
      *
      * Public for public catalogues; private catalogues answer 403 to anyone but the owner
      * or an admin. The deck is shuffled with `seed` and cut to `count`; the same seed
-     * reproduces the same deck, which is how "retry missed" works.
+     * reproduces the same deck, options included, so a reload resumes the same run.
      *
      * @response FlashcardDeckResource
      */

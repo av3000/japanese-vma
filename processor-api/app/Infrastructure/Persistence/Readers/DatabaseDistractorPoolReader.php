@@ -20,10 +20,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Two bounded random reads at most: one for the preferred level (JLPT for kanji and words,
- * stroke count for radicals), one without the preference for whatever is still missing.
- * `inRandomOrder()` is `ORDER BY RANDOM()` on PostgreSQL; the dictionary tables are
- * read-only reference data, so the full-table sort is acceptable for the pool sizes here.
+ * Two bounded reads at most: one for the preferred level (JLPT for kanji and words, stroke
+ * count for radicals), one without the preference for whatever is still missing. Rows are
+ * ordered by `md5(id || seed)`, a per-seed pseudo-random order, so two requests with the same
+ * seed get the same pool and the deck stays reproducible even when it needs the dictionary.
+ * The dictionary tables are read-only reference data, so the full-table sort is acceptable
+ * for the pool sizes here.
  */
 final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterface
 {
@@ -91,7 +93,10 @@ final class DatabaseDistractorPoolReader implements DistractorPoolReaderInterfac
 
         // The factory may still reject a row the column filter let through (a `sense` with
         // no gloss, say), so read a little more than asked and cut after mapping.
-        $rows = $query->inRandomOrder()->limit($limit * 2)->get();
+        $rows = $query
+            ->orderByRaw('md5(id::text || ?)', [(string) $config->seed])
+            ->limit($limit * 2)
+            ->get();
 
         $cards = [];
 
