@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
 import { getArticleDetailQueryKey, MappedArticle } from '@/api/articles/details';
 import { articleKeys } from '@/api/articles/keys';
-import { readArticleWriteError, type ArticleWriteFailure } from '@/api/articles/writes';
 import { articleUpdate } from '@/api/generated/article/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
 import {
@@ -39,7 +39,7 @@ const buildUpdatePayload = (values: ArticleFormValues, dirtyKeys: DirtyKey[]): U
 
 export default function ArticleEditModal({ article, controller }: ArticleEditModalProps) {
 	const queryClient = useQueryClient();
-	const [failure, setFailure] = useState<ArticleWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues: ArticleFormValues = useMemo(
 		() => ({
@@ -57,17 +57,17 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 	const updateMutation = useMutation({
 		mutationFn: (payload: UpdateArticleRequest) => articleUpdate(article.uuid, payload),
 		onSuccess: () => {
-			setFailure(null);
+			setApiError(null);
 			queryClient.invalidateQueries({ queryKey: getArticleDetailQueryKey(article.uuid) });
 			queryClient.invalidateQueries({ queryKey: articleKeys.lists() });
 			controller.close();
 		},
-		onError: (error) => setFailure(readArticleWriteError(error)),
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	// The form refuses an unchanged submit itself (`requireChanges`), so dirtyKeys is never empty here.
 	const handleSubmit = (values: ArticleFormValues, meta: ArticleFormSubmitMeta) => {
-		setFailure(null);
+		setApiError(null);
 
 		const payload = buildUpdatePayload(values, meta.dirtyKeys);
 
@@ -92,7 +92,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 					onSubmit={handleSubmit}
 					isSubmitting={updateMutation.isPending}
 					submitLabel="Save changes"
-					failure={failure}
+					apiError={apiError}
 					requireEnglishTitle
 					requireChanges
 					stacked

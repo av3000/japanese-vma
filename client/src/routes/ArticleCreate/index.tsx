@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
 import { articleKeys } from '@/api/articles/keys';
 import { applyProcessingStatus } from '@/api/articles/processingStatusCache';
-import { readArticleWriteError, type ArticleWriteFailure } from '@/api/articles/writes';
 import { articleStore } from '@/api/generated/article/article';
 import type { ArticleCreatedResource } from '@/api/generated/model/articleCreatedResource';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
@@ -17,7 +17,7 @@ export default function ArticleCreatePage() {
 	const qc = useQueryClient();
 	const navigate = useNavigate();
 
-	const [failure, setFailure] = useState<ArticleWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<ArticleFormValues>(() => {
 		return {
@@ -35,7 +35,7 @@ export default function ArticleCreatePage() {
 	const mutation = useMutation<ArticleCreatedResource, unknown, StoreArticleRequest>({
 		mutationFn: (payload) => articleStore(payload),
 		onSuccess: ({ uuid, processing_status }) => {
-			setFailure(null);
+			setApiError(null);
 
 			// The server opened the `pending` row inside the create transaction (#258), so the
 			// first detail fetch already carries it. Write it into whatever cache entries exist
@@ -49,11 +49,11 @@ export default function ArticleCreatePage() {
 
 			navigate(`/articles/${uuid}`);
 		},
-		onError: (error) => setFailure(readArticleWriteError(error)),
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	const onSubmit = (values: ArticleFormValues) => {
-		setFailure(null);
+		setApiError(null);
 
 		const payload: StoreArticleRequest = {
 			title_jp: values.title_jp.trim(),
@@ -75,7 +75,7 @@ export default function ArticleCreatePage() {
 				onSubmit={onSubmit}
 				isSubmitting={mutation.isPending}
 				submitLabel="Create article"
-				failure={failure}
+				apiError={apiError}
 				requireEnglishTitle
 				note={
 					<p>

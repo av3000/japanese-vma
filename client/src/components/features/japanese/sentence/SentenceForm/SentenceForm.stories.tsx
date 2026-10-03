@@ -1,24 +1,24 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
-import { WRITE_FAILURE_MESSAGES, type WriteFailure } from '@/api/writeFailure';
+import { API_ERROR_MESSAGES, type ApiError } from '@/api/apiError';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
 import { SentenceForm } from './index';
 
 type SentenceFormProps = React.ComponentProps<typeof SentenceForm>;
 
-/** Answers the first submit with `failure`, the way the route does after a rejected save. */
-const RejectingServer = ({ failure, onSubmit, ...props }: SentenceFormProps) => {
-	const [current, setCurrent] = React.useState<WriteFailure | null>(null);
+/** Answers the first submit with `apiError`, the way the route does after a rejected save. */
+const RejectingServer = ({ apiError, onSubmit, ...props }: SentenceFormProps) => {
+	const [current, setCurrent] = React.useState<ApiError | null>(null);
 
 	return (
 		<SentenceForm
 			{...props}
-			failure={current}
+			apiError={current}
 			onSubmit={(values) => {
 				onSubmit(values);
-				setCurrent(failure ?? null);
+				setCurrent(apiError ?? null);
 			}}
 		/>
 	);
@@ -71,9 +71,9 @@ export const Create: Story = {
 export const ServerError: Story = {
 	args: {
 		initialValues: { content: '水を飲みます。' },
-		failure: {
+		apiError: {
 			kind: 'validation',
-			message: WRITE_FAILURE_MESSAGES.validation,
+			message: API_ERROR_MESSAGES.validation,
 			errors: { content: ['The content has already been taken.'] },
 		},
 	},
@@ -82,7 +82,7 @@ export const ServerError: Story = {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('button', { name: 'Create sentence' }));
 
-		await expect(await canvas.findByRole('alert')).toHaveTextContent(WRITE_FAILURE_MESSAGES.validation);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(API_ERROR_MESSAGES.validation);
 		await waitFor(() => expect(canvas.getByLabelText('Sentence')).toHaveFocus());
 		await expect(canvas.getByLabelText('Sentence')).toHaveAccessibleDescription(/already been taken/);
 	},

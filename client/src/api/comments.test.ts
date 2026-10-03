@@ -14,7 +14,6 @@ import type { CommentReplyResource } from '@/api/generated/model/commentReplyRes
 import type { CommentResource } from '@/api/generated/model/commentResource';
 import { LikeTargetType } from '@/api/generated/model/likeTargetType';
 import type { LikeToggleContext } from '@/api/likes/likes';
-import { WRITE_FAILURE_MESSAGES } from '@/api/writeFailure';
 import { ObjectTemplateType } from '@/shared/constants/enums';
 import {
 	COMMENT_LIST_PARAMS,
@@ -23,7 +22,6 @@ import {
 	getCommentsQueryKey,
 	patchCommentContent,
 	prependComment,
-	readCommentWriteError,
 	removeComment,
 	replaceComment,
 	useLikeCommentMutation,
@@ -220,24 +218,6 @@ describe('cache mutators', () => {
 		expect(next.items[0].replies[0].content).toBe('a reply');
 	});
 });
-
-describe('readCommentWriteError', () => {
-	it.each([
-		[401, 'unauthenticated'],
-		[403, 'forbidden'],
-		[404, 'notFound'],
-	])('maps a %i problem document to %s without showing the server title', (status, kind) => {
-		const failure = readCommentWriteError({ response: { data: { status, title: 'Nope' } } });
-
-		expect(failure.kind).toBe(kind);
-		expect(failure.message).toBe(WRITE_FAILURE_MESSAGES[kind as keyof typeof WRITE_FAILURE_MESSAGES]);
-	});
-
-	it('falls back to a generic message for an unrecognised failure', () => {
-		expect(readCommentWriteError(new Error('boom'))).toMatchObject({ kind: 'unknown' });
-	});
-});
-
 type CommentLikeOptions = UseMutationOptions<
 	{ is_liked: boolean; likes_count: number },
 	unknown,

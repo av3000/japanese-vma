@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { WriteFailure } from '@/api/writeFailure';
+import type { ApiError } from '@/api/apiError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { ChoiceGroup, FormField, Input, Textarea } from '@/components/shared/FormControls';
 import { FormCard, FormLayout, FormNote } from '@/components/shared/FormPage';
 import { InputTags } from '@/components/shared/InputTags';
-import { fieldErrorMessages } from '@/helpers/applyServerFieldErrors';
-import { NO_CHANGES_MESSAGE, useWriteFailureAlert } from '@/hooks/useWriteFailureAlert';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
 import { VISIBILITY_OPTIONS } from '@/shared/constants/visibility';
 import {
 	buildArticleFormSchema,
@@ -45,8 +45,8 @@ interface ArticleFormProps {
 	onSubmit: (values: ArticleFormValues, meta: ArticleFormSubmitMeta) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	/** The last rejected save, from the route's write reader. */
-	failure?: WriteFailure | null;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
 	requireEnglishTitle?: boolean;
 	/** Edit forms: an unchanged form says so instead of sending an empty update. */
 	requireChanges?: boolean;
@@ -65,7 +65,7 @@ export function ArticleForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	failure,
+	apiError,
 	requireEnglishTitle = false,
 	requireChanges = false,
 	note,
@@ -102,7 +102,7 @@ export function ArticleForm({
 		if (isDirty) setShowNoChanges(false);
 	}, [isDirty]);
 
-	const failureMessage = useWriteFailureAlert(failure, setError, ARTICLE_FORM_FIELDS, SERVER_FIELD_MAP);
+	const alertMessage = useApiErrorInForm(apiError, setError, ARTICLE_FORM_FIELDS, SERVER_FIELD_MAP);
 
 	const onValidSubmit = (values: ArticleFormValues) => {
 		if (requireChanges && !isDirty) {
@@ -116,8 +116,8 @@ export function ArticleForm({
 
 	const alert = showNoChanges ? (
 		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
-	) : failureMessage ? (
-		<Alert tone="danger">{failureMessage}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
 	) : null;
 
 	return (
@@ -140,7 +140,7 @@ export function ArticleForm({
 										onChange={(next) => field.onChange(next === 'public')}
 										onBlur={field.onBlur}
 										inputRef={field.ref}
-										error={fieldErrorMessages(errors.publicity)}
+										error={getFieldErrorMessages(errors.publicity)}
 									/>
 								)}
 							/>
@@ -148,7 +148,7 @@ export function ArticleForm({
 							<FormField
 								label="Tags"
 								hint={`Up to ${MAX_TAG_QUANTITY} tags, ${MAX_TAG_LENGTH} characters each. Press Enter, comma or space to add one.`}
-								error={fieldErrorMessages(errors.tags)}
+								error={getFieldErrorMessages(errors.tags)}
 							>
 								{(fieldControl) => (
 									<Controller
@@ -175,7 +175,7 @@ export function ArticleForm({
 								label="Source link"
 								hint="Where the text comes from, for example an NHK News Web Easy article."
 								counter={countOf(sourceLink ?? '', MAX_SOURCE_LINK_LENGTH)}
-								error={fieldErrorMessages(errors.source_link)}
+								error={getFieldErrorMessages(errors.source_link)}
 							>
 								{(fieldControl) => (
 									<Input
@@ -206,7 +206,7 @@ export function ArticleForm({
 					<FormField
 						label="Japanese title"
 						counter={countOf(titleJp ?? '', MAX_TITLE_LENGTH)}
-						error={fieldErrorMessages(errors.title_jp)}
+						error={getFieldErrorMessages(errors.title_jp)}
 					>
 						{(fieldControl) => (
 							<Input
@@ -222,7 +222,7 @@ export function ArticleForm({
 					<FormField
 						label={requireEnglishTitle ? 'English title' : 'English title (optional)'}
 						counter={countOf(titleEn ?? '', MAX_TITLE_LENGTH)}
-						error={fieldErrorMessages(errors.title_en)}
+						error={getFieldErrorMessages(errors.title_en)}
 					>
 						{(fieldControl) => (
 							<Input
@@ -238,7 +238,7 @@ export function ArticleForm({
 						label="Japanese text"
 						hint="The original text. No markup needed."
 						counter={countOf(contentJp ?? '', MAX_CONTENT_LENGTH)}
-						error={fieldErrorMessages(errors.content_jp)}
+						error={getFieldErrorMessages(errors.content_jp)}
 					>
 						{(fieldControl) => (
 							<Textarea
@@ -256,7 +256,7 @@ export function ArticleForm({
 						label="English translation (optional)"
 						hint="For learners who want to check their understanding."
 						counter={countOf(contentEn ?? '', MAX_CONTENT_LENGTH)}
-						error={fieldErrorMessages(errors.content_en)}
+						error={getFieldErrorMessages(errors.content_en)}
 					>
 						{(fieldControl) => (
 							<Textarea

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { parseApiError } from '@/api/apiError';
 import {
 	COMMENT_LIST_PARAMS,
 	COMMENT_PARENTS,
 	getCommentsQueryKey,
-	readCommentWriteError,
 	useCreateCommentMutation,
 	useDeleteCommentMutation,
 	useLikeCommentMutation,
@@ -61,7 +61,7 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 		try {
 			await action();
 		} catch (error) {
-			setRowError({ commentId, message: readCommentWriteError(error).message });
+			setRowError({ commentId, message: parseApiError(error).message });
 			throw error;
 		}
 	};

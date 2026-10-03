@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { type ApiError, parseApiError } from '@/api/apiError';
 import { PostTopic } from '@/api/generated/model/postTopic';
 import { POST_ROUTES, isPostTopic, usePostQuery } from '@/api/posts/reads';
-import { canUpdatePost, readPostWriteError, useUpdatePostMutation, type PostWriteFailure } from '@/api/posts/writes';
+import { canUpdatePost, useUpdatePostMutation } from '@/api/posts/writes';
 import { PostForm, type PostFormSubmitMeta, type PostFormValues } from '@/components/features/community/PostForm';
 import { buildPostUpdatePayload } from '@/components/features/community/PostForm/postFormSchema';
 import { Alert } from '@/components/shared/Alert';
@@ -21,7 +22,7 @@ export default function PostEditPage() {
 	// The detail route seeds this cache entry, so arriving from a Post page costs no extra request.
 	const { data: post, isLoading, isError } = usePostQuery(routeIdentifier);
 
-	const [failure, setFailure] = useState<PostWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<PostFormValues>(
 		() => ({
@@ -64,11 +65,11 @@ export default function PostEditPage() {
 
 	// The form refuses an unchanged submit itself (`requireChanges`), so dirtyKeys is never empty here.
 	const handleSubmit = (values: PostFormValues, { dirtyKeys }: PostFormSubmitMeta) => {
-		setFailure(null);
+		setApiError(null);
 
 		updateMutation.mutate(buildPostUpdatePayload(values, dirtyKeys), {
 			onSuccess: (updated) => navigate(POST_ROUTES.detail(updated.uuid)),
-			onError: (error) => setFailure(readPostWriteError(error)),
+			onError: (error) => setApiError(parseApiError(error)),
 		});
 	};
 
@@ -79,7 +80,7 @@ export default function PostEditPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={updateMutation.isPending}
 				submitLabel="Save changes"
-				failure={failure}
+				apiError={apiError}
 				requireChanges
 				cancel={
 					<Button variant="ghost" to={postRoute}>

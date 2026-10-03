@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { WriteFailure } from '@/api/writeFailure';
+import type { ApiError } from '@/api/apiError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormField, Textarea } from '@/components/shared/FormControls';
 import { FormCard, FormLayout } from '@/components/shared/FormPage';
-import { fieldErrorMessages } from '@/helpers/applyServerFieldErrors';
-import { NO_CHANGES_MESSAGE, useWriteFailureAlert } from '@/hooks/useWriteFailureAlert';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
 import {
 	MAX_SENTENCE_LENGTH,
 	MIN_SENTENCE_LENGTH,
@@ -24,8 +24,8 @@ interface SentenceFormProps {
 	onSubmit: (values: SentenceFormValues) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	/** The last rejected save, from the route's write reader. */
-	failure?: WriteFailure | null;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
 	/** Edit forms: an unchanged form says so instead of sending the same text again. */
 	requireChanges?: boolean;
 	/** The Cancel control. */
@@ -37,7 +37,7 @@ export function SentenceForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	failure,
+	apiError,
 	requireChanges = false,
 	cancel,
 }: SentenceFormProps) {
@@ -66,7 +66,7 @@ export function SentenceForm({
 		if (isDirty) setShowNoChanges(false);
 	}, [isDirty]);
 
-	const failureMessage = useWriteFailureAlert(failure, setError, SENTENCE_FORM_FIELDS);
+	const alertMessage = useApiErrorInForm(apiError, setError, SENTENCE_FORM_FIELDS);
 
 	const onValidSubmit = (values: SentenceFormValues) => {
 		if (requireChanges && !isDirty) {
@@ -80,8 +80,8 @@ export function SentenceForm({
 
 	const alert = showNoChanges ? (
 		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
-	) : failureMessage ? (
-		<Alert tone="danger">{failureMessage}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
 	) : null;
 
 	return (
@@ -102,7 +102,7 @@ export function SentenceForm({
 						label="Sentence"
 						hint={`Between ${MIN_SENTENCE_LENGTH} and ${MAX_SENTENCE_LENGTH} characters.`}
 						counter={`${content.length} / ${MAX_SENTENCE_LENGTH}`}
-						error={fieldErrorMessages(errors.content)}
+						error={getFieldErrorMessages(errors.content)}
 					>
 						{(fieldControl) => (
 							<Textarea

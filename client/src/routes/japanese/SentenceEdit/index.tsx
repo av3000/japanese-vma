@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-	canMutateSentence,
-	isImportedSentence,
-	readSentenceWriteError,
-	useUpdateSentenceMutation,
-	type SentenceWriteFailure,
-} from '@/api/sentences/authoring';
+import { type ApiError, parseApiError } from '@/api/apiError';
+import { canMutateSentence, isImportedSentence, useUpdateSentenceMutation } from '@/api/sentences/authoring';
 import { useSentenceQuery } from '@/api/sentences/details';
 import { SentenceForm, type SentenceFormValues } from '@/components/features/japanese/sentence/SentenceForm';
 import { buildSentenceWritePayload } from '@/components/features/japanese/sentence/SentenceForm/sentenceFormSchema';
@@ -31,7 +26,7 @@ export default function SentenceEditPage() {
 
 	const { data: sentence, isLoading, isError } = useSentenceQuery(sentence_id);
 
-	const [failure, setFailure] = useState<SentenceWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<SentenceFormValues>(
 		() => ({ content: sentence?.content ?? '' }),
@@ -60,11 +55,11 @@ export default function SentenceEditPage() {
 	const sentenceRoute = `/sentence/${sentence.uuid}`;
 
 	const handleSubmit = (values: SentenceFormValues) => {
-		setFailure(null);
+		setApiError(null);
 
 		updateMutation.mutate(buildSentenceWritePayload(values), {
 			onSuccess: (updated) => navigate(`/sentence/${updated.uuid}`),
-			onError: (error) => setFailure(readSentenceWriteError(error)),
+			onError: (error) => setApiError(parseApiError(error)),
 		});
 	};
 
@@ -75,7 +70,7 @@ export default function SentenceEditPage() {
 				onSubmit={handleSubmit}
 				isSubmitting={updateMutation.isPending}
 				submitLabel="Save changes"
-				failure={failure}
+				apiError={apiError}
 				requireChanges
 				cancel={
 					<Button variant="ghost" to={sentenceRoute}>

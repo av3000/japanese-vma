@@ -1,24 +1,24 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
-import { WRITE_FAILURE_MESSAGES, type WriteFailure } from '@/api/writeFailure';
+import { API_ERROR_MESSAGES, type ApiError } from '@/api/apiError';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
 import { ArticleForm, type ArticleFormValues } from './ArticleForm';
 
 type ArticleFormProps = React.ComponentProps<typeof ArticleForm>;
 
-/** Answers the first submit with `failure`, the way the route does after a rejected save. */
-const RejectingServer = ({ failure, onSubmit, ...props }: ArticleFormProps) => {
-	const [current, setCurrent] = React.useState<WriteFailure | null>(null);
+/** Answers the first submit with `apiError`, the way the route does after a rejected save. */
+const RejectingServer = ({ apiError, onSubmit, ...props }: ArticleFormProps) => {
+	const [current, setCurrent] = React.useState<ApiError | null>(null);
 
 	return (
 		<ArticleForm
 			{...props}
-			failure={current}
+			apiError={current}
 			onSubmit={(values, meta) => {
 				onSubmit(values, meta);
-				setCurrent(failure ?? null);
+				setCurrent(apiError ?? null);
 			}}
 		/>
 	);
@@ -55,9 +55,9 @@ const LONGEST: ArticleFormValues = {
 	tags: Array.from({ length: 10 }, (_, index) => `${index}${'タグ'.repeat(24)}t`.slice(0, 50)),
 };
 
-const EVERY_FIELD_FAILURE: WriteFailure = {
+const EVERY_FIELD_ERROR: ApiError = {
 	kind: 'validation',
-	message: WRITE_FAILURE_MESSAGES.validation,
+	message: API_ERROR_MESSAGES.validation,
 	errors: {
 		title_jp: ['The title jp has already been taken.'],
 		title_en: ['The title en may not be greater than 255 characters.'],
@@ -127,13 +127,13 @@ export const Filled: Story = {
 
 /** Every server message sits under its own field; focus moves to the first one in form order. */
 export const ServerErrorsOnEveryField: Story = {
-	args: { initialValues: SAVED, failure: EVERY_FIELD_FAILURE },
+	args: { initialValues: SAVED, apiError: EVERY_FIELD_ERROR },
 	render: (args) => <RejectingServer {...args} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('button', { name: 'Create article' }));
 
-		await expect(await canvas.findByRole('alert')).toHaveTextContent(WRITE_FAILURE_MESSAGES.validation);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(API_ERROR_MESSAGES.validation);
 		await waitFor(() => expect(canvas.getByLabelText('Japanese title')).toHaveFocus());
 		await expect(canvas.getByLabelText('Japanese title')).toHaveAccessibleDescription(/already been taken/);
 		await expect(canvas.getByLabelText('English title')).toHaveAccessibleDescription(/greater than 255/);
@@ -151,9 +151,9 @@ export const ServerErrorsOnEveryField: Story = {
 export const ServerErrorInSettings: Story = {
 	args: {
 		initialValues: SAVED,
-		failure: {
+		apiError: {
 			kind: 'validation',
-			message: WRITE_FAILURE_MESSAGES.validation,
+			message: API_ERROR_MESSAGES.validation,
 			errors: { source_link: ['The source link must be a valid URL.'] },
 		},
 	},
@@ -165,9 +165,9 @@ export const ServerErrorInSettings: Story = {
 	},
 };
 
-/** A failure that names no field shows only in the general alert. */
-export const GeneralFailure: Story = {
-	args: { initialValues: SAVED, failure: { kind: 'unreachable', message: WRITE_FAILURE_MESSAGES.unreachable } },
+/** An error that names no field shows only in the general alert. */
+export const GeneralError: Story = {
+	args: { initialValues: SAVED, apiError: { kind: 'unreachable', message: API_ERROR_MESSAGES.unreachable } },
 	render: (args) => <RejectingServer {...args} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);

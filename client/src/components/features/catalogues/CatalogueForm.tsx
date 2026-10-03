@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { WriteFailure } from '@/api/writeFailure';
+import type { ApiError } from '@/api/apiError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { ChoiceGroup, FormField, Input, type ChoiceOption } from '@/components/shared/FormControls';
 import { FormCard, FormLayout, FormNote } from '@/components/shared/FormPage';
 import { InputTags } from '@/components/shared/InputTags';
-import { fieldErrorMessages } from '@/helpers/applyServerFieldErrors';
-import { NO_CHANGES_MESSAGE, useWriteFailureAlert } from '@/hooks/useWriteFailureAlert';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
 import { CATALOGUE_TYPE_OPTIONS, type CustomCatalogueType } from '@/shared/constants/catalogues';
 import { VISIBILITY_OPTIONS } from '@/shared/constants/visibility';
 import {
@@ -47,8 +47,8 @@ interface CatalogueFormProps {
 	onSubmit: (values: CatalogueFormValues, meta: CatalogueFormSubmitMeta) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	/** The last rejected save, from the route's write reader. */
-	failure?: WriteFailure | null;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
 	/** Edit forms: an unchanged form says so instead of sending an empty update. */
 	requireChanges?: boolean;
 	/** The catalogue already holds items, so the server refuses a type change. */
@@ -64,7 +64,7 @@ export const CatalogueForm = ({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	failure,
+	apiError,
 	requireChanges = false,
 	isTypeLocked = false,
 	note,
@@ -96,7 +96,7 @@ export const CatalogueForm = ({
 		if (isDirty) setShowNoChanges(false);
 	}, [isDirty]);
 
-	const failureMessage = useWriteFailureAlert(failure, setError, CATALOGUE_FORM_FIELDS);
+	const alertMessage = useApiErrorInForm(apiError, setError, CATALOGUE_FORM_FIELDS);
 
 	const onValidSubmit = (values: CatalogueFormValues) => {
 		if (requireChanges && !isDirty) {
@@ -112,8 +112,8 @@ export const CatalogueForm = ({
 
 	const alert = showNoChanges ? (
 		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
-	) : failureMessage ? (
-		<Alert tone="danger">{failureMessage}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
 	) : null;
 
 	return (
@@ -133,7 +133,7 @@ export const CatalogueForm = ({
 					<FormField
 						label="Title"
 						counter={`${title.length} / ${MAX_CATALOGUE_TITLE_LENGTH}`}
-						error={fieldErrorMessages(errors.title)}
+						error={getFieldErrorMessages(errors.title)}
 					>
 						{(fieldControl) => (
 							<Input
@@ -159,7 +159,7 @@ export const CatalogueForm = ({
 								inputRef={field.ref}
 								disabled={isTypeLocked}
 								hint={isTypeLocked ? TYPE_LOCKED_HINT : TYPE_HINT}
-								error={fieldErrorMessages(errors.type)}
+								error={getFieldErrorMessages(errors.type)}
 							/>
 						)}
 					/>
@@ -167,7 +167,7 @@ export const CatalogueForm = ({
 					<FormField
 						label="Tags"
 						hint={`Up to ${MAX_CATALOGUE_TAGS} tags, ${MAX_CATALOGUE_TAG_LENGTH} characters each. Press Enter, comma or space to add one.`}
-						error={fieldErrorMessages(errors.tags)}
+						error={getFieldErrorMessages(errors.tags)}
 					>
 						{(fieldControl) => (
 							<Controller
@@ -202,7 +202,7 @@ export const CatalogueForm = ({
 								onChange={(next) => field.onChange(next === 'public')}
 								onBlur={field.onBlur}
 								inputRef={field.ref}
-								error={fieldErrorMessages(errors.publicity)}
+								error={getFieldErrorMessages(errors.publicity)}
 							/>
 						)}
 					/>

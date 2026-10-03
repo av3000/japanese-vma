@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
 import { buildUpdateCataloguePayload } from '@/api/catalogues/payloads';
-import { readCatalogueWriteError, type CatalogueWriteFailure } from '@/api/catalogues/writes';
 import {
 	catalogueUpdate,
 	getCatalogueIndexQueryKey,
@@ -27,7 +27,7 @@ const CatalogueEditPage = () => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { catalogueId } = useParams<{ catalogueId: string }>();
-	const [failure, setFailure] = useState<CatalogueWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 	const { data, isPending, isError } = useCatalogueShow<CatalogueDetailResource>(catalogueId ?? '', {
 		query: {
 			enabled: Boolean(catalogueId),
@@ -39,12 +39,12 @@ const CatalogueEditPage = () => {
 		mutationFn: ({ uuid, payload }: { uuid: string; payload: UpdateCatalogueRequest }) =>
 			catalogueUpdate(uuid, payload),
 		onSuccess: (updatedCatalogue) => {
-			setFailure(null);
+			setApiError(null);
 			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
 			queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(updatedCatalogue.uuid) });
 			navigate(CATALOGUE_ROUTES.detail(updatedCatalogue.uuid));
 		},
-		onError: (error) => setFailure(readCatalogueWriteError(error)),
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	const initialValues = useMemo<CatalogueFormValues>(() => {
@@ -85,7 +85,7 @@ const CatalogueEditPage = () => {
 				initialValues={initialValues}
 				isSubmitting={updateMutation.isPending}
 				submitLabel="Save changes"
-				failure={failure}
+				apiError={apiError}
 				requireChanges
 				isTypeLocked={catalogue.items_count > 0}
 				cancel={
@@ -94,7 +94,7 @@ const CatalogueEditPage = () => {
 					</Button>
 				}
 				onSubmit={(values, meta: CatalogueFormSubmitMeta) => {
-					setFailure(null);
+					setApiError(null);
 					updateMutation.mutate({
 						uuid: catalogueId,
 						payload: buildUpdateCataloguePayload(values, meta.dirtyKeys),

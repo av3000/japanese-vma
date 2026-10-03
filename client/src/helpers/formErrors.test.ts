@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyServerFieldErrors, fieldErrorMessages } from './applyServerFieldErrors';
+import { setApiFieldErrors, getFieldErrorMessages } from './formErrors';
 
 type Values = { title: string; content: string; tags: string[] };
 
 const FIELDS = ['title', 'content', 'tags'] as const;
 
-describe('applyServerFieldErrors', () => {
+describe('setApiFieldErrors', () => {
 	it('sets errors in form order and focuses only the first field', () => {
 		const setError = vi.fn();
 
-		applyServerFieldErrors<Values>(setError, { tags: ['Bad tag.'], content: ['Too short.'] }, FIELDS);
+		setApiFieldErrors<Values>(setError, { tags: ['Bad tag.'], content: ['Too short.'] }, FIELDS);
 
 		expect(setError.mock.calls).toEqual([
 			[
@@ -24,7 +24,7 @@ describe('applyServerFieldErrors', () => {
 	it('maps server names and folds indexed entries into one field', () => {
 		const setError = vi.fn();
 
-		applyServerFieldErrors<Values>(
+		setApiFieldErrors<Values>(
 			setError,
 			{ 'hashtags.0': ['Tag 1 is too long.'], 'hashtags.3': ['Tag 4 is too long.', 'Tag 1 is too long.'] },
 			FIELDS,
@@ -46,7 +46,7 @@ describe('applyServerFieldErrors', () => {
 	it('returns messages that belong to no field and skips empty lists', () => {
 		const setError = vi.fn();
 
-		const unmatched = applyServerFieldErrors<Values>(
+		const unmatched = setApiFieldErrors<Values>(
 			setError,
 			{ fields: ['At least one field must be provided.'], title: [], description: ['Too long.'] },
 			FIELDS,
@@ -58,19 +58,19 @@ describe('applyServerFieldErrors', () => {
 	});
 });
 
-describe('fieldErrorMessages', () => {
+describe('getFieldErrorMessages', () => {
 	it('lists every server message, or the single client message', () => {
-		expect(fieldErrorMessages(undefined)).toEqual([]);
-		expect(fieldErrorMessages({ type: 'too_small', message: 'Too short.' })).toEqual(['Too short.']);
-		expect(fieldErrorMessages({ type: 'server', message: 'A.', types: { server: ['A.', 'B.'] } })).toEqual([
+		expect(getFieldErrorMessages(undefined)).toEqual([]);
+		expect(getFieldErrorMessages({ type: 'too_small', message: 'Too short.' })).toEqual(['Too short.']);
+		expect(getFieldErrorMessages({ type: 'server', message: 'A.', types: { server: ['A.', 'B.'] } })).toEqual([
 			'A.',
 			'B.',
 		]);
 	});
 
 	it('collects per-item and whole-list errors of an array field', () => {
-		expect(fieldErrorMessages([undefined, { type: 'too_big', message: 'Too long.' }])).toEqual(['Too long.']);
-		expect(fieldErrorMessages({ root: { type: 'too_big', message: 'Too many tags.' } })).toEqual([
+		expect(getFieldErrorMessages([undefined, { type: 'too_big', message: 'Too long.' }])).toEqual(['Too long.']);
+		expect(getFieldErrorMessages({ root: { type: 'too_big', message: 'Too many tags.' } })).toEqual([
 			'Too many tags.',
 		]);
 	});

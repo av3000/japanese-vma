@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
-import { WRITE_FAILURE_MESSAGES, type WriteFailure } from '@/api/writeFailure';
+import { API_ERROR_MESSAGES, type ApiError } from '@/api/apiError';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
 import { CatalogueForm, TYPE_LOCKED_HINT, type CatalogueFormValues } from './CatalogueForm';
@@ -24,9 +24,9 @@ const LONGEST: CatalogueFormValues = {
 	tags: Array.from({ length: 10 }, (_, index) => `${index}${'station'.repeat(7)}`.slice(0, 50)),
 };
 
-const EVERY_FIELD_FAILURE: WriteFailure = {
+const EVERY_FIELD_ERROR: ApiError = {
 	kind: 'validation',
-	message: WRITE_FAILURE_MESSAGES.validation,
+	message: API_ERROR_MESSAGES.validation,
 	errors: {
 		title: ['The list title must be at least 2 characters'],
 		type: ["The type can't be changed once the catalogue has items."],
@@ -35,17 +35,17 @@ const EVERY_FIELD_FAILURE: WriteFailure = {
 	},
 };
 
-/** Answers the first submit with `failure`, the way the route does after a rejected save. */
-const RejectingServer = ({ failure, onSubmit, ...props }: CatalogueFormProps) => {
-	const [current, setCurrent] = React.useState<WriteFailure | null>(null);
+/** Answers the first submit with `apiError`, the way the route does after a rejected save. */
+const RejectingServer = ({ apiError, onSubmit, ...props }: CatalogueFormProps) => {
+	const [current, setCurrent] = React.useState<ApiError | null>(null);
 
 	return (
 		<CatalogueForm
 			{...props}
-			failure={current}
+			apiError={current}
 			onSubmit={(values, meta) => {
 				onSubmit(values, meta);
-				setCurrent(failure ?? null);
+				setCurrent(apiError ?? null);
 			}}
 		/>
 	);
@@ -130,13 +130,13 @@ export const EditWithItems: Story = {
 
 /** Every server message sits under its field; focus moves to the first one. */
 export const ServerErrorsOnEveryField: Story = {
-	args: { initialValues: SAVED, failure: EVERY_FIELD_FAILURE },
+	args: { initialValues: SAVED, apiError: EVERY_FIELD_ERROR },
 	render: (args) => <RejectingServer {...args} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('button', { name: 'Create catalogue' }));
 
-		await expect(await canvas.findByRole('alert')).toHaveTextContent(WRITE_FAILURE_MESSAGES.validation);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(API_ERROR_MESSAGES.validation);
 		await waitFor(() => expect(canvas.getByLabelText('Title')).toHaveFocus());
 		await expect(canvas.getByLabelText('Title')).toHaveAccessibleDescription(/at least 2 characters/);
 		await expect(canvas.getByRole('group', { name: 'Type' })).toHaveAccessibleDescription(/can't be changed/);

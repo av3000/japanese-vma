@@ -9,7 +9,7 @@ import type { FieldError, FieldPath, FieldValues, UseFormSetError } from 'react-
  * Every message for a field is kept under `types.server`, so a field can list several broken rules.
  * Returns the messages that matched no field, for the form's general alert.
  */
-export function applyServerFieldErrors<TValues extends FieldValues>(
+export function setApiFieldErrors<TValues extends FieldValues>(
 	setError: UseFormSetError<TValues>,
 	errors: Record<string, string[] | undefined>,
 	fields: readonly FieldPath<TValues>[],
@@ -48,13 +48,13 @@ export function applyServerFieldErrors<TValues extends FieldValues>(
 }
 
 /**
- * Every message on a field, for `FormField`'s `error`. Server errors set by `applyServerFieldErrors`
+ * Every message on a field, for `FormField`'s `error`. Server errors set by `setApiFieldErrors`
  * carry all their messages under `types`; a client error carries one `message`. An array field
  * (tags) can also carry one error per item, or one for the whole list under `root`.
  */
-export const fieldErrorMessages = (error: unknown): string[] => {
+export const getFieldErrorMessages = (error: unknown): string[] => {
 	if (!error || typeof error !== 'object') return [];
-	if (Array.isArray(error)) return [...new Set(error.flatMap(fieldErrorMessages))];
+	if (Array.isArray(error)) return [...new Set(error.flatMap(getFieldErrorMessages))];
 
 	const { message, types, root } = error as Partial<FieldError> & { root?: FieldError };
 	if (types) {
@@ -64,5 +64,5 @@ export const fieldErrorMessages = (error: unknown): string[] => {
 	}
 	if (typeof message === 'string' && message) return [message];
 
-	return fieldErrorMessages(root);
+	return getFieldErrorMessages(root);
 };

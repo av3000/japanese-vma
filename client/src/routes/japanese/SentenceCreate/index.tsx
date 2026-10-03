@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-	readSentenceWriteError,
-	useCreateSentenceMutation,
-	type SentenceWriteFailure,
-} from '@/api/sentences/authoring';
+import { type ApiError, parseApiError } from '@/api/apiError';
+import { useCreateSentenceMutation } from '@/api/sentences/authoring';
 import { SentenceForm, type SentenceFormValues } from '@/components/features/japanese/sentence/SentenceForm';
 import { buildSentenceWritePayload } from '@/components/features/japanese/sentence/SentenceForm/sentenceFormSchema';
 import { Button } from '@/components/shared/Button';
@@ -15,18 +12,18 @@ const SENTENCES_ROUTE = '/sentences';
 export default function SentenceCreatePage() {
 	const navigate = useNavigate();
 
-	const [failure, setFailure] = useState<SentenceWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<SentenceFormValues>(() => ({ content: '' }), []);
 
 	const createMutation = useCreateSentenceMutation();
 
 	const handleSubmit = (values: SentenceFormValues) => {
-		setFailure(null);
+		setApiError(null);
 
 		createMutation.mutate(buildSentenceWritePayload(values), {
 			onSuccess: (sentence) => navigate(`/sentence/${sentence.uuid}`),
-			onError: (error) => setFailure(readSentenceWriteError(error)),
+			onError: (error) => setApiError(parseApiError(error)),
 		});
 	};
 
@@ -37,7 +34,7 @@ export default function SentenceCreatePage() {
 				onSubmit={handleSubmit}
 				isSubmitting={createMutation.isPending}
 				submitLabel="Create sentence"
-				failure={failure}
+				apiError={apiError}
 				cancel={
 					<Button variant="ghost" to={SENTENCES_ROUTE}>
 						Cancel

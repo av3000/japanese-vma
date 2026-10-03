@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
 import { buildCreateCataloguePayload } from '@/api/catalogues/payloads';
-import { readCatalogueWriteError, type CatalogueWriteFailure } from '@/api/catalogues/writes';
 import { catalogueStore, getCatalogueIndexQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { StoreCatalogueRequest } from '@/api/generated/model/storeCatalogueRequest';
 import type { UuidCreatedResource } from '@/api/generated/model/uuidCreatedResource';
@@ -14,7 +14,7 @@ import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 const CatalogueCreatePage = () => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const [failure, setFailure] = useState<CatalogueWriteFailure | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<CatalogueFormValues>(
 		() => ({
@@ -29,11 +29,11 @@ const CatalogueCreatePage = () => {
 	const mutation = useMutation<UuidCreatedResource, unknown, StoreCatalogueRequest>({
 		mutationFn: (payload: StoreCatalogueRequest) => catalogueStore(payload),
 		onSuccess: ({ uuid }) => {
-			setFailure(null);
+			setApiError(null);
 			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
 			navigate(CATALOGUE_ROUTES.detail(uuid));
 		},
-		onError: (error) => setFailure(readCatalogueWriteError(error)),
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	return (
@@ -42,7 +42,7 @@ const CatalogueCreatePage = () => {
 				initialValues={initialValues}
 				isSubmitting={mutation.isPending}
 				submitLabel="Create catalogue"
-				failure={failure}
+				apiError={apiError}
 				note={<p>Add items from any kanji, word, radical or sentence page with Save to catalogue.</p>}
 				cancel={
 					<Button variant="ghost" to={CATALOGUE_ROUTES.list}>
@@ -50,7 +50,7 @@ const CatalogueCreatePage = () => {
 					</Button>
 				}
 				onSubmit={(values) => {
-					setFailure(null);
+					setApiError(null);
 					mutation.mutate(buildCreateCataloguePayload(values));
 				}}
 			/>

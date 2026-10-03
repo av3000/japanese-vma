@@ -1,15 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ApiError } from '@/api/apiError';
 import { POST_TOPIC_OPTIONS, isPostTopic } from '@/api/posts/reads';
-import type { WriteFailure } from '@/api/writeFailure';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormField, Input, Select, Textarea } from '@/components/shared/FormControls';
 import { FormCard, FormLayout, FormNote } from '@/components/shared/FormPage';
 import { InputTags } from '@/components/shared/InputTags';
-import { fieldErrorMessages } from '@/helpers/applyServerFieldErrors';
-import { NO_CHANGES_MESSAGE, useWriteFailureAlert } from '@/hooks/useWriteFailureAlert';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
 import {
 	MAX_CONTENT_LENGTH,
 	MAX_TAG_LENGTH,
@@ -40,8 +40,8 @@ interface PostFormProps {
 	onSubmit: (values: PostFormValues, meta: PostFormSubmitMeta) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	/** The last rejected save, from the route's write reader. */
-	failure?: WriteFailure | null;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
 	/** Edit forms: an unchanged form says so instead of sending an empty update. */
 	requireChanges?: boolean;
 	/** The Cancel control. */
@@ -58,7 +58,7 @@ export function PostForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	failure,
+	apiError,
 	requireChanges = false,
 	cancel,
 }: PostFormProps) {
@@ -87,7 +87,7 @@ export function PostForm({
 		if (isDirty) setShowNoChanges(false);
 	}, [isDirty]);
 
-	const failureMessage = useWriteFailureAlert(failure, setError, POST_FORM_FIELDS, SERVER_FIELD_MAP);
+	const alertMessage = useApiErrorInForm(apiError, setError, POST_FORM_FIELDS, SERVER_FIELD_MAP);
 
 	const onValidSubmit = (values: PostFormValues) => {
 		// `UpdatePostRequest` rejects an empty body, so an unchanged edit never reaches the server.
@@ -102,8 +102,8 @@ export function PostForm({
 
 	const alert = showNoChanges ? (
 		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
-	) : failureMessage ? (
-		<Alert tone="danger">{failureMessage}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
 	) : null;
 
 	return (
@@ -113,7 +113,7 @@ export function PostForm({
 				aside={
 					<>
 						<FormCard title="Settings">
-							<FormField label="Topic" error={fieldErrorMessages(errors.topic)}>
+							<FormField label="Topic" error={getFieldErrorMessages(errors.topic)}>
 								{(fieldControl) => (
 									<Controller
 										control={control}
@@ -145,7 +145,7 @@ export function PostForm({
 							<FormField
 								label="Tags"
 								hint={`Up to ${MAX_TAG_QUANTITY} tags, ${MAX_TAG_LENGTH} characters each. Press Enter, comma or space to add one.`}
-								error={fieldErrorMessages(errors.tags)}
+								error={getFieldErrorMessages(errors.tags)}
 							>
 								{(fieldControl) => (
 									<Controller
@@ -186,7 +186,7 @@ export function PostForm({
 					<FormField
 						label="Title"
 						counter={`${(title ?? '').length} / ${MAX_TITLE_LENGTH}`}
-						error={fieldErrorMessages(errors.title)}
+						error={getFieldErrorMessages(errors.title)}
 					>
 						{(fieldControl) => (
 							<Input maxLength={MAX_TITLE_LENGTH} required {...fieldControl} {...register('title')} />
@@ -196,7 +196,7 @@ export function PostForm({
 					<FormField
 						label="Text"
 						counter={`${(content ?? '').length} / ${MAX_CONTENT_LENGTH}`}
-						error={fieldErrorMessages(errors.content)}
+						error={getFieldErrorMessages(errors.content)}
 					>
 						{(fieldControl) => (
 							<Textarea

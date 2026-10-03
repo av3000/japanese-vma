@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
-import { WRITE_FAILURE_MESSAGES, type WriteFailure } from '@/api/writeFailure';
+import { API_ERROR_MESSAGES, type ApiError } from '@/api/apiError';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
 import { PostForm } from './index';
@@ -26,9 +26,9 @@ const LONGEST: PostFormValues = {
 	tags: Array.from({ length: 10 }, (_, index) => `${index}${'suggestion'.repeat(5)}`.slice(0, 50)),
 };
 
-const EVERY_FIELD_FAILURE: WriteFailure = {
+const EVERY_FIELD_ERROR: ApiError = {
 	kind: 'validation',
-	message: WRITE_FAILURE_MESSAGES.validation,
+	message: API_ERROR_MESSAGES.validation,
 	errors: {
 		title: ['The title must be at least 2 characters.'],
 		content: ['The content must be at least 5 characters.'],
@@ -37,17 +37,17 @@ const EVERY_FIELD_FAILURE: WriteFailure = {
 	},
 };
 
-/** Answers the first submit with `failure`, the way the route does after a rejected save. */
-const RejectingServer = ({ failure, onSubmit, ...props }: PostFormProps) => {
-	const [current, setCurrent] = React.useState<WriteFailure | null>(null);
+/** Answers the first submit with `apiError`, the way the route does after a rejected save. */
+const RejectingServer = ({ apiError, onSubmit, ...props }: PostFormProps) => {
+	const [current, setCurrent] = React.useState<ApiError | null>(null);
 
 	return (
 		<PostForm
 			{...props}
-			failure={current}
+			apiError={current}
 			onSubmit={(values, meta) => {
 				onSubmit(values, meta);
-				setCurrent(failure ?? null);
+				setCurrent(apiError ?? null);
 			}}
 		/>
 	);
@@ -98,13 +98,13 @@ export const Create: Story = {
 
 /** Server names (`type`, `hashtags.1`) land on their form fields; focus moves to the first. */
 export const ServerErrorsOnEveryField: Story = {
-	args: { initialValues: SAVED, failure: EVERY_FIELD_FAILURE },
+	args: { initialValues: SAVED, apiError: EVERY_FIELD_ERROR },
 	render: (args) => <RejectingServer {...args} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('button', { name: 'Publish post' }));
 
-		await expect(await canvas.findByRole('alert')).toHaveTextContent(WRITE_FAILURE_MESSAGES.validation);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(API_ERROR_MESSAGES.validation);
 		await waitFor(() => expect(canvas.getByLabelText('Title')).toHaveFocus());
 		await expect(canvas.getByLabelText('Text')).toHaveAccessibleDescription(/at least 5/);
 		await expect(canvas.getByLabelText('Topic')).toHaveAccessibleDescription(/topic is invalid/);
