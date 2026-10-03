@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { presentRank, presentText, presentValues, toJlptLevel } from './listValues';
+import { presentAllValues, presentRank, presentText, presentValues, toJlptLevel } from './listValues';
 
 describe('toJlptLevel', () => {
 	it.each([
@@ -44,6 +44,13 @@ describe('presentValues', () => {
 	it('accepts a missing array', () => {
 		expect(presentValues(null)).toEqual([]);
 		expect(presentValues(undefined)).toEqual([]);
+	});
+
+	it('keeps every real entry through presentAllValues', () => {
+		const types = ['noun', '-', 'adverb', 'suru verb', 'no-adjective'];
+
+		expect(presentAllValues(types)).toEqual(['noun', 'adverb', 'suru verb', 'no-adjective']);
+		expect(presentAllValues(undefined)).toEqual([]);
 	});
 
 	it('takes a custom limit', () => {

@@ -8,6 +8,7 @@ import {
 	NumberValue,
 	PlainText,
 	presentRank,
+	presentText,
 	presentValues,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
@@ -30,7 +31,13 @@ const baseColumns: DataTableColumn<KanjiResource>[] = [
 		rowHeader: true,
 		width: 'shrink',
 		cellClassName: styles.glyphCell,
-		cell: (kanji) => <GlyphLink to={`/kanji/${kanji.uuid}`} glyph={kanji.character} missingLabel="Kanji" />,
+		cell: (kanji) => (
+			<GlyphLink
+				to={`/kanji/${kanji.uuid}`}
+				glyph={presentText(kanji.character)}
+				missingLabel={`Kanji without a glyph, #${kanji.id}`}
+			/>
+		),
 	},
 	{
 		id: 'meaning',

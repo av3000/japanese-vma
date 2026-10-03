@@ -75,6 +75,22 @@ describe('RadicalsList', () => {
 		}
 	});
 
+	it('gives rows without a glyph distinct link names', () => {
+		useInfiniteRadicalsMock.mockReturnValue(
+			queryResult({
+				radicals: [
+					{ id: 11, uuid: 'r3', radical: null, strokes: 3, meaning: 'water', hiragana: null },
+					{ id: 12, uuid: 'r4', radical: null, strokes: 4, meaning: null, hiragana: null },
+				],
+			}),
+		);
+
+		const html = renderToStaticMarkup(<RadicalsList />);
+
+		expect(html).toContain('>Radical without a glyph: water</span>');
+		expect(html).toContain('>Radical without a glyph, #12</span>');
+	});
+
 	it('shows skeleton rows while loading and the alert on failure', () => {
 		useInfiniteRadicalsMock.mockReturnValueOnce(queryResult({ radicals: [], isLoading: true }));
 		expect(renderToStaticMarkup(<RadicalsList />)).toMatch(

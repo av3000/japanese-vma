@@ -1,4 +1,4 @@
-import { presentText } from '@/components/features/japanese/dictionaryList';
+import { presentText } from '@/components/features/japanese/dictionaryList/listValues';
 
 /*
  * Radical payloads pack two things into one string each:

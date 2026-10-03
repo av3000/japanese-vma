@@ -6,8 +6,8 @@ import {
 	JlptLevelCell,
 	PlainText,
 	TextLink,
+	presentAllValues,
 	presentText,
-	presentValues,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { SavedListType } from '@/shared/constants/enums';
@@ -53,10 +53,7 @@ const baseColumns: DataTableColumn<WordResource>[] = [
 		cellClassName: styles.type,
 		// `word_types` is the clean list; the raw `word_type` string ends in a stray "|".
 		cell: (word) => (
-			<PlainText
-				value={presentValues(word.word_types, Number.POSITIVE_INFINITY).join(', ') || null}
-				missingLabel="No word type"
-			/>
+			<PlainText value={presentAllValues(word.word_types).join(', ') || null} missingLabel="No word type" />
 		),
 	},
 	{ id: 'jlpt', header: 'JLPT', cell: (word) => <JlptLevelCell value={word.jlpt} /> },

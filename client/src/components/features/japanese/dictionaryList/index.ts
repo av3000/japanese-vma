@@ -10,4 +10,4 @@ export {
 } from './cells';
 export { DICTIONARY_PER_PAGE, DictionaryListPage, LoadMore, emptySearch, showingCount } from './DictionaryListPage';
 export { KeywordFilters } from './KeywordFilters';
-export { presentRank, presentText, presentValues, toJlptLevel } from './listValues';
+export { presentAllValues, presentRank, presentText, presentValues, toJlptLevel } from './listValues';

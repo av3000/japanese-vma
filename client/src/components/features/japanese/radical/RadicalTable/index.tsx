@@ -18,6 +18,16 @@ export interface RadicalTableProps {
 	empty: DataTableEmpty;
 }
 
+/**
+ * A radical without a glyph still needs a link name that tells rows apart: its meaning when it
+ * has one, otherwise its id.
+ */
+const missingGlyphLabel = (radical: RadicalResource): string => {
+	const meaning = presentText(radical.meaning);
+
+	return meaning ? `Radical without a glyph: ${meaning}` : `Radical without a glyph, #${radical.id}`;
+};
+
 /** Every radical field is nullable, so every cell has a labelled dash. */
 const columns: DataTableColumn<RadicalResource>[] = [
 	{
@@ -31,7 +41,11 @@ const columns: DataTableColumn<RadicalResource>[] = [
 
 			return (
 				<>
-					<GlyphLink to={`/radical/${radical.uuid}`} glyph={glyph} missingLabel="Radical" />
+					<GlyphLink
+						to={`/radical/${radical.uuid}`}
+						glyph={glyph}
+						missingLabel={missingGlyphLabel(radical)}
+					/>
 					{variants.length > 0 ? (
 						<span className={styles.variants}>
 							<span className={styles.visuallyHidden}>Variants: </span>
