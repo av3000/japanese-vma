@@ -17,7 +17,6 @@ use App\Http\v1\JapaneseMaterial\Kanjis\Requests\IndexKanjiRequest;
 use App\Http\v1\JapaneseMaterial\Kanjis\Requests\ShowKanjiRequest;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiDetailResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiListResource;
-use App\Http\v1\Shared\Resources\PaginationResource;
 use App\Shared\Http\TypedResults;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
@@ -33,28 +32,7 @@ class KanjiController extends Controller
     ) {
     }
 
-    /**
-     * @response array{
-     *     items: array<int, array{
-     *         id: int,
-     *         uuid: string,
-     *         character: string,
-     *         onyomi: array<int, string>,
-     *         kunyomi: array<int, string>,
-     *         meanings: array<int, string>,
-     *         nanori: array<int, string>,
-     *         grade: string|null,
-     *         stroke_count: int,
-     *         jlpt: string|null,
-     *         frequency: int|null,
-     *         radicals: array<int, string>,
-     *         radical_parts: array<int, string>,
-     *         viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
-     *     }>,
-     *     pagination: PaginationResource
-     * }
-     */
-    #[Response(type: 'array{items: array<int, array{id: int, uuid: string, character: string, onyomi: array<int, string>, kunyomi: array<int, string>, meanings: array<int, string>, nanori: array<int, string>, grade: string|null, stroke_count: int, jlpt: string|null, frequency: int|null, radicals: array<int, string>, radical_parts: array<int, string>, viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null}>, pagination: PaginationResource}')]
+    #[Response(type: 'KanjiListResource')]
     public function index(IndexKanjiRequest $request): JsonResponse|JsonResource
     {
         $validatedData = $request->validated();

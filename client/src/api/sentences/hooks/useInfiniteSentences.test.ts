@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-	getNextSentencesPageParam,
-	getSentencesTotal,
-	type SentenceListResponse,
-} from './useInfiniteSentences';
+import type { SentenceListResource } from '@/api/generated/model/sentenceListResource';
+import { getNextSentencesPageParam, getSentencesTotal } from './useInfiniteSentences';
 
-const createSentenceListResponse = (
-	overrides: Partial<SentenceListResponse> = {},
-): SentenceListResponse => ({
+const createSentenceListResponse = (overrides: Partial<SentenceListResource> = {}): SentenceListResource => ({
 	items: [
 		{
 			id: 1,

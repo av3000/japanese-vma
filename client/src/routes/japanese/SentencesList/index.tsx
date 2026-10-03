@@ -1,21 +1,22 @@
 import { useSearchParams } from 'react-router-dom';
-import { useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
-import SentenceItem from '@/components/features/japanese/sentence/SentenceItem';
+import { type SentenceListFilters, useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
+import {
+	DICTIONARY_PER_PAGE,
+	DictionaryListPage,
+	KeywordFilters,
+	LoadMore,
+	emptySearch,
+	showingCount,
+} from '@/components/features/japanese/dictionaryList';
+import { SentenceTable } from '@/components/features/japanese/sentence/SentenceTable';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Link } from '@/components/shared/Link';
-import { PageLoading } from '@/components/shared/PageLoading';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
-import styles from '../japaneseListPage.module.css';
-import SearchBarSentences from './SearchBarSentences';
 
-const DEFAULT_PER_PAGE = 10;
-
-const getSentenceListFilters = (searchParams: URLSearchParams) => {
+const getSentenceListFilters = (searchParams: URLSearchParams): SentenceListFilters => {
 	const keyword = searchParams.get('keyword')?.trim();
 
-	return { per_page: DEFAULT_PER_PAGE, ...(keyword ? { keyword } : {}) };
+	return { per_page: DICTIONARY_PER_PAGE, ...(keyword ? { keyword } : {}) };
 };
 
 const SentencesList = () => {
@@ -33,72 +34,53 @@ const SentencesList = () => {
 	const handleSearch = (nextKeyword: string) => {
 		const nextParams = new URLSearchParams();
 
-		const keyword = nextKeyword.trim();
-
-		if (keyword !== '') {
-			nextParams.set('keyword', keyword);
+		if (nextKeyword !== '') {
+			nextParams.set('keyword', nextKeyword);
 		}
 
 		setSearchParams(nextParams);
 	};
 
-	if (isLoading) {
-		return <PageLoading family="list" />;
-	}
+	const createAction = isAuthenticated ? (
+		<Button to="/sentences/new" variant="primary">
+			Create sentence
+		</Button>
+	) : undefined;
+
+	const meta = isLoading
+		? undefined
+		: [showingCount(sentences.length, total), keyword !== '' && `keyword: ${keyword}`].filter(Boolean).join(' · ');
+
+	const filterBar = (
+		<KeywordFilters
+			key={keyword}
+			label="Sentence filters"
+			searchLabel="Search sentences by keyword"
+			placeholder="Japanese text"
+			defaultKeyword={keyword}
+			onSearch={handleSearch}
+		/>
+	);
 
 	if (error) {
 		return (
-			<Container className={styles.page}>
+			<DictionaryListPage title="Sentences" action={createAction} filters={filterBar}>
 				<Alert tone="danger">Sentences could not be loaded.</Alert>
-			</Container>
+			</DictionaryListPage>
 		);
 	}
 
 	return (
-		<Container className={styles.page}>
-			<Stack gap="2xl">
-				<SearchBarSentences defaultKeyword={keyword} onSearch={handleSearch} />
-
-				{isAuthenticated && (
-					<Cluster justify="center">
-						<Link to="/sentences/new">Create sentence</Link>
-					</Cluster>
-				)}
-
-				<Stack as="section" gap="md" className={styles.results}>
-					<Cluster justify="center" align="baseline" gap="md">
-						{keyword ? <h4 className={styles.heading}>keyword: {keyword}</h4> : null}
-						<h4 className={styles.heading}>Results total: '{total}'</h4>
-					</Cluster>
-					<ul className={styles.list}>
-						{sentences.map((sentence) => (
-							<SentenceItem
-								key={sentence.uuid}
-								detailIdentifier={sentence.uuid}
-								tatoeba_entry={sentence.tatoeba_entry ?? undefined}
-								userId={sentence.user_id ?? undefined}
-								sentence={sentence.content}
-							/>
-						))}
-					</ul>
-				</Stack>
-
-				<Cluster justify="center">
-					{hasNextPage ? (
-						<Button
-							variant="outline"
-							className={styles.loadMore}
-							onClick={() => void fetchNextPage()}
-							disabled={isFetchingNextPage}
-						>
-							{isFetchingNextPage ? 'Loading...' : 'Load More'}
-						</Button>
-					) : (
-						'no more results...'
-					)}
-				</Cluster>
-			</Stack>
-		</Container>
+		<DictionaryListPage title="Sentences" meta={meta} action={createAction} filters={filterBar}>
+			<SentenceTable sentences={sentences} loading={isLoading} empty={emptySearch('sentences', keyword)} />
+			{isLoading || sentences.length === 0 ? null : (
+				<LoadMore
+					hasNextPage={hasNextPage}
+					isFetchingNextPage={isFetchingNextPage}
+					onLoadMore={() => void fetchNextPage()}
+				/>
+			)}
+		</DictionaryListPage>
 	);
 };
 

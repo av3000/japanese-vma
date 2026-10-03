@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import classNames from 'classnames';
 import {
 	deriveCatalogueWidgetState,
@@ -25,6 +25,10 @@ interface AuthorizedBookmarkWidgetProps {
 	initialIsKnown?: boolean;
 	loadOnMount?: boolean;
 	onStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
+	/** Names the icon button, e.g. `水` gives "Save 水" or "Saved: 水". */
+	itemLabel?: string;
+	/** For table rows: no "Learned"/"Not learned" text, only a small "Known" mark when it applies. */
+	compact?: boolean;
 }
 
 export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> = ({
@@ -36,6 +40,8 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	initialIsKnown = false,
 	loadOnMount = true,
 	onStateChange,
+	itemLabel,
+	compact = false,
 }) => {
 	const [lists, setLists] = useState<CatalogueForItem[]>([]);
 	const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
@@ -44,7 +50,9 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const [isLoadingUserCatalogues, setIsLoadingUserCatalogues] = useState(false);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
-	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'sentence-bookmark-modal' });
+	// One dialog per widget: list rows render many widgets, so the id must be unique per instance.
+	const dialogId = `bookmark-dialog-${useId()}`;
+	const bookmarkModal = useModal(bookmarkDialogRef, { id: dialogId });
 	const isInvalidEntity = !entityId || Number.isNaN(entityId);
 
 	useEffect(() => {
@@ -154,8 +162,9 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 
 	return (
 		<>
-			<div className={styles.widgetWrapper}>
-				{isKnownType &&
+			<div className={classNames(styles.widgetWrapper, compact && styles.compact)}>
+				{!compact &&
+					isKnownType &&
 					(isKnown ? (
 						<i className={classNames('fas fa-check-circle', styles.learned)}> Learned</i>
 					) : (
@@ -168,9 +177,11 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 					hasOnlyIcon
 					aria-controls={bookmarkModal.id}
 					aria-expanded={bookmarkModal.isOpen}
+					aria-label={itemLabel ? `${isBookmarked ? 'Saved: ' : 'Save '}${itemLabel}` : undefined}
 				>
 					<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
 				</Button>
+				{compact && isKnownType && isKnown ? <span className={styles.knownMark}>Known</span> : null}
 			</div>
 
 			<CatalogueBookmarkModal

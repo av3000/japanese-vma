@@ -2,14 +2,11 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { getKanjiIndexQueryKey, kanjiIndex } from '@/api/generated/kanji/kanji';
 import type { KanjiIndexQueryError } from '@/api/generated/kanji/kanji';
-import type { KanjiIndex200 } from '@/api/generated/model/kanjiIndex200';
 import type { KanjiIndexParams } from '@/api/generated/model/kanjiIndexParams';
+import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
+import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
 
 export type KanjiListFilters = Omit<KanjiIndexParams, 'page'>;
-export type KanjiListResponse = KanjiIndex200;
-export type KanjiViewerCatalogueState = NonNullable<
-	KanjiListResponse['items'][number]['viewer_catalogue_state']
->;
 
 export const KANJI_VIEWER_CATALOGUE_INCLUDE = 'viewer_catalogue_state';
 
@@ -20,16 +17,16 @@ type UseInfiniteKanjisOptions = {
 
 export const getInfiniteKanjisQueryKey = (filters: KanjiListFilters = {}) => getKanjiIndexQueryKey(filters);
 
-export const getNextKanjisPageParam = (lastPage: KanjiListResponse) =>
+export const getNextKanjisPageParam = (lastPage: KanjiListResource) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
-export const getKanjisTotal = (pages: KanjiListResponse[] | undefined) => pages?.[0]?.pagination.total ?? 0;
+export const getKanjisTotal = (pages: KanjiListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const applyKanjiViewerCatalogueState = (
-	data: InfiniteData<KanjiListResponse> | undefined,
+	data: InfiniteData<KanjiListResource> | undefined,
 	kanjiId: number,
-	viewerCatalogueState: KanjiViewerCatalogueState,
-): InfiniteData<KanjiListResponse> | undefined => {
+	viewerCatalogueState: ViewerCatalogueStateResource,
+): InfiniteData<KanjiListResource> | undefined => {
 	if (!data) {
 		return data;
 	}
@@ -39,9 +36,7 @@ export const applyKanjiViewerCatalogueState = (
 		pages: data.pages.map((page) => ({
 			...page,
 			items: page.items.map((kanji) =>
-				kanji.id === kanjiId
-					? { ...kanji, viewer_catalogue_state: viewerCatalogueState }
-					: kanji,
+				kanji.id === kanjiId ? { ...kanji, viewer_catalogue_state: viewerCatalogueState } : kanji,
 			),
 		})),
 	};
@@ -49,9 +44,9 @@ export const applyKanjiViewerCatalogueState = (
 
 export const useInfiniteKanjis = ({ enabled = true, filters = {} }: UseInfiniteKanjisOptions = {}) => {
 	const query = useInfiniteQuery<
-		KanjiListResponse,
+		KanjiListResource,
 		KanjiIndexQueryError,
-		InfiniteData<KanjiListResponse>,
+		InfiniteData<KanjiListResource>,
 		ReturnType<typeof getInfiniteKanjisQueryKey>,
 		number
 	>({
@@ -62,7 +57,7 @@ export const useInfiniteKanjis = ({ enabled = true, filters = {} }: UseInfiniteK
 		enabled,
 	});
 
-	const pages = query.data?.pages as KanjiListResponse[] | undefined;
+	const pages = query.data?.pages as KanjiListResource[] | undefined;
 	const kanjis = query.data?.pages.flatMap((page) => page.items) ?? [];
 	const total = getKanjisTotal(pages);
 

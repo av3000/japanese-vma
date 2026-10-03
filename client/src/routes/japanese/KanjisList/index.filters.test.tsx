@@ -45,7 +45,6 @@ vi.mock('@/api/kanjis/hooks/useInfiniteKanjis', async () => {
 });
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated: false }) }));
-vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
 
 let view: Awaited<ReturnType<typeof renderWithAct>>;
 
@@ -165,6 +164,12 @@ describe('KanjisList filters', () => {
 
 		expect(controlLabelled<HTMLInputElement>(view.container, 'Search kanji by keyword').value).toBe('water');
 		expect(controlLabelled<HTMLSelectElement>(view.container, 'JLPT level').value).toBe('5');
-		expect(capturedFilters).toMatchObject({ keyword: 'water', jlpt: '5', per_page: 10 });
+		// per_page moved from 10 to 25 with the table layout (UI-DICT-00, #427); keyword and jlpt are unchanged.
+		expect(capturedFilters).toEqual({
+			keyword: 'water',
+			jlpt: '5',
+			per_page: 25,
+			include: 'viewer_catalogue_state',
+		});
 	});
 });

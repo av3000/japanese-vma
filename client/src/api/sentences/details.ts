@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-	getSentenceShowQueryKey,
-	sentenceShow,
-} from '@/api/generated/sentence/sentence';
 import type { SentenceResource } from '@/api/generated/model/sentenceResource';
+import { getSentenceShowQueryKey, sentenceShow } from '@/api/generated/sentence/sentence';
 
 export type SentenceDetailResponse = SentenceResource;
 
 export type MappedSentenceDetail = Omit<SentenceDetailResponse, 'words'> & {
-	kanjis: SentenceDetailResponse['kanjis'];
+	// Optional on SentenceResource because the list reuses that component without includes;
+	// the detail always asks for kanjis, and the mapper defaults a missing list to [].
+	kanjis: NonNullable<SentenceDetailResponse['kanjis']>;
 };
 
 export const mapSentenceDetail = (sentence: SentenceDetailResponse): MappedSentenceDetail => {

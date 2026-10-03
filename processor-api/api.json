@@ -2349,131 +2349,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`KanjiListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "character": {
-                                                        "type": "string"
-                                                    },
-                                                    "onyomi": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "kunyomi": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "meanings": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "nanori": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "grade": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "stroke_count": {
-                                                        "type": "integer"
-                                                    },
-                                                    "jlpt": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "frequency": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "radicals": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "radical_parts": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "viewer_catalogue_state": {
-                                                        "type": [
-                                                            "object",
-                                                            "null"
-                                                        ],
-                                                        "properties": {
-                                                            "is_saved": {
-                                                                "type": "boolean"
-                                                            },
-                                                            "is_known": {
-                                                                "type": [
-                                                                    "boolean",
-                                                                    "null"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "is_saved",
-                                                            "is_known"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "character",
-                                                    "onyomi",
-                                                    "kunyomi",
-                                                    "meanings",
-                                                    "nanori",
-                                                    "grade",
-                                                    "stroke_count",
-                                                    "jlpt",
-                                                    "frequency",
-                                                    "radicals",
-                                                    "radical_parts",
-                                                    "viewer_catalogue_state"
-                                                ]
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/PaginationResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "items",
-                                        "pagination"
-                                    ]
+                                    "$ref": "#/components/schemas/KanjiListResource"
                                 }
                             }
                         }
@@ -2965,66 +2845,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`RadicalListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "radical": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "strokes": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "meaning": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "hiragana": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "radical",
-                                                    "strokes",
-                                                    "meaning",
-                                                    "hiragana"
-                                                ]
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/PaginationResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "items",
-                                        "pagination"
-                                    ]
+                                    "$ref": "#/components/schemas/RadicalListResource"
                                 }
                             }
                         }
@@ -3053,58 +2878,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`RadicalResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "uuid": {
-                                            "type": "string"
-                                        },
-                                        "radical": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "strokes": {
-                                            "type": [
-                                                "integer",
-                                                "null"
-                                            ]
-                                        },
-                                        "meaning": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "hiragana": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "kanjis": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/KanjiResource"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "uuid",
-                                        "radical",
-                                        "strokes",
-                                        "meaning",
-                                        "hiragana",
-                                        "kanjis"
-                                    ]
+                                    "$ref": "#/components/schemas/RadicalResource"
                                 }
                             }
                         }
@@ -3192,56 +2970,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`SentenceListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "user_id": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "tatoeba_entry": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "content": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "user_id",
-                                                    "tatoeba_entry",
-                                                    "content"
-                                                ]
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/PaginationResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "items",
-                                        "pagination"
-                                    ]
+                                    "$ref": "#/components/schemas/SentenceListResource"
                                 }
                             }
                         }
@@ -4031,126 +3764,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`WordListResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "items": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "word": {
-                                                        "type": "string"
-                                                    },
-                                                    "furigana": {
-                                                        "type": "string"
-                                                    },
-                                                    "jlpt": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "meaning": {
-                                                        "type": "string"
-                                                    },
-                                                    "meanings": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "word_types": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "writing_elements": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "reading_elements": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "word_type": {
-                                                        "type": "string"
-                                                    },
-                                                    "word_k_ele": {
-                                                        "type": "string"
-                                                    },
-                                                    "furigana_r_ele": {
-                                                        "type": "string"
-                                                    },
-                                                    "sense": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "viewer_catalogue_state": {
-                                                        "type": [
-                                                            "object",
-                                                            "null"
-                                                        ],
-                                                        "properties": {
-                                                            "is_saved": {
-                                                                "type": "boolean"
-                                                            },
-                                                            "is_known": {
-                                                                "type": [
-                                                                    "boolean",
-                                                                    "null"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "is_saved",
-                                                            "is_known"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "word",
-                                                    "furigana",
-                                                    "jlpt",
-                                                    "meaning",
-                                                    "meanings",
-                                                    "word_types",
-                                                    "writing_elements",
-                                                    "reading_elements",
-                                                    "word_type",
-                                                    "word_k_ele",
-                                                    "furigana_r_ele",
-                                                    "sense",
-                                                    "viewer_catalogue_state"
-                                                ]
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/PaginationResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "items",
-                                        "pagination"
-                                    ]
+                                    "$ref": "#/components/schemas/WordListResource"
                                 }
                             }
                         }
@@ -4189,275 +3807,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`WordDetailResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "uuid": {
-                                            "type": "string"
-                                        },
-                                        "word": {
-                                            "type": "string"
-                                        },
-                                        "furigana": {
-                                            "type": "string"
-                                        },
-                                        "jlpt": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "meaning": {
-                                            "type": "string"
-                                        },
-                                        "meanings": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "word_types": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "writing_elements": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "reading_elements": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "word_type": {
-                                            "type": "string"
-                                        },
-                                        "word_k_ele": {
-                                            "type": "string"
-                                        },
-                                        "furigana_r_ele": {
-                                            "type": "string"
-                                        },
-                                        "sense": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "viewer_catalogue_state": {
-                                            "type": [
-                                                "object",
-                                                "null"
-                                            ],
-                                            "properties": {
-                                                "is_saved": {
-                                                    "type": "boolean"
-                                                },
-                                                "is_known": {
-                                                    "type": [
-                                                        "boolean",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "is_saved",
-                                                "is_known"
-                                            ]
-                                        },
-                                        "kanjis": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "character": {
-                                                        "type": "string"
-                                                    },
-                                                    "onyomi": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "kunyomi": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "meanings": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "nanori": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "grade": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "stroke_count": {
-                                                        "type": "integer"
-                                                    },
-                                                    "jlpt": {
-                                                        "type": [
-                                                            "string",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "frequency": {
-                                                        "type": [
-                                                            "integer",
-                                                            "null"
-                                                        ]
-                                                    },
-                                                    "radicals": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "radical_parts": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "viewer_catalogue_state": {
-                                                        "type": [
-                                                            "object",
-                                                            "null"
-                                                        ],
-                                                        "properties": {
-                                                            "is_saved": {
-                                                                "type": "boolean"
-                                                            },
-                                                            "is_known": {
-                                                                "type": [
-                                                                    "boolean",
-                                                                    "null"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "is_saved",
-                                                            "is_known"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "character",
-                                                    "onyomi",
-                                                    "kunyomi",
-                                                    "meanings",
-                                                    "nanori",
-                                                    "grade",
-                                                    "stroke_count",
-                                                    "jlpt",
-                                                    "frequency",
-                                                    "radicals",
-                                                    "radical_parts",
-                                                    "viewer_catalogue_state"
-                                                ]
-                                            }
-                                        },
-                                        "articles": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "uuid": {
-                                                        "type": "string"
-                                                    },
-                                                    "title_jp": {
-                                                        "type": "string"
-                                                    },
-                                                    "hashtags": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer"
-                                                                },
-                                                                "content": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                            "required": [
-                                                                "id",
-                                                                "content"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "views_total": {
-                                                        "type": "integer"
-                                                    },
-                                                    "likes_total": {
-                                                        "type": "integer"
-                                                    },
-                                                    "comments_total": {
-                                                        "type": "integer"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "uuid",
-                                                    "title_jp",
-                                                    "hashtags",
-                                                    "views_total",
-                                                    "likes_total",
-                                                    "comments_total"
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "uuid",
-                                        "word",
-                                        "furigana",
-                                        "jlpt",
-                                        "meaning",
-                                        "meanings",
-                                        "word_types",
-                                        "writing_elements",
-                                        "reading_elements",
-                                        "word_type",
-                                        "word_k_ele",
-                                        "furigana_r_ele",
-                                        "sense",
-                                        "viewer_catalogue_state"
-                                    ]
+                                    "$ref": "#/components/schemas/WordDetailResource"
                                 }
                             }
                         }
@@ -5898,24 +5252,13 @@
                         }
                     },
                     "viewer_catalogue_state": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "is_saved": {
-                                "type": "boolean"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ViewerCatalogueStateResource"
                             },
-                            "is_known": {
-                                "type": [
-                                    "boolean",
-                                    "null"
-                                ]
+                            {
+                                "type": "null"
                             }
-                        },
-                        "required": [
-                            "is_saved",
-                            "is_known"
                         ]
                     },
                     "words": {
@@ -5987,24 +5330,13 @@
                                             ]
                                         },
                                         "viewer_catalogue_state": {
-                                            "type": [
-                                                "object",
-                                                "null"
-                                            ],
-                                            "properties": {
-                                                "is_saved": {
-                                                    "type": "boolean"
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ViewerCatalogueStateResource"
                                                 },
-                                                "is_known": {
-                                                    "type": [
-                                                        "boolean",
-                                                        "null"
-                                                    ]
+                                                {
+                                                    "type": "null"
                                                 }
-                                            },
-                                            "required": [
-                                                "is_saved",
-                                                "is_known"
                                             ]
                                         }
                                     },
@@ -6156,6 +5488,25 @@
                 ],
                 "title": "KanjiDetailResource"
             },
+            "KanjiListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "KanjiListResource"
+            },
             "KanjiResource": {
                 "type": "object",
                 "properties": {
@@ -6226,21 +5577,13 @@
                         }
                     },
                     "viewer_catalogue_state": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "is_saved": {
-                                "type": "string"
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ViewerCatalogueStateResource"
                             },
-                            "is_known": {
-                                "type": "string"
+                            {
+                                "type": "null"
                             }
-                        },
-                        "required": [
-                            "is_saved",
-                            "is_known"
                         ]
                     }
                 },
@@ -6669,6 +6012,75 @@
                 ],
                 "title": "ProcessingStatusResource"
             },
+            "RadicalListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RadicalResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "RadicalListResource"
+            },
+            "RadicalResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "radical": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "strokes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "meaning": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "hiragana": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "kanjis": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "radical",
+                    "strokes",
+                    "meaning",
+                    "hiragana"
+                ],
+                "title": "RadicalResource"
+            },
             "RegisterRequest": {
                 "type": "object",
                 "properties": {
@@ -6697,6 +6109,57 @@
                 ],
                 "title": "RegisterRequest"
             },
+            "RelatedArticleSummaryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "title_jp": {
+                        "type": "string"
+                    },
+                    "hashtags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "content": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "content"
+                            ]
+                        }
+                    },
+                    "views_total": {
+                        "type": "integer"
+                    },
+                    "likes_total": {
+                        "type": "integer"
+                    },
+                    "comments_total": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "title_jp",
+                    "hashtags",
+                    "views_total",
+                    "likes_total",
+                    "comments_total"
+                ],
+                "title": "RelatedArticleSummaryResource"
+            },
             "RoleResource": {
                 "type": "object",
                 "properties": {
@@ -6723,6 +6186,25 @@
                     "is_system_role"
                 ],
                 "title": "RoleResource"
+            },
+            "SentenceListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SentenceResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "SentenceListResource"
             },
             "SentenceResource": {
                 "type": "object",
@@ -6764,9 +6246,7 @@
                     "uuid",
                     "user_id",
                     "tatoeba_entry",
-                    "content",
-                    "kanjis",
-                    "words"
+                    "content"
                 ],
                 "title": "SentenceResource"
             },
@@ -7140,6 +6620,242 @@
                     "uuid"
                 ],
                 "title": "UuidCreatedResource"
+            },
+            "ViewerCatalogueStateResource": {
+                "type": "object",
+                "properties": {
+                    "is_saved": {
+                        "type": "boolean"
+                    },
+                    "is_known": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "is_saved",
+                    "is_known"
+                ],
+                "title": "ViewerCatalogueStateResource"
+            },
+            "WordDetailResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "word": {
+                        "type": "string"
+                    },
+                    "furigana": {
+                        "type": "string"
+                    },
+                    "jlpt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "meaning": {
+                        "type": "string"
+                    },
+                    "meanings": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "word_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "writing_elements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "reading_elements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "word_type": {
+                        "type": "string"
+                    },
+                    "word_k_ele": {
+                        "type": "string"
+                    },
+                    "furigana_r_ele": {
+                        "type": "string"
+                    },
+                    "sense": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "viewer_catalogue_state": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ViewerCatalogueStateResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "kanjis": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/KanjiResource"
+                        }
+                    },
+                    "articles": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RelatedArticleSummaryResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "word",
+                    "furigana",
+                    "jlpt",
+                    "meaning",
+                    "meanings",
+                    "word_types",
+                    "writing_elements",
+                    "reading_elements",
+                    "word_type",
+                    "word_k_ele",
+                    "furigana_r_ele",
+                    "sense",
+                    "viewer_catalogue_state"
+                ],
+                "title": "WordDetailResource"
+            },
+            "WordListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WordResource"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationResource"
+                    }
+                },
+                "required": [
+                    "items",
+                    "pagination"
+                ],
+                "title": "WordListResource"
+            },
+            "WordResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "word": {
+                        "type": "string"
+                    },
+                    "furigana": {
+                        "type": "string"
+                    },
+                    "jlpt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "meaning": {
+                        "type": "string"
+                    },
+                    "meanings": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "word_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "writing_elements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "reading_elements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "word_type": {
+                        "type": "string"
+                    },
+                    "word_k_ele": {
+                        "type": "string"
+                    },
+                    "furigana_r_ele": {
+                        "type": "string"
+                    },
+                    "sense": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "viewer_catalogue_state": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ViewerCatalogueStateResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "uuid",
+                    "word",
+                    "furigana",
+                    "jlpt",
+                    "meaning",
+                    "meanings",
+                    "word_types",
+                    "writing_elements",
+                    "reading_elements",
+                    "word_type",
+                    "word_k_ele",
+                    "furigana_r_ele",
+                    "sense",
+                    "viewer_catalogue_state"
+                ],
+                "title": "WordResource"
             }
         },
         "responses": {

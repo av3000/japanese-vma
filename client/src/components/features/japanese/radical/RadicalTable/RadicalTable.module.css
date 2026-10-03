@@ -1,0 +1,44 @@
+/* Variant forms under the glyph, e.g. 乙 (乛 ⺄ 乚 乙 乀): small, so the column stays one glyph wide. */
+.variants {
+	display: block;
+	max-width: 5em;
+	margin-top: var(--spacing-3xs);
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-ja);
+	font-size: var(--font-size-body-sm);
+	overflow-wrap: anywhere;
+}
+
+/* Romaji after the kana reading, in the body font rather than the Japanese one. */
+.romaji {
+	margin-inline-start: var(--spacing-xs);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (max-width: 767px) {
+	.glyphCell {
+		align-self: start;
+	}
+
+	.variants {
+		max-width: 100%;
+	}
+
+	.lead {
+		font-size: var(--font-size-body-md);
+		font-weight: var(--font-weight-semibold);
+	}
+}
