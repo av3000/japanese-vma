@@ -1,172 +1,93 @@
 import * as React from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import classNames from 'classnames';
+import { Link, NavLink } from 'react-router-dom';
+import { HeaderSearch } from '@/components/features/HeaderSearch';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnClickAway } from '@/hooks/useOnClickAway';
+import { AccountMenu } from './AccountMenu';
 import styles from './Header.module.css';
+import { MenuDrawer } from './MenuDrawer';
 import { NavGroup } from './NavGroup';
+import { NAV_SECTIONS, navLinkClass } from './navigation';
 
-const MENU_ID = 'primary-navigation';
-
-const MATERIAL_LINKS = [
-	{ to: '/radicals', label: 'Radicals' },
-	{ to: '/kanjis', label: 'Kanji' },
-	{ to: '/words', label: 'Words' },
-	{ to: '/sentences', label: 'Sentences' },
-] as const;
-
-const navLinkClass = ({ isActive }: { isActive: boolean }) => classNames(styles.link, isActive && styles.linkActive);
-
+/**
+ * The app bar on every page. From 1024px: brand, the Explore and Dictionary disclosures, the
+ * search panel and the account. Below: brand, the search button and the menu button, each opening
+ * a full-height drawer.
+ */
 const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
-	const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-	const { pathname } = useLocation();
-	const navRef = React.useRef<HTMLElement>(null);
-	const toggleRef = React.useRef<HTMLButtonElement>(null);
 
-	React.useEffect(() => {
-		setIsMenuOpen(false);
-	}, [pathname]);
-
-	const closeMenu = React.useCallback(() => setIsMenuOpen(false), []);
-	useOnClickAway(navRef, closeMenu, isMenuOpen);
-
-	// Escape closes the collapsed (mobile) menu and returns focus to its toggle.
-	React.useEffect(() => {
-		if (!isMenuOpen) return;
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape') return;
-			const target = event.target as Node | null;
-			if (target && navRef.current?.contains(target)) {
-				setIsMenuOpen(false);
-				toggleRef.current?.focus();
-			}
-		};
-		document.addEventListener('keydown', handleKeyDown);
-		return () => document.removeEventListener('keydown', handleKeyDown);
-	}, [isMenuOpen]);
+	let account: React.ReactNode;
+	if (isLoading) {
+		account = (
+			<ul className={styles.account} aria-label="Account status">
+				<li>
+					<span className={styles.authPending} aria-label="Checking account status" />
+				</li>
+			</ul>
+		);
+	} else if (isAuthenticated && user) {
+		account = (
+			<ul className={styles.account} aria-label="Account">
+				<li className={styles.socket}>
+					<SocketStatusIndicator />
+				</li>
+				<AccountMenu id="account-nav-group" name={user.name} onLogout={() => logout()} />
+			</ul>
+		);
+	} else {
+		account = (
+			<ul className={styles.account} aria-label="Account">
+				<li>
+					<NavLink className={navLinkClass} to="/login">
+						Log In
+					</NavLink>
+				</li>
+				<li>
+					<Button to="/register" variant="primary" size="sm">
+						Sign Up
+					</Button>
+				</li>
+			</ul>
+		);
+	}
 
 	return (
 		<header className={styles.header}>
-			<nav ref={navRef} className={styles.nav} aria-label="Main">
+			<div className={styles.bar}>
 				<Link to="/" className={styles.brand}>
 					JPLearning
 				</Link>
 
-				<button
-					ref={toggleRef}
-					type="button"
-					className={styles.toggle}
-					aria-expanded={isMenuOpen}
-					aria-controls={MENU_ID}
-					aria-label={isMenuOpen ? 'Close navigation' : 'Open navigation'}
-					onClick={() => setIsMenuOpen((open) => !open)}
-				>
-					<span className={styles.toggleBars} aria-hidden="true" />
-				</button>
-
-				<div id={MENU_ID} className={classNames(styles.menu, isMenuOpen && styles.menuOpen)}>
-					<ul className={classNames(styles.list, styles.primary)}>
-						<li>
-							<NavLink className={navLinkClass} to="/articles">
-								Articles
-							</NavLink>
-						</li>
-						<li>
-							<NavLink className={navLinkClass} to="/catalogues">
-								Catalogues
-							</NavLink>
-						</li>
-						{/* Flat in the mobile menu and on wide screens; a disclosure only where the full
-						    row does not fit (see Header.module.css). */}
-						<NavGroup label="Japanese Material" id="material-nav-group" className={styles.materialGroup}>
-							{MATERIAL_LINKS.map(({ to, label }) => (
-								<li key={to}>
-									<NavLink className={navLinkClass} to={to}>
-										{label}
-									</NavLink>
-								</li>
-							))}
-						</NavGroup>
-						<li>
-							<NavLink className={navLinkClass} to="/community">
-								Community
-							</NavLink>
-						</li>
-						{isAuthenticated && (
-							<li>
-								<NavLink className={navLinkClass} to="/dashboard">
-									Dashboard
-								</NavLink>
-							</li>
-						)}
-					</ul>
-
-					{isLoading ? (
-						<ul className={classNames(styles.list, styles.account)} aria-label="Account status">
-							<li>
-								<span className={styles.authPending} aria-label="Checking account status" />
-							</li>
-						</ul>
-					) : isAuthenticated && user ? (
-						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
-							<NavGroup
-								label={
-									<span>
-										<span aria-hidden="true">+</span> New
-									</span>
-								}
-								id="new-nav-group"
-							>
-								<li>
-									<NavLink className={navLinkClass} to="/newarticle">
-										Article
-									</NavLink>
-								</li>
-								<li>
-									<NavLink className={navLinkClass} to="/catalogues/new">
-										Catalogue
-									</NavLink>
-								</li>
-								<li role="separator" className={styles.divider} />
-								<li>
-									<NavLink className={navLinkClass} to="/newpost">
-										Community Post
-									</NavLink>
-								</li>
+				<nav aria-label="Main" className={styles.desktopNav}>
+					<ul className={styles.groups}>
+						{NAV_SECTIONS.map((section) => (
+							<NavGroup key={section.id} label={section.label} id={`${section.id}-nav-group`}>
+								{section.links.map((link) => (
+									<li key={link.to}>
+										<NavLink className={navLinkClass} to={link.to}>
+											<span>{link.label}</span>
+											{link.description && (
+												<>
+													{' '}
+													<span className={styles.description}>{link.description}</span>
+												</>
+											)}
+										</NavLink>
+									</li>
+								))}
 							</NavGroup>
-							<li className={styles.socket}>
-								<SocketStatusIndicator />
-							</li>
-							<li>
-								<NavLink className={navLinkClass} to="/dashboard">
-									Logged in as <strong className={styles.userName}>{user.name}</strong>
-								</NavLink>
-							</li>
-							<li>
-								<Button type="button" variant="outline" size="sm" onClick={() => logout()}>
-									Logout
-								</Button>
-							</li>
-						</ul>
-					) : (
-						<ul className={classNames(styles.list, styles.account)} aria-label="Account">
-							<li>
-								<NavLink className={navLinkClass} to="/login">
-									Log In
-								</NavLink>
-							</li>
-							<li>
-								<Button to="/register" variant="primary" size="sm">
-									Sign Up
-								</Button>
-							</li>
-						</ul>
-					)}
-				</div>
-			</nav>
+						))}
+					</ul>
+				</nav>
+
+				<HeaderSearch />
+
+				{account}
+
+				<MenuDrawer />
+			</div>
 		</header>
 	);
 };

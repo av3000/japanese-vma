@@ -6,6 +6,7 @@ namespace App\Domain\Catalogues\DTOs;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 
 readonly class CatalogueListItemDTO
 {
@@ -14,6 +15,8 @@ readonly class CatalogueListItemDTO
         public ?CatalogueStats $stats,
         public array $hashtags,
         public int $itemsCount,
+        /** Null when not requested, or when the catalogue's type has no JLPT data. */
+        public ?JlptLevels $jlptLevels,
     ) {
     }
 }

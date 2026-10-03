@@ -15,10 +15,6 @@
 	text-align: center;
 }
 
-.search {
-	max-width: 720px;
-}
-
 @media (min-width: 768px) {
 	.page {
 		padding-top: var(--spacing-2xl);

@@ -4,6 +4,7 @@ namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Http\v1\Engagement\Resources\EngagementStatsResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
@@ -21,7 +22,8 @@ class CatalogueResource extends JsonResource
         Catalogue $catalogue,
         private ?CatalogueStats $stats = null,
         private array $hashtags = [],
-        private ?int $itemsCount = null
+        private ?int $itemsCount = null,
+        private ?JlptLevels $jlptLevels = null,
     ) {
         parent::__construct($catalogue);
     }
@@ -39,6 +41,7 @@ class CatalogueResource extends JsonResource
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
      *     engagement: EngagementStatsResource|null,
+     *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int}|null,
      *     created_at: string,
      *     updated_at: string
      * }
@@ -64,8 +67,31 @@ class CatalogueResource extends JsonResource
             'items_count' => (int) ($this->itemsCount ?? 0),
             'hashtags' => HashtagResource::collection($this->hashtags),
             'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,
+            'jlpt_levels' => self::jlptLevels($this->jlptLevels),
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),
+        ];
+    }
+
+    /**
+     * Same shape as an article's `jlpt_levels`, or null when it was not requested or the
+     * catalogue's type has no JLPT data. Shared with CatalogueDetailResource.
+     *
+     * @return array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int}|null
+     */
+    public static function jlptLevels(?JlptLevels $levels): ?array
+    {
+        if ($levels === null) {
+            return null;
+        }
+
+        return [
+            'n1' => (int) $levels->n1,
+            'n2' => (int) $levels->n2,
+            'n3' => (int) $levels->n3,
+            'n4' => (int) $levels->n4,
+            'n5' => (int) $levels->n5,
+            'uncommon' => (int) $levels->uncommon,
         ];
     }
 }

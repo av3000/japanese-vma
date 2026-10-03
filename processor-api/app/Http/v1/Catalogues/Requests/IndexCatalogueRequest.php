@@ -2,7 +2,6 @@
 
 namespace App\Http\v1\Catalogues\Requests;
 
-
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexCatalogueRequest extends FormRequest
@@ -26,6 +25,7 @@ class IndexCatalogueRequest extends FormRequest
             'custom_only' => 'sometimes|boolean',
             'include_stats_counts' => 'sometimes|boolean',
             'include_hashtags' => 'sometimes|boolean',
+            'include_jlpt_levels' => 'sometimes|boolean',
         ];
     }
 
@@ -45,6 +45,7 @@ class IndexCatalogueRequest extends FormRequest
             'custom_only.boolean' => 'Custom only must be a boolean value',
             'include_stats_counts.boolean' => 'Include stats must be a boolean value',
             'include_hashtags.boolean' => 'Include hashtags must be a boolean value',
+            'include_jlpt_levels.boolean' => 'Include JLPT levels must be a boolean value',
         ];
     }
 
@@ -53,8 +54,9 @@ class IndexCatalogueRequest extends FormRequest
         $booleanFields = [
             'include_stats_counts',
             'include_hashtags',
+            'include_jlpt_levels',
             'public_only',
-            'custom_only'
+            'custom_only',
         ];
 
         $normalized = [];

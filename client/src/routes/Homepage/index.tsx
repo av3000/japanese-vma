@@ -3,22 +3,20 @@ import { CorpusStatsTiles } from '@/components/features/Homepage/CorpusStatsTile
 import { LatestArticles } from '@/components/features/Homepage/LatestArticles';
 import { PhotoBand } from '@/components/features/Homepage/PhotoBand';
 import { PopularCatalogues } from '@/components/features/Homepage/PopularCatalogues';
-import { ScopedSearch } from '@/components/features/Homepage/ScopedSearch';
 import { Container, Grid, Stack } from '@/components/shared/layout';
 import styles from './Homepage.module.css';
 
 const LIST_COLUMNS = { base: 1, sm: 2 };
 
 /**
- * Search-first landing page, the same for guests and signed-in users. Sign-up lives in the
- * Header; each section handles its own loading and error states.
+ * Landing page, the same for guests and signed-in users. Search and sign-up live in the Header;
+ * each section handles its own loading and error states.
  */
 const Homepage: React.FC = () => (
 	<Container className={styles.page}>
 		<Stack gap="xl">
 			<div className={styles.top}>
 				<h1 className={styles.title}>Find your next reading</h1>
-				<ScopedSearch className={styles.search} />
 			</div>
 
 			<CorpusStatsTiles />

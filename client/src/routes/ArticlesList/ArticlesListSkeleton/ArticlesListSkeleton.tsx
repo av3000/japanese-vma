@@ -1,6 +1,7 @@
 import classNames from 'classnames';
-import ArticleCardSkeleton from '@/components/shared/ArticleCard/ArticleCardSkeleton';
-import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.css';
+import ArticleCardSkeleton from '@/components/features/LibraryCards/ArticleCard/ArticleCardSkeleton';
+import skeletonStyles from '@/components/features/LibraryCards/LibraryCardSkeleton.module.css';
+import { LibraryCardGrid } from '@/components/features/LibraryCards/LibraryLayout';
 import { Grid, Stack, type Responsive } from '@/components/shared/layout';
 import styles from './ArticlesListSkeleton.module.css';
 
@@ -29,13 +30,11 @@ const ArticlesListSkeleton = () => (
 			))}
 		</Grid>
 
-		<Grid as="ul" columns={{ base: 2, sm: 3, md: 4 }} gap="lg" className={styles.list}>
-			{Array.from({ length: ARTICLES_LIST_SKELETON_COUNT }).map((_, index) => (
-				<Grid.Item as="li" span="auto" key={index}>
-					<ArticleCardSkeleton />
-				</Grid.Item>
+		<LibraryCardGrid>
+			{Array.from({ length: ARTICLES_LIST_SKELETON_COUNT }, (_, index) => (
+				<ArticleCardSkeleton key={index} />
 			))}
-		</Grid>
+		</LibraryCardGrid>
 	</Stack>
 );
 

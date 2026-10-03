@@ -21,26 +21,29 @@ const CATALOGUE_PDF_TYPES: ReadonlyArray<readonly [CataloguePdfExportKind, reado
 	['sentences', [4, 8]],
 ];
 
-/** The dictionary family a catalogue's items belong to; null for types without cards. */
-export type StudyFamily = 'kanji' | 'words' | 'radicals';
+/** What a catalogue holds, with each "known" type folded into the family it saves. */
+export type CatalogueFamily = 'radicals' | 'kanji' | 'words' | 'sentences' | 'articles';
 
-// Mirrors FlashcardConfig::baseType on the backend (epic #413): the three dictionary families
-// and their "known" variants. Sentences have no translation column and articles are not cards,
-// so a Study action for them would only ever surface a 422.
+const CATALOGUE_FAMILIES: ReadonlyArray<readonly [CatalogueFamily, readonly number[]]> = [
+	['radicals', [1, 5]],
+	['kanji', [2, 6]],
+	['words', [3, 7]],
+	['sentences', [4, 8]],
+	['articles', [9]],
+];
+
+/**
+ * The families flashcards can be built from (epic #413). Sentences have no translation
+ * column and articles are not cards, so a Study action for them would only surface a 422.
+ * Mirrors FlashcardQuestion::baseType on the backend.
+ */
+export type StudyFamily = Extract<CatalogueFamily, 'kanji' | 'words' | 'radicals'>;
+
+const STUDY_FAMILIES: ReadonlySet<CatalogueFamily> = new Set<CatalogueFamily>(['kanji', 'words', 'radicals']);
+
 export const studyFamilyFor = (catalogueType: number): StudyFamily | null => {
-	switch (catalogueType) {
-		case SavedListType.KANJIS:
-		case SavedListType.KNOWNKANJIS:
-			return 'kanji';
-		case SavedListType.WORDS:
-		case SavedListType.KNOWNWORDS:
-			return 'words';
-		case SavedListType.RADICALS:
-		case SavedListType.KNOWNRADICALS:
-			return 'radicals';
-		default:
-			return null;
-	}
+	const family = resolveCatalogueFamily(catalogueType);
+	return family !== null && STUDY_FAMILIES.has(family) ? (family as StudyFamily) : null;
 };
 
 export const isCatalogueStudySupported = (value: number) => studyFamilyFor(value) !== null;
@@ -97,6 +100,11 @@ export const isCustomCatalogueType = (value: number): value is CustomCatalogueTy
 
 export const resolveCatalogueTypeLabel = (value: number) => {
 	return isCustomCatalogueType(value) ? CATALOGUE_TYPE_LABELS[value] : 'Unknown';
+};
+
+/** `null` for types that hold neither (lyrics, artists) or are unknown. */
+export const resolveCatalogueFamily = (value: number): CatalogueFamily | null => {
+	return CATALOGUE_FAMILIES.find(([, types]) => types.includes(value))?.[0] ?? null;
 };
 
 export const resolveCataloguePdfExportKind = (value: number): CataloguePdfExportKind | null => {

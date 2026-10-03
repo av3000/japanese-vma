@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import CataloguesListPage, { mapSearchFiltersToCatalogueParams } from './index';
 
@@ -13,7 +14,7 @@ vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 	useInfiniteCatalogues: () => queryState,
 }));
 
-vi.mock('@/components/features/catalogues/CatalogueCard/CatalogueCard', () => ({
+vi.mock('@/components/features/LibraryCards/CatalogueCard', () => ({
 	CatalogueCard: ({ catalogue }: { catalogue: { title: string } }) => <article>{catalogue.title}</article>,
 }));
 
@@ -22,6 +23,14 @@ vi.mock('@/components/shared/Button', () => ({
 }));
 
 vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
+
+// The filters live in the URL (#389), so the page needs a router.
+const renderAt = (url = '/catalogues') =>
+	renderToStaticMarkup(
+		<MemoryRouter initialEntries={[url]}>
+			<CataloguesListPage />
+		</MemoryRouter>,
+	);
 
 describe('catalogue filter mapping', () => {
 	it('keeps the legacy list search UX while mapping to catalogue-v1 filters', () => {
@@ -41,6 +50,7 @@ describe('catalogue filter mapping', () => {
 			custom_only: true,
 			include_stats_counts: true,
 			include_hashtags: true,
+			include_jlpt_levels: true,
 		});
 	});
 
@@ -61,6 +71,7 @@ describe('catalogue filter mapping', () => {
 			custom_only: true,
 			include_stats_counts: true,
 			include_hashtags: true,
+			include_jlpt_levels: true,
 		});
 	});
 });
@@ -81,7 +92,7 @@ describe('CataloguesListPage', () => {
 	});
 
 	it('uses the catalogue list skeleton inside accessible pending semantics', () => {
-		const html = renderToStaticMarkup(<CataloguesListPage />);
+		const html = renderAt();
 
 		expect(html).toContain('aria-busy="true"');
 		expect(html).toContain('role="status"');
@@ -91,7 +102,7 @@ describe('CataloguesListPage', () => {
 	});
 
 	it('shows the heading with its title only while the list is loading', () => {
-		const html = renderToStaticMarkup(<CataloguesListPage />);
+		const html = renderAt();
 
 		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
 		expect(html).toMatch(/<h1[^>]*>Catalogues<\/h1>/);
@@ -106,7 +117,7 @@ describe('CataloguesListPage', () => {
 			isPending: false,
 		};
 
-		const html = renderToStaticMarkup(<CataloguesListPage />);
+		const html = renderAt();
 
 		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
 		expect(html).toMatch(/<h1[^>]*>Catalogues<\/h1>/);
@@ -116,10 +127,28 @@ describe('CataloguesListPage', () => {
 	it('offers "New catalogue" to signed-in users only', () => {
 		queryState = { ...queryState, isPending: false };
 
-		expect(renderToStaticMarkup(<CataloguesListPage />)).not.toContain('New catalogue');
+		expect(renderAt()).not.toContain('New catalogue');
 
 		isAuthenticated = true;
 
-		expect(renderToStaticMarkup(<CataloguesListPage />)).toContain('New catalogue');
+		expect(renderAt()).toContain('New catalogue');
+	});
+
+	it.each([
+		['/catalogues', 'No public catalogues yet', 'Catalogues people share publicly appear here.'],
+		[
+			'/catalogues?q=%E5%8F%B0%E6%89%80',
+			'No catalogues match “台所”',
+			'Try a shorter search, or clear the filters.',
+		],
+		['/catalogues?type=7', 'No public catalogues of this type yet', 'Try another type, or All.'],
+	])('explains an empty list at %s', (url, title, hint) => {
+		queryState = { ...queryState, isPending: false };
+
+		const html = renderAt(url);
+
+		expect(html.match(/<h2[^>]*>(.*?)<\/h2>/)?.[1].replace(/<[^>]+>/g, '')).toBe(title);
+		expect(html).toContain(`>${hint}</p>`);
+		expect(html).not.toContain('No more results');
 	});
 });

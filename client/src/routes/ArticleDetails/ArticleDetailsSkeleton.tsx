@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import skeletonStyles from '@/components/shared/ArticleCard/ArticleCardSkeleton.module.css';
+import skeletonStyles from '@/components/features/LibraryCards/LibraryCardSkeleton.module.css';
 import { Container } from '@/components/shared/layout';
 import styles from './ArticleDetailsSkeleton.module.css';
 
