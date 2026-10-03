@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTH_FAILURE_MESSAGES, readAuthFailure } from './authFailure';
+import { AUTH_ERROR_MESSAGES, parseAuthError } from './authError';
 
 /** Shapes an axios rejection the way the interceptor hands it to callers. */
 const axiosError = (status: number, data: unknown) =>
@@ -27,16 +27,16 @@ const validationFailed = (errors: Record<string, string[]>) => ({
 	errors,
 });
 
-describe('readAuthFailure', () => {
+describe('parseAuthError', () => {
 	it('maps wrong credentials to a plain sentence, never the axios text', () => {
-		const failure = readAuthFailure(axiosError(401, invalidCredentials));
+		const authError = parseAuthError(axiosError(401, invalidCredentials));
 
-		expect(failure).toEqual({ message: AUTH_FAILURE_MESSAGES.invalidCredentials, fieldErrors: {} });
-		expect(failure.message).not.toContain('Request failed');
+		expect(authError).toEqual({ message: AUTH_ERROR_MESSAGES.invalidCredentials, fieldErrors: {} });
+		expect(authError.message).not.toContain('Request failed');
 	});
 
 	it('places 422 messages under their fields with every message kept', () => {
-		const failure = readAuthFailure(
+		const authError = parseAuthError(
 			axiosError(
 				422,
 				validationFailed({
@@ -49,7 +49,7 @@ describe('readAuthFailure', () => {
 			),
 		);
 
-		expect(failure).toEqual({
+		expect(authError).toEqual({
 			message: null,
 			fieldErrors: {
 				email: ['The email has already been taken.'],
@@ -62,7 +62,7 @@ describe('readAuthFailure', () => {
 	});
 
 	it('handles a taken email and a taken username together', () => {
-		const failure = readAuthFailure(
+		const authError = parseAuthError(
 			axiosError(
 				422,
 				validationFailed({
@@ -72,31 +72,31 @@ describe('readAuthFailure', () => {
 			),
 		);
 
-		expect(failure.message).toBeNull();
-		expect(failure.fieldErrors.name).toEqual(['The name has already been taken.']);
-		expect(failure.fieldErrors.email).toEqual(['The email has already been taken.']);
+		expect(authError.message).toBeNull();
+		expect(authError.fieldErrors.name).toEqual(['The name has already been taken.']);
+		expect(authError.fieldErrors.email).toEqual(['The email has already been taken.']);
 	});
 
 	it('moves messages for unknown keys into the general message', () => {
-		const failure = readAuthFailure(axiosError(422, validationFailed({ device_name: ['Too long.'] })));
+		const authError = parseAuthError(axiosError(422, validationFailed({ device_name: ['Too long.'] })));
 
-		expect(failure).toEqual({ message: 'Too long.', fieldErrors: {} });
+		expect(authError).toEqual({ message: 'Too long.', fieldErrors: {} });
 	});
 
 	it('falls back to a generic prompt when a 422 has no messages at all', () => {
-		expect(readAuthFailure(axiosError(422, validationFailed({}))).message).toBe(AUTH_FAILURE_MESSAGES.checkForm);
+		expect(parseAuthError(axiosError(422, validationFailed({}))).message).toBe(AUTH_ERROR_MESSAGES.checkForm);
 	});
 
 	it('maps the rate limit to a wait-and-retry sentence', () => {
-		const failure = readAuthFailure(
+		const authError = parseAuthError(
 			axiosError(429, { title: 'Too Many Requests', status: 429, detail: 'Too Many Attempts.' }),
 		);
 
-		expect(failure).toEqual({ message: AUTH_FAILURE_MESSAGES.rateLimited, fieldErrors: {} });
+		expect(authError).toEqual({ message: AUTH_ERROR_MESSAGES.rateLimited, fieldErrors: {} });
 	});
 
 	it('maps a server error to the generic sentence without leaking detail', () => {
-		const failure = readAuthFailure(
+		const authError = parseAuthError(
 			axiosError(500, {
 				title: 'Server error',
 				status: 500,
@@ -104,24 +104,24 @@ describe('readAuthFailure', () => {
 			}),
 		);
 
-		expect(failure).toEqual({ message: AUTH_FAILURE_MESSAGES.unknown, fieldErrors: {} });
+		expect(authError).toEqual({ message: AUTH_ERROR_MESSAGES.unknown, fieldErrors: {} });
 	});
 
 	it('uses the HTTP status when a proxy returns an HTML error page', () => {
-		const failure = readAuthFailure(axiosError(502, '<html><body>Bad Gateway</body></html>'));
+		const authError = parseAuthError(axiosError(502, '<html><body>Bad Gateway</body></html>'));
 
-		expect(failure).toEqual({ message: AUTH_FAILURE_MESSAGES.unknown, fieldErrors: {} });
+		expect(authError).toEqual({ message: AUTH_ERROR_MESSAGES.unknown, fieldErrors: {} });
 	});
 
 	it('maps an unreachable API (no response) to the connection sentence', () => {
-		expect(readAuthFailure(new Error('Network Error'))).toEqual({
-			message: AUTH_FAILURE_MESSAGES.unreachable,
+		expect(parseAuthError(new Error('Network Error'))).toEqual({
+			message: AUTH_ERROR_MESSAGES.unreachable,
 			fieldErrors: {},
 		});
 	});
 
 	it('survives a non-error rejection value', () => {
-		expect(readAuthFailure(undefined).message).toBe(AUTH_FAILURE_MESSAGES.unreachable);
-		expect(readAuthFailure(null).message).toBe(AUTH_FAILURE_MESSAGES.unreachable);
+		expect(parseAuthError(undefined).message).toBe(AUTH_ERROR_MESSAGES.unreachable);
+		expect(parseAuthError(null).message).toBe(AUTH_ERROR_MESSAGES.unreachable);
 	});
 });
