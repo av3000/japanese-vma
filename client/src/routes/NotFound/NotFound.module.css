@@ -1,4 +1,115 @@
 .page {
-	padding-block: var(--spacing-2xl);
+	padding-block: var(--spacing-2xl) var(--spacing-3xl);
+}
+
+/* The column starts just short of where the watermark ends, so 迷 sits above the "404" eyebrow
+   with its lowest strokes touching it. The heading stays clear of the glyph. */
+.column {
+	--glyph-size: 128px;
+
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-sm);
+	max-inline-size: 36rem;
+	margin-inline: auto;
+	padding-top: calc(var(--glyph-size) * 0.95);
 	text-align: center;
+}
+
+/* Watermark: 迷 in the serif stack, a shade over the kinari page. */
+.glyph {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline: 0;
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--glyph-size);
+	line-height: 1;
+	color: var(--color-neutral-200);
+	user-select: none;
+	pointer-events: none;
+}
+
+.code {
+	position: relative; /* paints above the watermark where the glyph's lowest strokes reach */
+	margin: 0;
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-body-sm);
+	letter-spacing: 0.08em;
+	color: var(--color-neutral-600);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
+}
+
+.lead {
+	margin: 0;
+	color: var(--color-neutral-700);
+}
+
+/* A dictionary entry: word, reading, gloss, the way word rows show elsewhere on the site. */
+.entry {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: center;
+	gap: var(--spacing-xs);
+	margin: var(--spacing-xs) 0 0;
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-600);
+}
+
+.word {
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--font-size-heading-4);
+	color: var(--color-text-neutral-default);
+}
+
+.reading {
+	font-size: var(--font-size-body-sm);
+}
+
+.gloss::before {
+	content: '·';
+	margin-inline-end: var(--spacing-xs);
+}
+
+.actions {
+	margin-top: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+	.page {
+		padding-top: var(--spacing-3xl);
+	}
+
+	.column {
+		--glyph-size: 192px;
+	}
+
+	.title {
+		font-size: var(--font-size-heading-2);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.glyph {
+		animation: settle var(--duration-lg) var(--ease-base) both;
+	}
+}
+
+@keyframes settle {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }
