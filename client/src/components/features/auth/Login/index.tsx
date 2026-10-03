@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { readAuthFailure } from '@/api/auth/authFailure';
+import { parseAuthError } from '@/api/auth/authError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormField, Input } from '@/components/shared/FormControls';
@@ -51,13 +51,13 @@ const LoginForm: React.FC = () => {
 		try {
 			await login(values);
 		} catch (error) {
-			const failure = readAuthFailure(error);
+			const authError = parseAuthError(error);
 
-			setGeneralError(failure.message);
+			setGeneralError(authError.message);
 
 			let focused = false;
 			for (const field of ['email', 'password'] as const) {
-				const messages = failure.fieldErrors[field];
+				const messages = authError.fieldErrors[field];
 
 				if (messages?.length) {
 					setError(field, { type: 'server', message: messages.join(' ') }, { shouldFocus: !focused });

@@ -20,8 +20,8 @@ const requiredWithMinMax = (opts: {
 		.string()
 		.trim()
 		.min(1, opts.requiredMessage)
-		.pipe(z.string().min(opts.min, opts.requiredMessage))
-		.pipe(z.string().max(opts.max, opts.requiredMessage));
+		.pipe(z.string().min(opts.min, opts.minMessage))
+		.pipe(z.string().max(opts.max, opts.maxMessage));
 };
 
 const optionalWithMinMax = (opts: { min: number; minMessage: string; max: number; maxMessage: string }) => {
@@ -113,7 +113,7 @@ export function buildArticleFormSchema({ requireEnglishTitle }: { requireEnglish
 			min: MIN_CONTENT_LENGTH,
 			minMessage: `Japanese content must be at least ${MIN_CONTENT_LENGTH} characters.`,
 			max: MAX_CONTENT_LENGTH,
-			maxMessage: 'Japanese content must be at most 2000 characters.',
+			maxMessage: `Japanese content must be at most ${MAX_CONTENT_LENGTH} characters.`,
 		}),
 		content_en: optionalWithMinMax({
 			min: MIN_CONTENT_LENGTH,

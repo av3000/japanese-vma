@@ -1,21 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
 import { buildCreateCataloguePayload } from '@/api/catalogues/payloads';
 import { catalogueStore, getCatalogueIndexQueryKey } from '@/api/generated/catalogue/catalogue';
 import type { StoreCatalogueRequest } from '@/api/generated/model/storeCatalogueRequest';
 import type { UuidCreatedResource } from '@/api/generated/model/uuidCreatedResource';
 import { CatalogueForm, type CatalogueFormValues } from '@/components/features/catalogues/CatalogueForm';
-import { Container } from '@/components/shared/layout';
-import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
+import { Button } from '@/components/shared/Button';
+import { FormPage } from '@/components/shared/FormPage';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
-import styles from './CatalogueCreate.module.css';
 
 const CatalogueCreatePage = () => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
-	const [status, setStatus] = useState<string | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<CatalogueFormValues>(
 		() => ({
@@ -30,41 +29,32 @@ const CatalogueCreatePage = () => {
 	const mutation = useMutation<UuidCreatedResource, unknown, StoreCatalogueRequest>({
 		mutationFn: (payload: StoreCatalogueRequest) => catalogueStore(payload),
 		onSuccess: ({ uuid }) => {
-			setStatus(null);
-			setServerErrors(null);
+			setApiError(null);
 			queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
 			navigate(CATALOGUE_ROUTES.detail(uuid));
 		},
-		onError: (error: any) => {
-			const data = error?.response?.data;
-
-			if (isHttpValidationProblemDetails(data)) {
-				setServerErrors(data.errors);
-				setStatus(data.title ?? 'Validation failed');
-				return;
-			}
-
-			setServerErrors(null);
-			setStatus('Something went wrong. Please try again.');
-			console.error(error);
-		},
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	return (
-		<Container as="section" className={styles.page}>
+		<FormPage title="New catalogue" size="sm" backLink={{ to: CATALOGUE_ROUTES.list, label: 'Catalogues' }}>
 			<CatalogueForm
 				initialValues={initialValues}
 				isSubmitting={mutation.isPending}
-				submitLabel="Create Catalogue"
-				serverErrors={serverErrors}
-				statusMessage={status}
+				submitLabel="Create catalogue"
+				apiError={apiError}
+				note={<p>Add items from any kanji, word, radical or sentence page with Save to catalogue.</p>}
+				cancel={
+					<Button variant="ghost" to={CATALOGUE_ROUTES.list}>
+						Cancel
+					</Button>
+				}
 				onSubmit={(values) => {
-					setStatus(null);
-					setServerErrors(null);
+					setApiError(null);
 					mutation.mutate(buildCreateCataloguePayload(values));
 				}}
 			/>
-		</Container>
+		</FormPage>
 	);
 };
 

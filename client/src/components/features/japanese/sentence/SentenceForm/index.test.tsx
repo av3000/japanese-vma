@@ -33,7 +33,8 @@ describe('SentenceForm', () => {
 	const baseProps = {
 		initialValues: { content: '水を飲みます。' },
 		onSubmit: () => {},
-		submitLabel: 'Create',
+		submitLabel: 'Create sentence',
+		cancel: <a href="/sentences">Cancel</a>,
 	};
 
 	it('seeds the form from initialValues and renders the submit label', () => {
@@ -42,26 +43,23 @@ describe('SentenceForm', () => {
 		// react-hook-form applies defaultValues through the field ref, so a static
 		// render leaves the textarea empty; the counter is what proves the value
 		// reached the form state.
-		expect(html).toContain('7/300');
-		expect(html).toContain('Create');
+		expect(html).toContain('7 / 300');
+		expect(html).toContain('Create sentence');
+	});
+
+	it('labels the field and describes it by its length rule', () => {
+		const html = renderToStaticMarkup(<SentenceForm {...baseProps} />);
+
+		const id = html.match(/<textarea[^>]*id="([^"]+)"/)?.[1];
+		expect(html).toContain(`for="${id}"`);
+		expect(html).toMatch(/<label[^>]*>Sentence<\/label>/);
+		expect(html).toMatch(new RegExp(`<textarea[^>]*aria-describedby="${id}-hint"`));
+		expect(html).toContain('Between 4 and 300 characters.');
 	});
 
 	it('disables submit while a write is in flight, so a second submit cannot start', () => {
 		const html = renderToStaticMarkup(<SentenceForm {...baseProps} isSubmitting />);
 
-		expect(html).toContain('disabled');
-		expect(html).not.toContain('>Create<');
-	});
-
-	it('renders a status message and a server field error', () => {
-		const html = renderToStaticMarkup(
-			<SentenceForm
-				{...baseProps}
-				statusMessage="Validation failed"
-				serverErrors={{ content: ['Content is too short.'] }}
-			/>,
-		);
-
-		expect(html).toContain('Validation failed');
+		expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled=""/);
 	});
 });

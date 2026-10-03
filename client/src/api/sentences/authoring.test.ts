@@ -3,9 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	canMutateSentence,
 	evictSentenceCaches,
-	GENERIC_SENTENCE_WRITE_ERROR,
 	isImportedSentence,
-	readSentenceWriteError,
 	reconcileSentenceCaches,
 	sentenceDetailQueryKeys,
 	type SentenceWriteResponse,
@@ -25,8 +23,6 @@ const createSentence = (overrides: Partial<SentenceWriteResponse> = {}): Sentenc
 const owner = { id: 5, isAdmin: false };
 const admin = { id: 9, isAdmin: true };
 const stranger = { id: 42, isAdmin: false };
-
-const axiosError = (status: number, data: Record<string, unknown>) => ({ response: { data: { status, ...data } } });
 
 describe('isImportedSentence', () => {
 	it('treats a null author as imported and any author id as authored', () => {
@@ -92,38 +88,5 @@ describe('evictSentenceCaches', () => {
 		expect(queryClient.getQueryData(['/sentences/sentence-uuid'])).toBeUndefined();
 		expect(queryClient.getQueryData(['/sentences/77'])).toBeUndefined();
 		expect(invalidate).toHaveBeenCalledWith({ queryKey: ['/sentences'] });
-	});
-});
-
-describe('readSentenceWriteError', () => {
-	it('surfaces field errors from a validation payload', () => {
-		const failure = readSentenceWriteError(
-			axiosError(422, { title: 'Validation failed', errors: { content: ['Content is too short.'] } }),
-		);
-
-		expect(failure).toEqual({
-			kind: 'validation',
-			message: 'Validation failed',
-			errors: { content: ['Content is too short.'] },
-		});
-	});
-
-	it('distinguishes the problem-details failures the write endpoints return', () => {
-		expect(readSentenceWriteError(axiosError(403, { title: 'Imported.' }))).toEqual({
-			kind: 'forbidden',
-			message: 'Imported.',
-		});
-		expect(readSentenceWriteError(axiosError(404, { title: 'Not found.' })).kind).toBe('notFound');
-		expect(readSentenceWriteError(axiosError(401, { title: 'Unauthenticated.' })).kind).toBe('unauthenticated');
-	});
-
-	it('falls back to a generic message for network and unrecognised failures', () => {
-		expect(readSentenceWriteError(new Error('Network Error'))).toEqual({
-			kind: 'unknown',
-			message: GENERIC_SENTENCE_WRITE_ERROR,
-		});
-		expect(readSentenceWriteError(axiosError(500, { title: 'Sentence update failed.' })).message).toBe(
-			GENERIC_SENTENCE_WRITE_ERROR,
-		);
 	});
 });

@@ -4,7 +4,7 @@ import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProble
 
 export type AuthField = keyof RegisterRequest | keyof LoginRequest;
 
-export interface AuthFailure {
+export interface AuthError {
 	/** For the general alert at the top of the card. `null` when every message belongs to a field. */
 	message: string | null;
 	fieldErrors: Partial<Record<AuthField, string[]>>;
@@ -12,7 +12,7 @@ export interface AuthFailure {
 
 const AUTH_FIELDS: readonly AuthField[] = ['name', 'email', 'password', 'password_confirmation'];
 
-export const AUTH_FAILURE_MESSAGES = {
+export const AUTH_ERROR_MESSAGES = {
 	invalidCredentials: 'Email or password is incorrect.',
 	checkForm: 'Check the form and try again.',
 	rateLimited: 'Too many attempts. Wait a minute and try again.',
@@ -22,8 +22,8 @@ export const AUTH_FAILURE_MESSAGES = {
 
 const isAuthField = (key: string): key is AuthField => (AUTH_FIELDS as readonly string[]).includes(key);
 
-const fromValidation = (errors: Record<string, string[]>): AuthFailure => {
-	const fieldErrors: AuthFailure['fieldErrors'] = {};
+const fromValidation = (errors: Record<string, string[]>): AuthError => {
+	const fieldErrors: AuthError['fieldErrors'] = {};
 	const unplaced: string[] = [];
 
 	for (const [key, messages] of Object.entries(errors)) {
@@ -35,7 +35,7 @@ const fromValidation = (errors: Record<string, string[]>): AuthFailure => {
 	}
 
 	const placedAny = Object.keys(fieldErrors).length > 0;
-	const message = unplaced.length > 0 ? unplaced.join(' ') : placedAny ? null : AUTH_FAILURE_MESSAGES.checkForm;
+	const message = unplaced.length > 0 ? unplaced.join(' ') : placedAny ? null : AUTH_ERROR_MESSAGES.checkForm;
 
 	return { message, fieldErrors };
 };
@@ -49,11 +49,11 @@ const fromValidation = (errors: Record<string, string[]>): AuthFailure => {
  * The only server text that reaches the user is the 422 field messages, which are written for
  * users. `title`, `detail` and the axios message never do.
  */
-export const readAuthFailure = (error: unknown): AuthFailure => {
+export const parseAuthError = (error: unknown): AuthError => {
 	const response = (error as { response?: { status?: number; data?: unknown } } | null)?.response;
 
 	if (!response) {
-		return { message: AUTH_FAILURE_MESSAGES.unreachable, fieldErrors: {} };
+		return { message: AUTH_ERROR_MESSAGES.unreachable, fieldErrors: {} };
 	}
 
 	if (response.status === 422 && response.data && isHttpValidationProblemDetails(response.data)) {
@@ -61,12 +61,12 @@ export const readAuthFailure = (error: unknown): AuthFailure => {
 	}
 
 	if (response.status === 401) {
-		return { message: AUTH_FAILURE_MESSAGES.invalidCredentials, fieldErrors: {} };
+		return { message: AUTH_ERROR_MESSAGES.invalidCredentials, fieldErrors: {} };
 	}
 
 	if (response.status === 429) {
-		return { message: AUTH_FAILURE_MESSAGES.rateLimited, fieldErrors: {} };
+		return { message: AUTH_ERROR_MESSAGES.rateLimited, fieldErrors: {} };
 	}
 
-	return { message: AUTH_FAILURE_MESSAGES.unknown, fieldErrors: {} };
+	return { message: AUTH_ERROR_MESSAGES.unknown, fieldErrors: {} };
 };

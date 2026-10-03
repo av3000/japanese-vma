@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { type FieldError, useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { readAuthFailure } from '@/api/auth/authFailure';
+import { parseAuthError } from '@/api/auth/authError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormField, Input } from '@/components/shared/FormControls';
@@ -56,13 +56,13 @@ const RegisterForm: React.FC = () => {
 		try {
 			await registerAccount(values);
 		} catch (error) {
-			const failure = readAuthFailure(error);
+			const authError = parseAuthError(error);
 
-			setGeneralError(failure.message);
+			setGeneralError(authError.message);
 
 			let focused = false;
 			for (const field of FIELDS) {
-				const messages = failure.fieldErrors[field];
+				const messages = authError.fieldErrors[field];
 
 				if (messages?.length) {
 					setError(

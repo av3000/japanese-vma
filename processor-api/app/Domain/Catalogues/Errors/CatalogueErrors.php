@@ -57,6 +57,24 @@ class CatalogueErrors
         );
     }
 
+    public const TYPE_LOCKED_BY_ITEMS = 'Catalogues.TypeLockedByItems';
+
+    /**
+     * Items are stored as bare ids and read under the catalogue's current type, so changing the
+     * type of a catalogue that holds items would show unrelated entries in their place.
+     * `errorMessage` is written for users: the controller returns it under `errors.type`.
+     */
+    public static function typeLockedByItems(string $catalogueUid): ResultError
+    {
+        return new ResultError(
+            code: self::TYPE_LOCKED_BY_ITEMS,
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Catalogue type is locked',
+            detail: "Catalogue {$catalogueUid} has items, so its type cannot change",
+            errorMessage: "The type can't be changed once the catalogue has items.",
+        );
+    }
+
     public static function unsupportedPdfExportKind(string $catalogueUid, string $kind): ResultError
     {
         return new ResultError(

@@ -77,3 +77,18 @@ export const LongLabelNarrow: Story = {
 	},
 	parameters: { viewport: { defaultViewport: 'mobile1' } },
 };
+
+/** The counter sits on the hint row and stays out of the accessible description. */
+export const WithCounter: Story = {
+	args: {
+		label: 'Japanese title',
+		hint: 'Up to 255 characters.',
+		counter: '14 / 255',
+		children: (control) => <Input defaultValue="新宿駅の新しい改札が完成" {...control} />,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByLabelText('Japanese title')).toHaveAccessibleDescription('Up to 255 characters.');
+		await expect(canvas.getByText('14 / 255')).toBeVisible();
+	},
+};

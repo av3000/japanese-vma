@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { parseApiError } from '@/api/apiError';
 import { POST_ROUTES } from '@/api/posts/reads';
 import {
 	canDeletePost,
 	canLockPost,
 	canUpdatePost,
 	nextLockRequest,
-	readPostWriteError,
 	useDeletePostMutation,
 	useLockPostMutation,
 } from '@/api/posts/writes';
@@ -61,7 +61,7 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 
 		// The desired state, not a toggle: a retried request cannot flip the Post back.
 		lockMutation.mutate(nextLockRequest(isLocked), {
-			onError: (error) => setStatus(readPostWriteError(error).message),
+			onError: (error) => setStatus(parseApiError(error).message),
 		});
 	};
 
@@ -74,7 +74,7 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 				navigate(POST_ROUTES.list);
 			},
 			// The dialog stays open on failure so the reason is visible next to the action that failed.
-			onError: (error) => setStatus(readPostWriteError(error).message),
+			onError: (error) => setStatus(parseApiError(error).message),
 		});
 	};
 

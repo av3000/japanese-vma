@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AUTH_FAILURE_MESSAGES } from '@/api/auth/authFailure';
+import { AUTH_ERROR_MESSAGES } from '@/api/auth/authError';
 import { authLogin } from '@/api/generated/auth/auth';
 import type { AuthLogin200 } from '@/api/generated/model/authLogin200';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
@@ -127,7 +127,7 @@ describe('Login page', () => {
 		await fillAndSubmit(view, { email: 'sora@example.com', password: 'wrong' });
 
 		const alert = requireElement<HTMLElement>(view.container, '[role="alert"]');
-		expect(alert.textContent).toBe(AUTH_FAILURE_MESSAGES.invalidCredentials);
+		expect(alert.textContent).toBe(AUTH_ERROR_MESSAGES.invalidCredentials);
 		expect(view.container.textContent).not.toContain('Request failed');
 		expect(localStorage.getItem('token')).toBeNull();
 		expect(navigate).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('Login page', () => {
 		await fillAndSubmit(view, { email: 'sora@example.com', password: 'secret' });
 
 		expect(requireElement<HTMLElement>(view.container, '[role="alert"]').textContent).toBe(
-			AUTH_FAILURE_MESSAGES.unreachable,
+			AUTH_ERROR_MESSAGES.unreachable,
 		);
 
 		await view.unmount();
@@ -164,7 +164,7 @@ describe('Login page', () => {
 
 		expect(view.container.textContent).not.toContain('Your session expired');
 		expect(requireElement<HTMLElement>(view.container, '[role="alert"]').textContent).toBe(
-			AUTH_FAILURE_MESSAGES.invalidCredentials,
+			AUTH_ERROR_MESSAGES.invalidCredentials,
 		);
 
 		await view.unmount();
