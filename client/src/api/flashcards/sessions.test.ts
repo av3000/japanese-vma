@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SessionAnswer } from '@/components/features/flashcards/SessionSummary';
+import type { SessionAnswer } from '@/api/flashcards/types';
 import { kanjiCards } from '@/components/features/flashcards/fixtures';
 import { defaultStudyConfig } from './deck';
 import { createSessionRecorder, type SessionRecorderClient } from './sessions';

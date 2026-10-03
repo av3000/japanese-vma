@@ -20,14 +20,14 @@ describe('AnswerInput', () => {
 		unmount = undefined;
 	});
 
-	it('submits the trimmed answer', async () => {
+	it('mounts empty and focused, and submits the trimmed answer', async () => {
 		const onSubmit = vi.fn();
-		const rendered = await renderWithAct(
-			<AnswerInput label="Kun’yomi (hiragana)" japanese onSubmit={onSubmit} cardKey={1} />,
-		);
+		const rendered = await renderWithAct(<AnswerInput label="Kun’yomi (hiragana)" japanese onSubmit={onSubmit} />);
 		unmount = rendered.unmount;
 
 		const input = requireElement<HTMLInputElement>(rendered.container, 'input');
+		expect(input.value).toBe('');
+		expect(document.activeElement).toBe(input);
 		expect(input.getAttribute('lang')).toBe('ja');
 
 		typeInto(input, ' つぐ ');
@@ -38,9 +38,7 @@ describe('AnswerInput', () => {
 
 	it('never submits an empty answer', async () => {
 		const onSubmit = vi.fn();
-		const rendered = await renderWithAct(
-			<AnswerInput label="Meaning" japanese={false} onSubmit={onSubmit} cardKey={1} />,
-		);
+		const rendered = await renderWithAct(<AnswerInput label="Meaning" japanese={false} onSubmit={onSubmit} />);
 		unmount = rendered.unmount;
 
 		const button = requireElement<HTMLButtonElement>(rendered.container, 'button[type="submit"]');
@@ -54,7 +52,7 @@ describe('AnswerInput', () => {
 
 	it('swallows Enter while an IME composition is in progress, then submits after it ends', async () => {
 		const onSubmit = vi.fn();
-		const rendered = await renderWithAct(<AnswerInput label="Reading" japanese onSubmit={onSubmit} cardKey={1} />);
+		const rendered = await renderWithAct(<AnswerInput label="Reading" japanese onSubmit={onSubmit} />);
 		unmount = rendered.unmount;
 
 		const input = requireElement<HTMLInputElement>(rendered.container, 'input');
@@ -82,20 +80,5 @@ describe('AnswerInput', () => {
 
 		submitForm(form);
 		expect(onSubmit).toHaveBeenCalledWith('つぐ');
-	});
-
-	it('clears the field when the card changes', async () => {
-		const rendered = await renderWithAct(
-			<AnswerInput label="Meaning" japanese={false} onSubmit={vi.fn()} cardKey={1} />,
-		);
-		unmount = rendered.unmount;
-
-		const input = requireElement<HTMLInputElement>(rendered.container, 'input');
-		typeInto(input, 'study');
-		expect(input.value).toBe('study');
-
-		await rendered.rerender(<AnswerInput label="Meaning" japanese={false} onSubmit={vi.fn()} cardKey={2} />);
-
-		expect(input.value).toBe('');
 	});
 });

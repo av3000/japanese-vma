@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { StudyCard, StudyDeck } from '@/api/flashcards/deck';
 import { grade } from '@/api/flashcards/grading';
 import type { SaveStatus } from '@/api/flashcards/sessions';
+import type { SessionAnswer } from '@/api/flashcards/types';
 import { Stack } from '@/components/shared/layout';
 import type { SavedListType } from '@/shared/constants/enums';
 import { AnswerFeedback } from '../AnswerFeedback';
@@ -9,7 +10,7 @@ import { AnswerInput } from '../AnswerInput';
 import { AnswerOptions } from '../AnswerOptions';
 import { FlashcardPrompt } from '../FlashcardPrompt';
 import { SessionProgress } from '../SessionProgress';
-import { SessionSummary, type SessionAnswer } from '../SessionSummary';
+import { SessionSummary } from '../SessionSummary';
 import styles from './StudySession.module.css';
 
 export interface StudySessionProps {
@@ -63,7 +64,6 @@ export const StudySession = ({
 	const [phase, setPhase] = useState<Phase>({ kind: 'question', index: 0 });
 	const [answers, setAnswers] = useState<SessionAnswer[]>([]);
 	const startedAtRef = useRef<number>(Date.now());
-	const reportedRoundRef = useRef<number | null>(null);
 
 	const promptJapanese = deck.config.prompt !== 'meaning';
 	const answerJapanese = deck.config.answer !== 'meaning';
@@ -86,19 +86,21 @@ export const StudySession = ({
 		[attemptNo, onAnswer],
 	);
 
+	// The event that moves to the summary is the one that reports the round; `answers`
+	// already holds the last answer because `record` ran before the learner could advance.
 	const next = useCallback(() => {
-		setPhase((current) => {
-			if (current.kind !== 'feedback') return current;
+		if (phase.kind !== 'feedback') return;
 
-			const nextIndex = current.index + 1;
-			if (nextIndex >= total) {
-				return { kind: 'summary' };
-			}
+		const nextIndex = phase.index + 1;
+		if (nextIndex >= total) {
+			setPhase({ kind: 'summary' });
+			onRoundComplete?.(answers, attemptNo);
+			return;
+		}
 
-			startedAtRef.current = Date.now();
-			return { kind: 'question', index: nextIndex };
-		});
-	}, [total]);
+		startedAtRef.current = Date.now();
+		setPhase({ kind: 'question', index: nextIndex });
+	}, [phase, total, answers, attemptNo, onRoundComplete]);
 
 	const startRound = useCallback((roundCards: StudyCard[], roundNo: number) => {
 		setCards(roundCards);
@@ -119,17 +121,6 @@ export const StudySession = ({
 			startRound(missed, attemptNo + 1);
 		}
 	}, [answers, attemptNo, startRound]);
-
-	useEffect(() => {
-		if (phase.kind === 'summary' && reportedRoundRef.current !== attemptNo) {
-			reportedRoundRef.current = attemptNo;
-			onRoundComplete?.(answers, attemptNo);
-		}
-		if (phase.kind !== 'summary' && reportedRoundRef.current === attemptNo) {
-			// A new round with the same number only happens on restart; let it report again.
-			reportedRoundRef.current = null;
-		}
-	}, [phase.kind, answers, attemptNo, onRoundComplete]);
 
 	if (phase.kind === 'summary') {
 		return (
@@ -175,7 +166,8 @@ export const StudySession = ({
 					/>
 				) : (
 					<AnswerInput
-						cardKey={`${attemptNo}-${card.itemId}`}
+						// A new card is a fresh input: empty and focused, no reset effect needed.
+						key={`${attemptNo}-${card.itemId}`}
 						label={ANSWER_LABEL[deck.config.answer]}
 						japanese={answerJapanese}
 						onSubmit={(given) => {

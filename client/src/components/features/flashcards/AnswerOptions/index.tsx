@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/shared/Button';
+import { useLatest } from '@/hooks/useLatest';
 import styles from './AnswerOptions.module.css';
 
 export interface AnswerOptionsProps {
@@ -20,6 +21,9 @@ const isTypingTarget = (target: EventTarget | null) =>
  * discoverable. Options arrive shuffled by the deck seed, so the order is reproducible.
  */
 export const AnswerOptions = ({ options, japanese, onSelect, disabled = false }: AnswerOptionsProps) => {
+	const latestOptions = useLatest(options);
+	const latestOnSelect = useLatest(onSelect);
+
 	useEffect(() => {
 		if (disabled) return;
 
@@ -33,16 +37,17 @@ export const AnswerOptions = ({ options, japanese, onSelect, disabled = false }:
 			)
 				return;
 
+			const current = latestOptions.current;
 			const index = Number(event.key) - 1;
-			if (Number.isInteger(index) && index >= 0 && index < options.length) {
+			if (Number.isInteger(index) && index >= 0 && index < current.length) {
 				event.preventDefault();
-				onSelect(options[index]);
+				latestOnSelect.current(current[index]);
 			}
 		};
 
 		window.addEventListener('keydown', onKeyDown);
 		return () => window.removeEventListener('keydown', onKeyDown);
-	}, [options, onSelect, disabled]);
+	}, [disabled, latestOptions, latestOnSelect]);
 
 	return (
 		<ol className={styles.list} aria-label="Answer options">

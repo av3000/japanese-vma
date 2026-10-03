@@ -1,19 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import type { StudyCard } from '@/api/flashcards/deck';
 import type { SaveStatus } from '@/api/flashcards/sessions';
+import type { SessionAnswer } from '@/api/flashcards/types';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { Button } from '@/components/shared/Button';
 import { Cluster, Stack } from '@/components/shared/layout';
 import type { SavedListType } from '@/shared/constants/enums';
 import styles from './SessionSummary.module.css';
 
-export interface SessionAnswer {
-	card: StudyCard;
-	given: string;
-	correct: boolean;
-	matched: string | null;
-	responseMs: number;
-}
+export type { SessionAnswer } from '@/api/flashcards/types';
 
 export interface SessionSummaryProps {
 	answers: SessionAnswer[];

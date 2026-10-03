@@ -32,14 +32,14 @@ export const FlashcardPrompt = ({ card, field, className }: FlashcardPromptProps
 				{card.promptText}
 			</p>
 			<Cluster as="p" gap="xs" align="center" className={styles.meta}>
-				{card.jlpt && <LevelBadge level={card.jlpt} size="sm" />}
+				{card.jlpt !== null && <LevelBadge level={card.jlpt} size="sm" />}
 				{card.strokes !== null && (
 					<span>
 						{card.strokes} {card.strokes === 1 ? 'stroke' : 'strokes'}
 					</span>
 				)}
-				{card.grade && <span>Grade {card.grade}</span>}
-				{card.promptHint && <span>{card.promptHint}</span>}
+				{card.grade !== null && <span>Grade {card.grade}</span>}
+				{card.promptHint !== null && <span>{card.promptHint}</span>}
 			</Cluster>
 		</div>
 	);

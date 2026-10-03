@@ -18,6 +18,7 @@ import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Checkbox, Field, FieldMessage, Input, Label, Select } from '@/components/shared/FormControls';
 import { Stack } from '@/components/shared/layout';
+import { useLatest } from '@/hooks/useLatest';
 import styles from './StudySetupForm.module.css';
 import { buildStudySetupSchema, type StudySetupValues } from './studySetupSchema';
 
@@ -84,17 +85,24 @@ const sameConfig = (a: StudyConfig, b: StudyConfig): boolean =>
  * from the URL, every valid change goes back through `onChange`, and Start hands the final
  * config over. The deck preview (counts, skipped items, backend refusals) is rendered from
  * `deckStatus` so the form itself makes no requests.
+ *
+ * The answer and mode are repaired in the prompt's and answer's change handlers (a prompt
+ * change can leave them invalid for this type); the URL write is a `watch` subscription.
+ * Neither is a derived-state effect, so a change settles in one pass.
  */
 export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckStatus }: StudySetupFormProps) => {
 	const family = studyFamilyFor(catalogueType);
 	const fields = studyFieldsFor(catalogueType);
 	const schema = useMemo(() => buildStudySetupSchema(catalogueType), [catalogueType]);
 	const id = useId();
+	const latestValue = useLatest(value);
+	const latestOnChange = useLatest(onChange);
 	const {
 		register,
 		handleSubmit,
 		watch,
 		setValue,
+		getValues,
 		reset,
 		formState: { errors, isValid },
 	} = useForm<StudySetupValues>({
@@ -106,36 +114,35 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 	const prompt = watch('prompt');
 	const answer = watch('answer');
 	const mode = watch('mode');
-	const lenient = watch('lenient');
-	const count = watch('count');
 
-	// The URL is the source of truth; when it changes from outside (back button), follow it.
-	useEffect(() => {
-		reset(toValues(value));
-	}, [value, reset]);
+	const answersFor = (forPrompt: FlashcardField): FlashcardField[] =>
+		fields.filter((field) =>
+			isValidStudyCombination(catalogueType, forPrompt, field, AnswerMode.options),
+		) as FlashcardField[];
 
-	// A prompt change can leave the answer or mode invalid for this type; repair them so the
-	// learner never sees a disabled Start without an explanation.
+	// The URL is the source of truth. When it changes from outside (back button, the route
+	// pinning a seed), follow it; a URL change caused by this form's own write is a no-op.
 	useEffect(() => {
-		const answers = answersFor(prompt);
-		if (!answers.includes(answer)) {
-			setValue('answer', answers[0] ?? FlashcardField.meaning, { shouldValidate: true });
-			return;
+		if (!sameConfig(toConfig(getValues(), value.seed), value)) {
+			reset(toValues(value));
 		}
-		if (mode === AnswerMode.typed && !isTypeableField(answer)) {
-			setValue('mode', AnswerMode.options, { shouldValidate: true });
-		}
-	}, [prompt, answer, mode, setValue]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [value, getValues, reset]);
 
+	// Every valid change goes to the URL. Validity is checked against the schema directly,
+	// so this never depends on formState catching up.
 	useEffect(() => {
-		if (!isValid || !Number.isFinite(count)) {
-			return;
-		}
-		const next = toConfig({ prompt, answer, mode, lenient, count }, value.seed);
-		if (!sameConfig(next, value)) {
-			onChange(next);
-		}
-	}, [prompt, answer, mode, lenient, count, isValid]); // eslint-disable-line react-hooks/exhaustive-deps
+		const subscription = watch((raw) => {
+			const parsed = schema.safeParse(raw);
+			if (!parsed.success) return;
+
+			const next = toConfig(parsed.data, latestValue.current.seed);
+			if (!sameConfig(next, latestValue.current)) {
+				latestOnChange.current(next);
+			}
+		});
+
+		return () => subscription.unsubscribe();
+	}, [watch, schema, latestValue, latestOnChange]);
 
 	if (!family) {
 		return (
@@ -145,11 +152,26 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 		);
 	}
 
-	function answersFor(forPrompt: FlashcardField): FlashcardField[] {
-		return fields.filter((field) =>
-			isValidStudyCombination(catalogueType, forPrompt, field, AnswerMode.options),
-		) as FlashcardField[];
-	}
+	const promptField = register('prompt', {
+		onChange: (event: { target: { value: string } }) => {
+			const nextPrompt = event.target.value as FlashcardField;
+			const answers = answersFor(nextPrompt);
+			if (!answers.includes(getValues('answer'))) {
+				setValue('answer', answers[0] ?? FlashcardField.meaning, { shouldValidate: true });
+			}
+			if (getValues('mode') === AnswerMode.typed && !isTypeableField(getValues('answer'))) {
+				setValue('mode', AnswerMode.options, { shouldValidate: true });
+			}
+		},
+	});
+
+	const answerField = register('answer', {
+		onChange: (event: { target: { value: string } }) => {
+			if (getValues('mode') === AnswerMode.typed && !isTypeableField(event.target.value as FlashcardField)) {
+				setValue('mode', AnswerMode.options, { shouldValidate: true });
+			}
+		},
+	});
 
 	const answerOptions = answersFor(prompt);
 	const typedAllowed = isTypeableField(answer);
@@ -170,7 +192,7 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 			<div className={styles.grid}>
 				<Field>
 					<Label htmlFor={`${id}-prompt`}>Card shows</Label>
-					<Select id={`${id}-prompt`} {...register('prompt')}>
+					<Select id={`${id}-prompt`} {...promptField}>
 						{fields.map((field) => (
 							<option key={field} value={field}>
 								{fieldLabel(field, family)}
@@ -181,7 +203,7 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 
 				<Field>
 					<Label htmlFor={`${id}-answer`}>You answer with</Label>
-					<Select id={`${id}-answer`} isInvalid={Boolean(errors.answer)} {...register('answer')}>
+					<Select id={`${id}-answer`} isInvalid={Boolean(errors.answer)} {...answerField}>
 						{answerOptions.map((field) => (
 							<option key={field} value={field}>
 								{fieldLabel(field, family)}

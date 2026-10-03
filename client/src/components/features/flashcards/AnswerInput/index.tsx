@@ -11,16 +11,17 @@ export interface AnswerInputProps {
 	japanese: boolean;
 	onSubmit: (given: string) => void;
 	disabled?: boolean;
-	/** Reset key: a new card clears the field and refocuses it. */
-	cardKey: string | number;
 }
 
 /**
  * The typed answer. Enter submits, except while a Japanese IME is composing: confirming a
  * kana conversion also fires Enter, and that keystroke must not grade the half-typed
  * answer. Empty input never submits.
+ *
+ * Starts empty and focused. The parent keys this component by card, so a new card is a
+ * fresh mount rather than a reset.
  */
-export const AnswerInput = ({ label, japanese, onSubmit, disabled = false, cardKey }: AnswerInputProps) => {
+export const AnswerInput = ({ label, japanese, onSubmit, disabled = false }: AnswerInputProps) => {
 	const id = useId();
 	const inputRef = useRef<HTMLInputElement>(null);
 	const composingRef = useRef(false);
@@ -28,10 +29,8 @@ export const AnswerInput = ({ label, japanese, onSubmit, disabled = false, cardK
 	const trimmed = value.trim();
 
 	useEffect(() => {
-		setValue('');
-		composingRef.current = false;
 		inputRef.current?.focus();
-	}, [cardKey]);
+	}, []);
 
 	const submit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();

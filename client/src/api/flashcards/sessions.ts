@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import type { CompleteStudySessionRequest } from '@/api/generated/model/completeStudySessionRequest';
 import type { StoreStudyAttemptRequest } from '@/api/generated/model/storeStudyAttemptRequest';
 import type { StoreStudySessionRequest } from '@/api/generated/model/storeStudySessionRequest';
@@ -9,8 +9,8 @@ import {
 	studySessionStore,
 	studySessionStoreAttempt,
 } from '@/api/generated/study-session/study-session';
-import type { SessionAnswer } from '@/components/features/flashcards/SessionSummary';
 import type { StudyConfig } from './deck';
+import type { SessionAnswer } from './types';
 
 /**
  * Saves a signed-in learner's run (epic #413). The session is created when the run starts;
@@ -135,14 +135,20 @@ export const createSessionRecorder = (client: SessionRecorderClient = defaultCli
  * deck the learner plays becomes its own saved session.
  */
 export const useSessionRecorder = (enabled: boolean, deckKey: string | null, client?: SessionRecorderClient) => {
-	// eslint-disable-next-line react-hooks/exhaustive-deps -- deckKey is the reset trigger, not a value read inside
-	const recorder = useMemo(() => createSessionRecorder(client), [deckKey, client]);
-	const [status, setStatus] = useState<SaveStatus>(recorder.status);
+	// Reset-on-key: a new deck gets a new recorder, set during render as React documents for
+	// state that derives from a prop change (no effect, no extra render with a stale recorder).
+	const [store, setStore] = useState(() => ({ key: deckKey, recorder: createSessionRecorder(client) }));
+	let recorder = store.recorder;
+	if (store.key !== deckKey) {
+		recorder = createSessionRecorder(client);
+		setStore({ key: deckKey, recorder });
+	}
 
-	useEffect(() => {
-		setStatus(recorder.status);
-		return recorder.subscribe(setStatus);
-	}, [recorder]);
+	const status = useSyncExternalStore(
+		recorder.subscribe,
+		() => recorder.status,
+		() => recorder.status,
+	);
 
 	return useMemo(
 		() => ({
