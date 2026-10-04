@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { useArticleStatusMutation } from '@/api/articles/moderation';
+import { isProcessingRunning } from '@/api/articles/readingStats';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
@@ -257,7 +258,11 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			</Stack>
 
 			<div className={styles.attachments}>
-				<ArticleAttachments articleUuid={article.uuid} />
+				<ArticleAttachments
+					articleUuid={article.uuid}
+					showSave={isAuthenticated}
+					isProcessing={isProcessingRunning(article)}
+				/>
 			</div>
 
 			<div className={styles.comments}>

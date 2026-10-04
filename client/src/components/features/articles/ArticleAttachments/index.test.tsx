@@ -1,13 +1,17 @@
 /**
  * @vitest-environment jsdom
  */
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { kanjiIndex } from '@/api/generated/kanji/kanji';
 import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
+import type { KanjiResource } from '@/api/generated/model/kanjiResource';
 import type { WordListResource } from '@/api/generated/model/wordListResource';
+import type { WordResource } from '@/api/generated/model/wordResource';
 import { wordIndex } from '@/api/generated/word/word';
-import { renderWithAct, requireElement } from '@/test/renderWithAct';
+import { kanjiRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
+import { renderWithAct } from '@/test/renderWithAct';
 import { ArticleAttachments } from './index';
 
 vi.mock('@/api/generated/kanji/kanji', () => ({
@@ -30,39 +34,33 @@ const pagination = (page: number, total: number, hasMore: boolean) => ({
 	has_more: hasMore,
 });
 
-const kanjiPage = (characters: string[], page = 1, total = characters.length, hasMore = false) =>
-	({
-		items: characters.map((character, index) => ({
-			id: index + 1,
-			uuid: `kanji-${character}`,
-			character,
-			meanings: 'water',
-		})),
-		pagination: pagination(page, total, hasMore),
-	}) as unknown as KanjiListResource;
+const kanjiPage = (items: KanjiResource[], page = 1, total = items.length, hasMore = false): KanjiListResource => ({
+	items,
+	pagination: pagination(page, total, hasMore),
+});
 
-const wordPage = (surfaces: string[], page = 1, total = surfaces.length, hasMore = false) =>
-	({
-		items: surfaces.map((word, index) => ({
-			id: index + 1,
-			uuid: `word-${word}`,
-			word,
-			furigana: 'べんきょう',
-		})),
-		pagination: pagination(page, total, hasMore),
-	}) as unknown as WordListResource;
+const wordPage = (items: WordResource[], page = 1, total = items.length, hasMore = false): WordListResource => ({
+	items,
+	pagination: pagination(page, total, hasMore),
+});
 
-const renderAttachments = async () => {
-	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false } },
-	});
+const renderAttachments = async (props: { showSave?: boolean; isProcessing?: boolean } = {}) => {
+	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 	return renderWithAct(
 		<QueryClientProvider client={queryClient}>
-			<ArticleAttachments articleUuid={UUID} />
+			<MemoryRouter>
+				<ArticleAttachments
+					articleUuid={UUID}
+					showSave={props.showSave ?? false}
+					isProcessing={props.isProcessing}
+				/>
+			</MemoryRouter>
 		</QueryClientProvider>,
 	);
 };
+
+const buttons = (container: HTMLElement) => Array.from(container.querySelectorAll('button'));
 
 describe('ArticleAttachments', () => {
 	beforeEach(() => {
@@ -73,85 +71,107 @@ describe('ArticleAttachments', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('says so plainly when processing has attached nothing', async () => {
-		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage([]));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
+	it('renders the kanji and words as the dictionary tables, with their totals', async () => {
+		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(kanjiRows.slice(0, 2), 1, 171));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage(wordRows.slice(0, 1), 1, 233));
 
 		const { container, unmount } = await renderAttachments();
 
 		await vi.waitFor(() => {
-			expect(container.textContent).toContain('No kanji have been attached to this article yet.');
+			expect(container.textContent).toContain(kanjiRows[1].character);
 		});
-		expect(container.textContent).toContain('No vocabulary has been attached to this article yet.');
-		expect(container.querySelectorAll('button')).toHaveLength(0);
-
-		await unmount();
-	});
-
-	it('renders the first page and its totals', async () => {
-		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(['水', '火']));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage(['勉強']));
-
-		const { container, unmount } = await renderAttachments();
-
-		await vi.waitFor(() => {
-			expect(container.textContent).toContain('水');
-		});
-		expect(container.textContent).toContain('火');
-		expect(container.textContent).toContain('勉強');
-		expect(container.querySelectorAll('li')).toHaveLength(3);
+		expect(container.querySelector('table[aria-label="Kanji"]')).not.toBeNull();
+		expect(container.querySelector('table[aria-label="Words"]')).not.toBeNull();
+		expect(container.querySelector('h2')?.textContent).toBe('Kanji and words in this reading');
+		expect(container.textContent).toContain('171');
+		expect(container.textContent).toContain('233');
 		expect(kanjiIndex).toHaveBeenCalledWith(
-			{ article_uuid: UUID, per_page: 20, page: 1 },
+			{ article_uuid: UUID, per_page: 20, include: 'viewer_catalogue_state', page: 1 },
 			undefined,
 			expect.anything(),
 		);
 
 		await unmount();
+	});
+
+	it('adds the Save column for signed-in viewers only', async () => {
+		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(kanjiRows.slice(0, 1)));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
+
+		const guest = await renderAttachments({ showSave: false });
+		await vi.waitFor(() => expect(guest.container.textContent).toContain(kanjiRows[0].character));
+		expect(buttons(guest.container).some((button) => button.getAttribute('aria-label')?.startsWith('Save'))).toBe(
+			false,
+		);
+		await guest.unmount();
+
+		const member = await renderAttachments({ showSave: true });
+		await vi.waitFor(() => expect(member.container.textContent).toContain(kanjiRows[0].character));
+		expect(
+			buttons(member.container).some((button) => /^Saved?:? /.test(button.getAttribute('aria-label') ?? '')),
+		).toBe(true);
+		await member.unmount();
+	});
+
+	it('says plainly when processing attached nothing, and why while it is still running', async () => {
+		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage([]));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
+
+		const done = await renderAttachments();
+		await vi.waitFor(() => {
+			expect(done.container.textContent).toContain('No kanji have been attached to this article yet.');
+		});
+		expect(done.container.textContent).toContain('No words have been attached to this article yet.');
+		expect(done.container.textContent).not.toContain('once processing finishes');
+		await done.unmount();
+
+		const running = await renderAttachments({ isProcessing: true });
+		await vi.waitFor(() => {
+			expect(running.container.textContent).toContain('They appear here once processing finishes.');
+		});
+		await running.unmount();
 	});
 
 	it('asks for the next page only when the server says there is one', async () => {
 		vi.mocked(kanjiIndex)
-			.mockResolvedValueOnce(kanjiPage(['水'], 1, 2, true))
-			.mockResolvedValueOnce(kanjiPage(['火'], 2, 2, false));
+			.mockResolvedValueOnce(kanjiPage(kanjiRows.slice(0, 1), 1, 2, true))
+			.mockResolvedValueOnce(kanjiPage(kanjiRows.slice(1, 2), 2, 2, false));
 		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
 
 		const { container, flush, unmount } = await renderAttachments();
+		const showMore = () => buttons(container).find((button) => button.textContent === 'Show more kanji');
 
-		await vi.waitFor(() => {
-			expect(container.querySelector('button')).not.toBeNull();
-		});
-
-		const loadMore = requireElement<HTMLButtonElement>(container, 'button');
-		expect(loadMore.textContent).toContain('Show more kanji');
+		await vi.waitFor(() => expect(showMore()).toBeDefined());
 
 		await flush(() => {
-			loadMore.click();
+			showMore()?.click();
 		});
 
 		expect(kanjiIndex).toHaveBeenNthCalledWith(
 			2,
-			{ article_uuid: UUID, per_page: 20, page: 2 },
+			{ article_uuid: UUID, per_page: 20, include: 'viewer_catalogue_state', page: 2 },
 			undefined,
 			expect.anything(),
 		);
 		await vi.waitFor(() => {
-			expect(container.textContent).toContain('火');
+			expect(container.textContent).toContain(kanjiRows[1].character);
 		});
-		expect(container.querySelectorAll('button')).toHaveLength(0);
+		expect(showMore()).toBeUndefined();
 
 		await unmount();
 	});
 
-	it('reports a failed page instead of pretending the article has none', async () => {
-		vi.mocked(kanjiIndex).mockRejectedValue(new Error('network'));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage(['勉強']));
+	it('reports a failed list in its own words instead of pretending the article has none', async () => {
+		vi.mocked(kanjiIndex).mockRejectedValue(new Error('SQLSTATE[08006] connection refused'));
+		vi.mocked(wordIndex).mockResolvedValue(wordPage(wordRows.slice(0, 1)));
 
 		const { container, unmount } = await renderAttachments();
 
 		await vi.waitFor(() => {
-			expect(container.textContent).toContain('Kanji could not be loaded.');
+			expect(container.textContent).toContain('Kanji could not be loaded. Reload the page to try again.');
 		});
 		expect(container.textContent).not.toContain('No kanji have been attached');
+		expect(container.textContent).not.toContain('SQLSTATE');
 
 		await unmount();
 	});
