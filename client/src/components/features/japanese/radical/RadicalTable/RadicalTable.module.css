@@ -29,6 +29,14 @@
 }
 
 @media (max-width: 767px) {
+	/*
+	 * A glyph with variant forms is taller than the three text lines beside it. Give the spare
+	 * height to the last row, so it sits at the bottom of the card instead of between the lines.
+	 */
+	.table > tbody > tr {
+		grid-template-rows: auto auto 1fr;
+	}
+
 	.glyphCell {
 		align-self: start;
 	}

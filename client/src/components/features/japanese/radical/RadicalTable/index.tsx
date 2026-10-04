@@ -100,6 +100,7 @@ export const RadicalTable: React.FC<RadicalTableProps> = ({ radicals, loading, e
 		loading={loading}
 		empty={empty}
 		stacked={STACKED}
+		className={styles.table}
 	/>
 );
 
