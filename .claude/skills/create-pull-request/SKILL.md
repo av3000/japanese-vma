@@ -5,7 +5,7 @@ description: Create or prepare a GitHub pull request for the current japanese-vm
 
 # Create Pull Request
 
-Open one focused PR from the current feature branch into `develop`, written so a reviewer can judge it from the PR page alone: what changed, what was verified, and, for anything visible, what it looks like on desktop, tablet and mobile. The only intended remote changes are pushing the feature branch, hosting the review screenshots on a temporary branch, and creating or editing the PR.
+Open one focused PR from the current feature branch into `develop`, written so a reviewer can judge it from the PR page alone: what changed, what was verified, and, for anything visible, what it looks like on desktop, tablet and mobile. The only intended remote changes are pushing the feature branch and creating or editing the PR; the screenshots upload with the PR as GitHub attachments.
 
 ## 1. Inspect before acting
 
@@ -44,11 +44,11 @@ A reviewer should not have to check out the branch to see the result. If the dif
 
 These match the repo's literal breakpoints (768, 1024, 1320), so the tablet shot shows the stacked layout and the desktop shot the widest one. Capture the states a reviewer would otherwise have to imagine: the normal state, plus each error, empty, loading, locked or long-text state the change touches. Skip the section only when nothing visible changed (backend-only, tests, tooling), and say so in one line under Verification.
 
-The screenshots exist only for review. They are not kept: GitHub can only show an image that lives at a URL, and `gh` cannot upload attachments, so the images are hosted on a temporary branch that holds only the current set and is deleted when the PR is merged or closed. After that the images in the PR stop loading, which is expected.
+The images are uploaded with `gh pr create|edit --attach` to GitHub's own attachment store, so they stay visible after the merge and need no cleanup.
 
-How to capture and host them is in `references/screenshots.md` in this skill's folder; read it when this section applies. In short: shoot the stories from section 3 at the three widths, look at every image, publish them with `scripts/publish-screenshots.sh`, and embed them in a Desktop / Tablet / Mobile table.
+How to capture and upload them is in `references/screenshots.md` in this skill's folder; read it when this section applies. In short: shoot the stories from section 3 at the three widths, look at every image, reference each PNG as a Markdown image in a Desktop / Tablet / Mobile table in the body file, and upload the PNGs with `--attach` in the same command that creates or edits the PR.
 
-If a later commit changes the visuals (for example review feedback), re-shoot, publish again (the script replaces the previous set) and update the PR body so it never shows superseded UI.
+If a later commit changes the visuals (for example review feedback), re-shoot and edit the body again with the new attachments (the re-shoot steps are in the reference), so the body never shows superseded UI.
 
 ## 5. Write for reviewers
 
@@ -83,9 +83,9 @@ Refs #<issue>, #<issue>
 ## 6. Create and verify
 
 1. Write the body to a file and pass it with `--body-file`. Do this from Bash: PowerShell captures have flattened bodies into one line.
-2. `gh pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <file>`.
+2. `gh pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <file>`, adding one `--attach <png>` per screenshot when the body has a `## Screenshots` section (see `references/screenshots.md` for the working directory and path rule).
 3. Verify URL, base, head, commit count and mergeability (`gh pr view <n> --json baseRefName,headRefName,commits,mergeable`). If the Claude desktop app's `ccd_pr` tools are available, use `get_status` instead of polling checks.
 4. CI on this repo runs only on PRs to `develop`, so the PR is the first remote CI run; say so, and expect a fix-up pass.
-5. Hand off: the PR link, the screenshot section (or why there is none), anything not verified, the issues to close by hand after merge, and a reminder that `screenshots/<branch>` gets deleted after merge (`scripts/publish-screenshots.sh --delete <branch>`).
+5. Hand off: the PR link, the screenshot section (or why there is none), anything not verified, and the issues to close by hand after merge.
 
 To edit an existing PR body later, fetch it with `gh pr view <n> --json body --jq .body > body.md`, edit the file, and send it back with `gh pr edit <n> --body-file body.md`.
