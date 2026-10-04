@@ -20,6 +20,8 @@ final readonly class WordQueryCriteria
         public ?int $kanjiId = null,
         /** Words attached to one article, the list behind the article detail page (#268). */
         public ?EntityId $articleId = null,
+        /** Words saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public ?int $catalogueId = null,
     ) {
     }
 
@@ -32,6 +34,7 @@ final readonly class WordQueryCriteria
         ?string $jlpt = null,
         ?int $kanjiId = null,
         ?EntityId $articleId = null,
+        ?int $catalogueId = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -41,6 +44,7 @@ final readonly class WordQueryCriteria
             jlpt: $jlpt,
             kanjiId: $kanjiId,
             articleId: $articleId,
+            catalogueId: $catalogueId,
         );
     }
 }

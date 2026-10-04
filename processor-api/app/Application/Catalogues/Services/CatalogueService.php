@@ -35,6 +35,8 @@ use App\Domain\Catalogues\ValueObjects\CatalogueSortCriteria;
 use App\Domain\Catalogues\ValueObjects\CatalogueTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\Services\TemplateTypeClassifier;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
@@ -60,6 +62,7 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly LoadCatalogueJlptLevelsAction $loadJlptLevels,
+        private readonly TemplateTypeClassifier $templateTypeClassifier,
     ) {
     }
 
@@ -199,6 +202,35 @@ class CatalogueService implements CatalogueServiceInterface
     public function getIdByUuid(EntityId $uuid): ?int
     {
         return $this->catalogueRepository->getIdByUuid($uuid);
+    }
+
+    /**
+     * @return Result Success data: int catalogue id, Failure data: ResultError
+     */
+    public function resolveItemSource(
+        EntityId $uuid,
+        SavedListType $family,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
+        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+        if (! $catalogue) {
+            return Result::failure(CatalogueErrors::notFound($uuid->value()));
+        }
+
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
+            return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+        }
+
+        // A "known kanji" catalogue holds kanji like a kanji catalogue does.
+        $type = $catalogue->getType();
+        $heldFamily = $this->templateTypeClassifier->getBaseType($type) ?? $type;
+
+        if ($heldFamily !== $family) {
+            return Result::failure(CatalogueErrors::itemFamilyMismatch($uuid->value(), $family));
+        }
+
+        return Result::success($catalogue->getIdValue());
     }
 
     /**

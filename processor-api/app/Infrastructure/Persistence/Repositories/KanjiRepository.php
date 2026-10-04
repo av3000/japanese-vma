@@ -148,13 +148,15 @@ class KanjiRepository implements KanjiRepositoryInterface
             //       ->where('articles.uuid', $criteria->articleId->value())
             //       ->select('japanese_kanji_bank_long.*'); // Important to select original kanji columns
         }
-        // TODO: implement when customLists will be migrated to clean architecture
-        // if ($criteria->customListId !== null) {
-        //     // Similarly, query through the custom_list_kanji pivot table
-        //     $query->whereHas('customLists', function(Builder $q) use ($criteria) {
-        //         $q->where('id', $criteria->customListId);
-        //     });
-        // }
+
+        if ($criteria->catalogueId !== null) {
+            // Items are bare ids in customlist_object; a kanji saved twice still lists once.
+            $query->whereIn($query->getModel()->getQualifiedKeyName(), function ($items) use ($criteria): void {
+                $items->select('real_object_id')
+                    ->from('customlist_object')
+                    ->where('list_id', $criteria->catalogueId);
+            });
+        }
     }
 
     public function findIdsByCharacters(array $characters): array
