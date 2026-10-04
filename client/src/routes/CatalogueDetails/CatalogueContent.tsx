@@ -1,18 +1,16 @@
 import { Suspense, lazy, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
 import {
 	catalogueExportKanjisPdf,
 	catalogueExportRadicalsPdf,
 	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
-	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
 	getCatalogueShowQueryKey,
 	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
-import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -53,7 +51,6 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
-	const [editMode, setEditMode] = useState(false);
 	const [isPdfPending, setIsPdfPending] = useState(false);
 	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
@@ -72,23 +69,6 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 				queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(catalogue.uuid) });
 				navigate(CATALOGUE_ROUTES.list);
 			},
-		},
-	});
-
-	const removeItemMutation = useMutation<unknown, unknown, number>({
-		mutationFn: (itemId: number) => catalogueRemoveItem(catalogue.uuid, itemId),
-		onSuccess: (_, itemId) => {
-			queryClient.setQueryData(
-				getCatalogueShowQueryKey(catalogue.uuid),
-				(old: CatalogueDetailResource | undefined) => {
-					if (!old) return old;
-					return {
-						...old,
-						items: (old.items as unknown as Array<{ id: number }>).filter((item) => item.id !== itemId),
-						items_count: Math.max(0, Number(old.items_count) - 1),
-					};
-				},
-			);
 		},
 	});
 
@@ -229,32 +209,13 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 				</Stack>
 
 				<Stack as="section" gap="xs">
-					{catalogue.items.length > 0 ? (
-						<>
-							{isOwner && (
-								<div>
-									<Button
-										onClick={() => setEditMode((current) => !current)}
-										size="sm"
-										variant={editMode ? 'success' : 'ghost'}
-									>
-										{editMode ? 'End' : 'Edit'}
-									</Button>
-								</div>
-							)}
-							<CatalogueItems
-								// TODO: Backend - add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type. Orvel autogenerates and use it here.
-								items={catalogue.items}
-								catalogueType={catalogue.type}
-								currentUser={currentUser}
-								ownerId={catalogue.owner.id}
-								editMode={editMode}
-								onRemoveItem={(itemId) => removeItemMutation.mutate(itemId)}
-							/>
-						</>
-					) : (
-						<p className={styles.muted}>This catalogue has no items yet.</p>
-					)}
+					<CatalogueItems
+						catalogueUuid={catalogue.uuid}
+						catalogueType={catalogue.type}
+						payloadItems={catalogue.items}
+						isOwner={isOwner}
+						showSave={isAuthenticated}
+					/>
 				</Stack>
 
 				<section>

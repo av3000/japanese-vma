@@ -6,7 +6,6 @@ import {
 	catalogueExportRadicalsPdf,
 	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
-	catalogueRemoveItem,
 	getCatalogueIndexQueryKey,
 	getCatalogueShowQueryKey,
 	useCatalogueDestroy,
@@ -24,7 +23,8 @@ const setQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const catalogueDestroyMutateMock = vi.fn();
 const capturedCatalogueItemsProps: Array<{
-	onRemoveItem: (id: number) => void;
+	catalogueUuid: string;
+	isOwner: boolean;
 }> = [];
 const capturedDeleteModalProps: Array<{
 	onDelete: () => void;
@@ -133,7 +133,7 @@ vi.mock('@/components/shared/Button', () => ({
 }));
 
 vi.mock('@/components/features/catalogues/CatalogueItems', () => ({
-	CatalogueItems: (props: { onRemoveItem: (id: number) => void }) => {
+	CatalogueItems: (props: { catalogueUuid: string; isOwner: boolean }) => {
 		capturedCatalogueItemsProps.push(props);
 		return <div>Catalogue items</div>;
 	},
@@ -193,7 +193,6 @@ describe('CatalogueContent', () => {
 		vi.mocked(catalogueExportWordsPdf).mockResolvedValue('%PDF-words' as never);
 		vi.mocked(catalogueExportRadicalsPdf).mockResolvedValue('%PDF-radicals' as never);
 		vi.mocked(catalogueExportSentencesPdf).mockResolvedValue('%PDF-sentences' as never);
-		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
 	it('renders the liked icon from the catalogue detail engagement payload', () => {
@@ -248,43 +247,6 @@ describe('CatalogueContent', () => {
 		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
 
 		expect(capturedLikeButtonProps[0].disabled).toBe(true);
-	});
-
-	it('removes catalogue items through the direct v1 catalogue item endpoint and updates the detail cache', async () => {
-		renderToStaticMarkup(
-			<CatalogueContent
-				catalogue={
-					createCatalogue({
-						items_count: 2,
-						items: [
-							{ id: 11, title: 'First item' },
-							{ id: 12, title: 'Second item' },
-						] as never,
-					}) as any
-				}
-			/>,
-		);
-
-		await capturedCatalogueItemsProps[0].onRemoveItem(12);
-
-		expect(catalogueRemoveItem).toHaveBeenCalledWith('catalogue-uuid', 12);
-		expect(setQueryDataMock).toHaveBeenCalledWith(['/catalogues/catalogue-uuid'], expect.any(Function));
-
-		const updater = setQueryDataMock.mock.calls[0][1] as (
-			old: CatalogueDetailResource | undefined,
-		) => CatalogueDetailResource | undefined;
-		const updated = updater(
-			createCatalogue({
-				items_count: 2,
-				items: [
-					{ id: 11, title: 'First item' },
-					{ id: 12, title: 'Second item' },
-				] as never,
-			}),
-		);
-
-		expect(updated?.items).toEqual([{ id: 11, title: 'First item' }]);
-		expect(updated?.items_count).toBe(1);
 	});
 
 	it('deletes catalogues through the generated v1 destroy mutation and clears related cache keys', async () => {
