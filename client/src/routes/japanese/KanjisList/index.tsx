@@ -1,4 +1,3 @@
-import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
@@ -15,11 +14,8 @@ import { KanjiTable } from '@/components/features/japanese/Kanji/KanjiTable';
 import {
 	DICTIONARY_PER_PAGE,
 	DictionaryListPage,
-	LoadMore,
-	emptySearch,
-	showingCount,
+	useKeywordSearch,
 } from '@/components/features/japanese/dictionaryList';
-import { Alert } from '@/components/shared/Alert';
 import { useAuth } from '@/hooks/useAuth';
 import KanjiFilters from './KanjiFilters';
 import type { KanjiSearchFilters } from './KanjiFilters';
@@ -49,29 +45,13 @@ const getKanjiListFilters = (searchParams: URLSearchParams): KanjiListFilters =>
 const KanjisList = () => {
 	const queryClient = useQueryClient();
 	const { isAuthenticated } = useAuth();
-	const [searchParams, setSearchParams] = useSearchParams();
+	const { searchParams, keyword, applySearch } = useKeywordSearch();
 	const filters = getKanjiListFilters(searchParams);
-	const keyword = filters.keyword ?? '';
 	const jlpt = filters.jlpt ?? '';
 
-	const { kanjis, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
-		useInfiniteKanjis({
-			filters,
-		});
+	const { kanjis, ...query } = useInfiniteKanjis({ filters });
 
-	const handleSearch = ({ keyword, jlpt }: KanjiSearchFilters) => {
-		const nextParams = new URLSearchParams();
-
-		if (keyword !== '') {
-			nextParams.set('keyword', keyword);
-		}
-
-		if (jlpt !== '') {
-			nextParams.set('jlpt', jlpt);
-		}
-
-		setSearchParams(nextParams);
-	};
+	const handleSearch = (next: KanjiSearchFilters) => applySearch({ keyword: next.keyword, jlpt: next.jlpt });
 
 	const handleKanjiBookmarkStateChange = (kanjiId: number, state: ViewerCatalogueStateResource) => {
 		queryClient.setQueryData<InfiniteData<KanjiListResource>>(getInfiniteKanjisQueryKey(filters), (data) =>
@@ -79,46 +59,31 @@ const KanjisList = () => {
 		);
 	};
 
-	const isInitialLoading = isPending && kanjis.length === 0;
-
-	const meta = isInitialLoading
-		? undefined
-		: [
-				showingCount(kanjis.length, total),
-				keyword !== '' && `keyword: ${keyword}`,
-				jlpt !== '' && `JLPT: ${jlpt === '-' ? 'Uncommon' : `N${jlpt}`}`,
-			]
-				.filter(Boolean)
-				.join(' · ');
-
-	const filterBar = (
-		<KanjiFilters key={`${keyword}|${jlpt}`} defaultKeyword={keyword} defaultJlpt={jlpt} onSearch={handleSearch} />
-	);
-
-	if (isError) {
-		const message = error instanceof Error ? error.message : 'Unable to load kanjis.';
-
-		return (
-			<DictionaryListPage title="Kanji" filters={filterBar}>
-				<Alert tone="danger">Error: {message}</Alert>
-			</DictionaryListPage>
-		);
-	}
-
 	return (
-		<DictionaryListPage title="Kanji" meta={meta} filters={filterBar}>
-			<KanjiTable
-				kanjis={kanjis}
-				loading={isInitialLoading}
-				showSave={isAuthenticated}
-				empty={emptySearch('kanji', keyword, jlpt !== '')}
-				onBookmarkStateChange={handleKanjiBookmarkStateChange}
-			/>
-			{isInitialLoading || kanjis.length === 0 ? null : (
-				<LoadMore
-					hasNextPage={hasNextPage}
-					isFetchingNextPage={isFetchingNextPage}
-					onLoadMore={() => void fetchNextPage()}
+		<DictionaryListPage
+			title="Kanji"
+			noun="kanji"
+			keyword={keyword}
+			extraMeta={jlpt !== '' ? [`JLPT: ${jlpt === '-' ? 'Uncommon' : `N${jlpt}`}`] : []}
+			hasOtherFilters={jlpt !== ''}
+			itemCount={kanjis.length}
+			query={query}
+			filters={
+				<KanjiFilters
+					key={`${keyword}|${jlpt}`}
+					defaultKeyword={keyword}
+					defaultJlpt={jlpt}
+					onSearch={handleSearch}
+				/>
+			}
+		>
+			{({ loading, empty }) => (
+				<KanjiTable
+					kanjis={kanjis}
+					loading={loading}
+					showSave={isAuthenticated}
+					empty={empty}
+					onBookmarkStateChange={handleKanjiBookmarkStateChange}
 				/>
 			)}
 		</DictionaryListPage>

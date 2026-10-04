@@ -28,10 +28,11 @@ const queryResult = (overrides: Record<string, unknown> = {}) =>
 	({
 		radicals: [{ id: 9, uuid: 'radical-uuid', radical: '水', strokes: 4, meaning: 'water', hiragana: 'みず' }],
 		total: 1,
-		isLoading: false,
+		isPending: false,
 		isFetchingNextPage: false,
 		hasNextPage: false,
 		fetchNextPage: vi.fn(),
+		refetch: vi.fn(),
 		isError: false,
 		...overrides,
 	}) as unknown as ReturnType<typeof useInfiniteRadicals>;
@@ -92,12 +93,12 @@ describe('RadicalsList', () => {
 	});
 
 	it('shows skeleton rows while loading and the alert on failure', () => {
-		useInfiniteRadicalsMock.mockReturnValueOnce(queryResult({ radicals: [], isLoading: true }));
+		useInfiniteRadicalsMock.mockReturnValueOnce(queryResult({ radicals: [], isPending: true }));
 		expect(renderToStaticMarkup(<RadicalsList />)).toMatch(
 			/<table role="table" aria-label="Radicals" aria-busy="true"/,
 		);
 
 		useInfiniteRadicalsMock.mockReturnValueOnce(queryResult({ radicals: [], isError: true }));
-		expect(renderToStaticMarkup(<RadicalsList />)).toContain('Unable to load radicals.');
+		expect(renderToStaticMarkup(<RadicalsList />)).toContain('Radicals could not be loaded.');
 	});
 });

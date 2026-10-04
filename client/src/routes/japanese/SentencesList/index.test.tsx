@@ -29,7 +29,9 @@ const loadedState = {
 		{ id: 2, uuid: 'user-sentence-uuid', user_id: 7, tatoeba_entry: null, content: 'はい。' },
 	],
 	total: 2,
-	isLoading: false,
+	isPending: false,
+	isError: false,
+	refetch: vi.fn(),
 	isFetchingNextPage: false,
 	hasNextPage: true,
 	fetchNextPage: fetchNextPageMock,
@@ -86,7 +88,7 @@ describe('SentencesList', () => {
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
 			sentences: [],
-			isLoading: true,
+			isPending: true,
 		} as ReturnType<typeof useInfiniteSentences>);
 		expect(renderToStaticMarkup(<SentencesList />)).toMatch(
 			/<table role="table" aria-label="Sentences" aria-busy="true"/,
@@ -94,7 +96,8 @@ describe('SentencesList', () => {
 
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
-			error: new Error('failed'),
+			sentences: [],
+			isError: true,
 		} as ReturnType<typeof useInfiniteSentences>);
 		expect(renderToStaticMarkup(<SentencesList />)).toContain('could not be loaded');
 	});
