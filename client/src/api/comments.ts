@@ -20,7 +20,6 @@ import type { CommentReplyResource } from '@/api/generated/model/commentReplyRes
 import type { CommentResource } from '@/api/generated/model/commentResource';
 import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
 import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
-import { readWriteFailure, type WriteFailure } from '@/api/writeFailure';
 import { ObjectTemplateType } from '@/shared/constants/enums';
 
 export type ApiComment = CommentResource;
@@ -97,11 +96,6 @@ export const getCommentsQueryKey = (parent: CommentParent, entityUuid: string): 
 
 export const getCommentRepliesCacheKey = (commentUuid: string): QueryKey =>
 	getCommentRepliesQueryKey(commentUuid, { per_page: COMMENT_PAGE_SIZE });
-
-export const GENERIC_COMMENT_WRITE_ERROR = 'Something went wrong. Please try again.';
-
-export const readCommentWriteError = (error: unknown): WriteFailure =>
-	readWriteFailure(error, GENERIC_COMMENT_WRITE_ERROR);
 
 // ---------------------------------------------------------------------------
 // Cache mutators. Pure, so the cache rules can be tested without React.

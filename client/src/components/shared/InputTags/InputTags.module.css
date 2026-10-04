@@ -17,13 +17,26 @@
 	gap: var(--spacing-xs);
 	min-height: var(--size-4xl);
 	padding: var(--spacing-xs) var(--spacing-sm);
-	border: var(--border-size-sm) solid var(--color-border-default);
-	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+	/* Same border and focus ring as the other form controls, so the field is visible on a white card. */
+	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border-radius: var(--border-radius-sm);
 	cursor: text;
 }
+.inputContainer:hover:not([data-disabled]) {
+	border-color: var(--color-neutral-600);
+}
 .inputContainer:focus-within {
-	border-color: var(--color-text-neutral-hover);
-	box-shadow: 0 0 0 1px var(--color-border-default);
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+}
+.invalid,
+.invalid:hover:not([data-disabled]) {
+	border-color: var(--color-error);
+}
+.invalid:focus-within {
+	border-color: var(--color-error);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-error-disabled);
 }
 .inputContainer:focus,
 .inputContainer:focus-visible {

@@ -26,10 +26,13 @@ class RelatedArticleSummaryResource extends JsonResource
     {
         $item = $this->resource;
 
+        // Explicit casts: Scramble cannot follow `$item->article`, and without them the
+        // component documents every scalar as `string` and `hashtags` as untyped.
         return [
-            'id' => $item->article->getIdValue(),
-            'uuid' => $item->article->getUid()->value(),
-            'title_jp' => $item->article->getTitleJp()->value,
+            'id' => (int) $item->article->getIdValue(),
+            'uuid' => (string) $item->article->getUid()->value(),
+            'title_jp' => (string) $item->article->getTitleJp()->value,
+            /** @var array<int, array{id: int, content: string}> */
             'hashtags' => array_map(
                 static fn (array|object $hashtag): array => [
                     'id' => (int) data_get($hashtag, 'id'),
@@ -37,9 +40,9 @@ class RelatedArticleSummaryResource extends JsonResource
                 ],
                 $item->hashtags,
             ),
-            'views_total' => $item->stats?->getViewsCount() ?? 0,
-            'likes_total' => $item->stats?->getLikesCount() ?? 0,
-            'comments_total' => $item->stats?->getCommentsCount() ?? 0,
+            'views_total' => (int) ($item->stats?->getViewsCount() ?? 0),
+            'likes_total' => (int) ($item->stats?->getLikesCount() ?? 0),
+            'comments_total' => (int) ($item->stats?->getCommentsCount() ?? 0),
         ];
     }
 }

@@ -1,0 +1,106 @@
+/* Page shell and cell content shared by the four dictionary list tables. */
+
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.loadMoreRow {
+	padding-top: var(--spacing-sm);
+}
+
+.loadMore {
+	width: 100%;
+	max-width: var(--container-xs);
+}
+
+.muted {
+	color: var(--color-neutral-600);
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.missing {
+	color: var(--color-neutral-500);
+}
+
+.glyph {
+	color: var(--color-neutral-900);
+	font-family: var(--font-family-ja-serif);
+	font-size: 32px;
+	line-height: 1;
+	text-decoration: none;
+}
+
+.word,
+.sentence {
+	color: var(--color-neutral-900);
+	font-family: var(--font-family-ja);
+	text-decoration: none;
+}
+
+.word {
+	font-size: var(--font-size-body-lg);
+	font-weight: var(--font-weight-semibold);
+}
+
+.sentence {
+	font-size: var(--font-size-body-lg);
+	line-height: 1.7;
+}
+
+.glyph:hover,
+.word:hover,
+.sentence:hover {
+	color: var(--color-primary);
+}
+
+.word:hover,
+.sentence:hover {
+	text-decoration: underline;
+}
+
+/*
+ * Japanese words and readings never wrap while they fit in about 14em. `width: max-content` makes
+ * the text's full width (up to the cap) the cell's minimum, so the table cannot squeeze a short
+ * reading list onto two lines to feed a long meaning. Past the cap, `keep-all` breaks only at
+ * punctuation such as 、 and `overflow-wrap` handles a single very long word.
+ */
+.whole {
+	display: inline-block;
+	width: max-content;
+	max-width: 14em;
+	font-family: var(--font-family-ja);
+	word-break: keep-all;
+	overflow-wrap: break-word;
+}
+
+/*
+ * 768-1023px is the narrowest table. With the Save column, two 14em cells (the longest word and
+ * reading) plus the meaning's minimum overflow it, so the cap tightens there.
+ */
+@media (min-width: 768px) and (max-width: 1023px) {
+	.whole {
+		max-width: 10em;
+	}
+}
+
+@media (max-width: 767px) {
+	.glyph {
+		font-size: 36px;
+	}
+
+	/* Stacked rows are narrower than 14em at 320px: the cell width is the cap there. */
+	.whole {
+		max-width: 100%;
+	}
+}

@@ -162,3 +162,137 @@
 .checkboxInvalid input {
 	outline: var(--border-size-sm) solid var(--color-error);
 }
+
+/* FormField counter: end-aligned on the hint row. */
+
+.messageRow {
+	display: flex;
+	align-items: baseline;
+	gap: var(--spacing-sm);
+}
+
+.counter {
+	flex: none;
+	margin-inline-start: auto;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ChoiceGroup: native radios drawn as tiles. */
+
+.choiceGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xs);
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.legend {
+	margin-bottom: var(--spacing-2xs);
+	padding: 0;
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-neutral-default);
+}
+
+.choices {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+	gap: var(--spacing-xs);
+}
+
+.choice {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: var(--spacing-xs);
+	padding: var(--spacing-sm);
+	background-color: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border-radius: var(--border-radius-sm);
+	cursor: pointer;
+	transition:
+		border-color var(--duration-sm) var(--ease-base),
+		box-shadow var(--duration-sm) var(--ease-base);
+}
+
+.choice:hover {
+	border-color: var(--color-neutral-600);
+}
+
+/* The heavier border is drawn inset so the checked tile does not shift its neighbours. */
+.choiceChecked,
+.choiceChecked:hover {
+	border-color: var(--color-primary);
+	box-shadow: inset 0 0 0 1px var(--color-primary);
+	background-color: var(--color-primary-tint);
+}
+
+/* The whole tile shows focus; browsers without :has() keep the radio's own focus ring instead. */
+@supports selector(:has(*)) {
+	.choice:has(:focus-visible) {
+		outline: var(--outline-size) solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.choiceInput:focus-visible {
+		outline: none;
+	}
+}
+
+.choiceInvalid,
+.choiceInvalid:hover {
+	border-color: var(--color-error);
+}
+
+.choiceGroup:disabled .choice {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.choiceGroup:disabled .choice:hover {
+	border-color: var(--color-neutral-400);
+}
+
+.choiceGroup:disabled .choiceChecked {
+	border-color: var(--color-primary);
+}
+
+.choiceInput {
+	width: var(--size-md);
+	height: var(--size-md);
+	margin: var(--spacing-3xs) 0 0;
+	accent-color: var(--color-primary);
+}
+
+.choiceText {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.choiceGlyph {
+	font-family: var(--font-family-ja);
+	font-size: var(--font-size-heading-4);
+	line-height: 1.2;
+	color: var(--color-neutral-800);
+}
+
+.choiceLabel {
+	font-size: var(--font-size-body-md);
+	color: var(--color-text-neutral-default);
+}
+
+.choiceChecked .choiceLabel {
+	font-weight: var(--font-weight-semibold);
+}
+
+.choiceDescription {
+	font-size: var(--font-size-body-sm);
+	line-height: var(--line-height-lg);
+	color: var(--color-neutral-600);
+}

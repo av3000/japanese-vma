@@ -22,7 +22,6 @@ import {
 	getCommentsQueryKey,
 	patchCommentContent,
 	prependComment,
-	readCommentWriteError,
 	removeComment,
 	replaceComment,
 	useLikeCommentMutation,
@@ -219,24 +218,6 @@ describe('cache mutators', () => {
 		expect(next.items[0].replies[0].content).toBe('a reply');
 	});
 });
-
-describe('readCommentWriteError', () => {
-	it.each([
-		[401, 'unauthenticated'],
-		[403, 'forbidden'],
-		[404, 'notFound'],
-	])('maps a %i problem document to %s', (status, kind) => {
-		const failure = readCommentWriteError({ response: { data: { status, title: 'Nope' } } });
-
-		expect(failure.kind).toBe(kind);
-		expect(failure.message).toBe('Nope');
-	});
-
-	it('falls back to a generic message for an unrecognised failure', () => {
-		expect(readCommentWriteError(new Error('boom'))).toMatchObject({ kind: 'unknown' });
-	});
-});
-
 type CommentLikeOptions = UseMutationOptions<
 	{ is_liked: boolean; likes_count: number },
 	unknown,

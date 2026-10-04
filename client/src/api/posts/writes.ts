@@ -6,7 +6,6 @@ import type { StorePostRequest } from '@/api/generated/model/storePostRequest';
 import type { UpdatePostRequest } from '@/api/generated/model/updatePostRequest';
 import { getPostIndexQueryKey, postDestroy, postLock, postStore, postUpdate } from '@/api/generated/post/post';
 import { getPostDetailQueryKey } from '@/api/posts/reads';
-import { readWriteFailure, type WriteFailure } from '@/api/writeFailure';
 import type { User } from '@/types';
 
 export type PostWriteResponse = PostDetailResource;
@@ -15,8 +14,6 @@ export type PostWriteResponse = PostDetailResource;
 export type PostIdentity = Pick<PostWriteResponse, 'id' | 'uuid'>;
 
 type PostViewer = Pick<User, 'id' | 'isAdmin'> | null | undefined;
-
-export const GENERIC_POST_WRITE_ERROR = 'Something went wrong. Please try again.';
 
 /**
  * Mirrors `PostPolicy::canUpdate` — deliberately owner-only. An admin moderates a Post by locking
@@ -70,11 +67,6 @@ export const applyPostLockToCaches = (queryClient: QueryClient, post: PostIdenti
 
 	queryClient.invalidateQueries({ queryKey: getPostIndexQueryKey() });
 };
-
-export type PostWriteFailure = WriteFailure;
-
-export const readPostWriteError = (error: unknown): PostWriteFailure =>
-	readWriteFailure(error, GENERIC_POST_WRITE_ERROR);
 
 export const useCreatePostMutation = () => {
 	const queryClient = useQueryClient();

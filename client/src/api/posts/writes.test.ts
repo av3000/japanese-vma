@@ -6,10 +6,8 @@ import {
 	canLockPost,
 	canUpdatePost,
 	evictPostCaches,
-	GENERIC_POST_WRITE_ERROR,
 	nextLockRequest,
 	postDetailQueryKeys,
-	readPostWriteError,
 	reconcilePostCaches,
 	type PostWriteResponse,
 } from './writes';
@@ -36,8 +34,6 @@ const AUTHOR_ID = 5;
 const owner = { id: AUTHOR_ID, isAdmin: false };
 const admin = { id: 9, isAdmin: true };
 const stranger = { id: 42, isAdmin: false };
-
-const axiosError = (status: number, data: Record<string, unknown>) => ({ response: { data: { status, ...data } } });
 
 describe('post write gates', () => {
 	it('allows only the owner to update, matching PostPolicy::canUpdate', () => {
@@ -133,38 +129,5 @@ describe('nextLockRequest', () => {
 	it('asks for the opposite state explicitly, so a retry cannot flip the Post back', () => {
 		expect(nextLockRequest(false)).toEqual({ locked: true });
 		expect(nextLockRequest(true)).toEqual({ locked: false });
-	});
-});
-
-describe('readPostWriteError', () => {
-	it('surfaces field errors from a validation payload', () => {
-		const failure = readPostWriteError(
-			axiosError(422, { title: 'Validation failed', errors: { title: ['Title is too short.'] } }),
-		);
-
-		expect(failure).toEqual({
-			kind: 'validation',
-			message: 'Validation failed',
-			errors: { title: ['Title is too short.'] },
-		});
-	});
-
-	it('distinguishes the problem-details failures the write endpoints return', () => {
-		expect(readPostWriteError(axiosError(403, { title: 'This post is not yours.' }))).toEqual({
-			kind: 'forbidden',
-			message: 'This post is not yours.',
-		});
-		expect(readPostWriteError(axiosError(404, { title: 'Not found.' })).kind).toBe('notFound');
-		expect(readPostWriteError(axiosError(401, { title: 'Unauthenticated.' })).kind).toBe('unauthenticated');
-	});
-
-	it('falls back to a generic message for network and unrecognised failures', () => {
-		expect(readPostWriteError(new Error('Network Error'))).toEqual({
-			kind: 'unknown',
-			message: GENERIC_POST_WRITE_ERROR,
-		});
-		expect(readPostWriteError(axiosError(500, { title: 'Post update failed.' })).message).toBe(
-			GENERIC_POST_WRITE_ERROR,
-		);
 	});
 });

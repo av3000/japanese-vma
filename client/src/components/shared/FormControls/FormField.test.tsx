@@ -111,4 +111,16 @@ describe('FormField', () => {
 		expect(textarea).toContain('aria-invalid="true"');
 		expect(textarea).toContain('aria-describedby="bio-error"');
 	});
+	it('renders the counter on the hint row but leaves it out of aria-describedby', () => {
+		const html = renderToStaticMarkup(
+			<FormField label="Title" id="title" hint="Up to 255 characters." counter="12 / 255">
+				{(control) => <Input {...control} />}
+			</FormField>,
+		);
+
+		expect(describedBy(html)).toBe('title-hint');
+		expect(html).toContain('12 / 255');
+		expect(html.indexOf('title-hint"')).toBeLessThan(html.indexOf('12 / 255'));
+		expect(html).not.toMatch(/aria-live/);
+	});
 });

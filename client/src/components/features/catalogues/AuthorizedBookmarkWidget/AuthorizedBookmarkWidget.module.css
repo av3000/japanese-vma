@@ -11,3 +11,15 @@
 .notLearned {
 	color: var(--color-neutral-600);
 }
+
+.compact {
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+}
+
+.knownMark {
+	color: var(--color-success-hover);
+	font-size: var(--font-size-body-xs);
+	font-weight: var(--font-weight-semibold);
+	white-space: nowrap;
+}

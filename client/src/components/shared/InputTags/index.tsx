@@ -21,6 +21,12 @@ export interface InputTagsProps {
 	inputClassName?: string;
 	'aria-label'?: string;
 	'aria-labelledby'?: string;
+	/** Hint and error ids, as `FormField` hands them out. */
+	'aria-describedby'?: string;
+	/** Marks the field invalid (red border, `aria-invalid`). */
+	isInvalid?: boolean;
+	/** Fires when the text input loses focus, so a form can mark the field touched. */
+	onBlur?: React.FocusEventHandler<HTMLInputElement>;
 	hideLabel?: boolean;
 }
 
@@ -29,25 +35,32 @@ const isDelimiterKey = (event: React.KeyboardEvent<HTMLInputElement>): boolean =
 	return event.key === 'Enter' || event.key === ',' || event.key === ' ' || event.key === 'Spacebar';
 };
 
-export const InputTags: React.FunctionComponent<InputTagsProps> = ({
-	defaultTags = [],
-	value,
-	onChange,
-	placeholder,
-	disabled = false,
-	maxTags,
-	maxTagLength,
-	showTagLengthCounter = false,
-	allowDuplicates = false,
-	label,
-	id,
-	name,
-	className,
-	inputClassName,
-	'aria-label': ariaLabel,
-	'aria-labelledby': ariaLabelledby,
-	hideLabel,
-}) => {
+/** The forwarded ref points at the text input, so a form can focus the field on a failed submit. */
+export const InputTags = React.forwardRef<HTMLInputElement, InputTagsProps>(function InputTags(
+	{
+		defaultTags = [],
+		value,
+		onChange,
+		placeholder,
+		disabled = false,
+		maxTags,
+		maxTagLength,
+		showTagLengthCounter = false,
+		allowDuplicates = false,
+		label,
+		id,
+		name,
+		className,
+		inputClassName,
+		'aria-label': ariaLabel,
+		'aria-labelledby': ariaLabelledby,
+		'aria-describedby': ariaDescribedby,
+		isInvalid,
+		onBlur,
+		hideLabel,
+	},
+	ref,
+) {
 	const isControlled = value !== undefined;
 	const [internalTags, setInternalTags] = React.useState<string[]>(defaultTags);
 	const [inputValue, setInputValue] = React.useState<string>('');
@@ -158,7 +171,10 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 				</label>
 			)}
 			<div
-				className={classNames(styles.inputContainer, { [styles.disabled]: disabled })}
+				className={classNames(styles.inputContainer, {
+					[styles.disabled]: disabled,
+					[styles.invalid]: isInvalid,
+				})}
 				data-disabled={disabled || undefined}
 			>
 				{tags.map((tag, index) => (
@@ -172,6 +188,7 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 					</Chip>
 				))}
 				<input
+					ref={ref}
 					id={inputId}
 					type="text"
 					name={name}
@@ -184,6 +201,9 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 					maxLength={maxTagLength}
 					aria-label={label ? undefined : ariaLabel}
 					aria-labelledby={ariaLabelledby}
+					aria-describedby={ariaDescribedby}
+					aria-invalid={isInvalid || undefined}
+					onBlur={onBlur}
 				/>
 			</div>
 			{showTagLengthCounter && maxTagLength !== undefined && (
@@ -193,4 +213,4 @@ export const InputTags: React.FunctionComponent<InputTagsProps> = ({
 			)}
 		</div>
 	);
-};
+});

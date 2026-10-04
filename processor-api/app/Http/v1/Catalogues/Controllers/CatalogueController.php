@@ -12,6 +12,7 @@ use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
+use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
@@ -219,7 +220,14 @@ class CatalogueController extends Controller
         $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
+            $error = $result->getError();
+
+            // The lock is a rule about one field, so clients get it in the same shape as any 422.
+            if ($error->code === CatalogueErrors::TYPE_LOCKED_BY_ITEMS) {
+                return TypedResults::validationProblem(['type' => [(string) $error->errorMessage]]);
+            }
+
+            return TypedResults::fromError($error);
         }
 
         /** @var CatalogueUpdateResultDTO $updateResult */
