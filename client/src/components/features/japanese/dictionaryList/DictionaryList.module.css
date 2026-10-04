@@ -84,6 +84,16 @@
 	overflow-wrap: break-word;
 }
 
+/*
+ * 768-1023px is the narrowest table. With the Save column, two 14em cells (the longest word and
+ * reading) plus the meaning's minimum overflow it, so the cap tightens there.
+ */
+@media (min-width: 768px) and (max-width: 1023px) {
+	.whole {
+		max-width: 10em;
+	}
+}
+
 @media (max-width: 767px) {
 	.glyph {
 		font-size: 36px;
