@@ -21,9 +21,11 @@ interface AuthorizedBookmarkWidgetProps {
 	instanceObjectType: SavedListType;
 	isKnownType?: SavedListType;
 	modalTitle?: string;
+	/** What the page already knows about the viewer; shown until the viewer's lists have loaded. */
 	initialIsBookmarked?: boolean;
 	initialIsKnown?: boolean;
 	loadOnMount?: boolean;
+	/** Called once whenever the saved or known state changes, with the new state. */
 	onStateChange?: (state: { isBookmarked: boolean; isKnown: boolean }) => void;
 	/** Names the icon button, e.g. `水` gives "Save 水" or "Saved: 水". */
 	itemLabel?: string;
@@ -31,6 +33,15 @@ interface AuthorizedBookmarkWidgetProps {
 	compact?: boolean;
 }
 
+const NO_LISTS: CatalogueForItem[] = [];
+
+/*
+ * State model: the viewer's catalogues for this item (`lists`) are the only state. Until they have
+ * loaded (`null`), the saved and known flags come from the `initial*` props; afterwards they are
+ * derived from `lists`. Once loaded, `lists` wins over later changes to the `initial*` props: it
+ * was fetched after the page payload, and the tables that pass `onStateChange` write the same
+ * values back into that payload anyway.
+ */
 export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> = ({
 	entityId,
 	instanceObjectType,
@@ -43,12 +54,13 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	itemLabel,
 	compact = false,
 }) => {
-	const [lists, setLists] = useState<CatalogueForItem[]>([]);
-	const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
-	const [isKnown, setIsKnown] = useState(initialIsKnown);
-	const [hasLoadedUserCatalogues, setHasLoadedUserCatalogues] = useState(false);
+	const [lists, setLists] = useState<CatalogueForItem[] | null>(null);
 	const [isLoadingUserCatalogues, setIsLoadingUserCatalogues] = useState(false);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
+	// The committed `lists`, readable from async handlers that started before the latest render.
+	const listsRef = useRef<CatalogueForItem[] | null>(null);
+	// The latest `onStateChange`, so an inline handler never changes what `loadLists` depends on.
+	const onStateChangeRef = useRef(onStateChange);
 	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
 	// One dialog per widget: list rows render many widgets, so the id must be unique per instance.
 	const dialogId = `bookmark-dialog-${useId()}`;
@@ -56,76 +68,71 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const isInvalidEntity = !entityId || Number.isNaN(entityId);
 
 	useEffect(() => {
-		setIsBookmarked(initialIsBookmarked);
-		setIsKnown(initialIsKnown);
-	}, [initialIsBookmarked, initialIsKnown]);
+		onStateChangeRef.current = onStateChange;
+	});
 
-	const loadUserCatalogues = useCallback(async () => {
-		if (isInvalidEntity) {
-			setLists([]);
-			setIsBookmarked(false);
-			setIsKnown(false);
-			setHasLoadedUserCatalogues(true);
-			return [];
-		}
+	const { isBookmarked, isKnown } = isInvalidEntity
+		? { isBookmarked: false, isKnown: false }
+		: lists
+			? deriveCatalogueWidgetState(lists, instanceObjectType, isKnownType)
+			: { isBookmarked: initialIsBookmarked, isKnown: initialIsKnown };
 
-		setIsLoadingUserCatalogues(true);
+	/** Stores the new lists and reports the state they imply, once. */
+	const commitLists = useCallback(
+		(nextLists: CatalogueForItem[]) => {
+			listsRef.current = nextLists;
+			setLists(nextLists);
+			onStateChangeRef.current?.(deriveCatalogueWidgetState(nextLists, instanceObjectType, isKnownType));
+		},
+		[instanceObjectType, isKnownType],
+	);
 
-		try {
-			const instanceTypes = [instanceObjectType];
-			if (isKnownType) {
-				instanceTypes.push(isKnownType);
+	/** `isCurrent` lets the mount effect drop a result it no longer wants (unmount, StrictMode replay). */
+	const loadLists = useCallback(
+		async (isCurrent: () => boolean = () => true) => {
+			setIsLoadingUserCatalogues(true);
+
+			try {
+				const instanceTypes = [instanceObjectType];
+				if (isKnownType) {
+					instanceTypes.push(isKnownType);
+				}
+
+				const updatedLists = await fetchCataloguesForItem(entityId, { types: instanceTypes });
+
+				if (isCurrent()) {
+					commitLists(updatedLists);
+				}
+			} catch (error) {
+				console.error(error);
+			} finally {
+				if (isCurrent()) {
+					setIsLoadingUserCatalogues(false);
+				}
 			}
-
-			const updatedLists = await fetchCataloguesForItem(entityId, {
-				types: instanceTypes,
-			});
-			const nextState = deriveCatalogueWidgetState(updatedLists, instanceObjectType, isKnownType);
-
-			setIsBookmarked(nextState.isBookmarked);
-			setIsKnown(nextState.isKnown);
-			setLists(updatedLists);
-			setHasLoadedUserCatalogues(true);
-			onStateChange?.(nextState);
-
-			return updatedLists;
-		} catch (error) {
-			console.error(error);
-			return [];
-		} finally {
-			setIsLoadingUserCatalogues(false);
-		}
-	}, [entityId, instanceObjectType, isInvalidEntity, isKnownType, onStateChange]);
+		},
+		[commitLists, entityId, instanceObjectType, isKnownType],
+	);
 
 	useEffect(() => {
-		if (!loadOnMount) {
+		if (!loadOnMount || isInvalidEntity) {
 			return;
 		}
 
 		let isActive = true;
 
-		const load = async () => {
-			const updatedLists = await loadUserCatalogues();
-
-			if (!isActive) {
-				return;
-			}
-
-			setLists(updatedLists);
-		};
-
-		void load();
+		void loadLists(() => isActive);
 
 		return () => {
 			isActive = false;
 		};
-	}, [loadOnMount, loadUserCatalogues]);
+	}, [isInvalidEntity, loadOnMount, loadLists]);
 
 	const openBookmarkModal = async () => {
 		bookmarkModal.open();
 
-		if (!loadOnMount && !hasLoadedUserCatalogues && !isLoadingUserCatalogues) {
-			await loadUserCatalogues();
+		if (!loadOnMount && lists === null && !isLoadingUserCatalogues) {
+			await loadLists();
 		}
 	};
 
@@ -143,16 +150,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			});
 
 			// TODO: This could become some mapper perhaps?
-			setLists((prevLists) => {
-				const updatedLists = optimisticApplyCatalogueForItemAction(prevLists, list.id, action);
-				const nextState = deriveCatalogueWidgetState(updatedLists, instanceObjectType, isKnownType);
-
-				setIsBookmarked(nextState.isBookmarked);
-				setIsKnown(nextState.isKnown);
-				onStateChange?.(nextState);
-
-				return updatedLists;
-			});
+			commitLists(optimisticApplyCatalogueForItemAction(listsRef.current ?? NO_LISTS, list.id, action));
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -186,7 +184,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 
 			<CatalogueBookmarkModal
 				controller={bookmarkModal}
-				lists={lists}
+				lists={lists ?? NO_LISTS}
 				loadingListIds={loadingListIds}
 				onListAction={addToOrRemoveFromList}
 				title={modalTitle}
