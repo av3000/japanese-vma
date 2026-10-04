@@ -1,0 +1,112 @@
+/*
+ * Reading Room: a 720px measure, a 56px gap and a 280px rail (UI-DETAIL-00, #457).
+ * Below 1024px the page is one flex column and the rail is `display: contents`, so its three
+ * slots join that column and `order` places them: the actions move up under the header, the
+ * facts and extras follow the text. The DOM order (header, main, rail, after) is what assistive
+ * technology reads and what Tab follows at every width.
+ */
+.layout {
+	--detail-measure: 720px;
+	--detail-rail: 280px;
+	--detail-gap: 56px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-lg);
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: calc(var(--detail-measure) + var(--detail-gap) + var(--detail-rail));
+	margin-inline: auto;
+	padding-block: var(--spacing-lg) var(--spacing-3xl);
+}
+
+.header,
+.main,
+.facts,
+.actions,
+.extra,
+.after {
+	min-width: 0;
+}
+
+.header {
+	order: 1;
+}
+
+.actions {
+	order: 2;
+}
+
+.main {
+	order: 3;
+	max-width: var(--detail-measure);
+}
+
+.facts {
+	order: 4;
+}
+
+.extra {
+	order: 5;
+}
+
+.after {
+	order: 6;
+	margin-top: var(--spacing-xl);
+}
+
+.rail {
+	display: contents;
+}
+
+@media (min-width: 768px) {
+	.layout {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+@media (min-width: 1024px) {
+	.layout {
+		display: grid;
+		grid-template-columns: minmax(0, var(--detail-measure)) var(--detail-rail);
+		grid-template-rows: auto 1fr auto;
+		grid-template-areas:
+			'header rail'
+			'main rail'
+			'after after';
+		gap: var(--spacing-lg) var(--detail-gap);
+	}
+
+	.header {
+		grid-area: header;
+	}
+
+	.main {
+		grid-area: main;
+	}
+
+	.after {
+		grid-area: after;
+	}
+
+	.rail {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-lg);
+		grid-area: rail;
+		align-self: start;
+		min-width: 0;
+	}
+
+	/* Inside the rail the facts lead again, as in the DOM. */
+	.facts,
+	.actions,
+	.extra {
+		order: 0;
+	}
+
+	/* Only while the whole rail fits the viewport; a taller rail scrolls with the page. */
+	.rail[data-sticky='true'] {
+		position: sticky;
+		top: var(--spacing-lg);
+	}
+}
