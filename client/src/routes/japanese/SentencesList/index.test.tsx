@@ -24,17 +24,14 @@ vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated }) }));
 
 const useInfiniteSentencesMock = vi.mocked(useInfiniteSentences);
 const loadedState = {
-	sentences: [{
-		id: 1,
-		uuid: 'sentence-uuid',
-		user_id: null,
-		tatoeba_entry: '1001',
-		content: '私は学生です。',
-	}],
-	total: 1,
+	sentences: [
+		{ id: 1, uuid: 'sentence-uuid', user_id: null, tatoeba_entry: '1001', content: '私は学生です。' },
+		{ id: 2, uuid: 'user-sentence-uuid', user_id: 7, tatoeba_entry: null, content: 'はい。' },
+	],
+	total: 2,
 	isLoading: false,
 	isFetchingNextPage: false,
-	hasNextPage: false,
+	hasNextPage: true,
 	fetchNextPage: fetchNextPageMock,
 	error: null,
 } as unknown as ReturnType<typeof useInfiniteSentences>;
@@ -52,33 +49,64 @@ describe('SentencesList', () => {
 		const html = renderToStaticMarkup(<SentencesList />);
 
 		expect(useInfiniteSentencesMock).toHaveBeenCalledWith({
-			filters: { keyword: 'student', per_page: 10 },
+			filters: { keyword: 'student', per_page: 25 },
 		});
-		expect(html).toContain('/sentence/sentence-uuid');
-		expect(html).toContain('Tatoeba entry');
+		expect(html).toMatch(/<th role="rowheader" scope="row"[^>]*><a href="\/sentence\/sentence-uuid"/);
 		expect(html).not.toContain('Add to List');
 	});
 
-	it('offers the create route only to authenticated viewers', () => {
+	it('links Tatoeba sentences with the same URL format and marks user sentences', () => {
+		const html = renderToStaticMarkup(<SentencesList />);
+
+		expect(html).toContain('href="https://tatoeba.org/eng/sentences/show/1001"');
+		expect(html).toContain('Tatoeba #1001');
+		expect(html).toContain('Added by a user');
+		expect(html).not.toContain('UserAuthor');
+	});
+
+	it('renders PageHeader and FilterBar in place of the legacy search bar', () => {
+		const html = renderToStaticMarkup(<SentencesList />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<p[^>]*>Showing 2 of 2<\/p>/);
+		expect(html).toContain('role="search" aria-label="Sentence filters"');
+		expect(html).toContain('Load more');
+	});
+
+	it('offers the create route only to authenticated viewers, as the page action', () => {
 		expect(renderToStaticMarkup(<SentencesList />)).not.toContain('/sentences/new');
 
 		isAuthenticated = true;
-		expect(renderToStaticMarkup(<SentencesList />)).toContain('/sentences/new');
+		expect(renderToStaticMarkup(<SentencesList />)).toMatch(
+			/<a[^>]*href="\/sentences\/new"[^>]*>Create sentence<\/a>/,
+		);
 	});
 
 	it('renders loading and failure states distinctly', () => {
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
+			sentences: [],
 			isLoading: true,
 		} as ReturnType<typeof useInfiniteSentences>);
-		// Was asserting 'Loading...' and failing on develop before this change:
-		// the route renders <PageLoading family="list" />, whose label is 'Loading page.'.
-		expect(renderToStaticMarkup(<SentencesList />)).toContain('data-loading-family="list"');
+		expect(renderToStaticMarkup(<SentencesList />)).toMatch(
+			/<table role="table" aria-label="Sentences" aria-busy="true"/,
+		);
 
 		useInfiniteSentencesMock.mockReturnValueOnce({
 			...loadedState,
 			error: new Error('failed'),
 		} as ReturnType<typeof useInfiniteSentences>);
 		expect(renderToStaticMarkup(<SentencesList />)).toContain('could not be loaded');
+	});
+
+	it('names the keyword in the empty search panel', () => {
+		searchParams = new URLSearchParams('keyword=はんらん');
+		useInfiniteSentencesMock.mockReturnValue({ ...loadedState, sentences: [], total: 0 } as ReturnType<
+			typeof useInfiniteSentences
+		>);
+
+		expect(renderToStaticMarkup(<SentencesList />)).toContain(
+			'No sentences match “<span lang="ja">はんらん</span>”',
+		);
 	});
 });

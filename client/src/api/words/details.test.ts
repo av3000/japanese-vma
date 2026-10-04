@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { WordShow200 } from '@/api/generated/model/wordShow200';
+import type { WordDetailResource } from '@/api/generated/model/wordDetailResource';
 import { mapWordDetail } from './details';
 
-const baseWord: WordShow200 = {
+const baseWord: WordDetailResource = {
 	id: 42,
 	uuid: 'word-uuid',
 	word: '水',

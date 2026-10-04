@@ -1,0 +1,16 @@
+.actionCell {
+	text-align: end;
+}
+
+@media (max-width: 767px) {
+	.glyphCell,
+	.actionCell {
+		align-self: start;
+	}
+
+	.lead {
+		font-size: var(--font-size-body-md);
+		font-weight: var(--font-weight-semibold);
+		overflow-wrap: anywhere;
+	}
+}

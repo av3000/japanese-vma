@@ -7,6 +7,7 @@ namespace App\Http\v1\JapaneseMaterial\Kanjis\Resources;
 use App\Domain\Articles\DTOs\ArticleListItemDTO;
 use App\Domain\JapaneseMaterial\Kanjis\DTOs\KanjiDetailResultDTO;
 use App\Http\v1\Articles\Resources\RelatedArticleSummaryResource;
+use App\Http\v1\Catalogues\Resources\ViewerCatalogueStateResource;
 use App\Http\v1\JapaneseMaterial\Sentences\Resources\SentenceListResource;
 use App\Http\v1\JapaneseMaterial\Words\Resources\WordListResource;
 use App\Http\v1\Shared\Resources\PaginationResource;
@@ -40,7 +41,7 @@ class KanjiDetailResource extends JsonResource
      *     frequency: int|null,
      *     radicals: list<string>,
      *     radical_parts: list<string>,
-     *     viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null,
+     *     viewer_catalogue_state: ViewerCatalogueStateResource|null,
      *     words?: array{
      *         items: array<int, array{
      *             id: int,
@@ -57,7 +58,7 @@ class KanjiDetailResource extends JsonResource
      *             word_k_ele: string,
      *             furigana_r_ele: string,
      *             sense: string|null,
-     *             viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
+     *             viewer_catalogue_state: ViewerCatalogueStateResource|null
      *         }>,
      *         pagination: PaginationResource
      *     },

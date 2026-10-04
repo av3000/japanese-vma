@@ -4,13 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 const MIGRATED_PENDING_BRANCHES = {
 	'./CatalogueDetails/index.tsx': 'detail',
-	'./japanese/RadicalsList/index.tsx': 'generic',
 	'./japanese/RadicalDetails/index.tsx': 'detail',
-	'./japanese/KanjisList/index.tsx': 'list',
 	'./japanese/KanjiDetails/index.tsx': 'detail',
-	'./japanese/WordsList/index.tsx': 'list',
 	'./japanese/WordDetails/index.tsx': 'detail',
-	'./japanese/SentencesList/index.tsx': 'list',
 	'./japanese/SentenceDetails/index.tsx': 'detail',
 	'./community/PostsList/index.tsx': 'list',
 	'./community/PostDetails/index.tsx': 'detail',

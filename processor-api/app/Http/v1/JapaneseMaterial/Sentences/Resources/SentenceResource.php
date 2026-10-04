@@ -45,34 +45,36 @@ class SentenceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $payload = [
+        // The includes go through `when` so Scramble documents them as optional: the
+        // list endpoint reuses this component for its items and never sends them.
+        //
+        // `kanjis` uses `::collection()` rather than `array_map`: Scramble does not infer
+        // the element type of an `array_map` result, so the mapped variant documents it as
+        // an untyped array and the generated client then types it `unknown[]`. Same
+        // combination as ArticleModerationItemResource. Safe here because KanjiResource
+        // takes a single constructor argument.
+        //
+        // `words` cannot use `::collection()`: `mapInto` passes the collection key as the
+        // second constructor argument, which WordResource types as ?ViewerCatalogueStateDTO,
+        // so it throws a TypeError on any non-empty list. `words` stays an untyped array in
+        // the schema; no client reads it today.
+        return [
             'id' => $this->resource->getIdValue(),
             'uuid' => $this->resource->getUuid()->value(),
             'user_id' => $this->resource->getUserId(),
             'tatoeba_entry' => $this->resource->getTatoebaEntry(),
             'content' => $this->resource->getContent(),
+            'kanjis' => $this->when(
+                $this->includeKanjis,
+                fn () => KanjiResource::collection($this->resource->getKanjis()),
+            ),
+            'words' => $this->when(
+                $this->includeWords,
+                fn (): array => array_map(
+                    fn (DomainWord $word): WordResource => new WordResource($word),
+                    $this->resource->getWords(),
+                ),
+            ),
         ];
-
-        // `::collection()` rather than `array_map`: Scramble does not infer the
-        // element type of an `array_map` result, so the mapped variant documents
-        // `kanjis` as an untyped array and the generated client then types it
-        // `unknown[]`. Same combination as ArticleModerationItemResource.
-        // Safe here because KanjiResource takes a single constructor argument.
-        if ($this->includeKanjis) {
-            $payload['kanjis'] = KanjiResource::collection($this->resource->getKanjis());
-        }
-
-        // WordResource cannot use `::collection()`: `mapInto` passes the collection
-        // key as the second constructor argument, which WordResource types as
-        // ?ViewerCatalogueStateDTO, so it throws a TypeError on any non-empty list.
-        // `words` stays an untyped array in the schema; no client reads it today.
-        if ($this->includeWords) {
-            $payload['words'] = array_map(
-                fn (DomainWord $word): WordResource => new WordResource($word),
-                $this->resource->getWords(),
-            );
-        }
-
-        return $payload;
     }
 }

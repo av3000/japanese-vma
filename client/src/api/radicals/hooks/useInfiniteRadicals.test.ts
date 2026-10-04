@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { RadicalIndex200 } from '@/api/generated/model/radicalIndex200';
-import {
-	getInfiniteRadicalsQueryKey,
-	getNextRadicalsPageParam,
-	getRadicalsTotal,
-} from './useInfiniteRadicals';
+import type { RadicalListResource } from '@/api/generated/model/radicalListResource';
+import { getInfiniteRadicalsQueryKey, getNextRadicalsPageParam, getRadicalsTotal } from './useInfiniteRadicals';
 
-const page = (overrides: Partial<RadicalIndex200> = {}): RadicalIndex200 => ({
+const page = (overrides: Partial<RadicalListResource> = {}): RadicalListResource => ({
 	items: [],
 	pagination: {
 		page: 1,

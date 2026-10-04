@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RadicalShow200 } from '@/api/generated/model/radicalShow200';
+import type { RadicalResource } from '@/api/generated/model/radicalResource';
 import { mapRadicalDetail } from './details';
 
 describe('mapRadicalDetail', () => {
@@ -28,7 +28,7 @@ describe('mapRadicalDetail', () => {
 					radical_parts: ['氵毎'],
 				},
 			],
-		} as RadicalShow200;
+		} as RadicalResource;
 
 		expect(mapRadicalDetail(radical).kanjis).toHaveLength(1);
 	});
@@ -41,7 +41,7 @@ describe('mapRadicalDetail', () => {
 			hiragana: 'ひ',
 			meaning: 'fire',
 			strokes: 4,
-		} as RadicalShow200;
+		} as RadicalResource;
 
 		expect(mapRadicalDetail(radical).kanjis).toEqual([]);
 	});

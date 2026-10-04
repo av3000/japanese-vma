@@ -31,6 +31,7 @@ class RadicalListResource extends JsonResource
         $result = $this->resource;
 
         return [
+            /** @var array<int, RadicalResource> */
             'items' => array_map(
                 fn (Radical $radical): RadicalResource => new RadicalResource($radical),
                 $result->items,
