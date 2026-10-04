@@ -1,6 +1,6 @@
-# Capturing and hosting PR review screenshots
+# Capturing and uploading PR review screenshots
 
-Read this when the PR changes anything visible. Goal: every materially changed state at desktop (1400px), tablet (768px) and mobile (360px), shown in the PR body so the reviewer sees it without checking anything out. The screenshots are for review only and are not kept after the PR closes.
+Read this when the PR changes anything visible. Goal: every materially changed state at desktop (1400px), tablet (768px) and mobile (360px), shown in the PR body so the reviewer sees it without checking anything out. The images are uploaded to GitHub as attachments and stay visible after the merge.
 
 ## Contents
 
@@ -8,9 +8,9 @@ Read this when the PR changes anything visible. Goal: every materially changed s
 2. Render them from stories
 3. Capture with Playwright
 4. Look at every image
-5. Host them on the temporary branch
+5. Upload with `gh --attach`
 6. Embed in the PR body
-7. Clean up, and delete the branch after merge
+7. Re-shoot, and clean up locally
 
 ## 1. Pick the states
 
@@ -60,48 +60,62 @@ async (page) => {
 
 ## 4. Look at every image
 
-Open each PNG and look at it before publishing. Check for stale styles, a half-rendered story, a loading skeleton, cut-off content, or the wrong state. An image of superseded UI is worse than no image.
+Open each PNG and look at it before uploading. Check for stale styles, a half-rendered story, a loading skeleton, cut-off content, or the wrong state. An image of superseded UI is worse than no image.
 
-## 5. Host them on the temporary branch
+## 5. Upload with `gh --attach`
 
-GitHub only renders images that live at a URL, and `gh` cannot upload attachments, so the PNGs go to a throwaway branch. It is not storage:
+`gh issue|pr create|edit|comment --attach <file>` uploads the file to GitHub's attachment store (`github.com/user-attachments/assets/…`, the same store as drag-and-drop in the browser) and rewrites the body reference to the uploaded URL. The images stay visible after the PR merges; there is nothing to clean up.
 
-- the branch is `screenshots/<feature-branch>` and holds only the current set, with no history;
-- publishing again replaces it (re-shoots after review feedback);
-- it is deleted when the PR is merged or closed, after which the images in the PR stop loading.
+Prerequisites:
+
+- `gh` ≥ 2.99.0 (`gh --version`).
+- Write access to the repository, with an OAuth token (`gh auth login`, a `gho_` token) or a classic PAT. GitHub App `ghu_` tokens are unreliable: older `gh` refuses them outright, newer `gh` (after cli/cli#14495) sends them on and the upload API may still reject them. `gh auth status` shows which kind is active.
+- Limits: 10 MB per image, 50 files per command. A full-page 1400px shot of a long page can approach 10 MB; check sizes with `ls -l` before uploading.
+
+How `--attach` matches files to the body:
+
+- A **Markdown** image or link, `![alt](./name.png)`, is rewritten when the path in the body equals the path given to `--attach`. `./name.png` matches `--attach name.png` and does not match `--attach ../dir/name.png`. Run the command from inside the PNG folder and attach bare file names; the body file can live anywhere.
+- An HTML `<img src="./name.png">` is **never** rewritten: it stays a broken image, and the file is appended to the end of the body as an extra Markdown image. Use Markdown images for every local file.
+- Every attached file the body does not reference is appended to the end of the body. Reference every PNG you attach, and attach only PNGs the body references.
+
+Create the PR with the screenshots, or add them to an existing PR:
 
 ```bash
-bash <this skill's folder>/scripts/publish-screenshots.sh <png-dir> <feature-branch>
+cd <png-dir>
+attach=(); for f in *.png; do attach+=(--attach "$f"); done
+gh pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <body.md> "${attach[@]}"
+gh pr edit <n> --repo av3000/japanese-vma --body-file <body.md> "${attach[@]}"
 ```
 
-The script commits the PNGs with git plumbing (the working tree is never touched), pushes the branch, and prints the URL prefix to embed. The prefix contains the commit id rather than the branch name only so a re-shoot shows up at once: GitHub caches raw files by URL for a few minutes. `DRY_RUN=1` builds the commit without pushing. The repository is public, so the links render for every reviewer.
+Then read the body back (`gh pr view <n> --json body --jq .body`) and check that every image URL starts with `https://github.com/user-attachments/assets/` and that no `./` path is left. Judge whether an image loads on the PR page, not by fetching the bare asset URL: that URL returns 404 without a GitHub session, while the PR page serves every viewer, logged out included, a signed image URL.
 
 ## 6. Embed in the PR body
 
-One table per screen, columns in Desktop, Tablet, Mobile order, with explicit widths so the three fit side by side:
+One table per screen, columns in Desktop, Tablet, Mobile order, each cell a Markdown image that points at the local PNG:
 
 ```markdown
 ## Screenshots
 
-From the built Storybook at 1400 / 768 / 360px. Temporary: these stop loading after the PR closes.
+From the built Storybook at 1400 / 768 / 360px.
 
 ### Article form
 
 | Desktop | Tablet | Mobile |
 |---|---|---|
-| <img src="https://raw.githubusercontent.com/av3000/japanese-vma/<commit>/article-filled-1400.png" width="420" alt="Article form, filled, 1400px"> | <img src="…/article-filled-768.png" width="260" alt="Article form, filled, 768px"> | <img src="…/article-filled-360.png" width="160" alt="Article form, filled, 360px"> |
-| <img src="…/article-errors-1400.png" width="420" alt="Article form, server errors, 1400px"> | <img src="…/article-errors-768.png" width="260" alt="…"> | <img src="…/article-errors-360.png" width="160" alt="…"> |
+| ![Article form, filled, 1400px](./article-filled-1400.png) | ![Article form, filled, 768px](./article-filled-768.png) | ![Article form, filled, 360px](./article-filled-360.png) |
+| ![Article form, server errors, 1400px](./article-errors-1400.png) | ![Article form, server errors, 768px](./article-errors-768.png) | ![Article form, server errors, 360px](./article-errors-360.png) |
 ```
 
+- Leave out `width` attributes: GitHub scales the table to the body width, so the three shots sit side by side at their true relative scale (about 360 / 210 / 120px on a desktop viewport). Clicking an image opens it full size.
 - Name each row's state in the alt text, and in a line above the table when it isn't obvious.
 - Say where the shots came from (stories, not a live backend), so reviewers know what was not exercised.
 
-## 7. Clean up, and delete the branch after merge
+## 7. Re-shoot, and clean up locally
 
-Right away: stop the static server, close the Playwright browser, and confirm `.playwright-mcp/` is gone from the main checkout.
+Every `--attach` run uploads new assets, even for an identical file; the body then points at the new ones and the old ones are left unreferenced, so a re-shoot never shows superseded UI:
 
-After the PR is merged or closed:
+1. Re-shoot, and look at every new PNG (section 4).
+2. `gh pr view <n> --json body --jq .body > body.md`, then replace the images in the `## Screenshots` section with Markdown references to the local file names (`![…](./article-filled-1400.png)`). Leave the rest of the body as it is.
+3. From the PNG folder, run `gh pr edit` with `--attach` for every PNG, as in section 5, and read the body back.
 
-```bash
-bash <this skill's folder>/scripts/publish-screenshots.sh --delete <feature-branch>
-```
+Local cleanup, right away: stop the static server, close the Playwright browser, and confirm `.playwright-mcp/` is gone from the main checkout.
