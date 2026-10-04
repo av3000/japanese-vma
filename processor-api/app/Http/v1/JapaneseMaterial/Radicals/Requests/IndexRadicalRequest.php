@@ -25,6 +25,7 @@ class IndexRadicalRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'catalogue_uuid' => ['nullable', 'uuid'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'keyword' => ['nullable', 'string', 'min:1', 'max:100'],
@@ -37,6 +38,7 @@ class IndexRadicalRequest extends FormRequest
 
     /**
      * @param array<int, string> $fields
+     *
      * @return array<string, int>
      */
     private function castIntegerFields(array $fields): array

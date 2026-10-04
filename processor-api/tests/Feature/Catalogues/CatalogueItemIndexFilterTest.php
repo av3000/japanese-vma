@@ -173,6 +173,54 @@ class CatalogueItemIndexFilterTest extends TestCase
             ->assertJsonValidationErrors('catalogue_uuid');
     }
 
+    public function test_the_radical_index_lists_only_the_radicals_saved_in_a_catalogue(): void
+    {
+        $catalogue = $this->createCatalogue(SavedListType::RADICALS);
+        $this->attach($catalogue, $this->createRadical('水', 'water'));
+        $this->createRadical('火', 'fire');
+
+        $this->getJson("/api/v1/radicals?catalogue_uuid={$catalogue->uuid}")
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.radical', '水')
+            ->assertJsonPath('pagination.total', 1);
+    }
+
+    public function test_the_sentence_index_lists_only_the_sentences_saved_in_a_catalogue(): void
+    {
+        $catalogue = $this->createCatalogue(SavedListType::KNOWNSENTENCES, ['publicity' => 0]);
+        $this->attach($catalogue, $this->createSentence('水を飲みます。'));
+        $this->createSentence('火です。');
+        Passport::actingAs($this->owner);
+
+        $this->getJson("/api/v1/sentences?catalogue_uuid={$catalogue->uuid}")
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.content', '水を飲みます。')
+            ->assertJsonPath('pagination.total', 1);
+    }
+
+    public function test_radical_and_sentence_filters_apply_the_catalogue_rules(): void
+    {
+        $private = $this->createCatalogue(SavedListType::RADICALS, ['publicity' => 0]);
+        $kanji = $this->createCatalogue(SavedListType::KANJIS);
+        $unknown = (string) Str::uuid();
+
+        $this->getJson("/api/v1/radicals?catalogue_uuid={$private->uuid}")->assertForbidden();
+        $this->getJson("/api/v1/radicals?catalogue_uuid={$unknown}")->assertNotFound();
+        $this->getJson("/api/v1/radicals?catalogue_uuid={$kanji->uuid}")
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.catalogue_uuid.0', "This catalogue doesn't hold radicals.");
+
+        $this->getJson("/api/v1/sentences?catalogue_uuid={$unknown}")->assertNotFound();
+        $this->getJson("/api/v1/sentences?catalogue_uuid={$kanji->uuid}")
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.catalogue_uuid.0', "This catalogue doesn't hold sentences.");
+        $this->getJson('/api/v1/sentences?catalogue_uuid=12')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('catalogue_uuid');
+    }
+
     private function createCatalogue(SavedListType $type, array $overrides = []): Catalogue
     {
         return Catalogue::create(array_merge([
@@ -227,6 +275,26 @@ class CatalogueItemIndexFilterTest extends TestCase
             'word_k_ele' => $word,
             'furigana_r_ele' => '-',
             'sense' => '-',
+        ]);
+    }
+
+    private function createRadical(string $radical, string $meaning): int
+    {
+        return DB::table('japanese_radicals_bank_long')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'radical' => $radical,
+            'hiragana' => '-',
+            'strokes' => 4,
+            'meaning' => $meaning,
+        ]);
+    }
+
+    private function createSentence(string $content): int
+    {
+        return DB::table('japanese_tatoeba_sentences')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'content' => $content,
+            'tatoeba_entry' => (string) random_int(1, 999999),
         ]);
     }
 }

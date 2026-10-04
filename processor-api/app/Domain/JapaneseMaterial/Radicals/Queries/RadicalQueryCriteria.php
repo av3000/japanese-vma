@@ -17,7 +17,10 @@ final readonly class RadicalQueryCriteria
         public ?string $hiragana,
         public ?int $strokes,
         public Pagination $pagination,
-    ) {}
+        /** Radicals saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public ?int $catalogueId = null,
+    ) {
+    }
 
     public static function forListing(
         int $page,
@@ -27,6 +30,7 @@ final readonly class RadicalQueryCriteria
         ?string $meaning,
         ?string $hiragana,
         ?int $strokes,
+        ?int $catalogueId = null,
     ): self {
         return new self(
             keyword: $keyword,
@@ -35,6 +39,7 @@ final readonly class RadicalQueryCriteria
             hiragana: $hiragana,
             strokes: $strokes,
             pagination: new Pagination(page: $page, per_page: $perPage),
+            catalogueId: $catalogueId,
         );
     }
 }
