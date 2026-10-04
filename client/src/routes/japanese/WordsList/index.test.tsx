@@ -64,6 +64,7 @@ const queryResult = (overrides: Record<string, unknown> = {}) =>
 		total: 1,
 		error: null,
 		fetchNextPage: vi.fn(),
+		refetch: vi.fn(),
 		hasNextPage: false,
 		isFetchingNextPage: false,
 		isPending: false,
@@ -165,10 +166,14 @@ describe('WordsList', () => {
 		expect(html).toMatch(/<p[^>]*>0 results · keyword: はんらんする<\/p>/);
 	});
 
-	it('keeps the error alert', () => {
+	it('shows a fixed message, never the raw error text', () => {
 		useInfiniteWordsMock.mockReturnValue(queryResult({ words: [], isError: true, error: new Error('boom') }));
 
-		expect(renderToStaticMarkup(<WordsList />)).toContain('Error: boom');
+		const html = renderToStaticMarkup(<WordsList />);
+
+		expect(html).toContain('Words could not be loaded.');
+		expect(html).toContain('Try again');
+		expect(html).not.toContain('boom');
 	});
 
 	it('writes a bookmark change into the list cache', () => {

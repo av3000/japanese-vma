@@ -74,6 +74,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
     -   Scramble turns a comment on an array key inside `toArray()` into that property's public `description`. Put implementation notes above the `return`.
     -   After changing a Resource or `#[Response]`, check the component's `properties` and `required` in `api.json` before running Orval, and pin anything non-obvious in a `tests/Unit/...OpenApiTest` (reference: `tests/Unit/JapaneseMaterial/DictionaryResponsesOpenApiTest.php`).
     -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
+    -   Backend CI re-exports `api.json` (`composer openapi` with `APP_NAME=Laravel`, `APP_URL=http://localhost`) and fails when it differs from the committed file. Commit the regenerated `api.json` with the Resource change; export with those two values or `info.title` and `servers[0].url` will differ.
 
 ## 6) Testing & Verification Expectations
 

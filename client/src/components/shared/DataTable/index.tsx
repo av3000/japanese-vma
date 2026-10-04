@@ -146,6 +146,29 @@ const BodyCell = <Row,>({
 	);
 };
 
+interface DataTableRowProps<Row> {
+	row: Row;
+	columns: ReadonlyArray<DataTableColumn<Row>>;
+	columnClassNames: readonly string[];
+}
+
+const DataTableRowView = <Row,>({ row, columns, columnClassNames }: DataTableRowProps<Row>) => (
+	<tr role="row">
+		{columns.map((column, index) => (
+			<BodyCell key={column.id} column={column} className={columnClassNames[index]}>
+				{column.cell(row)}
+			</BodyCell>
+		))}
+	</tr>
+);
+
+/**
+ * One body row. It re-renders only when its row object or the columns change, so a change to one
+ * row of a long, paged list (a Save click) does not re-render the others. That holds while the
+ * caller keeps `columns` stable (`useMemo`) and replaces only the rows that changed.
+ */
+const DataTableRow = React.memo(DataTableRowView) as typeof DataTableRowView;
+
 /**
  * A real `<table>` with a sticky header, for index pages. From 768px it is a table; below that the
  * same markup becomes stacked row cards. The explicit ARIA roles keep table semantics when CSS
@@ -215,13 +238,12 @@ export const DataTable = <Row,>({
 							</tr>
 						))
 					: rows.map((row) => (
-							<tr role="row" key={getRowKey(row)}>
-								{columns.map((column, index) => (
-									<BodyCell key={column.id} column={column} className={columnClassNames[index]}>
-										{column.cell(row)}
-									</BodyCell>
-								))}
-							</tr>
+							<DataTableRow
+								key={getRowKey(row)}
+								row={row}
+								columns={columns}
+								columnClassNames={columnClassNames}
+							/>
 						))}
 			</tbody>
 		</table>
