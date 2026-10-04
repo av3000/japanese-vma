@@ -23,3 +23,9 @@
 	font-weight: var(--font-weight-semibold);
 	white-space: nowrap;
 }
+
+/* The rail's full-width text button: the wrapper takes the rail's width. */
+.labelled {
+	display: block;
+	width: 100%;
+}
