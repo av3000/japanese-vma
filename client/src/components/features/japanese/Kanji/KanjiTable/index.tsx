@@ -1,6 +1,5 @@
 import * as React from 'react';
 import type { ViewerCatalogueStateResource, KanjiResource } from '@/api/generated/model';
-import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import {
 	GlyphLink,
 	JapaneseList,
@@ -10,6 +9,8 @@ import {
 	presentRank,
 	presentText,
 	presentValues,
+	saveColumn,
+	withSaveArea,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { SavedListType } from '@/shared/constants/enums';
@@ -87,9 +88,15 @@ const stackedAreas = [
 
 /** Strokes, JLPT and Freq. share the fourth line; Save takes its own column on the right. */
 const STACKED = { columns: '48px auto auto minmax(0, 1fr)', areas: stackedAreas };
-const STACKED_WITH_SAVE = {
-	columns: '48px auto auto minmax(0, 1fr) auto',
-	areas: stackedAreas.map((area) => `${area} save`),
+const STACKED_WITH_SAVE = withSaveArea(STACKED);
+
+const save = {
+	types: { saved: SavedListType.KANJIS, known: SavedListType.KNOWNKANJIS },
+	modalTitle: 'Choose Kanji List to add',
+	getId: (kanji: KanjiResource) => kanji.id,
+	getLabel: (kanji: KanjiResource) => kanji.character,
+	getState: (kanji: KanjiResource) => kanji.viewer_catalogue_state,
+	cellClassName: styles.actionCell,
 };
 
 /**
@@ -97,37 +104,13 @@ const STACKED_WITH_SAVE = {
  * frequency, plus Save for signed-in viewers. Below 768px each row stacks as glyph | details | Save.
  */
 export const KanjiTable: React.FC<KanjiTableProps> = ({ kanjis, showSave, loading, empty, onBookmarkStateChange }) => {
-	const columns: DataTableColumn<KanjiResource>[] = showSave
-		? [
-				...baseColumns,
-				{
-					id: 'save',
-					header: 'Save',
-					headerHidden: true,
-					width: 'shrink',
-					cellClassName: styles.actionCell,
-					cell: (kanji) => (
-						<AuthorizedBookmarkWidget
-							compact
-							itemLabel={kanji.character}
-							instanceObjectType={SavedListType.KANJIS}
-							isKnownType={SavedListType.KNOWNKANJIS}
-							entityId={kanji.id}
-							modalTitle="Choose Kanji List to add"
-							initialIsBookmarked={kanji.viewer_catalogue_state?.is_saved ?? false}
-							initialIsKnown={kanji.viewer_catalogue_state?.is_known ?? false}
-							loadOnMount={false}
-							onStateChange={(state) =>
-								onBookmarkStateChange?.(kanji.id, {
-									is_saved: state.isBookmarked,
-									is_known: state.isKnown,
-								})
-							}
-						/>
-					),
-				},
-			]
-		: baseColumns;
+	const columns = React.useMemo(
+		() =>
+			showSave
+				? [...baseColumns, saveColumn<KanjiResource>({ ...save, onChange: onBookmarkStateChange })]
+				: baseColumns,
+		[showSave, onBookmarkStateChange],
+	);
 
 	return (
 		<DataTable

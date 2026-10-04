@@ -11,4 +11,5 @@ export {
 export { DICTIONARY_PER_PAGE, DictionaryListPage } from './DictionaryListPage';
 export { KeywordFilters } from './KeywordFilters';
 export { presentAllValues, presentRank, presentText, presentValues, toJlptLevel } from './listValues';
+export { saveColumn, withSaveArea } from './saveColumn';
 export { useKeywordSearch } from './useKeywordSearch';

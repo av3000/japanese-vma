@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { KanjiIndexJlpt } from '@/api/generated/model/kanjiIndexJlpt';
@@ -46,18 +47,25 @@ const KanjisList = () => {
 	const queryClient = useQueryClient();
 	const { isAuthenticated } = useAuth();
 	const { searchParams, keyword, applySearch } = useKeywordSearch();
-	const filters = getKanjiListFilters(searchParams);
+	const filters = useMemo(() => getKanjiListFilters(searchParams), [searchParams]);
 	const jlpt = filters.jlpt ?? '';
 
 	const { kanjis, ...query } = useInfiniteKanjis({ filters });
 
-	const handleSearch = (next: KanjiSearchFilters) => applySearch({ keyword: next.keyword, jlpt: next.jlpt });
+	const handleSearch = useCallback(
+		(next: KanjiSearchFilters) => applySearch({ keyword: next.keyword, jlpt: next.jlpt }),
+		[applySearch],
+	);
 
-	const handleKanjiBookmarkStateChange = (kanjiId: number, state: ViewerCatalogueStateResource) => {
-		queryClient.setQueryData<InfiniteData<KanjiListResource>>(getInfiniteKanjisQueryKey(filters), (data) =>
-			applyKanjiViewerCatalogueState(data, kanjiId, state),
-		);
-	};
+	// Stable across renders, so the table keeps its columns and untouched rows do not re-render.
+	const handleKanjiBookmarkStateChange = useCallback(
+		(kanjiId: number, state: ViewerCatalogueStateResource) => {
+			queryClient.setQueryData<InfiniteData<KanjiListResource>>(getInfiniteKanjisQueryKey(filters), (data) =>
+				applyKanjiViewerCatalogueState(data, kanjiId, state),
+			);
+		},
+		[queryClient, filters],
+	);
 
 	return (
 		<DictionaryListPage

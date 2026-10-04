@@ -1,6 +1,5 @@
 import * as React from 'react';
 import type { ViewerCatalogueStateResource, WordResource } from '@/api/generated/model';
-import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import {
 	JapaneseText,
 	JlptLevelCell,
@@ -8,6 +7,8 @@ import {
 	TextLink,
 	presentAllValues,
 	presentText,
+	saveColumn,
+	withSaveArea,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { SavedListType } from '@/shared/constants/enums';
@@ -67,9 +68,15 @@ const stackedAreas = ['word reading jlpt', 'meaning meaning meaning', 'type type
  */
 const FIRST_LINE = 'minmax(0, max-content) minmax(0, max-content) minmax(0, 1fr)';
 const STACKED = { columns: FIRST_LINE, areas: stackedAreas };
-const STACKED_WITH_SAVE = {
-	columns: `${FIRST_LINE} auto`,
-	areas: stackedAreas.map((area) => `${area} save`),
+const STACKED_WITH_SAVE = withSaveArea(STACKED);
+
+const save = {
+	types: { saved: SavedListType.WORDS, known: SavedListType.KNOWNWORDS },
+	modalTitle: 'Choose Word List to add',
+	getId: (word: WordResource) => word.id,
+	getLabel: (word: WordResource) => word.word,
+	getState: (word: WordResource) => word.viewer_catalogue_state,
+	cellClassName: styles.actionCell,
 };
 
 /**
@@ -77,37 +84,13 @@ const STACKED_WITH_SAVE = {
  * signed-in viewers. The meaning column absorbs the width; Type hides from 768 to 1023px.
  */
 export const WordTable: React.FC<WordTableProps> = ({ words, showSave, loading, empty, onBookmarkStateChange }) => {
-	const columns: DataTableColumn<WordResource>[] = showSave
-		? [
-				...baseColumns,
-				{
-					id: 'save',
-					header: 'Save',
-					headerHidden: true,
-					width: 'shrink',
-					cellClassName: styles.actionCell,
-					cell: (word) => (
-						<AuthorizedBookmarkWidget
-							compact
-							itemLabel={word.word}
-							instanceObjectType={SavedListType.WORDS}
-							isKnownType={SavedListType.KNOWNWORDS}
-							entityId={word.id}
-							modalTitle="Choose Word List to add"
-							initialIsBookmarked={word.viewer_catalogue_state?.is_saved ?? false}
-							initialIsKnown={word.viewer_catalogue_state?.is_known ?? false}
-							loadOnMount={false}
-							onStateChange={(state) =>
-								onBookmarkStateChange?.(word.id, {
-									is_saved: state.isBookmarked,
-									is_known: state.isKnown,
-								})
-							}
-						/>
-					),
-				},
-			]
-		: baseColumns;
+	const columns = React.useMemo(
+		() =>
+			showSave
+				? [...baseColumns, saveColumn<WordResource>({ ...save, onChange: onBookmarkStateChange })]
+				: baseColumns,
+		[showSave, onBookmarkStateChange],
+	);
 
 	return (
 		<DataTable

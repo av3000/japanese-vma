@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
@@ -29,16 +29,20 @@ const WordsList: React.FC = () => {
 	const queryClient = useQueryClient();
 	const { isAuthenticated } = useAuth();
 	const { keyword, applySearch } = useKeywordSearch();
-	const queryFilters = getWordListFilters(keyword);
+	const queryFilters = useMemo(() => getWordListFilters(keyword), [keyword]);
 	const { words, ...query } = useInfiniteWords({ filters: queryFilters });
 
-	const handleSearch = (nextKeyword: string) => applySearch({ keyword: nextKeyword });
+	const handleSearch = useCallback((nextKeyword: string) => applySearch({ keyword: nextKeyword }), [applySearch]);
 
-	const handleWordBookmarkStateChange = (wordId: number, state: ViewerCatalogueStateResource) => {
-		queryClient.setQueryData<InfiniteData<WordListResource>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
-			applyWordViewerCatalogueState(data, wordId, state),
-		);
-	};
+	// Stable across renders, so the table keeps its columns and untouched rows do not re-render.
+	const handleWordBookmarkStateChange = useCallback(
+		(wordId: number, state: ViewerCatalogueStateResource) => {
+			queryClient.setQueryData<InfiniteData<WordListResource>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
+				applyWordViewerCatalogueState(data, wordId, state),
+			);
+		},
+		[queryClient, queryFilters],
+	);
 
 	return (
 		<DictionaryListPage
