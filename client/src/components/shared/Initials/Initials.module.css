@@ -1,0 +1,24 @@
+.initials {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background-color: var(--color-neutral-200);
+	color: var(--color-neutral-700);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
+	user-select: none;
+}
+
+.sm {
+	width: 24px;
+	height: 24px;
+	font-size: var(--font-size-body-sm);
+}
+
+.md {
+	width: 32px;
+	height: 32px;
+	font-size: var(--font-size-body-md);
+}

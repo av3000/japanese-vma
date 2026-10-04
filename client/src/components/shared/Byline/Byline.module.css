@@ -1,0 +1,30 @@
+.byline {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-2xs) var(--spacing-xs);
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+}
+
+.who {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.name {
+	color: var(--color-neutral-900);
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.separator {
+	color: var(--color-neutral-500);
+}
+
+.views {
+	font-variant-numeric: tabular-nums;
+}
