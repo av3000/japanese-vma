@@ -1,36 +1,119 @@
+/* The Header's surface, mirrored: white on the kinari page, one hairline between them. */
 .footer {
-	width: 100%;
 	margin-top: auto;
-	padding: var(--spacing-md);
-	background-color: var(--alternative-text-color);
-	color: var(--color-text-neutral-default);
-	text-align: center;
-	box-shadow: 0 -0.5px 3px rgba(0, 0, 0, 0.1);
+	padding-block: var(--spacing-xl) var(--spacing-lg);
+	background-color: var(--color-neutral-0);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+}
+
+/* Mobile first: brand, then the two link groups side by side. */
+.top {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--spacing-lg);
+}
+
+.nav {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+	.top {
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	}
+}
+
+.brandBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-xs);
 }
 
 .brand {
-	display: inline-block;
+	font-size: var(--font-size-heading-4);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-primary);
 	text-decoration: none;
 	white-space: nowrap;
 }
 
-.brand h4 {
+.brand:hover,
+.brand:focus-visible {
+	color: var(--color-primary);
+	text-decoration: underline var(--border-size-sm);
+	text-underline-offset: 0.2em;
+}
+
+.tagline {
+	max-inline-size: 36ch;
 	margin: 0;
+	color: var(--color-neutral-600);
 }
 
-.socialLinks {
-	margin-bottom: var(--spacing-xs);
+.groupLabel {
+	margin: 0 0 var(--spacing-xs);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-neutral-600);
 }
 
-.socialLinks a {
+.links {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Same opt-out as the Header links: no underline at rest, underline on hover. */
+.link {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--size-2xl);
+	color: var(--color-text-neutral-default);
 	text-decoration: none;
+	text-underline-offset: 0.4em;
 }
 
-.socialLinks a:hover {
-	opacity: 0.7;
+.link:hover {
+	color: var(--color-link-hover);
+	text-decoration: underline var(--border-size-sm);
+}
+
+.link:focus-visible,
+.brand:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+/* Licence paragraphs: small and muted, but readable (neutral-600 on white is 5.7:1). */
+.attribution {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	margin-top: var(--spacing-xl);
+	padding-top: var(--spacing-lg);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.attribution p {
+	max-inline-size: 90ch;
+	margin: 0;
 }
 
 .legal {
-	margin: 0;
+	margin: var(--spacing-lg) 0 0;
+	font-size: var(--font-size-body-sm);
 	color: var(--color-neutral-600);
+	overflow-wrap: anywhere;
 }

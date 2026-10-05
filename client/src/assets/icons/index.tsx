@@ -9,9 +9,7 @@ import clock from './clock.svg?raw';
 import commentSolid from './comment-solid.svg?raw';
 import downloadSolid from './download-solid.svg?raw';
 import eyeRegular from './eye-regular.svg?raw';
-import fbIcon from './fb-icon.svg?raw';
 import filePdfSolid from './file-pdf-solid.svg?raw';
-import igIcon from './ig-icon.svg?raw';
 import layerGroupSolid from './layer-group-solid.svg?raw';
 import lockOpenSolid from './lock-open-solid.svg?raw';
 import lockSolid from './lock-solid.svg?raw';
@@ -30,8 +28,6 @@ import removeSolid from './xmark-solid.svg?raw';
 export const icons = {
 	plus,
 	user,
-	fbIcon,
-	igIcon,
 	chevron,
 	thumbsUpSolid,
 	thumbsUpRegular,
