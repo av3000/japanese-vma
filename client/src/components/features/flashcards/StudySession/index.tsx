@@ -145,7 +145,12 @@ export const StudySession = ({
 
 	return (
 		<Stack as="section" gap="lg" aria-label="Study session" className={styles.session}>
-			<SessionProgress current={phase.index + 1} total={total} correct={correctCount} />
+			<SessionProgress
+				current={phase.index + 1}
+				answered={phase.kind === 'feedback' ? phase.index + 1 : phase.index}
+				total={total}
+				correct={correctCount}
+			/>
 
 			<FlashcardPrompt card={card} field={deck.config.prompt} />
 

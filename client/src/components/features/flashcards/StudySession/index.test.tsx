@@ -45,11 +45,15 @@ describe('StudySession', () => {
 		const { container } = rendered;
 
 		expect(container.textContent).toContain('学');
-		expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('1');
+		// The bar counts graded cards, so it starts empty and fills when an answer is given.
+		const progress = () => container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow');
+		expect(container.textContent).toContain('Card 1 of 3');
+		expect(progress()).toBe('0');
 
 		// Card 1: correct.
 		click(buttonNamed(container, 'study'));
 		expect(container.textContent).toContain('Correct');
+		expect(progress()).toBe('1');
 		click(buttonNamed(container, 'Next card'));
 
 		// Card 2: wrong.

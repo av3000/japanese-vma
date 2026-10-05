@@ -1,17 +1,21 @@
+/* Even border plus a tint of the verdict colour, the same recipe as the shared Alert. */
 .feedback {
+	--feedback-accent: var(--color-neutral-500);
+
 	padding: var(--spacing-md);
 	border: var(--border-size-sm) solid var(--color-neutral-200);
-	border-left-width: var(--size-2xs, 4px);
+	border-color: color-mix(in srgb, var(--feedback-accent) 35%, transparent);
 	border-radius: var(--border-radius-md);
 	background: var(--color-neutral-0);
+	background: color-mix(in srgb, var(--feedback-accent) 8%, var(--color-neutral-0));
 }
 
 .correct {
-	border-left-color: var(--color-success);
+	--feedback-accent: var(--color-success);
 }
 
 .wrong {
-	border-left-color: var(--color-error);
+	--feedback-accent: var(--color-error);
 }
 
 .verdict {

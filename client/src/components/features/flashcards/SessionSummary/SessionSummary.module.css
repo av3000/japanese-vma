@@ -21,19 +21,21 @@
 	list-style: none;
 }
 
+/* Prompt | answers with "you said" under them | bookmark. The prompt column is capped so a
+   long word wraps instead of squeezing the answers. */
 .missedRow {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr);
-	gap: var(--spacing-3xs) var(--spacing-md);
+	grid-template-columns: fit-content(40%) minmax(0, 1fr) auto;
+	gap: var(--spacing-md);
+	align-items: center;
 	padding-block: var(--spacing-sm);
 	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
 }
 
-@media (min-width: 768px) {
-	.missedRow {
-		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
-		align-items: baseline;
-	}
+.detail {
+	display: grid;
+	gap: var(--spacing-3xs);
+	min-width: 0;
 }
 
 .prompt {
@@ -69,5 +71,5 @@
 }
 
 .bookmark {
-	justify-self: start;
+	justify-self: end;
 }

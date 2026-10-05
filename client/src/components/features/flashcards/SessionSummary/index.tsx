@@ -91,11 +91,13 @@ export const SessionSummary = ({
 							<span className={styles.prompt} lang={promptJapanese ? 'ja' : undefined}>
 								{card.promptText}
 							</span>
-							<span className={styles.answers} lang={answerJapanese ? 'ja' : undefined}>
-								{card.acceptedAnswers.join(', ')}
-							</span>
-							<span className={styles.given}>
-								you said: <span lang={answerJapanese ? 'ja' : undefined}>{given || '—'}</span>
+							<span className={styles.detail}>
+								<span className={styles.answers} lang={answerJapanese ? 'ja' : undefined}>
+									{card.acceptedAnswers.join(', ')}
+								</span>
+								<span className={styles.given}>
+									you said: <span lang={answerJapanese ? 'ja' : undefined}>{given || '—'}</span>
+								</span>
 							</span>
 							{canBookmark && (
 								<span className={styles.bookmark}>
