@@ -19,6 +19,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Run lock
+    |--------------------------------------------------------------------------
+    |
+    | Only one Import Run per Content Source runs at a time; the run takes a cache lock to
+    | make sure. A lock is only shared between hosts that use the same cache store, so every
+    | host that may run an import must point this at the same store (Redis in production).
+    | Null uses the default cache store.
+    |
+    */
+
+    'lock_store' => env('CONTENT_IMPORT_LOCK_STORE'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Run limits
     |--------------------------------------------------------------------------
     |

@@ -30,11 +30,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping();
 
         // Content Import (epic #404): one run a day, in the Japanese morning, after the night's
-        // news is out. withoutOverlapping keeps two runs from racing for the same articles.
+        // news is out. No withoutOverlapping here: each run takes a per-source lock itself
+        // (ImportRunRecorder), which also covers runs started by hand.
         $schedule->command('content:import')
             ->dailyAt('07:30')
-            ->timezone('Asia/Tokyo')
-            ->withoutOverlapping(60);
+            ->timezone('Asia/Tokyo');
     }
 
     /**

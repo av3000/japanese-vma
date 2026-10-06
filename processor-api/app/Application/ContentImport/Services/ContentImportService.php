@@ -6,11 +6,13 @@ namespace App\Application\ContentImport\Services;
 
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\ContentImport\Interfaces\ArticleTaggerInterface;
+use App\Application\ContentImport\Interfaces\ContentSourceAdapterInterface;
 use App\Application\ContentImport\Interfaces\ContentSourceAdapterRegistryInterface;
 use App\Application\ContentImport\Interfaces\Providers\ImportSettingsProviderInterface;
 use App\Application\ContentImport\Interfaces\Providers\SystemAuthorProviderInterface;
 use App\Application\ContentImport\Interfaces\Repositories\ContentSourceRepositoryInterface;
-use App\Application\ContentImport\Interfaces\Repositories\ImportRunRepositoryInterface;
+use App\Application\ContentImport\Runs\ImportRunItems;
+use App\Application\ContentImport\Runs\ImportRunRecorder;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\ValueObjects\ArticleAuthor;
@@ -18,20 +20,18 @@ use App\Domain\Articles\ValueObjects\ArticleProvenance;
 use App\Domain\ContentImport\DTOs\ContentSourceDTO;
 use App\Domain\ContentImport\DTOs\ExternalArticle;
 use App\Domain\ContentImport\DTOs\ImportItemResult;
-use App\Domain\ContentImport\DTOs\ImportRunResult;
 use App\Domain\ContentImport\Enums\ImportItemOutcome;
-use App\Domain\ContentImport\Enums\ImportRunStatus;
 use App\Domain\ContentImport\Errors\ContentImportErrors;
-use App\Domain\ContentImport\Exceptions\ContentSourceUnavailableException;
 use App\Domain\ContentImport\ValueObjects\ImportRunSettings;
 use App\Shared\Results\Result;
-use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
  * One Import Run: list what the source has that is not imported yet, filter it, tag it, and
  * create each survivor as a public Imported Article through the ordinary article creation path.
+ * The bookkeeping around that work (one run per source at a time, the run row, failures) is
+ * ImportRunRecorder's.
  *
  * Volume is bounded twice: by a cap on articles created per run, and by a ceiling on how many
  * listed articles one run may look at, so a source full of filtered items cannot page forever.
@@ -40,14 +40,11 @@ use Throwable;
  */
 class ContentImportService implements ContentImportServiceInterface
 {
-    /** A run row still `running` after this long belongs to a process that died. */
-    private const ABANDONED_AFTER = '-2 hours';
-
     public function __construct(
         private readonly ContentSourceRepositoryInterface $sources,
         private readonly ContentSourceAdapterRegistryInterface $adapters,
         private readonly ImportSettingsProviderInterface $settings,
-        private readonly ImportRunRepositoryInterface $runs,
+        private readonly ImportRunRecorder $recorder,
         private readonly ArticleTaggerInterface $tagger,
         private readonly SystemAuthorProviderInterface $systemAuthor,
         private readonly ArticleServiceInterface $articles,
@@ -79,109 +76,42 @@ class ContentImportService implements ContentImportServiceInterface
         }
 
         $settings = $this->settings->for($sourceKey);
-        $runId = null;
 
-        if (! $dryRun) {
-            $this->closeAbandonedRuns($source);
-            $runId = $this->runs->start($source->id);
-        }
-
-        $items = [];
-        $created = 0;
-        $status = ImportRunStatus::Succeeded;
-        $error = null;
-
-        try {
-            $listing = $adapter->listRecent(
-                fn (string $externalId): bool => $this->articles->hasImportedArticle($source->id, $externalId),
-            );
-
-            // Checked before asking for the next item, so the lazy listing is never asked for one
-            // it will not use.
-            if (! $settings->isLimitReached($created, count($items))) {
-                foreach ($listing as $article) {
-                    $item = $this->importOne($source, $article, $author, $settings, $dryRun);
-                    $items[] = $item;
-
-                    if ($item->outcome === ImportItemOutcome::Created || $item->outcome === ImportItemOutcome::WouldCreate) {
-                        $created++;
-                    }
-
-                    if ($settings->isLimitReached($created, count($items))) {
-                        break;
-                    }
-                }
-            }
-        } catch (ContentSourceUnavailableException $e) {
-            $status = ImportRunStatus::Failed;
-            $error = $e->getMessage();
-
-            Log::warning('Content import run failed', ['source' => $sourceKey, 'error' => $error]);
-        } catch (Throwable $e) {
-            // Anything else is a bug, not an unreadable source, but the run row must still be
-            // closed: a row left `running` would hide every later run's state.
-            $status = ImportRunStatus::Failed;
-            $error = $e::class.': '.$e->getMessage();
-
-            Log::error('Content import run crashed', ['source' => $sourceKey, 'exception' => $e]);
-        }
-
-        $result = new ImportRunResult($sourceKey, $status, $dryRun, $items, $error);
-
-        if ($runId === null) {
-            return Result::success($result);
-        }
-
-        $this->runs->finish($runId, $result);
-
-        return Result::success(new ImportRunResult(
-            $sourceKey,
-            $status,
+        return $this->recorder->record(
+            $source,
             $dryRun,
-            $items,
-            $error,
-            $this->hasStalled($source, $settings->stalledAfterRuns),
-        ));
+            $settings->stalledAfterRuns,
+            fn (ImportRunItems $items) => $this->importNew($source, $adapter, $author, $settings, $dryRun, $items),
+        );
     }
 
     /**
-     * A process killed mid-run (deploy, out of memory, timeout) never closes its row. Such rows
-     * are closed as failed before the next run starts, so the run history stays truthful.
+     * Walks the source's listing until it runs out or a limit is reached. The limit is checked
+     * before asking for the next article, so the lazy listing never fetches one it will not use.
      */
-    private function closeAbandonedRuns(ContentSourceDTO $source): void
-    {
-        $closed = $this->runs->closeAbandoned($source->id, new DateTimeImmutable(self::ABANDONED_AFTER));
-
-        if ($closed > 0) {
-            Log::warning('Content import closed runs that never finished', [
-                'source' => $source->key,
-                'runs' => $closed,
-            ]);
-        }
-    }
-
-    /**
-     * An unofficial source rarely breaks with an error; it breaks by quietly yielding nothing.
-     * Several successful runs in a row that created nothing are reported as a warning.
-     */
-    private function hasStalled(ContentSourceDTO $source, int $runs): bool
-    {
-        if ($runs < 1) {
-            return false;
+    private function importNew(
+        ContentSourceDTO $source,
+        ContentSourceAdapterInterface $adapter,
+        ArticleAuthor $author,
+        ImportRunSettings $settings,
+        bool $dryRun,
+        ImportRunItems $items,
+    ): void {
+        if ($settings->isLimitReached($items->created(), $items->listed())) {
+            return;
         }
 
-        $counts = $this->runs->recentCreatedCounts($source->id, $runs);
+        $listing = $adapter->listRecent(
+            fn (string $externalId): bool => $this->articles->hasImportedArticle($source->id, $externalId),
+        );
 
-        if (count($counts) < $runs || array_sum($counts) > 0) {
-            return false;
+        foreach ($listing as $article) {
+            $items->add($this->importOne($source, $article, $author, $settings, $dryRun));
+
+            if ($settings->isLimitReached($items->created(), $items->listed())) {
+                return;
+            }
         }
-
-        Log::warning('Content import has created nothing for several runs', [
-            'source' => $source->key,
-            'runs' => $runs,
-        ]);
-
-        return true;
     }
 
     private function importOne(
@@ -231,6 +161,8 @@ class ContentImportService implements ContentImportServiceInterface
             return new ImportItemResult($article->externalId, $article->title, ImportItemOutcome::Created, $tags);
         }
 
+        // Another run of the same source created this article between our "already imported?"
+        // check and the insert. The unique index caught it; for this run it is simply a skip.
         if ($result->getError()->code === ArticleErrors::ALREADY_IMPORTED) {
             return $skip(ImportItemOutcome::AlreadyImported);
         }

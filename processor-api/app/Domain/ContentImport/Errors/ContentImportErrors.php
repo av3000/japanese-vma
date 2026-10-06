@@ -31,6 +31,17 @@ class ContentImportErrors
         );
     }
 
+    public static function runInProgress(string $key): ResultError
+    {
+        return new ResultError(
+            code: 'ContentImport.RunInProgress',
+            status: HttpStatus::CONFLICT,
+            description: 'Import run in progress',
+            detail: "Another import run of {$key} is still in progress",
+            errorMessage: "Another import run of {$key} is still in progress",
+        );
+    }
+
     public static function systemAuthorMissing(): ResultError
     {
         return new ResultError(

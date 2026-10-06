@@ -22,6 +22,9 @@ class FakeContentSourceAdapter implements ContentSourceAdapterInterface
 
     public int $yielded = 0;
 
+    /** Lists every article even when it was imported before, the way two racing runs would see it. */
+    public bool $ignoreKnown = false;
+
     public function __construct(private readonly string $key = 'fake-source')
     {
     }
@@ -34,7 +37,7 @@ class FakeContentSourceAdapter implements ContentSourceAdapterInterface
     public function listRecent(callable $isKnown): iterable
     {
         foreach ($this->articles as $article) {
-            if ($isKnown($article->externalId)) {
+            if (! $this->ignoreKnown && $isKnown($article->externalId)) {
                 continue;
             }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Console;
 
+use App\Application\ContentImport\Runs\ImportRunRecorder;
 use App\Domain\ContentImport\Enums\ImportRunStatus;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\ContentImportRun;
@@ -16,6 +17,7 @@ use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\ContentImport\FakesNhkNews;
 use Tests\Support\SeedsBaselineData;
@@ -104,7 +106,20 @@ class ImportContentCommandTest extends TestCase
             ->assertSuccessful();
     }
 
-    public function test_it_is_scheduled_daily_in_the_japanese_morning_without_overlap(): void
+    public function test_a_source_already_being_imported_is_reported_and_exits_non_zero(): void
+    {
+        $this->fakeNhkNews();
+        Cache::lock(ImportRunRecorder::lockName('nhk-news'), 60)->get();
+
+        $this->artisan('content:import')
+            ->expectsOutputToContain('nhk-news: Another import run of nhk-news is still in progress')
+            ->assertFailed();
+
+        self::assertSame(0, Article::query()->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_it_is_scheduled_daily_in_the_japanese_morning(): void
     {
         $events = collect(app(Schedule::class)->events())
             ->filter(fn (Event $event): bool => str_contains((string) $event->command, 'content:import'));
@@ -113,6 +128,5 @@ class ImportContentCommandTest extends TestCase
         $event = $events->first();
         self::assertSame('30 7 * * *', $event->expression);
         self::assertSame('Asia/Tokyo', (string) $event->timezone);
-        self::assertTrue($event->withoutOverlapping);
     }
 }

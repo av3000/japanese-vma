@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\ContentImport;
 
 use App\Application\ContentImport\Interfaces\ArticleTaggerInterface;
+use App\Application\ContentImport\Runs\ImportRunRecorder;
 use App\Application\ContentImport\Services\ContentImportServiceInterface;
 use App\Domain\ContentImport\DTOs\ContentSourceDTO;
 use App\Domain\ContentImport\DTOs\ExternalArticle;
@@ -19,6 +20,7 @@ use App\Infrastructure\Persistence\Models\User;
 use Database\Seeders\ContentImporterUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Tests\Support\ContentImport\FakeContentSourceAdapter;
 use Tests\Support\SeedsBaselineData;
 use Tests\TestCase;
@@ -233,6 +235,64 @@ class ContentImportServiceTest extends TestCase
         self::assertSame(ImportRunStatus::Failed, $run->status);
         self::assertNotNull($run->finished_at);
         self::assertSame('TypeError: boom', $run->error);
+    }
+
+    public function test_only_one_run_of_a_source_runs_at_a_time(): void
+    {
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];
+        $lock = Cache::lock(ImportRunRecorder::lockName('fake-source'), 60);
+        self::assertTrue($lock->get());
+
+        $refused = app(ContentImportServiceInterface::class)->run('fake-source');
+
+        self::assertTrue($refused->isFailure());
+        self::assertSame('ContentImport.RunInProgress', $refused->getError()->code);
+        self::assertSame(0, ContentImportRun::query()->count());
+        self::assertSame(0, Article::query()->count());
+
+        $lock->release();
+
+        self::assertSame(1, $this->runImport()->created());
+    }
+
+    public function test_a_dry_run_does_not_wait_for_a_running_import(): void
+    {
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];
+        Cache::lock(ImportRunRecorder::lockName('fake-source'), 60)->get();
+
+        $result = $this->runImport(dryRun: true);
+
+        self::assertSame(ImportItemOutcome::WouldCreate, $result->items[0]->outcome);
+    }
+
+    public function test_a_crashed_run_releases_the_lock(): void
+    {
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];
+        $this->adapter->crashWith = new \TypeError('boom');
+        $this->runImport();
+
+        $this->adapter->crashWith = null;
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a2')];
+
+        self::assertSame(ImportRunStatus::Succeeded, $this->runImport()->status);
+    }
+
+    public function test_an_article_another_run_created_first_is_skipped_not_failed(): void
+    {
+        // Two runs both checked "imported yet?" before either inserted; this run lost the race.
+        Article::factory()->importedFrom($this->source, 'a1')->create();
+        $this->adapter->ignoreKnown = true;
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1'), FakeContentSourceAdapter::article('a2')];
+
+        $result = $this->runImport();
+
+        self::assertSame(ImportRunStatus::Succeeded, $result->status);
+        self::assertSame(
+            [ImportItemOutcome::AlreadyImported, ImportItemOutcome::Created],
+            array_map(fn ($item) => $item->outcome, $result->items),
+        );
+        self::assertSame(1, Article::query()->where('external_id', 'a1')->count());
+        self::assertSame([1, 1, 0], [ContentImportRun::query()->sole()->created, $result->skipped(), $result->failed()]);
     }
 
     public function test_a_dry_run_writes_nothing(): void
