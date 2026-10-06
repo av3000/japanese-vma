@@ -63,6 +63,15 @@ const CATALOGUE_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab]
 // the pattern allows but JavaScript cannot represent without rounding.
 const CATALOGUE_LEGACY_ID_PATTERN = /^[1-9][0-9]{0,17}$/;
 
+/**
+ * The four Known lists every user gets at registration (`CatalogueType` 1–4 on the backend).
+ * Known marking depends on them and nothing recreates a deleted one, so the client offers no
+ * edit or delete for them (UI-DASH-04, #454; backend guard in #459).
+ */
+const BUILT_IN_CATALOGUE_TYPES: ReadonlySet<number> = new Set([1, 2, 3, 4]);
+
+export const isBuiltInCatalogueType = (value: number): boolean => BUILT_IN_CATALOGUE_TYPES.has(value);
+
 export const isCustomCatalogueType = (value: number): value is CustomCatalogueType => {
 	return Object.prototype.hasOwnProperty.call(CATALOGUE_TYPE_LABELS, value);
 };

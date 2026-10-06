@@ -1,0 +1,34 @@
+/* Cell content for the dashboard lists table; the table itself is the shared DataTable. */
+
+.titleCell {
+	min-width: 12rem;
+}
+
+.title {
+	display: block;
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.type {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-2xs);
+}
+
+/* A text tag, so "built in" is never carried by colour alone. */
+.builtIn {
+	padding: 0 var(--spacing-2xs);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-sm);
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-xs);
+	white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+	.titleCell {
+		min-width: 0;
+	}
+}
