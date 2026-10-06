@@ -124,11 +124,12 @@ class StoreUpdateCatalogueTest extends TestCase
     public function test_update_allows_owner_to_partially_update_and_replace_hashtags(): void
     {
         $user = $this->createUser();
+        // The type already matches its items: a catalogue that holds items cannot change type.
         $catalogue = $this->createCatalogue($user, [
             'title' => 'Before Update',
             'description' => 'Keep this description',
             'publicity' => false,
-            'type' => 5,
+            'type' => 8,
         ]);
         $this->attachHashtags($catalogue, ['#old']);
         DB::table('customlist_object')->insert([
@@ -239,6 +240,86 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('GET', '/api/v1/catalogues')
             ->assertStatus(200)
             ->assertJsonMissing(['uuid' => $catalogue->uuid]);
+    }
+
+    private function addItems(PersistenceCatalogue $catalogue, int $listTypeId, array $itemIds): void
+    {
+        DB::table('customlist_object')->insert(array_map(fn (int $itemId) => [
+            'list_id' => $catalogue->id,
+            'listtype_id' => $listTypeId,
+            'real_object_id' => $itemId,
+        ], $itemIds));
+    }
+
+    public function test_update_rejects_type_change_when_catalogue_has_items(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Station kanji', 'type' => 6]);
+        $this->addItems($catalogue, 6, [101, 102]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'title' => 'Station words',
+            'type' => 7,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.type.0', "The type can't be changed once the catalogue has items.")
+            ->assertJsonMissingPath('errors.title');
+
+        $catalogue->refresh();
+
+        // Nothing is written when the lock refuses the update, not even the valid title.
+        $this->assertSame(6, $catalogue->type->value);
+        $this->assertSame('Station kanji', $catalogue->title);
+    }
+
+    public function test_update_accepts_the_current_type_when_catalogue_has_items(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Station kanji', 'type' => 6]);
+        $this->addItems($catalogue, 6, [101]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'title' => 'Station kanji N4',
+            'type' => 6,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('title', 'Station kanji N4')
+            ->assertJsonPath('type', 6)
+            ->assertJsonPath('items_count', 1);
+    }
+
+    public function test_update_allows_type_change_of_an_empty_catalogue(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['type' => 6]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", ['type' => 7])
+            ->assertStatus(200)
+            ->assertJsonPath('type', 7)
+            ->assertJsonPath('items_count', 0);
+
+        $this->assertSame(7, $catalogue->refresh()->type->value);
+    }
+
+    public function test_update_type_lock_does_not_leak_to_non_owner(): void
+    {
+        $owner = $this->createUser();
+        $otherUser = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, ['type' => 6]);
+        $this->addItems($catalogue, 6, [101]);
+
+        Passport::actingAs($otherUser, ['*'], 'api');
+
+        // The policy answers first, so a stranger learns nothing about the catalogue's items.
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", ['type' => 7])
+            ->assertStatus(403)
+            ->assertJsonMissingPath('errors.type');
     }
 
     public function test_update_empty_payload_returns_validation_problem(): void

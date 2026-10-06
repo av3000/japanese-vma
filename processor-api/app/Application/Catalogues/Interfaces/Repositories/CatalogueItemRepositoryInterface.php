@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Catalogues\Interfaces\Repositories;
 
+use App\Domain\Catalogues\Enums\CatalogueJlptSource;
 use App\Domain\Shared\Enums\SavedListType;
 
 interface CatalogueItemRepositoryInterface
@@ -19,6 +20,16 @@ interface CatalogueItemRepositoryInterface
      * @return array<int,int> map list_id => count
      */
     public function countItemsByCatalogueIds(array $catalogueIds): array;
+
+    /**
+     * One grouped query for every given catalogue, whatever their number. Each distinct
+     * kanji or word is counted once per catalogue, under its raw `jlpt` value.
+     *
+     * @param int[] $catalogueIds catalogues whose type has this source
+     *
+     * @return array<int, array<string, int>> map list_id => raw jlpt value => count
+     */
+    public function countJlptLevelsByCatalogueIds(CatalogueJlptSource $source, array $catalogueIds): array;
 
     /**
      * @param int[] $itemIds

@@ -105,8 +105,9 @@ describe('PostEdit', () => {
 				topic: 5,
 				tags: ['howto', 'kanji'],
 			},
-			submitLabel: 'Update Post',
-			disableSubmitWhenUnchanged: true,
+			submitLabel: 'Save changes',
+			// The form answers an unchanged submit with "No changes to save." and never calls onSubmit.
+			requireChanges: true,
 		});
 	});
 
@@ -160,14 +161,6 @@ describe('PostEdit', () => {
 		capturedSubmit?.({ ...edited, tags: [] }, { dirtyKeys: ['tags'] });
 
 		expect(mutate).toHaveBeenCalledWith({ tags: [] }, expect.anything());
-	});
-
-	it('returns to the Post instead of sending an empty body the server would reject', () => {
-		render();
-		capturedSubmit?.(edited, { dirtyKeys: [] });
-
-		expect(mutate).not.toHaveBeenCalled();
-		expect(navigate).toHaveBeenCalledWith('/community/post-uuid');
 	});
 
 	it('does not navigate away from the draft when the server rejects the write', () => {

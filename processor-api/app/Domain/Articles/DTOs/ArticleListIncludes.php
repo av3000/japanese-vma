@@ -13,14 +13,18 @@ namespace App\Domain\Articles\DTOs;
  *
  * Implements ArticleIncludeOptionsInterface so the persistence mapper accepts it
  * directly; the list path carries one includes shape, not two.
+ *
+ * `include_kanjis` and `include_words` default to false, as on the detail endpoint since #268:
+ * embedding every kanji of every Article made a page of two weigh about 125 KB instead of 5 KB,
+ * and no list UI reads them (#384). Callers that want them inline still ask.
  */
 final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterface
 {
     public function __construct(
         public bool $includeStats = true,
         public bool $includeHashtags = true,
-        public bool $includeKanjis = true,
-        public bool $includeWords = true,
+        public bool $includeKanjis = false,
+        public bool $includeWords = false,
         /**
          * Off by default so homepage, dashboard and related-Article callers do not
          * pay aggregation cost for controls they never render.
@@ -45,8 +49,8 @@ final readonly class ArticleListIncludes implements ArticleIncludeOptionsInterfa
         return new self(
             includeStats: (bool) ($validated['include_stats_counts'] ?? true),
             includeHashtags: (bool) ($validated['include_hashtags'] ?? true),
-            includeKanjis: (bool) ($validated['include_kanjis'] ?? true),
-            includeWords: (bool) ($validated['include_words'] ?? true),
+            includeKanjis: (bool) ($validated['include_kanjis'] ?? false),
+            includeWords: (bool) ($validated['include_words'] ?? false),
             includeFacets: (bool) ($validated['include_facets'] ?? false),
         );
     }

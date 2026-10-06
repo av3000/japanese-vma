@@ -130,6 +130,13 @@ describe('PostsList', () => {
 		expect(renderToStaticMarkup(<PostsList />)).not.toContain('/newpost');
 
 		isAuthenticated = true;
-		expect(renderToStaticMarkup(<PostsList />)).toContain('/newpost');
+		expect(renderToStaticMarkup(<PostsList />)).toMatch(/<a[^>]*href="\/newpost"[^>]*>.*New post.*<\/a>/);
+	});
+
+	it('titles the page with its only h1', () => {
+		const html = renderToStaticMarkup(<PostsList />);
+
+		expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Community<\/h1>/);
 	});
 });

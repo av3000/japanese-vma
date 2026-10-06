@@ -9,7 +9,6 @@ import {
 	sentenceStore,
 	sentenceUpdate,
 } from '@/api/generated/sentence/sentence';
-import { readWriteFailure, type WriteFailure } from '@/api/writeFailure';
 import type { User } from '@/types';
 
 export type SentenceWriteResponse = SentenceResource;
@@ -17,8 +16,6 @@ export type SentenceWriteResponse = SentenceResource;
 type SentenceIdentity = Pick<SentenceWriteResponse, 'id' | 'uuid'>;
 type SentenceOwnership = Pick<SentenceWriteResponse, 'user_id'>;
 type SentenceViewer = Pick<User, 'id' | 'isAdmin'> | null | undefined;
-
-export const GENERIC_SENTENCE_WRITE_ERROR = 'Something went wrong. Please try again.';
 
 /**
  * Mirrors `SentencePolicy::isImmutable` — imported sentences have no author and
@@ -80,11 +77,6 @@ const asSentenceResource = (response: string | SentenceWriteResponse): SentenceW
 
 	return response;
 };
-
-export type SentenceWriteFailure = WriteFailure;
-
-export const readSentenceWriteError = (error: unknown): SentenceWriteFailure =>
-	readWriteFailure(error, GENERIC_SENTENCE_WRITE_ERROR);
 
 export const useCreateSentenceMutation = () => {
 	const queryClient = useQueryClient();

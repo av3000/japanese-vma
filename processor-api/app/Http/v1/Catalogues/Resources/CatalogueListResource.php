@@ -30,6 +30,7 @@ class CatalogueListResource extends JsonResource
                 stats: $item->stats,
                 hashtags: $item->hashtags,
                 itemsCount: $item->itemsCount,
+                jlptLevels: $item->jlptLevels,
             ),
             $this->resource->items,
         );

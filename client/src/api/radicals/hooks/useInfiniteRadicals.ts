@@ -1,9 +1,9 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
+import type { RadicalIndexParams } from '@/api/generated/model/radicalIndexParams';
+import type { RadicalListResource } from '@/api/generated/model/radicalListResource';
 import { getRadicalIndexQueryKey, radicalIndex } from '@/api/generated/radical/radical';
 import type { RadicalIndexQueryError } from '@/api/generated/radical/radical';
-import type { RadicalIndex200 } from '@/api/generated/model/radicalIndex200';
-import type { RadicalIndexParams } from '@/api/generated/model/radicalIndexParams';
 
 export type RadicalListFilters = Omit<RadicalIndexParams, 'page'>;
 
@@ -14,16 +14,16 @@ type UseInfiniteRadicalsOptions = {
 
 export const getInfiniteRadicalsQueryKey = (filters: RadicalListFilters = {}) => getRadicalIndexQueryKey(filters);
 
-export const getNextRadicalsPageParam = (lastPage: RadicalIndex200) =>
+export const getNextRadicalsPageParam = (lastPage: RadicalListResource) =>
 	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
 
-export const getRadicalsTotal = (pages: RadicalIndex200[] | undefined) => pages?.[0]?.pagination.total ?? 0;
+export const getRadicalsTotal = (pages: RadicalListResource[] | undefined) => pages?.[0]?.pagination.total ?? 0;
 
 export const useInfiniteRadicals = ({ enabled = true, filters = {} }: UseInfiniteRadicalsOptions = {}) => {
 	const query = useInfiniteQuery<
-		RadicalIndex200,
+		RadicalListResource,
 		RadicalIndexQueryError,
-		InfiniteData<RadicalIndex200>,
+		InfiniteData<RadicalListResource>,
 		ReturnType<typeof getInfiniteRadicalsQueryKey>,
 		number
 	>({

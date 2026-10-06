@@ -6,9 +6,17 @@ namespace App\Http\v1\JapaneseMaterial\Words\Resources;
 
 use App\Domain\Catalogues\DTOs\ViewerCatalogueStateDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Http\v1\Catalogues\Resources\ViewerCatalogueStateResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * The class-level `@property` lets Scramble resolve `$this->resource` when it infers this
+ * component; without it every property degrades to `string`. Same pattern as `KanjiResource`
+ * and `SentenceResource`.
+ *
+ * @property Word $resource
+ */
 class WordResource extends JsonResource
 {
     public static $wrap = null;
@@ -36,7 +44,7 @@ class WordResource extends JsonResource
      *     word_k_ele: string,
      *     furigana_r_ele: string,
      *     sense: ?string,
-     *     viewer_catalogue_state: array{is_saved: bool, is_known: bool|null}|null
+     *     viewer_catalogue_state: ViewerCatalogueStateResource|null
      * }
      */
     public function toArray(Request $request): array
@@ -55,16 +63,13 @@ class WordResource extends JsonResource
             'word_types' => $word->getWordTypes(),
             'writing_elements' => $word->getWritingElements(),
             'reading_elements' => $word->getReadingElements(),
-            'word_type' => $word->getRawWordType() ?? '',
-            'word_k_ele' => $word->getRawWritingElements() ?? '',
-            'furigana_r_ele' => $word->getRawReadingElements() ?? '',
+            'word_type' => (string) ($word->getRawWordType() ?? ''),
+            'word_k_ele' => (string) ($word->getRawWritingElements() ?? ''),
+            'furigana_r_ele' => (string) ($word->getRawReadingElements() ?? ''),
             'sense' => $word->getRawSense(),
             'viewer_catalogue_state' => $this->viewerCatalogueState === null
                 ? null
-                : [
-                    'is_saved' => $this->viewerCatalogueState->isSaved,
-                    'is_known' => $this->viewerCatalogueState->isKnown,
-                ],
+                : new ViewerCatalogueStateResource($this->viewerCatalogueState),
         ];
     }
 }

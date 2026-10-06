@@ -1,0 +1,339 @@
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Which half shows: the inline panel from 1024px (the Header collapse breakpoint), the button below. */
+.desktopOnly {
+	display: none;
+}
+
+/* Desktop form ------------------------------------------------------------ */
+
+.form {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: 640px;
+	margin: 0;
+	margin-inline: auto;
+}
+
+.field {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	height: var(--input-height-sm);
+	padding: 0 var(--spacing-sm);
+	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border-radius: var(--border-radius-sm);
+	background-color: var(--color-neutral-0);
+}
+
+.field:focus-within {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+}
+
+.fieldIcon {
+	flex: none;
+	color: var(--color-neutral-600);
+}
+
+.input {
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	font: inherit;
+	font-size: var(--font-size-body-lg);
+	color: var(--color-neutral-900);
+}
+
+/* The global input:focus outline would draw a second box inside the field's own focus ring. */
+.input:focus,
+.input:focus-visible {
+	outline: none;
+}
+
+.input::placeholder {
+	color: var(--color-neutral-500);
+}
+
+/* The field draws the focus ring; the native search "x" would sit next to the "/" hint. */
+.input::-webkit-search-cancel-button {
+	appearance: none;
+}
+
+.kbd {
+	padding: 0 var(--spacing-2xs);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-100);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.panel {
+	position: absolute;
+	top: calc(100% + var(--spacing-2xs) + var(--spacing-3xs));
+	right: 0;
+	left: 0;
+	z-index: var(--z-index-dropdown);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+	box-shadow: var(--box-shadow-default);
+}
+
+.footer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-md);
+	padding: var(--spacing-xs) var(--spacing-md);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+/* Body, shared by the panel and the drawer --------------------------------- */
+
+.body {
+	padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
+}
+
+.label {
+	margin: var(--spacing-sm) 0 var(--spacing-xs);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.label:first-child {
+	margin-top: 0;
+}
+
+/* Chips wrap; they never scroll sideways. */
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	min-height: var(--size-2xl);
+	padding: 0 var(--spacing-sm);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-lg);
+	background-color: var(--color-neutral-0);
+	font: inherit;
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+	cursor: pointer;
+}
+
+.chip:hover {
+	border-color: var(--color-neutral-500);
+	color: var(--color-neutral-900);
+}
+
+.chip:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+/* Fill, border and weight, so the selected chip does not rely on colour alone. */
+.chip[aria-pressed='true'] {
+	border-color: var(--color-primary-200);
+	background-color: var(--color-primary-tint);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-primary-hover);
+}
+
+.bestTag {
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-regular);
+	color: var(--color-primary);
+}
+
+.rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	width: 100%;
+	padding: var(--spacing-xs) var(--spacing-sm);
+	border: 0;
+	border-radius: var(--border-radius-sm);
+	background: transparent;
+	font: inherit;
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-900);
+	text-align: left;
+	cursor: pointer;
+}
+
+.row:hover {
+	background-color: var(--color-neutral-100);
+}
+
+.row:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: -2px;
+}
+
+.rowActive,
+.rowActive:hover {
+	background-color: var(--color-primary-tint);
+}
+
+.rowIcon {
+	flex: none;
+	color: var(--color-neutral-600);
+}
+
+/* Takes the free width; a trailing hit count (#383) slots in between this and the Enter hint. */
+.rowText {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.note {
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.enterHint {
+	flex: none;
+	visibility: hidden;
+	padding: 0 var(--spacing-2xs);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-0);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.rowActive .enterHint {
+	visibility: visible;
+}
+
+.query {
+	font-weight: var(--font-weight-semibold);
+}
+
+.query:lang(ja) {
+	font-family: var(--font-family-ja);
+}
+
+/* Mobile trigger and drawer ----------------------------------------------- */
+
+.iconButton {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: var(--size-4xl);
+	height: var(--size-3xl);
+	padding: 0;
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-sm);
+	background: transparent;
+	color: var(--color-neutral-900);
+	cursor: pointer;
+}
+
+.iconButton:hover {
+	border-color: var(--color-neutral-500);
+}
+
+.iconButton:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.mobileOnly {
+	margin-left: auto;
+}
+
+.drawerForm {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.drawerTop {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	padding: var(--size-sm) var(--size-md);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.drawerField {
+	flex: 1;
+	min-width: 0;
+	height: var(--input-height-md);
+}
+
+.cancel {
+	flex: none;
+	padding: var(--spacing-xs);
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: var(--font-size-body-md);
+	color: var(--color-primary);
+	cursor: pointer;
+}
+
+.cancel:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.drawerBody {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.drawerFoot {
+	padding: var(--spacing-sm) var(--size-md);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.drawerSubmit {
+	min-height: var(--button-height-md);
+	font-size: var(--font-size-body-lg);
+}
+
+@media (min-width: 1024px) {
+	.desktopOnly {
+		display: block;
+	}
+
+	.mobileOnly {
+		display: none;
+	}
+}

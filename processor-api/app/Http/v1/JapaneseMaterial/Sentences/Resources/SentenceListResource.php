@@ -31,6 +31,7 @@ class SentenceListResource extends JsonResource
         $result = $this->resource;
 
         return [
+            /** @var array<int, SentenceResource> */
             'items' => array_map(
                 fn (Sentence $sentence): SentenceResource => new SentenceResource($sentence),
                 $result->items,

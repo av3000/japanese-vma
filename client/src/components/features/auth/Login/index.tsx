@@ -1,77 +1,114 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { parseAuthError } from '@/api/auth/authError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Field, Input, Label } from '@/components/shared/FormControls';
-import { Container, Stack } from '@/components/shared/layout';
+import { FormField, Input } from '@/components/shared/FormControls';
+import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
-import styles from './Login.module.css';
+import { AuthCard } from '../AuthCard';
+import { resolveReturnTo } from '../returnTo';
 
-interface LoginFormProps {
-	heading: string;
-	buttonText: string;
-}
+// No strength rules here: accounts created before the current password policy must still sign in.
+const loginSchema = z.object({
+	email: z.string().trim().min(1, 'Enter your email.').email('Enter a valid email address.'),
+	password: z.string().min(1, 'Enter your password.'),
+});
 
-const LoginForm: React.FC<LoginFormProps> = ({ heading, buttonText }) => {
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+type LoginValues = z.infer<typeof loginSchema>;
+
+const LoginForm: React.FC = () => {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { login, sessionExpired, clearSessionExpired, isAuthenticated } = useAuth();
+	const [generalError, setGeneralError] = useState<string | null>(null);
 
+	const {
+		register,
+		handleSubmit,
+		setError,
+		formState: { errors, isSubmitting },
+	} = useForm<LoginValues>({
+		resolver: zodResolver(loginSchema),
+		defaultValues: { email: '', password: '' },
+	});
+
+	// The one navigation path: a successful login flips `isAuthenticated`, and so does arriving here
+	// already signed in.
 	useEffect(() => {
 		if (isAuthenticated) {
-			navigate('/');
+			navigate(resolveReturnTo(location.state), { replace: true });
 		}
-	}, [isAuthenticated, navigate]);
+	}, [isAuthenticated, location.state, navigate]);
 
-	const handleSubmit = async (event) => {
-		event.preventDefault();
-
-		const formData = new FormData(event.target);
-		setIsLoading(true);
-		setError(null);
+	const onSubmit = async (values: LoginValues) => {
+		setGeneralError(null);
 		clearSessionExpired();
 
 		try {
-			await login({ email: formData.get('email') as string, password: formData.get('password') as string });
-			navigate('/');
-		} catch (err: any) {
-			console.error('Login error:', err);
-			setError(err.response?.data?.message || err.message || 'Login failed. Please try again.');
-		} finally {
-			setIsLoading(false);
+			await login(values);
+		} catch (error) {
+			const authError = parseAuthError(error);
+
+			setGeneralError(authError.message);
+
+			let focused = false;
+			for (const field of ['email', 'password'] as const) {
+				const messages = authError.fieldErrors[field];
+
+				if (messages?.length) {
+					setError(field, { type: 'server', message: messages.join(' ') }, { shouldFocus: !focused });
+					focused = true;
+				}
+			}
 		}
 	};
 
+	const alert = generalError ? (
+		<Alert tone="danger">{generalError}</Alert>
+	) : sessionExpired ? (
+		<Alert tone="warning">Your session expired. Log in again to continue.</Alert>
+	) : null;
+
 	return (
-		<Container size="xs" as="section" className={styles.card}>
-			<form onSubmit={handleSubmit}>
+		<AuthCard
+			title="Welcome back"
+			alert={alert}
+			footer={
+				<>
+					New here?{' '}
+					<Link to="/register" state={location.state}>
+						Create an account
+					</Link>
+				</>
+			}
+		>
+			<form onSubmit={handleSubmit(onSubmit)} noValidate>
 				<Stack gap="md">
-					<h2 className={styles.title}>{heading}</h2>
-					<h6 className={styles.intro}>
-						Don't have an account yet? <Link to="/register">Create now.</Link>
-					</h6>
+					<FormField label="Email" id="email" error={errors.email?.message}>
+						{(control) => <Input type="email" autoComplete="email" {...control} {...register('email')} />}
+					</FormField>
 
-					{sessionExpired && <Alert tone="warning">Session expired, please login again</Alert>}
+					<FormField label="Password" id="password" error={errors.password?.message}>
+						{(control) => (
+							<Input
+								type="password"
+								autoComplete="current-password"
+								{...control}
+								{...register('password')}
+							/>
+						)}
+					</FormField>
 
-					{error && <Alert tone="danger">{error}</Alert>}
-
-					<Field>
-						<Label htmlFor="email">Email:</Label>
-						<Input id="email" name="email" type="email" required autoComplete="email" />
-					</Field>
-
-					<Field>
-						<Label htmlFor="password">Password:</Label>
-						<Input id="password" name="password" type="password" required autoComplete="current-password" />
-					</Field>
-
-					<Button type="submit" variant="outline" className={styles.submit} isLoading={isLoading}>
-						{buttonText}
+					<Button type="submit" variant="primary" isFullWidth isLoading={isSubmitting}>
+						Log in
 					</Button>
 				</Stack>
 			</form>
-		</Container>
+		</AuthCard>
 	);
 };
 

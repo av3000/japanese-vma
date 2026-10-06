@@ -1,22 +1,20 @@
 import React, { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useInfiniteCatalogues } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import Spinner from '@/assets/images/spinner.gif';
-import { CatalogueCard } from '@/components/features/catalogues/CatalogueCard/CatalogueCard';
-import {
-	CatalogueFilters,
-	DEFAULT_CATALOGUE_SEARCH_FILTERS,
-	type CatalogueSearchFilters,
-} from '@/components/features/catalogues/CatalogueFilters';
+import { CatalogueCard } from '@/components/features/LibraryCards/CatalogueCard';
+import { LibraryCardGrid, LibraryEmptyState, LibraryPage } from '@/components/features/LibraryCards/LibraryLayout';
+import { CatalogueFilters, type CatalogueSearchFilters } from '@/components/features/catalogues/CatalogueFilters';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { Container, Grid, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { CATALOGUE_ROUTES, isCustomCatalogueType } from '@/shared/constants/catalogues';
 import CataloguesListSkeleton from './CatalogueListSkeleton/CataloguesListSkeleton';
 import styles from './CataloguesList.module.css';
+import { parseCatalogueListSearchParams, serializeCatalogueListFilters } from './catalogueListSearchParams';
 
 export const DEFAULT_PER_PAGE = 12;
 
@@ -35,31 +33,64 @@ export const mapSearchFiltersToCatalogueParams = (
 		custom_only: true,
 		include_stats_counts: true,
 		include_hashtags: true,
+		// The cards render a JLPT bar (#388); the backend computes it only when asked.
+		include_jlpt_levels: true,
 	};
 };
 
+/** What the empty list says: a search, a type filter, or no public catalogues at all. */
+const emptyState = (filters: CatalogueSearchFilters) => {
+	const keyword = filters.keyword.trim();
+
+	if (keyword !== '') {
+		return { title: 'No catalogues match', term: keyword, hint: 'Try a shorter search, or clear the filters.' };
+	}
+
+	if (isCustomCatalogueType(Number(filters.filterType))) {
+		return { title: 'No public catalogues of this type yet', hint: 'Try another type, or All.' };
+	}
+
+	return { title: 'No public catalogues yet', hint: 'Catalogues people share publicly appear here.' };
+};
+
+/**
+ * Catalogue discovery.
+ *
+ * The URL owns the applied keyword, type and sort (#389): refresh, deep links and back/forward
+ * reproduce the list. The form edits a draft; a type or sort change applies at once, along with
+ * whatever keyword is typed, while the keyword alone waits for Enter or the button.
+ */
 const CataloguesListPage: React.FC = () => {
 	const { isAuthenticated } = useAuth();
-	// `draft` is what the form edits; `filters` is what the last submit applied.
-	const [draft, setDraft] = useState<CatalogueSearchFilters>(DEFAULT_CATALOGUE_SEARCH_FILTERS);
-	const [filters, setFilters] = useState<CatalogueSearchFilters | Record<string, never>>({});
+	const [searchParams, setSearchParams] = useSearchParams();
+	const appliedKey = searchParams.toString();
+	const filters = useMemo(() => parseCatalogueListSearchParams(new URLSearchParams(appliedKey)), [appliedKey]);
+
+	// The draft follows the URL whenever the URL changes (submit, back/forward), and only then.
+	const [draft, setDraft] = useState<CatalogueSearchFilters>(filters);
+	const [draftSource, setDraftSource] = useState(appliedKey);
+	if (draftSource !== appliedKey) {
+		setDraftSource(appliedKey);
+		setDraft(filters);
+	}
+
 	const queryFilters = useMemo(() => mapSearchFiltersToCatalogueParams(filters), [filters]);
 	const { catalogues, total, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, error, isError } =
 		useInfiniteCatalogues({
 			filters: queryFilters,
 		});
 
-	// A type or sort change applies at once, along with whatever keyword is typed; the keyword alone
-	// waits for Enter or the button.
+	const apply = (next: CatalogueSearchFilters) => setSearchParams(serializeCatalogueListFilters(next));
+
 	const handleFiltersChange = (next: CatalogueSearchFilters) => {
 		setDraft(next);
 
 		if (next.filterType !== draft.filterType || next.sortByWhat !== draft.sortByWhat) {
-			setFilters(next);
+			apply(next);
 		}
 	};
 
-	const keyword = typeof filters.keyword === 'string' ? filters.keyword.trim() : '';
+	const keyword = filters.keyword.trim();
 
 	const newCatalogueAction = isAuthenticated ? (
 		<Button to={CATALOGUE_ROUTES.create} variant="primary">
@@ -69,52 +100,48 @@ const CataloguesListPage: React.FC = () => {
 
 	if (isPending && catalogues.length === 0) {
 		return (
-			<Container className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Catalogues" action={newCatalogueAction} />
-					<PageLoading family="list" visual={<CataloguesListSkeleton />} />
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Catalogues" action={newCatalogueAction} />
+				<PageLoading family="list" visual={<CataloguesListSkeleton />} />
+			</LibraryPage>
 		);
 	}
 
 	if (isError) {
 		return (
-			<Container className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Catalogues" action={newCatalogueAction} />
-					<Alert tone="danger">Error: {error.message}</Alert>
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Catalogues" action={newCatalogueAction} />
+				<Alert tone="danger">Error: {error.message}</Alert>
+			</LibraryPage>
 		);
 	}
 
 	const meta = [`Showing ${catalogues.length} of ${total}`, keyword !== '' && `Results for: ${keyword}`]
 		.filter(Boolean)
 		.join(' · ');
+	const empty = emptyState(filters);
 
 	return (
-		<Container className={styles.page}>
-			<Stack gap="md">
-				<PageHeader title="Catalogues" meta={meta} action={newCatalogueAction} />
+		<LibraryPage>
+			<PageHeader title="Catalogues" meta={meta} action={newCatalogueAction} />
 
-				<CatalogueFilters value={draft} onChange={handleFiltersChange} onSubmit={() => setFilters(draft)} />
+			<CatalogueFilters value={draft} onChange={handleFiltersChange} onSubmit={() => apply(draft)} />
 
-				{catalogues.length === 0 ? (
-					<p>No catalogues found.</p>
-				) : (
-					<Grid as="ul" columns={12} gap="lg" className={styles.cards}>
-						{catalogues.map((catalogue) => (
-							<Grid.Item as="li" key={catalogue.uuid} span={{ base: 6, sm: 4, md: 3 }}>
-								<CatalogueCard catalogue={catalogue} />
-							</Grid.Item>
-						))}
-					</Grid>
-				)}
+			{catalogues.length === 0 ? (
+				<LibraryEmptyState {...empty} />
+			) : (
+				<LibraryCardGrid>
+					{catalogues.map((catalogue) => (
+						<CatalogueCard key={catalogue.uuid} catalogue={catalogue} />
+					))}
+				</LibraryCardGrid>
+			)}
 
+			{/* The empty state already says there is nothing; "No more results" under it is noise. */}
+			{catalogues.length > 0 && (
 				<div className={styles.pager}>
 					{isFetchingNextPage ? (
-						<img src={Spinner} alt="Loading more..." style={{ height: '40px' }} />
+						<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
 					) : hasNextPage ? (
 						<Button variant="secondary-outline" className={styles.loadMore} onClick={() => fetchNextPage()}>
 							Load More
@@ -123,8 +150,8 @@ const CataloguesListPage: React.FC = () => {
 						<span className={styles.muted}>No more results</span>
 					)}
 				</div>
-			</Stack>
-		</Container>
+			)}
+		</LibraryPage>
 	);
 };
 

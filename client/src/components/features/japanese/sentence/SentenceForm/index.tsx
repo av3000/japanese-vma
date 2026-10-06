@@ -1,24 +1,35 @@
-import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ApiError } from '@/api/apiError';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Field, FieldMessage, Textarea } from '@/components/shared/FormControls';
-import Spinner from '@/components/shared/Spinner';
-import { Stack } from '@/components/shared/layout';
-import styles from './SentenceForm.module.css';
-import { MAX_SENTENCE_LENGTH, sentenceFormSchema, type SentenceFormValues } from './sentenceFormSchema';
+import { FormField, Textarea } from '@/components/shared/FormControls';
+import { FormCard, FormLayout } from '@/components/shared/FormPage';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
+import {
+	MAX_SENTENCE_LENGTH,
+	MIN_SENTENCE_LENGTH,
+	sentenceFormSchema,
+	type SentenceFormValues,
+} from './sentenceFormSchema';
 
 export type { SentenceFormValues } from './sentenceFormSchema';
+
+const SENTENCE_FORM_FIELDS: readonly FieldPath<SentenceFormValues>[] = ['content'];
 
 interface SentenceFormProps {
 	initialValues: SentenceFormValues;
 	onSubmit: (values: SentenceFormValues) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	serverErrors?: Record<string, string[]> | null;
-	statusMessage?: string | null;
-	disableSubmitWhenUnchanged?: boolean;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
+	/** Edit forms: an unchanged form says so instead of sending the same text again. */
+	requireChanges?: boolean;
+	/** The Cancel control. */
+	cancel: ReactNode;
 }
 
 export function SentenceForm({
@@ -26,11 +37,11 @@ export function SentenceForm({
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	serverErrors,
-	statusMessage,
-	disableSubmitWhenUnchanged = false,
+	apiError,
+	requireChanges = false,
+	cancel,
 }: SentenceFormProps) {
-	const [isFocused, setIsFocused] = useState(false);
+	const [showNoChanges, setShowNoChanges] = useState(false);
 
 	const {
 		register,
@@ -38,97 +49,74 @@ export function SentenceForm({
 		handleSubmit,
 		reset,
 		setError,
-		clearErrors,
-		formState: { errors, touchedFields, isDirty, isValid },
+		formState: { errors, isDirty },
 	} = useForm<SentenceFormValues>({
 		defaultValues: initialValues,
-		mode: 'onChange',
+		mode: 'onTouched',
 		resolver: zodResolver(sentenceFormSchema),
 	});
 
-	const contentValue = useWatch({ control, name: 'content' }) ?? '';
+	const content = useWatch({ control, name: 'content' }) ?? '';
 
 	useEffect(() => {
 		reset(initialValues);
 	}, [initialValues, reset]);
 
 	useEffect(() => {
-		if (!serverErrors) {
+		if (isDirty) setShowNoChanges(false);
+	}, [isDirty]);
+
+	const alertMessage = useApiErrorInForm(apiError, setError, SENTENCE_FORM_FIELDS);
+
+	const onValidSubmit = (values: SentenceFormValues) => {
+		if (requireChanges && !isDirty) {
+			setShowNoChanges(true);
 			return;
 		}
 
-		let generalError: string | null = null;
+		setShowNoChanges(false);
+		onSubmit(values);
+	};
 
-		for (const [rawField, messages] of Object.entries(serverErrors)) {
-			const message = messages?.[0];
-			if (!message) continue;
-
-			if (rawField.split('.')[0] === 'content') {
-				setError('content', { type: 'server', message });
-				continue;
-			}
-
-			generalError ??= message;
-		}
-
-		if (generalError) {
-			setError('root' as never, { type: 'server', message: generalError });
-		}
-	}, [serverErrors, setError]);
-
-	// Suppress the field error while the field has focus so it does not flash on
-	// every keystroke; a server error is always shown. Same rule as ArticleForm.
-	const visibleContentError = (() => {
-		const error = errors.content;
-		if (!error || isFocused) return undefined;
-
-		return error.type === 'server' || touchedFields.content ? error.message : undefined;
-	})();
-
-	const generalErrorMessage = (errors as { root?: { message?: string } })?.root?.message;
-
-	const contentField = register('content', {
-		onChange: () => clearErrors(['content', 'root'] as never),
-	});
-
-	const isAtMaxLength = contentValue.length >= MAX_SENTENCE_LENGTH;
+	const alert = showNoChanges ? (
+		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
+	) : null;
 
 	return (
-		<Stack as="form" gap="lg" onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-			<Field>
-				<h4>Sentence</h4>
-				<Textarea
-					rows={4}
-					maxLength={MAX_SENTENCE_LENGTH}
-					aria-label="Sentence"
-					noResize
-					isInvalid={Boolean(visibleContentError)}
-					{...contentField}
-					onFocus={() => setIsFocused(true)}
-					onBlur={(event) => {
-						contentField.onBlur(event);
-						setIsFocused(false);
-					}}
-					required
-				/>
-				<FieldMessage alignEnd tone={isAtMaxLength ? 'error' : 'hint'}>
-					{contentValue.length}/{MAX_SENTENCE_LENGTH}
-				</FieldMessage>
-				<FieldMessage tone="error">{visibleContentError}</FieldMessage>
-			</Field>
-
-			<div>
-				<Button
-					type="submit"
-					variant="outline"
-					disabled={isSubmitting || (disableSubmitWhenUnchanged && !isDirty) || !isValid}
-				>
-					{isSubmitting ? <Spinner size="sm" /> : submitLabel}
-				</Button>
-			</div>
-
-			{statusMessage && <Alert tone="danger">{statusMessage}</Alert>}
-			{generalErrorMessage && <Alert tone="danger">{generalErrorMessage}</Alert>}
-		</Stack>
+		<form onSubmit={handleSubmit(onValidSubmit)} noValidate>
+			<FormLayout
+				alert={alert}
+				actions={
+					<>
+						<Button type="submit" variant="primary" isLoading={isSubmitting}>
+							{submitLabel}
+						</Button>
+						{cancel}
+					</>
+				}
+			>
+				<FormCard>
+					<FormField
+						label="Sentence"
+						hint={`Between ${MIN_SENTENCE_LENGTH} and ${MAX_SENTENCE_LENGTH} characters.`}
+						counter={`${content.length} / ${MAX_SENTENCE_LENGTH}`}
+						error={getFieldErrorMessages(errors.content)}
+					>
+						{(fieldControl) => (
+							<Textarea
+								lang="ja"
+								rows={4}
+								maxLength={MAX_SENTENCE_LENGTH}
+								required
+								{...fieldControl}
+								{...register('content')}
+							/>
+						)}
+					</FormField>
+				</FormCard>
+			</FormLayout>
+		</form>
 	);
 }

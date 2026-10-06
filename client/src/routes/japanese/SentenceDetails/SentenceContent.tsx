@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { canMutateSentence, readSentenceWriteError, useDeleteSentenceMutation } from '@/api/sentences/authoring';
+import { parseApiError } from '@/api/apiError';
+import { canMutateSentence, useDeleteSentenceMutation } from '@/api/sentences/authoring';
 import type { MappedSentenceDetail } from '@/api/sentences/details';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
@@ -39,7 +40,7 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 		deleteMutation.mutate(undefined, {
 			onSuccess: () => navigate('/sentences'),
 			// Keep the modal open on failure — the sentence is still there.
-			onError: (error) => setDeleteError(readSentenceWriteError(error).message),
+			onError: (error) => setDeleteError(parseApiError(error).message),
 		});
 	};
 

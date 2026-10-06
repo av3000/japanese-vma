@@ -1,0 +1,19 @@
+.type {
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+}
+
+.actionCell {
+	text-align: end;
+}
+
+@media (max-width: 767px) {
+	.meaning {
+		font-size: var(--font-size-body-md);
+		overflow-wrap: anywhere;
+	}
+
+	.actionCell {
+		align-self: start;
+	}
+}

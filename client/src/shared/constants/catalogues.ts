@@ -19,6 +19,17 @@ const CATALOGUE_PDF_TYPES: ReadonlyArray<readonly [CataloguePdfExportKind, reado
 	['sentences', [4, 8]],
 ];
 
+/** What a catalogue holds, with each "known" type folded into the family it saves. */
+export type CatalogueFamily = 'radicals' | 'kanji' | 'words' | 'sentences' | 'articles';
+
+const CATALOGUE_FAMILIES: ReadonlyArray<readonly [CatalogueFamily, readonly number[]]> = [
+	['radicals', [1, 5]],
+	['kanji', [2, 6]],
+	['words', [3, 7]],
+	['sentences', [4, 8]],
+	['articles', [9]],
+];
+
 export const CATALOGUE_TYPE_OPTIONS = Object.entries(CATALOGUE_TYPE_LABELS).map(([value, label]) => ({
 	value: Number(value) as CustomCatalogueType,
 	label,
@@ -58,6 +69,11 @@ export const isCustomCatalogueType = (value: number): value is CustomCatalogueTy
 
 export const resolveCatalogueTypeLabel = (value: number) => {
 	return isCustomCatalogueType(value) ? CATALOGUE_TYPE_LABELS[value] : 'Unknown';
+};
+
+/** `null` for types that hold neither (lyrics, artists) or are unknown. */
+export const resolveCatalogueFamily = (value: number): CatalogueFamily | null => {
+	return CATALOGUE_FAMILIES.find(([, types]) => types.includes(value))?.[0] ?? null;
 };
 
 export const resolveCataloguePdfExportKind = (value: number): CataloguePdfExportKind | null => {

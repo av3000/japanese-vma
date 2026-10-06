@@ -75,6 +75,22 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
+      # The frontend generates its API client from the committed `api.json`, and the OpenAPI
+      # tests read it too, so a Resource or #[Response] change without a fresh export would pass
+      # everything while the schema drifts. The committed file was exported with these two
+      # values, which feed `info.title` and `servers[0].url`.
+      - name: Check api.json is up to date
+        env:
+          APP_NAME: Laravel
+          APP_URL: http://localhost
+        run: |
+          composer openapi
+
+          if ! git diff --exit-code -- api.json; then
+            echo "::error file=processor-api/api.json::api.json is stale. Run 'composer openapi' in processor-api (with APP_NAME=Laravel and APP_URL=http://localhost), then 'npm run orval:file' in client, and commit the result."
+            exit 1
+          fi
+
       - name: Generate Passport keys
         run: php artisan passport:keys --force
 

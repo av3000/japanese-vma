@@ -1,0 +1,58 @@
+/* The grey band is painted here rather than on the app shell, so no other page changes. */
+.page {
+	padding: var(--spacing-xl) var(--spacing-sm);
+	background-color: var(--color-neutral-100);
+}
+
+/*
+ * Stretch the band down to the footer on tall screens. Only the app shell's main element that
+ * holds this band becomes a flex column, so no other page's layout changes. Browsers without
+ * `:has()` (Firefox before 121) drop the rule and show white below the band, as before.
+ */
+:global(.main-content):has(> .page) {
+	display: flex;
+	flex-direction: column;
+}
+
+:global(.main-content) > .page {
+	flex: 1 0 auto;
+}
+
+.card {
+	max-inline-size: var(--container-xs);
+	margin-inline: auto;
+	padding: var(--spacing-lg) var(--spacing-md);
+	background-color: var(--color-neutral-0);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--border-radius-md);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
+	overflow-wrap: anywhere;
+}
+
+.intro {
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
+}
+
+.footer {
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--color-border-default);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+}
+
+@media (min-width: 768px) {
+	.page {
+		padding-block: var(--spacing-3xl);
+	}
+
+	.card {
+		padding: var(--spacing-xl);
+	}
+}

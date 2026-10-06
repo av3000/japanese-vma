@@ -1,0 +1,141 @@
+/* The grey Library Cards surface the form cards sit on. */
+.page {
+	background-color: var(--color-neutral-100);
+}
+
+/*
+ * `main` only grows to fill the viewport; it does not hand that height to its child. Painting
+ * `main` itself grey keeps a short form from ending in a white band above the footer, the same way
+ * LibraryLayout does. Without :has() support only the page's own box is grey.
+ */
+:global(.main-content):has(.page) {
+	background-color: var(--color-neutral-100);
+}
+
+.content {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.back {
+	display: inline-flex;
+	gap: var(--spacing-2xs);
+	align-self: flex-start;
+	font-size: var(--font-size-body-md);
+}
+
+/* A class beats the global h1 rules (clamped size, min-height, margins). */
+.title {
+	--font-size: var(--font-size-heading-3);
+	min-height: 0;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.intro {
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
+}
+
+/* Layout ------------------------------------------------------------------ */
+
+.layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: start;
+	gap: var(--spacing-md);
+}
+
+.main,
+.aside {
+	min-width: 0;
+}
+
+/* Submit and Cancel: full-width and stacked on small screens, one row from 768px. */
+.actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+/* Cards ------------------------------------------------------------------- */
+
+.card {
+	min-width: 0;
+	padding: var(--spacing-md);
+	background-color: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-md);
+	overflow-wrap: anywhere;
+}
+
+.cardTitle {
+	--font-size: var(--font-size-heading-6);
+	min-height: 0;
+	margin: 0;
+}
+
+.note {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border-radius: var(--border-radius-md);
+	overflow-wrap: anywhere;
+}
+
+.noteTitle {
+	margin: 0;
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+}
+
+.noteBody {
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-md);
+}
+
+.noteBody > p {
+	margin: 0;
+}
+
+@media (min-width: 768px) {
+	.title {
+		--font-size: var(--font-size-heading-2);
+	}
+
+	.card {
+		padding: var(--spacing-lg);
+	}
+
+	.actions {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+}
+
+@media (min-width: 1024px) {
+	.withAside {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+		grid-template-areas:
+			'alert alert'
+			'main aside'
+			'actions .';
+	}
+
+	.withAside .alert {
+		grid-area: alert;
+	}
+
+	.withAside .main {
+		grid-area: main;
+	}
+
+	.withAside .aside {
+		grid-area: aside;
+	}
+
+	.withAside .actions {
+		grid-area: actions;
+	}
+}

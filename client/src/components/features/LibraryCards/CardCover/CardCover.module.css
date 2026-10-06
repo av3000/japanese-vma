@@ -1,0 +1,88 @@
+/* Below 768px: the card's left column. */
+.cover {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	min-height: 112px;
+	background-color: var(--color-neutral-100);
+	border-inline-end: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.glyph {
+	font-family: var(--font-family-ja-serif);
+	font-size: 44px;
+	line-height: 1;
+	color: var(--color-neutral-800);
+}
+
+.badge {
+	position: absolute;
+	inset-block-start: var(--spacing-2xs);
+	inset-inline-start: var(--spacing-2xs);
+	display: flex;
+}
+
+/* Below 768px the column is narrow, so the pill spans its bottom edge and keeps its label on one line. */
+.status {
+	position: absolute;
+	inset-inline: var(--spacing-3xs);
+	inset-block-end: var(--spacing-2xs);
+	display: flex;
+	justify-content: center;
+	white-space: nowrap;
+}
+
+.caption {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-end: var(--spacing-2xs);
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-body-sm);
+	text-align: center;
+	color: var(--color-neutral-600);
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--size-md);
+	padding: 0 var(--spacing-2xs);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-200);
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-xs);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
+	white-space: nowrap;
+}
+
+/* From 768px: on top of the card, 2:1. */
+@media (min-width: 768px) {
+	.cover {
+		aspect-ratio: 2 / 1;
+		min-height: 0;
+		border-inline-end: 0;
+		border-block-end: var(--border-size-sm) solid var(--color-neutral-200);
+	}
+
+	.glyph {
+		font-size: 72px;
+	}
+
+	.badge {
+		inset-block-start: var(--spacing-xs);
+		inset-inline-start: var(--spacing-xs);
+	}
+
+	.status {
+		inset-inline: auto var(--spacing-xs);
+		inset-block: var(--spacing-xs) auto;
+	}
+
+	.caption {
+		inset-block-end: var(--spacing-xs);
+	}
+}

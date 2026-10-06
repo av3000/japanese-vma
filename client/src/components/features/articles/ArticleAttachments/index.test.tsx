@@ -4,8 +4,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { kanjiIndex } from '@/api/generated/kanji/kanji';
-import type { KanjiIndex200 } from '@/api/generated/model/kanjiIndex200';
-import type { WordIndex200 } from '@/api/generated/model/wordIndex200';
+import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
+import type { WordListResource } from '@/api/generated/model/wordListResource';
 import { wordIndex } from '@/api/generated/word/word';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { ArticleAttachments } from './index';
@@ -39,7 +39,7 @@ const kanjiPage = (characters: string[], page = 1, total = characters.length, ha
 			meanings: 'water',
 		})),
 		pagination: pagination(page, total, hasMore),
-	}) as unknown as KanjiIndex200;
+	}) as unknown as KanjiListResource;
 
 const wordPage = (surfaces: string[], page = 1, total = surfaces.length, hasMore = false) =>
 	({
@@ -50,7 +50,7 @@ const wordPage = (surfaces: string[], page = 1, total = surfaces.length, hasMore
 			furigana: 'べんきょう',
 		})),
 		pagination: pagination(page, total, hasMore),
-	}) as unknown as WordIndex200;
+	}) as unknown as WordListResource;
 
 const renderAttachments = async () => {
 	const queryClient = new QueryClient({

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Catalogues;
 
+use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
@@ -110,6 +111,7 @@ class CatalogueServiceListTest extends TestCase
             $this->createMock(CommentRepositoryInterface::class),
             $loadStats,
             $this->createMock(EngagementServiceInterface::class),
+            new LoadCatalogueJlptLevelsAction($catalogueItemRepository),
         );
     }
 

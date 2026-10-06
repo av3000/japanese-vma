@@ -2,32 +2,34 @@ import * as React from 'react';
 import classNames from 'classnames';
 import type { ArticleResourceJlptLevels } from '@/api/generated/model/articleResourceJlptLevels';
 import styles from './JlptBar.module.css';
-import { dominantJlptLevel, jlptBarLabel, toJlptSegments } from './jlptSegments';
+import { dominantJlptLevel, jlptBarLabel, toJlptSegments, type JlptBarCounts } from './jlptSegments';
 
 export { dominantJlptLevel, jlptBarLabel, toJlptSegments } from './jlptSegments';
-export type { JlptSegment, JlptSegmentLevel } from './jlptSegments';
+export type { JlptBarCounts, JlptSegment, JlptSegmentLevel } from './jlptSegments';
 
 export interface JlptBarProps {
-	/** Kanji count per JLPT level, as the article resource returns it. */
+	/** Count per JLPT level, as the article and catalogue resources return it. */
 	levels: ArticleResourceJlptLevels;
+	/** What is being counted, for the accessible name. Defaults to kanji. */
+	counts?: JlptBarCounts;
 	/** `compact` is for list rows. */
 	size?: 'compact' | 'default';
 	className?: string;
 }
 
 /**
- * How hard an article is, as one bar: a segment per JLPT level (N5 → N1) sized by its kanji
- * count, with the count printed after it. The dominant level is the only segment in the shu
+ * How hard an article or catalogue is, as one bar: a segment per JLPT level (N5 → N1) sized by its
+ * kanji (or word) count, with the count printed after it. The dominant level is the only segment in the shu
  * accent. Renders nothing when every count is 0, e.g. while the article is still processing.
  */
-export const JlptBar: React.FC<JlptBarProps> = ({ levels, size = 'default', className }) => {
+export const JlptBar: React.FC<JlptBarProps> = ({ levels, counts = 'kanji', size = 'default', className }) => {
 	const segments = toJlptSegments(levels);
 	if (segments.length === 0) return null;
 
 	return (
 		<div
 			role="img"
-			aria-label={jlptBarLabel(segments, dominantJlptLevel(levels))}
+			aria-label={jlptBarLabel(segments, dominantJlptLevel(levels), counts)}
 			className={classNames(styles.bar, size === 'compact' && styles.compact, className)}
 		>
 			{segments.map((segment) => (

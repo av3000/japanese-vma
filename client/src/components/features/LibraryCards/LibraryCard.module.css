@@ -1,0 +1,173 @@
+/*
+ * Library Cards: one white card family for articles and catalogues.
+ * Below 768px a card is horizontal (96px cover column, text on the right); from 768px it is
+ * stacked with a 2:1 cover on top. The 768px breakpoint matches CardCover.module.css.
+ */
+.card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 96px minmax(0, 1fr);
+	height: 100%;
+	overflow: hidden;
+	background-color: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-md);
+}
+
+.card:hover {
+	border-color: var(--color-primary-200);
+}
+
+/* The title link covers the card, so the card shows where focus is. */
+.card:focus-within {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xs);
+	min-width: 0;
+	padding: var(--spacing-sm);
+}
+
+.date {
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+/* Two classes so the card beats the global h2 rules (min-height, margins, break-all hyphenation). */
+.card .title {
+	display: -webkit-box;
+	min-height: 0;
+	margin: 0;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	font-size: var(--font-size-body-lg);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1.4;
+	word-break: normal;
+	overflow-wrap: anywhere;
+	hyphens: manual;
+}
+
+.card .titleLink {
+	color: var(--color-text-neutral-default);
+	text-decoration: none;
+}
+
+.card .titleLink:hover {
+	color: var(--color-text-neutral-default);
+	text-decoration: underline;
+}
+
+/* The focus outline is the card's; the link itself draws none. */
+.card .titleLink:focus-visible {
+	outline: none;
+}
+
+/* Stretches the title link over the whole card: one link, one tab stop. */
+.titleLink::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.subtitle {
+	display: -webkit-box;
+	margin: 0;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+	overflow-wrap: anywhere;
+}
+
+.subtitleTwoLines {
+	-webkit-line-clamp: 2;
+}
+
+.owner {
+	overflow: hidden;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-3xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tag {
+	max-width: 100%;
+	overflow: hidden;
+	padding: 0 var(--spacing-2xs);
+	border: var(--border-size-sm) solid var(--color-pill-border);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-pill-bg);
+	color: var(--color-pill-fg);
+	font-size: var(--font-size-body-sm);
+	line-height: 1.6;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tagMore {
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+}
+
+/* Pinned to the bottom, so stats line up across a row of cards of different heights. */
+.stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2xs) var(--spacing-md);
+	margin: auto 0 0;
+	padding: var(--spacing-2xs) 0 0;
+	list-style: none;
+	font-family: var(--font-family-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-600);
+}
+
+.stat {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3xs);
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (min-width: 768px) {
+	.card {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto 1fr;
+	}
+
+	.body {
+		padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+	}
+}

@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { KanjiIndex200 } from '@/api/generated/model/kanjiIndex200';
+import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
 import {
 	applyKanjiViewerCatalogueState,
 	getInfiniteKanjisQueryKey,
 	getKanjisTotal,
 	getNextKanjisPageParam,
-	type KanjiListResponse,
 } from './useInfiniteKanjis';
 
-const createKanjiListResponse = (overrides: Partial<KanjiListResponse> = {}): KanjiListResponse => ({
+const createKanjiListResponse = (overrides: Partial<KanjiListResource> = {}): KanjiListResource => ({
 	items: [
 		{
 			id: 1,
@@ -66,7 +65,7 @@ describe('useInfiniteKanjis helpers', () => {
 	});
 
 	it('reads total from the first page', () => {
-		expect(getKanjisTotal([createKanjiListResponse() as KanjiIndex200])).toBe(11);
+		expect(getKanjisTotal([createKanjiListResponse() as KanjiListResource])).toBe(11);
 	});
 
 	it('returns zero total before pages load', () => {
@@ -77,11 +76,10 @@ describe('useInfiniteKanjis helpers', () => {
 		const response = createKanjiListResponse();
 
 		expect(
-			applyKanjiViewerCatalogueState(
-				{ pages: [response], pageParams: [1] },
-				1,
-				{ is_saved: true, is_known: false },
-			),
+			applyKanjiViewerCatalogueState({ pages: [response], pageParams: [1] }, 1, {
+				is_saved: true,
+				is_known: false,
+			}),
 		).toEqual({
 			pages: [
 				{

@@ -5,12 +5,11 @@ import bookmarkSolid from './bookmark-solid-full.svg?raw';
 import broomSolid from './broom-solid.svg?raw';
 import checkSolid from './check-solid-full.svg?raw';
 import chevron from './chevron.svg?raw';
+import clock from './clock.svg?raw';
 import commentSolid from './comment-solid.svg?raw';
 import downloadSolid from './download-solid.svg?raw';
 import eyeRegular from './eye-regular.svg?raw';
-import fbIcon from './fb-icon.svg?raw';
 import filePdfSolid from './file-pdf-solid.svg?raw';
-import igIcon from './ig-icon.svg?raw';
 import layerGroupSolid from './layer-group-solid.svg?raw';
 import lockOpenSolid from './lock-open-solid.svg?raw';
 import lockSolid from './lock-solid.svg?raw';
@@ -19,6 +18,7 @@ import minusSolid from './minus-solid.svg?raw';
 import paperPlane from './paper-plane-regular.svg?raw';
 import penSolid from './pen-solid.svg?raw';
 import plus from './plus.svg?raw';
+import sparkle from './sparkle.svg?raw';
 import thumbsUpRegular from './thumbs-up-regular-full.svg?raw';
 import thumbsUpSolid from './thumbs-up-solid-full.svg?raw';
 import trashbinSolid from './trash-solid.svg?raw';
@@ -28,8 +28,6 @@ import removeSolid from './xmark-solid.svg?raw';
 export const icons = {
 	plus,
 	user,
-	fbIcon,
-	igIcon,
 	chevron,
 	thumbsUpSolid,
 	thumbsUpRegular,
@@ -52,4 +50,6 @@ export const icons = {
 	layerGroupSolid,
 	arrowDownSolid,
 	checkSolid,
+	sparkle,
+	clock,
 } as const;

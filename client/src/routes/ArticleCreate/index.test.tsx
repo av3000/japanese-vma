@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationOptions } from '@tanstack/react-query';
@@ -10,7 +11,10 @@ import ArticleCreatePage from './index';
 
 const navigateMock = vi.fn();
 
+const formProps: Array<Record<string, unknown>> = [];
+
 vi.mock('react-router-dom', () => ({
+	Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 	useNavigate: () => navigateMock,
 }));
 
@@ -27,7 +31,10 @@ vi.mock('@/api/generated/article/article', async () => {
 });
 
 vi.mock('@/components/features/articles/ArticleForm', () => ({
-	ArticleForm: () => null,
+	ArticleForm: (props: Record<string, unknown>) => {
+		formProps.push(props);
+		return null;
+	},
 }));
 
 type CreateOptions = UseMutationOptions<ArticleCreatedResource, unknown, StoreArticleRequest>;
@@ -56,6 +63,7 @@ describe('ArticleCreatePage', () => {
 
 	beforeEach(() => {
 		navigateMock.mockReset();
+		formProps.length = 0;
 		queryClient = new QueryClient();
 		vi.mocked(useQueryClient).mockReturnValue(queryClient);
 		vi.mocked(useMutation).mockImplementation(((mutationOptions: CreateOptions) => {
@@ -83,5 +91,14 @@ describe('ArticleCreatePage', () => {
 		// The detail page renders the full resource; the server already returns `pending` on the
 		// first fetch because the row was opened in the create transaction.
 		expect(queryClient.getQueryData(articleKeys.detail('new-uuid'))).toBeUndefined();
+	});
+
+	it('renders the form on a page with one h1, a back link and a Cancel link to the list', () => {
+		const html = renderToStaticMarkup(<ArticleCreatePage />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>New article<\/h1>/);
+		expect(html).toContain('href="/articles"');
+		expect(formProps.at(-1)).toMatchObject({ submitLabel: 'Create article', requireEnglishTitle: true });
 	});
 });

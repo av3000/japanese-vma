@@ -64,8 +64,17 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Schema guidance:**
     -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
     -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
-    -   For lean ad hoc response shapes, Resource PHPDoc may be insufficient for nested arrays. If Scramble still collapses the generated schema incorrectly, add an explicit controller-level `#[Response(type: 'array{...}')]`.
+    -   When an action returns a Resource, reference it by name: `#[Response(type: 'KanjiListResource')]`. An inline `array{...}` shape duplicates the Resource, drifts from it silently, and makes Orval name the frontend type after the status code (`KanjiIndex200ItemsItem`).
+    -   Keep `#[Response(type: 'array{...}')]` for lean ad hoc shapes that have no Resource, where Resource PHPDoc is insufficient for nested arrays.
+    -   When a named component comes out wrong in `api.json`, fix the Resource, not the annotation:
+        -   every scalar typed `string`: add a class-level `@property Domain\Model $resource`, or explicit casts when the value comes through a nested object;
+        -   `array_map` items untyped: add a per-key hint, `/** @var array<int, XResource> */` above `'items' => array_map(...)`;
+        -   an optional include documented as required: build it with `'key' => $this->when($condition, fn () => ...)`, not a conditional `$payload['key'] = ...`;
+        -   a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema.
+    -   Scramble turns a comment on an array key inside `toArray()` into that property's public `description`. Put implementation notes above the `return`.
+    -   After changing a Resource or `#[Response]`, check the component's `properties` and `required` in `api.json` before running Orval, and pin anything non-obvious in a `tests/Unit/...OpenApiTest` (reference: `tests/Unit/JapaneseMaterial/DictionaryResponsesOpenApiTest.php`).
     -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
+    -   Backend CI re-exports `api.json` (`composer openapi` with `APP_NAME=Laravel`, `APP_URL=http://localhost`) and fails when it differs from the committed file. Commit the regenerated `api.json` with the Resource change; export with those two values or `info.title` and `servers[0].url` will differ.
 
 ## 6) Testing & Verification Expectations
 

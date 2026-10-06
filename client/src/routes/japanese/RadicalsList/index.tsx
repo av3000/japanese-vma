@@ -1,81 +1,43 @@
-import { useSearchParams } from 'react-router-dom';
 import { type RadicalListFilters, useInfiniteRadicals } from '@/api/radicals/hooks/useInfiniteRadicals';
-import RadicalItem from '@/components/features/japanese/radical/RadicalItem';
-import { Alert } from '@/components/shared/Alert';
-import { Button } from '@/components/shared/Button';
-import { PageLoading } from '@/components/shared/PageLoading';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
-import styles from '../japaneseListPage.module.css';
-import SearchBarRadicals from './SearchBarRadicals';
+import {
+	DICTIONARY_PER_PAGE,
+	DictionaryListPage,
+	KeywordFilters,
+	useKeywordSearch,
+} from '@/components/features/japanese/dictionaryList';
+import { RadicalTable } from '@/components/features/japanese/radical/RadicalTable';
 
-const DEFAULT_PER_PAGE = 10;
+const getRadicalListFilters = (keyword: string): RadicalListFilters => ({
+	per_page: DICTIONARY_PER_PAGE,
+	...(keyword ? { keyword } : {}),
+});
 
 const RadicalsList = () => {
-	const [searchParams, setSearchParams] = useSearchParams();
-	const keyword = searchParams.get('keyword')?.trim() ?? '';
-	const filters: RadicalListFilters = { per_page: DEFAULT_PER_PAGE, ...(keyword ? { keyword } : {}) };
-	const { radicals, total, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } = useInfiniteRadicals(
-		{
-			filters,
-		},
-	);
+	const { keyword, applySearch } = useKeywordSearch();
+	const { radicals, ...query } = useInfiniteRadicals({ filters: getRadicalListFilters(keyword) });
 
-	const handleSearch = (nextKeyword: string) => {
-		const nextParams = new URLSearchParams();
-
-		if (nextKeyword !== '') {
-			nextParams.set('keyword', nextKeyword);
-		}
-
-		setSearchParams(nextParams);
-	};
-
-	if (isLoading) {
-		return <PageLoading family="generic" />;
-	}
-
-	const searchTotal = `Results total: '${total}'`;
+	const handleSearch = (nextKeyword: string) => applySearch({ keyword: nextKeyword });
 
 	return (
-		<Container className={styles.page}>
-			<Stack gap="2xl">
-				<SearchBarRadicals defaultKeyword={keyword} onSearch={handleSearch} />
-				<Stack as="section" gap="md" className={styles.results}>
-					<Cluster justify="center">
-						<h4 className={styles.heading}>{searchTotal}</h4>
-					</Cluster>
-					{isError && <Alert tone="danger">Unable to load radicals.</Alert>}
-					<ul className={styles.list}>
-						{radicals.map((radical) => (
-							<RadicalItem
-								key={radical.uuid}
-								entityId={radical.id}
-								detailIdentifier={radical.uuid}
-								radical={radical.radical}
-								strokes={radical.strokes}
-								meaning={radical.meaning}
-								hiragana={radical.hiragana}
-							/>
-						))}
-					</ul>
-					{radicals.length === 0 && !isError && <p>No radicals found.</p>}
-				</Stack>
-				<Cluster justify="center">
-					{hasNextPage ? (
-						<Button
-							variant="outline"
-							className={styles.loadMore}
-							onClick={() => void fetchNextPage()}
-							disabled={isFetchingNextPage}
-						>
-							{isFetchingNextPage ? 'Loading...' : 'Load More'}
-						</Button>
-					) : (
-						'no more results...'
-					)}
-				</Cluster>
-			</Stack>
-		</Container>
+		<DictionaryListPage
+			title="Radicals"
+			noun="radicals"
+			keyword={keyword}
+			itemCount={radicals.length}
+			query={query}
+			filters={
+				<KeywordFilters
+					key={keyword}
+					label="Radical filters"
+					searchLabel="Search radicals by keyword"
+					placeholder="Radical, meaning or reading"
+					defaultKeyword={keyword}
+					onSearch={handleSearch}
+				/>
+			}
+		>
+			{({ loading, empty }) => <RadicalTable radicals={radicals} loading={loading} empty={empty} />}
+		</DictionaryListPage>
 	);
 };
 

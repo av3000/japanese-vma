@@ -2,18 +2,37 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import Header from './index';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+const logout = vi.hoisted(() => vi.fn());
+
 vi.mock('@/hooks/useAuth', () => ({
-	useAuth: () => ({ isAuthenticated: true, isLoading: false, user: { id: 1, name: 'Alana' }, logout: vi.fn() }),
+	useAuth: () => ({ isAuthenticated: true, isLoading: false, user: { id: 1, name: 'Alana' }, logout }),
 }));
 
 vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
+
+// jsdom has no showModal(); the real modal behaviour is covered by the Storybook play functions.
+const original = { showModal: HTMLDialogElement.prototype.showModal, close: HTMLDialogElement.prototype.close };
+
+beforeAll(() => {
+	HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+		this.setAttribute('open', '');
+	};
+	HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+		this.removeAttribute('open');
+	};
+});
+
+afterAll(() => {
+	HTMLDialogElement.prototype.showModal = original.showModal;
+	HTMLDialogElement.prototype.close = original.close;
+});
 
 const must = <T,>(element: T | null): T => {
 	if (element === null) throw new Error('Expected element to be rendered');
@@ -23,19 +42,9 @@ const must = <T,>(element: T | null): T => {
 let container: HTMLDivElement;
 let root: Root;
 
-const render = () => {
-	act(() => {
-		root.render(
-			<MemoryRouter>
-				<Header />
-			</MemoryRouter>,
-		);
-	});
-};
-
 const click = (element: Element) => {
 	act(() => {
-		element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 	});
 };
 
@@ -45,11 +54,34 @@ const keydown = (element: Element, key: string) => {
 	});
 };
 
+const mouseupOutside = () => {
+	act(() => {
+		document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+	});
+};
+
+/** useModal opens and restores focus on short timers. */
+const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 30)));
+
+const hrefs = (scope: ParentNode) => Array.from(scope.querySelectorAll('a')).map((link) => link.getAttribute('href'));
+
+const desktopNav = () => must(container.querySelector<HTMLElement>('header > div > nav[aria-label="Main"]'));
+const accountList = () => must(container.querySelector<HTMLUListElement>('header > div > ul[aria-label="Account"]'));
+const menuButton = () => must(container.querySelector<HTMLButtonElement>('button[aria-label="Open navigation"]'));
+const menuDialog = () => must(container.querySelector<HTMLDialogElement>('dialog[aria-label="Navigation"]'));
+
 beforeEach(() => {
+	logout.mockClear();
 	container = document.createElement('div');
 	document.body.appendChild(container);
 	root = createRoot(container);
-	render();
+	act(() => {
+		root.render(
+			<MemoryRouter>
+				<Header />
+			</MemoryRouter>,
+		);
+	});
 });
 
 afterEach(() => {
@@ -58,42 +90,33 @@ afterEach(() => {
 });
 
 describe('Header navigation semantics', () => {
-	it('exposes a main navigation landmark with plain link lists, not ARIA menus', () => {
-		const nav = container.querySelector('nav[aria-label="Main"]');
-		expect(nav).not.toBeNull();
+	it('uses disclosures and plain link lists, never ARIA menus', () => {
 		expect(container.querySelector('[role="menu"], [role="menubar"], [role="menuitem"]')).toBeNull();
-		expect(nav?.querySelectorAll('ul').length).toBeGreaterThanOrEqual(2);
+		expect(
+			Array.from(desktopNav().querySelectorAll('button[aria-controls]')).map((button) =>
+				button.textContent?.trim(),
+			),
+		).toEqual(['Explore', 'Dictionary']);
 	});
 
-	it('lists every section in one order, with the four dictionaries in the Japanese Material group', () => {
-		const primary = must(container.querySelector<HTMLUListElement>('#primary-navigation > ul'));
-		const hrefs = Array.from(primary.querySelectorAll('a')).map((link) => link.getAttribute('href'));
-
-		expect(hrefs).toEqual([
+	it('groups Articles, Catalogues and Community under Explore, and the four dictionaries under Dictionary', () => {
+		expect(hrefs(must(container.querySelector('#explore-nav-group')))).toEqual([
 			'/articles',
 			'/catalogues',
+			'/community',
+		]);
+		expect(hrefs(must(container.querySelector('#dictionary-nav-group')))).toEqual([
 			'/radicals',
 			'/kanjis',
 			'/words',
 			'/sentences',
-			'/community',
-			'/dashboard',
 		]);
-
-		// The group is a disclosure only in the middle width band; CSS lays it out flat in the
-		// mobile menu and on wide screens, so the links live in the group's own list.
-		const group = must(primary.querySelector<HTMLUListElement>(':scope > li > #material-nav-group'));
-		expect(Array.from(group.querySelectorAll(':scope > li > a')).map((link) => link.textContent)).toEqual([
-			'Radicals',
-			'Kanji',
-			'Words',
-			'Sentences',
-		]);
+		expect(hrefs(desktopNav())).not.toContain('/dashboard');
 	});
 
-	it('opens and closes Japanese Material as a disclosure, and closes it on outside click', () => {
-		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="material-nav-group"]'));
-		const list = must(container.querySelector<HTMLUListElement>('#material-nav-group'));
+	it('opens and closes a group as a disclosure, and closes it on outside click', () => {
+		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="explore-nav-group"]'));
+		const list = must(container.querySelector<HTMLUListElement>('#explore-nav-group'));
 
 		expect(button.getAttribute('aria-expanded')).toBe('false');
 		expect(list.hidden).toBe(true);
@@ -106,47 +129,14 @@ describe('Header navigation semantics', () => {
 		expect(button.getAttribute('aria-expanded')).toBe('false');
 
 		click(button);
-		act(() => {
-			document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-		});
-		expect(button.getAttribute('aria-expanded')).toBe('false');
-		expect(list.hidden).toBe(true);
-	});
-
-	it('keeps "+ New" in the account cluster, before the user name', () => {
-		const account = must(container.querySelector<HTMLUListElement>('ul[aria-label="Account"]'));
-		const button = must(account.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]'));
-		const userLink = must(account.querySelector<HTMLAnchorElement>('a[href="/dashboard"]'));
-
-		expect(button.textContent).toContain('New');
-		expect(button.compareDocumentPosition(userLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-	});
-
-	it('opens and closes "+ New" as a disclosure with all three targets', () => {
-		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]'));
-		const list = must(container.querySelector<HTMLUListElement>('#new-nav-group'));
-
-		expect(button.getAttribute('aria-expanded')).toBe('false');
-		expect(list.hidden).toBe(true);
-
-		click(button);
-		expect(button.getAttribute('aria-expanded')).toBe('true');
-		expect(list.hidden).toBe(false);
-		expect(Array.from(list.querySelectorAll('a')).map((link) => link.getAttribute('href'))).toEqual([
-			'/newarticle',
-			'/catalogues/new',
-			'/newpost',
-		]);
-
-		click(button);
-		expect(button.getAttribute('aria-expanded')).toBe('false');
+		mouseupOutside();
 		expect(list.hidden).toBe(true);
 	});
 
 	it('closes an open group on Escape and returns focus to its button', () => {
-		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]'));
+		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="dictionary-nav-group"]'));
 		click(button);
-		const firstLink = must(container.querySelector<HTMLAnchorElement>('#new-nav-group a'));
+		const firstLink = must(container.querySelector<HTMLAnchorElement>('#dictionary-nav-group a'));
 		firstLink.focus();
 
 		keydown(firstLink, 'Escape');
@@ -155,44 +145,91 @@ describe('Header navigation semantics', () => {
 		expect(document.activeElement).toBe(button);
 	});
 
-	it('closes an open group when clicking outside of it', () => {
-		const button = must(container.querySelector<HTMLButtonElement>('button[aria-controls="new-nav-group"]'));
+	it('shows only the name in the bar, with Dashboard, a divider and Log out last behind it', () => {
+		const button = must(
+			accountList().querySelector<HTMLButtonElement>('button[aria-controls="account-nav-group"]'),
+		);
+		const list = must(container.querySelector<HTMLUListElement>('#account-nav-group'));
+
+		expect(button.textContent?.trim()).toBe('Alana');
+		expect(list.hidden).toBe(true);
+		expect(accountList().textContent).not.toContain('Logged in as');
+
 		click(button);
-		expect(button.getAttribute('aria-expanded')).toBe('true');
+		expect(list.hidden).toBe(false);
+		const items = Array.from(list.children);
+		expect(items.map((item) => item.getAttribute('role') ?? item.textContent)).toEqual([
+			'Dashboard',
+			'separator',
+			'Log out',
+		]);
+		expect(hrefs(list)).toEqual(['/dashboard']);
 
-		act(() => {
-			document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-		});
-
-		expect(button.getAttribute('aria-expanded')).toBe('false');
+		click(must(items[2].querySelector('button')));
+		expect(logout).toHaveBeenCalledTimes(1);
 	});
 
-	it('toggles the collapsed mobile menu through an aria-expanded button', () => {
-		const toggle = must(container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]'));
-		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+	it('keeps the socket indicator just before the name', () => {
+		const [socket, account] = Array.from(accountList().children);
 
-		click(toggle);
-		expect(toggle.getAttribute('aria-expanded')).toBe('true');
-		expect(toggle.getAttribute('aria-label')).toBe('Close navigation');
+		expect(socket.textContent).toBe('Socket status');
+		expect(account.querySelector('button[aria-controls="account-nav-group"]')).not.toBeNull();
+	});
+});
 
-		click(toggle);
-		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+describe('Header menu drawer', () => {
+	it('opens a navigation dialog with the Explore and Dictionary sections and the account last', async () => {
+		expect(menuButton().getAttribute('aria-haspopup')).toBe('dialog');
+		expect(menuDialog().open).toBe(false);
+
+		click(menuButton());
+		await settle();
+
+		expect(menuDialog().open).toBe(true);
+		expect(menuButton().getAttribute('aria-expanded')).toBe('true');
+		const nav = must(menuDialog().querySelector('nav[aria-label="Main"]'));
+		expect(Array.from(nav.querySelectorAll('h2')).map((heading) => heading.textContent)).toEqual([
+			'Explore',
+			'Dictionary',
+		]);
+		expect(hrefs(nav)).toEqual([
+			'/articles',
+			'/catalogues',
+			'/community',
+			'/radicals',
+			'/kanjis',
+			'/words',
+			'/sentences',
+		]);
+
+		const account = must(menuDialog().querySelector('ul[aria-label="Account"]'));
+		expect(nav.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		const accountButton = must(account.querySelector<HTMLButtonElement>('button[aria-controls]'));
+		expect(accountButton.textContent?.trim()).toBe('Alana');
+		click(accountButton);
+		expect(hrefs(account)).toEqual(['/dashboard']);
+		expect(account.textContent).toContain('Log out');
 	});
 
-	it('closes the mobile menu on Escape (focus back to the toggle) and on outside click', () => {
-		const toggle = must(container.querySelector<HTMLButtonElement>('button[aria-controls="primary-navigation"]'));
-		click(toggle);
-		const firstLink = must(container.querySelector<HTMLAnchorElement>('#primary-navigation a'));
-		firstLink.focus();
-		keydown(firstLink, 'Escape');
-		expect(toggle.getAttribute('aria-expanded')).toBe('false');
-		expect(document.activeElement).toBe(toggle);
+	it('closes from its close button and returns focus to the menu button', async () => {
+		act(() => menuButton().focus());
+		click(menuButton());
+		await settle();
 
-		click(toggle);
-		expect(toggle.getAttribute('aria-expanded')).toBe('true');
-		act(() => {
-			document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-		});
-		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		click(must(menuDialog().querySelector('button[aria-label="Close navigation"]')));
+		await settle();
+
+		expect(menuDialog().open).toBe(false);
+		expect(document.activeElement).toBe(menuButton());
+	});
+
+	it('closes when a link is followed', async () => {
+		click(menuButton());
+		await settle();
+
+		click(must(menuDialog().querySelector('a[href="/words"]')));
+		await settle();
+
+		expect(menuDialog().open).toBe(false);
 	});
 });

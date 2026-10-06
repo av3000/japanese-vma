@@ -266,13 +266,25 @@ class IndexArticleTest extends TestCase
         $this->assertArticleTitles($response->json('items'), ['Included']);
     }
 
-    public function test_index_returns_attached_kanjis(): void
+    public function test_index_leaves_the_attached_lists_empty_unless_they_are_asked_for(): void
     {
         $author = $this->createUser();
         $article = $this->createArticle($author);
         $this->attachKanji($article);
 
+        // #384: no list UI reads them, and embedding them made every page about 24 times heavier.
         $this->getJson('/api/v1/articles')
+            ->assertOk()
+            ->assertJsonPath('items.0.kanjis', []);
+    }
+
+    public function test_index_returns_attached_kanjis_for_a_caller_that_asks(): void
+    {
+        $author = $this->createUser();
+        $article = $this->createArticle($author);
+        $this->attachKanji($article);
+
+        $this->getJson('/api/v1/articles?include_kanjis=true')
             ->assertOk()
             ->assertJsonPath('items.0.kanjis.0.character', '水');
     }

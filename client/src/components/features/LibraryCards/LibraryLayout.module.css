@@ -1,0 +1,73 @@
+/* The Library page: a grey surface the white cards sit on. */
+.page {
+	background-color: var(--color-neutral-100);
+}
+
+/*
+ * `main` only grows to fill the viewport; it does not hand that height to its child. Painting
+ * `main` itself grey keeps a short page (an empty state) from ending in a white band above the
+ * footer. Without :has() support only the page's own box is grey.
+ */
+:global(.main-content):has(.page) {
+	background-color: var(--color-neutral-100);
+}
+
+.content {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+/* One column below 768px, then 2 / 3 / 4 columns from 768 / 1024 / 1320px. */
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--spacing-sm);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gridItem {
+	min-width: 0;
+}
+
+@media (min-width: 768px) {
+	.grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--spacing-md);
+	}
+}
+
+@media (min-width: 1024px) {
+	.grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1320px) {
+	.grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.empty {
+	padding: var(--spacing-2xl) var(--spacing-md);
+	background-color: var(--color-neutral-0);
+	border: var(--border-size-sm) dashed var(--color-neutral-300);
+	border-radius: var(--border-radius-md);
+	text-align: center;
+}
+
+/* Two classes to beat the global h2 rules. */
+.empty .emptyTitle {
+	min-height: 0;
+	margin: 0 0 var(--spacing-2xs);
+	font-size: var(--font-size-heading-5);
+	word-break: normal;
+	overflow-wrap: anywhere;
+	hyphens: manual;
+}
+
+.emptyHint {
+	margin: 0;
+	color: var(--color-neutral-600);
+}

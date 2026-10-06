@@ -113,8 +113,8 @@ describe('SentenceEdit', () => {
 		expect(html).toContain('SentenceForm');
 		expect(capturedProps[0]).toMatchObject({
 			initialValues: { content: '水を飲みます。' },
-			submitLabel: 'Update',
-			disableSubmitWhenUnchanged: true,
+			submitLabel: 'Save changes',
+			requireChanges: true,
 		});
 	});
 
