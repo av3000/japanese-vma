@@ -79,7 +79,7 @@ class RobotsTxtPolicy
     {
         $response = $this->http->get($origin.'/robots.txt');
 
-        if ($response === null || $response->clientError()) {
+        if ($response->clientError()) {
             return [];
         }
 

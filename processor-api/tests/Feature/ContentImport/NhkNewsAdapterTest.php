@@ -9,6 +9,7 @@ use App\Domain\ContentImport\Exceptions\ContentSourceUnavailableException;
 use App\Infrastructure\ContentImport\Sources\Nhk\NhkNewsAdapter;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\Support\ContentImport\FakesNhkNews;
 use Tests\TestCase;
 
@@ -37,15 +38,30 @@ class NhkNewsAdapterTest extends TestCase
         self::assertSame([], $articles[2]->topics);
     }
 
-    public function test_it_stops_at_the_first_known_article_and_fetches_nothing_past_it(): void
+    public function test_it_skips_known_articles_without_fetching_them_and_keeps_going(): void
     {
         $this->fakeNhkNews();
 
-        $articles = $this->list(fn (string $id): bool => $id === 'nd-20261002de00002');
+        $ids = array_map(
+            fn (ExternalArticle $a): string => $a->externalId,
+            $this->list(fn (string $id): bool => $id === 'nd-20261002de00002'),
+        );
 
-        self::assertCount(1, $articles);
+        self::assertSame(['nd-20261002de00003', 'nd-20261002de00001'], $ids);
         Http::assertNotSent(fn (Request $r): bool => str_contains($r->url(), 'nd-20261002de00002'));
-        Http::assertNotSent(fn (Request $r): bool => str_contains($r->url(), 'nd-20261002de00001'));
+    }
+
+    public function test_entries_are_ordered_by_instant_whatever_their_offset(): void
+    {
+        // 12:00Z is 21:00 in Tokyo, so nd-...01 is the newer one although it sorts lower as text.
+        $this->fakeNhkNews([self::NHK_SITEMAP => Http::response($this->sitemap([
+            'nd-20261002de00002' => '2026-10-02T20:00+09:00',
+            'nd-20261002de00001' => '2026-10-02T12:00:00Z',
+        ]))]);
+
+        $ids = array_map(fn (ExternalArticle $a): string => $a->externalId, $this->list());
+
+        self::assertSame(['nd-20261002de00001', 'nd-20261002de00002'], $ids);
     }
 
     public function test_the_listing_is_lazy(): void
@@ -130,6 +146,27 @@ class NhkNewsAdapterTest extends TestCase
         self::assertSame(['nd-20261002de00002', 'nd-20261002de00001'], $ids);
     }
 
+    public function test_one_page_answering_a_server_error_is_skipped(): void
+    {
+        Sleep::fake();
+        $this->fakeNhkNews(['https://news.web.nhk/newsweb/na/nd-20261002de00003' => Http::response('', 503)]);
+
+        $ids = array_map(fn (ExternalArticle $a): string => $a->externalId, $this->list());
+
+        self::assertSame(['nd-20261002de00002', 'nd-20261002de00001'], $ids);
+    }
+
+    public function test_several_failing_pages_in_a_row_fail_the_run(): void
+    {
+        Sleep::fake();
+        $this->fakeNhkNews(['https://news.web.nhk/newsweb/na/*' => Http::response('', 503)]);
+
+        $this->expectException(ContentSourceUnavailableException::class);
+        $this->expectExceptionMessage('keep failing');
+
+        $this->list();
+    }
+
     public function test_server_errors_are_retried_then_fail_the_run(): void
     {
         $this->fakeNhkNews([self::NHK_SITEMAP => Http::response('', 503)]);
@@ -141,6 +178,20 @@ class NhkNewsAdapterTest extends TestCase
         } finally {
             Http::assertSentCount(4); // robots.txt + three sitemap attempts
         }
+    }
+
+    /**
+     * @param array<string, string> $publishedAtById
+     */
+    private function sitemap(array $publishedAtById): string
+    {
+        $urls = '';
+
+        foreach ($publishedAtById as $id => $publishedAt) {
+            $urls .= "<url><loc>https://news.web.nhk/newsweb/na/{$id}</loc><news:news><news:publication_date>{$publishedAt}</news:publication_date></news:news></url>";
+        }
+
+        return '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">'.$urls.'</urlset>';
     }
 
     /**

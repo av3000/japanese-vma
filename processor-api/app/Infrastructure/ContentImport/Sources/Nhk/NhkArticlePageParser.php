@@ -31,6 +31,8 @@ class NhkArticlePageParser
             }
 
             $canonical = $this->text($block['mainEntityOfPage']['@id'] ?? null);
+            // The page JSON-LD has no topic ids, so a topic is keyed by its own name.
+            $keywords = $this->texts($block['keywords'] ?? []);
 
             return new ExternalArticle(
                 externalId: $id,
@@ -39,7 +41,7 @@ class NhkArticlePageParser
                 canonicalUrl: $this->isNhkUrl($canonical) ? $canonical : $pageUrl,
                 publishedAt: $this->date($this->text($block['datePublished'] ?? null)),
                 genres: $this->texts($block['genre'] ?? []),
-                topics: array_combine($keywords = $this->texts($block['keywords'] ?? []), $keywords),
+                topics: array_combine($keywords, $keywords),
             );
         }
 

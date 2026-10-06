@@ -8,6 +8,8 @@ use App\Application\ContentImport\Interfaces\ContentSourceAdapterInterface;
 use App\Domain\ContentImport\Exceptions\ContentSourceUnavailableException;
 use App\Infrastructure\ContentImport\Http\PoliteHttpClient;
 use App\Infrastructure\ContentImport\Http\RobotsTxtPolicy;
+use DateTimeImmutable;
+use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 use Throwable;
 
@@ -25,8 +27,12 @@ class NhkNewsAdapter implements ContentSourceAdapterInterface
 
     public const HOST = 'news.web.nhk';
 
-    /** Consecutive article pages without a usable NewsArticle block before the run gives up. */
-    private const MAX_UNPARSEABLE_IN_A_ROW = 3;
+    /**
+     * Consecutive article pages that could not be read (an error answer, or no usable NewsArticle
+     * block) before the run gives up. One bad page is skipped and listed again next run; several
+     * in a row mean the site is down or changed shape.
+     */
+    private const MAX_UNREADABLE_IN_A_ROW = 3;
 
     public function __construct(
         private readonly PoliteHttpClient $http,
@@ -43,45 +49,51 @@ class NhkNewsAdapter implements ContentSourceAdapterInterface
 
     public function listRecent(callable $isKnown): iterable
     {
-        $unparseableInARow = 0;
+        $unreadableInARow = 0;
         $parsed = 0;
+
+        $unreadable = function (string $problem) use (&$unreadableInARow): void {
+            if (++$unreadableInARow >= self::MAX_UNREADABLE_IN_A_ROW) {
+                throw new ContentSourceUnavailableException("NHK article pages keep failing: {$problem}");
+            }
+
+            Log::warning('NHK article page skipped', ['problem' => $problem]);
+        };
 
         foreach ($this->sitemapEntries() as $entry) {
             if ($isKnown($entry['id'])) {
-                return;
+                continue;
             }
 
             $this->robots->assertAllowed($entry['url']);
             $response = $this->http->get($entry['url']);
 
             // A page removed between the sitemap and the fetch is skipped, not fatal.
-            if ($response === null || $response->status() === 404 || $response->status() === 410) {
+            if ($response->status() === 404 || $response->status() === 410) {
                 continue;
             }
 
             if (! $response->successful()) {
-                throw new ContentSourceUnavailableException("NHK article {$entry['url']} answered {$response->status()}");
+                $unreadable("{$entry['url']} answered {$response->status()}");
+
+                continue;
             }
 
             $article = $this->parser->parse($response->body(), $entry['url']);
 
             if ($article === null || $article->externalId !== $entry['id']) {
-                if (++$unparseableInARow >= self::MAX_UNPARSEABLE_IN_A_ROW) {
-                    throw new ContentSourceUnavailableException(
-                        'NHK article pages no longer carry a readable NewsArticle block (last: '.$entry['url'].')'
-                    );
-                }
+                $unreadable("{$entry['url']} carries no readable NewsArticle block");
 
                 continue;
             }
 
-            $unparseableInARow = 0;
+            $unreadableInARow = 0;
             $parsed++;
 
             yield $article;
         }
 
-        if ($unparseableInARow > 0 && $parsed === 0) {
+        if ($unreadableInARow > 0 && $parsed === 0) {
             throw new ContentSourceUnavailableException('No NHK article page in the sitemap could be read');
         }
     }
@@ -89,15 +101,15 @@ class NhkNewsAdapter implements ContentSourceAdapterInterface
     /**
      * Newest first.
      *
-     * @return list<array{id: string, url: string, publishedAt: string}>
+     * @return list<array{id: string, url: string, publishedAt: int|null}>
      */
     private function sitemapEntries(): array
     {
         $this->robots->assertAllowed($this->sitemapUrl);
         $response = $this->http->get($this->sitemapUrl);
 
-        if ($response === null || ! $response->successful()) {
-            throw new ContentSourceUnavailableException('NHK sitemap answered '.($response?->status() ?? 'nothing'));
+        if (! $response->successful()) {
+            throw new ContentSourceUnavailableException('NHK sitemap answered '.$response->status());
         }
 
         try {
@@ -121,17 +133,35 @@ class NhkNewsAdapter implements ContentSourceAdapterInterface
                 continue;
             }
 
-            $entries[] = ['id' => basename((string) parse_url($loc, PHP_URL_PATH)), 'url' => $loc, 'publishedAt' => $publishedAt];
+            $entries[] = [
+                'id' => basename((string) parse_url($loc, PHP_URL_PATH)),
+                'url' => $loc,
+                'publishedAt' => $this->timestamp($publishedAt),
+            ];
         }
 
         if ($entries === [] && count($xml->url) > 0) {
             throw new ContentSourceUnavailableException('NHK sitemap lists no article URLs in the expected form');
         }
 
-        // Stable sort, newest first: ISO-8601 timestamps with the same offset compare as strings.
-        usort($entries, fn (array $a, array $b): int => strcmp($b['publishedAt'], $a['publishedAt']));
+        // Stable sort, newest first, compared as instants so differing offsets cannot misorder
+        // them. An entry without a readable date goes last.
+        usort($entries, fn (array $a, array $b): int => ($b['publishedAt'] ?? PHP_INT_MIN) <=> ($a['publishedAt'] ?? PHP_INT_MIN));
 
         return $entries;
+    }
+
+    private function timestamp(string $value): ?int
+    {
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return (new DateTimeImmutable($value))->getTimestamp();
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     private function isArticleUrl(string $url): bool

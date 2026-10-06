@@ -39,9 +39,11 @@ class PoliteHttpClient
     }
 
     /**
-     * The response, whatever its status; null when the request could not be made at all.
+     * The response, whatever its status.
+     *
+     * @throws ContentSourceUnavailableException when the host cannot be reached even after the retries
      */
-    public function get(string $url): ?Response
+    public function get(string $url): Response
     {
         $this->pause();
 
