@@ -194,6 +194,16 @@
                         }
                     },
                     {
+                        "name": "statuses[]",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/ArticleStatus"
+                            }
+                        }
+                    },
+                    {
                         "name": "created_from",
                         "in": "query",
                         "schema": {
@@ -3875,6 +3885,12 @@
                             "type": "integer"
                         }
                     },
+                    "statuses": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
                     "author_uid": {
                         "type": [
                             "string",
@@ -3899,6 +3915,7 @@
                     "hashtag_ids",
                     "kanji_ids",
                     "word_ids",
+                    "statuses",
                     "author_uid",
                     "created_from",
                     "created_to"
