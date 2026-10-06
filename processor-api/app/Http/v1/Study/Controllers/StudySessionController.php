@@ -59,9 +59,10 @@ class StudySessionController extends Controller
      * already recorded, so a retried request is harmless. 409 for a first-pass answer
      * (`attempt_no` 1) once the session is complete; "retry missed" rounds are still accepted.
      *
-     * @response array{}
+     * @response array{success: bool}
      */
-    #[Response(201, type: 'array{}')]
+    #[Response(201, type: 'array{success: bool}')]
+    #[Response(200, type: 'array{success: bool}')]
     public function storeAttempt(string $uuid, StoreStudyAttemptRequest $request): JsonResponse
     {
         $result = $this->studySessionService->recordAttempt(
@@ -74,7 +75,7 @@ class StudySessionController extends Controller
             return TypedResults::fromError($result->getError());
         }
 
-        return response()->json([], $result->getData() === true ? 201 : 200);
+        return $result->getData() === true ? TypedResults::created(null) : TypedResults::ok(null);
     }
 
     /**

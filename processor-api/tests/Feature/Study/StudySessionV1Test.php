@@ -238,8 +238,12 @@ class StudySessionV1Test extends TestCase
         $session = $this->sessionFor($user);
         Passport::actingAs($user, ['*'], 'api');
 
-        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())->assertStatus(201);
-        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['is_correct' => false]))->assertStatus(200);
+        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt())
+            ->assertStatus(201)
+            ->assertExactJson(['success' => true]);
+        $this->postJson("/api/v1/study/sessions/{$session->uuid}/attempts", $this->attempt(['is_correct' => false]))
+            ->assertStatus(200)
+            ->assertExactJson(['success' => true]);
 
         $this->assertSame(1, StudyAttempt::query()->where('session_id', $session->id)->count());
         // The first verdict stands.

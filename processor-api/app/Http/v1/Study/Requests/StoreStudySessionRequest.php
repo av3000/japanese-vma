@@ -14,6 +14,8 @@ use Illuminate\Validation\Validator;
 
 class StoreStudySessionRequest extends FormRequest
 {
+    use ValidatesFlashcardQuestion;
+
     public function authorize(): bool
     {
         return auth('api')->check();
@@ -27,20 +29,16 @@ class StoreStudySessionRequest extends FormRequest
         return [
             'catalogue_uuid' => ['required', 'string', 'uuid'],
             'prompt' => ['required', Rule::enum(FlashcardField::class)],
-            'answer' => ['required', Rule::enum(FlashcardField::class), 'different:prompt'],
+            'answer' => ['required', Rule::enum(FlashcardField::class)],
             'mode' => ['required', Rule::enum(AnswerMode::class)],
             'script' => ['sometimes', Rule::enum(ScriptStrictness::class)],
             'card_count' => ['required', 'integer', 'min:'.FlashcardConfig::MIN_COUNT, 'max:'.FlashcardConfig::MAX_COUNT],
         ];
     }
 
-    /** A character answer cannot be typed; the type-specific rules are the service's. */
+    /** Prompt and answer must differ and a character answer cannot be typed; the type-specific rules are the service's. */
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $validator): void {
-            if ($this->input('mode') === AnswerMode::TYPED->value && $this->input('answer') === FlashcardField::CHARACTER->value) {
-                $validator->errors()->add('mode', 'A character answer cannot be typed; use options.');
-            }
-        });
+        $validator->after(fn (Validator $validator) => $this->addQuestionRuleErrors($validator));
     }
 }

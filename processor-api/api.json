@@ -3306,13 +3306,15 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        }
                                     },
-                                    "minItems": 0,
-                                    "maxItems": 0,
-                                    "additionalItems": false
+                                    "required": [
+                                        "success"
+                                    ]
                                 }
                             }
                         }
@@ -3331,13 +3333,15 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        }
                                     },
-                                    "minItems": 0,
-                                    "maxItems": 0,
-                                    "additionalItems": false
+                                    "required": [
+                                        "success"
+                                    ]
                                 }
                             }
                         }
@@ -5511,7 +5515,7 @@
             },
             "FlashcardField": {
                 "type": "string",
-                "description": "What a flashcard shows (prompt) or asks for (answer). The same vocabulary serves both sides; a valid card uses two different fields, see FlashcardConfig.\n| |\n|---|\n| `character` <br/> The kanji glyph, the radical glyph, or the word's written surface. |\n| `meaning` <br/> English meaning(s). |\n| `onyomi` <br/> Kanji on'yomi, stored in katakana. |\n| `kunyomi` <br/> Kanji kun'yomi, stored in hiragana with a dot before the okurigana. |\n| `reading` <br/> Word furigana or radical reading. |",
+                "description": "What a flashcard shows (prompt) or asks for (answer). The same vocabulary serves both sides; a valid card uses two different fields, see FlashcardQuestion.\n| |\n|---|\n| `character` <br/> The kanji glyph, the radical glyph, or the word's written surface. |\n| `meaning` <br/> English meaning(s). |\n| `onyomi` <br/> Kanji on'yomi, stored in katakana. |\n| `kunyomi` <br/> Kanji kun'yomi, stored in hiragana with a dot before the okurigana. |\n| `reading` <br/> Word furigana or radical reading. |",
                 "enum": [
                     "character",
                     "meaning",

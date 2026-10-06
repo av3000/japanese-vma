@@ -15,6 +15,16 @@ use Illuminate\Validation\Validator;
 
 class FlashcardDeckRequest extends FormRequest
 {
+    use ValidatesFlashcardQuestion;
+
+    /** The question asked when the query string leaves a field out. */
+    private const DEFAULTS = [
+        'prompt' => FlashcardField::CHARACTER->value,
+        'answer' => FlashcardField::MEANING->value,
+        'mode' => AnswerMode::OPTIONS->value,
+        'script' => ScriptStrictness::STRICT->value,
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -32,37 +42,21 @@ class FlashcardDeckRequest extends FormRequest
         ];
     }
 
-    /**
-     * Prompt and answer must differ, and a character answer cannot be typed. The type-specific
-     * combination rules need the catalogue and are answered by the service with a 422 of their own.
-     */
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $validator): void {
-            $prompt = $this->input('prompt', FlashcardField::CHARACTER->value);
-            $answer = $this->input('answer', FlashcardField::MEANING->value);
-            $mode = $this->input('mode', AnswerMode::OPTIONS->value);
-
-            if ($prompt === $answer) {
-                $validator->errors()->add('answer', 'The answer field must differ from the prompt field.');
-            }
-
-            if ($mode === AnswerMode::TYPED->value && $answer === FlashcardField::CHARACTER->value) {
-                $validator->errors()->add('mode', 'A character answer cannot be typed; use options.');
-            }
-        });
+        $validator->after(fn (Validator $validator) => $this->addQuestionRuleErrors($validator, self::DEFAULTS));
     }
 
     public function toConfig(): FlashcardConfig
     {
-        $validated = $this->validated();
+        $validated = [...self::DEFAULTS, ...$this->validated()];
 
         return new FlashcardConfig(
             question: new FlashcardQuestion(
-                prompt: FlashcardField::from($validated['prompt'] ?? FlashcardField::CHARACTER->value),
-                answer: FlashcardField::from($validated['answer'] ?? FlashcardField::MEANING->value),
-                mode: AnswerMode::from($validated['mode'] ?? AnswerMode::OPTIONS->value),
-                script: ScriptStrictness::from($validated['script'] ?? ScriptStrictness::STRICT->value),
+                prompt: FlashcardField::from($validated['prompt']),
+                answer: FlashcardField::from($validated['answer']),
+                mode: AnswerMode::from($validated['mode']),
+                script: ScriptStrictness::from($validated['script']),
             ),
             count: (int) ($validated['count'] ?? FlashcardConfig::DEFAULT_COUNT),
             seed: (int) ($validated['seed'] ?? random_int(0, FlashcardConfig::MAX_SEED)),

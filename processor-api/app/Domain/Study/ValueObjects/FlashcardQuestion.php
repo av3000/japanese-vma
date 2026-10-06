@@ -34,13 +34,25 @@ final readonly class FlashcardQuestion
         public AnswerMode $mode,
         public ScriptStrictness $script,
     ) {
-        if ($this->prompt === $this->answer) {
+        if (! self::fieldsDiffer($this->prompt, $this->answer)) {
             throw new InvalidArgumentException('Prompt and answer fields must differ');
         }
 
-        if ($this->mode === AnswerMode::TYPED && ! $this->answer->isTypeable()) {
+        if (! self::modeFitsAnswer($this->mode, $this->answer)) {
             throw new InvalidArgumentException('A character answer cannot be typed');
         }
+    }
+
+    /** A card never asks for what it shows. Holds for every catalogue type. */
+    public static function fieldsDiffer(FlashcardField $prompt, FlashcardField $answer): bool
+    {
+        return $prompt !== $answer;
+    }
+
+    /** Typed mode needs a typeable answer. Holds for every catalogue type. */
+    public static function modeFitsAnswer(AnswerMode $mode, FlashcardField $answer): bool
+    {
+        return $mode !== AnswerMode::TYPED || $answer->isTypeable();
     }
 
     /**

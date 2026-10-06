@@ -6,7 +6,7 @@ namespace App\Domain\Study\Enums;
 
 /**
  * What a flashcard shows (prompt) or asks for (answer). The same vocabulary serves
- * both sides; a valid card uses two different fields, see FlashcardConfig.
+ * both sides; a valid card uses two different fields, see FlashcardQuestion.
  */
 enum FlashcardField: string
 {

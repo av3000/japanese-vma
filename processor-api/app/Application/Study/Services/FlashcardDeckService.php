@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Study\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Interfaces\Repositories\KanjiRepositoryInterface;
 use App\Application\JapaneseMaterial\Radicals\Interfaces\Repositories\RadicalRepositoryInterface;
@@ -33,7 +32,6 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
 {
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
-        private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
         private readonly KanjiRepositoryInterface $kanjiRepository,
         private readonly WordRepositoryInterface $wordRepository,
         private readonly RadicalRepositoryInterface $radicalRepository,
@@ -69,7 +67,14 @@ final class FlashcardDeckService implements FlashcardDeckServiceInterface
             ));
         }
 
-        $itemIds = $this->catalogueItemRepository->findItemIdsByCatalogueId($catalogue->getIdValue());
+        $itemIdsResult = $this->catalogueService->getCatalogueItemIds($catalogue->getIdValue());
+
+        if ($itemIdsResult->isFailure()) {
+            return $itemIdsResult;
+        }
+
+        /** @var int[] $itemIds */
+        $itemIds = $itemIdsResult->getData();
         $source = new EligibleCardsDTO($baseType, $this->mapCards($baseType, $itemIds, $question), $itemIds);
 
         if ($source->cards === []) {

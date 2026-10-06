@@ -41,6 +41,21 @@ interface CatalogueServiceInterface
     public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result;
 
     /**
+     * The ids of the dictionary items in a catalogue. No policy check: the caller resolved
+     * the catalogue through getViewableCatalogue() first, or holds a reference it made then.
+     *
+     * @return Result Success data: int[].
+     */
+    public function getCatalogueItemIds(int $catalogueId): Result;
+
+    /**
+     * Whether a catalogue holds an item. Same caller contract as getCatalogueItemIds().
+     *
+     * @return Result Success data: bool.
+     */
+    public function catalogueContainsItem(int $catalogueId, int $itemId): Result;
+
+    /**
      * Resolve a legacy numeric catalogue id to its canonical UUID identity.
      *
      * Visibility-safe and side-effect free: no view is recorded and no detail

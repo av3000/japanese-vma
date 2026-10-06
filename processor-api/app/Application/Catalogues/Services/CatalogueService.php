@@ -220,6 +220,22 @@ class CatalogueService implements CatalogueServiceInterface
     }
 
     /**
+     * @return Result Success data: int[].
+     */
+    public function getCatalogueItemIds(int $catalogueId): Result
+    {
+        return Result::success($this->catalogueItemRepository->findItemIdsByCatalogueId($catalogueId));
+    }
+
+    /**
+     * @return Result Success data: bool.
+     */
+    public function catalogueContainsItem(int $catalogueId, int $itemId): Result
+    {
+        return Result::success($this->catalogueItemRepository->containsItem($catalogueId, $itemId));
+    }
+
+    /**
      * @return Result<CatalogueLegacyIdentityDTO>
      */
     public function resolveLegacyIdentity(int $legacyId, ?AuthenticatedUser $authenticatedUser = null): Result

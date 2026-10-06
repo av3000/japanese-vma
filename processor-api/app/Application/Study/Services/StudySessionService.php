@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Study\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Domain\Catalogues\Models\Catalogue;
@@ -23,7 +22,6 @@ final class StudySessionService implements StudySessionServiceInterface
 {
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
-        private readonly CatalogueItemRepositoryInterface $catalogueItems,
         private readonly StudySessionRepositoryInterface $sessions,
     ) {
     }
@@ -108,8 +106,16 @@ final class StudySessionService implements StudySessionServiceInterface
         // catalogue still exists to check against. A deleted catalogue leaves no reference.
         $catalogueId = $session->getCatalogueId();
 
-        if ($catalogueId !== null && ! $this->catalogueItems->containsItem($catalogueId, $attempt->itemId)) {
-            return Result::failure(StudyErrors::itemNotInCatalogue($sessionUuid->value(), $attempt->itemId));
+        if ($catalogueId !== null) {
+            $containsResult = $this->catalogueService->catalogueContainsItem($catalogueId, $attempt->itemId);
+
+            if ($containsResult->isFailure()) {
+                return $containsResult;
+            }
+
+            if ($containsResult->getData() !== true) {
+                return Result::failure(StudyErrors::itemNotInCatalogue($sessionUuid->value(), $attempt->itemId));
+            }
         }
 
         return Result::success($this->sessions->recordAttempt($session->getIdValue(), $itemType, $attempt));
