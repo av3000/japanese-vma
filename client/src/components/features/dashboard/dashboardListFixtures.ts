@@ -1,6 +1,6 @@
 import type { CatalogueResource } from '@/api/generated/model';
+import { PUBLICITY } from '@/api/publicity';
 import { fixtureOwner, fixtureUuid, UNBROKEN_TITLE } from './dashboardFixtures';
-import { PUBLICITY } from './dashboardValues';
 
 /*
  * Dashboard list rows shaped like the real owner payload

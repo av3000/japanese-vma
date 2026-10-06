@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { PublicityStatus } from '@/api/generated/model/publicityStatus';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import styles from './dashboardCells.module.css';
@@ -22,7 +23,7 @@ export const StackedLabel: React.FC<{ children: React.ReactNode }> = ({ children
 );
 
 /** Public or Private, as an icon plus the word, so it never relies on the icon alone. */
-export const VisibilityCell: React.FC<{ publicity: number }> = ({ publicity }) => {
+export const VisibilityCell: React.FC<{ publicity: PublicityStatus }> = ({ publicity }) => {
 	const visibility = visibilityDisplay(publicity);
 
 	return (

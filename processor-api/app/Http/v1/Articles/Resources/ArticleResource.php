@@ -5,6 +5,7 @@ namespace App\Http\v1\Articles\Resources;
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
@@ -57,7 +58,7 @@ class ArticleResource extends JsonResource
      *     content_preview_jp: string,
      *     content_preview_en: ?string,
      *     source_link: string,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     status: int,
      *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
      *     author: AuthorResource,
@@ -73,7 +74,7 @@ class ArticleResource extends JsonResource
     {
         /** @var Article $article */
         $article = $this->resource;
-        $publicity = (int) $article->getPublicity()->value;
+        $publicity = $article->getPublicity();
         $status = (int) $article->getStatus()->value;
         $jlptLevels = [
             'n1' => (int) $article->getJlptLevels()->n1,

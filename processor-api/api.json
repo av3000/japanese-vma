@@ -3966,7 +3966,7 @@
                         "type": "string"
                     },
                     "publicity": {
-                        "type": "integer"
+                        "$ref": "#/components/schemas/PublicityStatus"
                     },
                     "status": {
                         "type": "integer"
@@ -4236,7 +4236,7 @@
                         "type": "string"
                     },
                     "publicity": {
-                        "type": "integer"
+                        "$ref": "#/components/schemas/PublicityStatus"
                     },
                     "status": {
                         "type": "integer"
@@ -4600,7 +4600,7 @@
                         ]
                     },
                     "publicity": {
-                        "type": "integer"
+                        "$ref": "#/components/schemas/PublicityStatus"
                     },
                     "owner": {
                         "$ref": "#/components/schemas/AuthorResource"
@@ -4755,7 +4755,7 @@
                         ]
                     },
                     "publicity": {
-                        "type": "integer"
+                        "$ref": "#/components/schemas/PublicityStatus"
                     },
                     "owner": {
                         "$ref": "#/components/schemas/AuthorResource"
@@ -6028,6 +6028,14 @@
                     "updated_at"
                 ],
                 "title": "ProcessingStatusResource"
+            },
+            "PublicityStatus": {
+                "type": "integer",
+                "enum": [
+                    0,
+                    1
+                ],
+                "title": "PublicityStatus"
             },
             "RadicalListResource": {
                 "type": "object",

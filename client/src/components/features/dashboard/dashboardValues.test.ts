@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
+import type { PublicityStatus } from '@/api/generated/model/publicityStatus';
+import { PUBLICITY } from '@/api/publicity';
 import {
 	approvalColumnPill,
 	approvalHint,
 	formatCount,
 	formatDashboardDate,
-	PUBLICITY,
 	toCount,
 	visibilityDisplay,
 	visibleProcessingStatus,
@@ -19,7 +20,7 @@ describe('visibilityDisplay', () => {
 	});
 
 	it('treats an unknown value as private', () => {
-		expect(visibilityDisplay(7).label).toBe('Private');
+		expect(visibilityDisplay(7 as PublicityStatus).label).toBe('Private');
 	});
 });
 
