@@ -27,7 +27,7 @@ export const Queue: Story = {
 			'href',
 			`/articles/${reviewQueue[0].uuid}`,
 		);
-		await expect(table.getByText('Approval: Reviewing')).toBeVisible();
+		await expect(table.getByText('Reviewing')).toBeVisible();
 		await expect(table.getByText('No tags')).toBeInTheDocument();
 	},
 };

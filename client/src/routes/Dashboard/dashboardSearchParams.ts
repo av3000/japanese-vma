@@ -51,7 +51,8 @@ const ARTICLE_STATUS_FILTER_STATUSES: Record<ArticleStatusFilter, readonly Artic
 export const AWAITING_REVIEW_STATUSES = ARTICLE_STATUS_FILTER_STATUSES.awaiting;
 
 export const ARTICLE_STATUS_FILTER_OPTIONS: ReadonlyArray<{ value: ArticleStatusFilter; label: string }> = [
-	{ value: 'all', label: 'All' },
+	// The select's label is visually hidden, so the choices name what they filter.
+	{ value: 'all', label: 'All statuses' },
 	{ value: 'awaiting', label: 'Awaiting review' },
 	{ value: 'rejected', label: 'Rejected' },
 	{ value: 'approved', label: 'Approved' },
@@ -78,6 +79,12 @@ export type DashboardViewState = {
 	/** Lists tab only. */
 	listSort: ListSort;
 };
+
+/**
+ * How a tab changes the view. Typing replaces the history entry; a select or a tab pushes one,
+ * so back undoes it.
+ */
+export type DashboardViewChange = (patch: Partial<DashboardViewState>, options?: { replace?: boolean }) => void;
 
 export const defaultDashboardViewState = (tab: DashboardTab = DEFAULT_DASHBOARD_TAB): DashboardViewState => ({
 	tab,

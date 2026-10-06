@@ -1,7 +1,9 @@
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
+import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import type { IconName } from '@/components/shared/Icon';
+import { articleStatusPill, type ArticleStatusPill } from '@/components/shared/StatusPill';
 
 /**
  * Typed display values for the dashboard tables, so no cell checks raw numbers or strings in JSX.
@@ -24,6 +26,24 @@ const PRIVATE_VISIBILITY: VisibilityDisplay = { label: 'Private', icon: 'lockSol
 /** Anything that is not explicitly public reads as private: the safer label for an owner. */
 export const visibilityDisplay = (publicity: number): VisibilityDisplay =>
 	publicity === PUBLICITY.PUBLIC ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY;
+
+/**
+ * Approval status as a pill for a column already headed "Approval", so the label drops the
+ * "Approval:" prefix the shared `articleStatusPill` carries. The tone stays the shared one; keyed
+ * by the generated enum, so a new backend status stops this compiling until it has a label.
+ */
+const APPROVAL_LABELS: Record<ArticleStatus, string> = {
+	[ARTICLE_STATUS.PENDING]: 'Pending',
+	[ARTICLE_STATUS.PROCESSED]: 'Processed',
+	[ARTICLE_STATUS.REVIEWING]: 'Reviewing',
+	[ARTICLE_STATUS.REJECTED]: 'Rejected',
+	[ARTICLE_STATUS.APPROVED]: 'Approved',
+};
+
+export const approvalColumnPill = (status: number): ArticleStatusPill => ({
+	...articleStatusPill(status),
+	label: APPROVAL_LABELS[status as ArticleStatus] ?? APPROVAL_LABELS[ARTICLE_STATUS.PENDING],
+});
 
 /**
  * The next step under the approval pill, when the owner has one. There is no reviewer note yet

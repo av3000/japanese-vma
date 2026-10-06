@@ -23,7 +23,6 @@ const baseColumns: DataTableColumn<CatalogueResource>[] = [
 		id: 'title',
 		header: 'Title',
 		rowHeader: true,
-		width: 'fill',
 		cellClassName: styles.titleCell,
 		cell: (catalogue) => (
 			<Link to={CATALOGUE_ROUTES.detail(catalogue.uuid)} className={styles.title}>

@@ -29,7 +29,7 @@ describe('DashboardReviewTable', () => {
 	it('shows the status as a pill with text, and the tags', () => {
 		const html = render([makeReviewItem({ status: ARTICLE_STATUS.REVIEWING })]);
 
-		expect(html).toContain('Approval: Reviewing');
+		expect(html).toContain('>Reviewing<');
 		expect(html).toContain('grammar');
 	});
 

@@ -48,10 +48,11 @@ describe('DashboardArticlesTable', () => {
 		});
 		const row = cells(render([article]));
 
-		expect(row.approval).toContain('Approval: Rejected');
+		expect(row.approval).toBe('ApprovalRejectedEdit and resubmit');
 		expect(row.approval).toContain('Edit and resubmit');
 		expect(row.visibility).toBe('Private');
-		expect(row.processing).toBe('Failed');
+		// "Processing" is the stacked-row label, hidden in the table layout.
+		expect(row.processing).toBe('ProcessingFailed');
 	});
 
 	it('shows no processing pill once processing has finished', () => {

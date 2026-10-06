@@ -1,18 +1,16 @@
 // @vitest-environment jsdom
-import type { ReactNode } from 'react';
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAuth } from '@/hooks/useAuth';
 import { controlLabelled, submitForm, typeInto } from '@/test/formEvents';
-import { renderWithAct } from '@/test/renderWithAct';
 import type { User } from '@/types';
-import DashboardArticlesPanel from './DashboardArticlesPanel';
-import { DASHBOARD_TYPES } from './dashboard.constants';
+import { renderDashboardRoute } from './dashboardTestRoute';
 
 let capturedFilters: Record<string, unknown> | undefined;
 
-vi.mock('@/api/articles/moderation', () => ({
-	usePendingArticles: () => ({ pendingArticles: [], total: 0, isPending: false, isError: false }),
-}));
+vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }));
+vi.mock('@/api/dashboard/useDashboardCounts', () => ({ useDashboardCounts: () => ({ data: undefined }) }));
+vi.mock('@/api/articles/hooks/useOwnerProcessingSubscription', () => ({ OwnerProcessingSubscription: () => null }));
 
 vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 	useInfiniteArticles: ({ filters }: { filters: Record<string, unknown> }) => {
@@ -21,65 +19,55 @@ vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 		return {
 			articles: [],
 			total: 0,
-			error: null,
-			fetchNextPage: vi.fn(),
+			isPending: false,
+			isError: false,
 			hasNextPage: false,
 			isFetchingNextPage: false,
-			status: 'success',
+			fetchNextPage: vi.fn(),
+			refetch: vi.fn(),
 		};
 	},
 }));
 
-vi.mock('@/api/articles/hooks/useOwnerProcessingSubscription', () => ({ OwnerProcessingSubscription: () => null }));
-vi.mock('@/components/features/dashboard/DashboardArticleItem', () => ({ default: () => <div>item</div> }));
-vi.mock('@/components/shared/Link', () => ({
-	Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
-}));
-vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
-
 const owner = { id: 7, uuid: 'owner-uuid', isAdmin: false } as User;
 
-let view: Awaited<ReturnType<typeof renderWithAct>>;
+let route: Awaited<ReturnType<typeof renderDashboardRoute>>;
 
 const advance = (ms: number) =>
 	act(() => {
 		vi.advanceTimersByTime(ms);
 	});
 
+const search = () => controlLabelled<HTMLInputElement>(route.view.container, 'Search your articles');
+
 beforeEach(async () => {
 	vi.useFakeTimers();
 	capturedFilters = undefined;
-	view = await renderWithAct(
-		<DashboardArticlesPanel
-			dashboardView={DASHBOARD_TYPES.COMMON_USER}
-			isAuthenticated
-			currentUser={owner}
-			onToggleDashboardView={vi.fn()}
-		/>,
-	);
+	vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true, isLoading: false, user: owner } as never);
+	route = await renderDashboardRoute('/dashboard');
 });
 
 afterEach(async () => {
-	await view.unmount();
+	await route.view.unmount();
 	vi.useRealTimers();
 });
 
-const search = () => controlLabelled<HTMLInputElement>(view.container, 'Search your articles');
-
-describe('DashboardArticlesPanel search', () => {
+describe('Dashboard articles search', () => {
 	it('starts by listing the owner articles with no search term', () => {
 		expect(capturedFilters).toMatchObject({ author_uid: 'owner-uuid', include_facets: false });
 		expect(capturedFilters).not.toHaveProperty('q');
 	});
 
-	it('searches as the user types, after a 300 ms pause', () => {
+	it('searches as the user types, after a 300 ms pause, and records it in the URL', () => {
 		typeInto(search(), 'grammar');
 
 		advance(299);
 		expect(capturedFilters).not.toHaveProperty('q');
+		expect(route.search()).toBe('');
 
 		advance(1);
 		expect(capturedFilters).toMatchObject({ q: 'grammar' });
+		expect(route.search()).toBe('q=grammar');
 	});
 
 	it('sends the trimmed term as the canonical q, never the legacy search alias', () => {
@@ -100,7 +88,7 @@ describe('DashboardArticlesPanel search', () => {
 	it('searches at once on Enter, without waiting out the pause, and does not reload the page', () => {
 		typeInto(search(), 'grammar');
 
-		const form = view.container.querySelector('form') as HTMLFormElement;
+		const form = route.view.container.querySelector('form[role="search"]') as HTMLFormElement;
 		const submitEvents: Event[] = [];
 		form.addEventListener('submit', (event) => submitEvents.push(event));
 		submitForm(form);
@@ -116,5 +104,26 @@ describe('DashboardArticlesPanel search', () => {
 		advance(300);
 
 		expect(capturedFilters).not.toHaveProperty('q');
+		expect(route.search()).toBe('');
+	});
+
+	it('keeps typing out of the history, but follows the URL when it changes from outside', async () => {
+		await route.navigate('/dashboard?status=approved');
+		typeInto(search(), 'kanji');
+		advance(300);
+
+		expect(route.search()).toBe('q=kanji&status=approved');
+
+		// Typing replaced the entry, so one step back leaves the filtered view entirely.
+		await route.navigate(-1);
+
+		expect(route.search()).toBe('');
+		expect(search().value).toBe('');
+		expect(capturedFilters).not.toHaveProperty('q');
+
+		await route.navigate('/dashboard?q=restored');
+
+		expect(search().value).toBe('restored');
+		expect(capturedFilters).toMatchObject({ q: 'restored' });
 	});
 });

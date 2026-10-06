@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import {
+	approvalColumnPill,
 	approvalHint,
 	formatCount,
 	formatDashboardDate,
@@ -19,6 +20,17 @@ describe('visibilityDisplay', () => {
 
 	it('treats an unknown value as private', () => {
 		expect(visibilityDisplay(7).label).toBe('Private');
+	});
+});
+
+describe('approvalColumnPill', () => {
+	it('keeps the shared tone and drops the "Approval:" prefix the column header already says', () => {
+		expect(approvalColumnPill(ARTICLE_STATUS.REJECTED)).toEqual({ tone: 'danger', label: 'Rejected' });
+		expect(approvalColumnPill(ARTICLE_STATUS.APPROVED)).toEqual({ tone: 'success', label: 'Approved' });
+	});
+
+	it('falls back to pending for a value outside the enum, like the shared pill', () => {
+		expect(approvalColumnPill(42)).toEqual({ tone: 'warning', label: 'Pending' });
 	});
 });
 

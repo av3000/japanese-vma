@@ -11,6 +11,11 @@
 	white-space: nowrap;
 }
 
+/* Status pills stay on one line; the title is the cell that wraps when space runs out. */
+.statusCell {
+	white-space: nowrap;
+}
+
 .actionsCell {
 	text-align: end;
 }
@@ -32,8 +37,20 @@
 	border: 0;
 }
 
+/* A label for stacked rows only, where the column header is not visible. */
+.stackedLabel {
+	display: none;
+}
+
 @media (max-width: 767px) {
 	.actionsCell {
 		align-self: end;
+	}
+
+	.stackedLabel {
+		display: inline;
+		margin-inline-end: var(--spacing-2xs);
+		color: var(--color-neutral-600);
+		font-size: var(--font-size-body-sm);
 	}
 }

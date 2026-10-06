@@ -5,9 +5,17 @@ import { Missing } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { dominantJlptLevel } from '@/components/shared/JlptBar/jlptSegments';
 import { LevelBadge } from '@/components/shared/LevelBadge';
-import { articleStatusPill, processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
-import { actionsCellClassName, DateCell, RowActions, VisibilityCell, VisuallyHidden } from '../dashboardCells';
-import { approvalHint, formatCount, toCount, visibleProcessingStatus } from '../dashboardValues';
+import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
+import {
+	actionsCellClassName,
+	DateCell,
+	RowActions,
+	StackedLabel,
+	statusCellClassName,
+	VisibilityCell,
+	VisuallyHidden,
+} from '../dashboardCells';
+import { approvalColumnPill, approvalHint, formatCount, toCount, visibleProcessingStatus } from '../dashboardValues';
 import styles from './DashboardArticlesTable.module.css';
 
 export interface DashboardArticlesTableProps {
@@ -28,7 +36,6 @@ const baseColumns: DataTableColumn<ArticleResource>[] = [
 		id: 'title',
 		header: 'Title',
 		rowHeader: true,
-		width: 'fill',
 		cellClassName: styles.titleCell,
 		cell: (article) => (
 			<>
@@ -42,12 +49,14 @@ const baseColumns: DataTableColumn<ArticleResource>[] = [
 	{
 		id: 'approval',
 		header: 'Approval',
+		mobileLabel: 'Approval',
+		cellClassName: statusCellClassName,
 		cell: (article) => {
 			const hint = approvalHint(article.status);
 
 			return (
 				<>
-					<StatusPill {...articleStatusPill(article.status)} />
+					<StatusPill {...approvalColumnPill(article.status)} />
 					{hint ? <span className={styles.hint}>{hint}</span> : null}
 				</>
 			);
@@ -61,11 +70,15 @@ const baseColumns: DataTableColumn<ArticleResource>[] = [
 	{
 		id: 'processing',
 		header: 'Processing',
+		cellClassName: statusCellClassName,
 		cell: (article) => {
 			const status = visibleProcessingStatus(article.processing_status);
 
 			return status ? (
-				<StatusPill {...processingStatusPill(status)} />
+				<>
+					<StackedLabel>Processing</StackedLabel>
+					<StatusPill {...processingStatusPill(status)} />
+				</>
 			) : (
 				<VisuallyHidden>Nothing in progress</VisuallyHidden>
 			);
@@ -107,6 +120,8 @@ const baseColumns: DataTableColumn<ArticleResource>[] = [
 	{
 		id: 'updated',
 		header: 'Updated',
+		// Low priority: from 768 to 1023px the three status columns need the room.
+		priority: 'low',
 		mobileLabel: 'Updated',
 		cell: (article) => <DateCell iso={article.updated_at} />,
 	},

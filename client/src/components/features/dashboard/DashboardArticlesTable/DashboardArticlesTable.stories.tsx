@@ -27,7 +27,7 @@ export const EveryState: Story = {
 	play: async ({ canvasElement, args }) => {
 		const table = within(within(canvasElement).getByRole('table', { name: 'Your articles' }));
 
-		await expect(table.getAllByText('Approval: Rejected').length).toBeGreaterThan(0);
+		await expect(table.getAllByText('Rejected').length).toBeGreaterThan(0);
 		await expect(table.getAllByText('Edit and resubmit').length).toBeGreaterThan(0);
 		await expect(table.getAllByText('Failed').length).toBeGreaterThan(0);
 		await expect(table.getAllByText('Private').length).toBeGreaterThan(0);

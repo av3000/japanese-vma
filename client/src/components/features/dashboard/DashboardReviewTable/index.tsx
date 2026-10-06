@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import type { ArticleModerationItemResource } from '@/api/generated/model';
 import { Missing } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
-import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
-import { DateCell } from '../dashboardCells';
+import { StatusPill } from '@/components/shared/StatusPill';
+import { DateCell, statusCellClassName } from '../dashboardCells';
+import { approvalColumnPill } from '../dashboardValues';
 import styles from './DashboardReviewTable.module.css';
 
 export interface DashboardReviewTableProps {
@@ -30,7 +31,9 @@ const columns: DataTableColumn<ArticleModerationItemResource>[] = [
 	{
 		id: 'approval',
 		header: 'Approval',
-		cell: (article) => <StatusPill {...articleStatusPill(article.status)} />,
+		mobileLabel: 'Approval',
+		cellClassName: statusCellClassName,
+		cell: (article) => <StatusPill {...approvalColumnPill(article.status)} />,
 	},
 	{
 		id: 'tags',

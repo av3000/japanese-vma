@@ -1,7 +1,14 @@
 /* Cell content for the dashboard articles table; the table itself is the shared DataTable. */
 
+/* Narrower from 768 to 1023px, where every other column still has to fit beside it. */
 .titleCell {
-	min-width: 12rem;
+	min-width: 8rem;
+}
+
+@media (min-width: 1024px) {
+	.titleCell {
+		min-width: 12rem;
+	}
 }
 
 .title {
