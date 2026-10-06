@@ -7,11 +7,12 @@ namespace App\Application\ContentImport\Services;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\ContentImport\Interfaces\ArticleTaggerInterface;
 use App\Application\ContentImport\Interfaces\ContentSourceAdapterRegistryInterface;
+use App\Application\ContentImport\Interfaces\Providers\ImportSettingsProviderInterface;
 use App\Application\ContentImport\Interfaces\Providers\SystemAuthorProviderInterface;
-use App\Application\ContentImport\Interfaces\Readers\ImportedArticleReaderInterface;
 use App\Application\ContentImport\Interfaces\Repositories\ContentSourceRepositoryInterface;
 use App\Application\ContentImport\Interfaces\Repositories\ImportRunRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
+use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\ValueObjects\ArticleAuthor;
 use App\Domain\Articles\ValueObjects\ArticleProvenance;
 use App\Domain\ContentImport\DTOs\ContentSourceDTO;
@@ -22,23 +23,30 @@ use App\Domain\ContentImport\Enums\ImportItemOutcome;
 use App\Domain\ContentImport\Enums\ImportRunStatus;
 use App\Domain\ContentImport\Errors\ContentImportErrors;
 use App\Domain\ContentImport\Exceptions\ContentSourceUnavailableException;
+use App\Domain\ContentImport\ValueObjects\ImportRunSettings;
 use App\Shared\Results\Result;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * One Import Run: list what the source has that is new, filter it, tag it, and create each
- * survivor as a public Imported Article through the ordinary article creation path.
+ * One Import Run: list what the source has that is not imported yet, filter it, tag it, and
+ * create each survivor as a public Imported Article through the ordinary article creation path.
  *
- * Volume is bounded twice: by the daily cap on created articles, and by a ceiling on how many
+ * Volume is bounded twice: by a cap on articles created per run, and by a ceiling on how many
  * listed articles one run may look at, so a source full of filtered items cannot page forever.
+ * Articles already imported are skipped rather than ending the listing, so one that failed is
+ * tried again by the next run while the source still lists it.
  */
 class ContentImportService implements ContentImportServiceInterface
 {
+    /** A run row still `running` after this long belongs to a process that died. */
+    private const ABANDONED_AFTER = '-2 hours';
+
     public function __construct(
         private readonly ContentSourceRepositoryInterface $sources,
         private readonly ContentSourceAdapterRegistryInterface $adapters,
-        private readonly ImportedArticleReaderInterface $importedArticles,
+        private readonly ImportSettingsProviderInterface $settings,
         private readonly ImportRunRepositoryInterface $runs,
         private readonly ArticleTaggerInterface $tagger,
         private readonly SystemAuthorProviderInterface $systemAuthor,
@@ -70,8 +78,14 @@ class ContentImportService implements ContentImportServiceInterface
             return Result::failure(ContentImportErrors::systemAuthorMissing());
         }
 
-        $settings = $this->settings($sourceKey);
-        $runId = $dryRun ? null : $this->runs->start($source->id);
+        $settings = $this->settings->for($sourceKey);
+        $runId = null;
+
+        if (! $dryRun) {
+            $this->closeAbandonedRuns($source);
+            $runId = $this->runs->start($source->id);
+        }
+
         $items = [];
         $created = 0;
         $status = ImportRunStatus::Succeeded;
@@ -79,15 +93,12 @@ class ContentImportService implements ContentImportServiceInterface
 
         try {
             $listing = $adapter->listRecent(
-                fn (string $externalId): bool => $this->importedArticles->exists($source->id, $externalId),
+                fn (string $externalId): bool => $this->articles->hasImportedArticle($source->id, $externalId),
             );
 
-            // Checked after each item, so the lazy listing is never asked for one it will not use.
-            $limitReached = function () use (&$created, &$items, $settings): bool {
-                return $created >= $settings['daily_cap'] || count($items) >= $settings['max_listed'];
-            };
-
-            if (! $limitReached()) {
+            // Checked before asking for the next item, so the lazy listing is never asked for one
+            // it will not use.
+            if (! $settings->isLimitReached($created, count($items))) {
                 foreach ($listing as $article) {
                     $item = $this->importOne($source, $article, $author, $settings, $dryRun);
                     $items[] = $item;
@@ -96,7 +107,7 @@ class ContentImportService implements ContentImportServiceInterface
                         $created++;
                     }
 
-                    if ($limitReached()) {
+                    if ($settings->isLimitReached($created, count($items))) {
                         break;
                     }
                 }
@@ -129,8 +140,24 @@ class ContentImportService implements ContentImportServiceInterface
             $dryRun,
             $items,
             $error,
-            $this->hasStalled($source, $settings['stalled_after_runs']),
+            $this->hasStalled($source, $settings->stalledAfterRuns),
         ));
+    }
+
+    /**
+     * A process killed mid-run (deploy, out of memory, timeout) never closes its row. Such rows
+     * are closed as failed before the next run starts, so the run history stays truthful.
+     */
+    private function closeAbandonedRuns(ContentSourceDTO $source): void
+    {
+        $closed = $this->runs->closeAbandoned($source->id, new DateTimeImmutable(self::ABANDONED_AFTER));
+
+        if ($closed > 0) {
+            Log::warning('Content import closed runs that never finished', [
+                'source' => $source->key,
+                'runs' => $closed,
+            ]);
+        }
     }
 
     /**
@@ -157,14 +184,11 @@ class ContentImportService implements ContentImportServiceInterface
         return true;
     }
 
-    /**
-     * @param array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>, stalled_after_runs: int} $settings
-     */
     private function importOne(
         ContentSourceDTO $source,
         ExternalArticle $article,
         ArticleAuthor $author,
-        array $settings,
+        ImportRunSettings $settings,
         bool $dryRun,
     ): ImportItemResult {
         $skip = fn (ImportItemOutcome $outcome, ?string $detail = null): ImportItemResult => new ImportItemResult(
@@ -174,13 +198,11 @@ class ContentImportService implements ContentImportServiceInterface
             detail: $detail,
         );
 
-        // Excluded only when every genre is excluded: an AI story filed under both 気象・災害 and
-        // 科学・文化 is still worth reading, a bare weather bulletin is not.
-        if ($article->genres !== [] && array_diff($article->genres, $settings['excluded_genres']) === []) {
+        if ($settings->excludesEveryGenre($article->genres)) {
             return $skip(ImportItemOutcome::FilteredGenre, implode(', ', $article->genres));
         }
 
-        if (mb_strlen(trim($article->lead)) < $settings['min_lead_length']) {
+        if ($settings->isLeadTooShort($article->lead)) {
             return $skip(ImportItemOutcome::FilteredTooShort);
         }
 
@@ -209,7 +231,7 @@ class ContentImportService implements ContentImportServiceInterface
             return new ImportItemResult($article->externalId, $article->title, ImportItemOutcome::Created, $tags);
         }
 
-        if ($result->getError()->code === 'Articles.AlreadyImported') {
+        if ($result->getError()->code === ArticleErrors::ALREADY_IMPORTED) {
             return $skip(ImportItemOutcome::AlreadyImported);
         }
 
@@ -225,23 +247,5 @@ class ContentImportService implements ContentImportServiceInterface
         ]);
 
         return new ImportItemResult($article->externalId, $article->title, ImportItemOutcome::Failed, detail: $detail);
-    }
-
-    /**
-     * @return array{daily_cap: int, max_listed: int, min_lead_length: int, excluded_genres: list<string>, stalled_after_runs: int}
-     */
-    private function settings(string $sourceKey): array
-    {
-        $defaults = (array) config('content_import.defaults', []);
-        $source = (array) config("content_import.sources.{$sourceKey}", []);
-        $merged = array_merge($defaults, $source);
-
-        return [
-            'daily_cap' => (int) ($merged['daily_cap'] ?? 10),
-            'max_listed' => (int) ($merged['max_listed'] ?? 100),
-            'min_lead_length' => (int) ($merged['min_lead_length'] ?? 60),
-            'excluded_genres' => array_values((array) ($merged['excluded_genres'] ?? [])),
-            'stalled_after_runs' => (int) ($merged['stalled_after_runs'] ?? 3),
-        ];
     }
 }

@@ -9,7 +9,7 @@ use App\Domain\ContentImport\DTOs\ExternalArticle;
 use App\Domain\ContentImport\Exceptions\ContentSourceUnavailableException;
 
 /**
- * Lists a fixed set of articles newest first and honours `$isKnown` like a real adapter.
+ * Lists a fixed set of articles newest first and skips what `$isKnown` reports, like a real adapter.
  */
 class FakeContentSourceAdapter implements ContentSourceAdapterInterface
 {
@@ -35,7 +35,7 @@ class FakeContentSourceAdapter implements ContentSourceAdapterInterface
     {
         foreach ($this->articles as $article) {
             if ($isKnown($article->externalId)) {
-                return;
+                continue;
             }
 
             $this->yielded++;

@@ -8,6 +8,7 @@ use App\Application\ContentImport\Interfaces\Repositories\ImportRunRepositoryInt
 use App\Domain\ContentImport\DTOs\ImportRunResult;
 use App\Domain\ContentImport\Enums\ImportRunStatus;
 use App\Infrastructure\Persistence\Models\ContentImportRun;
+use DateTimeImmutable;
 
 class ImportRunRepository implements ImportRunRepositoryInterface
 {
@@ -31,6 +32,19 @@ class ImportRunRepository implements ImportRunRepositoryInterface
             'failed' => $result->failed(),
             'error' => $result->error,
         ]);
+    }
+
+    public function closeAbandoned(int $contentSourceId, DateTimeImmutable $startedBefore): int
+    {
+        return ContentImportRun::query()
+            ->where('content_source_id', $contentSourceId)
+            ->where('status', ImportRunStatus::Running->value)
+            ->where('started_at', '<', $startedBefore)
+            ->update([
+                'status' => ImportRunStatus::Failed->value,
+                'finished_at' => now(),
+                'error' => 'Abandoned: the run never finished',
+            ]);
     }
 
     public function recentCreatedCounts(int $contentSourceId, int $limit): array

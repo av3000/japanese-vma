@@ -22,7 +22,8 @@ return [
     | Run limits
     |--------------------------------------------------------------------------
     |
-    | daily_cap        Imported Articles one run may create.
+    | max_created_per_run  Imported Articles one run may create. The schedule runs once a
+    |                      day, so this is the daily volume unless someone also runs it by hand.
     | max_listed       Listed articles one run may look at, filtered or not.
     | min_lead_length  Leads shorter than this (characters) are one-line bulletins; skipped.
     | excluded_genres  An article is skipped only when every one of its genres is listed here.
@@ -33,7 +34,7 @@ return [
     */
 
     'defaults' => [
-        'daily_cap' => 10,
+        'max_created_per_run' => 10,
         'max_listed' => 100,
         'min_lead_length' => 60,
         'excluded_genres' => [],

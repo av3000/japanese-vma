@@ -11,6 +11,7 @@ use App\Domain\ContentImport\DTOs\ExternalArticle;
 use App\Domain\ContentImport\DTOs\ImportRunResult;
 use App\Domain\ContentImport\Enums\ImportItemOutcome;
 use App\Domain\ContentImport\Enums\ImportRunStatus;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\ContentImportRun;
 use App\Infrastructure\Persistence\Models\ContentSource;
@@ -50,7 +51,7 @@ class ContentImportServiceTest extends TestCase
         config([
             'content_import.sources.fake-source' => [
                 'adapter' => FakeContentSourceAdapter::class,
-                'daily_cap' => 3,
+                'max_created_per_run' => 3,
                 'max_listed' => 6,
                 'min_lead_length' => 20,
                 'excluded_genres' => ['気象・災害'],
@@ -82,6 +83,7 @@ class ContentImportServiceTest extends TestCase
         self::assertSame('https://news.example.jp/a1', $article->source_link);
         self::assertNull($article->title_en);
         self::assertSame(1, $article->publicity->value);
+        self::assertSame(ArticleStatus::APPROVED, $article->status, 'an import skips the moderation queue');
         $this->assertDatabaseHas('uniquehashtags', ['content' => '#テスト']);
 
         $run = ContentImportRun::query()->sole();
@@ -90,7 +92,7 @@ class ContentImportServiceTest extends TestCase
         self::assertNotNull($run->finished_at);
     }
 
-    public function test_a_second_run_stops_at_the_first_known_article(): void
+    public function test_a_second_run_skips_articles_it_already_imported(): void
     {
         $this->adapter->articles = [FakeContentSourceAdapter::article('a1'), FakeContentSourceAdapter::article('a2')];
         $this->runImport();
@@ -108,7 +110,44 @@ class ContentImportServiceTest extends TestCase
         self::assertSame(3, Article::query()->count());
     }
 
-    public function test_it_stops_at_the_daily_cap(): void
+    public function test_an_article_that_failed_is_tried_again_by_the_next_run(): void
+    {
+        $broken = new ExternalArticle('b1', 'タイトル', str_repeat('本文です。', 10), 'not a url', null, ['社会']);
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1'), $broken, FakeContentSourceAdapter::article('a2')];
+        $first = $this->runImport();
+
+        $this->adapter->articles = [
+            FakeContentSourceAdapter::article('a1'),
+            FakeContentSourceAdapter::article('b1'),
+            FakeContentSourceAdapter::article('a2'),
+        ];
+        $second = $this->runImport();
+
+        self::assertSame(1, $first->failed());
+        self::assertSame(['b1'], array_map(fn ($item) => $item->externalId, $second->items));
+        self::assertSame(1, $second->created());
+        $this->assertDatabaseHas('articles', ['external_id' => 'b1']);
+    }
+
+    public function test_a_run_left_running_by_a_dead_process_is_closed_before_the_next_one(): void
+    {
+        $abandoned = ContentImportRun::query()->create([
+            'content_source_id' => $this->source->id,
+            'status' => ImportRunStatus::Running,
+            'started_at' => now()->subHours(3),
+        ]);
+        $this->adapter->articles = [FakeContentSourceAdapter::article('a1')];
+
+        $this->runImport();
+
+        $abandoned->refresh();
+        self::assertSame(ImportRunStatus::Failed, $abandoned->status);
+        self::assertNotNull($abandoned->finished_at);
+        self::assertStringStartsWith('Abandoned', (string) $abandoned->error);
+        self::assertSame(1, ContentImportRun::query()->where('status', ImportRunStatus::Succeeded->value)->count());
+    }
+
+    public function test_it_stops_at_the_cap_on_created_articles(): void
     {
         $this->adapter->articles = array_map(
             fn (int $i): ExternalArticle => FakeContentSourceAdapter::article("c{$i}"),

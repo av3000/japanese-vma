@@ -19,9 +19,10 @@ interface ContentSourceAdapterInterface
     public function key(): string;
 
     /**
-     * Newest first, lazily. The adapter stops as soon as `$isKnown` reports an id that was
-     * imported before, so a daily run only fetches what is new since the last one. The caller
-     * may also stop consuming early once it has enough.
+     * Newest first, lazily. The adapter skips every id `$isKnown` reports as imported before,
+     * without fetching it, and keeps going: an article that failed on an earlier run is listed
+     * again for as long as the source still has it. The caller stops consuming once it has
+     * enough, so the source's own window and the run's ceilings bound the listing.
      *
      * @param callable(string): bool $isKnown
      *
