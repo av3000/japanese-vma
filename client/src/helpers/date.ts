@@ -41,3 +41,18 @@ export function formatDate(dateString: string, localeKey = 'default', includeTim
 		return dateString;
 	}
 }
+
+/** A duration as `1h 2m 3s`; zero hours or minutes are left out: `45s`, `1m 12s`. */
+export const formatDurationCompact = (ms: number): string => {
+	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+
+	const parts: string[] = [];
+	if (hours > 0) parts.push(`${hours}h`);
+	if (minutes > 0) parts.push(`${minutes}m`);
+	parts.push(`${seconds}s`);
+
+	return parts.join(' ');
+};

@@ -44,6 +44,10 @@ use App\Application\JapaneseMaterial\Words\Services\WordService;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Application\Processing\Services\ProcessingStateService;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Application\Study\Services\FlashcardDeckService;
+use App\Application\Study\Services\FlashcardDeckServiceInterface;
+use App\Application\Study\Services\StudySessionService;
+use App\Application\Study\Services\StudySessionServiceInterface;
 use App\Application\Users\Services\RoleService;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Application\Users\Services\UserService;
@@ -79,5 +83,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(KanjiExtractionServiceInterface::class, KanjiExtractionService::class);
         $this->app->bind(WordExtractionServiceInterface::class, WordExtractionService::class);
         $this->app->bind(ProcessingStateServiceInterface::class, ProcessingStateService::class);
+        $this->app->bind(FlashcardDeckServiceInterface::class, FlashcardDeckService::class);
+        $this->app->bind(StudySessionServiceInterface::class, StudySessionService::class);
     }
 }
