@@ -195,9 +195,9 @@ class IndexArticleTest extends TestCase
     }
 
     /**
-     * Characterization only. The Article list does not filter on moderation status today,
-     * so every status is visible under the public scope. AFM-01 must not change this;
-     * status filtering belongs to the separate moderation work.
+     * Characterization only. Without a `statuses` filter the Article list does not filter on
+     * moderation status, so every status is visible under the public scope. AFM-01 must not
+     * change this; `statuses` (UI-DASH-01) only narrows, see IndexArticleStatusFilterTest.
      */
     public function test_index_returns_every_moderation_status_under_the_public_scope(): void
     {

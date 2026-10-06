@@ -13,6 +13,7 @@ import {
 	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
+import { publicityLabel } from '@/api/publicity';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -30,6 +31,7 @@ import {
 	CATALOGUE_ROUTES,
 	type CataloguePdfExportKind,
 	isCataloguePdfExportSupported,
+	isCatalogueStudySupported,
 	resolveCataloguePdfExportKind,
 } from '@/shared/constants/catalogues';
 import styles from './CatalogueContent.module.css';
@@ -64,6 +66,8 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
 	const isPdfExportSupported = isCataloguePdfExportSupported(catalogue.type);
+	// Visible to visitors too: a public deck can be played without an account (epic #413).
+	const isStudySupported = isCatalogueStudySupported(catalogue.type);
 
 	const deleteMutation = useCatalogueDestroy({
 		mutation: {
@@ -148,7 +152,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 						<div>
 							{formatDate(catalogue.created_at, 'ja')} <br />
 							<span>{viewsCount} views</span>
-							{isOwner && <span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>}
+							{isOwner && <span> | {publicityLabel(catalogue.publicity)}</span>}
 							<br />
 							<strong>{catalogue.type_label}</strong>
 						</div>
@@ -200,6 +204,11 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							</p>
 						</Cluster>
 						<Cluster gap="xs">
+							{isStudySupported && (
+								<Button to={CATALOGUE_ROUTES.study(catalogue.uuid)} variant="primary" size="sm">
+									Study
+								</Button>
+							)}
 							<p className={styles.text}>{likesCount}</p>
 							<Button
 								variant="ghost"

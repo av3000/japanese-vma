@@ -24,6 +24,8 @@ use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderI
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
+use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
+use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
@@ -31,6 +33,7 @@ use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
+use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\ArticleSourceLookup;
@@ -47,6 +50,7 @@ use App\Infrastructure\Persistence\Repositories\ProcessingStateRepository;
 use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 use App\Infrastructure\Persistence\Repositories\RoleRepository;
 use App\Infrastructure\Persistence\Repositories\SentenceRepository;
+use App\Infrastructure\Persistence\Repositories\StudySessionRepository;
 use App\Infrastructure\Persistence\Repositories\UserRepository;
 use App\Infrastructure\Persistence\Repositories\ViewRepository;
 use App\Infrastructure\Persistence\Repositories\WordRepository;
@@ -119,6 +123,17 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->singleton(
             CommentRepositoryInterface::class,
             CommentRepository::class
+        );
+
+        // Wrong-answer candidates for flashcards in options mode (epic #413).
+        $this->app->singleton(
+            DistractorPoolReaderInterface::class,
+            DatabaseDistractorPoolReader::class
+        );
+
+        $this->app->singleton(
+            StudySessionRepositoryInterface::class,
+            StudySessionRepository::class
         );
 
         // Comment thread read port. The repository keeps identity reads and

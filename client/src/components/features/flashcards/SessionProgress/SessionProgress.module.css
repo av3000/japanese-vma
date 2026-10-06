@@ -1,0 +1,37 @@
+.progress {
+	display: grid;
+	gap: var(--spacing-2xs);
+}
+
+.text {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+	margin: 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+}
+
+.score {
+	font-variant-numeric: tabular-nums;
+}
+
+.track {
+	height: var(--size-2xs, 6px);
+	overflow: hidden;
+	border-radius: var(--border-radius-sm);
+	background: var(--color-neutral-200);
+}
+
+.bar {
+	height: 100%;
+	border-radius: inherit;
+	background: var(--color-primary);
+	transition: width var(--duration-md) var(--ease-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bar {
+		transition: none;
+	}
+}

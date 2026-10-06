@@ -4,6 +4,7 @@ namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Shared\Enums\ArticleStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,6 +27,7 @@ class ArticleAppliedFiltersResource extends JsonResource
      *     hashtag_ids: array<int, int>,
      *     kanji_ids: array<int, int>,
      *     word_ids: array<int, int>,
+     *     statuses: array<int, int>,
      *     author_uid: string|null,
      *     created_from: string|null,
      *     created_to: string|null
@@ -50,6 +52,12 @@ class ArticleAppliedFiltersResource extends JsonResource
         /** @var array<int, int> $wordIds */
         $wordIds = array_values(array_map('intval', $criteria->wordIds));
 
+        /** @var array<int, int> $statuses */
+        $statuses = array_values(array_map(
+            static fn (ArticleStatus $status): int => (int) $status->value,
+            $criteria->statuses,
+        ));
+
         return [
             /** @var array<int, string> */
             'jlpt_levels' => $jlptLevels,
@@ -59,6 +67,8 @@ class ArticleAppliedFiltersResource extends JsonResource
             'kanji_ids' => $kanjiIds,
             /** @var array<int, int> */
             'word_ids' => $wordIds,
+            /** @var array<int, int> */
+            'statuses' => $statuses,
             'author_uid' => $criteria->authorUid,
             /** @var string|null */
             'created_from' => $criteria->createdBetween?->from?->format('Y-m-d'),

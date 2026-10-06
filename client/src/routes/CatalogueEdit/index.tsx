@@ -12,6 +12,7 @@ import {
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import type { CatalogueResource } from '@/api/generated/model/catalogueResource';
 import type { UpdateCatalogueRequest } from '@/api/generated/model/updateCatalogueRequest';
+import { isPublic } from '@/api/publicity';
 import {
 	CatalogueForm,
 	type CatalogueFormSubmitMeta,
@@ -60,7 +61,7 @@ const CatalogueEditPage = () => {
 		return {
 			title: catalogue.title,
 			type: catalogue.type as CatalogueFormValues['type'],
-			publicity: catalogue.publicity === 1,
+			publicity: isPublic(catalogue.publicity),
 			tags: catalogue.hashtags.map((tag) => tag.content),
 		};
 	}, [catalogue]);

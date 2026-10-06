@@ -16,7 +16,8 @@ class RadicalRepository implements RadicalRepositoryInterface
 {
     public function __construct(
         private readonly RadicalMapper $radicalMapper,
-    ) {}
+    ) {
+    }
 
     public function find(RadicalQueryCriteria $criteria): RadicalListResultDTO
     {
@@ -71,6 +72,20 @@ class RadicalRepository implements RadicalRepositoryInterface
         $radical = $query->first();
 
         return $radical ? $this->radicalMapper->mapToDomain($radical) : null;
+    }
+
+    public function findByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return PersistenceRadical::query()
+            ->whereIn('id', $ids)
+            ->get()
+            ->map(fn (PersistenceRadical $radical): DomainRadical => $this->radicalMapper->mapToDomain($radical))
+            ->values()
+            ->all();
     }
 
     private function applyFilters(Builder $query, RadicalQueryCriteria $criteria): void

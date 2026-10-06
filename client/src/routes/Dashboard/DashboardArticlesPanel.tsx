@@ -1,231 +1,154 @@
-import React, { useState } from 'react';
-import { useInfiniteArticles } from '@/api/articles/hooks/useInfiniteArticles';
+import React, { useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
+import { useInfiniteArticles, type ArticleListFilters } from '@/api/articles/hooks/useInfiniteArticles';
 import { OwnerProcessingSubscription } from '@/api/articles/hooks/useOwnerProcessingSubscription';
-import { usePendingArticles } from '@/api/articles/moderation';
-import Spinner from '@/assets/images/spinner.gif';
-import DashboardArticleItem from '@/components/features/dashboard/DashboardArticleItem';
-import dashboardRowStyles from '@/components/features/dashboard/DashboardRow.module.css';
+import type { ArticleResource } from '@/api/generated/model';
+import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
+import { DashboardArticlesTable } from '@/components/features/dashboard/DashboardArticlesTable';
 import { Alert } from '@/components/shared/Alert';
-import { Button } from '@/components/shared/Button';
-import { Chip } from '@/components/shared/Chip';
+import type { DataTableEmpty } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
-import { Icon } from '@/components/shared/Icon';
-import { Link } from '@/components/shared/Link';
-import { Cluster, Stack } from '@/components/shared/layout';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { User } from '@/types';
-import styles from './Dashboard.module.css';
-import { DASHBOARD_TYPES, type DashboardType } from './dashboard.constants';
-
-/** How long the dashboard waits after the last keystroke before it searches. */
-const SEARCH_DEBOUNCE_MS = 300;
+import { DASHBOARD_PER_PAGE, DashboardListSection } from './DashboardListSection';
+import {
+	appliedSearch,
+	ARTICLE_STATUS_FILTER_OPTIONS,
+	statusesForFilter,
+	type ArticleStatusFilter,
+	type DashboardViewChange,
+	type DashboardViewState,
+} from './dashboardSearchParams';
+import { useDashboardDelete } from './useDashboardDelete';
+import { useDashboardKeyword } from './useDashboardKeyword';
 
 interface DashboardArticlesPanelProps {
-	dashboardView: DashboardType;
-	isAuthenticated: boolean;
-	currentUser: User | null;
-	onToggleDashboardView: () => void;
+	user: User;
+	view: DashboardViewState;
+	onViewChange: DashboardViewChange;
 }
 
-const toDisplayCount = (value: number | string | undefined) => {
-	const parsedValue = typeof value === 'number' ? value : Number(value);
+/** The request for one view of the owner's articles. Exported so the mapping can be tested alone. */
+export const dashboardArticleFilters = (
+	ownerUuid: string,
+	q: string,
+	status: ArticleStatusFilter,
+): ArticleListFilters => {
+	const search = appliedSearch(q);
+	const statuses = statusesForFilter(status);
 
-	return Number.isFinite(parsedValue) ? parsedValue : 0;
+	return {
+		author_uid: ownerUuid,
+		// Canonical `q`, not the legacy `search` alias.
+		...(search !== '' ? { q: search } : {}),
+		...(statuses.length > 0 ? { 'statuses[]': statuses } : {}),
+		per_page: DASHBOARD_PER_PAGE,
+		include_stats_counts: true,
+		// The table shows no tags and no facet controls.
+		include_hashtags: false,
+		include_facets: false,
+	};
 };
 
-const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({
-	dashboardView,
-	isAuthenticated,
-	currentUser,
-	onToggleDashboardView,
-}) => {
-	// The dashboard searches as the user types; Enter or the button catches up at once.
-	const [keyword, setKeyword] = useState('');
-	const [searchKeyword, applyKeyword] = useDebouncedValue(keyword, SEARCH_DEBOUNCE_MS);
-	const search = searchKeyword.trim();
-	const { articles, total, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteArticles({
-		filters: {
-			author_uid: currentUser?.uuid,
-			// Canonical `q`, not the legacy `search` alias, so AFM-07 can retire it.
-			// The backend rejects a one-character search, so do not send one.
-			...(search.length >= 2 ? { q: search } : {}),
-			include_stats_counts: true,
-			// The dashboard renders no facet controls.
-			include_facets: false,
-		},
-		enabled: dashboardView === DASHBOARD_TYPES.COMMON_USER && isAuthenticated && !!currentUser?.uuid,
-	});
+const emptyArticles = (q: string, status: ArticleStatusFilter): DataTableEmpty => {
+	// The same rule as the request: a one-letter term was not sent, so it is not reported as a search.
+	const search = appliedSearch(q);
 
-	const shouldFetchPendingArticles =
-		dashboardView === DASHBOARD_TYPES.ADMIN && isAuthenticated && !!currentUser?.isAdmin;
+	if (search !== '') {
+		return {
+			title: (
+				<>
+					No articles match “<span lang="ja">{search}</span>”
+				</>
+			),
+			hint: 'Try a shorter search, or set Approval back to All.',
+		};
+	}
 
-	const pendingArticlesQuery = usePendingArticles({ enabled: shouldFetchPendingArticles });
+	if (status !== 'all') {
+		return { title: 'No articles match this filter', hint: 'Set Approval back to All to see every article.' };
+	}
 
-	const articleErrorMessage = error instanceof Error ? error.message : 'Failed to load articles.';
-	const pendingArticlesErrorMessage =
-		pendingArticlesQuery.error instanceof Error
-			? pendingArticlesQuery.error.message
-			: 'Failed to load pending articles.';
-	const pendingArticles = shouldFetchPendingArticles ? pendingArticlesQuery.pendingArticles : [];
+	return {
+		title: 'You have no articles yet',
+		hint: (
+			<>
+				<Link to="/newarticle">Write your first article</Link>. It is analysed for kanji and words, and a
+				reviewer may check it before it is public.
+			</>
+		),
+	};
+};
+
+/** The Articles tab: the signed-in user's own articles, with search and an approval filter. */
+const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({ user, view, onViewChange }) => {
+	const commitKeyword = useCallback((q: string) => onViewChange({ q }, { replace: true }), [onViewChange]);
+	const { draft, setDraft, applyNow } = useDashboardKeyword(view.q, commitKeyword);
+
+	const filters = useMemo(
+		() => dashboardArticleFilters(user.uuid, view.q, view.status),
+		[user.uuid, view.q, view.status],
+	);
+	const { articles, ...query } = useInfiniteArticles({ filters });
+
+	const deleteMutation = useDeleteArticleMutation();
+	const { summaryRef, deleteModal, target, deleteFailed, isDeleting, requestDelete, confirmDelete } =
+		useDashboardDelete<ArticleResource>({ mutation: deleteMutation, modalId: 'dashboard-article-delete' });
 
 	return (
-		<Stack gap="md">
-			<div className={styles.toolbar}>
-				<FilterBar onSubmit={applyKeyword} label="Article filters">
-					<FilterBar.Search
-						label="Search your articles"
-						placeholder="Ex.: title, text, #tag"
-						value={keyword}
-						onChange={setKeyword}
+		<>
+			{/* One channel for every article the owner lists (#263); polling covers the rest. */}
+			<OwnerProcessingSubscription userUuid={user.uuid} />
+			<DashboardListSection
+				noun="articles"
+				subject="Your articles"
+				itemCount={articles.length}
+				query={query}
+				summaryRef={summaryRef}
+				notice={
+					deleteFailed ? (
+						<Alert tone="danger">The article could not be deleted. Try again in a moment.</Alert>
+					) : null
+				}
+				filters={
+					<FilterBar onSubmit={applyNow} label="Article filters">
+						<FilterBar.Search
+							label="Search your articles"
+							placeholder="Ex.: title, text, #tag"
+							value={draft}
+							onChange={setDraft}
+						/>
+						<FilterBar.Filters>
+							<FilterBar.Select
+								label="Approval"
+								value={view.status}
+								options={ARTICLE_STATUS_FILTER_OPTIONS}
+								onChange={(status) => onViewChange({ status })}
+							/>
+						</FilterBar.Filters>
+					</FilterBar>
+				}
+			>
+				{({ loading }) => (
+					<DashboardArticlesTable
+						articles={articles}
+						loading={loading}
+						empty={emptyArticles(view.q, view.status)}
+						onDelete={requestDelete}
 					/>
-				</FilterBar>
-			</div>
-
-			<Stack as="section" gap="md" className={styles.panel}>
-				{dashboardView === DASHBOARD_TYPES.ADMIN ? (
-					<>
-						<Cluster justify="between">
-							<h4 className={styles.panelTitle}>Pending Articles - Admin view</h4>
-							<Button variant="ghost" onClick={onToggleDashboardView}>
-								User View <Icon name="chevron" rotate="270" />
-							</Button>
-						</Cluster>
-						{shouldFetchPendingArticles && pendingArticlesQuery.isPending ? (
-							<LoadingState altText="Loading pending articles..." />
-						) : shouldFetchPendingArticles && pendingArticlesQuery.isError ? (
-							<Alert tone="danger">{pendingArticlesErrorMessage}</Alert>
-						) : pendingArticles.length ? (
-							<>
-								<ul className={styles.queue}>
-									{pendingArticles.map((article) => (
-										<li className={styles.queueRow} key={article.uuid}>
-											<div>
-												<h4 className={styles.queueTitle}>
-													<Link to={`/articles/${article.uuid}`}>{article.title_jp}</Link>
-												</h4>
-												<Cluster gap="xs">
-													<span className={styles.label}>tags:</span>
-													<Cluster as="span" gap="3xs">
-														{article.hashtags.map((tag) => (
-															<Chip
-																readonly
-																key={tag.id + tag.content}
-																title={tag.content}
-																name={tag.content}
-															>
-																{tag.content}
-															</Chip>
-														))}
-													</Cluster>
-												</Cluster>
-											</div>
-											<small className={styles.meta}>
-												{article.created_at}
-												<br />
-												duration from now(?) {article.created_at}
-											</small>
-											<div>
-												<strong>{article.status_label}</strong>
-											</div>
-										</li>
-									))}
-								</ul>
-								<LoadMore
-									isFetchingNextPage={pendingArticlesQuery.isFetchingNextPage}
-									hasNextPage={pendingArticlesQuery.hasNextPage}
-									onLoadMore={() => pendingArticlesQuery.fetchNextPage()}
-								/>
-							</>
-						) : (
-							<Alert tone="info" className={styles.emptyState}>
-								There are no articles to review.
-							</Alert>
-						)}
-					</>
-				) : (
-					<>
-						<Cluster justify="between">
-							<h4 className={styles.panelTitle}>My Articles - User view</h4>
-							<Button variant="ghost" onClick={onToggleDashboardView}>
-								Admin View <Icon name="chevron" rotate="270" />
-							</Button>
-						</Cluster>
-						<p className={styles.summary}>
-							Showing {articles.length} of {total}
-						</p>
-						<div className={styles.columnHeadings}>
-							<Cluster justify="between">
-								<span>Title and Tags</span>
-								<span>Status</span>
-							</Cluster>
-							<Cluster justify="between">
-								<span>Stats</span>
-								<span>Date and Action</span>
-							</Cluster>
-						</div>
-						{status === 'pending' ? (
-							<LoadingState altText="Loading articles..." />
-						) : status === 'error' ? (
-							<Alert tone="danger">{articleErrorMessage}</Alert>
-						) : articles.length ? (
-							<>
-								{/* One channel for every article the owner lists (#263); polling covers the rest. */}
-								{currentUser && <OwnerProcessingSubscription userUuid={currentUser.uuid} />}
-								<ul className={dashboardRowStyles.list}>
-									{articles.map((article) => (
-										<DashboardArticleItem
-											key={article.id}
-											uuid={article.uuid}
-											created_at={article.created_at}
-											title_jp={article.title_jp}
-											status={article.status}
-											commentsTotal={toDisplayCount(article.engagement?.stats?.comments_count)}
-											likesTotal={toDisplayCount(article.engagement?.stats?.likes_count)}
-											viewsTotal={toDisplayCount(article.engagement?.stats?.views_count)}
-											hashtags={article.hashtags}
-										/>
-									))}
-								</ul>
-								<LoadMore
-									isFetchingNextPage={isFetchingNextPage}
-									hasNextPage={hasNextPage}
-									onLoadMore={() => fetchNextPage()}
-								/>
-							</>
-						) : (
-							<Alert tone="info" className={styles.emptyState}>
-								You have no articles yet.
-							</Alert>
-						)}
-					</>
 				)}
-			</Stack>
-		</Stack>
+			</DashboardListSection>
+			<DeleteInstanceModal
+				controller={deleteModal}
+				instanceName={target?.title_jp ?? ''}
+				onDelete={confirmDelete}
+				isProcessing={isDeleting}
+				title="Delete this article?"
+				deleteLabel="Delete article"
+				ariaLabel="Delete article"
+			/>
+		</>
 	);
 };
-
-const LoadingState: React.FC<{ altText: string }> = ({ altText }) => (
-	<Cluster justify="center" className={styles.loading}>
-		<img src={Spinner} alt={altText} />
-	</Cluster>
-);
-
-const LoadMore: React.FC<{ isFetchingNextPage: boolean; hasNextPage: boolean; onLoadMore: () => void }> = ({
-	isFetchingNextPage,
-	hasNextPage,
-	onLoadMore,
-}) => (
-	<Cluster justify="center" className={styles.loadMore}>
-		{isFetchingNextPage ? (
-			<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
-		) : hasNextPage ? (
-			<Button variant="secondary-outline" className={styles.loadMoreButton} onClick={onLoadMore}>
-				Load More
-			</Button>
-		) : (
-			<span className={styles.label}>No more results</span>
-		)}
-	</Cluster>
-);
 
 export default DashboardArticlesPanel;

@@ -5,6 +5,7 @@ import { getArticleDetailQueryKey, MappedArticle } from '@/api/articles/details'
 import { articleKeys } from '@/api/articles/keys';
 import { articleUpdate } from '@/api/generated/article/article';
 import type { UpdateArticleRequest } from '@/api/generated/model/updateArticleRequest';
+import { isPublic } from '@/api/publicity';
 import {
 	ArticleForm,
 	type ArticleFormSubmitMeta,
@@ -48,7 +49,7 @@ export default function ArticleEditModal({ article, controller }: ArticleEditMod
 			content_jp: article.content_jp ?? '',
 			content_en: article.content_en ?? '',
 			source_link: article.source_link ?? '',
-			publicity: article.publicity === 1,
+			publicity: isPublic(article.publicity),
 			tags: article.hashtags.map((tag) => tag.content),
 		}),
 		[article],

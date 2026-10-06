@@ -5,19 +5,20 @@ import "./sharedStyles.css";
 <Meta title="Styleguide/Colors" />
 
 <Unstyled>
+<div className="styleguide">
   <h1>Colors</h1>
   <div className="richTextWrapper">
     <p>
-      Our color system is designed with flexibility and consistency in mind. The colors are organized into semantic categories and follow a tiered structure to support theming capabilities for different applications, brands, or modes.
+      The palette is a two-colour Japanese scheme on a warm white page: ai (藍) indigo carries navigation and actions, and shu (朱) vermilion is reserved for JLPT levels. All values live in <code>src/styles/00-settings/colors.css</code>, which documents contrast ratios inline. Usage rules are in <code>client/DESIGN.md</code>.
     </p>
-    
+
     <p>
       The color system follows a three-tier architecture:
     </p>
-    
+
     <ul>
       <li>
-        <strong>Tier 1 - Color definitions:</strong> These represent the raw color values that serve as the foundation of our design language. They include our primary orange palette, secondary grays, neutral tones, and system colors.
+        <strong>Tier 1 - Color definitions:</strong> The raw values: the indigo primary, the vermilion accent, secondary greys, neutral tones and status colours.
       </li>
       <li>
         <strong>Tier 2 - Color applications:</strong> These map the Tier 1 colors to semantic uses within the UI, such as backgrounds, borders, and text colors.
@@ -26,64 +27,84 @@ import "./sharedStyles.css";
         <strong>Tier 3 - Component-specific:</strong> These colors are tailored for specific components and inherit from Tier 2 tokens.
       </li>
     </ul>
+
   </div>
 
-  <h2 className={"u-mt-xl"}>Tier 1 - Color definitions</h2>
-  
-  <h3 className={"u-mt-lg"}>Primary Colors (Orange)</h3>
-  <p>Our primary color palette features a warm orange that conveys energy, creativity, and approachability.</p>
-  <SettingGroup variables="color-primary" variant={"color"} />
-  
-  <h3 className={"u-mt-lg"}>Secondary Colors (Gray)</h3>
-  <p>Our secondary palette provides subtlety and balance to complement the primary colors.</p>
-  <SettingGroup variables="color-secondary" variant={"color"} />
-  
-  <h3 className={"u-mt-lg"}>Neutral Colors</h3>
-  <p>Neutral colors form the backbone of our UI, providing a range from white to deep charcoal for text, backgrounds, and interfaces.</p>
-  <SettingGroup variables="color-neutral" variant={"color"} />
-  
-  <h3 className={"u-mt-lg"}>System Colors</h3>
-  <p>System colors communicate feedback and status information to users.</p>
-  <SettingGroup variables="color-success" variant={"color"} />
-  <SettingGroup variables="color-warning" variant={"color"} />
-  <SettingGroup variables="color-error" variant={"color"} />
-  
-  <hr className={"u-mt-xl"} />
-  
-  <h2 className={"u-mt-xl"}>Tier 2 - Color applications</h2>
-  
-  <h3 className={"u-mt-lg"}>Text Colors</h3>
-  <p>Semantic colors used for various text elements throughout the interface.</p>
-  <SettingGroup variables="color-text" variant={"color"} />
-  
-  <h3 className={"u-mt-lg"}>Background Colors</h3>
-  <p>Colors used for different background contexts, from pages to cards and containers.</p>
-  <SettingGroup variables="page-background-color" variant={"color"} />
-  
-  <hr className={"u-mt-xl"} />
-  
-  <h2 className={"u-mt-xl"}>Usage Guidelines</h2>
-  
-  <h3 className={"u-mt-lg"}>Accessibility</h3>
-  <p>
-    When using our color system, ensure that text has sufficient contrast against its background according to WCAG 2.1 AA standards:
-  </p>
-  <ul>
-    <li>Normal text (under 18pt): minimum contrast ratio of 4.5:1</li>
-    <li>Large text (18pt and above): minimum contrast ratio of 3:1</li>
-  </ul>
-  
-  <h3 className={"u-mt-lg"}>State Management</h3>
-  <p>
-    For interactive elements, use the appropriate color variants:
-  </p>
-  <ul>
-    <li>Default state: Base color (e.g., $color-primary)</li>
-    <li>Hover state: Hover variant (e.g., $color-primary-hover)</li>
-    <li>Disabled state: Disabled variant (e.g., $color-primary-disabled)</li>
-  </ul>
-  
-  <h3 className={"u-mt-lg"}>CSS Variables</h3>
+<h2>Tier 1 - Color definitions</h2>
+
+<h3>Primary Colors (Indigo, ai 藍)</h3>
+<p>
+  Navigation, buttons, selected states and focus tints. White text on <code>--color-primary</code> is 7.09:1.
+</p>
+<SettingGroup variables="color-primary" variant={"color"} />
+
+<h3>Accent Colors (Vermilion, shu 朱)</h3>
+<p>
+  JLPT level markers only (<code>LevelBadge</code>, <code>JlptBar</code>, glyph covers), so the accent always means
+  "level". <code>--color-accent-glyph</code> is a fill colour, not for small text.
+</p>
+<SettingGroup variables="color-accent" variant={"color"} />
+<SettingGroup variables="color-badge-accent" variant={"color"} />
+
+<h3>Secondary Colors (Gray)</h3>
+<p>Our secondary palette provides subtlety and balance to complement the primary colors.</p>
+<SettingGroup variables="color-secondary" variant={"color"} />
+
+<h3>Neutral Colors</h3>
+<p>
+  Neutral colors form the backbone of our UI, providing a range from white to deep charcoal for text, backgrounds, and
+  interfaces.
+</p>
+<SettingGroup variables="color-neutral" variant={"color"} />
+
+<h3>System Colors</h3>
+<p>System colors communicate feedback and status information to users.</p>
+<SettingGroup variables="color-success" variant={"color"} />
+<SettingGroup variables="color-warning" variant={"color"} />
+<SettingGroup variables="color-error" variant={"color"} />
+
+<hr />
+
+<h2>Tier 2 - Color applications</h2>
+
+<h3>Text Colors</h3>
+<p>Semantic colors used for various text elements throughout the interface.</p>
+<SettingGroup variables="color-text" variant={"color"} />
+
+<h3>Background Colors</h3>
+<p>The page surface is kinari (生成り), a warm undyed-cloth white.</p>
+<SettingGroup variables="page-background-color" variant={"color"} />
+
+<hr />
+
+<h2>Usage Guidelines</h2>
+
+<h3>Accessibility</h3>
+<p>
+  When using our color system, ensure that text has sufficient contrast against its background according to WCAG 2.2 AA
+  standards:
+</p>
+<ul>
+  <li>Normal text: minimum contrast ratio of 4.5:1</li>
+  <li>Large text and non-text UI (borders, icons, focus rings): minimum contrast ratio of 3:1</li>
+  <li>Never use colour as the only cue; pair it with visible text or an icon</li>
+</ul>
+
+<h3>State Management</h3>
+<p>For interactive elements, use the appropriate color variants:</p>
+<ul>
+  <li>
+    Default state: Base color (e.g., <code>var(--color-primary)</code>)
+  </li>
+  <li>
+    Hover state: Hover variant (e.g., <code>var(--color-primary-hover)</code>)
+  </li>
+  <li>
+    Disabled state: Disabled variant (e.g., <code>var(--color-primary-disabled)</code>)
+  </li>
+</ul>
+
+  <h3>CSS Variables</h3>
   <p>
     All colors are available as CSS custom properties (variables) for use in component styles:
   </p>
@@ -91,7 +112,8 @@ import "./sharedStyles.css";
     {`.my-component {
   background-color: var(--color-primary);
   color: var(--color-neutral-0);
-  border: 1px solid var(--color-primary-hover);
+  border: var(--border-size-sm) solid var(--color-primary-hover);
 }`}
   </pre>
+</div>
 </Unstyled>

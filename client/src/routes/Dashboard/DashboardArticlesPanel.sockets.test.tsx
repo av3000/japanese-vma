@@ -2,20 +2,16 @@
  * @vitest-environment jsdom
  */
 import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
 import { describe, expect, it, vi } from 'vitest';
-import { usePendingArticles } from '@/api/articles/moderation';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
 import { renderWithAct } from '@/test/renderWithAct';
 import type { User } from '@/types';
 import DashboardArticlesPanel from './DashboardArticlesPanel';
-import { DASHBOARD_TYPES } from './dashboard.constants';
-
-vi.mock('@/api/articles/moderation', () => ({
-	usePendingArticles: vi.fn(),
-}));
+import { defaultDashboardViewState } from './dashboardSearchParams';
 
 const pendingArticles = Array.from({ length: 10 }, (_, index) => ({
 	uuid: `article-${index}`,
@@ -44,7 +40,9 @@ vi.mock('@/api/articles/hooks/useInfiniteArticles', () => ({
 	}),
 }));
 
-vi.mock('@/components/features/dashboard/DashboardArticleItem', () => ({ default: () => <div>item</div> }));
+vi.mock('@/components/features/dashboard/DashboardArticlesTable', () => ({
+	DashboardArticlesTable: () => <div>table</div>,
+}));
 vi.mock('@/components/shared/Link', () => ({
 	Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
@@ -64,7 +62,6 @@ const owner = { id: 7, uuid: 'owner-uuid', isAdmin: false } as User;
  */
 describe('DashboardArticlesPanel socket usage', () => {
 	it('opens exactly one private channel for ten pending articles', async () => {
-		vi.mocked(usePendingArticles).mockReturnValue({ pendingArticles: [], total: 0, isPending: false } as never);
 		const channel = { listen: vi.fn(), stopListening: vi.fn(), subscribed: vi.fn(), error: vi.fn() };
 		const echo = {
 			private: vi.fn(() => channel),
@@ -78,12 +75,13 @@ describe('DashboardArticlesPanel socket usage', () => {
 				<SocketContext.Provider
 					value={{ ...DEFAULT_SOCKET_CONTEXT, echo: echo as unknown as Echo<'reverb'>, generation: 1 }}
 				>
-					<DashboardArticlesPanel
-						dashboardView={DASHBOARD_TYPES.COMMON_USER}
-						isAuthenticated
-						currentUser={owner}
-						onToggleDashboardView={vi.fn()}
-					/>
+					<MemoryRouter>
+						<DashboardArticlesPanel
+							user={owner}
+							view={defaultDashboardViewState('articles')}
+							onViewChange={vi.fn()}
+						/>
+					</MemoryRouter>
 				</SocketContext.Provider>
 			</QueryClientProvider>,
 		);

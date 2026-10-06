@@ -8,6 +8,7 @@ import { importedSourceOf } from '@/api/articles/provenance';
 import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
+import { publicityLabel } from '@/api/publicity';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -167,7 +168,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							<span>{article.engagement?.views_count || 0} views | </span>
 							{importedSource && <SourceBadge source={importedSource} />}
 							{(isOwner || isAdmin) && (
-								<Badge variant="secondary">{article.publicity === 1 ? 'Public' : 'Private'}</Badge>
+								<Badge variant="secondary">{publicityLabel(article.publicity)}</Badge>
 							)}
 							{(isOwner || isAdmin) && <StatusPill {...articleStatusPill(article.status)} />}
 						</Cluster>
