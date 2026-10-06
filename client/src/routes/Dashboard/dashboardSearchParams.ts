@@ -1,5 +1,6 @@
-import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
+import { ARTICLE_STATUS, AWAITING_REVIEW_STATUSES } from '@/api/articles/articleStatus';
 import type { ArticleStatus } from '@/api/generated/model/articleStatus';
+import { MIN_SEARCH_LENGTH } from '@/routes/ArticlesList/articleListSearchParams';
 import {
 	CATALOGUE_TYPE_FILTER_ALL,
 	CATALOGUE_TYPE_FILTER_OPTIONS,
@@ -43,12 +44,10 @@ export const DEFAULT_ARTICLE_STATUS_FILTER: ArticleStatusFilter = 'all';
  */
 const ARTICLE_STATUS_FILTER_STATUSES: Record<ArticleStatusFilter, readonly ArticleStatus[]> = {
 	all: [],
-	awaiting: [ARTICLE_STATUS.PENDING, ARTICLE_STATUS.REVIEWING],
+	awaiting: AWAITING_REVIEW_STATUSES,
 	rejected: [ARTICLE_STATUS.REJECTED],
 	approved: [ARTICLE_STATUS.APPROVED],
 };
-
-export const AWAITING_REVIEW_STATUSES = ARTICLE_STATUS_FILTER_STATUSES.awaiting;
 
 export const ARTICLE_STATUS_FILTER_OPTIONS: ReadonlyArray<{ value: ArticleStatusFilter; label: string }> = [
 	// The select's label is visually hidden, so the choices name what they filter.
@@ -99,6 +98,20 @@ const LIST_TYPE_VALUES = new Set(CATALOGUE_TYPE_FILTER_OPTIONS.map((option) => o
 const oneOf = <T extends string>(values: readonly T[], raw: string | null, fallback: T): T =>
 	raw !== null && (values as readonly string[]).includes(raw) ? (raw as T) : fallback;
 
+/** A Lists sort from the URL or a select, falling back to the default for anything else. */
+export const parseListSort = (raw: string | null): ListSort => oneOf(LIST_SORTS, raw, DEFAULT_LIST_SORT);
+
+/**
+ * The keyword a request actually sends: trimmed, and empty below the backend minimum
+ * (`SearchTerm::MIN_LENGTH`, which both the article and the catalogue index enforce). The
+ * empty-state copy reads the same value, so a one-letter search is never reported as a search.
+ */
+export const appliedSearch = (q: string): string => {
+	const search = q.trim();
+
+	return search.length >= MIN_SEARCH_LENGTH ? search : '';
+};
+
 const readListType = (raw: string | null): string =>
 	raw !== null && LIST_TYPE_VALUES.has(raw) && isCustomCatalogueType(Number(raw)) ? raw : CATALOGUE_TYPE_FILTER_ALL;
 
@@ -124,7 +137,7 @@ export const parseDashboardSearchParams = (
 			...state,
 			q,
 			listType: readListType(searchParams.get('type')),
-			listSort: oneOf(LIST_SORTS, searchParams.get('sort'), DEFAULT_LIST_SORT),
+			listSort: parseListSort(searchParams.get('sort')),
 		};
 	}
 

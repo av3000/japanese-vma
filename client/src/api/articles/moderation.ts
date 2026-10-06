@@ -7,7 +7,7 @@ import type { ArticleModerationListResource } from '@/api/generated/model/articl
 import type { ArticlePendingParams } from '@/api/generated/model/articlePendingParams';
 import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import type { ArticleStatusResource } from '@/api/generated/model/articleStatusResource';
-import { ARTICLE_STATUS } from './articleStatus';
+import { ARTICLE_STATUS, AWAITING_REVIEW_STATUSES } from './articleStatus';
 import { getArticleDetailQueryKey } from './details';
 
 export { ARTICLE_STATUS } from './articleStatus';
@@ -16,7 +16,7 @@ export { ARTICLE_STATUS } from './articleStatus';
  * The statuses `ArticleRepository::findModerationQueue` selects on. An article whose
  * status moves outside this set has left the review queue.
  */
-export const MODERATION_QUEUE_STATUSES: readonly number[] = [ARTICLE_STATUS.PENDING, ARTICLE_STATUS.REVIEWING];
+export const MODERATION_QUEUE_STATUSES: readonly number[] = AWAITING_REVIEW_STATUSES;
 
 /**
  * The four choices an admin can apply from the review modal, in the order they have

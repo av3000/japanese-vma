@@ -20,7 +20,7 @@ describe('fetchDashboardCounts', () => {
 		vi.mocked(catalogueIndex).mockResolvedValueOnce(page(6) as never);
 		const awaiting = [ARTICLE_STATUS.PENDING, ARTICLE_STATUS.REVIEWING];
 
-		await expect(fetchDashboardCounts('owner-uuid', awaiting)).resolves.toEqual({
+		await expect(fetchDashboardCounts('owner-uuid')).resolves.toEqual({
 			articles: 12,
 			lists: 6,
 			awaitingReview: 2,

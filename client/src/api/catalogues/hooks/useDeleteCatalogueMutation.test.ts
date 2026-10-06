@@ -8,7 +8,7 @@ import {
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueListResource } from '@/api/generated/model/catalogueListResource';
 import { makeDashboardCatalogue } from '@/components/features/dashboard/dashboardListFixtures';
-import { createDeleteCatalogueMutationOptions, removeCatalogueFromListPages } from './useDeleteCatalogueMutation';
+import { createDeleteCatalogueMutationOptions } from './useDeleteCatalogueMutation';
 
 vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	const actual = await vi.importActual<typeof import('@/api/generated/catalogue/catalogue')>(
@@ -30,12 +30,6 @@ const cache = (...pages: string[][]): InfiniteData<CatalogueListResource> => ({
 
 const uuidsOf = (data: InfiniteData<CatalogueListResource> | undefined) =>
 	data?.pages.map((p) => p.items.map((item) => item.uuid));
-
-describe('removeCatalogueFromListPages', () => {
-	it('drops the list from every page', () => {
-		expect(uuidsOf(removeCatalogueFromListPages(cache(['a', 'b'], ['b', 'c']), 'b'))).toEqual([['a'], ['c']]);
-	});
-});
 
 describe('createDeleteCatalogueMutationOptions', () => {
 	it('calls the generated destroy with the uuid', async () => {

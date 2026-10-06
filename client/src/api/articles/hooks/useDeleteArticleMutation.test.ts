@@ -5,7 +5,7 @@ import { articleDestroy } from '@/api/generated/article/article';
 import type { ArticleListResource } from '@/api/generated/model/articleListResource';
 import { makeDashboardArticle } from '@/components/features/dashboard/dashboardFixtures';
 import { articleKeys } from '../keys';
-import { createDeleteArticleMutationOptions, removeArticleFromListPages } from './useDeleteArticleMutation';
+import { createDeleteArticleMutationOptions } from './useDeleteArticleMutation';
 
 vi.mock('@/api/generated/article/article', async () => {
 	const actual = await vi.importActual<typeof import('@/api/generated/article/article')>(
@@ -28,16 +28,6 @@ const cache = (...pages: string[][]): InfiniteData<ArticleListResource> => ({
 
 const uuidsOf = (data: InfiniteData<ArticleListResource> | undefined) =>
 	data?.pages.map((p) => p.items.map((item) => item.uuid));
-
-describe('removeArticleFromListPages', () => {
-	it('drops the article from every page and leaves the rest', () => {
-		expect(uuidsOf(removeArticleFromListPages(cache(['a', 'b'], ['c', 'b']), 'b'))).toEqual([['a'], ['c']]);
-	});
-
-	it('leaves an empty cache alone', () => {
-		expect(removeArticleFromListPages(undefined, 'a')).toBeUndefined();
-	});
-});
 
 describe('createDeleteArticleMutationOptions', () => {
 	it('calls the generated destroy with the uuid', async () => {

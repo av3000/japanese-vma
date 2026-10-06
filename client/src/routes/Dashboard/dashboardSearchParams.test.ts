@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import {
+	appliedSearch,
 	ARTICLE_STATUS_FILTERS,
+	DEFAULT_LIST_SORT,
+	parseListSort,
 	dashboardTabSearch,
 	defaultDashboardViewState,
 	parseDashboardSearchParams,
@@ -97,5 +100,26 @@ describe('tab links', () => {
 		expect(dashboardTabSearch('articles')).toBe('');
 		expect(dashboardTabSearch('lists')).toBe('?tab=lists');
 		expect(dashboardTabSearch('review')).toBe('?tab=review');
+	});
+});
+
+describe('appliedSearch', () => {
+	it('is the trimmed keyword a request sends', () => {
+		expect(appliedSearch('  記事 ')).toBe('記事');
+		expect(appliedSearch('kanji')).toBe('kanji');
+	});
+
+	it('is empty below the backend minimum, so nothing reports a one-letter search', () => {
+		expect(appliedSearch('a')).toBe('');
+		expect(appliedSearch(' g ')).toBe('');
+		expect(appliedSearch('   ')).toBe('');
+	});
+});
+
+describe('parseListSort', () => {
+	it('keeps a known sort and falls back to the default otherwise', () => {
+		expect(parseListSort('pop')).toBe('pop');
+		expect(parseListSort('oldest')).toBe(DEFAULT_LIST_SORT);
+		expect(parseListSort(null)).toBe(DEFAULT_LIST_SORT);
 	});
 });

@@ -101,6 +101,21 @@ describe('Dashboard route', () => {
 		expect(route.view.container.querySelector('a[href="/newarticle"]')).not.toBeNull();
 	});
 
+	it('treats a one-letter search as no search, in the request and in the empty state', async () => {
+		signIn(owner);
+		route = await renderDashboardRoute('/dashboard?q=a');
+
+		expect(articleFilters).not.toHaveProperty('q');
+		expect(route.view.container.textContent).toContain('You have no articles yet');
+		expect(route.view.container.textContent).not.toContain('No articles match');
+		await route.view.unmount();
+
+		route = await renderDashboardRoute('/dashboard?tab=lists&q=a');
+
+		expect(catalogueFilters).toMatchObject({ search: undefined });
+		expect(route.view.container.textContent).toContain('You have no lists yet');
+	});
+
 	it('reads the approval filter from the URL and sends it as statuses[]', async () => {
 		signIn(owner);
 		route = await renderDashboardRoute('/dashboard?status=awaiting');

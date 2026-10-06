@@ -18,6 +18,12 @@ describe('mapDashboardSearchFiltersToCatalogueFilters', () => {
 		});
 	});
 
+	it('drops a keyword below the backend minimum, which the catalogue index would reject', () => {
+		expect(
+			mapDashboardSearchFiltersToCatalogueFilters({ keyword: ' a ', sortByWhat: 'new', filterType: '' }).search,
+		).toBe(undefined);
+	});
+
 	it('drops empty keywords and the all-types sentinel', () => {
 		expect(
 			mapDashboardSearchFiltersToCatalogueFilters({

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { formatCount } from '@/components/features/dashboard/dashboardValues';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Cluster, Stack } from '@/components/shared/layout';
@@ -6,8 +7,6 @@ import styles from './Dashboard.module.css';
 
 /** Page size for the dashboard tables, matching the dictionary tables (UI-DICT-00, #427). */
 export const DASHBOARD_PER_PAGE = 25;
-
-const countFormat = new Intl.NumberFormat('en-US');
 
 /** The part of an infinite query result the section reads; every `useInfinite*` hook returns it. */
 export interface DashboardListQuery {
@@ -76,7 +75,7 @@ export const DashboardListSection: React.FC<DashboardListSectionProps> = ({
 						<p ref={summaryRef} tabIndex={-1} className={styles.summary}>
 							{total === 0
 								? `0 ${noun}`
-								: `Showing ${countFormat.format(itemCount)} of ${countFormat.format(total)} ${noun}`}
+								: `Showing ${formatCount(itemCount)} of ${formatCount(total)} ${noun}`}
 						</p>
 					)}
 					{children({ loading: isPending })}

@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDashboardCounts, type DashboardCounts } from '@/api/dashboard/useDashboardCounts';
 import { DashboardTabs } from '@/components/features/dashboard/DashboardTabs';
+import { formatCount } from '@/components/features/dashboard/dashboardValues';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Container, Stack } from '@/components/shared/layout';
@@ -11,15 +12,12 @@ import DashboardArticlesPanel from './DashboardArticlesPanel';
 import DashboardCataloguesPanel from './DashboardCataloguesPanel';
 import DashboardReviewPanel from './DashboardReviewPanel';
 import {
-	AWAITING_REVIEW_STATUSES,
 	parseDashboardSearchParams,
 	serializeDashboardViewState,
 	type DashboardViewChange,
 } from './dashboardSearchParams';
 
-const countFormat = new Intl.NumberFormat('en-US');
-
-const plural = (count: number, one: string, many: string) => `${countFormat.format(count)} ${count === 1 ? one : many}`;
+const plural = (count: number, one: string, many: string) => `${formatCount(count)} ${count === 1 ? one : many}`;
 
 /** "12 articles · 6 lists · 2 awaiting review", or nothing until the counts arrive. */
 export const dashboardCountsMeta = (counts: DashboardCounts | undefined): string | undefined =>
@@ -27,7 +25,7 @@ export const dashboardCountsMeta = (counts: DashboardCounts | undefined): string
 		? [
 				plural(counts.articles, 'article', 'articles'),
 				plural(counts.lists, 'list', 'lists'),
-				`${countFormat.format(counts.awaitingReview)} awaiting review`,
+				`${formatCount(counts.awaitingReview)} awaiting review`,
 			].join(' · ')
 		: undefined;
 
@@ -39,7 +37,7 @@ const Dashboard: React.FC = () => {
 	const { isLoading, user } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const isAdmin = Boolean(user?.isAdmin);
-	const counts = useDashboardCounts(user?.uuid, AWAITING_REVIEW_STATUSES);
+	const counts = useDashboardCounts(user?.uuid);
 
 	const updateView = useCallback<DashboardViewChange>(
 		(patch, { replace = false } = {}) => {

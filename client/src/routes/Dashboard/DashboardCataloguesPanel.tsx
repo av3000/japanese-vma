@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { FetchCataloguesFilters } from '@/api/catalogues/catalogues';
 import { useDeleteCatalogueMutation } from '@/api/catalogues/hooks/useDeleteCatalogueMutation';
@@ -9,11 +9,16 @@ import { CatalogueFilters, type CatalogueSearchFilters } from '@/components/feat
 import { DashboardListsTable } from '@/components/features/dashboard/DashboardListsTable';
 import { Alert } from '@/components/shared/Alert';
 import type { DataTableEmpty } from '@/components/shared/DataTable';
-import { useModal } from '@/hooks/useModal';
 import { CATALOGUE_ROUTES, CATALOGUE_TYPE_FILTER_ALL, isCustomCatalogueType } from '@/shared/constants/catalogues';
 import type { User } from '@/types';
 import { DASHBOARD_PER_PAGE, DashboardListSection } from './DashboardListSection';
-import { LIST_SORTS, type DashboardViewChange, type DashboardViewState, type ListSort } from './dashboardSearchParams';
+import {
+	appliedSearch,
+	parseListSort,
+	type DashboardViewChange,
+	type DashboardViewState,
+} from './dashboardSearchParams';
+import { useDashboardDelete } from './useDashboardDelete';
 import { useDashboardKeyword } from './useDashboardKeyword';
 
 type DashboardCatalogueFilters = {
@@ -32,7 +37,8 @@ interface DashboardCataloguesPanelProps {
 export const mapDashboardSearchFiltersToCatalogueFilters = (
 	filters: CatalogueSearchFilters,
 ): DashboardCatalogueFilters => {
-	const keyword = filters.keyword.trim();
+	// The catalogue index rejects a one-letter search (SearchTerm::MIN_LENGTH) with an error.
+	const keyword = appliedSearch(filters.keyword);
 	const parsedType = Number(filters.filterType);
 
 	return {
@@ -69,11 +75,9 @@ export const dashboardCatalogueFilters = (
 	};
 };
 
-const toListSort = (value: string): ListSort =>
-	(LIST_SORTS as readonly string[]).includes(value) ? (value as ListSort) : 'new';
-
 const emptyLists = (view: DashboardViewState): DataTableEmpty => {
-	const search = view.q.trim();
+	// The same rule as the request: a one-letter term was not sent, so it is not reported as a search.
+	const search = appliedSearch(view.q);
 
 	if (search !== '') {
 		return { title: `No lists match “${search}”`, hint: 'Try a shorter search, or set the type back to All.' };
@@ -105,37 +109,9 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ use
 	);
 	const { catalogues, ...query } = useInfiniteCatalogues({ filters });
 
-	const summaryRef = useRef<HTMLParagraphElement>(null);
-	const dialogRef = useRef<HTMLDialogElement | null>(null);
-	const deleteModal = useModal(dialogRef, { id: 'dashboard-list-delete' });
-	const [target, setTarget] = useState<CatalogueResource | null>(null);
-	const [deleteFailed, setDeleteFailed] = useState(false);
 	const deleteMutation = useDeleteCatalogueMutation();
-	const { open: openDeleteModal, close: closeDeleteModal } = deleteModal;
-
-	const handleDelete = useCallback(
-		(catalogue: CatalogueResource) => {
-			setDeleteFailed(false);
-			setTarget(catalogue);
-			openDeleteModal();
-		},
-		[openDeleteModal],
-	);
-
-	const confirmDelete = () => {
-		if (!target) return;
-
-		deleteMutation.mutate(target.uuid, {
-			onSuccess: () => {
-				closeDeleteModal();
-				summaryRef.current?.focus();
-			},
-			onError: () => {
-				closeDeleteModal();
-				setDeleteFailed(true);
-			},
-		});
-	};
+	const { summaryRef, deleteModal, target, deleteFailed, isDeleting, requestDelete, confirmDelete } =
+		useDashboardDelete<CatalogueResource>({ mutation: deleteMutation, modalId: 'dashboard-list-delete' });
 
 	// Keyword edits stay a draft until the pause; type and sort apply at once.
 	const handleFiltersChange = (next: CatalogueSearchFilters) => {
@@ -144,7 +120,7 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ use
 		}
 
 		if (next.filterType !== view.listType || next.sortByWhat !== view.listSort) {
-			onViewChange({ listType: next.filterType, listSort: toListSort(next.sortByWhat) });
+			onViewChange({ listType: next.filterType, listSort: parseListSort(next.sortByWhat) });
 		}
 	};
 
@@ -174,7 +150,7 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ use
 						catalogues={catalogues}
 						loading={loading}
 						empty={emptyLists(view)}
-						onDelete={handleDelete}
+						onDelete={requestDelete}
 					/>
 				)}
 			</DashboardListSection>
@@ -182,7 +158,7 @@ const DashboardCataloguesPanel: React.FC<DashboardCataloguesPanelProps> = ({ use
 				controller={deleteModal}
 				instanceName={target?.title ?? ''}
 				onDelete={confirmDelete}
-				isProcessing={deleteMutation.isPending}
+				isProcessing={isDeleting}
 				title="Delete this list?"
 				deleteLabel="Delete list"
 				ariaLabel="Delete list"

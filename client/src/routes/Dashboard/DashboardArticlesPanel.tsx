@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
 import { useInfiniteArticles, type ArticleListFilters } from '@/api/articles/hooks/useInfiniteArticles';
@@ -9,20 +9,18 @@ import { DashboardArticlesTable } from '@/components/features/dashboard/Dashboar
 import { Alert } from '@/components/shared/Alert';
 import type { DataTableEmpty } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
-import { useModal } from '@/hooks/useModal';
 import type { User } from '@/types';
 import { DASHBOARD_PER_PAGE, DashboardListSection } from './DashboardListSection';
 import {
+	appliedSearch,
 	ARTICLE_STATUS_FILTER_OPTIONS,
 	statusesForFilter,
 	type ArticleStatusFilter,
 	type DashboardViewChange,
 	type DashboardViewState,
 } from './dashboardSearchParams';
+import { useDashboardDelete } from './useDashboardDelete';
 import { useDashboardKeyword } from './useDashboardKeyword';
-
-/** The backend rejects a shorter search (SearchTerm::MIN_LENGTH), so it is not sent. */
-const MIN_SEARCH_LENGTH = 2;
 
 interface DashboardArticlesPanelProps {
 	user: User;
@@ -36,13 +34,13 @@ export const dashboardArticleFilters = (
 	q: string,
 	status: ArticleStatusFilter,
 ): ArticleListFilters => {
-	const search = q.trim();
+	const search = appliedSearch(q);
 	const statuses = statusesForFilter(status);
 
 	return {
 		author_uid: ownerUuid,
 		// Canonical `q`, not the legacy `search` alias.
-		...(search.length >= MIN_SEARCH_LENGTH ? { q: search } : {}),
+		...(search !== '' ? { q: search } : {}),
 		...(statuses.length > 0 ? { 'statuses[]': statuses } : {}),
 		per_page: DASHBOARD_PER_PAGE,
 		include_stats_counts: true,
@@ -53,7 +51,8 @@ export const dashboardArticleFilters = (
 };
 
 const emptyArticles = (q: string, status: ArticleStatusFilter): DataTableEmpty => {
-	const search = q.trim();
+	// The same rule as the request: a one-letter term was not sent, so it is not reported as a search.
+	const search = appliedSearch(q);
 
 	if (search !== '') {
 		return {
@@ -92,38 +91,9 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({ user, v
 	);
 	const { articles, ...query } = useInfiniteArticles({ filters });
 
-	const summaryRef = useRef<HTMLParagraphElement>(null);
-	const dialogRef = useRef<HTMLDialogElement | null>(null);
-	const deleteModal = useModal(dialogRef, { id: 'dashboard-article-delete' });
-	const [target, setTarget] = useState<ArticleResource | null>(null);
-	const [deleteFailed, setDeleteFailed] = useState(false);
 	const deleteMutation = useDeleteArticleMutation();
-	const { open: openDeleteModal, close: closeDeleteModal } = deleteModal;
-
-	const handleDelete = useCallback(
-		(article: ArticleResource) => {
-			setDeleteFailed(false);
-			setTarget(article);
-			openDeleteModal();
-		},
-		[openDeleteModal],
-	);
-
-	const confirmDelete = () => {
-		if (!target) return;
-
-		deleteMutation.mutate(target.uuid, {
-			onSuccess: () => {
-				closeDeleteModal();
-				// The row, and the button that had focus, are gone: land on the count line.
-				summaryRef.current?.focus();
-			},
-			onError: () => {
-				closeDeleteModal();
-				setDeleteFailed(true);
-			},
-		});
-	};
+	const { summaryRef, deleteModal, target, deleteFailed, isDeleting, requestDelete, confirmDelete } =
+		useDashboardDelete<ArticleResource>({ mutation: deleteMutation, modalId: 'dashboard-article-delete' });
 
 	return (
 		<>
@@ -164,7 +134,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({ user, v
 						articles={articles}
 						loading={loading}
 						empty={emptyArticles(view.q, view.status)}
-						onDelete={handleDelete}
+						onDelete={requestDelete}
 					/>
 				)}
 			</DashboardListSection>
@@ -172,7 +142,7 @@ const DashboardArticlesPanel: React.FC<DashboardArticlesPanelProps> = ({ user, v
 				controller={deleteModal}
 				instanceName={target?.title_jp ?? ''}
 				onDelete={confirmDelete}
-				isProcessing={deleteMutation.isPending}
+				isProcessing={isDeleting}
 				title="Delete this article?"
 				deleteLabel="Delete article"
 				ariaLabel="Delete article"
