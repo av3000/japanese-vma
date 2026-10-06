@@ -2,6 +2,8 @@ import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
+import type { PublicityStatus } from '@/api/generated/model/publicityStatus';
+import { isPublic, publicityLabel } from '@/api/publicity';
 import type { IconName } from '@/components/shared/Icon';
 import { articleStatusPill, type ArticleStatusPill } from '@/components/shared/StatusPill';
 
@@ -9,23 +11,16 @@ import { articleStatusPill, type ArticleStatusPill } from '@/components/shared/S
  * Typed display values for the dashboard tables, so no cell checks raw numbers or strings in JSX.
  */
 
-/** Mirrors `App\Domain\Shared\Enums\PublicityStatus`; resources send it as a plain number. */
-export const PUBLICITY = {
-	PRIVATE: 0,
-	PUBLIC: 1,
-} as const;
-
 export interface VisibilityDisplay {
-	label: 'Public' | 'Private';
+	label: ReturnType<typeof publicityLabel>;
 	icon: IconName;
 }
 
-const PUBLIC_VISIBILITY: VisibilityDisplay = { label: 'Public', icon: 'eyeRegular' };
-const PRIVATE_VISIBILITY: VisibilityDisplay = { label: 'Private', icon: 'lockSolid' };
-
-/** Anything that is not explicitly public reads as private: the safer label for an owner. */
-export const visibilityDisplay = (publicity: number): VisibilityDisplay =>
-	publicity === PUBLICITY.PUBLIC ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY;
+/** Label and icon for the generated `PublicityStatus`; anything not public reads as private. */
+export const visibilityDisplay = (publicity: PublicityStatus): VisibilityDisplay => ({
+	label: publicityLabel(publicity),
+	icon: isPublic(publicity) ? 'eyeRegular' : 'lockSolid',
+});
 
 /**
  * Approval status as a pill for a column already headed "Approval", so the label drops the

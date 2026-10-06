@@ -4,6 +4,7 @@ namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Http\v1\Engagement\Resources\EngagementStatsResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
@@ -36,7 +37,7 @@ class CatalogueResource extends JsonResource
      *     type_label: string,
      *     title: string,
      *     description: string|null,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     owner: AuthorResource,
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
@@ -58,7 +59,7 @@ class CatalogueResource extends JsonResource
             'type_label' => $catalogue->getTypeLabel(),
             'title' => (string) $catalogue->getTitle(),
             'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
-            'publicity' => $catalogue->getPublicity()->value,
+            'publicity' => $catalogue->getPublicity(),
             'owner' => new AuthorResource([
                 'id' => $catalogue->getOwnerId()->value(),
                 'uuid' => $catalogue->getOwnerUuid()->value(),

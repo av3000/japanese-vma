@@ -1,7 +1,7 @@
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import type { ArticleResource, ProcessingStatusResource } from '@/api/generated/model';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
-import { PUBLICITY } from './dashboardValues';
+import { PUBLICITY } from '@/api/publicity';
 
 /*
  * Dashboard article rows shaped like the real owner payload (`GET /articles?author_uid=…`),

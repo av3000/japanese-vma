@@ -3,6 +3,7 @@
 namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\v1\Engagement\Resources\EngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
@@ -35,7 +36,7 @@ class ArticleDetailResource extends JsonResource
      *     content_jp: string,
      *     content_en: ?string,
      *     source_link: string,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     status: int,
      *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
      *     author: AuthorResource,
@@ -54,7 +55,7 @@ class ArticleDetailResource extends JsonResource
         $detail = $this->resource;
         $article = $detail->article;
 
-        $publicity = (int) $article->getPublicity()->value;
+        $publicity = $article->getPublicity();
         $status = (int) $article->getStatus()->value;
         // TODO: move to separate resource for entity agnostic usage
         $jlptLevels = [

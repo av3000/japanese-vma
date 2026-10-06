@@ -13,6 +13,7 @@ import {
 	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
+import { publicityLabel } from '@/api/publicity';
 import AvatarImg from '@/assets/images/avatar-woman.svg';
 import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -151,7 +152,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 						<div>
 							{formatDate(catalogue.created_at, 'ja')} <br />
 							<span>{viewsCount} views</span>
-							{isOwner && <span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>}
+							{isOwner && <span> | {publicityLabel(catalogue.publicity)}</span>}
 							<br />
 							<strong>{catalogue.type_label}</strong>
 						</div>

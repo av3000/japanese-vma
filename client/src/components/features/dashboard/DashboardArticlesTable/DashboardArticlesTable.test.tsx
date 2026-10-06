@@ -5,9 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import type { ArticleResource } from '@/api/generated/model';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
+import { PUBLICITY } from '@/api/publicity';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { makeDashboardArticle, makeProcessing } from '../dashboardFixtures';
-import { PUBLICITY } from '../dashboardValues';
 import { DashboardArticlesTable } from './';
 
 const EMPTY = { title: 'No articles yet' };

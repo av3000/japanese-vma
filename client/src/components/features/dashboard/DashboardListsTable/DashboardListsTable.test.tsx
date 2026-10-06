@@ -3,9 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogueResource } from '@/api/generated/model';
+import { PUBLICITY } from '@/api/publicity';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { knownLists, makeDashboardCatalogue } from '../dashboardListFixtures';
-import { PUBLICITY } from '../dashboardValues';
 import { DashboardListsTable } from './';
 
 const EMPTY = { title: 'No lists yet' };
