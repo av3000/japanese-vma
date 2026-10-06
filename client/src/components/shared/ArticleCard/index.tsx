@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+import { importedSourceOf } from '@/api/articles/provenance';
 import type { ArticleResource } from '@/api/generated/model/articleResource';
 import {
 	ProcessingStatus,
@@ -10,7 +11,7 @@ import { Chip } from '@/components/shared/Chip';
 import { Icon } from '@/components/shared/Icon';
 import { JlptBar } from '@/components/shared/JlptBar';
 import { Link } from '@/components/shared/Link';
-import { importedSourceOf, SourceBadge } from '@/components/shared/SourceBadge';
+import { SourceBadge } from '@/components/shared/SourceBadge';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { formatDate } from '@/helpers';
 import styles from './ArticleCard.module.css';
