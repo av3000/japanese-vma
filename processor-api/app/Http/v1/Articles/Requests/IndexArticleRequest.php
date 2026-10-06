@@ -4,6 +4,7 @@ namespace App\Http\v1\Articles\Requests;
 
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use Illuminate\Contracts\Validation\Validator;
@@ -30,7 +31,7 @@ class IndexArticleRequest extends FormRequest
         'include_facets',
     ];
 
-    private const ARRAY_FILTERS = ['jlpt_levels', 'hashtag_ids', 'kanji_ids', 'word_ids'];
+    private const ARRAY_FILTERS = ['jlpt_levels', 'hashtag_ids', 'kanji_ids', 'word_ids', 'statuses'];
 
     public function authorize(): bool
     {
@@ -51,6 +52,9 @@ class IndexArticleRequest extends FormRequest
             'kanji_ids.*' => 'integer|min:1',
             'word_ids' => 'sometimes|array|max:'.self::MAX_FILTER_VALUES,
             'word_ids.*' => 'integer|min:1',
+            // Moderation status. Narrows only: eligibility still comes from the actor's scope.
+            'statuses' => 'sometimes|array|max:'.self::MAX_FILTER_VALUES,
+            'statuses.*' => ['integer', Rule::enum(ArticleStatus::class)],
             'created_from' => 'sometimes|date_format:Y-m-d',
             'created_to' => 'sometimes|date_format:Y-m-d',
             'sort' => ['sometimes', Rule::in(ArticleSortCriteria::allowedValues())],
@@ -73,6 +77,7 @@ class IndexArticleRequest extends FormRequest
             'hashtag_ids.max' => 'At most '.self::MAX_FILTER_VALUES.' hashtags may be supplied',
             'kanji_ids.max' => 'At most '.self::MAX_FILTER_VALUES.' kanjis may be supplied',
             'word_ids.max' => 'At most '.self::MAX_FILTER_VALUES.' words may be supplied',
+            'statuses.max' => 'At most '.self::MAX_FILTER_VALUES.' statuses may be supplied',
             'author_uid.uuid' => 'Author UID must be a valid UUID',
             'created_from.date_format' => 'created_from must be a date in YYYY-MM-DD format',
             'created_to.date_format' => 'created_to must be a date in YYYY-MM-DD format',

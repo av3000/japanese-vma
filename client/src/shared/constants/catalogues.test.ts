@@ -3,6 +3,7 @@ import {
 	CATALOGUE_ROUTES,
 	CATALOGUE_TYPE_LABELS,
 	isCataloguePdfExportSupported,
+	isBuiltInCatalogueType,
 	isCatalogueRouteUuid,
 	parseCatalogueLegacyId,
 	isCustomCatalogueType,
@@ -107,5 +108,10 @@ describe('parseCatalogueLegacyId', () => {
 
 	it('rejects an in-pattern id JavaScript cannot represent exactly', () => {
 		expect(parseCatalogueLegacyId('999999999999999999')).toBeNull();
+	});
+
+	it('marks only the four Known lists as built in', () => {
+		expect([1, 2, 3, 4].every(isBuiltInCatalogueType)).toBe(true);
+		expect([0, 5, 6, 7, 8, 9, 10, 11].some(isBuiltInCatalogueType)).toBe(false);
 	});
 });

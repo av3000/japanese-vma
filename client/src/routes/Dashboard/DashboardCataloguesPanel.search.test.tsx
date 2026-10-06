@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAuth } from '@/hooks/useAuth';
 import { choose, controlLabelled, submitForm, typeInto } from '@/test/formEvents';
-import { renderWithAct } from '@/test/renderWithAct';
 import type { User } from '@/types';
-import DashboardCataloguesPanel from './DashboardCataloguesPanel';
+import { renderDashboardRoute } from './dashboardTestRoute';
 
 let capturedFilters: Record<string, unknown> | undefined;
+
+vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }));
+vi.mock('@/api/dashboard/useDashboardCounts', () => ({ useDashboardCounts: () => ({ data: undefined }) }));
 
 vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 	useInfiniteCatalogues: ({ filters }: { filters: Record<string, unknown> }) => {
@@ -16,21 +18,19 @@ vi.mock('@/api/catalogues/hooks/useInfiniteCatalogues', () => ({
 		return {
 			catalogues: [],
 			total: 0,
-			error: null,
-			fetchNextPage: vi.fn(),
-			hasNextPage: false,
-			isFetchingNextPage: false,
 			isPending: false,
 			isError: false,
+			hasNextPage: false,
+			isFetchingNextPage: false,
+			fetchNextPage: vi.fn(),
+			refetch: vi.fn(),
 		};
 	},
 }));
 
-vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
+const owner = { id: 7, uuid: 'owner-uuid', isAdmin: false } as User;
 
-const owner = { id: 7, uuid: 'owner-uuid' } as User;
-
-let view: Awaited<ReturnType<typeof renderWithAct>>;
+let route: Awaited<ReturnType<typeof renderDashboardRoute>>;
 
 const advance = (ms: number) =>
 	act(() => {
@@ -40,20 +40,17 @@ const advance = (ms: number) =>
 beforeEach(async () => {
 	vi.useFakeTimers();
 	capturedFilters = undefined;
-	view = await renderWithAct(
-		<MemoryRouter>
-			<DashboardCataloguesPanel isAuthenticated currentUser={owner} />
-		</MemoryRouter>,
-	);
+	vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true, isLoading: false, user: owner } as never);
+	route = await renderDashboardRoute('/dashboard?tab=lists');
 });
 
 afterEach(async () => {
-	await view.unmount();
+	await route.view.unmount();
 	vi.useRealTimers();
 });
 
-describe('DashboardCataloguesPanel search', () => {
-	it('starts with the same request as before: the owner lists, newest first, every type', () => {
+describe('Dashboard lists search', () => {
+	it('starts with the owner lists, newest first, every type, built-in lists included', () => {
 		expect(capturedFilters).toMatchObject({
 			owner_uid: 'owner-uuid',
 			search: undefined,
@@ -65,22 +62,32 @@ describe('DashboardCataloguesPanel search', () => {
 		});
 	});
 
-	it('maps a keyword, a type and a sort onto the same request params as before, after a 300 ms pause', () => {
-		typeInto(controlLabelled(view.container, 'Search catalogues'), '  tokyo  ');
-		choose(controlLabelled(view.container, 'Catalogue type'), '7');
-		choose(controlLabelled(view.container, 'Sort by'), 'pop');
+	it('applies type and sort at once, and the keyword after a 300 ms pause', () => {
+		choose(controlLabelled(route.view.container, 'Catalogue type'), '7');
+		choose(controlLabelled(route.view.container, 'Sort by'), 'pop');
 
+		expect(capturedFilters).toMatchObject({ type: 7, sort_by: 'views', sort_dir: 'desc' });
+		expect(route.search()).toBe('tab=lists&type=7&sort=pop');
+
+		typeInto(controlLabelled(route.view.container, 'Search catalogues'), '  tokyo  ');
 		advance(299);
-		expect(capturedFilters).toMatchObject({ search: undefined, sort_by: 'created_at', type: undefined });
+		expect(capturedFilters).toMatchObject({ search: undefined });
 
 		advance(1);
-		expect(capturedFilters).toMatchObject({ search: 'tokyo', sort_by: 'views', sort_dir: 'desc', type: 7 });
+		expect(capturedFilters).toMatchObject({ search: 'tokyo', type: 7, sort_by: 'views' });
 	});
 
-	it('applies the form at once on Enter', () => {
-		typeInto(controlLabelled(view.container, 'Search catalogues'), 'tokyo');
-		submitForm(view.container.querySelector('form') as HTMLFormElement);
+	it('applies the keyword at once on Enter', () => {
+		typeInto(controlLabelled(route.view.container, 'Search catalogues'), 'tokyo');
+		submitForm(route.view.container.querySelector('form[role="search"]') as HTMLFormElement);
 
 		expect(capturedFilters).toMatchObject({ search: 'tokyo' });
+	});
+
+	it('restores the filters from the URL', async () => {
+		await route.navigate('/dashboard?tab=lists&q=verbs&type=7');
+
+		expect(capturedFilters).toMatchObject({ search: 'verbs', type: 7 });
+		expect(controlLabelled<HTMLInputElement>(route.view.container, 'Search catalogues').value).toBe('verbs');
 	});
 });

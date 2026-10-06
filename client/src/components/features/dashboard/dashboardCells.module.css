@@ -1,0 +1,56 @@
+/* Cell content shared by the dashboard tables (dashboardCells.tsx). */
+
+.visibility {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	white-space: nowrap;
+}
+
+.date {
+	white-space: nowrap;
+}
+
+/* Status pills stay on one line; the title is the cell that wraps when space runs out. */
+.statusCell {
+	white-space: nowrap;
+}
+
+.actionsCell {
+	text-align: end;
+}
+
+.actionGroup {
+	display: inline-flex;
+	gap: var(--spacing-3xs);
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* A label for stacked rows only, where the column header is not visible. */
+.stackedLabel {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	.actionsCell {
+		align-self: end;
+	}
+
+	.stackedLabel {
+		display: inline;
+		margin-inline-end: var(--spacing-2xs);
+		color: var(--color-neutral-600);
+		font-size: var(--font-size-body-sm);
+	}
+}
