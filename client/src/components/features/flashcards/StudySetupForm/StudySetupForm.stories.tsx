@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, within } from '@storybook/test';
-import { defaultStudyConfig, type StudyConfig } from '@/api/flashcards/deck';
+import { DECK_ERRORS, defaultStudyConfig, type StudyConfig } from '@/api/flashcards/deck';
 import { SavedListType } from '@/shared/constants/enums';
 import { StudySetupForm, type StudyDeckStatus, type StudySetupFormProps } from './index';
 
@@ -80,11 +80,7 @@ export const Counting: Story = {
 export const NoEligibleCards: Story = {
 	args: {
 		value: { ...defaultStudyConfig(), answer: 'kunyomi' },
-		deckStatus: {
-			kind: 'error',
-			title: 'No eligible cards',
-			detail: 'No item in this catalogue has a kunyomi to answer with',
-		},
+		deckStatus: { kind: 'error', ...DECK_ERRORS.noCards },
 	},
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByRole('button', { name: 'Start studying' })).toBeDisabled();

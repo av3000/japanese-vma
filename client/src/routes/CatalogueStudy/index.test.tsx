@@ -149,7 +149,7 @@ describe('CatalogueStudyPage', () => {
 		expect(useStudyDeck).not.toHaveBeenCalledWith(expect.any(String), expect.anything(), true);
 	});
 
-	it('renders the backend refusal as an alert instead of crashing', () => {
+	it('renders the backend refusal as an alert in study copy instead of crashing', () => {
 		loadedCatalogue();
 		vi.mocked(useStudyDeck).mockReturnValue({
 			data: undefined,
@@ -160,8 +160,9 @@ describe('CatalogueStudyPage', () => {
 
 		const html = renderToStaticMarkup(<CatalogueStudyPage />);
 
-		expect(html).toContain('No eligible cards');
-		expect(html).toContain('No item has a kunyomi');
+		// Study copy, not the server's text, which names internals.
+		expect(html).toContain('No cards to study this way');
+		expect(html).not.toContain('No item has a kunyomi');
 	});
 
 	it('switches to the session when play=1 and the deck is loaded', () => {

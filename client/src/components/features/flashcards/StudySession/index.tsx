@@ -4,6 +4,7 @@ import { grade } from '@/api/flashcards/grading';
 import type { SaveStatus } from '@/api/flashcards/sessions';
 import type { SessionAnswer } from '@/api/flashcards/types';
 import { Stack } from '@/components/shared/layout';
+import { studyFamilyFor } from '@/shared/constants/catalogues';
 import type { SavedListType } from '@/shared/constants/enums';
 import { AnswerFeedback } from '../AnswerFeedback';
 import { AnswerInput } from '../AnswerInput';
@@ -11,6 +12,7 @@ import { AnswerOptions } from '../AnswerOptions';
 import { FlashcardPrompt } from '../FlashcardPrompt';
 import { SessionProgress } from '../SessionProgress';
 import { SessionSummary } from '../SessionSummary';
+import { flashcardFieldLabel, isJapaneseField } from '../fieldLabels';
 import styles from './StudySession.module.css';
 
 export interface StudySessionProps {
@@ -33,14 +35,6 @@ type Phase =
 	| { kind: 'question'; index: number }
 	| { kind: 'feedback'; index: number; answer: SessionAnswer }
 	| { kind: 'summary' };
-
-const ANSWER_LABEL: Record<StudyDeck['config']['answer'], string> = {
-	character: 'Character',
-	meaning: 'Meaning (English)',
-	onyomi: 'On’yomi (katakana)',
-	kunyomi: 'Kun’yomi (hiragana)',
-	reading: 'Reading',
-};
 
 /**
  * One run through a deck: question → feedback → next card → summary, then optionally a
@@ -65,8 +59,9 @@ export const StudySession = ({
 	const [answers, setAnswers] = useState<SessionAnswer[]>([]);
 	const startedAtRef = useRef<number>(Date.now());
 
-	const promptJapanese = deck.config.prompt !== 'meaning';
-	const answerJapanese = deck.config.answer !== 'meaning';
+	const family = studyFamilyFor(deck.catalogue.type);
+	const promptJapanese = isJapaneseField(deck.config.prompt);
+	const answerJapanese = isJapaneseField(deck.config.answer);
 	const total = cards.length;
 	const correctCount = useMemo(() => answers.filter((answer) => answer.correct).length, [answers]);
 
@@ -173,7 +168,7 @@ export const StudySession = ({
 					<AnswerInput
 						// A new card is a fresh input: empty and focused, no reset effect needed.
 						key={`${attemptNo}-${card.itemId}`}
-						label={ANSWER_LABEL[deck.config.answer]}
+						label={family ? flashcardFieldLabel(deck.config.answer, family) : ''}
 						japanese={answerJapanese}
 						onSubmit={(given) => {
 							const result = grade({

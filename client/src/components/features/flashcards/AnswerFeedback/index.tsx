@@ -19,10 +19,15 @@ export interface AnswerFeedbackProps {
 	onNext: () => void;
 }
 
+/** Controls whose own Enter behaviour (follow, press, submit) must win over "next card". */
+const CONTROL_SELECTOR =
+	'a[href], button, input, select, textarea, summary, [contenteditable="true"], [role="button"], [role="link"]';
+
 /**
  * The answer side. The verdict is a word plus a mark, never colour alone; every accepted
  * answer is listed with the okurigana dot left in, so the learner sees where the stem ends.
- * Enter advances, as the number keys and the Check button did before it.
+ * Enter advances from anywhere except another control: with focus on a link, a button or a
+ * field elsewhere on the page, Enter keeps its own meaning.
  */
 export const AnswerFeedback = ({ card, correct, matched, given, japanese, isLast, onNext }: AnswerFeedbackProps) => {
 	const actionsRef = useRef<HTMLDivElement>(null);
@@ -33,13 +38,18 @@ export const AnswerFeedback = ({ card, correct, matched, given, japanese, isLast
 		actionsRef.current?.querySelector('button')?.focus();
 	}, []);
 
-	// `event.repeat`: a held Enter from the typed submit must not skip straight through.
+	// `event.repeat`: a held Enter from the typed submit must not skip straight through. The
+	// Next button itself is handled here too, so its native click does not fire a second time.
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === 'Enter' && !event.repeat && !event.defaultPrevented) {
-				event.preventDefault();
-				latestOnNext.current();
-			}
+			if (event.key !== 'Enter' || event.repeat || event.defaultPrevented) return;
+
+			const nextButton = actionsRef.current?.querySelector('button') ?? null;
+			const target = event.target;
+			if (target instanceof Element && target !== nextButton && target.closest(CONTROL_SELECTOR)) return;
+
+			event.preventDefault();
+			latestOnNext.current();
 		};
 
 		window.addEventListener('keydown', onKeyDown);

@@ -3,6 +3,7 @@ import type { StudyCard } from '@/api/flashcards/deck';
 import type { FlashcardField } from '@/api/generated/model/flashcardField';
 import { LevelBadge } from '@/components/shared/LevelBadge';
 import { Cluster } from '@/components/shared/layout';
+import { isJapaneseField } from '../fieldLabels';
 import styles from './FlashcardPrompt.module.css';
 
 export interface FlashcardPromptProps {
@@ -11,8 +12,6 @@ export interface FlashcardPromptProps {
 	field: FlashcardField;
 	className?: string;
 }
-
-const isJapaneseField = (field: FlashcardField) => field !== 'meaning';
 
 /**
  * The question side of a card: the prompt large, then JLPT level, stroke count, grade and

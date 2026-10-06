@@ -64,6 +64,13 @@
 	font-weight: var(--font-weight-regular);
 }
 
+.time {
+	margin: var(--spacing-2xs) 0 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+	font-variant-numeric: tabular-nums;
+}
+
 .save {
 	margin: var(--spacing-xs) 0 0;
 	color: var(--color-neutral-700);

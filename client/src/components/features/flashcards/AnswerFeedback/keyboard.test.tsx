@@ -38,6 +38,46 @@ describe('AnswerFeedback keyboard', () => {
 		expect(onNext).toHaveBeenCalledTimes(1);
 	});
 
+	it('leaves Enter to another control that has focus, but handles it on the Next button', async () => {
+		const onNext = vi.fn();
+		const link = document.createElement('a');
+		link.href = '/catalogues/c-1';
+		link.textContent = 'Back to N5 kanji';
+		document.body.append(link);
+		const rendered = await renderWithAct(
+			<AnswerFeedback
+				card={kanjiCards[0]}
+				correct
+				matched="study"
+				given="study"
+				japanese={false}
+				isLast={false}
+				onNext={onNext}
+			/>,
+		);
+		unmount = rendered.unmount;
+		const pressEnterOn = (target: Element) =>
+			target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+		let linkEvent = true;
+		await rendered.flush(() => {
+			linkEvent = pressEnterOn(link);
+		});
+		expect(onNext).not.toHaveBeenCalled();
+		// Not prevented: the link still follows.
+		expect(linkEvent).toBe(true);
+
+		const nextButton = Array.from(document.querySelectorAll('button')).find(
+			(button) => button.textContent === 'Next card',
+		);
+		await rendered.flush(() => {
+			pressEnterOn(nextButton as HTMLButtonElement);
+		});
+		expect(onNext).toHaveBeenCalledTimes(1);
+
+		link.remove();
+	});
+
 	it('focuses the Next button on mount and calls the latest onNext without re-subscribing', async () => {
 		const first = vi.fn();
 		const second = vi.fn();

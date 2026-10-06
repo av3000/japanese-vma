@@ -1,4 +1,5 @@
-import { useFlashcardDeckShow, getFlashcardDeckShowQueryKey } from '@/api/generated/flashcard-deck/flashcard-deck';
+import { parseApiError } from '@/api/apiError';
+import { useFlashcardDeckShow } from '@/api/generated/flashcard-deck/flashcard-deck';
 import { AnswerMode } from '@/api/generated/model/answerMode';
 import type { FlashcardDeckResource } from '@/api/generated/model/flashcardDeckResource';
 import type { FlashcardDeckShowParams } from '@/api/generated/model/flashcardDeckShowParams';
@@ -11,7 +12,7 @@ import { studyFamilyFor, type StudyFamily } from '@/shared/constants/catalogues'
  * Deck access for the Study route (epic #413). The configuration lives in the URL, seed
  * included once the first deck has chosen one, so a specific drill is a link; this module
  * parses it, serialises it, and knows which fields a catalogue type allows. The
- * allowed-fields table mirrors the backend's `FlashcardConfig::fieldsFor` and must change
+ * allowed-fields table mirrors the backend's `FlashcardQuestion::fieldsFor` and must change
  * together with it.
  */
 
@@ -201,9 +202,6 @@ export const mapStudyDeck = (deck: FlashcardDeckResource): StudyDeck => ({
 	excludedEmptyAnswerField: deck.excluded.empty_answer_field,
 });
 
-export const getStudyDeckQueryKey = (catalogueUuid: string, config: StudyConfig) =>
-	getFlashcardDeckShowQueryKey(catalogueUuid, studyConfigToParams(config));
-
 export const useStudyDeck = (catalogueUuid: string | undefined, config: StudyConfig, enabled = true) =>
 	useFlashcardDeckShow<StudyDeck>(catalogueUuid ?? '', studyConfigToParams(config), {
 		query: {
@@ -218,23 +216,46 @@ export const useStudyDeck = (catalogueUuid: string | undefined, config: StudyCon
 		},
 	});
 
-/* Failures --------------------------------------------------------------- */
+/* Errors ----------------------------------------------------------------- */
 
-export interface DeckFailure {
-	status: number | null;
-	/** Problem Details `title`, e.g. "No eligible cards". */
+/** What the setup form shows when a deck cannot be built. */
+export interface DeckError {
 	title: string;
-	detail: string | null;
+	detail: string;
 }
 
-/** Reads the backend's Problem Details from a failed deck request. */
-export const readDeckFailure = (error: unknown): DeckFailure => {
-	const response = (error as { response?: { status?: number; data?: unknown } } | undefined)?.response;
-	const data = (response?.data ?? null) as { title?: string; detail?: string; status?: number } | null;
+export const DECK_ERRORS = {
+	noCards: {
+		title: 'No cards to study this way',
+		detail: 'Nothing in this catalogue can be asked with this setup. Choose another answer field.',
+	},
+	invalidSetup: { title: 'This setup is not valid', detail: 'Change the setup and try again.' },
+	private: { title: 'This catalogue is private', detail: 'Only its owner can study it.' },
+} as const satisfies Record<string, DeckError>;
 
-	return {
-		status: data?.status ?? response?.status ?? null,
-		title: data?.title ?? 'The deck could not be loaded',
-		detail: data?.detail ?? null,
-	};
+/**
+ * Turns a failed deck request into the setup form's message. Built on `parseApiError`, so no
+ * server text reaches the screen: the Problem Details `title` and `detail` name internals
+ * (the raw field value, the catalogue uuid). A 422 that is not a field-validation error is
+ * one of the Study refusals; the form already rules out unsupported types and invalid
+ * combinations, so in practice it means no item has the chosen answer field, and the copy
+ * says so without claiming which refusal it was.
+ */
+export const parseDeckError = (error: unknown): DeckError => {
+	const apiError = parseApiError(error);
+	const status = (error as { response?: { status?: number } } | null)?.response?.status;
+
+	if (apiError.kind === 'validation') {
+		return DECK_ERRORS.invalidSetup;
+	}
+
+	if (status === 422) {
+		return DECK_ERRORS.noCards;
+	}
+
+	if (apiError.kind === 'forbidden') {
+		return DECK_ERRORS.private;
+	}
+
+	return { title: 'The deck could not be loaded', detail: apiError.message };
 };

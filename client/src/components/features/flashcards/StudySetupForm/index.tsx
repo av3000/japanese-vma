@@ -9,7 +9,6 @@ import {
 	studyFamilyFor,
 	studyFieldsFor,
 	type StudyConfig,
-	type StudyFamily,
 } from '@/api/flashcards/deck';
 import { AnswerMode } from '@/api/generated/model/answerMode';
 import { FlashcardField } from '@/api/generated/model/flashcardField';
@@ -19,6 +18,7 @@ import { Button } from '@/components/shared/Button';
 import { Checkbox, Field, FieldMessage, Input, Label, Select } from '@/components/shared/FormControls';
 import { Stack } from '@/components/shared/layout';
 import { useLatest } from '@/hooks/useLatest';
+import { flashcardFieldLabel } from '../fieldLabels';
 import styles from './StudySetupForm.module.css';
 import { buildStudySetupSchema, type StudySetupValues } from './studySetupSchema';
 
@@ -36,27 +36,6 @@ export interface StudySetupFormProps {
 	onStart: (config: StudyConfig) => void;
 	deckStatus: StudyDeckStatus;
 }
-
-const CHARACTER_LABEL: Record<StudyFamily, string> = {
-	kanji: 'Kanji',
-	words: 'Word',
-	radicals: 'Radical',
-};
-
-const fieldLabel = (field: FlashcardField, family: StudyFamily): string => {
-	switch (field) {
-		case FlashcardField.character:
-			return CHARACTER_LABEL[family];
-		case FlashcardField.meaning:
-			return 'Meaning (English)';
-		case FlashcardField.onyomi:
-			return 'On’yomi (katakana)';
-		case FlashcardField.kunyomi:
-			return 'Kun’yomi (hiragana)';
-		case FlashcardField.reading:
-			return family === 'radicals' ? 'Reading (kana or romaji)' : 'Reading (kana)';
-	}
-};
 
 const SCRIPT_FIELDS: readonly FlashcardField[] = [FlashcardField.onyomi, FlashcardField.kunyomi];
 
@@ -195,7 +174,7 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 					<Select id={`${id}-prompt`} {...promptField}>
 						{fields.map((field) => (
 							<option key={field} value={field}>
-								{fieldLabel(field, family)}
+								{flashcardFieldLabel(field, family)}
 							</option>
 						))}
 					</Select>
@@ -206,7 +185,7 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 					<Select id={`${id}-answer`} isInvalid={Boolean(errors.answer)} {...answerField}>
 						{answerOptions.map((field) => (
 							<option key={field} value={field}>
-								{fieldLabel(field, family)}
+								{flashcardFieldLabel(field, family)}
 							</option>
 						))}
 					</Select>
@@ -221,7 +200,8 @@ export const StudySetupForm = ({ catalogueType, value, onChange, onStart, deckSt
 					</Select>
 					{!typedAllowed && (
 						<FieldMessage>
-							A {CHARACTER_LABEL[family].toLowerCase()} answer is always picked from options.
+							A {flashcardFieldLabel(FlashcardField.character, family).toLowerCase()} answer is always
+							picked from options.
 						</FieldMessage>
 					)}
 				</Field>

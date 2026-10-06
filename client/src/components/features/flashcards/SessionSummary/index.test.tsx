@@ -15,9 +15,17 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
-	AuthorizedBookmarkWidget: ({ entityId, instanceObjectType }: { entityId: number; instanceObjectType: number }) => (
+	AuthorizedBookmarkWidget: ({
+		entityId,
+		instanceObjectType,
+		itemLabel,
+	}: {
+		entityId: number;
+		instanceObjectType: number;
+		itemLabel?: string;
+	}) => (
 		<span>
-			bookmark:{entityId}:{instanceObjectType}
+			bookmark:{entityId}:{instanceObjectType}:{itemLabel}
 		</span>
 	),
 }));
@@ -49,6 +57,14 @@ const render = (props: Partial<SessionSummaryProps> = {}) =>
 	);
 
 describe('SessionSummary', () => {
+	it('shows the time spent answering, summed over the cards', () => {
+		// Three answers of 1.8 s each.
+		expect(render()).toContain('Time: 5s');
+		expect(render({ answers: Array.from({ length: 40 }, (_, index) => answer(index % 3, true)) })).toContain(
+			'Time: 1m 12s',
+		);
+	});
+
 	it('shows the score, the missed card with its answers and a bookmark into a kanji catalogue', () => {
 		const html = render();
 
@@ -56,7 +72,8 @@ describe('SessionSummary', () => {
 		expect(html).toContain('1 card to look at again');
 		expect(html).toContain('水');
 		expect(html).toContain('you said: <span>fire</span>');
-		expect(html).toContain(`bookmark:${kanjiCards[1].itemId}:${SavedListType.KANJIS}`);
+		// The item label names the icon-only bookmark button ("Save 水").
+		expect(html).toContain(`bookmark:${kanjiCards[1].itemId}:${SavedListType.KANJIS}:${kanjiCards[1].promptText}`);
 		expect(html).toContain('Retry missed (1)');
 		expect(html).toContain('Results saved.');
 	});

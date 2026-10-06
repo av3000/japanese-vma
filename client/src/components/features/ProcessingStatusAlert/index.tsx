@@ -16,6 +16,7 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { STATUS_VARIANT_CLASSES, type StatusVariant } from '@/components/ui/status-colors';
+import { formatDurationCompact } from '@/helpers/date';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
 import styles from './ProcessingStatusAlert.module.css';
 
@@ -51,20 +52,6 @@ interface ProcessingStatusAlertProps {
 	processing_status?: ProcessingStatusResource | null;
 	className?: string;
 }
-
-const formatDurationCompact = (ms: number): string => {
-	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-	const hours = Math.floor(totalSeconds / 3600);
-	const minutes = Math.floor((totalSeconds % 3600) / 60);
-	const seconds = totalSeconds % 60;
-
-	const parts: string[] = [];
-	if (hours > 0) parts.push(`${hours}h`);
-	if (minutes > 0) parts.push(`${minutes}m`);
-	parts.push(`${seconds}s`);
-
-	return parts.join(' ');
-};
 
 // TODO: Should perhaps allow to close permanently, after each processing,
 // probably saving the last state on browser storage.

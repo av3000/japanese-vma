@@ -5,7 +5,8 @@ import {
 	isValidStudyCombination,
 	mapStudyDeck,
 	parseStudyConfig,
-	readDeckFailure,
+	DECK_ERRORS,
+	parseDeckError,
 	studyConfigToSearchParams,
 	studyFamilyFor,
 	studyFieldsFor,
@@ -110,23 +111,41 @@ describe('mapStudyDeck', () => {
 	});
 });
 
-describe('readDeckFailure', () => {
-	it('reads the Problem Details title and detail', () => {
-		expect(
-			readDeckFailure({
-				response: {
+describe('parseDeckError', () => {
+	it('turns a Study refusal into study copy, never the server text', () => {
+		const error = parseDeckError({
+			response: {
+				status: 422,
+				data: {
+					title: 'No eligible cards',
+					detail: 'No item in catalogue 3f2a has a kunyomi to answer with',
 					status: 422,
-					data: { title: 'No eligible cards', detail: 'No item has a kunyomi', status: 422 },
 				},
-			}),
-		).toEqual({ status: 422, title: 'No eligible cards', detail: 'No item has a kunyomi' });
+			},
+		});
+
+		expect(error).toEqual(DECK_ERRORS.noCards);
+		expect(JSON.stringify(error)).not.toContain('kunyomi');
 	});
 
-	it('degrades to a generic title for a network failure', () => {
-		expect(readDeckFailure(new Error('offline'))).toEqual({
-			status: null,
+	it('reads a field-validation 422 as an invalid setup', () => {
+		expect(
+			parseDeckError({
+				response: { status: 422, data: { message: 'Invalid', errors: { count: ['Too many'] } } },
+			}),
+		).toEqual(DECK_ERRORS.invalidSetup);
+	});
+
+	it('names a private catalogue', () => {
+		expect(parseDeckError({ response: { status: 403, data: { title: 'Access denied', status: 403 } } })).toEqual(
+			DECK_ERRORS.private,
+		);
+	});
+
+	it('falls back to the shared message for anything else', () => {
+		expect(parseDeckError(new Error('offline'))).toEqual({
 			title: 'The deck could not be loaded',
-			detail: null,
+			detail: 'Something went wrong. Please try again.',
 		});
 	});
 });

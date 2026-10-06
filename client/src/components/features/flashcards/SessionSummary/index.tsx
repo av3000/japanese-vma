@@ -4,6 +4,7 @@ import type { SessionAnswer } from '@/api/flashcards/types';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { Button } from '@/components/shared/Button';
 import { Cluster, Stack } from '@/components/shared/layout';
+import { formatDurationCompact } from '@/helpers/date';
 import type { SavedListType } from '@/shared/constants/enums';
 import styles from './SessionSummary.module.css';
 
@@ -56,6 +57,8 @@ export const SessionSummary = ({
 	const location = useLocation();
 	const correct = answers.filter((answer) => answer.correct).length;
 	const missed = answers.filter((answer) => !answer.correct);
+	// Thinking time per card, summed: the time spent reading feedback is not counted.
+	const totalMs = answers.reduce((sum, answer) => sum + answer.responseMs, 0);
 	const canBookmark = saveStatus !== 'disabled' && bookmarkCatalogueType !== null;
 
 	return (
@@ -70,6 +73,7 @@ export const SessionSummary = ({
 						? 'Every card right. Try typed mode, or a bigger deck.'
 						: `${missed.length} ${missed.length === 1 ? 'card' : 'cards'} to look at again.`}
 				</p>
+				<p className={styles.time}>Time: {formatDurationCompact(totalMs)}</p>
 				<p className={styles.save} role="status">
 					{saveStatus === 'disabled' ? (
 						<>
@@ -105,6 +109,7 @@ export const SessionSummary = ({
 										entityId={card.itemId}
 										instanceObjectType={bookmarkCatalogueType}
 										modalTitle={`Save ${card.promptText} to a catalogue`}
+										itemLabel={card.promptText}
 										loadOnMount={false}
 									/>
 								</span>

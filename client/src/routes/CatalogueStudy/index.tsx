@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useCatalogueQuery } from '@/api/catalogues/details';
 import {
 	isTypeableField,
+	parseDeckError,
 	parseStudyConfig,
-	readDeckFailure,
 	studyConfigToSearchParams,
 	useStudyDeck,
 	type StudyConfig,
 } from '@/api/flashcards/deck';
-import { useSessionRecorder } from '@/api/flashcards/sessions';
 import { StudySession } from '@/components/features/flashcards/StudySession';
 import { StudySetupForm, type StudyDeckStatus } from '@/components/features/flashcards/StudySetupForm';
 import { Button } from '@/components/shared/Button';
@@ -20,6 +19,7 @@ import { Container, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { CATALOGUE_ROUTES, isCatalogueStudySupported, studyBookmarkTypeFor } from '@/shared/constants/catalogues';
 import styles from './CatalogueStudy.module.css';
+import { useStudyRun } from './useStudyRun';
 
 const PLAY_PARAM = 'play';
 
@@ -48,14 +48,12 @@ const CatalogueStudyPage = () => {
 	const isSupported = catalogueType !== undefined && isCatalogueStudySupported(catalogueType);
 	const isPlaying = searchParams.get(PLAY_PARAM) === '1';
 	// "Study again" is a new run of the same deck: a new session on the server, a fresh component.
-	const [runNo, setRunNo] = useState(0);
 
 	const config = useMemo(() => parseStudyConfig(searchParams, catalogueType), [searchParams, catalogueType]);
 	const previewQuery = useStudyDeck(catalogueId, previewConfigFor(config), isSupported && !isPlaying);
 	const deckQuery = useStudyDeck(catalogueId, config, isSupported && isPlaying);
 	const deck = deckQuery.data;
-	const deckKey = deck ? `${deck.config.seed}-${deck.cards.length}-${runNo}` : null;
-	const recorder = useSessionRecorder(isAuthenticated, deckKey);
+	const { runKey, recorder, restart } = useStudyRun({ catalogueId, deck, isPlaying, isAuthenticated });
 
 	const writeConfig = useCallback(
 		(next: StudyConfig, play: boolean, replace = !play) => {
@@ -75,12 +73,6 @@ const CatalogueStudyPage = () => {
 
 	// One saved session per run: start it when the session mounts (play=1 with a deck).
 	// The recorder is keyed by deck and run and starts only once, so re-renders are harmless.
-	useEffect(() => {
-		if (isPlaying && deck && catalogueId) {
-			recorder.start(catalogueId, deck.config, deck.cards.length);
-		}
-	}, [isPlaying, deck, catalogueId, recorder]);
-
 	if (!catalogueId || (isPending && !catalogue)) {
 		return <PageLoading family="form" />;
 	}
@@ -97,7 +89,7 @@ const CatalogueStudyPage = () => {
 	}
 
 	const deckStatus: StudyDeckStatus = previewQuery.isError
-		? { kind: 'error', ...readDeckFailure(previewQuery.error) }
+		? { kind: 'error', ...parseDeckError(previewQuery.error) }
 		: previewQuery.data
 			? {
 					kind: 'ready',
@@ -124,11 +116,11 @@ const CatalogueStudyPage = () => {
 				{isPlaying ? (
 					deck ? (
 						<StudySession
-							key={deckKey ?? undefined}
+							key={runKey ?? undefined}
 							deck={deck}
 							catalogueHref={CATALOGUE_ROUTES.detail(catalogue.uuid)}
 							onChangeSetup={() => writeConfig(config, false)}
-							onRestart={() => setRunNo((current) => current + 1)}
+							onRestart={restart}
 							onAnswer={recorder.recordAttempt}
 							onRoundComplete={(answers, attemptNo) => {
 								// The score is the first pass; retry rounds are recorded as attempts only.
@@ -145,7 +137,7 @@ const CatalogueStudyPage = () => {
 							value={config}
 							onChange={(next) => writeConfig(next, false)}
 							onStart={(next) => writeConfig(next, true)}
-							deckStatus={{ kind: 'error', ...readDeckFailure(deckQuery.error) }}
+							deckStatus={{ kind: 'error', ...parseDeckError(deckQuery.error) }}
 						/>
 					) : (
 						<PageLoading family="form" />
