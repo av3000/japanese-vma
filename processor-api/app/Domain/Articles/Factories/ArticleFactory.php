@@ -37,7 +37,10 @@ class ArticleFactory
             contentEn: $dto->content_en ? new ArticleContent($dto->content_en) : null,
             sourceUrl: new ArticleSourceUrl($dto->source_link),
             publicity: $dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE,
-            status: ArticleStatus::PENDING,
+            // The moderation queue is for what people write. An Imported Article is an excerpt
+            // from a vetted Content Source, so it starts approved; `content_sources.enabled` is
+            // the switch for a source that stops deserving that.
+            status: $dto->provenance?->isImported() ? ArticleStatus::APPROVED : ArticleStatus::PENDING,
             jlptLevels: JlptLevels::empty(),
             createdAt: new \DateTimeImmutable(),
             updatedAt: new \DateTimeImmutable(),

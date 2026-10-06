@@ -83,7 +83,7 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
         ArticleVisibilityScope $scope,
         ArticleListIncludes $includes,
     ): Builder {
-        $builder = $this->filterBuilder->newQuery($criteria, $scope)->with(['user', 'contentSource']);
+        $builder = $this->filterBuilder->newQuery($criteria, $scope)->with(['user']);
 
         $this->applyEagerLoads($builder, $includes);
         $this->applySorting($builder, $criteria);

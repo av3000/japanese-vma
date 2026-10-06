@@ -6,7 +6,6 @@ use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleProvenance;
-use App\Domain\Articles\ValueObjects\ArticleSource;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -20,6 +19,7 @@ class ArticleMapper
     public function __construct(
         private readonly KanjiMapper $kanjiMapper,
         private readonly WordMapper $wordMapper,
+        private readonly ArticleSourceLookup $sources,
     ) {
     }
 
@@ -101,17 +101,17 @@ class ArticleMapper
         );
     }
 
+    /**
+     * The source is always resolved here, never from an eager-loaded relation, so an imported
+     * article reads the same whichever query loaded it. A null source means the row was deleted.
+     */
     private function mapProvenance(PersistenceArticle $entity): ArticleProvenance
     {
-        $source = $entity->content_source_id !== null && $entity->relationLoaded('contentSource')
-            ? $entity->contentSource
-            : null;
-
         return ArticleProvenance::fromStored(
             $entity->origin,
             $entity->content_source_id,
             $entity->external_id,
-            $source === null ? null : new ArticleSource($source->key, $source->name, $source->homepage_url),
+            $entity->content_source_id === null ? null : $this->sources->find($entity->content_source_id),
         );
     }
 

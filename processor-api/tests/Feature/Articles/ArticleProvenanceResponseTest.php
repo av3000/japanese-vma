@@ -51,6 +51,17 @@ class ArticleProvenanceResponseTest extends TestCase
             ]);
     }
 
+    public function test_an_import_whose_source_was_deleted_still_reads_as_imported(): void
+    {
+        $article = Article::factory()->importedFrom($this->source, 'nd-1')->create();
+        $this->source->delete();
+
+        $this->json('GET', "/api/v1/articles/{$article->uuid}")
+            ->assertOk()
+            ->assertJsonPath('origin', 'imported')
+            ->assertJsonPath('source', null);
+    }
+
     public function test_the_list_credits_sources_with_one_query_for_all_of_them(): void
     {
         Article::factory()->count(3)->sequence(

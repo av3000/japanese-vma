@@ -25,6 +25,7 @@ use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
+use App\Domain\Articles\Exceptions\ArticleAlreadyImportedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
@@ -39,7 +40,6 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -119,19 +119,9 @@ class ArticleService implements ArticleServiceInterface
             ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
 
             return Result::success($created);
-        } catch (UniqueConstraintViolationException $e) {
-            // For an import this is the (content_source_id, external_id) pair: another run created
-            // the same external article first. Anything else is an ordinary creation failure.
-            if ($dto->provenance?->isImported() && str_contains($e->getMessage(), 'articles_content_source_external_id_unique')) {
-                return Result::failure(ArticleErrors::alreadyImported((string) $dto->provenance->externalId));
-            }
-
-            Log::error('Article creation failed', [
-                'user_id' => $author->id->value(),
-                'error' => $e->getMessage(),
-            ]);
-
-            return Result::failure(ArticleErrors::creationFailed());
+        } catch (ArticleAlreadyImportedException $e) {
+            // Another import run created the same external article first.
+            return Result::failure(ArticleErrors::alreadyImported($e->externalId));
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
                 'user_id' => $author->id->value(),
@@ -145,6 +135,11 @@ class ArticleService implements ArticleServiceInterface
     public function getArticleIdByUuid(EntityId $uuid): ?int
     {
         return $this->articleRepository->getIdByUuid($uuid);
+    }
+
+    public function hasImportedArticle(int $contentSourceId, string $externalId): bool
+    {
+        return $this->articleRepository->existsImported($contentSourceId, $externalId);
     }
 
     /**

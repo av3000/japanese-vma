@@ -30,6 +30,12 @@ interface ArticleServiceInterface
     public function getArticleIdByUuid(EntityId $uuid): ?int;
 
     /**
+     * Whether an article was already imported from this Content Source under this external id.
+     * The Content Import context asks this before fetching a page it would only skip.
+     */
+    public function hasImportedArticle(int $contentSourceId, string $externalId): bool;
+
+    /**
      * Get single article with optional relationships and permission check.
      * Tracks view if user has access.
      *

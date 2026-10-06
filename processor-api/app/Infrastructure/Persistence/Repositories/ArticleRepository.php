@@ -6,6 +6,7 @@ use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
+use App\Domain\Articles\Exceptions\ArticleAlreadyImportedException;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -15,10 +16,14 @@ use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
+    /** The unique index on (content_source_id, external_id) that deduplicates imports. */
+    private const IMPORT_UNIQUE_INDEX = 'articles_content_source_external_id_unique';
+
     public function __construct(
         private readonly ArticleMapper $articleMapper,
         private readonly WordMapper $wordMapper,
@@ -31,7 +36,8 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param DomainArticle $article The domain article to create
      *
-     * @throws \Illuminate\Database\QueryException On database constraint violation
+     * @throws ArticleAlreadyImportedException When an import of the same external article exists
+     * @throws \Illuminate\Database\QueryException On any other database constraint violation
      *
      * @return DomainArticle The created article with generated ID and relationships
      */
@@ -39,8 +45,21 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
-        $entityArticle = PersistenceArticle::create($mappedArticle);
-        $entityArticle->load(['user', 'contentSource']);
+
+        try {
+            $entityArticle = PersistenceArticle::create($mappedArticle);
+        } catch (UniqueConstraintViolationException $e) {
+            $provenance = $article->getProvenance();
+
+            // Only the import index means "already imported"; a uuid clash stays a plain failure.
+            if ($provenance->isImported() && str_contains($e->getMessage(), self::IMPORT_UNIQUE_INDEX)) {
+                throw new ArticleAlreadyImportedException((string) $provenance->externalId, $e);
+            }
+
+            throw $e;
+        }
+
+        $entityArticle->load('user');
 
         return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
     }
@@ -54,7 +73,7 @@ class ArticleRepository implements ArticleRepositoryInterface
      */
     public function update(DomainArticle $article): void
     {
-        $entityArticle = PersistenceArticle::with(['user', 'contentSource'])
+        $entityArticle = PersistenceArticle::with('user')
             ->where('uuid', $article->getUid()->value())
             ->firstOrFail();
 
@@ -104,7 +123,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findByUserId(UserId $userId, int $limit = 10): array
     {
         return PersistenceArticle::where('user_id', $userId->value())
-            ->with(['user', 'contentSource', 'kanjis'])
+            ->with(['user', 'kanjis'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
@@ -129,6 +148,17 @@ class ArticleRepository implements ArticleRepositoryInterface
     }
 
     /**
+     * Served by the (content_source_id, external_id) unique index.
+     */
+    public function existsImported(int $contentSourceId, string $externalId): bool
+    {
+        return PersistenceArticle::query()
+            ->where('content_source_id', $contentSourceId)
+            ->where('external_id', $externalId)
+            ->exists();
+    }
+
+    /**
      * Find article by public UUID with optional selective eager loading.
      *
      *
@@ -141,7 +171,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findByPublicUid(EntityId $articleUuid, ?ArticleIncludeOptionsInterface $options = null): ?DomainArticle
     {
         $query = PersistenceArticle::query()
-            ->with(['user', 'contentSource'])
+            ->with(['user'])
             ->where('uuid', $articleUuid->value());
 
         if ($options?->includeKanjis()) {
@@ -162,7 +192,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findPdfExportData(EntityId $articleUuid, bool $includeKanjis, bool $includeWords): ?ArticlePdfExportData
     {
         $query = PersistenceArticle::query()
-            ->with(['user', 'contentSource'])
+            ->with(['user'])
             ->where('uuid', $articleUuid->value());
 
         if ($includeKanjis) {
@@ -189,7 +219,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function findModerationQueue(Pagination $pagination): Articles
     {
         $paginator = PersistenceArticle::query()
-            ->with(['user', 'contentSource'])
+            ->with('user')
             ->whereIn('status', [ArticleStatus::PENDING->value, ArticleStatus::REVIEWING->value])
             ->orderByDesc('created_at')
             ->orderByDesc('id')

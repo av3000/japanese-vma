@@ -8,8 +8,10 @@ use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
+use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\ValueObjects\ArticleAuthor;
 use App\Domain\Articles\ValueObjects\ArticleProvenance;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -57,6 +59,7 @@ class CreateImportedArticleTest extends TestCase
             'content_source_id' => $this->source->id,
             'external_id' => 'nd-1',
             'user_id' => $this->author->id->value(),
+            'status' => ArticleStatus::APPROVED->value,
         ]);
         $this->assertDatabaseHas('processing_states', [
             'entity_id' => $created->article->getUid()->value(),
@@ -73,7 +76,7 @@ class CreateImportedArticleTest extends TestCase
         $result = $service->createArticle($this->dto('nd-2'), $this->author);
 
         self::assertTrue($result->isFailure());
-        self::assertSame('Articles.AlreadyImported', $result->getError()->code);
+        self::assertSame(ArticleErrors::ALREADY_IMPORTED, $result->getError()->code);
         $this->assertDatabaseCount('articles', 1);
         Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 1);
     }
@@ -85,7 +88,12 @@ class CreateImportedArticleTest extends TestCase
         $result = app(ArticleServiceInterface::class)->createArticle($dto, $this->author);
 
         self::assertTrue($result->isSuccess());
-        $this->assertDatabaseHas('articles', ['origin' => 'user', 'content_source_id' => null, 'external_id' => null]);
+        $this->assertDatabaseHas('articles', [
+            'origin' => 'user',
+            'content_source_id' => null,
+            'external_id' => null,
+            'status' => ArticleStatus::PENDING->value,
+        ]);
     }
 
     private function dto(string $externalId): ArticleCreateDTO

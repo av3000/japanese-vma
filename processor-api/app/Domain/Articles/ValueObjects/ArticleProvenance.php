@@ -20,8 +20,8 @@ final readonly class ArticleProvenance
         public ArticleOrigin $origin,
         public ?int $contentSourceId,
         public ?string $externalId,
-        // Loaded with the article for attribution; null for user articles and for an import
-        // whose source row was deleted.
+        // Always resolved by the mapper for attribution; null for user articles and for an
+        // import whose source row was deleted.
         public ?ArticleSource $source = null,
     ) {
     }
