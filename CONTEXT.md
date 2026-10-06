@@ -40,6 +40,7 @@ _Avoid_: Auto-generated article, scraped article, bot post
 - A **Module-Seams-First Audit** is the review order for deciding whether the v1 backend is a **Robust Modular Monolith**.
 - A **Domain-Feature Audit** is the structure for applying a **Module-Seams-First Audit** to the v1 backend.
 - An **Import Run** reads exactly one **Content Source** and creates zero or more **Imported Articles**.
+- Only one **Import Run** per **Content Source** runs at a time; a second one is refused while the first is in progress.
 - An **Imported Article** is still an Article: it goes through the same creation path, processing and tagging as one a person writes; only its origin, author and attribution differ.
 
 ## Example dialogue
