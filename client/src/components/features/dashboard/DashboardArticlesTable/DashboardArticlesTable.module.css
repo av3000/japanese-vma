@@ -1,0 +1,34 @@
+/* Cell content for the dashboard articles table; the table itself is the shared DataTable. */
+
+.titleCell {
+	min-width: 12rem;
+}
+
+.title {
+	display: block;
+	font-family: var(--font-family-ja);
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.subtitle {
+	display: block;
+	margin-top: var(--spacing-3xs);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+	overflow-wrap: anywhere;
+}
+
+.hint {
+	display: block;
+	margin-top: var(--spacing-3xs);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-xs);
+	white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+	.titleCell {
+		min-width: 0;
+	}
+}

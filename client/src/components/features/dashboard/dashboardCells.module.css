@@ -1,0 +1,39 @@
+/* Cell content shared by the dashboard tables (dashboardCells.tsx). */
+
+.visibility {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	white-space: nowrap;
+}
+
+.date {
+	white-space: nowrap;
+}
+
+.actionsCell {
+	text-align: end;
+}
+
+.actionGroup {
+	display: inline-flex;
+	gap: var(--spacing-3xs);
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (max-width: 767px) {
+	.actionsCell {
+		align-self: end;
+	}
+}
