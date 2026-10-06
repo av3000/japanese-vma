@@ -1,0 +1,22 @@
+/* Cell content for the admin review-queue table; the table itself is the shared DataTable. */
+
+.titleCell {
+	min-width: 12rem;
+}
+
+.title {
+	display: block;
+	font-family: var(--font-family-ja);
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.tags {
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+	.titleCell {
+		min-width: 0;
+	}
+}
