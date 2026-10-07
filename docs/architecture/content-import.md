@@ -91,11 +91,7 @@ Both reference solutions run imports as background jobs in a shared job layer, d
 
 ## Running it in production
 
-- **By hand:** `php artisan content:import` (all enabled sources) or `--source=nhk-news`. Add `--dry-run` to see what would be imported, and `-v` for one line per article.
-- **Scheduled:** daily at 07:30 Asia/Tokyo in `Console/Kernel.php`. Nothing runs `schedule:run` in production yet, so until a scheduler runtime is chosen, imports only happen by hand.
-- **Lock store:** the lock is only shared between hosts that use the same cache store. Set `CONTENT_IMPORT_LOCK_STORE=redis` on every host that may run an import, so they all use Redis (Upstash). Hosts on the file cache would otherwise each have their own lock.
-- **Stop a source:** set `content_sources.enabled = false`.
-- **Where to look:** `content_import_runs` for each run's status, counts and error. Logs for per-item failures, unmapped topics and stalled-source warnings.
+The [Content Import runbook](../runbooks/content-import.md) owns this: the first-time setup checklist (including the seeders the release pipeline does not run), the options for running it daily without an always-on host, and troubleshooting.
 
 ## Adding a Content Source
 
@@ -107,6 +103,7 @@ Both reference solutions run imports as background jobs in a shared job layer, d
 
 ## Related Documents
 
+- [Content Import runbook](../runbooks/content-import.md)
 - [Data and integrations](./data-and-integrations.md)
 - [Architecture comparison backlog](./architecture-comparison-backlog.md), rows 20, 22 and 27
 - [Deployment and runtime](./deployment-and-runtime.md)
