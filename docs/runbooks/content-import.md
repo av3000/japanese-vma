@@ -2,13 +2,62 @@
 
 > **Status:** Current; written for the first production setup after PR #425
 > **Last reviewed:** 2026-10-07
-> **Audience:** Whoever sets up or looks after a production environment
+> **Audience:** Whoever runs the import locally, or sets up or looks after a production environment
+> **Verified:** 2026-10-07, on this feature's branch in an isolated Docker lane against the live NHK site. The production seeding commands, a dry run, a real run (10 created, all processed), `schedule:list`, `schedule:test` and `schedule:work` (which fired the five-minute sweep) all behaved as described here.
 
-The Content Import creates short articles from NHK News once a day (`php artisan content:import`). This runbook is the checklist for making it work in production and keeping it working. How it works inside, and why, is in [Content Import](../architecture/content-import.md).
+The Content Import creates short articles from NHK News once a day (`php artisan content:import`). This runbook covers running it on your machine, setting it up in production, and keeping it working. How it works inside, and why, is in [Content Import](../architecture/content-import.md).
 
-**Nothing here happens by itself.** Merging into `develop` deploys nothing, and the release pipeline neither seeds the import's data nor runs a scheduler. Work through the first-time setup below the first time an environment gets this code.
+**Nothing here happens by itself.** Merging into `develop` deploys nothing, and the release pipeline neither seeds the import's data nor runs a scheduler.
 
-## First-time setup checklist
+## Run it locally
+
+All commands run from `processor-api/` against the normal local Docker stack (`docker compose up -d`).
+
+### 1. Get the data in place
+
+- **New local setup:** `composer setup:dev` (which runs `php artisan app:setup --with-dev-users`) already migrates and runs `DatabaseSeeder`, and that includes the import's three seeders. Nothing extra to do.
+- **Existing local database:** add the new tables and the import's reference data:
+
+  ```bash
+  docker compose exec laravel-app php artisan migrate
+  docker compose exec laravel-app php artisan db:seed --class=ContentSourceSeeder
+  docker compose exec laravel-app php artisan db:seed --class=NhkTagMappingSeeder
+  docker compose exec laravel-app php artisan db:seed --class=ContentImporterUserSeeder
+  ```
+
+### 2. Run it by hand
+
+```bash
+docker compose exec laravel-app php artisan content:import --dry-run -v
+docker compose exec laravel-app php artisan content:import
+```
+
+The dry run prints a table of up to ten articles with their tags and writes nothing. The real run prints a line like `nhk-news: listed 10, created 10, skipped 0, failed 0.` Each run takes about two minutes, because the import pauses a second between requests to NHK. The articles show up on the Articles page with an NHK News badge.
+
+The `queue` container processes each new article's words and kanji, as it does for any article. Kanji and words are only linked if the dictionary data was imported (`app:setup` does this).
+
+### 3. Let it run on a schedule (optional)
+
+The local stack has a scheduler service. It is opt-in, so a plain `docker compose up -d` never crawls NHK on its own:
+
+```bash
+docker compose --profile scheduler up -d scheduler
+```
+
+It runs `php artisan schedule:work`, which starts whatever `app/Console/Kernel.php` lists when it is due: the import every day at 07:30 Tokyo time (22:30 UTC), and `article-processing:sweep-stale` every five minutes. Useful commands:
+
+```bash
+docker compose exec laravel-app php artisan schedule:list
+docker compose exec laravel-app php artisan schedule:test --name="content:import"
+docker compose logs -f scheduler
+docker compose --profile scheduler stop scheduler
+```
+
+`schedule:list` shows the times in UTC. `schedule:test` runs the import through the scheduler right now, instead of waiting for 22:30 UTC.
+
+Locally the run lock uses the file cache. The containers share the bind-mounted `storage/` folder, so the scheduler and a manual run in `laravel-app` still see the same lock.
+
+## First production setup checklist
 
 Do these in order, once per environment.
 
@@ -74,14 +123,14 @@ A healthy run is `succeeded`, with `created` between 1 and 10 most days.
 
 ### 6. Make sure imported articles get processed
 
-Each Imported Article goes through the same word and kanji processing as any other article, as a queued job (`ProcessArticleContentJob`). **If nothing consumes the queue, imported articles stay "pending" forever.** The worker host is currently gone, so this has to be decided together with the queue runtime in [#331](https://github.com/av3000/japanese-vma/issues/331). For the import alone, there are two ways out:
+Each Imported Article goes through the same word and kanji processing as any other article, as a queued job (`ProcessArticleContentJob`). **If nothing consumes the queue, imported articles stay "pending" forever.** On a VM running Horizon (the plan below), there is nothing more to do. The worker host is currently gone, so this has to be decided together with the queue runtime in [#331](https://github.com/av3000/japanese-vma/issues/331). Without a worker, there are two ways out for the import alone:
 
 - Run the scheduled import with `QUEUE_CONNECTION=sync`. Each article is then processed in the same process, right after it is saved. #331 records a known risk to check first: a failed extraction rethrows. Under `sync`, the import would then report that article as failed even though it was saved, and it would not be retried.
 - Run `php artisan queue:work --stop-when-empty` straight after the import, in the same job. This also processes anything else waiting in the queue.
 
 ### 7. Make it run every day
 
-See the next section. Until one of those options is set up, the import only runs when someone runs it by hand.
+See the next section; the recommended setup is a scheduler next to the worker on a VM. Until something runs a scheduler, the import only runs when someone runs it by hand.
 
 ## Making it run every day
 
@@ -102,6 +151,38 @@ No. The cost is not the scheduler; it is having something running all the time.
 
 So the question is not "can we afford a scheduler" but "where does a process run every minute, or once a day". Today nothing in this project's production runs all the time except the Render web service.
 
+### The plan: a scheduler next to the worker on a VM
+
+This is the recommended setup. It is the local setup above, moved to the worker VM. One host then runs both Horizon (the queue) and the scheduler, which covers step 6 and step 7 together. #331 lists free VM options.
+
+1. **Point the worker deploy at the new VM.** `deploy_worker` in `.gitlab-ci.yml` already copies `processor-api/.deploy/worker/docker-compose.yml` and a generated `.env.worker` to the host over SSH. Set `WORKER_SSH_HOST`, `WORKER_SSH_USER` and the SSH key variables to the new VM, and install Docker with the Compose plugin on it.
+2. **Add the scheduler to the worker compose file** (`processor-api/.deploy/worker/docker-compose.yml`), next to `worker`:
+
+   ```yaml
+     scheduler:
+       image: ${IMAGE_NAME}
+       restart: unless-stopped
+       env_file:
+         - .env.worker
+       command:
+         - /bin/sh
+         - -lc
+         - exec php artisan schedule:work
+   ```
+
+3. **Start it on every deploy.** In `deploy_worker`, change `pull worker` to `pull worker scheduler`, and `up -d --remove-orphans worker` to `up -d --remove-orphans worker scheduler`.
+4. **Nothing to add to the environment.** `.env.worker` already sets `CACHE_DRIVER=redis` and `QUEUE_CONNECTION=redis`. The run lock is shared through Redis, and Horizon on the same host processes the imported articles. If you ever run the import on another host too, set `CONTENT_IMPORT_LOCK_STORE=redis` there.
+5. **Check it on the VM**, in the directory the deploy uses (`/opt/japanese-vma-worker` by default):
+
+   ```bash
+   docker compose --env-file .env.worker exec scheduler php artisan schedule:list
+   docker compose --env-file .env.worker logs --tail 50 scheduler
+   ```
+
+   The next morning, check `content_import_runs` as in step 5.
+
+It costs one more PHP process on the VM, idle almost all the time. `restart: unless-stopped` brings it back after a crash or a reboot. Nothing alerts you if it stays down; that is [#210](https://github.com/av3000/japanese-vma/issues/210) (scheduler liveness) and [#222](https://github.com/av3000/japanese-vma/issues/222) (alerting when an expected signal is missing). The stalled-source warning only shows up in runs that actually happen.
+
 ### Options without a VM
 
 | Option | What it runs | Cost | Watch out for |
@@ -112,10 +193,7 @@ So the question is not "can we afford a scheduler" but "where does a process run
 | **An always-on host** (a VM, or a paid Render background worker) | `schedule:work` and Horizon side by side | A small VM or worker plan | The most production-like, and it also solves the queue in step 6. This is what [#210](https://github.com/av3000/japanese-vma/issues/210) and #331 are about. |
 | **Not this: the scheduler inside the free Render web service** | — | — | A free web service sleeps after 15 minutes without traffic, and its scheduler sleeps with it. |
 
-Recommendation:
-
-- **While there is no always-on host:** a Render Cron Job if $1 a month is fine, because it is the least to set up and maintain. Otherwise a GitLab scheduled pipeline, guarding the other jobs first.
-- **Once a host exists for the queue worker (#331):** run `schedule:work` there and remove the outside scheduler.
+Recommendation: the VM plan above. If no VM is available yet, use a Render Cron Job if $1 a month is fine, because it is the least to set up and maintain. Otherwise use a GitLab scheduled pipeline, guarding the other jobs first. Remove the outside scheduler once the VM runs `schedule:work`, or keep the outside scheduler and remove the VM's; the lock makes a double start harmless, but one scheduler is easier to reason about.
 
 Whichever runs it, check `content_import_runs` the next morning, as in step 5.
 
