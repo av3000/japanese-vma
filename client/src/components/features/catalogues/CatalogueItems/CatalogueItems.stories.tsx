@@ -10,7 +10,7 @@ import {
 	wordRows,
 } from '@/components/shared/DataTable/DataTable.fixtures';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
-import { infiniteSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
 import { CatalogueItems } from './';
 
 const UUID = 'c1c1c1c1-0000-4000-8000-000000000001';
@@ -18,18 +18,16 @@ const TYPES: Record<CatalogueFamily, number> = { radicals: 5, kanji: 6, words: 7
 
 /** The first page of a family's items, with the server's total. */
 const firstPage = <Row,>(family: CatalogueFamily, rows: Row[], total = rows.length): QuerySeed =>
-	infiniteSeed(catalogueItemsQueryKey(family, UUID) ?? [], [
-		{
-			items: rows,
-			pagination: {
-				page: 1,
-				per_page: 25,
-				total,
-				last_page: Math.ceil(total / 25) || 1,
-				has_more: total > rows.length,
-			},
+	pageSeed(catalogueItemsQueryKey(family, UUID) ?? [], {
+		items: rows,
+		pagination: {
+			page: 1,
+			per_page: 25,
+			total,
+			last_page: Math.ceil(total / 25) || 1,
+			has_more: total > rows.length,
 		},
-	]);
+	});
 
 const articleItems: CatalogueArticleItem[] = Array.from({ length: 3 }, (_, index) => ({
 	id: index + 1,
@@ -73,11 +71,15 @@ export const Kanji: Story = {
 	},
 };
 
-/** 500 saved kanji: the first 25 rows and "Show more kanji". */
+/** 500 saved kanji: the first 25 rows, numbered pages and "Load all". */
 export const Kanji500: Story = {
 	parameters: { seeds: [firstPage('kanji', repeatRows(kanjiRows, 25), 500)] },
 	play: async ({ canvasElement }) => {
-		await expect(within(canvasElement).getByRole('button', { name: 'Show more kanji' })).toBeVisible();
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getByRole('navigation', { name: 'Kanji pages' })).toBeVisible();
+		await expect(canvas.getByRole('button', { name: 'Load all 500 kanji' })).toBeVisible();
+		await expect(canvas.getByText('Showing 1–25 of 500 kanji')).toBeVisible();
 	},
 };
 

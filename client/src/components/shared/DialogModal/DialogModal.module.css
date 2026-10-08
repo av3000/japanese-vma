@@ -143,6 +143,11 @@
 	--modal-width: 920px;
 }
 
+/* Wide enough for a dictionary table (the words table needs about 923px plus padding). */
+.size-xl {
+	--modal-width: 1120px;
+}
+
 .size-fullscreen {
 	width: 100vw;
 	max-height: 100vh;

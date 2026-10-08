@@ -1,7 +1,6 @@
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
-import { useInfiniteWords } from '@/api/words/hooks/useInfiniteWords';
-import { articleWordFilters } from './attachments';
+import { useArticleWordPages } from './attachments';
 
 type JlptLevels = ArticleDetailResource['jlpt_levels'];
 
@@ -27,19 +26,19 @@ export interface ArticleReadingStats {
 
 /**
  * The rail's kanji and word counts. Kanji come from the detail payload; words from the total of
- * the article's word list, through the same query and key `ArticleAttachments` uses, so React Query
- * sends one request for both.
+ * the article's first word page, the same query and key the preview and the modal use, so React
+ * Query sends one request for all three.
  */
 export const useArticleReadingStats = (
 	article: Pick<ArticleDetailResource, 'uid' | 'jlpt_levels' | 'processing_status'>,
 ): ArticleReadingStats => {
 	const running = isProcessingRunning(article);
-	const words = useInfiniteWords({ filters: articleWordFilters(article.uid), enabled: Boolean(article.uid) });
+	const words = useArticleWordPages(article.uid);
 
 	let wordCount: number | null | undefined = null;
 
-	if (!running && words.isSuccess) wordCount = words.total;
-	else if (!running && words.isError) wordCount = undefined;
+	if (!running && words.isError) wordCount = undefined;
+	else if (!running && !words.isPending) wordCount = words.total;
 
 	return {
 		kanji: running ? null : kanjiCountOf(article.jlpt_levels),

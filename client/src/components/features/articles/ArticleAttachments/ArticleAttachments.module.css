@@ -36,6 +36,75 @@
 	color: var(--color-neutral-700);
 }
 
-.more {
+.seeAll {
 	justify-self: start;
+}
+
+/* Kanji preview: a strip of glyph tiles, each a link to its kanji page. */
+.glyphs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.glyph {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--size-4xl);
+	height: var(--size-4xl);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+	color: var(--color-text-primary);
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--font-size-heading-3);
+	text-decoration: none;
+}
+
+.glyph:hover {
+	border-color: var(--color-primary);
+}
+
+/* Words preview: word and reading, in columns from 768px. */
+.words {
+	display: grid;
+	gap: var(--spacing-2xs) var(--spacing-lg);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.word {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.wordLink {
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.reading {
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
+}
+
+.modalBody {
+	display: grid;
+	gap: var(--spacing-md);
+	min-width: 0;
+}
+
+@media (min-width: 768px) {
+	.words {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }

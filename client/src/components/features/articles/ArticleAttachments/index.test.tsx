@@ -5,14 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { kanjiIndex } from '@/api/generated/kanji/kanji';
-import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
-import type { KanjiResource } from '@/api/generated/model/kanjiResource';
-import type { WordListResource } from '@/api/generated/model/wordListResource';
-import type { WordResource } from '@/api/generated/model/wordResource';
 import { wordIndex } from '@/api/generated/word/word';
-import { kanjiRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
+import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { renderWithAct } from '@/test/renderWithAct';
-import { ArticleAttachments } from './index';
+import { ArticleAttachments, PREVIEW_KANJI } from './index';
 
 vi.mock('@/api/generated/kanji/kanji', () => ({
 	kanjiIndex: vi.fn(),
@@ -25,24 +21,29 @@ vi.mock('@/api/generated/word/word', () => ({
 }));
 
 const UUID = 'a1a1a1a1-0000-4000-8000-000000000001';
+const FILTERS = { article_uuid: UUID, per_page: 20, include: 'viewer_catalogue_state' };
 
-const pagination = (page: number, total: number, hasMore: boolean) => ({
-	page,
-	per_page: 20,
-	total,
-	last_page: hasMore ? page + 1 : page,
-	has_more: hasMore,
-});
-
-const kanjiPage = (items: KanjiResource[], page = 1, total = items.length, hasMore = false): KanjiListResource => ({
+const page = <Row,>(items: Row[], pageNumber: number, total: number, perPage = 20) => ({
 	items,
-	pagination: pagination(page, total, hasMore),
+	pagination: {
+		page: pageNumber,
+		per_page: perPage,
+		total,
+		last_page: Math.ceil(total / perPage) || 1,
+		has_more: pageNumber * perPage < total,
+	},
 });
 
-const wordPage = (items: WordResource[], page = 1, total = items.length, hasMore = false): WordListResource => ({
-	items,
-	pagination: pagination(page, total, hasMore),
-});
+/** An index of `total` rows built from fixtures, honouring `page` and `per_page`. */
+const serve =
+	<Row extends { id: number; uuid: string }>(fixtures: Row[], total: number) =>
+	async ({ page: pageNumber = 1, per_page = 20 }: { page?: number; per_page?: number }) =>
+		page(
+			repeatRows(fixtures, Math.max(0, Math.min(per_page, total - (pageNumber - 1) * per_page))),
+			pageNumber,
+			total,
+			per_page,
+		);
 
 const renderAttachments = async (props: { showSave?: boolean; isProcessing?: boolean } = {}) => {
 	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -60,118 +61,101 @@ const renderAttachments = async (props: { showSave?: boolean; isProcessing?: boo
 	);
 };
 
-const buttons = (container: HTMLElement) => Array.from(container.querySelectorAll('button'));
+const button = (root: ParentNode, name: string | RegExp) =>
+	Array.from(root.querySelectorAll('button')).find((element) => {
+		const label = element.getAttribute('aria-label') ?? element.textContent ?? '';
+		return typeof name === 'string' ? label === name : name.test(label);
+	});
 
 describe('ArticleAttachments', () => {
 	beforeEach(() => {
-		vi.resetAllMocks();
+		HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+			this.setAttribute('open', '');
+		});
+		HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+			this.removeAttribute('open');
+		});
 	});
 
 	afterEach(() => {
+		vi.resetAllMocks();
 		document.body.innerHTML = '';
 	});
 
-	it('renders the kanji and words as the dictionary tables, with their totals', async () => {
-		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(kanjiRows.slice(0, 2), 1, 171));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage(wordRows.slice(0, 1), 1, 233));
+	it('previews the first kanji and words, with the totals on the See all buttons', async () => {
+		vi.mocked(kanjiIndex).mockImplementation(serve(kanjiRows, 171) as never);
+		vi.mocked(wordIndex).mockImplementation(serve(wordRows, 233) as never);
 
 		const { container, unmount } = await renderAttachments();
 
-		await vi.waitFor(() => {
-			expect(container.textContent).toContain(kanjiRows[1].character);
-		});
-		expect(container.querySelector('table[aria-label="Kanji"]')).not.toBeNull();
-		expect(container.querySelector('table[aria-label="Words"]')).not.toBeNull();
+		await vi.waitFor(() => expect(button(container, 'See all 171 kanji')).toBeDefined());
+		expect(button(container, 'See all 233 words')).toBeDefined();
+		expect(container.querySelectorAll('a[href^="/kanji/"]')).toHaveLength(PREVIEW_KANJI);
 		expect(container.querySelector('h2')?.textContent).toBe('Kanji and words in this reading');
-		expect(container.textContent).toContain('171');
-		expect(container.textContent).toContain('233');
-		expect(kanjiIndex).toHaveBeenCalledWith(
-			{ article_uuid: UUID, per_page: 20, include: 'viewer_catalogue_state', page: 1 },
-			undefined,
-			expect.anything(),
-		);
+		expect(container.querySelector('table')).toBeNull();
+		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, page: 1 }, undefined, expect.anything());
 
 		await unmount();
-	});
-
-	it('adds the Save column for signed-in viewers only', async () => {
-		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage(kanjiRows.slice(0, 1)));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
-
-		const guest = await renderAttachments({ showSave: false });
-		await vi.waitFor(() => expect(guest.container.textContent).toContain(kanjiRows[0].character));
-		expect(buttons(guest.container).some((button) => button.getAttribute('aria-label')?.startsWith('Save'))).toBe(
-			false,
-		);
-		await guest.unmount();
-
-		const member = await renderAttachments({ showSave: true });
-		await vi.waitFor(() => expect(member.container.textContent).toContain(kanjiRows[0].character));
-		expect(
-			buttons(member.container).some((button) => /^Saved?:? /.test(button.getAttribute('aria-label') ?? '')),
-		).toBe(true);
-		await member.unmount();
 	});
 
 	it('says plainly when processing attached nothing, and why while it is still running', async () => {
-		vi.mocked(kanjiIndex).mockResolvedValue(kanjiPage([]));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
+		vi.mocked(kanjiIndex).mockImplementation(serve(kanjiRows, 0) as never);
+		vi.mocked(wordIndex).mockImplementation(serve(wordRows, 0) as never);
 
 		const done = await renderAttachments();
-		await vi.waitFor(() => {
-			expect(done.container.textContent).toContain('No kanji have been attached to this article yet.');
-		});
+		await vi.waitFor(() =>
+			expect(done.container.textContent).toContain('No kanji have been attached to this article yet.'),
+		);
 		expect(done.container.textContent).toContain('No words have been attached to this article yet.');
-		expect(done.container.textContent).not.toContain('once processing finishes');
+		expect(button(done.container, /^See all/)).toBeUndefined();
 		await done.unmount();
 
 		const running = await renderAttachments({ isProcessing: true });
-		await vi.waitFor(() => {
-			expect(running.container.textContent).toContain('They appear here once processing finishes.');
-		});
+		await vi.waitFor(() =>
+			expect(running.container.textContent).toContain('They appear here once processing finishes.'),
+		);
 		await running.unmount();
 	});
 
-	it('asks for the next page only when the server says there is one', async () => {
-		vi.mocked(kanjiIndex)
-			.mockResolvedValueOnce(kanjiPage(kanjiRows.slice(0, 1), 1, 2, true))
-			.mockResolvedValueOnce(kanjiPage(kanjiRows.slice(1, 2), 2, 2, false));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage([]));
+	it('reports a failed list in its own words', async () => {
+		vi.mocked(kanjiIndex).mockRejectedValue(new Error('SQLSTATE[08006] connection refused'));
+		vi.mocked(wordIndex).mockImplementation(serve(wordRows, 3) as never);
 
-		const { container, flush, unmount } = await renderAttachments();
-		const showMore = () => buttons(container).find((button) => button.textContent === 'Show more kanji');
+		const { container, unmount } = await renderAttachments();
 
-		await vi.waitFor(() => expect(showMore()).toBeDefined());
-
-		await flush(() => {
-			showMore()?.click();
-		});
-
-		expect(kanjiIndex).toHaveBeenNthCalledWith(
-			2,
-			{ article_uuid: UUID, per_page: 20, include: 'viewer_catalogue_state', page: 2 },
-			undefined,
-			expect.anything(),
+		await vi.waitFor(() =>
+			expect(container.textContent).toContain('Kanji could not be loaded. Reload the page to try again.'),
 		);
-		await vi.waitFor(() => {
-			expect(container.textContent).toContain(kanjiRows[1].character);
-		});
-		expect(showMore()).toBeUndefined();
+		expect(container.textContent).not.toContain('SQLSTATE');
 
 		await unmount();
 	});
 
-	it('reports a failed list in its own words instead of pretending the article has none', async () => {
-		vi.mocked(kanjiIndex).mockRejectedValue(new Error('SQLSTATE[08006] connection refused'));
-		vi.mocked(wordIndex).mockResolvedValue(wordPage(wordRows.slice(0, 1)));
+	it('opens the full list in a modal with numbered pages and Load all', async () => {
+		vi.mocked(kanjiIndex).mockImplementation(serve(kanjiRows, 171) as never);
+		vi.mocked(wordIndex).mockImplementation(serve(wordRows, 3) as never);
 
-		const { container, unmount } = await renderAttachments();
+		const { container, flush, unmount } = await renderAttachments({ showSave: true });
 
-		await vi.waitFor(() => {
-			expect(container.textContent).toContain('Kanji could not be loaded. Reload the page to try again.');
-		});
-		expect(container.textContent).not.toContain('No kanji have been attached');
-		expect(container.textContent).not.toContain('SQLSTATE');
+		await vi.waitFor(() => expect(button(container, 'See all 171 kanji')).toBeDefined());
+		await flush(() => button(container, 'See all 171 kanji')?.click());
+
+		const dialog = () => document.getElementById('article-kanji-modal') as HTMLElement;
+		await vi.waitFor(() => expect(dialog().querySelector('table[aria-label="Kanji"]')).not.toBeNull());
+		expect(dialog().textContent).toContain('Showing 1–20 of 171 kanji');
+		expect(dialog().querySelector('nav[aria-label="Kanji pages"]')).not.toBeNull();
+		expect(dialog().querySelector('[aria-current="page"]')?.textContent).toBe('1');
+
+		await flush(() => button(dialog(), 'Page 2')?.click());
+		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing 21–40 of 171 kanji'));
+		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, page: 2 }, undefined, expect.anything());
+
+		await flush(() => button(dialog(), 'Load all 171 kanji')?.click());
+		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing all 171 kanji'));
+		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, per_page: 100, page: 2 }, undefined, expect.anything());
+		expect(dialog().querySelectorAll('tbody tr')).toHaveLength(171);
+		expect(dialog().querySelector('nav[aria-label="Kanji pages"]')).toBeNull();
+		expect(button(dialog(), 'Show pages')).toBeDefined();
 
 		await unmount();
 	});

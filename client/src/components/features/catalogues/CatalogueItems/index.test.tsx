@@ -116,20 +116,40 @@ describe('CatalogueItems', () => {
 		await view.unmount();
 	});
 
-	it('pages with Show more', async () => {
-		vi.mocked(kanjiIndex)
-			.mockResolvedValueOnce(page(kanjiRows.slice(0, 1), true, 2))
-			.mockResolvedValueOnce({
-				...page(kanjiRows.slice(1, 2)),
-				pagination: { ...page([]).pagination, page: 2, total: 2 },
-			});
+	it('pages with numbered pages and loads everything with Load all', async () => {
+		const pageOf = (pageNumber: number, perPage = 25) => ({
+			items: kanjiRows.slice(pageNumber - 1, pageNumber),
+			pagination: {
+				page: pageNumber,
+				per_page: perPage,
+				total: 60,
+				last_page: Math.ceil(60 / perPage),
+				has_more: pageNumber * perPage < 60,
+			},
+		});
+		vi.mocked(kanjiIndex).mockImplementation((async ({ page: pageNumber = 1, per_page = 25 }) =>
+			pageOf(pageNumber, per_page)) as never);
 
 		const view = await renderItems({ catalogueType: TYPES.kanji });
 
-		await vi.waitFor(() => expect(button(view.container, 'Show more kanji')).toBeDefined());
-		await view.flush(() => button(view.container, 'Show more kanji')?.click());
+		await vi.waitFor(() => expect(view.container.querySelector('nav[aria-label="Kanji pages"]')).not.toBeNull());
+		expect(button(view.container, 'Show more kanji')).toBeUndefined();
+
+		await view.flush(() => button(view.container, 'Page 2')?.click());
 		await vi.waitFor(() => expect(view.container.textContent).toContain(kanjiRows[1].character));
-		expect(kanjiIndex).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }), undefined, expect.anything());
+		expect(kanjiIndex).toHaveBeenLastCalledWith(
+			expect.objectContaining({ catalogue_uuid: UUID, per_page: 25, page: 2 }),
+			undefined,
+			expect.anything(),
+		);
+
+		await view.flush(() => button(view.container, 'Load all 60 kanji')?.click());
+		await vi.waitFor(() => expect(view.container.textContent).toContain('Showing all 60 kanji'));
+		expect(kanjiIndex).toHaveBeenCalledWith(
+			expect.objectContaining({ catalogue_uuid: UUID, per_page: 100, page: 1 }),
+			undefined,
+			expect.anything(),
+		);
 		await view.unmount();
 	});
 

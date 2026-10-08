@@ -14,10 +14,6 @@
 	color: var(--color-neutral-700);
 }
 
-.more {
-	justify-self: start;
-}
-
 /* Article catalogues ----------------------------------------------------- */
 .articleList {
 	display: grid;

@@ -50,6 +50,14 @@ describe('DetailLayout', () => {
 		expect(html.indexOf('</aside>')).toBeLessThan(html.indexOf('data-slot="after"'));
 	});
 
+	it('keeps after outside the container the sticky rail is bounded by', () => {
+		const html = renderToStaticMarkup(<DetailLayout {...slots} railLabel="About this article" />);
+		const bodyEnd = html.indexOf('</aside></div>');
+
+		expect(bodyEnd).toBeGreaterThan(0);
+		expect(html.indexOf('data-slot="after"')).toBeGreaterThan(bodyEnd);
+	});
+
 	it('renders main alone without an aside when there are no rail slots', () => {
 		const html = renderToStaticMarkup(<DetailLayout main={<p>Body</p>} railLabel="About this article" />);
 

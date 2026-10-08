@@ -1,33 +1,22 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import React, { useCallback, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import {
-	catalogueKanjiFilters,
-	catalogueRadicalFilters,
-	catalogueSentenceFilters,
-	catalogueWordFilters,
+	catalogueItemsQueryKey,
+	useCatalogueKanjiPages,
+	useCatalogueRadicalPages,
+	useCatalogueSentencePages,
+	useCatalogueWordPages,
 	useRemoveCatalogueItem,
 } from '@/api/catalogues/items';
-import type { KanjiListResource } from '@/api/generated/model/kanjiListResource';
 import type { KanjiResource } from '@/api/generated/model/kanjiResource';
 import type { RadicalResource } from '@/api/generated/model/radicalResource';
 import type { SentenceResource } from '@/api/generated/model/sentenceResource';
 import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
-import type { WordListResource } from '@/api/generated/model/wordListResource';
 import type { WordResource } from '@/api/generated/model/wordResource';
-import {
-	applyKanjiViewerCatalogueState,
-	getInfiniteKanjisQueryKey,
-	useInfiniteKanjis,
-} from '@/api/kanjis/hooks/useInfiniteKanjis';
-import { useInfiniteRadicals } from '@/api/radicals/hooks/useInfiniteRadicals';
-import { useInfiniteSentences } from '@/api/sentences/hooks/useInfiniteSentences';
-import {
-	applyWordViewerCatalogueState,
-	getInfiniteWordsQueryKey,
-	useInfiniteWords,
-} from '@/api/words/hooks/useInfiniteWords';
+import { updateCachedRows, type PagedIndex } from '@/api/pagedIndex';
 import { KanjiTable } from '@/components/features/japanese/Kanji/KanjiTable';
+import { PagedControls } from '@/components/features/japanese/dictionaryList';
 import { RadicalTable } from '@/components/features/japanese/radical/RadicalTable';
 import { SentenceTable } from '@/components/features/japanese/sentence/SentenceTable';
 import { WordTable } from '@/components/features/japanese/word/WordTable';
@@ -81,45 +70,33 @@ const shortLabel = (text: string | null | undefined, max = 24) => {
 	return characters.length > max ? `${characters.slice(0, max).join('')}…` : value || 'this item';
 };
 
-interface ListQuery {
-	total: number;
-	isError: boolean;
-	hasNextPage?: boolean;
-	isFetchingNextPage: boolean;
-	fetchNextPage: () => unknown;
-}
+const PAGE_LABELS: Record<string, string> = {
+	kanji: 'Kanji pages',
+	words: 'Word pages',
+	radicals: 'Radical pages',
+	sentences: 'Sentence pages',
+};
 
-/** "Show more" under a table, and the user-written error in place of a list that failed. */
+/** The paged controls under a table, or a user-written error in place of a list that failed. */
 const ItemsList: React.FC<{
-	query: ListQuery;
-	hasItems: boolean;
+	list: PagedIndex<unknown>;
 	noun: string;
 	children: React.ReactNode;
-}> = ({ query, hasItems, noun, children }) => (
-	<>
-		{query.isError && !hasItems ? (
-			<p className={styles.message} role="status">
-				{LOAD_ERROR}
-			</p>
-		) : (
-			children
-		)}
-		{query.hasNextPage ? (
-			<Button
-				className={styles.more}
-				variant="outline"
-				onClick={() => void query.fetchNextPage()}
-				disabled={query.isFetchingNextPage}
-			>
-				{query.isFetchingNextPage ? 'Loading…' : `Show more ${noun}`}
-			</Button>
-		) : null}
-	</>
-);
+}> = ({ list, noun, children }) =>
+	list.isError && list.rows.length === 0 ? (
+		<p className={styles.message} role="status">
+			{LOAD_ERROR}
+		</p>
+	) : (
+		<>
+			{children}
+			<PagedControls list={list} noun={noun} label={PAGE_LABELS[noun] ?? 'Pages'} />
+		</>
+	);
 
 /**
- * A catalogue's items: kanji, words, radicals and sentences as the dictionary tables, 25 per page,
- * and articles as a compact list. The owner can switch on "Manage items" to get a Remove button
+ * A catalogue's items: kanji, words, radicals and sentences as the dictionary tables, 25 to a
+ * numbered page with "Load all", and articles as a compact list. The owner can switch on "Manage items" to get a Remove button
  * on every row; each removal is confirmed first.
  */
 export const CatalogueItems: React.FC<CatalogueItemsProps> = ({
@@ -280,31 +257,45 @@ interface FamilyItemsProps<Row> {
 	trailingColumns: DataTableColumn<Row>[];
 }
 
+/** Saving from a row writes the new state into every cached page of the family's list. */
+const useSaveStateWriter = (family: CatalogueFamily, catalogueUuid: string) => {
+	const queryClient = useQueryClient();
+
+	return useCallback(
+		(rowId: number, state: ViewerCatalogueStateResource) => {
+			const queryKey = catalogueItemsQueryKey(family, catalogueUuid);
+
+			if (!queryKey) return;
+
+			queryClient.setQueriesData({ queryKey }, (data) =>
+				updateCachedRows<{ id: number; viewer_catalogue_state?: ViewerCatalogueStateResource | null }>(
+					data,
+					rowId,
+					(row) => ({ ...row, viewer_catalogue_state: state }),
+				),
+			);
+		},
+		[queryClient, family, catalogueUuid],
+	);
+};
+
 const KanjiItems: React.FC<FamilyItemsProps<KanjiResource> & { showSave: boolean }> = ({
 	catalogueUuid,
 	showSave,
 	empty,
 	trailingColumns,
 }) => {
-	const queryClient = useQueryClient();
-	const filters = useMemo(() => catalogueKanjiFilters(catalogueUuid), [catalogueUuid]);
-	const { kanjis, ...query } = useInfiniteKanjis({ filters });
-	const handleSaved = useCallback(
-		(kanjiId: number, state: ViewerCatalogueStateResource) =>
-			queryClient.setQueryData<InfiniteData<KanjiListResource>>(getInfiniteKanjisQueryKey(filters), (data) =>
-				applyKanjiViewerCatalogueState(data, kanjiId, state),
-			),
-		[queryClient, filters],
-	);
+	const list = useCatalogueKanjiPages(catalogueUuid);
+	const writeSaveState = useSaveStateWriter('kanji', catalogueUuid);
 
 	return (
-		<ItemsList query={query} hasItems={kanjis.length > 0} noun="kanji">
+		<ItemsList list={list} noun="kanji">
 			<KanjiTable
-				kanjis={kanjis}
-				loading={query.isPending}
+				kanjis={list.rows}
+				loading={list.isPending}
 				showSave={showSave}
 				empty={empty}
-				onBookmarkStateChange={handleSaved}
+				onBookmarkStateChange={writeSaveState}
 				trailingColumns={trailingColumns}
 			/>
 		</ItemsList>
@@ -317,25 +308,17 @@ const WordItems: React.FC<FamilyItemsProps<WordResource> & { showSave: boolean }
 	empty,
 	trailingColumns,
 }) => {
-	const queryClient = useQueryClient();
-	const filters = useMemo(() => catalogueWordFilters(catalogueUuid), [catalogueUuid]);
-	const { words, ...query } = useInfiniteWords({ filters });
-	const handleSaved = useCallback(
-		(wordId: number, state: ViewerCatalogueStateResource) =>
-			queryClient.setQueryData<InfiniteData<WordListResource>>(getInfiniteWordsQueryKey(filters), (data) =>
-				applyWordViewerCatalogueState(data, wordId, state),
-			),
-		[queryClient, filters],
-	);
+	const list = useCatalogueWordPages(catalogueUuid);
+	const writeSaveState = useSaveStateWriter('words', catalogueUuid);
 
 	return (
-		<ItemsList query={query} hasItems={words.length > 0} noun="words">
+		<ItemsList list={list} noun="words">
 			<WordTable
-				words={words}
-				loading={query.isPending}
+				words={list.rows}
+				loading={list.isPending}
 				showSave={showSave}
 				empty={empty}
-				onBookmarkStateChange={handleSaved}
+				onBookmarkStateChange={writeSaveState}
 				trailingColumns={trailingColumns}
 			/>
 		</ItemsList>
@@ -343,14 +326,13 @@ const WordItems: React.FC<FamilyItemsProps<WordResource> & { showSave: boolean }
 };
 
 const RadicalItems: React.FC<FamilyItemsProps<RadicalResource>> = ({ catalogueUuid, empty, trailingColumns }) => {
-	const filters = useMemo(() => catalogueRadicalFilters(catalogueUuid), [catalogueUuid]);
-	const { radicals, ...query } = useInfiniteRadicals({ filters });
+	const list = useCatalogueRadicalPages(catalogueUuid);
 
 	return (
-		<ItemsList query={query} hasItems={radicals.length > 0} noun="radicals">
+		<ItemsList list={list} noun="radicals">
 			<RadicalTable
-				radicals={radicals}
-				loading={query.isPending}
+				radicals={list.rows}
+				loading={list.isPending}
 				empty={empty}
 				trailingColumns={trailingColumns}
 			/>
@@ -359,14 +341,13 @@ const RadicalItems: React.FC<FamilyItemsProps<RadicalResource>> = ({ catalogueUu
 };
 
 const SentenceItems: React.FC<FamilyItemsProps<SentenceResource>> = ({ catalogueUuid, empty, trailingColumns }) => {
-	const filters = useMemo(() => catalogueSentenceFilters(catalogueUuid), [catalogueUuid]);
-	const { sentences, ...query } = useInfiniteSentences({ filters });
+	const list = useCatalogueSentencePages(catalogueUuid);
 
 	return (
-		<ItemsList query={query} hasItems={sentences.length > 0} noun="sentences">
+		<ItemsList list={list} noun="sentences">
 			<SentenceTable
-				sentences={sentences}
-				loading={query.isPending}
+				sentences={list.rows}
+				loading={list.isPending}
 				empty={empty}
 				trailingColumns={trailingColumns}
 			/>

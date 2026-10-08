@@ -1,9 +1,11 @@
 /*
  * Reading Room: a 720px measure, a 56px gap and a 280px rail (UI-DETAIL-00, #457).
- * Below 1024px the page is one flex column and the rail is `display: contents`, so its three
- * slots join that column and `order` places them: the actions move up under the header, the
- * facts and extras follow the text. The DOM order (header, main, rail, after) is what assistive
- * technology reads and what Tab follows at every width.
+ * Header, main and rail share an inner container (`.body`) and `after` sits outside it, so a
+ * sticky rail stops where the text ends and never floats over the full-width section below.
+ * Below 1024px `.body` is one flex column and the rail is `display: contents`, so its three slots
+ * join that column and `order` places them: the actions move up under the header, the facts and
+ * extras follow the text. The DOM order (header, main, rail, after) is what assistive technology
+ * reads and what Tab follows at every width.
  */
 .layout {
 	--detail-measure: var(--measure-reading);
@@ -12,11 +14,18 @@
 
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-lg);
+	gap: var(--spacing-2xl);
 	width: calc(100% - var(--spacing-md) * 2);
 	max-width: calc(var(--detail-measure) + var(--detail-gap) + var(--detail-rail));
 	margin-inline: auto;
 	padding-block: var(--spacing-lg) var(--spacing-3xl);
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-lg);
+	min-width: 0;
 }
 
 .header,
@@ -49,11 +58,6 @@
 	order: 5;
 }
 
-.after {
-	order: 6;
-	margin-top: var(--spacing-xl);
-}
-
 .rail {
 	display: contents;
 }
@@ -65,14 +69,13 @@
 }
 
 @media (min-width: 1024px) {
-	.layout {
+	.body {
 		display: grid;
 		grid-template-columns: minmax(0, var(--detail-measure)) var(--detail-rail);
-		grid-template-rows: auto 1fr auto;
+		grid-template-rows: auto 1fr;
 		grid-template-areas:
 			'header rail'
-			'main rail'
-			'after after';
+			'main rail';
 		gap: var(--spacing-lg) var(--detail-gap);
 	}
 
@@ -82,10 +85,6 @@
 
 	.main {
 		grid-area: main;
-	}
-
-	.after {
-		grid-area: after;
 	}
 
 	.rail {
@@ -120,14 +119,13 @@
 }
 
 @media (min-width: 1024px) {
-	.wide {
+	.wide .body {
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: auto;
 		grid-template-areas:
 			'header'
 			'rail'
-			'main'
-			'after';
+			'main';
 	}
 
 	.wide .rail {

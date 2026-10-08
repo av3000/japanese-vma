@@ -80,20 +80,22 @@ export const DetailLayout: React.FC<DetailLayoutProps> = ({
 
 	return (
 		<div className={classNames(styles.layout, variant === 'wide' && styles.wide, className)}>
-			{header ? <div className={styles.header}>{header}</div> : null}
-			<div className={styles.main}>{main}</div>
-			{hasRail ? (
-				<aside
-					ref={railRef}
-					className={styles.rail}
-					aria-label={railLabel}
-					data-sticky={variant === 'reading' && railFits ? 'true' : undefined}
-				>
-					{facts ? <div className={styles.facts}>{facts}</div> : null}
-					{actions ? <div className={styles.actions}>{actions}</div> : null}
-					{extra ? <div className={styles.extra}>{extra}</div> : null}
-				</aside>
-			) : null}
+			<div className={styles.body}>
+				{header ? <div className={styles.header}>{header}</div> : null}
+				<div className={styles.main}>{main}</div>
+				{hasRail ? (
+					<aside
+						ref={railRef}
+						className={styles.rail}
+						aria-label={railLabel}
+						data-sticky={variant === 'reading' && railFits ? 'true' : undefined}
+					>
+						{facts ? <div className={styles.facts}>{facts}</div> : null}
+						{actions ? <div className={styles.actions}>{actions}</div> : null}
+						{extra ? <div className={styles.extra}>{extra}</div> : null}
+					</aside>
+				) : null}
+			</div>
 			{after ? <div className={styles.after}>{after}</div> : null}
 		</div>
 	);

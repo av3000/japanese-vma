@@ -1,6 +1,6 @@
 import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import { expect, userEvent, waitFor, within } from '@storybook/test';
 import { articleKanjisQueryKey, articleWordsQueryKey } from '@/api/articles/attachments';
 import type { MappedArticle } from '@/api/articles/details';
 import { getCommentsQueryKey } from '@/api/comments';
@@ -10,7 +10,7 @@ import type { ProcessingStatusResource } from '@/api/generated/model/processingS
 import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { AuthContext } from '@/providers/contexts/auth-provider';
 import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
-import { infiniteSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
 import ArticleContent from './';
 
 type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
@@ -119,8 +119,8 @@ const seeds = (options: { kanji?: number; words?: number; comments?: number } = 
 	const comments = options.comments ?? 2;
 
 	return [
-		infiniteSeed(articleKanjisQueryKey(UUID), [pageOf(repeatRows(kanjiRows, Math.min(kanji, 20)), kanji)]),
-		infiniteSeed(articleWordsQueryKey(UUID), [pageOf(repeatRows(wordRows, Math.min(words, 20)), words)]),
+		pageSeed(articleKanjisQueryKey(UUID), pageOf(repeatRows(kanjiRows, Math.min(kanji, 20)), kanji)),
+		pageSeed(articleWordsQueryKey(UUID), pageOf(repeatRows(wordRows, Math.min(words, 20)), words)),
 		{
 			queryKey: getCommentsQueryKey('article', UUID),
 			data: pageOf(
@@ -267,5 +267,21 @@ export const TwoHundredComments: Story = {
 	parameters: { seeds: seeds({ comments: 200 }) },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByText('Showing 20 of 200 comments')).toBeVisible();
+	},
+};
+
+/** "See all" opens the full list in a modal with numbered pages and Load all (#522). */
+export const AllKanjiModal: Story = {
+	parameters: { auth: signedIn(AUTHOR_ID), seeds: seeds({ kanji: 171 }) },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(canvas.getByRole('button', { name: 'See all 171 kanji' }));
+
+		const dialog = within(canvasElement.ownerDocument.getElementById('article-kanji-modal') as HTMLElement);
+		// The dialog fades in; wait for it rather than checking mid-transition.
+		await waitFor(() => expect(dialog.getByRole('table', { name: 'Kanji' })).toBeVisible());
+		await expect(dialog.getByRole('navigation', { name: 'Kanji pages' })).toBeVisible();
+		await expect(dialog.getByRole('button', { name: 'Load all 171 kanji' })).toBeVisible();
 	},
 };

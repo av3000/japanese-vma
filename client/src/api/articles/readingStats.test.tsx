@@ -7,9 +7,8 @@ import type { ArticleDetailResource } from '@/api/generated/model/articleDetailR
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { wordIndex } from '@/api/generated/word/word';
-import { useInfiniteWords } from '@/api/words/hooks/useInfiniteWords';
 import { renderWithAct } from '@/test/renderWithAct';
-import { articleWordFilters } from './attachments';
+import { useArticleWordPages } from './attachments';
 import { kanjiCountOf, useArticleReadingStats, type ArticleReadingStats } from './readingStats';
 
 vi.mock('@/api/generated/word/word', () => ({
@@ -51,7 +50,7 @@ const renderStats = async (subject: Article) => {
 		return null;
 	};
 	const Table = () => {
-		useInfiniteWords({ filters: articleWordFilters(UUID) });
+		useArticleWordPages(UUID);
 		return null;
 	};
 

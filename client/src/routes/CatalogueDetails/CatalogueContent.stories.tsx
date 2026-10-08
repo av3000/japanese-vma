@@ -8,7 +8,7 @@ import { getCommentsQueryKey } from '@/api/comments';
 import { kanjiRows, repeatRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { AuthContext } from '@/providers/contexts/auth-provider';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
-import { infiniteSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
 import CatalogueContent from './CatalogueContent';
 
 type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
@@ -68,18 +68,16 @@ const catalogue = (overrides: Partial<MappedCatalogue> = {}): MappedCatalogue =>
 	}) as MappedCatalogue;
 
 const firstPage = <Row,>(family: CatalogueFamily, rows: Row[], total = rows.length): QuerySeed =>
-	infiniteSeed(catalogueItemsQueryKey(family, UUID) ?? [], [
-		{
-			items: rows,
-			pagination: {
-				page: 1,
-				per_page: 25,
-				total,
-				last_page: Math.ceil(total / 25) || 1,
-				has_more: total > rows.length,
-			},
+	pageSeed(catalogueItemsQueryKey(family, UUID) ?? [], {
+		items: rows,
+		pagination: {
+			page: 1,
+			per_page: 25,
+			total,
+			last_page: Math.ceil(total / 25) || 1,
+			has_more: total > rows.length,
 		},
-	]);
+	});
 
 const noComments: QuerySeed = {
 	queryKey: getCommentsQueryKey('catalogue', UUID),

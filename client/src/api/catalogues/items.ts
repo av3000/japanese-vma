@@ -1,11 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { catalogueRemoveItem, getCatalogueShowQueryKey } from '@/api/generated/catalogue/catalogue';
+import { getKanjiIndexQueryKey, kanjiIndex } from '@/api/generated/kanji/kanji';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
+import type { KanjiResource } from '@/api/generated/model/kanjiResource';
+import type { RadicalResource } from '@/api/generated/model/radicalResource';
+import type { SentenceResource } from '@/api/generated/model/sentenceResource';
+import type { WordResource } from '@/api/generated/model/wordResource';
+import { getRadicalIndexQueryKey, radicalIndex } from '@/api/generated/radical/radical';
+import { getSentenceIndexQueryKey, sentenceIndex } from '@/api/generated/sentence/sentence';
+import { getWordIndexQueryKey, wordIndex } from '@/api/generated/word/word';
 import {
 	KANJI_VIEWER_CATALOGUE_INCLUDE,
 	getInfiniteKanjisQueryKey,
 	type KanjiListFilters,
 } from '@/api/kanjis/hooks/useInfiniteKanjis';
+import { usePagedIndex } from '@/api/pagedIndex';
 import { getInfiniteRadicalsQueryKey, type RadicalListFilters } from '@/api/radicals/hooks/useInfiniteRadicals';
 import { getInfiniteSentencesQueryKey, type SentenceListFilters } from '@/api/sentences/hooks/useInfiniteSentences';
 import {
@@ -20,7 +29,7 @@ import type { CatalogueFamily } from '@/shared/constants/catalogues';
  * article attachments are read by `article_uuid` (#268). The indexes page, type and carry viewer
  * save state, which the catalogue detail payload's untyped `items` does not. Article catalogues
  * still read that payload. The filters live here so the lists and the removal that refreshes them
- * use the same query keys.
+ * use the same query keys: removal invalidates the filters, which reaches every numbered page.
  */
 
 export const CATALOGUE_ITEMS_PAGE_SIZE = 25;
@@ -100,3 +109,32 @@ export const useRemoveCatalogueItem = (catalogueUuid: string, family: CatalogueF
 		},
 	});
 };
+
+/** A catalogue's kanji, a numbered page (25) at a time or all at once (#522). */
+export const useCatalogueKanjiPages = (catalogueUuid: string) =>
+	usePagedIndex<KanjiListFilters, KanjiResource>({
+		filters: catalogueKanjiFilters(catalogueUuid),
+		queryKey: getKanjiIndexQueryKey,
+		fetchPage: (params, signal) => kanjiIndex(params, undefined, signal),
+	});
+
+export const useCatalogueWordPages = (catalogueUuid: string) =>
+	usePagedIndex<WordListFilters, WordResource>({
+		filters: catalogueWordFilters(catalogueUuid),
+		queryKey: getWordIndexQueryKey,
+		fetchPage: (params, signal) => wordIndex(params, undefined, signal),
+	});
+
+export const useCatalogueRadicalPages = (catalogueUuid: string) =>
+	usePagedIndex<RadicalListFilters, RadicalResource>({
+		filters: catalogueRadicalFilters(catalogueUuid),
+		queryKey: getRadicalIndexQueryKey,
+		fetchPage: (params, signal) => radicalIndex(params, undefined, signal),
+	});
+
+export const useCatalogueSentencePages = (catalogueUuid: string) =>
+	usePagedIndex<SentenceListFilters, SentenceResource>({
+		filters: catalogueSentenceFilters(catalogueUuid),
+		queryKey: getSentenceIndexQueryKey,
+		fetchPage: (params, signal) => sentenceIndex(params, undefined, signal),
+	});
