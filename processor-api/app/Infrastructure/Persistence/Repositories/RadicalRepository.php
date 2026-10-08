@@ -74,6 +74,20 @@ class RadicalRepository implements RadicalRepositoryInterface
         return $radical ? $this->radicalMapper->mapToDomain($radical) : null;
     }
 
+    public function findByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return PersistenceRadical::query()
+            ->whereIn('id', $ids)
+            ->get()
+            ->map(fn (PersistenceRadical $radical): DomainRadical => $this->radicalMapper->mapToDomain($radical))
+            ->values()
+            ->all();
+    }
+
     private function applyFilters(Builder $query, RadicalQueryCriteria $criteria): void
     {
         if ($criteria->keyword !== null && $criteria->keyword !== '') {

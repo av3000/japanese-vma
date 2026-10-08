@@ -2,6 +2,8 @@
 
 This file defines **frontend-specific** guidance for changes under `client/`.
 
+For any visual, styling, token or component-choice work, read `client/DESIGN.md` first. It covers what each token means, the colour roles, typography (including Japanese text) and which shared component to use.
+
 ## 1) Frontend Direction In This Repo
 
 - **Primary precedent for migrated work:** Article list/detail/create flows are the best current reference for route shape, React Query usage, and shared form composition.

@@ -31,6 +31,7 @@ const CatalogueDetailsPage = createLazyRoute(() => import('@/routes/CatalogueDet
 const CatalogueCreatePage = createLazyRoute(() => import('@/routes/CatalogueCreate'), { family: 'form' });
 const CatalogueEditPage = createLazyRoute(() => import('@/routes/CatalogueEdit'), { family: 'form' });
 const CatalogueLegacyRedirectsPage = createLazyRoute(() => import('@/routes/CatalogueLegacyRedirects'));
+const CatalogueStudyPage = createLazyRoute(() => import('@/routes/CatalogueStudy'), { family: 'form' });
 
 const RadicalsPage = createLazyRoute(() => import('@/routes/japanese/RadicalsList'), { family: 'generic' });
 const RadicalDetailsPage = createLazyRoute(() => import('@/routes/japanese/RadicalDetails'), {
@@ -65,6 +66,7 @@ const AppRoutes: React.FC = () => (
 
 		<Route path="/catalogues" element={<CataloguesListPage />} />
 		<Route path="/catalogues/:catalogueId" element={<CatalogueDetailsPage />} />
+		<Route path="/catalogues/:catalogueId/study" element={<CatalogueStudyPage />} />
 		<Route path="/lists" element={<CatalogueLegacyRedirectsPage />} />
 		<Route path="/list/:catalogueId" element={<CatalogueLegacyRedirectsPage />} />
 

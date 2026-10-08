@@ -8,6 +8,7 @@ import type { ProcessingStatusResource } from '@/api/generated/model/processingS
 import { Alert } from '@/components/shared/Alert';
 import Spinner from '@/components/shared/Spinner';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
+import { formatDurationCompact } from '@/helpers/date';
 import { useWebSocket } from '@/providers/contexts/socket-provider';
 import styles from './ProcessingStatusAlert.module.css';
 
@@ -54,20 +55,6 @@ interface ProcessingStatusAlertProps {
 	isOwner?: boolean;
 	className?: string;
 }
-
-const formatDurationCompact = (ms: number): string => {
-	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-	const hours = Math.floor(totalSeconds / 3600);
-	const minutes = Math.floor((totalSeconds % 3600) / 60);
-	const seconds = totalSeconds % 60;
-
-	const parts: string[] = [];
-	if (hours > 0) parts.push(`${hours}h`);
-	if (minutes > 0) parts.push(`${minutes}m`);
-	parts.push(`${seconds}s`);
-
-	return parts.join(' ');
-};
 
 const toTime = (value: string | null | undefined): number | null => {
 	if (!value) return null;

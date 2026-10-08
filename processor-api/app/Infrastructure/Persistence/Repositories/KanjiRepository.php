@@ -166,13 +166,22 @@ class KanjiRepository implements KanjiRepositoryInterface
             ->toArray();
     }
 
+    /**
+     * @param int[] $ids
+     *
+     * @return list<DomainKanji>
+     */
     public function findByIds(array $ids): array
     {
-        $entities = PersistenceKanji::whereIn('id', $ids)->get();
+        if ($ids === []) {
+            return [];
+        }
 
-        // TODO: create and use kanji mapper
-        // TODO: create and use kanji domain object with value objects
-        return $entities;
+        return PersistenceKanji::whereIn('id', $ids)
+            ->get()
+            ->map(fn (PersistenceKanji $kanji): DomainKanji => $this->kanjiMapper->mapToDomain($kanji))
+            ->values()
+            ->all();
     }
 
     public function findByCharacters(array $characters): array

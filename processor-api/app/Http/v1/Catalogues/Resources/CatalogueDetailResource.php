@@ -3,6 +3,7 @@
 namespace App\Http\v1\Catalogues\Resources;
 
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
@@ -29,7 +30,7 @@ class CatalogueDetailResource extends JsonResource
      *     type_label: string,
      *     title: string,
      *     description: string|null,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     owner: AuthorResource,
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
@@ -53,7 +54,7 @@ class CatalogueDetailResource extends JsonResource
             'type_label' => $catalogue->getTypeLabel(),
             'title' => (string) $catalogue->getTitle(),
             'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
-            'publicity' => $catalogue->getPublicity()->value,
+            'publicity' => $catalogue->getPublicity(),
             'owner' => new AuthorResource([
                 'id' => $catalogue->getOwnerId()->value(),
                 'uuid' => $catalogue->getOwnerUuid()->value(),

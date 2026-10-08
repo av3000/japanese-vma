@@ -1,0 +1,46 @@
+/* Dashboard section links: a row of tabs over one shared baseline. */
+
+.tabs {
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tab {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--size-3xl);
+	padding: 0 var(--spacing-sm);
+	/* Sits on the shared baseline, so the active bar replaces it rather than stacking. */
+	margin-bottom: calc(-1 * var(--border-size-sm));
+	border-bottom: var(--border-size-md) solid transparent;
+	color: var(--color-text-primary);
+	font-size: var(--font-size-body-md);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.tab:hover {
+	color: var(--color-link-hover);
+	border-bottom-color: var(--color-neutral-300);
+}
+
+.tab:focus-visible {
+	outline: var(--outline-size) solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+/* Weight plus the bar, so the current section is not marked by colour alone. */
+.tabActive,
+.tabActive:hover {
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-primary);
+	border-bottom-color: var(--color-primary);
+}

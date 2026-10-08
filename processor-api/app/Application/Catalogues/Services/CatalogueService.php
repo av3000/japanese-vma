@@ -205,13 +205,10 @@ class CatalogueService implements CatalogueServiceInterface
     }
 
     /**
-     * @return Result Success data: int catalogue id, Failure data: ResultError
+     * @return Result Success data: Catalogue.
      */
-    public function resolveItemSource(
-        EntityId $uuid,
-        SavedListType $family,
-        ?AuthenticatedUser $authenticatedUser = null,
-    ): Result {
+    public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result
+    {
         $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
 
         if (! $catalogue) {
@@ -222,6 +219,26 @@ class CatalogueService implements CatalogueServiceInterface
             return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
         }
 
+        return Result::success($catalogue);
+    }
+
+    /**
+     * @return Result Success data: int catalogue id, Failure data: ResultError
+     */
+    public function resolveItemSource(
+        EntityId $uuid,
+        SavedListType $family,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
+        $viewable = $this->getViewableCatalogue($uuid, $authenticatedUser);
+
+        if ($viewable->isFailure()) {
+            return $viewable;
+        }
+
+        /** @var Catalogue $catalogue */
+        $catalogue = $viewable->getData();
+
         // A "known kanji" catalogue holds kanji like a kanji catalogue does.
         $type = $catalogue->getType();
         $heldFamily = $this->templateTypeClassifier->getBaseType($type) ?? $type;
@@ -231,6 +248,22 @@ class CatalogueService implements CatalogueServiceInterface
         }
 
         return Result::success($catalogue->getIdValue());
+    }
+
+    /**
+     * @return Result Success data: int[].
+     */
+    public function getCatalogueItemIds(int $catalogueId): Result
+    {
+        return Result::success($this->catalogueItemRepository->findItemIdsByCatalogueId($catalogueId));
+    }
+
+    /**
+     * @return Result Success data: bool.
+     */
+    public function catalogueContainsItem(int $catalogueId, int $itemId): Result
+    {
+        return Result::success($this->catalogueItemRepository->containsItem($catalogueId, $itemId));
     }
 
     /**

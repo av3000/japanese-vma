@@ -75,6 +75,20 @@ class WordRepository implements WordRepositoryInterface
         return $word ? $this->wordMapper->mapToDomain($word) : null;
     }
 
+    public function findByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return PersistenceWord::query()
+            ->whereIn('id', $ids)
+            ->get()
+            ->map(fn (PersistenceWord $word): DomainWord => $this->wordMapper->mapToDomain($word))
+            ->values()
+            ->all();
+    }
+
     public function maxWordLength(): int
     {
         $length = PersistenceWord::query()

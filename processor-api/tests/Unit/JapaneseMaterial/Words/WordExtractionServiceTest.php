@@ -163,4 +163,9 @@ final class FakeWordRepository implements WordRepositoryInterface
     {
         return [];
     }
+
+    public function findByIds(array $ids): array
+    {
+        return [];
+    }
 }

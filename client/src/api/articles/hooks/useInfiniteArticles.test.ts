@@ -15,6 +15,7 @@ const createPage = (overrides?: Partial<ArticleListResource>): ArticleListResour
 			hashtag_ids: [],
 			kanji_ids: [],
 			word_ids: [],
+			statuses: [],
 			author_uid: null,
 			created_from: null,
 			created_to: null,

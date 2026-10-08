@@ -14,3 +14,9 @@ export const ARTICLE_STATUS = {
 	REJECTED: ArticleStatus.NUMBER_3,
 	APPROVED: ArticleStatus.NUMBER_4,
 } as const satisfies Record<string, ArticleStatus>;
+
+/**
+ * "Awaiting review": the statuses `ArticleRepository::findModerationQueue` selects on. The
+ * moderation queue, the dashboard's approval filter and its header count all read this one list.
+ */
+export const AWAITING_REVIEW_STATUSES: readonly ArticleStatus[] = [ARTICLE_STATUS.PENDING, ARTICLE_STATUS.REVIEWING];

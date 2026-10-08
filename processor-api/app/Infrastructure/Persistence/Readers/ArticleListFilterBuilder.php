@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Readers;
 use App\Domain\Articles\Enums\ArticleFacetDimension;
 use App\Domain\Articles\Queries\ArticleQueryCriteria;
 use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
@@ -102,6 +103,14 @@ final readonly class ArticleListFilterBuilder
             $builder->whereHas('user', function (Builder $user) use ($criteria): void {
                 $user->where('uuid', $criteria->authorUid);
             });
+        }
+
+        // Narrows only. The visibility scope above is applied first and stays intact.
+        if ($criteria->statuses !== []) {
+            $builder->whereIn(
+                'articles.status',
+                array_map(static fn (ArticleStatus $status): int => $status->value, $criteria->statuses),
+            );
         }
 
         if ($criteria->hasSearch()) {

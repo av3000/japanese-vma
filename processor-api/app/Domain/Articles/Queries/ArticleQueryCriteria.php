@@ -7,6 +7,7 @@ namespace App\Domain\Articles\Queries;
 use App\Domain\Articles\Enums\ArticleJlptLevel;
 use App\Domain\Articles\ValueObjects\ArticleDateRange;
 use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 
@@ -26,6 +27,7 @@ final readonly class ArticleQueryCriteria
      * @param array<int, int> $hashtagIds uniquehashtags.id values
      * @param array<int, int> $kanjiIds
      * @param array<int, int> $wordIds
+     * @param array<int, ArticleStatus> $statuses moderation statuses; narrows, never widens
      */
     public function __construct(
         public ArticleSortCriteria $sort,
@@ -37,6 +39,7 @@ final readonly class ArticleQueryCriteria
         public array $kanjiIds = [],
         public array $wordIds = [],
         public ?ArticleDateRange $createdBetween = null,
+        public array $statuses = [],
     ) {
     }
 
@@ -67,6 +70,10 @@ final readonly class ArticleQueryCriteria
             createdBetween: ArticleDateRange::fromInput(
                 $validated['created_from'] ?? null,
                 $validated['created_to'] ?? null,
+            ),
+            statuses: array_map(
+                static fn (int|string $status): ArticleStatus => ArticleStatus::from((int) $status),
+                $validated['statuses'] ?? [],
             ),
         );
     }

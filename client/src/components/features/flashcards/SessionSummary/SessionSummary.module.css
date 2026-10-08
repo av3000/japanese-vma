@@ -1,0 +1,82 @@
+.summary {
+	padding: var(--spacing-lg);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border-radius: var(--border-radius-lg);
+	background: var(--color-neutral-0);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
+}
+
+.lead {
+	margin: var(--spacing-2xs) 0 0;
+	color: var(--color-neutral-700);
+}
+
+.missed {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Prompt | answers with "you said" under them | bookmark. The prompt column is capped so a
+   long word wraps instead of squeezing the answers. */
+.missedRow {
+	display: grid;
+	grid-template-columns: fit-content(40%) minmax(0, 1fr) auto;
+	gap: var(--spacing-md);
+	align-items: center;
+	padding-block: var(--spacing-sm);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.detail {
+	display: grid;
+	gap: var(--spacing-3xs);
+	min-width: 0;
+}
+
+.prompt {
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.prompt[lang='ja'],
+.answers[lang='ja'] {
+	font-family: var(--font-family-ja);
+	font-size: var(--font-size-body-lg);
+}
+
+.answers {
+	overflow-wrap: anywhere;
+}
+
+.given {
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+}
+
+.round {
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-regular);
+}
+
+.time {
+	margin: var(--spacing-2xs) 0 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+	font-variant-numeric: tabular-nums;
+}
+
+.save {
+	margin: var(--spacing-xs) 0 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-sm);
+}
+
+.bookmark {
+	justify-self: end;
+}

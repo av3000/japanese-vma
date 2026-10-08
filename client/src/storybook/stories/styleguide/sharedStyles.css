@@ -17,3 +17,11 @@ ul:not([class]) li {
 .richTextWrapper {
 	font-size: var(--font-size-body-md);
 }
+
+.styleguide h2,
+.styleguide hr {
+	margin-top: var(--spacing-xl);
+}
+.styleguide h3 {
+	margin-top: var(--spacing-lg);
+}
