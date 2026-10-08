@@ -1,28 +1,30 @@
-import { Suspense, lazy, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { Suspense, lazy, useId, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
+import { useDeleteCatalogueMutation } from '@/api/catalogues/hooks/useDeleteCatalogueMutation';
 import {
 	catalogueExportKanjisPdf,
 	catalogueExportRadicalsPdf,
 	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
-	getCatalogueIndexQueryKey,
-	getCatalogueShowQueryKey,
-	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
-import { publicityLabel } from '@/api/publicity';
-import AvatarImg from '@/assets/images/avatar-woman.svg';
-import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
+import { catalogueCoverGlyph, catalogueJlptCounts } from '@/components/features/LibraryCards/coverRule';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Byline } from '@/components/shared/Byline';
 import { Chip } from '@/components/shared/Chip';
+import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
+import { DetailFacts } from '@/components/shared/DetailFacts';
+import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
-import { formatDate } from '@/helpers';
+import { dominantJlptLevel, JlptBar } from '@/components/shared/JlptBar';
+import { Link } from '@/components/shared/Link';
+import { VisibilityCue } from '@/components/shared/VisibilityCue';
+import { Cluster } from '@/components/shared/layout';
 import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
+import { japaneseLang } from '@/helpers/japaneseLang';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import {
@@ -31,6 +33,7 @@ import {
 	isCataloguePdfExportSupported,
 	isCatalogueStudySupported,
 	resolveCataloguePdfExportKind,
+	resolveCatalogueTypeLabel,
 } from '@/shared/constants/catalogues';
 import styles from './CatalogueContent.module.css';
 
@@ -51,8 +54,9 @@ const pdfExportClients: Record<CataloguePdfExportKind, typeof catalogueExportKan
 
 const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const navigate = useNavigate();
-	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
+	const tagsHeadingId = useId();
+	const commentsHeadingId = useId();
 	const [isPdfPending, setIsPdfPending] = useState(false);
 	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
@@ -61,20 +65,15 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const likesCount = Number(catalogue.engagement?.likes_count ?? 0);
 	const viewsCount = Number(catalogue.engagement?.views_count ?? 0);
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
+	const itemsCount = Number(catalogue.items_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
+	const deleteMutation = useDeleteCatalogueMutation();
 	const isPdfExportSupported = isCataloguePdfExportSupported(catalogue.type);
-	// Visible to visitors too: a public deck can be played without an account (epic #413).
-	const isStudySupported = isCatalogueStudySupported(catalogue.type);
-
-	const deleteMutation = useCatalogueDestroy({
-		mutation: {
-			onSuccess: () => {
-				queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
-				queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(catalogue.uuid) });
-				navigate(CATALOGUE_ROUTES.list);
-			},
-		},
-	});
+	// Study needs cards: visitors can play a public deck (epic #413), but an empty one has nothing to play.
+	const isStudyOffered = isCatalogueStudySupported(catalogue.type) && itemsCount > 0;
+	const showStudyHint = isOwner && isCatalogueStudySupported(catalogue.type) && itemsCount === 0;
+	const typeLabel = catalogue.type_label || resolveCatalogueTypeLabel(catalogue.type);
+	const levels = catalogue.jlpt_levels;
 
 	const handleDownloadPdf = async () => {
 		if (!isAuthenticated) {
@@ -117,107 +116,31 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	};
 
 	return (
-		<Container size="sm" className={styles.page}>
-			<Stack gap="2xl">
-				<Stack as="section" gap="md">
-					<div>
-						<Link to={CATALOGUE_ROUTES.list} className="tag-link">
-							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Back to Catalogues
+		<>
+			<DetailLayout
+				railLabel="About this catalogue"
+				header={
+					<div className={styles.header}>
+						<Link to={CATALOGUE_ROUTES.list} className={styles.back}>
+							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Catalogues
 						</Link>
-					</div>
-
-					<h1 className={styles.title}>{catalogue.title}</h1>
-
-					<Cluster justify="between" gap="sm" className={styles.muted}>
-						<div>
-							{formatDate(catalogue.created_at, 'ja')} <br />
-							<span>{viewsCount} views</span>
-							{isOwner && <span> | {publicityLabel(catalogue.publicity)}</span>}
-							<br />
-							<strong>{catalogue.type_label}</strong>
-						</div>
-
-						{isOwner && (
-							<Cluster gap="2xs">
-								<Button
-									onClick={deleteModal.open}
-									variant="ghost"
-									hasOnlyIcon
-									aria-controls={deleteModal.id}
-									aria-expanded={deleteModal.isOpen}
-								>
-									<Icon name="trashbinSolid" size="md" />
-								</Button>
-								<Button
-									onClick={() => navigate(CATALOGUE_ROUTES.edit(catalogue.uuid))}
-									variant="ghost"
-									hasOnlyIcon
-								>
-									<Icon name="penSolid" size="md" />
-								</Button>
-							</Cluster>
-						)}
-					</Cluster>
-
-					<img className={styles.cover} src={DefaultListImg} alt="Cover" />
-					<p className={styles.description}>{catalogue.description ?? 'No description yet.'}</p>
-
-					{catalogue.hashtags && catalogue.hashtags.length > 0 && (
-						<Cluster as="ul" gap="2xs" className={styles.tagList}>
-							{catalogue.hashtags.map((tag) => (
-								<li key={tag.id}>
-									<Chip readonly title={tag.content}>
-										{tag.content}
-									</Chip>
-								</li>
-							))}
-						</Cluster>
-					)}
-
-					<hr className={styles.divider} />
-
-					<Cluster justify="between" gap="sm">
-						<Cluster gap="md">
-							<img src={AvatarImg} alt="user" width="40" className={styles.avatar} />
-							<p className={styles.text}>
-								Created by <strong>{catalogue.owner.name}</strong>
+						<h1 className={styles.title} lang={japaneseLang(catalogue.title)}>
+							{catalogue.title}
+						</h1>
+						{catalogue.description?.trim() ? (
+							<p className={styles.description} lang={japaneseLang(catalogue.description)}>
+								{catalogue.description}
 							</p>
-						</Cluster>
-						<Cluster gap="xs">
-							{isStudySupported && (
-								<Button to={CATALOGUE_ROUTES.study(catalogue.uuid)} variant="primary" size="sm">
-									Study
-								</Button>
-							)}
-							<p className={styles.text}>{likesCount}</p>
-							<Button
-								variant="ghost"
-								hasOnlyIcon
-								aria-label={isLiked ? 'Unlike this catalogue' : 'Like this catalogue'}
-								aria-pressed={isLiked}
-								disabled={likeMutation.isTogglingInstance(catalogue.id)}
-								onClick={handleLikeClick}
-							>
-								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
-							</Button>
-							{isPdfExportSupported && (
-								<Button
-									variant="ghost"
-									hasOnlyIcon
-									aria-label="Download this catalogue as PDF"
-									isLoading={isPdfPending}
-									onClick={handleDownloadPdf}
-								>
-									<Icon size="md" name="filePdfSolid" />
-								</Button>
-							)}
-							{downloadCount > 0 && <span className={styles.muted}>{downloadCount} downloads</span>}
-						</Cluster>
-					</Cluster>
-					{pdfErrorMessage && <Alert tone="danger">{pdfErrorMessage}</Alert>}
-				</Stack>
-
-				<Stack as="section" gap="xs">
+						) : null}
+						<Byline name={catalogue.owner.name} date={catalogue.created_at} views={viewsCount} />
+						{isOwner ? (
+							<Cluster gap="xs">
+								<VisibilityCue publicity={catalogue.publicity} />
+							</Cluster>
+						) : null}
+					</div>
+				}
+				main={
 					<CatalogueItems
 						catalogueUuid={catalogue.uuid}
 						catalogueType={catalogue.type}
@@ -225,24 +148,120 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 						isOwner={isOwner}
 						showSave={isAuthenticated}
 					/>
-				</Stack>
-
-				<section>
-					<Suspense fallback={null}>
-						<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
-					</Suspense>
-				</section>
-			</Stack>
+				}
+				facts={
+					<DetailFacts
+						title="In this catalogue"
+						facts={[
+							{ term: 'Items', value: itemsCount },
+							{ term: 'Views', value: viewsCount },
+							{ term: 'Downloads', value: downloadCount },
+						]}
+					>
+						<div className={styles.type}>
+							<span className={styles.typeGlyph} lang="ja" aria-hidden="true">
+								{catalogueCoverGlyph(catalogue.type)}
+							</span>
+							<span>{typeLabel}</span>
+						</div>
+						{levels && dominantJlptLevel(levels) !== null ? (
+							<JlptBar
+								size="compact"
+								levels={levels}
+								counts={catalogueJlptCounts(catalogue.type)}
+								className={styles.levels}
+							/>
+						) : null}
+					</DetailFacts>
+				}
+				actions={
+					<DetailActions>
+						{isStudyOffered ? (
+							<Button variant="primary" isFullWidth to={CATALOGUE_ROUTES.study(catalogue.uuid)}>
+								Study
+							</Button>
+						) : null}
+						{showStudyHint ? (
+							<p className={styles.hint}>Add kanji, words or radicals to study this catalogue.</p>
+						) : null}
+						<Button
+							variant="outline"
+							isFullWidth
+							aria-pressed={isLiked}
+							disabled={likeMutation.isTogglingInstance(catalogue.id)}
+							onClick={handleLikeClick}
+						>
+							<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+							{`Like · ${likesCount}`}
+						</Button>
+						{isPdfExportSupported ? (
+							<Button variant="outline" isFullWidth isLoading={isPdfPending} onClick={handleDownloadPdf}>
+								<Icon size="sm" name="filePdfSolid" />
+								Download PDF
+							</Button>
+						) : null}
+						{pdfErrorMessage ? <Alert tone="danger">{pdfErrorMessage}</Alert> : null}
+						{isOwner ? (
+							<DetailActionGroup heading="Your catalogue">
+								<Button variant="outline" isFullWidth to={CATALOGUE_ROUTES.edit(catalogue.uuid)}>
+									<Icon size="sm" name="penSolid" />
+									Edit catalogue
+								</Button>
+								<Button
+									variant="outline"
+									isFullWidth
+									aria-controls={deleteModal.id}
+									aria-expanded={deleteModal.isOpen}
+									onClick={deleteModal.open}
+								>
+									<Icon size="sm" name="trashbinSolid" />
+									Delete catalogue
+								</Button>
+							</DetailActionGroup>
+						) : null}
+					</DetailActions>
+				}
+				extra={
+					catalogue.hashtags && catalogue.hashtags.length > 0 ? (
+						<section aria-labelledby={tagsHeadingId}>
+							<h2 id={tagsHeadingId} className={styles.railHeading}>
+								Tags
+							</h2>
+							<Cluster as="ul" gap="2xs" className={styles.tags}>
+								{catalogue.hashtags.map((tag) => (
+									<li key={tag.id}>
+										<Chip readonly title={tag.content}>
+											{tag.content}
+										</Chip>
+									</li>
+								))}
+							</Cluster>
+						</section>
+					) : null
+				}
+				after={
+					<section aria-labelledby={commentsHeadingId} className={styles.comments}>
+						<h2 id={commentsHeadingId} className={styles.sectionHeading}>
+							Comments
+						</h2>
+						<Suspense fallback={null}>
+							<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
+						</Suspense>
+					</section>
+				}
+			/>
 
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={catalogue.title}
-				onDelete={() => deleteMutation.mutate({ uuid: catalogue.uuid })}
+				onDelete={() =>
+					deleteMutation.mutate(catalogue.uuid, { onSuccess: () => navigate(CATALOGUE_ROUTES.list) })
+				}
 				isProcessing={deleteMutation.isPending}
 				deleteLabel="Yes, Delete Catalogue"
 				ariaLabel="Delete catalogue"
 			/>
-		</Container>
+		</>
 	);
 };
 
