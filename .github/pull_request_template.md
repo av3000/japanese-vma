@@ -16,6 +16,10 @@ Close the issues by hand after merge. CI fails if the body references no issue, 
 
 <!-- Size S/M/L · one-way or two-way door · blast radius · touches contract / migrations / auth / queues / none -->
 
+## Where to look first
+
+<!-- Large diffs only (more than 20 files): the two or three places a reviewer should start. Remove otherwise. -->
+
 ## Commits → issues
 
 <!-- Multi-slice PRs: commit SHA, issue, one-line what. Single-slice PRs: replace with "## Summary" and grouped bullets. -->
