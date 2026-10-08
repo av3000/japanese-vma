@@ -110,3 +110,23 @@
 		top: var(--spacing-lg);
 	}
 }
+
+/* Not found, deleted or private --------------------------------------------------------- */
+.unavailable {
+	display: grid;
+	justify-items: center;
+	gap: var(--spacing-md);
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: var(--detail-measure, 720px);
+	margin: var(--spacing-3xl) auto;
+	padding: var(--spacing-xl) var(--spacing-lg);
+	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border-radius: var(--border-radius-md);
+	text-align: center;
+}
+
+.unavailableTitle {
+	margin: 0;
+	font-size: var(--font-size-heading-4);
+	overflow-wrap: anywhere;
+}

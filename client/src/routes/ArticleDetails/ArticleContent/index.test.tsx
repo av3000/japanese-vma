@@ -5,7 +5,7 @@ import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
 import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import { downloadFile } from '@/helpers/downloadFile';
-import ArticleContent from './index';
+import ArticleContent, { articleEditHref } from './index';
 
 const fetchCataloguesForItemMock = vi.fn();
 const capturedModalProps: Array<{
@@ -31,6 +31,7 @@ const navigateMock = vi.fn();
 const likeMutateMock = vi.fn();
 let likeIsToggling = false;
 let isAuthenticatedMock = true;
+let currentUserMock: { id: number; isAdmin: boolean } = { id: 7, isAdmin: false };
 const capturedLikeButtonProps: Array<{ onClick?: () => void; disabled?: boolean; 'aria-pressed'?: boolean }> = [];
 
 vi.mock('react-router-dom', async () => {
@@ -90,6 +91,17 @@ vi.mock('@/api/articles/hooks/useArticleSubscription', () => ({
 	useArticleSubscription: vi.fn(),
 }));
 
+vi.mock('@/api/articles/readingStats', async () => {
+	const actual = await vi.importActual<typeof import('@/api/articles/readingStats')>('@/api/articles/readingStats');
+	return {
+		...actual,
+		useArticleReadingStats: (article: Parameters<typeof actual.useArticleReadingStats>[0]) => ({
+			kanji: actual.isProcessingRunning(article) ? null : actual.kanjiCountOf(article.jlpt_levels),
+			words: actual.isProcessingRunning(article) ? null : 5,
+		}),
+	};
+});
+
 vi.mock('@/api/articles/moderation', () => ({
 	useArticleStatusMutation: (
 		articleUuid: string,
@@ -116,7 +128,7 @@ vi.mock('@/api/generated/article/article', () => ({
 
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
-		user: { id: 7, isAdmin: false },
+		user: currentUserMock,
 		isAuthenticated: isAuthenticatedMock,
 	}),
 }));
@@ -178,20 +190,24 @@ vi.mock('@/components/shared/Button', () => ({
 		children,
 		onClick,
 		disabled,
+		to,
 		...rest
 	}: {
 		children: ReactNode;
 		onClick?: () => void;
 		disabled?: boolean;
+		to?: string;
 		'aria-label'?: string;
 		'aria-pressed'?: boolean;
 	}) => {
-		if (rest['aria-label']?.endsWith('this article')) {
+		if (rest['aria-pressed'] !== undefined) {
 			capturedLikeButtonProps.push({ onClick, disabled, 'aria-pressed': rest['aria-pressed'] });
 		}
 
+		if (to) return <a href={to}>{children}</a>;
+
 		return (
-			<button type="button" disabled={disabled}>
+			<button type="button" disabled={disabled} aria-pressed={rest['aria-pressed']}>
 				{children}
 			</button>
 		);
@@ -259,6 +275,7 @@ describe('ArticleContent', () => {
 		statusMutationIsPending = false;
 		likeIsToggling = false;
 		isAuthenticatedMock = true;
+		currentUserMock = { id: 7, isAdmin: false };
 		fetchCataloguesForItemMock.mockResolvedValue(cataloguesForItemLists);
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
@@ -302,7 +319,7 @@ describe('ArticleContent', () => {
 		expect(catalogueAddItem).not.toHaveBeenCalled();
 	});
 
-	it('shows the JLPT level bar in the meta area', () => {
+	it('shows the JLPT level bar in the reading facts', () => {
 		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
 		expect(html).toContain('aria-label="Mostly N3: N5 6, N4 3, N3 9, N2 2, uncommon 1"');
@@ -427,5 +444,79 @@ describe('ArticleContent', () => {
 		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
 		expect(capturedLikeButtonProps[0].disabled).toBe(true);
+	});
+
+	it('lays the page out as the Reading Room: one h1, the reading facts and a named rail', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toContain('aria-label="About this article"');
+		expect(html).toMatch(/In this reading<\/h2>/);
+		expect(html).toMatch(/<dt[^>]*>Kanji<\/dt><dd[^>]*>21<\/dd>/);
+		expect(html).toMatch(/<dt[^>]*>Words<\/dt><dd[^>]*>5<\/dd>/);
+		expect(html).toMatch(/<dt[^>]*>Characters<\/dt><dd[^>]*>4<\/dd>/);
+		expect(html).toMatch(/Comments<\/h2>/);
+		expect(html).not.toContain('unsplash');
+	});
+
+	it('counts nothing while processing is still running', () => {
+		const article = createArticle();
+		article.processing_status = { type: 'article_content_processing', status: 'processing' };
+
+		const html = renderToStaticMarkup(<ArticleContent article={article} />);
+
+		expect(html.match(/Counting…/g)).toHaveLength(2);
+		expect(html).not.toContain('role="img"');
+	});
+
+	it('gives the owner Edit (still the ?edit=1 modal) and Delete, and the visibility cue', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(articleEditHref('article-uuid')).toBe('/articles/article-uuid?edit=1');
+		expect(html).toContain('href="/articles/article-uuid?edit=1"');
+		expect(html).toContain('Your article');
+		expect(html).toContain('Delete');
+		expect(html).toContain('Public');
+		expect(html).not.toContain('Moderation');
+	});
+
+	it('shows a reader neither owner controls nor the visibility and status cues', () => {
+		currentUserMock = { id: 99, isAdmin: false };
+
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html).not.toContain('Your article');
+		expect(html).not.toContain('?edit=1');
+		expect(html).not.toContain('Public');
+		expect(html).not.toContain('Article status');
+	});
+
+	it('keeps Review for admins until moderation moves to the admin panel', () => {
+		currentUserMock = { id: 99, isAdmin: true };
+
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html).toContain('Moderation');
+		expect(html).toContain('>Review</button>');
+		expect(html).toContain('Article status');
+		expect(html).not.toContain('Your article');
+	});
+
+	it('labels the save and PDF actions with visible text', () => {
+		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		expect(html).toContain('Save to a catalogue');
+		expect(html).toContain('Kanji &amp; words PDF');
+		expect(html).toContain('Like · 3');
+	});
+
+	it('links a written article to its source by hostname', () => {
+		const article = createArticle();
+		article.source_link = 'https://www.example.com/news/12345';
+
+		expect(renderToStaticMarkup(<ArticleContent article={article} />)).toMatch(/Source:.*example\.com/);
+
+		article.source_link = 'not a url';
+		expect(renderToStaticMarkup(<ArticleContent article={article} />)).not.toContain('Source:');
 	});
 });

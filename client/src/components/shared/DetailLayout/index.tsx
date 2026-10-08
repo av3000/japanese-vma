@@ -93,3 +93,5 @@ export const DetailLayout: React.FC<DetailLayoutProps> = ({
 };
 
 export default DetailLayout;
+
+export { DetailUnavailable, unavailableMessage } from './DetailUnavailable';
