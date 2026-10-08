@@ -1,0 +1,43 @@
+name: Agent Skills
+
+# .claude/skills/ is canonical; .codex/skills/ is generated from it by
+# scripts/sync-agent-skills.sh. This workflow lints every skill and fails when
+# the committed mirror differs from what the script produces.
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+    paths:
+      - ".claude/skills/**"
+      - ".codex/skills/**"
+      - "docs/agents/workflow.md"
+      - "scripts/sync-agent-skills.sh"
+      - "scripts/lint-agent-skills.mjs"
+      - ".github/workflows/agent-skills.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  skills:
+    name: Lint skills and check the Codex mirror
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint skills
+        run: node scripts/lint-agent-skills.mjs
+
+      - name: Check the Codex mirror
+        run: |
+          bash scripts/sync-agent-skills.sh
+          drift="$(git status --porcelain -- .codex/skills)"
+          if [ -n "$drift" ]; then
+            echo "::error::.codex/skills is out of date. Run 'bash scripts/sync-agent-skills.sh' and commit the result."
+            echo "Drifted paths:"
+            echo "$drift"
+            exit 1
+          fi
+          echo "The Codex mirror matches .claude/skills."
