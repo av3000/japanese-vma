@@ -126,11 +126,12 @@ export const DialogModal = (({
 				<Button
 					className={styles['close-floating']}
 					variant="ghost"
+					size="sm"
 					hasOnlyIcon
 					aria-label={closeLabel}
 					onClick={onClose}
 				>
-					<Icon name="removeSolid" size="md" />
+					<Icon name="removeSolid" size="sm" />
 				</Button>
 				{content}
 			</div>

@@ -5,8 +5,12 @@
 	padding: 0;
 	border: none;
 	background: transparent;
-	width: 100vw;
-	height: 100vh;
+	/* An open modal <dialog> gets a UA max-width/max-height of about 100% - 38px, which shrank it
+	   and pinned the panel to the left on narrow screens; it fills the viewport instead. */
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	max-height: none;
 	display: grid;
 	place-items: center;
 	z-index: var(--z-index-modal);
@@ -122,8 +126,8 @@
 
 .close-floating {
 	position: absolute;
-	top: var(--spacing-md);
-	right: var(--spacing-md);
+	top: var(--spacing-sm);
+	right: var(--spacing-sm);
 	z-index: 2;
 }
 
@@ -143,9 +147,25 @@
 	--modal-width: 920px;
 }
 
-/* Wide enough for a dictionary table (the words table needs about 923px plus padding). */
+/*
+ * Wide enough for a dictionary table (the words table needs about 923px plus padding). Below
+ * 768px it is a full-screen sheet, like the Drawer, so a stacked table gets the whole screen.
+ */
 .size-xl {
 	--modal-width: 1120px;
+}
+
+@media only screen and (max-width: 767px) {
+	.panel.size-xl {
+		width: 100%;
+		max-width: 100%;
+		height: 100%;
+		height: 100dvh;
+		max-height: 100%;
+		max-height: 100dvh;
+		border-radius: 0;
+		transform: none;
+	}
 }
 
 .size-fullscreen {
