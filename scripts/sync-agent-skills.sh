@@ -21,8 +21,6 @@ dst="$root/.codex/skills"
 CODEX_ONLY=(
   backend-architecture-boundaries
   react-best-practices
-  saved-list-to-catalogue-v1-migration
-  scramble-orval-contract-debugging
 )
 
 is_codex_only() {
