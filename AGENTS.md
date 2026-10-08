@@ -101,6 +101,8 @@ When touching files under either subtree, treat the scoped AGENTS file there as 
 
 ## 7) Agent Workflow
 
+The full map (which skill to use when, the other ways in, context hygiene) is `docs/agents/workflow.md`. The rules:
+
 - **Path:** issue with numbered acceptance criteria (`write-issue`) → build one slice at a time (`tdd`) → self-review (`review-branch`) → PR into `develop` (`create-pull-request`) → optional review record on the PR (`post-review-to-pr`) → answer review comments (`address-pr-review`).
 - **Acceptance criteria are mandatory.** Every PR references at least one issue (`Refs #N`), and every referenced issue has an `## Acceptance criteria` checklist. CI enforces both.
 - **Review findings** are labelled `[Type · Criticality]`:

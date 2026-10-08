@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and planning tickets for this repo live as GitHub issues in `av3000/japanese-vma`.
+Issues and planning tickets for this repo live as GitHub issues in `av3000/japanese-vma`. How issues fit into the whole agent workflow (issue → build → review → PR) is in `docs/agents/workflow.md`.
 
 ## Conventions
 

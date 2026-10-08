@@ -9,6 +9,10 @@
 //   - a SKILL.md of at most 500 lines
 //   - working relative links: Markdown links, and backticked paths under
 //     references/, rules/, templates/, scripts/, assets/ or agents/
+//
+// And the workflow guide (docs/agents/workflow.md) must list every skill in
+// its "skills at a glance" table, and every row whose source is "repo" must
+// name skills that exist.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,6 +99,36 @@ for (const skill of skills) {
 	for (const target of new Set(linkedPaths(text))) {
 		if (!existsSync(join(skillDir, target))) {
 			fail(skill, `links to ${target}, which does not exist`);
+		}
+	}
+}
+
+const guideFile = join(root, 'docs', 'agents', 'workflow.md');
+const guide = 'docs/agents/workflow.md';
+if (!existsSync(guideFile)) {
+	errors.push(`${guide}: missing`);
+} else {
+	const lines = readFileSync(guideFile, 'utf8').split(/\r?\n/);
+	const start = lines.findIndex((line) => /^##\s+The skills at a glance/i.test(line));
+	const rows = [];
+	if (start === -1) {
+		errors.push(`${guide}: no "## The skills at a glance" section`);
+	} else {
+		for (const line of lines.slice(start + 1)) {
+			if (/^#{1,6}\s/.test(line)) break;
+			if (!line.startsWith('|') || /^\|\s*-/.test(line) || /^\|\s*Skill\s*\|/i.test(line)) continue;
+			const [names, source] = line.split('|').slice(1).map((cell) => cell.trim());
+			rows.push({ names: [...names.matchAll(/`\/?([^`]+)`/g)].map(([, name]) => name), source });
+		}
+	}
+
+	const listed = new Set(rows.flatMap((row) => row.names));
+	for (const skill of skills) {
+		if (!listed.has(skill)) errors.push(`${skill}: not listed in the ${guide} skills table`);
+	}
+	for (const row of rows.filter((row) => /^repo$/i.test(row.source))) {
+		for (const name of row.names) {
+			if (!skills.includes(name)) errors.push(`${guide}: names repo skill "${name}", which does not exist in .claude/skills`);
 		}
 	}
 }
