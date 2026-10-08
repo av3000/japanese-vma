@@ -1,6 +1,8 @@
 # Triage Labels
 
-The skills speak in terms of five canonical triage roles. This file maps those roles to the label strings expected for this repo's GitHub tracker.
+The skills speak in terms of five canonical triage roles and two categories. This file maps them to this repo's GitHub labels.
+
+## State (exactly one per issue)
 
 | Skill role | Tracker label | Meaning |
 | --- | --- | --- |
@@ -10,4 +12,15 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | `ready-for-human` | `ready-for-human` | Requires human implementation |
 | `wontfix` | `wontfix` | Will not be actioned |
 
-Use these defaults unless the GitHub repository adopts a different label vocabulary later.
+`ready-for-agent` requires an `## Acceptance criteria` checklist and at least one "Out" line under Scope. Without both, use `needs-info` or `needs-triage`.
+
+## Category (exactly one per issue)
+
+| Category | Tracker label | Meaning |
+| --- | --- | --- |
+| `bug` | `bug` | Existing behaviour is wrong |
+| `enhancement` | `enhancement` | New or changed behaviour |
+
+Area labels (`frontend`, `backend`, `ci`, `documentation`, `epic`, …) are added on top, as many as apply.
+
+Review follow-ups start as `needs-triage`.

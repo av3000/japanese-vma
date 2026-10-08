@@ -106,9 +106,9 @@ This file defines **backend-specific** guidance for changes under `processor-api
 
 ## 8) AI Guidance
 
--   Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
--   For legacy-to-v1 endpoint migrations, prefer `.ai/skills/legacy-to-v1-migration/` when the agent supports repository skills.
--   Keep this file as the source of truth for backend constraints; the skill should reinforce these rules, not override them.
+-   Always-on Laravel conventions live in `processor-api/.ai/guidelines/`. Laravel Boost copies them into the generated block below, so edit the source files rather than the block.
+-   Repo-wide skills live in the root `.claude/skills/`, mirrored to `.codex/skills/`. The agent workflow (issues, review, PRs, commit shape) is in the root `AGENTS.md` §7.
+-   Keep this file as the source of truth for backend constraints. Rules here win over Boost-installed vendor skills (`laravel-best-practices`, `configuring-horizon`) and over the generic guidance in the generated block.
 
 <laravel-boost-guidelines>
 === .ai/backend-response-and-errors rules ===
@@ -179,7 +179,7 @@ When migrating backend endpoints:
 - Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
-- Use `.ai/guidelines/` for always-on conventions and `.ai/skills/` for deeper, task-specific workflows.
+- Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.
 
 === foundation rules ===
 
