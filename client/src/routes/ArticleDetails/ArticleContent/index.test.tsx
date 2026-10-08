@@ -102,6 +102,13 @@ vi.mock('@/api/articles/readingStats', async () => {
 	};
 });
 
+const deleteMutateMock = vi.fn();
+const capturedDeleteModalProps: Array<{ onDelete: () => void }> = [];
+
+vi.mock('@/api/articles/hooks/useDeleteArticleMutation', () => ({
+	useDeleteArticleMutation: () => ({ mutate: deleteMutateMock, isPending: false }),
+}));
+
 vi.mock('@/api/articles/moderation', () => ({
 	useArticleStatusMutation: (
 		articleUuid: string,
@@ -156,7 +163,10 @@ vi.mock('@/components/features/catalogues/CatalogueBookmarkModal', () => ({
 }));
 
 vi.mock('@/components/features/DeleteInstanceModal', () => ({
-	DeleteInstanceModal: () => <div>Delete modal</div>,
+	DeleteInstanceModal: (props: { onDelete: () => void }) => {
+		capturedDeleteModalProps.push(props);
+		return <div>Delete modal</div>;
+	},
 }));
 
 vi.mock('@/components/features/ProcessingStatusAlert', () => ({
@@ -227,10 +237,6 @@ vi.mock('@/components/shared/StatusPill', () => ({
 	StatusPill: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
-vi.mock('@/components/ui/badge', () => ({
-	Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-}));
-
 vi.mock('../ArticleEditModal', () => ({
 	default: () => <div>Article edit modal</div>,
 }));
@@ -272,6 +278,7 @@ describe('ArticleContent', () => {
 		capturedReviewModalProps.length = 0;
 		capturedStatusMutationArgs.length = 0;
 		capturedLikeButtonProps.length = 0;
+		capturedDeleteModalProps.length = 0;
 		statusMutationIsPending = false;
 		likeIsToggling = false;
 		isAuthenticatedMock = true;
@@ -518,5 +525,15 @@ describe('ArticleContent', () => {
 
 		article.source_link = 'not a url';
 		expect(renderToStaticMarkup(<ArticleContent article={article} />)).not.toContain('Source:');
+	});
+
+	it('deletes through the shared article delete mutation, then returns to the list', () => {
+		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
+
+		capturedDeleteModalProps[0].onDelete();
+
+		expect(deleteMutateMock).toHaveBeenCalledWith('article-uuid', expect.any(Object));
+		deleteMutateMock.mock.calls[0][1].onSuccess();
+		expect(navigateMock).toHaveBeenCalledWith('/articles');
 	});
 });

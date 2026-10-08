@@ -12,13 +12,13 @@
 }
 
 .sm {
-	width: 24px;
-	height: 24px;
+	width: var(--size-xl);
+	height: var(--size-xl);
 	font-size: var(--font-size-body-sm);
 }
 
 .md {
-	width: 32px;
-	height: 32px;
+	width: var(--size-2xl);
+	height: var(--size-2xl);
 	font-size: var(--font-size-body-md);
 }

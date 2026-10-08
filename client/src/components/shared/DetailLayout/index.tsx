@@ -17,6 +17,12 @@ export interface DetailLayoutProps {
 	after?: React.ReactNode;
 	/** Accessible name of the rail, e.g. "About this article". */
 	railLabel: string;
+	/**
+	 * `reading` (default): a 720px column with the rail beside it, for text.
+	 * `wide`: for list-like pages whose `main` is a table. From 1024px the rail becomes one band
+	 * under the header (facts, actions and extras side by side) and `main` takes the full width.
+	 */
+	variant?: 'reading' | 'wide';
 	className?: string;
 }
 
@@ -65,6 +71,7 @@ export const DetailLayout: React.FC<DetailLayoutProps> = ({
 	extra,
 	after,
 	railLabel,
+	variant = 'reading',
 	className,
 }) => {
 	const railRef = React.useRef<HTMLElement | null>(null);
@@ -72,7 +79,7 @@ export const DetailLayout: React.FC<DetailLayoutProps> = ({
 	const hasRail = Boolean(facts || actions || extra);
 
 	return (
-		<div className={classNames(styles.layout, className)}>
+		<div className={classNames(styles.layout, variant === 'wide' && styles.wide, className)}>
 			{header ? <div className={styles.header}>{header}</div> : null}
 			<div className={styles.main}>{main}</div>
 			{hasRail ? (
@@ -80,7 +87,7 @@ export const DetailLayout: React.FC<DetailLayoutProps> = ({
 					ref={railRef}
 					className={styles.rail}
 					aria-label={railLabel}
-					data-sticky={railFits ? 'true' : undefined}
+					data-sticky={variant === 'reading' && railFits ? 'true' : undefined}
 				>
 					{facts ? <div className={styles.facts}>{facts}</div> : null}
 					{actions ? <div className={styles.actions}>{actions}</div> : null}

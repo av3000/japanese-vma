@@ -1,11 +1,11 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
 import { useArticleStatusMutation } from '@/api/articles/moderation';
 import { isProcessingRunning, useArticleReadingStats } from '@/api/articles/readingStats';
-import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
+import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
@@ -81,10 +81,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		onError: () => setTempStatus(article.status as ArticleStatusValue),
 	});
 
-	const deleteMutation = useMutation({
-		mutationFn: () => articleDestroy(article.uuid),
-		onSuccess: () => navigate('/articles'),
-	});
+	const deleteMutation = useDeleteArticleMutation();
 
 	const closeEditModal = () => {
 		const next = new URLSearchParams(searchParams);
@@ -316,7 +313,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={article.title_jp}
-				onDelete={() => deleteMutation.mutate()}
+				onDelete={() => deleteMutation.mutate(article.uuid, { onSuccess: () => navigate('/articles') })}
 				isProcessing={deleteMutation.isPending}
 			/>
 

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, within } from '@storybook/test';
+import { PUBLICITY } from '@/api/publicity';
 import { VisibilityCue } from '@/components/shared/VisibilityCue';
 import { Byline } from './';
 
@@ -49,8 +50,8 @@ export const WithVisibilityCues: Story = {
 		<div style={{ display: 'grid', gap: 'var(--spacing-xs)' }}>
 			<Byline {...args} />
 			<div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
-				<VisibilityCue publicity={1} />
-				<VisibilityCue publicity={0} />
+				<VisibilityCue publicity={PUBLICITY.PUBLIC} />
+				<VisibilityCue publicity={PUBLICITY.PRIVATE} />
 			</div>
 		</div>
 	),

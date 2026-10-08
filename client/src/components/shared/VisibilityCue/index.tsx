@@ -1,5 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
+import type { PublicityStatus } from '@/api/generated/model/publicityStatus';
+import { isPublic } from '@/api/publicity';
 import { Icon, type IconName } from '@/components/shared/Icon';
 import styles from './VisibilityCue.module.css';
 
@@ -17,15 +19,15 @@ const VISIBILITY_CUES: Record<Visibility, VisibilityCueContent> = {
 };
 
 /**
- * Maps the API's numeric `publicity` (1 public, 0 private, as on articles and catalogues) to the
- * cue's content, so no page branches on the number. Anything but 1 reads as private: showing a
- * private item as public is the mistake worth avoiding.
+ * The cue's content for the API's `publicity`, read through `isPublic` (#497) so no page branches
+ * on the number. Anything not explicitly public reads as private: showing a private item as
+ * public is the mistake worth avoiding.
  */
-export const visibilityCue = (publicity: number | boolean | null | undefined): VisibilityCueContent =>
-	Number(publicity) === 1 ? VISIBILITY_CUES.public : VISIBILITY_CUES.private;
+export const visibilityCue = (publicity: PublicityStatus | null | undefined): VisibilityCueContent =>
+	publicity != null && isPublic(publicity) ? VISIBILITY_CUES.public : VISIBILITY_CUES.private;
 
 export interface VisibilityCueProps {
-	publicity: number | boolean | null | undefined;
+	publicity: PublicityStatus | null | undefined;
 	className?: string;
 }
 

@@ -93,3 +93,21 @@ export const MainOnly: Story = {
 		await expect(within(canvasElement).queryByRole('complementary')).not.toBeInTheDocument();
 	},
 };
+
+/** List-like pages: the rail is a band under the header and `main` takes the full width from 1024px. */
+export const Wide: Story = {
+	args: {
+		variant: 'wide',
+		railLabel: 'About this catalogue',
+		main: (
+			<div style={{ border: '1px dashed var(--color-neutral-400)', minWidth: 920, padding: 'var(--spacing-sm)' }}>
+				A 920px table
+			</div>
+		),
+	},
+	play: async ({ canvasElement }) => {
+		const rail = within(canvasElement).getByRole('complementary', { name: 'About this catalogue' });
+
+		await expect(rail).not.toHaveAttribute('data-sticky', 'true');
+	},
+};

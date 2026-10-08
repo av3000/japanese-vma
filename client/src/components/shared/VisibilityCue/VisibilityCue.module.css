@@ -9,6 +9,6 @@
 	color: var(--color-neutral-700);
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-semibold);
-	line-height: 1.4;
+	line-height: var(--line-height-lg);
 	white-space: nowrap;
 }

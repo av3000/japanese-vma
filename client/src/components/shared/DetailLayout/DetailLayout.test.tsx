@@ -57,6 +57,15 @@ describe('DetailLayout', () => {
 		expect(html).not.toContain('<aside');
 	});
 
+	it('marks the wide variant for list-like pages and leaves the reading one unmarked', () => {
+		const reading = renderToStaticMarkup(<DetailLayout {...slots} railLabel="About this article" />);
+		const wide = renderToStaticMarkup(<DetailLayout {...slots} railLabel="About this catalogue" variant="wide" />);
+		const rootClass = (html: string) => html.match(/^<div class="([^"]+)"/)?.[1] ?? '';
+
+		expect(rootClass(wide).split(' ')).toHaveLength(rootClass(reading).split(' ').length + 1);
+		expect(count(wide, 'data-slot="facts"')).toBe(1);
+	});
+
 	it('makes the rail sticky only while it fits the viewport', async () => {
 		vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
 		const height = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);

@@ -118,6 +118,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	return (
 		<>
 			<DetailLayout
+				variant="wide"
 				railLabel="About this catalogue"
 				header={
 					<div className={styles.header}>

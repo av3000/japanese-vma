@@ -6,9 +6,9 @@
  * technology reads and what Tab follows at every width.
  */
 .layout {
-	--detail-measure: 720px;
-	--detail-rail: 280px;
-	--detail-gap: 56px;
+	--detail-measure: var(--measure-reading);
+	--detail-rail: var(--rail-width);
+	--detail-gap: var(--size-5xl);
 
 	display: flex;
 	flex-direction: column;
@@ -111,13 +111,39 @@
 	}
 }
 
+/*
+ * Wide: list-like pages (Catalogue detail) whose main column is a table too wide for the measure.
+ * From 1024px the rail is a band under the header, its three slots side by side, never sticky.
+ */
+.wide .main {
+	max-width: none;
+}
+
+@media (min-width: 1024px) {
+	.wide {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto;
+		grid-template-areas:
+			'header'
+			'rail'
+			'main'
+			'after';
+	}
+
+	.wide .rail {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		align-items: start;
+	}
+}
+
 /* Not found, deleted or private --------------------------------------------------------- */
 .unavailable {
 	display: grid;
 	justify-items: center;
 	gap: var(--spacing-md);
 	width: calc(100% - var(--spacing-md) * 2);
-	max-width: var(--detail-measure, 720px);
+	max-width: var(--measure-reading);
 	margin: var(--spacing-3xl) auto;
 	padding: var(--spacing-xl) var(--spacing-lg);
 	border: var(--border-size-sm) dashed var(--color-neutral-400);
