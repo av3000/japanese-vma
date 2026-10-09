@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { kanjiIndex } from '@/api/generated/kanji/kanji';
 import { wordIndex } from '@/api/generated/word/word';
 import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
+import { choose, submitForm, typeInto } from '@/test/formEvents';
 import { renderWithAct } from '@/test/renderWithAct';
 import { ArticleAttachments, PREVIEW_KANJI } from './index';
 
@@ -34,16 +35,27 @@ const page = <Row,>(items: Row[], pageNumber: number, total: number, perPage = 2
 	},
 });
 
-/** An index of `total` rows built from fixtures, honouring `page` and `per_page`. */
+/** An index of `total` rows built from fixtures, honouring `page`, `per_page` and a keyword (3 matches). */
 const serve =
 	<Row extends { id: number; uuid: string }>(fixtures: Row[], total: number) =>
-	async ({ page: pageNumber = 1, per_page = 20 }: { page?: number; per_page?: number }) =>
-		page(
-			repeatRows(fixtures, Math.max(0, Math.min(per_page, total - (pageNumber - 1) * per_page))),
+	async ({
+		page: pageNumber = 1,
+		per_page = 20,
+		keyword,
+	}: {
+		page?: number;
+		per_page?: number;
+		keyword?: string;
+	}) => {
+		const size = keyword ? 3 : total;
+
+		return page(
+			repeatRows(fixtures, Math.max(0, Math.min(per_page, size - (pageNumber - 1) * per_page))),
 			pageNumber,
-			total,
+			size,
 			per_page,
 		);
+	};
 
 const renderAttachments = async (props: { showSave?: boolean; isProcessing?: boolean } = {}) => {
 	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -131,7 +143,7 @@ describe('ArticleAttachments', () => {
 		await unmount();
 	});
 
-	it('opens the full list in a modal with numbered pages and Load all', async () => {
+	it('opens the full list in a modal with numbered pages, a page size and a search', async () => {
 		vi.mocked(kanjiIndex).mockImplementation(serve(kanjiRows, 171) as never);
 		vi.mocked(wordIndex).mockImplementation(serve(wordRows, 3) as never);
 
@@ -150,12 +162,25 @@ describe('ArticleAttachments', () => {
 		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing 21–40 of 171 kanji'));
 		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, page: 2 }, undefined, expect.anything());
 
-		await flush(() => button(dialog(), 'Load all 171 kanji')?.click());
-		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing all 171 kanji'));
-		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, per_page: 100, page: 2 }, undefined, expect.anything());
-		expect(dialog().querySelectorAll('tbody tr')).toHaveLength(171);
-		expect(dialog().querySelector('nav[aria-label="Kanji pages"]')).toBeNull();
-		expect(button(dialog(), 'Show pages')).toBeDefined();
+		expect(button(dialog(), /^Load all/)).toBeUndefined();
+
+		await flush(() => choose(dialog().querySelector('select') as HTMLSelectElement, '50'));
+		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing 1–50 of 171 kanji'));
+		expect(kanjiIndex).toHaveBeenLastCalledWith(
+			{ ...FILTERS, per_page: 50, page: 1 },
+			undefined,
+			expect.anything(),
+		);
+
+		const form = dialog().querySelector('form[role="search"]') as HTMLFormElement;
+		await flush(() => typeInto(form.querySelector('input') as HTMLInputElement, ' water '));
+		await flush(() => submitForm(form));
+		await vi.waitFor(() => expect(dialog().textContent).toContain('Showing 1–3 of 3 kanji'));
+		expect(kanjiIndex).toHaveBeenLastCalledWith(
+			{ ...FILTERS, per_page: 50, page: 1, keyword: 'water' },
+			undefined,
+			expect.anything(),
+		);
 
 		await unmount();
 	});

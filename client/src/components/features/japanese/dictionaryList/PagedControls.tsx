@@ -1,18 +1,14 @@
 import * as React from 'react';
 import type { PagedIndex } from '@/api/pagedIndex';
-import { Button } from '@/components/shared/Button';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { Pagination } from '@/components/shared/Pagination';
 import styles from './DictionaryList.module.css';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
-/** "Showing 21–40 of 171", or "Showing all 171" once every page is loaded. */
-export const pagedSummary = (
-	list: Pick<PagedIndex<unknown>, 'isAll' | 'page' | 'perPage' | 'rows' | 'total'>,
-	noun: string,
-) => {
-	if (list.total === 0) return null;
-	if (list.isAll) return `Showing all ${numberFormat.format(list.total)} ${noun}`;
+/** "Showing 21–40 of 171 kanji". */
+export const pagedSummary = (list: Pick<PagedIndex<unknown>, 'page' | 'perPage' | 'rows' | 'total'>, noun: string) => {
+	if (list.total === 0 || list.rows.length === 0) return null;
 
 	const first = (list.page - 1) * list.perPage + 1;
 	const last = first + list.rows.length - 1;
@@ -28,42 +24,57 @@ export interface PagedControlsProps {
 	label: string;
 }
 
+/** Under a paged table: what is shown, and the numbered pages. A failure says so in plain words. */
+export const PagedControls: React.FC<PagedControlsProps> = ({ list, noun, label }) => (
+	<div className={styles.pagedControls}>
+		<p className={styles.pagedStatus} role="status">
+			{list.isError ? `The ${noun} could not be loaded. Try again in a moment.` : pagedSummary(list, noun)}
+		</p>
+		<Pagination page={list.page} pageCount={list.pageCount} onPageChange={list.setPage} label={label} />
+	</div>
+);
+
+export interface PagedListFiltersProps {
+	list: PagedIndex<unknown>;
+	/** Plural noun, e.g. "kanji". */
+	noun: string;
+	/** Placeholder of the search input, e.g. "Kanji, reading or meaning". */
+	placeholder: string;
+}
+
 /**
- * The controls under a paged table: numbered pages and "Load all", or, once everything is loaded,
- * "Show pages". Loading all reports progress in a polite status; a failure says so in plain words.
+ * Above a paged table: a keyword search, applied on Enter or the button, and the page size. Both go
+ * back to page 1. The typed draft is local; the applied keyword lives in the list.
  */
-export const PagedControls: React.FC<PagedControlsProps> = ({ list, noun, label }) => {
-	const summary = pagedSummary(list, noun);
+export const PagedListFilters: React.FC<PagedListFiltersProps> = ({ list, noun, placeholder }) => {
+	const [draft, setDraft] = React.useState(list.keyword);
+	const sizes = list.pageSizes.map((size) => ({ value: String(size), label: `${size} per page` }));
 
 	return (
-		<div className={styles.pagedControls}>
-			<p className={styles.pagedStatus} role="status">
-				{list.isError
-					? `The ${noun} could not be loaded. Try again in a moment.`
-					: list.progress
-						? `Loading ${numberFormat.format(list.progress.loaded)} of ${numberFormat.format(list.progress.total)} ${noun}…`
-						: summary}
-			</p>
-			{list.isAll ? (
-				<Button variant="outline" size="sm" onClick={list.showPages} disabled={list.isFetching}>
-					Show pages
-				</Button>
-			) : (
-				<>
-					<Pagination
-						page={list.page}
-						pageCount={list.pageCount}
-						onPageChange={list.setPage}
-						label={label}
-					/>
-					{list.pageCount > 1 ? (
-						<Button variant="outline" size="sm" onClick={list.loadAll}>
-							{`Load all ${numberFormat.format(list.total)} ${noun}`}
-						</Button>
-					) : null}
-				</>
-			)}
-		</div>
+		<FilterBar onSubmit={() => list.setKeyword(draft)} label={`Search ${noun}`}>
+			<FilterBar.Search
+				label={`Search ${noun}`}
+				placeholder={placeholder}
+				name="keyword"
+				value={draft}
+				onChange={setDraft}
+			/>
+			<FilterBar.Filters>
+				<FilterBar.Select
+					label="Per page"
+					value={String(list.perPage)}
+					options={sizes}
+					onChange={(value) => list.setPerPage(Number(value))}
+				/>
+			</FilterBar.Filters>
+			<FilterBar.Reset
+				active={list.keyword !== ''}
+				onClick={() => {
+					setDraft('');
+					list.setKeyword('');
+				}}
+			/>
+		</FilterBar>
 	);
 };
 

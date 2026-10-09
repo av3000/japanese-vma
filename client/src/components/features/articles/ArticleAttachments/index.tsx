@@ -14,7 +14,12 @@ import type { WordResource } from '@/api/generated/model/wordResource';
 import { getWordIndexQueryKey } from '@/api/generated/word/word';
 import { updateCachedRows } from '@/api/pagedIndex';
 import { KanjiTable } from '@/components/features/japanese/Kanji/KanjiTable';
-import { PagedControls, presentText, presentValues } from '@/components/features/japanese/dictionaryList';
+import {
+	PagedControls,
+	PagedListFilters,
+	presentText,
+	presentValues,
+} from '@/components/features/japanese/dictionaryList';
 import { WordTable } from '@/components/features/japanese/word/WordTable';
 import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
@@ -23,7 +28,7 @@ import styles from './ArticleAttachments.module.css';
 
 /**
  * The kanji and words processing found in an article: a short preview under the text, and the full
- * lists in modals with numbered pages and "Load all" (#522).
+ * lists in modals with numbered pages, a page size and a keyword search (#522).
  *
  * Both lists are the ordinary kanji and word indexes filtered by `article_uuid` (#268), not an
  * article-scoped endpoint. The preview, the modal's first page and the rail's word count read the
@@ -101,11 +106,16 @@ const KanjiListModal: React.FC<{ articleUuid: string; showSave: boolean; emptyHi
 
 	return (
 		<>
+			<PagedListFilters list={list} noun="kanji" placeholder="Kanji, reading or meaning" />
 			<KanjiTable
 				kanjis={list.rows}
 				loading={list.isPending}
 				showSave={showSave}
-				empty={{ title: 'No kanji have been attached to this article yet.', hint: emptyHint }}
+				empty={
+					list.keyword
+						? { title: `No kanji match “${list.keyword}”.`, hint: 'Try a reading or an English meaning.' }
+						: { title: 'No kanji have been attached to this article yet.', hint: emptyHint }
+				}
 				onBookmarkStateChange={writeSaveState}
 			/>
 			<PagedControls list={list} noun="kanji" label="Kanji pages" />
@@ -124,11 +134,16 @@ const WordListModal: React.FC<{ articleUuid: string; showSave: boolean; emptyHin
 
 	return (
 		<>
+			<PagedListFilters list={list} noun="words" placeholder="Word, reading or meaning" />
 			<WordTable
 				words={list.rows}
 				loading={list.isPending}
 				showSave={showSave}
-				empty={{ title: 'No words have been attached to this article yet.', hint: emptyHint }}
+				empty={
+					list.keyword
+						? { title: `No words match “${list.keyword}”.`, hint: 'Try a reading or an English meaning.' }
+						: { title: 'No words have been attached to this article yet.', hint: emptyHint }
+				}
 				onBookmarkStateChange={writeSaveState}
 			/>
 			<PagedControls list={list} noun="words" label="Word pages" />

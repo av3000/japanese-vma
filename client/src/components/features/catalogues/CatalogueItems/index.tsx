@@ -16,7 +16,7 @@ import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerC
 import type { WordResource } from '@/api/generated/model/wordResource';
 import { updateCachedRows, type PagedIndex } from '@/api/pagedIndex';
 import { KanjiTable } from '@/components/features/japanese/Kanji/KanjiTable';
-import { PagedControls } from '@/components/features/japanese/dictionaryList';
+import { PagedControls, PagedListFilters } from '@/components/features/japanese/dictionaryList';
 import { RadicalTable } from '@/components/features/japanese/radical/RadicalTable';
 import { SentenceTable } from '@/components/features/japanese/sentence/SentenceTable';
 import { WordTable } from '@/components/features/japanese/word/WordTable';
@@ -77,26 +77,41 @@ const PAGE_LABELS: Record<string, string> = {
 	sentences: 'Sentence pages',
 };
 
-/** The paged controls under a table, or a user-written error in place of a list that failed. */
+const SEARCH_PLACEHOLDERS: Record<string, string> = {
+	kanji: 'Kanji, reading or meaning',
+	words: 'Word, reading or meaning',
+	radicals: 'Radical, reading or meaning',
+	sentences: 'Words in the sentence',
+};
+
+/**
+ * Search and page size above a table, the paged controls under it, or a user-written error in place
+ * of a list that failed.
+ */
 const ItemsList: React.FC<{
 	list: PagedIndex<unknown>;
 	noun: string;
 	children: React.ReactNode;
 }> = ({ list, noun, children }) =>
-	list.isError && list.rows.length === 0 ? (
+	list.isError && list.rows.length === 0 && !list.keyword ? (
 		<p className={styles.message} role="status">
 			{LOAD_ERROR}
 		</p>
 	) : (
 		<>
+			<PagedListFilters list={list} noun={noun} placeholder={SEARCH_PLACEHOLDERS[noun] ?? 'Search'} />
 			{children}
 			<PagedControls list={list} noun={noun} label={PAGE_LABELS[noun] ?? 'Pages'} />
 		</>
 	);
 
+/** The empty panel: no items at all, or none matching the search. */
+const emptyFor = (list: PagedIndex<unknown>, noun: string, empty: DataTableEmpty): DataTableEmpty =>
+	list.keyword ? { title: `No ${noun} match “${list.keyword}”.`, hint: 'Try another search.' } : empty;
+
 /**
  * A catalogue's items: kanji, words, radicals and sentences as the dictionary tables, 25 to a
- * numbered page with "Load all", and articles as a compact list. The owner can switch on "Manage items" to get a Remove button
+ * numbered page with a page size and a search, and articles as a compact list. The owner can switch on "Manage items" to get a Remove button
  * on every row; each removal is confirmed first.
  */
 export const CatalogueItems: React.FC<CatalogueItemsProps> = ({
@@ -294,7 +309,7 @@ const KanjiItems: React.FC<FamilyItemsProps<KanjiResource> & { showSave: boolean
 				kanjis={list.rows}
 				loading={list.isPending}
 				showSave={showSave}
-				empty={empty}
+				empty={emptyFor(list, 'kanji', empty)}
 				onBookmarkStateChange={writeSaveState}
 				trailingColumns={trailingColumns}
 			/>
@@ -317,7 +332,7 @@ const WordItems: React.FC<FamilyItemsProps<WordResource> & { showSave: boolean }
 				words={list.rows}
 				loading={list.isPending}
 				showSave={showSave}
-				empty={empty}
+				empty={emptyFor(list, 'words', empty)}
 				onBookmarkStateChange={writeSaveState}
 				trailingColumns={trailingColumns}
 			/>
@@ -333,7 +348,7 @@ const RadicalItems: React.FC<FamilyItemsProps<RadicalResource>> = ({ catalogueUu
 			<RadicalTable
 				radicals={list.rows}
 				loading={list.isPending}
-				empty={empty}
+				empty={emptyFor(list, 'radicals', empty)}
 				trailingColumns={trailingColumns}
 			/>
 		</ItemsList>
@@ -348,7 +363,7 @@ const SentenceItems: React.FC<FamilyItemsProps<SentenceResource>> = ({ catalogue
 			<SentenceTable
 				sentences={list.rows}
 				loading={list.isPending}
-				empty={empty}
+				empty={emptyFor(list, 'sentences', empty)}
 				trailingColumns={trailingColumns}
 			/>
 		</ItemsList>

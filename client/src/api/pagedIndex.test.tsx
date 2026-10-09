@@ -4,46 +4,38 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithAct } from '@/test/renderWithAct';
-import { fetchAllPages, updateCachedRows, usePagedIndex, type IndexPage } from './pagedIndex';
+import { pageSizeOptions, updateCachedRows, usePagedIndex, type IndexPage } from './pagedIndex';
 
 type Row = { id: number; label: string; saved?: boolean };
+type Params = { per_page?: number; page?: number; keyword?: string };
 
 const rows = (from: number, count: number): Row[] =>
 	Array.from({ length: count }, (_, index) => ({ id: from + index, label: `row ${from + index}` }));
 
-/** A fake index of `total` rows that honours `page` and `per_page`. */
+/** A fake index of `total` rows that honours `page`, `per_page` and a keyword (which matches 3 rows). */
 const fakeIndex = (total: number) =>
-	vi.fn(async ({ page, per_page = 20 }: { page: number; per_page?: number }): Promise<IndexPage<Row>> => {
+	vi.fn(async ({ page = 1, per_page = 20, keyword }: Params): Promise<IndexPage<Row>> => {
+		const size = keyword ? 3 : total;
 		const start = (page - 1) * per_page;
-		const items = rows(start + 1, Math.max(0, Math.min(per_page, total - start)));
+		const items = rows(start + 1, Math.max(0, Math.min(per_page, size - start)));
 
 		return {
 			items,
 			pagination: {
 				page,
 				per_page,
-				total,
-				last_page: Math.ceil(total / per_page),
-				has_more: start + per_page < total,
+				total: size,
+				last_page: Math.ceil(size / per_page) || 1,
+				has_more: start + per_page < size,
 			},
 		};
 	});
 
-describe('fetchAllPages', () => {
-	it('fetches page after page until there are no more, reporting progress', async () => {
-		const index = fakeIndex(233);
-		const progress = vi.fn();
-
-		const all = await fetchAllPages((page) => index({ page, per_page: 100 }), progress);
-
-		expect(index).toHaveBeenCalledTimes(3);
-		expect(all.items).toHaveLength(233);
-		expect(all.pagination).toMatchObject({ total: 233, has_more: false, last_page: 1 });
-		expect(progress.mock.calls.map(([value]) => value)).toEqual([
-			{ loaded: 100, total: 233 },
-			{ loaded: 200, total: 233 },
-			{ loaded: 233, total: 233 },
-		]);
+describe('pageSizeOptions', () => {
+	it('starts from the list default and stays within the API cap', () => {
+		expect(pageSizeOptions(20)).toEqual([20, 50, 100]);
+		expect(pageSizeOptions(25)).toEqual([25, 50, 100]);
+		expect(pageSizeOptions(50)).toEqual([50, 100]);
 	});
 });
 
@@ -70,13 +62,13 @@ describe('usePagedIndex', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('reads one numbered page at a time, then every page at once', async () => {
+	it('pages, changes the page size and searches, going back to page 1 each time', async () => {
 		const index = fakeIndex(45);
 		const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-		const seen: { list?: ReturnType<typeof usePagedIndex<{ per_page: number }, Row>> } = {};
+		const seen: { list?: ReturnType<typeof usePagedIndex<Params, Row>> } = {};
 
 		const Probe = () => {
-			seen.list = usePagedIndex<{ per_page: number }, Row>({
+			seen.list = usePagedIndex<Params, Row>({
 				filters: { per_page: 20 },
 				queryKey: (params) => ['/rows', params],
 				fetchPage: (params) => index(params),
@@ -91,16 +83,21 @@ describe('usePagedIndex', () => {
 		);
 
 		await vi.waitFor(() => expect(seen.list?.rows).toHaveLength(20));
-		expect(seen.list).toMatchObject({ page: 1, pageCount: 3, total: 45, perPage: 20, isAll: false });
+		expect(seen.list).toMatchObject({ page: 1, pageCount: 3, total: 45, perPage: 20, keyword: '' });
 
 		await view.flush(() => seen.list?.setPage(3));
 		await vi.waitFor(() => expect(seen.list?.rows[0].id).toBe(41));
 		expect(seen.list?.rows).toHaveLength(5);
 
-		await view.flush(() => seen.list?.loadAll());
+		await view.flush(() => seen.list?.setPerPage(50));
 		await vi.waitFor(() => expect(seen.list?.rows).toHaveLength(45));
-		expect(seen.list).toMatchObject({ isAll: true, pageCount: 1 });
-		expect(index).toHaveBeenLastCalledWith({ per_page: 100, page: 1 });
+		expect(seen.list).toMatchObject({ page: 1, perPage: 50, pageCount: 1 });
+		expect(index).toHaveBeenLastCalledWith({ per_page: 50, page: 1 });
+
+		await view.flush(() => seen.list?.setKeyword('  water  '));
+		await vi.waitFor(() => expect(seen.list?.total).toBe(3));
+		expect(seen.list?.keyword).toBe('water');
+		expect(index).toHaveBeenLastCalledWith({ per_page: 50, page: 1, keyword: 'water' });
 
 		await view.unmount();
 	});

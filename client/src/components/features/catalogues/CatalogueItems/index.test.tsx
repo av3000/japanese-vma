@@ -11,6 +11,7 @@ import { radicalIndex } from '@/api/generated/radical/radical';
 import { sentenceIndex } from '@/api/generated/sentence/sentence';
 import { wordIndex } from '@/api/generated/word/word';
 import { kanjiRows, radicalRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
+import { submitForm, typeInto } from '@/test/formEvents';
 import { renderWithAct } from '@/test/renderWithAct';
 import { CatalogueItems } from './index';
 
@@ -116,19 +117,19 @@ describe('CatalogueItems', () => {
 		await view.unmount();
 	});
 
-	it('pages with numbered pages and loads everything with Load all', async () => {
-		const pageOf = (pageNumber: number, perPage = 25) => ({
+	it('pages with numbered pages and searches the catalogue', async () => {
+		const pageOf = (pageNumber: number, perPage: number, total: number) => ({
 			items: kanjiRows.slice(pageNumber - 1, pageNumber),
 			pagination: {
 				page: pageNumber,
 				per_page: perPage,
-				total: 60,
-				last_page: Math.ceil(60 / perPage),
-				has_more: pageNumber * perPage < 60,
+				total,
+				last_page: Math.ceil(total / perPage),
+				has_more: pageNumber * perPage < total,
 			},
 		});
-		vi.mocked(kanjiIndex).mockImplementation((async ({ page: pageNumber = 1, per_page = 25 }) =>
-			pageOf(pageNumber, per_page)) as never);
+		vi.mocked(kanjiIndex).mockImplementation((async ({ page: pageNumber = 1, per_page = 25, keyword }) =>
+			pageOf(pageNumber, per_page, keyword ? 1 : 60)) as never);
 
 		const view = await renderItems({ catalogueType: TYPES.kanji });
 
@@ -143,12 +144,15 @@ describe('CatalogueItems', () => {
 			expect.anything(),
 		);
 
-		await view.flush(() => button(view.container, 'Load all 60 kanji')?.click());
-		await vi.waitFor(() => expect(view.container.textContent).toContain('Showing all 60 kanji'));
-		expect(kanjiIndex).toHaveBeenCalledWith(
-			expect.objectContaining({ catalogue_uuid: UUID, per_page: 100, page: 1 }),
-			undefined,
-			expect.anything(),
+		const form = view.container.querySelector('form[role="search"]') as HTMLFormElement;
+		await view.flush(() => typeInto(form.querySelector('input') as HTMLInputElement, '水'));
+		await view.flush(() => submitForm(form));
+		await vi.waitFor(() =>
+			expect(kanjiIndex).toHaveBeenLastCalledWith(
+				expect.objectContaining({ catalogue_uuid: UUID, page: 1, keyword: '水' }),
+				undefined,
+				expect.anything(),
+			),
 		);
 		await view.unmount();
 	});

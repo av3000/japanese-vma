@@ -270,7 +270,7 @@ export const TwoHundredComments: Story = {
 	},
 };
 
-/** "See all" opens the full list in a modal with numbered pages and Load all (#522). */
+/** "See all" opens the full list in a modal with numbered pages, a page size and a search (#522). */
 export const AllKanjiModal: Story = {
 	parameters: { auth: signedIn(AUTHOR_ID), seeds: seeds({ kanji: 171 }) },
 	play: async ({ canvasElement }) => {
@@ -282,6 +282,7 @@ export const AllKanjiModal: Story = {
 		// The dialog fades in; wait for it rather than checking mid-transition.
 		await waitFor(() => expect(dialog.getByRole('table', { name: 'Kanji' })).toBeVisible());
 		await expect(dialog.getByRole('navigation', { name: 'Kanji pages' })).toBeVisible();
-		await expect(dialog.getByRole('button', { name: 'Load all 171 kanji' })).toBeVisible();
+		await expect(dialog.getByRole('search', { name: 'Search kanji' })).toBeVisible();
+		await expect(dialog.getByRole('combobox', { name: 'Per page' })).toHaveValue('20');
 	},
 };

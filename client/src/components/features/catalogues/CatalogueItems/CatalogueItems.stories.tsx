@@ -71,14 +71,14 @@ export const Kanji: Story = {
 	},
 };
 
-/** 500 saved kanji: the first 25 rows, numbered pages and "Load all". */
+/** 500 saved kanji: the first 25 rows, a search, a page size and numbered pages. */
 export const Kanji500: Story = {
 	parameters: { seeds: [firstPage('kanji', repeatRows(kanjiRows, 25), 500)] },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
 		await expect(canvas.getByRole('navigation', { name: 'Kanji pages' })).toBeVisible();
-		await expect(canvas.getByRole('button', { name: 'Load all 500 kanji' })).toBeVisible();
+		await expect(canvas.getByRole('search', { name: 'Search kanji' })).toBeVisible();
 		await expect(canvas.getByText('Showing 1–25 of 500 kanji')).toBeVisible();
 	},
 };

@@ -10,7 +10,7 @@ export {
 } from './cells';
 export { DICTIONARY_PER_PAGE, DictionaryListPage } from './DictionaryListPage';
 export { KeywordFilters } from './KeywordFilters';
-export { PagedControls, pagedSummary } from './PagedControls';
+export { PagedControls, PagedListFilters, pagedSummary } from './PagedControls';
 export { presentAllValues, presentRank, presentText, presentValues, toJlptLevel } from './listValues';
 export { saveColumn, withSaveArea } from './saveColumn';
 export { withTrailingAreas, withTrailingColumns } from './trailingColumns';
