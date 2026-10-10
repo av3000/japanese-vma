@@ -9,7 +9,7 @@ import { wordIndex } from '@/api/generated/word/word';
 import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { choose, submitForm, typeInto } from '@/test/formEvents';
 import { renderWithAct } from '@/test/renderWithAct';
-import { ArticleAttachments, PREVIEW_KANJI } from './index';
+import { ArticleAttachments, PREVIEW_KANJI, PREVIEW_WORDS } from './index';
 
 vi.mock('@/api/generated/kanji/kanji', () => ({
 	kanjiIndex: vi.fn(),
@@ -103,6 +103,7 @@ describe('ArticleAttachments', () => {
 		await vi.waitFor(() => expect(button(container, 'See all 171 kanji')).toBeDefined());
 		expect(button(container, 'See all 233 words')).toBeDefined();
 		expect(container.querySelectorAll('a[href^="/kanji/"]')).toHaveLength(PREVIEW_KANJI);
+		expect(container.querySelectorAll('a[href^="/word/"]')).toHaveLength(PREVIEW_WORDS);
 		expect(container.querySelector('h2')?.textContent).toBe('Kanji and words in this reading');
 		expect(container.querySelector('table')).toBeNull();
 		expect(kanjiIndex).toHaveBeenCalledWith({ ...FILTERS, page: 1 }, undefined, expect.anything());

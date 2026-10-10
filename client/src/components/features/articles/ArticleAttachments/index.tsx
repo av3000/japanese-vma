@@ -35,8 +35,9 @@ import styles from './ArticleAttachments.module.css';
  * same first-page query.
  */
 
-export const PREVIEW_KANJI = 12;
-export const PREVIEW_WORDS = 8;
+/** Five of each keep the section short under the text; the rest are one click away in the modal. */
+export const PREVIEW_KANJI = 5;
+export const PREVIEW_WORDS = 5;
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
