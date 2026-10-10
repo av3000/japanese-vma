@@ -46,6 +46,7 @@ const createPost = (overrides: Partial<PostDetailResource> = {}): PostDetailReso
 	hashtags: [],
 	engagement: {
 		stats: { likes_count: '4', views_count: '12', downloads_count: '0', comments_count: '2' },
+		is_liked_by_viewer: false,
 	},
 	created_at: '2026-04-01T12:00:00.000Z',
 	updated_at: '2026-04-02T12:00:00.000Z',
@@ -102,13 +103,33 @@ describe('useLikePostMutation', () => {
 		expect(likeLikeInstance).not.toHaveBeenCalled();
 	});
 
-	it('makes no optimistic guess, because the Post read contract carries no viewer like state', async () => {
-		const post = createPost();
-		const { queryClient, options } = usePostLikeHarness(post);
+	it('flips the cached like state and count optimistically', async () => {
+		const { queryClient, options } = usePostLikeHarness(createPost());
 
 		await options.onMutate(31, CALLBACK_CONTEXT);
 
-		expect(readCachedPost(queryClient)).toEqual(post);
+		expect(readCachedPost(queryClient)?.engagement).toMatchObject({
+			is_liked_by_viewer: true,
+			stats: { likes_count: '5' },
+		});
+	});
+
+	it('flips an existing like off optimistically', async () => {
+		const { queryClient, options } = usePostLikeHarness(
+			createPost({
+				engagement: {
+					stats: { likes_count: '4', views_count: '12', downloads_count: '0', comments_count: '2' },
+					is_liked_by_viewer: true,
+				},
+			}),
+		);
+
+		await options.onMutate(31, CALLBACK_CONTEXT);
+
+		expect(readCachedPost(queryClient)?.engagement).toMatchObject({
+			is_liked_by_viewer: false,
+			stats: { likes_count: '3' },
+		});
 	});
 
 	it('writes the served count back onto the cached post when a like succeeds', async () => {
@@ -132,7 +153,10 @@ describe('useLikePostMutation', () => {
 		const context = await options.onMutate(31, CALLBACK_CONTEXT);
 		options.onSuccess({ is_liked: false, likes_count: 3 }, 31, context, CALLBACK_CONTEXT);
 
-		expect(readCachedPost(queryClient)?.engagement.stats?.likes_count).toBe('3');
+		expect(readCachedPost(queryClient)?.engagement).toMatchObject({
+			is_liked_by_viewer: false,
+			stats: { likes_count: '3' },
+		});
 	});
 
 	it('leaves the rest of the cached post untouched', async () => {
@@ -145,13 +169,18 @@ describe('useLikePostMutation', () => {
 		expect(readCachedPost(queryClient)).toMatchObject({ id: 31, title: post.title, locked: false });
 	});
 
-	it('tolerates a post nobody has engaged with yet, where stats are null', async () => {
-		const { queryClient, options } = usePostLikeHarness(createPost({ engagement: { stats: null } }));
+	it('gives a post nobody has engaged with yet its first count', async () => {
+		const { queryClient, options } = usePostLikeHarness(
+			createPost({ engagement: { stats: null, is_liked_by_viewer: false } }),
+		);
 
 		const context = await options.onMutate(31, CALLBACK_CONTEXT);
 		options.onSuccess({ is_liked: true, likes_count: 1 }, 31, context, CALLBACK_CONTEXT);
 
-		expect(readCachedPost(queryClient)?.engagement.stats).toBeNull();
+		expect(readCachedPost(queryClient)?.engagement).toEqual({
+			is_liked_by_viewer: true,
+			stats: { likes_count: '1', views_count: '0', downloads_count: '0', comments_count: '0' },
+		});
 	});
 
 	it('leaves the cached post exactly as it was when the toggle is rejected', async () => {

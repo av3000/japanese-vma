@@ -40,6 +40,7 @@ export const makePostListItem = (overrides: Partial<PostListItemResource> = {}):
 
 export const makePostDetailResource = (overrides: Partial<PostDetailResource> = {}): PostDetailResource => ({
 	...makePostListItemResource(),
+	engagement: { ...engagement(12, 348, 9), is_liked_by_viewer: false },
 	content:
 		'I keep mixing them up when I write.\nIs there a rule of thumb that works for you?\n\nExample: 私は学生です vs 私が学生です.',
 	...overrides,

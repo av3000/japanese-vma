@@ -12,22 +12,18 @@ interface PostLikeButtonProps {
 	/** Route identifier the detail query is cached under, so a like patches the visible Post. */
 	detailIdentifier: string;
 	likesCount: number;
+	/** The viewer's own like state from the cached Post, which the toggle patches optimistically. */
+	isLiked: boolean;
 }
 
 /**
- * Post like control.
- *
- * Unlike Article, Catalogue and Comment, the v1 Post read contract carries aggregate counts only
- * and no `is_liked_by_viewer`. There is therefore no persisted viewer state to render on load: the
- * filled icon reflects the last toggle this session returned, and the count comes from the cached
- * Post that the mutation patches on success.
+ * Post like control. Both the pressed state and the count come from the cached Post detail, so a
+ * reload shows the viewer's earlier like and a toggle shows at once.
  */
-const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifier, likesCount }) => {
+const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifier, likesCount, isLiked }) => {
 	const navigate = useNavigate();
 	const { isAuthenticated } = useAuth();
 	const likeMutation = useLikePostMutation(detailIdentifier);
-
-	const isLiked = likeMutation.data?.is_liked ?? false;
 
 	const handleClick = () => {
 		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here

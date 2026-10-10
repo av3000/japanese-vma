@@ -176,6 +176,7 @@ class PostController extends Controller
             $detail->post,
             $detail->stats,
             $detail->hashtags,
+            $detail->isLikedByViewer,
         );
     }
 

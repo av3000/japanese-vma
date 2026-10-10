@@ -123,6 +123,25 @@ export const Owner: Story = {
 	},
 };
 
+/** A reader who liked the post earlier: Like loads pressed (#529). */
+export const LikedByReader: Story = {
+	args: {
+		post: makePostDetail({
+			engagement: {
+				stats: { likes_count: '13', views_count: '349', downloads_count: '0', comments_count: '9' },
+				is_liked_by_viewer: true,
+			},
+		}),
+	},
+	parameters: { auth: signedIn(42) },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('button', { name: /Like · 13/ })).toHaveAttribute(
+			'aria-pressed',
+			'true',
+		);
+	},
+};
+
 /** An admin who did not write the post: Lock and Delete under "Moderation". */
 export const Admin: Story = {
 	parameters: { auth: admin },
@@ -161,7 +180,7 @@ export const LongestTitleZeroComments: Story = {
 				'Expected: it wraps. Actual: '.concat('長'.repeat(400)),
 			].join('\n\n'),
 			hashtags: makeHashtags(['bug', 'search', 'mobile', 'safari', 'layout-overflow-on-narrow-screens']),
-			engagement: { stats: null },
+			engagement: { stats: null, is_liked_by_viewer: false },
 		}),
 	},
 	parameters: { seeds: [comments(0)] },

@@ -31,7 +31,11 @@ vi.mock('@/components/features/comment/CommentsBlock', () => ({
 // The mutating controls carry their own query and auth wiring; this file is a read
 // surface, so they are stubbed rather than exercised here.
 vi.mock('@/components/features/community/PostLikeButton', () => ({
-	default: () => <button type="button">Like stub</button>,
+	default: ({ isLiked }: { isLiked: boolean }) => (
+		<button type="button" aria-pressed={isLiked}>
+			Like stub
+		</button>
+	),
 }));
 vi.mock('@/components/features/community/PostOwnerActions', () => ({
 	default: () => <div>Owner actions stub</div>,
@@ -95,6 +99,13 @@ describe('PostContent', () => {
 		expect(html).toMatch(/<dt[^>]*>Views<\/dt><dd[^>]*>348<\/dd>/);
 		expect(html).toContain('Like stub');
 		expect(html).toContain('Owner actions stub');
+	});
+
+	it("passes the viewer's like state from the post to the Like button", () => {
+		const liked = { stats: null, is_liked_by_viewer: true };
+
+		expect(render({ engagement: liked })).toContain('aria-pressed="true"');
+		expect(render()).toContain('aria-pressed="false"');
 	});
 
 	it('links each tag to the list filtered by it, and hides Tags when there are none', () => {

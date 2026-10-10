@@ -16,6 +16,7 @@ final readonly class PostDetailResultDTO
         public Post $post,
         public PostStats $stats,
         public array $hashtags,
+        public bool $isLikedByViewer,
     ) {
     }
 }

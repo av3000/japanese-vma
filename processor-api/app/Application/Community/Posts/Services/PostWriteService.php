@@ -66,7 +66,7 @@ class PostWriteService implements PostWriteServiceInterface
         // and a failure here must not discard a Post the author already wrote.
         $this->recordInitialView($post->getIdValue(), $viewer);
 
-        return Result::success($this->postReadService->describe($post));
+        return Result::success($this->postReadService->describe($post, $viewer->userId()));
     }
 
     public function update(EntityId $uuid, PostUpdateDTO $dto, AuthenticatedUser $actor): Result
@@ -105,7 +105,7 @@ class PostWriteService implements PostWriteServiceInterface
             return Result::failure(PostErrors::updateFailed());
         }
 
-        return Result::success($this->postReadService->describe($updated));
+        return Result::success($this->postReadService->describe($updated, $actor->id));
     }
 
     public function delete(EntityId $uuid, AuthenticatedUser $actor): Result

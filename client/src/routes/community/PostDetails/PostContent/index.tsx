@@ -72,6 +72,7 @@ const PostContent: React.FC<PostContentProps> = ({ post }) => {
 						postId={post.id}
 						detailIdentifier={post.uuid}
 						likesCount={post.engagementCounts.likes}
+						isLiked={post.engagement.is_liked_by_viewer}
 					/>
 					<PostOwnerActions
 						postId={post.id}

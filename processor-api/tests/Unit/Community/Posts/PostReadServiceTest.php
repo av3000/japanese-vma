@@ -8,6 +8,7 @@ use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterf
 use App\Application\Community\Posts\Services\PostReadService;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Community\Posts\DTOs\PostDetailResultDTO;
 use App\Domain\Community\Posts\DTOs\PostListResultDTO;
@@ -34,6 +35,8 @@ class PostReadServiceTest extends TestCase
 
     private IncrementViewAction&MockObject $incrementView;
 
+    private EngagementServiceInterface&MockObject $engagementService;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,6 +45,7 @@ class PostReadServiceTest extends TestCase
         $this->loadEntityStats = $this->createMock(LoadEntityStatsAction::class);
         $this->hashtagService = $this->createMock(HashtagServiceInterface::class);
         $this->incrementView = $this->createMock(IncrementViewAction::class);
+        $this->engagementService = $this->createMock(EngagementServiceInterface::class);
     }
 
     public function test_list_enrichment_is_batched_once_per_page(): void
@@ -195,6 +199,50 @@ class PostReadServiceTest extends TestCase
         self::assertTrue($result->isSuccess());
     }
 
+    public function test_detail_asks_whether_the_viewer_liked_the_post(): void
+    {
+        $this->repository->method('findByUuid')->willReturn($this->domainPost(5));
+        $this->loadEntityStats->method('batchLoadStatsById')->willReturn([]);
+        $this->hashtagService->method('getHashtags')->willReturn([]);
+
+        $this->engagementService->expects(self::once())
+            ->method('isEntityLikedByViewer')
+            ->with(5, ObjectTemplateType::POST, 7)
+            ->willReturn(true);
+
+        $result = $this->service()->findByIdentifier(
+            '922f91b4-cbe8-4ca0-8bf8-50de48f5d086',
+            $this->authenticatedViewer(),
+        );
+
+        /** @var PostDetailResultDTO $data */
+        $data = $result->getData();
+
+        self::assertTrue($data->isLikedByViewer);
+    }
+
+    public function test_a_guest_is_asked_about_with_no_user_id(): void
+    {
+        $this->repository->method('findByUuid')->willReturn($this->domainPost(5));
+        $this->loadEntityStats->method('batchLoadStatsById')->willReturn([]);
+        $this->hashtagService->method('getHashtags')->willReturn([]);
+
+        $this->engagementService->expects(self::once())
+            ->method('isEntityLikedByViewer')
+            ->with(5, ObjectTemplateType::POST, null)
+            ->willReturn(false);
+
+        $result = $this->service()->findByIdentifier(
+            '922f91b4-cbe8-4ca0-8bf8-50de48f5d086',
+            new Viewer(null, '127.0.0.1'),
+        );
+
+        /** @var PostDetailResultDTO $data */
+        $data = $result->getData();
+
+        self::assertFalse($data->isLikedByViewer);
+    }
+
     public function test_a_numeric_identifier_resolves_through_the_legacy_lookup(): void
     {
         $this->repository->expects(self::once())->method('findByLegacyId')->with(42)->willReturn($this->domainPost(42));
@@ -240,6 +288,7 @@ class PostReadServiceTest extends TestCase
             $this->loadEntityStats,
             $this->hashtagService,
             $this->incrementView,
+            $this->engagementService,
         );
     }
 
