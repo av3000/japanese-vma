@@ -7,8 +7,8 @@ namespace App\Http\v1\Community\Posts\Resources;
 use App\Domain\Community\Posts\Models\Post as DomainPost;
 use App\Domain\Community\Posts\Models\PostStats;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
+use App\Http\v1\Engagement\Resources\PostDetailEngagementResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,6 +29,7 @@ class PostDetailResource extends JsonResource
         DomainPost $resource,
         private readonly ?PostStats $stats = null,
         private readonly array $hashtags = [],
+        private readonly bool $isLikedByViewer = false,
     ) {
         parent::__construct($resource);
     }
@@ -45,7 +46,7 @@ class PostDetailResource extends JsonResource
      *     content: string,
      *     author: AuthorResource,
      *     hashtags: array<int, HashtagResource>,
-     *     engagement: EngagementStatsSummaryResource,
+     *     engagement: PostDetailEngagementResource,
      *     created_at: string,
      *     updated_at: string
      * }
@@ -79,7 +80,7 @@ class PostDetailResource extends JsonResource
             ]),
             /** @var array<int, HashtagResource> */
             'hashtags' => $hashtags,
-            'engagement' => new EngagementStatsSummaryResource($this->stats),
+            'engagement' => new PostDetailEngagementResource($this->stats, $this->isLikedByViewer),
             'created_at' => $post->getCreatedAt()->format('c'),
             'updated_at' => $post->getUpdatedAt()->format('c'),
         ];

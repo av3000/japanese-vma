@@ -38,6 +38,10 @@ const createListItem = (overrides: Partial<PostListItemResource> = {}): PostList
 
 const createDetail = (overrides: Partial<PostDetailResource> = {}): PostDetailResource => ({
 	...createListItem(),
+	engagement: {
+		stats: { likes_count: '3', views_count: '17', downloads_count: '0', comments_count: '2' },
+		is_liked_by_viewer: false,
+	},
 	content: 'Full post body.',
 	...overrides,
 });
@@ -132,7 +136,10 @@ describe('mapPostListItem / mapPostDetail', () => {
 
 	it('keeps detail content and survives a Post whose author name is empty', () => {
 		const mapped = mapPostDetail(
-			createDetail({ author: { id: 4, uuid: 'author-uuid', name: '' }, engagement: { stats: null } }),
+			createDetail({
+				author: { id: 4, uuid: 'author-uuid', name: '' },
+				engagement: { stats: null, is_liked_by_viewer: false },
+			}),
 		);
 
 		expect(mapped.content).toBe('Full post body.');

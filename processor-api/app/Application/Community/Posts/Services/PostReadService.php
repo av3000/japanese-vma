@@ -7,6 +7,7 @@ namespace App\Application\Community\Posts\Services;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Community\Posts\DTOs\PostDetailResultDTO;
 use App\Domain\Community\Posts\DTOs\PostListItemDTO;
@@ -17,6 +18,7 @@ use App\Domain\Community\Posts\Models\PostStats;
 use App\Domain\Community\Posts\Queries\PostQueryCriteria;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +37,7 @@ class PostReadService implements PostReadServiceInterface
         private readonly LoadEntityStatsAction $loadEntityStats,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly IncrementViewAction $incrementView,
+        private readonly EngagementServiceInterface $engagementService,
     ) {
     }
 
@@ -91,10 +94,10 @@ class PostReadService implements PostReadServiceInterface
         // matching the legacy detail response.
         $this->recordView($post->getIdValue(), $viewer);
 
-        return Result::success($this->describe($post));
+        return Result::success($this->describe($post, $viewer->userId()));
     }
 
-    public function describe(Post $post): PostDetailResultDTO
+    public function describe(Post $post, ?UserId $viewerId): PostDetailResultDTO
     {
         $statsById = $this->loadEntityStats->batchLoadStatsById(
             (string) ObjectTemplateType::POST->getLegacyId(),
@@ -105,6 +108,11 @@ class PostReadService implements PostReadServiceInterface
             post: $post,
             stats: $this->statsFor($statsById, $post->getIdValue()),
             hashtags: $this->hashtagService->getHashtags($post->getIdValue(), ObjectTemplateType::POST),
+            isLikedByViewer: $this->engagementService->isEntityLikedByViewer(
+                $post->getIdValue(),
+                ObjectTemplateType::POST,
+                $viewerId?->value(),
+            ),
         );
     }
 

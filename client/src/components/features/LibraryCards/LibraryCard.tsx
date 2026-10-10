@@ -25,12 +25,13 @@ export const toCount = (value: string | number | null | undefined): number => {
 	return Number.isFinite(count) && count > 0 ? count : 0;
 };
 
-export const LibraryCard: React.FC<{ cover: React.ReactNode; children: React.ReactNode; className?: string }> = ({
+/** A card with no `cover` (e.g. a Community post) is the text column alone, at every width. */
+export const LibraryCard: React.FC<{ cover?: React.ReactNode; children: React.ReactNode; className?: string }> = ({
 	cover,
 	children,
 	className,
 }) => (
-	<article className={classNames(styles.card, className)}>
+	<article className={classNames(styles.card, !cover && styles.noCover, className)}>
 		{cover}
 		<div className={styles.body}>{children}</div>
 	</article>

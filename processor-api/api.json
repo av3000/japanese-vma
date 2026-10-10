@@ -6243,6 +6243,29 @@
                 ],
                 "title": "PaginationResource"
             },
+            "PostDetailEngagementResource": {
+                "type": "object",
+                "properties": {
+                    "stats": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/EngagementStatsResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "is_liked_by_viewer": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "stats",
+                    "is_liked_by_viewer"
+                ],
+                "title": "PostDetailEngagementResource"
+            },
             "PostDetailResource": {
                 "type": "object",
                 "properties": {
@@ -6281,7 +6304,7 @@
                         }
                     },
                     "engagement": {
-                        "$ref": "#/components/schemas/EngagementStatsSummaryResource"
+                        "$ref": "#/components/schemas/PostDetailEngagementResource"
                     },
                     "created_at": {
                         "type": "string"

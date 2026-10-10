@@ -63,23 +63,37 @@ describe('PostOwnerActions', () => {
 		expect(render()).toBe('');
 	});
 
-	it('gives the author edit and delete, but not lock', () => {
+	it('gives the author edit and delete under "Your post", but not lock', () => {
 		const html = render();
 
-		expect(html).toContain('Edit this post');
-		expect(html).toContain('Delete this post');
-		expect(html).not.toContain('Lock this post');
+		expect(html).toContain('>Your post</h2>');
+		expect(html).toContain('>Edit post<');
+		expect(html).toContain('>Delete post<');
+		expect(html).not.toContain('Moderation');
+		expect(html).not.toContain('Lock post');
 	});
 
-	it('gives an admin lock and delete, but not edit', () => {
+	it('gives an admin lock and delete under "Moderation", but not edit', () => {
 		currentUser = { id: 9, isAdmin: true };
 
 		const html = render();
 
-		expect(html).toContain('Lock this post');
+		expect(html).toContain('>Moderation</h2>');
+		expect(html).toContain('>Lock post<');
 		// PostPolicy::canDelete is owner *or* admin; the previous shim hid this from admins.
-		expect(html).toContain('Delete this post');
-		expect(html).not.toContain('Edit this post');
+		expect(html).toContain('>Delete post<');
+		expect(html).not.toContain('Your post');
+		expect(html).not.toContain('Edit post');
+	});
+
+	it('renders Delete once for an admin who is also the author', () => {
+		currentUser = { id: AUTHOR_ID, isAdmin: true };
+
+		const html = render();
+
+		expect(html).toContain('>Your post</h2>');
+		expect(html).toContain('>Moderation</h2>');
+		expect(html.match(/>Delete post</g)).toHaveLength(1);
 	});
 
 	it('links edit to the UUID, not the transitional numeric id', () => {
@@ -92,8 +106,8 @@ describe('PostOwnerActions', () => {
 	it('labels the lock control from the current state', () => {
 		currentUser = { id: 9, isAdmin: true };
 
-		expect(render({ isLocked: true })).toContain('Unlock this post');
-		expect(render({ isLocked: false })).toContain('Lock this post');
+		expect(render({ isLocked: true })).toContain('>Unlock post<');
+		expect(render({ isLocked: false })).toContain('>Lock post<');
 	});
 
 	it('addresses both mutations by the UUID with the numeric id for cache reconciliation', () => {

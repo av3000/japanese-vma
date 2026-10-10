@@ -12,7 +12,9 @@
 	border-top: var(--border-size-sm) solid var(--color-neutral-200);
 }
 
+/* The global h2 keeps a min-height sized for heading type; this group label is small print. */
 .heading {
+	min-height: 0;
 	margin: 0;
 	color: var(--color-neutral-600);
 	font-size: var(--font-size-body-sm);

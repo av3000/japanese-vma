@@ -6,6 +6,7 @@ import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import { Cluster } from '@/components/shared/layout';
+import { formatDate } from '@/helpers/date';
 import CommentForm from '../CommentForm/CommentForm';
 import styles from './CommentItem.module.css';
 
@@ -129,7 +130,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						</Button>
 					)}
 
-					<span className={styles.date}>{comment.created_at}</span>
+					{/* One absolute format with a machine-readable value, as in the page's Byline. */}
+					<time className={styles.date} dateTime={comment.created_at}>
+						{formatDate(comment.created_at)}
+					</time>
 				</Cluster>
 
 				{isReplying && onReply && (

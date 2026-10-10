@@ -6,6 +6,7 @@ namespace Tests\Feature\Community\Posts;
 
 use App\Domain\Community\Posts\Enums\PostTopic;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Infrastructure\Persistence\Models\Like;
 use App\Infrastructure\Persistence\Models\Post as PersistencePost;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -176,6 +177,53 @@ class PostReadV1Test extends TestCase
         self::assertSame(1, $this->getJson("/api/v1/posts/{$post->uuid}")->json('engagement.stats.views_count'));
     }
 
+    public function test_detail_tells_a_reader_who_liked_the_post_so(): void
+    {
+        $post = $this->createPost();
+        $liker = User::factory()->create();
+        $this->likePost($post, $liker);
+
+        Passport::actingAs($liker);
+
+        $this->getJson("/api/v1/posts/{$post->uuid}")
+            ->assertOk()
+            ->assertJsonPath('engagement.is_liked_by_viewer', true)
+            ->assertJsonPath('engagement.stats.likes_count', 1);
+    }
+
+    public function test_detail_tells_another_reader_they_have_not_liked_it(): void
+    {
+        $post = $this->createPost();
+        $this->likePost($post, User::factory()->create());
+
+        Passport::actingAs(User::factory()->create());
+
+        $this->getJson("/api/v1/posts/{$post->uuid}")
+            ->assertOk()
+            ->assertJsonPath('engagement.is_liked_by_viewer', false)
+            ->assertJsonPath('engagement.stats.likes_count', 1);
+    }
+
+    public function test_a_guest_has_liked_nothing(): void
+    {
+        $post = $this->createPost();
+        $this->likePost($post, User::factory()->create());
+
+        $this->getJson("/api/v1/posts/{$post->uuid}")
+            ->assertOk()
+            ->assertJsonPath('engagement.is_liked_by_viewer', false);
+    }
+
+    public function test_the_list_contract_carries_no_viewer_like_state(): void
+    {
+        $this->createPost();
+
+        self::assertArrayNotHasKey(
+            'is_liked_by_viewer',
+            $this->getJson('/api/v1/posts')->assertOk()->json('items.0.engagement'),
+        );
+    }
+
     public function test_anonymous_detail_requests_record_no_view(): void
     {
         $post = $this->createPost();
@@ -194,6 +242,16 @@ class PostReadV1Test extends TestCase
     private function createPost(array $overrides = []): PersistencePost
     {
         return PersistencePost::factory()->create($overrides);
+    }
+
+    private function likePost(PersistencePost $post, User $user): void
+    {
+        Like::create([
+            'user_id' => $user->id,
+            'template_id' => ObjectTemplateType::POST->getLegacyId(),
+            'real_object_id' => $post->id,
+            'value' => 1,
+        ]);
     }
 
     private function attachHashtag(PersistencePost $post, string $content): void

@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { POST_ROUTES, usePostQuery } from '@/api/posts/reads';
-import { Button } from '@/components/shared/Button';
+import { DetailUnavailable, unavailableMessage } from '@/components/shared/DetailLayout';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { Container, Stack } from '@/components/shared/layout';
 import PostContent from './PostContent';
-import styles from './PostDetails.module.css';
 
 /**
  * The contract resolves a transitional numeric identifier and always answers with the UUID, so a
@@ -27,7 +25,7 @@ const PostDetails: React.FC = () => {
 	const { post_id: routeIdentifier } = useParams<{ post_id: string }>();
 	const navigate = useNavigate();
 
-	const { data: post, isLoading, isError } = usePostQuery(routeIdentifier);
+	const { data: post, isLoading, isError, error } = usePostQuery(routeIdentifier);
 
 	// The query seam has already seeded the UUID cache entry, so this replace does not refetch.
 	const canonicalRedirect = resolveCanonicalPostRedirect(routeIdentifier, post?.uuid);
@@ -46,14 +44,11 @@ const PostDetails: React.FC = () => {
 
 	if (isError || !post) {
 		return (
-			<Container size="sm" className={styles.notFound}>
-				<Stack gap="md" align="center">
-					<p className={styles.lead}>Post not found or was deleted.</p>
-					<Button href={POST_ROUTES.list} variant="linkButton">
-						Back to Community
-					</Button>
-				</Stack>
-			</Container>
+			<DetailUnavailable
+				message={unavailableMessage(error, 'post')}
+				backTo={POST_ROUTES.list}
+				backLabel="Back to Community"
+			/>
 		);
 	}
 

@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePostQuery } from '@/api/posts/reads';
 import PostDetails, { resolveCanonicalPostRedirect } from './index';
@@ -27,6 +28,14 @@ vi.mock('./PostContent', () => ({
 }));
 
 const usePostQueryMock = vi.mocked(usePostQuery);
+
+// The unavailable panel links back to the list, so it needs a routing context.
+const renderInRouter = () =>
+	renderToStaticMarkup(
+		<MemoryRouter>
+			<PostDetails />
+		</MemoryRouter>,
+	);
 
 const loadedPost = { uuid: 'post-uuid', id: 12, title: 'How do I read this kanji?' };
 
@@ -74,12 +83,19 @@ describe('PostDetails', () => {
 		expect(resolveCanonicalPostRedirect('12', undefined)).toBeNull();
 	});
 
-	it('shows a distinct not-found state', () => {
-		usePostQueryMock.mockReturnValue(queryState({ isError: true }));
+	it('says why the post is unavailable, from the HTTP status, with the way back', () => {
+		const failed = (status: number) => ({ isAxiosError: true, response: { status, data: {} } });
 
-		const html = renderToStaticMarkup(<PostDetails />);
+		usePostQueryMock.mockReturnValue(queryState({ isError: true, error: failed(404) }));
+		const missing = renderInRouter();
+		expect(missing).toContain('This post doesn&#x27;t exist. It may have been deleted.');
+		expect(missing).toContain('href="/community"');
+		expect(missing).not.toContain('data-loading-family');
 
-		expect(html).toContain('Post not found or was deleted.');
-		expect(html).not.toContain('data-loading-family');
+		usePostQueryMock.mockReturnValue(queryState({ isError: true, error: failed(403) }));
+		expect(renderInRouter()).toContain('This post is private.');
+
+		usePostQueryMock.mockReturnValue(queryState({ isError: true, error: failed(500) }));
+		expect(renderInRouter()).toContain('This post couldn&#x27;t be loaded.');
 	});
 });

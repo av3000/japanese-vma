@@ -105,11 +105,11 @@ For any visual, styling, token or component-choice work, read `client/DESIGN.md`
   - duplicated list type labels and magic numbers
   - legacy comment props that do not match the current `CommentsBlock` contract
 - Additional comment-specific debt to avoid copying forward:
-  - `src/routes/community/PostDetails/index.tsx`
   - `src/routes/japanese/SentenceDetails/index.tsx`
 - Current comment precedents:
   - `src/routes/ArticleDetails/ArticleContent/index.tsx`
   - `src/routes/CatalogueDetails/CatalogueContent.tsx`
+  - `src/routes/community/PostDetails/PostContent/index.tsx`
   - Those are the current migrated examples for wiring `CommentsBlock` into detail routes.
 
 ## 8) SavedList And Catalogue Migration Guardrails

@@ -88,13 +88,14 @@ Reuse one of these before writing new markup. Each has stories in Storybook.
 | Create or edit page                                     | `FormPage` with `FormLayout`, `FormCard`, `FormNote`                      |
 | Tabular list that stacks on mobile                      | `DataTable`                                                               |
 | Article or catalogue card in a list                     | `features/LibraryCards` (`ArticleCard`, `CatalogueCard`, `LibraryLayout`) |
+| Community post in a list                                | `features/community/PostCard` (a `LibraryCard` with no cover)             |
 | Modal or dialog                                         | `Modal`, `DialogModal`, `modals/ConfirmModal` (native `<dialog>`)         |
 | Full-height sheet (mobile navigation, search)           | `Drawer` (native `<dialog>`, opened through `useModal`)                   |
 | Popover                                                 | `src/components/ui/popover` (Radix)                                       |
 | Icon                                                    | `Icon`                                                                    |
 | Loading                                                 | `Spinner`, `PageLoading`                                                  |
 
-`src/components/ui/badge` is an older status badge kept for comments and post details. Use `StatusPill` for new status UI.
+`src/components/ui/badge` is an older status badge kept for the comment count. Use `StatusPill` for new status UI.
 
 ## 8) Before You Finish A Styling Change
 
