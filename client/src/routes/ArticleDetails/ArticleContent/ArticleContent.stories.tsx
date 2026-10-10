@@ -286,3 +286,54 @@ export const AllKanjiModal: Story = {
 		await expect(dialog.getByRole('combobox', { name: 'Per page' })).toHaveValue('20');
 	},
 };
+
+const NHK_NEWS = { key: 'nhk-news', name: 'NHK News', homepage_url: 'https://news.web.nhk/newsweb' };
+
+/** An Imported Article as the Content Import creates it: NHK's own lead, no translation, a system author. */
+const importedArticle = (sourceName = NHK_NEWS.name) =>
+	article({
+		origin: 'imported',
+		source: { ...NHK_NEWS, name: sourceName },
+		source_link: 'https://news.web.nhk/newsweb/na/nd-20261008de56224',
+		title_en: undefined,
+		content_jp: PARAGRAPHS[0],
+		content_en: undefined,
+		author: { id: 1, name: 'Content Importer', uuid: 'content-importer-uuid' },
+		displayName: 'Content Importer',
+		status: 4,
+	});
+
+/** The byline credits the source, the attribution follows the text, and the rail has no Source row. */
+export const Imported: Story = {
+	args: { article: importedArticle() },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getByText(/^from/).textContent).toBe('from NHK News');
+		await expect(canvas.queryByText('Content Importer')).not.toBeInTheDocument();
+
+		const attribution = canvas.getByRole('complementary', { name: 'Article source' });
+		await expect(attribution).toBeVisible();
+		await expect(
+			within(attribution).getByRole('link', { name: 'Read the full article on NHK News' }),
+		).toHaveAttribute('href', 'https://news.web.nhk/newsweb/na/nd-20261008de56224');
+		await expect(canvas.queryByText(/^Source:/)).not.toBeInTheDocument();
+	},
+};
+
+/** A very long source name at 360px wraps in the byline and the attribution instead of overflowing. */
+export const ImportedLongSourceMobile: Story = {
+	args: {
+		article: importedArticle(
+			'Nippon Hōsō Kyōkai World Service International News and Current Affairs Department (Overseas Edition)',
+		),
+	},
+	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getByText(/^from/).textContent).toMatch(/^from Nippon Hōsō Kyōkai/);
+		await expect(canvas.getByRole('complementary', { name: 'Article source' })).toBeVisible();
+		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
+	},
+};

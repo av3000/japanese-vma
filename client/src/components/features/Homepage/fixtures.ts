@@ -18,6 +18,8 @@ export const makeArticle = (overrides: Partial<ArticleResource> = {}): ArticleRe
 	content_preview_jp: '',
 	content_preview_en: '',
 	source_link: '',
+	origin: 'user',
+	source: null,
 	publicity: 1,
 	status: 1,
 	jlpt_levels: { n1: 1, n2: 3, n3: 9, n4: 6, n5: 12, uncommon: 1 },

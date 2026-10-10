@@ -5,6 +5,7 @@ namespace App\Application\Articles\Interfaces\Repositories;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
+use App\Domain\Articles\Exceptions\ArticleAlreadyImportedException;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -20,7 +21,8 @@ interface ArticleRepositoryInterface
      *
      * @param DomainArticle $article The domain article to create
      *
-     * @throws \Illuminate\Database\QueryException On database constraint violation
+     * @throws ArticleAlreadyImportedException When an import of the same external article exists
+     * @throws \Illuminate\Database\QueryException On any other database constraint violation
      *
      * @return DomainArticle The created article with generated ID
      */
@@ -95,6 +97,11 @@ interface ArticleRepositoryInterface
      * @return int|null The article's integer ID, or null if not found
      */
     public function getIdByUuid(EntityId $entityUuid): ?int;
+
+    /**
+     * Whether an article was already imported from this Content Source under this external id.
+     */
+    public function existsImported(int $contentSourceId, string $externalId): bool;
 
     /**
      * Syncs a list of Kanji IDs to an article.

@@ -1,5 +1,8 @@
 <?php
+
 namespace App\Domain\Articles\DTOs;
+
+use App\Domain\Articles\ValueObjects\ArticleProvenance;
 
 readonly class ArticleCreateDTO
 {
@@ -10,23 +13,24 @@ readonly class ArticleCreateDTO
         public ?string $content_en,
         public string $source_link,
         public bool $publicity,
-        public ?array $tags = null
-    ) {}
+        public ?array $tags = null,
+        // Null means a user article; only the Content Import context passes an imported one.
+        public ?ArticleProvenance $provenance = null,
+    ) {
+    }
+
     /**
      * Create an instance from request data.
-     *
-     * @param array $data
-     * @return self
      */
     public static function fromRequest(array $data): self
     {
-         return new self(
+        return new self(
             title_jp: $data['title_jp'],
             title_en: $data['title_en'] ?? null,
             content_jp: $data['content_jp'],
             content_en: $data['content_en'] ?? null,
             source_link: $data['source_link'],
-            publicity: (bool)($data['publicity'] ?? false),
+            publicity: (bool) ($data['publicity'] ?? false),
             tags: $data['tags'] ?? null
         );
     }

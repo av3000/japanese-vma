@@ -44,6 +44,8 @@ export const makeDashboardArticle = (overrides: Partial<ArticleResource> = {}): 
 		content_preview_jp: '',
 		content_preview_en: '',
 		source_link: '',
+		origin: 'user',
+		source: null,
 		publicity: PUBLICITY.PUBLIC,
 		status: ARTICLE_STATUS.APPROVED,
 		jlpt_levels: { n1: 1, n2: 3, n3: 9, n4: 6, n5: 12, uncommon: 1 },

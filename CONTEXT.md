@@ -20,6 +20,18 @@ _Avoid_: Runtime-first audit, infrastructure-first audit
 An architecture review structure that audits each v1 domain feature flow before comparing repeated module-type smells across the backend.
 _Avoid_: Layer-only audit, controller-only audit
 
+**Content Source**:
+An external publisher the platform imports articles from, such as NHK News. Each one has a key, one adapter class that reads it, and an enabled switch.
+_Avoid_: Scraper, feed, provider
+
+**Import Run**:
+One execution of the Content Import against one Content Source: list what is new, filter it, tag it, create what survives. Every non-dry run is recorded with its counts.
+_Avoid_: Scrape, sync, crawl
+
+**Imported Article**:
+An Article whose origin is `imported`: an excerpt (headline, the publisher's own lead, link) authored by the seeded system user and linked to its Content Source and the id the source knows it by.
+_Avoid_: Auto-generated article, scraped article, bot post
+
 ## Relationships
 
 - **Scalable Backend Architecture** is the audit lens for v1 backend work before proposing runtime or refactoring improvements.
@@ -27,6 +39,9 @@ _Avoid_: Layer-only audit, controller-only audit
 - A **Robust Modular Monolith** is the target shape for **Scalable Backend Architecture** in the current v1 backend.
 - A **Module-Seams-First Audit** is the review order for deciding whether the v1 backend is a **Robust Modular Monolith**.
 - A **Domain-Feature Audit** is the structure for applying a **Module-Seams-First Audit** to the v1 backend.
+- An **Import Run** reads exactly one **Content Source** and creates zero or more **Imported Articles**.
+- Only one **Import Run** per **Content Source** runs at a time; a second one is refused while the first is in progress.
+- An **Imported Article** is still an Article: it goes through the same creation path, processing and tagging as one a person writes; only its origin, author and attribution differ.
 
 ## Example dialogue
 
@@ -48,3 +63,5 @@ _Avoid_: Layer-only audit, controller-only audit
 - "scalable" does not mean tens or hundreds of thousands of active users for the current audit; it means robust v1 code that teaches and preserves strong architecture patterns at moderate product scale.
 - The audit order was resolved as module seams first, runtime mechanisms second.
 - The audit structure was resolved as domain feature first, module type inside each feature.
+- "auto-generated article" was resolved to **Imported Article**: nothing is generated, the text is the publisher's own excerpt.
+- "source" on an article means its **Content Source** for an **Imported Article**; the free-text `source_link` a person enters is not a Content Source.

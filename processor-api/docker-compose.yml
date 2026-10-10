@@ -227,6 +227,52 @@ services:
       - redis
     command: php artisan queue:work --verbose
 
+  # Laravel's scheduler: runs whatever app/Console/Kernel.php lists when it is due (the daily
+  # content:import, the five-minute article-processing sweep). Opt in, so a plain `up` does not
+  # start crawling NHK every morning:
+  #   docker compose --profile scheduler up -d scheduler
+  # See docs/runbooks/content-import.md.
+  scheduler:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: laravel_scheduler
+    profiles: ["scheduler"]
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      REVERB_HOST: 'reverb_server'
+      REVERB_PORT: '${REVERB_PORT}'
+      REVERB_SCHEME: 'http'
+      REVERB_APP_ID: '${REVERB_APP_ID}'
+      REVERB_APP_KEY: '${REVERB_APP_KEY}'
+      REVERB_APP_SECRET: '${REVERB_APP_SECRET}'
+
+      APP_DEBUG: '${APP_DEBUG}'
+      APP_ENV: '${APP_ENV}'
+      APP_URL: '${APP_URL}'
+      DB_CONNECTION: '${DB_CONNECTION}'
+      DB_HOST: 'db'
+      DB_DATABASE: '${DB_DATABASE}'
+      DB_USERNAME: '${DB_USERNAME}'
+      DB_PASSWORD: '${DB_PASSWORD}'
+      # Jobs the scheduled commands dispatch go to the queue worker above.
+      QUEUE_CONNECTION: 'redis'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '${REDIS_PORT}'
+      REDIS_PASSWORD: '${REDIS_PASSWORD}'
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/bootstrap/cache
+      - /var/www/html/vendor
+      - /var/www/html/storage/fonts
+    networks:
+      - shared-network
+    depends_on:
+      - db
+      - redis
+    command: php artisan schedule:work
+
   test-runner:
     build:
       context: .

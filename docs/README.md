@@ -21,6 +21,7 @@ Read these sources in order before changing the repository:
 | Architecture decisions and the reasoning behind them | [`docs/adr/`](./adr/) |
 | Cross-project synthesis and traceability | [`docs/ai/`](./ai/) |
 | System, application, deployment, and integration views | [`docs/architecture/`](./architecture/) |
+| Setting up and operating one production feature: checklists, schedules, troubleshooting | [`docs/runbooks/`](./runbooks/) |
 | User-visible behavior and feature migration | [`docs/feature-artifacts/`](./feature-artifacts/) |
 | Focused migration work | [`docs/legacy-v1-migration/`](./legacy-v1-migration/) |
 | Issue tracker and triage conventions | [`docs/agents/`](./agents/) |
@@ -57,7 +58,14 @@ The [evidence manifest](./ai/evidence-manifest.md) maps important claims to thei
 - [Application boundaries](./architecture/application-boundaries.md)
 - [Deployment and runtime](./architecture/deployment-and-runtime.md)
 - [Data and integrations](./architecture/data-and-integrations.md)
+- [Content Import](./architecture/content-import.md)
 - [Architecture comparison backlog](./architecture/architecture-comparison-backlog.md) — open pattern questions against the two reference solutions, triaged into ADRs or `AGENTS.md` rules
+
+## Runbooks
+
+How to set up and operate a feature in a real environment. Read the runbook before deploying the feature for the first time.
+
+- [Content Import (NHK News)](./runbooks/content-import.md): seeders the release pipeline does not run, making it run daily, troubleshooting
 
 ## Architecture Decisions
 

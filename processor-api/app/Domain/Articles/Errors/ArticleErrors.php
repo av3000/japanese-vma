@@ -7,6 +7,9 @@ use App\Shared\Results\ResultError;
 
 class ArticleErrors
 {
+    /** Callers in other modules match on this code, so it is a constant rather than a literal. */
+    public const ALREADY_IMPORTED = 'Articles.AlreadyImported';
+
     public static function notFound(string $articleUid): ResultError
     {
         return new ResultError(
@@ -70,6 +73,17 @@ class ArticleErrors
             description: 'Article update failed',
             detail: 'An unexpected error occurred during article updating',
             errorMessage: $errorMessage
+        );
+    }
+
+    public static function alreadyImported(string $externalId): ResultError
+    {
+        return new ResultError(
+            code: self::ALREADY_IMPORTED,
+            status: HttpStatus::CONFLICT,
+            description: 'Article already imported',
+            detail: "An article with external id {$externalId} already exists for this content source",
+            errorMessage: "An article with external id {$externalId} already exists for this content source",
         );
     }
 

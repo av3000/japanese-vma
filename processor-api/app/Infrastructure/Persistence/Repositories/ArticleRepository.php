@@ -6,6 +6,7 @@ use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\DTOs\ArticlePdfExportData;
 use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
+use App\Domain\Articles\Exceptions\ArticleAlreadyImportedException;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -15,10 +16,14 @@ use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 // use App\Infrastructure\Persistence\Builders\KanjiRelationQueryBuilder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class ArticleRepository implements ArticleRepositoryInterface
 {
+    /** The unique index on (content_source_id, external_id) that deduplicates imports. */
+    private const IMPORT_UNIQUE_INDEX = 'articles_content_source_external_id_unique';
+
     public function __construct(
         private readonly ArticleMapper $articleMapper,
         private readonly WordMapper $wordMapper,
@@ -31,7 +36,8 @@ class ArticleRepository implements ArticleRepositoryInterface
      *
      * @param DomainArticle $article The domain article to create
      *
-     * @throws \Illuminate\Database\QueryException On database constraint violation
+     * @throws ArticleAlreadyImportedException When an import of the same external article exists
+     * @throws \Illuminate\Database\QueryException On any other database constraint violation
      *
      * @return DomainArticle The created article with generated ID and relationships
      */
@@ -39,7 +45,20 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         // TODO: use class::method if needed ArticleMapper::mapToEntity($article);
         $mappedArticle = $this->articleMapper->mapToEntity($article);
-        $entityArticle = PersistenceArticle::create($mappedArticle);
+
+        try {
+            $entityArticle = PersistenceArticle::create($mappedArticle);
+        } catch (UniqueConstraintViolationException $e) {
+            $provenance = $article->getProvenance();
+
+            // Only the import index means "already imported"; a uuid clash stays a plain failure.
+            if ($provenance->isImported() && str_contains($e->getMessage(), self::IMPORT_UNIQUE_INDEX)) {
+                throw new ArticleAlreadyImportedException((string) $provenance->externalId, $e);
+            }
+
+            throw $e;
+        }
+
         $entityArticle->load('user');
 
         return $this->articleMapper->mapToCreatedArticleDomain($entityArticle);
@@ -126,6 +145,17 @@ class ArticleRepository implements ArticleRepositoryInterface
     public function getIdByUuid(EntityId $entityUuid): ?int
     {
         return PersistenceArticle::where('uuid', $entityUuid->value())->value('id');
+    }
+
+    /**
+     * Served by the (content_source_id, external_id) unique index.
+     */
+    public function existsImported(int $contentSourceId, string $externalId): bool
+    {
+        return PersistenceArticle::query()
+            ->where('content_source_id', $contentSourceId)
+            ->where('external_id', $externalId)
+            ->exists();
     }
 
     /**

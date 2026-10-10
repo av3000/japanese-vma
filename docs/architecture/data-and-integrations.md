@@ -70,6 +70,7 @@ This polymorphic boundary requires careful validation: numeric IDs, UUIDs, and o
 | GCP worker VM | Pipeline and repository guidance | Configuration verified; VM state open |
 | Upstash Redis | Repository guidance and environment/config references | Intended production dependency; live connection open |
 | Sentry | Frontend provider/dependency references | Client integration present; project ingestion open |
+| NHK News (Content Import) | `processor-api/app/Infrastructure/ContentImport/`, `processor-api/config/content_import.php`; see [Content Import](./content-import.md) | Adapter verified against synthetic fixtures and one live dry run (2026-10-02); no production runtime runs the schedule yet |
 | Laravel Reverb | `processor-api/routes/channels.php`, `App\Application\Processing\Events\ProcessingStatusUpdated`, `client/src/lib/echo/`, `.gitlab-ci.yml` (`verify_reverb`) | Application and pipeline wiring verified; Render service and `REVERB_*` variables not yet provisioned (#262), so live channel health remains open |
 
 ## Integrity Rules
@@ -84,5 +85,6 @@ This polymorphic boundary requires careful validation: numeric IDs, UUIDs, and o
 
 - [System context](./system-context.md)
 - [Deployment and runtime](./deployment-and-runtime.md)
+- [Content Import](./content-import.md)
 - [Current-to-target state](../ai/current-target-state.md)
 - [Japanese study material](../feature-artifacts/japanese-study-material/abstract.md)

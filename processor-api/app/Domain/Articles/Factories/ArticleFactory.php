@@ -1,12 +1,20 @@
 <?php
+
 namespace App\Domain\Articles\Factories;
 
-use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl};
-use App\Domain\Shared\ValueObjects\{UserId, UserName, EntityId, JlptLevels};
-use App\Domain\Shared\Enums\{PublicityStatus, ArticleStatus};
+use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleProvenance;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\UserName;
 
 class ArticleFactory
 {
@@ -15,8 +23,7 @@ class ArticleFactory
         UserId $authorId,
         UserName $authorName,
         EntityId $authorUuid
-    ): Article
-    {
+    ): Article {
         return new Article(
             id: null,
             uuid: EntityId::generate(),
@@ -30,10 +37,14 @@ class ArticleFactory
             contentEn: $dto->content_en ? new ArticleContent($dto->content_en) : null,
             sourceUrl: new ArticleSourceUrl($dto->source_link),
             publicity: $dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE,
-            status: ArticleStatus::PENDING,
+            // The moderation queue is for what people write. An Imported Article is an excerpt
+            // from a vetted Content Source, so it starts approved; `content_sources.enabled` is
+            // the switch for a source that stops deserving that.
+            status: $dto->provenance?->isImported() ? ArticleStatus::APPROVED : ArticleStatus::PENDING,
             jlptLevels: JlptLevels::empty(),
             createdAt: new \DateTimeImmutable(),
             updatedAt: new \DateTimeImmutable(),
+            provenance: $dto->provenance ?? ArticleProvenance::user(),
         );
     }
 }

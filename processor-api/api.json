@@ -4265,6 +4265,20 @@
                     "source_link": {
                         "type": "string"
                     },
+                    "origin": {
+                        "description": "Who put the article here, and the Content Source to credit when it was imported.",
+                        "$ref": "#/components/schemas/ArticleOrigin"
+                    },
+                    "source": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ArticleSourceResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
                     "publicity": {
                         "$ref": "#/components/schemas/PublicityStatus"
                     },
@@ -4352,6 +4366,8 @@
                     "content_jp",
                     "content_en",
                     "source_link",
+                    "origin",
+                    "source",
                     "publicity",
                     "status",
                     "jlpt_levels",
@@ -4508,6 +4524,15 @@
                 ],
                 "title": "ArticleModerationListResource"
             },
+            "ArticleOrigin": {
+                "type": "string",
+                "description": "Who put the article on the platform: a person, or the Content Import context on behalf of a Content Source.\n",
+                "enum": [
+                    "user",
+                    "imported"
+                ],
+                "title": "ArticleOrigin"
+            },
             "ArticleResource": {
                 "type": "object",
                 "properties": {
@@ -4534,6 +4559,20 @@
                     },
                     "source_link": {
                         "type": "string"
+                    },
+                    "origin": {
+                        "description": "Who put the article here, and the Content Source to credit when it was imported.",
+                        "$ref": "#/components/schemas/ArticleOrigin"
+                    },
+                    "source": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ArticleSourceResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     },
                     "publicity": {
                         "$ref": "#/components/schemas/PublicityStatus"
@@ -4616,6 +4655,8 @@
                     "content_preview_jp",
                     "content_preview_en",
                     "source_link",
+                    "origin",
+                    "source",
                     "publicity",
                     "status",
                     "jlpt_levels",
@@ -4628,6 +4669,26 @@
                     "processing_status"
                 ],
                 "title": "ArticleResource"
+            },
+            "ArticleSourceResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "homepage_url": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "key",
+                    "name",
+                    "homepage_url"
+                ],
+                "title": "ArticleSourceResource"
             },
             "ArticleStatus": {
                 "type": "integer",

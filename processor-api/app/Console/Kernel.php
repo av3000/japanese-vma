@@ -28,6 +28,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('article-processing:sweep-stale')
             ->everyFiveMinutes()
             ->withoutOverlapping();
+
+        // Content Import (epic #404): one run a day, in the Japanese morning, after the night's
+        // news is out. No withoutOverlapping here: each run takes a per-source lock itself
+        // (ImportRunRecorder), which also covers runs started by hand.
+        $schedule->command('content:import')
+            ->dailyAt('07:30')
+            ->timezone('Asia/Tokyo');
     }
 
     /**

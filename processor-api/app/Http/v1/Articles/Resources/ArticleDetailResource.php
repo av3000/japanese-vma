@@ -36,6 +36,8 @@ class ArticleDetailResource extends JsonResource
      *     content_jp: string,
      *     content_en: ?string,
      *     source_link: string,
+     *     origin: \App\Domain\Articles\Enums\ArticleOrigin,
+     *     source: ArticleSourceResource|null,
      *     publicity: PublicityStatus,
      *     status: int,
      *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
@@ -76,6 +78,9 @@ class ArticleDetailResource extends JsonResource
             'content_jp' => $article->getContentJp()->value,
             'content_en' => $article->getContentEn()?->value,
             'source_link' => $article->getSourceUrl()->value,
+            // Who put the article here, and the Content Source to credit when it was imported.
+            'origin' => $article->getProvenance()->origin,
+            'source' => $article->getProvenance()->source ? new ArticleSourceResource($article->getProvenance()->source) : null,
             'publicity' => $publicity,
             'status' => $status,
             'jlpt_levels' => $jlptLevels,
