@@ -7,6 +7,8 @@ import {
 	PlainText,
 	presentRank,
 	presentText,
+	withTrailingAreas,
+	withTrailingColumns,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import styles from './RadicalTable.module.css';
@@ -16,6 +18,8 @@ export interface RadicalTableProps {
 	radicals: RadicalResource[];
 	loading?: boolean;
 	empty: DataTableEmpty;
+	/** Columns appended after the table's own, e.g. the owner's Remove column on Catalogue detail. */
+	trailingColumns?: DataTableColumn<RadicalResource>[];
 }
 
 /**
@@ -91,15 +95,15 @@ const columns: DataTableColumn<RadicalResource>[] = [
 const STACKED = { columns: '48px minmax(0, 1fr)', areas: ['glyph meaning', 'glyph reading', 'glyph strokes'] };
 
 /** The Radicals list as an Index table: the same table as the other lists, not a glyph grid. */
-export const RadicalTable: React.FC<RadicalTableProps> = ({ radicals, loading, empty }) => (
+export const RadicalTable: React.FC<RadicalTableProps> = ({ radicals, loading, empty, trailingColumns }) => (
 	<DataTable
 		label="Radicals"
-		columns={columns}
+		columns={withTrailingColumns(columns, trailingColumns)}
 		rows={radicals}
 		getRowKey={(radical) => radical.uuid}
 		loading={loading}
 		empty={empty}
-		stacked={STACKED}
+		stacked={withTrailingAreas(STACKED, trailingColumns)}
 		className={styles.table}
 	/>
 );

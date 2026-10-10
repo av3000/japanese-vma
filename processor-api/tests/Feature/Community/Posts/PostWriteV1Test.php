@@ -169,7 +169,8 @@ class PostWriteV1Test extends TestCase
             ->assertJsonPath('uuid', $post->uuid)
             ->assertJsonPath('title', 'Rewritten title')
             ->assertJsonPath('topic', PostTopic::TECHNICAL->value)
-            ->assertJsonPath('topic_label', 'Technical');
+            ->assertJsonPath('topic_label', 'Technical')
+            ->assertJsonPath('engagement.is_liked_by_viewer', false);
 
         self::assertSame(['#fresh'], array_column($response->json('hashtags'), 'content'));
         $this->assertDatabaseHas('posts', ['id' => $post->id, 'title' => 'Rewritten title']);

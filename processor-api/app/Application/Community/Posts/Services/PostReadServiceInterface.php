@@ -7,6 +7,7 @@ namespace App\Application\Community\Posts\Services;
 use App\Domain\Community\Posts\DTOs\PostDetailResultDTO;
 use App\Domain\Community\Posts\Models\Post;
 use App\Domain\Community\Posts\Queries\PostQueryCriteria;
+use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
 
@@ -26,9 +27,10 @@ interface PostReadServiceInterface
     public function findByIdentifier(string $identifier, Viewer $viewer): Result;
 
     /**
-     * Enriches an already-resolved Post with stats and hashtags, with no view
-     * side effect. The write slice returns the canonical detail shape after a
-     * create or update, where recording a view for the author would be wrong.
+     * Enriches an already-resolved Post with stats, hashtags and whether the
+     * viewer has liked it, with no view side effect. The write slice returns the
+     * canonical detail shape after a create or update, where recording a view
+     * for the author would be wrong. A null viewer (a guest) has liked nothing.
      */
-    public function describe(Post $post): PostDetailResultDTO;
+    public function describe(Post $post, ?UserId $viewerId): PostDetailResultDTO;
 }

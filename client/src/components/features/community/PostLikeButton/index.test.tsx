@@ -44,8 +44,8 @@ vi.mock('@/components/shared/Button', () => ({
 	},
 }));
 
-const renderButton = () =>
-	renderToStaticMarkup(<PostLikeButton postId={31} detailIdentifier="post-uuid" likesCount={4} />);
+const renderButton = (isLiked = false) =>
+	renderToStaticMarkup(<PostLikeButton postId={31} detailIdentifier="post-uuid" likesCount={4} isLiked={isLiked} />);
 
 describe('PostLikeButton', () => {
 	beforeEach(() => {
@@ -62,8 +62,8 @@ describe('PostLikeButton', () => {
 		expect(vi.mocked(useLikePostMutation)).toHaveBeenCalledWith('post-uuid');
 	});
 
-	it('renders the count the cached post carries', () => {
-		expect(renderButton()).toContain('4 likes');
+	it('renders the count the cached post carries in the visible label', () => {
+		expect(renderButton()).toContain('Like · 4');
 	});
 
 	it('likes through the loaded numeric post id rather than the uuid route parameter', () => {
@@ -91,19 +91,17 @@ describe('PostLikeButton', () => {
 		expect(capturedButtonProps[0].disabled).toBe(true);
 	});
 
-	it('shows the unfilled icon on load, because the Post read contract carries no viewer like state', () => {
-		expect(renderButton()).toContain('thumbsUpRegular');
+	it('shows the unfilled icon for a viewer who has not liked the post', () => {
+		expect(renderButton(false)).toContain('thumbsUpRegular');
 	});
 
-	it('fills the icon from the toggle response once the viewer has liked', () => {
+	it('shows the filled icon on load for a viewer who already liked the post', () => {
+		expect(renderButton(true)).toContain('thumbsUpSolid');
+	});
+
+	it('takes the pressed state from the cached post, not from the last toggle response', () => {
 		lastToggleResult = { is_liked: true, likes_count: 5 };
 
-		expect(renderButton()).toContain('thumbsUpSolid');
-	});
-
-	it('unfills the icon again when the toggle response reports an unlike', () => {
-		lastToggleResult = { is_liked: false, likes_count: 4 };
-
-		expect(renderButton()).toContain('thumbsUpRegular');
+		expect(renderButton(false)).toContain('thumbsUpRegular');
 	});
 });

@@ -1,33 +1,94 @@
-.page {
-	padding-block: var(--spacing-lg) var(--spacing-2xl);
+.header {
+	display: grid;
+	gap: var(--spacing-sm);
+	min-width: 0;
+}
+
+.back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	justify-self: start;
+	font-size: var(--font-size-body-md);
 }
 
 .title {
 	margin: 0;
+	font-size: var(--font-size-heading-2);
+	/* A 255-character title with no spaces still wraps at 360px. */
+	overflow-wrap: anywhere;
+	word-break: normal;
+	hyphens: manual;
 }
 
-.meta {
-	color: var(--color-neutral-600);
+.title[lang='ja'] {
+	font-family: var(--font-family-ja-serif);
+	font-weight: var(--font-weight-regular);
 }
 
+/* Community posts are mostly English prose: the body face at the reading size, not the Japanese article face. */
 .body {
-	margin: 0;
+	min-width: 0;
 	font-size: var(--font-size-body-lg);
+	line-height: var(--line-height-lg);
+	overflow-wrap: anywhere;
 }
 
-.divider {
-	width: 100%;
+.paragraph {
+	margin: 0 0 1em;
+}
+
+.paragraph:last-child {
+	margin-bottom: 0;
+}
+
+/* The global h2 keeps a min-height sized for heading type; this one is small print. */
+.railHeading {
+	min-height: 0;
+	margin: 0 0 var(--spacing-xs);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.tags {
 	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
-.avatar {
-	border-radius: 50%;
+.tag {
+	display: inline-block;
+	max-width: 100%;
+	padding: 0 var(--spacing-2xs);
+	border: var(--border-size-sm) solid var(--color-pill-border);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-pill-bg);
+	color: var(--color-pill-fg);
+	font-size: var(--font-size-body-sm);
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+	text-decoration: none;
 }
 
-.author {
-	margin: 0;
+.tag:hover {
+	text-decoration: underline;
 }
 
 .comments {
-	margin-top: var(--spacing-2xl);
+	display: grid;
+	gap: var(--spacing-md);
+}
+
+.sectionHeading {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
+}
+
+@media (min-width: 768px) {
+	.title {
+		font-size: var(--font-size-heading-1);
+	}
 }

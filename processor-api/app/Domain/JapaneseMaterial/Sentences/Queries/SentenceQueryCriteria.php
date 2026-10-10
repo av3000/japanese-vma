@@ -17,6 +17,8 @@ final readonly class SentenceQueryCriteria
         public ?string $tatoebaEntry = null,
         public ?int $userId = null,
         public ?int $kanjiId = null,
+        /** Sentences saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public ?int $catalogueId = null,
     ) {
     }
 
@@ -28,6 +30,7 @@ final readonly class SentenceQueryCriteria
         ?string $tatoebaEntry = null,
         ?int $userId = null,
         ?int $kanjiId = null,
+        ?int $catalogueId = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -36,6 +39,7 @@ final readonly class SentenceQueryCriteria
             tatoebaEntry: $tatoebaEntry,
             userId: $userId,
             kanjiId: $kanjiId,
+            catalogueId: $catalogueId,
         );
     }
 }

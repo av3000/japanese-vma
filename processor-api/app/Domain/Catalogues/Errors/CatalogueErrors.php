@@ -2,6 +2,7 @@
 
 namespace App\Domain\Catalogues\Errors;
 
+use App\Domain\Shared\Enums\SavedListType;
 use App\Shared\Enums\HttpStatus;
 use App\Shared\Results\ResultError;
 
@@ -72,6 +73,26 @@ class CatalogueErrors
             description: 'Catalogue type is locked',
             detail: "Catalogue {$catalogueUid} has items, so its type cannot change",
             errorMessage: "The type can't be changed once the catalogue has items.",
+        );
+    }
+
+    public const ITEM_FAMILY_MISMATCH = 'Catalogues.ItemFamilyMismatch';
+
+    /**
+     * A dictionary index was asked for the items of a catalogue that holds another kind of item.
+     * Items are bare ids read under the catalogue's type, so answering would list unrelated
+     * entries. `errorMessage` is written for users: controllers return it under the filter field.
+     */
+    public static function itemFamilyMismatch(string $catalogueUid, SavedListType $family): ResultError
+    {
+        $noun = strtolower($family->label());
+
+        return new ResultError(
+            code: self::ITEM_FAMILY_MISMATCH,
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Catalogue holds another kind of item',
+            detail: "Catalogue {$catalogueUid} does not hold {$noun}",
+            errorMessage: "This catalogue doesn't hold {$noun}.",
         );
     }
 

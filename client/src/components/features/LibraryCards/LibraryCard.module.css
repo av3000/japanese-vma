@@ -14,6 +14,10 @@
 	border-radius: var(--border-radius-md);
 }
 
+.noCover {
+	grid-template-columns: minmax(0, 1fr);
+}
+
 .card:hover {
 	border-color: var(--color-primary-200);
 }

@@ -1,0 +1,80 @@
+.titleBlock {
+	display: grid;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.title {
+	margin: 0;
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--font-size-heading-2);
+	font-weight: var(--font-weight-regular);
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.subtitle {
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-lg);
+	overflow-wrap: anywhere;
+}
+
+.body {
+	display: grid;
+	gap: var(--spacing-xl);
+	min-width: 0;
+}
+
+.text {
+	font-family: var(--font-family-ja);
+	font-size: var(--font-size-japanese-article-text);
+	line-height: var(--line-height-japanese-article-text);
+	/* Long unbroken runs and URLs wrap inside the 720px measure, down to 360px screens. */
+	overflow-wrap: anywhere;
+}
+
+.paragraph {
+	margin: 0 0 1em;
+}
+
+.paragraph:last-child {
+	margin-bottom: 0;
+}
+
+.attribution {
+	min-width: 0;
+}
+
+.translation {
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	padding-top: var(--spacing-md);
+}
+
+.summary {
+	cursor: pointer;
+	color: var(--color-neutral-700);
+	font-weight: var(--font-weight-semibold);
+}
+
+.translationText {
+	margin-top: var(--spacing-md);
+	color: var(--color-neutral-800);
+	font-size: var(--font-size-body-lg);
+	line-height: 1.7;
+	overflow-wrap: anywhere;
+}
+
+.translationParagraph {
+	margin: 0 0 1em;
+}
+
+.translationParagraph:last-child {
+	margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+	.title {
+		font-size: var(--font-size-heading-1);
+	}
+}

@@ -1,33 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
+import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
 import { useArticleStatusMutation } from '@/api/articles/moderation';
-import { importedSourceOf } from '@/api/articles/provenance';
-import { articleDestroy, articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
+import { isProcessingRunning, useArticleReadingStats } from '@/api/articles/readingStats';
+import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
-import { publicityLabel } from '@/api/publicity';
-import AvatarImg from '@/assets/images/avatar-woman.svg';
-import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
-import { ArticleAttribution } from '@/components/features/articles/ArticleAttribution';
+import { ArticleBody, ArticleTitle } from '@/components/features/articles/ArticleBody';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
+import { Byline } from '@/components/shared/Byline';
 import { Chip } from '@/components/shared/Chip';
+import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
+import { characterCount, DetailFacts, type DetailFact } from '@/components/shared/DetailFacts';
+import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
 import { JlptBar } from '@/components/shared/JlptBar';
-import { SourceBadge } from '@/components/shared/SourceBadge';
+import { Link } from '@/components/shared/Link';
 import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
-import { Badge } from '@/components/ui/badge';
+import { VisibilityCue } from '@/components/shared/VisibilityCue';
+import { Cluster } from '@/components/shared/layout';
 import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
+import { isValidHttpUrl } from '@/helpers/isValidHttpUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
@@ -38,10 +40,22 @@ interface ArticleContentProps {
 	article: MappedArticle;
 }
 
+/**
+ * Where the Edit action goes. Edit is still the modal on this page (`?edit=1`); #447 moves it to
+ * `/articles/:id/edit`, and then only this line changes.
+ */
+export const articleEditHref = (articleUuid: string) => `/articles/${articleUuid}?edit=1`;
+
+/** The hostname of a source link, or `null` when it is not a usable http(s) URL. */
+const sourceHostOf = (link: string | null | undefined): string | null =>
+	link && isValidHttpUrl(link) ? new URL(link).hostname.replace(/^www\./, '') : null;
+
 const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { user: currentUser, isAuthenticated } = useAuth();
+	const tagsHeadingId = useId();
+	const commentsHeadingId = useId();
 
 	const [tempStatus, setTempStatus] = useState<ArticleStatusValue>(article.status as ArticleStatusValue);
 	const [pdfPendingType, setPdfPendingType] = useState<'kanji' | 'words' | null>(null);
@@ -55,31 +69,19 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
 	const pdfModal = useModal(pdfDialogRef, { id: 'article-pdf-modal' });
 
-	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
+	// Live processing updates write into the detail cache this page renders from.
 	useArticleSubscription(article.uuid);
 
-	// TODO: how should this backend call passed onto - directly here or come from parent smart component?
 	const likeMutation = useLikeArticleMutation(article.uuid);
+	const readingStats = useArticleReadingStats(article);
 
-	// TODO: Should only call queries propagating up to smart component
-	// ex: statusMutation could be called from a dashboard.
 	const statusMutation = useArticleStatusMutation(article.uuid, {
 		onSuccess: () => reviewModal.close(),
 		// Keep the select in step with the status the server still holds.
 		onError: () => setTempStatus(article.status as ArticleStatusValue),
 	});
 
-	// TODO: Lift this query up and create query function to be reused
-	const deleteMutation = useMutation({
-		mutationFn: () => articleDestroy(article.uuid),
-		onSuccess: () => navigate('/articles'),
-	});
-
-	const openEditModal = () => {
-		const next = new URLSearchParams(searchParams);
-		next.set('edit', '1');
-		setSearchParams(next);
-	};
+	const deleteMutation = useDeleteArticleMutation();
 
 	const closeEditModal = () => {
 		const next = new URLSearchParams(searchParams);
@@ -95,7 +97,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		isRendered: isEditDialogRendered,
 	} = editModal;
 
-	// TODO: Lift this query up and create query function to be reused, with pending state to avoid multi calls
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
 
@@ -119,10 +120,12 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	};
 
 	const isLiked = article.engagement?.is_liked_by_viewer ?? false;
+	const likesCount = Number(article.engagement?.likes_count ?? 0);
 	const isOwner = currentUser?.id === article.author.id;
-	const importedSource = importedSourceOf(article);
-	const isAdmin = currentUser?.isAdmin;
+	const isAdmin = Boolean(currentUser?.isAdmin);
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
+	const isProcessing = isProcessingRunning(article);
+	const sourceHost = sourceHostOf(article.source_link);
 
 	const handleLikeClick = () => {
 		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
@@ -146,131 +149,158 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 		}
 	}, [isEditOpen, isEditDialogOpen, isEditDialogRendered, openEditDialog, closeEditDialog]);
 
+	// "Words" is left out, not shown as a guess, when its list could not be read.
+	const facts: DetailFact[] = [
+		{ term: 'Kanji', value: readingStats.kanji },
+		...(readingStats.words === undefined ? [] : [{ term: 'Words', value: readingStats.words }]),
+		{ term: 'Characters', value: characterCount(article.content_jp) },
+	];
+
 	return (
-		<Container size="sm" className={styles.page}>
-			<Stack gap="md">
-				<div>
-					<Link to="/articles" className="tag-link">
-						<Icon name="arrowDownSolid" rotate="90" size="sm" /> Back to Articles
-					</Link>
-				</div>
-
-				<ProcessingStatusAlert processing_status={article.processing_status} />
-
-				<h1 className={styles.title} lang="ja">
-					{article.title_jp}
-				</h1>
-
-				<Cluster justify="between" className={styles.meta}>
-					<div>
-						<p className={styles.inlineText}>Posted on {article.formattedDate}</p>
-						<Cluster gap="xs">
-							<span>{article.engagement?.views_count || 0} views | </span>
-							{importedSource && <SourceBadge source={importedSource} />}
-							{(isOwner || isAdmin) && (
-								<Badge variant="secondary">{publicityLabel(article.publicity)}</Badge>
-							)}
-							{(isOwner || isAdmin) && <StatusPill {...articleStatusPill(article.status)} />}
-						</Cluster>
-						<JlptBar levels={article.jlpt_levels} className={styles.levels} />
+		<>
+			<DetailLayout
+				railLabel="About this article"
+				header={
+					<div className={styles.header}>
+						<Link to="/articles" className={styles.back}>
+							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Articles
+						</Link>
+						<ArticleTitle titleJp={article.title_jp} titleEn={article.title_en} />
+						<Byline
+							name={article.author?.name}
+							date={article.created_at}
+							views={Number(article.engagement?.views_count ?? 0)}
+						/>
+						{isOwner || isAdmin ? (
+							<Cluster gap="xs" className={styles.ownerCues}>
+								<VisibilityCue publicity={article.publicity} />
+								<StatusPill {...articleStatusPill(article.status)} />
+							</Cluster>
+						) : null}
 					</div>
-
-					<Cluster gap="xs">
-						{isAdmin && (
-							<Button
-								onClick={reviewModal.open}
-								variant="ghost"
-								size="md"
-								aria-controls={reviewModal.id}
-								aria-expanded={reviewModal.isOpen}
-							>
-								Review
-							</Button>
-						)}
-						{isOwner && (
-							<>
-								<Button
-									onClick={deleteModal.open}
-									variant="ghost"
-									hasOnlyIcon
-									aria-label="Delete article"
-									aria-controls={deleteModal.id}
-									aria-expanded={deleteModal.isOpen}
-								>
-									<Icon name="trashbinSolid" size="md" />
-								</Button>
-								<Button onClick={openEditModal} variant="ghost" hasOnlyIcon aria-label="Edit article">
-									<Icon name="penSolid" size="md" />
-								</Button>
-							</>
-						)}
-					</Cluster>
-				</Cluster>
-
-				<img className={styles.cover} src={DefaultArticleImg} alt="Cover" />
-				<p className={styles.articleParagraph} lang="ja">
-					{article.content_jp}
-				</p>
-
-				{importedSource && <ArticleAttribution source={importedSource} sourceLink={article.source_link} />}
-
-				<Cluster as="section" gap="2xs" aria-label="Tags">
-					{article.hashtags?.map((tag) => (
-						<Chip readonly key={tag.id} title={tag.content}>
-							{tag.content}
-						</Chip>
-					))}
-				</Cluster>
-
-				<hr className={styles.divider} />
-
-				<Cluster justify="between">
-					<Cluster gap="md">
-						<img src={AvatarImg} alt="user" width="40" className={styles.avatar} />
-						<p className={styles.inlineText}>
-							Created by <strong>{article.displayName}</strong>
-						</p>
-					</Cluster>
-					<Cluster gap="xs">
-						<p className={styles.inlineText}>{article.engagement?.likes_count}</p>
+				}
+				main={
+					<div className={styles.main}>
+						<ProcessingStatusAlert processing_status={article.processing_status} isOwner={isOwner} />
+						<ArticleBody contentJp={article.content_jp} contentEn={article.content_en} />
+					</div>
+				}
+				facts={
+					<DetailFacts title="In this reading" facts={facts}>
+						{readingStats.kanji ? <JlptBar levels={article.jlpt_levels} /> : null}
+					</DetailFacts>
+				}
+				actions={
+					<DetailActions>
 						<Button
-							variant="ghost"
-							hasOnlyIcon
-							aria-label={isLiked ? 'Unlike this article' : 'Like this article'}
+							variant="outline"
+							isFullWidth
 							aria-pressed={isLiked}
 							disabled={likeMutation.isTogglingInstance(article.id)}
 							onClick={handleLikeClick}
 						>
-							<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+							<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+							{`Like · ${likesCount}`}
 						</Button>
 						{isAuthenticated && (
 							<AuthorizedBookmarkWidget
 								instanceObjectType={SavedListType.ARTICLES}
 								entityId={article.id}
 								modalTitle="Choose Articles List to add"
+								label="Save to a catalogue"
+								savedLabel="Saved to a catalogue"
 							/>
 						)}
 						<Button
-							variant="ghost"
-							hasOnlyIcon
-							aria-label="Generate PDF"
+							variant="outline"
+							isFullWidth
 							aria-controls={pdfModal.id}
 							aria-expanded={pdfModal.isOpen}
 							onClick={pdfModal.open}
 						>
-							<Icon size="md" name="filePdfSolid" />
+							<Icon size="sm" name="filePdfSolid" />
+							Kanji &amp; words PDF
 						</Button>
-					</Cluster>
-				</Cluster>
-			</Stack>
-
-			<div className={styles.attachments}>
-				<ArticleAttachments articleUuid={article.uuid} />
-			</div>
-
-			<div className={styles.comments}>
-				<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
-			</div>
+						{isOwner && (
+							<DetailActionGroup heading="Your article">
+								<Button variant="outline" isFullWidth to={articleEditHref(article.uuid)}>
+									<Icon size="sm" name="penSolid" />
+									Edit
+								</Button>
+								<Button
+									variant="outline"
+									isFullWidth
+									aria-controls={deleteModal.id}
+									aria-expanded={deleteModal.isOpen}
+									onClick={deleteModal.open}
+								>
+									<Icon size="sm" name="trashbinSolid" />
+									Delete
+								</Button>
+							</DetailActionGroup>
+						)}
+						{/* Review stays here until moderation moves to the admin panel (#184). */}
+						{isAdmin && (
+							<DetailActionGroup heading="Moderation">
+								<Button
+									variant="outline"
+									isFullWidth
+									aria-controls={reviewModal.id}
+									aria-expanded={reviewModal.isOpen}
+									onClick={reviewModal.open}
+								>
+									Review
+								</Button>
+							</DetailActionGroup>
+						)}
+					</DetailActions>
+				}
+				extra={
+					article.hashtags.length > 0 || sourceHost ? (
+						<div className={styles.extra}>
+							{article.hashtags.length > 0 ? (
+								<section aria-labelledby={tagsHeadingId}>
+									<h2 id={tagsHeadingId} className={styles.railHeading}>
+										Tags
+									</h2>
+									<Cluster as="ul" gap="2xs" className={styles.tags}>
+										{article.hashtags.map((tag) => (
+											<li key={tag.id}>
+												<Chip readonly title={tag.content}>
+													{tag.content}
+												</Chip>
+											</li>
+										))}
+									</Cluster>
+								</section>
+							) : null}
+							{sourceHost ? (
+								<p className={styles.source}>
+									Source:{' '}
+									<Link linkUrl={article.source_link} rel="noopener noreferrer">
+										{sourceHost}
+									</Link>
+								</p>
+							) : null}
+						</div>
+					) : null
+				}
+				after={
+					<div className={styles.after}>
+						<ArticleAttachments
+							articleUuid={article.uuid}
+							showSave={isAuthenticated}
+							isProcessing={isProcessing}
+						/>
+						<section aria-labelledby={commentsHeadingId} className={styles.comments}>
+							<h2 id={commentsHeadingId} className={styles.sectionHeading}>
+								Comments
+							</h2>
+							<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
+						</section>
+					</div>
+				}
+			/>
 
 			<ArticleReviewModal
 				controller={reviewModal}
@@ -283,7 +313,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={article.title_jp}
-				onDelete={() => deleteMutation.mutate()}
+				onDelete={() => deleteMutation.mutate(article.uuid, { onSuccess: () => navigate('/articles') })}
 				isProcessing={deleteMutation.isPending}
 			/>
 
@@ -296,7 +326,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			/>
 
 			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}
-		</Container>
+		</>
 	);
 };
 export default ArticleContent;

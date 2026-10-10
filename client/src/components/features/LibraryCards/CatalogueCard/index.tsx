@@ -1,17 +1,9 @@
 import type { Catalogue } from '@/api/catalogues/catalogues';
 import { dominantJlptLevel, JlptBar } from '@/components/shared/JlptBar';
+import { japaneseLang } from '@/helpers/japaneseLang';
 import { CATALOGUE_ROUTES, resolveCatalogueTypeLabel } from '@/shared/constants/catalogues';
 import { CardCover, CoverChip } from '../CardCover';
-import {
-	CardOwner,
-	CardStats,
-	CardSubtitle,
-	CardTags,
-	CardTitle,
-	japaneseLang,
-	LibraryCard,
-	toCount,
-} from '../LibraryCard';
+import { CardOwner, CardStats, CardSubtitle, CardTags, CardTitle, LibraryCard, toCount } from '../LibraryCard';
 import { catalogueCoverGlyph, catalogueJlptCounts } from '../coverRule';
 
 interface CatalogueCardProps {

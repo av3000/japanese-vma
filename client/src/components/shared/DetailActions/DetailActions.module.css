@@ -1,0 +1,30 @@
+.actions {
+	display: grid;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.group {
+	display: grid;
+	gap: var(--spacing-xs);
+	margin-top: var(--spacing-xs);
+	padding-top: var(--spacing-md);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+/* The global h2 keeps a min-height sized for heading type; this group label is small print. */
+.heading {
+	min-height: 0;
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-xs);
+}

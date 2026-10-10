@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Controllers;
 
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\Catalogues\Services\ViewerCatalogueStateService;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
+use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -29,6 +31,7 @@ class KanjiController extends Controller
         private readonly KanjiDetailServiceInterface $kanjiDetailService,
         private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
         private readonly CurrentUserProviderInterface $currentUserProvider,
+        private readonly CatalogueServiceInterface $catalogueService,
     ) {
     }
 
@@ -40,6 +43,30 @@ class KanjiController extends Controller
         $articleId = isset($validatedData['article_uuid'])
             ? EntityId::from($validatedData['article_uuid'])
             : null;
+
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $catalogueId = null;
+
+        if (isset($validatedData['catalogue_uuid'])) {
+            $source = $this->catalogueService->resolveItemSource(
+                EntityId::from($validatedData['catalogue_uuid']),
+                SavedListType::KANJIS,
+                $authenticatedUser,
+            );
+
+            if ($source->isFailure()) {
+                $error = $source->getError();
+
+                // A filter on the wrong kind of catalogue is a rule about one field, so it comes back as a 422 on it.
+                if ($error->code === CatalogueErrors::ITEM_FAMILY_MISMATCH) {
+                    return TypedResults::validationProblem(['catalogue_uuid' => [(string) $error->errorMessage]]);
+                }
+
+                return TypedResults::fromError($error);
+            }
+
+            $catalogueId = $source->getData();
+        }
 
         $criteria = KanjiQueryCriteria::forListing(
             page: $validatedData['page'] ?? Pagination::MIN_PAGE,
@@ -57,6 +84,7 @@ class KanjiController extends Controller
             limit: $validatedData['limit'] ?? null,
             offset: $validatedData['offset'] ?? null,
             articleId: $articleId,
+            catalogueId: $catalogueId,
         );
 
         $paginatedKanjisResult = $this->kanjiService->find($criteria);
@@ -67,7 +95,6 @@ class KanjiController extends Controller
 
         $kanjiListResult = $paginatedKanjisResult->getData();
         $viewerCatalogueStates = [];
-        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
 
         if ($request->includesViewerCatalogueState() && $authenticatedUser !== null) {
             $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(

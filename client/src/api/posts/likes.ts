@@ -1,36 +1,41 @@
+import type { EngagementStatsResource } from '@/api/generated/model/engagementStatsResource';
 import type { PostDetailResource } from '@/api/generated/model/postDetailResource';
 import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
 import { ObjectTemplateType } from '@/shared/constants/enums';
 import { getPostDetailQueryKey } from './reads';
 
+/** A Post nobody has engaged with has `stats: null`; a like is the first count it gets. */
+const NO_STATS: EngagementStatsResource = {
+	likes_count: '0',
+	views_count: '0',
+	downloads_count: '0',
+	comments_count: '0',
+};
+
 /**
- * Post detail exposes aggregate engagement only: `EngagementStatsSummaryResource` has no
- * `is_liked_by_viewer`, unlike the Article, Catalogue and Comment contracts.
- *
- * So `read` reports nothing to flip and no optimistic write happens - the cached count moves only
- * on the authoritative response, and the viewer's own state comes from that response rather than
- * from the cache. Giving Post the same optimistic treatment as the others needs the read contract
- * to carry the viewer flag first.
+ * Post detail carries the viewer's own like state (#529), so the toggle flips the cached record
+ * optimistically and settles on the served count, as Article and Catalogue detail do.
  */
 const buildPostLikeBinding = (detailIdentifier: string): LikeCacheBinding<PostDetailResource> => ({
 	queryKey: getPostDetailQueryKey(detailIdentifier),
 
-	read: () => undefined,
+	read: (post) => ({
+		is_liked: post.engagement.is_liked_by_viewer,
+		likes_count: Number(post.engagement.stats?.likes_count ?? 0),
+	}),
 
-	write: (post, _instanceId, next) =>
-		post.engagement.stats
-			? {
-					...post,
-					engagement: {
-						...post.engagement,
-						stats: {
-							...post.engagement.stats,
-							// `EngagementStatsResource` types every count as a string on the wire.
-							likes_count: String(next.likes_count),
-						},
-					},
-				}
-			: post,
+	write: (post, _instanceId, next) => ({
+		...post,
+		engagement: {
+			...post.engagement,
+			is_liked_by_viewer: next.is_liked,
+			stats: {
+				...(post.engagement.stats ?? NO_STATS),
+				// `EngagementStatsResource` types every count as a string on the wire.
+				likes_count: String(next.likes_count),
+			},
+		},
+	}),
 });
 
 /**

@@ -38,6 +38,29 @@ describe('AuthorizedBookmarkWidget', () => {
 		expect(unknown).not.toContain('learned');
 	});
 
+	it('renders a labelled full-width button for a detail rail, named by its visible text', () => {
+		const props = {
+			instanceObjectType: SavedListType.ARTICLES,
+			isKnownType: undefined,
+			label: 'Save to a catalogue',
+			savedLabel: 'Saved to a catalogue',
+		};
+		const unsaved = renderToStaticMarkup(widget(props));
+		const saved = renderToStaticMarkup(widget({ ...props, initialIsBookmarked: true }));
+
+		expect(unsaved).toMatch(/<button[^>]*aria-controls="[^"]+"[^>]*>.*Save to a catalogue<\/button>/);
+		expect(unsaved).not.toContain('aria-label=');
+		expect(saved).toContain('Saved to a catalogue</button>');
+	});
+
+	it('keeps the label when no saved label is given', () => {
+		const html = renderToStaticMarkup(
+			widget({ label: 'Save to a catalogue', isKnownType: undefined, initialIsBookmarked: true }),
+		);
+
+		expect(html).toContain('Save to a catalogue</button>');
+	});
+
 	it('gives every widget its own dialog id', () => {
 		const html = renderToStaticMarkup(
 			<>

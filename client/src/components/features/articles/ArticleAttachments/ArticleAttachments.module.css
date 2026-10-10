@@ -1,11 +1,18 @@
 .attachments {
 	display: grid;
-	gap: var(--spacing-lg);
+	gap: var(--spacing-xl);
+	min-width: 0;
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
 }
 
 .section {
 	display: grid;
 	gap: var(--spacing-sm);
+	min-width: 0;
 }
 
 .heading {
@@ -13,41 +20,86 @@
 	align-items: baseline;
 	gap: var(--spacing-xs);
 	margin: 0;
+	font-size: var(--font-size-heading-5);
 }
 
 .count {
-	color: var(--color-text-neutral-default);
-	font-size: var(--font-size-body-sm);
-	font-weight: 400;
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--font-weight-regular);
 }
 
-.items {
+.message {
+	margin: 0;
+	color: var(--color-neutral-700);
+}
+
+.seeAll {
+	justify-self: start;
+}
+
+/* Kanji preview: a strip of glyph tiles, each a link to its kanji page. */
+.glyphs {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--spacing-xs);
-	list-style: none;
 	margin: 0;
 	padding: 0;
+	list-style: none;
 }
 
-.item {
-	border: 1px solid var(--color-border-default);
-	border-radius: var(--border-radius-sm);
-	padding: var(--spacing-2xs) var(--spacing-xs);
+.glyph {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--size-4xl);
+	height: var(--size-4xl);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+	color: var(--color-text-primary);
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--font-size-heading-3);
+	text-decoration: none;
+}
+
+.glyph:hover {
+	border-color: var(--color-primary);
+}
+
+/* Words preview: word and reading, wrapping in a row like the kanji strip. */
+.words {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2xs) var(--spacing-lg);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.word {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--spacing-xs);
+	min-width: 0;
+}
+
+.wordLink {
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
 }
 
 .reading {
-	color: var(--color-text-neutral-default);
-	font-size: var(--font-size-body-sm);
-	margin-left: var(--spacing-2xs);
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
 }
 
-.empty {
-	color: var(--color-text-neutral-default);
-	font-size: var(--font-size-body-sm);
-	margin: 0;
-}
-
-.more {
-	justify-self: start;
+.modalBody {
+	display: grid;
+	gap: var(--spacing-md);
+	min-width: 0;
 }

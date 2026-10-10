@@ -1,4 +1,4 @@
-import { isValidElement, type ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -6,10 +6,6 @@ import {
 	catalogueExportRadicalsPdf,
 	catalogueExportSentencesPdf,
 	catalogueExportWordsPdf,
-	catalogueRemoveItem,
-	getCatalogueIndexQueryKey,
-	getCatalogueShowQueryKey,
-	useCatalogueDestroy,
 } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
 import { downloadFile } from '@/helpers/downloadFile';
@@ -22,9 +18,11 @@ let isAuthenticatedMock = true;
 const capturedLikeButtonProps: Array<{ onClick?: () => void; disabled?: boolean; 'aria-pressed'?: boolean }> = [];
 const setQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
-const catalogueDestroyMutateMock = vi.fn();
+const deleteMutateMock = vi.fn();
+let currentUserIdMock = 7;
 const capturedCatalogueItemsProps: Array<{
-	onRemoveItem: (id: number) => void;
+	catalogueUuid: string;
+	isOwner: boolean;
 }> = [];
 const capturedDeleteModalProps: Array<{
 	onDelete: () => void;
@@ -68,13 +66,12 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 		catalogueExportWordsPdf: vi.fn(),
 		catalogueExportRadicalsPdf: vi.fn(),
 		catalogueExportSentencesPdf: vi.fn(),
-		catalogueRemoveItem: vi.fn(),
-		useCatalogueDestroy: vi.fn(() => ({
-			mutate: catalogueDestroyMutateMock,
-			isPending: false,
-		})),
 	};
 });
+
+vi.mock('@/api/catalogues/hooks/useDeleteCatalogueMutation', () => ({
+	useDeleteCatalogueMutation: () => ({ mutate: deleteMutateMock, isPending: false }),
+}));
 
 vi.mock('@/helpers/downloadFile', async () => {
 	const actual = await vi.importActual<typeof import('@/helpers/downloadFile')>('@/helpers/downloadFile');
@@ -86,7 +83,7 @@ vi.mock('@/helpers/downloadFile', async () => {
 
 vi.mock('@/hooks/useAuth', () => ({
 	useAuth: () => ({
-		user: { id: 7, isAdmin: false },
+		user: { id: currentUserIdMock, isAdmin: false },
 		isAuthenticated: isAuthenticatedMock,
 	}),
 }));
@@ -108,21 +105,30 @@ vi.mock('@/components/shared/Button', () => ({
 		children,
 		onClick,
 		disabled,
+		to,
 		...rest
 	}: {
 		children: ReactNode;
 		onClick?: () => void;
 		disabled?: boolean;
+		to?: string;
 		'aria-label'?: string;
 		'aria-pressed'?: boolean;
 	}) => {
-		if (isValidElement<{ name?: string }>(children) && children.props.name === 'filePdfSolid') {
+		const hasIcon = (name: string) =>
+			Children.toArray(children).some(
+				(child) => isValidElement<{ name?: string }>(child) && child.props.name === name,
+			);
+
+		if (hasIcon('filePdfSolid')) {
 			capturedPdfButtonProps.push({ onClick });
 		}
 
-		if (rest['aria-label']?.endsWith('this catalogue')) {
+		if (rest['aria-pressed'] !== undefined) {
 			capturedLikeButtonProps.push({ onClick, disabled, 'aria-pressed': rest['aria-pressed'] });
 		}
+
+		if (to) return <a href={to}>{children}</a>;
 
 		return (
 			<button type="button" onClick={onClick} disabled={disabled}>
@@ -133,7 +139,7 @@ vi.mock('@/components/shared/Button', () => ({
 }));
 
 vi.mock('@/components/features/catalogues/CatalogueItems', () => ({
-	CatalogueItems: (props: { onRemoveItem: (id: number) => void }) => {
+	CatalogueItems: (props: { catalogueUuid: string; isOwner: boolean }) => {
 		capturedCatalogueItemsProps.push(props);
 		return <div>Catalogue items</div>;
 	},
@@ -189,11 +195,11 @@ describe('CatalogueContent', () => {
 		capturedLikeButtonProps.length = 0;
 		likeIsToggling = false;
 		isAuthenticatedMock = true;
+		currentUserIdMock = 7;
 		vi.mocked(catalogueExportKanjisPdf).mockResolvedValue('%PDF-kanji' as never);
 		vi.mocked(catalogueExportWordsPdf).mockResolvedValue('%PDF-words' as never);
 		vi.mocked(catalogueExportRadicalsPdf).mockResolvedValue('%PDF-radicals' as never);
 		vi.mocked(catalogueExportSentencesPdf).mockResolvedValue('%PDF-sentences' as never);
-		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 	});
 
 	it('renders the liked icon from the catalogue detail engagement payload', () => {
@@ -204,18 +210,33 @@ describe('CatalogueContent', () => {
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
 	});
 
-	it('offers Study for kanji, words and radicals catalogues only', () => {
-		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 6 }) as any} />)).toContain(
-			'Study',
-		);
-		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 3 }) as any} />)).toContain(
-			'Study',
-		);
+	it('offers Study for kanji, words and radicals catalogues with items, to visitors too', () => {
+		isAuthenticatedMock = false;
+		currentUserIdMock = 99;
+		const study = (type: number, itemsCount = 3) =>
+			renderToStaticMarkup(
+				<CatalogueContent catalogue={createCatalogue({ type: type as any, items_count: itemsCount }) as any} />,
+			);
+
+		expect(study(6)).toContain('href="/catalogues/catalogue-uuid/study"');
+		expect(study(3)).toContain('>Study</a>');
 		// The default fixture is an Articles catalogue; sentences have no cards either.
-		expect(renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />)).not.toContain('Study');
-		expect(
-			renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ type: 8 }) as any} />),
-		).not.toContain('Study');
+		expect(study(9)).not.toContain('Study');
+		expect(study(8)).not.toContain('Study');
+	});
+
+	it('hides Study for an empty catalogue and tells its owner how to fill it', () => {
+		const owner = renderToStaticMarkup(
+			<CatalogueContent catalogue={createCatalogue({ type: 6, items_count: 0 }) as any} />,
+		);
+		expect(owner).not.toContain('>Study</a>');
+		expect(owner).toContain('Add kanji, words or radicals to study this catalogue.');
+
+		currentUserIdMock = 99;
+		const visitor = renderToStaticMarkup(
+			<CatalogueContent catalogue={createCatalogue({ type: 6, items_count: 0 }) as any} />,
+		);
+		expect(visitor).not.toContain('Study');
 	});
 
 	it('renders the unfilled like icon for a catalogue the viewer has not liked', () => {
@@ -264,62 +285,47 @@ describe('CatalogueContent', () => {
 		expect(capturedLikeButtonProps[0].disabled).toBe(true);
 	});
 
-	it('removes catalogue items through the direct v1 catalogue item endpoint and updates the detail cache', async () => {
-		renderToStaticMarkup(
-			<CatalogueContent
-				catalogue={
-					createCatalogue({
-						items_count: 2,
-						items: [
-							{ id: 11, title: 'First item' },
-							{ id: 12, title: 'Second item' },
-						] as never,
-					}) as any
-				}
-			/>,
-		);
-
-		await capturedCatalogueItemsProps[0].onRemoveItem(12);
-
-		expect(catalogueRemoveItem).toHaveBeenCalledWith('catalogue-uuid', 12);
-		expect(setQueryDataMock).toHaveBeenCalledWith(['/catalogues/catalogue-uuid'], expect.any(Function));
-
-		const updater = setQueryDataMock.mock.calls[0][1] as (
-			old: CatalogueDetailResource | undefined,
-		) => CatalogueDetailResource | undefined;
-		const updated = updater(
-			createCatalogue({
-				items_count: 2,
-				items: [
-					{ id: 11, title: 'First item' },
-					{ id: 12, title: 'Second item' },
-				] as never,
-			}),
-		);
-
-		expect(updated?.items).toEqual([{ id: 11, title: 'First item' }]);
-		expect(updated?.items_count).toBe(1);
-	});
-
-	it('deletes catalogues through the generated v1 destroy mutation and clears related cache keys', async () => {
+	it('deletes through the shared catalogue delete mutation, then returns to the list', () => {
 		renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
 
 		capturedDeleteModalProps[0].onDelete();
 
-		expect(catalogueDestroyMutateMock).toHaveBeenCalledWith({ uuid: 'catalogue-uuid' });
-
-		const options = vi.mocked(useCatalogueDestroy).mock.calls[0]?.[0];
-		expect(options).toBeDefined();
-
-		await options?.mutation?.onSuccess?.('', { uuid: 'catalogue-uuid' }, undefined, {} as never);
-
-		expect(invalidateQueriesMock).toHaveBeenNthCalledWith(1, {
-			queryKey: getCatalogueIndexQueryKey(),
-		});
-		expect(invalidateQueriesMock).toHaveBeenNthCalledWith(2, {
-			queryKey: getCatalogueShowQueryKey('catalogue-uuid'),
-		});
+		expect(deleteMutateMock).toHaveBeenCalledWith('catalogue-uuid', expect.any(Object));
+		deleteMutateMock.mock.calls[0][1].onSuccess();
 		expect(useNavigateMock).toHaveBeenCalledWith('/catalogues');
+	});
+
+	it('lays the page out with one h1, a named rail, the items and comments', () => {
+		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue({ items_count: 12 }) as any} />);
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toContain('aria-label="About this catalogue"');
+		expect(html).toMatch(/In this catalogue<\/h2>/);
+		expect(html).toMatch(/<dt[^>]*>Items<\/dt><dd[^>]*>12<\/dd>/);
+		expect(html).toMatch(/Comments<\/h2>/);
+		expect(html).toContain('Saved for study');
+		expect(html).not.toContain('smartphone-screen');
+		expect(html).not.toContain('No description yet.');
+		expect(capturedCatalogueItemsProps[0]).toMatchObject({ catalogueUuid: 'catalogue-uuid', isOwner: true });
+	});
+
+	it('gives the owner named Edit and Delete actions and the visibility cue', () => {
+		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		expect(html).toContain('href="/catalogues/catalogue-uuid/edit"');
+		expect(html).toContain('Edit catalogue');
+		expect(html).toContain('Delete catalogue');
+		expect(html).toContain('Public');
+	});
+
+	it('shows a visitor neither owner actions nor the visibility cue', () => {
+		currentUserIdMock = 99;
+
+		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
+
+		expect(html).not.toContain('Edit catalogue');
+		expect(html).not.toContain('Delete catalogue');
+		expect(html).not.toContain('Public');
 	});
 
 	it.each([

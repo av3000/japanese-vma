@@ -104,3 +104,26 @@
 		max-width: 100%;
 	}
 }
+
+/* Paged tables (Article detail modals, Catalogue detail) ----------------------------------- */
+.pagedControls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+}
+
+.pagedStatus {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+	.pagedStatus {
+		flex-basis: auto;
+	}
+}

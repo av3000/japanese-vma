@@ -171,6 +171,15 @@ class WordRepository implements WordRepositoryInterface
             });
         }
 
+        if ($criteria->catalogueId !== null) {
+            // Items are bare ids in customlist_object; a word saved twice still lists once.
+            $query->whereIn($query->getModel()->getQualifiedKeyName(), function ($items) use ($criteria): void {
+                $items->select('real_object_id')
+                    ->from('customlist_object')
+                    ->where('list_id', $criteria->catalogueId);
+            });
+        }
+
         if ($criteria->kanjiId !== null) {
             $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
                 $kanjiQuery->whereKey($criteria->kanjiId);

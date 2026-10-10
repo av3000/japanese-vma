@@ -1,0 +1,156 @@
+/*
+ * Reading Room: a 720px measure, a 56px gap and a 280px rail (UI-DETAIL-00, #457).
+ * Header, main and rail share an inner container (`.body`) and `after` sits outside it, so a
+ * sticky rail stops where the text ends and never floats over the full-width section below.
+ * Below 1024px `.body` is one flex column and the rail is `display: contents`, so its three slots
+ * join that column and `order` places them: the actions move up under the header, the facts and
+ * extras follow the text. The DOM order (header, main, rail, after) is what assistive technology
+ * reads and what Tab follows at every width.
+ */
+.layout {
+	--detail-measure: var(--measure-reading);
+	--detail-rail: var(--rail-width);
+	--detail-gap: var(--size-5xl);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xl);
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: calc(var(--detail-measure) + var(--detail-gap) + var(--detail-rail));
+	margin-inline: auto;
+	padding-block: var(--spacing-lg) var(--spacing-3xl);
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-lg);
+	min-width: 0;
+}
+
+.header,
+.main,
+.facts,
+.actions,
+.extra,
+.after {
+	min-width: 0;
+}
+
+.header {
+	order: 1;
+}
+
+.actions {
+	order: 2;
+}
+
+.main {
+	order: 3;
+	max-width: var(--detail-measure);
+}
+
+.facts {
+	order: 4;
+}
+
+.extra {
+	order: 5;
+}
+
+.rail {
+	display: contents;
+}
+
+@media (min-width: 768px) {
+	.layout {
+		width: calc(100% - var(--spacing-lg) * 2);
+	}
+}
+
+@media (min-width: 1024px) {
+	.body {
+		display: grid;
+		grid-template-columns: minmax(0, var(--detail-measure)) var(--detail-rail);
+		grid-template-rows: auto 1fr;
+		grid-template-areas:
+			'header rail'
+			'main rail';
+		gap: var(--spacing-lg) var(--detail-gap);
+	}
+
+	.header {
+		grid-area: header;
+	}
+
+	.main {
+		grid-area: main;
+	}
+
+	.rail {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-lg);
+		grid-area: rail;
+		align-self: start;
+		min-width: 0;
+	}
+
+	/* Inside the rail the facts lead again, as in the DOM. */
+	.facts,
+	.actions,
+	.extra {
+		order: 0;
+	}
+
+	/* Only while the whole rail fits the viewport; a taller rail scrolls with the page. */
+	.rail[data-sticky='true'] {
+		position: sticky;
+		top: var(--spacing-lg);
+	}
+}
+
+/*
+ * Wide: list-like pages (Catalogue detail) whose main column is a table too wide for the measure.
+ * From 1024px the rail is a band under the header, its three slots side by side, never sticky.
+ */
+.wide .main {
+	max-width: none;
+}
+
+@media (min-width: 1024px) {
+	.wide .body {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto;
+		grid-template-areas:
+			'header'
+			'rail'
+			'main';
+	}
+
+	.wide .rail {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		align-items: start;
+	}
+}
+
+/* Not found, deleted or private --------------------------------------------------------- */
+.unavailable {
+	display: grid;
+	justify-items: center;
+	gap: var(--spacing-md);
+	width: calc(100% - var(--spacing-md) * 2);
+	max-width: var(--measure-reading);
+	margin: var(--spacing-3xl) auto;
+	padding: var(--spacing-xl) var(--spacing-lg);
+	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border-radius: var(--border-radius-md);
+	text-align: center;
+}
+
+.unavailableTitle {
+	margin: 0;
+	font-size: var(--font-size-heading-4);
+	overflow-wrap: anywhere;
+}

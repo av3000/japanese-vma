@@ -1,160 +1,229 @@
-// @vitest-environment jsdom
-import { renderToStaticMarkup } from 'react-dom/server';
+/**
+ * @vitest-environment jsdom
+ */
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
-import { ObjectTemplates } from '@/shared/constants';
-import type { User } from '@/types';
+import { catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
+import { kanjiIndex } from '@/api/generated/kanji/kanji';
+import { radicalIndex } from '@/api/generated/radical/radical';
+import { sentenceIndex } from '@/api/generated/sentence/sentence';
+import { wordIndex } from '@/api/generated/word/word';
+import { kanjiRows, radicalRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
+import { submitForm, typeInto } from '@/test/formEvents';
+import { renderWithAct } from '@/test/renderWithAct';
 import { CatalogueItems } from './index';
 
-const capturedButtons: Array<{ ariaLabel?: string; onClick?: () => void }> = [];
-
-const removeButtons = () => capturedButtons.filter((button) => button.ariaLabel?.startsWith('Remove '));
-
-vi.mock('@/components/shared/Button', () => ({
-	Button: ({
-		children,
-		onClick,
-		'aria-label': ariaLabel,
-	}: {
-		children?: React.ReactNode;
-		onClick?: () => void;
-		'aria-label'?: string;
-	}) => {
-		capturedButtons.push({ ariaLabel, onClick });
-		return (
-			<button type="button" aria-label={ariaLabel}>
-				{children}
-			</button>
-		);
-	},
+vi.mock('@/api/generated/kanji/kanji', () => ({
+	kanjiIndex: vi.fn(),
+	getKanjiIndexQueryKey: (params?: unknown) => ['/kanjis', ...(params ? [params] : [])],
+}));
+vi.mock('@/api/generated/word/word', () => ({
+	wordIndex: vi.fn(),
+	getWordIndexQueryKey: (params?: unknown) => ['/words', ...(params ? [params] : [])],
+}));
+vi.mock('@/api/generated/radical/radical', () => ({
+	radicalIndex: vi.fn(),
+	getRadicalIndexQueryKey: (params?: unknown) => ['/radicals', ...(params ? [params] : [])],
+}));
+vi.mock('@/api/generated/sentence/sentence', () => ({
+	sentenceIndex: vi.fn(),
+	getSentenceIndexQueryKey: (params?: unknown) => ['/sentences', ...(params ? [params] : [])],
+}));
+vi.mock('@/api/generated/catalogue/catalogue', () => ({
+	catalogueRemoveItem: vi.fn(),
+	getCatalogueShowQueryKey: (uuid: string) => [`/catalogues/${uuid}`],
 }));
 
-vi.mock('@/components/shared/Icon', () => ({
-	Icon: ({ name }: { name: string }) => <i data-icon={name} />,
-}));
+const UUID = 'c1c1c1c1-0000-4000-8000-000000000001';
+const TYPES = { radicals: 5, kanji: 6, words: 7, sentences: 8, articles: 9 } as const;
 
-const owner = { id: 7 } as User;
+const page = <Row,>(items: Row[], hasMore = false, total = items.length) => ({
+	items,
+	pagination: { page: 1, per_page: 25, total, last_page: hasMore ? 2 : 1, has_more: hasMore },
+});
 
-const articleItem = {
+const articleItem: CatalogueArticleItem = {
 	id: 41,
 	uuid: 'e2f6d1c0-1111-4222-8333-444455556666',
 	title_jp: '日本語の記事',
 	saves_count: 3,
 	hashtags: [{ id: 1, content: 'grammar' }],
-	engagement: {
-		views_count: 12,
-		downloads_count: 1,
-		comments_count: 2,
-		likes_count: 5,
-	},
+	engagement: { views_count: 12, downloads_count: 1, comments_count: 2, likes_count: 1 },
 } as unknown as CatalogueArticleItem;
 
-const kanjiItem = {
-	id: 88,
-	kanji: '語',
-	onyomi: 'ゴ',
-	kunyomi: 'かた|る',
-	meaning: 'language|word',
-	jlpt: '3',
-	frequency: 301,
-};
-const radicalItem = { id: 12, radical: '氵', strokes: 3, meaning: 'water', hiragana: 'みず' };
-const wordItem = { id: 55, word: '言葉', furigana: 'ことば', meaning: 'word', jlpt: '3', word_type: 'noun' };
-const sentenceItem = { id: 63, content: 'これは文です。', tatoeba_entry: 9876 };
+const renderItems = async (props: Partial<React.ComponentProps<typeof CatalogueItems>> & { catalogueType: number }) => {
+	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-const renderItems = (props: Partial<Parameters<typeof CatalogueItems>[0]> = {}) => {
-	capturedButtons.length = 0;
-	return renderToStaticMarkup(
-		<MemoryRouter>
-			<CatalogueItems
-				items={[]}
-				catalogueType={ObjectTemplates.ARTICLES}
-				currentUser={owner}
-				ownerId={owner.id}
-				editMode={false}
-				onRemoveItem={() => {}}
-				{...props}
-			/>
-		</MemoryRouter>,
+	return renderWithAct(
+		<QueryClientProvider client={queryClient}>
+			<MemoryRouter>
+				<CatalogueItems catalogueUuid={UUID} payloadItems={[]} isOwner={false} showSave={false} {...props} />
+			</MemoryRouter>
+		</QueryClientProvider>,
 	);
 };
+
+const button = (container: HTMLElement, name: string) =>
+	Array.from(container.querySelectorAll('button')).find(
+		(element) => (element.getAttribute('aria-label') ?? element.textContent) === name,
+	);
 
 describe('CatalogueItems', () => {
-	it('renders article items with their UUID detail link', () => {
-		const html = renderItems({ catalogueType: ObjectTemplates.ARTICLES, items: [articleItem] });
-
-		expect(html).toContain(`href="/articles/${articleItem.uuid}"`);
-		expect(html).toContain('日本語の記事');
-		expect(html).not.toContain(`/articles/${articleItem.id}`);
-	});
-
-	it.each([
-		['kanji', ObjectTemplates.KANJIS, ObjectTemplates.KNOWNKANJIS, kanjiItem, '/kanji/88'],
-		['radical', ObjectTemplates.RADICALS, ObjectTemplates.KNOWNRADICALS, radicalItem, '/radical/12'],
-		['word', ObjectTemplates.WORDS, ObjectTemplates.KNOWNWORDS, wordItem, '/word/55'],
-	])(
-		'renders %s items with their id detail link for both the plain and known type',
-		(_label, type, knownType, item, href) => {
-			expect(renderItems({ catalogueType: type, items: [item] })).toContain(`href="${href}"`);
-			expect(renderItems({ catalogueType: knownType, items: [item] })).toContain(`href="${href}"`);
-		},
-	);
-
-	it('renders sentence items with their Tatoeba source link', () => {
-		const html = renderItems({ catalogueType: ObjectTemplates.SENTENCES, items: [sentenceItem] });
-
-		expect(html).toContain('これは文です。');
-		expect(html).toContain('https://tatoeba.org/eng/sentences/show/9876');
-	});
-
-	it('renders each empty state for its own catalogue type', () => {
-		expect(renderItems({ catalogueType: ObjectTemplates.ARTICLES })).toContain('No saved articles found.');
-		expect(renderItems({ catalogueType: ObjectTemplates.KANJIS })).toContain('No saved kanji found.');
-	});
-
-	it('falls back to a placeholder for an unmapped catalogue type', () => {
-		expect(renderItems({ catalogueType: 999 })).toContain('Unknown catalogue type');
-	});
-
-	it('forwards the removal of an owned article as a numeric id', () => {
-		const onRemoveItem = vi.fn();
-		renderItems({
-			catalogueType: ObjectTemplates.ARTICLES,
-			items: [articleItem],
-			editMode: true,
-			onRemoveItem,
+	beforeEach(() => {
+		HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+			this.setAttribute('open', '');
 		});
+		HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+			this.removeAttribute('open');
+		});
+	});
 
-		const buttons = removeButtons();
-		expect(buttons).toHaveLength(1);
-		buttons[0].onClick?.();
-		expect(onRemoveItem).toHaveBeenCalledWith(41);
+	afterEach(() => {
+		vi.resetAllMocks();
+		document.body.innerHTML = '';
 	});
 
 	it.each([
-		['kanji', ObjectTemplates.KANJIS, kanjiItem],
-		['radical', ObjectTemplates.RADICALS, radicalItem],
-		['word', ObjectTemplates.WORDS, wordItem],
-		['sentence', ObjectTemplates.SENTENCES, sentenceItem],
-	])('defers %s removal to the confirmation dialog instead of removing straight away', (_label, type, item) => {
-		const onRemoveItem = vi.fn();
-		renderItems({ catalogueType: type, items: [item], editMode: true, onRemoveItem });
+		['kanji', TYPES.kanji, 'Kanji', kanjiIndex, kanjiRows[0].character],
+		['words', TYPES.words, 'Words', wordIndex, wordRows[0].word],
+		['radicals', TYPES.radicals, 'Radicals', radicalIndex, radicalRows[0].radical],
+		['sentences', TYPES.sentences, 'Sentences', sentenceIndex, sentenceRows[0].content],
+	] as const)('renders a %s catalogue as its dictionary table', async (_family, type, label, client, text) => {
+		vi.mocked(kanjiIndex).mockResolvedValue(page(kanjiRows.slice(0, 1)));
+		vi.mocked(wordIndex).mockResolvedValue(page(wordRows.slice(0, 1)));
+		vi.mocked(radicalIndex).mockResolvedValue(page(radicalRows.slice(0, 1)));
+		vi.mocked(sentenceIndex).mockResolvedValue(page(sentenceRows.slice(0, 1)));
 
-		const buttons = removeButtons();
-		expect(buttons).toHaveLength(1);
-		buttons[0].onClick?.();
-		expect(onRemoveItem).not.toHaveBeenCalled();
+		const view = await renderItems({ catalogueType: type });
+
+		await vi.waitFor(() => expect(view.container.textContent).toContain(text));
+		expect(view.container.querySelector(`table[aria-label="${label}"]`)).not.toBeNull();
+		expect(client).toHaveBeenCalledWith(
+			expect.objectContaining({ catalogue_uuid: UUID, per_page: 25, page: 1 }),
+			undefined,
+			expect.anything(),
+		);
+		await view.unmount();
 	});
 
-	it.each([
-		['outside edit mode', { editMode: false }],
-		['for non-owners', { editMode: true, currentUser: { id: 99 } as User }],
-	])('hides removal controls %s', (_label, overrides) => {
-		renderItems({ catalogueType: ObjectTemplates.ARTICLES, items: [articleItem], ...overrides });
-		expect(removeButtons()).toHaveLength(0);
+	it('folds a known-kanji catalogue into the kanji table', async () => {
+		vi.mocked(kanjiIndex).mockResolvedValue(page(kanjiRows.slice(0, 1)));
 
-		renderItems({ catalogueType: ObjectTemplates.KANJIS, items: [kanjiItem], ...overrides });
-		expect(removeButtons()).toHaveLength(0);
+		const view = await renderItems({ catalogueType: 2 });
+
+		await vi.waitFor(() => expect(view.container.querySelector('table[aria-label="Kanji"]')).not.toBeNull());
+		await view.unmount();
+	});
+
+	it('pages with numbered pages and searches the catalogue', async () => {
+		const pageOf = (pageNumber: number, perPage: number, total: number) => ({
+			items: kanjiRows.slice(pageNumber - 1, pageNumber),
+			pagination: {
+				page: pageNumber,
+				per_page: perPage,
+				total,
+				last_page: Math.ceil(total / perPage),
+				has_more: pageNumber * perPage < total,
+			},
+		});
+		vi.mocked(kanjiIndex).mockImplementation((async ({ page: pageNumber = 1, per_page = 25, keyword }) =>
+			pageOf(pageNumber, per_page, keyword ? 1 : 60)) as never);
+
+		const view = await renderItems({ catalogueType: TYPES.kanji });
+
+		await vi.waitFor(() => expect(view.container.querySelector('nav[aria-label="Kanji pages"]')).not.toBeNull());
+		expect(button(view.container, 'Show more kanji')).toBeUndefined();
+
+		await view.flush(() => button(view.container, 'Page 2')?.click());
+		await vi.waitFor(() => expect(view.container.textContent).toContain(kanjiRows[1].character));
+		expect(kanjiIndex).toHaveBeenLastCalledWith(
+			expect.objectContaining({ catalogue_uuid: UUID, per_page: 25, page: 2 }),
+			undefined,
+			expect.anything(),
+		);
+
+		const form = view.container.querySelector('form[role="search"]') as HTMLFormElement;
+		await view.flush(() => typeInto(form.querySelector('input') as HTMLInputElement, '水'));
+		await view.flush(() => submitForm(form));
+		await vi.waitFor(() =>
+			expect(kanjiIndex).toHaveBeenLastCalledWith(
+				expect.objectContaining({ catalogue_uuid: UUID, page: 1, keyword: '水' }),
+				undefined,
+				expect.anything(),
+			),
+		);
+		await view.unmount();
+	});
+
+	it('renders an article catalogue from the payload as a linked list', async () => {
+		const view = await renderItems({ catalogueType: TYPES.articles, payloadItems: [articleItem] });
+		const link = view.container.querySelector(`a[href="/articles/${articleItem.uuid}"]`);
+
+		expect(link?.textContent).toBe('日本語の記事');
+		expect(link?.getAttribute('lang')).toBe('ja');
+		expect(view.container.textContent).toContain('grammar');
+		expect(view.container.textContent).toContain('1 like · 12 views');
+		await view.unmount();
+	});
+
+	it('says an empty catalogue is empty, with a hint for its owner only', async () => {
+		const guest = await renderItems({ catalogueType: TYPES.articles });
+		expect(guest.container.textContent).toContain('This catalogue has no items yet.');
+		expect(guest.container.textContent).not.toContain('Save to a catalogue');
+		await guest.unmount();
+
+		const owner = await renderItems({ catalogueType: TYPES.articles, isOwner: true });
+		expect(owner.container.textContent).toContain('Use Save to a catalogue on any article page');
+		await owner.unmount();
+	});
+
+	it('shows a user-written message when the items cannot be loaded', async () => {
+		vi.mocked(wordIndex).mockRejectedValue(new Error('SQLSTATE[08006]'));
+
+		const view = await renderItems({ catalogueType: TYPES.words });
+
+		await vi.waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'The items could not be loaded. Reload the page to try again.',
+			),
+		);
+		expect(view.container.textContent).not.toContain('SQLSTATE');
+		await view.unmount();
+	});
+
+	it('offers Manage items to the owner only', async () => {
+		const guest = await renderItems({ catalogueType: TYPES.articles, payloadItems: [articleItem] });
+		expect(button(guest.container, 'Manage items')).toBeUndefined();
+		await guest.unmount();
+
+		const owner = await renderItems({ catalogueType: TYPES.articles, payloadItems: [articleItem], isOwner: true });
+		expect(button(owner.container, 'Manage items')?.getAttribute('aria-pressed')).toBe('false');
+		expect(button(owner.container, `Remove ${articleItem.title_jp} from this catalogue`)).toBeUndefined();
+		await owner.unmount();
+	});
+
+	it('adds a Remove column while managing and removes after confirmation', async () => {
+		vi.mocked(kanjiIndex).mockResolvedValue(page(kanjiRows.slice(0, 1)));
+		vi.mocked(catalogueRemoveItem).mockResolvedValue(204);
+		const character = kanjiRows[0].character;
+
+		const view = await renderItems({ catalogueType: TYPES.kanji, isOwner: true });
+
+		await vi.waitFor(() => expect(view.container.textContent).toContain(character));
+		await view.flush(() => button(view.container, 'Manage items')?.click());
+
+		const remove = button(view.container, `Remove ${character} from this catalogue`);
+		expect(remove).toBeDefined();
+		expect(button(view.container, 'Done managing')?.getAttribute('aria-pressed')).toBe('true');
+
+		await view.flush(() => remove?.click());
+		expect(document.body.textContent).toContain(`This removes ${character} from the catalogue.`);
+		expect(catalogueRemoveItem).not.toHaveBeenCalled();
+
+		await view.flush(() => button(document.body, 'Yes, remove')?.click());
+		await vi.waitFor(() => expect(catalogueRemoveItem).toHaveBeenCalledWith(UUID, kanjiRows[0].id));
+		await view.unmount();
 	});
 });
