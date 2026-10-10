@@ -1,0 +1,27 @@
+/* Neutral on purpose: the shu accent means "JLPT level" and status colours mean status. */
+.topic {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	padding: var(--spacing-3xs) var(--spacing-xs);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-neutral-0);
+	color: var(--color-neutral-800);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--line-height-lg);
+	overflow-wrap: anywhere;
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
