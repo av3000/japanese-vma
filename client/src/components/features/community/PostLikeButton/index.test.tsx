@@ -62,8 +62,8 @@ describe('PostLikeButton', () => {
 		expect(vi.mocked(useLikePostMutation)).toHaveBeenCalledWith('post-uuid');
 	});
 
-	it('renders the count the cached post carries', () => {
-		expect(renderButton()).toContain('4 likes');
+	it('renders the count the cached post carries in the visible label', () => {
+		expect(renderButton()).toContain('Like · 4');
 	});
 
 	it('likes through the loaded numeric post id rather than the uuid route parameter', () => {

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useLikePostMutation } from '@/api/posts/likes';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
-import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+
+const countFormat = new Intl.NumberFormat('en-US');
 
 interface PostLikeButtonProps {
 	postId: number;
@@ -39,20 +40,18 @@ const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifie
 		likeMutation.mutate(postId);
 	};
 
+	// A rail action, as on Article and Catalogue detail: full width, the count in the visible label.
 	return (
-		<Cluster gap="xs">
-			<span>{likesCount} likes</span>
-			<Button
-				variant="ghost"
-				hasOnlyIcon
-				aria-label="Like this post"
-				aria-pressed={isLiked}
-				onClick={handleClick}
-				disabled={likeMutation.isTogglingInstance(postId)}
-			>
-				<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
-			</Button>
-		</Cluster>
+		<Button
+			variant="outline"
+			isFullWidth
+			aria-pressed={isLiked}
+			onClick={handleClick}
+			disabled={likeMutation.isTogglingInstance(postId)}
+		>
+			<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+			{`Like · ${countFormat.format(likesCount)}`}
+		</Button>
 	);
 };
 

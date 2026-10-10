@@ -11,12 +11,12 @@ import {
 	useLockPostMutation,
 } from '@/api/posts/writes';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { DetailActionGroup } from '@/components/shared/DetailActions';
 import { Icon } from '@/components/shared/Icon';
-import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import styles from './PostOwnerActions.module.css';
 
 interface PostOwnerActionsProps {
 	postId: number;
@@ -78,46 +78,52 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 		});
 	};
 
+	const deleteButton = (
+		<Button
+			onClick={deleteModal.open}
+			variant="outline"
+			isFullWidth
+			aria-controls={deleteModal.id}
+			aria-expanded={deleteModal.isOpen}
+		>
+			<Icon name="trashbinSolid" size="sm" />
+			Delete post
+		</Button>
+	);
+
+	// The author's own controls sit under "Your post"; an admin's under "Moderation". An admin who
+	// is also the author gets Delete once, under "Your post".
 	return (
-		<Cluster gap="xs">
-			{canLock && (
-				<Button
-					onClick={handleLock}
-					variant="outline"
-					size="md"
-					hasOnlyIcon
-					aria-label={isLocked ? 'Unlock this post' : 'Lock this post'}
-					disabled={lockMutation.isPending}
-				>
-					<Icon size="md" name={isLocked ? 'lockSolid' : 'lockOpenSolid'} />
-				</Button>
-			)}
-
-			{canDelete && (
-				<Button
-					onClick={deleteModal.open}
-					variant="ghost"
-					size="md"
-					hasOnlyIcon
-					aria-label="Delete this post"
-					aria-controls={deleteModal.id}
-					aria-expanded={deleteModal.isOpen}
-				>
-					<Icon name="trashbinSolid" size="md" />
-				</Button>
-			)}
-
+		<>
 			{canEdit && (
-				<Button to={POST_ROUTES.edit(uuid)} variant="ghost" size="md" hasOnlyIcon aria-label="Edit this post">
-					<Icon name="penSolid" size="md" />
-				</Button>
+				<DetailActionGroup heading="Your post">
+					<Button to={POST_ROUTES.edit(uuid)} variant="outline" isFullWidth>
+						<Icon name="penSolid" size="sm" />
+						Edit post
+					</Button>
+					{canDelete && deleteButton}
+				</DetailActionGroup>
 			)}
 
-			{status && (
-				<span role="alert" className={styles.error}>
-					{status}
-				</span>
+			{(canLock || (canDelete && !canEdit)) && (
+				<DetailActionGroup heading="Moderation">
+					{canLock && (
+						<Button
+							onClick={handleLock}
+							variant="outline"
+							isFullWidth
+							isLoading={lockMutation.isPending}
+							disabled={lockMutation.isPending}
+						>
+							<Icon size="sm" name={isLocked ? 'lockOpenSolid' : 'lockSolid'} />
+							{isLocked ? 'Unlock post' : 'Lock post'}
+						</Button>
+					)}
+					{canDelete && !canEdit && deleteButton}
+				</DetailActionGroup>
 			)}
+
+			{status && <Alert tone="danger">{status}</Alert>}
 
 			{canDelete && (
 				<DeleteInstanceModal
@@ -125,10 +131,11 @@ const PostOwnerActions: React.FC<PostOwnerActionsProps> = ({ postId, uuid, title
 					instanceName={title}
 					onDelete={handleDelete}
 					isProcessing={deleteMutation.isPending}
+					deleteLabel="Yes, Delete Post"
 					ariaLabel="Delete post"
 				/>
 			)}
-		</Cluster>
+		</>
 	);
 };
 
