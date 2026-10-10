@@ -4,6 +4,7 @@ import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
 import { useArticleStatusMutation } from '@/api/articles/moderation';
+import { importedSourceOf } from '@/api/articles/provenance';
 import { isProcessingRunning, useArticleReadingStats } from '@/api/articles/readingStats';
 import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
 import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
@@ -11,6 +12,7 @@ import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
 import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
+import { ArticleAttribution } from '@/components/features/articles/ArticleAttribution';
 import { ArticleBody, ArticleTitle } from '@/components/features/articles/ArticleBody';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
@@ -125,7 +127,10 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const isAdmin = Boolean(currentUser?.isAdmin);
 	const isEditOpen = isOwner && searchParams.get('edit') === '1';
 	const isProcessing = isProcessingRunning(article);
-	const sourceHost = sourceHostOf(article.source_link);
+	// An Imported Article credits its Content Source in the byline and the attribution, so the
+	// rail's Source row is only for articles a person wrote.
+	const importedSource = importedSourceOf(article);
+	const sourceHost = importedSource ? null : sourceHostOf(article.source_link);
 
 	const handleLikeClick = () => {
 		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
@@ -168,6 +173,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 						<ArticleTitle titleJp={article.title_jp} titleEn={article.title_en} />
 						<Byline
 							name={article.author?.name}
+							source={importedSource?.name}
 							date={article.created_at}
 							views={Number(article.engagement?.views_count ?? 0)}
 						/>
@@ -182,7 +188,15 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				main={
 					<div className={styles.main}>
 						<ProcessingStatusAlert processing_status={article.processing_status} isOwner={isOwner} />
-						<ArticleBody contentJp={article.content_jp} contentEn={article.content_en} />
+						<ArticleBody
+							contentJp={article.content_jp}
+							contentEn={article.content_en}
+							attribution={
+								importedSource ? (
+									<ArticleAttribution source={importedSource} sourceLink={article.source_link} />
+								) : null
+							}
+						/>
 					</div>
 				}
 				facts={
