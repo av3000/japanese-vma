@@ -11,6 +11,8 @@ import {
 	presentValues,
 	saveColumn,
 	withSaveArea,
+	withTrailingAreas,
+	withTrailingColumns,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { SavedListType } from '@/shared/constants/enums';
@@ -23,6 +25,8 @@ export interface KanjiTableProps {
 	loading?: boolean;
 	empty: DataTableEmpty;
 	onBookmarkStateChange?: (kanjiId: number, state: ViewerCatalogueStateResource) => void;
+	/** Columns appended after the table's own, e.g. the owner's Remove column on Catalogue detail. */
+	trailingColumns?: DataTableColumn<KanjiResource>[];
 }
 
 const baseColumns: DataTableColumn<KanjiResource>[] = [
@@ -103,13 +107,23 @@ const save = {
  * The Kanji list as an Index table: glyph, first three meanings, readings, strokes, level and
  * frequency, plus Save for signed-in viewers. Below 768px each row stacks as glyph | details | Save.
  */
-export const KanjiTable: React.FC<KanjiTableProps> = ({ kanjis, showSave, loading, empty, onBookmarkStateChange }) => {
+export const KanjiTable: React.FC<KanjiTableProps> = ({
+	kanjis,
+	showSave,
+	loading,
+	empty,
+	onBookmarkStateChange,
+	trailingColumns,
+}) => {
 	const columns = React.useMemo(
 		() =>
-			showSave
-				? [...baseColumns, saveColumn<KanjiResource>({ ...save, onChange: onBookmarkStateChange })]
-				: baseColumns,
-		[showSave, onBookmarkStateChange],
+			withTrailingColumns(
+				showSave
+					? [...baseColumns, saveColumn<KanjiResource>({ ...save, onChange: onBookmarkStateChange })]
+					: baseColumns,
+				trailingColumns,
+			),
+		[showSave, onBookmarkStateChange, trailingColumns],
 	);
 
 	return (
@@ -120,7 +134,7 @@ export const KanjiTable: React.FC<KanjiTableProps> = ({ kanjis, showSave, loadin
 			getRowKey={(kanji) => kanji.uuid}
 			loading={loading}
 			empty={empty}
-			stacked={showSave ? STACKED_WITH_SAVE : STACKED}
+			stacked={withTrailingAreas(showSave ? STACKED_WITH_SAVE : STACKED, trailingColumns)}
 		/>
 	);
 };

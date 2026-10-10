@@ -115,5 +115,14 @@ class RadicalRepository implements RadicalRepositoryInterface
         if ($criteria->strokes !== null) {
             $query->where('strokes', $criteria->strokes);
         }
+
+        if ($criteria->catalogueId !== null) {
+            // Items are bare ids in customlist_object; a radical saved twice still lists once.
+            $query->whereIn($query->getModel()->getQualifiedKeyName(), function ($items) use ($criteria): void {
+                $items->select('real_object_id')
+                    ->from('customlist_object')
+                    ->where('list_id', $criteria->catalogueId);
+            });
+        }
     }
 }

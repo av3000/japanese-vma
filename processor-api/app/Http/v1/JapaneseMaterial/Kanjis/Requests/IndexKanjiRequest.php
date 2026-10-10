@@ -34,6 +34,7 @@ class IndexKanjiRequest extends FormRequest
     {
         return [
             'article_uuid' => ['nullable', 'uuid'],
+            'catalogue_uuid' => ['nullable', 'uuid'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'limit' => ['nullable', 'integer', 'min:1'],

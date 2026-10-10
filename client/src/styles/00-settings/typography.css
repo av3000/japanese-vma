@@ -30,5 +30,7 @@
 	--line-height-sm: 1;
 	--line-height-md: 1.2;
 	--line-height-lg: 1.4;
-	--line-height-japanese-article-text: 2.5;
+	/* Japanese article body in the Reading Room layout (UI-DETAIL-00, #457). */
+	--font-size-japanese-article-text: 19px;
+	--line-height-japanese-article-text: 2;
 }

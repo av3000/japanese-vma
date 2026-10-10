@@ -2248,6 +2248,17 @@
                         }
                     },
                     {
+                        "name": "catalogue_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -2851,6 +2862,17 @@
                 ],
                 "parameters": [
                     {
+                        "name": "catalogue_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -2988,6 +3010,17 @@
                     "Sentence"
                 ],
                 "parameters": [
+                    {
+                        "name": "catalogue_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
                     {
                         "name": "page",
                         "in": "query",
@@ -3928,6 +3961,17 @@
                 "parameters": [
                     {
                         "name": "article_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "catalogue_uuid",
                         "in": "query",
                         "schema": {
                             "type": [

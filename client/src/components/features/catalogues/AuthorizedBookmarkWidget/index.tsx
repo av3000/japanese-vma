@@ -31,6 +31,12 @@ interface AuthorizedBookmarkWidgetProps {
 	itemLabel?: string;
 	/** For table rows: no "Learned"/"Not learned" text, only a small "Known" mark when it applies. */
 	compact?: boolean;
+	/**
+	 * For a detail page's rail: a full-width outline button with this visible text instead of the
+	 * icon button, e.g. "Save to a catalogue". `savedLabel` replaces it once the item is saved.
+	 */
+	label?: string;
+	savedLabel?: string;
 }
 
 const NO_LISTS: CatalogueForItem[] = [];
@@ -53,6 +59,8 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	onStateChange,
 	itemLabel,
 	compact = false,
+	label,
+	savedLabel,
 }) => {
 	const [lists, setLists] = useState<CatalogueForItem[] | null>(null);
 	const [isLoadingUserCatalogues, setIsLoadingUserCatalogues] = useState(false);
@@ -160,7 +168,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 
 	return (
 		<>
-			<div className={classNames(styles.widgetWrapper, compact && styles.compact)}>
+			<div className={classNames(styles.widgetWrapper, compact && styles.compact, label && styles.labelled)}>
 				{!compact &&
 					isKnownType &&
 					(isKnown ? (
@@ -168,17 +176,31 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 					) : (
 						<i className={classNames('fas fa-check-circle', styles.notLearned)}> Not learned</i>
 					))}
-				<Button
-					onClick={openBookmarkModal}
-					disabled={isInvalidEntity}
-					variant="ghost"
-					hasOnlyIcon
-					aria-controls={bookmarkModal.id}
-					aria-expanded={bookmarkModal.isOpen}
-					aria-label={itemLabel ? `${isBookmarked ? 'Saved: ' : 'Save '}${itemLabel}` : undefined}
-				>
-					<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
-				</Button>
+				{label ? (
+					<Button
+						onClick={openBookmarkModal}
+						disabled={isInvalidEntity}
+						variant="outline"
+						isFullWidth
+						aria-controls={bookmarkModal.id}
+						aria-expanded={bookmarkModal.isOpen}
+					>
+						<Icon size="sm" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
+						{isBookmarked ? (savedLabel ?? label) : label}
+					</Button>
+				) : (
+					<Button
+						onClick={openBookmarkModal}
+						disabled={isInvalidEntity}
+						variant="ghost"
+						hasOnlyIcon
+						aria-controls={bookmarkModal.id}
+						aria-expanded={bookmarkModal.isOpen}
+						aria-label={itemLabel ? `${isBookmarked ? 'Saved: ' : 'Save '}${itemLabel}` : undefined}
+					>
+						<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
+					</Button>
+				)}
 				{compact && isKnownType && isKnown ? <span className={styles.knownMark}>Known</span> : null}
 			</div>
 

@@ -4,12 +4,13 @@ import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
 import styles from './DialogModal.module.css';
 
-export type DialogModalSize = 'sm' | 'md' | 'lg' | 'fullscreen';
+export type DialogModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen';
 
 const sizeClassMap: Record<DialogModalSize, string> = {
 	sm: styles['size-sm'],
 	md: styles['size-md'],
 	lg: styles['size-lg'],
+	xl: styles['size-xl'],
 	fullscreen: styles['size-fullscreen'],
 };
 
@@ -125,11 +126,12 @@ export const DialogModal = (({
 				<Button
 					className={styles['close-floating']}
 					variant="ghost"
+					size="sm"
 					hasOnlyIcon
 					aria-label={closeLabel}
 					onClick={onClose}
 				>
-					<Icon name="removeSolid" size="md" />
+					<Icon name="removeSolid" size="sm" />
 				</Button>
 				{content}
 			</div>

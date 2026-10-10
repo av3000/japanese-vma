@@ -14,10 +14,7 @@ export const createDeleteArticleMutationOptions = (
 		detailKey: (uuid) => articleKeys.detail(uuid),
 	});
 
-/**
- * Deletes one of the signed-in user's articles. The detail page keeps its own inline mutation
- * for now (`routes/ArticleDetails/ArticleContent`); this is the dashboard's.
- */
+/** Deletes one of the signed-in user's articles, from the dashboard or the article page. */
 export const useDeleteArticleMutation = () => {
 	const queryClient = useQueryClient();
 

@@ -12,6 +12,7 @@ use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
@@ -54,6 +55,20 @@ interface CatalogueServiceInterface
      * @return Result Success data: bool.
      */
     public function catalogueContainsItem(int $catalogueId, int $itemId): Result;
+
+    /**
+     * The id of a catalogue the viewer may read, so a dictionary index can list its items (#347).
+     *
+     * Fails like `getViewableCatalogue` for a missing or private catalogue, and with
+     * `CatalogueErrors::itemFamilyMismatch` when the catalogue holds another kind of item.
+     *
+     * @return Result Success data: int catalogue id, Failure data: ResultError
+     */
+    public function resolveItemSource(
+        EntityId $uuid,
+        SavedListType $family,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result;
 
     /**
      * Resolve a legacy numeric catalogue id to its canonical UUID identity.

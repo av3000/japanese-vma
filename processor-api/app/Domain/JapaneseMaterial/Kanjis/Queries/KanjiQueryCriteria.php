@@ -15,7 +15,8 @@ final readonly class KanjiQueryCriteria
     public function __construct(
         // TODO: pass in the persistence model instead of optional id parameters for each entity
         public readonly ?EntityId $articleId = null,
-        public readonly ?int $customListId = null,
+        /** Kanji saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public readonly ?int $catalogueId = null,
         public readonly ?EntityId $uuid = null,
         public readonly ?string $keyword = null,
         public readonly ?KanjiCharacter $character = null,
@@ -49,9 +50,11 @@ final readonly class KanjiQueryCriteria
         ?int $limit = null,
         ?int $offset = null,
         ?EntityId $articleId = null,
+        ?int $catalogueId = null,
     ): self {
         return new self(
             articleId: $articleId,
+            catalogueId: $catalogueId,
             keyword: $keyword,
             character: $character ? new KanjiCharacter($character) : null,
             grade: $grade ? new KanjiGrade($grade) : null,

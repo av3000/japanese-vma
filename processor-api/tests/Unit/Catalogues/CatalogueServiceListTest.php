@@ -26,6 +26,7 @@ use App\Domain\Catalogues\ValueObjects\CatalogueTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\Services\TemplateTypeClassifier;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -112,6 +113,7 @@ class CatalogueServiceListTest extends TestCase
             $loadStats,
             $this->createMock(EngagementServiceInterface::class),
             new LoadCatalogueJlptLevelsAction($catalogueItemRepository),
+            new TemplateTypeClassifier,
         );
     }
 

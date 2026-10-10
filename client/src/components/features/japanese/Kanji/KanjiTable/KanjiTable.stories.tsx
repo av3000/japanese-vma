@@ -62,3 +62,28 @@ export const ManyRows: Story = { args: { kanjis: repeatRows(kanjiRows, 60) } };
 export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
 
 export const MobileGuest: Story = { ...Guest, parameters: { viewport: { defaultViewport: 'mobile1' } } };
+
+/** Catalogue detail's "Manage items" mode: a caller-owned Remove column after Save. */
+export const WithTrailingColumn: Story = {
+	args: {
+		trailingColumns: [
+			{
+				id: 'remove',
+				header: 'Remove',
+				headerHidden: true,
+				width: 'shrink',
+				cell: (kanji) => <button type="button">{`Remove ${kanji.character}`}</button>,
+			},
+		],
+	},
+	play: async ({ canvasElement }) => {
+		const table = within(within(canvasElement).getByRole('table', { name: 'Kanji' }));
+
+		await expect(table.getByRole('button', { name: 'Remove 水' })).toBeVisible();
+	},
+};
+
+export const WithTrailingColumnMobile: Story = {
+	...WithTrailingColumn,
+	parameters: { viewport: { defaultViewport: 'mobile1' } },
+};

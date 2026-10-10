@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 import { Container, Stack } from '@/components/shared/layout';
-import { japaneseLang } from './LibraryCard';
+import { japaneseLang } from '@/helpers/japaneseLang';
 import styles from './LibraryLayout.module.css';
 
 /** The grey Library page: header, filters, card grid and Load More stack inside it. */

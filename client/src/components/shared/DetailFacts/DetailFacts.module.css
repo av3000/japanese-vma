@@ -1,0 +1,57 @@
+.card {
+	padding: var(--spacing-md) var(--spacing-lg);
+	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border-radius: var(--border-radius-md);
+	background-color: var(--color-neutral-0);
+}
+
+.title {
+	margin: 0;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.list {
+	display: grid;
+	gap: var(--spacing-xs);
+	margin: var(--spacing-sm) 0 0;
+}
+
+.row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--spacing-sm);
+}
+
+.term {
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-regular);
+}
+
+.value {
+	margin: 0;
+	color: var(--color-neutral-900);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--font-weight-semibold);
+	text-align: right;
+	overflow-wrap: anywhere;
+}
+
+.pending {
+	color: var(--color-neutral-600);
+	font-family: inherit;
+	font-weight: var(--font-weight-regular);
+}
+
+.footer {
+	margin-top: var(--spacing-md);
+	padding-top: var(--spacing-md);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}

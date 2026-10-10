@@ -6,10 +6,13 @@ namespace App\Http\v1\JapaneseMaterial\Sentences\Controllers;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceServiceInterface;
+use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\JapaneseMaterial\Sentences\DTOs\SentenceWriteDTO;
 use App\Domain\JapaneseMaterial\Sentences\Errors\SentenceErrors;
 use App\Domain\JapaneseMaterial\Sentences\Queries\SentenceQueryCriteria;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
@@ -29,6 +32,7 @@ class SentenceController extends Controller
     public function __construct(
         private readonly SentenceServiceInterface $sentenceService,
         private readonly CurrentUserProviderInterface $currentUserProvider,
+        private readonly CatalogueServiceInterface $catalogueService,
     ) {
     }
 
@@ -36,6 +40,28 @@ class SentenceController extends Controller
     public function index(IndexSentenceRequest $request): JsonResponse|JsonResource
     {
         $validated = $request->validated();
+        $catalogueId = null;
+
+        if (isset($validated['catalogue_uuid'])) {
+            $source = $this->catalogueService->resolveItemSource(
+                EntityId::from($validated['catalogue_uuid']),
+                SavedListType::SENTENCES,
+                $this->currentUserProvider->currentAuthenticatedUser(),
+            );
+
+            if ($source->isFailure()) {
+                $error = $source->getError();
+
+                // A filter on the wrong kind of catalogue is a rule about one field, so it comes back as a 422 on it.
+                if ($error->code === CatalogueErrors::ITEM_FAMILY_MISMATCH) {
+                    return TypedResults::validationProblem(['catalogue_uuid' => [(string) $error->errorMessage]]);
+                }
+
+                return TypedResults::fromError($error);
+            }
+
+            $catalogueId = $source->getData();
+        }
 
         $criteria = SentenceQueryCriteria::forListing(
             page: $validated['page'] ?? Pagination::MIN_PAGE,
@@ -44,6 +70,7 @@ class SentenceController extends Controller
             content: $validated['content'] ?? null,
             tatoebaEntry: $validated['tatoeba_entry'] ?? null,
             userId: $validated['user_id'] ?? null,
+            catalogueId: $catalogueId,
         );
 
         $result = $this->sentenceService->find($criteria);

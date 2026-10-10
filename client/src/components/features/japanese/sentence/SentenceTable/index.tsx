@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { SentenceResource } from '@/api/generated/model';
-import { TextLink, presentText } from '@/components/features/japanese/dictionaryList';
+import { TextLink, presentText, withTrailingColumns } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import styles from './SentenceTable.module.css';
 
@@ -8,6 +8,8 @@ export interface SentenceTableProps {
 	sentences: SentenceResource[];
 	loading?: boolean;
 	empty: DataTableEmpty;
+	/** Columns appended after the table's own, e.g. the owner's Remove column on Catalogue detail. */
+	trailingColumns?: DataTableColumn<SentenceResource>[];
 }
 
 export const tatoebaUrl = (entry: string) => `https://tatoeba.org/eng/sentences/show/${encodeURIComponent(entry)}`;
@@ -49,10 +51,10 @@ const columns: DataTableColumn<SentenceResource>[] = [
  * payload carries no translation, so there is no translation column. Rows stack one cell per line
  * below 768px.
  */
-export const SentenceTable: React.FC<SentenceTableProps> = ({ sentences, loading, empty }) => (
+export const SentenceTable: React.FC<SentenceTableProps> = ({ sentences, loading, empty, trailingColumns }) => (
 	<DataTable
 		label="Sentences"
-		columns={columns}
+		columns={withTrailingColumns(columns, trailingColumns)}
 		rows={sentences}
 		getRowKey={(sentence) => sentence.uuid}
 		loading={loading}

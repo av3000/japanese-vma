@@ -9,6 +9,8 @@ import {
 	presentText,
 	saveColumn,
 	withSaveArea,
+	withTrailingAreas,
+	withTrailingColumns,
 } from '@/components/features/japanese/dictionaryList';
 import { DataTable, type DataTableColumn, type DataTableEmpty } from '@/components/shared/DataTable';
 import { SavedListType } from '@/shared/constants/enums';
@@ -21,6 +23,8 @@ export interface WordTableProps {
 	loading?: boolean;
 	empty: DataTableEmpty;
 	onBookmarkStateChange?: (wordId: number, state: ViewerCatalogueStateResource) => void;
+	/** Columns appended after the table's own, e.g. the owner's Remove column on Catalogue detail. */
+	trailingColumns?: DataTableColumn<WordResource>[];
 }
 
 const baseColumns: DataTableColumn<WordResource>[] = [
@@ -83,13 +87,23 @@ const save = {
  * The Words list as an Index table: word, reading, meaning, type and level, plus Save for
  * signed-in viewers. The meaning column absorbs the width; Type hides from 768 to 1023px.
  */
-export const WordTable: React.FC<WordTableProps> = ({ words, showSave, loading, empty, onBookmarkStateChange }) => {
+export const WordTable: React.FC<WordTableProps> = ({
+	words,
+	showSave,
+	loading,
+	empty,
+	onBookmarkStateChange,
+	trailingColumns,
+}) => {
 	const columns = React.useMemo(
 		() =>
-			showSave
-				? [...baseColumns, saveColumn<WordResource>({ ...save, onChange: onBookmarkStateChange })]
-				: baseColumns,
-		[showSave, onBookmarkStateChange],
+			withTrailingColumns(
+				showSave
+					? [...baseColumns, saveColumn<WordResource>({ ...save, onChange: onBookmarkStateChange })]
+					: baseColumns,
+				trailingColumns,
+			),
+		[showSave, onBookmarkStateChange, trailingColumns],
 	);
 
 	return (
@@ -100,7 +114,7 @@ export const WordTable: React.FC<WordTableProps> = ({ words, showSave, loading, 
 			getRowKey={(word) => word.uuid}
 			loading={loading}
 			empty={empty}
-			stacked={showSave ? STACKED_WITH_SAVE : STACKED}
+			stacked={withTrailingAreas(showSave ? STACKED_WITH_SAVE : STACKED, trailingColumns)}
 		/>
 	);
 };

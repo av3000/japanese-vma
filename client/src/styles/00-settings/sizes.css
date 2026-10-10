@@ -26,6 +26,9 @@
 	--size-5xl: 56px;
 	--size-6xl: 80px;
 	--size-7xl: 96px;
+	/* Detail pages (Reading Room): the reading column's measure and the rail beside it (#347). */
+	--measure-reading: 720px;
+	--rail-width: 280px;
 }
 
 :root {
