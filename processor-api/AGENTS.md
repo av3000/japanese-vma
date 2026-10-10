@@ -106,9 +106,9 @@ This file defines **backend-specific** guidance for changes under `processor-api
 
 ## 8) AI Guidance
 
--   Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
--   For legacy-to-v1 endpoint migrations, prefer `.ai/skills/legacy-to-v1-migration/` when the agent supports repository skills.
--   Keep this file as the source of truth for backend constraints; the skill should reinforce these rules, not override them.
+-   Always-on Laravel conventions live in `processor-api/.ai/guidelines/`. Laravel Boost copies them into the generated block below, so edit the source files rather than the block.
+-   Repo-wide skills live in the root `.claude/skills/`, mirrored to `.codex/skills/`. The agent workflow (issues, review, PRs, commit shape) is in the root `AGENTS.md` §7.
+-   Keep this file as the source of truth for backend constraints. Rules here win over Boost-installed vendor skills (`laravel-best-practices`, `configuring-horizon`) and over the generic guidance in the generated block.
 
 <laravel-boost-guidelines>
 === .ai/backend-response-and-errors rules ===
@@ -179,7 +179,7 @@ When migrating backend endpoints:
 - Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
-- Use `.ai/guidelines/` for always-on conventions and `.ai/skills/` for deeper, task-specific workflows.
+- Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.
 
 === foundation rules ===
 
@@ -212,10 +212,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
 - `configuring-horizon` — Use this skill whenever the user mentions Horizon by name in a Laravel context. Covers the full Horizon lifecycle: installing Horizon (horizon:install, Sail setup), configuring config/horizon.php (supervisor blocks, queue assignments, balancing strategies, minProcesses/maxProcesses), fixing the dashboard (authorization via Gate::define viewHorizon, blank metrics, horizon:snapshot scheduling), and troubleshooting production issues (worker crashes, timeout chain ordering, LongWaitDetected notifications, waits config). Also covers job tagging and silencing. Do not use for generic Laravel queues without Horizon, SQS or database drivers, standalone Redis setup, Linux supervisord, Telescope, or job batching.
-- `spatie-javascript` — Apply Spatie's JavaScript coding standards for any task that creates, edits, reviews, refactors, or formats JavaScript or TypeScript code; use for variable declarations, comparisons, functions, destructuring, and Prettier configuration to align with Spatie's JS conventions.
-- `spatie-laravel-php` — Apply Spatie's Laravel and PHP coding standards for any task that creates, edits, reviews, refactors, or formats Laravel/PHP code or Blade templates; use for controllers, Eloquent models, routes, config, validation, migrations, tests, and related files to align with Laravel conventions and PSR-12.
-- `spatie-security` — Apply Spatie's security guidelines when configuring applications, databases, or servers, or when reviewing code for security concerns; use for SSL setup, CSRF protection, password hashing, database permissions, and server hardening.
-- `spatie-version-control` — Apply Spatie's version control conventions when creating commits, branches, pull requests, or managing Git repositories; use for naming repos, writing commit messages, choosing branch strategies, and merging code.
 
 ## Conventions
 
@@ -387,15 +383,5 @@ This project has domain-specific skills available. You MUST activate the relevan
 - To run all tests: `docker compose exec test-runner composer test`.
 - To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
-
-=== spatie/guidelines-skills rules ===
-
-# Project Coding Guidelines
-
-- This codebase follows Spatie's coding guidelines.
-- Always activate the `spatie-laravel-php` skill when writing, editing, reviewing, or formatting Laravel or PHP code.
-- Always activate the `spatie-javascript` skill when writing, editing, reviewing, or formatting JavaScript or TypeScript code.
-- Always activate the `spatie-version-control` skill when creating commits, branches, or managing Git operations.
-- Always activate the `spatie-security` skill when configuring security, reviewing authentication, or setting up servers and databases.
 
 </laravel-boost-guidelines>

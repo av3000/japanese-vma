@@ -99,12 +99,27 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
 
-## 7) Laravel AI Guidance
+## 7) Agent Workflow
 
-- Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
-- For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
-- Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.
-- Repo and scoped `AGENTS.md` constraints still take precedence over generic clean architecture advice.
+The full map (which skill to use when, the other ways in, context hygiene) is `docs/agents/workflow.md`. The rules:
+
+- **Path:** issue with numbered acceptance criteria (`write-issue`) → build one slice at a time (`tdd`) → self-review (`review-branch`) → PR into `develop` (`create-pull-request`) → optional review record on the PR (`post-review-to-pr`) → answer review comments (`address-pr-review`).
+- **Acceptance criteria are mandatory.** Every PR references at least one issue (`Refs #N`), and every referenced issue has an `## Acceptance criteria` checklist. CI enforces both.
+- **Review findings** are labelled `[Type · Criticality]`:
+  - Type: `Spec` (measured against an acceptance criterion), `Standards` (measured against a documented repo rule), `Judgement` (no written rule; the reasoning is stated).
+  - Criticality: `Critical` (blocks the merge), `Warning` (fix now, or defer with a linked issue), `Suggestion` (optional).
+- **Commits:** one per sub-issue.
+  - First line: `<Stable ID>: <outcome>`, for example `HARNESS-03: remove finished migration skills`.
+  - Body: `Refs #N`. Never `Closes`: PRs into `develop` do not auto-close issues, so close them by hand after merge.
+  - No attribution trailers or footers.
+- **Follow-ups** found mid-work become separate `needs-triage` issues, never extra changes on the current branch.
+- **Skills live in `.claude/skills/`** for Claude Code. `.codex/skills/` is a generated mirror for Codex: edit `.claude/skills/`, then run `scripts/sync-agent-skills.sh`.
+- **Precedence:**
+  - These `AGENTS.md` files win over vendor and plugin skills (Laravel Boost, Matt Pocock's skills, Vercel's).
+  - A skill's `SKILL.md` is canonical for that skill's behaviour.
+- **Backend conventions:**
+  - Always-on Laravel conventions live in `processor-api/.ai/guidelines/`.
+  - Laravel Boost copies them into `processor-api/AGENTS.md`.
 
 ## Agent skills
 
@@ -118,4 +133,4 @@ Use the default triage label vocabulary unless the repo's GitHub labels are chan
 
 ### Domain docs
 
-Use a single-context repo layout by default; read root and scoped `AGENTS.md` files as the current source of project guidance until `CONTEXT.md` or ADR docs exist. See `docs/agents/domain.md`.
+Use a single-context repo layout. Read the root and scoped `AGENTS.md` files for rules, `CONTEXT.md` for domain vocabulary, and `docs/adr/` for recorded decisions. See `docs/agents/domain.md`.
