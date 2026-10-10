@@ -1,15 +1,14 @@
-.page {
-	padding-block: var(--spacing-md) var(--spacing-2xl);
+/* One column at every width: posts are titles and counts, read top to bottom like a thread list. */
+.list {
+	display: grid;
+	gap: var(--spacing-sm);
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
-.centered {
-	margin: 0;
-	text-align: center;
-}
-
-.results h4,
-.results p {
-	margin: 0;
+.list > li {
+	min-width: 0;
 }
 
 .muted {
@@ -17,23 +16,14 @@
 	color: var(--color-neutral-600);
 }
 
-.panel {
-	padding: var(--spacing-md);
-	background: var(--color-neutral-0);
-	border-radius: var(--border-radius-md);
-	box-shadow: var(--box-shadow-default);
-}
-
-.empty {
-	margin: 0;
-}
-
-.list {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
 .loadMore {
+	padding-block: var(--spacing-sm) var(--spacing-lg);
+}
+
+.loadMoreSpinner {
+	height: var(--size-3xl);
+}
+
+.loadMoreButton {
 	min-width: 50%;
 }

@@ -5,33 +5,57 @@ import {
 	parsePostListFilters,
 	useInfinitePosts,
 	type PostListFilterInput,
+	type PostListFilters,
 } from '@/api/posts/reads';
-import PostItem from '@/components/features/community/PostItem';
+import Spinner from '@/assets/images/spinner.gif';
+import { LibraryEmptyState, LibraryPage } from '@/components/features/LibraryCards/LibraryLayout';
+import PostCard from '@/components/features/community/PostCard';
+import PostFilters from '@/components/features/community/PostFilters';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Icon } from '@/components/shared/Icon';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { Cluster, Container, Stack } from '@/components/shared/layout';
+import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import styles from './PostsList.module.css';
-import PostsSearchBar from './PostsSearchBar';
 
+/** What the empty list says: a search, other filters, or no posts at all. */
+export const emptyState = (filters: PostListFilters) => {
+	if (filters.keyword) {
+		return { title: 'No posts match', term: filters.keyword, hint: 'Try a shorter search, or clear the filters.' };
+	}
+
+	if (filters.hashtag || filters.topic) {
+		return { title: 'No posts match these filters', hint: 'Try another topic or tag, or clear the filters.' };
+	}
+
+	return { title: 'No posts yet', hint: 'Questions, feedback and announcements from the community appear here.' };
+};
+
+/** One muted line under the title: how much is shown, and which search or tag produced it. */
+export const listMeta = (filters: PostListFilters, shown: number, total: number) =>
+	[
+		`Showing ${shown} of ${total}`,
+		filters.keyword && `Results for: ${filters.keyword}`,
+		filters.hashtag && `Tagged #${filters.hashtag}`,
+	]
+		.filter(Boolean)
+		.join(' · ');
+
+/**
+ * Community posts as Library Card rows. The URL owns every filter, so refresh, deep links and
+ * back/forward reproduce what is on screen.
+ */
 const PostsList = () => {
 	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const filters = parsePostListFilters(searchParams);
-	const hasActiveFilters = Boolean(filters.keyword || filters.hashtag || filters.topic);
 
-	const { posts, total, error, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
+	const { posts, total, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
 		useInfinitePosts({ filters });
 
-	const handleSearch = (nextFilters: PostListFilterInput) => {
-		setSearchParams(buildPostListSearchParams(nextFilters));
-	};
-
-	const clearSearch = () => {
-		setSearchParams(new URLSearchParams());
-	};
+	const handleChange = (next: PostListFilterInput) => setSearchParams(buildPostListSearchParams(next));
+	const handleReset = () => setSearchParams(new URLSearchParams());
 
 	const newPostAction = isAuthenticated ? (
 		<Button to={POST_ROUTES.create} variant="primary">
@@ -43,101 +67,68 @@ const PostsList = () => {
 	// previous page rendered instead of dropping back to this loader.
 	if (isPending && posts.length === 0) {
 		return (
-			<Container size="md" className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Community" action={newPostAction} />
-					<PageLoading family="list" />
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Community" action={newPostAction} />
+				<PageLoading family="list" />
+			</LibraryPage>
 		);
 	}
 
 	if (isError && posts.length === 0) {
 		return (
-			<Container size="md" className={styles.page}>
-				<Stack gap="md">
-					<PageHeader title="Community" action={newPostAction} />
-					<p className={styles.centered}>Posts could not be loaded. {error?.message}</p>
-				</Stack>
-			</Container>
+			<LibraryPage>
+				<PageHeader title="Community" action={newPostAction} />
+				<Alert tone="danger">Posts couldn't be loaded. Please try again.</Alert>
+			</LibraryPage>
 		);
 	}
 
 	const isBackgroundRefreshing = isFetching && !isFetchingNextPage;
 
 	return (
-		<Container size="md" className={styles.page}>
-			<Stack gap="md">
-				<PageHeader title="Community" action={newPostAction} />
-				<PostsSearchBar
-					// Remount the control when the URL changes so its inputs follow back/forward navigation.
-					key={searchParams.toString()}
-					defaults={{
-						keyword: filters.keyword ?? '',
-						topic: filters.topic ? String(filters.topic) : '',
-						sort: filters.sort,
-					}}
-					onSearch={handleSearch}
-				/>
+		<LibraryPage>
+			<PageHeader title="Community" meta={listMeta(filters, posts.length, total)} action={newPostAction} />
 
-				<Stack gap="xs" align="start" className={styles.results}>
-					{hasActiveFilters && (
-						<>
-							<Button variant="ghost" onClick={clearSearch}>
-								<Icon name="broomSolid" /> Clear search
-							</Button>
-							{filters.keyword && <h4>Results for: {filters.keyword}</h4>}
-							{filters.hashtag && <h4>Tagged: #{filters.hashtag}</h4>}
-						</>
-					)}
-					<h4>Results total: {total}</h4>
-					{isBackgroundRefreshing && (
-						<p role="status" className={styles.muted}>
-							Refreshing results...
-						</p>
-					)}
-				</Stack>
+			<PostFilters filters={filters} onChange={handleChange} onReset={handleReset} />
 
-				<section className={styles.panel}>
-					{posts.length === 0 ? (
-						<p className={styles.empty}>No posts found.</p>
-					) : (
-						<ul className={styles.list}>
-							{posts.map((post) => (
-								<PostItem
-									key={post.uuid}
-									detailIdentifier={post.uuid}
-									title={post.title}
-									postType={post.topic_label}
-									userName={post.authorName}
-									date={post.formattedDate}
-									commentsTotal={post.engagementCounts.comments}
-									likesTotal={post.engagementCounts.likes}
-									viewsTotal={post.engagementCounts.views}
-									hashtags={post.hashtags.slice(0, 3)}
-									isLocked={post.locked}
-								/>
-							))}
-						</ul>
-					)}
-				</section>
+			{isBackgroundRefreshing && (
+				<p role="status" className={styles.muted}>
+					Refreshing results…
+				</p>
+			)}
+			{isError ? <Alert tone="danger">More posts couldn't be loaded. Please try again.</Alert> : null}
 
-				<Cluster justify="center">
-					{hasNextPage ? (
+			{posts.length === 0 ? (
+				<LibraryEmptyState {...emptyState(filters)} />
+			) : (
+				<ul className={styles.list}>
+					{posts.map((post) => (
+						<li key={post.uuid}>
+							<PostCard post={post} />
+						</li>
+					))}
+				</ul>
+			)}
+
+			{/* The empty state already says there is nothing; "No more results" under it is noise. */}
+			{posts.length > 0 && (
+				<Cluster justify="center" className={styles.loadMore}>
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
+					) : hasNextPage ? (
 						<Button
-							variant="outline"
-							className={styles.loadMore}
+							variant="secondary-outline"
+							className={styles.loadMoreButton}
 							onClick={() => void fetchNextPage()}
-							disabled={isFetchingNextPage}
 						>
-							{isFetchingNextPage ? 'Loading more...' : 'Load More'}
+							Load More
 						</Button>
 					) : (
-						<span className={styles.muted}>no more results...</span>
+						<span className={styles.muted}>No more results</span>
 					)}
 				</Cluster>
-			</Stack>
-		</Container>
+			)}
+		</LibraryPage>
 	);
 };
 
