@@ -11,7 +11,6 @@ use App\Filament\Support\DateRangeFilter;
 use App\Filament\Support\EntityReferenceLinks;
 use App\Infrastructure\Persistence\Models\Comment;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -57,19 +56,24 @@ class CommentsTable
                     ->url(static fn (Comment $record, $livewire): ?string => EntityReferenceLinks::url(CommentParents::of($record, $livewire->getTableRecords())))
                     ->color(static fn (Comment $record, $livewire): ?string => CommentParents::of($record, $livewire->getTableRecords())?->exists() ? 'primary' : 'gray')
                     ->limit(40),
-                IconColumn::make('is_reply')
+                TextColumn::make('is_reply')
                     ->label('Reply')
-                    ->boolean()
-                    ->state(static fn (Comment $record): bool => $record->parent_comment_id !== null),
+                    ->badge()
+                    ->color('gray')
+                    ->state(static fn (Comment $record): ?string => $record->parent_comment_id !== null ? 'Reply' : null)
+                    ->placeholder('-'),
                 TextColumn::make('replies_count')
                     ->label('Replies')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('likes_count')
                     ->label('Likes')
-                    ->numeric(),
+                    ->numeric()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Written')
+                    ->since()
+                    ->dateTimeTooltip()
                     ->sortable(),
             ])
             ->filters([

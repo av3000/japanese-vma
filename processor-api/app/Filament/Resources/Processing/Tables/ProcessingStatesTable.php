@@ -32,7 +32,8 @@ class ProcessingStatesTable
                     ->label('Entity')
                     ->badge()
                     ->color('gray')
-                    ->formatStateUsing(static fn (ProcessingEntityType $state): string => ucfirst($state->value)),
+                    ->formatStateUsing(static fn (ProcessingEntityType $state): string => ucfirst($state->value))
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('article_title')
                     ->label('Article')
                     ->placeholder('Deleted article')
@@ -43,7 +44,7 @@ class ProcessingStatesTable
                 TextColumn::make('task_type')
                     ->label('Task')
                     ->formatStateUsing(static fn (string $state): string => self::taskLabel($state))
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->badge()
                     ->state(static fn (ProcessingState $record): string => ProcessingStateResource::isStuck($record) ? 'stuck' : $record->status->value)
@@ -66,7 +67,7 @@ class ProcessingStatesTable
                     ->tooltip(static fn (ProcessingState $record): ?string => $record->error_message)
                     ->placeholder('-')
                     ->wrap(),
-                TextColumn::make('started_at')->dateTime()->sortable()->toggleable(),
+                TextColumn::make('started_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')->label('Last progress')->since()->dateTimeTooltip()->sortable(),
             ])
             ->filters([

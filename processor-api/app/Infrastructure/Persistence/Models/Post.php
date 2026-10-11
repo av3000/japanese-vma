@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Carbon\Carbon;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Post extends Model
 {
     use HasFactory;
+    use RoutesByUuid;
 
     protected $table = 'posts';
 

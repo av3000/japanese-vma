@@ -57,7 +57,7 @@ class ArticleInfolist
                     ->schema([
                         Section::make('Engagement')
                             ->schema(self::engagementEntries())
-                            ->columns(4),
+                            ->columns(2),
                         Section::make('Study data')
                             ->schema([
                                 TextEntry::make('kanji_count')->label('Kanji')
@@ -69,9 +69,9 @@ class ArticleInfolist
                                         'N5 %d · N4 %d · N3 %d · N2 %d · N1 %d · other %d',
                                         $record->n5, $record->n4, $record->n3, $record->n2, $record->n1, $record->uncommon,
                                     ))
-                                    ->columnSpan(2),
+                                    ->columnSpanFull(),
                             ])
-                            ->columns(4),
+                            ->columns(2),
                     ]),
                 Section::make('Processing')
                     ->schema([

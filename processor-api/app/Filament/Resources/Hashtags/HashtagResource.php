@@ -33,6 +33,10 @@ class HashtagResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'content';
 
+    protected static ?string $navigationLabel = 'Hashtags';
+
+    protected static ?string $modelLabel = 'hashtag';
+
     /**
      * Entity types that carry hashtags, by the label shown in the usage column.
      */

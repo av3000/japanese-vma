@@ -65,14 +65,15 @@ class ArticlesTable
                         'N5 %d · N4 %d · N3 %d · N2 %d · N1 %d',
                         $record->n5, $record->n4, $record->n3, $record->n2, $record->n1,
                     ))
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('hashtags_count')
                     ->label('Tags')
                     ->numeric()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Submitted')
-                    ->dateTime()
+                    ->since()
+                    ->dateTimeTooltip()
                     ->sortable(),
             ])
             ->filters([

@@ -2,12 +2,15 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Sentence extends Model
 {
+    use RoutesByUuid;
+
     protected $table = 'japanese_tatoeba_sentences';
 
     public $timestamps = false;
