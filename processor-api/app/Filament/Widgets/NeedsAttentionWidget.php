@@ -9,6 +9,7 @@ use App\Domain\Processing\ProcessingThresholds;
 use App\Filament\Resources\Articles\ArticleResource;
 use App\Filament\Resources\Processing\ProcessingStateResource;
 use App\Filament\Support\PanelActor;
+use App\Http\Middleware\EnsureHorizonBasicAuth;
 use Filament\Facades\Filament;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
@@ -49,7 +50,10 @@ class NeedsAttentionWidget extends StatsOverviewWidget
                 ->url($processing),
             $this->count('Processing stuck', $counts->processingStuck, 'danger', Heroicon::OutlinedClock)
                 ->url($processing),
-            $this->count('Failed queue jobs', $counts->failedJobs, 'danger', Heroicon::OutlinedQueueList),
+            $this->count('Failed queue jobs', $counts->failedJobs, 'danger', Heroicon::OutlinedQueueList)
+                ->url(PanelActor::may(EnsureHorizonBasicAuth::PANEL_PERMISSION)
+                    ? url((string) config('horizon.path', 'horizon')).'/failed'
+                    : null, shouldOpenInNewTab: true),
         ];
     }
 
