@@ -26,6 +26,7 @@ use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceR
 use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
@@ -42,6 +43,7 @@ use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
 use App\Infrastructure\Persistence\Readers\DatabaseEntityReferenceReader;
+use App\Infrastructure\Persistence\Readers\DatabaseImportStatusReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
@@ -63,6 +65,7 @@ use App\Infrastructure\Persistence\Repositories\UserAccountRepository;
 use App\Infrastructure\Persistence\Repositories\UserRepository;
 use App\Infrastructure\Persistence\Repositories\ViewRepository;
 use App\Infrastructure\Persistence\Repositories\WordRepository;
+use App\Support\JapaneseDataImport\JapaneseDataManifest;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -73,6 +76,10 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
         $this->app->bind(ActivityRecorderInterface::class, DatabaseActivityRecorder::class);
         $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
+        $this->app->bind(ImportStatusReaderInterface::class, fn ($app): DatabaseImportStatusReader => new DatabaseImportStatusReader(
+            new JapaneseDataManifest(),
+            $app->make('cache.store'),
+        ));
         $this->app->bind(EntityReferenceReaderInterface::class, DatabaseEntityReferenceReader::class);
 
         $this->app->singleton(

@@ -17,13 +17,17 @@ use Throwable;
  */
 class JapaneseDataImporter
 {
-    private const SENTINEL_TASK = 'japanese-data-import';
+    private const SENTINEL_TASK = JapaneseDataManifest::SENTINEL_TASK;
 
     private const SENTENCES_TABLE = 'japanese_tatoeba_sentences';
 
+    private readonly JapaneseDataManifest $manifest;
+
     public function __construct(
         private readonly LegacySqlInsertParser $parser,
+        ?JapaneseDataManifest $manifest = null,
     ) {
+        $this->manifest = $manifest ?? new JapaneseDataManifest();
     }
 
     /**
@@ -122,14 +126,7 @@ class JapaneseDataImporter
      */
     private function loadManifest(): array
     {
-        $manifestPath = base_path('database/japanese-data-pg/manifest.php');
-        $manifest = require $manifestPath;
-
-        if (! is_array($manifest) || $manifest === []) {
-            throw new RuntimeException("Import manifest is missing or empty: {$manifestPath}");
-        }
-
-        return $manifest;
+        return $this->manifest->datasets();
     }
 
     private function loadSentinel(string $environment): ?object
@@ -164,10 +161,8 @@ class JapaneseDataImporter
     private function assertSourcesExist(array $datasets): void
     {
         foreach ($datasets as $dataset) {
-            $absolutePath = base_path($dataset['source']);
-
-            if (! is_file($absolutePath)) {
-                throw new RuntimeException("Missing import source file: {$absolutePath}");
+            if (! $this->manifest->sourceExists($dataset)) {
+                throw new RuntimeException("Missing import source file: {$this->manifest->sourcePath($dataset)}");
             }
         }
     }
@@ -226,7 +221,7 @@ class JapaneseDataImporter
     private function importDataset(array $dataset): int
     {
         $table = $dataset['table'];
-        $sourcePath = base_path($dataset['source']);
+        $sourcePath = $this->manifest->sourcePath($dataset);
         $file = new SplFileObject($sourcePath, 'r');
         $statementBuffer = '';
         $collectingInsert = false;
