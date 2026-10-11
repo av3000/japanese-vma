@@ -18,6 +18,7 @@ enum ActivitySubjectType: string
     case Comment = 'comment';
     case Hashtag = 'hashtag';
     case Catalogue = 'catalogue';
+    case Sentence = 'sentence';
 
     /**
      * @return list<string>
@@ -32,6 +33,7 @@ enum ActivitySubjectType: string
             self::Comment => ['content', 'author', 'entity_type', 'entity_id', 'parent_comment_id'],
             self::Hashtag => ['content'],
             self::Catalogue => ['title', 'type', 'publicity', 'owner'],
+            self::Sentence => ['content', 'author_id'],
         };
     }
 
@@ -45,6 +47,7 @@ enum ActivitySubjectType: string
             self::Comment => 'Comment',
             self::Hashtag => 'Hashtag',
             self::Catalogue => 'Catalogue',
+            self::Sentence => 'Sentence',
         };
     }
 }

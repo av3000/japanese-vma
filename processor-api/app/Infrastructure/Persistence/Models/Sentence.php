@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Sentence extends Model
@@ -24,6 +25,14 @@ class Sentence extends Model
         'tatoeba_entry' => 'string',
         'content' => 'string',
     ];
+
+    /**
+     * The author of a user-written sentence; imported Tatoeba rows have none.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function kanjis(): BelongsToMany
     {
