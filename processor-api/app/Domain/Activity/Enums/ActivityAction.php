@@ -18,12 +18,14 @@ enum ActivityAction: string
     case UserRoleRemoved = 'user.role_removed';
     case UserEmailVerified = 'user.email_verified';
     case UserTokensRevoked = 'user.tokens_revoked';
+    case ArticleStatusChanged = 'article.status_changed';
+    case ArticlePublicityChanged = 'article.publicity_changed';
+    case ArticleReprocessRequested = 'article.reprocess_requested';
+    case ArticleDeleted = 'article.deleted';
 
     public function label(): string
     {
         return match ($this) {
-            self::UserEmailVerified => 'User email marked verified',
-            self::UserTokensRevoked => 'User signed out everywhere',
             self::RoleCreated => 'Role created',
             self::RoleUpdated => 'Role updated',
             self::RoleDeleted => 'Role deleted',
@@ -31,6 +33,12 @@ enum ActivityAction: string
             self::UserUpdated => 'User updated',
             self::UserRoleAssigned => 'Role assigned to user',
             self::UserRoleRemoved => 'Role removed from user',
+            self::UserEmailVerified => 'User email marked verified',
+            self::UserTokensRevoked => 'User signed out everywhere',
+            self::ArticleStatusChanged => 'Article status changed',
+            self::ArticlePublicityChanged => 'Article publicity changed',
+            self::ArticleReprocessRequested => 'Article reprocessing requested',
+            self::ArticleDeleted => 'Article deleted',
         };
     }
 }

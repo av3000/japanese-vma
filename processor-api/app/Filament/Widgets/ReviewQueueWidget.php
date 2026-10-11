@@ -7,6 +7,7 @@ namespace App\Filament\Widgets;
 use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
 use App\Domain\AdminDashboard\DTOs\ReviewQueueItemDTO;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Filament\Resources\Articles\ArticleResource;
 use App\Filament\Support\PanelActor;
 use Filament\Facades\Filament;
 use Filament\Support\ArrayRecord;
@@ -38,6 +39,7 @@ class ReviewQueueWidget extends TableWidget
                 app(AdminDashboardReaderInterface::class)->reviewQueue(),
             ))
             ->paginated(false)
+            ->recordUrl(static fn (array $record): string => ArticleResource::getUrl('view', ['record' => $record['uuid']]))
             ->emptyStateHeading('No articles are waiting for review')
             ->columns([
                 TextColumn::make('title')->wrap(),

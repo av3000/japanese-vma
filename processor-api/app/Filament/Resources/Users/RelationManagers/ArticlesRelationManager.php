@@ -6,6 +6,8 @@ namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Filament\Resources\Articles\ArticleResource;
+use App\Infrastructure\Persistence\Models\Article;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -28,6 +30,9 @@ class ArticlesRelationManager extends RelationManager
             ->modifyQueryUsing(static fn (Builder $query): Builder => $query->select([
                 'id', 'uuid', 'user_id', 'title_jp', 'title_en', 'status', 'publicity', 'created_at',
             ]))
+            ->recordUrl(static fn (Article $record): ?string => ArticleResource::canView($record)
+                ? ArticleResource::getUrl('view', ['record' => $record])
+                : null)
             ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(10)
             ->columns([

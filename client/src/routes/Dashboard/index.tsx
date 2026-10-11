@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import styles from './Dashboard.module.css';
 import DashboardArticlesPanel from './DashboardArticlesPanel';
 import DashboardCataloguesPanel from './DashboardCataloguesPanel';
-import DashboardReviewPanel from './DashboardReviewPanel';
 import {
 	parseDashboardSearchParams,
 	serializeDashboardViewState,
@@ -36,37 +35,33 @@ export const dashboardCountsMeta = (counts: DashboardCounts | undefined): string
 const Dashboard: React.FC = () => {
 	const { isLoading, user } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
-	const isAdmin = Boolean(user?.isAdmin);
 	const counts = useDashboardCounts(user?.uuid);
 
 	const updateView = useCallback<DashboardViewChange>(
 		(patch, { replace = false } = {}) => {
 			setSearchParams(
-				(current) =>
-					serializeDashboardViewState({ ...parseDashboardSearchParams(current, { isAdmin }), ...patch }),
+				(current) => serializeDashboardViewState({ ...parseDashboardSearchParams(current), ...patch }),
 				{ replace },
 			);
 		},
-		[setSearchParams, isAdmin],
+		[setSearchParams],
 	);
 
 	if (isLoading || !user) {
 		return <PageLoading family="dashboard" />;
 	}
 
-	const view = parseDashboardSearchParams(searchParams, { isAdmin });
+	const view = parseDashboardSearchParams(searchParams);
 
 	return (
 		<Container as="section" className={styles.page}>
 			<Stack gap="lg">
 				<PageHeader title="Dashboard" meta={dashboardCountsMeta(counts.data)} />
-				<DashboardTabs active={view.tab} isAdmin={isAdmin} />
+				<DashboardTabs active={view.tab} />
 				{view.tab === 'articles' ? (
 					<DashboardArticlesPanel user={user} view={view} onViewChange={updateView} />
-				) : view.tab === 'lists' ? (
-					<DashboardCataloguesPanel user={user} view={view} onViewChange={updateView} />
 				) : (
-					<DashboardReviewPanel enabled={isAdmin} />
+					<DashboardCataloguesPanel user={user} view={view} onViewChange={updateView} />
 				)}
 			</Stack>
 		</Container>

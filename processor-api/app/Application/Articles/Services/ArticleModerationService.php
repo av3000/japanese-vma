@@ -2,10 +2,14 @@
 
 namespace App\Application\Articles\Services;
 
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Articles\DTOs\ArticleModerationItemDTO;
 use App\Domain\Articles\DTOs\ArticleModerationListResultDTO;
 use App\Domain\Articles\DTOs\ArticleStatusResultDTO;
@@ -13,9 +17,11 @@ use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Models\Article;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Shared\Results\Result;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -25,6 +31,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         private readonly ArticleRepositoryInterface $articleRepository,
         private readonly ArticlePolicy $articlePolicy,
         private readonly HashtagServiceInterface $hashtagService,
+        private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -72,14 +79,43 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         }
     }
 
-    public function updateStatus(EntityId $articleUuid, ArticleStatus $status, AuthenticatedUser $authenticatedUser): Result
-    {
+    public function updateStatus(
+        EntityId $articleUuid,
+        ArticleStatus $status,
+        AuthenticatedUser $authenticatedUser,
+        ?string $reason = null,
+    ): Result {
         if (! $this->articlePolicy->canModerate($authenticatedUser)) {
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
         try {
-            $persistedStatus = $this->articleRepository->updateStatus($articleUuid, $status);
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            $previousStatus = $article->getStatus();
+
+            $persistedStatus = DB::transaction(function () use ($article, $articleUuid, $status, $previousStatus, $authenticatedUser, $reason): ?ArticleStatus {
+                $persistedStatus = $this->articleRepository->updateStatus($articleUuid, $status);
+
+                if ($persistedStatus !== null && $persistedStatus !== $previousStatus) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $authenticatedUser,
+                        ActivityAction::ArticleStatusChanged,
+                        ActivitySubjectType::Article,
+                        $articleUuid->value(),
+                        $article->getTitleJp()->value,
+                        before: ['status' => $previousStatus->label()],
+                        after: ['status' => $persistedStatus->label()],
+                        context: $reason === null || trim($reason) === '' ? [] : ['reason' => trim($reason)],
+                    ));
+                }
+
+                return $persistedStatus;
+            });
 
             if ($persistedStatus === null) {
                 return Result::failure(ArticleErrors::notFound($articleUuid->value()));
@@ -95,5 +131,40 @@ class ArticleModerationService implements ArticleModerationServiceInterface
 
             return Result::failure(ArticleErrors::moderationStatusUpdateFailed());
         }
+    }
+
+    public function setPublicity(EntityId $articleUuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result
+    {
+        if (! $this->articlePolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+        if ($article === null) {
+            return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+        }
+
+        $previous = $article->getPublicity();
+
+        if ($previous === $publicity) {
+            return Result::success($publicity);
+        }
+
+        DB::transaction(function () use ($article, $articleUuid, $publicity, $previous, $authenticatedUser): void {
+            $this->articleRepository->updatePublicity($articleUuid, $publicity);
+
+            $this->activityRecorder->record(ActivityEntries::by(
+                $authenticatedUser,
+                ActivityAction::ArticlePublicityChanged,
+                ActivitySubjectType::Article,
+                $articleUuid->value(),
+                $article->getTitleJp()->value,
+                before: ['publicity' => $previous->label()],
+                after: ['publicity' => $publicity->label()],
+            ));
+        });
+
+        return Result::success($publicity);
     }
 }

@@ -9,6 +9,7 @@ use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
@@ -216,6 +217,20 @@ class ArticleRepository implements ArticleRepositoryInterface
         $article->save();
 
         return $article->status;
+    }
+
+    public function updatePublicity(EntityId $articleUuid, PublicityStatus $publicity): ?PublicityStatus
+    {
+        $article = PersistenceArticle::where('uuid', $articleUuid->value())->first();
+
+        if ($article === null) {
+            return null;
+        }
+
+        $article->publicity = $publicity;
+        $article->save();
+
+        return $article->publicity;
     }
 
     /**

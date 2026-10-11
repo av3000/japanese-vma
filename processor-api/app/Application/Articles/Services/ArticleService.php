@@ -2,6 +2,8 @@
 
 namespace App\Application\Articles\Services;
 
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
@@ -17,6 +19,8 @@ use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
@@ -60,6 +64,7 @@ class ArticleService implements ArticleServiceInterface
         private DownloadRepositoryInterface $downloadRepository,
         private CommentRepositoryInterface $commentRepository,
         private ProcessingStateServiceInterface $processingStates,
+        private ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -357,6 +362,24 @@ class ArticleService implements ArticleServiceInterface
 
                 if (! $this->articlePolicy->canDelete($authenticatedUser, $article)) {
                     throw new ArticleAccessDeniedException($articleUuid->value());
+                }
+
+                // An author removing their own article is ordinary use; removing someone else's
+                // is moderation and goes in the activity log.
+                if (! $authenticatedUser->id->equals($article->getAuthorId())) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $authenticatedUser,
+                        ActivityAction::ArticleDeleted,
+                        ActivitySubjectType::Article,
+                        $articleUuid->value(),
+                        $article->getTitleJp()->value,
+                        before: [
+                            'title' => $article->getTitleJp()->value,
+                            'status' => $article->getStatus()->label(),
+                            'publicity' => $article->getPublicity()->label(),
+                            'author' => $article->getAuthorName()->value(),
+                        ],
+                    ));
                 }
 
                 // Delete relationships and engagement data

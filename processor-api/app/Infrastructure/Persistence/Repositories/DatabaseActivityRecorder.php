@@ -35,17 +35,19 @@ final class DatabaseActivityRecorder implements ActivityRecorderInterface
     }
 
     /**
-     * Only the Filament panel signs in on the `web` guard; the API uses Passport on `api`. The
-     * guard tells the surface apart without services having to pass transport details down.
+     * The API authenticates with a Passport bearer token on `api`; only the Filament panel signs in
+     * on the `web` session guard. The guard tells the surface apart without services having to
+     * pass transport details down. A bearer token is checked first: a request carrying one is an
+     * API call whatever session cookie came with it.
      */
     private function source(): ActivitySource
     {
-        if ($this->auth->guard('web')->check()) {
-            return ActivitySource::Panel;
-        }
-
         if ($this->auth->guard('api')->check()) {
             return ActivitySource::Api;
+        }
+
+        if ($this->auth->guard('web')->check()) {
+            return ActivitySource::Panel;
         }
 
         return app()->runningInConsole() ? ActivitySource::Console : ActivitySource::Api;

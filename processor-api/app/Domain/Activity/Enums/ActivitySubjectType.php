@@ -13,6 +13,7 @@ enum ActivitySubjectType: string
 {
     case Role = 'role';
     case User = 'user';
+    case Article = 'article';
 
     /**
      * @return list<string>
@@ -22,6 +23,7 @@ enum ActivitySubjectType: string
         return match ($this) {
             self::Role => ['name', 'guard_name', 'permissions'],
             self::User => ['name', 'email', 'email_verified_at', 'roles'],
+            self::Article => ['title', 'status', 'publicity', 'author'],
         };
     }
 
@@ -30,6 +32,7 @@ enum ActivitySubjectType: string
         return match ($this) {
             self::Role => 'Role',
             self::User => 'User',
+            self::Article => 'Article',
         };
     }
 }
