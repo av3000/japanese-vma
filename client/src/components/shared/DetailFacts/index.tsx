@@ -11,11 +11,26 @@ const numberFormat = new Intl.NumberFormat('en-US');
 export const characterCount = (text: string | null | undefined): number =>
 	Array.from((text ?? '').replace(/\s+/gu, '')).length;
 
+/** A value that is not a count, e.g. a JLPT badge, "Grade 1" or a linked radical. */
+export interface DetailFactText {
+	text: React.ReactNode;
+}
+
 export interface DetailFact {
 	term: string;
-	/** A count, or `null` while it is still being worked out ("Counting…"). */
-	value: number | null;
+	/**
+	 * A count, `null` while it is still being worked out ("Counting…"), or `{ text }` for a value
+	 * that is not a number. Text is shown as given, without number formatting.
+	 */
+	value: number | null | DetailFactText;
 }
+
+const factValue = (value: DetailFact['value']): React.ReactNode => {
+	if (value === null) return 'Counting…';
+	if (typeof value === 'number') return numberFormat.format(value);
+
+	return value.text;
+};
 
 export interface DetailFactsProps {
 	/** Eyebrow heading, e.g. "In this reading". */
@@ -27,7 +42,7 @@ export interface DetailFactsProps {
 	className?: string;
 }
 
-/** The rail's facts card: a titled `<dl>` of counts, with an optional footer such as a `JlptBar`. */
+/** The rail's facts card: a titled `<dl>` of counts and short values, with an optional footer such as a `JlptBar`. */
 export const DetailFacts: React.FC<DetailFactsProps> = ({ title, headingLevel = 2, facts, children, className }) => {
 	const headingId = React.useId();
 	const Heading = `h${headingLevel}` as const;
@@ -42,8 +57,14 @@ export const DetailFacts: React.FC<DetailFactsProps> = ({ title, headingLevel = 
 				{facts.map((fact) => (
 					<div key={fact.term} className={styles.row}>
 						<dt className={styles.term}>{fact.term}</dt>
-						<dd className={classNames(styles.value, fact.value === null && styles.pending)}>
-							{fact.value === null ? 'Counting…' : numberFormat.format(fact.value)}
+						<dd
+							className={classNames(
+								styles.value,
+								fact.value === null && styles.pending,
+								fact.value !== null && typeof fact.value === 'object' && styles.text,
+							)}
+						>
+							{factValue(fact.value)}
 						</dd>
 					</div>
 				))}

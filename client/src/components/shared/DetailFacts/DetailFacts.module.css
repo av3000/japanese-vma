@@ -46,6 +46,12 @@
 	overflow-wrap: anywhere;
 }
 
+/* A value that is not a count: body type, so words and Japanese glyphs are not set in mono. */
+.text {
+	font-family: inherit;
+	font-variant-numeric: normal;
+}
+
 .pending {
 	color: var(--color-neutral-600);
 	font-family: inherit;

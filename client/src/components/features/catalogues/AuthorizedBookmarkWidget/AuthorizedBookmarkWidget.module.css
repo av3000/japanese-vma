@@ -29,3 +29,14 @@
 	display: block;
 	width: 100%;
 }
+
+/* Under the rail's Save button: the viewer has marked the item as learned. */
+.learnedLine {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	margin: var(--spacing-xs) 0 0;
+	color: var(--color-success-hover);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+}

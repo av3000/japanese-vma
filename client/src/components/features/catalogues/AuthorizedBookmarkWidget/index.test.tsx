@@ -53,6 +53,16 @@ describe('AuthorizedBookmarkWidget', () => {
 		expect(saved).toContain('Saved to a catalogue</button>');
 	});
 
+	it('says Learned under a labelled button for a learned item, and nothing when not learned', () => {
+		const props = { label: 'Save to a catalogue', isKnownType: SavedListType.KNOWNKANJIS };
+		const learned = renderToStaticMarkup(widget({ ...props, initialIsKnown: true }));
+		const notLearned = renderToStaticMarkup(widget({ ...props, initialIsKnown: false }));
+
+		expect(learned).toMatch(/<p class="[^"]*learnedLine[^"]*">.*Learned<\/p>/);
+		expect(learned).not.toContain('fa-check-circle');
+		expect(notLearned).not.toContain('earned');
+	});
+
 	it('keeps the label when no saved label is given', () => {
 		const html = renderToStaticMarkup(
 			widget({ label: 'Save to a catalogue', isKnownType: undefined, initialIsBookmarked: true }),

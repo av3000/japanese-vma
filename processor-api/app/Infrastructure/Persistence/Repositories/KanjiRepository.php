@@ -157,6 +157,12 @@ class KanjiRepository implements KanjiRepositoryInterface
                     ->where('list_id', $criteria->catalogueId);
             });
         }
+
+        if ($criteria->radicalUuid !== null) {
+            $query->whereHas('radicals', function (Builder $radicalQuery) use ($criteria): void {
+                $radicalQuery->where($radicalQuery->qualifyColumn('uuid'), $criteria->radicalUuid->value());
+            });
+        }
     }
 
     public function findIdsByCharacters(array $characters): array

@@ -38,24 +38,12 @@ describe('mapWordDetail', () => {
 			radical_parts: ['水'],
 			viewer_catalogue_state: null,
 		};
-		const relatedArticle = {
-			id: 2,
-			uuid: 'article-uuid',
-			title_jp: '水の記事',
-			hashtags: [],
-			views_total: 3,
-			likes_total: 2,
-			comments_total: 1,
-		};
-
-		const mapped = mapWordDetail({ ...baseWord, kanjis: [relatedKanji], articles: [relatedArticle] });
+		const mapped = mapWordDetail({ ...baseWord, kanjis: [relatedKanji] });
 
 		expect(mapped.kanjis).toEqual([relatedKanji]);
-		expect(mapped.articles).toEqual([relatedArticle]);
 	});
 
-	it('normalizes omitted optional relations', () => {
+	it('normalizes an omitted kanji list', () => {
 		expect(mapWordDetail(baseWord).kanjis).toEqual([]);
-		expect(mapWordDetail(baseWord).articles).toEqual([]);
 	});
 });

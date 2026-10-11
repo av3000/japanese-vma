@@ -185,5 +185,11 @@ class WordRepository implements WordRepositoryInterface
                 $kanjiQuery->whereKey($criteria->kanjiId);
             });
         }
+
+        if ($criteria->kanjiUuid !== null) {
+            $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
+                $kanjiQuery->where($kanjiQuery->qualifyColumn('uuid'), $criteria->kanjiUuid->value());
+            });
+        }
     }
 }

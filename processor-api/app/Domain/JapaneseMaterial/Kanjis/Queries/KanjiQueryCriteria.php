@@ -17,6 +17,8 @@ final readonly class KanjiQueryCriteria
         public readonly ?EntityId $articleId = null,
         /** Kanji saved in one catalogue, the list behind the catalogue detail page (#347). */
         public readonly ?int $catalogueId = null,
+        /** Kanji built on one radical, the list behind the radical detail page (#352). */
+        public readonly ?EntityId $radicalUuid = null,
         public readonly ?EntityId $uuid = null,
         public readonly ?string $keyword = null,
         public readonly ?KanjiCharacter $character = null,
@@ -51,10 +53,12 @@ final readonly class KanjiQueryCriteria
         ?int $offset = null,
         ?EntityId $articleId = null,
         ?int $catalogueId = null,
+        ?EntityId $radicalUuid = null,
     ): self {
         return new self(
             articleId: $articleId,
             catalogueId: $catalogueId,
+            radicalUuid: $radicalUuid,
             keyword: $keyword,
             character: $character ? new KanjiCharacter($character) : null,
             grade: $grade ? new KanjiGrade($grade) : null,

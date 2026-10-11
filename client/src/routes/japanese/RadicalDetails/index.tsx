@@ -1,15 +1,12 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useRadicalQuery } from '@/api/radicals/details';
-import { Alert } from '@/components/shared/Alert';
+import { DetailUnavailable, unavailableMessage } from '@/components/shared/DetailLayout';
 import { PageLoading } from '@/components/shared/PageLoading';
-import { Container } from '@/components/shared/layout';
-import styles from '../japaneseDetailPage.module.css';
 import RadicalContent from './RadicalContent';
 
-const RadicalDetails: React.FC = () => {
+const RadicalDetails = () => {
 	const { radical_id } = useParams<{ radical_id: string }>();
-	const { data: radical, isLoading, isError } = useRadicalQuery(radical_id);
+	const { data: radical, isLoading, isError, error } = useRadicalQuery(radical_id);
 
 	if (isLoading) {
 		return <PageLoading family="detail" />;
@@ -17,9 +14,11 @@ const RadicalDetails: React.FC = () => {
 
 	if (isError || !radical) {
 		return (
-			<Container className={styles.page}>
-				<Alert tone="danger">Unable to load radical.</Alert>
-			</Container>
+			<DetailUnavailable
+				message={unavailableMessage(error, 'radical')}
+				backTo="/radicals"
+				backLabel="Back to Radicals"
+			/>
 		);
 	}
 

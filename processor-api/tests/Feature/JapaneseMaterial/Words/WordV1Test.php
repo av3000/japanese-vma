@@ -122,14 +122,14 @@ class WordV1Test extends TestCase
             ->assertJsonValidationErrors(['include']);
     }
 
-    public function test_word_detail_includes_bounded_ordered_kanjis_and_articles(): void
+    public function test_word_detail_includes_every_kanji_and_bounded_ordered_articles(): void
     {
         $uuid = $this->createRelatedWordFixture(6);
 
         $response = $this->getJson("/api/v1/words/{$uuid}?include=kanjis,articles");
 
         $response->assertOk()
-            ->assertJsonCount(5, 'kanjis')
+            ->assertJsonCount(6, 'kanjis')
             ->assertJsonCount(5, 'articles')
             ->assertJsonPath('kanjis.0.id', 201)
             ->assertJsonPath('kanjis.0.uuid', fn (string $value): bool => Str::isUuid($value))
@@ -141,7 +141,7 @@ class WordV1Test extends TestCase
             ->assertJsonPath('articles.0.likes_total', 1)
             ->assertJsonPath('articles.0.comments_total', 1);
 
-        $this->assertSame([201, 202, 203, 204, 205], array_column($response->json('kanjis'), 'id'));
+        $this->assertSame([201, 202, 203, 204, 205, 206], array_column($response->json('kanjis'), 'id'));
         $this->assertSame([301, 302, 303, 304, 305], array_column($response->json('articles'), 'id'));
     }
 
