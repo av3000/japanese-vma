@@ -8,10 +8,12 @@ use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Post;
+use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Policies\AdminActivityPolicy;
 use App\Policies\ArticleAdminPolicy;
 use App\Policies\CommentAdminPolicy;
+use App\Policies\HashtagAdminPolicy;
 use App\Policies\PostAdminPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
@@ -32,6 +34,7 @@ class AuthServiceProvider extends ServiceProvider
         Article::class => ArticleAdminPolicy::class,
         Post::class => PostAdminPolicy::class,
         Comment::class => CommentAdminPolicy::class,
+        Uniquehashtag::class => HashtagAdminPolicy::class,
     ];
 
     /**

@@ -26,6 +26,8 @@ enum ActivityAction: string
     case PostUnlocked = 'post.unlocked';
     case PostDeleted = 'post.deleted';
     case CommentDeleted = 'comment.deleted';
+    case HashtagRenamed = 'hashtag.renamed';
+    case HashtagMerged = 'hashtag.merged';
 
     public function label(): string
     {
@@ -47,6 +49,8 @@ enum ActivityAction: string
             self::PostUnlocked => 'Post unlocked',
             self::PostDeleted => 'Post deleted',
             self::CommentDeleted => 'Comment deleted',
+            self::HashtagRenamed => 'Hashtag renamed',
+            self::HashtagMerged => 'Hashtags merged',
         };
     }
 }
