@@ -20,6 +20,12 @@ final readonly class WordDetailService implements WordDetailServiceInterface
 {
     private const RELATED_LIMIT = 5;
 
+    /**
+     * Every kanji a word is written with: the longest real entry has 18. The ceiling only stops a
+     * corrupt entry from fanning out to hundreds of rows.
+     */
+    private const KANJI_LIMIT = 50;
+
     public function __construct(
         private WordServiceInterface $wordService,
         private WordRepositoryInterface $wordRepository,
@@ -43,7 +49,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
         $wordId = $word->getIdValue();
 
         $kanjis = $includes->kanjis
-            ? $this->wordRepository->findRelatedKanjis($wordId, self::RELATED_LIMIT)
+            ? $this->wordRepository->findRelatedKanjis($wordId, self::KANJI_LIMIT)
             : null;
 
         $articles = $includes->articles

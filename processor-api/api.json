@@ -2259,6 +2259,17 @@
                         }
                     },
                     {
+                        "name": "radical_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {

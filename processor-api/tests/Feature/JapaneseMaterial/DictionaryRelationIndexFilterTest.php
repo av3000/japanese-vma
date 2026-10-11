@@ -17,8 +17,9 @@ use Tests\TestCase;
 
 /**
  * Relation filters on the dictionary indexes (#352): the words and sentences written with one
- * kanji, read page by page in the index's own shape for the dictionary detail pages. Dictionary
- * data is public, so an unknown uuid is an empty page rather than a 404.
+ * kanji, and the kanji built on one radical, read page by page in the index's own shape for the
+ * dictionary detail pages. Dictionary data is public, so an unknown uuid is an empty page rather
+ * than a 404.
  */
 class DictionaryRelationIndexFilterTest extends TestCase
 {
@@ -127,10 +128,86 @@ class DictionaryRelationIndexFilterTest extends TestCase
         }
     }
 
+    public function test_the_kanji_index_lists_only_the_kanji_built_on_the_radical(): void
+    {
+        $tree = $this->createRadical('木', 'tree');
+        $water = $this->createRadical('水', 'water');
+
+        foreach (['林', '森', '村'] as $character) {
+            $this->linkRadical($this->createKanji($character)['id'], $tree['id']);
+        }
+
+        $this->linkRadical($this->createKanji('池')['id'], $water['id']);
+
+        $this->getJson("/api/v1/kanjis?radical_uuid={$tree['uuid']}&per_page=2")
+            ->assertOk()
+            ->assertJsonCount(2, 'items')
+            ->assertJsonPath('items.0.character', '林')
+            ->assertJsonPath('items.1.character', '森')
+            ->assertJsonPath('pagination.total', 3)
+            ->assertJsonPath('pagination.last_page', 2);
+    }
+
+    public function test_the_radical_filter_combines_with_the_keyword_and_the_viewer_catalogue_state(): void
+    {
+        $tree = $this->createRadical('木', 'tree');
+        $grove = $this->createKanji('林', 'grove');
+        $this->linkRadical($grove['id'], $tree['id']);
+        $this->linkRadical($this->createKanji('森', 'forest')['id'], $tree['id']);
+
+        $owner = User::factory()->create();
+        $catalogue = $this->createCatalogue($owner, SavedListType::KANJIS);
+        $this->save($catalogue, $grove['id']);
+        Passport::actingAs($owner);
+
+        $this->getJson("/api/v1/kanjis?radical_uuid={$tree['uuid']}&keyword=grove&include=viewer_catalogue_state")
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.character', '林')
+            ->assertJsonPath('items.0.viewer_catalogue_state.is_saved', true);
+    }
+
+    public function test_an_unknown_radical_gives_an_empty_page_and_a_malformed_one_a_422(): void
+    {
+        $tree = $this->createRadical('木', 'tree');
+        $this->linkRadical($this->createKanji('林')['id'], $tree['id']);
+
+        $this->getJson('/api/v1/kanjis?radical_uuid='.Str::uuid())
+            ->assertOk()
+            ->assertJsonCount(0, 'items')
+            ->assertJsonPath('pagination.total', 0);
+
+        $this->getJson('/api/v1/kanjis?radical_uuid=75')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('radical_uuid');
+    }
+
     /**
      * @return array{id: int, uuid: string}
      */
-    private function createKanji(string $kanji): array
+    private function createRadical(string $radical, string $meaning): array
+    {
+        $uuid = (string) Str::uuid();
+        $id = DB::table('japanese_radicals_bank_long')->insertGetId([
+            'uuid' => $uuid,
+            'radical' => $radical,
+            'hiragana' => '-',
+            'strokes' => 4,
+            'meaning' => $meaning,
+        ]);
+
+        return ['id' => $id, 'uuid' => $uuid];
+    }
+
+    private function linkRadical(int $kanjiId, int $radicalId): void
+    {
+        DB::table('japanese_radical_kanji_long')->insert(['kanji_id' => $kanjiId, 'radical_id' => $radicalId]);
+    }
+
+    /**
+     * @return array{id: int, uuid: string}
+     */
+    private function createKanji(string $kanji, string $meaning = '-'): array
     {
         $uuid = (string) Str::uuid();
         $id = DB::table('japanese_kanji_bank_long')->insertGetId([
@@ -138,7 +215,7 @@ class DictionaryRelationIndexFilterTest extends TestCase
             'kanji' => $kanji,
             'onyomi' => '-',
             'kunyomi' => '-',
-            'meaning' => '-',
+            'meaning' => $meaning,
             'nanori' => '-',
             'grade' => '1',
             'stroke_count' => '4',

@@ -85,6 +85,9 @@ class KanjiController extends Controller
             offset: $validatedData['offset'] ?? null,
             articleId: $articleId,
             catalogueId: $catalogueId,
+            radicalUuid: isset($validatedData['radical_uuid'])
+                ? EntityId::from($validatedData['radical_uuid'])
+                : null,
         );
 
         $paginatedKanjisResult = $this->kanjiService->find($criteria);
