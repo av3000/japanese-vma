@@ -32,6 +32,8 @@ enum ActivityAction: string
     case CatalogueDeleted = 'catalogue.deleted';
     case SentenceUpdated = 'sentence.updated';
     case SentenceDeleted = 'sentence.deleted';
+    case EnvironmentViewed = 'operations.environment_viewed';
+    case WorkerCheckRun = 'operations.worker_check_run';
 
     public function label(): string
     {
@@ -59,6 +61,8 @@ enum ActivityAction: string
             self::CatalogueDeleted => 'Catalogue deleted',
             self::SentenceUpdated => 'Sentence edited',
             self::SentenceDeleted => 'Sentence deleted',
+            self::EnvironmentViewed => 'Environment page viewed',
+            self::WorkerCheckRun => 'Worker check run',
         };
     }
 }

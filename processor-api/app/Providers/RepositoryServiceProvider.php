@@ -27,6 +27,7 @@ use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInt
 use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
+use App\Application\Operations\Services\HealthCheckRunner;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
@@ -34,6 +35,10 @@ use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterfac
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Operations\HealthChecks\DatabaseHealthCheck;
+use App\Infrastructure\Operations\HealthChecks\RedisHealthCheck;
+use App\Infrastructure\Operations\HealthChecks\ReverbConfiguredHealthCheck;
+use App\Infrastructure\Operations\HealthChecks\SentryConfiguredHealthCheck;
 use App\Infrastructure\Persistence\Readers\CachedAdminDashboardReader;
 use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseAdminDashboardReader;
@@ -76,6 +81,13 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
         $this->app->bind(ActivityRecorderInterface::class, DatabaseActivityRecorder::class);
         $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
+        // Order is display order on the health page.
+        $this->app->bind(HealthCheckRunner::class, static fn ($app): HealthCheckRunner => new HealthCheckRunner([
+            $app->make(DatabaseHealthCheck::class),
+            $app->make(RedisHealthCheck::class),
+            $app->make(ReverbConfiguredHealthCheck::class),
+            $app->make(SentryConfiguredHealthCheck::class),
+        ]));
         $this->app->bind(ImportStatusReaderInterface::class, fn ($app): DatabaseImportStatusReader => new DatabaseImportStatusReader(
             new JapaneseDataManifest(),
             $app->make('cache.store'),

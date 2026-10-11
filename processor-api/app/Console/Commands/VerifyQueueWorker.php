@@ -2,10 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\QueueSmokeMarkerJob;
+use App\Application\Operations\Services\QueueWorkerVerifier;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class VerifyQueueWorker extends Command
 {
@@ -17,30 +15,27 @@ class VerifyQueueWorker extends Command
 
     protected $description = 'Dispatch a queue smoke job and wait for the shared cache marker to confirm a live worker consumed it';
 
-    public function handle(): int
+    public function handle(QueueWorkerVerifier $verifier): int
     {
         $queue = (string) $this->option('queue');
         $timeoutSeconds = max(1, (int) $this->option('timeout'));
         $ttlSeconds = max($timeoutSeconds, (int) $this->option('ttl'));
         $pollSeconds = max(1, (int) $this->option('poll'));
-        $cacheKey = 'queue_smoke:'.Str::uuid()->toString();
 
-        Cache::forget($cacheKey);
+        $result = $verifier->verify(
+            queue: $queue,
+            timeoutSeconds: $timeoutSeconds,
+            ttlSeconds: $ttlSeconds,
+            pollMilliseconds: $pollSeconds * 1000,
+            onDispatched: function (string $cacheKey) use ($queue): void {
+                $this->info("Dispatched queue smoke job on [{$queue}] and waiting for marker [{$cacheKey}].");
+            },
+        );
 
-        QueueSmokeMarkerJob::dispatch($cacheKey, $ttlSeconds)->onQueue($queue);
+        if ($result->succeeded) {
+            $this->info('Queue worker verification succeeded.');
 
-        $this->info("Dispatched queue smoke job on [{$queue}] and waiting for marker [{$cacheKey}].");
-
-        $deadline = now()->addSeconds($timeoutSeconds);
-
-        while (now()->lessThanOrEqualTo($deadline)) {
-            if (Cache::has($cacheKey)) {
-                $this->info('Queue worker verification succeeded.');
-
-                return self::SUCCESS;
-            }
-
-            sleep($pollSeconds);
+            return self::SUCCESS;
         }
 
         $this->error("Queue worker verification timed out after {$timeoutSeconds} seconds.");
