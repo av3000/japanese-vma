@@ -15,6 +15,7 @@ use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Articles\ArticleResource;
 use App\Filament\Support\PanelActor;
+use App\Filament\Support\ResultNotifications;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Shared\Results\Result;
 use Filament\Actions\Action;
@@ -51,7 +52,7 @@ final class ArticleModerationActions
                 $result = self::changeStatus($record, $data);
 
                 if ($result->isFailure()) {
-                    self::notifyFailure($result);
+                    ResultNotifications::failure($result);
 
                     return;
                 }
@@ -76,17 +77,11 @@ final class ArticleModerationActions
                     $result = self::changeStatus($record, $data);
 
                     if ($result->isFailure()) {
-                        $failures[] = $record->title_jp.': '.($result->getError()->errorMessage ?? $result->getError()->description);
+                        $failures[] = $record->title_jp.': '.ResultNotifications::message($result);
                     }
                 }
 
-                $succeeded = $records->count() - count($failures);
-
-                Notification::make()
-                    ->title("{$succeeded} changed, ".count($failures).' failed')
-                    ->body($failures === [] ? null : implode("\n", array_slice($failures, 0, 5)))
-                    ->status($failures === [] ? 'success' : 'warning')
-                    ->send();
+                ResultNotifications::bulk($records->count(), $failures, 'changed');
             });
     }
 
@@ -108,7 +103,7 @@ final class ArticleModerationActions
                 );
 
                 if ($result->isFailure()) {
-                    self::notifyFailure($result);
+                    ResultNotifications::failure($result);
 
                     return;
                 }
@@ -138,7 +133,7 @@ final class ArticleModerationActions
                 );
 
                 if ($result->isFailure()) {
-                    self::notifyFailure($result);
+                    ResultNotifications::failure($result);
 
                     return;
                 }
@@ -171,7 +166,7 @@ final class ArticleModerationActions
                 );
 
                 if ($result->isFailure()) {
-                    self::notifyFailure($result);
+                    ResultNotifications::failure($result);
 
                     return;
                 }
@@ -243,13 +238,5 @@ final class ArticleModerationActions
         }
 
         return $options;
-    }
-
-    private static function notifyFailure(Result $result): void
-    {
-        Notification::make()
-            ->danger()
-            ->title($result->getError()->errorMessage ?? $result->getError()->description)
-            ->send();
     }
 }

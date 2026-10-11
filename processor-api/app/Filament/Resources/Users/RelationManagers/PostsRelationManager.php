@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users\RelationManagers;
 
+use App\Filament\Resources\Posts\PostResource;
+use App\Infrastructure\Persistence\Models\Post;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -24,6 +26,9 @@ class PostsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('title')
+            ->recordUrl(static fn (Post $record): ?string => PostResource::canView($record)
+                ? PostResource::getUrl('view', ['record' => $record])
+                : null)
             ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(10)
             ->columns([

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use Carbon\Carbon;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * v1 Post persistence model.
@@ -70,5 +72,14 @@ class Post extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Comments attach polymorphically through the legacy template id plus the numeric post id.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'real_object_id')
+            ->where('template_id', ObjectTemplateType::POST->getLegacyId());
     }
 }

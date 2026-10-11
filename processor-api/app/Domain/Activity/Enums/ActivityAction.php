@@ -22,6 +22,9 @@ enum ActivityAction: string
     case ArticlePublicityChanged = 'article.publicity_changed';
     case ArticleReprocessRequested = 'article.reprocess_requested';
     case ArticleDeleted = 'article.deleted';
+    case PostLocked = 'post.locked';
+    case PostUnlocked = 'post.unlocked';
+    case PostDeleted = 'post.deleted';
 
     public function label(): string
     {
@@ -39,6 +42,9 @@ enum ActivityAction: string
             self::ArticlePublicityChanged => 'Article publicity changed',
             self::ArticleReprocessRequested => 'Article reprocessing requested',
             self::ArticleDeleted => 'Article deleted',
+            self::PostLocked => 'Post locked',
+            self::PostUnlocked => 'Post unlocked',
+            self::PostDeleted => 'Post deleted',
         };
     }
 }
