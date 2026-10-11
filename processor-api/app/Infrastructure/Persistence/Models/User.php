@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Shared\Enums\UserRole;
 use App\Http\Models\Article;
 use App\Http\Models\Comment;
@@ -86,9 +87,34 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(CustomList::class);
     }
 
+    /**
+     * Any catalogue permission opens the panel; each resource policy then narrows what is visible.
+     * Recovery when nobody can sign in: `php artisan tinker` then
+     * `User::where('email', '...')->first()->assignRole('admin')`.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin' && $this->hasRole(UserRole::ADMIN->value);
+        if ($panel->getId() !== 'admin') {
+            return false;
+        }
+
+        return $this->isPanelSuperuser()
+            || $this->hasAnyPermission(PermissionCatalog::allPermissionNames());
+    }
+
+    /**
+     * The `admin` role passes every panel permission check without holding the permission rows,
+     * so a missed seeder run cannot lock the only administrator out. Policy invariants such as
+     * "users are never deleted" still apply after this check.
+     */
+    public function hasPanelPermission(string $permission): bool
+    {
+        return $this->isPanelSuperuser() || $this->checkPermissionTo($permission);
+    }
+
+    public function isPanelSuperuser(): bool
+    {
+        return $this->hasRole(UserRole::ADMIN->value);
     }
 
     /**

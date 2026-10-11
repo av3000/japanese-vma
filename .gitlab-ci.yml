@@ -18,6 +18,8 @@ variables:
 .migration_changes: &migration_changes
   - .gitlab-ci.yml
   - processor-api/database/migrations/**/*
+  - processor-api/database/seeders/**/*
+  - processor-api/config/permission-catalog.php
 
 .docker_backend_job:
   image: docker:27
@@ -232,6 +234,7 @@ migrate_backend:
       docker run --rm --env-file "$RUNTIME_ENV_FILE" "$IMAGE_NAME" sh -lc '
         php artisan migrate --force &&
         php artisan db:seed --class="Database\\Seeders\\ObjectTemplatesTableSeeder" --force &&
+        php artisan db:seed --class="Database\\Seeders\\PermissionSeeder" --force &&
         php artisan db:seed --class="Database\\Seeders\\RoleSeeder" --force
       '
 
