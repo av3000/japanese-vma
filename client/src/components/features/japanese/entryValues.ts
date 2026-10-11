@@ -143,3 +143,20 @@ export const sentenceSource = (
 		? { kind: 'tatoeba', entry, href: `https://tatoeba.org/eng/sentences/show/${encodeURIComponent(entry)}` }
 		: null;
 };
+
+/**
+ * Kanji in the order they first appear in a word or sentence, rather than the dictionary order the
+ * payload sends. Kanji that do not appear keep their order at the end.
+ */
+export const inTextOrder = <Item extends { character: string }>(items: readonly Item[], text: string): Item[] => {
+	const position = (item: Item) => {
+		const index = text.indexOf(item.character);
+
+		return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+	};
+
+	return items
+		.map((item, order) => ({ item, order }))
+		.sort((a, b) => position(a.item) - position(b.item) || a.order - b.order)
+		.map(({ item }) => item);
+};

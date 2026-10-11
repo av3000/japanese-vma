@@ -11,8 +11,8 @@ export {
 export { DICTIONARY_PER_PAGE, DictionaryListPage } from './DictionaryListPage';
 export { KeywordFilters } from './KeywordFilters';
 export { PagedControls, PagedListFilters, pagedSummary } from './PagedControls';
-export { RelatedListModal, RelatedPreview } from './RelatedPreview';
-export type { RelatedListModalProps, RelatedPreviewProps } from './RelatedPreview';
+export { RelatedListModal, RelatedPreview, RelatedSection } from './RelatedPreview';
+export type { RelatedListModalProps, RelatedPreviewProps, RelatedSectionProps } from './RelatedPreview';
 export { presentAllValues, presentRank, presentText, presentValues, toJlptLevel } from './listValues';
 export { saveColumn, withSaveArea } from './saveColumn';
 export { withTrailingAreas, withTrailingColumns } from './trailingColumns';

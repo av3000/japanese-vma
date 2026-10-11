@@ -1,0 +1,42 @@
+/* Related material under a dictionary entry (#352): sections stacked in the page's `after` slot. */
+.sections {
+	display: grid;
+	gap: var(--spacing-2xl);
+	min-width: 0;
+}
+
+.message {
+	margin: 0;
+	color: var(--color-neutral-700);
+}
+
+/* Related articles: one line each, title then likes and views. */
+.articles {
+	display: grid;
+	gap: var(--spacing-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.article {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--spacing-3xs) var(--spacing-md);
+	min-width: 0;
+	padding-block: var(--spacing-xs);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.articleTitle {
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.articleMeta {
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-sm);
+	font-variant-numeric: tabular-nums;
+}

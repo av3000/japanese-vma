@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	frequencyLabel,
+	inTextOrder,
 	kanjiGradeLabel,
 	kanjiParts,
 	kanjiRadicals,
@@ -133,5 +134,13 @@ describe('sentenceSource', () => {
 
 	it('has no source for an import without an entry', () => {
 		expect(sentenceSource({ user_id: null, tatoeba_entry: null }, 7)).toBeNull();
+	});
+});
+
+describe('inTextOrder', () => {
+	it('orders kanji by their first appearance, keeping missing ones last', () => {
+		const kanji = ['事', '公', '共', '業', '他'].map((character) => ({ character }));
+
+		expect(inTextOrder(kanji, '公共事業').map((item) => item.character)).toEqual(['公', '共', '事', '業', '他']);
 	});
 });

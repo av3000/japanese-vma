@@ -31,7 +31,8 @@ type PagedArticleParams = RelatedArticleFilters & { page?: number; keyword?: str
 export const toArticleIndexParams = ({ keyword, ...params }: PagedArticleParams): ArticleIndexParams =>
 	keyword ? { ...params, q: keyword } : params;
 
-const useRelatedArticlePages = (filters: RelatedArticleFilters, enabled: boolean) =>
+/** Articles matching fixed filters, a numbered page at a time, with the search sent as `q`. */
+export const useRelatedArticlePages = (filters: RelatedArticleFilters, enabled = true) =>
 	usePagedIndex<RelatedArticleFilters, ArticleResource>({
 		filters,
 		queryKey: (params) => getArticleIndexQueryKey(toArticleIndexParams(params)),
