@@ -15,6 +15,7 @@ enum ActivitySubjectType: string
     case User = 'user';
     case Article = 'article';
     case Post = 'post';
+    case Comment = 'comment';
 
     /**
      * @return list<string>
@@ -26,6 +27,7 @@ enum ActivitySubjectType: string
             self::User => ['name', 'email', 'email_verified_at', 'roles'],
             self::Article => ['title', 'status', 'publicity', 'author'],
             self::Post => ['title', 'content', 'topic', 'locked', 'author'],
+            self::Comment => ['content', 'author', 'entity_type', 'entity_id', 'parent_comment_id'],
         };
     }
 
@@ -36,6 +38,7 @@ enum ActivitySubjectType: string
             self::User => 'User',
             self::Article => 'Article',
             self::Post => 'Community post',
+            self::Comment => 'Comment',
         };
     }
 }

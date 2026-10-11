@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Comments;
 
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Comments\Policies\CommentPolicy;
@@ -192,6 +193,7 @@ class CommentServiceThreadReadTest extends TestCase
             $reader,
             $resolver,
             new CommentPolicy,
+            $this->createMock(ActivityRecorderInterface::class),
         );
     }
 

@@ -27,10 +27,18 @@ class CommentPolicy
             return false;
         }
 
-        if ($authenticatedUser->isAdmin) {
+        if ($this->canModerate($authenticatedUser)) {
             return true;
         }
 
         return $comment->isAuthoredBy($authenticatedUser->id);
+    }
+
+    /**
+     * May delete anyone's comment. Moderation of comments is deletion, never rewriting.
+     */
+    public function canModerate(?AuthenticatedUser $authenticatedUser): bool
+    {
+        return $authenticatedUser?->isAdmin === true;
     }
 }

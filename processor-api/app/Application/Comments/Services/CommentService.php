@@ -2,10 +2,14 @@
 
 namespace App\Application\Comments\Services;
 
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Comments\Policies\CommentPolicy;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
 use App\Domain\Comments\DTOs\CommentListIncludes;
 use App\Domain\Comments\DTOs\CommentListItemDTO;
@@ -29,6 +33,7 @@ class CommentService implements CommentServiceInterface
         private readonly CommentThreadReaderInterface $commentThreadReader,
         private readonly CommentEntityResolver $commentEntityResolver,
         private readonly CommentPolicy $commentPolicy,
+        private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -224,11 +229,31 @@ class CommentService implements CommentServiceInterface
         }
 
         try {
-            DB::transaction(function () use ($comment) {
+            DB::transaction(function () use ($comment, $actor) {
                 $commentId = $comment->getIdValue();
 
                 // Deepest replies first, so no row is orphaned mid-transaction.
                 $descendantIds = $this->commentRepository->collectDescendantIds($commentId);
+
+                // Removing someone else's comment is moderation. There is no soft delete, so the
+                // snapshot is the only record of what was said.
+                if (! $comment->isAuthoredBy($actor->id)) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $actor,
+                        ActivityAction::CommentDeleted,
+                        ActivitySubjectType::Comment,
+                        $comment->getUuid()->value(),
+                        mb_substr($comment->getContent(), 0, 120),
+                        before: [
+                            'content' => $comment->getContent(),
+                            'author' => $comment->getAuthorName(),
+                            'entity_type' => $comment->getEntityType()->label(),
+                            'entity_id' => $comment->getEntityId(),
+                            'parent_comment_id' => $comment->getParentCommentId(),
+                        ],
+                        context: ['replies_deleted' => count($descendantIds)],
+                    ));
+                }
 
                 $this->commentRepository->deleteWithLikesByIds(
                     [...$descendantIds, $commentId]

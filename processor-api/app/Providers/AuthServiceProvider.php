@@ -6,10 +6,12 @@ use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
+use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Post;
 use App\Infrastructure\Persistence\Models\User;
 use App\Policies\AdminActivityPolicy;
 use App\Policies\ArticleAdminPolicy;
+use App\Policies\CommentAdminPolicy;
 use App\Policies\PostAdminPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
@@ -29,6 +31,7 @@ class AuthServiceProvider extends ServiceProvider
         AdminActivity::class => AdminActivityPolicy::class,
         Article::class => ArticleAdminPolicy::class,
         Post::class => PostAdminPolicy::class,
+        Comment::class => CommentAdminPolicy::class,
     ];
 
     /**

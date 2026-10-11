@@ -10,9 +10,10 @@ use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInte
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
+use App\Application\Comments\Interfaces\Readers\CommentParentReaderInterface;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 
+use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
@@ -37,6 +38,7 @@ use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseAdminDashboardReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
+use App\Infrastructure\Persistence\Readers\DatabaseCommentParentReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
@@ -71,6 +73,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
         $this->app->bind(ActivityRecorderInterface::class, DatabaseActivityRecorder::class);
         $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
+        $this->app->bind(CommentParentReaderInterface::class, DatabaseCommentParentReader::class);
 
         $this->app->singleton(
             ArticleRepositoryInterface::class,

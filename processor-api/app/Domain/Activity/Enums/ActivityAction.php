@@ -25,6 +25,7 @@ enum ActivityAction: string
     case PostLocked = 'post.locked';
     case PostUnlocked = 'post.unlocked';
     case PostDeleted = 'post.deleted';
+    case CommentDeleted = 'comment.deleted';
 
     public function label(): string
     {
@@ -45,6 +46,7 @@ enum ActivityAction: string
             self::PostLocked => 'Post locked',
             self::PostUnlocked => 'Post unlocked',
             self::PostDeleted => 'Post deleted',
+            self::CommentDeleted => 'Comment deleted',
         };
     }
 }
