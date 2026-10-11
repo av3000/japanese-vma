@@ -50,6 +50,8 @@ use App\Application\Study\Services\StudySessionService;
 use App\Application\Study\Services\StudySessionServiceInterface;
 use App\Application\Users\Services\RoleService;
 use App\Application\Users\Services\RoleServiceInterface;
+use App\Application\Users\Services\UserAdminService;
+use App\Application\Users\Services\UserAdminServiceInterface;
 use App\Application\Users\Services\UserService;
 use App\Application\Users\Services\UserServiceInterface;
 
@@ -72,6 +74,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(HashtagServiceInterface::class, HashtagService::class);
         $this->app->bind(UserServiceInterface::class, UserService::class);
         $this->app->bind(RoleServiceInterface::class, RoleService::class);
+        $this->app->bind(UserAdminServiceInterface::class, UserAdminService::class);
         $this->app->bind(KanjiServiceInterface::class, KanjiService::class);
         $this->app->bind(KanjiDetailServiceInterface::class, KanjiDetailService::class);
         $this->app->bind(RadicalServiceInterface::class, RadicalService::class);

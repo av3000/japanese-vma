@@ -9,6 +9,7 @@ use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Users\Models\Role as DomainRole;
 use App\Filament\Resources\Roles\Pages\Concerns\ReportsRoleServiceErrors;
 use App\Filament\Resources\Roles\RoleResource;
+use App\Filament\Support\PanelActor;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
@@ -42,6 +43,7 @@ class EditRole extends EditRecord
             $data['name'] ?? $record->name,
             $data['guard_name'] ?? $record->guard_name,
             PermissionCatalog::flattenPermissionGroups($data['permission_groups'] ?? []),
+            PanelActor::current(),
         );
 
         if ($result->isFailure()) {
@@ -63,7 +65,7 @@ class EditRole extends EditRecord
                 ->action(function (): void {
                     /** @var Role $record */
                     $record = $this->getRecord();
-                    $result = app(RoleServiceInterface::class)->deleteRole($record->name);
+                    $result = app(RoleServiceInterface::class)->deleteRole($record->name, PanelActor::current());
 
                     if ($result->isFailure()) {
                         Notification::make()

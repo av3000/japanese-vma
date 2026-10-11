@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Services;
 
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Users\Support\PermissionCatalog;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Errors\RoleErrors;
@@ -14,6 +19,7 @@ use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Users\Queries\RoleQueryCriteria;
 use App\Shared\Results\Result;
+use Illuminate\Support\Facades\DB;
 
 class RoleService implements RoleServiceInterface
 {
@@ -22,6 +28,7 @@ class RoleService implements RoleServiceInterface
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly RoleRepositoryInterface $roleRepository,
+        private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -50,7 +57,7 @@ class RoleService implements RoleServiceInterface
      *
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function assignRole(EntityId $userUuid, string $roleName): Result
+    public function assignRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
@@ -66,7 +73,17 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::roleAlreadyAssigned($roleName));
         }
 
-        $this->roleRepository->assignRole($user->getId(), $roleName);
+        DB::transaction(function () use ($user, $roleName, $actor): void {
+            $this->roleRepository->assignRole($user->getId(), $roleName);
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::UserRoleAssigned,
+                ActivitySubjectType::User,
+                $user->getUuid()->value(),
+                $user->getName()->value(),
+                context: ['role' => $roleName],
+            ));
+        });
 
         return Result::success($userUuid->value());
     }
@@ -76,7 +93,7 @@ class RoleService implements RoleServiceInterface
      *
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function removeRole(EntityId $userUuid, string $roleName): Result
+    public function removeRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
@@ -102,7 +119,17 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::roleNotAssigned($roleName));
         }
 
-        $this->roleRepository->removeRole($user->getId(), $roleName);
+        DB::transaction(function () use ($user, $roleName, $actor): void {
+            $this->roleRepository->removeRole($user->getId(), $roleName);
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::UserRoleRemoved,
+                ActivitySubjectType::User,
+                $user->getUuid()->value(),
+                $user->getName()->value(),
+                context: ['role' => $roleName],
+            ));
+        });
 
         return Result::success($userUuid->value());
     }
@@ -114,7 +141,7 @@ class RoleService implements RoleServiceInterface
      *
      * @return Result<string> Success: Name of deleted role, Failure: ResultError
      */
-    public function deleteRole(string $name): Result
+    public function deleteRole(string $name, ?AuthenticatedUser $actor = null): Result
     {
         $role = $this->roleRepository->findByName($name);
 
@@ -130,7 +157,22 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::roleHasActiveAssignments($name));
         }
 
-        $success = $this->roleRepository->deleteRole($name);
+        $success = DB::transaction(function () use ($role, $name, $actor): bool {
+            if (! $this->roleRepository->deleteRole($name)) {
+                return false;
+            }
+
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::RoleDeleted,
+                ActivitySubjectType::Role,
+                $name,
+                $name,
+                before: $this->snapshot($role),
+            ));
+
+            return true;
+        });
 
         if (! $success) {
             return Result::failure(RoleErrors::failed());
@@ -194,7 +236,7 @@ class RoleService implements RoleServiceInterface
      *
      * @return Result<DomainRole> Success: The newly created DomainRole, Failure: ResultError
      */
-    public function createRole(string $name, ?string $guardName = null, array $permissions = []): Result
+    public function createRole(string $name, ?string $guardName = null, array $permissions = [], ?AuthenticatedUser $actor = null): Result
     {
         $actualGuardName = $guardName ?? self::DEFAULT_GUARD_NAME;
 
@@ -212,16 +254,28 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
         }
 
-        $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
+        return DB::transaction(function () use ($name, $actualGuardName, $permissions, $actor): Result {
+            $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
+            $result = $permissions === []
+                ? Result::success($newDomainRole)
+                : $this->syncRolePermissions($newDomainRole->getName(), $permissions);
 
-        if ($permissions === []) {
-            return Result::success($newDomainRole);
-        }
+            if ($result->isSuccess()) {
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::RoleCreated,
+                    ActivitySubjectType::Role,
+                    $name,
+                    $name,
+                    after: $this->snapshot($result->getData()),
+                ));
+            }
 
-        return $this->syncRolePermissions($newDomainRole->getName(), $permissions);
+            return $result;
+        });
     }
 
-    public function updateRole(string $currentName, string $newName, ?string $guardName = null, array $permissions = []): Result
+    public function updateRole(string $currentName, string $newName, ?string $guardName = null, array $permissions = [], ?AuthenticatedUser $actor = null): Result
     {
         $role = $this->roleRepository->findByName($currentName);
 
@@ -249,12 +303,48 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
         }
 
-        $updatedRole = $role;
-        if ($currentName !== $newName || $role->getGuardName() !== $actualGuardName) {
-            $updatedRole = $this->roleRepository->updateRole($currentName, $newName, $actualGuardName);
-        }
+        return DB::transaction(function () use ($role, $currentName, $newName, $actualGuardName, $permissions, $actor): Result {
+            $updatedRole = $role;
+            if ($currentName !== $newName || $role->getGuardName() !== $actualGuardName) {
+                $updatedRole = $this->roleRepository->updateRole($currentName, $newName, $actualGuardName);
+            }
 
-        return $this->syncRolePermissions($updatedRole->getName(), $permissions);
+            $result = $this->syncRolePermissions($updatedRole->getName(), $permissions);
+
+            if ($result->isSuccess()) {
+                $before = $this->snapshot($role);
+                $after = $this->snapshot($result->getData());
+
+                if ($before !== $after) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $actor,
+                        ActivityAction::RoleUpdated,
+                        ActivitySubjectType::Role,
+                        $newName,
+                        $newName,
+                        before: $before,
+                        after: $after,
+                    ));
+                }
+            }
+
+            return $result;
+        });
+    }
+
+    /**
+     * @return array{name: string, guard_name: string, permissions: list<string>}
+     */
+    private function snapshot(DomainRole $role): array
+    {
+        $permissions = array_values($role->getPermissions());
+        sort($permissions);
+
+        return [
+            'name' => $role->getName(),
+            'guard_name' => $role->getGuardName(),
+            'permissions' => $permissions,
+        ];
     }
 
     public function syncRolePermissions(string $roleName, array $permissions): Result

@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserForm
 {
@@ -22,8 +18,6 @@ class UserForm
             ->components([
                 Section::make('User details')
                     ->schema([
-                        Hidden::make('uuid')
-                            ->default(static fn (): string => (string) Str::uuid()),
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255),
@@ -32,10 +26,8 @@ class UserForm
                             ->email()
                             ->required()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true),
-                        DateTimePicker::make('email_verified_at')
-                            ->label('Email verified at')
-                            ->seconds(false),
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Changing the address clears its verification.'),
                     ])
                     ->columns(2),
                 Section::make('Access')
@@ -58,7 +50,6 @@ class UserForm
                             ->revealable()
                             ->required(static fn (string $operation): bool => $operation === 'create')
                             ->confirmed()
-                            ->dehydrateStateUsing(static fn (string $state): string => Hash::make($state))
                             ->dehydrated(static fn (?string $state): bool => filled($state))
                             ->minLength(8),
                         TextInput::make('password_confirmation')

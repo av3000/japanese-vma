@@ -2,16 +2,17 @@
 
 namespace App\Providers;
 
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
-
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
+
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeTargetRepositoryInterface;
@@ -27,6 +28,7 @@ use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepository
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
 use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
+use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
@@ -39,6 +41,7 @@ use App\Infrastructure\Persistence\Repositories\ArticleRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueRepository;
 use App\Infrastructure\Persistence\Repositories\CommentRepository;
+use App\Infrastructure\Persistence\Repositories\DatabaseActivityRecorder;
 use App\Infrastructure\Persistence\Repositories\DownloadRepository;
 use App\Infrastructure\Persistence\Repositories\HashtagRepository;
 use App\Infrastructure\Persistence\Repositories\KanjiRepository;
@@ -50,6 +53,7 @@ use App\Infrastructure\Persistence\Repositories\RadicalRepository;
 use App\Infrastructure\Persistence\Repositories\RoleRepository;
 use App\Infrastructure\Persistence\Repositories\SentenceRepository;
 use App\Infrastructure\Persistence\Repositories\StudySessionRepository;
+use App\Infrastructure\Persistence\Repositories\UserAccountRepository;
 use App\Infrastructure\Persistence\Repositories\UserRepository;
 use App\Infrastructure\Persistence\Repositories\ViewRepository;
 use App\Infrastructure\Persistence\Repositories\WordRepository;
@@ -61,6 +65,8 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(ProcessingStateRepositoryInterface::class, ProcessingStateRepository::class);
         $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
+        $this->app->bind(ActivityRecorderInterface::class, DatabaseActivityRecorder::class);
+        $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
 
         $this->app->singleton(
             ArticleRepositoryInterface::class,

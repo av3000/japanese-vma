@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
+use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\User;
+use App\Policies\AdminActivityPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -20,6 +22,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         User::class => UserPolicy::class,
         SpatieRole::class => RolePolicy::class,
+        AdminActivity::class => AdminActivityPolicy::class,
     ];
 
     /**

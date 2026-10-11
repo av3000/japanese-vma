@@ -9,6 +9,7 @@ use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Users\Models\Role as DomainRole;
 use App\Filament\Resources\Roles\Pages\Concerns\ReportsRoleServiceErrors;
 use App\Filament\Resources\Roles\RoleResource;
+use App\Filament\Support\PanelActor;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Models\Role;
@@ -32,6 +33,7 @@ class CreateRole extends CreateRecord
             $data['name'],
             $data['guard_name'] ?? PermissionCatalog::guardName(),
             PermissionCatalog::flattenPermissionGroups($data['permission_groups'] ?? []),
+            PanelActor::current(),
         );
 
         if ($result->isFailure()) {
