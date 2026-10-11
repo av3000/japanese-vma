@@ -8,6 +8,7 @@ use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Policies\CataloguePolicy;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -40,6 +41,27 @@ final class CataloguePolicyTest extends TestCase
         self::assertFalse($policy->canDelete($this->authenticatedUser(20), $catalogue));
     }
 
+    public function test_moderators_delete_custom_lists_but_never_known_lists(): void
+    {
+        $policy = new CataloguePolicy;
+        $moderator = $this->authenticatedUser(20, true);
+
+        self::assertTrue($policy->canDelete($moderator, $this->catalogue(PublicityStatus::PUBLIC, 10, SavedListType::WORDS)));
+        self::assertFalse($policy->canDelete($moderator, $this->catalogue(PublicityStatus::PUBLIC, 10, SavedListType::KNOWNWORDS)));
+        self::assertTrue($policy->canDelete($this->authenticatedUser(10), $this->catalogue(PublicityStatus::PUBLIC, 10, SavedListType::KNOWNWORDS)));
+    }
+
+    public function test_owner_and_moderator_change_publicity(): void
+    {
+        $policy = new CataloguePolicy;
+        $catalogue = $this->catalogue(PublicityStatus::PUBLIC, 10);
+
+        self::assertTrue($policy->canChangePublicity($this->authenticatedUser(10), $catalogue));
+        self::assertTrue($policy->canChangePublicity($this->authenticatedUser(20, true), $catalogue));
+        self::assertFalse($policy->canChangePublicity($this->authenticatedUser(20), $catalogue));
+        self::assertFalse($policy->canChangePublicity(null, $catalogue));
+    }
+
     private function authenticatedUser(int $id, bool $isAdmin = false): AuthenticatedUser
     {
         return new AuthenticatedUser(
@@ -50,11 +72,12 @@ final class CataloguePolicyTest extends TestCase
         );
     }
 
-    private function catalogue(PublicityStatus $publicity, int $ownerId): Catalogue
+    private function catalogue(PublicityStatus $publicity, int $ownerId, SavedListType $type = SavedListType::ARTICLES): Catalogue
     {
         $catalogue = $this->createMock(Catalogue::class);
         $catalogue->method('getPublicity')->willReturn($publicity);
         $catalogue->method('getOwnerId')->willReturn(UserId::from($ownerId));
+        $catalogue->method('getType')->willReturn($type);
 
         return $catalogue;
     }

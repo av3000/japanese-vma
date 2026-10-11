@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Comments\DTOs;
+namespace App\Domain\Shared\DTOs;
 
 use App\Domain\Shared\Enums\ObjectTemplateType;
 
 /**
- * The entity a comment hangs off, as far as a moderator needs it: what it is and what it is
- * called. A parent that no longer exists keeps its type and id but has no uuid or label.
+ * Another entity as a pointer needs it - the parent of a comment, an item in a catalogue: what it
+ * is and what it is called. An entity that no longer exists keeps its type and id but has no
+ * uuid or label.
  */
-final readonly class CommentParentDTO
+final readonly class EntityReferenceDTO
 {
     public function __construct(
         public ObjectTemplateType $type,

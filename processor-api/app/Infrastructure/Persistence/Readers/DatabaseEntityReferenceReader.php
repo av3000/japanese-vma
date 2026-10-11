@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Readers;
 
-use App\Application\Comments\Interfaces\Readers\CommentParentReaderInterface;
-use App\Domain\Comments\DTOs\CommentParentDTO;
+use App\Application\Engagement\Interfaces\Readers\EntityReferenceReaderInterface;
+use App\Domain\Shared\DTOs\EntityReferenceDTO;
 use Illuminate\Support\Facades\DB;
 
-final class DatabaseCommentParentReader implements CommentParentReaderInterface
+final class DatabaseEntityReferenceReader implements EntityReferenceReaderInterface
 {
     /**
-     * Table and label column per commentable type. Types without an entry (artists, lyrics) have
+     * Table and label column per referenced type. Types without an entry (artists, lyrics) have
      * no table left and always resolve as missing.
      */
     private const SOURCES = [
@@ -24,12 +24,12 @@ final class DatabaseCommentParentReader implements CommentParentReaderInterface
         'RADICAL' => ['japanese_radicals_bank_long', 'radical'],
     ];
 
-    public function findParents(array $parents): array
+    public function find(array $references): array
     {
         $idsByType = [];
         $types = [];
 
-        foreach ($parents as [$type, $id]) {
+        foreach ($references as [$type, $id]) {
             $idsByType[$type->name][$id] = $id;
             $types[$type->name] = $type;
         }
@@ -52,9 +52,9 @@ final class DatabaseCommentParentReader implements CommentParentReaderInterface
             foreach ($ids as $id) {
                 $row = $found[$id] ?? null;
 
-                $resolved[CommentParentDTO::key($type, $id)] = $row === null
-                    ? CommentParentDTO::missing($type, $id)
-                    : new CommentParentDTO($type, $id, $row->uuid === null ? null : (string) $row->uuid, (string) $row->label);
+                $resolved[EntityReferenceDTO::key($type, $id)] = $row === null
+                    ? EntityReferenceDTO::missing($type, $id)
+                    : new EntityReferenceDTO($type, $id, $row->uuid === null ? null : (string) $row->uuid, (string) $row->label);
             }
         }
 

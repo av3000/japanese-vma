@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Catalogues;
 
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
@@ -81,6 +82,7 @@ class CatalogueServiceForItemTest extends TestCase
             $this->createMock(EngagementServiceInterface::class),
             new LoadCatalogueJlptLevelsAction($catalogueItemRepository),
             new TemplateTypeClassifier,
+            $this->createMock(ActivityRecorderInterface::class),
         );
     }
 

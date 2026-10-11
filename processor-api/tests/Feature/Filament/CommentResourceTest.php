@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Filament;
 
 use App\Domain\Activity\Enums\ActivityAction;
-use App\Domain\Comments\DTOs\CommentParentDTO;
+use App\Domain\Shared\DTOs\EntityReferenceDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\Resources\Comments\Pages\ListComments;
 use App\Filament\Resources\Comments\Pages\ViewComment;
@@ -16,7 +16,7 @@ use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Post;
 use App\Infrastructure\Persistence\Models\User;
-use App\Infrastructure\Persistence\Readers\DatabaseCommentParentReader;
+use App\Infrastructure\Persistence\Readers\DatabaseEntityReferenceReader;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +79,7 @@ class CommentResourceTest extends TestCase
             ->assertSee('Deleted article');
     }
 
-    public function test_parent_reader_runs_one_query_per_entity_type(): void
+    public function test_reference_reader_runs_one_query_per_entity_type(): void
     {
         $refs = [];
 
@@ -92,13 +92,13 @@ class CommentResourceTest extends TestCase
 
         DB::flushQueryLog();
         DB::enableQueryLog();
-        $parents = (new DatabaseCommentParentReader())->findParents($refs);
+        $parents = (new DatabaseEntityReferenceReader())->find($refs);
         $queries = count(DB::getQueryLog());
         DB::disableQueryLog();
 
         self::assertSame(3, $queries);
         self::assertCount(13, $parents);
-        self::assertFalse($parents[CommentParentDTO::key(ObjectTemplateType::ARTICLE, 999999)]->exists());
+        self::assertFalse($parents[EntityReferenceDTO::key(ObjectTemplateType::ARTICLE, 999999)]->exists());
     }
 
     public function test_listing_cost_does_not_grow_with_the_page(): void

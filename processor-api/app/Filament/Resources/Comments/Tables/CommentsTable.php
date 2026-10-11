@@ -8,6 +8,7 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\Resources\Comments\Actions\CommentModerationActions;
 use App\Filament\Resources\Comments\Support\CommentParents;
 use App\Filament\Support\DateRangeFilter;
+use App\Filament\Support\EntityReferenceLinks;
 use App\Infrastructure\Persistence\Models\Comment;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
@@ -52,8 +53,8 @@ class CommentsTable
                     ->formatStateUsing(static fn (int $state): string => ObjectTemplateType::tryFromLegacyValue($state)?->label() ?? 'Unknown'),
                 TextColumn::make('parent')
                     ->label('Parent')
-                    ->state(static fn (Comment $record, $livewire): string => CommentParents::label(CommentParents::of($record, $livewire->getTableRecords())))
-                    ->url(static fn (Comment $record, $livewire): ?string => CommentParents::url(CommentParents::of($record, $livewire->getTableRecords())))
+                    ->state(static fn (Comment $record, $livewire): string => EntityReferenceLinks::label(CommentParents::of($record, $livewire->getTableRecords())))
+                    ->url(static fn (Comment $record, $livewire): ?string => EntityReferenceLinks::url(CommentParents::of($record, $livewire->getTableRecords())))
                     ->color(static fn (Comment $record, $livewire): ?string => CommentParents::of($record, $livewire->getTableRecords())?->exists() ? 'primary' : 'gray')
                     ->limit(40),
                 IconColumn::make('is_reply')

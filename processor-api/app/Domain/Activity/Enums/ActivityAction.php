@@ -28,6 +28,8 @@ enum ActivityAction: string
     case CommentDeleted = 'comment.deleted';
     case HashtagRenamed = 'hashtag.renamed';
     case HashtagMerged = 'hashtag.merged';
+    case CataloguePublicityChanged = 'catalogue.publicity_changed';
+    case CatalogueDeleted = 'catalogue.deleted';
 
     public function label(): string
     {
@@ -51,6 +53,8 @@ enum ActivityAction: string
             self::CommentDeleted => 'Comment deleted',
             self::HashtagRenamed => 'Hashtag renamed',
             self::HashtagMerged => 'Hashtags merged',
+            self::CataloguePublicityChanged => 'Catalogue publicity changed',
+            self::CatalogueDeleted => 'Catalogue deleted',
         };
     }
 }

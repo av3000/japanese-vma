@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Comments\Schemas;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\Resources\Comments\CommentResource;
 use App\Filament\Resources\Comments\Support\CommentParents;
+use App\Filament\Support\EntityReferenceLinks;
 use App\Infrastructure\Persistence\Models\Comment;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -38,8 +39,8 @@ class CommentInfolist
                             ->formatStateUsing(static fn (int $state): string => ObjectTemplateType::tryFromLegacyValue($state)?->label() ?? 'Unknown'),
                         TextEntry::make('parent_entity')
                             ->label('Entity')
-                            ->state(static fn (Comment $record): string => CommentParents::label(CommentParents::of($record)))
-                            ->url(static fn (Comment $record): ?string => CommentParents::url(CommentParents::of($record))),
+                            ->state(static fn (Comment $record): string => EntityReferenceLinks::label(CommentParents::of($record)))
+                            ->url(static fn (Comment $record): ?string => EntityReferenceLinks::url(CommentParents::of($record))),
                         TextEntry::make('parentComment.content')
                             ->label('In reply to')
                             ->limit(200)

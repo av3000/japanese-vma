@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Domain\Shared\Enums\SavedListType;
+use App\Filament\Resources\Catalogues\CatalogueResource;
+use App\Infrastructure\Persistence\Models\Catalogue;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -23,6 +25,9 @@ class CataloguesRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('title')
+            ->recordUrl(static fn (Catalogue $record): ?string => CatalogueResource::canView($record)
+                ? CatalogueResource::getUrl('view', ['record' => $record])
+                : null)
             ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(10)
             ->columns([

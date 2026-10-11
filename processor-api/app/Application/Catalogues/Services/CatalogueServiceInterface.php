@@ -12,6 +12,7 @@ use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
@@ -90,4 +91,11 @@ interface CatalogueServiceInterface
     public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, AuthenticatedUser $authenticatedUser): Result;
 
     public function deleteCatalogue(EntityId $uuid, AuthenticatedUser $authenticatedUser): Result;
+
+    /**
+     * Owner or moderator. Setting the publicity a catalogue already has is a no-op.
+     *
+     * @return Result<PublicityStatus>
+     */
+    public function setPublicity(EntityId $uuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result;
 }

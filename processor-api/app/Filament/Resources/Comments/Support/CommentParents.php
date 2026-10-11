@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Comments\Support;
 
-use App\Application\Comments\Interfaces\Readers\CommentParentReaderInterface;
-use App\Domain\Comments\DTOs\CommentParentDTO;
+use App\Application\Engagement\Interfaces\Readers\EntityReferenceReaderInterface;
+use App\Domain\Shared\DTOs\EntityReferenceDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
-use App\Filament\Resources\Articles\ArticleResource;
-use App\Filament\Resources\Posts\PostResource;
-use App\Filament\Support\ClientUrls;
 use App\Infrastructure\Persistence\Models\Comment;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -22,13 +19,13 @@ use WeakMap;
  */
 final class CommentParents
 {
-    /** @var WeakMap<object, array<string, CommentParentDTO>>|null */
+    /** @var WeakMap<object, array<string, EntityReferenceDTO>>|null */
     private static ?WeakMap $pages = null;
 
     /**
      * @param Collection<int, Comment>|Paginator|iterable<Comment>|null $page the records on screen
      */
-    public static function of(Comment $comment, mixed $page = null): ?CommentParentDTO
+    public static function of(Comment $comment, mixed $page = null): ?EntityReferenceDTO
     {
         $type = ObjectTemplateType::tryFromLegacyValue((int) $comment->template_id);
 
@@ -36,56 +33,22 @@ final class CommentParents
             return null;
         }
 
-        $key = CommentParentDTO::key($type, (int) $comment->real_object_id);
+        $key = EntityReferenceDTO::key($type, (int) $comment->real_object_id);
 
         if (is_object($page)) {
             self::$pages ??= new WeakMap();
             self::$pages[$page] ??= self::resolve($page instanceof Paginator ? $page->items() : $page);
 
-            return self::$pages[$page][$key] ?? CommentParentDTO::missing($type, (int) $comment->real_object_id);
+            return self::$pages[$page][$key] ?? EntityReferenceDTO::missing($type, (int) $comment->real_object_id);
         }
 
-        return self::resolve([$comment])[$key] ?? CommentParentDTO::missing($type, (int) $comment->real_object_id);
-    }
-
-    public static function label(?CommentParentDTO $parent): string
-    {
-        if ($parent === null) {
-            return 'Unknown entity';
-        }
-
-        return $parent->exists()
-            ? mb_strimwidth((string) $parent->label, 0, 60, '…')
-            : 'Deleted '.mb_strtolower($parent->type->label());
-    }
-
-    /**
-     * The admin page when this panel has one for the type and the viewer may open it, otherwise
-     * the public client page.
-     */
-    public static function url(?CommentParentDTO $parent): ?string
-    {
-        if ($parent === null || ! $parent->exists()) {
-            return null;
-        }
-
-        $resource = match ($parent->type) {
-            ObjectTemplateType::ARTICLE => ArticleResource::class,
-            ObjectTemplateType::POST => PostResource::class,
-            default => null,
-        };
-
-        if ($resource !== null && $resource::canViewAny()) {
-            return $resource::getUrl('view', ['record' => $parent->uuid]);
-        }
-
-        return ClientUrls::forEntity($parent->type, $parent->uuid);
+        return self::resolve([$comment])[$key] ?? EntityReferenceDTO::missing($type, (int) $comment->real_object_id);
     }
 
     /**
      * @param iterable<Comment> $comments
      *
-     * @return array<string, CommentParentDTO>
+     * @return array<string, EntityReferenceDTO>
      */
     private static function resolve(iterable $comments): array
     {
@@ -99,6 +62,6 @@ final class CommentParents
             }
         }
 
-        return $refs === [] ? [] : app(CommentParentReaderInterface::class)->findParents($refs);
+        return $refs === [] ? [] : app(EntityReferenceReaderInterface::class)->find($refs);
     }
 }
