@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\AdminDashboard\Interfaces\Caches\AdminDashboardCacheInterface;
+use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleListReaderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
@@ -10,9 +12,9 @@ use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryIn
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\LikeTargetRepositoryInterface;
@@ -30,7 +32,9 @@ use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterfac
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Persistence\Readers\CachedAdminDashboardReader;
 use App\Infrastructure\Persistence\Readers\CachedCorpusStatsReader;
+use App\Infrastructure\Persistence\Readers\DatabaseAdminDashboardReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleListReader;
 use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
@@ -121,6 +125,16 @@ class RepositoryServiceProvider extends ServiceProvider
         );
         $this->app->alias(CachedCorpusStatsReader::class, CorpusStatsReaderInterface::class);
         $this->app->alias(CachedCorpusStatsReader::class, CorpusStatsCacheInterface::class);
+
+        $this->app->singleton(
+            CachedAdminDashboardReader::class,
+            fn ($app): CachedAdminDashboardReader => new CachedAdminDashboardReader(
+                new DatabaseAdminDashboardReader(),
+                $app->make('cache.store'),
+            )
+        );
+        $this->app->alias(CachedAdminDashboardReader::class, AdminDashboardReaderInterface::class);
+        $this->app->alias(CachedAdminDashboardReader::class, AdminDashboardCacheInterface::class);
 
         $this->app->singleton(
             CommentRepositoryInterface::class,

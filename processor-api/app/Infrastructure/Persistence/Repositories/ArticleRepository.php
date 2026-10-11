@@ -190,7 +190,7 @@ class ArticleRepository implements ArticleRepositoryInterface
     {
         $paginator = PersistenceArticle::query()
             ->with('user')
-            ->whereIn('status', [ArticleStatus::PENDING->value, ArticleStatus::REVIEWING->value])
+            ->whereIn('status', ArticleStatus::awaitingReviewValues())
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate($pagination->per_page, ['*'], 'page', $pagination->page);
