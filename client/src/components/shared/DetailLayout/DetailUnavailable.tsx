@@ -7,7 +7,9 @@ import styles from './DetailLayout.module.css';
  * What a detail page says when its record cannot be shown, by the kind of failure. The status
  * comes from the HTTP response; the server's own text never reaches the page.
  */
-export const unavailableMessage = (error: unknown, noun: 'article' | 'catalogue' | 'post'): string => {
+export type UnavailableNoun = 'article' | 'catalogue' | 'post' | 'kanji' | 'word' | 'radical' | 'sentence';
+
+export const unavailableMessage = (error: unknown, noun: UnavailableNoun): string => {
 	switch (parseApiError(error).kind) {
 		case 'forbidden':
 		case 'unauthenticated':
