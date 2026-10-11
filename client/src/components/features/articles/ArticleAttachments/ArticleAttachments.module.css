@@ -9,37 +9,6 @@
 	font-size: var(--font-size-heading-3);
 }
 
-.section {
-	display: grid;
-	gap: var(--spacing-sm);
-	min-width: 0;
-}
-
-.heading {
-	display: flex;
-	align-items: baseline;
-	gap: var(--spacing-xs);
-	margin: 0;
-	font-size: var(--font-size-heading-5);
-}
-
-.count {
-	color: var(--color-neutral-600);
-	font-family: var(--font-family-mono);
-	font-size: var(--font-size-body-md);
-	font-variant-numeric: tabular-nums;
-	font-weight: var(--font-weight-regular);
-}
-
-.message {
-	margin: 0;
-	color: var(--color-neutral-700);
-}
-
-.seeAll {
-	justify-self: start;
-}
-
 /* Kanji preview: a strip of glyph tiles, each a link to its kanji page. */
 .glyphs {
 	display: flex;
@@ -96,10 +65,4 @@
 	color: var(--color-neutral-600);
 	font-size: var(--font-size-body-md);
 	overflow-wrap: anywhere;
-}
-
-.modalBody {
-	display: grid;
-	gap: var(--spacing-md);
-	min-width: 0;
 }

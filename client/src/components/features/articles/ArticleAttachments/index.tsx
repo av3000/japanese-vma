@@ -19,11 +19,11 @@ import {
 	PagedListFilters,
 	presentText,
 	presentValues,
+	RelatedListModal,
+	RelatedPreview,
 } from '@/components/features/japanese/dictionaryList';
 import { WordTable } from '@/components/features/japanese/word/WordTable';
-import { Button } from '@/components/shared/Button';
-import { DialogModal } from '@/components/shared/DialogModal';
-import { useModal, type ModalController } from '@/hooks/useModal';
+import { useModal } from '@/hooks/useModal';
 import styles from './ArticleAttachments.module.css';
 
 /**
@@ -38,8 +38,6 @@ import styles from './ArticleAttachments.module.css';
 /** Five of each keep the section short under the text; the rest are one click away in the modal. */
 export const PREVIEW_KANJI = 5;
 export const PREVIEW_WORDS = 5;
-
-const numberFormat = new Intl.NumberFormat('en-US');
 
 interface ArticleAttachmentsProps {
 	articleUuid: string;
@@ -63,36 +61,6 @@ const useSaveStateWriter = (queryKey: readonly unknown[]) => {
 				),
 			),
 		[queryClient, queryKey],
-	);
-};
-
-interface ListModalProps {
-	controller: ModalController;
-	title: string;
-	children: React.ReactNode;
-}
-
-const ListModal: React.FC<ListModalProps> = ({ controller, title, children }) => {
-	const titleId = useId();
-
-	if (!controller.isRendered) return null;
-
-	return (
-		<DialogModal
-			id={controller.id}
-			dialogRef={controller.dialogRef}
-			isOpen={controller.isOpen}
-			onClose={controller.close}
-			size="xl"
-			ariaLabel={title}
-		>
-			<DialogModal.Header>
-				<DialogModal.Title id={titleId}>{title}</DialogModal.Title>
-			</DialogModal.Header>
-			<DialogModal.Body>
-				<div className={styles.modalBody}>{children}</div>
-			</DialogModal.Body>
-		</DialogModal>
 	);
 };
 
@@ -152,64 +120,6 @@ const WordListModal: React.FC<{ articleUuid: string; showSave: boolean; emptyHin
 	);
 };
 
-interface PreviewBlockProps {
-	title: string;
-	noun: string;
-	total: number;
-	isPending: boolean;
-	isError: boolean;
-	isEmpty: boolean;
-	emptyMessage: string;
-	controller: ModalController;
-	children: React.ReactNode;
-}
-
-const PreviewBlock: React.FC<PreviewBlockProps> = ({
-	title,
-	noun,
-	total,
-	isPending,
-	isError,
-	isEmpty,
-	emptyMessage,
-	controller,
-	children,
-}) => {
-	const headingId = useId();
-
-	return (
-		<section className={styles.section} aria-labelledby={headingId}>
-			<h3 className={styles.heading} id={headingId}>
-				{title}
-				{!isPending && !isError && total > 0 ? (
-					<span className={styles.count}>{numberFormat.format(total)}</span>
-				) : null}
-			</h3>
-			{isPending ? <p className={styles.message}>Loading {noun}…</p> : null}
-			{isError ? (
-				<p className={styles.message} role="status">
-					{title} could not be loaded. Reload the page to try again.
-				</p>
-			) : null}
-			{!isPending && !isError && isEmpty ? <p className={styles.message}>{emptyMessage}</p> : null}
-			{!isPending && !isError && !isEmpty ? (
-				<>
-					{children}
-					<Button
-						className={styles.seeAll}
-						variant="outline"
-						aria-controls={controller.id}
-						aria-expanded={controller.isOpen}
-						onClick={controller.open}
-					>
-						{`See all ${numberFormat.format(total)} ${noun}`}
-					</Button>
-				</>
-			) : null}
-		</section>
-	);
-};
-
 export const ArticleAttachments: React.FC<ArticleAttachmentsProps> = ({
 	articleUuid,
 	showSave,
@@ -231,7 +141,8 @@ export const ArticleAttachments: React.FC<ArticleAttachmentsProps> = ({
 				Kanji and words in this reading
 			</h2>
 
-			<PreviewBlock
+			<RelatedPreview
+				headingLevel={3}
 				title="Kanji"
 				noun="kanji"
 				total={kanji.total}
@@ -255,9 +166,10 @@ export const ArticleAttachments: React.FC<ArticleAttachmentsProps> = ({
 						</li>
 					))}
 				</ul>
-			</PreviewBlock>
+			</RelatedPreview>
 
-			<PreviewBlock
+			<RelatedPreview
+				headingLevel={3}
 				title="Words"
 				noun="words"
 				total={words.total}
@@ -285,14 +197,14 @@ export const ArticleAttachments: React.FC<ArticleAttachmentsProps> = ({
 						);
 					})}
 				</ul>
-			</PreviewBlock>
+			</RelatedPreview>
 
-			<ListModal controller={kanjiModal} title="Kanji in this reading">
+			<RelatedListModal controller={kanjiModal} title="Kanji in this reading">
 				<KanjiListModal articleUuid={articleUuid} showSave={showSave} emptyHint={emptyHint} />
-			</ListModal>
-			<ListModal controller={wordModal} title="Words in this reading">
+			</RelatedListModal>
+			<RelatedListModal controller={wordModal} title="Words in this reading">
 				<WordListModal articleUuid={articleUuid} showSave={showSave} emptyHint={emptyHint} />
-			</ListModal>
+			</RelatedListModal>
 		</section>
 	);
 };

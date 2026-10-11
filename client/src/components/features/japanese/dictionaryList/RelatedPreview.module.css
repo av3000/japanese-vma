@@ -1,0 +1,49 @@
+/* A related list's preview: heading with its count, a few rows, then "See all" (#522, #352). */
+.section {
+	display: grid;
+	gap: var(--spacing-sm);
+	min-width: 0;
+}
+
+.heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--spacing-xs);
+	margin: 0;
+}
+
+/* Directly under the page title (dictionary detail pages). The global h2 min-height is sized for
+   heading-2 type, too tall for this one. */
+.headingTop {
+	min-height: 0;
+	font-size: var(--font-size-heading-4);
+}
+
+/* Under a section heading of its own (Article detail). */
+.headingNested {
+	font-size: var(--font-size-heading-5);
+}
+
+.count {
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--font-weight-regular);
+}
+
+.message {
+	margin: 0;
+	color: var(--color-neutral-700);
+}
+
+.seeAll {
+	justify-self: start;
+}
+
+.modalBody {
+	display: grid;
+	gap: var(--spacing-md);
+	min-width: 0;
+}
