@@ -6,6 +6,8 @@ namespace App\Filament\Widgets;
 
 use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
 use App\Domain\Processing\ProcessingThresholds;
+use App\Filament\Resources\Articles\ArticleResource;
+use App\Filament\Resources\Processing\ProcessingStateResource;
 use App\Filament\Support\PanelActor;
 use Filament\Facades\Filament;
 use Filament\Support\Icons\Heroicon;
@@ -36,10 +38,17 @@ class NeedsAttentionWidget extends StatsOverviewWidget
     {
         $counts = app(AdminDashboardReaderInterface::class)->attentionCounts();
 
+        $processing = ProcessingStateResource::canViewAny()
+            ? ProcessingStateResource::getUrl('index', ['tab' => 'needs-attention'])
+            : null;
+
         return [
-            $this->count('Articles awaiting review', $counts->articlesAwaitingReview, 'warning', Heroicon::OutlinedInboxStack),
-            $this->count('Processing failed, 24 h', $counts->processingFailedLastDay, 'danger', Heroicon::OutlinedExclamationTriangle),
-            $this->count('Processing stuck', $counts->processingStuck, 'danger', Heroicon::OutlinedClock),
+            $this->count('Articles awaiting review', $counts->articlesAwaitingReview, 'warning', Heroicon::OutlinedInboxStack)
+                ->url(ArticleResource::canViewAny() ? ArticleResource::getUrl('index') : null),
+            $this->count('Processing failed, 24 h', $counts->processingFailedLastDay, 'danger', Heroicon::OutlinedExclamationTriangle)
+                ->url($processing),
+            $this->count('Processing stuck', $counts->processingStuck, 'danger', Heroicon::OutlinedClock)
+                ->url($processing),
             $this->count('Failed queue jobs', $counts->failedJobs, 'danger', Heroicon::OutlinedQueueList),
         ];
     }

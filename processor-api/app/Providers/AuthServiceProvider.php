@@ -10,6 +10,7 @@ use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Kanji;
 use App\Infrastructure\Persistence\Models\Post;
+use App\Infrastructure\Persistence\Models\ProcessingState;
 use App\Infrastructure\Persistence\Models\Radical;
 use App\Infrastructure\Persistence\Models\Sentence;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
@@ -21,6 +22,7 @@ use App\Policies\CatalogueAdminPolicy;
 use App\Policies\CommentAdminPolicy;
 use App\Policies\HashtagAdminPolicy;
 use App\Policies\PostAdminPolicy;
+use App\Policies\ProcessingStateAdminPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\StudyMaterialAdminPolicy;
 use App\Policies\UserPolicy;
@@ -47,6 +49,7 @@ class AuthServiceProvider extends ServiceProvider
         Radical::class => StudyMaterialAdminPolicy::class,
         Word::class => StudyMaterialAdminPolicy::class,
         Sentence::class => StudyMaterialAdminPolicy::class,
+        ProcessingState::class => ProcessingStateAdminPolicy::class,
     ];
 
     /**
