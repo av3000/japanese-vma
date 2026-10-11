@@ -3022,6 +3022,17 @@
                         }
                     },
                     {
+                        "name": "kanji_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -3972,6 +3983,17 @@
                     },
                     {
                         "name": "catalogue_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "kanji_uuid",
                         "in": "query",
                         "schema": {
                             "type": [

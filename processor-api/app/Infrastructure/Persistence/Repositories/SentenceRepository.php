@@ -150,6 +150,12 @@ class SentenceRepository implements SentenceRepositoryInterface
             });
         }
 
+        if ($criteria->kanjiUuid !== null) {
+            $query->whereHas('kanjis', function (Builder $kanjiQuery) use ($criteria): void {
+                $kanjiQuery->where($kanjiQuery->qualifyColumn('uuid'), $criteria->kanjiUuid->value());
+            });
+        }
+
         if ($criteria->catalogueId !== null) {
             // Items are bare ids in customlist_object; a sentence saved twice still lists once.
             $query->whereIn($query->getModel()->getQualifiedKeyName(), function ($items) use ($criteria): void {
