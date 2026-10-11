@@ -139,6 +139,7 @@
 }
 
 .radicalNumber {
+	margin-inline-start: var(--spacing-2xs);
 	color: var(--color-neutral-600);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
