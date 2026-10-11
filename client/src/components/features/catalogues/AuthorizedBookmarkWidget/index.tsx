@@ -170,6 +170,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 		<>
 			<div className={classNames(styles.widgetWrapper, compact && styles.compact, label && styles.labelled)}>
 				{!compact &&
+					!label &&
 					isKnownType &&
 					(isKnown ? (
 						<i className={classNames('fas fa-check-circle', styles.learned)}> Learned</i>
@@ -202,6 +203,13 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 					</Button>
 				)}
 				{compact && isKnownType && isKnown ? <span className={styles.knownMark}>Known</span> : null}
+				{/* A detail rail says only what is true: the item is learned. Nothing for "not yet". */}
+				{label && isKnownType && isKnown ? (
+					<p className={styles.learnedLine}>
+						<Icon size="sm" name="checkSolid" />
+						Learned
+					</p>
+				) : null}
 			</div>
 
 			<CatalogueBookmarkModal

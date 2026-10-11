@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\JapaneseMaterial\Sentences\Queries;
 
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 
 final readonly class SentenceQueryCriteria
@@ -19,6 +20,8 @@ final readonly class SentenceQueryCriteria
         public ?int $kanjiId = null,
         /** Sentences saved in one catalogue, the list behind the catalogue detail page (#347). */
         public ?int $catalogueId = null,
+        /** Sentences written with one kanji, the list behind the kanji detail page (#352). */
+        public ?EntityId $kanjiUuid = null,
     ) {
     }
 
@@ -31,6 +34,7 @@ final readonly class SentenceQueryCriteria
         ?int $userId = null,
         ?int $kanjiId = null,
         ?int $catalogueId = null,
+        ?EntityId $kanjiUuid = null,
     ): self {
         return new self(
             pagination: new Pagination($page, $perPage),
@@ -40,6 +44,7 @@ final readonly class SentenceQueryCriteria
             userId: $userId,
             kanjiId: $kanjiId,
             catalogueId: $catalogueId,
+            kanjiUuid: $kanjiUuid,
         );
     }
 }

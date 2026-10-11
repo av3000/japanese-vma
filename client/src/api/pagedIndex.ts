@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { keepPreviousData, useQuery, type InfiniteData, type QueryKey } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { keepPreviousData, useQuery, useQueryClient, type InfiniteData, type QueryKey } from '@tanstack/react-query';
 import type { PaginationResource } from '@/api/generated/model/paginationResource';
+import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
 
 /** One page of a v1 index: `{ items, pagination }`, the shape every dictionary index returns. */
 export interface IndexPage<Row> {
@@ -34,6 +35,24 @@ export const updateCachedRows = <Row extends { id: number }>(
 	if ('items' in data) return mapPage(data as IndexPage<Row>);
 
 	return data;
+};
+
+type SaveStateRow = { id: number; viewer_catalogue_state?: ViewerCatalogueStateResource | null };
+
+/**
+ * Writes a row's new save state into every cached list under `queryKey`. Pass the index key built
+ * from the fixed filters without `per_page`, so every page, page size and search matches it.
+ */
+export const useViewerStateWriter = (queryKey: QueryKey) => {
+	const queryClient = useQueryClient();
+
+	return useCallback(
+		(rowId: number, state: ViewerCatalogueStateResource) =>
+			queryClient.setQueriesData({ queryKey }, (data) =>
+				updateCachedRows<SaveStateRow>(data, rowId, (row) => ({ ...row, viewer_catalogue_state: state })),
+			),
+		[queryClient, queryKey],
+	);
 };
 
 interface PagedParams {

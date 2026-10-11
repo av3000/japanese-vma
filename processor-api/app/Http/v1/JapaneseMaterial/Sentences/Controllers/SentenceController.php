@@ -71,6 +71,9 @@ class SentenceController extends Controller
             tatoebaEntry: $validated['tatoeba_entry'] ?? null,
             userId: $validated['user_id'] ?? null,
             catalogueId: $catalogueId,
+            kanjiUuid: isset($validated['kanji_uuid'])
+                ? EntityId::from($validated['kanji_uuid'])
+                : null,
         );
 
         $result = $this->sentenceService->find($criteria);

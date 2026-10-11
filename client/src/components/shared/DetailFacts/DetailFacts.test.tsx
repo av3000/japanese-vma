@@ -46,6 +46,33 @@ describe('DetailFacts', () => {
 		expect(html).toMatch(/<dt[^>]*>Characters<\/dt><dd[^>]*>0<\/dd>/);
 	});
 
+	it('renders a text value as given, beside formatted counts', () => {
+		const html = renderToStaticMarkup(
+			<DetailFacts
+				title="About this kanji"
+				facts={[
+					{ term: 'Strokes', value: 1200 },
+					{ term: 'Grade', value: { text: 'Grade 1' } },
+					{
+						term: 'Radical',
+						value: {
+							text: (
+								<a href="/radical/75" lang="ja">
+									木
+								</a>
+							),
+						},
+					},
+				]}
+			/>,
+		);
+
+		expect(html).toMatch(/<dt[^>]*>Strokes<\/dt><dd[^>]*>1,200<\/dd>/);
+		expect(html).toMatch(/<dt[^>]*>Grade<\/dt><dd class="[^"]*text[^"]*">Grade 1<\/dd>/);
+		expect(html).toContain('<a href="/radical/75" lang="ja">木</a>');
+		expect(html).not.toContain('aria-busy');
+	});
+
 	it('renders the footer only when given', () => {
 		const bare = renderToStaticMarkup(<DetailFacts title="In this catalogue" headingLevel={3} facts={[]} />);
 		const withFooter = renderToStaticMarkup(

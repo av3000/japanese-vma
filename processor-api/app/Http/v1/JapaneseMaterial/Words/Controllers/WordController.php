@@ -74,6 +74,9 @@ class WordController extends Controller
                 ? EntityId::from($validated['article_uuid'])
                 : null,
             catalogueId: $catalogueId,
+            kanjiUuid: isset($validated['kanji_uuid'])
+                ? EntityId::from($validated['kanji_uuid'])
+                : null,
         );
 
         $result = $this->wordService->find($criteria);

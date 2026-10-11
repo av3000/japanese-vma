@@ -46,6 +46,34 @@ export const WithJlptBar: Story = {
 	},
 };
 
+/** Counts beside values that are not numbers: a badge, a label and a linked glyph (#352). */
+export const WithTextValues: Story = {
+	args: {
+		title: 'About this kanji',
+		facts: [
+			{ term: 'Strokes', value: 4 },
+			{ term: 'JLPT', value: { text: 'N5' } },
+			{ term: 'Grade', value: { text: 'Grade 1' } },
+			{ term: 'Frequency', value: { text: '#317' } },
+			{
+				term: 'Radical',
+				value: {
+					text: (
+						<a href="/radical/75" lang="ja">
+							木
+						</a>
+					),
+				},
+			},
+		],
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByText('Grade 1')).toBeVisible();
+		await expect(canvas.getByRole('link', { name: '木' })).toHaveAttribute('href', '/radical/75');
+	},
+};
+
 /** While processing runs, kanji and words read "Counting…" instead of a misleading 0. */
 export const Counting: Story = {
 	args: {
