@@ -43,9 +43,9 @@ class CataloguesTable
                     ->color(static fn (bool $state): string => $state ? 'success' : 'gray')
                     ->icon(static fn (bool $state): string => $state ? 'heroicon-o-globe-alt' : 'heroicon-o-lock-closed'),
                 TextColumn::make('items_count')->label('Items')->numeric()->sortable(),
-                TextColumn::make('comments_count')->label('Comments')->numeric()->toggleable(),
-                TextColumn::make('likes_count')->label('Likes')->numeric()->toggleable(),
-                TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('comments_count')->label('Comments')->numeric()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('likes_count')->label('Likes')->numeric()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')->label('Created')->since()->dateTimeTooltip()->sortable(),
             ])
             ->filters([
                 SelectFilter::make('type')
