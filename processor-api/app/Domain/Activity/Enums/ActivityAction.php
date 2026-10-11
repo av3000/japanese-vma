@@ -16,10 +16,14 @@ enum ActivityAction: string
     case UserUpdated = 'user.updated';
     case UserRoleAssigned = 'user.role_assigned';
     case UserRoleRemoved = 'user.role_removed';
+    case UserEmailVerified = 'user.email_verified';
+    case UserTokensRevoked = 'user.tokens_revoked';
 
     public function label(): string
     {
         return match ($this) {
+            self::UserEmailVerified => 'User email marked verified',
+            self::UserTokensRevoked => 'User signed out everywhere',
             self::RoleCreated => 'Role created',
             self::RoleUpdated => 'Role updated',
             self::RoleDeleted => 'Role deleted',

@@ -26,4 +26,18 @@ interface UserAdminServiceInterface
      * @return Result Success payload: UserAccountDTO
      */
     public function updateUser(EntityId $uuid, UserAccountWriteDTO $account, AuthenticatedUser $actor): Result;
+
+    /**
+     * Idempotent: an already verified address keeps its original timestamp and records nothing.
+     *
+     * @return Result Success payload: UserAccountDTO
+     */
+    public function markEmailVerified(EntityId $uuid, AuthenticatedUser $actor): Result;
+
+    /**
+     * Signs the user out of every API session.
+     *
+     * @return Result Success payload: null
+     */
+    public function revokeAllTokens(EntityId $uuid, AuthenticatedUser $actor): Result;
 }

@@ -7,9 +7,11 @@ namespace App\Filament\Resources\Users\Pages;
 use App\Application\Users\Services\UserAdminServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
+use App\Filament\Resources\Users\Actions\UserAccountActions;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Support\PanelActor;
 use App\Infrastructure\Persistence\Models\User;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,10 @@ class EditUser extends EditRecord
     {
         return [
             ViewAction::make(),
+            ActionGroup::make(UserAccountActions::all())
+                ->label('Support')
+                ->button()
+                ->color('gray'),
         ];
     }
 
