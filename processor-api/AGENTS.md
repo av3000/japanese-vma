@@ -70,7 +70,8 @@ This file defines **backend-specific** guidance for changes under `processor-api
         -   every scalar typed `string`: add a class-level `@property Domain\Model $resource`, or explicit casts when the value comes through a nested object;
         -   `array_map` items untyped: add a per-key hint, `/** @var array<int, XResource> */` above `'items' => array_map(...)`;
         -   an optional include documented as required: build it with `'key' => $this->when($condition, fn () => ...)`, not a conditional `$payload['key'] = ...`;
-        -   a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema.
+        -   a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema;
+        -   a field typed nullable although it never is: `$value ?? ''` is inferred as nullable, so cast it with `(string)`.
     -   Scramble turns a comment on an array key inside `toArray()` into that property's public `description`. Put implementation notes above the `return`.
     -   After changing a Resource or `#[Response]`, check the component's `properties` and `required` in `api.json` before running Orval, and pin anything non-obvious in a `tests/Unit/...OpenApiTest` (reference: `tests/Unit/JapaneseMaterial/DictionaryResponsesOpenApiTest.php`).
     -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
@@ -84,13 +85,23 @@ This file defines **backend-specific** guidance for changes under `processor-api
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
-    -   From `processor-api/`, bring up backend test infrastructure with `docker compose up -d --build db-test test-runner`.
-    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` PostgreSQL service.
-    -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
+    -   Run backend tests in an isolated test lane, one per checkout, so Laravel boots in `APP_ENV=testing` against the lane's own PostgreSQL service. From `processor-api/`, with a project name unique to the worktree (for example `jvma<issue>`):
+        ```bash
+        docker compose -f docker-compose.test.yml -p jvma<issue> up -d --build
+        docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner php artisan passport:keys --force
+        docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/Foo
+        docker compose -f docker-compose.test.yml -p jvma<issue> stop   # while the PR is open
+        docker compose -f docker-compose.test.yml -p jvma<issue> down   # once the branch has merged
+        ```
+    -   Do not use the default `docker-compose.yml` for tests. Its container names are fixed, so from a worktree `docker compose exec test-runner` can attach to another checkout's container and read and write that tree.
+    -   A fresh lane has no Passport keypair. Without `passport:keys --force`, every `auth:api` test returns 500 with `Invalid key supplied`; that is not an `APP_KEY` problem.
+    -   Use `composer test:prepare` in the lane when you need an explicit schema reset before a run.
+    -   Run the tests the change touches (the module's test folders, plus files elsewhere that reference the changed classes), not the whole suite. More lane traps: `docs/agents/local-environment.md`.
     -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
 -   **Code style (Pint):**
     -   Run `./format-changed.ps1` (or `./format-changed.sh`) from `processor-api/` on the host before finalizing any PHP change. CI fails on style drift in changed files.
+    -   From a worktree, pass the lane: `./format-changed.ps1 -Lane jvma<issue>` or `LANE=jvma<issue> ./format-changed.sh`. Without it the scripts refuse to run, because the default `laravel-app` container belongs to another checkout.
     -   Do not rely on `composer format`, `composer format:check`, or `vendor/bin/pint --dirty` inside the containers. Only `processor-api/` is bind-mounted while `.git` lives at the repository root, so `--dirty` matches nothing and reports a false `PASS 0 files`. This overrides the generic Pint guidance in the Laravel Boost block below.
     -   Do not run `composer format:all` or `composer quality:ci` on a feature branch; the repository still carries legacy style drift and a full pass creates a large unrelated diff.
     -   If the dedicated test lane itself is unavailable, report that environment limitation clearly and still run any unit or schema checks that remain feasible.
@@ -301,7 +312,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands through `docker compose exec test-runner composer test -- ...` from `processor-api/`, with a specific filename or filter.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands in the isolated test lane from `processor-api/`, with a specific filename or filter: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- ...`.
 
 === laravel/core rules ===
 
@@ -380,8 +391,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `docker compose exec test-runner composer test`.
-- To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
+- Tests run in the isolated test lane from `processor-api/` (`docker compose -f docker-compose.test.yml -p <lane>`; see "Testing & Verification Expectations" above).
+- To run all tests in a file: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
