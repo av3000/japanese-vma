@@ -4,8 +4,9 @@ namespace App\Application\Articles\Services;
 
 use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Activity\Enums\ActivityAction;
@@ -29,15 +30,16 @@ class ArticleModerationService implements ArticleModerationServiceInterface
 {
     public function __construct(
         private readonly ArticleRepositoryInterface $articleRepository,
-        private readonly ArticlePolicy $articlePolicy,
+        private readonly ArticleModerationPolicy $moderationPolicy,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly DeleteArticleAction $deleteArticle,
     ) {
     }
 
     public function getPendingArticles(Pagination $pagination, AuthenticatedUser $authenticatedUser): Result
     {
-        if (! $this->articlePolicy->canModerate($authenticatedUser)) {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
@@ -85,7 +87,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         AuthenticatedUser $authenticatedUser,
         ?string $reason = null,
     ): Result {
-        if (! $this->articlePolicy->canModerate($authenticatedUser)) {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
@@ -135,7 +137,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
 
     public function setPublicity(EntityId $articleUuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result
     {
-        if (! $this->articlePolicy->canModerate($authenticatedUser)) {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
@@ -166,5 +168,48 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         });
 
         return Result::success($publicity);
+    }
+
+    public function remove(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+        if ($article === null) {
+            return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+        }
+
+        try {
+            DB::transaction(function () use ($article, $articleUuid, $authenticatedUser): void {
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $authenticatedUser,
+                    ActivityAction::ArticleDeleted,
+                    ActivitySubjectType::Article,
+                    $articleUuid->value(),
+                    $article->getTitleJp()->value,
+                    before: [
+                        'title' => $article->getTitleJp()->value,
+                        'status' => $article->getStatus()->label(),
+                        'publicity' => $article->getPublicity()->label(),
+                        'author' => $article->getAuthorName()->value(),
+                    ],
+                ));
+
+                $this->deleteArticle->execute($article->getIdValue());
+            });
+        } catch (Throwable $exception) {
+            Log::error('Article moderation removal failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'article_uuid' => $articleUuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::deletionFailed());
+        }
+
+        return Result::success();
     }
 }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Posts\Actions;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Community\Posts\Policies\PostPolicy;
-use App\Application\Community\Posts\Services\PostWriteServiceInterface;
+use App\Application\Community\Posts\Policies\PostModerationPolicy;
+use App\Application\Community\Posts\Services\PostModerationServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Posts\PostResource;
 use App\Filament\Support\PanelActor;
@@ -19,14 +19,14 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Lock, unlock and delete through PostWriteService (#137). The panel never flips the `locked`
+ * Lock, unlock and removal through PostModerationService. The panel never flips the `locked`
  * column itself.
  */
 final class PostModerationActions
 {
     public static function canModerate(): bool
     {
-        return PanelActor::may('posts.moderate', static fn (AuthenticatedUser $actor): bool => app(PostPolicy::class)->canLock($actor));
+        return PanelActor::may('posts.moderate', static fn (AuthenticatedUser $actor): bool => app(PostModerationPolicy::class)->canModerate($actor));
     }
 
     public static function toggleLock(): Action
@@ -70,7 +70,7 @@ final class PostModerationActions
             ->modalSubmitActionLabel('Delete post')
             ->visible(static fn (): bool => self::canModerate())
             ->action(static function (Post $record, Action $action): void {
-                $result = app(PostWriteServiceInterface::class)->delete(
+                $result = app(PostModerationServiceInterface::class)->remove(
                     new EntityId((string) $record->uuid),
                     PanelActor::current(),
                 );
@@ -108,7 +108,7 @@ final class PostModerationActions
 
     private static function setLocked(Post $record, bool $locked): Result
     {
-        return app(PostWriteServiceInterface::class)->setLocked(
+        return app(PostModerationServiceInterface::class)->setLocked(
             new EntityId((string) $record->uuid),
             $locked,
             PanelActor::current(),

@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Filament;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Community\Posts\Services\PostWriteServiceInterface;
+use App\Application\Community\Posts\Services\PostModerationServiceInterface;
 use App\Domain\Activity\Enums\ActivityAction;
-use App\Domain\Community\Posts\DTOs\PostCreateDTO;
-use App\Domain\Community\Posts\DTOs\PostUpdateDTO;
 use App\Domain\Community\Posts\Enums\PostTopic;
 use App\Domain\Community\Posts\Errors\PostErrors;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Viewer;
 use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Filament\Resources\Posts\Pages\ViewPost;
 use App\Filament\Resources\Posts\RelationManagers\CommentsRelationManager;
@@ -135,28 +132,18 @@ class PostResourceTest extends TestCase
     {
         $kept = $this->createPost();
         $refused = $this->createPost(['title' => 'Refused post']);
-        $real = app(PostWriteServiceInterface::class);
+        $real = app(PostModerationServiceInterface::class);
         $failingUuid = (string) $refused->uuid;
 
-        $this->app->instance(PostWriteServiceInterface::class, new class($real, $failingUuid) implements PostWriteServiceInterface
+        $this->app->instance(PostModerationServiceInterface::class, new class($real, $failingUuid) implements PostModerationServiceInterface
         {
-            public function __construct(private PostWriteServiceInterface $inner, private string $failingUuid)
+            public function __construct(private PostModerationServiceInterface $inner, private string $failingUuid)
             {
             }
 
-            public function create(PostCreateDTO $dto, AuthenticatedUser $actor, Viewer $viewer): Result
+            public function remove(EntityId $uuid, AuthenticatedUser $actor): Result
             {
-                return $this->inner->create($dto, $actor, $viewer);
-            }
-
-            public function update(EntityId $uuid, PostUpdateDTO $dto, AuthenticatedUser $actor): Result
-            {
-                return $this->inner->update($uuid, $dto, $actor);
-            }
-
-            public function delete(EntityId $uuid, AuthenticatedUser $actor): Result
-            {
-                return $this->inner->delete($uuid, $actor);
+                return $this->inner->remove($uuid, $actor);
             }
 
             public function setLocked(EntityId $uuid, bool $locked, AuthenticatedUser $actor): Result

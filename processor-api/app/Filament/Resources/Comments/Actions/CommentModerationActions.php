@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Comments\Actions;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Comments\Policies\CommentPolicy;
-use App\Application\Comments\Services\CommentServiceInterface;
+use App\Application\Comments\Policies\CommentModerationPolicy;
+use App\Application\Comments\Services\CommentModerationServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Comments\CommentResource;
 use App\Filament\Support\PanelActor;
@@ -20,14 +20,14 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Delete through CommentService (#139): the comment, every reply beneath it and their likes go in
- * one transaction. There is no soft delete, so the activity row keeps a content snapshot.
+ * Removal through CommentModerationService (#139): the comment, every reply beneath it and their
+ * likes go in one transaction. There is no soft delete, so the activity row keeps a content snapshot.
  */
 final class CommentModerationActions
 {
     public static function canModerate(): bool
     {
-        return PanelActor::may('comments.delete', static fn (AuthenticatedUser $actor): bool => app(CommentPolicy::class)->canModerate($actor));
+        return PanelActor::may('comments.delete', static fn (AuthenticatedUser $actor): bool => app(CommentModerationPolicy::class)->canModerate($actor));
     }
 
     public static function delete(): Action
@@ -89,7 +89,7 @@ final class CommentModerationActions
 
     private static function deleteComment(Comment $record): Result
     {
-        return app(CommentServiceInterface::class)->deleteComment(
+        return app(CommentModerationServiceInterface::class)->remove(
             new EntityId((string) $record->uuid),
             PanelActor::current(),
         );

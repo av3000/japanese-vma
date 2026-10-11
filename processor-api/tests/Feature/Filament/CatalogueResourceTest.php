@@ -143,17 +143,18 @@ class CatalogueResourceTest extends TestCase
             ->assertActionVisible('togglePublicity');
     }
 
-    public function test_admin_api_delete_follows_the_same_rule(): void
+    public function test_the_api_gives_staff_no_delete_on_other_users_catalogues(): void
     {
         $custom = $this->catalogue();
         $known = Catalogue::factory()->ofType(SavedListType::KNOWNWORDS)->create(['user_id' => $this->owner->id]);
         Passport::actingAs($this->admin, ['*'], 'api');
 
         $this->deleteJson("/api/v1/catalogues/{$known->uuid}")->assertForbidden();
-        $this->deleteJson("/api/v1/catalogues/{$custom->uuid}")->assertSuccessful();
+        $this->deleteJson("/api/v1/catalogues/{$custom->uuid}")->assertForbidden();
 
         self::assertNotNull($known->fresh());
-        self::assertNull($custom->fresh());
+        self::assertNotNull($custom->fresh());
+        self::assertSame(0, AdminActivity::query()->count());
     }
 
     public function test_viewers_get_no_actions_and_others_get_no_access(): void

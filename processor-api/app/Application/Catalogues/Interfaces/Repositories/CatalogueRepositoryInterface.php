@@ -7,6 +7,7 @@ namespace App\Application\Catalogues\Interfaces\Repositories;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Catalogues\Models\Catalogues;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -21,6 +22,8 @@ interface CatalogueRepositoryInterface
     public function create(Catalogue $catalogue): Catalogue;
 
     public function update(Catalogue $catalogue): void;
+
+    public function updatePublicity(int $catalogueId, PublicityStatus $publicity): void;
 
     public function deleteById(int $id): bool;
 

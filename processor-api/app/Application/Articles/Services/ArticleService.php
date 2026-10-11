@@ -2,25 +2,16 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Activity\ActivityEntries;
-use App\Application\Activity\Interfaces\ActivityRecorderInterface;
-use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
-use App\Domain\Activity\Enums\ActivityAction;
-use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
 use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
 use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
@@ -57,14 +48,8 @@ class ArticleService implements ArticleServiceInterface
         private ArticleProcessingStateReaderInterface $processingStateReader,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
-        private CleanupArticleCustomListsAction $cleanupCustomLists,
-        private HashtagRepositoryInterface $hashtagRepository,
-        private ViewRepositoryInterface $viewRepository,
-        private LikeRepositoryInterface $likeRepository,
-        private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository,
+        private DeleteArticleAction $deleteArticle,
         private ProcessingStateServiceInterface $processingStates,
-        private ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -364,32 +349,7 @@ class ArticleService implements ArticleServiceInterface
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 
-                // An author removing their own article is ordinary use; removing someone else's
-                // is moderation and goes in the activity log.
-                if (! $authenticatedUser->id->equals($article->getAuthorId())) {
-                    $this->activityRecorder->record(ActivityEntries::by(
-                        $authenticatedUser,
-                        ActivityAction::ArticleDeleted,
-                        ActivitySubjectType::Article,
-                        $articleUuid->value(),
-                        $article->getTitleJp()->value,
-                        before: [
-                            'title' => $article->getTitleJp()->value,
-                            'status' => $article->getStatus()->label(),
-                            'publicity' => $article->getPublicity()->label(),
-                            'author' => $article->getAuthorName()->value(),
-                        ],
-                    ));
-                }
-
-                // Delete relationships and engagement data
-                $this->articleRepository->deleteById($article->getIdValue());
-                $this->viewRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->downloadRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->likeRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->commentRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->hashtagRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->cleanupCustomLists->execute($article->getIdValue());
+                $this->deleteArticle->execute($article->getIdValue());
             });
 
             return Result::success();

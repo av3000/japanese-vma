@@ -121,41 +121,33 @@ class StudyMaterialResourceTest extends TestCase
 
         Livewire::test(ViewSentence::class, ['record' => $imported->uuid])
             ->assertOk()
-            ->assertActionHidden('editSentence')
             ->assertActionHidden('deleteSentence');
     }
 
-    public function test_user_authored_sentence_edit_and_delete_go_through_the_service(): void
+    public function test_staff_remove_user_authored_sentences_but_never_edit_them(): void
     {
         $writer = $this->createPanelUser('Writer');
         $sentence = $this->sentence('古い文です。', $writer);
 
         Livewire::test(ViewSentence::class, ['record' => $sentence->uuid])
-            ->callAction('editSentence', ['content' => '新しい文です。'])
-            ->assertNotified('Sentence updated.');
-
-        self::assertSame('新しい文です。', $sentence->fresh()->content);
-
-        Livewire::test(ViewSentence::class, ['record' => $sentence->uuid])
+            ->assertActionDoesNotExist('editSentence')
             ->callAction('deleteSentence')
             ->assertNotified('Sentence deleted.');
 
         self::assertNull($sentence->fresh());
-        self::assertSame(
-            [ActivityAction::SentenceUpdated, ActivityAction::SentenceDeleted],
-            AdminActivity::query()->orderBy('id')->pluck('action')->all(),
-        );
-        self::assertSame(['content' => '古い文です。'], AdminActivity::query()->orderBy('id')->first()->changes['before']);
+
+        $activity = AdminActivity::query()->sole();
+        self::assertSame(ActivityAction::SentenceDeleted, $activity->action);
+        self::assertSame('古い文です。', $activity->changes['before']['content']);
     }
 
-    public function test_sentence_edits_need_sentences_moderate(): void
+    public function test_sentence_removal_needs_sentences_moderate(): void
     {
         $sentence = $this->sentence('私が書いた文です。', $this->createPanelUser('Writer'));
         $this->actingAsPanelUser($this->createUserWithPermissions(['study.view']));
 
         Livewire::test(ViewSentence::class, ['record' => $sentence->uuid])
             ->assertOk()
-            ->assertActionHidden('editSentence')
             ->assertActionHidden('deleteSentence');
 
         $this->actingAs($this->createUserWithPermissions(['posts.view']), 'web')

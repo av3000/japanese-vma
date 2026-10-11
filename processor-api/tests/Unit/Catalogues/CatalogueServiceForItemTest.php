@@ -2,21 +2,16 @@
 
 namespace Tests\Unit\Catalogues;
 
-use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Actions\DeleteCatalogueAction;
 use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
 use App\Application\Catalogues\Services\CatalogueItemService;
 use App\Application\Catalogues\Services\CatalogueService;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
@@ -73,16 +68,11 @@ class CatalogueServiceForItemTest extends TestCase
             $this->createMock(CatalogueItemService::class),
             $this->createMock(HashtagServiceInterface::class),
             $catalogueItemRepository,
-            $this->createMock(HashtagRepositoryInterface::class),
-            $this->createMock(ViewRepositoryInterface::class),
-            $this->createMock(LikeRepositoryInterface::class),
-            $this->createMock(DownloadRepositoryInterface::class),
-            $this->createMock(CommentRepositoryInterface::class),
+            $this->createMock(DeleteCatalogueAction::class),
             $this->createMock(LoadEntityStatsAction::class),
             $this->createMock(EngagementServiceInterface::class),
             new LoadCatalogueJlptLevelsAction($catalogueItemRepository),
             new TemplateTypeClassifier,
-            $this->createMock(ActivityRecorderInterface::class),
         );
     }
 

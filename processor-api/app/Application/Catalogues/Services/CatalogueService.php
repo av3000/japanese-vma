@@ -2,24 +2,16 @@
 
 namespace App\Application\Catalogues\Services;
 
-use App\Application\Activity\ActivityEntries;
-use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Actions\DeleteCatalogueAction;
 use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Domain\Activity\Enums\ActivityAction;
-use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
@@ -58,16 +50,11 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly CatalogueItemService $catalogueItemService,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly HashtagRepositoryInterface $hashtagRepository,
-        private readonly ViewRepositoryInterface $viewRepository,
-        private readonly LikeRepositoryInterface $likeRepository,
-        private readonly DownloadRepositoryInterface $downloadRepository,
-        private readonly CommentRepositoryInterface $commentRepository,
+        private readonly DeleteCatalogueAction $deleteCatalogue,
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly LoadCatalogueJlptLevelsAction $loadJlptLevels,
         private readonly TemplateTypeClassifier $templateTypeClassifier,
-        private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -491,37 +478,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            DB::transaction(function () use ($catalogue, $authenticatedUser) {
-                $catalogueId = $catalogue->getIdValue();
-                $templateId = ObjectTemplateType::LIST->getLegacyId();
-
-                // An owner removing their own list is ordinary use; removing someone else's is
-                // moderation and goes in the activity log.
-                if (! $authenticatedUser->id->equals($catalogue->getOwnerId())) {
-                    $this->activityRecorder->record(ActivityEntries::by(
-                        $authenticatedUser,
-                        ActivityAction::CatalogueDeleted,
-                        ActivitySubjectType::Catalogue,
-                        $catalogue->getUid()->value(),
-                        $catalogue->getTitle()->value,
-                        before: [
-                            'title' => $catalogue->getTitle()->value,
-                            'type' => $catalogue->getType()->label(),
-                            'publicity' => $catalogue->getPublicity()->label(),
-                            'owner' => $catalogue->getOwnerName()->value(),
-                        ],
-                        context: ['items' => $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogueId])[$catalogueId] ?? 0],
-                    ));
-                }
-
-                $this->catalogueItemRepository->deleteByCatalogueId($catalogueId);
-                $this->viewRepository->deleteByEntity($catalogueId, $templateId);
-                $this->downloadRepository->deleteByEntity($catalogueId, $templateId);
-                $this->likeRepository->deleteByEntity($catalogueId, $templateId);
-                $this->commentRepository->deleteByEntity($catalogueId, $templateId);
-                $this->hashtagRepository->deleteByEntity($catalogueId, $templateId);
-                $this->catalogueRepository->deleteById($catalogueId);
-            });
+            DB::transaction(fn () => $this->deleteCatalogue->execute($catalogue->getIdValue()));
 
             return Result::success();
         } catch (\Exception $e) {
@@ -533,46 +490,6 @@ class CatalogueService implements CatalogueServiceInterface
 
             return Result::failure(CatalogueErrors::deletionFailed());
         }
-    }
-
-    public function setPublicity(EntityId $uuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result
-    {
-        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
-
-        if (! $catalogue) {
-            return Result::failure(CatalogueErrors::notFound($uuid->value()));
-        }
-
-        if (! $this->cataloguePolicy->canChangePublicity($authenticatedUser, $catalogue)) {
-            return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
-        }
-
-        $previous = $catalogue->getPublicity();
-
-        if ($previous === $publicity) {
-            return Result::success($publicity);
-        }
-
-        DB::transaction(function () use ($catalogue, $publicity, $previous, $authenticatedUser): void {
-            $this->catalogueRepository->update($this->applyUpdates(
-                $catalogue,
-                new CatalogueUpdateDTO(publicity: $publicity === PublicityStatus::PUBLIC),
-            ));
-
-            if (! $authenticatedUser->id->equals($catalogue->getOwnerId())) {
-                $this->activityRecorder->record(ActivityEntries::by(
-                    $authenticatedUser,
-                    ActivityAction::CataloguePublicityChanged,
-                    ActivitySubjectType::Catalogue,
-                    $catalogue->getUid()->value(),
-                    $catalogue->getTitle()->value,
-                    before: ['publicity' => $previous->label()],
-                    after: ['publicity' => $publicity->label()],
-                ));
-            }
-        });
-
-        return Result::success($publicity);
     }
 
     private function trackView(int $id, ObjectTemplateType $objectTemplateType, Viewer $viewer): void

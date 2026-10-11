@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Catalogues\Actions;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Catalogues\Policies\CataloguePolicy;
-use App\Application\Catalogues\Services\CatalogueServiceInterface;
+use App\Application\Catalogues\Policies\CatalogueModerationPolicy;
+use App\Application\Catalogues\Services\CatalogueModerationServiceInterface;
 use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -19,8 +19,8 @@ use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 
 /**
- * Publicity and delete through CatalogueService. Whether the button shows is decided by the same
- * CataloguePolicy the service applies, so Known lists never offer a delete to a moderator.
+ * Publicity and removal through CatalogueModerationService. Whether the button shows is decided by
+ * the same CatalogueModerationPolicy the service applies, so Known lists never offer a delete.
  */
 final class CatalogueModerationActions
 {
@@ -31,13 +31,13 @@ final class CatalogueModerationActions
             ->icon(static fn (Catalogue $record): Heroicon => $record->publicity ? Heroicon::OutlinedLockClosed : Heroicon::OutlinedGlobeAlt)
             ->color('gray')
             ->requiresConfirmation()
-            ->visible(static fn (Catalogue $record): bool => PanelActor::may(
+            ->visible(static fn (): bool => PanelActor::may(
                 'catalogues.update',
-                static fn (AuthenticatedUser $actor): bool => app(CataloguePolicy::class)->canChangePublicity($actor, self::domain($record)),
+                static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canModerate($actor),
             ))
             ->action(static function (Catalogue $record): void {
                 $target = $record->publicity ? PublicityStatus::PRIVATE : PublicityStatus::PUBLIC;
-                $result = app(CatalogueServiceInterface::class)->setPublicity(
+                $result = app(CatalogueModerationServiceInterface::class)->setPublicity(
                     new EntityId((string) $record->uuid),
                     $target,
                     PanelActor::current(),
@@ -61,10 +61,10 @@ final class CatalogueModerationActions
             ->modalSubmitActionLabel('Delete catalogue')
             ->visible(static fn (Catalogue $record): bool => PanelActor::may(
                 'catalogues.delete',
-                static fn (AuthenticatedUser $actor): bool => app(CataloguePolicy::class)->canDelete($actor, self::domain($record)),
+                static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canRemove($actor, self::domain($record)),
             ))
             ->action(static function (Catalogue $record, Action $action): void {
-                $result = app(CatalogueServiceInterface::class)->deleteCatalogue(
+                $result = app(CatalogueModerationServiceInterface::class)->remove(
                     new EntityId((string) $record->uuid),
                     PanelActor::current(),
                 );

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Articles\Actions;
 
 use App\Application\Articles\Actions\Processing\RequeueArticleProcessingAction;
-use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
-use App\Application\Articles\Services\ArticleServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
@@ -31,13 +30,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Article moderation actions. Each one calls the application layer; the panel only decides who
- * sees the button (panel permission plus the application ArticlePolicy).
+ * sees the button (panel permission plus ArticleModerationPolicy).
  */
 final class ArticleModerationActions
 {
     public static function canModerate(string $permission): bool
     {
-        return PanelActor::may($permission, static fn (AuthenticatedUser $actor): bool => app(ArticlePolicy::class)->canModerate($actor));
+        return PanelActor::may($permission, static fn (AuthenticatedUser $actor): bool => app(ArticleModerationPolicy::class)->canModerate($actor));
     }
 
     public static function setStatus(): Action
@@ -160,7 +159,7 @@ final class ArticleModerationActions
             ])
             ->modalSubmitActionLabel('Delete article')
             ->action(static function (Article $record, Action $action): void {
-                $result = app(ArticleServiceInterface::class)->deleteArticle(
+                $result = app(ArticleModerationServiceInterface::class)->remove(
                     new EntityId((string) $record->uuid),
                     PanelActor::current(),
                 );

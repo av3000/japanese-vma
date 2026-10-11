@@ -33,4 +33,12 @@ interface ArticleModerationServiceInterface
      * @return Result Success payload: PublicityStatus
      */
     public function setPublicity(EntityId $articleUuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result;
+
+    /**
+     * Removes someone's article with everything attached to it, and records a snapshot in the
+     * activity log. Authors delete their own articles through ArticleService.
+     *
+     * @return Result<null>
+     */
+    public function remove(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result;
 }

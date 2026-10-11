@@ -30,7 +30,6 @@ enum ActivityAction: string
     case HashtagMerged = 'hashtag.merged';
     case CataloguePublicityChanged = 'catalogue.publicity_changed';
     case CatalogueDeleted = 'catalogue.deleted';
-    case SentenceUpdated = 'sentence.updated';
     case SentenceDeleted = 'sentence.deleted';
     case EnvironmentViewed = 'operations.environment_viewed';
     case WorkerCheckRun = 'operations.worker_check_run';
@@ -59,7 +58,6 @@ enum ActivityAction: string
             self::HashtagMerged => 'Hashtags merged',
             self::CataloguePublicityChanged => 'Catalogue publicity changed',
             self::CatalogueDeleted => 'Catalogue deleted',
-            self::SentenceUpdated => 'Sentence edited',
             self::SentenceDeleted => 'Sentence deleted',
             self::EnvironmentViewed => 'Environment page viewed',
             self::WorkerCheckRun => 'Worker check run',

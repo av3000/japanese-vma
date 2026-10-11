@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace App\Application\Community\Posts\Services;
 
-use App\Application\Activity\ActivityEntries;
-use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Community\Posts\Actions\CleanupPostDependenciesAction;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Community\Posts\Policies\PostPolicy;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Services\HashtagServiceInterface;
-use App\Domain\Activity\Enums\ActivityAction;
-use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Community\Posts\DTOs\PostCreateDTO;
 use App\Domain\Community\Posts\DTOs\PostUpdateDTO;
 use App\Domain\Community\Posts\Errors\PostErrors;
@@ -38,7 +34,6 @@ class PostWriteService implements PostWriteServiceInterface
         private readonly HashtagServiceInterface $hashtagService,
         private readonly CleanupPostDependenciesAction $cleanupPostDependencies,
         private readonly IncrementViewAction $incrementView,
-        private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
 
@@ -126,26 +121,7 @@ class PostWriteService implements PostWriteServiceInterface
         }
 
         try {
-            DB::transaction(function () use ($post, $actor): void {
-                // An author removing their own post is ordinary use; removing someone else's is
-                // moderation, and the snapshot is all that remains of it afterwards.
-                if ($actor->id->value() !== $post->getAuthorId()) {
-                    $this->activityRecorder->record(ActivityEntries::by(
-                        $actor,
-                        ActivityAction::PostDeleted,
-                        ActivitySubjectType::Post,
-                        $post->getUuid()->value(),
-                        $post->getTitle(),
-                        before: [
-                            'title' => $post->getTitle(),
-                            'content' => $post->getContent(),
-                            'topic' => $post->getTopic()->label(),
-                            'locked' => $post->isLocked(),
-                            'author' => $post->getAuthorName(),
-                        ],
-                    ));
-                }
-
+            DB::transaction(function () use ($post): void {
                 $this->cleanupPostDependencies->execute($post->getIdValue());
                 $this->postRepository->delete($post->getIdValue());
             });
@@ -182,18 +158,8 @@ class PostWriteService implements PostWriteServiceInterface
         }
 
         try {
-            $updated = DB::transaction(function () use ($post, $locked, $uuid, $actor): Post {
+            $updated = DB::transaction(function () use ($post, $locked, $uuid): Post {
                 $this->postRepository->setLocked($post->getIdValue(), $locked);
-
-                $this->activityRecorder->record(ActivityEntries::by(
-                    $actor,
-                    $locked ? ActivityAction::PostLocked : ActivityAction::PostUnlocked,
-                    ActivitySubjectType::Post,
-                    $uuid->value(),
-                    $post->getTitle(),
-                    before: ['locked' => ! $locked],
-                    after: ['locked' => $locked],
-                ));
 
                 return $this->postRepository->findByUuid($uuid)
                     ?? throw new RuntimeException('Locked post could not be reloaded.');
