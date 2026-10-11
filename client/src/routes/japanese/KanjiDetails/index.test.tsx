@@ -1,18 +1,19 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	kanjiManyMeanings,
+	kanjiNoMeaning,
+	kanjiNoReadings,
+	kanjiPerson,
+} from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { SavedListType } from '@/shared/constants/enums';
 import KanjiDetails from './index';
 
-const authorizedWidgetProps: Array<{
-	entityId: number;
-	instanceObjectType: SavedListType;
-	isKnownType: SavedListType;
-	modalTitle?: string;
-	initialIsBookmarked?: boolean;
-	initialIsKnown?: boolean;
-	loadOnMount?: boolean;
-}> = [];
+const useKanjiQueryMock = vi.fn();
+const authorizedWidgetProps: Array<Record<string, unknown>> = [];
+const relatedProps: Array<Record<string, unknown>> = [];
 let isAuthenticated = true;
 
 vi.mock('react-router-dom', async () => {
@@ -20,166 +21,169 @@ vi.mock('react-router-dom', async () => {
 
 	return {
 		...actual,
-		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
-		useParams: () => ({ kanji_id: 'kanji-uuid' }),
+		Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => (
+			<a href={to} className={className}>
+				{children}
+			</a>
+		),
+		useParams: () => ({ kanji_id: 'kanji-route-id' }),
 	};
 });
 
 vi.mock('@/api/kanjis/details', () => ({
-	useKanjiQuery: () => ({
-		data: {
-			id: 88,
-			uuid: 'kanji-uuid',
-			character: '水',
-			onyomi: ['スイ'],
-			kunyomi: ['みず'],
-			meanings: ['water', 'river'],
-			nanori: [],
-			grade: '1',
-			stroke_count: 4,
-			jlpt: '5',
-			frequency: 2,
-			radicals: ['水'],
-			radical_parts: ['水'],
-			viewer_catalogue_state: { is_saved: true, is_known: false },
-			display: {
-				meaning: 'water, river',
-				onyomi: 'スイ',
-				kunyomi: 'みず',
-				nanori: '',
-				radicalParts: '水',
-				radicals: '水',
-				grade: '1',
-				jlpt: '5',
-				frequency: '2',
-			},
-			related: {
-				words: [
-					{
-						id: 501,
-						uuid: 'word-uuid',
-						word: '水泳',
-						furigana: 'すいえい',
-						jlpt: 'N5',
-						meanings: ['swimming'],
-					},
-				],
-				wordTotal: 1,
-				sentences: [
-					{
-						id: 601,
-						uuid: 'sentence-uuid',
-						content: '水を飲みます。',
-						tatoeba_entry: '12345',
-					},
-				],
-				sentenceTotal: 1,
-				articles: [
-					{
-						id: 701,
-						uuid: 'article-uuid',
-						title_jp: '水の記事',
-						hashtags: [],
-						views_total: 3,
-						likes_total: 2,
-						comments_total: 1,
-					},
-				],
-				articleTotal: 1,
-			},
-		},
-		isLoading: false,
-		isError: false,
-	}),
+	useKanjiQuery: (...args: unknown[]) => useKanjiQueryMock(...args),
 }));
 
 vi.mock('@/hooks/useAuth', () => ({
-	useAuth: () => ({
-		isAuthenticated,
-	}),
+	useAuth: () => ({ isAuthenticated }),
 }));
 
 vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
-	AuthorizedBookmarkWidget: (props: {
-		entityId: number;
-		instanceObjectType: SavedListType;
-		isKnownType: SavedListType;
-		modalTitle?: string;
-		initialIsBookmarked?: boolean;
-		initialIsKnown?: boolean;
-		loadOnMount?: boolean;
-	}) => {
+	AuthorizedBookmarkWidget: (props: Record<string, unknown>) => {
 		authorizedWidgetProps.push(props);
 		return <div>Authorized bookmark widget</div>;
 	},
 }));
 
-vi.mock('@/assets/images/spinner.gif', () => ({
-	default: 'spinner.gif',
+vi.mock('@/components/features/japanese/related', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/components/features/japanese/related')>()),
+	KanjiRelated: (props: Record<string, unknown>) => {
+		relatedProps.push(props);
+		return <section>Related to this kanji</section>;
+	},
 }));
+
+vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
+
+const loaded = (data: unknown) => ({ data, isLoading: false, isError: false, error: null });
+
+const httpError = (status: number) =>
+	new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+		status,
+		statusText: '',
+		headers: {},
+		config: { headers: new AxiosHeaders() },
+		data: { title: 'Kanji not found', detail: 'Kanji 4d98c557 not found' },
+	});
 
 describe('KanjiDetails', () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
 		authorizedWidgetProps.length = 0;
+		relatedProps.length = 0;
 		isAuthenticated = true;
+		useKanjiQueryMock.mockReturnValue(
+			loaded({ ...kanjiPerson, viewer_catalogue_state: { is_saved: true, is_known: false } }),
+		);
 	});
 
-	it('renders migrated v1 kanji detail data', () => {
+	it('shows the kanji as the page title in the Japanese serif face, with its meaning and the way back', () => {
 		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		expect(html).toContain('<h1 lang="ja">水</h1>');
-		expect(html).toContain('Kunyomi: <span lang="ja">みず</span>');
-		expect(html).toContain('Onyomi: <span lang="ja">スイ</span>');
-		expect(html).toContain('<h2>water, river</h2>');
-		expect(html).toContain('JLPT: 5');
-		expect(html.indexOf('Kunyomi: <span lang="ja">みず</span>')).toBeLessThan(
-			html.indexOf('Onyomi: <span lang="ja">スイ</span>'),
-		);
-		expect(html.indexOf('Onyomi: <span lang="ja">スイ</span>')).toBeLessThan(html.indexOf('<h2>water, river</h2>'));
+		expect(useKanjiQueryMock).toHaveBeenCalledWith('kanji-route-id');
+		expect(html).toMatch(/<h1 class="[^"]*glyph[^"]*" lang="ja">人<\/h1>/);
+		expect(html.match(/<h1/g)).toHaveLength(1);
+		expect(html).toContain('lang="en">person</p>');
+		expect(html).toMatch(/<a href="\/kanjis"[^>]*>.*Kanji<\/a>/);
+		expect(html).toContain('aria-label="About this kanji"');
 	});
 
-	it('uses numeric kanji id for catalogue actions', () => {
+	it('lists the readings, with suffix marks kept and empty kinds left out', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toContain('>On’yomi</dt>');
+		expect(html).toContain('<li>ジン</li><li>ニン</li>');
+		expect(html).toContain('>Kun’yomi</dt>');
+		expect(html).toContain('<li>-り</li>');
+		expect(html).toContain('>Name readings</dt>');
+
+		useKanjiQueryMock.mockReturnValue(loaded(kanjiNoMeaning));
+		const sparse = renderToStaticMarkup(<KanjiDetails />);
+		expect(sparse).toContain('>On’yomi</dt>');
+		expect(sparse).not.toContain('Kun’yomi');
+		expect(sparse).not.toContain('Name readings');
+	});
+
+	it('sets the okurigana apart after a dot', () => {
+		useKanjiQueryMock.mockReturnValue(loaded(kanjiManyMeanings));
+
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toMatch(
+			/<li>な<span class="[^"]*okurigana[^"]*"><span aria-hidden="true">·<\/span>る<\/span><\/li>/,
+		);
+	});
+
+	it('says so when a kanji has no readings or no meaning, never a dash', () => {
+		useKanjiQueryMock.mockReturnValue(loaded(kanjiNoReadings));
+		expect(renderToStaticMarkup(<KanjiDetails />)).toContain('No readings are recorded for this kanji.');
+
+		useKanjiQueryMock.mockReturnValue(loaded(kanjiNoMeaning));
+		const html = renderToStaticMarkup(<KanjiDetails />);
+		expect(html).toContain('No English meaning recorded.');
+		expect(html).not.toMatch(/<(dd|li|p)[^>]*>-<\//);
+	});
+
+	it('shows the facts the dictionary has in the rail, and leaves out the rest', () => {
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toMatch(/>Strokes<\/dt><dd[^>]*>2<\/dd>/);
+		expect(html).toMatch(/>JLPT<\/dt><dd[^>]*>.*N5.*<\/dd>/);
+		expect(html).toMatch(/>Grade<\/dt><dd[^>]*>Grade 1<\/dd>/);
+		expect(html).toMatch(/>Frequency<\/dt><dd[^>]*>#5<\/dd>/);
+		expect(html).toMatch(/>Radical<\/dt><dd[^>]*><a href="\/radical\/9"[^>]*><span lang="ja">人<\/span>/);
+
+		useKanjiQueryMock.mockReturnValue(loaded(kanjiNoMeaning));
+		const sparse = renderToStaticMarkup(<KanjiDetails />);
+		expect(sparse).not.toContain('>JLPT</dt>');
+		expect(sparse).not.toContain('>Grade</dt>');
+		expect(sparse).not.toContain('>Frequency</dt>');
+		expect(sparse).toContain('href="/radical/37"');
+	});
+
+	it('offers a labelled Save with the viewer’s state, by the numeric kanji id', () => {
 		renderToStaticMarkup(<KanjiDetails />);
 
+		expect(authorizedWidgetProps).toHaveLength(1);
 		expect(authorizedWidgetProps[0]).toMatchObject({
-			entityId: 88,
+			entityId: kanjiPerson.id,
 			instanceObjectType: SavedListType.KANJIS,
 			isKnownType: SavedListType.KNOWNKANJIS,
 			modalTitle: 'Choose Kanji List to add',
 			initialIsBookmarked: true,
 			initialIsKnown: false,
 			loadOnMount: false,
+			label: 'Save to a catalogue',
+		});
+		expect(relatedProps[0]).toMatchObject({
+			kanji: expect.objectContaining({ uuid: kanjiPerson.uuid }),
+			showSave: true,
 		});
 	});
 
-	it('renders related words sentences and articles from the v1 detail aggregate', () => {
-		const html = renderToStaticMarkup(<KanjiDetails />);
-
-		expect(html).toContain('Found in (1) words');
-		expect(html).toContain('水泳');
-		expect(html).toContain('<h3>swimming</h3>');
-		expect(html).toContain('JLPT: N5');
-		expect(html).toContain('/word/word-uuid');
-		expect(html).toContain('Found in (1) sentences');
-		expect(html).toContain('水を飲みます。');
-		expect(html).toContain('/sentence/sentence-uuid');
-		expect(html).toContain('Found in (1) articles');
-		expect(html).toContain('水の記事');
-		expect(html).toContain('Likes: 2 · Views: 3 · Comments: 1');
-		expect(html).toContain('/articles/article-uuid');
-		expect(html.match(/relatedList/g)).toHaveLength(3);
-		expect(html.match(/relatedResource/g)).toHaveLength(3);
-	});
-
-	it('keeps core and related detail public without catalogue actions for guests', () => {
+	it('keeps the entry and its related lists public, without Save, for guests', () => {
 		isAuthenticated = false;
 
 		const html = renderToStaticMarkup(<KanjiDetails />);
 
-		expect(html).toContain('<h2>water, river</h2>');
-		expect(html).toContain('Found in (1) words');
-		expect(html).not.toContain('Authorized bookmark widget');
+		expect(html).toContain('lang="ja">人</h1>');
+		expect(html).toContain('Related to this kanji');
 		expect(authorizedWidgetProps).toHaveLength(0);
+		expect(relatedProps[0]).toMatchObject({ showSave: false });
+	});
+
+	it('explains a missing kanji in its own words, with a way back', () => {
+		useKanjiQueryMock.mockReturnValue({ data: undefined, isLoading: false, isError: true, error: httpError(404) });
+
+		const html = renderToStaticMarkup(<KanjiDetails />);
+
+		expect(html).toContain('This kanji doesn&#x27;t exist. It may have been deleted.');
+		expect(html).toContain('href="/kanjis"');
+		expect(html).not.toContain('Kanji 4d98c557 not found');
+	});
+
+	it('shows the loading page while the kanji loads', () => {
+		useKanjiQueryMock.mockReturnValue({ data: undefined, isLoading: true, isError: false, error: null });
+
+		expect(renderToStaticMarkup(<KanjiDetails />)).toContain('data-loading-family="detail"');
 	});
 });

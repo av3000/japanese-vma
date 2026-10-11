@@ -1,0 +1,162 @@
+/* A dictionary entry's header and body on its detail page (UI-DICT-DETAIL, #352). */
+.header {
+	display: grid;
+	gap: var(--spacing-sm);
+	min-width: 0;
+}
+
+.back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	justify-self: start;
+	font-size: var(--font-size-body-md);
+}
+
+/* The global h1 min-height is sized for heading-1 type; these titles set their own size. */
+.title {
+	min-height: 0;
+	margin: 0;
+	font-family: var(--font-family-ja-serif);
+	font-weight: var(--font-weight-regular);
+	overflow-wrap: anywhere;
+}
+
+.glyph {
+	font-size: var(--font-size-japanese-entry-glyph);
+	line-height: var(--line-height-md);
+}
+
+.word {
+	font-size: var(--font-size-heading-1);
+	line-height: var(--line-height-md);
+}
+
+.sentence {
+	font-size: var(--font-size-heading-3);
+	line-height: var(--line-height-japanese-article-text);
+}
+
+.reading {
+	margin: 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-heading-5);
+	overflow-wrap: anywhere;
+}
+
+.lead {
+	margin: 0;
+	color: var(--color-neutral-800);
+	font-size: var(--font-size-heading-5);
+	overflow-wrap: anywhere;
+}
+
+.missing {
+	margin: 0;
+	color: var(--color-neutral-600);
+}
+
+.lead.missing {
+	font-size: var(--font-size-body-lg);
+}
+
+.source {
+	margin: 0;
+	color: var(--color-neutral-700);
+	font-size: var(--font-size-body-md);
+}
+
+/* A titled block in the reading column: readings, meanings. */
+.block {
+	display: grid;
+	gap: var(--spacing-sm);
+	min-width: 0;
+}
+
+.blockHeading {
+	min-height: 0;
+	margin: 0;
+	font-size: var(--font-size-heading-4);
+}
+
+.definitions {
+	display: grid;
+	gap: var(--spacing-sm);
+	margin: 0;
+}
+
+.definition {
+	display: grid;
+	gap: var(--spacing-3xs);
+	min-width: 0;
+}
+
+@media (min-width: 768px) {
+	.definition {
+		grid-template-columns: calc(var(--size-7xl) + var(--size-xl)) minmax(0, 1fr);
+		gap: var(--spacing-md);
+		align-items: baseline;
+	}
+}
+
+.term {
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+}
+
+.value {
+	margin: 0;
+	min-width: 0;
+}
+
+.readingList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2xs) var(--spacing-md);
+	margin: 0;
+	padding: 0;
+	font-size: var(--font-size-heading-5);
+	list-style: none;
+}
+
+.readingList li {
+	overflow-wrap: anywhere;
+}
+
+.okurigana {
+	color: var(--color-neutral-600);
+}
+
+.meanings {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.glyphs {
+	font-family: var(--font-family-ja-serif);
+	font-size: var(--font-size-heading-3);
+}
+
+.radicalNumber {
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-sm);
+}
+
+.comments {
+	display: grid;
+	gap: var(--spacing-md);
+}
+
+.sectionHeading {
+	min-height: 0;
+	margin: 0;
+	font-size: var(--font-size-heading-4);
+}
+
+.romaji {
+	color: var(--color-neutral-600);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+}

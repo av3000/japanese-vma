@@ -1,47 +1,27 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
-import { kanjiArticleFilters, wordArticleFilters } from '@/api/articles/related';
-import { getArticleIndexQueryKey } from '@/api/generated/article/article';
-import { getKanjiIndexQueryKey } from '@/api/generated/kanji/kanji';
-import { getSentenceIndexQueryKey } from '@/api/generated/sentence/sentence';
-import { getWordIndexQueryKey } from '@/api/generated/word/word';
-import { kanjiSentenceFilters, kanjiWordFilters } from '@/api/kanjis/related';
-import { radicalKanjiFilters } from '@/api/radicals/related';
-import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { SeededQueryClient } from '@/test/seededQueryClient';
 import { EntryKanji, KanjiRelated, RadicalKanji, WordRelated } from './';
 import {
-	articleRows,
-	indexPage,
 	kanjiNoMeaning,
 	kanjiPerson,
-	personSentenceRows,
-	personWordRows,
 	radicalTree,
 	sentenceLong,
-	treeKanjiRows,
 	wordKanaOnly,
 	wordManyKanji,
 } from './dictionaryDetail.fixtures';
+import { kanjiRelatedSeeds, radicalKanjiSeeds, wordRelatedSeeds } from './relatedSeeds';
 
 /*
  * The related material under each dictionary entry (#352), on seeded index pages: the totals are the
  * full-data counts from the UI-DICT-DETAIL-00 check (人 2,398 words, 49,419 sentences; 木 674 kanji).
  */
 
-const kanjiSeeds = (kanji: { id: number; uuid: string }, full: boolean): QuerySeed[] => [
-	pageSeed(
-		getWordIndexQueryKey(kanjiWordFilters(kanji.uuid)),
-		full ? indexPage(personWordRows, 2398) : indexPage([], 0),
-	),
-	pageSeed(
-		getSentenceIndexQueryKey(kanjiSentenceFilters(kanji.uuid)),
-		full ? indexPage(personSentenceRows, 49419) : indexPage([], 0),
-	),
-	pageSeed(
-		getArticleIndexQueryKey(kanjiArticleFilters(kanji.id)),
-		full ? indexPage(articleRows, articleRows.length) : indexPage([], 0),
-	),
-];
+const kanjiSeeds = (kanji: { id: number; uuid: string }, full: boolean) =>
+	kanjiRelatedSeeds(
+		kanji,
+		full ? { words: 2398, sentences: 49419, articles: 2 } : { words: 0, sentences: 0, articles: 0 },
+	);
 
 const meta = {
 	title: 'Features/Japanese/Related',
@@ -117,9 +97,7 @@ export const KanjiNothingRelated: Story = {
 /** The 18-kanji word, in the order the kanji appear in it, and no articles. */
 export const WordManyKanji: Story = {
 	render: () => (
-		<SeededQueryClient
-			seeds={[pageSeed(getArticleIndexQueryKey(wordArticleFilters(wordManyKanji.id)), indexPage([], 0))]}
-		>
+		<SeededQueryClient seeds={wordRelatedSeeds(wordManyKanji.id, 0)}>
 			<WordRelated word={{ ...wordManyKanji, kanjis: wordManyKanji.kanjis ?? [] }} />
 		</SeededQueryClient>
 	),
@@ -135,14 +113,7 @@ export const WordManyKanji: Story = {
 
 export const WordKanaOnly: Story = {
 	render: () => (
-		<SeededQueryClient
-			seeds={[
-				pageSeed(
-					getArticleIndexQueryKey(wordArticleFilters(wordKanaOnly.id)),
-					indexPage(articleRows, articleRows.length),
-				),
-			]}
-		>
+		<SeededQueryClient seeds={wordRelatedSeeds(wordKanaOnly.id, 2)}>
 			<WordRelated word={{ ...wordKanaOnly, kanjis: [] }} />
 		</SeededQueryClient>
 	),
@@ -154,14 +125,7 @@ export const WordKanaOnly: Story = {
 /** 木, signed in: page 1 of 27 inline, with search, page size and Save. */
 export const RadicalThousands: Story = {
 	render: () => (
-		<SeededQueryClient
-			seeds={[
-				pageSeed(
-					getKanjiIndexQueryKey(radicalKanjiFilters(radicalTree.uuid)),
-					indexPage(treeKanjiRows, 674, 25),
-				),
-			]}
-		>
+		<SeededQueryClient seeds={radicalKanjiSeeds(radicalTree.uuid, 674)}>
 			<RadicalKanji radicalUuid={radicalTree.uuid} showSave />
 		</SeededQueryClient>
 	),

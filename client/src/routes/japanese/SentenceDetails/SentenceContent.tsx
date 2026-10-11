@@ -5,20 +5,28 @@ import { canMutateSentence, useDeleteSentenceMutation } from '@/api/sentences/au
 import type { MappedSentenceDetail } from '@/api/sentences/details';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
-import CommentsBlock from '@/components/features/comment/CommentsBlock';
+import { EntryHeader, SentenceSourceLine } from '@/components/features/japanese/entry';
+import { sentenceSource, type SentenceSource } from '@/components/features/japanese/entryValues';
+import { SentenceRelated } from '@/components/features/japanese/related';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
+import { characterCount, DetailFacts } from '@/components/shared/DetailFacts';
+import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
-import { Link } from '@/components/shared/Link';
-import { Cluster, Container, Grid, Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
-import styles from '../japaneseDetailPage.module.css';
 
 interface SentenceContentProps {
 	sentence: MappedSentenceDetail;
 }
+
+const SOURCE_FACTS: Record<SentenceSource['kind'], string> = {
+	tatoeba: 'Tatoeba',
+	own: 'You',
+	member: 'A member',
+};
 
 const SentenceContent = ({ sentence }: SentenceContentProps) => {
 	const { isAuthenticated, user } = useAuth();
@@ -33,6 +41,8 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 
 	// One gate for both controls, so imported sentences stay read-only for admins too.
 	const canMutate = canMutateSentence(user, sentence);
+	const isOwn = user != null && sentence.user_id === user.id;
+	const source = sentenceSource(sentence, user?.id);
 
 	const handleDelete = () => {
 		setDeleteError(null);
@@ -44,88 +54,69 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 		});
 	};
 
+	const facts = [
+		{ term: 'Characters', value: characterCount(sentence.content) },
+		{ term: 'Kanji', value: sentence.kanjis.length },
+		...(source ? [{ term: 'Source', value: { text: SOURCE_FACTS[source.kind] } }] : []),
+	];
+
 	return (
-		<Container className={styles.page}>
-			<Stack gap="2xl">
-				<div>
-					<Link to="/sentences">Back</Link>
-				</div>
-				<Grid columns={12} gap="lg" align="start">
-					<Grid.Item span={{ base: 12, sm: 8 }}>
-						<h4 lang="ja">{sentence.content}</h4>
-						{sentence.user_id ? (
-							<p>User Author - {sentence.user_id}</p>
-						) : (
-							<p>
-								Tatoeba link:{' '}
-								<a
-									href={`https://tatoeba.org/eng/sentences/show/${sentence.tatoeba_entry}`}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									{sentence.tatoeba_entry}
-								</a>
-							</p>
-						)}
-					</Grid.Item>
-					<Grid.Item span={{ base: 12, sm: 4 }}>
-						<Cluster gap="xs" align="start">
-							{canMutate && (
-								<>
-									<Button
-										onClick={deleteModal.open}
-										variant="ghost"
-										hasOnlyIcon
-										aria-label="Delete sentence"
-										aria-controls={deleteModal.id}
-										aria-expanded={deleteModal.isOpen}
-									>
-										<Icon name="trashbinSolid" size="md" />
-									</Button>
-									<Link to={`/sentences/${sentence.uuid}/edit`}>Edit</Link>
-								</>
-							)}
-							{isAuthenticated && (
+		<>
+			<DetailLayout
+				railLabel="About this sentence"
+				header={
+					<EntryHeader backTo="/sentences" backLabel="Sentences" title={sentence.content} kind="sentence">
+						{source ? <SentenceSourceLine source={source} /> : null}
+					</EntryHeader>
+				}
+				main={deleteError ? <Alert tone="danger">{deleteError}</Alert> : null}
+				facts={<DetailFacts title="About this sentence" facts={facts} />}
+				actions={
+					isAuthenticated || canMutate ? (
+						<DetailActions>
+							{isAuthenticated ? (
 								<AuthorizedBookmarkWidget
 									instanceObjectType={SavedListType.SENTENCES}
 									isKnownType={SavedListType.KNOWNSENTENCES}
 									entityId={sentence.id}
 									modalTitle="Choose Sentence List to add"
+									label="Save to a catalogue"
+									savedLabel="Saved to a catalogue"
 								/>
-							)}
-						</Cluster>
-					</Grid.Item>
-				</Grid>
-				{deleteError && <Alert tone="danger">{deleteError}</Alert>}
-
-				<section className={styles.section}>
-					<h4>Kanjis ({sentence.kanjis.length}) results</h4>
-					<ul className={styles.relatedList}>
-						{sentence.kanjis.map((kanji) => (
-							<li className={styles.relatedRow} key={kanji.uuid}>
-								<h3 lang="ja">{kanji.character}</h3>
-								<span>{kanji.meanings.slice(0, 3).join(', ')}</span>
-								<Link to={`/kanji/${kanji.uuid}`} className={styles.rowAction}>
-									Open
-								</Link>
-							</li>
-						))}
-					</ul>
-				</section>
-			</Stack>
-
-			{/* A sentence cannot be locked, so no `isLocked` is passed; the gate exists only for Post. */}
-			<Container size="sm" as="section" className={styles.section}>
-				<CommentsBlock parent="sentence" entityId={sentence.id} entityUuid={sentence.uuid} />
-			</Container>
+							) : null}
+							{canMutate ? (
+								<DetailActionGroup heading={isOwn ? 'Your sentence' : 'Manage sentence'}>
+									<Button variant="outline" isFullWidth to={`/sentences/${sentence.uuid}/edit`}>
+										<Icon size="sm" name="penSolid" />
+										Edit sentence
+									</Button>
+									<Button
+										variant="outline"
+										isFullWidth
+										onClick={deleteModal.open}
+										aria-controls={deleteModal.id}
+										aria-expanded={deleteModal.isOpen}
+									>
+										<Icon size="sm" name="trashbinSolid" />
+										Delete sentence
+									</Button>
+								</DetailActionGroup>
+							) : null}
+						</DetailActions>
+					) : undefined
+				}
+				after={<SentenceRelated sentence={sentence} />}
+			/>
 
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={sentence.content}
+				ariaLabel="Delete sentence"
+				deleteLabel="Yes, delete the sentence"
 				onDelete={handleDelete}
 				isProcessing={deleteMutation.isPending}
 			/>
-		</Container>
+		</>
 	);
 };
 

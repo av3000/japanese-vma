@@ -33,4 +33,7 @@
 	/* Japanese article body in the Reading Room layout (UI-DETAIL-00, #457). */
 	--font-size-japanese-article-text: 19px;
 	--line-height-japanese-article-text: 2;
+	/* A dictionary entry's single glyph, a kanji or a radical, set as the page title so its strokes
+	   can be read (UI-DICT-DETAIL-00, #535). Larger than any heading on purpose. */
+	--font-size-japanese-entry-glyph: 96px;
 }

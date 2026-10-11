@@ -160,3 +160,7 @@ export const inTextOrder = <Item extends { character: string }>(items: readonly 
 		.sort((a, b) => position(a.item) - position(b.item) || a.order - b.order)
 		.map(({ item }) => item);
 };
+
+/** The entries that are present, e.g. a page's facts once those the dictionary lacks are `null`. */
+export const withoutMissing = <Item>(items: readonly (Item | null)[]): Item[] =>
+	items.filter((item): item is Item => item !== null);
