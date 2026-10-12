@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Models;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Carbon\Carbon;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Article extends Model
 {
     use HasFactory;
+    use RoutesByUuid;
 
     protected static function newFactory(): ArticleFactory
     {

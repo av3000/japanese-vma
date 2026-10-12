@@ -106,6 +106,17 @@ class ArticleErrors
         );
     }
 
+    public static function processingStillRunning(string $articleUid): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingStillRunning',
+            status: HttpStatus::CONFLICT,
+            description: 'Processing is still running',
+            detail: "Article {$articleUid} is being processed and has reported progress recently",
+            errorMessage: 'This article is still being processed. Wait for it to finish or fail, or force the retry.',
+        );
+    }
+
     public static function validationFailed(array $errors): ResultError
     {
         return new ResultError(

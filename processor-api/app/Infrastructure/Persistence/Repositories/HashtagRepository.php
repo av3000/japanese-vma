@@ -4,11 +4,15 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
+use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
+use App\Domain\Engagement\DTOs\HashtagTagDTO;
+use App\Domain\Engagement\ValueObjects\HashtagName;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
 use App\Infrastructure\Persistence\Models\ObjectTemplate;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class HashtagRepository implements HashtagRepositoryInterface
 {
@@ -24,8 +28,13 @@ class HashtagRepository implements HashtagRepositoryInterface
      */
     public function create(array $data): void
     {
-        // Get or create the unique hashtag
-        $uniquehashtag = Uniquehashtag::firstOrCreate(['content' => $data['content']]);
+        // Reuse a tag that differs only in case or character width, so `#JLPT` and `＃jlpt` do
+        // not become two tags.
+        $uniquehashtag = Uniquehashtag::query()
+            ->where('normalized_content', HashtagName::keyFor($data['content']))
+            ->orderBy('id')
+            ->first()
+            ?? Uniquehashtag::create(['content' => trim($data['content'])]);
 
         // Create the association
         HashtagEntity::create([
@@ -115,6 +124,91 @@ class HashtagRepository implements HashtagRepositoryInterface
             ->groupBy('entity_id')
             ->map(fn ($links) => $links->map(fn ($link) => $link->uniquehashtag))
             ->toArray();
+    }
+
+    public function findTag(int $hashtagId): ?HashtagTagDTO
+    {
+        $tag = Uniquehashtag::query()->find($hashtagId);
+
+        return $tag === null ? null : $this->toTagDTO($tag);
+    }
+
+    public function findTagByKey(string $key, ?int $exceptId = null): ?HashtagTagDTO
+    {
+        $tag = Uniquehashtag::query()
+            ->where('normalized_content', $key)
+            ->when($exceptId !== null, static fn (Builder $query) => $query->where('id', '!=', $exceptId))
+            ->orderBy('id')
+            ->first();
+
+        return $tag === null ? null : $this->toTagDTO($tag);
+    }
+
+    public function rename(int $hashtagId, HashtagName $name): HashtagTagDTO
+    {
+        $tag = Uniquehashtag::query()->findOrFail($hashtagId);
+        $tag->content = $name->display;
+        $tag->save();
+
+        return $this->toTagDTO($tag);
+    }
+
+    public function merge(int $sourceId, int $targetId): HashtagMergeResultDTO
+    {
+        // Lock both tags in id order so two opposite merges cannot deadlock.
+        $locked = Uniquehashtag::query()
+            ->whereIn('id', [$sourceId, $targetId])
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        $source = $locked[$sourceId] ?? throw (new ModelNotFoundException())->setModel(Uniquehashtag::class, [$sourceId]);
+        $target = $locked[$targetId] ?? throw (new ModelNotFoundException())->setModel(Uniquehashtag::class, [$targetId]);
+
+        $targetKeys = HashtagEntity::query()
+            ->where('hashtag_id', $targetId)
+            ->get(['entity_type_id', 'entity_id'])
+            ->map(static fn (HashtagEntity $link): string => $link->entity_type_id.':'.$link->entity_id)
+            ->flip();
+
+        $sourceLinks = HashtagEntity::withTrashed()
+            ->where('hashtag_id', $sourceId)
+            ->orderBy('id')
+            ->get(['id', 'entity_type_id', 'entity_id', 'deleted_at']);
+
+        $retired = $sourceLinks
+            ->filter(static fn (HashtagEntity $link): bool => $link->deleted_at === null
+                && $targetKeys->has($link->entity_type_id.':'.$link->entity_id))
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
+        if ($retired !== []) {
+            HashtagEntity::query()->whereIn('id', $retired)->delete();
+        }
+
+        HashtagEntity::withTrashed()->where('hashtag_id', $sourceId)->update(['hashtag_id' => $targetId]);
+
+        $sourceDTO = $this->toTagDTO($source);
+        $source->delete();
+
+        return new HashtagMergeResultDTO(
+            source: $sourceDTO,
+            target: $this->toTagDTO($target),
+            movedLinkIds: $sourceLinks->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all(),
+            retiredLinkIds: $retired,
+        );
+    }
+
+    private function toTagDTO(Uniquehashtag $tag): HashtagTagDTO
+    {
+        return new HashtagTagDTO(
+            id: (int) $tag->id,
+            content: (string) $tag->content,
+            key: (string) ($tag->normalized_content ?? HashtagName::keyFor((string) $tag->content)),
+        );
     }
 
     private function resolveTemplateId(ObjectTemplateType $entityType): int

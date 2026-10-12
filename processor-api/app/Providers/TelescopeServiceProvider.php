@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureHorizonBasicAuth;
+use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -56,10 +58,9 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function ($user) {
-            return in_array($user->email, [
-                //
-            ]);
-        });
+        // Same rule as Horizon's panel path. Telescope only runs where TELESCOPE_ENABLED is set,
+        // which production does not.
+        Gate::define('viewTelescope', static fn ($user = null): bool => $user instanceof User
+            && $user->hasPanelPermission(EnsureHorizonBasicAuth::PANEL_PERMISSION));
     }
 }

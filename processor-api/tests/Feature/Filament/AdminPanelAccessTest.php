@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -19,6 +22,8 @@ class AdminPanelAccessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed(PermissionSeeder::class);
 
         Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
         Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
@@ -46,6 +51,42 @@ class AdminPanelAccessTest extends TestCase
         $this->actingAs($admin, 'web')
             ->get('/admin')
             ->assertOk();
+    }
+
+    public function test_admin_without_explicit_permissions_passes_every_catalogue_check(): void
+    {
+        $admin = $this->createUser([UserRole::ADMIN->value]);
+
+        self::assertSame([], $admin->getAllPermissions()->all());
+
+        foreach (PermissionCatalog::allPermissionNames() as $permission) {
+            self::assertTrue($admin->hasPanelPermission($permission), $permission);
+        }
+
+        $this->actingAs($admin, 'web')->get('/admin/users')->assertOk();
+        $this->actingAs($admin, 'web')->get('/admin/roles')->assertOk();
+    }
+
+    public function test_user_with_only_users_view_reaches_users_but_not_roles(): void
+    {
+        $role = Role::create(['name' => 'support', 'guard_name' => 'api']);
+        $role->givePermissionTo('users.view');
+        $support = $this->createUser(['support']);
+
+        $this->actingAs($support, 'web')->get('/admin')->assertOk();
+        $this->actingAs($support, 'web')->get('/admin/users')->assertOk();
+        $this->actingAs($support, 'web')->get('/admin/roles')->assertForbidden();
+        $this->actingAs($support, 'web')->get('/admin/users/create')->assertForbidden();
+    }
+
+    public function test_permission_outside_the_catalogue_does_not_open_the_panel(): void
+    {
+        Permission::create(['name' => 'legacy.unlisted', 'guard_name' => 'api']);
+        $role = Role::create(['name' => 'legacy', 'guard_name' => 'api']);
+        $role->givePermissionTo('legacy.unlisted');
+        $user = $this->createUser(['legacy']);
+
+        $this->actingAs($user, 'web')->get('/admin')->assertForbidden();
     }
 
     /**

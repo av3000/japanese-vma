@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Filament\Resources\Users\Actions\UserAccountActions;
 use App\Filament\Resources\Users\UserResource;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -14,6 +18,10 @@ class ViewUser extends ViewRecord
     {
         return [
             EditAction::make(),
+            ActionGroup::make(UserAccountActions::all())
+                ->label('Support')
+                ->button()
+                ->color('gray'),
         ];
     }
 }
