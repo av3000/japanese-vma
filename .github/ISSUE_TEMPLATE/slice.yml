@@ -1,0 +1,85 @@
+name: Slice or feature
+description: One vertical slice of behaviour, small enough for one commit. Acceptance criteria are required.
+title: "[STABLE-ID] "
+labels:
+  - needs-triage
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The issue body is the contract: reviews check the code against it, and the PR shows the evidence for each criterion.
+        Agents fill this shape with the `write-issue` skill. See `docs/agents/issue-tracker.md`.
+  - type: input
+    id: parent
+    attributes:
+      label: Parent
+      description: The epic this slice belongs to, if any.
+      placeholder: "#501"
+  - type: input
+    id: blocked-by
+    attributes:
+      label: Blocked by
+      description: Issues that must land first, if any.
+      placeholder: "#503, #504"
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Current behaviour and who it hurts, in 2 to 4 sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: desired
+    attributes:
+      label: Desired behaviour
+      description: What is true when this is done. Describe behaviour, not layers.
+    validations:
+      required: true
+  - type: textarea
+    id: scope-in
+    attributes:
+      label: "Scope: in"
+    validations:
+      required: true
+  - type: textarea
+    id: scope-out
+    attributes:
+      label: "Scope: out"
+      description: At least one line. This is what stops scope creep in review.
+    validations:
+      required: true
+  - type: textarea
+    id: key-interfaces
+    attributes:
+      label: Key interfaces
+      description: Names of routes, endpoints, components or use cases. Prefer names over file paths and line numbers.
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: |
+        Observable, independently verifiable outcomes, 3 to 7 per slice. Put test expectations inside a criterion.
+        Never use standard procedure as a criterion ("PR opened", "CI green", "code reviewed").
+      value: |
+        - [ ] AC-1
+        - [ ] AC-2
+        - [ ] AC-3
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: How much damage a mistake here could do.
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Decisions, links, screenshots.
