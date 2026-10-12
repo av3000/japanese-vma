@@ -59,9 +59,9 @@ export const EmptySearch: Story = {
 export const ManyRows: Story = { args: { kanjis: repeatRows(kanjiRows, 60) } };
 
 /** Stacked rows: glyph | meaning, On, Kun, then Strokes · JLPT · Freq. on one line | Save. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
 
-export const MobileGuest: Story = { ...Guest, parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const MobileGuest: Story = { ...Guest, parameters: { viewport: { defaultViewport: 'xs' } } };
 
 /** Catalogue detail's "Manage items" mode: a caller-owned Remove column after Save. */
 export const WithTrailingColumn: Story = {
@@ -85,5 +85,5 @@ export const WithTrailingColumn: Story = {
 
 export const WithTrailingColumnMobile: Story = {
 	...WithTrailingColumn,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

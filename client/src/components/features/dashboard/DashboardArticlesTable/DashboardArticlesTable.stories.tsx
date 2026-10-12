@@ -50,4 +50,4 @@ export const Empty: Story = { args: { articles: [] } };
 export const FiveHundredRows: Story = { args: { articles: manyArticles(500) } };
 
 /** Stacked rows below 768px. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
-import { QueryClient, QueryClientProvider, type InfiniteData } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
 import { articleKeys } from '@/api/articles/keys';
 import { getPendingArticlesQueryKey } from '@/api/articles/moderation';
@@ -23,8 +23,7 @@ import {
 } from '@/components/features/dashboard/dashboardFixtures';
 import { hostileCatalogues, knownLists } from '@/components/features/dashboard/dashboardListFixtures';
 import { reviewQueue } from '@/components/features/dashboard/dashboardReviewFixtures';
-import { AuthContext } from '@/providers/contexts/auth-provider';
-import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
+import type { QuerySeed } from '@/storybook/decorators';
 import type { User } from '@/types';
 import { dashboardArticleFilters } from './DashboardArticlesPanel';
 import { dashboardCatalogueFilters } from './DashboardCataloguesPanel';
@@ -33,27 +32,11 @@ import { defaultDashboardViewState } from './dashboardSearchParams';
 import Dashboard from './index';
 
 /*
- * The whole Dashboard route on seeded data. The QueryClient is pre-filled for the default view of
+ * The whole Dashboard route on seeded data. The cache (`parameters.seeds`) holds the default view of
  * each tab (staleTime: Infinity), so nothing fetches; a view that was not seeded (another filter)
  * goes to the network and, without a backend, shows the real error state. A fake Echo instance
  * captures the owner-channel listener so a story can push a processing update into a row.
  */
-
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-
-const signedIn = (user: User): AuthValue => ({
-	user,
-	isAuthenticated: true,
-	isLoading: false,
-	sessionExpired: false,
-	token: 'story-token',
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-});
 
 const owner = {
 	id: 7,
@@ -94,40 +77,49 @@ interface Seed {
 	loadEverything?: boolean;
 }
 
-const seededClient = ({ user, articles = [], catalogues = [], loadEverything = false }: Seed) => {
-	const client = new QueryClient({
-		defaultOptions: { queries: { staleTime: Infinity, retry: false, refetchOnWindowFocus: false } },
-	});
+/** The cache for the default view of each tab, for `user`. */
+const dashboardSeeds = ({ user, articles = [], catalogues = [], loadEverything = false }: Seed): QuerySeed[] => {
 	const pick = loadEverything ? infinite : firstPageOnly;
 
-	client.setQueryData(
-		articleKeys.list(dashboardArticleFilters(user.uuid, '', 'all')),
-		pick(
-			toPages(articles).map(
-				(page) =>
-					({
-						...page,
-						facets: [],
-						applied: { q: null, filters: {}, sort: '-created_at' },
-					}) as unknown as ArticleListResource,
+	return [
+		{
+			queryKey: articleKeys.list(dashboardArticleFilters(user.uuid, '', 'all')),
+			data: pick(
+				toPages(articles).map(
+					(page) =>
+						({
+							...page,
+							facets: [],
+							applied: { q: null, filters: {}, sort: '-created_at' },
+						}) as unknown as ArticleListResource,
+				),
 			),
-		),
-	);
-	client.setQueryData(
-		getInfiniteCataloguesQueryKey(dashboardCatalogueFilters(user.uuid, defaultDashboardViewState('lists'))),
-		pick(toPages(catalogues) as unknown as CatalogueListResource[]),
-	);
-	client.setQueryData(
-		getPendingArticlesQueryKey({ per_page: DASHBOARD_PER_PAGE }),
-		pick(toPages(reviewQueue) as unknown as ArticleModerationListResource[]),
-	);
-	client.setQueryData(dashboardKeys.counts(user.uuid), {
-		articles: articles.length,
-		lists: catalogues.length,
-		awaitingReview: articles.filter((article) => article.status === 0 || article.status === 2).length,
-	});
+		},
+		{
+			queryKey: getInfiniteCataloguesQueryKey(
+				dashboardCatalogueFilters(user.uuid, defaultDashboardViewState('lists')),
+			),
+			data: pick(toPages(catalogues) as unknown as CatalogueListResource[]),
+		},
+		{
+			queryKey: getPendingArticlesQueryKey({ per_page: DASHBOARD_PER_PAGE }),
+			data: pick(toPages(reviewQueue) as unknown as ArticleModerationListResource[]),
+		},
+		{
+			queryKey: dashboardKeys.counts(user.uuid),
+			data: {
+				articles: articles.length,
+				lists: catalogues.length,
+				awaitingReview: articles.filter((article) => article.status === 0 || article.status === 2).length,
+			},
+		},
+	];
+};
 
-	return client;
+const defaultSeed: Seed = {
+	user: owner,
+	articles: [...hostileArticles, ...everyStateArticles],
+	catalogues: [...hostileCatalogues, ...knownLists],
 };
 
 /** A connected socket whose owner-channel listener the story can call. */
@@ -150,22 +142,15 @@ const fakeSocket = () => {
 	};
 
 	return {
-		context: {
-			...DEFAULT_SOCKET_CONTEXT,
-			echo: echo as unknown as Echo<'reverb'>,
-			generation: 1,
-			isConfigured: true,
-			isConnected: true,
-			connectionStatus: 'connected' as const,
-			hasAttemptedConnection: true,
-		},
+		context: { echo: echo as unknown as Echo<'reverb'>, generation: 1 },
 		emit: (payload: unknown) => listeners.forEach((listener) => listener(payload)),
+		reset: () => {
+			listeners.length = 0;
+		},
 	};
 };
 
-interface DashboardStoryArgs extends Seed {
-	tab?: 'articles' | 'lists' | 'review';
-}
+const live = fakeSocket();
 
 /** Story-only: one button that pushes "processing finished" for the second article. */
 const LiveUpdateButton: React.FC<{ onEmit: () => void }> = ({ onEmit }) => (
@@ -174,56 +159,31 @@ const LiveUpdateButton: React.FC<{ onEmit: () => void }> = ({ onEmit }) => (
 	</button>
 );
 
-const DashboardStory: React.FC<DashboardStoryArgs> = (args) => {
-	const [client] = React.useState(() => seededClient(args));
-	const [socket] = React.useState(fakeSocket);
-	const target = everyStateArticles[1];
+const target = everyStateArticles[1];
 
-	return (
-		<QueryClientProvider client={client}>
-			<AuthContext.Provider value={signedIn(args.user)}>
-				<SocketContext.Provider value={socket.context}>
-					<LiveUpdateButton
-						onEmit={() =>
-							socket.emit({
-								...makeProcessing(ProcessingStatus.completed, target.uuid),
-								sequence: 2,
-							})
-						}
-					/>
-					<Dashboard />
-				</SocketContext.Provider>
-			</AuthContext.Provider>
-		</QueryClientProvider>
-	);
-};
-
-/** Puts the tab in the iframe URL before the router reads it. */
-const openTab = (tab: DashboardStoryArgs['tab']) => () => {
-	const url = new URL(window.location.href);
-
-	for (const key of ['tab', 'q', 'status', 'type', 'sort']) {
-		url.searchParams.delete(key);
-	}
-
-	if (tab && tab !== 'articles') {
-		url.searchParams.set('tab', tab);
-	}
-
-	window.history.replaceState(window.history.state, '', url);
-};
+/** The dashboard at `tab`, as the router would open it. */
+const atTab = (tab: 'lists' | 'review') => ({ initialEntries: [`/dashboard?tab=${tab}`] });
 
 const meta = {
-	title: 'Routes/Dashboard',
-	component: DashboardStory,
-	parameters: { layout: 'fullscreen' },
-	args: {
-		user: owner,
-		articles: [...hostileArticles, ...everyStateArticles],
-		catalogues: [...hostileCatalogues, ...knownLists],
+	title: 'Pages/Dashboard',
+	component: Dashboard,
+	parameters: {
+		layout: 'fullscreen',
+		auth: { user: owner },
+		socket: { ...live.context, isConfigured: true, connectionStatus: 'connected', isConnected: true },
+		router: { initialEntries: ['/dashboard'] },
+		seeds: dashboardSeeds(defaultSeed),
 	},
-	beforeEach: openTab('articles'),
-} satisfies Meta<typeof DashboardStory>;
+	beforeEach: () => live.reset(),
+	render: () => (
+		<>
+			<LiveUpdateButton
+				onEmit={() => live.emit({ ...makeProcessing(ProcessingStatus.completed, target.uuid), sequence: 2 })}
+			/>
+			<Dashboard />
+		</>
+	),
+} satisfies Meta<typeof Dashboard>;
 
 export default meta;
 
@@ -243,15 +203,25 @@ export const Articles: Story = {
 	},
 };
 
-export const Lists: Story = { beforeEach: openTab('lists') };
+export const Lists: Story = { parameters: { router: atTab('lists') } };
 
 /** A brand-new user: no articles, and only the four built-in Known lists. */
-export const NewUser: Story = { args: { articles: [], catalogues: knownLists } };
+export const NewUser: Story = {
+	parameters: { seeds: dashboardSeeds({ user: owner, articles: [], catalogues: knownLists }) },
+};
 
-export const NewUserLists: Story = { ...NewUser, beforeEach: openTab('lists') };
+export const NewUserLists: Story = { parameters: { ...NewUser.parameters, router: atTab('lists') } };
 
 /** 500 articles, all loaded: the sticky header holds and nothing overflows. */
-export const FiveHundredArticles: Story = { args: { articles: manyArticles(500), loadEverything: true } };
+export const FiveHundredArticles: Story = {
+	parameters: { seeds: dashboardSeeds({ ...defaultSeed, articles: manyArticles(500), loadEverything: true }) },
+};
 
 /** Admins get the review queue as a third section. */
-export const AdminReview: Story = { args: { user: admin }, beforeEach: openTab('review') };
+export const AdminReview: Story = {
+	parameters: {
+		auth: { user: admin },
+		router: atTab('review'),
+		seeds: dashboardSeeds({ ...defaultSeed, user: admin }),
+	},
+};

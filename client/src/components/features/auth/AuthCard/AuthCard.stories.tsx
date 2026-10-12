@@ -75,5 +75,5 @@ export const LongCopy: Story = {
 };
 
 export const MobileViewport: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

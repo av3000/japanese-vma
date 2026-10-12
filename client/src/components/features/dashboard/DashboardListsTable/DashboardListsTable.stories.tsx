@@ -41,4 +41,4 @@ export const Empty: Story = { args: { catalogues: [] } };
 
 export const FiveHundredRows: Story = { args: { catalogues: manyCatalogues(500) } };
 
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

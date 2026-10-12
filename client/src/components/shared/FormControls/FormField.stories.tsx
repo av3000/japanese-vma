@@ -75,7 +75,7 @@ export const LongLabelNarrow: Story = {
 		label: 'The email address you want to use to log in and receive account notices',
 		error: 'The email field must be a valid email address with a domain that accepts mail.',
 	},
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };
 
 /** The counter sits on the hint row and stays out of the accessible description. */

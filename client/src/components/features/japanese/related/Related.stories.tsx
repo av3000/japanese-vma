@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
-import { SeededQueryClient } from '@/test/seededQueryClient';
 import { EntryKanji, KanjiRelated, RadicalKanji, WordRelated } from './';
 import {
 	kanjiNoMeaning,
@@ -34,11 +33,8 @@ type Story = StoryObj<typeof meta>;
 
 /** 人, signed in: five words with Save, five sentences, the articles, and "See all" on each. */
 export const KanjiThousands: Story = {
-	render: () => (
-		<SeededQueryClient seeds={kanjiSeeds(kanjiPerson, true)}>
-			<KanjiRelated kanji={kanjiPerson} showSave />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: kanjiSeeds(kanjiPerson, true) },
+	render: () => <KanjiRelated kanji={kanjiPerson} showSave />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -52,6 +48,7 @@ export const KanjiThousands: Story = {
 
 /** The words modal: page 1 of 120 with search and page size; it opens on the cached first page. */
 export const KanjiWordsModal: Story = {
+	parameters: KanjiThousands.parameters,
 	render: KanjiThousands.render,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -66,11 +63,8 @@ export const KanjiWordsModal: Story = {
 };
 
 export const KanjiGuest: Story = {
-	render: () => (
-		<SeededQueryClient seeds={kanjiSeeds(kanjiPerson, true)}>
-			<KanjiRelated kanji={kanjiPerson} showSave={false} />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: kanjiSeeds(kanjiPerson, true) },
+	render: () => <KanjiRelated kanji={kanjiPerson} showSave={false} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await canvas.findByRole('table', { name: 'Words' });
@@ -80,11 +74,8 @@ export const KanjiGuest: Story = {
 
 /** 夳: no words, sentences or articles. Each heading stays, with one line. */
 export const KanjiNothingRelated: Story = {
-	render: () => (
-		<SeededQueryClient seeds={kanjiSeeds(kanjiNoMeaning, false)}>
-			<KanjiRelated kanji={kanjiNoMeaning} showSave />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: kanjiSeeds(kanjiNoMeaning, false) },
+	render: () => <KanjiRelated kanji={kanjiNoMeaning} showSave />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(await canvas.findByText('No words use this kanji yet.')).toBeVisible();
@@ -96,11 +87,8 @@ export const KanjiNothingRelated: Story = {
 
 /** The 18-kanji word, in the order the kanji appear in it, and no articles. */
 export const WordManyKanji: Story = {
-	render: () => (
-		<SeededQueryClient seeds={wordRelatedSeeds(wordManyKanji.id, 0)}>
-			<WordRelated word={{ ...wordManyKanji, kanjis: wordManyKanji.kanjis ?? [] }} />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: wordRelatedSeeds(wordManyKanji.id, 0) },
+	render: () => <WordRelated word={{ ...wordManyKanji, kanjis: wordManyKanji.kanjis ?? [] }} />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const table = within(canvas.getByRole('table', { name: 'Kanji' }));
@@ -112,11 +100,8 @@ export const WordManyKanji: Story = {
 };
 
 export const WordKanaOnly: Story = {
-	render: () => (
-		<SeededQueryClient seeds={wordRelatedSeeds(wordKanaOnly.id, 2)}>
-			<WordRelated word={{ ...wordKanaOnly, kanjis: [] }} />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: wordRelatedSeeds(wordKanaOnly.id, 2) },
+	render: () => <WordRelated word={{ ...wordKanaOnly, kanjis: [] }} />,
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByText('This word is written without kanji.')).toBeVisible();
 	},
@@ -124,11 +109,8 @@ export const WordKanaOnly: Story = {
 
 /** 木, signed in: page 1 of 27 inline, with search, page size and Save. */
 export const RadicalThousands: Story = {
-	render: () => (
-		<SeededQueryClient seeds={radicalKanjiSeeds(radicalTree.uuid, 674)}>
-			<RadicalKanji radicalUuid={radicalTree.uuid} showSave />
-		</SeededQueryClient>
-	),
+	parameters: { seeds: radicalKanjiSeeds(radicalTree.uuid, 674) },
+	render: () => <RadicalKanji radicalUuid={radicalTree.uuid} showSave />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(

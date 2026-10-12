@@ -3,7 +3,7 @@ import { expect, within } from '@storybook/test';
 import Footer from './';
 
 const meta = {
-	title: 'Features/Footer',
+	title: 'Features/Navigation/Footer',
 	component: Footer,
 	parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof Footer>;
@@ -25,5 +25,5 @@ export const Default: Story = {
 
 /** Narrow canvas: the brand stacks above the two link columns. */
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

@@ -39,5 +39,5 @@ export const FewPages: Story = { render: () => <Controlled initialPage={2} pageC
 
 export const Mobile: Story = {
 	render: () => <Controlled initialPage={12} pageCount={25} />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

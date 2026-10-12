@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { currentLocation } from '@/storybook/decorators';
 import { HeaderSearchDrawer } from './HeaderSearchDrawer';
 import { HeaderSearchPanel } from './HeaderSearchPanel';
 import { SEARCH_MEMORY_KEY, type SearchMemory } from './recentSearches';
@@ -26,7 +27,7 @@ const withMemory = (memory: SearchMemory | null) => () => {
 };
 
 const meta = {
-	title: 'Features/HeaderSearch/Panel',
+	title: 'Features/Navigation/HeaderSearch',
 	component: HeaderSearchPanel,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
@@ -124,7 +125,6 @@ export const RecentSearches: Story = {
 export const Keyboard: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const startUrl = window.location.href;
 		const input = canvas.getByRole('combobox', { name: 'Search JPLearning' });
 
 		await userEvent.type(input, '水');
@@ -139,16 +139,14 @@ export const Keyboard: Story = {
 		await expect(input).toHaveAttribute('aria-activedescendant', options[1].id);
 		await userEvent.keyboard('{Enter}');
 
-		await expect(`${window.location.pathname}${window.location.search}`).toBe('/articles?q=%E6%B0%B4');
-		// The preview's BrowserRouter pushed a real history entry; put the story URL back.
-		window.history.replaceState(window.history.state, '', startUrl);
+		await expect(currentLocation()).toBe('/articles?q=%E6%B0%B4');
 	},
 };
 
 /** The mobile drawer: a real modal dialog, closed by Cancel with focus back on the trigger. */
 export const Drawer: StoryObj<typeof HeaderSearchDrawer> = {
 	render: () => <HeaderSearchDrawer />,
-	parameters: { viewport: { defaultViewport: 'mobile1' }, layout: 'fullscreen' },
+	parameters: { viewport: { defaultViewport: 'xs' }, layout: 'fullscreen' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const trigger = canvas.getByRole('button', { name: 'Search' });

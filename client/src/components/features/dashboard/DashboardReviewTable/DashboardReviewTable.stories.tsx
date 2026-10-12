@@ -36,4 +36,4 @@ export const Loading: Story = { args: { articles: [], loading: true } };
 
 export const Empty: Story = { args: { articles: [] } };
 
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

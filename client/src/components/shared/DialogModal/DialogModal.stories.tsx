@@ -9,7 +9,7 @@ import { DialogModal } from './DialogModal';
 
 const meta: Meta<typeof DialogModal> = {
 	component: DialogModal,
-	title: 'Components/DialogModal',
+	title: 'Shared/DialogModal',
 	tags: ['autodocs'],
 	parameters: {
 		docs: {

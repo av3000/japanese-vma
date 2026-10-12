@@ -77,7 +77,7 @@ export const OneCard: Story = {
 /** Hostile: a twelve-character word wraps instead of overflowing at 360px. */
 export const LongWord: Story = {
 	args: { deck: longWordDeck },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };
 
 export const Summary: Story = {

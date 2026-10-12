@@ -7,7 +7,7 @@ import { ConfirmModal } from './ConfirmModal';
 
 const meta: Meta<typeof ConfirmModal> = {
 	component: ConfirmModal,
-	title: 'Components/Modals/ConfirmModal',
+	title: 'Shared/Modals/ConfirmModal',
 	tags: ['autodocs'],
 	parameters: {
 		docs: {

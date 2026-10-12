@@ -7,7 +7,7 @@ import AnimatedBadgeDemo from './BadgeAnimatedDemo';
 
 const meta: Meta<typeof Badge> = {
 	component: Badge,
-	title: 'Components/Badge',
+	title: 'Shared/Badge',
 	tags: ['autodocs'],
 	parameters: {
 		docs: {

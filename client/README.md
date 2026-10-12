@@ -85,6 +85,20 @@ npm run storybook
 npm run build-storybook
 ```
 
+## Storybook
+
+Run Storybook natively, not through the Docker `storybook` service: on Windows the bind mount makes the container much slower.
+
+```bash
+cd client
+npx playwright install chromium   # once, for the story tests
+npm run storybook                 # http://localhost:6006
+npm run test:storybook            # every story and play function in headless Chromium
+npm run build-storybook
+```
+
+Story conventions (titles, the `auth`/`socket`/`router`/`seeds` parameters, play functions) are in Storybook under **Docs/Authoring** (`src/storybook/docs/Authoring.mdx`).
+
 ## Generate API Client
 
 ```bash

@@ -158,7 +158,7 @@ export const WithHint: Story = {
 /** Below 768px every control takes the full width and stacks. */
 export const MobileViewport: Story = {
 	render: (args) => <Example onSubmit={args.onSubmit} initialSearch="文法" withFilters hasActiveFilters />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 

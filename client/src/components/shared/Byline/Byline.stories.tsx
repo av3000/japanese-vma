@@ -29,7 +29,7 @@ export const JapaneseName: Story = { args: { name: '田中太郎' } };
 /** Long names wrap inside the line; they never push the date off screen. */
 export const LongName: Story = {
 	args: { name: 'Wolfeschlegelsteinhausenbergerdorff'.repeat(3), views: 98765432 },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };
 
 export const UnknownAuthor: Story = { args: { name: '', views: 0 } };

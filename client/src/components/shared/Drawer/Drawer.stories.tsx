@@ -27,7 +27,7 @@ const DrawerDemo = ({ label }: { label: string }) => {
 };
 
 const meta = {
-	title: 'Components/Drawer',
+	title: 'Shared/Drawer',
 	component: DrawerDemo,
 	tags: ['autodocs'],
 	args: { label: 'Example drawer' },

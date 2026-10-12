@@ -28,6 +28,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
+    "test:storybook": "vitest run --project storybook",
     "style:audit": "node scripts/style-audit.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -60,7 +61,6 @@
     "@eslint/js": "^9.24.0",
     "@storybook/addon-essentials": "^8.6.8",
     "@storybook/addon-links": "^8.6.8",
-    "@storybook/addon-onboarding": "^8.6.8",
     "@storybook/blocks": "^8.6.8",
     "@storybook/experimental-addon-test": "^8.6.8",
     "@storybook/react": "^8.6.8",
@@ -96,12 +96,6 @@
     "vite": "^6.2.1",
     "vite-plugin-checker": "^0.9.1",
     "vitest": "^3.0.9"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "plugin:storybook/recommended"
-    ]
   },
   "browserslist": {
     "production": [

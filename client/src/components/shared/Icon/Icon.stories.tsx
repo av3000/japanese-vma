@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Icon } from '.';
 
 const meta: Meta<typeof Icon> = {
+	title: 'Shared/Icon',
 	component: Icon,
 	tags: ['autodocs'],
 };

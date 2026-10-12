@@ -25,5 +25,5 @@ export const ErrorState: Story = { name: 'Error', args: { status: 'error' } };
 
 export const MobileViewport: Story = {
 	args: { status: 'success', stats },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

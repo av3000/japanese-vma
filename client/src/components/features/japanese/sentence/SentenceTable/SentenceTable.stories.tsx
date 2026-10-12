@@ -45,4 +45,4 @@ export const EmptySearch: Story = {
 };
 
 /** No stacked layout: one cell per line, the sentence full width. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

@@ -6,7 +6,7 @@ import { FormField } from '@/components/shared/FormControls';
 import { InputTags } from './';
 
 const meta = {
-	title: 'Components/InputTags',
+	title: 'Shared/InputTags',
 	component: InputTags,
 	tags: ['autodocs'],
 } satisfies Meta<typeof InputTags>;

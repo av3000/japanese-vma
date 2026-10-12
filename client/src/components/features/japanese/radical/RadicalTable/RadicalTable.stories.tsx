@@ -45,4 +45,4 @@ export const EmptySearch: Story = {
 };
 
 /** Stacked rows: glyph | meaning, reading, strokes. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

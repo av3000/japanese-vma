@@ -6,7 +6,7 @@ import { getSentenceIndexQueryKey } from '@/api/generated/sentence/sentence';
 import { getWordIndexQueryKey } from '@/api/generated/word/word';
 import { kanjiSentenceFilters, kanjiWordFilters } from '@/api/kanjis/related';
 import { radicalKanjiFilters } from '@/api/radicals/related';
-import { pageSeed, type QuerySeed } from '@/test/seededQueryClient';
+import { pageSeed, type QuerySeed } from '@/storybook/decorators';
 import { articleRows, indexPage, personSentenceRows, personWordRows, treeKanjiRows } from './dictionaryDetail.fixtures';
 
 /*

@@ -108,7 +108,7 @@ const radicalColumns: DataTableColumn<RadicalResource>[] = [
 ];
 
 const meta = {
-	title: 'Components/DataTable',
+	title: 'Shared/DataTable',
 	component: DataTable<KanjiResource>,
 	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
@@ -209,10 +209,10 @@ export const ManyRows: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };
 
 export const MobileWords: Story = {
 	...Words,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

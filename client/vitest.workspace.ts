@@ -2,6 +2,7 @@ import { storybookTest } from '@storybook/experimental-addon-test/vitest-plugin'
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineWorkspace } from 'vitest/config';
+import { storyOptimizeDeps } from './.storybook/vite-shared';
 
 const dirname =
   typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,7 @@ export default defineWorkspace([
       // See options at: https://storybook.js.org/docs/writing-tests/test-addon#storybooktest
       storybookTest({ configDir: path.join(dirname, '.storybook') }),
     ],
+    optimizeDeps: { include: storyOptimizeDeps },
     test: {
       name: 'storybook',
       browser: {

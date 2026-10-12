@@ -71,5 +71,5 @@ export const Processing: Story = {
 
 export const Mobile: Story = {
 	args: { article: libraryArticles.longest },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

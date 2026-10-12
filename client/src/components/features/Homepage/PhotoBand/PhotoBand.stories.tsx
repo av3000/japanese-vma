@@ -24,5 +24,5 @@ export const Default: Story = {
 
 /** 96px tall below 768px; the sides are trimmed and the summit stays centred. */
 export const MobileViewport: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

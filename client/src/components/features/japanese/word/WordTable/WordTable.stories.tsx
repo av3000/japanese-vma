@@ -62,4 +62,4 @@ export const EmptySearch: Story = {
 export const ManyRows: Story = { args: { words: repeatRows(wordRows, 60) } };
 
 /** Stacked rows: word, reading and level on line 1, then the meaning, then the type | Save. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

@@ -4,7 +4,7 @@ import { Chip } from './';
 
 // Define the Meta object for the component
 const meta = {
-	title: 'Components/Chip',
+	title: 'Shared/Chip',
 	component: Chip,
 	tags: ['autodocs'],
 	argTypes: {

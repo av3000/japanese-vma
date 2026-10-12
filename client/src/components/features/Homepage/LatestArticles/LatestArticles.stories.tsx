@@ -30,4 +30,4 @@ export const Empty: Story = { args: { articles: [], total: 0 } };
 
 export const ErrorState: Story = { name: 'Error', args: { status: 'error', articles: [], total: undefined } };
 
-export const MobileViewport: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const MobileViewport: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };

@@ -1,32 +1,13 @@
-import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, within } from '@storybook/test';
 import { getCommentsQueryKey } from '@/api/comments';
 import type { CommentResource } from '@/api/generated/model/commentResource';
 import { makeHashtags } from '@/components/features/Homepage/fixtures';
 import { LONGEST_POST_TITLE, POST_AUTHOR, makePostDetail } from '@/components/features/community/fixtures';
-import { AuthContext } from '@/providers/contexts/auth-provider';
-import { SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import type { AuthParameter, QuerySeed } from '@/storybook/decorators';
 import PostContent from './';
 
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-const guest: AuthValue = {
-	user: null,
-	isAuthenticated: false,
-	isLoading: false,
-	sessionExpired: false,
-	token: null,
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-};
-const signedIn = (id: number, isAdmin = false): AuthValue => ({
-	...guest,
-	isAuthenticated: true,
-	token: 'story-token',
+const signedIn = (id: number, isAdmin = false): AuthParameter => ({
 	user: { id, uuid: `user-${id}`, name: 'Story user', email: 'user@example.com', roles: [], isAdmin },
 });
 const owner = signedIn(POST_AUTHOR.id);
@@ -62,30 +43,12 @@ const comments = (count: number, uuid = POST_UUID): QuerySeed => ({
 	},
 });
 
-interface StoryParams {
-	auth?: AuthValue;
-	seeds?: QuerySeed[];
-}
-
 const meta = {
 	title: 'Pages/PostDetails',
 	component: PostContent,
 	tags: ['autodocs'],
-	parameters: { layout: 'fullscreen' },
+	parameters: { layout: 'fullscreen', seeds: [comments(2)] },
 	args: { post: makePostDetail() },
-	decorators: [
-		(Story, context) => {
-			const params = context.parameters as StoryParams;
-
-			return (
-				<AuthContext.Provider value={params.auth ?? guest}>
-					<SeededQueryClient seeds={params.seeds ?? [comments(2)]}>
-						<Story />
-					</SeededQueryClient>
-				</AuthContext.Provider>
-			);
-		},
-	],
 } satisfies Meta<typeof PostContent>;
 
 export default meta;
@@ -94,6 +57,7 @@ type Story = StoryObj<typeof meta>;
 
 /** A visitor: the topic, one h1, the byline, the counts, Like and the tags. No owner or admin groups. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 

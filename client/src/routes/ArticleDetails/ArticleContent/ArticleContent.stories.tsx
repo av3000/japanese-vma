@@ -1,4 +1,3 @@
-import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
 import { articleKanjisQueryKey, articleWordsQueryKey } from '@/api/articles/attachments';
@@ -8,29 +7,10 @@ import type { CommentResource } from '@/api/generated/model/commentResource';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
-import { AuthContext } from '@/providers/contexts/auth-provider';
-import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
-import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { type AuthParameter, pageSeed, type QuerySeed } from '@/storybook/decorators';
 import ArticleContent from './';
 
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-const guest: AuthValue = {
-	user: null,
-	isAuthenticated: false,
-	isLoading: false,
-	sessionExpired: false,
-	token: null,
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-};
-const signedIn = (id: number, isAdmin = false): AuthValue => ({
-	...guest,
-	isAuthenticated: true,
-	token: 'story-token',
+const signedIn = (id: number, isAdmin = false): AuthParameter => ({
 	user: { id, uuid: `user-${id}`, name: 'Hanako', email: 'hanako@example.com', roles: [], isAdmin },
 });
 const AUTHOR_ID = 7;
@@ -131,34 +111,12 @@ const seeds = (options: { kanji?: number; words?: number; comments?: number } = 
 	];
 };
 
-interface StoryParams {
-	auth?: AuthValue;
-	seeds?: QuerySeed[];
-}
-
 const meta = {
 	title: 'Pages/ArticleDetails',
 	component: ArticleContent,
 	tags: ['autodocs'],
-	parameters: { layout: 'fullscreen' },
+	parameters: { layout: 'fullscreen', seeds: seeds() },
 	args: { article: article() },
-	decorators: [
-		(Story, context) => {
-			const params = context.parameters as StoryParams;
-
-			return (
-				<AuthContext.Provider value={params.auth ?? guest}>
-					<SocketContext.Provider
-						value={{ ...DEFAULT_SOCKET_CONTEXT, isConnected: true, connectionStatus: 'connected' }}
-					>
-						<SeededQueryClient seeds={params.seeds ?? seeds()}>
-							<Story />
-						</SeededQueryClient>
-					</SocketContext.Provider>
-				</AuthContext.Provider>
-			);
-		},
-	],
 } satisfies Meta<typeof ArticleContent>;
 
 export default meta;
@@ -166,6 +124,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -179,9 +138,9 @@ export const Guest: Story = {
 	},
 };
 
-export const GuestMobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const GuestMobile: Story = { parameters: { auth: 'guest', viewport: { defaultViewport: 'xs' } } };
 
-export const GuestTablet: Story = { parameters: { viewport: { defaultViewport: 'tablet' } } };
+export const GuestTablet: Story = { parameters: { auth: 'guest', viewport: { defaultViewport: 'sm' } } };
 
 export const Owner: Story = {
 	parameters: { auth: signedIn(AUTHOR_ID) },
@@ -195,7 +154,7 @@ export const Owner: Story = {
 };
 
 export const OwnerMobile: Story = {
-	parameters: { auth: signedIn(AUTHOR_ID), viewport: { defaultViewport: 'mobile1' } },
+	parameters: { auth: signedIn(AUTHOR_ID), viewport: { defaultViewport: 'xs' } },
 };
 
 export const Admin: Story = {
@@ -257,7 +216,7 @@ export const HostileContentMobile: Story = {
 			})) as MappedArticle['hashtags'],
 		}),
 	},
-	parameters: { viewport: { defaultViewport: 'mobile1' }, seeds: seeds({ kanji: 500, words: 900, comments: 200 }) },
+	parameters: { viewport: { defaultViewport: 'xs' }, seeds: seeds({ kanji: 500, words: 900, comments: 200 }) },
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
 	},

@@ -2,6 +2,7 @@ import pluginJs from "@eslint/js";
 import pluginJsxA11y from "eslint-plugin-jsx-a11y";
 import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginReactConfig from "eslint-plugin-react/configs/recommended.js";
+import pluginStorybook from "eslint-plugin-storybook";
 import globals from "globals";
 import tsEslint from "typescript-eslint";
 
@@ -113,4 +114,6 @@ export default [
       ...pluginReactHooks.configs.recommended.rules,
     },
   },
+  // Story files (CSF): see src/storybook/docs/Authoring.mdx.
+  ...pluginStorybook.configs["flat/recommended"],
 ];

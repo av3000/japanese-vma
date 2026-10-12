@@ -4,6 +4,7 @@ import { Icon } from '@/components/shared/Icon';
 import { buttonSizes, buttonVariants } from './types';
 
 const meta: Meta<typeof Button> = {
+	title: 'Shared/Button',
 	component: Button,
 	tags: ['autodocs'],
 	argTypes: {

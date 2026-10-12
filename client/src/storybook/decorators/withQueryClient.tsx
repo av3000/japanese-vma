@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { Decorator } from '@storybook/react';
 import { QueryClient, QueryClientProvider, type QueryKey } from '@tanstack/react-query';
 
 /** One cached query: its key and the data a story wants it to hold. */
@@ -24,11 +25,10 @@ export const pageSeed = (listKey: QueryKey, data: unknown, page = 1): QuerySeed 
 };
 
 /**
- * Storybook has no API, so stories for components that read React Query get a client whose cache
- * already holds the data. Queries never go stale and never retry, so nothing is fetched unless the
- * story itself triggers a new page.
+ * A fresh client per story, its cache already holding `seeds`. Queries never go stale, retry or
+ * refetch on focus, so a seeded story fetches nothing unless the story itself asks for new data.
  */
-export const SeededQueryClient: React.FC<{ seeds: readonly QuerySeed[]; children: React.ReactNode }> = ({
+const SeededQueryClient: React.FC<{ seeds: readonly QuerySeed[]; children: React.ReactNode }> = ({
 	seeds,
 	children,
 }) => {
@@ -44,3 +44,10 @@ export const SeededQueryClient: React.FC<{ seeds: readonly QuerySeed[]; children
 
 	return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 };
+
+/** Provides React Query, seeded from `parameters.seeds`. */
+export const withQueryClient: Decorator = (Story, { id, parameters }) => (
+	<SeededQueryClient key={id} seeds={(parameters.seeds as QuerySeed[] | undefined) ?? []}>
+		<Story />
+	</SeededQueryClient>
+);

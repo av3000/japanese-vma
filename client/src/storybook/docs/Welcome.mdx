@@ -1,0 +1,40 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Docs/Welcome" />
+
+# Japanese VMA Storybook
+
+Every component in `client/src`, rendered with the app's real styles and contexts, plus a story for each page. A story is a statement of how a component looks and behaves. Its `play` function is a test that runs in a real browser.
+
+## The sidebar
+
+| Group | What lives there |
+|---|---|
+| `Docs/` | This page and the authoring conventions |
+| `Styleguide/` | Design tokens, read live from `src/styles/00-settings/*.css` |
+| `Shared/` | Primitives in `components/shared` |
+| `UI/` | Headless-UI wrappers in `components/ui` |
+| `System/` | App-level fallbacks in `components/system` |
+| `Features/<Domain>/` | Feature components in `components/features`, grouped by domain |
+| `Pages/` | Route components in `routes/` |
+
+## The toolbar
+
+- **Viewer**: guest, checking session, or a signed-in member.
+- **Socket**: the realtime connection state.
+
+A story that sets `parameters.auth` or `parameters.socket` keeps its own value, so named states stay fixed; every other story follows the toolbar. **Viewport** offers `xs` 360, `sm` 768, `md` 1024, `lg` 1320 and `xl` 1600, matching the CSS breakpoints.
+
+## Running it
+
+Storybook runs natively, not in Docker: on Windows the bind mount makes the container much slower.
+
+```bash
+cd client
+npx playwright install chromium   # once
+npm run storybook                 # http://localhost:6006
+npm run test:storybook            # every story and play function, headless Chromium
+npm run build-storybook
+```
+
+Writing a story? Read [Docs/Authoring](?path=/docs/docs-authoring--docs) first.

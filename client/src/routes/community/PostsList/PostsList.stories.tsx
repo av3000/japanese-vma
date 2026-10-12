@@ -1,36 +1,17 @@
-import type * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, within } from '@storybook/test';
 import type { PostListItemResource } from '@/api/generated/model';
 import { getInfinitePostsQueryKey, parsePostListFilters } from '@/api/posts/reads';
 import { makeHashtags } from '@/components/features/Homepage/fixtures';
 import { LONGEST_POST_TITLE, makePostListItemResource } from '@/components/features/community/fixtures';
-import { AuthContext } from '@/providers/contexts/auth-provider';
-import { infiniteSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { type AuthParameter, infiniteSeed, type QuerySeed } from '@/storybook/decorators';
 import PostsList from './';
 
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-const guest: AuthValue = {
-	user: null,
-	isAuthenticated: false,
-	isLoading: false,
-	sessionExpired: false,
-	token: null,
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-};
-const signedIn: AuthValue = {
-	...guest,
-	isAuthenticated: true,
-	token: 'story-token',
+const signedIn: AuthParameter = {
 	user: { id: 7, uuid: 'user-7', name: 'Hanako Sato', email: 'hanako@example.com', roles: [], isAdmin: false },
 };
 
-// The story iframe's own `?id=` parameters are not post filters, so this is the unfiltered key.
+// Stories start at `/` with no search params, so this is the unfiltered key.
 const listKey = getInfinitePostsQueryKey(parsePostListFilters(new URLSearchParams()));
 
 const firstPage = (items: PostListItemResource[], total = items.length): QuerySeed =>
@@ -89,28 +70,10 @@ const posts: PostListItemResource[] = [
 	}),
 ];
 
-interface StoryParams {
-	auth?: AuthValue;
-	seeds?: QuerySeed[];
-}
-
 const meta = {
 	title: 'Pages/PostsList',
 	component: PostsList,
-	parameters: { layout: 'fullscreen' },
-	decorators: [
-		(Story, context) => {
-			const params = context.parameters as StoryParams;
-
-			return (
-				<AuthContext.Provider value={params.auth ?? guest}>
-					<SeededQueryClient seeds={params.seeds ?? [firstPage(posts, 23)]}>
-						<Story />
-					</SeededQueryClient>
-				</AuthContext.Provider>
-			);
-		},
-	],
+	parameters: { layout: 'fullscreen', seeds: [firstPage(posts, 23)] },
 } satisfies Meta<typeof PostsList>;
 
 export default meta;

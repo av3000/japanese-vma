@@ -103,5 +103,5 @@ export const EveryType: Story = {
 
 export const Mobile: Story = {
 	args: { catalogue: libraryCatalogues.longest },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

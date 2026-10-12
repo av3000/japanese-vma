@@ -84,5 +84,5 @@ export const MobileViewport: Story = {
 			</Button>
 		),
 	},
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	parameters: { viewport: { defaultViewport: 'xs' } },
 };

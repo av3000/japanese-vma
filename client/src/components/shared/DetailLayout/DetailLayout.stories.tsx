@@ -61,9 +61,9 @@ export const Default: Story = {
 };
 
 /** Below 1024px the actions sit under the header, and the facts and extras follow the text. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
 
-export const Tablet: Story = { parameters: { viewport: { defaultViewport: 'tablet' } } };
+export const Tablet: Story = { parameters: { viewport: { defaultViewport: 'sm' } } };
 
 /** A 240-character title with no spaces wraps inside the reading column. */
 export const LongTitle: Story = {
