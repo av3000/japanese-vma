@@ -102,7 +102,6 @@ jobs:
           VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME || 'https' }}
         run: npm run typecheck
 
-      # Unit project only: the `storybook` Vitest project needs Playwright browsers.
       - name: Unit tests
         run: npm run test:unit
 
@@ -110,6 +109,57 @@ jobs:
       # beyond client/style-budget.json. Lower the budget as files are migrated.
       - name: Style audit
         run: npm run style:audit -- --check
+
+      # Story coverage guardrail (#578): fails when a component or route lands without a story
+      # and without a reasoned entry in client/story-coverage.json, or when an entry goes stale.
+      - name: Story audit
+        run: npm run story:audit -- --check
+
+      # The `storybook` Vitest project runs every story and play function in headless
+      # Chromium. Playwright's browser download is keyed on the exact pinned version.
+      - name: Read Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # A cache hit skips the browser download but not the system libraries it needs.
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Story tests
+        run: npm run test:storybook
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Upload Storybook
+        uses: actions/upload-artifact@v7
+        with:
+          name: storybook-static
+          path: client/storybook-static
+          retention-days: 7
+          if-no-files-found: error
+
+      # Vitest browser mode writes failure screenshots next to the story files.
+      - name: Upload story test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: story-test-screenshots
+          path: client/src/**/__screenshots__/
+          retention-days: 7
+          if-no-files-found: ignore
 
       # No separate `npm run build` here: the production image build below runs
       # the same `vite build`, and vite-plugin-checker runs TypeScript and ESLint
