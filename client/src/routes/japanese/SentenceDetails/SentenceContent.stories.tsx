@@ -11,7 +11,7 @@ const memberSentence = mapSentenceDetail({ ...sentenceShort, user_id: OWNER_ID, 
 
 /** Sentence detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real sentences. */
 const meta = {
-	title: 'Pages/SentenceDetails',
+	title: 'Pages/SentenceDetails/Content',
 	component: SentenceContent,
 	parameters: { layout: 'fullscreen', seeds: sentenceCommentSeeds(sentenceShort.uuid) },
 	args: { sentence: mapSentenceDetail(sentenceShort) },

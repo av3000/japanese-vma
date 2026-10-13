@@ -11,7 +11,7 @@ import WordContent from './WordContent';
 
 /** Word detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/WordDetails',
+	title: 'Pages/WordDetails/Content',
 	component: WordContent,
 	parameters: { layout: 'fullscreen', seeds: wordRelatedSeeds(wordManyMeanings.id, 2) },
 	args: { word: mapWordDetail(wordManyMeanings) },

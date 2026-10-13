@@ -11,7 +11,7 @@ import KanjiContent from './KanjiContent';
 
 /** Kanji detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/KanjiDetails',
+	title: 'Pages/KanjiDetails/Content',
 	component: KanjiContent,
 	parameters: {
 		layout: 'fullscreen',

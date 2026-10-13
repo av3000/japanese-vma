@@ -112,7 +112,7 @@ const seeds = (options: { kanji?: number; words?: number; comments?: number } = 
 };
 
 const meta = {
-	title: 'Pages/ArticleDetails',
+	title: 'Pages/ArticleDetails/Content',
 	component: ArticleContent,
 	parameters: { layout: 'fullscreen', seeds: seeds() },
 	args: { article: article() },

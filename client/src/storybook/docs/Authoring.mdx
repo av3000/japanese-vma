@@ -9,6 +9,7 @@ import { Meta } from '@storybook/addon-docs/blocks';
 - Put `<Component>.stories.tsx` next to the component.
 - Set an explicit `title` in the sidebar hierarchy: `Shared/…`, `UI/…`, `System/…`, `Features/<Domain>/…` or `Pages/…`. Moving a file then never renames its stories.
   - Feature domains: `Navigation`, `Articles`, `Catalogues`, `Community`, `Comments`, `Auth`, `Dashboard`, `Flashcards`, `Homepage`, `Japanese`, `LibraryCards`, `Realtime`.
+  - A title is either a component or a folder, never both. When a page has more than one story file, make it a folder of siblings: `Pages/ArticleDetails/Content`, `Pages/ArticleDetails/Route states`, `Pages/ArticleDetails/Skeleton`, not `Pages/ArticleDetails` next to `Pages/ArticleDetails/Skeleton`.
 - Type the meta with `satisfies Meta<typeof Component>`, and stories with `StoryObj<typeof meta>`. No `@ts-ignore`.
 
 ## Args

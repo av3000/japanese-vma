@@ -44,7 +44,7 @@ const comments = (count: number, uuid = POST_UUID): QuerySeed => ({
 });
 
 const meta = {
-	title: 'Pages/PostDetails',
+	title: 'Pages/PostDetails/Content',
 	component: PostContent,
 	parameters: { layout: 'fullscreen', seeds: [comments(2)] },
 	args: { post: makePostDetail() },

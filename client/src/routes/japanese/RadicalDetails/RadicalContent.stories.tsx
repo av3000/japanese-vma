@@ -6,7 +6,7 @@ import RadicalContent from './RadicalContent';
 
 /** Radical detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/RadicalDetails',
+	title: 'Pages/RadicalDetails/Content',
 	component: RadicalContent,
 	parameters: { layout: 'fullscreen', seeds: radicalKanjiSeeds(radicalTree.uuid, 674) },
 	args: { radical: { ...radicalTree, kanjis: [] } },

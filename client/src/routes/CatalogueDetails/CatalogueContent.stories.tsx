@@ -80,7 +80,7 @@ const articleItems = Array.from({ length: 3 }, (_, index) => ({
 })) as unknown as CatalogueArticleItem[];
 
 const meta = {
-	title: 'Pages/CatalogueDetails',
+	title: 'Pages/CatalogueDetails/Content',
 	component: CatalogueContent,
 	parameters: { layout: 'fullscreen', seeds: [firstPage('kanji', kanjiRows, 42), noComments] },
 	args: { catalogue: catalogue() },
