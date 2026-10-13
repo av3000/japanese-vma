@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { articleKanjisQueryKey, articleWordsQueryKey } from '@/api/articles/attachments';
 import type { MappedArticle } from '@/api/articles/details';
 import { getCommentsQueryKey } from '@/api/comments';
@@ -114,7 +114,6 @@ const seeds = (options: { kanji?: number; words?: number; comments?: number } = 
 const meta = {
 	title: 'Pages/ArticleDetails',
 	component: ArticleContent,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen', seeds: seeds() },
 	args: { article: article() },
 } satisfies Meta<typeof ArticleContent>;
@@ -138,9 +137,9 @@ export const Guest: Story = {
 	},
 };
 
-export const GuestMobile: Story = { parameters: { auth: 'guest', viewport: { defaultViewport: 'xs' } } };
+export const GuestMobile: Story = { parameters: { auth: 'guest' }, globals: { viewport: { value: 'xs' } } };
 
-export const GuestTablet: Story = { parameters: { auth: 'guest', viewport: { defaultViewport: 'sm' } } };
+export const GuestTablet: Story = { parameters: { auth: 'guest' }, globals: { viewport: { value: 'sm' } } };
 
 export const Owner: Story = {
 	parameters: { auth: signedIn(AUTHOR_ID) },
@@ -154,7 +153,8 @@ export const Owner: Story = {
 };
 
 export const OwnerMobile: Story = {
-	parameters: { auth: signedIn(AUTHOR_ID), viewport: { defaultViewport: 'xs' } },
+	parameters: { auth: signedIn(AUTHOR_ID) },
+	globals: { viewport: { value: 'xs' } },
 };
 
 export const Admin: Story = {
@@ -216,7 +216,8 @@ export const HostileContentMobile: Story = {
 			})) as MappedArticle['hashtags'],
 		}),
 	},
-	parameters: { viewport: { defaultViewport: 'xs' }, seeds: seeds({ kanji: 500, words: 900, comments: 200 }) },
+	parameters: { seeds: seeds({ kanji: 500, words: 900, comments: 200 }) },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
 	},

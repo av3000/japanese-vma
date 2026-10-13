@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { mapSentenceDetail } from '@/api/sentences/details';
 import { sentenceLong, sentenceShort } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { sentenceCommentSeeds } from '@/components/features/japanese/related/relatedSeeds';

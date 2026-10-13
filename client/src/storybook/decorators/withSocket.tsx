@@ -1,4 +1,4 @@
-import type { Decorator } from '@storybook/react';
+import type { Decorator } from '@storybook/react-vite';
 import { DEFAULT_SOCKET_CONTEXT, SocketContext, type SocketContextType } from '@/providers/contexts/socket-provider';
 
 export type SocketScenario = 'unconfigured' | 'connecting' | 'connected' | 'reconnecting' | 'failed';

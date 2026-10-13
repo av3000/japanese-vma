@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { Button } from '@/components/shared/Button';
 import { FormField } from '@/components/shared/FormControls';
 import { InputTags } from './';
@@ -8,7 +8,6 @@ import { InputTags } from './';
 const meta = {
 	title: 'Shared/InputTags',
 	component: InputTags,
-	tags: ['autodocs'],
 } satisfies Meta<typeof InputTags>;
 
 export default meta;

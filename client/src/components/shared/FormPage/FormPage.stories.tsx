@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormField, Input, Textarea } from '@/components/shared/FormControls';
@@ -30,7 +30,6 @@ const Actions = ({ label = 'Create article' }: { label?: string }) => (
 const meta = {
 	title: 'Shared/FormPage',
 	component: FormPage,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen' },
 	args: {
 		title: 'New article',

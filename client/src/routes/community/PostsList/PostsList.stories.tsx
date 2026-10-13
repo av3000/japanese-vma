@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { PostListItemResource } from '@/api/generated/model';
 import { getInfinitePostsQueryKey, parsePostListFilters } from '@/api/posts/reads';
 import { makeHashtags } from '@/components/features/Homepage/fixtures';

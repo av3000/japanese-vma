@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { KanjiResource, RadicalResource, SentenceResource, WordResource } from '@/api/generated/model';
 import { DataTable, type DataTableColumn } from './';
 import { kanjiRows, radicalRows, repeatRows, sentenceRows, wordRows } from './DataTable.fixtures';
@@ -110,7 +110,6 @@ const radicalColumns: DataTableColumn<RadicalResource>[] = [
 const meta = {
 	title: 'Shared/DataTable',
 	component: DataTable<KanjiResource>,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		label: 'Kanji',
@@ -209,10 +208,10 @@ export const ManyRows: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };
 
 export const MobileWords: Story = {
 	...Words,
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };

@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { everyStateArticles, hostileArticles, manyArticles } from '../dashboardFixtures';
 import { DashboardArticlesTable } from './';
 
 const meta = {
 	title: 'Features/Dashboard/DashboardArticlesTable',
 	component: DashboardArticlesTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		articles: [...hostileArticles, ...everyStateArticles],
@@ -47,7 +46,11 @@ export const Loading: Story = { args: { articles: [], loading: true } };
 export const Empty: Story = { args: { articles: [] } };
 
 /** 500 rows: the sticky header holds and nothing overflows. */
-export const FiveHundredRows: Story = { args: { articles: manyArticles(500) } };
+export const FiveHundredRows: Story = {
+	args: { articles: manyArticles(500) },
+	// Axe over 500 rows outruns the test timeout; the same rows are checked at normal size above.
+	parameters: { a11y: { test: 'off' } },
+};
 
 /** Stacked rows below 768px. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

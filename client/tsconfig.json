@@ -46,7 +46,7 @@
     /* Completeness */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", ".storybook/**/*", "vite.env.d.ts", "vitest.workspace.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", ".storybook/preview.tsx", "vite.env.d.ts"],
   "exclude": [ "vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

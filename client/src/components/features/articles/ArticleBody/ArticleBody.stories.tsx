@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ArticleBody, ArticleTitle } from './';
 
 const PARAGRAPHS = [
@@ -19,7 +19,6 @@ const HOSTILE_BODY = [
 const meta = {
 	title: 'Features/Articles/ArticleBody',
 	component: ArticleBody,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	decorators: [
 		(Story) => (
@@ -66,7 +65,7 @@ export const Imported: Story = {
 /** No horizontal scroll at 360px: long runs and URLs wrap inside the column. */
 export const HostileBodyMobile: Story = {
 	args: { contentJp: HOSTILE_BODY },
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
 	},
@@ -84,7 +83,7 @@ export const Title: Story = {
 /** A 255-character title with no spaces wraps inside the column. */
 export const LongestTitleMobile: Story = {
 	render: () => <ArticleTitle titleJp={'長'.repeat(255)} titleEn={'L'.repeat(255)} />,
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByRole('heading', { level: 1 })).toBeVisible();
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);

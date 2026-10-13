@@ -1,4 +1,4 @@
-import type { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/react-vite';
 import { authSpies, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
 import '@/styles/global-styles';
 
@@ -10,6 +10,7 @@ const viewport = (name: string, width: number, type: 'mobile' | 'tablet' | 'desk
 });
 
 const preview: Preview = {
+	tags: ['autodocs'],
 	// The last decorator is the outermost, so this nests like `App.tsx`: Query > Router > Auth > Socket.
 	decorators: [withSocket, withAuth, withRouter, withQueryClient],
 	globalTypes: {
@@ -58,8 +59,10 @@ const preview: Preview = {
 				date: /Date$/i,
 			},
 		},
+		// Reported, not failing, until #176 fixes the existing violations and switches this to 'error'.
+		a11y: { test: 'todo' },
 		viewport: {
-			viewports: {
+			options: {
 				xs: viewport('xs', 360, 'mobile'),
 				sm: viewport('sm', 768, 'tablet'),
 				md: viewport('md', 1024, 'desktop'),

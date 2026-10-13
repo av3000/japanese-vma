@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { currentLocation } from '@/storybook/decorators';
 import { HeaderSearchDrawer } from './HeaderSearchDrawer';
 import { HeaderSearchPanel } from './HeaderSearchPanel';
@@ -29,7 +29,6 @@ const withMemory = (memory: SearchMemory | null) => () => {
 const meta = {
 	title: 'Features/Navigation/HeaderSearch',
 	component: HeaderSearchPanel,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	beforeEach: withMemory(null),
 	decorators: [
@@ -146,7 +145,8 @@ export const Keyboard: Story = {
 /** The mobile drawer: a real modal dialog, closed by Cancel with focus back on the trigger. */
 export const Drawer: StoryObj<typeof HeaderSearchDrawer> = {
 	render: () => <HeaderSearchDrawer />,
-	parameters: { viewport: { defaultViewport: 'xs' }, layout: 'fullscreen' },
+	parameters: { layout: 'fullscreen' },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const trigger = canvas.getByRole('button', { name: 'Search' });

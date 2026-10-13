@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '@/components/shared/Button';
 import { Cluster } from '@/components/shared/layout';
 import { FilterBar } from './';
@@ -26,7 +26,6 @@ const HASHTAGS = ['grammar', 'news', 'kyoto'];
 const meta = {
 	title: 'Shared/FilterBar',
 	component: FilterBar,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { onSubmit: fn(), label: 'Article filters' },
 } satisfies Meta<typeof FilterBar>;
@@ -158,7 +157,7 @@ export const WithHint: Story = {
 /** Below 768px every control takes the full width and stacks. */
 export const MobileViewport: Story = {
 	render: (args) => <Example onSubmit={args.onSubmit} initialSearch="文法" withFilters hasActiveFilters />,
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 

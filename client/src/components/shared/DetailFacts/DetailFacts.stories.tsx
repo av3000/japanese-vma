@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { Button } from '@/components/shared/Button';
 import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
 import { JlptBar } from '@/components/shared/JlptBar';
@@ -9,7 +9,6 @@ import { DetailFacts } from './';
 const meta = {
 	title: 'Shared/DetailFacts',
 	component: DetailFacts,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	decorators: [
 		(Story) => (

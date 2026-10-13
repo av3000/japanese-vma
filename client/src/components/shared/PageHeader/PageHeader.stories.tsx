@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { Button } from '@/components/shared/Button';
 import { PageHeader } from './';
 
 const meta = {
 	title: 'Shared/PageHeader',
 	component: PageHeader,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { title: 'Articles', meta: 'Showing 12 of 48' },
 } satisfies Meta<typeof PageHeader>;
@@ -84,5 +83,5 @@ export const MobileViewport: Story = {
 			</Button>
 		),
 	},
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };

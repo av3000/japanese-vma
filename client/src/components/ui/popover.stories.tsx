@@ -1,5 +1,5 @@
-import { useArgs } from '@storybook/preview-api';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useArgs } from 'storybook/preview-api';
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from './popover';
 import storyStyles from './stories.module.css';
 
@@ -12,7 +12,6 @@ type PopoverStoryArgs = {
 
 const meta: Meta<PopoverStoryArgs> = {
 	title: 'UI/Popover',
-	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			story: { inline: false },

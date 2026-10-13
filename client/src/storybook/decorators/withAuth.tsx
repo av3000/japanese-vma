@@ -1,6 +1,6 @@
 import type * as React from 'react';
-import type { Decorator } from '@storybook/react';
-import { fn } from '@storybook/test';
+import type { Decorator } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
 import { AuthContext } from '@/providers/contexts/auth-provider';
 import { users } from '@/storybook/fixtures/users';
 

@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { kanjiRows, repeatRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { KanjiTable } from './';
 
 const meta = {
 	title: 'Features/Japanese/KanjiTable',
 	component: KanjiTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		kanjis: kanjiRows,
@@ -59,9 +58,9 @@ export const EmptySearch: Story = {
 export const ManyRows: Story = { args: { kanjis: repeatRows(kanjiRows, 60) } };
 
 /** Stacked rows: glyph | meaning, On, Kun, then Strokes · JLPT · Freq. on one line | Save. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };
 
-export const MobileGuest: Story = { ...Guest, parameters: { viewport: { defaultViewport: 'xs' } } };
+export const MobileGuest: Story = { ...Guest, globals: { viewport: { value: 'xs' } } };
 
 /** Catalogue detail's "Manage items" mode: a caller-owned Remove column after Save. */
 export const WithTrailingColumn: Story = {
@@ -85,5 +84,5 @@ export const WithTrailingColumn: Story = {
 
 export const WithTrailingColumnMobile: Story = {
 	...WithTrailingColumn,
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };

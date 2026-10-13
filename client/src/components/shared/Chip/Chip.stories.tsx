@@ -1,12 +1,11 @@
 // TODO: Revisit chip style https://smart-interface-design-patterns.com/articles/badges-chips-tags-pills/ and make clear usage examples, restyle if needed.
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Chip } from './';
 
 // Define the Meta object for the component
 const meta = {
 	title: 'Shared/Chip',
 	component: Chip,
-	tags: ['autodocs'],
 	argTypes: {
 		children: {
 			control: 'text',

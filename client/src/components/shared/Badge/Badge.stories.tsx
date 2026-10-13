@@ -1,5 +1,5 @@
 // Badge.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@/components/shared/Button';
 import AvatarWithStatus from '../AvatarWithStatus';
 import { Badge } from './Badge';
@@ -8,7 +8,6 @@ import AnimatedBadgeDemo from './BadgeAnimatedDemo';
 const meta: Meta<typeof Badge> = {
 	component: Badge,
 	title: 'Shared/Badge',
-	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			description: {

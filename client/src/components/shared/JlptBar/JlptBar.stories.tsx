@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { ArticleResourceJlptLevels } from '@/api/generated/model/articleResourceJlptLevels';
 import { JlptBar } from './';
 
@@ -12,7 +12,6 @@ const tie: ArticleResourceJlptLevels = { n1: 0, n2: 10, n3: 0, n4: 4, n5: 10, un
 const meta = {
 	title: 'Shared/JlptBar',
 	component: JlptBar,
-	tags: ['autodocs'],
 	args: { levels: typicalArticle, size: 'default' },
 	argTypes: {
 		size: { control: 'inline-radio', options: ['default', 'compact'] },

@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { radicalRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { RadicalTable } from './';
 
 const meta = {
 	title: 'Features/Japanese/RadicalTable',
 	component: RadicalTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { radicals: radicalRows, empty: { title: 'No radicals yet' } },
 } satisfies Meta<typeof RadicalTable>;
@@ -45,4 +44,4 @@ export const EmptySearch: Story = {
 };
 
 /** Stacked rows: glyph | meaning, reading, strokes. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

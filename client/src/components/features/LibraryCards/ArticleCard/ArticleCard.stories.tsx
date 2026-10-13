@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { LONGEST_JAPANESE_TITLE, libraryArticles, makeArticle } from '@/components/features/Homepage/fixtures';
 import { ArticleCard } from './';
 
 const meta = {
 	title: 'Features/LibraryCards/ArticleCard',
 	component: ArticleCard,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { article: makeArticle() },
 	decorators: [
@@ -71,5 +70,5 @@ export const Processing: Story = {
 
 export const Mobile: Story = {
 	args: { article: libraryArticles.longest },
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };

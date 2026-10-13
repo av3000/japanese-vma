@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { radicalTree, radicalWater } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { radicalKanjiSeeds } from '@/components/features/japanese/related/relatedSeeds';
 import RadicalContent from './RadicalContent';

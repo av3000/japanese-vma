@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { communityPosts } from '../fixtures';
 import { PostCard } from './';
 
 const meta = {
 	title: 'Features/Community/PostCard',
 	component: PostCard,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { post: communityPosts.default },
 	decorators: [

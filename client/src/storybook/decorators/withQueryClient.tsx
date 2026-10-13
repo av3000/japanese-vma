@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Decorator } from '@storybook/react';
+import type { Decorator } from '@storybook/react-vite';
 import { QueryClient, QueryClientProvider, type QueryKey } from '@tanstack/react-query';
 
 /** One cached query: its key and the data a story wants it to hold. */

@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import Footer from './';
 
 const meta = {
@@ -25,5 +25,5 @@ export const Default: Story = {
 
 /** Narrow canvas: the brand stacks above the two link columns. */
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 };

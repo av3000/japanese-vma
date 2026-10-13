@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { getCommentsQueryKey } from '@/api/comments';
 import type { CommentResource } from '@/api/generated/model/commentResource';
 import { makeHashtags } from '@/components/features/Homepage/fixtures';
@@ -46,7 +46,6 @@ const comments = (count: number, uuid = POST_UUID): QuerySeed => ({
 const meta = {
 	title: 'Pages/PostDetails',
 	component: PostContent,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen', seeds: [comments(2)] },
 	args: { post: makePostDetail() },
 } satisfies Meta<typeof PostContent>;

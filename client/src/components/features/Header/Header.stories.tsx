@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { authSpies, type AuthParameter } from '@/storybook/decorators';
 import { users } from '@/storybook/fixtures/users';
 import Header from './';

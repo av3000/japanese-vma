@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import type { MappedCatalogue } from '@/api/catalogues/details';
 import { catalogueItemsQueryKey } from '@/api/catalogues/items';
@@ -82,7 +82,6 @@ const articleItems = Array.from({ length: 3 }, (_, index) => ({
 const meta = {
 	title: 'Pages/CatalogueDetails',
 	component: CatalogueContent,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen', seeds: [firstPage('kanji', kanjiRows, 42), noComments] },
 	args: { catalogue: catalogue() },
 } satisfies Meta<typeof CatalogueContent>;
@@ -103,7 +102,7 @@ export const Guest: Story = {
 	},
 };
 
-export const GuestMobile: Story = { parameters: { auth: 'guest', viewport: { defaultViewport: 'xs' } } };
+export const GuestMobile: Story = { parameters: { auth: 'guest' }, globals: { viewport: { value: 'xs' } } };
 
 export const Owner: Story = {
 	parameters: { auth: owner },
@@ -116,7 +115,7 @@ export const Owner: Story = {
 	},
 };
 
-export const OwnerMobile: Story = { parameters: { auth: owner, viewport: { defaultViewport: 'xs' } } };
+export const OwnerMobile: Story = { parameters: { auth: owner }, globals: { viewport: { value: 'xs' } } };
 
 /** Empty and Study-eligible: no Study button, a hint for the owner. */
 export const EmptyForTheOwner: Story = {
@@ -166,7 +165,7 @@ export const Articles: Story = {
 /** A 255-character title with no spaces and no description, at 360px. */
 export const LongestTitleMobile: Story = {
 	args: { catalogue: catalogue({ title: 'L'.repeat(255), description: null }) },
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
 	},

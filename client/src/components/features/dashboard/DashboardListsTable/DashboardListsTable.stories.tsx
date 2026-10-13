@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { hostileCatalogues, knownLists, manyCatalogues } from '../dashboardListFixtures';
 import { DashboardListsTable } from './';
 
 const meta = {
 	title: 'Features/Dashboard/DashboardListsTable',
 	component: DashboardListsTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		catalogues: [...hostileCatalogues, ...knownLists],
@@ -39,6 +38,10 @@ export const Loading: Story = { args: { catalogues: [], loading: true } };
 
 export const Empty: Story = { args: { catalogues: [] } };
 
-export const FiveHundredRows: Story = { args: { catalogues: manyCatalogues(500) } };
+export const FiveHundredRows: Story = {
+	args: { catalogues: manyCatalogues(500) },
+	// Axe over 500 rows outruns the test timeout; the same rows are checked at normal size above.
+	parameters: { a11y: { test: 'off' } },
+};
 
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'xs' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

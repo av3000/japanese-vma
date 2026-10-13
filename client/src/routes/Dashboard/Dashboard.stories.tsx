@@ -1,8 +1,8 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { InfiniteData } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { articleKeys } from '@/api/articles/keys';
 import { getPendingArticlesQueryKey } from '@/api/articles/moderation';
 import { getInfiniteCataloguesQueryKey } from '@/api/catalogues/hooks/useInfiniteCatalogues';
@@ -214,7 +214,11 @@ export const NewUserLists: Story = { parameters: { ...NewUser.parameters, router
 
 /** 500 articles, all loaded: the sticky header holds and nothing overflows. */
 export const FiveHundredArticles: Story = {
-	parameters: { seeds: dashboardSeeds({ ...defaultSeed, articles: manyArticles(500), loadEverything: true }) },
+	// Axe over 500 rows outruns the test timeout; the same rows are checked at normal size above.
+	parameters: {
+		seeds: dashboardSeeds({ ...defaultSeed, articles: manyArticles(500), loadEverything: true }),
+		a11y: { test: 'off' },
+	},
 };
 
 /** Admins get the review queue as a third section. */

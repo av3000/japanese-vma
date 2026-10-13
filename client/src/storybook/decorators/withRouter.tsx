@@ -1,6 +1,6 @@
 import type * as React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import type { Decorator } from '@storybook/react';
+import type { Decorator } from '@storybook/react-vite';
 
 export interface RouterParameter {
 	/** The history the story starts with; the last entry is the current location. Default `['/']`. */

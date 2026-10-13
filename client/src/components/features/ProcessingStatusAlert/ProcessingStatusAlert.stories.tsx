@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import ProcessingStatusAlert, { READY_ANNOUNCEMENT } from './';
@@ -21,7 +21,6 @@ const processingStatus = (status: ProcessingStatus, attempt = 1): ProcessingStat
 const meta = {
 	title: 'Features/Articles/ProcessingStatusAlert',
 	component: ProcessingStatusAlert,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded', socket: 'connected' },
 	args: { processing_status: processingStatus(ProcessingStatus.processing) },
 	decorators: [

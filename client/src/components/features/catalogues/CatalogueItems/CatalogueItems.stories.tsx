@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import { catalogueItemsQueryKey } from '@/api/catalogues/items';
 import {
@@ -46,7 +46,6 @@ const articleItems: CatalogueArticleItem[] = Array.from({ length: 3 }, (_, index
 const meta = {
 	title: 'Features/Catalogues/CatalogueItems',
 	component: CatalogueItems,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded', seeds: [] as QuerySeed[] },
 	args: { catalogueUuid: UUID, catalogueType: TYPES.kanji, payloadItems: [], isOwner: false, showSave: false },
 	decorators: [
@@ -130,7 +129,7 @@ export const OwnerManagingItems: Story = {
 
 export const OwnerManagingArticlesMobile: Story = {
 	args: { isOwner: true, catalogueType: TYPES.articles, payloadItems: articleItems },
-	parameters: { viewport: { defaultViewport: 'xs' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await userEvent.click(within(canvasElement).getByRole('button', { name: 'Manage items' }));
 	},

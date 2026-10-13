@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import { useRef } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@/components/shared/Button';
 import { useModal } from '@/hooks/useModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -8,7 +8,6 @@ import { ConfirmModal } from './ConfirmModal';
 const meta: Meta<typeof ConfirmModal> = {
 	component: ConfirmModal,
 	title: 'Shared/Modals/ConfirmModal',
-	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			description: {

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '.';
 import { Icon } from '@/components/shared/Icon';
 import { buttonSizes, buttonVariants } from './types';
@@ -6,7 +6,6 @@ import { buttonSizes, buttonVariants } from './types';
 const meta: Meta<typeof Button> = {
 	title: 'Shared/Button',
 	component: Button,
-	tags: ['autodocs'],
 	argTypes: {
 		size: {
 			options: buttonSizes,

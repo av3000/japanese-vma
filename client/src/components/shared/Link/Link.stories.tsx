@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { Link } from '../Link';
 
 const meta: Meta<typeof Link> = {
   title: 'Shared/Link',
   component: Link,
-  tags: ['autodocs'],
 };
 
 export default meta;

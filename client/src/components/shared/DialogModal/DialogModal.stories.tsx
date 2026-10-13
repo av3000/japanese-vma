@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import { useRef } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/FormControls';
 import { Stack } from '@/components/shared/layout';
@@ -10,7 +10,6 @@ import { DialogModal } from './DialogModal';
 const meta: Meta<typeof DialogModal> = {
 	component: DialogModal,
 	title: 'Shared/DialogModal',
-	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			description: {
