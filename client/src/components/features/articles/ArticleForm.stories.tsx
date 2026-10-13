@@ -210,3 +210,11 @@ export const LongestText: Story = {
 		await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
 	},
 };
+
+/** While the save is in flight the submit control is disabled, so a second click cannot send it twice. */
+export const Submitting: Story = {
+	args: { initialValues: SAVED, isSubmitting: true },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('button', { name: 'Create article' })).toBeDisabled();
+	},
+};

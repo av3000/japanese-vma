@@ -107,3 +107,72 @@ export const ExploreOpen: Story = {
 
 /** A 20-character name, for checking the bar still fits; the name truncates past 12rem. */
 export const LongName: Story = { parameters: { auth: signedInAs('Hanako Yamamoto-Ito') } };
+
+/** The account list of whichever layout fits: the bar from 1024px, the navigation drawer below. */
+const accountScope = async (canvasElement: HTMLElement) => {
+	const scope = isDesktop() ? within(canvasElement) : await openMenuDrawer(canvasElement);
+
+	return within(scope.getByRole('list', { name: 'Account' }));
+};
+
+/** Account menu, then Log out: the auth context's `logout` runs once. */
+export const LogsOut: Story = {
+	parameters: { auth: signedInAs('Hanako') },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await userEvent.click(account.getByRole('button', { name: 'Hanako' }));
+		await userEvent.click(account.getByRole('button', { name: 'Log out' }));
+		await expect(authSpies.logout).toHaveBeenCalledTimes(1);
+	},
+};
+
+/** The realtime dot sits beside the account name, and only for a signed-in viewer. */
+export const SocketConnecting: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'connecting' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket connecting' })).toBeInTheDocument();
+	},
+};
+
+export const SocketReconnecting: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'reconnecting' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket reconnecting' })).toBeInTheDocument();
+	},
+};
+
+export const SocketFailed: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'failed' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket failed' })).toBeInTheDocument();
+	},
+};
+
+/** With no realtime server configured the dot is not rendered, and the account still is. */
+export const SocketUnconfigured: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'unconfigured' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.queryByRole('button', { name: /^WebSocket/ })).toBeNull();
+		await expect(account.getByRole('button', { name: 'Hanako' })).toBeInTheDocument();
+	},
+};
+
+/** At 360px the bar collapses to the brand, search and menu buttons; everything else is in the drawer. */
+export const Mobile: Story = {
+	globals: { viewport: { value: 'xs' } },
+	parameters: { auth: signedInAs('Hanako') },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('link', { name: 'JPLearning' })).toBeVisible();
+
+		const drawer = await openMenuDrawer(canvasElement);
+		await expect(drawer.getByRole('heading', { name: 'Explore' })).toBeInTheDocument();
+		await expect(drawer.getByRole('list', { name: 'Account' })).toBeInTheDocument();
+		await userEvent.click(drawer.getByRole('button', { name: 'Close navigation' }));
+		await waitFor(() => expect(canvas.getByRole('button', { name: 'Open navigation' })).toHaveFocus());
+	},
+};
