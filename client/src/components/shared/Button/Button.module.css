@@ -52,8 +52,12 @@
 .content {
 	display: contents;
 }
+/* While loading the label is transparent, not removed, so the button keeps its accessible name. */
 .spinner ~ .content {
-	visibility: hidden;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	opacity: 0;
 }
 
 .spinner {
@@ -118,9 +122,12 @@
 .variantPrimary:hover,
 .variantSecondary:hover,
 .variantSuccess:hover,
-.variantDanger:hover,
-.variantPending:hover {
+.variantDanger:hover {
 	color: var(--color-neutral-0);
+}
+
+.variantPending:hover {
+	color: var(--color-text-primary);
 }
 
 .variantPrimary {
@@ -246,7 +253,8 @@
 .variantPending {
 	background-color: #f59e0b;
 	border-color: #f59e0b;
-	color: var(--color-neutral-0);
+	/* White on this amber is 2.14:1; the dark text token passes 4.5:1. */
+	color: var(--color-text-primary);
 }
 @media (hover: hover) {
 	.variantPending:hover {

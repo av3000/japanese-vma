@@ -158,11 +158,9 @@ describe('Header navigation semantics', () => {
 		click(button);
 		expect(list.hidden).toBe(false);
 		const items = Array.from(list.children);
-		expect(items.map((item) => item.getAttribute('role') ?? item.textContent)).toEqual([
-			'Dashboard',
-			'separator',
-			'Log out',
-		]);
+		expect(
+			items.map((item) => (item.getAttribute('aria-hidden') === 'true' ? 'divider' : item.textContent)),
+		).toEqual(['Dashboard', 'divider', 'Log out']);
 		expect(hrefs(list)).toEqual(['/dashboard']);
 
 		click(must(items[2].querySelector('button')));

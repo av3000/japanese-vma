@@ -33,9 +33,9 @@ const posted: StoreCommentRequest[] = [];
 /** Whatever the generated handler answers (faker, seeded per story, so the same every run). */
 export const Default: Story = {
 	play: async ({ canvasElement }) => {
-		const comments = within(canvasElement).getByRole('region', { name: 'Comments' });
-		await waitFor(() => expect(within(comments).queryByRole('status')).not.toBeInTheDocument());
-		await expect(within(comments).queryByText('Comments could not be loaded. Please try again.')).toBeNull();
+		const comments = within(canvasElement);
+		await waitFor(() => expect(comments.queryByRole('status')).not.toBeInTheDocument());
+		await expect(comments.queryByText('Comments could not be loaded. Please try again.')).toBeNull();
 	},
 };
 

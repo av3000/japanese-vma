@@ -67,7 +67,16 @@ const preview: Preview = {
 	parameters: {
 		options: {
 			storySort: {
-				order: ['Docs', ['Welcome', 'Authoring'], 'Styleguide', 'Shared', 'UI', 'System', 'Features', 'Pages'],
+				order: [
+					'Docs',
+					['Welcome', 'Authoring', 'Choosing badges', 'Choosing dialogs'],
+					'Styleguide',
+					'Shared',
+					'UI',
+					'System',
+					'Features',
+					'Pages',
+				],
 			},
 		},
 		controls: {
@@ -76,8 +85,8 @@ const preview: Preview = {
 				date: /Date$/i,
 			},
 		},
-		// Reported, not failing, until #176 fixes the existing violations and switches this to 'error'.
-		a11y: { test: 'todo' },
+		// Violations fail story tests. Disable a rule per story only, with a comment naming it and why.
+		a11y: { test: 'error' },
 		viewport: {
 			options: {
 				xs: viewport('xs', 360, 'mobile'),

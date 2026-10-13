@@ -74,7 +74,7 @@ export const TwoColumns: Story = {
 		await expect(canvas.getByRole('region', { name: 'New article' })).toBeVisible();
 		await expect(canvas.getAllByRole('heading', { level: 1 })).toHaveLength(1);
 		await expect(canvas.getByRole('region', { name: 'Settings' })).toBeVisible();
-		await expect(canvas.getByRole('complementary', { name: 'What happens next' })).toBeVisible();
+		await expect(canvas.getByRole('group', { name: 'What happens next' })).toBeVisible();
 	},
 };
 

@@ -94,23 +94,24 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 	});
 
 	return (
-		<Stack as="section" gap="md" className={styles.block} aria-label="Comments">
+		// The parent page owns the "Comments" section and its heading; this is its content.
+		<Stack gap="md" className={styles.block}>
 			{isLocked ? (
 				<Alert tone="warning" role="status">
 					This post is locked and new comments are not allowed.
 				</Alert>
 			) : isAuthenticated && user ? (
 				<>
-					<h6 className={styles.prompt}>Share what's on your mind</h6>
+					<p className={styles.prompt}>Share what's on your mind</p>
 					<CommentForm
 						onSubmit={(content) => createMutation.mutateAsync({ content }).then(() => undefined)}
 						isSubmitting={createMutation.isPending && createMutation.variables?.parent_comment_id == null}
 					/>
 				</>
 			) : (
-				<h6 className={styles.prompt}>
+				<p className={styles.prompt}>
 					You need to <Link to="/login">login</Link> to comment
-				</h6>
+				</p>
 			)}
 
 			{isLoading ? (

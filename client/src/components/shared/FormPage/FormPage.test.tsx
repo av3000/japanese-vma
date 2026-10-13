@@ -87,7 +87,8 @@ describe('FormCard and FormNote', () => {
 
 		const id = html.match(/<p id="([^"]+)"[^>]*>What happens next<\/p>/)?.[1];
 		expect(id).toBeTruthy();
-		expect(html).toMatch(new RegExp(`<aside[^>]*aria-labelledby="${id}"`));
+		expect(html).toMatch(new RegExp(`<div[^>]*role="group"[^>]*aria-labelledby="${id}"`));
+		expect(html).not.toContain('<aside');
 		expect(html).toContain('We analyse the text.');
 	});
 });

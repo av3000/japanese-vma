@@ -56,3 +56,23 @@ export const Default: Story = {
 		await waitFor(() => expect(trigger).toHaveFocus());
 	},
 };
+
+/** Escape closes the drawer, releases the page's scroll lock and returns focus to the trigger. */
+export const OpensAndCloses: Story = {
+	play: async ({ canvasElement }) => {
+		const trigger = within(canvasElement).getByRole('button', { name: 'Open drawer' });
+
+		await userEvent.click(trigger);
+		const dialog = await within(document.body).findByRole('dialog', { name: 'Example drawer' });
+		await waitFor(() => expect(dialog).toHaveProperty('open', true));
+		await expect(dialog).toBeVisible();
+		// The scroll lock fixes the body in place while the drawer is open.
+		await waitFor(() => expect(document.body.style.position).toBe('fixed'));
+
+		// The browser turns a real Escape press into `cancel`; user-event's synthetic Escape never reaches a native dialog.
+		dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+		await waitFor(() => expect(dialog).toHaveProperty('open', false));
+		await waitFor(() => expect(trigger).toHaveFocus());
+		await waitFor(() => expect(document.body.style.position).toBe(''));
+	},
+};

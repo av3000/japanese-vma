@@ -1,0 +1,18 @@
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Shadows" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Shadows</h1>
+  <div className="richTextWrapper">
+    <p>
+      One shadow, <code>--box-shadow-default</code>, from <code>src/styles/00-settings/box-shadow.css</code>. It lifts a surface off the page, such as a popover or a menu. If a design needs a second elevation, add a token there instead of writing a shadow in a CSS Module.
+    </p>
+  </div>
+
+  <TokenGroup prefix="box-shadow" kind="shadow" />
+</div>
+</Unstyled>

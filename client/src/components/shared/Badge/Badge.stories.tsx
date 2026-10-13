@@ -1,11 +1,10 @@
 // Badge.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button } from '@/components/shared/Button';
-import AvatarWithStatus from '../AvatarWithStatus';
 import { Badge } from './Badge';
 import AnimatedBadgeDemo from './BadgeAnimatedDemo';
 
-const meta: Meta<typeof Badge> = {
+const meta = {
 	component: Badge,
 	title: 'Shared/Badge',
 	parameters: {
@@ -60,10 +59,10 @@ For inline status labels, use **components/ui/badge** instead.
 			defaultValue: false,
 		},
 	},
-};
+} satisfies Meta<typeof Badge>;
 
 export default meta;
-type Story = StoryObj<typeof Badge>;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
@@ -311,63 +310,30 @@ The badge can be positioned at any of the four corners of its child component.
 
 export const StatusIndicators: Story = {
 	render: () => (
-		<div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-			<div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-				<AvatarWithStatus userId="1" linkTitle="JD" status="success" image={{ size180: null }} />
-
-				<div style={{ position: 'relative', display: 'inline-block' }}>
-					<div
-						style={{
-							width: '40px',
-							height: '40px',
-							borderRadius: '50%',
-							backgroundColor: '#e0e0e0',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							fontSize: '16px',
-							fontWeight: 'bold',
-						}}
-					>
-						AB
-					</div>
-					<Badge
-						variant="dot"
-						color="error"
-						anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-						// @ts-ignore
-						style={{
-							position: 'absolute',
-							bottom: 0,
-							right: 0,
-							transform: 'translate(25%, 25%)',
-						}}
-					/>
+		<div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+			<Badge variant="dot" color="error" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+				<div
+					style={{
+						width: '40px',
+						height: '40px',
+						borderRadius: '50%',
+						backgroundColor: 'var(--color-neutral-200)',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						fontSize: '16px',
+						fontWeight: 'bold',
+					}}
+				>
+					AB
 				</div>
-			</div>
+			</Badge>
 		</div>
 	),
 	parameters: {
 		docs: {
 			description: {
-				story: `
-## Status Indicators
-
-Badges can be used as status indicators for avatars and other components.
-
-\`\`\`tsx
-// Online status indicator
-<div style={{ position: 'relative' }}>
-  <Avatar>JD</Avatar>
-  <Badge
-    variant="dot"
-    color="success"
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    standalone={true}
-  />
-</div>
-\`\`\`
-        `,
+				story: 'A dot badge wraps another element to mark its status, here at the bottom right of a circle.',
 			},
 		},
 	},

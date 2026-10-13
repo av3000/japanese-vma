@@ -1,0 +1,175 @@
+.group {
+	margin-top: var(--spacing-md);
+	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.row {
+	display: grid;
+	grid-template-columns: minmax(10rem, 16rem) minmax(5rem, 9rem) minmax(0, 1fr);
+	align-items: center;
+	column-gap: var(--spacing-md);
+	padding-block: var(--spacing-xs);
+	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.name {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	overflow-wrap: anywhere;
+}
+
+.value {
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+	overflow-wrap: anywhere;
+}
+
+.preview {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+	min-width: 0;
+	overflow: hidden;
+}
+
+.caption {
+	margin-top: var(--spacing-xs);
+	font-size: var(--font-size-body-md);
+	color: var(--color-neutral-700);
+}
+
+.error {
+	color: var(--color-text-system-danger);
+}
+
+.bar {
+	display: block;
+	flex: none;
+	max-width: 100%;
+	height: var(--size-md);
+	background: var(--color-primary);
+}
+
+.square {
+	display: block;
+	flex: none;
+	background: var(--color-primary-tint);
+	border: var(--border-size-sm) solid var(--color-primary);
+}
+
+.swatch {
+	display: block;
+	flex: none;
+	width: var(--size-6xl);
+	height: var(--size-4xl);
+	background: var(--color-primary-tint);
+	border: var(--border-size-sm) solid var(--color-primary);
+}
+
+.shadowSwatch {
+	display: block;
+	flex: none;
+	width: var(--size-7xl);
+	height: var(--size-5xl);
+	margin: var(--spacing-md);
+	background: var(--color-neutral-0);
+	border-radius: var(--border-radius-md);
+}
+
+.opacityBackdrop {
+	display: block;
+	flex: none;
+	width: var(--size-6xl);
+	height: var(--size-4xl);
+	background: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-neutral-200);
+}
+
+.opacitySwatch {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: var(--color-primary);
+}
+
+.ratio {
+	display: block;
+	flex: none;
+	width: var(--size-6xl);
+	background: var(--color-primary-tint);
+	border: var(--border-size-sm) solid var(--color-primary);
+}
+
+.fontSample {
+	font-size: var(--font-size-heading-4);
+	line-height: var(--line-height-md);
+}
+
+.lines {
+	font-size: var(--font-size-body-md);
+}
+
+.expression {
+	flex: 1 1 12rem;
+	min-width: 0;
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-sm);
+	color: var(--color-neutral-700);
+	overflow-wrap: anywhere;
+}
+
+/* Motion rows */
+.play {
+	flex: none;
+	min-width: var(--size-6xl);
+	padding: var(--spacing-2xs) var(--spacing-sm);
+	font: inherit;
+	font-size: var(--font-size-body-md);
+	color: var(--color-primary);
+	background: var(--color-neutral-0);
+	border: var(--border-size-sm) solid var(--color-primary);
+	border-radius: var(--border-radius-sm);
+	cursor: pointer;
+}
+
+.track {
+	position: relative;
+	flex: 1;
+	min-width: var(--size-6xl);
+	height: var(--size-xl);
+	background: var(--color-neutral-100);
+	border-radius: var(--border-radius-xl);
+}
+
+.dot {
+	position: absolute;
+	inset-block: var(--spacing-3xs);
+	inset-inline-start: var(--spacing-3xs);
+	width: calc(var(--size-xl) - 2 * var(--spacing-3xs));
+	background: var(--color-primary);
+	border-radius: 50%;
+	transition: inset-inline-start var(--token-duration) var(--token-easing);
+}
+
+.track[data-played='true'] .dot {
+	inset-inline-start: calc(100% - var(--size-xl) + var(--spacing-3xs));
+}
+
+/* The demo follows the same rule as the app: no travel under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+	.dot {
+		transition: none;
+	}
+}
+
+@media (max-width: 767px) {
+	.row {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		row-gap: var(--spacing-2xs);
+	}
+
+	.preview {
+		grid-column: 1 / -1;
+	}
+}

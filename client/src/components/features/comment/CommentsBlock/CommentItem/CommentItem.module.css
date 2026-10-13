@@ -16,8 +16,13 @@
 	min-width: 0;
 }
 
+/* Was an h5, which broke the page's heading order; keeps the h5 look. */
 .author {
 	margin: 0;
+	font-size: clamp(var(--font-size-heading-6), 5vw, var(--font-size-heading-5));
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
 }
 
 .content {
