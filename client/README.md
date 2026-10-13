@@ -12,8 +12,8 @@
 - Redux Toolkit
 - Axios
 - CSS Modules with design tokens in `src/styles` (see Styling)
-- Storybook 8
-- Vitest
+- Storybook 10 (with the Vitest and a11y addons)
+- Vitest 5 (`unit` project, plus a `storybook` browser project)
 - Sentry
 
 ## Frontend Architecture
@@ -84,6 +84,22 @@ npm run build
 npm run storybook
 npm run build-storybook
 ```
+
+## Storybook
+
+Run Storybook natively, not through the Docker `storybook` service: on Windows the bind mount makes the container much slower.
+
+```bash
+cd client
+npx playwright install chromium   # once, for the story tests
+npm run storybook                 # http://localhost:6006
+npm run test:storybook            # every story and play function in headless Chromium, with a11y checks
+npm run build-storybook
+```
+
+`npm test` runs only the `unit` project and never opens a browser; `npm run test:all` runs both projects.
+
+Story conventions (titles, the `auth`/`socket`/`router`/`seeds` parameters, play functions) are in Storybook under **Docs/Authoring** (`src/storybook/docs/Authoring.mdx`).
 
 ## Generate API Client
 

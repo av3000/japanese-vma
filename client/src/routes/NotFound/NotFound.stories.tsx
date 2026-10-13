@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import PageNotFound from './';
 
 const meta = {
-	title: 'Routes/NotFound',
+	title: 'Pages/NotFound',
 	component: PageNotFound,
 	parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof PageNotFound>;
@@ -25,5 +25,5 @@ export const Default: Story = {
 
 /** 360px: the glyph shrinks, the buttons wrap under each other if they must. */
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

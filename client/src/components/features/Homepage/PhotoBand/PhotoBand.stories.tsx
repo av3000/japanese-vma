@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { PhotoBand, PHOTO_CREDIT } from './';
 
 const meta = {
 	title: 'Features/Homepage/PhotoBand',
 	component: PhotoBand,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 } satisfies Meta<typeof PhotoBand>;
 
@@ -24,5 +23,5 @@ export const Default: Story = {
 
 /** 96px tall below 768px; the sides are trimmed and the summit stays centred. */
 export const MobileViewport: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

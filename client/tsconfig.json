@@ -23,7 +23,7 @@
       "@/lib/*": ["src/lib/*"],
       "@/hooks/*": ["src/hooks/*"],
       "@/types/*": ["src/types/*"],
-      "@/storybook/*": ["./storybook/*"],
+      "@/storybook/*": ["src/storybook/*"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     "allowImportingTsExtensions": true,               /* Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set. */
     "resolveJsonModule": true,                        /* Enable importing .json files. */
@@ -46,7 +46,7 @@
     /* Completeness */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", ".storybook/**/*", "vite.env.d.ts", "vitest.workspace.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", ".storybook/preview.tsx", "vite.env.d.ts"],
   "exclude": [ "vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

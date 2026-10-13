@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { DetailLayout } from './';
 
 const LONG_TITLE = 'ウクライナで「ビシバンカの日」市民が伝統衣装で結束を確認'.repeat(4);
@@ -20,7 +20,6 @@ const Box = ({ label, lines = 1 }: { label: string; lines?: number }) => (
 const meta = {
 	title: 'Shared/DetailLayout',
 	component: DetailLayout,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen' },
 	args: {
 		railLabel: 'About this article',
@@ -61,9 +60,9 @@ export const Default: Story = {
 };
 
 /** Below 1024px the actions sit under the header, and the facts and extras follow the text. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };
 
-export const Tablet: Story = { parameters: { viewport: { defaultViewport: 'tablet' } } };
+export const Tablet: Story = { globals: { viewport: { value: 'sm' } } };
 
 /** A 240-character title with no spaces wraps inside the reading column. */
 export const LongTitle: Story = {

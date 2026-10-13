@@ -1,9 +1,8 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
-import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
 import ProcessingStatusAlert, { READY_ANNOUNCEMENT } from './';
 
 const processingStatus = (status: ProcessingStatus, attempt = 1): ProcessingStatusResource => ({
@@ -19,21 +18,16 @@ const processingStatus = (status: ProcessingStatus, attempt = 1): ProcessingStat
 	updated_at: '2026-10-03T10:00:42+00:00',
 });
 
-const connectedSocket = { ...DEFAULT_SOCKET_CONTEXT, isConnected: true, connectionStatus: 'connected' as const };
-
 const meta = {
 	title: 'Features/Articles/ProcessingStatusAlert',
 	component: ProcessingStatusAlert,
-	tags: ['autodocs'],
-	parameters: { layout: 'padded' },
+	parameters: { layout: 'padded', socket: 'connected' },
 	args: { processing_status: processingStatus(ProcessingStatus.processing) },
 	decorators: [
 		(Story) => (
-			<SocketContext.Provider value={connectedSocket}>
-				<div style={{ maxWidth: 720 }}>
-					<Story />
-				</div>
-			</SocketContext.Provider>
+			<div style={{ maxWidth: 720 }}>
+				<Story />
+			</div>
 		),
 	],
 } satisfies Meta<typeof ProcessingStatusAlert>;
@@ -60,13 +54,7 @@ export const ProcessingLive: Story = {
 
 /** Polling: no socket, so the page only promises to keep checking (#251). */
 export const ProcessingPolling: Story = {
-	decorators: [
-		(Story) => (
-			<SocketContext.Provider value={DEFAULT_SOCKET_CONTEXT}>
-				<Story />
-			</SocketContext.Provider>
-		),
-	],
+	parameters: { socket: 'unconfigured' },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByText(/Checking for updates/)).toBeVisible();
 	},

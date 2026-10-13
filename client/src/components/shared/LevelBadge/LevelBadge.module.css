@@ -25,7 +25,6 @@
 .count {
 	font-weight: var(--font-weight-regular);
 	color: inherit;
-	opacity: 0.85;
 }
 
 .sm {

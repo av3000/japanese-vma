@@ -1,24 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { radicalTree, radicalWater } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { radicalKanjiSeeds } from '@/components/features/japanese/related/relatedSeeds';
-import { StoryProviders, type PageStoryParameters } from '@/test/StoryProviders';
-import { signedInAuth } from '@/test/storyAuth';
 import RadicalContent from './RadicalContent';
 
 /** Radical detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/RadicalDetails',
+	title: 'Pages/RadicalDetails/Content',
 	component: RadicalContent,
 	parameters: { layout: 'fullscreen', seeds: radicalKanjiSeeds(radicalTree.uuid, 674) },
 	args: { radical: { ...radicalTree, kanjis: [] } },
-	decorators: [
-		(Story, context) => (
-			<StoryProviders {...(context.parameters as PageStoryParameters)}>
-				<Story />
-			</StoryProviders>
-		),
-	],
 } satisfies Meta<typeof RadicalContent>;
 
 export default meta;
@@ -27,6 +18,7 @@ type Story = StoryObj<typeof meta>;
 
 /** 木 for a guest: 674 kanji, 25 to a page, inline. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const rail = canvas.getByRole('complementary', { name: 'About this radical' });
@@ -38,7 +30,7 @@ export const Guest: Story = {
 };
 
 export const SignedIn: Story = {
-	parameters: { auth: signedInAuth(3) },
+	parameters: { auth: 'member' },
 };
 
 /** 水 with its variants 氵 and 氺. */

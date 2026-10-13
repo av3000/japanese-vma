@@ -1,0 +1,51 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Docs/Choosing dialogs" />
+
+# Choosing dialogs
+
+Every dialog here is a native `<dialog>` opened with `showModal()`, so focus is trapped and the page behind is inert. They differ in who opens them, how they are laid out, and how much of the content they decide for you. Start from the most specific component that fits and drop down only when none does.
+
+- Ask the user to confirm an action: use `ConfirmModal` (`components/shared/modals`)
+- Confirm deleting an article, catalogue or post: use `DeleteInstanceModal` (`components/features/DeleteInstanceModal`)
+- Tell the user something, with one Close button: use `InfoModal` (`components/shared/modals`)
+- Any other dialog with a title, body and actions: use `DialogModal` (`components/shared/DialogModal`)
+- A full-height sheet (mobile menu, search): use `Drawer` (`components/shared/Drawer`)
+- A dialog that must carry its own header close button: use `Modal` (`components/shared/Modal`)
+
+## Opening them: `useModal`
+
+`DialogModal`, `ConfirmModal`, `InfoModal`, `DeleteInstanceModal` and `Drawer` are driven by a controller from `useModal(dialogRef)`: `open()`, `close()`, `isOpen` and `isRendered`. The hook owns `showModal()`, Escape, the scroll lock and returning focus to the trigger. The wrappers return `null` until `isRendered`, so a closed dialog costs nothing.
+
+`Modal` predates this and takes `useDialog(dialogRef)` instead (`handleOpen`, `handleClose`). Do not mix the two hooks with the wrong component.
+
+## DialogModal: the default dialog
+
+Compose `DialogModal.Header`, `DialogModal.Title`, `DialogModal.Body` and `DialogModal.Footer`, or pass bare children for a simple body. A floating close button sits in the corner. Sizes: `sm`, `md`, `lg`, `xl`, `fullscreen`. `closeOnBackdrop` defaults to true; set it to false when a click outside would lose typed work. Give it an `ariaLabel` when there is no visible title. Most dialogs in the app are built on it. See [Shared/DialogModal](?path=/docs/shared-dialogmodal--docs).
+
+## ConfirmModal: yes or no
+
+A `DialogModal` with a title, your content as the body, and a Cancel and a confirm button. Set `confirmLabel` to the verb (`Remove item`, not `OK`), and `confirmVariant="danger"` for anything destructive. `isConfirmLoading` disables the confirm button and shows `Working...` while the request runs. See [Shared/Modals/ConfirmModal](?path=/docs/shared-modals-confirmmodal--docs).
+
+## InfoModal: acknowledge
+
+The same shell with a single Close button, for a message the user only needs to read. It has no stories yet.
+
+## DeleteInstanceModal: delete an owned item
+
+A `ConfirmModal`-shaped dialog with the wording fixed: it states the action cannot be undone and names the item through `instanceName`, and its button is the danger variant that reads `Deleting...` while `isProcessing`. Articles, catalogues and community posts use it, so a delete reads the same everywhere. Use it only for permanent deletes of a named item; for any other destructive action use `ConfirmModal` with its own wording. It has no stories; the dashboard, article and catalogue screens show it.
+
+## Drawer: a sheet, not a dialog
+
+A full-height, full-width panel for mobile navigation and search. It has no title bar, close button or padding: the content lays out its own top bar and must include a way to close it. Pass `label` as the accessible name. Do not use it for a question or a form that belongs in a dialog. See [Shared/Drawer](?path=/docs/shared-drawer--docs).
+
+## Modal: the older compound dialog
+
+`Modal` is a similar compound component (`Modal.Header`, `Modal.Title`, `Modal.Body`, `Modal.Footer`) with a close button inside the header, sizes `sm`, `md`, `lg` and `fullscreen`, and `aria-labelledby` wired from its title. Nothing in the app imports it today. Prefer `DialogModal` for new work so there is one dialog shell; reach for `Modal` only if you need the header close button and are prepared to use `useDialog`. See [Shared/Modal](?path=/docs/shared-modal--docs).
+
+## Rules
+
+- Name the dialog: a visible `Title`, or an `ariaLabel` (`label` for `Drawer`).
+- Buttons say what they do. Destructive confirmations use the danger variant and name the thing being deleted.
+- Do not stack dialogs. If a dialog needs a second decision, change its content.
+- Use a popover (`components/ui/popover`) for a small, non-blocking panel anchored to its trigger, not a dialog.

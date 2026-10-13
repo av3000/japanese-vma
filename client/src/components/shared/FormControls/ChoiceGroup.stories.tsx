@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { ChoiceGroup, type ChoiceGroupProps, type ChoiceOption } from './';
 
 const VISIBILITY: ChoiceOption<'public' | 'private'>[] = [
@@ -37,7 +37,6 @@ function Controlled<T extends string | number>({ value: initial, onChange, ...pr
 const meta = {
 	title: 'Shared/FormControls/ChoiceGroup',
 	component: ChoiceGroup,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 } satisfies Meta<typeof ChoiceGroup>;
 

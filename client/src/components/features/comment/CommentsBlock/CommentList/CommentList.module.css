@@ -1,5 +1,8 @@
+/* An h3 under the page's "Comments" h2 (was an h5, which skipped levels); keeps the h5 size. */
 .heading {
 	margin-block: var(--spacing-lg);
+	min-height: auto;
+	font-size: clamp(var(--font-size-heading-6), 5vw, var(--font-size-heading-5));
 	color: var(--color-neutral-600);
 }
 

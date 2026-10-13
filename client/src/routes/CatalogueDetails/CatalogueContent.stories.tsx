@@ -1,35 +1,16 @@
-import type * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import type { MappedCatalogue } from '@/api/catalogues/details';
 import { catalogueItemsQueryKey } from '@/api/catalogues/items';
 import { getCommentsQueryKey } from '@/api/comments';
 import { kanjiRows, repeatRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
-import { AuthContext } from '@/providers/contexts/auth-provider';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
-import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { type AuthParameter, pageSeed, type QuerySeed } from '@/storybook/decorators';
 import CatalogueContent from './CatalogueContent';
 
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-const guest: AuthValue = {
-	user: null,
-	isAuthenticated: false,
-	isLoading: false,
-	sessionExpired: false,
-	token: null,
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-};
 const OWNER_ID = 7;
-const owner: AuthValue = {
-	...guest,
-	isAuthenticated: true,
-	token: 'story-token',
+const owner: AuthParameter = {
 	user: { id: OWNER_ID, uuid: 'owner-uuid', name: 'Aki Tanaka', email: 'aki@example.com', roles: [], isAdmin: false },
 };
 
@@ -98,30 +79,11 @@ const articleItems = Array.from({ length: 3 }, (_, index) => ({
 	},
 })) as unknown as CatalogueArticleItem[];
 
-interface StoryParams {
-	auth?: AuthValue;
-	seeds?: QuerySeed[];
-}
-
 const meta = {
-	title: 'Pages/CatalogueDetails',
+	title: 'Pages/CatalogueDetails/Content',
 	component: CatalogueContent,
-	tags: ['autodocs'],
-	parameters: { layout: 'fullscreen' },
+	parameters: { layout: 'fullscreen', seeds: [firstPage('kanji', kanjiRows, 42), noComments] },
 	args: { catalogue: catalogue() },
-	decorators: [
-		(Story, context) => {
-			const params = context.parameters as StoryParams;
-
-			return (
-				<AuthContext.Provider value={params.auth ?? guest}>
-					<SeededQueryClient seeds={params.seeds ?? [firstPage('kanji', kanjiRows, 42), noComments]}>
-						<Story />
-					</SeededQueryClient>
-				</AuthContext.Provider>
-			);
-		},
-	],
 } satisfies Meta<typeof CatalogueContent>;
 
 export default meta;
@@ -130,6 +92,7 @@ type Story = StoryObj<typeof meta>;
 
 /** A Study-eligible kanji catalogue as a visitor sees it: Study is offered, no owner actions. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -139,7 +102,7 @@ export const Guest: Story = {
 	},
 };
 
-export const GuestMobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const GuestMobile: Story = { parameters: { auth: 'guest' }, globals: { viewport: { value: 'xs' } } };
 
 export const Owner: Story = {
 	parameters: { auth: owner },
@@ -152,7 +115,7 @@ export const Owner: Story = {
 	},
 };
 
-export const OwnerMobile: Story = { parameters: { auth: owner, viewport: { defaultViewport: 'mobile1' } } };
+export const OwnerMobile: Story = { parameters: { auth: owner }, globals: { viewport: { value: 'xs' } } };
 
 /** Empty and Study-eligible: no Study button, a hint for the owner. */
 export const EmptyForTheOwner: Story = {
@@ -202,7 +165,7 @@ export const Articles: Story = {
 /** A 255-character title with no spaces and no description, at 360px. */
 export const LongestTitleMobile: Story = {
 	args: { catalogue: catalogue({ title: 'L'.repeat(255), description: null }) },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth + 1);
 	},

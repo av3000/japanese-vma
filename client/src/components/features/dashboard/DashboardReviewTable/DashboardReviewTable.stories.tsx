@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { reviewQueue } from '../dashboardReviewFixtures';
 import { DashboardReviewTable } from './';
 
 const meta = {
 	title: 'Features/Dashboard/DashboardReviewTable',
 	component: DashboardReviewTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		articles: reviewQueue,
@@ -36,4 +35,4 @@ export const Loading: Story = { args: { articles: [], loading: true } };
 
 export const Empty: Story = { args: { articles: [] } };
 
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

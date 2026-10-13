@@ -41,7 +41,7 @@ export const ButtonRegular: React.FunctionComponent<ButtonRegularProps> = ({
 
   return (
     <button className={classes} type={type} disabled={disabled || isLoading} {...buttonProps}>
-      {isLoading && <span className={classNames(styles.spinner, 'u-spinner')} />}
+      {isLoading && <span className={classNames(styles.spinner, 'u-spinner')} aria-hidden="true" />}
       {isLoading === undefined ? (
         <>{children}</>
       ) : (

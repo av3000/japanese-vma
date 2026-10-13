@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { latestArticles } from '../fixtures';
 import { LatestArticlesView } from './';
 
 const meta = {
 	title: 'Features/Homepage/LatestArticles',
 	component: LatestArticlesView,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { status: 'success', articles: latestArticles, total: 128, onRetry: () => undefined },
 	decorators: [
@@ -30,4 +29,4 @@ export const Empty: Story = { args: { articles: [], total: 0 } };
 
 export const ErrorState: Story = { name: 'Error', args: { status: 'error', articles: [], total: undefined } };
 
-export const MobileViewport: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const MobileViewport: Story = { globals: { viewport: { value: 'xs' } } };

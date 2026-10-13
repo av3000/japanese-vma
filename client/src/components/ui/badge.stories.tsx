@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Badge } from './badge';
 import storyStyles from './stories.module.css';
 
 const meta = {
 	title: 'UI/Badge',
 	component: Badge,
-	tags: ['autodocs'],
 	argTypes: {
 		variant: {
 			options: ['default', 'secondary', 'success', 'destructive', 'outline', 'ghost', 'link', 'pending'],

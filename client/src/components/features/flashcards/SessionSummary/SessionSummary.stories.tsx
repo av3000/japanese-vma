@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { SavedListType } from '@/shared/constants/enums';
 import { kanjiCards } from '../fixtures';
 import { SessionSummary, type SessionAnswer } from './index';

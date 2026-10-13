@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { mapWordDetail } from '@/api/words/details';
 import {
 	wordKanaOnly,
@@ -7,23 +7,14 @@ import {
 	wordManyMeanings,
 } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { wordRelatedSeeds } from '@/components/features/japanese/related/relatedSeeds';
-import { StoryProviders, type PageStoryParameters } from '@/test/StoryProviders';
-import { signedInAuth } from '@/test/storyAuth';
 import WordContent from './WordContent';
 
 /** Word detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/WordDetails',
+	title: 'Pages/WordDetails/Content',
 	component: WordContent,
 	parameters: { layout: 'fullscreen', seeds: wordRelatedSeeds(wordManyMeanings.id, 2) },
 	args: { word: mapWordDetail(wordManyMeanings) },
-	decorators: [
-		(Story, context) => (
-			<StoryProviders {...(context.parameters as PageStoryParameters)}>
-				<Story />
-			</StoryProviders>
-		),
-	],
 } satisfies Meta<typeof WordContent>;
 
 export default meta;
@@ -32,6 +23,7 @@ type Story = StoryObj<typeof meta>;
 
 /** 出る for a guest: 77 glosses in one paragraph. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -42,7 +34,7 @@ export const Guest: Story = {
 };
 
 export const SignedIn: Story = {
-	parameters: { auth: signedInAuth(3) },
+	parameters: { auth: 'member' },
 };
 
 /** 公共土木施設災害復旧事業費国庫負担法: the longest word title, with 18 kanji. */

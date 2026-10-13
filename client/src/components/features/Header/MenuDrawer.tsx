@@ -27,7 +27,7 @@ export const MenuDrawer: React.FC = () => {
 
 	let account: React.ReactNode;
 	if (isLoading) {
-		account = <span className={styles.authPending} aria-label="Checking account status" />;
+		account = <span className={styles.authPending} role="status" aria-label="Checking account status" />;
 	} else if (isAuthenticated && user) {
 		account = (
 			<ul className={styles.drawerAccountList} aria-label="Account">

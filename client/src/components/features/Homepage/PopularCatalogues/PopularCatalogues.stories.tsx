@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { popularCatalogues } from '../fixtures';
 import { PopularCataloguesView } from './';
 
 const meta = {
 	title: 'Features/Homepage/PopularCatalogues',
 	component: PopularCataloguesView,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { status: 'success', catalogues: popularCatalogues, total: 37, onRetry: () => undefined },
 	decorators: [
@@ -30,4 +29,4 @@ export const Empty: Story = { args: { catalogues: [], total: 0 } };
 
 export const ErrorState: Story = { name: 'Error', args: { status: 'error', catalogues: [], total: undefined } };
 
-export const MobileViewport: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const MobileViewport: Story = { globals: { viewport: { value: 'xs' } } };

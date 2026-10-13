@@ -70,7 +70,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 			<img className={styles.avatar} src={DefaultAvatar} alt="" width="40" height="40" />
 			<div className={styles.body}>
 				<Cluster justify="between">
-					<h5 className={styles.author}>@{comment.author?.name ?? DELETED_AUTHOR_NAME}</h5>
+					<p className={styles.author}>@{comment.author?.name ?? DELETED_AUTHOR_NAME}</p>
 					<Cluster gap="2xs">
 						{canEdit && !isEditing && (
 							<Button

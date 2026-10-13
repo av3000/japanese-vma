@@ -1,50 +1,10 @@
-import type * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
-import { AuthContext } from '@/providers/contexts/auth-provider';
-import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { authSpies, type AuthParameter } from '@/storybook/decorators';
+import { users } from '@/storybook/fixtures/users';
 import Header from './';
 
-type AuthValue = NonNullable<React.ComponentProps<typeof AuthContext.Provider>['value']>;
-
-const noop = async () => undefined;
-
-const guest: AuthValue = {
-	user: null,
-	isAuthenticated: false,
-	isLoading: false,
-	sessionExpired: false,
-	token: null,
-	login: noop,
-	register: noop,
-	logout: noop,
-	clearSessionExpired: () => undefined,
-};
-
-const loading: AuthValue = { ...guest, isLoading: true };
-
-const signedInAs = (name: string): AuthValue => ({
-	...guest,
-	isAuthenticated: true,
-	token: 'story-token',
-	user: { id: 1, uuid: 'story-user', name, email: 'hanako@example.com', roles: [], isAdmin: false },
-});
-
-const connectedSocket = {
-	...DEFAULT_SOCKET_CONTEXT,
-	isConfigured: true,
-	connectionStatus: 'connected' as const,
-	hasAttemptedConnection: true,
-};
-
-/** The Header reads auth and socket state from context; the story supplies both. */
-const HeaderWithAuth: React.FC<{ auth: AuthValue; onLogout?: () => void }> = ({ auth, onLogout }) => (
-	<AuthContext.Provider value={onLogout ? { ...auth, logout: async () => onLogout() } : auth}>
-		<SocketContext.Provider value={connectedSocket}>
-			<Header />
-		</SocketContext.Provider>
-	</AuthContext.Provider>
-);
+const signedInAs = (name: string): AuthParameter => ({ user: { ...users.member, name } });
 
 /**
  * The play functions follow whichever layout the canvas is wide enough for: the bar from 1024px,
@@ -62,18 +22,17 @@ const openMenuDrawer = async (canvasElement: HTMLElement) => {
 };
 
 const meta = {
-	title: 'Features/Header',
-	component: HeaderWithAuth,
+	title: 'Features/Navigation/Header',
+	component: Header,
 	parameters: { layout: 'fullscreen' },
-	args: { auth: guest, onLogout: fn() },
-	argTypes: { auth: { control: false } },
-} satisfies Meta<typeof HeaderWithAuth>;
+} satisfies Meta<typeof Header>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(canvas.queryByRole('menu')).toBeNull();
@@ -93,7 +52,7 @@ export const Guest: Story = {
 };
 
 export const Loading: Story = {
-	args: { auth: loading },
+	parameters: { auth: 'loading' },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).queryByRole('link', { name: 'Sign Up' })).toBeNull();
 	},
@@ -101,8 +60,8 @@ export const Loading: Story = {
 
 /** A signed-in user sees only their name; Dashboard and Log out sit behind it. */
 export const SignedIn: Story = {
-	args: { auth: signedInAs('Hanako') },
-	play: async ({ canvasElement, args }) => {
+	parameters: { auth: signedInAs('Hanako') },
+	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
 		if (isDesktop()) {
@@ -116,7 +75,7 @@ export const SignedIn: Story = {
 				'/dashboard',
 			);
 			await userEvent.click(within(account).getByRole('button', { name: 'Log out' }));
-			await expect(args.onLogout).toHaveBeenCalled();
+			await expect(authSpies.logout).toHaveBeenCalled();
 			return;
 		}
 
@@ -137,7 +96,7 @@ export const SignedIn: Story = {
 
 /** The Explore disclosure on desktop, with a description under each link. */
 export const ExploreOpen: Story = {
-	args: { auth: signedInAs('Hanako') },
+	parameters: { auth: signedInAs('Hanako') },
 	play: async ({ canvasElement }) => {
 		if (!isDesktop()) return;
 		const canvas = within(canvasElement);
@@ -147,4 +106,73 @@ export const ExploreOpen: Story = {
 };
 
 /** A 20-character name, for checking the bar still fits; the name truncates past 12rem. */
-export const LongName: Story = { args: { auth: signedInAs('Hanako Yamamoto-Ito') } };
+export const LongName: Story = { parameters: { auth: signedInAs('Hanako Yamamoto-Ito') } };
+
+/** The account list of whichever layout fits: the bar from 1024px, the navigation drawer below. */
+const accountScope = async (canvasElement: HTMLElement) => {
+	const scope = isDesktop() ? within(canvasElement) : await openMenuDrawer(canvasElement);
+
+	return within(scope.getByRole('list', { name: 'Account' }));
+};
+
+/** Account menu, then Log out: the auth context's `logout` runs once. */
+export const LogsOut: Story = {
+	parameters: { auth: signedInAs('Hanako') },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await userEvent.click(account.getByRole('button', { name: 'Hanako' }));
+		await userEvent.click(account.getByRole('button', { name: 'Log out' }));
+		await expect(authSpies.logout).toHaveBeenCalledTimes(1);
+	},
+};
+
+/** The realtime dot sits beside the account name, and only for a signed-in viewer. */
+export const SocketConnecting: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'connecting' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket connecting' })).toBeInTheDocument();
+	},
+};
+
+export const SocketReconnecting: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'reconnecting' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket reconnecting' })).toBeInTheDocument();
+	},
+};
+
+export const SocketFailed: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'failed' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.getByRole('button', { name: 'WebSocket failed' })).toBeInTheDocument();
+	},
+};
+
+/** With no realtime server configured the dot is not rendered, and the account still is. */
+export const SocketUnconfigured: Story = {
+	parameters: { auth: signedInAs('Hanako'), socket: 'unconfigured' },
+	play: async ({ canvasElement }) => {
+		const account = await accountScope(canvasElement);
+		await expect(account.queryByRole('button', { name: /^WebSocket/ })).toBeNull();
+		await expect(account.getByRole('button', { name: 'Hanako' })).toBeInTheDocument();
+	},
+};
+
+/** At 360px the bar collapses to the brand, search and menu buttons; everything else is in the drawer. */
+export const Mobile: Story = {
+	globals: { viewport: { value: 'xs' } },
+	parameters: { auth: signedInAs('Hanako') },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('link', { name: 'JPLearning' })).toBeVisible();
+
+		const drawer = await openMenuDrawer(canvasElement);
+		await expect(drawer.getByRole('heading', { name: 'Explore' })).toBeInTheDocument();
+		await expect(drawer.getByRole('list', { name: 'Account' })).toBeInTheDocument();
+		await userEvent.click(drawer.getByRole('button', { name: 'Close navigation' }));
+		await waitFor(() => expect(canvas.getByRole('button', { name: 'Open navigation' })).toHaveFocus());
+	},
+};
