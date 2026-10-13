@@ -34,7 +34,7 @@ import Dashboard from './index';
 /*
  * The whole Dashboard route on seeded data. The cache (`parameters.seeds`) holds the default view of
  * each tab (staleTime: Infinity), so nothing fetches; a view that was not seeded (another filter)
- * goes to the network and, without a backend, shows the real error state. A fake Echo instance
+ * is answered by the generated MSW handlers with seeded faker data. A fake Echo instance
  * captures the owner-channel listener so a story can push a processing update into a row.
  */
 

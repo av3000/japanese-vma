@@ -23,7 +23,6 @@
   "src/components/features/catalogues/CatalogueBookmarkModal": "todo: #177",
   "src/components/features/catalogues/CatalogueFilters": "todo: #177",
   "src/components/features/catalogues/CatalogueItems/CatalogueArticleList.tsx": "covered-by: src/components/features/catalogues/CatalogueItems/CatalogueItems.stories.tsx",
-  "src/components/features/comment/CommentsBlock": "todo: #333",
   "src/components/features/comment/CommentsBlock/CommentForm": "todo: #579",
   "src/components/features/comment/CommentsBlock/CommentItem": "todo: #579",
   "src/components/features/comment/CommentsBlock/CommentList": "todo: #579",

@@ -1,5 +1,8 @@
+import { faker } from '@faker-js/faker';
 import type { Preview } from '@storybook/react-vite';
+import { mswLoader } from 'msw-storybook-addon/csf3';
 import { authSpies, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
+import { startStoryWorker, takeUnhandledRequests } from '@/storybook/msw';
 import '@/styles/global-styles';
 
 /** Viewport presets, from the breakpoints the CSS uses (768, 1024, 1320). */
@@ -44,8 +47,22 @@ const preview: Preview = {
 		},
 	},
 	initialGlobals: { auth: 'guest', socket: 'connected' },
+	loaders: [mswLoader(startStoryWorker)],
 	beforeEach: () => {
 		Object.values(authSpies).forEach((spy) => spy.mockClear());
+		// Generated handlers draw from faker: one seed per story keeps every run identical.
+		faker.seed(173);
+		takeUnhandledRequests();
+	},
+	afterEach: () => {
+		const unhandled = takeUnhandledRequests();
+
+		if (unhandled.length > 0) {
+			throw new Error(
+				`Unmocked API request(s): ${unhandled.join(', ')}. Every endpoint in api.json has a generated ` +
+					'handler; anything else needs one (see Docs/Authoring, "Data in stories").',
+			);
+		}
 	},
 	parameters: {
 		options: {

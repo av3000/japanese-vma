@@ -31,7 +31,39 @@ The global decorators provide React Query, the router, auth and the socket, nest
 - A story that is *about* a viewer or a connection state (`Guest`, `Owner`, `Polling`) pins it with `parameters.auth` or `parameters.socket`. Leave the rest unpinned, so the toolbar can flip them.
 - Viewers come from `@/storybook/fixtures/users`: `users.member` is the default member, and `users.other` is a second one for owner-versus-visitor stories.
 - The auth actions are spies in `authSpies` (`login`, `register`, `logout`, `clearSessionExpired`), cleared before every story. A `play` asserts on them directly: `expect(authSpies.logout).toHaveBeenCalled()`.
-- Each story gets a fresh query client: no retries, no refetch on focus, and seeded data never goes stale. A seeded story fetches nothing unless it asks for new data (another page, another filter). Without a backend, that request fails and shows the component's real error state.
+- Each story gets a fresh query client: no retries, no refetch on focus, and seeded data never goes stale. A seeded story fetches nothing unless it asks for new data (another page, another filter); that request then goes to the mocked API below.
+
+## Data in stories
+
+Two tools, each with one job:
+
+| The story needs… | Use |
+|---|---|
+| The rendered screen with known data, and no request | `parameters.seeds` |
+| A loading or error state | MSW |
+| A mutation: submit, delete, like, comment | MSW |
+| Pagination, filter changes, a refetch after a mutation | MSW, optionally with seeds for the first page |
+| A route component that fetches on mount (`Pages/`) | MSW |
+
+**MSW handlers are generated, never hand-written.** `npm run orval:file` writes a `*.msw.ts` next to each generated client in `src/api/generated/`. It holds a `get…MockHandler(override?)` for every endpoint and a `get…ResponseMock()` factory for every response. All of them are loaded for every story (`src/storybook/msw.ts`), so a component that fetches gets generated data unless the story says otherwise.
+
+- **Determinism.** Faker is seeded before every story, so generated data is identical on every run. Named state stories pass explicit fixtures rather than relying on the seed.
+- **Overrides** go in `beforeEach`, using the generated factory for that endpoint:
+
+  ```tsx
+  beforeEach: ({ msw }) => {
+  	msw.use(getCommentGetArticleCommentsMockHandler(threadOf([])));
+  },
+  ```
+
+  - Pass a function to read the request: `getCommentStoreMockHandler(async ({ request }) => …)`.
+  - Never-resolving: `async () => { await delay('infinite'); … }`, with `delay` from `msw`.
+  - Errors: `() => { throw new Response(null, { status: 500 }); }`.
+  - A raw `http.get(…)` is allowed only for something the factories can't express, with a comment naming the generated handler it stands in for.
+- **Unmocked API calls fail the story.** A request under `/api/` that no handler answers fails the story with `Unmocked API request(s): …`. That means the endpoint is missing from `api.json`; fix the backend schema, not the story.
+- **Paths.** Handlers match `*/<path>`, whatever `VITE_API_URL` is, so Storybook needs no API URL.
+- **After a backend change**, run `composer openapi` in `processor-api/`, then `npm run orval:file` in `client/`, one after the other. The handlers regenerate with the client.
+- **The service worker** lives in `.storybook/public/`, not `client/public/`, so it never ships in the app build.
 
 ## Viewports
 
