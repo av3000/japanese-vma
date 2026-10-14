@@ -58,6 +58,7 @@ The [evidence manifest](./ai/evidence-manifest.md) maps important claims to thei
 - [Deployment and runtime](./architecture/deployment-and-runtime.md)
 - [Data and integrations](./architecture/data-and-integrations.md)
 - [Architecture comparison backlog](./architecture/architecture-comparison-backlog.md) — open pattern questions against the two reference solutions, triaged into ADRs or `AGENTS.md` rules
+- [Agent loop](./architecture/agent-loop/README.md) — proposed: from a labelled issue to a reviewed PR, with unattended agent runs (temporary until its decisions and issues land)
 
 ## Architecture Decisions
 
