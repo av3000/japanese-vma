@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleProvenance;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -18,6 +19,7 @@ class ArticleMapper
     public function __construct(
         private readonly KanjiMapper $kanjiMapper,
         private readonly WordMapper $wordMapper,
+        private readonly ArticleSourceLookup $sources,
     ) {
     }
 
@@ -61,6 +63,7 @@ class ArticleMapper
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
+            $this->mapProvenance($entity),
             kanjis: $domainKanjis,
             words: $domainWords,
         );
@@ -93,7 +96,22 @@ class ArticleMapper
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
+            $this->mapProvenance($entity),
             kanjis: [],
+        );
+    }
+
+    /**
+     * The source is always resolved here, never from an eager-loaded relation, so an imported
+     * article reads the same whichever query loaded it. A null source means the row was deleted.
+     */
+    private function mapProvenance(PersistenceArticle $entity): ArticleProvenance
+    {
+        return ArticleProvenance::fromStored(
+            $entity->origin,
+            $entity->content_source_id,
+            $entity->external_id,
+            $entity->content_source_id === null ? null : $this->sources->find($entity->content_source_id),
         );
     }
 
@@ -111,6 +129,9 @@ class ArticleMapper
             'source_link' => $article->getSourceUrl()->value,
             'publicity' => $article->getPublicity()->value,
             'status' => $article->getStatus()->value,
+            'origin' => $article->getProvenance()->origin->value,
+            'content_source_id' => $article->getProvenance()->contentSourceId,
+            'external_id' => $article->getProvenance()->externalId,
             'n1' => (string) $article->getJlptLevels()->n1,
             'n2' => (string) $article->getJlptLevels()->n2,
             'n3' => (string) $article->getJlptLevels()->n3,

@@ -36,6 +36,7 @@ use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
 use App\Infrastructure\Persistence\Repositories\ArticleRepository;
+use App\Infrastructure\Persistence\Repositories\ArticleSourceLookup;
 use App\Infrastructure\Persistence\Repositories\CatalogueItemRepository;
 use App\Infrastructure\Persistence\Repositories\CatalogueRepository;
 use App\Infrastructure\Persistence\Repositories\CommentRepository;
@@ -66,6 +67,9 @@ class RepositoryServiceProvider extends ServiceProvider
             ArticleRepositoryInterface::class,
             ArticleRepository::class
         );
+
+        // One copy of the Content Source attributions for every article mapper.
+        $this->app->singleton(ArticleSourceLookup::class);
 
         // Article list read ports. Swapping in a search-engine reader later means
         // rebinding ArticleListReaderInterface here and nothing else.

@@ -8,6 +8,7 @@ use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
+use App\Domain\Articles\ValueObjects\ArticleAuthor;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Viewer;
 use App\Shared\Results\Result;
@@ -24,9 +25,15 @@ interface ArticleServiceInterface
     /**
      * Success data: ArticleCreateResultDTO (article plus its pending processing state).
      */
-    public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result;
+    public function createArticle(ArticleCreateDTO $dto, ArticleAuthor $author): Result;
 
     public function getArticleIdByUuid(EntityId $uuid): ?int;
+
+    /**
+     * Whether an article was already imported from this Content Source under this external id.
+     * The Content Import context asks this before fetching a page it would only skip.
+     */
+    public function hasImportedArticle(int $contentSourceId, string $externalId): bool;
 
     /**
      * Get single article with optional relationships and permission check.

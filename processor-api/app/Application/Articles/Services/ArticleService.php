@@ -25,9 +25,11 @@ use App\Domain\Articles\DTOs\ArticleUpdateDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
+use App\Domain\Articles\Exceptions\ArticleAlreadyImportedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
+use App\Domain\Articles\ValueObjects\ArticleAuthor;
 use App\Domain\Articles\ValueObjects\ArticleContent;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
@@ -71,17 +73,17 @@ class ArticleService implements ArticleServiceInterface
      *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
-    public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
+    public function createArticle(ArticleCreateDTO $dto, ArticleAuthor $author): Result
     {
         try {
             /** @var ArticleCreateResultDTO $created */
-            $created = DB::transaction(function () use ($dto, $authenticatedUser): ArticleCreateResultDTO {
+            $created = DB::transaction(function () use ($dto, $author): ArticleCreateResultDTO {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
-                    $authenticatedUser->id,
-                    $authenticatedUser->name,
-                    $authenticatedUser->uuid,
+                    $author->id,
+                    $author->name,
+                    $author->uuid,
                 );
                 // TODO: for frontend we only need UUID/ID which can be used to redirect user to article details page where frontend fetched the article show endpoint.
                 $createdDomainArticle = $this->articleRepository->create($domainArticle);
@@ -91,7 +93,7 @@ class ArticleService implements ArticleServiceInterface
                         $createdDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->tags,
-                        $authenticatedUser->id->value(),
+                        $author->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -117,9 +119,12 @@ class ArticleService implements ArticleServiceInterface
             ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
 
             return Result::success($created);
+        } catch (ArticleAlreadyImportedException $e) {
+            // Another import run created the same external article first.
+            return Result::failure(ArticleErrors::alreadyImported($e->externalId));
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
-                'user_id' => $authenticatedUser->id->value(),
+                'user_id' => $author->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -130,6 +135,11 @@ class ArticleService implements ArticleServiceInterface
     public function getArticleIdByUuid(EntityId $uuid): ?int
     {
         return $this->articleRepository->getIdByUuid($uuid);
+    }
+
+    public function hasImportedArticle(int $contentSourceId, string $externalId): bool
+    {
+        return $this->articleRepository->existsImported($contentSourceId, $externalId);
     }
 
     /**
@@ -335,6 +345,7 @@ class ArticleService implements ArticleServiceInterface
             $article->getJlptLevels(), // Recomputed by ProcessArticleContentJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
+            $article->getProvenance(), // Provenance never changes after creation
         );
     }
 

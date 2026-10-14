@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Domain\Articles\Enums\ArticleOrigin;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
@@ -22,6 +23,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string $source_link
  * @property PublicityStatus $publicity
  * @property ArticleStatus $status
+ * @property ArticleOrigin $origin
+ * @property int|null $content_source_id
+ * @property string|null $external_id
  * @property int $user_id
  * @property string $uuid
  * @property string|null $entity_type_uuid
@@ -34,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $user
+ * @property-read ContentSource|null $contentSource
  * @property-read Collection<int, Kanji> $kanjis
  * @property-read Collection<int, Word> $words
  */
@@ -54,6 +59,9 @@ class Article extends Model
         'source_link',
         'publicity',
         'status',
+        'origin',
+        'content_source_id',
+        'external_id',
         'user_id',
         'uuid',
         'entity_type_uuid',
@@ -69,6 +77,8 @@ class Article extends Model
     protected $casts = [
         'publicity' => PublicityStatus::class,
         'status' => ArticleStatus::class,
+        'origin' => ArticleOrigin::class,
+        'content_source_id' => 'integer',
         'n1' => 'integer',
         'n2' => 'integer',
         'n3' => 'integer',
@@ -83,6 +93,7 @@ class Article extends Model
     protected $attributes = [
         'publicity' => PublicityStatus::PRIVATE,
         'status' => ArticleStatus::PENDING,
+        'origin' => ArticleOrigin::User,
         'n1' => 0,
         'n2' => 0,
         'n3' => 0,
@@ -94,6 +105,11 @@ class Article extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function contentSource(): BelongsTo
+    {
+        return $this->belongsTo(ContentSource::class);
     }
 
     public function kanjis(): BelongsToMany

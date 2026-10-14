@@ -1,4 +1,5 @@
 import React from 'react';
+import { importedSourceOf } from '@/api/articles/provenance';
 import type { ArticleResource } from '@/api/generated/model/articleResource';
 import {
 	ProcessingStatus,
@@ -6,7 +7,9 @@ import {
 } from '@/api/generated/model/processingStatus';
 import { JlptBar } from '@/components/shared/JlptBar';
 import { LevelBadge } from '@/components/shared/LevelBadge';
+import { SourceBadge } from '@/components/shared/SourceBadge';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
+import { Cluster } from '@/components/shared/layout';
 import { formatDate } from '@/helpers';
 import { CardCover } from '../CardCover';
 import { CardDate, CardStats, CardSubtitle, CardTags, CardTitle, LibraryCard, toCount } from '../LibraryCard';
@@ -29,12 +32,14 @@ const shouldShowProcessingBadge = (status: string | undefined): status is Proces
 
 /**
  * An article as a Library Card: the cover glyph and dominant level, the date, the Japanese title
- * (two lines at most), the English title, tags, the JLPT bar and the engagement counts.
+ * (two lines at most), the source of an Imported Article, the English title, tags, the JLPT bar and the engagement counts.
  */
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) => {
 	const status = article.processing_status?.status;
 	const level = articleCoverLevel(article.jlpt_levels);
 	const stats = article.engagement?.stats;
+	const source = importedSourceOf(article);
+	const date = <CardDate dateTime={article.created_at}>{formatDate(article.created_at, 'ja')}</CardDate>;
 
 	return (
 		<LibraryCard
@@ -53,7 +58,14 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, className }) 
 				/>
 			}
 		>
-			<CardDate dateTime={article.created_at}>{formatDate(article.created_at, 'ja')}</CardDate>
+			{source ? (
+				<Cluster gap="xs">
+					{date}
+					<SourceBadge source={source} />
+				</Cluster>
+			) : (
+				date
+			)}
 			<CardTitle to={`/articles/${article.uuid}`} lang="ja">
 				{article.title_jp}
 			</CardTitle>

@@ -65,6 +65,8 @@ const createArticle = (overrides: Partial<ArticleDetailResource> = {}): ArticleD
 	content_jp: 'これはテスト記事です。',
 	content_en: 'This is a test article.',
 	source_link: 'https://example.com/article',
+	origin: 'user',
+	source: null,
 	publicity: 1,
 	status: 3,
 	jlpt_levels: {
