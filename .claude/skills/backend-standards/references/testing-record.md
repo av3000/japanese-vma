@@ -1,5 +1,7 @@
 # Testing Record
 
+This is the pressure-test record of `backend-architecture-boundaries`, the skill `backend-standards` replaced in epic #502 (STANDARDS-03). Its scenarios still describe what the ARCH- and DATA- rules must make an agent do.
+
 Skill creation followed documentation TDD as far as available tooling allowed.
 
 ## Pressure Scenarios

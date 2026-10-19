@@ -10,7 +10,7 @@
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- Run tests in the isolated Docker test lane from `processor-api/`, never with `php artisan test`. `jvma<issue>` is a project name unique to the checkout.
+- Run tests in the isolated Docker test lane from `processor-api/`, never with `php artisan test`. `jvma<issue>` is a project name unique to the checkout (`TEST-docker-lane`).
 - To run all tests: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test`.
 - To run all tests in a file: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
