@@ -4,12 +4,10 @@ import type { InfiniteData } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { articleKeys } from '@/api/articles/keys';
-import { getPendingArticlesQueryKey } from '@/api/articles/moderation';
 import { getInfiniteCataloguesQueryKey } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import { dashboardKeys } from '@/api/dashboard/keys';
 import type {
 	ArticleListResource,
-	ArticleModerationListResource,
 	ArticleResource,
 	CatalogueListResource,
 	CatalogueResource,
@@ -22,7 +20,6 @@ import {
 	manyArticles,
 } from '@/components/features/dashboard/dashboardFixtures';
 import { hostileCatalogues, knownLists } from '@/components/features/dashboard/dashboardListFixtures';
-import { reviewQueue } from '@/components/features/dashboard/dashboardReviewFixtures';
 import type { QuerySeed } from '@/storybook/decorators';
 import type { User } from '@/types';
 import { dashboardArticleFilters } from './DashboardArticlesPanel';
@@ -46,7 +43,6 @@ const owner = {
 	roles: [],
 	isAdmin: false,
 } as User;
-const admin = { ...owner, id: 1, uuid: 'admin-uuid', isAdmin: true } as User;
 
 /** Splits rows into API pages of 25, with the pagination the backend would send. */
 const toPages = <T,>(items: T[]) => {
@@ -100,10 +96,6 @@ const dashboardSeeds = ({ user, articles = [], catalogues = [], loadEverything =
 				dashboardCatalogueFilters(user.uuid, defaultDashboardViewState('lists')),
 			),
 			data: pick(toPages(catalogues) as unknown as CatalogueListResource[]),
-		},
-		{
-			queryKey: getPendingArticlesQueryKey({ per_page: DASHBOARD_PER_PAGE }),
-			data: pick(toPages(reviewQueue) as unknown as ArticleModerationListResource[]),
 		},
 		{
 			queryKey: dashboardKeys.counts(user.uuid),
@@ -162,7 +154,7 @@ const LiveUpdateButton: React.FC<{ onEmit: () => void }> = ({ onEmit }) => (
 const target = everyStateArticles[1];
 
 /** The dashboard at `tab`, as the router would open it. */
-const atTab = (tab: 'lists' | 'review') => ({ initialEntries: [`/dashboard?tab=${tab}`] });
+const atTab = (tab: 'lists') => ({ initialEntries: [`/dashboard?tab=${tab}`] });
 
 const meta = {
 	title: 'Pages/Dashboard',
@@ -218,14 +210,5 @@ export const FiveHundredArticles: Story = {
 	parameters: {
 		seeds: dashboardSeeds({ ...defaultSeed, articles: manyArticles(500), loadEverything: true }),
 		a11y: { test: 'off' },
-	},
-};
-
-/** Admins get the review queue as a third section. */
-export const AdminReview: Story = {
-	parameters: {
-		auth: { user: admin },
-		router: atTab('review'),
-		seeds: dashboardSeeds({ ...defaultSeed, user: admin }),
 	},
 };

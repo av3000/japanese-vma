@@ -5,7 +5,7 @@ import { DashboardTabs } from './';
 const meta = {
 	title: 'Features/Dashboard/DashboardTabs',
 	component: DashboardTabs,
-	args: { active: 'articles', isAdmin: false },
+	args: { active: 'articles' },
 } satisfies Meta<typeof DashboardTabs>;
 
 export default meta;
@@ -29,14 +29,5 @@ export const ListsOpen: Story = {
 		const nav = within(canvasElement).getByRole('navigation', { name: 'Dashboard sections' });
 
 		await expect(within(nav).getByRole('link', { name: 'Lists' })).toHaveAttribute('aria-current', 'page');
-	},
-};
-
-export const Admin: Story = {
-	args: { isAdmin: true, active: 'review' },
-	play: async ({ canvasElement }) => {
-		const nav = within(canvasElement).getByRole('navigation', { name: 'Dashboard sections' });
-
-		await expect(within(nav).getByRole('link', { name: 'Review queue' })).toHaveAttribute('aria-current', 'page');
 	},
 };

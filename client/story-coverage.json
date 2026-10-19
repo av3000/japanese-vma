@@ -23,7 +23,6 @@
   "src/components/shared/Link/LinkRouter.tsx": "covered-by: src/components/shared/Link/Link.stories.tsx",
   "src/components/shared/modals/InfoModal.tsx": "dead: #583",
   "src/routes": "not-visual",
-  "src/routes/Dashboard/DashboardReviewPanel.tsx": "pending: #572",
   "src/routes/Dashboard/dashboardTestRoute.tsx": "not-visual",
   "src/routes/routeLoading": "not-visual"
 }

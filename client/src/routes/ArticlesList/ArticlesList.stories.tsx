@@ -156,14 +156,18 @@ export const FilterChangesRequest: Story = {
 		await waitFor(() => expect(requests.last()['jlpt_levels[]']).toBe('n3'));
 		await expect(new URLSearchParams(currentLocation().split('?')[1]).getAll('jlpt_levels[]')).toEqual(['n3']);
 
-		await userEvent.type(canvas.getByRole('searchbox', { name: 'Search articles' }), '新幹線{Enter}');
+		await userEvent.type(await canvas.findByRole('searchbox', { name: 'Search articles' }), '新幹線{Enter}');
 		await waitFor(() => expect(requests.last().q).toBe('新幹線'));
 		await expect(new URLSearchParams(currentLocation().split('?')[1]).get('q')).toBe('新幹線');
 
-		await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Sort articles' }), 'Oldest first');
+		// The list refetches after the search, so wait for the sort control to be back.
+		await userEvent.selectOptions(
+			await canvas.findByRole('combobox', { name: 'Sort articles' }, { timeout: 5000 }),
+			'Oldest first',
+		);
 		await waitFor(() => expect(requests.last().sort).toBe('created_at'));
 
-		await userEvent.click(canvas.getByRole('button', { name: 'Reset' }));
+		await userEvent.click(await canvas.findByRole('button', { name: 'Reset' }));
 		await waitFor(() => expect(currentLocation()).toBe('/articles'));
 		await waitFor(() => expect(canvas.getByRole('searchbox', { name: 'Search articles' })).toHaveValue(''));
 		await expect(canvas.queryByText(/Results for/)).not.toBeInTheDocument();

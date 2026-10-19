@@ -1,0 +1,38 @@
+name: PR Issue Link
+
+# Every PR must reference at least one issue (Refs #N), and every referenced
+# issue must carry an acceptance-criteria checklist. Bots are exempt.
+# Editing the PR body re-runs the check.
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  issue-link:
+    name: Linked issue has acceptance criteria
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: scripts/check-pr-issue-link.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Check the linked issues
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-pr-issue-link.mjs

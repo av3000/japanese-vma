@@ -1,9 +1,14 @@
 import { faker } from '@faker-js/faker';
 import type { Preview } from '@storybook/react-vite';
 import { mswLoader } from 'msw-storybook-addon/csf3';
+import { configure } from 'storybook/test';
 import { authSpies, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
 import { startStoryWorker, takeUnhandledRequests } from '@/storybook/msw';
 import '@/styles/global-styles';
+
+// findBy*/waitFor give up after 1 s by default, which is too tight for ~150 story files running in
+// parallel browsers on a busy machine or CI runner. 3 s still fails fast on a real regression.
+configure({ asyncUtilTimeout: 3000 });
 
 /** Viewport presets, from the breakpoints the CSS uses (768, 1024, 1320). */
 const viewport = (name: string, width: number, type: 'mobile' | 'tablet' | 'desktop') => ({

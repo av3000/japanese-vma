@@ -34,11 +34,24 @@ class PermissionSeeder extends Seeder
         $this->command?->info('Permissions seed complete.');
 
         if ($created !== []) {
-            $this->command?->info('Created permissions: ' . implode(', ', $created));
+            $this->command?->info('Created permissions: '.implode(', ', $created));
         }
 
         if ($existing !== []) {
-            $this->command?->info('Existing permissions: ' . implode(', ', $existing));
+            $this->command?->info('Existing permissions: '.implode(', ', $existing));
+        }
+
+        // Reported, never deleted: a role may still reference a renamed or retired permission, and
+        // removing it should be a deliberate migration.
+        $orphaned = Permission::query()
+            ->where('guard_name', PermissionCatalog::guardName())
+            ->whereNotIn('name', PermissionCatalog::allPermissionNames())
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+
+        if ($orphaned !== []) {
+            $this->command?->warn('Permissions not in the catalogue: '.implode(', ', $orphaned));
         }
     }
 }

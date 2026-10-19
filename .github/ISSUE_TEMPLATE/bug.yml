@@ -1,0 +1,60 @@
+name: Bug
+description: Existing behaviour is wrong. Steps to reproduce and acceptance criteria are required.
+labels:
+  - needs-triage
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what happens and what should happen instead, precisely enough that someone else can reproduce it.
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behaviour
+      description: What happens now. Include error messages or screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should happen instead. Give exact values (text, colour, count) when they matter.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Observable outcomes that prove the bug is fixed.
+      value: |
+        - [ ] AC-1 Following the steps above no longer reproduces the bug.
+        - [ ] AC-2 A regression test fails before the fix and passes after it.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: How much damage the bug, or a careless fix, could do.
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, device, signed in or not, and since when, if known.

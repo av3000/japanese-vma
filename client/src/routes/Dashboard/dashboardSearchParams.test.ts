@@ -10,11 +10,11 @@ import {
 	parseDashboardSearchParams,
 	serializeDashboardViewState,
 	statusesForFilter,
-	visibleDashboardTabs,
+	DASHBOARD_TABS,
 	type DashboardViewState,
 } from './dashboardSearchParams';
 
-const parse = (query: string, isAdmin = false) => parseDashboardSearchParams(new URLSearchParams(query), { isAdmin });
+const parse = (query: string) => parseDashboardSearchParams(new URLSearchParams(query));
 
 const serialize = (state: DashboardViewState) => serializeDashboardViewState(state).toString();
 
@@ -46,13 +46,8 @@ describe('parseDashboardSearchParams', () => {
 		expect(parse('tab=lists&type=banana')).toEqual(defaultDashboardViewState('lists'));
 	});
 
-	it('opens the review queue for admins only', () => {
-		expect(parse('tab=review', true).tab).toBe('review');
-		expect(parse('tab=review', false)).toEqual(defaultDashboardViewState('articles'));
-	});
-
-	it('carries no filters on the review queue', () => {
-		expect(parse('tab=review&q=x&status=rejected', true)).toEqual(defaultDashboardViewState('review'));
+	it('opens Articles for the retired review queue link', () => {
+		expect(parse('tab=review')).toEqual(defaultDashboardViewState('articles'));
 	});
 });
 
@@ -91,15 +86,13 @@ describe('statusesForFilter', () => {
 });
 
 describe('tab links', () => {
-	it('lists Review only for admins', () => {
-		expect(visibleDashboardTabs(false)).toEqual(['articles', 'lists']);
-		expect(visibleDashboardTabs(true)).toEqual(['articles', 'lists', 'review']);
+	it('has the same two sections for everyone', () => {
+		expect(DASHBOARD_TABS).toEqual(['articles', 'lists']);
 	});
 
 	it('links each tab with its own filters reset', () => {
 		expect(dashboardTabSearch('articles')).toBe('');
 		expect(dashboardTabSearch('lists')).toBe('?tab=lists');
-		expect(dashboardTabSearch('review')).toBe('?tab=review');
 	});
 });
 

@@ -46,6 +46,7 @@ class WordMapper
         if (is_array($decoded)) {
             return $this->topLevelStringValues($decoded);
         }
+
         return $this->parseDelimitedStringList($value);
     }
 
@@ -65,7 +66,7 @@ class WordMapper
      *
      * @return array<int, string>
      */
-    private function extractMeanings(?string $sense): array
+    public function extractMeanings(?string $sense): array
     {
         $decodedSense = json_decode($sense ?? '[]', true);
 

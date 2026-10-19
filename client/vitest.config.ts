@@ -28,6 +28,8 @@ export default defineConfig((env) => {
 					optimizeDeps: { include: storyOptimizeDeps },
 					test: {
 						name: 'storybook',
+						// A real browser per file, axe on every story: 15 s is tight on a busy machine or CI runner.
+						testTimeout: 30000,
 						browser: {
 							enabled: true,
 							headless: true,

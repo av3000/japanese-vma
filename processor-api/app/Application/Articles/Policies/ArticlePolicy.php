@@ -9,11 +9,6 @@ use App\Domain\Shared\Enums\PublicityStatus;
 
 class ArticlePolicy
 {
-    public function canModerate(AuthenticatedUser $authenticatedUser): bool
-    {
-        return $authenticatedUser->isAdmin;
-    }
-
     /**
      * Derive the mandatory Article visibility scope from the actor.
      *

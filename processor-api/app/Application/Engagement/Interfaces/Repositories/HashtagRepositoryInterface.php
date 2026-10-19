@@ -1,7 +1,11 @@
 <?php
+
 namespace App\Application\Engagement\Interfaces\Repositories;
 
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
+use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
+use App\Domain\Engagement\DTOs\HashtagTagDTO;
+use App\Domain\Engagement\ValueObjects\HashtagName;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 
 interface HashtagRepositoryInterface
@@ -11,10 +15,27 @@ interface HashtagRepositoryInterface
      * Creates the unique hashtag if it doesn't exist, then creates the association.
      *
      * @param array{entity_id: int, entity_type_id: int, content: string, user_id: int} $data
-     * @return void
+     *
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function create(array $data): void; // TODO: create CreateHashtagDTO
+
+    public function findTag(int $hashtagId): ?HashtagTagDTO;
+
+    /**
+     * Another tag with the same comparison key, if one exists.
+     */
+    public function findTagByKey(string $key, ?int $exceptId = null): ?HashtagTagDTO;
+
+    public function rename(int $hashtagId, HashtagName $name): HashtagTagDTO;
+
+    /**
+     * Move every link from source to target and delete source, under row locks on both tags.
+     * Active source links that would duplicate an active target link are soft-deleted as they
+     * move, so the history survives and no entity ends up tagged twice. Call inside a
+     * transaction.
+     */
+    public function merge(int $sourceId, int $targetId): HashtagMergeResultDTO;
 
     /**
      * Delete all hashtags for a specific entity.
@@ -22,7 +43,7 @@ interface HashtagRepositoryInterface
      *
      * @param int $entityId The entity ID
      * @param int $entityTypeId The entity type ID (legacy integer ID)
-     * @return void
+     *
      * @throws \Illuminate\Database\QueryException On database failure
      */
     public function deleteByEntity(int $entityId, int $entityTypeId): void;
@@ -31,8 +52,10 @@ interface HashtagRepositoryInterface
      * Find all hashtags for a specific entity using a filter DTO.
      *
      * @param HashtagFilterDTO $filter Filter criteria (entity_id, entity_type)
-     * @return array<object> Array of hashtag objects with properties: id, content, created_at, updated_at
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<object> Array of hashtag objects with properties: id, content, created_at, updated_at
      */
     public function findAllByFilter(HashtagFilterDTO $filter): array;
 
@@ -41,8 +64,10 @@ interface HashtagRepositoryInterface
      *
      * @param array<int> $entityIds Array of entity IDs to load hashtags for
      * @param ObjectTemplateType $objectType The type of entities
-     * @return array<int, array<object>> Associative array keyed by entity_id, values are arrays of hashtag objects
+     *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return array<int, array<object>> Associative array keyed by entity_id, values are arrays of hashtag objects
      */
     public function findAllByEntityIds(array $entityIds, ObjectTemplateType $objectType): array;
 }

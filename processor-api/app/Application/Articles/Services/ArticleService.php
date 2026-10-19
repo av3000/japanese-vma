@@ -2,18 +2,13 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
@@ -53,12 +48,7 @@ class ArticleService implements ArticleServiceInterface
         private ArticleProcessingStateReaderInterface $processingStateReader,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
-        private CleanupArticleCustomListsAction $cleanupCustomLists,
-        private HashtagRepositoryInterface $hashtagRepository,
-        private ViewRepositoryInterface $viewRepository,
-        private LikeRepositoryInterface $likeRepository,
-        private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository,
+        private DeleteArticleAction $deleteArticle,
         private ProcessingStateServiceInterface $processingStates,
     ) {
     }
@@ -359,14 +349,7 @@ class ArticleService implements ArticleServiceInterface
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 
-                // Delete relationships and engagement data
-                $this->articleRepository->deleteById($article->getIdValue());
-                $this->viewRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->downloadRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->likeRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->commentRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->hashtagRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->cleanupCustomLists->execute($article->getIdValue());
+                $this->deleteArticle->execute($article->getIdValue());
             });
 
             return Result::success();

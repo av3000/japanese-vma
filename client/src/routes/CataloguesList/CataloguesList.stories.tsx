@@ -143,19 +143,23 @@ export const FilterChangesRequest: Story = {
 		const canvas = within(canvasElement);
 		await canvas.findByText('Showing 12 of 30');
 
-		await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Catalogue type' }), 'Words');
+		await userEvent.selectOptions(await canvas.findByRole('combobox', { name: 'Catalogue type' }), 'Words');
 		await waitFor(() => expect(requests.last().type).toBe('7'));
 		await expect(searchOf(currentLocation()).get('type')).toBe('7');
 
-		await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Sort by' }), 'Popular');
+		// The list refetches after the previous change, so wait for the sort control to be back.
+		await userEvent.selectOptions(
+			await canvas.findByRole('combobox', { name: 'Sort by' }, { timeout: 5000 }),
+			'Popular',
+		);
 		await waitFor(() => expect(requests.last().sort_by).toBe('views'));
 		await expect(searchOf(currentLocation()).get('sort')).toBe('pop');
 
 		const requestsBeforeTyping = requests.searches.length;
-		await userEvent.type(canvas.getByRole('searchbox', { name: 'Search catalogues' }), 'cooking');
+		await userEvent.type(await canvas.findByRole('searchbox', { name: 'Search catalogues' }), 'cooking');
 		await expect(requests.searches).toHaveLength(requestsBeforeTyping);
 
-		await userEvent.type(canvas.getByRole('searchbox', { name: 'Search catalogues' }), '{Enter}');
+		await userEvent.type(await canvas.findByRole('searchbox', { name: 'Search catalogues' }), '{Enter}');
 		await waitFor(() => expect(requests.last().search).toBe('cooking'));
 		await expect(requests.last()).toMatchObject({ type: '7', sort_by: 'views' });
 		await expect(searchOf(currentLocation()).get('q')).toBe('cooking');

@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Shared\Enums\UserRole;
-use App\Http\Models\Article;
-use App\Http\Models\Comment;
-use App\Http\Models\CustomList;
-use App\Http\Models\Download;
-use App\Http\Models\Post;
-use App\Http\Models\View;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -51,44 +47,69 @@ class User extends Authenticatable implements FilamentUser
         'updated_at' => 'datetime',
     ];
 
-    public function articles()
+    public function articles(): HasMany
     {
         return $this->hasMany(Article::class);
     }
 
-    public function likes()
+    public function likes(): HasMany
     {
         return $this->hasMany(Like::class);
     }
 
-    public function downloads()
+    public function downloads(): HasMany
     {
         return $this->hasMany(Download::class);
     }
 
-    public function views()
+    public function views(): HasMany
     {
         return $this->hasMany(View::class);
     }
 
-    public function comments()
+    public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    public function posts()
+    public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
-    public function lists()
+    public function catalogues(): HasMany
     {
-        return $this->hasMany(CustomList::class);
+        return $this->hasMany(Catalogue::class);
     }
 
+    /**
+     * Any catalogue permission opens the panel; each resource policy then narrows what is visible.
+     * Recovery when nobody can sign in: `php artisan tinker` then
+     * `User::where('email', '...')->first()->assignRole('admin')`.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin' && $this->hasRole(UserRole::ADMIN->value);
+        if ($panel->getId() !== 'admin') {
+            return false;
+        }
+
+        return $this->isPanelSuperuser()
+            || $this->hasAnyPermission(PermissionCatalog::allPermissionNames());
+    }
+
+    /**
+     * The `admin` role passes every panel permission check without holding the permission rows,
+     * so a missed seeder run cannot lock the only administrator out. Policy invariants such as
+     * "users are never deleted" still apply after this check.
+     */
+    public function hasPanelPermission(string $permission): bool
+    {
+        return $this->isPanelSuperuser() || $this->checkPermissionTo($permission);
+    }
+
+    public function isPanelSuperuser(): bool
+    {
+        return $this->hasRole(UserRole::ADMIN->value);
     }
 
     /**

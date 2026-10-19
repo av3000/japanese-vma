@@ -9,7 +9,7 @@ Surface frontend deepening opportunities: refactors that turn shallow route, hoo
 
 ## Core Vocabulary
 
-Use the architecture vocabulary from `improve-codebase-architecture`: **module**, **interface**, **seam**, **adapter**, **depth**, **leverage**, and **locality**. Apply it to frontend surfaces without drifting into vague "component/service/boundary" language.
+Use the deep-module vocabulary from Matt Pocock's `codebase-design` skill (plugin `mattpocock-skills`): **module**, **interface**, **seam**, **adapter**, **depth**, **leverage**, and **locality**. Apply it to frontend surfaces without drifting into vague "component/service/boundary" language.
 
 Frontend-specific seam vocabulary lives in [references/frontend-seams.md](references/frontend-seams.md).
 
@@ -20,10 +20,7 @@ Read these first:
 1. root `AGENTS.md`
 2. `client/AGENTS.md`
 3. `CONTEXT.md` and `docs/adr/` if they exist
-4. Relevant repo-local frontend skills when triggered:
-   - `client-frontend-standards`
-   - `saved-list-to-catalogue-v1-migration`
-   - `scramble-orval-contract-debugging`
+4. The generated API contract workflow in root `AGENTS.md` §2 and `processor-api/AGENTS.md` §5, when a candidate depends on the Orval client or `api.json`
 
 Read reference files only when needed:
 
@@ -76,7 +73,7 @@ Once the user picks a candidate, walk the design tree:
 - What temporary adapter remains, and what removes it?
 - What tests survive an internal refactor?
 
-If interface alternatives are needed, use `improve-codebase-architecture` `INTERFACE-DESIGN.md` as the pattern: compare radically different interfaces by depth, locality, and seam placement.
+If interface alternatives are needed, design them with `codebase-design`: compare radically different interfaces by depth, locality, and seam placement.
 
 ## Default Frontend Shape
 
@@ -95,7 +92,7 @@ Scalable frontend architecture in this repo means added routes and features keep
 Run the scanner on a focused file set when useful:
 
 ```powershell
-.codex/skills/improve-frontend-codebase-architecture/scripts/check-frontend-architecture.ps1 -Files client/src/routes/ArticlesList/index.tsx
+.claude/skills/improve-frontend-codebase-architecture/scripts/check-frontend-architecture.ps1 -Files client/src/routes/ArticlesList/index.tsx
 ```
 
 Use templates only after a candidate is chosen:

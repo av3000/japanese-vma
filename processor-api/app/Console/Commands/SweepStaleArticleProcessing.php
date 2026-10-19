@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Domain\Processing\ProcessingThresholds;
 use Illuminate\Console\Command;
 
 class SweepStaleArticleProcessing extends Command
 {
-    /**
-     * Default threshold: job timeout (120 s) + queue retry_after (180 s) + margin. A row that
-     * has not been touched for that long has no attempt left that could still update it.
-     */
-    public const DEFAULT_OLDER_THAN_SECONDS = 330;
+    public const DEFAULT_OLDER_THAN_SECONDS = ProcessingThresholds::STALE_AFTER_SECONDS;
 
     protected $signature = 'article-processing:sweep-stale
         {--older-than='.self::DEFAULT_OLDER_THAN_SECONDS.' : Mark pending/processing rows not updated for this many seconds as failed}';

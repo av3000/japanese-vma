@@ -12,27 +12,30 @@ class RolePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(UserRole::ADMIN->value);
+        return $user->hasPanelPermission('roles.view');
     }
 
     public function view(User $user, Role $role): bool
     {
-        return $user->hasRole(UserRole::ADMIN->value);
+        return $user->hasPanelPermission('roles.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole(UserRole::ADMIN->value);
+        return $user->hasPanelPermission('roles.create');
     }
 
     public function update(User $user, Role $role): bool
     {
-        return $user->hasRole(UserRole::ADMIN->value);
+        return $user->hasPanelPermission('roles.update');
     }
 
+    /**
+     * System roles and roles still assigned to users are never deletable, whoever asks.
+     */
     public function delete(User $user, Role $role): bool
     {
-        if (! $user->hasRole(UserRole::ADMIN->value)) {
+        if (! $user->hasPanelPermission('roles.delete')) {
             return false;
         }
 

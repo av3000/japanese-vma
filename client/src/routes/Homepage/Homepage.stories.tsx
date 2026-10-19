@@ -57,11 +57,11 @@ export const Default: Story = {
 		await expect(canvas.getByRole('link', { name: '214 Radicals' })).toHaveAttribute('href', '/radicals');
 
 		const articles = within(await canvas.findByRole('region', { name: 'Latest articles' }));
-		await expect(articles.getAllByRole('listitem')).toHaveLength(4);
+		await expect(await articles.findAllByRole('listitem')).toHaveLength(4);
 		await expect(articles.getByRole('link', { name: 'All 128 articles' })).toHaveAttribute('href', '/articles');
 
 		const catalogues = within(await canvas.findByRole('region', { name: 'Popular catalogues' }));
-		await expect(catalogues.getAllByRole('listitem')).toHaveLength(4);
+		await expect(await catalogues.findAllByRole('listitem')).toHaveLength(4);
 		await expect(catalogues.getByRole('link', { name: 'All 37 catalogues' })).toHaveAttribute(
 			'href',
 			'/catalogues',

@@ -171,9 +171,19 @@ export const Member: Story = {
 		await userEvent.click(list.getByRole('button', { name: 'Next page' }));
 		await expect(await list.findByText('Showing 21–40 of 171 kanji')).toBeInTheDocument();
 
-		await userEvent.click((await list.findAllByRole('button', { name: /^Save / }))[0]);
-		const chooser = within(await list.findByRole('dialog', { name: 'Choose Kanji List to add' }));
-		await userEvent.click((await chooser.findAllByRole('button', { name: 'Add' }))[0]);
+		// Under load the click can land on a page-1 row that page 2 is replacing, so keep clicking the
+		// first row's Save until its chooser is actually open (a mounted dialog is not yet an open one).
+		await waitFor(
+			async () => {
+				await userEvent.click((await list.findAllByRole('button', { name: /^Save / }))[0]);
+				const dialog = list.getByRole('dialog', { name: 'Choose Kanji List to add' }) as HTMLDialogElement;
+				await expect(dialog.open).toBe(true);
+			},
+			{ timeout: 10000 },
+		);
+		const chooser = within(list.getByRole('dialog', { name: 'Choose Kanji List to add' }));
+		// Each row fetches its lists on mount, and the chooser shows "no lists" until that lands (#617).
+		await userEvent.click((await chooser.findAllByRole('button', { name: 'Add' }, { timeout: 10000 }))[0]);
 
 		await waitFor(() => expect(chooser.getAllByRole('button', { name: 'Remove' })).toHaveLength(1));
 		await expect(added).toHaveLength(1);

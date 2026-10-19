@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
-import { usePendingArticles } from '@/api/articles/moderation';
 import { useDashboardCounts } from '@/api/dashboard/useDashboardCounts';
 import { useAuth } from '@/hooks/useAuth';
 import { choose, controlLabelled } from '@/test/formEvents';
@@ -17,7 +16,6 @@ let catalogueFilters: Record<string, unknown> | undefined;
 vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('@/api/dashboard/useDashboardCounts', () => ({ useDashboardCounts: vi.fn() }));
 vi.mock('@/api/articles/hooks/useOwnerProcessingSubscription', () => ({ OwnerProcessingSubscription: () => null }));
-vi.mock('@/api/articles/moderation', () => ({ usePendingArticles: vi.fn() }));
 
 const emptyQuery = {
 	total: 0,
@@ -59,7 +57,6 @@ beforeEach(() => {
 	articleFilters = undefined;
 	catalogueFilters = undefined;
 	vi.mocked(useDashboardCounts).mockReturnValue({ data: { articles: 12, lists: 1, awaitingReview: 2 } } as never);
-	vi.mocked(usePendingArticles).mockReturnValue({ pendingArticles: [], ...emptyQuery } as never);
 });
 
 afterEach(async () => {
@@ -152,21 +149,12 @@ describe('Dashboard route', () => {
 		expect(route.view.container.querySelector('nav a[aria-current="page"]')?.textContent).toBe('Lists');
 	});
 
-	it('keeps the review queue for admins only', async () => {
-		signIn(owner);
-		route = await renderDashboardRoute('/dashboard?tab=review');
-
-		expect(navLinks(route.view.container)).not.toContain('Review queue');
-		expect(articleFilters).toMatchObject({ author_uid: 'owner-uuid' });
-		expect(usePendingArticles).not.toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
-		await route.view.unmount();
-
+	it('opens Articles for the retired review queue link, admins included', async () => {
 		signIn(admin);
 		route = await renderDashboardRoute('/dashboard?tab=review');
 
-		expect(navLinks(route.view.container)).toEqual(['Articles', 'Lists', 'Review queue']);
-		expect(usePendingArticles).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
-		expect(route.view.container.textContent).toContain('Nothing awaits review');
+		expect(navLinks(route.view.container)).toEqual(['Articles', 'Lists']);
+		expect(articleFilters).toMatchObject({ author_uid: 'admin-uuid' });
 	});
 });
 

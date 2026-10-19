@@ -22,8 +22,9 @@ export const startStoryWorker = async () => {
 		onUnhandledRequest: (request, print) => {
 			const url = new URL(request.url);
 
-			// Only API calls count; Vite modules, fonts and images pass through untouched.
-			if (url.pathname.includes('/api/')) {
+			// Only API calls count (`…/api/v1/…`). Vite modules such as `/src/api/generated/…`, fonts and
+			// images pass through untouched.
+			if (/\/api\/v\d+\//.test(url.pathname) && !url.pathname.startsWith('/src/')) {
 				unhandled.push(`${request.method} ${url.pathname}`);
 				print.error();
 			}
