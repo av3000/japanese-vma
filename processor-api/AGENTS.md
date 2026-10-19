@@ -192,12 +192,14 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.3
+- filament/filament (FILAMENT) - v5
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
 - laravel/passport (PASSPORT) - v12
 - laravel/prompts (PROMPTS) - v0
 - laravel/reverb (REVERB) - v1
 - laravel/telescope (TELESCOPE) - v5
+- livewire/livewire (LIVEWIRE) - v4
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
@@ -301,7 +303,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands through `docker compose exec test-runner composer test -- ...` from `processor-api/`, with a specific filename or filter.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, never use `php artisan test`: run tests in the isolated Docker test lane from `processor-api/`, `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- ...`, with a specific filename or filter. Lane setup is in `processor-api/AGENTS.md` §6.
 
 === laravel/core rules ===
 
@@ -343,12 +345,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Laravel 10 Structure
 
-- Middleware typically lives in `app\Http/Middleware/` and service providers in `app\Providers/`.
+- Middleware typically lives in `app/Http/Middleware/` and service providers in `app/Providers/`.
 - There is no `bootstrap/app.php` application configuration in a Laravel 10 structure:
-    - Middleware registration happens in `app\Http/Kernel.php`
-    - Exception handling is in `app\Exceptions/Handler.php`
-    - Console commands and schedule register in `app\Console/Kernel.php`
-    - Rate limits likely exist in `RouteServiceProvider` or `app\Http/Kernel.php`
+    - Middleware registration happens in `app/Http/Kernel.php`
+    - Exception handling is in `app/Exceptions/Handler.php`
+    - Console commands and schedule register in `app/Console/Kernel.php`
+    - Rate limits likely exist in `RouteServiceProvider` or `app/Http/Kernel.php`
 
 ## Database
 
@@ -380,8 +382,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `docker compose exec test-runner composer test`.
-- To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
+- Run tests in the isolated Docker test lane from `processor-api/`, never with `php artisan test`. `jvma<issue>` is a project name unique to the checkout.
+- To run all tests: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test`.
+- To run all tests in a file: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
