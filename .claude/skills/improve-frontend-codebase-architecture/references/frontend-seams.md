@@ -1,12 +1,10 @@
 # Frontend Seams
 
-Use these frontend-specific seam names consistently with the architecture vocabulary.
+Use these frontend-specific seam names consistently with the architecture vocabulary. The rules each seam must follow are `frontend-standards` rule IDs, cited below rather than restated.
 
 ## Route Seam
 
-The route seam is where React Router params, search params, navigation, loading gates, and error gates meet the feature.
-
-Good route modules are thin. They parse inputs, call hooks, gate states, and delegate.
+The route seam is where React Router params, search params, navigation, loading gates, and error gates meet the feature. Rules: `repo-thin-routes`, `repo-router-v6-hooks`, `repo-parse-route-params-once`.
 
 Smell: route owns raw request details, pagination mechanics, backend wire shape, cache invalidation, or repeated mutation logic.
 
@@ -36,13 +34,11 @@ Feature API modules under `src/api/<feature>/...` own server-state behavior:
 - mutation behavior
 - temporary legacy shielding
 
-This is the preferred seam for repeated or behavior-heavy server logic.
+This is the preferred seam for repeated or behavior-heavy server logic. Rules: `repo-feature-query-hooks`, `repo-generated-query-keys`, `client-query-keys`.
 
 ## Generated Client Seam
 
-Generated Orval clients are the transport adapter for documented v1 endpoints.
-
-Use them directly when usable. Wrap only when the wrapper adds behavior or shields instability.
+Generated Orval clients are the transport adapter for documented v1 endpoints. Rules: `repo-generated-client-first`, `repo-contract-drift-backend-first`.
 
 ## Temporary Adapter Seam
 
@@ -53,4 +49,10 @@ Temporary adapters are for transition states only:
 - generated output is unstable or unusable
 - backend/schema work is pending
 
-Every temporary adapter must name its target, removal condition, and GitHub issue number or `no issue`.
+Rule: `repo-adapter-todo-shape`.
+
+## State Ownership
+
+Which tool owns which state: `client-query-dedup` and `repo-no-page-owned-server-state` (server state), `rerender-store-id-derive-item` (selection), `rerender-context-value-memo` (Context), `repo-no-redux`.
+
+Context suits stable app and session dependencies (auth, permissions, config). A selector-based store such as Zustand earns its place only when shared client state changes often, many independent consumers need slices of it, and broad re-renders are measured or clearly likely.

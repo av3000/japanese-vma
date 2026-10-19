@@ -42,15 +42,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.
   - Keep outputs and assumptions explicit in summaries.
-- **Generated API contract workflow:**
-  - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
-  - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
-  - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
-  - If Orval output looks wrong, inspect `processor-api/api.json` before adding frontend adapters or type coercion.
-  - Prefer fixing schema generation at the backend source even if the runtime endpoint itself appears correct.
-  - Verify the regenerated schema before trusting regenerated client types.
-  - Do not hand-edit generated API files to patch over contract problems.
-  - When a v1 endpoint is already documented and Orval already generates a usable client, prefer that generated client over adding a custom frontend wrapper. Only add a custom adapter when the endpoint is legacy, missing from the schema, or the generated client is actually unusable.
+- **Generated API contract workflow:** the rules live in the standards skills, with examples.
+  - Backend source, then `composer openapi`, then `npm run orval:file`, one after the other: `CONTRACT-api-json-orval-workflow` (`backend-standards`).
+  - Contract drift is fixed at the backend schema, never in generated files or client coercion: `repo-contract-drift-backend-first` (`frontend-standards`).
+  - A documented v1 endpoint is called through its generated client: `repo-generated-client-first` (`frontend-standards`).
 
 ## 3) How to Work in This Repository
 
@@ -74,8 +69,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
-  - For backend verification, use the dedicated Docker test lane from `processor-api/`: `docker compose up -d --build db-test test-runner`, then `docker compose exec test-runner composer test -- ...`.
-  - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+  - For backend verification, use the isolated Docker test lane: `TEST-docker-lane` in `backend-standards` holds the commands and what never to run tests against.
   - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
   - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
 - **Safety:**
