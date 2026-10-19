@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 import type { DashboardTab } from '@/routes/Dashboard/dashboardSearchParams';
 import { DashboardTabs } from './';
 
-const render = (active: DashboardTab, isAdmin = false) =>
+const render = (active: DashboardTab) =>
 	renderToStaticMarkup(
 		<MemoryRouter initialEntries={['/dashboard?tab=lists&q=old']}>
-			<DashboardTabs active={active} isAdmin={isAdmin} />
+			<DashboardTabs active={active} />
 		</MemoryRouter>,
 	);
 
@@ -36,8 +36,7 @@ describe('DashboardTabs', () => {
 		expect(current[0]).toContain('>Lists<');
 	});
 
-	it('shows the review queue to admins only', () => {
-		expect(render('articles', false)).not.toContain('Review queue');
-		expect(render('articles', true)).toContain('href="/dashboard?tab=review">Review queue</a>');
+	it('no longer offers the review queue, which moved to the admin panel', () => {
+		expect(render('articles')).not.toContain('Review queue');
 	});
 });

@@ -2,12 +2,16 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Http\Models\Like;
+use App\Http\Models\ObjectTemplate;
 use App\Http\User;
-use App\Http\Models\{ObjectTemplate, Like};
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
+use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
+    use RoutesByUuid;
+
     protected $fillable = [
         'template_id',
         'real_object_id',
@@ -16,7 +20,7 @@ class Comment extends Model
         'content',
         'uuid',
         'real_object_uuid',
-        'entity_type_uuid'
+        'entity_type_uuid',
     ];
 
     protected $casts = [

@@ -11,6 +11,7 @@ use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -55,6 +56,11 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
 
         $this->catalogueMapper->mapToExistingEntity($catalogue, $entity);
         $entity->save();
+    }
+
+    public function updatePublicity(int $catalogueId, PublicityStatus $publicity): void
+    {
+        Catalogue::whereKey($catalogueId)->update(['publicity' => $publicity === PublicityStatus::PUBLIC]);
     }
 
     public function deleteById(int $id): bool

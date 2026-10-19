@@ -3,17 +3,13 @@
 namespace App\Application\Catalogues\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Actions\DeleteCatalogueAction;
 use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
 use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
@@ -54,11 +50,7 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly CatalogueItemService $catalogueItemService,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly HashtagRepositoryInterface $hashtagRepository,
-        private readonly ViewRepositoryInterface $viewRepository,
-        private readonly LikeRepositoryInterface $likeRepository,
-        private readonly DownloadRepositoryInterface $downloadRepository,
-        private readonly CommentRepositoryInterface $commentRepository,
+        private readonly DeleteCatalogueAction $deleteCatalogue,
         private readonly LoadEntityStatsAction $loadStats,
         private readonly EngagementServiceInterface $engagementService,
         private readonly LoadCatalogueJlptLevelsAction $loadJlptLevels,
@@ -486,18 +478,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            DB::transaction(function () use ($catalogue) {
-                $catalogueId = $catalogue->getIdValue();
-                $templateId = ObjectTemplateType::LIST->getLegacyId();
-
-                $this->catalogueItemRepository->deleteByCatalogueId($catalogueId);
-                $this->viewRepository->deleteByEntity($catalogueId, $templateId);
-                $this->downloadRepository->deleteByEntity($catalogueId, $templateId);
-                $this->likeRepository->deleteByEntity($catalogueId, $templateId);
-                $this->commentRepository->deleteByEntity($catalogueId, $templateId);
-                $this->hashtagRepository->deleteByEntity($catalogueId, $templateId);
-                $this->catalogueRepository->deleteById($catalogueId);
-            });
+            DB::transaction(fn () => $this->deleteCatalogue->execute($catalogue->getIdValue()));
 
             return Result::success();
         } catch (\Exception $e) {

@@ -2,12 +2,15 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Kanji extends Model
 {
+    use RoutesByUuid;
+
     protected $table = 'japanese_kanji_bank_long';
 
     public $timestamps = false;

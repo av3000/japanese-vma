@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace App\Application\Users\Services;
 
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
+use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Users\Support\PermissionCatalog;
-use App\Application\Users\Interfaces\Repositories\{UserRepositoryInterface, RoleRepositoryInterface};
-use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Shared\Enums\UserRole;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\Errors\RoleErrors;
-use App\Domain\Users\Models\Role as DomainRole;
-use App\Shared\Results\Result;
 use App\Domain\Users\Errors\UserErrors;
+use App\Domain\Users\Models\Role as DomainRole;
 use App\Domain\Users\Queries\RoleQueryCriteria;
+use App\Shared\Results\Result;
+use Illuminate\Support\Facades\DB;
 
 class RoleService implements RoleServiceInterface
 {
@@ -21,7 +28,9 @@ class RoleService implements RoleServiceInterface
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly RoleRepositoryInterface $roleRepository,
-    ) {}
+        private readonly ActivityRecorderInterface $activityRecorder,
+    ) {
+    }
 
     /**
      * Checks if a user has a specific role.
@@ -29,12 +38,12 @@ class RoleService implements RoleServiceInterface
      *
      * @param EntityId $userUuid The public UUID of the user.
      * @param string|UserRole $role The role name or UserRole enum.
-     * @return bool
      */
     public function userHasRole(EntityId $userUuid, string|UserRole $role): bool
     {
         // TODO: probably one way should be expected and accepted rather than both
         $roleName = $role instanceof UserRole ? $role->value : $role;
+
         return $this->roleRepository->userHasRole($userUuid, $roleName);
     }
 
@@ -46,19 +55,17 @@ class RoleService implements RoleServiceInterface
     /**
      * Assign a role to a user.
      *
-     * @param EntityId $userUuid
-     * @param string $roleName
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function assignRole(EntityId $userUuid, string $roleName): Result
+    public function assignRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
-        if (!$user) {
+        if (! $user) {
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
-        if (!$this->roleExists($roleName)) {
+        if (! $this->roleExists($roleName)) {
             return Result::failure(RoleErrors::invalidRole($roleName));
         }
 
@@ -66,7 +73,17 @@ class RoleService implements RoleServiceInterface
             return Result::failure(UserErrors::roleAlreadyAssigned($roleName));
         }
 
-        $this->roleRepository->assignRole($user->getId(), $roleName);
+        DB::transaction(function () use ($user, $roleName, $actor): void {
+            $this->roleRepository->assignRole($user->getId(), $roleName);
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::UserRoleAssigned,
+                ActivitySubjectType::User,
+                $user->getUuid()->value(),
+                $user->getName()->value(),
+                context: ['role' => $roleName],
+            ));
+        });
 
         return Result::success($userUuid->value());
     }
@@ -74,15 +91,13 @@ class RoleService implements RoleServiceInterface
     /**
      * Remove a role from a user.
      *
-     * @param EntityId $userUuid
-     * @param string $roleName
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function removeRole(EntityId $userUuid, string $roleName): Result
+    public function removeRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
-        if (!$user) {
+        if (! $user) {
             return Result::failure(UserErrors::notFound($userUuid->value()));
         }
 
@@ -96,15 +111,25 @@ class RoleService implements RoleServiceInterface
             }
         }
 
-        if (!$this->roleExists($roleName)) {
+        if (! $this->roleExists($roleName)) {
             return Result::failure(RoleErrors::invalidRole($roleName));
         }
 
-        if (!$this->roleRepository->userHasRole($userUuid, $roleName)) {
+        if (! $this->roleRepository->userHasRole($userUuid, $roleName)) {
             return Result::failure(UserErrors::roleNotAssigned($roleName));
         }
 
-        $this->roleRepository->removeRole($user->getId(), $roleName);
+        DB::transaction(function () use ($user, $roleName, $actor): void {
+            $this->roleRepository->removeRole($user->getId(), $roleName);
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::UserRoleRemoved,
+                ActivitySubjectType::User,
+                $user->getUuid()->value(),
+                $user->getName()->value(),
+                context: ['role' => $roleName],
+            ));
+        });
 
         return Result::success($userUuid->value());
     }
@@ -113,13 +138,14 @@ class RoleService implements RoleServiceInterface
      * Permanently deletes a role, with guardrails.
      *
      * @param string $name The name of the role to delete.
+     *
      * @return Result<string> Success: Name of deleted role, Failure: ResultError
      */
-    public function deleteRole(string $name): Result
+    public function deleteRole(string $name, ?AuthenticatedUser $actor = null): Result
     {
         $role = $this->roleRepository->findByName($name);
 
-        if (!$role) {
+        if (! $role) {
             return Result::failure(RoleErrors::notFound($name));
         }
 
@@ -131,9 +157,24 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::roleHasActiveAssignments($name));
         }
 
-        $success = $this->roleRepository->deleteRole($name);
+        $success = DB::transaction(function () use ($role, $name, $actor): bool {
+            if (! $this->roleRepository->deleteRole($name)) {
+                return false;
+            }
 
-        if (!$success) {
+            $this->activityRecorder->record(ActivityEntries::by(
+                $actor,
+                ActivityAction::RoleDeleted,
+                ActivitySubjectType::Role,
+                $name,
+                $name,
+                before: $this->snapshot($role),
+            ));
+
+            return true;
+        });
+
+        if (! $success) {
             return Result::failure(RoleErrors::failed());
         }
 
@@ -145,6 +186,7 @@ class RoleService implements RoleServiceInterface
      * This method replaces both getRolesForUser and getRoles.
      *
      * @param RoleQueryCriteria|null $criteria Optional criteria for filtering roles.
+     *
      * @return DomainRole[]
      */
     public function findRoles(?RoleQueryCriteria $criteria = null): array
@@ -156,17 +198,19 @@ class RoleService implements RoleServiceInterface
      * Get all roles for a specific user (convenience method).
      *
      * @param EntityId $userUuid The public UUID of the user.
+     *
      * @return DomainRole[]
      */
     public function getUserRoles(EntityId $userUuid): array
     {
         $userId = $this->userRepository->getIdByUuid($userUuid);
 
-        if (!$userId) {
+        if (! $userId) {
             return [];
         }
 
         $criteria = RoleQueryCriteria::forUser($userId);
+
         return $this->findRoles($criteria);
     }
 
@@ -188,11 +232,11 @@ class RoleService implements RoleServiceInterface
     /**
      * Creates a new role.
      *
-     * @param string $name
      * @param string|null $guardName Defaults to 'api' if null.
+     *
      * @return Result<DomainRole> Success: The newly created DomainRole, Failure: ResultError
      */
-    public function createRole(string $name, ?string $guardName = null, array $permissions = []): Result
+    public function createRole(string $name, ?string $guardName = null, array $permissions = [], ?AuthenticatedUser $actor = null): Result
     {
         $actualGuardName = $guardName ?? self::DEFAULT_GUARD_NAME;
 
@@ -201,7 +245,7 @@ class RoleService implements RoleServiceInterface
         }
 
         $configuredGuards = array_keys(config('auth.guards'));
-        if (!in_array($actualGuardName, $configuredGuards)) {
+        if (! in_array($actualGuardName, $configuredGuards)) {
             return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
         }
 
@@ -210,20 +254,32 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
         }
 
-        $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
+        return DB::transaction(function () use ($name, $actualGuardName, $permissions, $actor): Result {
+            $newDomainRole = $this->roleRepository->createRole($name, $actualGuardName);
+            $result = $permissions === []
+                ? Result::success($newDomainRole)
+                : $this->syncRolePermissions($newDomainRole->getName(), $permissions);
 
-        if ($permissions === []) {
-            return Result::success($newDomainRole);
-        }
+            if ($result->isSuccess()) {
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::RoleCreated,
+                    ActivitySubjectType::Role,
+                    $name,
+                    $name,
+                    after: $this->snapshot($result->getData()),
+                ));
+            }
 
-        return $this->syncRolePermissions($newDomainRole->getName(), $permissions);
+            return $result;
+        });
     }
 
-    public function updateRole(string $currentName, string $newName, ?string $guardName = null, array $permissions = []): Result
+    public function updateRole(string $currentName, string $newName, ?string $guardName = null, array $permissions = [], ?AuthenticatedUser $actor = null): Result
     {
         $role = $this->roleRepository->findByName($currentName);
 
-        if (!$role) {
+        if (! $role) {
             return Result::failure(RoleErrors::notFound($currentName));
         }
 
@@ -238,7 +294,7 @@ class RoleService implements RoleServiceInterface
         }
 
         $configuredGuards = array_keys(config('auth.guards'));
-        if (!in_array($actualGuardName, $configuredGuards, true)) {
+        if (! in_array($actualGuardName, $configuredGuards, true)) {
             return Result::failure(RoleErrors::invalidGuardName($actualGuardName));
         }
 
@@ -247,18 +303,58 @@ class RoleService implements RoleServiceInterface
             return Result::failure(RoleErrors::invalidPermissions($invalidPermissions));
         }
 
-        $updatedRole = $role;
-        if ($currentName !== $newName || $role->getGuardName() !== $actualGuardName) {
-            $updatedRole = $this->roleRepository->updateRole($currentName, $newName, $actualGuardName);
-        }
+        return DB::transaction(function () use ($role, $currentName, $newName, $actualGuardName, $permissions, $actor): Result {
+            $updatedRole = $role;
+            if ($currentName !== $newName || $role->getGuardName() !== $actualGuardName) {
+                $updatedRole = $this->roleRepository->updateRole($currentName, $newName, $actualGuardName);
+            }
 
-        return $this->syncRolePermissions($updatedRole->getName(), $permissions);
+            $result = $this->syncRolePermissions($updatedRole->getName(), $permissions);
+
+            if ($result->isSuccess()) {
+                $before = $this->snapshot($role);
+                $after = $this->snapshot($result->getData());
+
+                if ($before !== $after) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $actor,
+                        ActivityAction::RoleUpdated,
+                        ActivitySubjectType::Role,
+                        $newName,
+                        $newName,
+                        before: $before,
+                        after: $after,
+                    ));
+                }
+            }
+
+            return $result;
+        });
+    }
+
+    /**
+     * @return array{name: string, guard_name: string, permissions: list<string>}
+     */
+    private function snapshot(DomainRole $role): array
+    {
+        $permissions = array_values($role->getPermissions());
+        sort($permissions);
+
+        return [
+            'name' => $role->getName(),
+            'guard_name' => $role->getGuardName(),
+            'permissions' => $permissions,
+        ];
     }
 
     public function syncRolePermissions(string $roleName, array $permissions): Result
     {
-        if (!$this->roleRepository->exists($roleName)) {
+        if (! $this->roleRepository->exists($roleName)) {
             return Result::failure(RoleErrors::notFound($roleName));
+        }
+
+        if ($roleName === UserRole::COMMON->value && $permissions !== []) {
+            return Result::failure(RoleErrors::baseRoleCannotHoldPermissions($roleName));
         }
 
         $invalidPermissions = $this->getInvalidPermissions($permissions);
@@ -290,6 +386,7 @@ class RoleService implements RoleServiceInterface
 
     /**
      * @param array<int, string> $permissions
+     *
      * @return array<int, string>
      */
     private function getInvalidPermissions(array $permissions): array
@@ -298,7 +395,7 @@ class RoleService implements RoleServiceInterface
 
         return array_values(array_filter(
             $permissions,
-            static fn (string $permission): bool => !isset($assignablePermissions[$permission]),
+            static fn (string $permission): bool => ! isset($assignablePermissions[$permission]),
         ));
     }
 }

@@ -11,7 +11,8 @@ class ImportJapaneseData extends Command
 {
     protected $signature = 'app:import-japanese-data
         {--environment=production : Logical environment name stored in the sentinel table}
-        {--allow-rerun : Clear imported tables and run the import again even if it already completed}';
+        {--allow-rerun : Clear imported tables and run the import again even if it already completed}
+        {--discard-user-sentences : With --allow-rerun, also delete user-authored sentences, which share the sentences table}';
 
     protected $description = 'Import the Japanese dictionary datasets into the configured database';
 
@@ -36,6 +37,7 @@ class ImportJapaneseData extends Command
                 output: function (string $message): void {
                     $this->line($message);
                 },
+                discardUserSentences: (bool) $this->option('discard-user-sentences'),
             );
         } catch (Throwable $exception) {
             report($exception);

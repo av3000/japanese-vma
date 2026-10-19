@@ -4,12 +4,10 @@ import { expect, userEvent, waitFor, within } from '@storybook/test';
 import { QueryClient, QueryClientProvider, type InfiniteData } from '@tanstack/react-query';
 import type Echo from 'laravel-echo';
 import { articleKeys } from '@/api/articles/keys';
-import { getPendingArticlesQueryKey } from '@/api/articles/moderation';
 import { getInfiniteCataloguesQueryKey } from '@/api/catalogues/hooks/useInfiniteCatalogues';
 import { dashboardKeys } from '@/api/dashboard/keys';
 import type {
 	ArticleListResource,
-	ArticleModerationListResource,
 	ArticleResource,
 	CatalogueListResource,
 	CatalogueResource,
@@ -22,7 +20,6 @@ import {
 	manyArticles,
 } from '@/components/features/dashboard/dashboardFixtures';
 import { hostileCatalogues, knownLists } from '@/components/features/dashboard/dashboardListFixtures';
-import { reviewQueue } from '@/components/features/dashboard/dashboardReviewFixtures';
 import { AuthContext } from '@/providers/contexts/auth-provider';
 import { DEFAULT_SOCKET_CONTEXT, SocketContext } from '@/providers/contexts/socket-provider';
 import type { User } from '@/types';
@@ -63,7 +60,6 @@ const owner = {
 	roles: [],
 	isAdmin: false,
 } as User;
-const admin = { ...owner, id: 1, uuid: 'admin-uuid', isAdmin: true } as User;
 
 /** Splits rows into API pages of 25, with the pagination the backend would send. */
 const toPages = <T,>(items: T[]) => {
@@ -117,10 +113,6 @@ const seededClient = ({ user, articles = [], catalogues = [], loadEverything = f
 		getInfiniteCataloguesQueryKey(dashboardCatalogueFilters(user.uuid, defaultDashboardViewState('lists'))),
 		pick(toPages(catalogues) as unknown as CatalogueListResource[]),
 	);
-	client.setQueryData(
-		getPendingArticlesQueryKey({ per_page: DASHBOARD_PER_PAGE }),
-		pick(toPages(reviewQueue) as unknown as ArticleModerationListResource[]),
-	);
 	client.setQueryData(dashboardKeys.counts(user.uuid), {
 		articles: articles.length,
 		lists: catalogues.length,
@@ -164,7 +156,7 @@ const fakeSocket = () => {
 };
 
 interface DashboardStoryArgs extends Seed {
-	tab?: 'articles' | 'lists' | 'review';
+	tab?: 'articles' | 'lists';
 }
 
 /** Story-only: one button that pushes "processing finished" for the second article. */
@@ -252,6 +244,3 @@ export const NewUserLists: Story = { ...NewUser, beforeEach: openTab('lists') };
 
 /** 500 articles, all loaded: the sticky header holds and nothing overflows. */
 export const FiveHundredArticles: Story = { args: { articles: manyArticles(500), loadEverything: true } };
-
-/** Admins get the review queue as a third section. */
-export const AdminReview: Story = { args: { user: admin }, beforeEach: openTab('review') };

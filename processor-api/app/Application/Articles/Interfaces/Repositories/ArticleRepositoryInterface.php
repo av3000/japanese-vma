@@ -8,6 +8,7 @@ use App\Domain\Articles\DTOs\ArticleProcessingSourceDTO;
 use App\Domain\Articles\Models\Article as DomainArticle;
 use App\Domain\Articles\Models\Articles;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\JlptLevels;
 use App\Domain\Shared\ValueObjects\Pagination;
@@ -53,6 +54,8 @@ interface ArticleRepositoryInterface
     public function findModerationQueue(Pagination $pagination): Articles;
 
     public function updateStatus(EntityId $articleUuid, ArticleStatus $status): ?ArticleStatus;
+
+    public function updatePublicity(EntityId $articleUuid, PublicityStatus $publicity): ?PublicityStatus;
 
     /**
      * Delete article by integer ID with proper relationship cleanup.

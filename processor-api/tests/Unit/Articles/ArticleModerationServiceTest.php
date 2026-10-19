@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Articles;
 
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Articles\Services\ArticleModerationService;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\HashtagServiceInterface;
@@ -60,9 +62,9 @@ final class ArticleModerationServiceTest extends TestCase
         $uuid = EntityId::generate();
         $repository = $this->createMock(ArticleRepositoryInterface::class);
         $repository->expects(self::once())
-            ->method('updateStatus')
-            ->with($uuid, ArticleStatus::APPROVED)
+            ->method('findByPublicUid')
             ->willReturn(null);
+        $repository->expects(self::never())->method('updateStatus');
 
         $result = $this->service($repository)->updateStatus(
             $uuid,
@@ -78,7 +80,7 @@ final class ArticleModerationServiceTest extends TestCase
     public function test_repository_failures_do_not_leak_the_exception_message(): void
     {
         $repository = $this->createMock(ArticleRepositoryInterface::class);
-        $repository->method('updateStatus')
+        $repository->method('findByPublicUid')
             ->willThrowException(new \RuntimeException('SQLSTATE[42P01]: relation "articles" does not exist'));
 
         $result = $this->service($repository)->updateStatus(
@@ -98,8 +100,10 @@ final class ArticleModerationServiceTest extends TestCase
     {
         return new ArticleModerationService(
             $repository,
-            new ArticlePolicy,
+            new ArticleModerationPolicy,
             $this->createMock(HashtagServiceInterface::class),
+            $this->createMock(ActivityRecorderInterface::class),
+            $this->createMock(DeleteArticleAction::class),
         );
     }
 

@@ -3,6 +3,7 @@
 namespace App\Application\Comments\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Comments\Actions\DeleteCommentThreadAction;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Comments\Policies\CommentPolicy;
@@ -29,6 +30,7 @@ class CommentService implements CommentServiceInterface
         private readonly CommentThreadReaderInterface $commentThreadReader,
         private readonly CommentEntityResolver $commentEntityResolver,
         private readonly CommentPolicy $commentPolicy,
+        private readonly DeleteCommentThreadAction $deleteCommentThread,
     ) {
     }
 
@@ -224,16 +226,7 @@ class CommentService implements CommentServiceInterface
         }
 
         try {
-            DB::transaction(function () use ($comment) {
-                $commentId = $comment->getIdValue();
-
-                // Deepest replies first, so no row is orphaned mid-transaction.
-                $descendantIds = $this->commentRepository->collectDescendantIds($commentId);
-
-                $this->commentRepository->deleteWithLikesByIds(
-                    [...$descendantIds, $commentId]
-                );
-            });
+            DB::transaction(fn () => $this->deleteCommentThread->execute($comment->getIdValue()));
 
             return Result::success();
         } catch (\Exception $e) {

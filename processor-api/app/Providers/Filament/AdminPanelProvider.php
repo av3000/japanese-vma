@@ -2,16 +2,19 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\AdminNavigationGroup;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Support\PanelActor;
+use App\Http\Middleware\EnsureHorizonBasicAuth;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,16 +34,30 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->navigationGroups(AdminNavigationGroup::class)
+            ->navigationItems([
+                // Horizon already shows queues, workers and failed jobs; the panel links to it and
+                // the panel session is accepted there (EnsureHorizonBasicAuth).
+                NavigationItem::make('Horizon')
+                    ->url(static fn (): string => url((string) config('horizon.path', 'horizon')), shouldOpenInNewTab: true)
+                    ->icon(Heroicon::OutlinedQueueList)
+                    ->group(AdminNavigationGroup::Operations)
+                    ->sort(40)
+                    ->visible(static fn (): bool => PanelActor::may(EnsureHorizonBasicAuth::PANEL_PERMISSION)),
+                NavigationItem::make('Telescope')
+                    ->url(static fn (): string => url((string) config('telescope.path', 'telescope')), shouldOpenInNewTab: true)
+                    ->icon(Heroicon::OutlinedMagnifyingGlass)
+                    ->group(AdminNavigationGroup::Operations)
+                    ->sort(50)
+                    ->visible(static fn (): bool => (bool) config('telescope.enabled')
+                        && PanelActor::may(EnsureHorizonBasicAuth::PANEL_PERMISSION)),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
-            ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

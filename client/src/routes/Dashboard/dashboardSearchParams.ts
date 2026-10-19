@@ -15,7 +15,7 @@ import {
  * and a keyword typed on Articles means nothing on Lists.
  */
 
-export const DASHBOARD_TABS = ['articles', 'lists', 'review'] as const;
+export const DASHBOARD_TABS = ['articles', 'lists'] as const;
 
 export type DashboardTab = (typeof DASHBOARD_TABS)[number];
 
@@ -24,12 +24,7 @@ export const DEFAULT_DASHBOARD_TAB: DashboardTab = 'articles';
 export const DASHBOARD_TAB_LABELS: Record<DashboardTab, string> = {
 	articles: 'Articles',
 	lists: 'Lists',
-	review: 'Review queue',
 };
-
-/** Tabs a signed-in user may open. Review is the admin-only queue kept until #184 ships. */
-export const visibleDashboardTabs = (isAdmin: boolean): readonly DashboardTab[] =>
-	isAdmin ? DASHBOARD_TABS : DASHBOARD_TABS.filter((tab) => tab !== 'review');
 
 export const ARTICLE_STATUS_FILTERS = ['all', 'awaiting', 'rejected', 'approved'] as const;
 
@@ -117,18 +112,12 @@ const readListType = (raw: string | null): string =>
 
 /**
  * Unknown or stale values fall back to the defaults instead of erroring: a hand-edited or old
- * URL still opens a working dashboard. `review` falls back to Articles for non-admins.
+ * URL still opens a working dashboard. That includes the retired admin review queue
+ * (`?tab=review`): article moderation moved to the admin panel's Articles resource (#184).
  */
-export const parseDashboardSearchParams = (
-	searchParams: URLSearchParams,
-	{ isAdmin }: { isAdmin: boolean },
-): DashboardViewState => {
-	const tab = oneOf(visibleDashboardTabs(isAdmin), searchParams.get('tab'), DEFAULT_DASHBOARD_TAB);
+export const parseDashboardSearchParams = (searchParams: URLSearchParams): DashboardViewState => {
+	const tab = oneOf(DASHBOARD_TABS, searchParams.get('tab'), DEFAULT_DASHBOARD_TAB);
 	const state = defaultDashboardViewState(tab);
-
-	if (tab === 'review') {
-		return state;
-	}
 
 	const q = searchParams.get('q') ?? '';
 
@@ -157,10 +146,6 @@ export const serializeDashboardViewState = (state: DashboardViewState): URLSearc
 
 	if (state.tab !== DEFAULT_DASHBOARD_TAB) {
 		params.set('tab', state.tab);
-	}
-
-	if (state.tab === 'review') {
-		return params;
 	}
 
 	if (state.q !== '') {

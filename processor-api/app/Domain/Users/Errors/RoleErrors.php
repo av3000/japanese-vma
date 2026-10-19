@@ -9,15 +9,14 @@ use App\Shared\Results\ResultError;
 
 class RoleErrors
 {
-
     public static function failed(): ResultError
     {
         return new ResultError(
             code: 'Roles.Failed',
             status: HttpStatus::INTERNAL_SERVER_ERROR,
             description: 'Role action has failed',
-            detail: "Role action has failed",
-            errorMessage: "Role actions has unexpectedly failed",
+            detail: 'Role action has failed',
+            errorMessage: 'Role actions has unexpectedly failed',
         );
     }
 
@@ -34,7 +33,6 @@ class RoleErrors
 
     /**
      * @param string $roleName The name of the invalid role.
-     * @return ResultError
      */
     public static function invalidRole(string $roleName): ResultError
     {
@@ -54,7 +52,7 @@ class RoleErrors
             status: HttpStatus::FORBIDDEN,
             description: "Cannot remove the '{$roleName}' role from an admin user.",
             detail: "The role '{$roleName}' cannot be removed from a user who is currently an administrator.",
-            errorMessage: "Cannot remove admin role from an admin.",
+            errorMessage: 'Cannot remove admin role from an admin.',
         );
     }
 
@@ -65,7 +63,7 @@ class RoleErrors
             status: HttpStatus::FORBIDDEN,
             description: "The '{$roleName}' role cannot be removed from any user.",
             detail: "The role '{$roleName}' is a system-protected role and cannot be removed.",
-            errorMessage: "Cannot remove protected role.",
+            errorMessage: 'Cannot remove protected role.',
         );
     }
 
@@ -76,7 +74,7 @@ class RoleErrors
             status: HttpStatus::FORBIDDEN,
             description: "The '{$roleName}' role cannot be deleted.",
             detail: "The role '{$roleName}' is a system-protected role and cannot be deleted.",
-            errorMessage: "Cannot delete protected role.",
+            errorMessage: 'Cannot delete protected role.',
         );
     }
 
@@ -98,7 +96,7 @@ class RoleErrors
             status: HttpStatus::BAD_REQUEST,
             description: "Guard name '{$guardName}' is not a valid system guard.",
             detail: "The provided guard name '{$guardName}' is not configured in the system.",
-            errorMessage: "Invalid guard name.",
+            errorMessage: 'Invalid guard name.',
         );
     }
 
@@ -109,7 +107,22 @@ class RoleErrors
             status: HttpStatus::CONFLICT,
             description: 'Role has active assignments',
             detail: "Role with name '{$roleName}' has active user assignments and cannot be deleted.",
-            errorMessage: "Role has active assignments.",
+            errorMessage: 'Role has active assignments.',
+        );
+    }
+
+    /**
+     * Every registered user holds the base role, so one permission on it would open the admin
+     * panel to everybody.
+     */
+    public static function baseRoleCannotHoldPermissions(string $roleName): ResultError
+    {
+        return new ResultError(
+            code: 'Roles.InvalidPermissions',
+            status: HttpStatus::BAD_REQUEST,
+            description: "The '{$roleName}' role cannot hold permissions.",
+            detail: "Every user holds the '{$roleName}' role, so permissions on it would apply to every account.",
+            errorMessage: "The '{$roleName}' role cannot hold permissions, because every user has it.",
         );
     }
 
