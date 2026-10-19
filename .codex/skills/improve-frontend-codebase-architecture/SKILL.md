@@ -89,11 +89,7 @@ Scalable frontend architecture in this repo means added routes and features keep
 
 ## Optional Tools
 
-Run the scanner on a focused file set when useful:
-
-```powershell
-.claude/skills/improve-frontend-codebase-architecture/scripts/check-frontend-architecture.ps1 -Files client/src/routes/ArticlesList/index.tsx
-```
+The mechanical banned patterns are ESLint errors: run `npm run lint` from `client/`. Each message names its `frontend-standards` rule ID.
 
 Use templates only after a candidate is chosen:
 

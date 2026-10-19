@@ -9,6 +9,8 @@ tags: repo, state, redux
 
 **Impact: HIGH (one owner per kind of state)**
 
+**Enforced by ESLint** (`no-restricted-imports` for `react-redux`, `@reduxjs/toolkit` and `redux`). Reviewers skip this rule; the linter reports it.
+
 Do not add Redux slices, selectors or `connect()` for new client state. Server state belongs to TanStack Query (`client-query-dedup`), local UI state to `useState` near the feature, and stable app-wide dependencies (auth, socket) to a Context provider. The remaining store in `src/store/` is legacy.
 
 **Incorrect:**

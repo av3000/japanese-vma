@@ -15,7 +15,7 @@ When a route must still call a legacy endpoint, isolate the call in one typed mo
 // TODO(#<issue> | no issue): temporary legacy adapter because <reason>. Target: <v1 endpoint or generated client>. Remove when <condition>.
 ```
 
-Acceptable reasons: the endpoint is intentionally legacy or undocumented, the v1 endpoint does not exist yet, or the generated client is unusable. A documented v1 endpoint with a working generated client is never a reason (`repo-generated-client-first`).
+The adapter is the one module allowed to import `@/services/axios`, so it disables `repo-no-direct-axios` on that import line, pointing at the TODO. Acceptable reasons: the endpoint is intentionally legacy or undocumented, the v1 endpoint does not exist yet, or the generated client is unusable. A documented v1 endpoint with a working generated client is never a reason (`repo-generated-client-first`).
 
 **Incorrect (legacy call inline in the route, vague TODO):**
 
@@ -29,6 +29,7 @@ const res = await apiCall({ method: HttpMethod.POST, path: '/lists/search', data
 ```ts
 // src/api/catalogues/legacySearch.ts
 // TODO(no issue): temporary legacy adapter because /v1/catalogues has no full-text search yet. Target: catalogueIndex({ search }). Remove when the v1 index accepts `search`.
+// eslint-disable-next-line no-restricted-imports -- temporary legacy adapter, see the TODO above
 import axiosInstance from '@/services/axios';
 
 export const searchCataloguesLegacy = async (filters: LegacyCatalogueSearch): Promise<LegacyCatalogueSearchResult> => {

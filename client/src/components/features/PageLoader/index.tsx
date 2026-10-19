@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-restricted-imports -- repo-no-redux: legacy store, removal tracked in #622
 import { useSelector } from 'react-redux';
 
 import styles from './PageLoader.module.css';

@@ -9,6 +9,8 @@ tags: repo, typescript
 
 **Impact: HIGH (type errors stay visible)**
 
+**Enforced by ESLint** (`repo/no-ts-nocheck`, a local rule in `client/eslint.config.mjs`). Reviewers skip this rule; the linter reports it.
+
 `// @ts-nocheck` switches off type checking for the whole file, so a wrong prop or a changed generated type ships unnoticed. Fix the types instead. If one line genuinely cannot be typed, use `// @ts-expect-error` with a reason on that line only.
 
 **Incorrect (top of the removed `SavedLists` route):**

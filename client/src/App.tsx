@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- repo-no-redux: legacy store, removal tracked in #622
 import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter as Router } from 'react-router-dom';
 import * as Sentry from '@sentry/react';

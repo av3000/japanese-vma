@@ -62,12 +62,12 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 - [`repo-generated-client-first`](rules/repo-generated-client-first.md): Call Documented v1 Endpoints Through the Generated Client
 - [`repo-keep-focus-outline`](rules/repo-keep-focus-outline.md): Keep the Global Focus Outline
 - [`repo-no-bootstrap-utility-classes`](rules/repo-no-bootstrap-utility-classes.md): No Bootstrap, Tailwind or Utility Classes *(enforced by tooling)*
-- [`repo-no-class-components`](rules/repo-no-class-components.md): No Class Components
-- [`repo-no-direct-axios`](rules/repo-no-direct-axios.md): No Direct axios Calls or Raw Endpoint Strings
+- [`repo-no-class-components`](rules/repo-no-class-components.md): No Class Components *(enforced by tooling)*
+- [`repo-no-direct-axios`](rules/repo-no-direct-axios.md): No Direct axios Calls or Raw Endpoint Strings *(enforced by tooling)*
 - [`repo-no-page-owned-server-state`](rules/repo-no-page-owned-server-state.md): No Page-Owned Pagination, Search or Loading State for Server Data
-- [`repo-no-redux`](rules/repo-no-redux.md): No New Redux State
-- [`repo-no-ts-nocheck`](rules/repo-no-ts-nocheck.md): No @ts-nocheck
-- [`repo-router-v6-hooks`](rules/repo-router-v6-hooks.md): Use React Router v6 Hooks, Not v5 Route Props
+- [`repo-no-redux`](rules/repo-no-redux.md): No New Redux State *(enforced by tooling)*
+- [`repo-no-ts-nocheck`](rules/repo-no-ts-nocheck.md): No @ts-nocheck *(enforced by tooling)*
+- [`repo-router-v6-hooks`](rules/repo-router-v6-hooks.md): Use React Router v6 Hooks, Not v5 Route Props *(enforced by tooling)*
 - [`rerender-no-inline-components`](rules/rerender-no-inline-components.md): Don't Define Components Inside Components
 
 ### MEDIUM (51)
