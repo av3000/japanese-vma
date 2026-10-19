@@ -20,7 +20,6 @@ dst="$root/.codex/skills"
 # Skills that still live only in .codex/skills/ until epic #502 moves them.
 CODEX_ONLY=(
   backend-architecture-boundaries
-  react-best-practices
 )
 
 is_codex_only() {

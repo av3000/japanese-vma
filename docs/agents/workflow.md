@@ -13,6 +13,7 @@ This guide maps which skills to use, in what order, for each kind of work in thi
 | `grilling` | Matt Pocock plugin | Get interviewed until the idea is sharp, one question at a time |
 | `write-issue` | repo | Write an issue with numbered acceptance criteria, or check and score an existing one |
 | `tdd` | Matt Pocock plugin | Build one behaviour at a time, red → green → refactor |
+| `frontend-standards` | repo | Look up and cite the frontend rules: rule IDs, impact levels, Incorrect/Correct examples for `client/` |
 | `review-branch` | repo | Review the branch against its issues and the repo rules, with typed and rated findings |
 | `create-pull-request` | repo | Open the PR into `develop`, with an acceptance-criteria evidence table, risk, screenshots and verification |
 | `post-review-to-pr` | repo | Put a `review-branch` report on the PR as a pending review with inline comments |
@@ -27,7 +28,7 @@ This guide maps which skills to use, in what order, for each kind of work in thi
 | `resolving-merge-conflicts` | Matt Pocock plugin | An in-progress merge or rebase conflict |
 | `/code-review`, `/security-review`, `/simplify` | Claude Code built-ins | Bug hunting, a security pass, a clean-up pass. These are optional extras next to `review-branch`. |
 
-**Coming next (epic #502):** `frontend-standards` and `backend-standards`, citable rules with IDs and impact levels. Until they land, `review-branch` cites `AGENTS.md` sections for Standards findings.
+**Coming next (epic #502):** `backend-standards`, citable backend rules with IDs and impact levels. Until it lands, `review-branch` cites `processor-api/AGENTS.md` sections for backend Standards findings.
 
 ## The main flow: idea → merged
 
