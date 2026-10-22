@@ -11,5 +11,5 @@ For v1 endpoints:
 
 When changing contracts:
 
-- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1: `CONTRACT-explicit-contract-changes`.
+- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1.
 - One endpoint family never mixes legacy JSON and `TypedResults`: `RESULT-no-mixed-envelopes`.

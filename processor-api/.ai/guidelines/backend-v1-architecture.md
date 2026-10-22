@@ -2,7 +2,7 @@
 
 Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example from the v1 modules. Open the rule file before applying it.
 
-Request flow for v1 endpoints (`ARCH-request-flow`):
+Request flow for v1 endpoints:
 
 `routes/api_v1.php` -> v1 Controller -> Request -> DTO or Value Object -> Application Service or Policy -> Repository Interface -> Infrastructure Repository, Model, Mapper or Builder -> Resource -> `TypedResults`
 
@@ -25,4 +25,4 @@ By layer:
 - `app/Http/v1`: controllers, requests and resources.
   - Controllers coordinate and return a Resource or `TypedResults`: `ARCH-thin-controllers`.
 
-Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`), and keep interface bindings explicit in the providers (`ARCH-explicit-bindings`).
+Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`).

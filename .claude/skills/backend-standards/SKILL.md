@@ -59,15 +59,13 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 - [`TEST-docker-lane`](rules/TEST-docker-lane.md): Run Backend Tests in the Isolated Docker Test Lane
 - [`TEST-feature-tests-per-endpoint`](rules/TEST-feature-tests-per-endpoint.md): Endpoint Changes Get Feature Tests for Success, Failure and Edges
 
-### MEDIUM (19)
+### MEDIUM (17)
 
 - [`ARCH-focused-actions`](rules/ARCH-focused-actions.md): A Reusable or Side-Effectful Step Is a Focused Action
 - [`ARCH-no-speculative-layers`](rules/ARCH-no-speculative-layers.md): Reuse the Nearest v1 Pattern Before Adding Layers
-- [`ARCH-request-flow`](rules/ARCH-request-flow.md): v1 Endpoints Follow the Layered Request Flow
 - [`ARCH-v1-routes`](rules/ARCH-v1-routes.md): New and Refactored Endpoints Go in routes/api_v1.php
 - [`CONTRACT-comment-write-payload`](rules/CONTRACT-comment-write-payload.md): Comment Writes Use the Generic Enum Payload
 - [`CONTRACT-enum-schema-components`](rules/CONTRACT-enum-schema-components.md): Public API Enums Are Backed Enums Shared by Request and Resource
-- [`CONTRACT-explicit-contract-changes`](rules/CONTRACT-explicit-contract-changes.md): Contract Changes Are Explicit; Legacy Behaviour Is Kept on Purpose
 - [`CONTRACT-fix-schema-at-resource`](rules/CONTRACT-fix-schema-at-resource.md): When a Component Is Wrong in api.json, Fix the Resource
 - [`CONTRACT-partial-update-validation`](rules/CONTRACT-partial-update-validation.md): Partial Updates Validate Optional Fields and Reject an Empty Payload
 - [`CONTRACT-request-per-endpoint`](rules/CONTRACT-request-per-endpoint.md): Each v1 Endpoint Validates Through Its Own Request Class
@@ -81,9 +79,8 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 - [`RESULT-no-mixed-envelopes`](rules/RESULT-no-mixed-envelopes.md): One Endpoint Family, One Response Style
 - [`TEST-openapi-schema-tests`](rules/TEST-openapi-schema-tests.md): Pin Non-Obvious Schema in an OpenApiTest
 
-### LOW (4)
+### LOW (3)
 
-- [`ARCH-explicit-bindings`](rules/ARCH-explicit-bindings.md): Bind Interfaces Explicitly in the Providers
 - [`CONTRACT-clean-array-param-names`](rules/CONTRACT-clean-array-param-names.md): Array Query Params Have Clean Rule Keys
 - [`CONTRACT-no-key-comments-in-toarray`](rules/CONTRACT-no-key-comments-in-toarray.md): Implementation Notes Go Above the return, Not on Array Keys
 - [`CONTRACT-v1-identifiers`](rules/CONTRACT-v1-identifiers.md): v1 Routes Address Entities by UUID Through EntityId

@@ -7,24 +7,22 @@ This file defines **backend-specific** guidance for changes under `processor-api
 ## 1) Backend Architecture Direction
 
 -   **Style:** Domain-driven modular monolith with layered responsibilities.
--   **Request flow and layers:** `ARCH-request-flow`.
 -   **Primary direction:**
     -   Keep legacy behavior stable where needed.
     -   Prefer new/refactored work in v1 architecture/routes when practical: `ARCH-v1-routes`.
 
 ## 2) Route & Endpoint Policy
 
--   Rules: `ARCH-v1-routes`, `CONTRACT-route-specificity`, `CONTRACT-explicit-contract-changes`, `CONTRACT-comment-write-payload`.
+-   Rules: `ARCH-v1-routes`, `CONTRACT-route-specificity`, `CONTRACT-comment-write-payload`.
 
 ## 3) Layering & Domain Boundaries
 
--   Rules: `ARCH-thin-controllers`, `ARCH-business-rules-in-application`, `ARCH-domain-dependency-direction`, `ARCH-domain-no-framework`, `ARCH-cross-module-service-interface`, `ARCH-focused-actions`, `ARCH-no-speculative-layers`, `ARCH-explicit-bindings`.
+-   Rules: `ARCH-thin-controllers`, `ARCH-business-rules-in-application`, `ARCH-domain-dependency-direction`, `ARCH-domain-no-framework`, `ARCH-cross-module-service-interface`, `ARCH-focused-actions`, `ARCH-no-speculative-layers`.
 -   Persistence: `DATA-repositories-hide-persistence`, `DATA-list-readers`, `DATA-list-shape-naming`, `DATA-complete-domain-models`, `DATA-mappers-translate-shape`, `DATA-sql-in-infrastructure`.
 
 ## 4) Validation, DTO, and Identifier Conventions
 
 -   Rules: `CONTRACT-request-per-endpoint`, `CONTRACT-partial-update-validation`, `CONTRACT-comment-write-payload`, `CONTRACT-clean-array-param-names`, `CONTRACT-v1-identifiers`.
--   DTOs and value objects sit in the request flow: `ARCH-request-flow`.
 
 ## 5) Response & Error Handling
 
@@ -80,7 +78,7 @@ For v1 endpoints:
 
 When changing contracts:
 
-- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1: `CONTRACT-explicit-contract-changes`.
+- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1.
 - One endpoint family never mixes legacy JSON and `TypedResults`: `RESULT-no-mixed-envelopes`.
 
 === .ai/backend-v1-architecture rules ===
@@ -89,7 +87,7 @@ When changing contracts:
 
 Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example from the v1 modules. Open the rule file before applying it.
 
-Request flow for v1 endpoints (`ARCH-request-flow`):
+Request flow for v1 endpoints:
 
 `routes/api_v1.php` -> v1 Controller -> Request -> DTO or Value Object -> Application Service or Policy -> Repository Interface -> Infrastructure Repository, Model, Mapper or Builder -> Resource -> `TypedResults`
 
@@ -112,7 +110,7 @@ By layer:
 - `app/Http/v1`: controllers, requests and resources.
   - Controllers coordinate and return a Resource or `TypedResults`: `ARCH-thin-controllers`.
 
-Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`), and keep interface bindings explicit in the providers (`ARCH-explicit-bindings`).
+Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`).
 
 === .ai/repository rules ===
 
@@ -126,7 +124,7 @@ Use this repository as a multi-application workspace:
 
 When migrating backend endpoints:
 
-- Preserve legacy behavior intentionally; contract changes follow `CONTRACT-explicit-contract-changes` in the `backend-standards` skill.
+- Preserve legacy behavior intentionally, and state contract changes explicitly.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
 - Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.
