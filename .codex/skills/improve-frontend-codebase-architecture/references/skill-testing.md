@@ -28,7 +28,7 @@ Failure to prevent: breaking `repo-catalogue-v1-migration`, `repo-no-direct-axio
 
 Prompt: add a new authenticated feature and global provider data.
 
-Failure to prevent: breaking `async-public-routes-no-auth-wait`, `rerender-context-value-memo` or `bundle-dynamic-imports`.
+Failure to prevent: breaking `async-public-routes-no-auth-wait`, re-rendering every Context consumer, or pulling a heavy route into the initial chunk.
 
 ## Expected Forward-Test Behaviors
 

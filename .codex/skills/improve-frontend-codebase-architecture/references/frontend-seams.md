@@ -4,7 +4,7 @@ Use these frontend-specific seam names consistently with the architecture vocabu
 
 ## Route Seam
 
-The route seam is where React Router params, search params, navigation, loading gates, and error gates meet the feature. Rules: `repo-thin-routes`, `repo-router-v6-hooks`, `repo-parse-route-params-once`.
+The route seam is where React Router params, search params, navigation, loading gates, and error gates meet the feature. Rules: `repo-thin-routes`, `repo-parse-route-params-once`.
 
 Smell: route owns raw request details, pagination mechanics, backend wire shape, cache invalidation, or repeated mutation logic.
 
@@ -53,6 +53,6 @@ Rule: `repo-adapter-todo-shape`.
 
 ## State Ownership
 
-Which tool owns which state: `client-query-dedup` and `repo-no-page-owned-server-state` (server state), `rerender-store-id-derive-item` (selection), `rerender-context-value-memo` (Context), `repo-no-redux`.
+Which tool owns which state: `repo-no-page-owned-server-state` (server state).
 
 Context suits stable app and session dependencies (auth, permissions, config). A selector-based store such as Zustand earns its place only when shared client state changes often, many independent consumers need slices of it, and broad re-renders are measured or clearly likely.

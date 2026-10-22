@@ -33,7 +33,7 @@ For `japanese-vma`, the current best direction is:
 route -> feature orchestration -> feature API module/hook -> generated client
 ```
 
-This scales while new work follows `repo-thin-routes`, `client-query-dedup`, `repo-generated-client-first` and `repo-feature-query-hooks`.
+This scales while new work follows `repo-thin-routes`, `repo-no-page-owned-server-state`, `repo-generated-client-first` and `repo-feature-query-hooks`.
 
 ## Scaling Checklist
 
@@ -41,12 +41,11 @@ Check the touched surface against these `frontend-standards` rules, grouped by s
 
 | Seam | Rules |
 | --- | --- |
-| Route | `repo-thin-routes`, `repo-router-v6-hooks`, `repo-no-page-owned-server-state` |
-| Feature | `rerender-store-id-derive-item`, `repo-shared-dialogs`, `repo-forms-rhf-zod` |
+| Route | `repo-thin-routes`, `repo-no-page-owned-server-state` |
+| Feature | `repo-shared-dialogs`, `repo-forms-rhf-zod` |
 | API | `repo-generated-client-first`, `repo-feature-query-hooks`, `repo-generated-query-keys`, `repo-adapter-todo-shape` |
-| State | `client-query-dedup`, `rerender-context-value-memo`, `repo-no-redux` |
 | Migration | `repo-catalogue-v1-migration`, `repo-contract-drift-backend-first` |
-| Performance | `bundle-dynamic-imports`, `async-public-routes-no-auth-wait`, `bundle-defer-third-party`, `rerender-context-value-memo` |
+| Performance | `async-public-routes-no-auth-wait` |
 | Testing | `repo-test-shared-seam` |
 
 Questions no rule answers, so judge them:
@@ -62,8 +61,8 @@ Questions no rule answers, so judge them:
 - temporary adapters that lack a removal target (`repo-adapter-todo-shape`)
 - public homepage/list data coupled to auth shell state (`async-public-routes-no-auth-wait`)
 - global providers absorbing feature-specific behavior
-- broad Context values changing often enough to rerender unrelated consumers (`rerender-context-value-memo`)
-- route-level imports that pull admin/dashboard/heavy tooling into public initial chunks (`bundle-dynamic-imports`)
+- broad Context values changing often enough to rerender unrelated consumers
+- route-level imports that pull admin/dashboard/heavy tooling into public initial chunks
 
 ## Rule Of Thumb
 

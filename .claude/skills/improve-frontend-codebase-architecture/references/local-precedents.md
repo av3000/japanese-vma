@@ -74,6 +74,6 @@ Do not copy these as precedents for new or touched migrated work:
 - `client/src/components/features/SavedList/SavedListItems.tsx`
 - `client/src/components/features/SavedList/SavedListItem/index.tsx`
 
-Debt markers, by rule: `repo-no-ts-nocheck`, `repo-no-class-components`, `repo-router-v6-hooks`, `repo-no-direct-axios`, `repo-no-page-owned-server-state`, `repo-shared-type-labels`, `repo-map-numeric-types-once`, `repo-shared-dialogs`, `repo-forms-rhf-zod`.
+Debt markers, by rule: `repo-no-ts-nocheck`, `repo-no-direct-axios`, `repo-no-page-owned-server-state`, `repo-shared-type-labels`, `repo-map-numeric-types-once`, `repo-shared-dialogs`, `repo-forms-rhf-zod`.
 
 Touched SavedList/custom-list work should move toward catalogue-v1 query/detail patterns (`repo-catalogue-v1-migration`).
