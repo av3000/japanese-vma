@@ -1,0 +1,218 @@
+# SKETCH, NOT ACTIVE. It lives outside .github/workflows on purpose, so it never runs.
+#
+# The shape of the dispatcher + build + review workflow from
+# docs/architecture/agent-loop/README.md (sections 5.2 to 5.10 and 6). Inputs of
+# anthropics/claude-code-action are taken from its action.yml (October 2026).
+# Lines marked CHECK are open points to settle when AGENT-LOOP-01..03 are built.
+#
+# Things this file depends on that do not exist yet:
+#   scripts/agent-gate.mjs                 the dispatcher checks (AGENT-LOOP-01)
+#   .github/actions/setup-workspace        shared CI setup (AGENT-READY-01)
+#   scripts/verify.sh                      one verify command (AGENT-READY-02)
+#   .github/agent/run-prompt.md            sketches/run-prompt.md, moved in
+#   a private GitHub App with Contents, Issues and Pull requests read/write only
+#   the "agent" environment holding AGENT_APP_PRIVATE_KEY and AGENT_ANTHROPIC_API_KEY
+
+name: Agent run
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to run
+        required: true
+        type: number
+
+# Nothing by default; each job asks for what it needs.
+permissions: {}
+
+# One run at a time, queued, never cancelled by the next one (WIP limit 1).
+concurrency:
+  group: agent-run
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    # Kill switch first, then only our own label.
+    if: >-
+      vars.AGENT_LOOP_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.label.name == 'agent:queued')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+      issue: ${{ steps.check.outputs.issue }}
+    steps:
+      - uses: actions/checkout@<sha> # pin (#484)
+        with:
+          sparse-checkout: scripts/agent-gate.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # Every value goes in through env, never interpolated into the script, so
+      # issue text can't become shell. The script fetches the issue itself and checks:
+      # sender is the owner, issue author is the owner, ready-for-agent present,
+      # every "Blocked by" issue closed, open agent:running + agent:review below
+      # the WIP limit, runs in the last 7 days below the weekly cap. If any check
+      # fails it comments why and leaves (or removes) the label. If all pass it swaps
+      # agent:queued for agent:running and writes go=true and the issue number.
+      - id: check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          SENDER: ${{ github.event.sender.login }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+          OWNER: ${{ github.repository_owner }}
+          WIP_LIMIT: ${{ vars.AGENT_WIP_LIMIT || '1' }}
+          WEEKLY_CAP: ${{ vars.AGENT_WEEKLY_CAP || '5' }}
+        run: node scripts/agent-gate.mjs
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Holds only the App key and the model key. Deploy secrets live in the
+    # "production" environment, which this job never names.
+    environment: agent
+    # The job's own GITHUB_TOKEN can only read. Writes go through the App token below.
+    # No id-token: the default Claude App auth needs it, and we don't use that.
+    permissions:
+      contents: read
+
+    # `services:` can't live in a composite action, so this block mirrors
+    # backend-ci.yml. Keep the two identical (AGENT-READY-01).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: japanese_vma_test
+          POSTGRES_USER: japanese_vma_test
+          POSTGRES_PASSWORD: japanese_vma_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U japanese_vma_test -d japanese_vma_test"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+      redis:
+        image: redis:7.0.2
+        ports: ["6379:6379"]
+
+    steps:
+      # Audit first; switch to egress-policy: block once a few runs show the real list.
+      # GitHub stays reachable, so this narrows exfiltration; it can't close it (README 5.9).
+      - uses: step-security/harden-runner@<sha>
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            api.anthropic.com:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            registry.npmjs.org:443
+            repo.packagist.org:443
+
+      - id: app-token
+        uses: actions/create-github-app-token@<sha>
+        with:
+          app-id: ${{ vars.AGENT_APP_ID }}
+          private-key: ${{ secrets.AGENT_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@<sha>
+        with:
+          ref: develop
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          backend: true
+          frontend: true
+
+      - name: Create the run branch
+        env:
+          ISSUE: ${{ needs.gate.outputs.issue }}
+        run: git switch -c "agent/issue-$ISSUE"
+
+      - uses: anthropics/claude-code-action@<sha> # a v1 release with the 2026 security fixes
+        with:
+          anthropic_api_key: ${{ secrets.AGENT_ANTHROPIC_API_KEY }}
+          # Our App, not the official Claude App and not GITHUB_TOKEN: CI runs on its
+          # pushes, and it has no workflow permission.
+          github_token: ${{ steps.app-token.outputs.token }}
+          base_branch: develop
+          # Other people's comments never reach the model.
+          include_comments_by_actor: ${{ github.repository_owner }}
+          # CHECK: the marketplace URL and plugin id of the tdd skill used locally.
+          plugin_marketplaces: |
+            <marketplace git URL>
+          plugins: |
+            <tdd plugin id>
+          # The issue number only, never its text. The agent fetches the issue itself.
+          prompt: |
+            Follow .github/agent/run-prompt.md ("Run prompt" section).
+            ISSUE=${{ needs.gate.outputs.issue }}
+            BRANCH=agent/issue-${{ needs.gate.outputs.issue }}
+            RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # CHECK: the exact Bash patterns once verify.sh exists. No bare Bash, no web.
+          # gh issue edit is there for the agent:* labels and the epic checklist.
+          claude_args: >-
+            --model claude-sonnet-5-5
+            --max-turns 80
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(scripts/verify.sh:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/issue-*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh issue create:*)"
+            --disallowedTools "WebFetch,WebSearch"
+
+  review:
+    needs: [gate, build]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: agent
+    permissions:
+      contents: read
+    # CHECK: same services block as build if review-branch should rerun backend tests.
+    steps:
+      # Same harden-runner, app-token, checkout (ref: agent/issue-N) and
+      # setup-workspace steps as build, then:
+      - uses: anthropics/claude-code-action@<sha>
+        with:
+          anthropic_api_key: ${{ secrets.AGENT_ANTHROPIC_API_KEY }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          base_branch: develop
+          include_comments_by_actor: ${{ github.repository_owner }}
+          # A fresh context: nothing from the build run is passed on except the branch.
+          prompt: |
+            Follow .github/agent/run-prompt.md ("Review run prompt" section).
+            ISSUE=${{ needs.gate.outputs.issue }}
+            BRANCH=agent/issue-${{ needs.gate.outputs.issue }}
+          # Can open a draft PR; can't merge, approve or mark it ready.
+          claude_args: >-
+            --model claude-opus-5-5
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(scripts/verify.sh:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/issue-*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create --draft:*),Bash(gh pr view:*)"
+            --disallowedTools "WebFetch,WebSearch"
+
+  # A run that fails or hits its timeout still ends in a visible state.
+  stuck:
+    needs: [gate, build, review]
+    if: always() && needs.gate.outputs.go == 'true' && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ needs.gate.outputs.issue }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --remove-label agent:running --add-label agent:stuck
+          gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Agent run stopped without a PR (failure or timeout): $RUN_URL"
+
+  # When a run ends either way, start the oldest queued issue (README 5.2).
+  # CHECK: a repository_dispatch or workflow_dispatch call to this workflow from a
+  # final job, using the App token, since GITHUB_TOKEN events don't start workflows
+  # (workflow_dispatch is the documented exception).
