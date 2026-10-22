@@ -24,6 +24,10 @@ docker compose exec test-runner composer test     # default compose file, from a
 docker compose -f docker-compose.test.yml -p jvma502 up -d --build
 docker compose -f docker-compose.test.yml -p jvma502 exec -T test-runner php artisan passport:keys --force
 docker compose -f docker-compose.test.yml -p jvma502 exec -T test-runner composer test -- tests/Feature/Catalogues
+docker compose -f docker-compose.test.yml -p jvma502 stop    # while the PR is open
+docker compose -f docker-compose.test.yml -p jvma502 down    # once the branch has merged
 ```
+
+A fresh lane has no Passport keypair, so without `passport:keys --force` every `auth:api` test returns 500 with `Invalid key supplied`. That and the other lane traps (process limits, imported data wiped by `RefreshDatabase`) are in `docs/agents/local-environment.md`.
 
 Source: `.ai/guidelines/enforce-tests.blade.php`, `.ai/guidelines/phpunit/core.blade.php`, `processor-api/AGENTS.md` §6.

@@ -30,4 +30,4 @@ const items = catalogue.items.filter((item) => item.id !== itemId);
 return { ...catalogue, items };
 ```
 
-Source: `client/AGENTS.md` §10, root `AGENTS.md` §2.
+Source: `client/AGENTS.md` §8, root `AGENTS.md` §2.

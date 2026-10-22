@@ -31,4 +31,4 @@ fetchLists(givenUrl) {
 const { articles, total, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteArticles({ filters });
 ```
 
-Source: `client/AGENTS.md` §3, §7 and §9.
+Source: `client/AGENTS.md` §3 and §7.

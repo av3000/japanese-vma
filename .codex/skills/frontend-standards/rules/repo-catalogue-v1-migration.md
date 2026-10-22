@@ -31,4 +31,4 @@ const DashboardCataloguesPanel = () => {
 };
 ```
 
-Source: `client/AGENTS.md` §1 and §8.
+Source: `client/AGENTS.md` §1.

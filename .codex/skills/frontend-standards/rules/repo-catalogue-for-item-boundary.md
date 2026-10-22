@@ -26,4 +26,4 @@ const { isBookmarked } = deriveCatalogueWidgetState(lists, instanceObjectType);
 await addOrRemoveCatalogueForItem({ list, elementId: kanji.id, action: 'add' });
 ```
 
-Source: `client/AGENTS.md` §3 and §8.
+Source: `client/AGENTS.md` §3.

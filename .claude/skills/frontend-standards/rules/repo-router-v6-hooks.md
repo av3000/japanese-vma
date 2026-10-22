@@ -32,4 +32,4 @@ const CatalogueStudy = () => {
 };
 ```
 
-Source: `client/AGENTS.md` §2 and §9.
+Source: `client/AGENTS.md` §2 and §7.

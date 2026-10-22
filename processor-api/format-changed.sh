@@ -12,12 +12,25 @@
 #   ./format-changed.sh              # fix changed files
 #   ./format-changed.sh --test       # check only, non-zero exit on drift
 #   BASE_REF=origin/master ./format-changed.sh
+#   LANE=jvma520 ./format-changed.sh # run Pint in an isolated test lane
+#
+# Without LANE, Pint runs in the default compose file's `laravel-app`. Its
+# container name is fixed, so from a git worktree that is the main checkout's
+# container and Pint would format the wrong tree. The script refuses that case.
 
 set -eu
 
 cd "$(dirname "$0")"
 
 repository_root="$(git rev-parse --show-toplevel)"
+
+lane="${LANE:-}"
+if [ -z "$lane" ] && [ "$(git rev-parse --path-format=absolute --git-dir)" != "$(git rev-parse --path-format=absolute --git-common-dir)" ]; then
+    echo "This is a git worktree, and the default laravel-app container is bound to another checkout." >&2
+    echo "Run Pint in this worktree's test lane instead: LANE=<name> ./format-changed.sh" >&2
+    echo "(the lane from: docker compose -f docker-compose.test.yml -p <name> up -d --build)" >&2
+    exit 1
+fi
 
 pint_test_flag=""
 if [ "${1:-}" = "--test" ]; then
@@ -65,7 +78,11 @@ $changed_files
 EOF
 
 if [ -n "$pint_test_flag" ]; then
-    docker compose exec -T laravel-app vendor/bin/pint "$pint_test_flag" "$@"
+    set -- "$pint_test_flag" "$@"
+fi
+
+if [ -n "$lane" ]; then
+    docker compose -f docker-compose.test.yml -p "$lane" exec -T test-runner vendor/bin/pint "$@"
 else
     docker compose exec -T laravel-app vendor/bin/pint "$@"
 fi

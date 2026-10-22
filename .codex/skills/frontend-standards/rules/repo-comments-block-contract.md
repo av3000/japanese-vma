@@ -23,4 +23,4 @@ tags: repo, comments, contract
 <LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
 ```
 
-Source: `client/AGENTS.md` §7 and §8.
+Source: `client/AGENTS.md` §6.

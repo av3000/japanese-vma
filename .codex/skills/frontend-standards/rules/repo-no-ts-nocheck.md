@@ -29,4 +29,4 @@ import type { CatalogueListResource } from '@/api/generated/model/catalogueListR
 const CatalogueCard = ({ catalogue }: { catalogue: CatalogueListResource }) => <LibraryCard title={catalogue.title} />;
 ```
 
-Source: `client/AGENTS.md` §7 and §9.
+Source: `client/AGENTS.md` §7.

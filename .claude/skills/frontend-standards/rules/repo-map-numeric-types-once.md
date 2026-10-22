@@ -29,4 +29,4 @@ const family = studyFamilyFor(catalogue.type);
 {family === 'kanji' && <JlptBar counts={catalogue.jlpt} />}
 ```
 
-Source: `client/AGENTS.md` §6 and §9.
+Source: `client/AGENTS.md` §6 and §7.

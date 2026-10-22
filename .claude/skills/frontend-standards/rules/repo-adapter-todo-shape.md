@@ -15,7 +15,7 @@ When a route must still call a legacy endpoint, isolate the call in one typed mo
 // TODO(#<issue> | no issue): temporary legacy adapter because <reason>. Target: <v1 endpoint or generated client>. Remove when <condition>.
 ```
 
-The adapter is the one module allowed to import `@/services/axios`, so it disables `repo-no-direct-axios` on that import line, pointing at the TODO. Acceptable reasons: the endpoint is intentionally legacy or undocumented, the v1 endpoint does not exist yet, or the generated client is unusable. A documented v1 endpoint with a working generated client is never a reason (`repo-generated-client-first`).
+The adapter is the one module allowed to import `@/services/axios`, so it disables `repo-no-direct-axios` on that import line, pointing at the TODO. An endpoint missing from the schema is fixed in the backend schema first; an adapter is the fallback only when that is impossible. Acceptable reasons: the endpoint is intentionally legacy or undocumented, the v1 endpoint cannot be added yet, or the generated client is unusable. A documented v1 endpoint with a working generated client is never a reason (`repo-generated-client-first`).
 
 **Incorrect (legacy call inline in the route, vague TODO):**
 
@@ -38,4 +38,4 @@ export const searchCataloguesLegacy = async (filters: LegacyCatalogueSearch): Pr
 };
 ```
 
-Source: `client/AGENTS.md` §3 and §8; template in `improve-frontend-codebase-architecture/templates/temporary-adapter.ts`.
+Source: `client/AGENTS.md` §3; template in `improve-frontend-codebase-architecture/templates/temporary-adapter.ts`.

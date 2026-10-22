@@ -27,4 +27,4 @@ api/catalogues/cataloguesForItem.test.ts        adds, removes, optimistic update
 routes/japanese/KanjiDetails/index.test.tsx     one bookmark round trip through the route
 ```
 
-Source: `client/AGENTS.md` §11.
+Source: `client/AGENTS.md` §9.

@@ -14,7 +14,8 @@ Fix a wrong named component at the Resource, not by overriding the annotation:
 - every scalar typed `string`: add a class-level `@property Domain\Model $resource`, or explicit casts when the value comes through a nested object;
 - `array_map` items untyped: add `/** @var array<int, XResource> */` above `'items' => array_map(...)`;
 - an optional include documented as required: build it with `'key' => $this->when($condition, fn () => ...)`, not a conditional `$payload['key'] = ...`;
-- a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema.
+- a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema;
+- a field typed nullable although it never is: `$value ?? ''` is inferred as nullable, so cast it with `(string)` (`CONTRACT-resource-scalar-casts`).
 
 **Incorrect (`6fe1b436^:RadicalResource`: a conditional assignment, so `kanjis` is documented as required and untyped):**
 

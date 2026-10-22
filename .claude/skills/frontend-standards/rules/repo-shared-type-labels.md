@@ -29,4 +29,4 @@ import { CATALOGUE_TYPE_OPTIONS } from '@/shared/constants/catalogues';
 <Select options={CATALOGUE_TYPE_OPTIONS} {...register('type')} />
 ```
 
-Source: `client/AGENTS.md` §6 and §9.
+Source: `client/AGENTS.md` §6 and §7.

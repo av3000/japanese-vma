@@ -33,4 +33,4 @@ const ArticlesList = () => {
 };
 ```
 
-Source: `client/AGENTS.md` §9.
+Source: `client/AGENTS.md` §7.

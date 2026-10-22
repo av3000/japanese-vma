@@ -29,4 +29,4 @@ const likeMutation = useLikeCatalogueMutation(uuid);
 const deleteMutation = useDeleteCatalogueMutation();
 ```
 
-Source: `client/AGENTS.md` §3 and §9.
+Source: `client/AGENTS.md` §3 and §7.

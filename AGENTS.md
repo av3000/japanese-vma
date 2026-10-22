@@ -16,7 +16,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 ### Current Live Environment
 
-- **Frontend live hosting:** GitHub Actions workflow deploys the frontend; see `docs/frontend-github-actions-plan.md` for pipeline context.
+- **Frontend live hosting:** `.github/workflows/frontend-ci.yml` builds the frontend image and triggers the Render deploy; see `docs/architecture/deployment-and-runtime.md` for the whole runtime.
 - **Backend live hosting:** Render hosts the live Laravel API/web service.
 - **Queue / worker runtime:** Production queue workers run on a GCP VM via Docker Compose, not on Render.
 - **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
@@ -70,8 +70,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
   - For backend verification, use the isolated Docker test lane: `TEST-docker-lane` in `backend-standards` holds the commands and what never to run tests against.
-  - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
-  - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
+  - Setting up a fresh worktree, sandbox limits (`spawn EPERM`, a Vitest browser run that exits 0 after one file) and the other known local traps: `docs/agents/local-environment.md`. Treat those as environment limitations to report, not product bugs to "fix" inside unrelated work.
 - **Safety:**
   - Do not silently alter contracts or conventions.
   - Highlight behavior-impacting changes and rollout implications.
