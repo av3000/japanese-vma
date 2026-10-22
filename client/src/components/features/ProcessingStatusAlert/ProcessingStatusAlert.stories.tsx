@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
+import { Button } from '@/components/shared/Button';
 import ProcessingStatusAlert, { READY_ANNOUNCEMENT } from './';
 
 const processingStatus = (status: ProcessingStatus, attempt = 1): ProcessingStatusResource => ({
@@ -91,9 +92,9 @@ const CompletingAlert: React.FC<React.ComponentProps<typeof ProcessingStatusAler
 
 	return (
 		<div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
-			<button type="button" onClick={() => setStatus(ProcessingStatus.completed)}>
+			<Button variant="outline" size="sm" onClick={() => setStatus(ProcessingStatus.completed)}>
 				Finish processing
-			</button>
+			</Button>
 			<ProcessingStatusAlert {...props} processing_status={processingStatus(status)} />
 		</div>
 	);

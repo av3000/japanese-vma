@@ -60,7 +60,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 			<ul className={styles.list}>
 				<li>
 					<Button
-						variant="outline"
+						variant="secondary-outline"
 						size="sm"
 						disabled={disabled || page <= 1}
 						onClick={() => onPageChange(page - 1)}
@@ -77,7 +77,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 					) : (
 						<li key={item}>
 							<Button
-								variant={item === page ? 'primary' : 'ghost'}
+								variant={item === page ? 'secondary' : 'ghost'}
 								size="sm"
 								disabled={disabled}
 								onClick={() => item !== page && onPageChange(item)}
@@ -92,7 +92,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 				)}
 				<li>
 					<Button
-						variant="outline"
+						variant="secondary-outline"
 						size="sm"
 						disabled={disabled || page >= pageCount}
 						onClick={() => onPageChange(page + 1)}

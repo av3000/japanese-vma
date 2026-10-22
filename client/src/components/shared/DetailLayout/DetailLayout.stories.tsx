@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
+import { Button } from '@/components/shared/Button';
 import { DetailLayout } from './';
 
 const LONG_TITLE = 'ウクライナで「ビシバンカの日」市民が伝統衣装で結束を確認'.repeat(4);
@@ -35,9 +36,15 @@ const meta = {
 		facts: <Box label="facts" />,
 		actions: (
 			<div style={{ display: 'grid', gap: 'var(--spacing-xs)' }}>
-				<button type="button">Like · 3</button>
-				<button type="button">Save to a catalogue</button>
-				<button type="button">Kanji &amp; words PDF</button>
+				<Button variant="outline" isFullWidth>
+					Like · 3
+				</Button>
+				<Button variant="outline" isFullWidth>
+					Save to a catalogue
+				</Button>
+				<Button variant="outline" isFullWidth>
+					Kanji &amp; words PDF
+				</Button>
 			</div>
 		),
 		extra: <Box label="extra" />,

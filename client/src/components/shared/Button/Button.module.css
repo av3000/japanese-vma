@@ -22,16 +22,16 @@
 		transform 0.2s ease,
 		box-shadow 0.2s ease;
 }
+/* Lift only: each variant sets its own hover colour below. A background here outranked every
+   `.variantX:hover` (the :not() adds a class), so every variant turned primary on hover. */
 @media (hover: hover) {
 	.button:not(.variantLinkButton):hover {
 		text-decoration: none;
-		background: var(--color-primary-hover);
 		transform: translateY(-1px);
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	}
 }
 .button:active {
-	background: var(--color-primary-hover);
 	transform: translateY(0);
 	box-shadow: none;
 }
@@ -308,6 +308,14 @@
 .variantDanger {
 	background-color: var(--color-error);
 	color: var(--color-neutral-0);
+}
+@media (hover: hover) {
+	.variantDanger:hover {
+		background: var(--color-error-hover);
+	}
+}
+.variantDanger:active {
+	background: var(--color-error-hover);
 }
 @media (hover: hover) {
 	.variantDanger:hover {

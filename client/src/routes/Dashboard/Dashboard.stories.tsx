@@ -20,6 +20,7 @@ import {
 	manyArticles,
 } from '@/components/features/dashboard/dashboardFixtures';
 import { hostileCatalogues, knownLists } from '@/components/features/dashboard/dashboardListFixtures';
+import { Button } from '@/components/shared/Button';
 import type { QuerySeed } from '@/storybook/decorators';
 import type { User } from '@/types';
 import { dashboardArticleFilters } from './DashboardArticlesPanel';
@@ -146,9 +147,9 @@ const live = fakeSocket();
 
 /** Story-only: one button that pushes "processing finished" for the second article. */
 const LiveUpdateButton: React.FC<{ onEmit: () => void }> = ({ onEmit }) => (
-	<button type="button" onClick={onEmit} style={{ margin: 8 }}>
+	<Button variant="outline" size="sm" onClick={onEmit} style={{ margin: 8 }}>
 		Story: finish processing of 記事 1-2
-	</button>
+	</Button>
 );
 
 const target = everyStateArticles[1];

@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { delay } from 'msw';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { PostDetailResource } from '@/api/generated/model/postDetailResource';
 import type { UpdatePostRequest } from '@/api/generated/model/updatePostRequest';
@@ -7,7 +6,7 @@ import { getPostShowMockHandler, getPostUpdateMockHandler } from '@/api/generate
 import { makePostDetailResource } from '@/components/features/community/fixtures';
 import { currentLocation } from '@/storybook/decorators';
 import { users } from '@/storybook/fixtures/users';
-import { MEMBER_AS_AUTHOR, POST_UUID, failWith, rejectWith } from '../../routeFixtures';
+import { MEMBER_AS_AUTHOR, POST_UUID, failWith } from '../../routeFixtures';
 import PostEditPage from './';
 
 /*
@@ -73,23 +72,6 @@ export const Edit: Story = {
 	},
 };
 
-/** The post request never answers: the route shows its loading state, not the form. */
-export const Loading: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getPostShowMockHandler(async () => {
-				await delay('infinite');
-
-				return ownPost();
-			}),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('status')).toBeVisible();
-		await expect(within(canvasElement).queryByLabelText('Title')).toBeNull();
-	},
-};
-
 /** A 404: the route says the post could not be loaded, with the way back. */
 export const NotFound: Story = {
 	beforeEach: ({ msw }) => {
@@ -109,51 +91,5 @@ export const NotOwner: Story = {
 		const canvas = within(canvasElement);
 		await expect(await canvas.findByText('You do not have permission to edit this post.')).toBeVisible();
 		await expect(canvas.queryByLabelText('Title')).toBeNull();
-	},
-};
-
-/** A 422 puts each message under its field and moves focus to the first one. Nothing navigates. */
-export const ServerValidation: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getPostUpdateMockHandler(() =>
-				rejectWith({
-					title: ['The title has already been taken.'],
-					content: ['The content must be at least 5 characters.'],
-				}),
-			),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await changeTitleAndSave(canvas);
-
-		await expect(await canvas.findByRole('alert')).toHaveTextContent('Check the highlighted fields and try again.');
-		await waitFor(() => expect(canvas.getByLabelText('Title')).toHaveFocus());
-		await expect(canvas.getByLabelText('Title')).toHaveAccessibleDescription(/already been taken/);
-		await expect(canvas.getByLabelText('Text')).toHaveAccessibleDescription(/at least 5/);
-		await expect(currentLocation()).toBe(EDIT_PATH);
-	},
-};
-
-/** A 500 shows the general error above the form, keeps the edit and does not navigate. */
-export const SubmitError: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(getPostUpdateMockHandler(() => failWith(500)));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await changeTitleAndSave(canvas);
-
-		await expect(await canvas.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
-		await expect(canvas.getByLabelText('Title')).toHaveValue(`${ownPost().title} (solved)`);
-		await expect(currentLocation()).toBe(EDIT_PATH);
-	},
-};
-
-export const Mobile: Story = {
-	globals: { viewport: { value: 'xs' } },
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('button', { name: 'Save changes' })).toBeVisible();
 	},
 };

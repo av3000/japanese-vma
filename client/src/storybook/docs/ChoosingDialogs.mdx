@@ -11,13 +11,11 @@ Every dialog here is a native `<dialog>` opened with `showModal()`, so focus is 
 - Tell the user something, with one Close button: use `InfoModal` (`components/shared/modals`)
 - Any other dialog with a title, body and actions: use `DialogModal` (`components/shared/DialogModal`)
 - A full-height sheet (mobile menu, search): use `Drawer` (`components/shared/Drawer`)
-- A dialog that must carry its own header close button: use `Modal` (`components/shared/Modal`)
 
 ## Opening them: `useModal`
 
 `DialogModal`, `ConfirmModal`, `InfoModal`, `DeleteInstanceModal` and `Drawer` are driven by a controller from `useModal(dialogRef)`: `open()`, `close()`, `isOpen` and `isRendered`. The hook owns `showModal()`, Escape, the scroll lock and returning focus to the trigger. The wrappers return `null` until `isRendered`, so a closed dialog costs nothing.
 
-`Modal` predates this and takes `useDialog(dialogRef)` instead (`handleOpen`, `handleClose`). Do not mix the two hooks with the wrong component.
 
 ## DialogModal: the default dialog
 
@@ -33,15 +31,11 @@ The same shell with a single Close button, for a message the user only needs to 
 
 ## DeleteInstanceModal: delete an owned item
 
-A `ConfirmModal`-shaped dialog with the wording fixed: it states the action cannot be undone and names the item through `instanceName`, and its button is the danger variant that reads `Deleting...` while `isProcessing`. Articles, catalogues and community posts use it, so a delete reads the same everywhere. Use it only for permanent deletes of a named item; for any other destructive action use `ConfirmModal` with its own wording. It has no stories; the dashboard, article and catalogue screens show it.
+A `ConfirmModal`-shaped dialog with the wording fixed: it states the action cannot be undone and names the item through `instanceName`, and its button is the danger variant that reads `Deleting...` while `isProcessing`. Articles, catalogues and community posts use it, so a delete reads the same everywhere. Use it only for permanent deletes of a named item; for any other destructive action use `ConfirmModal` with its own wording. See [Features/Articles/DeleteInstanceModal](?path=/docs/features-articles-deleteinstancemodal--docs).
 
 ## Drawer: a sheet, not a dialog
 
 A full-height, full-width panel for mobile navigation and search. It has no title bar, close button or padding: the content lays out its own top bar and must include a way to close it. Pass `label` as the accessible name. Do not use it for a question or a form that belongs in a dialog. See [Shared/Drawer](?path=/docs/shared-drawer--docs).
-
-## Modal: the older compound dialog
-
-`Modal` is a similar compound component (`Modal.Header`, `Modal.Title`, `Modal.Body`, `Modal.Footer`) with a close button inside the header, sizes `sm`, `md`, `lg` and `fullscreen`, and `aria-labelledby` wired from its title. Nothing in the app imports it today. Prefer `DialogModal` for new work so there is one dialog shell; reach for `Modal` only if you need the header close button and are prepared to use `useDialog`. See [Shared/Modal](?path=/docs/shared-modal--docs).
 
 ## Rules
 

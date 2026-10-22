@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, within } from 'storybook/test';
+import { Button } from '@/components/shared/Button';
 import { kanjiRows, repeatRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { KanjiTable } from './';
 
@@ -71,7 +72,7 @@ export const WithTrailingColumn: Story = {
 				header: 'Remove',
 				headerHidden: true,
 				width: 'shrink',
-				cell: (kanji) => <button type="button">{`Remove ${kanji.character}`}</button>,
+				cell: (kanji) => <Button variant="ghost" size="sm">{`Remove ${kanji.character}`}</Button>,
 			},
 		],
 	},

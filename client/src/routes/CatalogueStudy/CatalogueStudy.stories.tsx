@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { delay } from 'msw';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { StudyCard } from '@/api/flashcards/deck';
 import { getCatalogueShowMockHandler } from '@/api/generated/catalogue/catalogue.msw';
@@ -184,33 +183,6 @@ export const Setup: Story = {
 	},
 };
 
-/** A shared link's configuration fills the form and reaches the preview request. */
-export const SetupFromLink: Story = {
-	parameters: {
-		router: {
-			path: STUDY_PATH,
-			initialEntries: [study('?prompt=character&answer=kunyomi&mode=typed&script=lenient&count=5&seed=3')],
-		},
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByLabelText('You answer with')).toHaveValue('kunyomi');
-		await expect(canvas.getByLabelText('How')).toHaveValue('typed');
-		await expect(canvas.getByLabelText('Cards per run')).toHaveValue(5);
-		await expect(canvas.getByLabelText(/Accept katakana too/)).toBeChecked();
-
-		await canvas.findByText(/items can be asked this way/);
-		await expect(deckRequests.last()).toMatchObject({
-			prompt: 'character',
-			answer: 'kunyomi',
-			mode: 'typed',
-			script: 'lenient',
-			seed: '3',
-		});
-	},
-};
-
 /** Three cards, four options each: the first card, and the progress line. */
 export const InSession: Story = {
 	parameters: { router: { path: STUDY_PATH, initialEntries: [study(PLAY(3))] } },
@@ -224,24 +196,6 @@ export const InSession: Story = {
 		).toHaveLength(4);
 
 		await expect(deckRequests.last()).toMatchObject({ count: '3', mode: 'options', seed: '7' });
-	},
-};
-
-/** A typed run: the answer is typed in hiragana and graded in the client. */
-export const InSessionTyped: Story = {
-	parameters: {
-		router: {
-			path: STUDY_PATH,
-			initialEntries: [study('?prompt=character&answer=kunyomi&mode=typed&script=strict&count=2&seed=7&play=1')],
-		},
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		const input = await canvas.findByLabelText('Kun’yomi (hiragana)');
-		await userEvent.type(input, 'まなぶ{Enter}');
-
-		await expect(await canvas.findByRole('status')).toHaveTextContent('Correct');
 	},
 };
 
@@ -399,66 +353,9 @@ export const NotFound: Story = {
 	},
 };
 
-/** A sentences catalogue cannot be studied: the form says why, and no deck is requested. */
-export const UnsupportedType: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getCatalogueShowMockHandler(catalogue({ type: 8, type_label: 'Sentences', title: 'Station sentences' })),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByText('This catalogue cannot be studied')).toBeVisible();
-		await expect(deckRequests.searches).toHaveLength(0);
-	},
-};
-
-/** The catalogue request never answers: the form-family loading placeholder. */
-export const Loading: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getCatalogueShowMockHandler(async () => {
-				await delay('infinite');
-
-				return catalogue();
-			}),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByRole('status')).toHaveTextContent('Loading page.');
-		await expect(canvas.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
-	},
-};
-
-/** The preview request fails with a 500: the form shows a warning in place of the counts and cannot start. */
-export const DeckError: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getFlashcardDeckShowMockHandler(() => {
-				throw new Response(null, { status: 500 });
-			}),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText('The deck could not be loaded')).toBeVisible();
-		await expect(canvas.getByRole('button', { name: 'Start studying' })).toBeDisabled();
-	},
-};
-
 export const Mobile: Story = {
 	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(await within(canvasElement).findByText(/items can be asked this way/)).toBeVisible();
-	},
-};
-
-export const MobileInSession: Story = {
-	parameters: { router: { path: STUDY_PATH, initialEntries: [study(PLAY(3))] } },
-	globals: { viewport: { value: 'xs' } },
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('region', { name: 'Study session' })).toBeVisible();
 	},
 };

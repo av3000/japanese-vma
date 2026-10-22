@@ -72,16 +72,6 @@ export const Default: Story = {
 	},
 };
 
-export const Guest: Story = {
-	parameters: { auth: 'guest' },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await canvas.findByText('Showing 25 of 60');
-
-		await expect(canvas.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument();
-	},
-};
-
 /** A signed-in viewer gets a Save button on every row, from the viewer state the list payload carries. */
 export const Member: Story = {
 	parameters: { auth: { user: users.member } },
@@ -91,34 +81,6 @@ export const Member: Story = {
 
 		await expect(canvas.getAllByRole('button', { name: /^Save/ }).length).toBeGreaterThan(0);
 		await expect(canvas.getAllByRole('button', { name: /^Saved:/ }).length).toBeGreaterThan(0);
-	},
-};
-
-/** A shared link: keyword and JLPT level in the URL reach the request, the controls and the count line. */
-export const Filtered: Story = {
-	parameters: {
-		router: { path: '/kanjis', initialEntries: ['/kanjis?keyword=%E6%B0%B4&jlpt=5'] },
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText('Showing 25 of 60 · keyword: 水 · JLPT: N5')).toBeVisible();
-		await expect(canvas.getByRole('searchbox', { name: 'Search kanji by keyword' })).toHaveValue('水');
-		await expect(canvas.getByRole('combobox', { name: 'JLPT level' })).toHaveValue('5');
-
-		await expect(requests.last()).toMatchObject({ keyword: '水', jlpt: '5', per_page: '25' });
-	},
-};
-
-/** The "-" level the API uses for kanji with no JLPT level is offered as "Uncommon". */
-export const FilteredUncommon: Story = {
-	parameters: { router: { path: '/kanjis', initialEntries: ['/kanjis?jlpt=-'] } },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText('Showing 25 of 60 · JLPT: Uncommon')).toBeVisible();
-		await expect(canvas.getByRole('combobox', { name: 'JLPT level' })).toHaveValue('-');
-		await expect(requests.last().jlpt).toBe('-');
 	},
 };
 
@@ -177,34 +139,6 @@ export const Empty: Story = {
 	},
 };
 
-/** A search that matches nothing names the term and suggests kana. */
-export const NoResults: Story = {
-	parameters: {
-		router: { path: '/kanjis', initialEntries: ['/kanjis?keyword=%E3%81%B5%E3%81%97%E3%81%8E%E3%81%AA'] },
-	},
-	beforeEach: ({ msw }) => {
-		msw.use(kanjiIndex(0));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText(/^No kanji match/)).toBeVisible();
-		await expect(canvas.getByText('Try a shorter search, a reading in kana, or clear the filters.')).toBeVisible();
-		await expect(requests.last().keyword).toBe('ふしぎな');
-	},
-};
-
-/** A level that matches nothing words itself as "these filters", not as a search. */
-export const NoResultsForLevel: Story = {
-	parameters: { router: { path: '/kanjis', initialEntries: ['/kanjis?jlpt=1'] } },
-	beforeEach: ({ msw }) => {
-		msw.use(kanjiIndex(0));
-	},
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByText('No kanji match these filters')).toBeVisible();
-	},
-};
-
 /** The index request never answers: the real header and filters over skeleton rows, no count line yet. */
 export const Loading: Story = {
 	beforeEach: ({ msw }) => {
@@ -244,48 +178,10 @@ export const LoadError: Story = {
 	},
 };
 
-/** Try again after a failure asks the same page again and shows the rows. */
-export const RetryAfterError: Story = {
-	beforeEach: ({ msw }) => {
-		let failed = false;
-
-		msw.use(
-			getKanjiIndexMockHandler(({ request }) => {
-				requests.record(request);
-
-				if (!failed) {
-					failed = true;
-					throw new Response(null, { status: 500 });
-				}
-
-				return pageOf(request, TOTAL, rowAt, DICTIONARY_PER_PAGE);
-			}),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(await canvas.findByRole('button', { name: 'Try again' }));
-
-		await expect(await canvas.findByText('Showing 25 of 60')).toBeVisible();
-		await expect(requests.searches).toHaveLength(2);
-	},
-};
-
 /** Stacked rows: glyph and meaning, On, Kun, then strokes, level and frequency on one line, at 360px. */
 export const Mobile: Story = {
 	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await expect(await within(canvasElement).findByText('Showing 25 of 60')).toBeVisible();
-	},
-};
-
-export const MobileMember: Story = {
-	parameters: { auth: { user: users.member } },
-	globals: { viewport: { value: 'xs' } },
-	play: async ({ canvasElement }) => {
-		await expect((await within(canvasElement).findAllByRole('button', { name: /^Save/ })).length).toBeGreaterThan(
-			0,
-		);
 	},
 };

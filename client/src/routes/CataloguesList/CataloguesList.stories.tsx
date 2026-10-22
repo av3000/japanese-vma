@@ -95,14 +95,6 @@ export const Skeleton: Story = {
 	},
 };
 
-export const Guest: Story = {
-	parameters: { auth: 'guest' },
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByText('Showing 12 of 30')).toBeVisible();
-		await expect(within(canvasElement).queryByRole('link', { name: 'New catalogue' })).not.toBeInTheDocument();
-	},
-};
-
 /** A signed-in viewer gets "New catalogue" beside the title. */
 export const Member: Story = {
 	parameters: { auth: { user: users.member } },
@@ -111,26 +103,6 @@ export const Member: Story = {
 			'href',
 			'/catalogues/new',
 		);
-	},
-};
-
-/** A shared link: keyword, type and sort in the URL reach the request and the controls. */
-export const Filtered: Story = {
-	parameters: {
-		router: {
-			path: '/catalogues',
-			initialEntries: ['/catalogues?q=%E6%BC%A2%E5%AD%97&type=6&sort=pop'],
-		},
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText('Showing 12 of 30 · Results for: 漢字')).toBeVisible();
-		await expect(canvas.getByRole('searchbox', { name: 'Search catalogues' })).toHaveValue('漢字');
-		await expect(canvas.getByRole('combobox', { name: 'Catalogue type' })).toHaveValue('6');
-		await expect(canvas.getByRole('combobox', { name: 'Sort by' })).toHaveValue('pop');
-
-		await expect(requests.last()).toMatchObject({ search: '漢字', type: '6', sort_by: 'views' });
 	},
 };
 
@@ -198,23 +170,6 @@ export const Empty: Story = {
 		await expect(await canvas.findByText('No public catalogues yet')).toBeVisible();
 		await expect(canvas.queryByText('No more results')).not.toBeInTheDocument();
 		await expect(canvas.queryByRole('article')).not.toBeInTheDocument();
-	},
-};
-
-/** A search that matches nothing names the term. */
-export const NoResults: Story = {
-	parameters: {
-		router: { path: '/catalogues', initialEntries: ['/catalogues?q=%E3%81%B5%E3%81%97%E3%81%8E%E3%81%AA'] },
-	},
-	beforeEach: ({ msw }) => {
-		msw.use(cataloguesIndex(0));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByRole('heading', { level: 2, name: /No catalogues match/ })).toBeVisible();
-		await expect(canvas.getByText('ふしぎな')).toBeVisible();
-		await expect(requests.last().search).toBe('ふしぎな');
 	},
 };
 

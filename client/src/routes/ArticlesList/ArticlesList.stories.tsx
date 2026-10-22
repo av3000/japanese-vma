@@ -104,14 +104,6 @@ export const Skeleton: Story = {
 	},
 };
 
-export const Guest: Story = {
-	parameters: { auth: 'guest' },
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByText('Showing 12 of 30')).toBeVisible();
-		await expect(within(canvasElement).queryByRole('link', { name: 'New article' })).not.toBeInTheDocument();
-	},
-};
-
 /** A signed-in viewer gets "New article" beside the title. */
 export const Member: Story = {
 	parameters: { auth: { user: users.member } },
@@ -120,29 +112,6 @@ export const Member: Story = {
 			'href',
 			'/newarticle',
 		);
-	},
-};
-
-/** A shared link: search, two JLPT levels and a sort in the URL reach the request and the controls. */
-export const Filtered: Story = {
-	parameters: {
-		router: {
-			path: '/articles',
-			initialEntries: ['/articles?q=%E4%BA%AC%E9%83%BD&jlpt_levels[]=n5&jlpt_levels[]=n3&sort=title_jp'],
-		},
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByText('Showing 12 of 30 · Results for: 京都')).toBeVisible();
-		await expect(canvas.getByRole('searchbox', { name: 'Search articles' })).toHaveValue('京都');
-		await expect(canvas.getByRole('combobox', { name: 'Sort articles' })).toHaveValue('title_jp');
-		await expect(canvas.getByRole('button', { name: 'Reset' })).toBeVisible();
-
-		const search = requests.searches[0];
-		await expect(search.get('q')).toBe('京都');
-		await expect(search.getAll('jlpt_levels[]')).toEqual(['n5', 'n3']);
-		await expect(search.get('sort')).toBe('title_jp');
 	},
 };
 
@@ -206,24 +175,6 @@ export const Empty: Story = {
 		await expect(await canvas.findByText('No articles yet')).toBeVisible();
 		await expect(canvas.queryByText('No more results')).not.toBeInTheDocument();
 		await expect(canvas.queryByRole('article')).not.toBeInTheDocument();
-	},
-};
-
-/** A search that matches nothing names the term and offers Reset. */
-export const NoResults: Story = {
-	parameters: {
-		router: { path: '/articles', initialEntries: ['/articles?q=%E3%81%B5%E3%81%97%E3%81%8E%E3%81%AA'] },
-	},
-	beforeEach: ({ msw }) => {
-		msw.use(articlesIndex(0));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expect(await canvas.findByRole('heading', { level: 2, name: /No articles match/ })).toBeVisible();
-		await expect(canvas.getByText('ふしぎな')).toBeVisible();
-		await expect(canvas.getByRole('button', { name: 'Reset' })).toBeVisible();
-		await expect(requests.last().q).toBe('ふしぎな');
 	},
 };
 

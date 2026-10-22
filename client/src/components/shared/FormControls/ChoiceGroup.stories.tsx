@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { Button } from '@/components/shared/Button';
 import { ChoiceGroup, type ChoiceGroupProps, type ChoiceOption } from './';
 
 const VISIBILITY: ChoiceOption<'public' | 'private'>[] = [
@@ -136,9 +137,9 @@ export const FocusThroughRef: Story = {
 			return (
 				<>
 					<ChoiceGroup {...(args as ChoiceGroupProps<'public' | 'private'>)} inputRef={ref} />
-					<button type="button" onClick={() => ref.current?.focus()}>
+					<Button variant="secondary-outline" size="sm" onClick={() => ref.current?.focus()}>
 						Focus group
-					</button>
+					</Button>
 				</>
 			);
 		};

@@ -22,9 +22,11 @@ export default defineConfig({
 			clean: true,
 			prettier: true,
 			urlEncodeParameters: true,
-			// MSW handlers and response factories for Storybook (#333). Paths keep Orval's `*/` prefix, so
-			// they match whatever VITE_API_URL is. No artificial delay: stories and tests stay fast.
-			mock: { type: 'msw', delay: false, indexMockFiles: true },
+			// MSW handlers and response factories for Storybook (#333). `*/api/v1` matches whatever
+			// VITE_API_URL is, but only API paths: a bare `*/articles/:uid` also matched Vite's
+			// `/src/.../articles/X.stories.tsx` module requests and answered them with JSON.
+			// No artificial delay: stories and tests stay fast.
+			mock: { type: 'msw', delay: false, indexMockFiles: true, baseUrl: '*/api/v1' },
 			override: {
 				mutator: {
 					path: path.resolve(rootDir, 'src/services/orval-mutator.ts'),

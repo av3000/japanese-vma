@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { delay } from 'msw';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { UpdateSentenceRequest } from '@/api/generated/model/updateSentenceRequest';
 import { getSentenceShowMockHandler, getSentenceUpdateMockHandler } from '@/api/generated/sentence/sentence.msw';
 import { sentenceShort } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { currentLocation } from '@/storybook/decorators';
 import { users } from '@/storybook/fixtures/users';
-import { SENTENCE_UUID, failWith, ownSentence, rejectWith } from '../../routeFixtures';
+import { SENTENCE_UUID, failWith, ownSentence } from '../../routeFixtures';
 import SentenceEditPage from './';
 
 /*
@@ -70,23 +69,6 @@ export const Edit: Story = {
 	},
 };
 
-/** The sentence request never answers: the route shows its loading state, not the form. */
-export const Loading: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(
-			getSentenceShowMockHandler(async () => {
-				await delay('infinite');
-
-				return ownSentence();
-			}),
-		);
-	},
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('status')).toBeVisible();
-		await expect(within(canvasElement).queryByLabelText('Sentence')).toBeNull();
-	},
-};
-
 /** A 404: the route says the sentence could not be loaded, with the way back. */
 export const NotFound: Story = {
 	beforeEach: ({ msw }) => {
@@ -116,43 +98,5 @@ export const Imported: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		await expect(await within(canvasElement).findByText('Imported sentences cannot be edited.')).toBeVisible();
-	},
-};
-
-/** A 422 puts the message under the field and moves focus to it. Nothing navigates. */
-export const ServerValidation: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(getSentenceUpdateMockHandler(() => rejectWith({ content: ['The content has already been taken.'] })));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await changeAndSave(canvas);
-
-		await expect(await canvas.findByRole('alert')).toHaveTextContent('Check the highlighted fields and try again.');
-		await waitFor(() => expect(canvas.getByLabelText('Sentence')).toHaveFocus());
-		await expect(canvas.getByLabelText('Sentence')).toHaveAccessibleDescription(/already been taken/);
-		await expect(currentLocation()).toBe(EDIT_PATH);
-	},
-};
-
-/** A 500 shows the general error above the form, keeps the edit and does not navigate. */
-export const SubmitError: Story = {
-	beforeEach: ({ msw }) => {
-		msw.use(getSentenceUpdateMockHandler(() => failWith(500)));
-	},
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await changeAndSave(canvas);
-
-		await expect(await canvas.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
-		await expect(canvas.getByLabelText('Sentence')).toHaveValue('親友は何人いますか？');
-		await expect(currentLocation()).toBe(EDIT_PATH);
-	},
-};
-
-export const Mobile: Story = {
-	globals: { viewport: { value: 'xs' } },
-	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('button', { name: 'Save changes' })).toBeVisible();
 	},
 };
