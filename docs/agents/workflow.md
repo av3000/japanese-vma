@@ -52,7 +52,7 @@ grilling ─► write-issue ─► per slice: tdd ─► commit ─► review-br
 
 1. **Start each slice from its issue,** not from the earlier conversation. The issue is self-contained, so you can `/clear` between slices.
 2. **Drive `tdd`.** If `tdd` hits a bug that resists a first look, switch to `diagnosing-bugs` and come back once it is fixed.
-3. **Run the checks the issue names,** using the lanes in `client/AGENTS.md` and `processor-api/AGENTS.md`.
+3. **Run the checks the issue names,** using the lanes in `client/AGENTS.md` and `processor-api/AGENTS.md`. A fresh worktree needs the setup in `docs/agents/local-environment.md` first, or a missing generated client or Passport key looks like a regression.
 4. **Commit once per slice:**
    ```
    HARNESS-03: remove finished migration skills and Spatie skills
@@ -110,7 +110,7 @@ A **phase** is a chunk of work: shaping, one slice, the review. Decide what to d
 1. **Continue** if the next phase needs this one's reasoning word for word (shaping → first slice), or if there is plenty of room left.
 2. **`/clear`** if what came before is disposable. Between slices it usually is, because the issue carries everything.
 3. **Hand off** (write a short file) only when the work moves to a different tool (Claude ↔ Codex), a different directory, or a different person.
-4. **A subagent** only for a tightly scoped task that can run unattended, and only when you've asked for one. Subagents multiply token use.
+4. **Subagents** for independent work that can run unattended: parallel research, or a checker that reviews what another context wrote. Keep it to four or five per task, on the cheapest model that fits; small lookups stay inline. Subagents multiply token use, so they have to buy something.
 5. **`/compact`** otherwise, with an instruction about what to keep: `/compact next: review the branch against #501`.
 
 ## Getting the most out of it

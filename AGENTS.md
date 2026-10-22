@@ -16,7 +16,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 ### Current Live Environment
 
-- **Frontend live hosting:** GitHub Actions workflow deploys the frontend; see `docs/frontend-github-actions-plan.md` for pipeline context.
+- **Frontend live hosting:** `.github/workflows/frontend-ci.yml` builds the frontend image and triggers the Render deploy; see `docs/architecture/deployment-and-runtime.md` for the whole runtime.
 - **Backend live hosting:** Render hosts the live Laravel API/web service.
 - **Queue / worker runtime:** Production queue workers run on a GCP VM via Docker Compose, not on Render.
 - **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
@@ -74,10 +74,12 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
-  - For backend verification, use the dedicated Docker test lane from `processor-api/`: `docker compose up -d --build db-test test-runner`, then `docker compose exec test-runner composer test -- ...`.
+  - For backend verification, use an isolated Docker test lane from `processor-api/`, with a project name unique to the worktree. Never the default `docker-compose.yml`: its fixed container names attach to other checkouts.
+    - Up: `docker compose -f docker-compose.test.yml -p jvma<issue> up -d --build`, then `... exec -T test-runner php artisan passport:keys --force` in a fresh lane.
+    - Test: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- ...`.
+    - Down: `docker compose -f docker-compose.test.yml -p jvma<issue> down` once the branch has merged.
   - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
-  - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
-  - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
+  - Setting up a fresh worktree, sandbox limits (`spawn EPERM`, a Vitest browser run that exits 0 after one file) and the other known local traps: `docs/agents/local-environment.md`. Treat those as environment limitations to report, not product bugs to "fix" inside unrelated work.
 - **Safety:**
   - Do not silently alter contracts or conventions.
   - Highlight behavior-impacting changes and rollout implications.

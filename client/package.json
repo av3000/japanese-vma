@@ -24,7 +24,7 @@
     "build-storybook": "storybook build",
     "chromatic": "npx chromatic",
     "lint": "eslint ./**/*.{ts,tsx} --fix",
-    "prettier": "prettier --loglevel error --write ./**/*.{js,jsx,ts,tsx,css}",
+    "format": "prettier --log-level error --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
