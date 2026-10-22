@@ -19,7 +19,7 @@ For any visual, styling, token or component-choice work, read `client/DESIGN.md`
 
 ## 2) Route Composition
 
-- Rules: `repo-thin-routes`, `repo-router-v6-hooks`, `repo-parse-route-params-once`, `repo-no-class-components`.
+- Rules: `repo-thin-routes`, `repo-parse-route-params-once`.
 - Precedent for a thin route: `src/routes/ArticleDetails/index.tsx`.
 
 ## 3) Data Access Boundaries
@@ -40,7 +40,7 @@ For any visual, styling, token or component-choice work, read `client/DESIGN.md`
 
 ## 5) Modal And Dialog Composition
 
-- Rules: `repo-shared-dialogs`, `repo-css-modules-tokens`, `repo-layout-primitives`, `repo-no-bootstrap-utility-classes`.
+- Rules: `repo-shared-dialogs`, `repo-css-modules-tokens`, `repo-layout-primitives`.
 - Primitives: `src/components/shared/DialogModal`, `src/components/shared/Modal`, `src/hooks/useModal.ts`, `src/hooks/useDialog.ts`.
 - Existing wrappers: `src/components/features/DeleteInstanceModal`, `src/components/shared/modals/ConfirmModal.tsx`, `src/components/features/catalogues/CatalogueBookmarkModal`.
 - `src/routes/ArticleDetails/ArticleContent/index.tsx` is the best current example of composing multiple modal controllers in one feature without pushing modal markup into unrelated route branches.
@@ -50,11 +50,11 @@ For any visual, styling, token or component-choice work, read `client/DESIGN.md`
 
 - Rules: `repo-map-numeric-types-once`, `repo-shared-type-labels`, `repo-generated-contract-types`.
 - `src/shared/constants/enums/` is the preferred direction for object-type identifiers and labels.
-- Comments: `repo-comments-block-contract`. Examples: `src/routes/ArticleDetails/ArticleContent/index.tsx`, `src/routes/community/PostDetails/PostContent/index.tsx`, `src/components/features/japanese/related/SentenceRelated.tsx`.
+- Comments go through `CommentsBlock` (`parent`, `entityId`, `entityUuid`). Examples: `src/routes/ArticleDetails/ArticleContent/index.tsx`, `src/routes/community/PostDetails/PostContent/index.tsx`, `src/components/features/japanese/related/SentenceRelated.tsx`.
 
 ## 7) Banned Patterns For Touched Or Migrated Code
 
-`repo-no-ts-nocheck`, `repo-no-class-components`, `repo-router-v6-hooks`, `repo-no-redux`, `repo-no-page-owned-server-state`, `repo-no-direct-axios`, `repo-shared-type-labels`, `repo-map-numeric-types-once`.
+`repo-no-ts-nocheck`, `repo-no-page-owned-server-state`, `repo-no-direct-axios`, `repo-shared-type-labels`, `repo-map-numeric-types-once`.
 
 ## 8) Generated API Contract Drift
 

@@ -21,7 +21,6 @@ The CSS is the source of truth for values. This file explains meaning and rules;
 Each hard rule is a citable rule in the `frontend-standards` skill (`.claude/skills/frontend-standards/rules/<id>.md`), with examples:
 
 - Tokens for every value, and only tokens that exist: `repo-css-modules-tokens`.
-- No Bootstrap, Tailwind, Sass, CSS-in-JS or utility-class frameworks: `repo-no-bootstrap-utility-classes`.
 - Layout through `Container`, `Stack`, `Cluster` and `Grid`: `repo-layout-primitives`.
 - Colour is never the only cue: `repo-colour-not-only-cue`.
 - Keep the global focus outline: `repo-keep-focus-outline`.

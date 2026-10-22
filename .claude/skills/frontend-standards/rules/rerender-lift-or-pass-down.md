@@ -50,7 +50,7 @@ function Toggle({ isOn, onChange }: { isOn: boolean; onChange: (on: boolean) => 
 }
 ```
 
-**The same applies to data.** A child that fetches and then hands the result up to its parent through an effect creates a waterfall — the parent cannot start any dependent work until the child has mounted, fetched, and re-rendered. Fetch in the parent through a query hook and pass the data down as props. See `async-parallel`.
+**The same applies to data.** A child that fetches and then hands the result up to its parent through an effect creates a waterfall — the parent cannot start any dependent work until the child has mounted, fetched, and re-rendered. Fetch in the parent through a query hook and pass the data down as props.
 
 References: [Notifying parent components about state changes](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes), [Passing data to the parent](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
 
