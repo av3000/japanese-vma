@@ -42,15 +42,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.
   - Keep outputs and assumptions explicit in summaries.
-- **Generated API contract workflow:**
-  - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
-  - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
-  - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
-  - If Orval output looks wrong, inspect `processor-api/api.json` before adding frontend adapters or type coercion.
-  - Prefer fixing schema generation at the backend source even if the runtime endpoint itself appears correct.
-  - Verify the regenerated schema before trusting regenerated client types.
-  - Do not hand-edit generated API files to patch over contract problems.
-  - When a v1 endpoint is already documented and Orval already generates a usable client, prefer that generated client over adding a custom frontend wrapper. Only add a custom adapter when the endpoint is legacy, missing from the schema, or the generated client is actually unusable.
+- **Generated API contract workflow:** the rules live in the standards skills, with examples.
+  - Backend source, then `composer openapi`, then `npm run orval:file`, one after the other: `CONTRACT-api-json-orval-workflow` (`backend-standards`).
+  - Contract drift is fixed at the backend schema, never in generated files or client coercion: `repo-contract-drift-backend-first` (`frontend-standards`).
+  - A documented v1 endpoint is called through its generated client: `repo-generated-client-first` (`frontend-standards`).
 
 ## 3) How to Work in This Repository
 
@@ -74,11 +69,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
-  - For backend verification, use an isolated Docker test lane from `processor-api/`, with a project name unique to the worktree. Never the default `docker-compose.yml`: its fixed container names attach to other checkouts.
-    - Up: `docker compose -f docker-compose.test.yml -p jvma<issue> up -d --build`, then `... exec -T test-runner php artisan passport:keys --force` in a fresh lane.
-    - Test: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- ...`.
-    - Down: `docker compose -f docker-compose.test.yml -p jvma<issue> down` once the branch has merged.
-  - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+  - For backend verification, use the isolated Docker test lane: `TEST-docker-lane` in `backend-standards` holds the commands and what never to run tests against.
   - Setting up a fresh worktree, sandbox limits (`spawn EPERM`, a Vitest browser run that exits 0 after one file) and the other known local traps: `docs/agents/local-environment.md`. Treat those as environment limitations to report, not product bugs to "fix" inside unrelated work.
 - **Safety:**
   - Do not silently alter contracts or conventions.

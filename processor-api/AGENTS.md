@@ -2,102 +2,42 @@
 
 This file defines **backend-specific** guidance for changes under `processor-api/`.
 
+**Rules live in the `backend-standards` skill** (`.claude/skills/backend-standards/`): one file per rule ID (`ARCH-`, `CONTRACT-`, `RESULT-`, `DATA-`, `TEST-`), each with an impact level and an Incorrect/Correct example from the v1 modules. This file keeps direction, environment and process, and names the rule IDs that apply. Cite a rule by its ID.
+
 ## 1) Backend Architecture Direction
 
 -   **Style:** Domain-driven modular monolith with layered responsibilities.
--   **Preferred request flow:**
-    -   Route → Controller → Request validation → DTO/Value Objects → Service/Application layer → Repository/Model → Resource/HTTP response.
 -   **Primary direction:**
     -   Keep legacy behavior stable where needed.
-    -   Prefer new/refactored work in v1 architecture/routes when practical.
+    -   Prefer new/refactored work in v1 architecture/routes when practical: `ARCH-v1-routes`.
 
 ## 2) Route & Endpoint Policy
 
--   **Legacy coexistence:**
-    -   Do not break legacy endpoints unless explicitly requested.
--   **v1 preference:**
-    -   For new/refactored endpoints, prefer `routes/api_v1.php` conventions.
--   **Route specificity:**
-    -   When adding a concrete v1 route beside a parameterized sibling such as `catalogues/{uuid}`, place the concrete route where it cannot be shadowed by the parameterized match.
--   **Migration behavior:**
-    -   Preserve existing behavior intentionally, or document intentional changes.
--   **Generic comment write contract:**
-    -   `POST /api/v1/comments` uses a generic write payload: `{ entity_type: ObjectTemplateType, entity_id, entity_uuid, content, parent_comment_id? }`.
-    -   Do not reintroduce string-name mappings like `article` or `catalogue` at the write boundary when the backend already accepts the shared enum value.
+-   Rules: `ARCH-v1-routes`, `CONTRACT-route-specificity`, `CONTRACT-comment-write-payload`.
 
 ## 3) Layering & Domain Boundaries
 
--   **Controller responsibilities:**
-    -   Coordinate request handling and mapping only.
-    -   Avoid embedding heavy business logic.
--   **Service responsibilities:**
-    -   Orchestrate business rules and use-cases.
-    -   Enforce ownership/authorization rules at appropriate layer.
--   **Repository responsibilities:**
-    -   Encapsulate persistence/data access concerns.
--   **Boundary rule:**
-    -   Keep HTTP/transport details from leaking into domain entities.
+-   Rules: `ARCH-thin-controllers`, `ARCH-business-rules-in-application`, `ARCH-domain-dependency-direction`, `ARCH-domain-no-framework`, `ARCH-cross-module-service-interface`, `ARCH-focused-actions`, `ARCH-no-speculative-layers`.
+-   Persistence: `DATA-repositories-hide-persistence`, `DATA-list-readers`, `DATA-list-shape-naming`, `DATA-complete-domain-models`, `DATA-mappers-translate-shape`, `DATA-sql-in-infrastructure`.
 
 ## 4) Validation, DTO, and Identifier Conventions
 
--   **Validation:**
-    -   Prefer dedicated Request classes per endpoint.
-    -   For partial updates, validate optional fields and handle empty-update payloads explicitly.
-    -   For generic v1 comment create, validate the `entity_type` / `entity_id` / `entity_uuid` tuple directly in the request contract instead of resolving numeric IDs from UUIDs inside the service layer.
-    -   For new v1 array query params, prefer clean names like `types` over `types[]` unless legacy compatibility requires bracket syntax, because Orval preserves the literal wire name.
--   **DTOs/Value Objects:**
-    -   Use DTO contracts for operation inputs/outputs where meaningful.
-    -   Use value objects where they improve invariants and type safety.
--   **Identifiers:**
-    -   Follow existing v1 UUID/entity identifier conventions in the touched module.
-    -   Comment create currently trusts the validated `entity_type` / `entity_id` / `entity_uuid` tuple at write time; do not add per-type resolver indirection back unless the contract itself changes.
-    -   The generic like toggle is the exception that proves that rule: its contract does require the target to be proven, so `LikeTargetRepositoryInterface` resolves existence and visibility per target type before any write. That indirection is deliberate - a like must not create a row against a missing or private target, and the 404 must not distinguish the two.
+-   Rules: `CONTRACT-request-per-endpoint`, `CONTRACT-partial-update-validation`, `CONTRACT-comment-write-payload`, `CONTRACT-clean-array-param-names`, `CONTRACT-v1-identifiers`.
 
 ## 5) Response & Error Handling
 
--   **Response consistency:**
-    -   Reuse existing module resource/response patterns.
-    -   Keep success/error envelope aligned with neighboring endpoints.
--   **Error behavior:**
-    -   Prefer explicit, typed/structured error handling patterns.
-    -   Do not hide contract-significant failures.
--   **Schema guidance:**
-    -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
-    -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
-    -   When an action returns a Resource, reference it by name: `#[Response(type: 'KanjiListResource')]`. An inline `array{...}` shape duplicates the Resource, drifts from it silently, and makes Orval name the frontend type after the status code (`KanjiIndex200ItemsItem`).
-    -   Keep `#[Response(type: 'array{...}')]` for lean ad hoc shapes that have no Resource, where Resource PHPDoc is insufficient for nested arrays.
-    -   When a named component comes out wrong in `api.json`, fix the Resource, not the annotation:
-        -   every scalar typed `string`: add a class-level `@property Domain\Model $resource`, or explicit casts when the value comes through a nested object;
-        -   `array_map` items untyped: add a per-key hint, `/** @var array<int, XResource> */` above `'items' => array_map(...)`;
-        -   an optional include documented as required: build it with `'key' => $this->when($condition, fn () => ...)`, not a conditional `$payload['key'] = ...`;
-        -   a detail Resource that extends another: `$this->merge((new XResource(...))->toArray($request))`. Merging the Resource object itself drops its fields from the schema;
-        -   a field typed nullable although it never is: `$value ?? ''` is inferred as nullable, so cast it with `(string)`.
-    -   Scramble turns a comment on an array key inside `toArray()` into that property's public `description`. Put implementation notes above the `return`.
-    -   After changing a Resource or `#[Response]`, check the component's `properties` and `required` in `api.json` before running Orval, and pin anything non-obvious in a `tests/Unit/...OpenApiTest` (reference: `tests/Unit/JapaneseMaterial/DictionaryResponsesOpenApiTest.php`).
-    -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
-    -   Backend CI re-exports `api.json` (`composer openapi` with `APP_NAME=Laravel`, `APP_URL=http://localhost`) and fails when it differs from the committed file. Commit the regenerated `api.json` with the Resource change; export with those two values or `info.title` and `servers[0].url` will differ.
+-   Responses and errors: `RESULT-typed-results`, `RESULT-result-typed-errors`, `RESULT-envelope-matches-module`, `RESULT-no-mixed-envelopes`.
+-   Schema and the generated client: `CONTRACT-named-resources`, `CONTRACT-resource-scalar-casts`, `CONTRACT-fix-schema-at-resource`, `CONTRACT-no-key-comments-in-toarray`, `CONTRACT-enum-schema-components`, `CONTRACT-resources-shape-only`, `CONTRACT-api-json-orval-workflow`, `TEST-openapi-schema-tests`.
+-   Backend CI re-exports `api.json` (`composer openapi` with `APP_NAME=Laravel`, `APP_URL=http://localhost`) and fails when it differs from the committed file. Export with those two values or `info.title` and `servers[0].url` will differ.
 
 ## 6) Testing & Verification Expectations
 
--   **When backend code changes:**
-    -   Run targeted PHPUnit tests for affected feature/module.
-    -   Add or update feature tests for endpoint success/failure/edge cases.
+-   **When backend code changes:** `TEST-feature-tests-per-endpoint`, run in the isolated lane per `TEST-docker-lane` (the rule holds the commands).
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
-    -   Run backend tests in an isolated test lane, one per checkout, so Laravel boots in `APP_ENV=testing` against the lane's own PostgreSQL service. From `processor-api/`, with a project name unique to the worktree (for example `jvma<issue>`):
-        ```bash
-        docker compose -f docker-compose.test.yml -p jvma<issue> up -d --build
-        docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner php artisan passport:keys --force
-        docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/Foo
-        docker compose -f docker-compose.test.yml -p jvma<issue> stop   # while the PR is open
-        docker compose -f docker-compose.test.yml -p jvma<issue> down   # once the branch has merged
-        ```
-    -   Do not use the default `docker-compose.yml` for tests. Its container names are fixed, so from a worktree `docker compose exec test-runner` can attach to another checkout's container and read and write that tree.
-    -   A fresh lane has no Passport keypair. Without `passport:keys --force`, every `auth:api` test returns 500 with `Invalid key supplied`; that is not an `APP_KEY` problem.
     -   Use `composer test:prepare` in the lane when you need an explicit schema reset before a run.
-    -   Run the tests the change touches (the module's test folders, plus files elsewhere that reference the changed classes), not the whole suite. More lane traps: `docs/agents/local-environment.md`.
-    -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+    -   More lane traps: `docs/agents/local-environment.md`.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
 -   **Code style (Pint):**
     -   Run `./format-changed.ps1` (or `./format-changed.sh`) from `processor-api/` on the host before finalizing any PHP change. CI fails on style drift in changed files.
@@ -119,6 +59,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
 
 -   Always-on Laravel conventions live in `processor-api/.ai/guidelines/`. Laravel Boost copies them into the generated block below, so edit the source files rather than the block.
 -   Repo-wide skills live in the root `.claude/skills/`, mirrored to `.codex/skills/`. The agent workflow (issues, review, PRs, commit shape) is in the root `AGENTS.md` §7.
+-   Citable backend rules are in the `backend-standards` skill; `review-branch` cites them by ID.
 -   Keep this file as the source of truth for backend constraints. Rules here win over Boost-installed vendor skills (`laravel-best-practices`, `configuring-horizon`) and over the generic guidance in the generated block.
 
 <laravel-boost-guidelines>
@@ -126,54 +67,50 @@ This file defines **backend-specific** guidance for changes under `processor-api
 
 # Backend Response And Errors
 
+Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example.
+
 For v1 endpoints:
 
-- Return success responses through `App\Shared\Http\TypedResults`.
-- Return service-level failures through `App\Shared\Results\Result` and typed error classes.
-- Keep pagination, envelope shape, and include-flag behavior aligned with the nearest existing v1 module.
-- Use request validation classes to reject invalid inputs before service orchestration.
+- Success responses are a named Resource or an `App\Shared\Http\TypedResults` helper, never ad hoc JSON: `RESULT-typed-results`.
+- Service-level failures are `App\Shared\Results\Result` with typed error classes: `RESULT-result-typed-errors`.
+- Pagination, envelope shape and include flags follow the nearest v1 module: `RESULT-envelope-matches-module`.
+- A Request class rejects invalid input before the service runs: `CONTRACT-request-per-endpoint`.
 
 When changing contracts:
 
-- Make the change explicit in the task summary or implementation notes.
-- Keep legacy behavior unless a migration intentionally moves to a new v1 contract.
-- Do not mix legacy JSON patterns and v1 `TypedResults` patterns in the same endpoint family without a clear reason.
+- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1.
+- One endpoint family never mixes legacy JSON and `TypedResults`: `RESULT-no-mixed-envelopes`.
 
 === .ai/backend-v1-architecture rules ===
 
 # Backend V1 Architecture
 
-Use this request flow for v1 Laravel endpoints:
+Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example from the v1 modules. Open the rule file before applying it.
+
+Request flow for v1 endpoints:
 
 `routes/api_v1.php` -> v1 Controller -> Request -> DTO or Value Object -> Application Service or Policy -> Repository Interface -> Infrastructure Repository, Model, Mapper or Builder -> Resource -> `TypedResults`
 
-Keep responsibilities separated by layer:
+By layer:
 
-- `app/Domain`
-  - Put domain models, DTOs, value objects, enums, and typed errors here.
-  - Do not leak HTTP requests, responses, Eloquent models, or raw query builders into this layer.
-  - Never import `App\Application`, `App\Infrastructure` or `App\Http` here; `tests/Unit/Architecture/DomainLayerDependencyTest` fails the build if you do.
-  - Name shapes after their siblings: `*QueryCriteria` for list input (`Domain/{Module}/Queries`), `*Includes` for optional-enrichment flags, `*PageDTO` for raw reader output, `*ListResultDTO` for the enriched envelope, `*SortCriteria` for sort. Do not introduce `*Query`, `*Projection` or `*Page` for these roles.
-  - Domain models are constructed complete by their mapper, from their own row. Per-read enrichment - counts, previews, page totals - belongs on a `*ListItemDTO` beside the model, never as defaulted constructor arguments filled in later by a `with*()` wither. A model that can be handed out half-populated gives every reader a value it cannot tell apart from the truth; see `docs/adr/0001-read-enrichment-lives-beside-the-entity.md`.
-- `app/Application`
-  - Put use-case orchestration, policies, actions, jobs, and repository interfaces here.
-  - Keep business rules here instead of controllers.
-  - List reads with filters, facets or pagination go through a `*ReaderInterface` in `Application/{Module}/Interfaces/Readers`; identity reads and writes stay on the repository. A reader returns Domain models and scalar pagination, never a paginator. Reference: `Articles/Interfaces/Readers/ArticleListReaderInterface`.
-  - Anything another module calls is a `*ServiceInterface` returning `Result`. Actions are module-internal steps and are not injected across modules.
-- `app/Infrastructure/Persistence`
-  - Put persistence models, repositories, and mappers or builders here.
-  - Encapsulate query logic and batch loading here instead of the HTTP layer.
-  - The backend targets PostgreSQL only (CI, compose and production). PostgreSQL-specific SQL (`ILIKE`, `FILTER (WHERE ...)`, partial indexes) is allowed here. Domain and Application code contain no SQL at all.
-- `app/Http/v1`
-  - Put controllers, requests, and resources here.
-  - Keep controllers thin and focused on coordination, mapping, and returning `TypedResults`.
+- `app/Domain`: domain models, DTOs, value objects, enums and typed errors.
+  - Never imports `App\Application`, `App\Infrastructure` or `App\Http`: `ARCH-domain-dependency-direction`, enforced by `tests/Unit/Architecture/DomainLayerDependencyTest`.
+  - No HTTP requests or responses, Eloquent models or query builders: `ARCH-domain-no-framework`.
+  - List shapes are named `*QueryCriteria`, `*Includes`, `*PageDTO`, `*ListResultDTO` and `*SortCriteria`: `DATA-list-shape-naming`.
+  - Domain models are constructed complete by their mapper; per-read enrichment lives on a `*ListItemDTO` (ADR 0001): `DATA-complete-domain-models`.
+- `app/Application`: use cases, policies, actions, jobs and repository interfaces.
+  - Business rules and ownership checks live here, not in controllers: `ARCH-business-rules-in-application`.
+  - List reads with filters, facets or pagination go through a `*ReaderInterface`: `DATA-list-readers`.
+  - Anything another module calls is a `*ServiceInterface` returning `Result`: `ARCH-cross-module-service-interface`.
+  - A reusable or side-effectful step is a focused action: `ARCH-focused-actions`.
+- `app/Infrastructure/Persistence`: persistence models, repositories, mappers and builders.
+  - Repositories hide persistence and return domain shapes: `DATA-repositories-hide-persistence`.
+  - Mappers translate shape and hold no policy: `DATA-mappers-translate-shape`.
+  - The backend targets PostgreSQL only; SQL lives here, never in Domain, Application or Http: `DATA-sql-in-infrastructure`.
+- `app/Http/v1`: controllers, requests and resources.
+  - Controllers coordinate and return a Resource or `TypedResults`: `ARCH-thin-controllers`.
 
-Apply these guardrails:
-
-- Reuse nearby v1 patterns before inventing new abstractions.
-- Add a mapper or builder when the persistence shape should not leak into the domain shape.
-- Add a focused service or action when logic is reusable, side-effectful, batch-heavy, or heterogeneous.
-- Keep interface bindings explicit in service and repository providers.
+Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`).
 
 === .ai/repository rules ===
 
@@ -187,7 +124,7 @@ Use this repository as a multi-application workspace:
 
 When migrating backend endpoints:
 
-- Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
+- Preserve legacy behavior intentionally, and state contract changes explicitly.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
 - Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.
@@ -203,12 +140,14 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.3
+- filament/filament (FILAMENT) - v5
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
 - laravel/passport (PASSPORT) - v12
 - laravel/prompts (PROMPTS) - v0
 - laravel/reverb (REVERB) - v1
 - laravel/telescope (TELESCOPE) - v5
+- livewire/livewire (LIVEWIRE) - v4
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
@@ -312,7 +251,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands in the isolated test lane from `processor-api/`, with a specific filename or filter: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- ...`.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, never use `php artisan test`: run tests in the isolated Docker test lane from `processor-api/`, `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- ...`, with a specific filename or filter. Lane setup is in `processor-api/AGENTS.md` §6; the rules are `TEST-docker-lane` and `TEST-feature-tests-per-endpoint` in the `backend-standards` skill.
 
 === laravel/core rules ===
 
@@ -354,12 +293,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Laravel 10 Structure
 
-- Middleware typically lives in `app\Http/Middleware/` and service providers in `app\Providers/`.
+- Middleware typically lives in `app/Http/Middleware/` and service providers in `app/Providers/`.
 - There is no `bootstrap/app.php` application configuration in a Laravel 10 structure:
-    - Middleware registration happens in `app\Http/Kernel.php`
-    - Exception handling is in `app\Exceptions/Handler.php`
-    - Console commands and schedule register in `app\Console/Kernel.php`
-    - Rate limits likely exist in `RouteServiceProvider` or `app\Http/Kernel.php`
+    - Middleware registration happens in `app/Http/Kernel.php`
+    - Exception handling is in `app/Exceptions/Handler.php`
+    - Console commands and schedule register in `app/Console/Kernel.php`
+    - Rate limits likely exist in `RouteServiceProvider` or `app/Http/Kernel.php`
 
 ## Database
 
@@ -391,8 +330,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- Tests run in the isolated test lane from `processor-api/` (`docker compose -f docker-compose.test.yml -p <lane>`; see "Testing & Verification Expectations" above).
-- To run all tests in a file: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `docker compose -f docker-compose.test.yml -p <lane> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
+- Run tests in the isolated Docker test lane from `processor-api/`, never with `php artisan test`. `jvma<issue>` is a project name unique to the checkout (`TEST-docker-lane`).
+- To run all tests: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test`.
+- To run all tests in a file: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>

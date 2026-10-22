@@ -22,13 +22,13 @@ Failure to prevent: adding `domain/`, `useCases/`, `Service`, `Manager`, or broa
 
 Prompt: migrate a SavedList-like route while preserving behavior.
 
-Failure to prevent: modernizing legacy shape in place, hand-writing endpoint strings against the shared axios instance, route-owned pagination, magic labels, or temporary adapters without targets.
+Failure to prevent: breaking `repo-catalogue-v1-migration`, `repo-no-direct-axios`, `repo-no-page-owned-server-state`, `repo-shared-type-labels` or `repo-adapter-todo-shape`.
 
 ### Scenario 4: Provider/Startup Growth
 
 Prompt: add a new authenticated feature and global provider data.
 
-Failure to prevent: coupling public routes to auth/profile/private data, expanding provider rerender blast radius, or pulling heavy/private chunks into the initial public bundle.
+Failure to prevent: breaking `async-public-routes-no-auth-wait`, re-rendering every Context consumer, or pulling a heavy route into the initial chunk.
 
 ## Expected Forward-Test Behaviors
 
@@ -36,4 +36,4 @@ Failure to prevent: coupling public routes to auth/profile/private data, expandi
 - Uses the repo's target shape: `route -> feature orchestration -> feature API module/hook -> generated client`.
 - Separates current-size fit, near-term scale, and long-term risk.
 - Recommends seams only when the deletion test shows leverage.
-- Treats legacy adapters as transitional debt with target/removal status.
+- Cites `repo-adapter-todo-shape` for legacy adapters.

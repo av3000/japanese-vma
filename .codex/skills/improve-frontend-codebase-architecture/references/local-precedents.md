@@ -43,8 +43,7 @@ Use these examples when comparing touched frontend work.
 
 `client/src/components/shared/DialogModal` and `client/src/components/shared/modals/ConfirmModal.tsx`
 
-- Good shared dialog primitive precedents.
-- Prefer these over new `react-bootstrap` modal usage on touched or migrated surfaces.
+- Good shared dialog primitive precedents (`repo-shared-dialogs`).
 
 ## Mixed Precedents
 
@@ -75,17 +74,6 @@ Do not copy these as precedents for new or touched migrated work:
 - `client/src/components/features/SavedList/SavedListItems.tsx`
 - `client/src/components/features/SavedList/SavedListItem/index.tsx`
 
-Debt markers:
+Debt markers, by rule: `repo-no-ts-nocheck`, `repo-no-direct-axios`, `repo-no-page-owned-server-state`, `repo-shared-type-labels`, `repo-map-numeric-types-once`, `repo-shared-dialogs`, `repo-forms-rhf-zod`.
 
-- `@ts-nocheck`
-- class components
-- `componentWillMount`
-- `props.match` / `props.history`
-- raw endpoint strings on the shared axios instance
-- route-owned pagination/search state
-- duplicated type-label arrays
-- numeric type branching in JSX
-- old modal patterns when shared dialog primitives fit
-- ad hoc form state where `react-hook-form` plus Zod fits
-
-Touched SavedList/custom-list work should move toward catalogue-v1 query/detail patterns.
+Touched SavedList/custom-list work should move toward catalogue-v1 query/detail patterns (`repo-catalogue-v1-migration`).

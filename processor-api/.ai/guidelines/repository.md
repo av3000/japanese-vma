@@ -8,7 +8,7 @@ Use this repository as a multi-application workspace:
 
 When migrating backend endpoints:
 
-- Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
+- Preserve legacy behavior intentionally, and state contract changes explicitly.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
 - Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.

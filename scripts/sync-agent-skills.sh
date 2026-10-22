@@ -17,11 +17,8 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 src="$root/.claude/skills"
 dst="$root/.codex/skills"
 
-# Skills that still live only in .codex/skills/ until epic #502 moves them.
-CODEX_ONLY=(
-  backend-architecture-boundaries
-  react-best-practices
-)
+# Skills that live only in .codex/skills/. Empty since epic #502 moved the last ones.
+CODEX_ONLY=()
 
 is_codex_only() {
   local name=$1 kept
