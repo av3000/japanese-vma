@@ -1,14 +1,13 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button } from '@/components/shared/Button';
 import { FormField } from '@/components/shared/FormControls';
 import { InputTags } from './';
 
 const meta = {
-	title: 'Components/InputTags',
+	title: 'Shared/InputTags',
 	component: InputTags,
-	tags: ['autodocs'],
 } satisfies Meta<typeof InputTags>;
 
 export default meta;
@@ -55,7 +54,7 @@ const UncontrolledExample = () => {
 			<div style={{ marginTop: '8px', fontSize: '12px' }}>
 				Last `onChange` value: {lastOnChangeValue.length ? lastOnChangeValue.join(', ') : 'None'}
 			</div>
-			<div style={{ marginTop: '4px', fontSize: '12px', color: '#6c757d' }}>
+			<div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--color-neutral-700)' }}>
 				This instance manages its own tags internally (no `value` prop). `onChange` is optional.
 			</div>
 		</div>
@@ -151,5 +150,53 @@ export const Invalid: Story = {
 		const input = within(canvasElement).getByLabelText('Tags');
 		await expect(input).toHaveAttribute('aria-invalid', 'true');
 		await expect(input).toHaveAccessibleDescription(/at most 50 characters/);
+	},
+};
+
+const KeyboardEntryExample = ({ onChange }: { onChange: (tags: string[]) => void }) => {
+	const [tags, setTags] = React.useState<string[]>(['Kana']);
+
+	return (
+		<div style={{ maxWidth: 520 }}>
+			<InputTags
+				label="Tags"
+				value={tags}
+				onChange={(next) => {
+					setTags(next);
+					onChange(next);
+				}}
+			/>
+		</div>
+	);
+};
+
+/** Enter, comma and space each add a tag; Backspace on an empty field removes the last; duplicates are ignored. */
+export const KeyboardEntry: Story = {
+	args: { onChange: fn() },
+	render: (args) => <KeyboardEntryExample onChange={args.onChange ?? (() => undefined)} />,
+	play: async ({ args, canvasElement }) => {
+		const canvas = within(canvasElement);
+		const input = canvas.getByRole('textbox', { name: 'Tags' });
+
+		await userEvent.type(input, 'Grammar{Enter}');
+		await expect(args.onChange).toHaveBeenLastCalledWith(['Kana', 'Grammar']);
+		await expect(canvas.getByRole('button', { name: 'Grammar' })).toBeVisible();
+
+		await userEvent.type(input, 'N5,');
+		await expect(args.onChange).toHaveBeenLastCalledWith(['Kana', 'Grammar', 'N5']);
+
+		await userEvent.type(input, 'Kanji ');
+		await expect(args.onChange).toHaveBeenLastCalledWith(['Kana', 'Grammar', 'N5', 'Kanji']);
+		await expect(input).toHaveValue('');
+
+		// A duplicate is rejected whatever its case, and its text stays in the field.
+		await userEvent.type(input, 'grammar{Enter}');
+		await expect(args.onChange).toHaveBeenCalledTimes(3);
+		await expect(canvas.getAllByRole('button', { name: /^Grammar$/i })).toHaveLength(1);
+		await userEvent.clear(input);
+
+		await userEvent.keyboard('{Backspace}');
+		await expect(args.onChange).toHaveBeenLastCalledWith(['Kana', 'Grammar', 'N5']);
+		await expect(canvas.queryByRole('button', { name: 'Kanji' })).not.toBeInTheDocument();
 	},
 };

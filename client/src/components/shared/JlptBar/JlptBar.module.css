@@ -2,29 +2,47 @@
 	--jlpt-bar-height: 8px;
 
 	display: flex;
-	align-items: center;
-	gap: var(--spacing-2xs);
+	align-items: flex-end;
+	gap: var(--spacing-xs);
 	width: 100%;
 	min-width: 0;
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-md);
 	font-variant-numeric: tabular-nums;
-	line-height: 1;
+	line-height: 1.2;
 	color: var(--color-neutral-700);
 }
 
 .compact {
 	--jlpt-bar-height: 6px;
 
-	gap: var(--spacing-3xs);
+	gap: var(--spacing-2xs);
 	font-size: var(--font-size-body-sm);
 }
 
-/* Width comes from the inline `flex-grow` (the kanji count); the numbers keep their own width. */
-.segment {
+/* One level: its label above its bar. Width comes from the inline `flex-grow` (the count), but an
+   item never gets narrower than its label, so a level with one kanji still reads "N1 1". */
+.item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
 	flex-shrink: 1;
 	flex-basis: 0;
-	min-width: var(--spacing-2xs);
+	min-width: max-content;
+}
+
+.label {
+	display: flex;
+	gap: 0.35em;
+	white-space: nowrap;
+}
+
+.level {
+	color: var(--color-neutral-600);
+}
+
+.segment {
+	width: 100%;
 	height: var(--jlpt-bar-height);
 	border-radius: var(--border-radius-xs);
 	background-color: var(--color-neutral-500);
@@ -39,17 +57,12 @@
 	background-color: var(--color-neutral-300);
 }
 
-.count {
-	flex: none;
-	padding-inline-end: var(--spacing-2xs);
-}
-
-.count:last-child {
-	padding-inline-end: 0;
-}
-
 /* Weight as well as colour, so the dominant level does not rely on colour alone. */
-.countDominant {
+.itemDominant .label {
 	font-weight: var(--font-weight-semibold);
+	color: var(--color-neutral-900);
+}
+
+.itemDominant .level {
 	color: var(--color-neutral-900);
 }

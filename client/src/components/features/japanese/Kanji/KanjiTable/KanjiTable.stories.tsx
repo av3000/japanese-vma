@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
+import { Button } from '@/components/shared/Button';
 import { kanjiRows, repeatRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { KanjiTable } from './';
 
 const meta = {
 	title: 'Features/Japanese/KanjiTable',
 	component: KanjiTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		kanjis: kanjiRows,
@@ -59,9 +59,9 @@ export const EmptySearch: Story = {
 export const ManyRows: Story = { args: { kanjis: repeatRows(kanjiRows, 60) } };
 
 /** Stacked rows: glyph | meaning, On, Kun, then Strokes · JLPT · Freq. on one line | Save. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };
 
-export const MobileGuest: Story = { ...Guest, parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const MobileGuest: Story = { ...Guest, globals: { viewport: { value: 'xs' } } };
 
 /** Catalogue detail's "Manage items" mode: a caller-owned Remove column after Save. */
 export const WithTrailingColumn: Story = {
@@ -72,7 +72,7 @@ export const WithTrailingColumn: Story = {
 				header: 'Remove',
 				headerHidden: true,
 				width: 'shrink',
-				cell: (kanji) => <button type="button">{`Remove ${kanji.character}`}</button>,
+				cell: (kanji) => <Button variant="ghost" size="sm">{`Remove ${kanji.character}`}</Button>,
 			},
 		],
 	},
@@ -85,5 +85,5 @@ export const WithTrailingColumn: Story = {
 
 export const WithTrailingColumnMobile: Story = {
 	...WithTrailingColumn,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

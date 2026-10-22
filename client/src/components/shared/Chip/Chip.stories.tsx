@@ -1,12 +1,20 @@
 // TODO: Revisit chip style https://smart-interface-design-patterns.com/articles/badges-chips-tags-pills/ and make clear usage examples, restyle if needed.
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { buttonVariants } from '@/components/shared/Button/types';
 import { Chip } from './';
 
-// Define the Meta object for the component
 const meta = {
-	title: 'Components/Chip',
+	title: 'Shared/Chip',
 	component: Chip,
-	tags: ['autodocs'],
+	args: {
+		children: 'Category',
+		title: 'Remove Category filter',
+		name: 'category',
+		value: 'electronics',
+		onCancel: fn(),
+		onClick: fn(),
+	},
 	argTypes: {
 		children: {
 			control: 'text',
@@ -15,7 +23,6 @@ const meta = {
 		disabled: {
 			control: 'boolean',
 			description: 'Whether the chip is disabled',
-			defaultValue: false,
 		},
 		title: {
 			control: 'text',
@@ -30,22 +37,18 @@ const meta = {
 			description: 'The value attribute for the chip button',
 		},
 		onCancel: {
-			action: 'cancelled',
 			description: 'Function called when the chip is cancelled (not needed for readonly chips)',
 		},
 		readonly: {
 			control: 'boolean',
 			description: 'If true, the chip will not have a remove icon',
-			defaultValue: false,
 		},
 		variant: {
-			options: ['primary', 'secondary', 'success', 'pending', 'danger', 'outline', 'secondary-outline', 'ghost', 'linkButton'],
+			options: buttonVariants,
 			control: { type: 'select' },
-			description: 'The visual style of the chip',
-			defaultValue: 'secondary-outline',
+			description: 'The visual style of the chip (default: secondary-outline)',
 		},
 		onClick: {
-			action: 'clicked',
 			description: 'Function called when a readonly chip is clicked',
 		},
 	},
@@ -54,17 +57,11 @@ const meta = {
 // Important: Export the meta object as the default export
 export default meta;
 
-// Define the Story type
 type Story = StoryObj<typeof meta>;
 
+const row = { display: 'flex', gap: '8px', flexWrap: 'wrap' } as const;
+
 export const Default: Story = {
-	args: {
-		children: 'Category',
-		title: 'Remove Category filter',
-		name: 'category',
-		value: 'electronics',
-		onCancel: () => console.log('Cancelled'),
-	},
 	parameters: {
 		docs: {
 			description: {
@@ -74,9 +71,9 @@ export const Default: Story = {
 The standard Chip component is used to display selected filters or tags that can be removed by the user.
 
 \`\`\`tsx
-<Chip 
-  title="Remove Category filter" 
-  name="category" 
+<Chip
+  title="Remove Category filter"
+  name="category"
   value="electronics"
   onCancel={() => handleRemoveFilter('category')}
 >
@@ -86,6 +83,37 @@ The standard Chip component is used to display selected filters or tags that can
         `,
 			},
 		},
+	},
+};
+
+/** A removable chip calls `onCancel` when pressed, and a read-only chip never does. */
+export const Removable: Story = {
+	render: (args) => (
+		<div style={row}>
+			<Chip {...args}>Removable</Chip>
+			<Chip {...args} readonly title="Read-only tag">
+				Read-only
+			</Chip>
+			<Chip {...args} disabled title="Disabled filter">
+				Disabled
+			</Chip>
+		</div>
+	),
+	play: async ({ args, canvasElement }) => {
+		const canvas = within(canvasElement);
+		const removable = canvas.getByRole('button', { name: 'Removable' });
+
+		// The title is the description, so a screen reader hears what pressing it does.
+		await expect(removable).toHaveAccessibleDescription('Remove Category filter');
+		await userEvent.click(removable);
+		await expect(args.onCancel).toHaveBeenCalledTimes(1);
+		await expect(args.onClick).not.toHaveBeenCalled();
+
+		await userEvent.click(canvas.getByRole('button', { name: 'Read-only' }));
+		await expect(args.onCancel).toHaveBeenCalledTimes(1);
+		await expect(args.onClick).toHaveBeenCalledTimes(1);
+
+		await expect(canvas.getByRole('button', { name: 'Disabled' })).toBeDisabled();
 	},
 };
 
@@ -105,8 +133,8 @@ The readonly variant is used for displaying tags or labels that cannot be remove
 These chips don't have the "x" icon and don't require an onCancel callback.
 
 \`\`\`tsx
-<Chip 
-  title="JavaScript tag" 
+<Chip
+  title="JavaScript tag"
   readonly={true}
 >
   JavaScript
@@ -123,7 +151,6 @@ export const ClickableReadonlyChip: Story = {
 		children: 'React',
 		title: 'React tag',
 		readonly: true,
-		onClick: () => console.log('Clicked on React tag'),
 	},
 	parameters: {
 		docs: {
@@ -135,8 +162,8 @@ Readonly chips can still be clickable by providing an onClick handler.
 This is useful for tags that navigate to filtered views.
 
 \`\`\`tsx
-<Chip 
-  title="React tag" 
+<Chip
+  title="React tag"
   readonly={true}
   onClick={() => navigateToReactArticles()}
 >
@@ -147,55 +174,26 @@ This is useful for tags that navigate to filtered views.
 			},
 		},
 	},
+	play: async ({ args, canvasElement }) => {
+		await userEvent.click(within(canvasElement).getByRole('button', { name: 'React' }));
+		await expect(args.onClick).toHaveBeenCalledTimes(1);
+		await expect(args.onCancel).not.toHaveBeenCalled();
+	},
 };
 
-// @ts-ignore
 export const ChipVariants: Story = {
-	render: () => {
-		return (
-			<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-				<Chip variant="secondary-outline" onCancel={() => console.log('Cancelled')}>
-					Secondary Outline
+	render: (args) => (
+		<div style={row}>
+			{buttonVariants.map((variant) => (
+				<Chip key={variant} {...args} variant={variant} title={`Remove ${variant}`}>
+					{variant}
 				</Chip>
-
-				<Chip variant="outline" onCancel={() => console.log('Cancelled')}>
-					Outline
-				</Chip>
-
-				<Chip variant="primary" onCancel={() => console.log('Cancelled')}>
-					Primary
-				</Chip>
-
-				<Chip variant="secondary" onCancel={() => console.log('Cancelled')}>
-					Secondary
-				</Chip>
-
-				<Chip variant="success" onCancel={() => console.log('Cancelled')}>
-					Success
-				</Chip>
-
-				<Chip variant="pending" onCancel={() => console.log('Cancelled')}>
-					Pending
-				</Chip>
-
-				<Chip variant="danger" onCancel={() => console.log('Cancelled')}>
-					Destructive
-				</Chip>
-
-				<Chip variant="ghost" onCancel={() => console.log('Cancelled')}>
-					Ghost
-				</Chip>
-
-				<Chip variant="linkButton" onCancel={() => console.log('Cancelled')}>
-					Link
-				</Chip>
-
-				<Chip variant="secondary-outline" readonly={true}>
-					Readonly
-				</Chip>
-			</div>
-		);
-	},
+			))}
+			<Chip {...args} variant="secondary-outline" readonly title="Read-only">
+				Readonly
+			</Chip>
+		</div>
+	),
 	parameters: {
 		docs: {
 			description: {
@@ -209,70 +207,49 @@ Chips support different visual styles through the variant prop.
 	},
 };
 
-// @ts-ignore
 export const ArticleTags: Story = {
-	render: () => {
-		return (
+	render: (args) => (
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '16px',
+				maxWidth: '600px',
+			}}
+		>
+			<h3>Article Tags Example</h3>
+			<p>
+				Article tags are typically displayed in a read-only format that users can click to view related
+				articles.
+			</p>
+
 			<div
+				className="article-preview"
 				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '16px',
-					maxWidth: '600px',
+					padding: '16px',
+					border: '1px solid var(--color-neutral-300)',
+					borderRadius: '4px',
 				}}
 			>
-				<h3>Article Tags Example</h3>
-				<p>
-					Article tags are typically displayed in a read-only format that users can click to view related
-					articles.
-				</p>
+				<h4>Getting Started with TypeScript</h4>
+				<p>Learn the basics of TypeScript and how to integrate it into your projects...</p>
 
 				<div
-					className="article-preview"
 					style={{
-						padding: '16px',
-						border: '1px solid #e0e0e0',
-						borderRadius: '4px',
+						display: 'flex',
+						gap: '8px',
+						marginTop: '16px',
 					}}
 				>
-					<h4>Getting Started with TypeScript</h4>
-					<p>Learn the basics of TypeScript and how to integrate it into your projects...</p>
-
-					<div
-						style={{
-							display: 'flex',
-							gap: '8px',
-							marginTop: '16px',
-						}}
-					>
-						<Chip
-							readonly={true}
-							variant="secondary-outline"
-							onClick={() => console.log('TypeScript tag clicked')}
-						>
-							TypeScript
+					{['TypeScript', 'JavaScript', 'Web Development'].map((tag) => (
+						<Chip key={tag} {...args} readonly variant="secondary-outline" title={`${tag} tag`}>
+							{tag}
 						</Chip>
-
-						<Chip
-							readonly={true}
-							variant="secondary-outline"
-							onClick={() => console.log('JavaScript tag clicked')}
-						>
-							JavaScript
-						</Chip>
-
-						<Chip
-							readonly={true}
-							variant="secondary-outline"
-							onClick={() => console.log('Web Development tag clicked')}
-						>
-							Web Development
-						</Chip>
-					</div>
+					))}
 				</div>
 			</div>
-		);
-	},
+		</div>
+	),
 	parameters: {
 		docs: {
 			description: {
@@ -300,33 +277,21 @@ Readonly chips are ideal for displaying article tags or categories.
 	},
 };
 
-// @ts-ignore
-export const FilterGroup: Story = {
-	render: () => {
-		const handleCancel = (filter: string) => {
-			console.log(`Removed ${filter}`);
-		};
+const FILTERS = ['Price: $10-$50', 'Color: Red', 'Size: Medium', 'Category: Electronics'] as const;
 
-		return (
-			<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-				<Chip title="Remove Price filter" onCancel={() => handleCancel('Price: $10-$50')}>
-					Price: $10-$50
+export const FilterGroup: Story = {
+	render: (args) => (
+		<div style={row}>
+			{FILTERS.map((filter) => (
+				<Chip key={filter} {...args} title={`Remove ${filter.split(':')[0]} filter`}>
+					{filter}
 				</Chip>
-				<Chip title="Remove Color filter" onCancel={() => handleCancel('Color: Red')}>
-					Color: Red
-				</Chip>
-				<Chip title="Remove Size filter" onCancel={() => handleCancel('Size: Medium')}>
-					Size: Medium
-				</Chip>
-				<Chip title="Remove Category filter" onCancel={() => handleCancel('Category: Electronics')}>
-					Category: Electronics
-				</Chip>
-				<Chip title="Remove Brand filter" disabled onCancel={() => handleCancel('Brand: Apple')}>
-					Brand: Apple
-				</Chip>
-			</div>
-		);
-	},
+			))}
+			<Chip {...args} title="Remove Brand filter" disabled>
+				Brand: Apple
+			</Chip>
+		</div>
+	),
 	parameters: {
 		docs: {
 			description: {
@@ -340,72 +305,75 @@ Chips are commonly used in groups to represent multiple applied filters.
 	},
 };
 
-// @ts-ignore
+/** A long Japanese label is cut with an ellipsis inside the chip instead of stretching it. */
+export const LongLabel: Story = {
+	globals: { viewport: { value: 'xs' } },
+	args: {
+		children: '新宿駅の新しい改札口についてのお知らせとご案内とその他の情報',
+		title: 'Remove title filter',
+	},
+	render: (args) => (
+		<div style={{ maxWidth: '12rem' }}>
+			<Chip {...args} />
+		</div>
+	),
+};
+
 export const MixedChipGroup: Story = {
-	render: () => {
-		const handleCancel = (filter: string) => {
-			console.log(`Removed ${filter}`);
-		};
+	render: (args) => (
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '16px',
+			}}
+		>
+			<h3>Mixed Chip Types</h3>
+			<p>Combining removable filter chips with readonly category chips:</p>
 
-		const handleClick = (tag: string) => {
-			console.log(`Clicked on ${tag} tag`);
-		};
-
-		return (
 			<div
 				style={{
 					display: 'flex',
-					flexDirection: 'column',
-					gap: '16px',
+					gap: '8px',
+					flexWrap: 'wrap',
+					padding: '16px',
+					backgroundColor: 'var(--color-neutral-100)',
+					borderRadius: '4px',
 				}}
 			>
-				<h3>Mixed Chip Types</h3>
-				<p>Combining removable filter chips with readonly category chips:</p>
-
-				<div
-					style={{
-						display: 'flex',
-						gap: '8px',
-						flexWrap: 'wrap',
-						padding: '16px',
-						backgroundColor: '#f5f5f5',
-						borderRadius: '4px',
-					}}
-				>
-					<div style={{ display: 'flex', alignItems: 'center', marginRight: '8px' }}>
-						<strong>Categories:</strong>
-					</div>
-
-					<Chip readonly variant="outline" onClick={() => handleClick('Clothing')}>
-						Clothing
-					</Chip>
-
-					<Chip readonly variant="outline" onClick={() => handleClick('Accessories')}>
-						Accessories
-					</Chip>
-
-					<div style={{ display: 'flex', alignItems: 'center', margin: '0 8px' }}>
-						<strong>Active Filters:</strong>
-					</div>
-
-					<Chip title="Remove Size filter" onCancel={() => handleCancel('Size: Medium')}>
-						Size: Medium
-					</Chip>
-
-					<Chip title="Remove Color filter" onCancel={() => handleCancel('Color: Blue')}>
-						Color: Blue
-					</Chip>
+				<div style={{ display: 'flex', alignItems: 'center', marginRight: '8px' }}>
+					<strong>Categories:</strong>
 				</div>
+
+				<Chip {...args} readonly variant="outline" title="Clothing category">
+					Clothing
+				</Chip>
+
+				<Chip {...args} readonly variant="outline" title="Accessories category">
+					Accessories
+				</Chip>
+
+				<div style={{ display: 'flex', alignItems: 'center', margin: '0 8px' }}>
+					<strong>Active Filters:</strong>
+				</div>
+
+				<Chip {...args} title="Remove Size filter">
+					Size: Medium
+				</Chip>
+
+				<Chip {...args} title="Remove Color filter">
+					Color: Blue
+				</Chip>
 			</div>
-		);
-	},
+		</div>
+	),
 	parameters: {
 		docs: {
 			description: {
 				story: `
 ## Mixed Chip Group
 
-You can combine both readonly and removable chips to create interfaces with both 
+You can combine both readonly and removable chips to create interfaces with both
 fixed categories and removable filters.
         `,
 			},

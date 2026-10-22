@@ -123,12 +123,16 @@ export interface FormNoteProps {
 	className?: string;
 }
 
-/** What happens after the form is sent. Muted, and named by its heading rather than a colour. */
+/**
+ * What happens after the form is sent. Muted, and named by its heading rather than a colour. A named
+ * group, not an `<aside>`: it always sits inside the page's own landmarks, and a complementary
+ * landmark must be top-level.
+ */
 export const FormNote: React.FC<FormNoteProps> = ({ title, children, className }) => {
 	const titleId = React.useId();
 
 	return (
-		<Stack as="aside" gap="2xs" className={classNames(styles.note, className)} aria-labelledby={titleId}>
+		<Stack as="div" role="group" gap="2xs" className={classNames(styles.note, className)} aria-labelledby={titleId}>
 			<p id={titleId} className={styles.noteTitle}>
 				{title}
 			</p>

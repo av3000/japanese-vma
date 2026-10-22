@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { sentenceRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { SentenceTable } from './';
 
 const meta = {
 	title: 'Features/Japanese/SentenceTable',
 	component: SentenceTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { sentences: sentenceRows, empty: { title: 'No sentences yet' } },
 } satisfies Meta<typeof SentenceTable>;
@@ -45,4 +44,4 @@ export const EmptySearch: Story = {
 };
 
 /** No stacked layout: one cell per line, the sentence full width. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { ARTICLE_STATUS } from '@/api/articles/articleStatus';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { articleStatusPill, processingStatusPill, STATUS_TONES, StatusPill } from './';
@@ -7,7 +7,6 @@ import { articleStatusPill, processingStatusPill, STATUS_TONES, StatusPill } fro
 const meta = {
 	title: 'Shared/StatusPill',
 	component: StatusPill,
-	tags: ['autodocs'],
 	args: { tone: 'success', label: 'Approval: Approved' },
 	argTypes: {
 		tone: { control: 'inline-radio', options: STATUS_TONES },

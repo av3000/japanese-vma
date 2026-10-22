@@ -1,0 +1,25 @@
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Opacity" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Opacity</h1>
+  <div className="richTextWrapper">
+    <p>
+      Two values, from <code>src/styles/00-settings/opacity.css</code>. The swatch is the primary colour at that opacity on white.
+    </p>
+    <ul>
+      <li><code>--opacity-disabled</code>: for controls that cannot be used. Pair it with the native <code>disabled</code> state, not with opacity alone.</li>
+      <li><code>--opacity-overlay</code>: for the scrim behind a surface.</li>
+    </ul>
+    <p>
+      No stylesheet references these tokens yet: disabled controls use the <code>-disabled</code> colour variants, and the modal scrim sets its own colour. Use the tokens when a component needs one of these two values, rather than a literal.
+    </p>
+  </div>
+
+  <TokenGroup prefix="opacity" kind="opacity" />
+</div>
+</Unstyled>

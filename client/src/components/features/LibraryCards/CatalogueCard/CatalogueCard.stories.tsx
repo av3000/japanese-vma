@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { CatalogueResourceTypeLabel } from '@/api/generated/model';
 import { libraryCatalogues, makeCatalogue } from '@/components/features/Homepage/fixtures';
 import { CATALOGUE_TYPE_OPTIONS, type CustomCatalogueType } from '@/shared/constants/catalogues';
 import { CatalogueCard } from './';
+import { CatalogueCardSkeleton } from './CatalogueCardSkeleton';
 
 const meta = {
 	title: 'Features/LibraryCards/CatalogueCard',
 	component: CatalogueCard,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { catalogue: libraryCatalogues.kanji },
 	decorators: [
@@ -103,5 +103,15 @@ export const EveryType: Story = {
 
 export const Mobile: Story = {
 	args: { catalogue: libraryCatalogues.longest },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
+};
+
+/** The placeholder while catalogues load: the card's cover footprint and rows, hidden from assistive technology. */
+export const Skeleton: Story = {
+	render: () => <CatalogueCardSkeleton />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByTestId('catalogue-card-skeleton')).toHaveAttribute('aria-hidden', 'true');
+		await expect(canvas.queryByRole('heading')).not.toBeInTheDocument();
+	},
 };

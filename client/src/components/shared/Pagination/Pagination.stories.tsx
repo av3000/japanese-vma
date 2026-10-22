@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { Pagination } from './';
 
 /** Holds the page in state so the story can be clicked through. */
@@ -13,7 +13,6 @@ const Controlled: React.FC<{ initialPage: number; pageCount: number }> = ({ init
 const meta = {
 	title: 'Shared/Pagination',
 	component: Pagination,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { page: 1, pageCount: 9, onPageChange: () => {}, label: 'Kanji pages' },
 } satisfies Meta<typeof Pagination>;
@@ -39,5 +38,5 @@ export const FewPages: Story = { render: () => <Controlled initialPage={2} pageC
 
 export const Mobile: Story = {
 	render: () => <Controlled initialPage={12} pageCount={25} />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

@@ -31,7 +31,8 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({ name, id, onLogout, on
 				Dashboard
 			</NavLink>
 		</li>
-		<li role="separator" className={styles.divider} />
+		{/* A visual divider only: a `role="separator"` here would no longer be a list item. */}
+		<li aria-hidden="true" className={styles.divider} />
 		<li>
 			<button
 				type="button"

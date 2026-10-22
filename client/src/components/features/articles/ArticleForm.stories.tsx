@@ -1,6 +1,6 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, waitFor, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { API_ERROR_MESSAGES, type ApiError } from '@/api/apiError';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
@@ -208,5 +208,13 @@ export const LongestText: Story = {
 	play: async ({ canvasElement }) => {
 		const root = canvasElement.ownerDocument.documentElement;
 		await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
+	},
+};
+
+/** While the save is in flight the submit control is disabled, so a second click cannot send it twice. */
+export const Submitting: Story = {
+	args: { initialValues: SAVED, isSubmitting: true },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('button', { name: 'Create article' })).toBeDisabled();
 	},
 };

@@ -1,0 +1,48 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Docs/Choosing badges" />
+
+# Choosing badges
+
+Six components look alike and do different jobs. Pick by what the marker says, not by how it looks.
+
+- A count or dot in the corner of another element: use `Badge` in `components/shared/Badge`
+- A small count or label that sits inline, such as the comment total: use the older `Badge` in `components/ui/badge`
+- A tag or an active filter, removable or read-only: use `Chip` (`components/shared/Chip`)
+- A JLPT level: use `LevelBadge` (`components/shared/LevelBadge`)
+- Moderation or processing status: use `StatusPill` (`components/shared/StatusPill`)
+- Public or private: use `VisibilityCue` (`components/shared/VisibilityCue`)
+
+## Shared Badge: a count on something else
+
+`Badge` wraps a child and pins a count or a dot to its corner, for example the unread number on a bell. Props: `badgeContent`, `max` (shows `99+`), `showZero`, `variant` (`standard` or `dot`), `color` (`primary`, `secondary`, `error`, `success`, `warning`), `anchorOrigin` and `invisible`. With `standalone` it renders in flow without a child, and `animated` makes it pulse when the count changes. That pulse has no `prefers-reduced-motion` rule yet, so leave `animated` off until it does.
+
+A dot on its own carries no text, so the element it sits on needs a label that says what changed. Nothing in the app imports it yet; its stories are the reference. See [Shared/Badge](?path=/docs/shared-badge--docs).
+
+## UI Badge: an inline label
+
+`components/ui/badge` is an older span-based badge with the variants `default`, `secondary`, `success`, `destructive`, `outline`, `ghost`, `link` and `pending`. `asChild` renders your element with the badge styling, and `isOnlyIcon` makes a round icon badge (give it an `aria-label`). The app uses it for the comment count. Do not use it for new status UI; use `StatusPill`. See [UI/Badge](?path=/docs/ui-badge--docs).
+
+## Chip: a tag you can act on
+
+`Chip` is a small button for tags and active filters. By default it shows a remove icon and calls `onCancel`. With `readonly` it has no icon and calls `onClick` instead, so a read-only chip can still be a link-like button. Long text is cut with an ellipsis, so set `title` when the full text matters. See [Shared/Chip](?path=/docs/shared-chip--docs).
+
+Use `CoverChip` from `features/LibraryCards/CardCover` for the type label on a catalogue card cover; it is not interactive.
+
+## LevelBadge: a JLPT level
+
+`LevelBadge` shows `N1` to `N5`, or `Uncommon` for material outside the lists. It accepts what the API returns (`3`, `'n3'`, `'N3'`) and normalises it. Pass `count` to show how many items of that level there are. It is the only text use of the vermilion accent, so the accent always means "level"; never use it for another meaning, and never recolour a level badge. See [Shared/LevelBadge](?path=/docs/shared-levelbadge--docs).
+
+## StatusPill: moderation and processing state
+
+`StatusPill` takes a `tone` (`neutral`, `success`, `warning`, `info`, `danger`) and a `label`. The label is always visible text, and there is a leading icon (or a spinner), so colour is never the only cue. Do not build the props by hand: feed it from `articleStatusPill(status)` for approval state or `processingStatusPill(status)` for background work, so one status reads the same everywhere. See [Shared/StatusPill](?path=/docs/shared-statuspill--docs).
+
+## VisibilityCue: public or private
+
+`VisibilityCue` renders the word `Public` or `Private` with a lock icon from the API's `publicity` value. Anything that is not explicitly public reads as private, because showing a private item as public is the worse mistake. Use `visibilityCue(publicity)` when you need the label and icon without the component. It is not a status: do not show it through a `StatusPill`. See [Shared/VisibilityCue](?path=/docs/shared-visibilitycue--docs).
+
+## Quick rules
+
+- A count on another element is a `Badge`. A word that states something about the item is a `StatusPill`, a `LevelBadge` or a `VisibilityCue`.
+- Something the user can remove or click is a `Chip`. Everything else here is not interactive.
+- Every marker that conveys meaning carries visible text or an icon next to the colour.

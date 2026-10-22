@@ -1,11 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { RelatedPreview } from './RelatedPreview';
 
 const meta = {
 	title: 'Features/Japanese/RelatedPreview',
 	component: RelatedPreview,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		title: 'Words with 人',

@@ -1,0 +1,48 @@
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Typography" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Typography</h1>
+  <div className="richTextWrapper">
+    <p>
+      Body text is IBM Plex Sans; counts, dates and readings use IBM Plex Mono. Both are bundled through <code>@fontsource</code>, so every build ships the same fonts. Values live in <code>src/styles/00-settings/typography.css</code>.
+    </p>
+    <p>
+      Put <code>lang="ja"</code> on Japanese content (kanji, kana, readings, article bodies). <code>03-elements/page.css</code> maps <code>[lang='ja']</code> to <code>--font-family-ja</code>, which gives the Japanese font stack and Japanese glyph forms in one step.
+    </p>
+  </div>
+
+<h2>Font sizes</h2>
+<p>
+  The page body is <code>--font-size-body-lg</code>. Use <code>md</code> and <code>sm</code> for secondary text and
+  metadata.
+</p>
+<h3>Body</h3>
+<TokenGroup prefix="font-size-body" kind="fontSize" />
+<h3>Headings</h3>
+<TokenGroup prefix="font-size-heading" kind="fontSize" />
+<h3>Japanese reading</h3>
+<p>
+  The article body in the Reading Room layout, and a dictionary entry's single glyph, which is larger than any heading
+  on purpose.
+</p>
+<TokenGroup prefix="font-size-japanese" kind="fontSize" />
+
+<h2>Font families</h2>
+<p>
+  <code>--font-family-ja-serif</code> is for display type only.
+</p>
+<TokenGroup prefix="font-family" kind="fontFamily" />
+
+<h2>Font weights</h2>
+<TokenGroup prefix="font-weight" kind="fontWeight" />
+
+  <h2>Line heights</h2>
+  <p>The page body uses <code>--line-height-lg</code>. Japanese article text has its own, wider value.</p>
+  <TokenGroup prefix="line-height" kind="lineHeight" />
+</div>
+</Unstyled>

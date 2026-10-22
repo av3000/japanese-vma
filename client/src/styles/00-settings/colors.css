@@ -1,11 +1,13 @@
 :root {
-	--color-success: #28a745;
-	--color-success-hover: #1e7e34;
+	/* Status colours, darkened for WCAG AA (#176): white on --color-success 5.14:1 (was #28a745, 3.13:1);
+	   --color-error as text on the page 5.37:1 (was #dc3545, 4.33:1). */
+	--color-success: #1e7e34;
+	--color-success-hover: #155d27;
 	--color-success-disabled: #94d7a1;
 	--color-warning: #ffc107;
 	--color-warning-hover: #c69500;
 	--color-warning-disabled: #ffe08a;
-	--color-error: #dc3545;
+	--color-error: #c82333;
 	--color-error-hover: #a71d2a;
 	--color-error-disabled: #f29ba5;
 	/* Primary: ai (藍) indigo, from a two-colour scheme with shu (朱) vermilion below.
@@ -43,7 +45,9 @@
 	--color-secondary-200: #e5e8e5;
 	--color-secondary-300: #d8ddd8;
 	--color-secondary-400: #cbd1cb;
-	--color-secondary: #6c757d;
+	/* Muted text. #5f676e is 5.5:1 on the page and 4.67:1 on --color-primary-tint, the lightest tint it
+	   sits on; the previous #6c757d was 4.49:1 on the page, just under AA (#176). */
+	--color-secondary: #5f676e;
 	--color-secondary-hover: #494f54;
 	--color-secondary-disabled: #b5bcc2;
 	--color-neutral-0: #ffffff;
@@ -54,7 +58,7 @@
 	--color-neutral-300: #dee2e6;
 	--color-neutral-400: #ced4da;
 	--color-neutral-500: #adb5bd;
-	--color-neutral-600: #6c757d;
+	--color-neutral-600: #5f676e; /* = --color-secondary, see above */
 	--color-neutral-700: #495057;
 	--color-neutral-800: #343a40;
 	--color-neutral-900: #212121;

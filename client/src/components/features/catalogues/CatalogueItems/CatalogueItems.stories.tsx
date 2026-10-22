@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import { catalogueItemsQueryKey } from '@/api/catalogues/items';
 import {
@@ -10,7 +10,7 @@ import {
 	wordRows,
 } from '@/components/shared/DataTable/DataTable.fixtures';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
-import { pageSeed, SeededQueryClient, type QuerySeed } from '@/test/seededQueryClient';
+import { pageSeed, type QuerySeed } from '@/storybook/decorators';
 import { CatalogueItems } from './';
 
 const UUID = 'c1c1c1c1-0000-4000-8000-000000000001';
@@ -46,16 +46,13 @@ const articleItems: CatalogueArticleItem[] = Array.from({ length: 3 }, (_, index
 const meta = {
 	title: 'Features/Catalogues/CatalogueItems',
 	component: CatalogueItems,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded', seeds: [] as QuerySeed[] },
 	args: { catalogueUuid: UUID, catalogueType: TYPES.kanji, payloadItems: [], isOwner: false, showSave: false },
 	decorators: [
-		(Story, context) => (
-			<SeededQueryClient seeds={(context.parameters.seeds as QuerySeed[]) ?? []}>
-				<div style={{ maxWidth: 720 }}>
-					<Story />
-				</div>
-			</SeededQueryClient>
+		(Story) => (
+			<div style={{ maxWidth: 720 }}>
+				<Story />
+			</div>
 		),
 	],
 } satisfies Meta<typeof CatalogueItems>;
@@ -132,7 +129,7 @@ export const OwnerManagingItems: Story = {
 
 export const OwnerManagingArticlesMobile: Story = {
 	args: { isOwner: true, catalogueType: TYPES.articles, payloadItems: articleItems },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 	play: async ({ canvasElement }) => {
 		await userEvent.click(within(canvasElement).getByRole('button', { name: 'Manage items' }));
 	},

@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import {
 	kanjiManyMeanings,
 	kanjiNoMeaning,
@@ -7,26 +7,17 @@ import {
 	kanjiPerson,
 } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { kanjiRelatedSeeds } from '@/components/features/japanese/related/relatedSeeds';
-import { StoryProviders, type PageStoryParameters } from '@/test/StoryProviders';
-import { signedInAuth } from '@/test/storyAuth';
 import KanjiContent from './KanjiContent';
 
 /** Kanji detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real dictionary entries. */
 const meta = {
-	title: 'Pages/KanjiDetails',
+	title: 'Pages/KanjiDetails/Content',
 	component: KanjiContent,
 	parameters: {
 		layout: 'fullscreen',
 		seeds: kanjiRelatedSeeds(kanjiPerson, { words: 2398, sentences: 49419, articles: 2 }),
 	},
 	args: { kanji: kanjiPerson },
-	decorators: [
-		(Story, context) => (
-			<StoryProviders {...(context.parameters as PageStoryParameters)}>
-				<Story />
-			</StoryProviders>
-		),
-	],
 } satisfies Meta<typeof KanjiContent>;
 
 export default meta;
@@ -35,6 +26,7 @@ type Story = StoryObj<typeof meta>;
 
 /** 人 for a guest: readings, facts, and thousands of related words and sentences behind See all. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const rail = canvas.getByRole('complementary', { name: 'About this kanji' });
@@ -49,7 +41,7 @@ export const Guest: Story = {
 };
 
 export const SignedIn: Story = {
-	parameters: { auth: signedInAuth(3) },
+	parameters: { auth: 'member' },
 };
 
 /** 夳: on’yomi only, no meaning, no grade, JLPT or frequency, and nothing related. */

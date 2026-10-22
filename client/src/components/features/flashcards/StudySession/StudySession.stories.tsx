@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import {
 	kanjiOptionsDeck,
 	kanjiTypedKunyomiDeck,
@@ -77,7 +77,7 @@ export const OneCard: Story = {
 /** Hostile: a twelve-character word wraps instead of overflowing at 360px. */
 export const LongWord: Story = {
 	args: { deck: longWordDeck },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };
 
 export const Summary: Story = {

@@ -23,7 +23,7 @@ const Header: React.FC = () => {
 		account = (
 			<ul className={styles.account} aria-label="Account status">
 				<li>
-					<span className={styles.authPending} aria-label="Checking account status" />
+					<span className={styles.authPending} role="status" aria-label="Checking account status" />
 				</li>
 			</ul>
 		);

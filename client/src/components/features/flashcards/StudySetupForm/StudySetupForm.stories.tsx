@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { DECK_ERRORS, defaultStudyConfig, type StudyConfig } from '@/api/flashcards/deck';
 import { SavedListType } from '@/shared/constants/enums';
 import { StudySetupForm, type StudyDeckStatus, type StudySetupFormProps } from './index';

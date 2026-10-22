@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { LevelBadge } from '@/components/shared/LevelBadge';
 import { processingStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { CATALOGUE_TYPE_LABELS } from '@/shared/constants/catalogues';
@@ -9,7 +9,6 @@ import { CardCover, CoverChip } from './';
 const meta = {
 	title: 'Features/LibraryCards/CardCover',
 	component: CardCover,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		glyph: articleCoverGlyph('毎年交流してきたお年よりだけど'),

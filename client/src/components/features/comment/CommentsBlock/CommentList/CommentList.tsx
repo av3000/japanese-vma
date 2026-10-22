@@ -97,11 +97,11 @@ const CommentList: React.FC<CommentListProps> = ({
 }) => {
 	return (
 		<div>
-			<h5 className={styles.heading}>
+			<h3 className={styles.heading}>
 				<Badge variant="secondary">{total}</Badge>
 				{'  '}
 				Comment{total !== 1 ? 's' : ''}
-			</h5>
+			</h3>
 
 			{comments.length === 0 ? (
 				<Alert tone="info" className={styles.empty}>

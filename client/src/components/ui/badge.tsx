@@ -40,7 +40,7 @@ export interface BadgeProps extends React.ComponentProps<'span'> {
 	variant?: BadgeVariant | null;
 	/** Render the child element with badge styling instead of a `span`. */
 	asChild?: boolean;
-	/** Round, fixed-size badge that holds a single icon. Pair with `aria-label`. */
+	/** Round, fixed-size badge that holds a single icon. Renders with `role="img"`, so pair it with `aria-label`. */
 	isOnlyIcon?: boolean;
 }
 
@@ -53,6 +53,8 @@ function Badge({ className, variant = 'default', asChild = false, isOnlyIcon = f
 			data-slot="badge"
 			data-variant={resolvedVariant}
 			data-icon-only={isOnlyIcon ? '' : undefined}
+			// A bare span may not carry `aria-label`; as an image it names the icon.
+			role={isOnlyIcon ? 'img' : undefined}
 			className={classNames(
 				badgeVariants({ variant: resolvedVariant }),
 				isOnlyIcon && styles.iconOnly,

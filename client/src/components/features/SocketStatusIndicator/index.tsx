@@ -59,6 +59,7 @@ const SocketStatusIndicator: React.FC = () => {
 			</PopoverTrigger>
 			<PopoverContent
 				align="end"
+				aria-label="WebSocket connection details"
 				className={styles.content}
 				onOpenAutoFocus={(event) => event.preventDefault()}
 				onPointerEnter={() => setIsOpen(true)}

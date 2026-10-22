@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Field, Input, Label } from '@/components/shared/FormControls';
@@ -27,7 +27,6 @@ const LoginShapedForm = () => (
 const meta = {
 	title: 'Features/Auth/AuthCard',
 	component: AuthCard,
-	tags: ['autodocs'],
 	parameters: { layout: 'fullscreen' },
 	args: {
 		title: 'Welcome back',
@@ -75,5 +74,5 @@ export const LongCopy: Story = {
 };
 
 export const MobileViewport: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

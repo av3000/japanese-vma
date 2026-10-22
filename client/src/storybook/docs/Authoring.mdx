@@ -1,0 +1,94 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Docs/Authoring" />
+
+# Writing stories
+
+## File and title
+
+- Put `<Component>.stories.tsx` next to the component.
+- Set an explicit `title` in the sidebar hierarchy: `Shared/…`, `UI/…`, `System/…`, `Features/<Domain>/…` or `Pages/…`. Moving a file then never renames its stories.
+  - Feature domains: `Navigation`, `Articles`, `Catalogues`, `Community`, `Comments`, `Auth`, `Dashboard`, `Flashcards`, `Homepage`, `Japanese`, `LibraryCards`, `Realtime`.
+  - A title is either a component or a folder, never both. When a page has more than one story file, make it a folder of siblings: `Pages/ArticleDetails/Content`, `Pages/ArticleDetails/Route states`, `Pages/ArticleDetails/Skeleton`, not `Pages/ArticleDetails` next to `Pages/ArticleDetails/Skeleton`.
+- Type the meta with `satisfies Meta<typeof Component>`, and stories with `StoryObj<typeof meta>`. No `@ts-ignore`.
+
+## Args
+
+- Callbacks are `fn()` spies from `storybook/test`, so a `play` can assert they were called.
+- Defaults live in the meta's `args`.
+- Variant option lists come from the component's own exported constants, never a copied list.
+
+## App contexts come from parameters
+
+The global decorators provide React Query, the router, auth and the socket, nested as in `App.tsx`. Never mount the real providers or import from `providers/contexts/` in a story.
+
+| Parameter | Shape | Default |
+|---|---|---|
+| `auth` | `'guest' \| 'loading' \| 'member'`, or fields to override. Passing a `user` signs that user in: `{ user: { ...users.member, id: OWNER_ID } }` | The toolbar's Viewer (guest) |
+| `socket` | `'unconfigured' \| 'connecting' \| 'connected' \| 'reconnecting' \| 'failed'`, or fields to override, such as a fake `echo` | The toolbar's Socket (connected) |
+| `router` | `{ initialEntries?: ['/kanjis?page=2'], path?: '/kanji/:kanji_id' }`. Set `path` when the component reads `useParams` | `{ initialEntries: ['/'] }` |
+| `seeds` | `QuerySeed[]`: query keys and the data the cache already holds. Build keys with the generated `get…QueryKey` helpers and the `pageSeed`/`infiniteSeed` helpers from `@/storybook/decorators` | `[]` |
+
+- A story that is *about* a viewer or a connection state (`Guest`, `Owner`, `Polling`) pins it with `parameters.auth` or `parameters.socket`. Leave the rest unpinned, so the toolbar can flip them.
+- Viewers come from `@/storybook/fixtures/users`: `users.member` is the default member, and `users.other` is a second one for owner-versus-visitor stories.
+- The auth actions are spies in `authSpies` (`login`, `register`, `logout`, `clearSessionExpired`), cleared before every story. A `play` asserts on them directly: `expect(authSpies.logout).toHaveBeenCalled()`.
+- Each story gets a fresh query client: no retries, no refetch on focus, and seeded data never goes stale. A seeded story fetches nothing unless it asks for new data (another page, another filter); that request then goes to the mocked API below.
+
+## Data in stories
+
+Two tools, each with one job:
+
+| The story needs… | Use |
+|---|---|
+| The rendered screen with known data, and no request | `parameters.seeds` |
+| A loading or error state | MSW |
+| A mutation: submit, delete, like, comment | MSW |
+| Pagination, filter changes, a refetch after a mutation | MSW, optionally with seeds for the first page |
+| A route component that fetches on mount (`Pages/`) | MSW |
+
+**MSW handlers are generated, never hand-written.** `npm run orval:file` writes a `*.msw.ts` next to each generated client in `src/api/generated/`. It holds a `get…MockHandler(override?)` for every endpoint and a `get…ResponseMock()` factory for every response. All of them are loaded for every story (`src/storybook/msw.ts`), so a component that fetches gets generated data unless the story says otherwise.
+
+- **Determinism.** Faker is seeded before every story, so generated data is identical on every run. Named state stories pass explicit fixtures rather than relying on the seed.
+- **Overrides** go in `beforeEach`, using the generated factory for that endpoint:
+
+  ```tsx
+  beforeEach: ({ msw }) => {
+  	msw.use(getCommentGetArticleCommentsMockHandler(threadOf([])));
+  },
+  ```
+
+  - Pass a function to read the request: `getCommentStoreMockHandler(async ({ request }) => …)`.
+  - Never-resolving: `async () => { await delay('infinite'); … }`, with `delay` from `msw`.
+  - Errors: `() => { throw new Response(null, { status: 500 }); }`.
+  - A raw `http.get(…)` is allowed only for something the factories can't express, with a comment naming the generated handler it stands in for.
+- **Unmocked API calls fail the story.** A request under `/api/` that no handler answers fails the story with `Unmocked API request(s): …`. That means the endpoint is missing from `api.json`; fix the backend schema, not the story.
+- **Paths.** Handlers match `*/<path>`, whatever `VITE_API_URL` is, so Storybook needs no API URL.
+- **After a backend change**, run `composer openapi` in `processor-api/`, then `npm run orval:file` in `client/`, one after the other. The handlers regenerate with the client.
+- **The service worker** lives in `.storybook/public/`, not `client/public/`, so it never ships in the app build.
+
+## Viewports
+
+Pick a preset by name: `globals: { viewport: { value: 'xs' } }`. The presets are `xs` 360, `sm` 768, `md` 1024, `lg` 1320 and `xl` 1600.
+
+## Play functions
+
+- Assert on roles and accessible names (`getByRole('button', { name: 'Save' })`), never class names or DOM structure.
+- Use `await expect(…).toBeVisible()` or `waitFor` for anything animated or async, never fixed sleeps.
+- Dialogs render into `document.body`; query them with `within(document.body)`.
+
+## Fixtures
+
+Keep fixtures beside the domain that owns them (`components/features/<domain>/fixtures.ts`), typed from the Orval models in `@/api/generated/model`, so a schema change breaks `npm run typecheck` rather than a story. Move one to `src/storybook/fixtures/` only once a second domain needs it.
+
+## Coverage
+
+`npm run story:audit` lists every component module and route without a story. CI runs it with `--check`.
+
+- **A module** is a directory under `src/components` or `src/routes` with one component `.tsx` file. A directory that holds several makes each `.tsx` its own module. Hooks, `.ts` helpers, barrels and tests are not modules.
+- **Covered** means a `*.stories.tsx` in the same directory imports it, directly or through the directory's barrel.
+- Anything uncovered needs an entry in `client/story-coverage.json` with a reason:
+  - `covered-by: <story file>`: the module has no props worth varying outside its parent and no behaviour of its own. Prefer a story of its own whenever either is untrue.
+  - `dead: #<issue>` or `pending: #<issue>`: an open issue is removing or reshaping it.
+  - `not-visual`: route tables, lazy-route plumbing, test helpers.
+  - `todo: #<issue>`: not storied yet. The issue owns it.
+- `--check` also fails on an entry whose module is now storied or gone, so the list only shrinks. Delete the entry in the same change that adds the story.

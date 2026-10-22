@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { CorpusStatsResource } from '@/api/generated/model';
 import { CorpusStatsTilesView } from './';
 
@@ -7,7 +7,6 @@ const stats: CorpusStatsResource = { radicals: 214, kanjis: 13108, words: 183512
 const meta = {
 	title: 'Features/Homepage/CorpusStatsTiles',
 	component: CorpusStatsTilesView,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 } satisfies Meta<typeof CorpusStatsTilesView>;
 
@@ -25,5 +24,5 @@ export const ErrorState: Story = { name: 'Error', args: { status: 'error' } };
 
 export const MobileViewport: Story = {
 	args: { status: 'success', stats },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

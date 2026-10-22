@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import type { KanjiResource, RadicalResource, SentenceResource, WordResource } from '@/api/generated/model';
+import { Button } from '@/components/shared/Button';
 import { DataTable, type DataTableColumn } from './';
 import { kanjiRows, radicalRows, repeatRows, sentenceRows, wordRows } from './DataTable.fixtures';
 
@@ -42,7 +43,11 @@ const kanjiColumns: DataTableColumn<KanjiResource>[] = [
 		header: 'Save',
 		headerHidden: true,
 		width: 'shrink',
-		cell: () => <button type="button">Save</button>,
+		cell: () => (
+			<Button variant="ghost" size="sm">
+				Save
+			</Button>
+		),
 	},
 ];
 
@@ -108,9 +113,8 @@ const radicalColumns: DataTableColumn<RadicalResource>[] = [
 ];
 
 const meta = {
-	title: 'Components/DataTable',
+	title: 'Shared/DataTable',
 	component: DataTable<KanjiResource>,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		label: 'Kanji',
@@ -209,10 +213,10 @@ export const ManyRows: Story = {
 };
 
 export const Mobile: Story = {
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };
 
 export const MobileWords: Story = {
 	...Words,
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };

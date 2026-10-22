@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { PUBLICITY } from '@/api/publicity';
 import { VisibilityCue } from '@/components/shared/VisibilityCue';
 import { Byline } from './';
@@ -7,7 +7,6 @@ import { Byline } from './';
 const meta = {
 	title: 'Shared/Byline',
 	component: Byline,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: { name: 'Aki Tanaka', date: '2026-05-25T10:00:00+00:00', views: 1234 },
 } satisfies Meta<typeof Byline>;
@@ -29,7 +28,7 @@ export const JapaneseName: Story = { args: { name: '田中太郎' } };
 /** Long names wrap inside the line; they never push the date off screen. */
 export const LongName: Story = {
 	args: { name: 'Wolfeschlegelsteinhausenbergerdorff'.repeat(3), views: 98765432 },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'xs' } },
 };
 
 export const UnknownAuthor: Story = { args: { name: '', views: 0 } };

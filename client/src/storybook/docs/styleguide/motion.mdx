@@ -1,0 +1,39 @@
+import { Meta, Source, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Motion" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Motion</h1>
+  <div className="richTextWrapper">
+    <p>
+      Durations and easing curves from <code>src/styles/00-settings/motion.css</code>. Use <code>--ease-base</code> by default; the elastic curves are for small playful feedback only. Press Play to run a token.
+    </p>
+  </div>
+
+<h2>Durations</h2>
+<p>
+  Played with <code>--ease-base</code>.
+</p>
+<TokenGroup prefix="duration" kind="duration" />
+
+<h2>Easing</h2>
+<p>
+  Played with <code>--duration-lg</code>.
+</p>
+<TokenGroup prefix="ease" kind="easing" />
+
+  <h2>Reduced motion</h2>
+  <div className="richTextWrapper">
+    <p>
+      Respect <code>prefers-reduced-motion: reduce</code> for any animation or transition that moves things. There is no global rule and no JavaScript check; each component owns its motion and switches it off beside it, in its own CSS Module:
+    </p>
+<Source language="css" format={false} code={".bar {\n  transition: width var(--duration-md) var(--ease-base);\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .bar {\n    transition: none;\n  }\n}"} />
+    <p>
+      The same pattern turns off the flashcard progress bar, the header chevron, skeleton shimmer, <code>PageLoading</code>, <code>ui/badge</code> and the popover animations. The not-found glyph goes the other way: it animates only inside <code>prefers-reduced-motion: no-preference</code>. Where motion is replaced rather than removed, use an opacity change. The Play buttons above follow the rule too, so the dot jumps instead of travelling when the system asks for reduced motion.
+    </p>
+  </div>
+</div>
+</Unstyled>

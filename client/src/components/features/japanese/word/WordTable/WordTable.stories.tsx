@@ -1,12 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, within } from 'storybook/test';
 import { repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import { WordTable } from './';
 
 const meta = {
 	title: 'Features/Japanese/WordTable',
 	component: WordTable,
-	tags: ['autodocs'],
 	parameters: { layout: 'padded' },
 	args: {
 		words: wordRows,
@@ -62,4 +61,4 @@ export const EmptySearch: Story = {
 export const ManyRows: Story = { args: { words: repeatRows(wordRows, 60) } };
 
 /** Stacked rows: word, reading and level on line 1, then the meaning, then the type | Save. */
-export const Mobile: Story = { parameters: { viewport: { defaultViewport: 'mobile1' } } };
+export const Mobile: Story = { globals: { viewport: { value: 'xs' } } };

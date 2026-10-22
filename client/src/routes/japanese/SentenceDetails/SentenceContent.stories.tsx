@@ -1,10 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, within } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { mapSentenceDetail } from '@/api/sentences/details';
 import { sentenceLong, sentenceShort } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { sentenceCommentSeeds } from '@/components/features/japanese/related/relatedSeeds';
-import { StoryProviders, type PageStoryParameters } from '@/test/StoryProviders';
-import { signedInAuth } from '@/test/storyAuth';
+import { users } from '@/storybook/fixtures/users';
 import SentenceContent from './SentenceContent';
 
 const OWNER_ID = 5;
@@ -12,17 +11,10 @@ const memberSentence = mapSentenceDetail({ ...sentenceShort, user_id: OWNER_ID, 
 
 /** Sentence detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real sentences. */
 const meta = {
-	title: 'Pages/SentenceDetails',
+	title: 'Pages/SentenceDetails/Content',
 	component: SentenceContent,
 	parameters: { layout: 'fullscreen', seeds: sentenceCommentSeeds(sentenceShort.uuid) },
 	args: { sentence: mapSentenceDetail(sentenceShort) },
-	decorators: [
-		(Story, context) => (
-			<StoryProviders {...(context.parameters as PageStoryParameters)}>
-				<Story />
-			</StoryProviders>
-		),
-	],
 } satisfies Meta<typeof SentenceContent>;
 
 export default meta;
@@ -31,6 +23,7 @@ type Story = StoryObj<typeof meta>;
 
 /** A Tatoeba sentence for a guest: its kanji, then comments. */
 export const Guest: Story = {
+	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -41,13 +34,13 @@ export const Guest: Story = {
 };
 
 export const SignedIn: Story = {
-	parameters: { auth: signedInAuth(3) },
+	parameters: { auth: 'member' },
 };
 
 /** The author of a member sentence: Edit and Delete under "Your sentence". */
 export const Owner: Story = {
 	args: { sentence: memberSentence },
-	parameters: { auth: signedInAuth(OWNER_ID) },
+	parameters: { auth: { user: { ...users.member, id: OWNER_ID } } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
