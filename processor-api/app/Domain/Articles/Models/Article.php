@@ -3,6 +3,7 @@
 namespace App\Domain\Articles\Models;
 
 use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleProvenance;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji as DomainKanji;
@@ -40,6 +41,7 @@ class Article
         private JlptLevels $jlptLevels,
         private \DateTimeImmutable $createdAt,
         private \DateTimeImmutable $updatedAt,
+        private ArticleProvenance $provenance,
         private array $kanjis = [],
         private array $words = [],
     ) {
@@ -123,6 +125,11 @@ class Article
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getProvenance(): ArticleProvenance
+    {
+        return $this->provenance;
     }
 
     /**

@@ -527,6 +527,46 @@ describe('ArticleContent', () => {
 		expect(renderToStaticMarkup(<ArticleContent article={article} />)).not.toContain('Source:');
 	});
 
+	it('credits an Imported Article to its source: byline, attribution under the body, no Source row or badge', () => {
+		const article = createArticle();
+		article.origin = 'imported';
+		article.source = { key: 'nhk-news', name: 'NHK News', homepage_url: 'https://news.web.nhk/newsweb' };
+		article.source_link = 'https://news.web.nhk/newsweb/na/nd-20261008de56224';
+		article.author = { id: 99, uuid: 'importer-uuid', name: 'Content Importer' };
+		article.content_jp = '第一段落です。\n\n第二段落です。';
+		article.content_en = 'An English translation.';
+
+		const html = renderToStaticMarkup(<ArticleContent article={article} />);
+
+		expect(html).toMatch(/from <strong[^>]*>NHK News<\/strong>/);
+		expect(html).not.toContain('Content Importer');
+
+		const lastParagraph = html.indexOf('第二段落です。');
+		const attribution = html.indexOf('aria-label="Article source"');
+		const translation = html.indexOf('English translation');
+		expect(lastParagraph).toBeGreaterThan(-1);
+		expect(attribution).toBeGreaterThan(lastParagraph);
+		expect(translation).toBeGreaterThan(attribution);
+		expect(html).toContain('Read the full article on NHK News');
+
+		expect(html).not.toContain('Source:');
+		// SourceBadge's accessible text; the byline replaces the badge on this page.
+		expect(html).not.toContain('Imported from');
+	});
+
+	it('treats an article a person wrote as before: their byline, no attribution', () => {
+		const article = createArticle();
+		article.origin = 'user';
+		article.source = null;
+		article.source_link = 'https://www.example.com/news/12345';
+
+		const html = renderToStaticMarkup(<ArticleContent article={article} />);
+
+		expect(html).toMatch(/by <strong[^>]*>Aki<\/strong>/);
+		expect(html).not.toContain('aria-label="Article source"');
+		expect(html).toMatch(/Source:.*example\.com/);
+	});
+
 	it('deletes through the shared article delete mutation, then returns to the list', () => {
 		renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
