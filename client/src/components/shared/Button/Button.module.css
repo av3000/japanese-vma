@@ -18,22 +18,12 @@
 	transition:
 		background-color 0.2s ease,
 		border-color 0.2s ease,
-		color 0.2s ease,
-		transform 0.2s ease,
-		box-shadow 0.2s ease;
+		color 0.2s ease;
 }
-/* Lift only: each variant sets its own hover colour below. A background here outranked every
-   `.variantX:hover` (the :not() adds a class), so every variant turned primary on hover. */
-@media (hover: hover) {
-	.button:not(.variantLinkButton):hover {
-		text-decoration: none;
-		transform: translateY(-1px);
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	}
-}
-.button:active {
-	transform: translateY(0);
-	box-shadow: none;
+/* No base hover or active style: each variant sets its own colours below. (A base
+   `.button:not(.variantLinkButton):hover` background once outranked every `.variantX:hover`.) */
+.button:hover {
+	text-decoration: none;
 }
 .button:focus,
 .button:focus-visible {

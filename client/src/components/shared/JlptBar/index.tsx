@@ -19,8 +19,9 @@ export interface JlptBarProps {
 
 /**
  * How hard an article or catalogue is, as one bar: a segment per JLPT level (N5 → N1) sized by its
- * kanji (or word) count, with the count printed after it. The dominant level is the only segment in the shu
- * accent. Renders nothing when every count is 0, e.g. while the article is still processing.
+ * kanji (or word) count, with its level (`Other` for uncommon kanji) and count printed above it.
+ * The dominant level is the only segment in the shu accent. Renders nothing when every count is 0,
+ * e.g. while the article is still processing.
  */
 export const JlptBar: React.FC<JlptBarProps> = ({ levels, counts = 'kanji', size = 'default', className }) => {
 	const segments = toJlptSegments(levels);
@@ -33,24 +34,25 @@ export const JlptBar: React.FC<JlptBarProps> = ({ levels, counts = 'kanji', size
 			className={classNames(styles.bar, size === 'compact' && styles.compact, className)}
 		>
 			{segments.map((segment) => (
-				<React.Fragment key={segment.level}>
+				<span
+					key={segment.level}
+					aria-hidden="true"
+					className={classNames(styles.item, segment.isDominant && styles.itemDominant)}
+					style={{ flexGrow: segment.count }}
+				>
+					<span className={styles.label}>
+						<span className={styles.level}>{segment.level === 'uncommon' ? 'Other' : segment.label}</span>
+						<span className={styles.count}>{segment.count}</span>
+					</span>
 					<span
-						aria-hidden="true"
 						data-level={segment.level}
 						className={classNames(
 							styles.segment,
 							segment.isDominant && styles.dominant,
 							segment.level === 'uncommon' && styles.uncommon,
 						)}
-						style={{ flexGrow: segment.count }}
 					/>
-					<span
-						aria-hidden="true"
-						className={classNames(styles.count, segment.isDominant && styles.countDominant)}
-					>
-						{segment.count}
-					</span>
-				</React.Fragment>
+				</span>
 			))}
 		</div>
 	);

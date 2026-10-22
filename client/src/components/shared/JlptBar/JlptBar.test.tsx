@@ -86,7 +86,7 @@ describe('JlptBar', () => {
 		);
 	});
 
-	it('hides segments and printed counts from assistive technology, in display order', () => {
+	it('hides each level (label and segment) from assistive technology, in display order', () => {
 		const html = renderToStaticMarkup(<JlptBar levels={levels({ n1: 3, n5: 7, uncommon: 1 })} />);
 
 		expect(html.match(/data-level="([^"]+)"/g)).toEqual([
@@ -94,7 +94,15 @@ describe('JlptBar', () => {
 			'data-level="N1"',
 			'data-level="uncommon"',
 		]);
-		expect(html.match(/aria-hidden="true"/g)).toHaveLength(6);
+		expect(html.match(/aria-hidden="true"/g)).toHaveLength(3);
 		expect(html).toMatch(/>7<.*>3<.*>1</);
+	});
+
+	it('labels each segment with its level above the bar, and uncommon kanji as Other', () => {
+		const html = renderToStaticMarkup(<JlptBar levels={levels({ n1: 3, n5: 7, uncommon: 1 })} />);
+
+		expect(html).toMatch(/>N5<\/span><span[^>]*>7<.*>N1<\/span><span[^>]*>3<.*>Other<\/span><span[^>]*>1</);
+		// The label comes before its segment, so it sits above the line.
+		expect(html.indexOf('>N5<')).toBeLessThan(html.indexOf('data-level="N5"'));
 	});
 });
