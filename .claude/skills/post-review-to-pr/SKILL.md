@@ -38,7 +38,7 @@ The review body ends with `<!-- review-branch:<headRefOid> -->`.
   "commit_id": "<headRefOid>",
   "body": "<verdict, scope, risk, AC table, findings table, follow-ups>\n\n<!-- review-branch:<headRefOid> -->",
   "comments": [
-    { "path": "client/src/x.ts", "line": 42, "side": "RIGHT", "body": "**F3 [Standards · Warning]** client/AGENTS.md §3 \"…\"\n\nWhat is wrong. Why. Suggested fix." }
+    { "path": "client/src/x.ts", "line": 42, "side": "RIGHT", "body": "**F3 [Standards · Warning]** `repo-generated-client-first` (HIGH) \"…\"\n\nWhat is wrong. Why. Suggested fix." }
   ]
 }
 ```

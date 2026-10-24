@@ -21,9 +21,13 @@
 | ID | Type | Criticality | Where | One line |
 | --- | --- | --- | --- | --- |
 | F1 | Spec | Critical | `path/to/file.ts:42` | AC-2 asks for 403, code returns 404 |
+| F2 | Standards | Warning | `client/src/routes/CataloguesList/index.tsx:42` | Hand-written wrapper around a generated client |
 
 **F1 [Spec · Critical]** #458/AC-2 "a private catalogue as another user: 403" — `processor-api/app/…/Controller.php:42`
 What is wrong. Why it matters. Suggested fix (test-first if it is behaviour, refactor if it is structure).
+
+**F2 [Standards · Warning]** `repo-generated-client-first` (HIGH) "Call Documented v1 Endpoints Through the Generated Client" — `client/src/routes/CataloguesList/index.tsx:42`
+What is wrong. Why it matters. Suggested fix.
 
 ### Follow-ups (not findings)
 
@@ -37,5 +41,5 @@ What is wrong. Why it matters. Suggested fix (test-first if it is behaviour, ref
 Rules:
 
 - Finding IDs are `F1`, `F2`, … in table order: Critical first, then Warning, then Suggestion.
-- Each finding line starts `**F<n> [<Type> · <Criticality>]**`, then the criterion or rule reference, then `—` and `path:line` when there is one.
+- Each finding line starts `**F<n> [<Type> · <Criticality>]**`, then the criterion or rule reference, then `—` and `path:line` when there is one. A Standards reference is the rule ID in backticks, its impact in parentheses, and the quoted rule title.
 - Omit empty sections except Acceptance criteria and Findings. Write "No findings." when there are none.

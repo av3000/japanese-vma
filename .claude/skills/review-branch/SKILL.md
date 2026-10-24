@@ -24,14 +24,14 @@ Check a diff against what was asked (the issue) and what the repo says (its rule
 ## 3. Load the standards
 
 - Root `AGENTS.md`, plus the scoped `AGENTS.md` for every area the diff touches.
-- Standards skills with rule IDs, when present (`frontend-standards`, `backend-standards`).
+- The standards skill for every area the diff touches: `frontend-standards` for `client/`, `backend-standards` for `processor-api/`. Read its `SKILL.md` index, then the rule files for what the diff changes.
 - `docs/adr/`.
-- Skip anything ESLint, tsc, Prettier, Pint or PHPStan already enforce; tooling reports those.
+- Skip every rule whose file says **Enforced by …** (ESLint, `tsc`, `npm run style:audit`, Pint, PHPStan, an architecture test, a CI check). The tool reports those breaches, so they are never findings, even when you spot one.
 
 ## 4. Three passes
 
 1. **Spec.** For every criterion: **Met**, **Partial**, **Missing** or **Wrong**, with `path:line` evidence (a test name counts). Then list behaviour the diff adds that no criterion asked for (scope creep).
-2. **Standards.** Each violation quotes the rule and cites where it lives (`AGENTS.md` section, rule ID, ADR).
+2. **Standards.** Cite each violation as `<rule-id> (<IMPACT>) path:line`, for example `repo-generated-client-first (HIGH) client/src/routes/CataloguesList/index.tsx:42`, and quote the rule title. Only a rule with no ID (an `AGENTS.md` section, an ADR) is cited by where it lives.
 3. **Judgement.** No written rule applies. Look for the smell baseline: Mysterious Name, Duplicated Code, Feature Envy, Data Clumps, Primitive Obsession, Repeated Switches, Shotgun Surgery, Divergent Change, Speculative Generality, Message Chains, Middle Man, Refused Bequest. Also design concerns and correctness concerns no rule covers. A documented rule overrides a smell: if the repo deliberately does it this way, it is not a finding.
 
 ## 5. Classify every finding
@@ -41,7 +41,7 @@ Check a diff against what was asked (the issue) and what the repo says (its rule
 | Type | Measured against | Must include |
 | --- | --- | --- |
 | **Spec** | A criterion of a linked issue (missing, partial, wrong, or unrequested behaviour) | `#N/AC-k` and the quoted criterion |
-| **Standards** | A documented repo rule | Where the rule lives, and the quoted rule |
+| **Standards** | A documented repo rule | The rule ID and its impact (or, for a rule with no ID, where it lives), and the quoted rule |
 | **Judgement** | No written rule | The reasoning; for correctness, a concrete failing scenario |
 
 **Criticality** says how much it matters:
@@ -52,10 +52,17 @@ Check a diff against what was asked (the issue) and what the repo says (its rule
 | **Warning** | Fix in this PR, or defer with a linked follow-up issue | Partial criterion; working code that breaks a layer or boundary rule; tests a criterion names are missing |
 | **Suggestion** | Optional, never blocks | Naming, small duplication, local readability, low-impact rules |
 
+**Standards criticality comes from the rule impact:**
+
+| Rule impact | Criticality of a breach |
+| --- | --- |
+| CRITICAL or HIGH | Warning; Critical when the breach makes behaviour wrong |
+| MEDIUM or LOW | Suggestion |
+
 Rules:
 
 - A Judgement finding is Critical only with a concrete failing scenario (this input leads to this wrong output, or an exploit path). Otherwise its ceiling is Warning.
-- Hedged findings ("could theoretically", "might", "in some cases") drop one level.
+- Hedged findings ("could theoretically", "might", "in some cases") drop one level, except that a breach of a CRITICAL or HIGH rule never drops below Warning.
 - On an **S** diff, report at most 3 Suggestions; pick the most useful.
 - Never invent findings to fill a section. "No findings" is a valid result.
 

@@ -13,6 +13,8 @@ This guide maps which skills to use, in what order, for each kind of work in thi
 | `grilling` | Matt Pocock plugin | Get interviewed until the idea is sharp, one question at a time |
 | `write-issue` | repo | Write an issue with numbered acceptance criteria, or check and score an existing one |
 | `tdd` | Matt Pocock plugin | Build one behaviour at a time, red → green → refactor |
+| `frontend-standards` | repo | Look up and cite the frontend rules: rule IDs, impact levels, Incorrect/Correct examples for `client/` |
+| `backend-standards` | repo | Look up and cite the backend rules: `ARCH-`, `CONTRACT-`, `RESULT-`, `DATA-` and `TEST-` IDs with examples for `processor-api/` |
 | `review-branch` | repo | Review the branch against its issues and the repo rules, with typed and rated findings |
 | `create-pull-request` | repo | Open the PR into `develop`, with an acceptance-criteria evidence table, risk, screenshots and verification |
 | `post-review-to-pr` | repo | Put a `review-branch` report on the PR as a pending review with inline comments |
@@ -26,8 +28,6 @@ This guide maps which skills to use, in what order, for each kind of work in thi
 | `wizard` | Matt Pocock plugin | Steps only a human can do: dashboards, secrets, one-off cutovers |
 | `resolving-merge-conflicts` | Matt Pocock plugin | An in-progress merge or rebase conflict |
 | `/code-review`, `/security-review`, `/simplify` | Claude Code built-ins | Bug hunting, a security pass, a clean-up pass. These are optional extras next to `review-branch`. |
-
-**Coming next (epic #502):** `frontend-standards` and `backend-standards`, citable rules with IDs and impact levels. Until they land, `review-branch` cites `AGENTS.md` sections for Standards findings.
 
 ## The main flow: idea → merged
 
@@ -85,7 +85,7 @@ grilling ─► write-issue ─► per slice: tdd ─► commit ─► review-br
 4. **After merge, close the issues by hand.** The PR hand-off lists them.
 5. **Spend five minutes on a retro.**
    - A mistake a tool could catch becomes a lint rule or a test.
-   - A recurring judgement call becomes a written rule: in the scoped `AGENTS.md` today, and in the standards skills once epic #502 lands.
+   - A recurring judgement call becomes a written rule, with an ID, in `frontend-standards` or `backend-standards`.
    - A skill that misled the agent gets its `SKILL.md` fixed with `writing-for-agents`.
 
 ## Other ways in

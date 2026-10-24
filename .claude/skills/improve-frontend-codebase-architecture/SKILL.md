@@ -13,20 +13,20 @@ Use the deep-module vocabulary from Matt Pocock's `codebase-design` skill (plugi
 
 Frontend-specific seam vocabulary lives in [references/frontend-seams.md](references/frontend-seams.md).
 
+The rules a candidate is measured against live in the `frontend-standards` skill, one file per rule ID. This skill does not restate them: it finds where code breaks them, and where a deeper module would make breaking them harder.
+
 ## Required Context
 
 Read these first:
 
 1. root `AGENTS.md`
-2. `client/AGENTS.md`
+2. `client/AGENTS.md`, and the `frontend-standards` index (`.claude/skills/frontend-standards/SKILL.md`)
 3. `CONTEXT.md` and `docs/adr/` if they exist
 4. The generated API contract workflow in root `AGENTS.md` §2 and `processor-api/AGENTS.md` §5, when a candidate depends on the Orval client or `api.json`
 
 Read reference files only when needed:
 
 - [references/local-precedents.md](references/local-precedents.md) for current good, mixed, and legacy examples.
-- [references/generated-client-boundaries.md](references/generated-client-boundaries.md) for Orval/v1 contract decisions.
-- [references/state-management.md](references/state-management.md) for React Query, local state, Context, Zustand, and Redux guidance.
 - [references/scalability.md](references/scalability.md) when the user asks whether a frontend architecture scales, or when a change affects route/API/state/provider patterns across multiple features.
 
 ## Process
@@ -37,11 +37,11 @@ Inspect the touched route, feature module, API hook, generated client, tests, an
 
 Look for friction:
 
-- route modules owning request details, pagination, cache invalidation, or backend wire shape
+- route modules owning request details, pagination, cache invalidation, or backend wire shape (`repo-thin-routes`, `repo-feature-query-hooks`, `repo-no-page-owned-server-state`)
 - feature UI modules accumulating repeated server mutations or side effects
-- wrappers that only rename generated clients
-- temporary adapters without target endpoint, removal condition, or issue status
-- raw endpoint strings on the shared axios instance, `@ts-nocheck`, class components, route-owned server pagination, or magic numbers copied forward
+- wrappers that only rename generated clients (`repo-generated-client-first`)
+- temporary adapters that break `repo-adapter-todo-shape`
+- legacy patterns copied forward: `npm run lint` reports the mechanical ones by rule ID; also check `repo-map-numeric-types-once` and `repo-shared-type-labels`
 - tests that reach past the module interface instead of testing the seam where behavior lives
 - scalability risks: low locality, high coordination cost, unstable data boundaries, broad provider rerenders, public routes coupled to private/auth state, or feature additions that grow the initial bundle
 
@@ -89,11 +89,7 @@ Scalable frontend architecture in this repo means added routes and features keep
 
 ## Optional Tools
 
-Run the scanner on a focused file set when useful:
-
-```powershell
-.claude/skills/improve-frontend-codebase-architecture/scripts/check-frontend-architecture.ps1 -Files client/src/routes/ArticlesList/index.tsx
-```
+The mechanical banned patterns are ESLint errors: run `npm run lint` from `client/`. Each message names its `frontend-standards` rule ID.
 
 Use templates only after a candidate is chosen:
 
@@ -105,8 +101,8 @@ Use templates only after a candidate is chosen:
 | Mistake | Correction |
 |---|---|
 | Copying a clean-architecture folder diagram | Keep the repo shape; deepen seams where they earn leverage |
-| Wrapping generated clients for naming symmetry | Use generated clients directly unless a hook adds behavior |
+| Wrapping generated clients for naming symmetry | `repo-generated-client-first` |
 | Moving all logic out of UI blindly | Keep local UI state local; move repeated server behavior |
-| Treating temporary adapters as normal architecture | Add target, removal condition, and issue/no-issue status |
-| Testing every route end-to-end | Prefer seam-level tests; add route tests only for crossing behavior |
+| Treating temporary adapters as normal architecture | `repo-adapter-todo-shape` |
+| Testing every route end-to-end | `repo-test-shared-seam` |
 | Answering "does it scale?" with yes/no | Separate current-size fit, near-term scaling, and long-term risk |

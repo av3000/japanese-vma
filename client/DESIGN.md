@@ -18,15 +18,15 @@ The CSS is the source of truth for values. This file explains meaning and rules;
 
 ## 2) Hard Rules
 
-- Use a token for every colour, spacing, radius, font size, shadow, duration and z-index that has one. Do not hardcode hex values or pixel spacing in a CSS Module.
-- If no token fits, add one to the right `00-settings` file with a comment saying why, instead of hardcoding the value.
-- Only reference tokens that exist. An undefined `var(--x)` fails silently and falls back to the inherited value.
-- No Bootstrap, Tailwind, Sass, CSS-in-JS or utility-class frameworks. `npm run style:audit` and `style-budget.json` hold these at zero, and ESLint rejects Bootstrap imports.
-- Lay out with `Container`, `Stack`, `Cluster` and `Grid` from `src/components/shared/layout`. Their `gap` props take spacing token names (`'md'`, `'lg'`).
-- Colour is never the only cue. Status, level and validity also carry text or an icon, and the text is visible (see `StatusPill`'s `label`).
-- Keep the global focus outline from `02-generic/outline.css`. Change its colour if you need to, but never remove it.
-- Respect `prefers-reduced-motion: reduce` for any animation or transition that moves things.
-- Treat the app as production: keep browser defaults where they work, add fallbacks for newer CSS, and ship assets such as fonts through the build, not a CDN.
+Each hard rule is a citable rule in the `frontend-standards` skill (`.claude/skills/frontend-standards/rules/<id>.md`), with examples:
+
+- Tokens for every value, and only tokens that exist: `repo-css-modules-tokens`.
+- Layout through `Container`, `Stack`, `Cluster` and `Grid`: `repo-layout-primitives`.
+- Colour is never the only cue: `repo-colour-not-only-cue`.
+- Keep the global focus outline: `repo-keep-focus-outline`.
+- Respect `prefers-reduced-motion`: `repo-reduced-motion`.
+- Production habits, assets through the build, fallbacks for newer CSS: `repo-assets-through-build`.
+- Japanese text carries `lang="ja"` (§5): `repo-lang-ja`. The accent colour means JLPT level (§3): `repo-accent-means-level`. Reuse the components in §7: `repo-shared-components-first`.
 
 ## 3) Colour
 
