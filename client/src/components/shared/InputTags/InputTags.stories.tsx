@@ -74,6 +74,7 @@ export const Controlled: Story = {
 	},
 };
 
+/** `onChange` re-renders the parent, which passes a new inline `defaultTags` array; the added tag must survive it. */
 export const Uncontrolled: Story = {
 	render: () => {
 		return <UncontrolledExample />;
@@ -81,9 +82,17 @@ export const Uncontrolled: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: `Uses \`defaultValue\`: the component owns the tags state internally (still emits \`onChange\`).`,
+				story: `Uses \`defaultTags\`: the component owns the tags state internally (still emits \`onChange\`). \`defaultTags\` is read once, on mount.`,
 			},
 		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.type(canvas.getByRole('textbox', { name: 'Uncontrolled' }), 'N5{Enter}');
+
+		await expect(canvas.getByText('Last `onChange` value: Kana, Grammar, N5')).toBeVisible();
+		await expect(canvas.getByRole('button', { name: 'N5' })).toBeVisible();
 	},
 };
 
