@@ -166,6 +166,21 @@ class WordV1Test extends TestCase
             ->assertJsonMissingPath('articles');
     }
 
+    public function test_word_detail_lists_jmdict_writing_and_reading_elements(): void
+    {
+        $uuid = (string) Str::uuid();
+        $this->createWord(id: 11, uuid: $uuid, word: '人', furigana: 'ひと', meanings: ['person']);
+        DB::table('japanese_word_bank_long')->where('id', 11)->update([
+            'word_k_ele' => '[[["keb",{"0":"人"}],["ke_pri",{"0":"ichi1"}]]]',
+            'furigana_r_ele' => '[[["reb",{"0":"ひと"}],["re_pri",{"0":"ichi1"}]],[["reb",{"0":"ヒト"}],["re_nokanji",{}]]]',
+        ]);
+
+        $this->getJson("/api/v1/words/{$uuid}")
+            ->assertOk()
+            ->assertJsonPath('writing_elements', ['人'])
+            ->assertJsonPath('reading_elements', ['ひと', 'ヒト']);
+    }
+
     public function test_guest_can_fetch_word_detail_by_exact_surface(): void
     {
         $uuid = (string) Str::uuid();
