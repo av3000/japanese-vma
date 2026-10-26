@@ -2987,6 +2987,8 @@
         "/radicals/{identifier}": {
             "get": {
                 "operationId": "radical.show",
+                "description": "Without the include no kanji are loaded: \u6728 alone has 674. Pages of a radical's\nkanji come from `GET /kanjis?radical_uuid=`.",
+                "summary": "Show a radical; `include=kanjis` adds every kanji that uses it",
                 "tags": [
                     "Radical"
                 ],
@@ -2997,6 +2999,16 @@
                         "required": true,
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
                         }
                     }
                 ],
@@ -3010,6 +3022,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }

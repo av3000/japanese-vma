@@ -69,7 +69,7 @@ class RadicalV1Test extends TestCase
             'kanji_id' => 11,
         ]);
 
-        $response = $this->getJson("/api/v1/radicals/{$radicalUuid}");
+        $response = $this->getJson("/api/v1/radicals/{$radicalUuid}?include=kanjis");
 
         $response->assertOk()
             ->assertJsonMissingPath('success')
@@ -82,13 +82,45 @@ class RadicalV1Test extends TestCase
             ->assertJsonCount(1, 'kanjis');
     }
 
+    public function test_radical_detail_without_include_returns_no_kanjis_and_queries_none(): void
+    {
+        $radicalUuid = (string) Str::uuid();
+
+        $this->createRadical(id: 1, uuid: $radicalUuid, radical: '一');
+        $this->createKanji(id: 10, kanji: '一');
+        DB::table('japanese_radical_kanji_long')->insert(['radical_id' => 1, 'kanji_id' => 10]);
+
+        DB::enableQueryLog();
+        $response = $this->getJson("/api/v1/radicals/{$radicalUuid}");
+        $kanjiQueries = array_filter(
+            DB::getQueryLog(),
+            static fn (array $query): bool => str_contains($query['query'], 'japanese_kanji_bank_long'),
+        );
+        DB::disableQueryLog();
+
+        $response->assertOk()
+            ->assertJsonPath('uuid', $radicalUuid)
+            ->assertJsonMissingPath('kanjis');
+        $this->assertSame([], array_values($kanjiQueries));
+    }
+
+    public function test_radical_detail_rejects_unknown_include_values(): void
+    {
+        $radicalUuid = (string) Str::uuid();
+        $this->createRadical(id: 1, uuid: $radicalUuid);
+
+        $this->getJson("/api/v1/radicals/{$radicalUuid}?include=kanjis,words")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['include']);
+    }
+
     public function test_guest_can_fetch_radical_detail_by_legacy_numeric_id(): void
     {
         $radicalUuid = (string) Str::uuid();
 
         $this->createRadical(id: 77, uuid: $radicalUuid, radical: '水', strokes: 4, meaning: 'water', hiragana: 'みず / mizu');
 
-        $response = $this->getJson('/api/v1/radicals/77');
+        $response = $this->getJson('/api/v1/radicals/77?include=kanjis');
 
         $response->assertOk()
             ->assertJsonPath('id', 77)

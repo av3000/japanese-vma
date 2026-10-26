@@ -22,7 +22,7 @@ class RadicalService implements RadicalServiceInterface
         return Result::success($this->radicalRepository->find($criteria));
     }
 
-    public function findByIdentifier(string $identifier, bool $withKanjis = true): Result
+    public function findByIdentifier(string $identifier, bool $withKanjis = false): Result
     {
         if (EntityId::isValid($identifier)) {
             $radical = $this->radicalRepository->findByUuid(EntityId::from($identifier), $withKanjis);
