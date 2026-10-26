@@ -4939,7 +4939,8 @@
                         "$ref": "#/components/schemas/AuthorResource"
                     },
                     "items_count": {
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "Items the viewer can see: an article catalogue leaves out articles that are private to someone else."
                     },
                     "hashtags": {
                         "type": "array",
@@ -5094,7 +5095,8 @@
                         "$ref": "#/components/schemas/AuthorResource"
                     },
                     "items_count": {
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "Every stored item. The catalogue detail counts only the items its viewer can see."
                     },
                     "hashtags": {
                         "type": "array",
