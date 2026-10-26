@@ -22,7 +22,22 @@ final readonly class Sentence
         private string $content,
         private array $kanjis = [],
         private array $words = [],
+        private ?string $authorName = null,
+        private ?EntityId $authorUuid = null,
     ) {
+    }
+
+    /**
+     * The writer of a user-written sentence. Imported Tatoeba sentences have none.
+     */
+    public function getAuthorName(): ?string
+    {
+        return $this->authorName;
+    }
+
+    public function getAuthorUuid(): ?EntityId
+    {
+        return $this->authorUuid;
     }
 
     public function getIdValue(): int

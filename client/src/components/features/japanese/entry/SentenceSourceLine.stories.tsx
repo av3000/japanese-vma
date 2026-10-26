@@ -23,17 +23,28 @@ export const Tatoeba: Story = {
 	},
 };
 
-/** The viewer's own sentence. */
-export const Own: Story = {
-	args: { source: { kind: 'own' } },
+/** A member's sentence, credited by name through the shared byline. */
+export const Member: Story = {
+	args: { source: { kind: 'member', name: 'Kenji' } },
 	play: async ({ canvasElement }) => {
-		await expect(within(canvasElement).getByText('Written by you')).toBeVisible();
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getByText('Kenji')).toBeVisible();
+		await expect(canvas.getByText(/by/)).toBeVisible();
 	},
 };
 
-/** Another member's sentence; the payload carries no author name yet (#549). */
-export const Member: Story = {
-	args: { source: { kind: 'member' } },
+/** The viewer's own sentence reads the same way, with their name. */
+export const Own: Story = {
+	args: { source: { kind: 'own', name: 'Hanako' } },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByText('Hanako')).toBeVisible();
+	},
+};
+
+/** A member's sentence whose payload has no author name falls back to a generic credit. */
+export const MemberWithoutName: Story = {
+	args: { source: { kind: 'member', name: null } },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByText('Written by a member')).toBeVisible();
 	},
@@ -42,7 +53,7 @@ export const Member: Story = {
 /** An entry id that needs encoding in the URL. */
 export const OddEntryId: Story = {
 	args: {
-		source: sentenceSource({ user_id: null, tatoeba_entry: 'a b/1' }, null) ?? { kind: 'member' },
+		source: sentenceSource({ user_id: null, tatoeba_entry: 'a b/1' }, null) ?? { kind: 'member', name: null },
 	},
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByRole('link')).toHaveAttribute(

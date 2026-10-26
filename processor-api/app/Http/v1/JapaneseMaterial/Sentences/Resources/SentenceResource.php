@@ -8,6 +8,7 @@ use App\Domain\JapaneseMaterial\Sentences\Models\Sentence as DomainSentence;
 use App\Domain\JapaneseMaterial\Words\Models\Word as DomainWord;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use App\Http\v1\JapaneseMaterial\Words\Resources\WordResource;
+use App\Http\v1\Shared\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -37,6 +38,7 @@ class SentenceResource extends JsonResource
      *     id: int,
      *     uuid: string,
      *     user_id: int|null,
+     *     author: AuthorResource|null,
      *     tatoeba_entry: string|null,
      *     content: string,
      *     kanjis?: array<int, KanjiResource>,
@@ -58,10 +60,18 @@ class SentenceResource extends JsonResource
         // second constructor argument, which WordResource types as ?ViewerCatalogueStateDTO,
         // so it throws a TypeError on any non-empty list. `words` stays an untyped array in
         // the schema; no client reads it today.
+        $authorUuid = $this->resource->getAuthorUuid();
+
         return [
             'id' => $this->resource->getIdValue(),
             'uuid' => $this->resource->getUuid()->value(),
             'user_id' => $this->resource->getUserId(),
+            // The writer of a user-written sentence; null for imported Tatoeba sentences.
+            'author' => $authorUuid === null ? null : new AuthorResource([
+                'id' => (int) $this->resource->getUserId(),
+                'name' => (string) $this->resource->getAuthorName(),
+                'uuid' => $authorUuid->value(),
+            ]),
             'tatoeba_entry' => $this->resource->getTatoebaEntry(),
             'content' => $this->resource->getContent(),
             'kanjis' => $this->when(

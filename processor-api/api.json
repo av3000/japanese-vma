@@ -6830,6 +6830,17 @@
                             "null"
                         ]
                     },
+                    "author": {
+                        "anyOf": [
+                            {
+                                "description": "The writer of a user-written sentence; null for imported Tatoeba sentences.",
+                                "$ref": "#/components/schemas/AuthorResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
                     "tatoeba_entry": {
                         "type": [
                             "string",
@@ -6854,6 +6865,7 @@
                     "id",
                     "uuid",
                     "user_id",
+                    "author",
                     "tatoeba_entry",
                     "content"
                 ],

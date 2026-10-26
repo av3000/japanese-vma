@@ -55,7 +55,14 @@ const word = (fields: Partial<WordResource> & Pick<WordResource, 'word' | 'meani
 const sentence = (fields: Partial<SentenceResource> & Pick<SentenceResource, 'content'>) => {
 	const id = nextId++;
 
-	return { id, uuid: uuid(id), user_id: null, tatoeba_entry: null, ...fields } satisfies SentenceResource;
+	return {
+		id,
+		uuid: uuid(id),
+		user_id: null,
+		author: null,
+		tatoeba_entry: null,
+		...fields,
+	} satisfies SentenceResource;
 };
 
 const radical = (fields: Partial<RadicalResource>) => {

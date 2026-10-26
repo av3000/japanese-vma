@@ -101,6 +101,7 @@ export const ownSentence = (overrides: Partial<SentenceResource> = {}): Sentence
 	...sentenceShort,
 	uuid: SENTENCE_UUID,
 	user_id: users.member.id,
+	author: { id: users.member.id, name: users.member.name, uuid: users.member.uuid },
 	tatoeba_entry: null,
 	content: '親友は何人いるの？',
 	...overrides,

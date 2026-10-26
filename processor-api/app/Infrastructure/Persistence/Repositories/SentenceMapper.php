@@ -36,6 +36,8 @@ class SentenceMapper
                 ->all();
         }
 
+        $author = $persistenceSentence->user_id === null ? null : $persistenceSentence->user;
+
         return new DomainSentence(
             id: (int) $persistenceSentence->id,
             uuid: new EntityId((string) $persistenceSentence->uuid),
@@ -44,6 +46,8 @@ class SentenceMapper
             content: (string) $persistenceSentence->content,
             kanjis: $kanjis,
             words: $words,
+            authorName: $author === null ? null : (string) $author->name,
+            authorUuid: $author === null ? null : new EntityId((string) $author->uuid),
         );
     }
 }

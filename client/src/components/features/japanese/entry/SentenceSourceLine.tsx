@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { SentenceSource } from '@/components/features/japanese/entryValues';
+import { Byline } from '@/components/shared/Byline';
 import { Link } from '@/components/shared/Link';
 import styles from './Entry.module.css';
 
@@ -16,9 +17,10 @@ export const SentenceSourceLine: React.FC<{ source: SentenceSource }> = ({ sourc
 				</p>
 			);
 		case 'own':
-			return <p className={styles.source}>Written by you</p>;
 		case 'member':
-			return <p className={styles.source}>Written by a member</p>;
+			if (source.name) return <Byline name={source.name} />;
+
+			return <p className={styles.source}>{source.kind === 'own' ? 'Written by you' : 'Written by a member'}</p>;
 	}
 };
 
