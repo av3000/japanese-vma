@@ -130,6 +130,17 @@ class EnvironmentHealthPageTest extends TestCase
         Livewire::test(EnvironmentHealth::class)->assertSee('Passed on queue default');
     }
 
+    public function test_a_non_admin_holding_operations_manage_can_run_the_check(): void
+    {
+        $this->actingAsPanelUser($this->createUserWithPermissions(['operations.view', 'operations.manage']));
+
+        Livewire::test(EnvironmentHealth::class)
+            ->callAction('runWorkerCheck')
+            ->assertNotified();
+
+        self::assertSame(1, AdminActivity::query()->where('action', ActivityAction::WorkerCheckRun)->count());
+    }
+
     public function test_operators_without_manage_see_the_page_but_cannot_run_the_check(): void
     {
         $this->actingAsPanelUser($this->createUserWithPermissions(['operations.view']));

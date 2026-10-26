@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Users\Errors;
 
-use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
+use App\Shared\Results\ResultError;
 
 class UserErrors
 {
@@ -117,6 +117,17 @@ class UserErrors
             description: 'Logout failed',
             detail: 'An unexpected error occurred during logout',
             errorMessage: 'An unexpected error occurred during logout',
+        );
+    }
+
+    public static function adminAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Users.AdminAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to administer user accounts",
+            errorMessage: "You don't have permission to administer user accounts.",
         );
     }
 

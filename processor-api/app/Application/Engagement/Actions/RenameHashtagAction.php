@@ -8,6 +8,7 @@ use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Application\Engagement\Policies\HashtagManagementPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Engagement\DTOs\HashtagTagDTO;
@@ -26,6 +27,7 @@ final class RenameHashtagAction
     public function __construct(
         private readonly HashtagRepositoryInterface $hashtags,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly HashtagManagementPolicy $policy,
     ) {
     }
 
@@ -34,6 +36,10 @@ final class RenameHashtagAction
      */
     public function execute(int $hashtagId, string $newName, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canManage($actor)) {
+            return Result::failure(HashtagErrors::manageAccessDenied());
+        }
+
         $current = $this->hashtags->findTag($hashtagId);
 
         if ($current === null) {

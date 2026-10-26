@@ -8,6 +8,7 @@ use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Application\Engagement\Policies\HashtagManagementPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
@@ -27,6 +28,7 @@ final class MergeHashtagsAction
     public function __construct(
         private readonly HashtagRepositoryInterface $hashtags,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly HashtagManagementPolicy $policy,
     ) {
     }
 
@@ -35,6 +37,10 @@ final class MergeHashtagsAction
      */
     public function execute(int $sourceId, int $targetId, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canManage($actor)) {
+            return Result::failure(HashtagErrors::manageAccessDenied());
+        }
+
         if ($sourceId === $targetId) {
             return Result::failure(HashtagErrors::mergeIntoItself());
         }

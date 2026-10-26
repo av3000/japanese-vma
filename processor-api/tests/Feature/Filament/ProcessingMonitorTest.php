@@ -91,6 +91,19 @@ class ProcessingMonitorTest extends TestCase
         self::assertSame(ActivityAction::ArticleReprocessRequested, AdminActivity::query()->sole()->action);
     }
 
+    public function test_a_non_admin_holding_operations_manage_can_retry(): void
+    {
+        $this->actingAsPanelUser($this->createUserWithPermissions(['operations.view', 'operations.manage']));
+        $state = $this->state(ProcessingStatus::FAILED, contentVersion: 2);
+
+        Livewire::test(ListProcessingStates::class)
+            ->callTableAction('retry', $state)
+            ->assertNotified('Processing was queued again.');
+
+        Queue::assertPushed(ProcessArticleContentJob::class);
+        self::assertSame(ProcessingStatus::PENDING, $state->fresh()->status);
+    }
+
     public function test_retry_is_refused_for_a_healthy_run_unless_forced(): void
     {
         $state = $this->state(ProcessingStatus::PROCESSING, updatedAt: CarbonImmutable::now()->subMinute());

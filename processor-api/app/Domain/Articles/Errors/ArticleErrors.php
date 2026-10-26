@@ -106,6 +106,17 @@ class ArticleErrors
         );
     }
 
+    public static function processingRequeueAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingRequeueAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to requeue article processing",
+            errorMessage: "You don't have permission to requeue article processing.",
+        );
+    }
+
     public static function processingStillRunning(string $articleUid): ResultError
     {
         return new ResultError(

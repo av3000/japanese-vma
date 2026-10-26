@@ -10,8 +10,9 @@ use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Shared\Results\Result;
 
 /**
- * Account administration. Panel-only: there is no API surface for these use cases, so the
- * caller's panel permission is the authorisation and this service records what was done.
+ * Account administration. Panel-only: there is no API surface for these use cases. Every method
+ * checks `users.update` (UserAdminPolicy) before it reads or writes, returning
+ * `Users.AdminAccessDenied` otherwise, and records what was done.
  */
 interface UserAdminServiceInterface
 {

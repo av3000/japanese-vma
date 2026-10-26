@@ -9,6 +9,7 @@ use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Application\Users\Policies\UserAdminPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -25,11 +26,16 @@ final class UserAdminService implements UserAdminServiceInterface
         private readonly UserAccountRepositoryInterface $accounts,
         private readonly UserRepositoryInterface $users,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly UserAdminPolicy $policy,
     ) {
     }
 
     public function createUser(UserAccountWriteDTO $account, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canCreate($actor)) {
+            return Result::failure(UserErrors::adminAccessDenied());
+        }
+
         if ($this->accounts->emailBelongsToAnotherAccount($account->email)) {
             return Result::failure(UserErrors::emailAlreadyExists($account->email));
         }
@@ -54,6 +60,10 @@ final class UserAdminService implements UserAdminServiceInterface
 
     public function updateUser(EntityId $uuid, UserAccountWriteDTO $account, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canUpdate($actor)) {
+            return Result::failure(UserErrors::adminAccessDenied());
+        }
+
         $current = $this->accounts->find($uuid);
 
         if ($current === null) {
@@ -91,6 +101,10 @@ final class UserAdminService implements UserAdminServiceInterface
 
     public function markEmailVerified(EntityId $uuid, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canUpdate($actor)) {
+            return Result::failure(UserErrors::adminAccessDenied());
+        }
+
         $current = $this->accounts->find($uuid);
 
         if ($current === null) {
@@ -122,6 +136,10 @@ final class UserAdminService implements UserAdminServiceInterface
 
     public function revokeAllTokens(EntityId $uuid, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canUpdate($actor)) {
+            return Result::failure(UserErrors::adminAccessDenied());
+        }
+
         $current = $this->accounts->find($uuid);
 
         if ($current === null) {

@@ -5,8 +5,10 @@ declare(strict_types=1);
 /*
  * The permission catalogue is authoritative inside the Filament panel: every panel policy maps to
  * one of these names, and holding any of them grants entry to /admin. API routes stay role-gated
- * (`checkRole:admin`), and application policies still read `AuthenticatedUser::$isAdmin`; panel
- * writes therefore need both the permission and the application rule.
+ * (`checkRole:admin`), and the moderation policies still read `AuthenticatedUser::$isAdmin`; panel
+ * moderation writes therefore need both the permission and the application rule. Panel-only use
+ * cases (hashtag management, processing requeue, account administration, the worker check) check
+ * the permission itself in the application layer, through ActorPermissionCheckerInterface.
  *
  * The `common` role must never hold a permission from this file - every registered user has it.
  */

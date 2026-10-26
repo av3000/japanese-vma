@@ -60,6 +60,17 @@ class HashtagErrors
         );
     }
 
+    public static function manageAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Hashtags.ManageAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to rename or merge hashtags",
+            errorMessage: "You don't have permission to rename or merge hashtags.",
+        );
+    }
+
     public static function mergeIntoItself(): ResultError
     {
         return new ResultError(

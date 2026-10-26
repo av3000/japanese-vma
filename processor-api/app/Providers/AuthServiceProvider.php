@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
+use App\Infrastructure\Auth\Providers\SpatieActorPermissionChecker;
 use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\Catalogue;
@@ -67,6 +69,11 @@ class AuthServiceProvider extends ServiceProvider
         $this->app->bind(
             CurrentUserProviderInterface::class,
             PassportCurrentUserProvider::class,
+        );
+
+        $this->app->bind(
+            ActorPermissionCheckerInterface::class,
+            SpatieActorPermissionChecker::class,
         );
     }
 }

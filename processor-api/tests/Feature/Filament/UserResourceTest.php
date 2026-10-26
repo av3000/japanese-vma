@@ -197,6 +197,18 @@ class UserResourceTest extends TestCase
         CarbonImmutable::setTestNow();
     }
 
+    public function test_a_non_admin_holding_users_update_can_mark_an_address_verified(): void
+    {
+        $this->actingAsPanelUser($this->createUserWithPermissions(['users.view', 'users.update'], 'Support'));
+        $user = $this->createPanelUser();
+
+        Livewire::test(ViewUser::class, ['record' => $user->getKey()])
+            ->callAction('markEmailVerified')
+            ->assertNotified('Email address marked as verified.');
+
+        self::assertNotNull($user->fresh()->email_verified_at);
+    }
+
     public function test_revoke_tokens_revokes_every_token_and_records_activity(): void
     {
         $user = $this->createPanelUser();

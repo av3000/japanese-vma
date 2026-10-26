@@ -8,9 +8,11 @@ use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
 use App\Application\Operations\Services\EnvironmentHealthService;
 use App\Application\Operations\Services\HealthCheckRunner;
 use App\Domain\Operations\DTOs\HealthCheckResultDTO;
+use App\Domain\Operations\DTOs\QueueWorkerCheckDTO;
 use App\Domain\Operations\Enums\HealthStatus;
 use App\Filament\AdminNavigationGroup;
 use App\Filament\Support\PanelActor;
+use App\Filament\Support\ResultNotifications;
 use BackedEnum;
 use Composer\InstalledVersions;
 use Filament\Actions\Action;
@@ -64,7 +66,16 @@ class EnvironmentHealth extends Page
                 ->modalDescription('Puts one smoke job on the default queue and waits up to '.EnvironmentHealthService::WORKER_CHECK_TIMEOUT_SECONDS.' seconds for a worker to run it.')
                 ->visible(static fn (): bool => PanelActor::may('operations.manage'))
                 ->action(function (): void {
-                    $result = $this->service()->runWorkerCheck(PanelActor::current());
+                    $outcome = $this->service()->runWorkerCheck(PanelActor::current());
+
+                    if ($outcome->isFailure()) {
+                        ResultNotifications::failure($outcome);
+
+                        return;
+                    }
+
+                    /** @var QueueWorkerCheckDTO $result */
+                    $result = $outcome->getData();
 
                     $notification = Notification::make();
                     ($result->succeeded

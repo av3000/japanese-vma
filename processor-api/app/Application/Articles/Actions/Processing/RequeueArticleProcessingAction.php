@@ -9,6 +9,7 @@ use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Application\Articles\Policies\ArticleProcessingPolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Activity\Enums\ActivityAction;
@@ -29,7 +30,8 @@ use Illuminate\Support\Facades\DB;
  * VM therefore sees nothing it does not already handle.
  *
  * A row that is still pending or processing and has reported progress within the stale threshold
- * is refused unless forced, so a retry does not race a healthy run.
+ * is refused unless forced, so a retry does not race a healthy run. The actor needs
+ * `operations.manage` (ArticleProcessingPolicy).
  */
 final class RequeueArticleProcessingAction
 {
@@ -38,6 +40,7 @@ final class RequeueArticleProcessingAction
         private readonly ArticleProcessingStateReaderInterface $states,
         private readonly ProcessingStateServiceInterface $processingStates,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly ArticleProcessingPolicy $policy,
     ) {
     }
 
@@ -46,6 +49,10 @@ final class RequeueArticleProcessingAction
      */
     public function execute(EntityId $articleUuid, AuthenticatedUser $actor, bool $force = false): Result
     {
+        if (! $this->policy->canRequeue($actor)) {
+            return Result::failure(ArticleErrors::processingRequeueAccessDenied());
+        }
+
         $source = $this->articles->findProcessingSource($articleUuid);
 
         if ($source === null) {

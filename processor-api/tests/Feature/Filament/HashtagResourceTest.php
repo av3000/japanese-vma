@@ -106,6 +106,18 @@ class HashtagResourceTest extends TestCase
         self::assertSame(['content' => '#grammer'], $row->changes['before']);
     }
 
+    public function test_a_non_admin_holding_hashtags_manage_can_rename(): void
+    {
+        $this->actingAsPanelUser($this->createUserWithPermissions(['hashtags.manage']));
+        $tag = Uniquehashtag::create(['content' => '#grammer']);
+
+        Livewire::test(ListHashtags::class)
+            ->callTableAction('rename', $tag, ['name' => '#grammar'])
+            ->assertNotified('Hashtag renamed.');
+
+        self::assertSame('#grammar', $tag->fresh()->content);
+    }
+
     public function test_rename_that_collides_after_normalisation_is_refused(): void
     {
         Uniquehashtag::create(['content' => '#jlpt']);

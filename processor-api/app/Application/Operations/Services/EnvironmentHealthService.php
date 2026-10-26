@@ -7,10 +7,13 @@ namespace App\Application\Operations\Services;
 use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Operations\Policies\OperationsPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Operations\DTOs\HealthCheckResultDTO;
 use App\Domain\Operations\DTOs\QueueWorkerCheckDTO;
+use App\Domain\Operations\Errors\OperationsErrors;
+use App\Shared\Results\Result;
 
 /**
  * What the admin panel's environment page needs. Host and driver names help an attacker, so
@@ -26,6 +29,7 @@ final class EnvironmentHealthService
         private readonly HealthCheckRunner $checks,
         private readonly QueueWorkerVerifier $verifier,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly OperationsPolicy $policy,
     ) {
     }
 
@@ -42,8 +46,17 @@ final class EnvironmentHealthService
         return $this->verifier->lastResult();
     }
 
-    public function runWorkerCheck(AuthenticatedUser $actor): QueueWorkerCheckDTO
+    /**
+     * Needs `operations.manage` (OperationsPolicy), checked before anything is dispatched.
+     *
+     * @return Result Success payload: QueueWorkerCheckDTO
+     */
+    public function runWorkerCheck(AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canManage($actor)) {
+            return Result::failure(OperationsErrors::accessDenied());
+        }
+
         $result = $this->verifier->verify(
             timeoutSeconds: self::WORKER_CHECK_TIMEOUT_SECONDS,
             pollMilliseconds: 250,
@@ -58,7 +71,7 @@ final class EnvironmentHealthService
             context: ['succeeded' => $result->succeeded, 'waited_ms' => $result->waitedMs, 'queue' => $result->queue],
         ));
 
-        return $result;
+        return Result::success($result);
     }
 
     public function recordViewed(AuthenticatedUser $actor): void
