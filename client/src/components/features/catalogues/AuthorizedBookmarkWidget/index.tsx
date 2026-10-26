@@ -64,6 +64,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 }) => {
 	const [lists, setLists] = useState<CatalogueForItem[] | null>(null);
 	const [isLoadingUserCatalogues, setIsLoadingUserCatalogues] = useState(false);
+	const [hasListsError, setHasListsError] = useState(false);
 	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
 	// The committed `lists`, readable from async handlers that started before the latest render.
 	const listsRef = useRef<CatalogueForItem[] | null>(null);
@@ -99,6 +100,7 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const loadLists = useCallback(
 		async (isCurrent: () => boolean = () => true) => {
 			setIsLoadingUserCatalogues(true);
+			setHasListsError(false);
 
 			try {
 				const instanceTypes = [instanceObjectType];
@@ -113,6 +115,9 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 				}
 			} catch (error) {
 				console.error(error);
+				if (isCurrent()) {
+					setHasListsError(true);
+				}
 			} finally {
 				if (isCurrent()) {
 					setIsLoadingUserCatalogues(false);
@@ -139,7 +144,8 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 	const openBookmarkModal = async () => {
 		bookmarkModal.open();
 
-		if (!loadOnMount && lists === null && !isLoadingUserCatalogues) {
+		// Loads on first open with `loadOnMount={false}`, and retries a load that failed.
+		if (lists === null && !isLoadingUserCatalogues) {
 			await loadLists();
 		}
 	};
@@ -215,6 +221,8 @@ export const AuthorizedBookmarkWidget: React.FC<AuthorizedBookmarkWidgetProps> =
 			<CatalogueBookmarkModal
 				controller={bookmarkModal}
 				lists={lists ?? NO_LISTS}
+				isLoadingLists={lists === null && !hasListsError}
+				hasListsError={lists === null && hasListsError}
 				loadingListIds={loadingListIds}
 				onListAction={addToOrRemoveFromList}
 				title={modalTitle}

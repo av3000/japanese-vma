@@ -10,6 +10,10 @@ import styles from './CatalogueBookmarkModal.module.css';
 interface CatalogueBookmarkModalProps {
 	controller: ModalController;
 	lists: CatalogueForItem[];
+	/** The viewer's lists are still loading: `lists` is not the answer yet, so no empty text. */
+	isLoadingLists?: boolean;
+	/** The viewer's lists failed to load: `lists` is not the answer, so no empty text. */
+	hasListsError?: boolean;
 	loadingListIds: number[];
 	onListAction: (list: CatalogueForItem, action: CatalogueForItemAction) => void;
 	title?: string;
@@ -22,6 +26,8 @@ interface CatalogueBookmarkModalProps {
 export const CatalogueBookmarkModal = ({
 	controller,
 	lists,
+	isLoadingLists = false,
+	hasListsError = false,
 	loadingListIds,
 	onListAction,
 	title = 'Save to List',
@@ -45,7 +51,15 @@ export const CatalogueBookmarkModal = ({
 				<DialogModal.Title>{title}</DialogModal.Title>
 			</DialogModal.Header>
 			<DialogModal.Body>
-				{lists.length === 0 ? (
+				{isLoadingLists ? (
+					<p className={styles.empty} role="status">
+						Loading your lists…
+					</p>
+				) : hasListsError ? (
+					<p className={styles.empty} role="alert">
+						Your lists could not be loaded. Close this and try again.
+					</p>
+				) : lists.length === 0 ? (
 					<p className={styles.empty}>{emptyText}</p>
 				) : (
 					<Stack as="ul" gap="xs" className={styles.list}>
