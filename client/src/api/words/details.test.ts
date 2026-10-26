@@ -18,6 +18,7 @@ const baseWord: WordDetailResource = {
 	furigana_r_ele: 'みず',
 	sense: null,
 	viewer_catalogue_state: null,
+	senses: [],
 };
 
 describe('mapWordDetail', () => {

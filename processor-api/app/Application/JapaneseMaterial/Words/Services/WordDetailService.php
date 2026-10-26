@@ -13,6 +13,7 @@ use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
 use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Domain\JapaneseMaterial\Words\ValueObjects\WordSense;
 use App\Domain\Shared\Enums\SortDirection;
 use App\Shared\Results\Result;
 
@@ -70,6 +71,7 @@ final readonly class WordDetailService implements WordDetailServiceInterface
             word: $word,
             kanjis: $kanjis,
             articles: $articles,
+            senses: WordSense::listFromJmdict($word->getRawSense()),
         ));
     }
 }

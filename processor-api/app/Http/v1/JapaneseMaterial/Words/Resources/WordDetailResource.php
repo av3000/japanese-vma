@@ -7,6 +7,7 @@ namespace App\Http\v1\JapaneseMaterial\Words\Resources;
 use App\Domain\Articles\DTOs\ArticleListItemDTO;
 use App\Domain\JapaneseMaterial\Kanjis\Models\Kanji;
 use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
+use App\Domain\JapaneseMaterial\Words\ValueObjects\WordSense;
 use App\Http\v1\Articles\Resources\RelatedArticleSummaryResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
 use Illuminate\Http\Request;
@@ -29,6 +30,11 @@ class WordDetailResource extends JsonResource
 
         return [
             $this->merge((new WordResource($this->resource->word))->toArray($request)),
+            /** @var array<int, WordSenseResource> */
+            'senses' => array_map(
+                static fn (WordSense $sense): WordSenseResource => new WordSenseResource($sense),
+                $this->resource->senses,
+            ),
             /** @var array<int, KanjiResource> */
             'kanjis' => $this->when(
                 $kanjis !== null,

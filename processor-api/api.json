@@ -7479,6 +7479,12 @@
                             }
                         ]
                     },
+                    "senses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/WordSenseResource"
+                        }
+                    },
                     "kanjis": {
                         "type": "array",
                         "items": {
@@ -7507,7 +7513,8 @@
                     "word_k_ele",
                     "furigana_r_ele",
                     "sense",
-                    "viewer_catalogue_state"
+                    "viewer_catalogue_state",
+                    "senses"
                 ],
                 "title": "WordDetailResource"
             },
@@ -7622,6 +7629,42 @@
                     "viewer_catalogue_state"
                 ],
                 "title": "WordResource"
+            },
+            "WordSenseResource": {
+                "type": "object",
+                "properties": {
+                    "parts_of_speech": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "glosses": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "notes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "misc": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "parts_of_speech",
+                    "glosses",
+                    "notes",
+                    "misc"
+                ],
+                "title": "WordSenseResource"
             }
         },
         "responses": {
