@@ -36,6 +36,11 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	};
 });
 
+const OWNER_ID = 7;
+let currentUser: { id: number } | null = { id: OWNER_ID };
+
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: currentUser, isAuthenticated: Boolean(currentUser) }) }));
+
 const formProps: Array<Record<string, unknown>> = [];
 
 vi.mock('@/components/features/catalogues/CatalogueForm', () => ({
@@ -56,7 +61,16 @@ const render = () =>
 
 const showCatalogue = (overrides: Record<string, unknown> = {}) =>
 	vi.mocked(useCatalogueShow).mockReturnValue({
-		data: { uuid: UUID, title: 'My catalogue', type: 5, publicity: 1, hashtags: [], items_count: 0, ...overrides },
+		data: {
+			uuid: UUID,
+			title: 'My catalogue',
+			type: 5,
+			publicity: 1,
+			hashtags: [],
+			items_count: 0,
+			owner: { id: OWNER_ID, uuid: 'owner-uuid', name: 'Aki Tanaka' },
+			...overrides,
+		},
 		isPending: false,
 		isError: false,
 	} as never);
@@ -64,6 +78,7 @@ const showCatalogue = (overrides: Record<string, unknown> = {}) =>
 describe('CatalogueEditPage', () => {
 	beforeEach(() => {
 		formProps.length = 0;
+		currentUser = { id: OWNER_ID };
 		useParamsMock.mockReturnValue({ catalogueId: UUID });
 	});
 
@@ -106,6 +121,21 @@ describe('CatalogueEditPage', () => {
 		expect(html).toContain('role="alert"');
 		expect(html).toContain('This catalogue could not be loaded.');
 		expect(html).toContain('href="/catalogues"');
+		expect(formProps).toHaveLength(0);
+	});
+
+	it.each([
+		['another member', { id: OWNER_ID + 1 }],
+		['a guest', null],
+	])('refuses %s instead of showing the form', (_viewer, viewer) => {
+		currentUser = viewer;
+		showCatalogue();
+
+		const html = render();
+
+		expect(html).toContain('role="alert"');
+		expect(html).toContain('You do not have permission to edit this catalogue.');
+		expect(html).toContain(`href="/catalogues/${UUID}"`);
 		expect(formProps).toHaveLength(0);
 	});
 });
