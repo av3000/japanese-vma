@@ -6,7 +6,7 @@ import { getSentenceIndexQueryKey } from '@/api/generated/sentence/sentence';
 import { getWordIndexQueryKey } from '@/api/generated/word/word';
 import { kanjiSentenceFilters, kanjiWordFilters } from '@/api/kanjis/related';
 import { radicalKanjiFilters } from '@/api/radicals/related';
-import { pageSeed, type QuerySeed } from '@/storybook/decorators';
+import { infiniteSeed, pageSeed, type QuerySeed } from '@/storybook/decorators';
 import { articleRows, indexPage, personSentenceRows, personWordRows, treeKanjiRows } from './dictionaryDetail.fixtures';
 
 /*
@@ -44,5 +44,5 @@ export const radicalKanjiSeeds = (radicalUuid: string, total: number): QuerySeed
 ];
 
 export const sentenceCommentSeeds = (sentenceUuid: string): QuerySeed[] => [
-	{ queryKey: getCommentsQueryKey('sentence', sentenceUuid), data: indexPage([], 0) },
+	infiniteSeed(getCommentsQueryKey('sentence', sentenceUuid), [indexPage([], 0)]),
 ];

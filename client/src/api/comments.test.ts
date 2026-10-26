@@ -20,11 +20,15 @@ import {
 	COMMENT_PARENTS,
 	appendReply,
 	getCommentsQueryKey,
+	getNextCommentPageParam,
+	mergeThreadPages,
 	patchCommentContent,
 	prependComment,
 	removeComment,
 	replaceComment,
+	updateThreadPages,
 	useLikeCommentMutation,
+	type CommentThreadPages,
 } from './comments';
 
 /**
@@ -140,6 +144,50 @@ describe('getCommentsQueryKey', () => {
 	});
 });
 
+describe('thread pages', () => {
+	const page = (items: CommentResource[], number: number, hasMore: boolean): CommentListResource => ({
+		items,
+		pagination: { page: number, per_page: 2, total: 3, last_page: 2, has_more: hasMore },
+	});
+	const first = createComment({ id: 1, uuid: 'c-1' });
+	const second = createComment({ id: 2, uuid: 'c-2' });
+	const third = createComment({ id: 3, uuid: 'c-3' });
+	const twoPages: CommentThreadPages = {
+		pages: [page([first, second], 1, true), page([third], 2, false)],
+		pageParams: [1, 2],
+	};
+
+	it('asks for the next page only while the server has one', () => {
+		expect(getNextCommentPageParam(page([first], 1, true))).toBe(2);
+		expect(getNextCommentPageParam(page([first], 2, false))).toBeUndefined();
+	});
+
+	it('reads the loaded pages as one thread with the latest has_more', () => {
+		const thread = mergeThreadPages(twoPages);
+
+		expect(thread.items.map((item) => item.id)).toEqual([1, 2, 3]);
+		expect(thread.pagination).toMatchObject({ page: 2, total: 3, has_more: false });
+	});
+
+	it('shows a comment that a newer post pushed onto the next page only once', () => {
+		const shifted: CommentThreadPages = {
+			pages: [page([first, second], 1, true), page([second, third], 2, false)],
+			pageParams: [1, 2],
+		};
+
+		expect(mergeThreadPages(shifted).items.map((item) => item.id)).toEqual([1, 2, 3]);
+	});
+
+	it('applies a cache rule across pages and keeps each page number for refetch', () => {
+		const next = updateThreadPages(twoPages, (thread) => removeComment(thread, { id: 3, parentCommentId: null }));
+
+		expect(mergeThreadPages(next).items.map((item) => item.id)).toEqual([1, 2]);
+		expect(next.pages.map((p) => p.pagination.total)).toEqual([2, 2]);
+		expect(next.pages.map((p) => p.pagination.page)).toEqual([1, 2]);
+		expect(next.pageParams).toEqual([1, 2]);
+	});
+});
+
 describe('cache mutators', () => {
 	it('prepends a new comment and counts it as a conversation', () => {
 		const thread = createThread([createComment()]);
@@ -222,7 +270,7 @@ type CommentLikeOptions = UseMutationOptions<
 	{ is_liked: boolean; likes_count: number },
 	unknown,
 	number,
-	LikeToggleContext<CommentListResource>
+	LikeToggleContext<CommentThreadPages>
 >;
 
 /** The seam always sets these four; narrowing here keeps the assertions free of `!`. */
@@ -238,7 +286,7 @@ const useCommentLikeHarness = (cached?: CommentListResource) => {
 	const queryClient = new QueryClient();
 
 	if (cached) {
-		queryClient.setQueryData(THREAD_KEY, cached);
+		queryClient.setQueryData<CommentThreadPages>(THREAD_KEY, { pages: [cached], pageParams: [1] });
 	}
 
 	let options!: LikeCallbacks;
@@ -253,7 +301,11 @@ const useCommentLikeHarness = (cached?: CommentListResource) => {
 	return { queryClient, options };
 };
 
-const readThread = (queryClient: QueryClient) => queryClient.getQueryData<CommentListResource>(THREAD_KEY);
+const readThread = (queryClient: QueryClient) => {
+	const pages = queryClient.getQueryData<CommentThreadPages>(THREAD_KEY);
+
+	return pages && mergeThreadPages(pages);
+};
 
 describe('useLikeCommentMutation', () => {
 	beforeEach(() => {

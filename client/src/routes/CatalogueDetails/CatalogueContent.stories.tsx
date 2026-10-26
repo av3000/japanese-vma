@@ -6,7 +6,7 @@ import { catalogueItemsQueryKey } from '@/api/catalogues/items';
 import { getCommentsQueryKey } from '@/api/comments';
 import { kanjiRows, repeatRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
-import { type AuthParameter, pageSeed, type QuerySeed } from '@/storybook/decorators';
+import { type AuthParameter, infiniteSeed, pageSeed, type QuerySeed } from '@/storybook/decorators';
 import CatalogueContent from './CatalogueContent';
 
 const OWNER_ID = 7;
@@ -60,10 +60,9 @@ const firstPage = <Row,>(family: CatalogueFamily, rows: Row[], total = rows.leng
 		},
 	});
 
-const noComments: QuerySeed = {
-	queryKey: getCommentsQueryKey('catalogue', UUID),
-	data: { items: [], pagination: { page: 1, per_page: 20, total: 0, last_page: 1, has_more: false } },
-};
+const noComments: QuerySeed = infiniteSeed(getCommentsQueryKey('catalogue', UUID), [
+	{ items: [], pagination: { page: 1, per_page: 20, total: 0, last_page: 1, has_more: false } },
+]);
 
 const articleItems = Array.from({ length: 3 }, (_, index) => ({
 	id: index + 1,

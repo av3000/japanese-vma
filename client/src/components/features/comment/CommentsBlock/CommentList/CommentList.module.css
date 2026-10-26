@@ -1,4 +1,4 @@
-/* An h3 under the page's "Comments" h2 (was an h5, which skipped levels); keeps the h5 size. */
+/* The count heading, one level under the page's "Comments" heading; keeps the h5 size at any level. */
 .heading {
 	margin-block: var(--spacing-lg);
 	min-height: auto;
@@ -22,8 +22,15 @@
 	list-style: none;
 }
 
+.showMore {
+	display: grid;
+	justify-items: center;
+	gap: var(--spacing-sm);
+	margin-top: var(--spacing-md);
+}
+
 .showing {
-	margin: var(--spacing-md) 0 0;
+	margin: 0;
 	color: var(--color-neutral-600);
 	text-align: center;
 }

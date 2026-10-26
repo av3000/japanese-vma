@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCommentsQueryKey, useLikeCommentMutation } from '@/api/comments';
 import type { CommentListResource } from '@/api/generated/model/commentListResource';
 import type { CommentResource } from '@/api/generated/model/commentResource';
@@ -10,6 +11,7 @@ import CommentsBlock from './index';
 const ARTICLE_UUID = '0fb383ad-e203-43f3-9c15-a34bd1ad1a46';
 
 const likeMutateMock = vi.fn();
+const fetchNextPageMock = vi.fn().mockResolvedValue(undefined);
 const createMutateAsync = vi.fn().mockResolvedValue(undefined);
 const updateMutateAsync = vi.fn().mockResolvedValue(undefined);
 const deleteMutateAsync = vi.fn().mockResolvedValue(undefined);
@@ -62,9 +64,16 @@ vi.mock('@tanstack/react-query', async () => {
 	const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
 	return {
 		...actual,
-		useQuery: vi.fn((options: any) => {
+		// The thread query merges its pages through `select`, so the mock hands back a merged thread.
+		useInfiniteQuery: vi.fn((options: any) => {
 			capturedQueryOptions.push(options);
-			return queryState;
+			return {
+				...queryState,
+				hasNextPage: queryState.data?.pagination.has_more ?? false,
+				fetchNextPage: fetchNextPageMock,
+				isFetchingNextPage: false,
+				isFetchNextPageError: false,
+			};
 		}),
 	};
 });
@@ -157,6 +166,44 @@ describe('CommentsBlock', () => {
 
 		expect(capturedListProps[0].total).toBe(42);
 		expect(capturedListProps[0].hasMore).toBe(true);
+	});
+
+	it('starts the thread at page 1 and asks for the next page only while there is one', () => {
+		render();
+
+		const options = capturedQueryOptions[0] as unknown as {
+			initialPageParam: number;
+			getNextPageParam: (lastPage: ReturnType<typeof thread>) => number | undefined;
+		};
+
+		expect(options.initialPageParam).toBe(1);
+		expect(options.getNextPageParam(thread([comment()], { page: 1, has_more: true }))).toBe(2);
+		expect(options.getNextPageParam(thread([comment()], { page: 2, has_more: false }))).toBeUndefined();
+	});
+
+	it('loads the next page when the list asks to show more', () => {
+		queryState = { data: thread([comment()], { total: 42, has_more: true }), isLoading: false, isError: false };
+
+		render();
+		capturedListProps[0].onShowMore();
+
+		expect(fetchNextPageMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('puts the count heading one level under the page heading unless told otherwise', () => {
+		render();
+		render({ headingLevel: 2 });
+
+		expect(capturedListProps[0].headingLevel).toBe(3);
+		expect(capturedListProps[1].headingLevel).toBe(2);
+	});
+
+	it('prompts in plain text rather than headings', () => {
+		const html = render();
+
+		expect(html).toContain('<p class=');
+		expect(html).toContain('Share what&#x27;s on your mind');
+		expect(html).not.toMatch(/<h[1-6]/);
 	});
 
 	it('renders an empty thread without error', () => {
@@ -267,5 +314,71 @@ describe('CommentsBlock', () => {
 		expect(markup).toContain('login');
 		expect(capturedFormProps).toHaveLength(0);
 		expect(capturedListProps[0].canReply).toBe(false);
+	});
+});
+
+describe('CommentList', () => {
+	const idle = () => ({
+		isLikePending: false,
+		isEditPending: false,
+		isDeletePending: false,
+		isReplyPending: false,
+	});
+
+	// The block's tests mock CommentList; these render the real one, imported once up front so the
+	// first test does not pay for the import inside its time limit.
+	let CommentList: typeof import('./CommentList/CommentList').default;
+
+	beforeAll(async () => {
+		({ default: CommentList } =
+			await vi.importActual<typeof import('./CommentList/CommentList')>('./CommentList/CommentList'));
+	});
+
+	const renderList = async (props: Record<string, unknown> = {}) => {
+		return renderToStaticMarkup(
+			<QueryClientProvider client={new QueryClient()}>
+				<CommentList
+					comments={[comment()]}
+					total={12}
+					hasMore={false}
+					canReply={false}
+					stateFor={idle}
+					onLike={vi.fn()}
+					onDelete={vi.fn()}
+					onEdit={vi.fn()}
+					onReply={vi.fn()}
+					{...props}
+				/>
+			</QueryClientProvider>,
+		);
+	};
+
+	it('names the count in its heading, at the level it is given, with no h5 or h6', async () => {
+		const byDefault = await renderList();
+		const underH1 = await renderList({ headingLevel: 2 });
+
+		expect(byDefault).toMatch(/<h3[^>]*>12 comments<\/h3>/);
+		expect(underH1).toMatch(/<h2[^>]*>12 comments<\/h2>/);
+		expect(byDefault + underH1).not.toMatch(/<h[56]/);
+	});
+
+	it('says "1 comment" for one', async () => {
+		expect(await renderList({ total: 1 })).toContain('>1 comment</h3>');
+	});
+
+	it('offers Show more only while the server has more', async () => {
+		expect(await renderList()).not.toContain('Show more comments');
+
+		const more = await renderList({ total: 200, hasMore: true });
+
+		expect(more).toContain('Showing 1 of 200 comments');
+		expect(more).toContain('Show more comments');
+	});
+
+	it('says when the next page could not be loaded and keeps the button to retry', async () => {
+		const failed = await renderList({ total: 200, hasMore: true, loadMoreFailed: true });
+
+		expect(failed).toContain('More comments could not be loaded');
+		expect(failed).toContain('Show more comments');
 	});
 });
