@@ -4,6 +4,7 @@ import type { CatalogueArticleItem } from '@/api/catalogues/catalogues';
 import type { MappedCatalogue } from '@/api/catalogues/details';
 import { catalogueItemsQueryKey } from '@/api/catalogues/items';
 import { getCommentsQueryKey } from '@/api/comments';
+import { treeKanjiRows } from '@/components/features/japanese/related/dictionaryDetail.fixtures';
 import { kanjiRows, repeatRows, sentenceRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
 import type { CatalogueFamily } from '@/shared/constants/catalogues';
 import { type AuthParameter, infiniteSeed, pageSeed, type QuerySeed } from '@/storybook/decorators';
@@ -125,6 +126,19 @@ export const EmptyForTheOwner: Story = {
 
 		await expect(canvas.queryByRole('link', { name: 'Study' })).not.toBeInTheDocument();
 		await expect(canvas.getByText('Add kanji, words or radicals to study this catalogue.')).toBeVisible();
+	},
+};
+
+/**
+ * A kanji catalogue for a signed-in reader at 768px (#550): the Save column and real readings such
+ * as 杏's キョウ、アン、コウ fit the 720px reading column without a sideways scroll.
+ */
+export const KanjiSignedInTablet: Story = {
+	parameters: { auth: owner, seeds: [firstPage('kanji', treeKanjiRows, 42), noComments] },
+	globals: { viewport: { value: 'sm' } },
+	play: async ({ canvasElement }) => {
+		await expect(await within(canvasElement).findByText('キョウ、アン、コウ')).toBeVisible();
+		await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
 	},
 };
 

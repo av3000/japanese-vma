@@ -185,3 +185,16 @@ export const Mobile: Story = {
 		await expect(await within(canvasElement).findByText('Showing 25 of 60')).toBeVisible();
 	},
 };
+
+/**
+ * A signed-in viewer at 768px and 1023px, the narrowest table layout (#550): the Save column and
+ * the tightened column caps still fit the page without a sideways scroll.
+ */
+export const MemberTablet: Story = {
+	parameters: { auth: { user: users.member } },
+	globals: { viewport: { value: 'sm' } },
+	play: async ({ canvasElement }) => {
+		await expect(await within(canvasElement).findByText('Showing 25 of 60')).toBeVisible();
+		await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+	},
+};
