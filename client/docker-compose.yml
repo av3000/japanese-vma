@@ -14,6 +14,8 @@ services:
       # bind mount, so without this an edit on the host is never noticed. It is expensive -
       # vite.config.ts pairs it with a 3s poll interval, because chokidar's 100ms default
       # starves the dev server. Read the comment there before changing either one.
+      # The default local setup runs the frontend natively on Windows (`npm run dev`) with
+      # polling off; this container is the opt-in Docker route (#330).
       - CHOKIDAR_USEPOLLING=true
       - ORVAL_OPENAPI_URL=http://host.docker.internal:8080/docs/api.json
     networks:
@@ -26,6 +28,8 @@ services:
       context: .
       dockerfile: .docker/Dockerfile
     command: npm run storybook:docker
+    # Storybook reads CHOKIDAR_USEPOLLING from .env, not from here. Set it to true in .env when
+    # running Storybook in this container, or edits on the host are never noticed (#330).
     ports:
       - "${STORYBOOK_PORT:-6006}:6006"
     volumes:
