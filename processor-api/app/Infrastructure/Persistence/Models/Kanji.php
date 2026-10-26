@@ -45,6 +45,19 @@ class Kanji extends Model
         'radical_parts' => 'string',
     ];
 
+    /**
+     * 303 imported rows store the character as a literal '????' (supplementary-plane kanji
+     * lost to a non-UTF-8 import, #545). They cannot become a KanjiCharacter, so every read
+     * leaves them out: the detail answers 404 and lists, relations and counts skip them.
+     * The rows stay in the table until the source data can restore them.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('readable_character', function (Builder $query): void {
+            $query->where($query->qualifyColumn('kanji'), 'not like', '%?%');
+        });
+    }
+
     public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class, 'japanese_kanji_word_long');
