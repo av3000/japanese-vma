@@ -4,20 +4,13 @@ import { Meta } from "@storybook/addon-docs/blocks";
 
 # Choosing badges
 
-Six components look alike and do different jobs. Pick by what the marker says, not by how it looks.
+Five components look alike and do different jobs. Pick by what the marker says, not by how it looks.
 
-- A count or dot in the corner of another element: use `Badge` in `components/shared/Badge`
 - A small count or label that sits inline, such as the comment total: use the older `Badge` in `components/ui/badge`
 - A tag or an active filter, removable or read-only: use `Chip` (`components/shared/Chip`)
 - A JLPT level: use `LevelBadge` (`components/shared/LevelBadge`)
 - Moderation or processing status: use `StatusPill` (`components/shared/StatusPill`)
 - Public or private: use `VisibilityCue` (`components/shared/VisibilityCue`)
-
-## Shared Badge: a count on something else
-
-`Badge` wraps a child and pins a count or a dot to its corner, for example the unread number on a bell. Props: `badgeContent`, `max` (shows `99+`), `showZero`, `variant` (`standard` or `dot`), `color` (`primary`, `secondary`, `error`, `success`, `warning`), `anchorOrigin` and `invisible`. With `standalone` it renders in flow without a child, and `animated` makes it pulse when the count changes. That pulse has no `prefers-reduced-motion` rule yet, so leave `animated` off until it does.
-
-A dot on its own carries no text, so the element it sits on needs a label that says what changed. Nothing in the app imports it yet; its stories are the reference. See [Shared/Badge](?path=/docs/shared-badge--docs).
 
 ## UI Badge: an inline label
 
@@ -43,6 +36,6 @@ Use `CoverChip` from `features/LibraryCards/CardCover` for the type label on a c
 
 ## Quick rules
 
-- A count on another element is a `Badge`. A word that states something about the item is a `StatusPill`, a `LevelBadge` or a `VisibilityCue`.
+- A word that states something about the item is a `StatusPill`, a `LevelBadge` or a `VisibilityCue`.
 - Something the user can remove or click is a `Chip`. Everything else here is not interactive.
 - Every marker that conveys meaning carries visible text or an icon next to the colour.

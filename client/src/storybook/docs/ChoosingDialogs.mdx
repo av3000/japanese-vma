@@ -8,13 +8,12 @@ Every dialog here is a native `<dialog>` opened with `showModal()`, so focus is 
 
 - Ask the user to confirm an action: use `ConfirmModal` (`components/shared/modals`)
 - Confirm deleting an article, catalogue or post: use `DeleteInstanceModal` (`components/features/DeleteInstanceModal`)
-- Tell the user something, with one Close button: use `InfoModal` (`components/shared/modals`)
 - Any other dialog with a title, body and actions: use `DialogModal` (`components/shared/DialogModal`)
 - A full-height sheet (mobile menu, search): use `Drawer` (`components/shared/Drawer`)
 
 ## Opening them: `useModal`
 
-`DialogModal`, `ConfirmModal`, `InfoModal`, `DeleteInstanceModal` and `Drawer` are driven by a controller from `useModal(dialogRef)`: `open()`, `close()`, `isOpen` and `isRendered`. The hook owns `showModal()`, Escape, the scroll lock and returning focus to the trigger. The wrappers return `null` until `isRendered`, so a closed dialog costs nothing.
+`DialogModal`, `ConfirmModal`, `DeleteInstanceModal` and `Drawer` are driven by a controller from `useModal(dialogRef)`: `open()`, `close()`, `isOpen` and `isRendered`. The hook owns `showModal()`, Escape, the scroll lock and returning focus to the trigger. The wrappers return `null` until `isRendered`, so a closed dialog costs nothing.
 
 
 ## DialogModal: the default dialog
@@ -24,10 +23,6 @@ Compose `DialogModal.Header`, `DialogModal.Title`, `DialogModal.Body` and `Dialo
 ## ConfirmModal: yes or no
 
 A `DialogModal` with a title, your content as the body, and a Cancel and a confirm button. Set `confirmLabel` to the verb (`Remove item`, not `OK`), and `confirmVariant="danger"` for anything destructive. `isConfirmLoading` disables the confirm button and shows `Working...` while the request runs. See [Shared/Modals/ConfirmModal](?path=/docs/shared-modals-confirmmodal--docs).
-
-## InfoModal: acknowledge
-
-The same shell with a single Close button, for a message the user only needs to read. It has no stories yet.
 
 ## DeleteInstanceModal: delete an owned item
 

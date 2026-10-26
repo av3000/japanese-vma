@@ -41,7 +41,7 @@ For any visual, styling, token or component-choice work, read `client/DESIGN.md`
 ## 5) Modal And Dialog Composition
 
 - Rules: `repo-shared-dialogs`, `repo-css-modules-tokens`, `repo-layout-primitives`.
-- Primitives: `src/components/shared/DialogModal`, `src/components/shared/Modal`, `src/hooks/useModal.ts`, `src/hooks/useDialog.ts`.
+- Primitives: `src/components/shared/DialogModal`, `src/components/shared/Drawer`, `src/hooks/useModal.ts`.
 - Existing wrappers: `src/components/features/DeleteInstanceModal`, `src/components/shared/modals/ConfirmModal.tsx`, `src/components/features/catalogues/CatalogueBookmarkModal`.
 - `src/routes/ArticleDetails/ArticleContent/index.tsx` is the best current example of composing multiple modal controllers in one feature without pushing modal markup into unrelated route branches.
 - `npm run style:audit` reports what is left to migrate off utility classes.
