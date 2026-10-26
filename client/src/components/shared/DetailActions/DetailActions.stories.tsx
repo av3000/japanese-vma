@@ -68,17 +68,45 @@ export const FiveActions: Story = {
 	},
 };
 
-/** The same five actions on a phone, where the rail is the width of the screen. */
+/** Every action is visible, full width inside the group, and nothing scrolls sideways. */
+const expectFiveActionsFit = async (canvasElement: HTMLElement) => {
+	const group = within(canvasElement).getByRole('region', { name: 'Your article' });
+	const groupBox = group.getBoundingClientRect();
+
+	await expect(within(group).getAllByRole('button')).toHaveLength(5);
+	for (const label of FIVE_LABELS) {
+		const button = within(group).getByRole('button', { name: label });
+		const box = button.getBoundingClientRect();
+
+		await expect(button).toBeVisible();
+		await expect(box.left).toBeGreaterThanOrEqual(groupBox.left - 1);
+		await expect(box.right).toBeLessThanOrEqual(groupBox.right + 1);
+	}
+	await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+};
+
+/** The same five actions on a phone (360px), where the rail is the width of the screen. */
 export const FiveActionsOnPhone: Story = {
 	globals: { viewport: { value: 'xs' } },
 	args: { children: FIVE_LABELS.map(actionButton) },
 	play: async ({ canvasElement }) => {
-		const group = within(canvasElement).getByRole('region', { name: 'Your article' });
+		await expect(window.innerWidth).toBe(360);
+		await expectFiveActionsFit(canvasElement);
+	},
+};
 
-		for (const label of FIVE_LABELS) {
-			await expect(within(group).getByRole('button', { name: label })).toBeVisible();
-		}
-		await expect(within(group).getAllByRole('button')).toHaveLength(5);
+/** The same five actions in the rail on a wide desktop (1400px). */
+export const FiveActionsWide: Story = {
+	parameters: {
+		viewport: {
+			options: { wide: { name: 'wide (1400px)', styles: { width: '1400px', height: '900px' }, type: 'desktop' } },
+		},
+	},
+	globals: { viewport: { value: 'wide' } },
+	args: { children: FIVE_LABELS.map(actionButton) },
+	play: async ({ canvasElement }) => {
+		await expect(window.innerWidth).toBe(1400);
+		await expectFiveActionsFit(canvasElement);
 	},
 };
 
