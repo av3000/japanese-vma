@@ -82,7 +82,7 @@ describe('DashboardArticlesTable', () => {
 	it('names each action after the article', () => {
 		const html = render([makeDashboardArticle({ uuid: 'a3', title_jp: '猫の話' })]);
 
-		expect(html).toContain('href="/articles/a3?edit=1"');
+		expect(html).toContain('href="/articles/a3/edit"');
 		expect(html).toContain('aria-label="Edit 猫の話"');
 		expect(html).toContain('aria-label="Delete 猫の話"');
 	});

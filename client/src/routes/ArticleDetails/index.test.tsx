@@ -5,12 +5,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { useArticleQuery } from '@/api/articles/details';
 import ArticleDetails from './index';
 
+let searchParams = new URLSearchParams();
+
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 
 	return {
 		...actual,
+		Navigate: ({ to }: { to: string }) => <div data-navigate={to} />,
 		useParams: () => ({ article_id: 'article-uuid' }),
+		useSearchParams: () => [searchParams],
 	};
 });
 
@@ -23,6 +27,16 @@ vi.mock('./ArticleContent', () => ({
 }));
 
 describe('ArticleDetails', () => {
+	it('sends an old ?edit=1 link to the edit page', () => {
+		searchParams = new URLSearchParams('edit=1');
+		vi.mocked(useArticleQuery).mockReturnValue({ data: undefined, isLoading: true, isError: false } as never);
+
+		const html = renderToStaticMarkup(<ArticleDetails />);
+
+		expect(html).toContain('data-navigate="/articles/article-uuid/edit"');
+		searchParams = new URLSearchParams();
+	});
+
 	it('uses the article detail skeleton inside accessible pending semantics', () => {
 		vi.mocked(useArticleQuery).mockReturnValue({
 			data: undefined,

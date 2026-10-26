@@ -237,10 +237,6 @@ vi.mock('@/components/shared/StatusPill', () => ({
 	StatusPill: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
-vi.mock('../ArticleEditModal', () => ({
-	default: () => <div>Article edit modal</div>,
-}));
-
 const createArticle = (engagementOverrides: Record<string, unknown> = {}) =>
 	({
 		id: 321,
@@ -476,11 +472,11 @@ describe('ArticleContent', () => {
 		expect(html).not.toContain('role="img"');
 	});
 
-	it('gives the owner Edit (still the ?edit=1 modal) and Delete, and the visibility cue', () => {
+	it('gives the owner Edit (the edit page) and Delete, and the visibility cue', () => {
 		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
-		expect(articleEditHref('article-uuid')).toBe('/articles/article-uuid?edit=1');
-		expect(html).toContain('href="/articles/article-uuid?edit=1"');
+		expect(articleEditHref('article-uuid')).toBe('/articles/article-uuid/edit');
+		expect(html).toContain('href="/articles/article-uuid/edit"');
 		expect(html).toContain('Your article');
 		expect(html).toContain('Delete');
 		expect(html).toContain('Public');
@@ -493,7 +489,7 @@ describe('ArticleContent', () => {
 		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
 		expect(html).not.toContain('Your article');
-		expect(html).not.toContain('?edit=1');
+		expect(html).not.toContain('/articles/article-uuid/edit');
 		expect(html).not.toContain('Public');
 		expect(html).not.toContain('Article status');
 	});
