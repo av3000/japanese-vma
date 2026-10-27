@@ -112,15 +112,7 @@ final class RequeueArticleProcessingAction
 
     public static function isRunning(ProcessingStateDTO $state): bool
     {
-        if ($state->status->isTerminal()) {
-            return false;
-        }
-
-        $lastProgress = $state->updatedAt ?? $state->createdAt;
-
-        return $lastProgress !== null
-            && CarbonImmutable::instance($lastProgress)->greaterThan(
-                CarbonImmutable::now()->subSeconds(ProcessingThresholds::STALE_AFTER_SECONDS),
-            );
+        return ! $state->status->isTerminal()
+            && ! ProcessingThresholds::isStale($state->status, $state->updatedAt, $state->createdAt, CarbonImmutable::now());
     }
 }

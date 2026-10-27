@@ -158,8 +158,7 @@ final class ProcessingStateRepository implements ProcessingStateRepositoryInterf
     public function getStaleNonTerminal(DateTimeInterface $before): array
     {
         return ProcessingState::query()
-            ->whereIn('status', ProcessingStatus::nonTerminalValues())
-            ->where('updated_at', '<', $before)
+            ->stale($before)
             ->orderBy('id')
             ->get()
             ->map(self::toDto(...))

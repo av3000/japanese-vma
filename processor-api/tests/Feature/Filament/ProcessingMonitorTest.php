@@ -18,6 +18,7 @@ use App\Infrastructure\Persistence\Models\ProcessingState;
 use App\Infrastructure\Persistence\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
@@ -89,6 +90,27 @@ class ProcessingMonitorTest extends TestCase
         Queue::assertPushed(ProcessArticleContentJob::class, static fn (ProcessArticleContentJob $job): bool => $job->articleUuid === $state->entity_id && $job->contentVersion === 4);
         self::assertSame(ProcessingStatus::PENDING, $state->fresh()->status);
         self::assertSame(ActivityAction::ArticleReprocessRequested, AdminActivity::query()->sole()->action);
+    }
+
+    public function test_a_run_that_never_reported_progress_is_stuck_and_retryable_without_force(): void
+    {
+        $silent = $this->state(ProcessingStatus::PENDING);
+        DB::table('processing_states')->where('id', $silent->id)->update(['updated_at' => null, 'created_at' => CarbonImmutable::now()->subHour()]);
+
+        Livewire::test(ListProcessingStates::class)
+            ->assertCanSeeTableRecords([$silent])
+            ->assertSee('Stuck');
+
+        Livewire::test(ListProcessingStates::class, ['activeTab' => 'all'])
+            ->filterTable('stuck')
+            ->assertCanSeeTableRecords([$silent]);
+
+        Livewire::test(ListProcessingStates::class)
+            ->callTableAction('retry', $silent->fresh())
+            ->assertNotified('Processing was queued again.');
+
+        self::assertSame(ProcessingStatus::PENDING, $silent->fresh()->status);
+        Queue::assertPushed(ProcessArticleContentJob::class);
     }
 
     public function test_a_non_admin_holding_operations_manage_can_retry(): void
