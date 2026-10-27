@@ -12,24 +12,31 @@ use App\Domain\Shared\Enums\ObjectTemplateType;
  */
 final class ClientUrls
 {
-    private const PATHS = [
-        'ARTICLE' => 'articles',
-        'LIST' => 'catalogues',
-        'POST' => 'community',
-        'SENTENCE' => 'sentence',
-        'KANJI' => 'kanji',
-        'WORD' => 'word',
-        'RADICAL' => 'radical',
-    ];
-
     public static function forEntity(ObjectTemplateType $type, ?string $uuid): ?string
     {
-        $path = self::PATHS[$type->name] ?? null;
+        $path = self::path($type);
 
         if ($path === null || $uuid === null) {
             return null;
         }
 
         return rtrim((string) config('app.frontend_url'), '/')."/{$path}/{$uuid}";
+    }
+
+    /**
+     * The client route segment per type. Artists, lyrics and comments have no detail page.
+     */
+    private static function path(ObjectTemplateType $type): ?string
+    {
+        return match ($type) {
+            ObjectTemplateType::ARTICLE => 'articles',
+            ObjectTemplateType::LIST => 'catalogues',
+            ObjectTemplateType::POST => 'community',
+            ObjectTemplateType::SENTENCE => 'sentence',
+            ObjectTemplateType::KANJI => 'kanji',
+            ObjectTemplateType::WORD => 'word',
+            ObjectTemplateType::RADICAL => 'radical',
+            ObjectTemplateType::ARTIST, ObjectTemplateType::LYRIC, ObjectTemplateType::COMMENT => null,
+        };
     }
 }

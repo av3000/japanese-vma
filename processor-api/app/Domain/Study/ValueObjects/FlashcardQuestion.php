@@ -116,11 +116,6 @@ final readonly class FlashcardQuestion
     /** The engagement vocabulary's id for the items a catalogue type's cards are built from. */
     public static function itemTypeFor(SavedListType $type): ?ObjectTemplateType
     {
-        return match (self::baseType($type)) {
-            SavedListType::KANJIS => ObjectTemplateType::KANJI,
-            SavedListType::WORDS => ObjectTemplateType::WORD,
-            SavedListType::RADICALS => ObjectTemplateType::RADICAL,
-            default => null,
-        };
+        return self::baseType($type) === null ? null : $type->itemType();
     }
 }

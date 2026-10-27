@@ -54,7 +54,7 @@ final class UserAdminService implements UserAdminServiceInterface
                     ActivitySubjectType::User,
                     $created->uuid->value(),
                     $created->name,
-                    after: $created->activitySnapshot(),
+                    after: $this->snapshot($created),
                 ));
 
                 return $created;
@@ -86,15 +86,15 @@ final class UserAdminService implements UserAdminServiceInterface
             $updated = DB::transaction(function () use ($uuid, $account, $actor, $current, $emailChanged): UserAccountDTO {
                 $updated = $this->accounts->update($uuid, $account, clearEmailVerification: $emailChanged);
 
-                if ($current->activitySnapshot() !== $updated->activitySnapshot()) {
+                if ($this->snapshot($current) !== $this->snapshot($updated)) {
                     $this->activityRecorder->record(ActivityEntries::by(
                         $actor,
                         ActivityAction::UserUpdated,
                         ActivitySubjectType::User,
                         $updated->uuid->value(),
                         $updated->name,
-                        before: $current->activitySnapshot(),
-                        after: $updated->activitySnapshot(),
+                        before: $this->snapshot($current),
+                        after: $this->snapshot($updated),
                     ));
                 }
 
@@ -131,8 +131,8 @@ final class UserAdminService implements UserAdminServiceInterface
                     ActivitySubjectType::User,
                     $verified->uuid->value(),
                     $verified->name,
-                    before: $current->activitySnapshot(),
-                    after: $verified->activitySnapshot(),
+                    before: $this->snapshot($current),
+                    after: $this->snapshot($verified),
                 ));
 
                 return $verified;
@@ -169,6 +169,20 @@ final class UserAdminService implements UserAdminServiceInterface
 
             return Result::success();
         });
+    }
+
+    /**
+     * The account fields as the activity log keeps them: snake_case keys and an ATOM date.
+     *
+     * @return array{name: string, email: string, email_verified_at: string|null}
+     */
+    private function snapshot(UserAccountDTO $account): array
+    {
+        return [
+            'name' => $account->name,
+            'email' => $account->email,
+            'email_verified_at' => $account->emailVerifiedAt?->format(DATE_ATOM),
+        ];
     }
 
     /**

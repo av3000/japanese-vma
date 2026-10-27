@@ -21,16 +21,4 @@ final readonly class UserAccountDTO
         public ?DateTimeImmutable $emailVerifiedAt,
     ) {
     }
-
-    /**
-     * @return array{name: string, email: string, email_verified_at: string|null}
-     */
-    public function activitySnapshot(): array
-    {
-        return [
-            'name' => $this->name,
-            'email' => $this->email,
-            'email_verified_at' => $this->emailVerifiedAt?->format(DATE_ATOM),
-        ];
-    }
 }

@@ -6,7 +6,7 @@ namespace App\Filament\Resources\StudyMaterial;
 
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\JlptLevel;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiGrade;
-use App\Infrastructure\Persistence\Repositories\WordMapper;
+use App\Domain\JapaneseMaterial\Words\ValueObjects\JmdictSense;
 
 /**
  * Filter vocabularies shared by the study material resources, taken from the same value objects
@@ -54,6 +54,6 @@ final class StudyMaterialOptions
      */
     public static function meanings(?string $sense): string
     {
-        return implode('; ', app(WordMapper::class)->extractMeanings($sense));
+        return implode('; ', JmdictSense::glosses($sense));
     }
 }

@@ -8,7 +8,6 @@ use App\Application\Engagement\Interfaces\Readers\EntityReferenceReaderInterface
 use App\Domain\Shared\DTOs\EntityReferenceDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\SavedListType;
-use App\Domain\Shared\Services\TemplateTypeClassifier;
 use App\Infrastructure\Persistence\Models\CatalogueItem;
 use Illuminate\Contracts\Pagination\Paginator;
 use WeakMap;
@@ -27,16 +26,7 @@ final class CatalogueItemLabels
      */
     public static function itemType(SavedListType $catalogueType): ?ObjectTemplateType
     {
-        $base = (new TemplateTypeClassifier())->getBaseType($catalogueType) ?? $catalogueType;
-
-        return match ($base) {
-            SavedListType::RADICALS => ObjectTemplateType::RADICAL,
-            SavedListType::KANJIS => ObjectTemplateType::KANJI,
-            SavedListType::WORDS => ObjectTemplateType::WORD,
-            SavedListType::SENTENCES => ObjectTemplateType::SENTENCE,
-            SavedListType::ARTICLES => ObjectTemplateType::ARTICLE,
-            default => null,
-        };
+        return $catalogueType->itemType();
     }
 
     /**

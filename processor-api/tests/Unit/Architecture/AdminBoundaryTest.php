@@ -91,6 +91,32 @@ class AdminBoundaryTest extends TestCase
         $this->assertSame([], $violations, "Use a reader or a model scope instead:\n".implode("\n", $violations));
     }
 
+    /**
+     * The panel uses Eloquent models for its tables and forms (epic #179 rule 2) and nothing else
+     * from Infrastructure. PanelActor is the one exception: CurrentUserProviderInterface resolves
+     * only the `api` guard, so it maps the `web` panel user through the provider's static method.
+     */
+    public function test_the_panel_reaches_infrastructure_only_through_models(): void
+    {
+        $allowed = ['Filament/Support/PanelActor.php' => 'App\Infrastructure\Auth\Providers\PassportCurrentUserProvider'];
+        $scanner = new ClassReferenceScanner;
+        $violations = [];
+
+        foreach ($this->filesUnder('Filament') as $relative) {
+            foreach ($scanner->references($this->code($relative)) as $class => $lines) {
+                if (! str_starts_with($class, 'App\Infrastructure\\')
+                    || str_starts_with($class, 'App\Infrastructure\Persistence\Models\\')
+                    || ($allowed[$relative] ?? null) === $class) {
+                    continue;
+                }
+
+                $violations[] = "{$relative}:{$lines[0]} reaches {$class}";
+            }
+        }
+
+        $this->assertSame([], $violations, "Go through an application port instead:\n".implode("\n", $violations));
+    }
+
     public function test_website_policies_grant_staff_nothing(): void
     {
         $violations = [];
