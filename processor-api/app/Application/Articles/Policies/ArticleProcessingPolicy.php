@@ -6,6 +6,7 @@ namespace App\Application\Articles\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Requeueing processing puts a job on the production queue, so it is an operations right, not an
@@ -20,6 +21,6 @@ class ArticleProcessingPolicy
 
     public function canRequeue(AuthenticatedUser $actor): bool
     {
-        return $this->permissions->allows($actor, 'operations.manage');
+        return $this->permissions->allows($actor, PanelPermission::OperationsManage);
     }
 }

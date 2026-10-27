@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Processing\Actions;
 
 use App\Application\Articles\Actions\Processing\RequeueArticleProcessingAction;
 use App\Application\Articles\Actions\Processing\RequeueArticleProcessingBatchAction;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Processing\DTOs\ProcessingRetryBatchDTO;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Support\PanelActor;
@@ -29,7 +30,7 @@ final class RetryProcessingActions
             ->icon(Heroicon::OutlinedArrowPath)
             ->color('gray')
             ->visible(static fn (ProcessingState $record): bool => $record->entity_type->isRetryable()
-                && PanelActor::may('operations.manage'))
+                && PanelActor::may(PanelPermission::OperationsManage))
             ->schema([
                 Checkbox::make('force')
                     ->label('Retry even if the run is still reporting progress'),
@@ -55,7 +56,7 @@ final class RetryProcessingActions
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
             ->modalDescription('Runs still reporting progress are skipped. At most '.RequeueArticleProcessingBatchAction::MAX_BATCH.' can be retried at once.')
-            ->visible(static fn (): bool => PanelActor::may('operations.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::OperationsManage))
             ->deselectRecordsAfterCompletion()
             ->action(static function (Collection $records): void {
                 $result = app(RequeueArticleProcessingBatchAction::class)->execute(

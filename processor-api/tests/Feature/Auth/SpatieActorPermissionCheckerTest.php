@@ -6,6 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -42,37 +43,30 @@ final class SpatieActorPermissionCheckerTest extends TestCase
 
     public function test_a_role_holding_the_permission_is_allowed_and_nothing_else(): void
     {
-        $actor = $this->actorFor($this->createUserWithPermissions(['hashtags.manage']));
+        $actor = $this->actorFor($this->createUserWithPermissions([PanelPermission::HashtagsManage->value]));
 
-        self::assertTrue($this->checker->allows($actor, 'hashtags.manage'));
-        self::assertFalse($this->checker->allows($actor, 'operations.manage'));
+        self::assertTrue($this->checker->allows($actor, PanelPermission::HashtagsManage));
+        self::assertFalse($this->checker->allows($actor, PanelPermission::OperationsManage));
     }
 
     public function test_the_admin_role_passes_every_permission(): void
     {
         $actor = $this->actorFor($this->createAdmin());
 
-        self::assertTrue($this->checker->allows($actor, 'operations.manage'));
-        self::assertTrue($this->checker->allows($actor, 'users.update'));
+        self::assertTrue($this->checker->allows($actor, PanelPermission::OperationsManage));
+        self::assertTrue($this->checker->allows($actor, PanelPermission::UsersUpdate));
     }
 
     public function test_a_plain_member_is_refused(): void
     {
-        self::assertFalse($this->checker->allows($this->actorFor($this->createPanelUser()), 'hashtags.manage'));
-    }
-
-    public function test_an_unknown_permission_is_refused_rather_than_thrown(): void
-    {
-        $actor = $this->actorFor($this->createUserWithPermissions(['hashtags.manage']));
-
-        self::assertFalse($this->checker->allows($actor, 'hashtags.destroy'));
+        self::assertFalse($this->checker->allows($this->actorFor($this->createPanelUser()), PanelPermission::HashtagsManage));
     }
 
     public function test_an_actor_whose_account_is_gone_is_refused(): void
     {
         $actor = new AuthenticatedUser(UserId::from(999_999), EntityId::generate(), UserName::from('Ghost'), isAdmin: true);
 
-        self::assertFalse($this->checker->allows($actor, 'hashtags.manage'));
+        self::assertFalse($this->checker->allows($actor, PanelPermission::HashtagsManage));
     }
 
     private function actorFor(User $user): AuthenticatedUser

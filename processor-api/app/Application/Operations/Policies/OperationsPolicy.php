@@ -6,6 +6,7 @@ namespace App\Application\Operations\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Operations that act on production infrastructure, such as the queue worker check. Only
@@ -20,6 +21,6 @@ class OperationsPolicy
 
     public function canManage(AuthenticatedUser $actor): bool
     {
-        return $this->permissions->allows($actor, 'operations.manage');
+        return $this->permissions->allows($actor, PanelPermission::OperationsManage);
     }
 }

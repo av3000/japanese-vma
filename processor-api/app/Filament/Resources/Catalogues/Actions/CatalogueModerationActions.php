@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Catalogues\Actions;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Policies\CatalogueModerationPolicy;
 use App\Application\Catalogues\Services\CatalogueModerationServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Catalogues\CatalogueResource;
@@ -30,7 +31,7 @@ final class CatalogueModerationActions
             ->color('gray')
             ->requiresConfirmation()
             ->visible(static fn (): bool => PanelActor::may(
-                'catalogues.update',
+                PanelPermission::CataloguesUpdate,
                 static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canModerate($actor),
             ))
             ->action(static function (Catalogue $record): void {
@@ -58,7 +59,7 @@ final class CatalogueModerationActions
             ->modalDescription('The catalogue, its items, comments, likes, views and hashtag links are removed. The items themselves stay. This cannot be undone.')
             ->modalSubmitActionLabel('Delete catalogue')
             ->visible(static fn (Catalogue $record): bool => PanelActor::may(
-                'catalogues.delete',
+                PanelPermission::CataloguesDelete,
                 static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canRemoveType($actor, $record->type),
             ))
             ->action(static function (Catalogue $record, Action $action): void {

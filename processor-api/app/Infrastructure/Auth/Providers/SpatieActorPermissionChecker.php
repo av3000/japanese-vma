@@ -6,6 +6,7 @@ namespace App\Infrastructure\Auth\Providers;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Infrastructure\Persistence\Models\User;
 
 /**
@@ -14,7 +15,7 @@ use App\Infrastructure\Persistence\Models\User;
  */
 final class SpatieActorPermissionChecker implements ActorPermissionCheckerInterface
 {
-    public function allows(AuthenticatedUser $actor, string $permission): bool
+    public function allows(AuthenticatedUser $actor, PanelPermission $permission): bool
     {
         return User::query()->find($actor->id->value())?->hasPanelPermission($permission) === true;
     }

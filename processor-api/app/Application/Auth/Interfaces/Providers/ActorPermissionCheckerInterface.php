@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Auth\Interfaces\Providers;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Whether an actor holds a panel permission from `config/permission-catalog.php`, with the `admin`
@@ -13,5 +14,5 @@ use App\Application\Auth\DTOs\AuthenticatedUser;
  */
 interface ActorPermissionCheckerInterface
 {
-    public function allows(AuthenticatedUser $actor, string $permission): bool;
+    public function allows(AuthenticatedUser $actor, PanelPermission $permission): bool;
 }

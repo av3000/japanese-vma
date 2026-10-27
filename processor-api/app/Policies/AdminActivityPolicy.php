@@ -4,41 +4,25 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Infrastructure\Persistence\Models\AdminActivity;
-use App\Infrastructure\Persistence\Models\User;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * The activity log is append-only: readable with `activity.view`, never writable from the panel.
  */
-class AdminActivityPolicy
+class AdminActivityPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('activity.view');
+        return PanelPermission::ActivityView;
     }
 
-    public function view(User $user, AdminActivity $activity): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('activity.view');
+        return null;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
-    }
-
-    public function update(User $user, AdminActivity $activity): bool
-    {
-        return false;
-    }
-
-    public function delete(User $user, AdminActivity $activity): bool
-    {
-        return false;
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+        return null;
     }
 }

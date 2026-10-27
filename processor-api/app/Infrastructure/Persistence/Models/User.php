@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Application\Users\Support\PanelPermission;
 use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Shared\Enums\UserRole;
 use Database\Factories\UserFactory;
@@ -102,9 +103,9 @@ class User extends Authenticatable implements FilamentUser
      * so a missed seeder run cannot lock the only administrator out. Policy invariants such as
      * "users are never deleted" still apply after this check.
      */
-    public function hasPanelPermission(string $permission): bool
+    public function hasPanelPermission(PanelPermission $permission): bool
     {
-        return $this->isPanelSuperuser() || $this->checkPermissionTo($permission);
+        return $this->isPanelSuperuser() || $this->checkPermissionTo($permission->value);
     }
 
     public function isPanelSuperuser(): bool

@@ -11,6 +11,7 @@ use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Application\Users\Policies\UserAdminPolicy;
 use App\Application\Users\Services\UserAdminService;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -62,7 +63,7 @@ final class UserAdminServiceTest extends TestCase
         $checker = $this->createMock(ActorPermissionCheckerInterface::class);
         $checker->expects(self::once())
             ->method('allows')
-            ->with(self::isInstanceOf(AuthenticatedUser::class), 'users.update')
+            ->with(self::isInstanceOf(AuthenticatedUser::class), PanelPermission::UsersUpdate)
             ->willReturn(false);
 
         $result = $call(new UserAdminService($accounts, $users, $recorder, new UserAdminPolicy($checker)), $this->actor());

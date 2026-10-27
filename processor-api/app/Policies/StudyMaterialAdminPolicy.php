@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Application\Users\Support\PanelPermission;
 use App\Infrastructure\Persistence\Models\Sentence;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -14,37 +15,30 @@ use Illuminate\Database\Eloquent\Model;
  * never edited, through SentenceModerationServiceInterface, which applies
  * SentenceModerationPolicy.
  */
-class StudyMaterialAdminPolicy
+class StudyMaterialAdminPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('study.view');
+        return PanelPermission::StudyView;
     }
 
-    public function view(User $user, Model $record): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('study.view');
+        return null;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
+        return PanelPermission::SentencesModerate;
     }
 
-    public function update(User $user, Model $record): bool
-    {
-        return false;
-    }
-
+    /**
+     * Only a user-authored sentence can be removed; imported rows belong to the importer.
+     */
     public function delete(User $user, Model $record): bool
     {
         return $record instanceof Sentence
             && $record->user_id !== null
-            && $user->hasPanelPermission('sentences.moderate');
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+            && parent::delete($user, $record);
     }
 }

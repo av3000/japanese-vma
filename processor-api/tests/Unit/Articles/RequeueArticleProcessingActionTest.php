@@ -12,6 +12,7 @@ use App\Application\Articles\Policies\ArticleProcessingPolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -41,7 +42,7 @@ final class RequeueArticleProcessingActionTest extends TestCase
         $checker = $this->createMock(ActorPermissionCheckerInterface::class);
         $checker->expects(self::once())
             ->method('allows')
-            ->with(self::isInstanceOf(AuthenticatedUser::class), 'operations.manage')
+            ->with(self::isInstanceOf(AuthenticatedUser::class), PanelPermission::OperationsManage)
             ->willReturn(false);
 
         $result = (new RequeueArticleProcessingAction(

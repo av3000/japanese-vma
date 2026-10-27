@@ -6,6 +6,7 @@ namespace App\Filament\Support;
 
 use App\Application\Activity\ActivitySourceContext;
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Activity\Enums\ActivitySource;
 use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\User;
@@ -50,7 +51,7 @@ final class PanelActor
      *
      * @param callable(AuthenticatedUser): bool|null $applicationRule
      */
-    public static function may(string $permission, ?callable $applicationRule = null): bool
+    public static function may(PanelPermission $permission, ?callable $applicationRule = null): bool
     {
         $user = Filament::auth()->user();
 

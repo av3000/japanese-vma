@@ -6,6 +6,7 @@ namespace App\Filament\Pages;
 
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
 use App\Application\Operations\Services\EnvironmentHealthServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Operations\DTOs\HealthCheckResultDTO;
 use App\Domain\Operations\DTOs\QueueWorkerCheckDTO;
 use App\Domain\Operations\Enums\HealthStatus;
@@ -47,7 +48,7 @@ class EnvironmentHealth extends Page
 
     public static function canAccess(): bool
     {
-        return PanelActor::may('operations.view');
+        return PanelActor::may(PanelPermission::OperationsView);
     }
 
     public function mount(): void
@@ -63,7 +64,7 @@ class EnvironmentHealth extends Page
                 ->icon(Heroicon::OutlinedPlay)
                 ->requiresConfirmation()
                 ->modalDescription('Puts one smoke job on the default queue and waits up to '.EnvironmentHealthServiceInterface::WORKER_CHECK_TIMEOUT_SECONDS.' seconds for a worker to run it.')
-                ->visible(static fn (): bool => PanelActor::may('operations.manage'))
+                ->visible(static fn (): bool => PanelActor::may(PanelPermission::OperationsManage))
                 ->action(function (): void {
                     $outcome = $this->service()->runWorkerCheck(PanelActor::current());
 

@@ -11,6 +11,7 @@ use App\Application\Engagement\Actions\MergeHashtagsAction;
 use App\Application\Engagement\Actions\RenameHashtagAction;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Application\Engagement\Policies\HashtagManagementPolicy;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -82,7 +83,7 @@ final class HashtagManagementTest extends TestCase
         $checker = $this->createMock(ActorPermissionCheckerInterface::class);
         $checker->expects(self::once())
             ->method('allows')
-            ->with(self::isInstanceOf(AuthenticatedUser::class), 'hashtags.manage')
+            ->with(self::isInstanceOf(AuthenticatedUser::class), PanelPermission::HashtagsManage)
             ->willReturn($allows);
 
         return new HashtagManagementPolicy($checker);

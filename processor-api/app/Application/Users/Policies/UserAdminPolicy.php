@@ -6,6 +6,7 @@ namespace App\Application\Users\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Account administration by staff. Only UserAdminService reads this. Creating and updating share a
@@ -20,11 +21,11 @@ class UserAdminPolicy
 
     public function canCreate(AuthenticatedUser $actor): bool
     {
-        return $this->permissions->allows($actor, 'users.update');
+        return $this->permissions->allows($actor, PanelPermission::UsersUpdate);
     }
 
     public function canUpdate(AuthenticatedUser $actor): bool
     {
-        return $this->permissions->allows($actor, 'users.update');
+        return $this->permissions->allows($actor, PanelPermission::UsersUpdate);
     }
 }

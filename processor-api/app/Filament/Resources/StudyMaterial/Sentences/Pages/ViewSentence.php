@@ -7,6 +7,7 @@ namespace App\Filament\Resources\StudyMaterial\Sentences\Pages;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Sentences\Policies\SentenceModerationPolicy;
 use App\Application\JapaneseMaterial\Sentences\Services\SentenceModerationServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\StudyMaterial\Sentences\SentenceResource;
 use App\Filament\Support\PanelActor;
@@ -34,7 +35,7 @@ class ViewSentence extends ViewRecord
                 ->requiresConfirmation()
                 ->modalDescription('The sentence, its kanji and word links, comments and list entries are removed. This cannot be undone.')
                 ->visible(fn (): bool => $this->sentence()->user_id !== null && PanelActor::may(
-                    'sentences.moderate',
+                    PanelPermission::SentencesModerate,
                     static fn (AuthenticatedUser $actor): bool => app(SentenceModerationPolicy::class)->canModerate($actor),
                 ))
                 ->action(function (): void {

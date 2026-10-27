@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Application\Users\Support\PanelPermission;
 use App\Infrastructure\Persistence\Models\User;
 
 class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPanelPermission('users.view');
+        return $user->hasPanelPermission(PanelPermission::UsersView);
     }
 
     public function view(User $user, User $record): bool
     {
-        return $user->hasPanelPermission('users.view');
+        return $user->hasPanelPermission(PanelPermission::UsersView);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPanelPermission('users.update');
+        return $user->hasPanelPermission(PanelPermission::UsersUpdate);
     }
 
     public function update(User $user, User $record): bool
     {
-        return $user->hasPanelPermission('users.update');
+        return $user->hasPanelPermission(PanelPermission::UsersUpdate);
     }
 
     /**
@@ -35,7 +36,7 @@ class UserPolicy
      */
     public function assignRoles(User $user, User $record): bool
     {
-        return $user->hasPanelPermission('roles.assign');
+        return $user->hasPanelPermission(PanelPermission::RolesAssign);
     }
 
     public function assignAdminRole(User $user): bool

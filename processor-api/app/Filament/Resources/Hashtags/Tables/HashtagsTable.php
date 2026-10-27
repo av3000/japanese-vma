@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Hashtags\Tables;
 
 use App\Application\Engagement\Actions\MergeHashtagsAction;
 use App\Application\Engagement\Actions\RenameHashtagAction;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
 use App\Domain\Engagement\ValueObjects\HashtagName;
 use App\Domain\Shared\Enums\ObjectTemplateType;
@@ -126,7 +127,7 @@ class HashtagsTable
         return Action::make('rename')
             ->icon(Heroicon::OutlinedPencilSquare)
             ->color('gray')
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Uniquehashtag $record): array => ['name' => $record->content])
             ->schema([
                 TextInput::make('name')
@@ -148,7 +149,7 @@ class HashtagsTable
             ->label('Merge into…')
             ->icon(Heroicon::OutlinedArrowsPointingIn)
             ->color('gray')
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Uniquehashtag $record): array => ['target' => self::defaultTargetFor($record)])
             ->schema(static fn (Uniquehashtag $record): array => [
                 Select::make('target')
@@ -180,7 +181,7 @@ class HashtagsTable
         return BulkAction::make('mergeSelected')
             ->label('Merge selected')
             ->icon(Heroicon::OutlinedArrowsPointingIn)
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Collection $records): array => ['target' => $records->sortByDesc('active_links')->first()?->id])
             ->schema(static fn (Collection $records): array => [
                 Select::make('target')

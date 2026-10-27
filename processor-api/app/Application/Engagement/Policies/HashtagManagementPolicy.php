@@ -6,6 +6,7 @@ namespace App\Application\Engagement\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Renaming and merging tags change every entity that uses them. Only MergeHashtagsAction and
@@ -20,6 +21,6 @@ class HashtagManagementPolicy
 
     public function canManage(AuthenticatedUser $actor): bool
     {
-        return $this->permissions->allows($actor, 'hashtags.manage');
+        return $this->permissions->allows($actor, PanelPermission::HashtagsManage);
     }
 }

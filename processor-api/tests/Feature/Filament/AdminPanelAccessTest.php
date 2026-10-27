@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
-use App\Application\Users\Support\PermissionCatalog;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\User;
 use Database\Seeders\PermissionSeeder;
@@ -59,8 +59,8 @@ class AdminPanelAccessTest extends TestCase
 
         self::assertSame([], $admin->getAllPermissions()->all());
 
-        foreach (PermissionCatalog::allPermissionNames() as $permission) {
-            self::assertTrue($admin->hasPanelPermission($permission), $permission);
+        foreach (PanelPermission::cases() as $permission) {
+            self::assertTrue($admin->hasPanelPermission($permission), $permission->value);
         }
 
         $this->actingAs($admin, 'web')->get('/admin/users')->assertOk();
