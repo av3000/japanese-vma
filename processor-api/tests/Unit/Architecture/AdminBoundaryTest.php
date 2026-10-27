@@ -8,110 +8,165 @@ use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Tests\Unit\Architecture\Support\AdminBoundaryRules;
 
 /**
- * Staff actions live in the admin panel only, and the website knows nothing about them.
+ * Staff actions live in the admin panel only, and the website knows nothing about them
+ * (`ARCH-admin-boundary`). The checks run on resolved class references, not on text, so comments
+ * do not count and aliased or grouped imports do.
  *
- * - The website (app/Http) never reaches a moderation service or moderation policy.
+ * - Website code (app/Http, app/Console, app/Jobs and the non-moderation parts of app/Application)
+ *   never reaches a moderation service or policy, or a panel-only use case.
  * - The panel (app/Filament) never acts through the website's write services or policies, so
  *   every staff action has one entry point and one activity log entry.
  * - The website's policies grant staff nothing.
  *
- * KNOWN_VIOLATIONS lists what is still being removed, each with the issue that removes it. An
- * entry that no longer violates fails the test too, so the list only shrinks.
+ * KNOWN_VIOLATIONS lists what is still being removed, each with its rule and the issue that removes
+ * it. An entry that no longer violates fails the test too, so the list only shrinks.
  */
 class AdminBoundaryTest extends TestCase
 {
-    private const MODERATION_CODE = '/\b\w+Moderation(Service|ServiceInterface|Policy)\b/';
-
-    private const WEBSITE_WRITE_CODE = '/\b(ArticleServiceInterface|CatalogueServiceInterface|CommentServiceInterface|PostWriteServiceInterface|SentenceServiceInterface|ArticlePolicy|CataloguePolicy|CommentPolicy|PostPolicy|SentencePolicy)\b/';
-
-    private const STAFF_CHECK = '/->isAdmin\b/';
-
-    private const WEBSITE_POLICIES = [
-        'Application/Articles/Policies/ArticlePolicy.php',
-        'Application/Catalogues/Policies/CataloguePolicy.php',
-        'Application/Comments/Policies/CommentPolicy.php',
-        'Application/Community/Posts/Policies/PostPolicy.php',
-        'Application/JapaneseMaterial/Sentences/Policies/SentencePolicy.php',
-    ];
-
-    /** @var array<string, string> path relative to app/ => issue that removes the violation */
+    /** @var array<string, array{rule: 'moderation'|'staff', issue: string}> path relative to app/ */
     private const KNOWN_VIOLATIONS = [
-        'Http/v1/Articles/Controllers/ArticleController.php' => '#572',
-        'Application/Articles/Policies/ArticlePolicy.php' => '#572',
-        'Application/Community/Posts/Policies/PostPolicy.php' => '#573',
-        'Application/Catalogues/Policies/CataloguePolicy.php' => '#574',
-        'Application/Comments/Policies/CommentPolicy.php' => '#574',
-        'Application/JapaneseMaterial/Sentences/Policies/SentencePolicy.php' => '#574',
+        'Http/v1/Articles/Controllers/ArticleController.php' => ['rule' => 'moderation', 'issue' => '#572'],
+        'Application/Articles/Policies/ArticlePolicy.php' => ['rule' => 'staff', 'issue' => '#572'],
+        'Application/Community/Posts/Policies/PostPolicy.php' => ['rule' => 'staff', 'issue' => '#573'],
+        'Application/Catalogues/Policies/CataloguePolicy.php' => ['rule' => 'staff', 'issue' => '#574'],
+        'Application/Comments/Policies/CommentPolicy.php' => ['rule' => 'staff', 'issue' => '#574'],
+        'Application/JapaneseMaterial/Sentences/Policies/SentencePolicy.php' => ['rule' => 'staff', 'issue' => '#574'],
     ];
+
+    private AdminBoundaryRules $rules;
+
+    protected function setUp(): void
+    {
+        $this->rules = new AdminBoundaryRules;
+    }
 
     public function test_the_website_never_reaches_moderation_code(): void
     {
-        $this->assertNoViolations($this->violations($this->filesUnder('Http'), self::MODERATION_CODE));
+        $violations = [];
+
+        foreach ($this->filesUnder('Http', 'Console', 'Jobs', 'Application') as $relative) {
+            if (AdminBoundaryRules::isWebsiteFile($relative) && ! $this->isKnown($relative)) {
+                array_push($violations, ...$this->rules->websiteReachingModeration($relative, $this->code($relative)));
+            }
+        }
+
+        $this->assertNoViolations($violations);
     }
 
     public function test_the_panel_never_acts_through_the_website_write_path(): void
     {
-        $this->assertNoViolations($this->violations($this->filesUnder('Filament'), self::WEBSITE_WRITE_CODE));
+        $violations = [];
+
+        foreach ($this->filesUnder('Filament') as $relative) {
+            array_push($violations, ...$this->rules->panelUsingWebsiteWritePath($relative, $this->code($relative)));
+        }
+
+        $this->assertNoViolations($violations);
     }
 
     public function test_website_policies_grant_staff_nothing(): void
     {
-        $this->assertNoViolations($this->violations(self::WEBSITE_POLICIES, self::STAFF_CHECK));
+        $violations = [];
+
+        foreach (AdminBoundaryRules::WEBSITE_POLICIES as $relative) {
+            if (! $this->isKnown($relative)) {
+                array_push($violations, ...$this->rules->staffChecks($relative, $this->code($relative)));
+            }
+        }
+
+        $this->assertNoViolations($violations);
     }
 
     public function test_every_known_violation_still_exists(): void
     {
         $stale = [];
 
-        foreach (array_keys(self::KNOWN_VIOLATIONS) as $relative) {
-            $pattern = str_starts_with($relative, 'Http/') ? self::MODERATION_CODE : self::STAFF_CHECK;
+        foreach (self::KNOWN_VIOLATIONS as $relative => ['rule' => $rule, 'issue' => $issue]) {
+            $found = $rule === 'moderation'
+                ? $this->rules->websiteReachingModeration($relative, $this->code($relative))
+                : $this->rules->staffChecks($relative, $this->code($relative));
 
-            if ($this->matchingLines($relative, $pattern) === []) {
-                $stale[] = $relative;
+            if ($found === []) {
+                $stale[] = "{$relative} ({$issue})";
             }
         }
 
         $this->assertSame([], $stale, "Fixed, so remove from KNOWN_VIOLATIONS:\n".implode("\n", $stale));
     }
 
-    /**
-     * @param list<string> $files paths relative to app/
-     *
-     * @return list<string>
-     */
-    private function violations(array $files, string $pattern): array
+    public function test_the_rules_catch_what_a_line_scan_missed(): void
     {
-        $violations = [];
+        $panelUsingConcreteWriteService = <<<'PHP'
+            <?php
+            namespace App\Filament\Resources\Posts\Actions;
 
-        foreach ($files as $relative) {
-            if (array_key_exists($relative, self::KNOWN_VIOLATIONS)) {
-                continue;
+            use App\Application\Community\Posts\Services\PostWriteService;
+
+            final class Example
+            {
+                public function __construct(private PostWriteService $posts)
+                {
+                }
             }
+            PHP;
 
-            foreach ($this->matchingLines($relative, $pattern) as $number => $line) {
-                $violations[] = sprintf('%s:%d %s', $relative, $number, $line);
+        $consoleReachingPanelOnlyCode = <<<'PHP'
+            <?php
+            namespace App\Console\Commands;
+
+            use App\Application\Engagement\Actions as Hashtags;
+
+            final class Example
+            {
+                public function handle(): void
+                {
+                    app(Hashtags\MergeHashtagsAction::class);
+                }
             }
-        }
+            PHP;
 
-        return $violations;
+        $policyGrantingAdminByRole = <<<'PHP'
+            <?php
+            namespace App\Application\Articles\Policies;
+
+            use App\Domain\Shared\Enums\UserRole;
+
+            final class ArticlePolicy
+            {
+                // Staff used to bypass this with ->isAdmin.
+                public function canDelete(object $user): bool
+                {
+                    return $user->hasRole(UserRole::ADMIN->value);
+                }
+            }
+            PHP;
+
+        self::assertSame(
+            [
+                'Filament/Example.php:4 acts through the website write path: App\Application\Community\Posts\Services\PostWriteService',
+                'Filament/Example.php:8 acts through the website write path: App\Application\Community\Posts\Services\PostWriteService',
+            ],
+            $this->rules->panelUsingWebsiteWritePath('Filament/Example.php', $panelUsingConcreteWriteService),
+        );
+        self::assertSame(
+            ['Console/Example.php:10 reaches staff-only code: App\Application\Engagement\Actions\MergeHashtagsAction'],
+            $this->rules->websiteReachingModeration('Console/Example.php', $consoleReachingPanelOnlyCode),
+        );
+        self::assertSame(
+            [
+                'Policy.php:11 grants staff through ->hasRole',
+                'Policy.php:11 grants staff through UserRole::ADMIN',
+            ],
+            $this->rules->staffChecks('Policy.php', $policyGrantingAdminByRole),
+        );
     }
 
-    /**
-     * @return array<int, string> line number => trimmed line
-     */
-    private function matchingLines(string $relative, string $pattern): array
+    private function isKnown(string $relative): bool
     {
-        $matches = [];
-
-        foreach (file($this->appPath().'/'.$relative) as $index => $line) {
-            if (preg_match($pattern, $line) === 1) {
-                $matches[$index + 1] = trim($line);
-            }
-        }
-
-        return $matches;
+        return array_key_exists($relative, self::KNOWN_VIOLATIONS);
     }
 
     /**
@@ -122,23 +177,31 @@ class AdminBoundaryTest extends TestCase
         $this->assertSame(
             [],
             $violations,
-            "Staff actions belong to the admin panel and its moderation services:\n".implode("\n", $violations),
+            "Staff actions belong to the admin panel and its moderation services (ARCH-admin-boundary):\n".implode("\n", $violations),
         );
+    }
+
+    private function code(string $relative): string
+    {
+        return (string) file_get_contents($this->appPath().'/'.$relative);
     }
 
     /**
      * @return list<string> paths relative to app/
      */
-    private function filesUnder(string $directory): array
+    private function filesUnder(string ...$directories): array
     {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->appPath().'/'.$directory, RecursiveDirectoryIterator::SKIP_DOTS),
-        );
         $files = [];
 
-        foreach ($iterator as $file) {
-            if ($file instanceof SplFileInfo && $file->getExtension() === 'php') {
-                $files[] = str_replace('\\', '/', substr($file->getPathname(), strlen($this->appPath()) + 1));
+        foreach ($directories as $directory) {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($this->appPath().'/'.$directory, RecursiveDirectoryIterator::SKIP_DOTS),
+            );
+
+            foreach ($iterator as $file) {
+                if ($file instanceof SplFileInfo && $file->getExtension() === 'php') {
+                    $files[] = str_replace('\\', '/', substr($file->getPathname(), strlen($this->appPath()) + 1));
+                }
             }
         }
 
