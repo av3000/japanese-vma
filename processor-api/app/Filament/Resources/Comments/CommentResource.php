@@ -23,7 +23,8 @@ use UnitEnum;
 
 /**
  * Recent comments across every entity type, the only place the site's comments can be seen
- * together. Delete goes through CommentService and takes the comment's replies with it.
+ * together. Delete goes through CommentModerationServiceInterface and takes the comment's replies
+ * with it.
  */
 class CommentResource extends Resource
 {

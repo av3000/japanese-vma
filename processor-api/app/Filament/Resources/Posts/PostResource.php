@@ -23,7 +23,7 @@ use UnitEnum;
 
 /**
  * Community post moderation. Locking closes comments while the post stays visible; lock, unlock
- * and delete go through PostWriteService.
+ * and delete go through PostModerationServiceInterface.
  */
 class PostResource extends Resource
 {

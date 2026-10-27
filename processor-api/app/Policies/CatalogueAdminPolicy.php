@@ -9,8 +9,8 @@ use App\Infrastructure\Persistence\Models\User;
 
 /**
  * Panel access to catalogues. Titles, descriptions and items are edited only by their owners in
- * the React client; the panel changes publicity and deletes, and both also pass the application
- * CataloguePolicy.
+ * the React client; the panel changes publicity and deletes through
+ * CatalogueModerationServiceInterface, which applies CatalogueModerationPolicy.
  */
 class CatalogueAdminPolicy
 {

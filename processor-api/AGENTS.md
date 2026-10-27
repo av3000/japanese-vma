@@ -18,6 +18,7 @@ This file defines **backend-specific** guidance for changes under `processor-api
 ## 3) Layering & Domain Boundaries
 
 -   Rules: `ARCH-thin-controllers`, `ARCH-business-rules-in-application`, `ARCH-domain-dependency-direction`, `ARCH-domain-no-framework`, `ARCH-cross-module-service-interface`, `ARCH-focused-actions`, `ARCH-no-speculative-layers`.
+-   Admin panel: `ARCH-admin-boundary` (website and panel policies, `{Module}ModerationService` as the only staff write path, enforced by `tests/Unit/Architecture/AdminBoundaryTest`, whose `KNOWN_VIOLATIONS` only shrinks).
 -   Persistence: `DATA-repositories-hide-persistence`, `DATA-list-readers`, `DATA-list-shape-naming`, `DATA-complete-domain-models`, `DATA-mappers-translate-shape`, `DATA-sql-in-infrastructure`.
 
 ## 4) Validation, DTO, and Identifier Conventions

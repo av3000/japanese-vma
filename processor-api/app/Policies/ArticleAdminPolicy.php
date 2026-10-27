@@ -9,7 +9,8 @@ use App\Infrastructure\Persistence\Models\User;
 
 /**
  * Panel access to articles. Authoring stays in the React client, so there is no create. Status,
- * publicity and delete additionally pass the application ArticlePolicy at the action.
+ * publicity and delete go through ArticleModerationServiceInterface, which applies
+ * ArticleModerationPolicy.
  */
 class ArticleAdminPolicy
 {

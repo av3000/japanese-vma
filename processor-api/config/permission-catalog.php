@@ -56,7 +56,7 @@ return [
             'label' => 'Study material',
             'permissions' => [
                 'study.view' => 'Browse kanji, radicals, words, and sentences',
-                'sentences.moderate' => 'Edit and delete user-authored sentences',
+                'sentences.moderate' => 'Delete user-authored sentences',
             ],
         ],
         'operations' => [

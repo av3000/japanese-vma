@@ -9,7 +9,8 @@ use App\Infrastructure\Persistence\Models\User;
 
 /**
  * Panel access to community posts. Posts are written in the React client; the panel only locks,
- * unlocks and deletes them, and those actions also pass the application PostPolicy.
+ * unlocks and deletes them through PostModerationServiceInterface, which applies
+ * PostModerationPolicy.
  */
 class PostAdminPolicy
 {

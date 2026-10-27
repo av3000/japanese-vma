@@ -27,7 +27,7 @@ use UnitEnum;
 
 /**
  * Sentences, imported and user-authored, which share one table. Imported rows are read-only;
- * user-authored ones can be edited or deleted through SentenceService.
+ * user-authored ones are removed, never edited, through SentenceModerationServiceInterface.
  */
 class SentenceResource extends Resource
 {

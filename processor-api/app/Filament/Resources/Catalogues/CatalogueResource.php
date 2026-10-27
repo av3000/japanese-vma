@@ -23,8 +23,8 @@ use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
- * Mostly read-only catalogue oversight. Publicity and delete go through CatalogueService; titles,
- * descriptions and items belong to their owners.
+ * Mostly read-only catalogue oversight. Publicity and delete go through
+ * CatalogueModerationServiceInterface; titles, descriptions and items belong to their owners.
  */
 class CatalogueResource extends Resource
 {
