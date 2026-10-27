@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySource;
 use App\Domain\Activity\Enums\ActivitySubjectType;
@@ -133,6 +134,17 @@ class ActivityLogTest extends TestCase
         self::assertSame(ActivityAction::UserRoleAssigned, $row->action);
         self::assertSame((string) $member->uuid, $row->subject_id);
         self::assertSame(['role' => 'reviewer'], $row->context);
+    }
+
+    public function test_a_change_outside_any_request_is_recorded_as_console(): void
+    {
+        app(RoleServiceInterface::class)->createRole('auditor', 'api');
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::RoleCreated, $row->action);
+        self::assertSame(ActivitySource::Console, $row->source);
+        self::assertNull($row->actor_id);
     }
 
     public function test_api_role_delete_writes_a_row_with_the_api_source(): void

@@ -7,6 +7,7 @@ namespace App\Application\Activity;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Activity\DTOs\ActivityEntry;
 use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySource;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 
 /**
@@ -31,6 +32,7 @@ final class ActivityEntries
         array $before = [],
         array $after = [],
         array $context = [],
+        ?ActivitySource $source = null,
     ): ActivityEntry {
         return new ActivityEntry(
             actorId: $actor?->id->value(),
@@ -42,6 +44,7 @@ final class ActivityEntries
             before: $before,
             after: $after,
             context: $context,
+            source: $source,
         );
     }
 }

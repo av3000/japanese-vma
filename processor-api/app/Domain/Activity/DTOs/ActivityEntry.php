@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace App\Domain\Activity\DTOs;
 
 use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySource;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 
 /**
  * One privileged mutation: who did what to which entity, with before/after values.
  *
  * The actor is passed in explicitly rather than read from the session, because the panel signs in
- * on the `web` guard and the API on `api`; a null actor id means a console or system run.
+ * on the `web` guard and the API on `api`; a null actor id means a console or system run. The
+ * source may be passed too; when it is not, the recorder takes it from the request's
+ * ActivitySourceContext.
+ *
+ * `context` is free-form and kept verbatim, so it must never hold a secret: a flag such as
+ * `password_changed` is fine, the password itself never is.
  */
 final readonly class ActivityEntry
 {
@@ -30,7 +36,24 @@ final readonly class ActivityEntry
         public array $before = [],
         public array $after = [],
         public array $context = [],
+        public ?ActivitySource $source = null,
     ) {
+    }
+
+    /**
+     * Snapshot keys the subject type does not allow. loggableChanges() drops them; the recorder
+     * decides whether that is an error.
+     *
+     * @return list<string>
+     */
+    public function unknownAttributes(): array
+    {
+        $allowed = $this->subjectType->loggableAttributes();
+
+        return array_values(array_diff(
+            array_unique([...array_keys($this->before), ...array_keys($this->after)]),
+            $allowed,
+        ));
     }
 
     /**

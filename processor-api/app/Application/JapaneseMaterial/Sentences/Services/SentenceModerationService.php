@@ -53,7 +53,10 @@ class SentenceModerationService implements SentenceModerationServiceInterface
                     ActivitySubjectType::Sentence,
                     $sentence->getUuid()->value(),
                     mb_substr($sentence->getContent(), 0, 120),
-                    before: ['content' => $sentence->getContent(), 'author_id' => $sentence->getUserId()],
+                    before: [
+                        'content' => $sentence->getContent(),
+                        'author' => $this->sentenceRepository->findAuthorName($sentence->getIdValue()),
+                    ],
                 ));
 
                 $this->deleteSentence->execute($sentence->getIdValue());

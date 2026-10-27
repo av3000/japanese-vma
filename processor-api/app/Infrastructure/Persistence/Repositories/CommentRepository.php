@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Domain\Comments\DTOs\CommentCreateDTO;
+use App\Domain\Comments\DTOs\CommentSnapshotDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -103,6 +104,33 @@ class CommentRepository implements CommentRepositoryInterface
         }
 
         return $levels === [] ? [] : array_merge(...array_reverse($levels));
+    }
+
+    /**
+     * @param int[] $commentIds
+     *
+     * @return list<CommentSnapshotDTO>
+     */
+    public function findSnapshotsByIds(array $commentIds): array
+    {
+        if ($commentIds === []) {
+            return [];
+        }
+
+        return PersistenceComment::query()
+            ->leftJoin('users', 'users.id', '=', 'comments.user_id')
+            ->whereIn('comments.id', $commentIds)
+            ->orderBy('comments.id')
+            ->toBase()
+            ->get(['comments.uuid', 'comments.content', 'comments.parent_comment_id', 'users.name as author_name'])
+            ->map(static fn (object $row): CommentSnapshotDTO => new CommentSnapshotDTO(
+                uuid: (string) $row->uuid,
+                author: $row->author_name === null ? null : (string) $row->author_name,
+                content: (string) $row->content,
+                parentCommentId: $row->parent_comment_id === null ? null : (int) $row->parent_comment_id,
+            ))
+            ->values()
+            ->all();
     }
 
     /**

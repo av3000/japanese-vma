@@ -57,6 +57,11 @@ class FailsAfterDescendantDeleteCommentRepository implements CommentRepositoryIn
         return $this->inner->collectDescendantIds($commentId);
     }
 
+    public function findSnapshotsByIds(array $commentIds): array
+    {
+        return $this->inner->findSnapshotsByIds($commentIds);
+    }
+
     public function deleteByEntity(int $entityId, int $entityTypeId): void
     {
         $this->inner->deleteByEntity($entityId, $entityTypeId);

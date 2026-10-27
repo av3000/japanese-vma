@@ -191,7 +191,11 @@ class CommentResourceTest extends TestCase
         self::assertSame(ActivityAction::CommentDeleted, $row->action);
         self::assertSame('Offensive remark', $row->changes['before']['content']);
         self::assertSame('Comment Author', $row->changes['before']['author']);
-        self::assertSame(['replies_deleted' => 2], $row->context);
+        self::assertSame(2, $row->context['replies_deleted']);
+        self::assertSame([
+            ['uuid' => $reply->uuid, 'author' => 'Comment Author', 'content' => 'Reply below it', 'parent_comment_id' => $parent->id],
+            ['uuid' => $nested->uuid, 'author' => 'Comment Author', 'content' => 'Reply to the reply', 'parent_comment_id' => $reply->id],
+        ], $row->context['replies']);
     }
 
     public function test_bulk_delete_of_a_comment_and_its_reply_counts_both_as_deleted(): void

@@ -81,7 +81,7 @@ final class SentenceModerationServiceTest extends TestCase
         $row = AdminActivity::query()->sole();
         self::assertSame(ActivityAction::SentenceDeleted, $row->action);
         self::assertSame($this->sentence->uuid, $row->subject_id);
-        self::assertSame('私が書いた文です。', $row->changes['before']['content']);
+        self::assertSame(['content' => '私が書いた文です。', 'author' => 'Writer'], $row->changes['before']);
     }
 
     public function test_removal_rolls_back_when_the_activity_row_fails(): void
