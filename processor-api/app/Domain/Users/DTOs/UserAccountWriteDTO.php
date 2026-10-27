@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Users\DTOs;
 
 /**
- * An administrator's create or update of an account. A null password leaves the stored one
- * unchanged; on create it is required by the caller's validation.
+ * An administrator creating an account. Create-only: edits use UserAccountUpdateDTO, which
+ * carries no password.
  */
 final readonly class UserAccountWriteDTO
 {
@@ -14,7 +14,7 @@ final readonly class UserAccountWriteDTO
         public string $name,
         public string $email,
         #[\SensitiveParameter]
-        public ?string $password = null,
+        public string $password,
     ) {
     }
 }

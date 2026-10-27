@@ -14,6 +14,7 @@ use App\Application\Users\Services\UserAdminService;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Shared\Enums\HttpStatus;
 use App\Shared\Results\Result;
@@ -39,7 +40,7 @@ final class UserAdminServiceTest extends TestCase
 
         return [
             'create' => [static fn (UserAdminService $service, AuthenticatedUser $actor): Result => $service->createUser($account, $actor)],
-            'update' => [static fn (UserAdminService $service, AuthenticatedUser $actor): Result => $service->updateUser(EntityId::generate(), $account, $actor)],
+            'update' => [static fn (UserAdminService $service, AuthenticatedUser $actor): Result => $service->updateUser(EntityId::generate(), new UserAccountUpdateDTO('Someone', 'someone@example.com'), $actor)],
             'mark verified' => [static fn (UserAdminService $service, AuthenticatedUser $actor): Result => $service->markEmailVerified(EntityId::generate(), $actor)],
             'revoke tokens' => [static fn (UserAdminService $service, AuthenticatedUser $actor): Result => $service->revokeAllTokens(EntityId::generate(), $actor)],
         ];

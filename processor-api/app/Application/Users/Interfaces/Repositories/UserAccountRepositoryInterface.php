@@ -6,6 +6,7 @@ namespace App\Application\Users\Interfaces\Repositories;
 
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\DTOs\UserAccountDTO;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use DateTimeImmutable;
 
@@ -21,7 +22,10 @@ interface UserAccountRepositoryInterface
 
     public function create(UserAccountWriteDTO $account): UserAccountDTO;
 
-    public function update(EntityId $uuid, UserAccountWriteDTO $account, bool $clearEmailVerification): UserAccountDTO;
+    /**
+     * Name and email only; there is no way to set a password through this method.
+     */
+    public function update(EntityId $uuid, UserAccountUpdateDTO $account, bool $clearEmailVerification): UserAccountDTO;
 
     public function markEmailVerified(EntityId $uuid, DateTimeImmutable $verifiedAt): UserAccountDTO;
 }

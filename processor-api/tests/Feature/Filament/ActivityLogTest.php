@@ -156,8 +156,6 @@ class ActivityLogTest extends TestCase
         Livewire::test(EditUser::class, ['record' => $created->getKey()])
             ->fillForm([
                 'name' => 'Renamed Person',
-                'password' => 'secret-password-2',
-                'password_confirmation' => 'secret-password-2',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
@@ -167,8 +165,8 @@ class ActivityLogTest extends TestCase
         self::assertSame([ActivityAction::UserCreated, ActivityAction::UserUpdated], $rows->pluck('action')->all());
         self::assertSame(['name' => 'Created Person'], $rows[1]->changes['before']);
         self::assertSame(['name' => 'Renamed Person'], $rows[1]->changes['after']);
-        self::assertSame(['password_changed' => true], $rows[1]->context);
-        self::assertTrue(Hash::check('secret-password-2', $created->fresh()->password));
+        self::assertNull($rows[1]->context);
+        self::assertTrue(Hash::check('secret-password-1', $created->fresh()->password));
 
         foreach ($rows as $row) {
             $serialised = json_encode([$row->changes, $row->context]);

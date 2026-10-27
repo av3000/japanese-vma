@@ -41,21 +41,23 @@ class UserForm
                             ->badge()
                             ->helperText('Use the Assign role and Remove role actions to change roles.'),
                     ]),
+                // Create only: staff never set another user's password, which would let a
+                // `users.update` holder sign in as anyone. Edits go through UserAccountUpdateDTO.
                 Section::make('Password')
+                    ->visibleOn('create')
                     ->schema([
                         TextInput::make('password')
                             ->password()
                             ->revealable()
-                            ->required(static fn (string $operation): bool => $operation === 'create')
+                            ->required()
                             ->confirmed()
-                            ->dehydrated(static fn (?string $state): bool => filled($state))
                             ->minLength(8),
                         TextInput::make('password_confirmation')
                             ->label('Confirm password')
                             ->password()
                             ->revealable()
                             ->dehydrated(false)
-                            ->required(static fn (string $operation): bool => $operation === 'create'),
+                            ->required(),
                     ])
                     ->columns(2),
             ]);

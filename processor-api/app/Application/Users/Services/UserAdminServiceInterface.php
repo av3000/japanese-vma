@@ -6,6 +6,7 @@ namespace App\Application\Users\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Shared\Results\Result;
 
@@ -22,11 +23,12 @@ interface UserAdminServiceInterface
     public function createUser(UserAccountWriteDTO $account, AuthenticatedUser $actor): Result;
 
     /**
-     * Changing the email address clears its verification.
+     * Name and email only: staff never set another user's password. Changing the email address
+     * clears its verification.
      *
      * @return Result Success payload: UserAccountDTO
      */
-    public function updateUser(EntityId $uuid, UserAccountWriteDTO $account, AuthenticatedUser $actor): Result;
+    public function updateUser(EntityId $uuid, UserAccountUpdateDTO $account, AuthenticatedUser $actor): Result;
 
     /**
      * Idempotent: an already verified address keeps its original timestamp and records nothing.

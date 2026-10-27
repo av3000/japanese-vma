@@ -14,6 +14,7 @@ use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Users\DTOs\UserAccountDTO;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Domain\Users\Errors\UserErrors;
 use App\Shared\Results\Result;
@@ -63,7 +64,7 @@ final class UserAdminService implements UserAdminServiceInterface
         });
     }
 
-    public function updateUser(EntityId $uuid, UserAccountWriteDTO $account, AuthenticatedUser $actor): Result
+    public function updateUser(EntityId $uuid, UserAccountUpdateDTO $account, AuthenticatedUser $actor): Result
     {
         if (! $this->policy->canUpdate($actor)) {
             return Result::failure(UserErrors::adminAccessDenied());
@@ -84,9 +85,8 @@ final class UserAdminService implements UserAdminServiceInterface
 
             $updated = DB::transaction(function () use ($uuid, $account, $actor, $current, $emailChanged): UserAccountDTO {
                 $updated = $this->accounts->update($uuid, $account, clearEmailVerification: $emailChanged);
-                $passwordChanged = $account->password !== null;
 
-                if ($current->activitySnapshot() !== $updated->activitySnapshot() || $passwordChanged) {
+                if ($current->activitySnapshot() !== $updated->activitySnapshot()) {
                     $this->activityRecorder->record(ActivityEntries::by(
                         $actor,
                         ActivityAction::UserUpdated,
@@ -95,7 +95,6 @@ final class UserAdminService implements UserAdminServiceInterface
                         $updated->name,
                         before: $current->activitySnapshot(),
                         after: $updated->activitySnapshot(),
-                        context: $passwordChanged ? ['password_changed' => true] : [],
                     ));
                 }
 
