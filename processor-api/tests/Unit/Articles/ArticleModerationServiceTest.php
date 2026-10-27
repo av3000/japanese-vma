@@ -6,11 +6,19 @@ namespace Tests\Unit\Articles;
 
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Articles\Services\ArticleModerationService;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Domain\Activity\DTOs\ActivityEntry;
+use App\Domain\Articles\Models\Article;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -19,6 +27,8 @@ use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Shared\Enums\HttpStatus;
 use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use Tests\TestCase;
 
 /**
@@ -128,14 +138,142 @@ final class ArticleModerationServiceTest extends TestCase
         Log::shouldHaveReceived('error')->once();
     }
 
-    private function service(ArticleRepositoryInterface $repository): ArticleModerationService
+    /**
+     * @return array<string, array{ProcessingStatus|null}>
+     */
+    public static function unfinishedProcessing(): array
     {
-        return new ArticleModerationService(
+        return [
+            'no row' => [null],
+            'pending' => [ProcessingStatus::PENDING],
+            'processing' => [ProcessingStatus::PROCESSING],
+            'failed' => [ProcessingStatus::FAILED],
+            'superseded' => [ProcessingStatus::SUPERSEDED],
+        ];
+    }
+
+    #[DataProvider('unfinishedProcessing')]
+    public function test_approval_without_completed_processing_needs_the_override(?ProcessingStatus $processing): void
+    {
+        $repository = $this->repositoryWith(ArticleStatus::PENDING);
+        $repository->expects(self::never())->method('updateStatus');
+
+        $result = $this->service($repository, processing: $processing)->updateStatus(
+            EntityId::generate(),
+            ArticleStatus::APPROVED,
+            $this->authenticatedUser(isAdmin: true),
+        );
+
+        self::assertSame('Articles.ApprovalNeedsFinishedProcessing', $result->getError()->code);
+        self::assertSame(HttpStatus::CONFLICT, $result->getError()->toHttpStatus());
+    }
+
+    #[DataProvider('unfinishedProcessing')]
+    public function test_the_override_approves_and_is_recorded(?ProcessingStatus $processing): void
+    {
+        $repository = $this->repositoryWith(ArticleStatus::PENDING);
+        $repository->expects(self::once())->method('updateStatus')->willReturn(ArticleStatus::APPROVED);
+        $recorder = $this->createMock(ActivityRecorderInterface::class);
+        $recorder->expects(self::once())
+            ->method('record')
+            ->with(self::callback(static fn (ActivityEntry $entry): bool => $entry->context === [
+                'reason' => 'checked by hand',
+                'approved_despite_processing' => $processing->value ?? 'none',
+            ]));
+
+        $result = $this->service($repository, processing: $processing, recorder: $recorder)->updateStatus(
+            EntityId::generate(),
+            ArticleStatus::APPROVED,
+            $this->authenticatedUser(isAdmin: true),
+            'checked by hand',
+            approveUnfinishedProcessing: true,
+        );
+
+        self::assertTrue($result->isSuccess());
+    }
+
+    public function test_completed_processing_needs_no_override_and_records_none(): void
+    {
+        $repository = $this->repositoryWith(ArticleStatus::PENDING);
+        $repository->expects(self::once())->method('updateStatus')->willReturn(ArticleStatus::APPROVED);
+        $recorder = $this->createMock(ActivityRecorderInterface::class);
+        $recorder->expects(self::once())
+            ->method('record')
+            ->with(self::callback(static fn (ActivityEntry $entry): bool => $entry->context === []));
+
+        $result = $this->service($repository, processing: ProcessingStatus::COMPLETED, recorder: $recorder)->updateStatus(
+            EntityId::generate(),
+            ArticleStatus::APPROVED,
+            $this->authenticatedUser(isAdmin: true),
+            approveUnfinishedProcessing: true,
+        );
+
+        self::assertTrue($result->isSuccess());
+    }
+
+    public function test_other_statuses_ignore_processing(): void
+    {
+        $repository = $this->repositoryWith(ArticleStatus::PENDING);
+        $repository->expects(self::once())->method('updateStatus')->willReturn(ArticleStatus::REJECTED);
+        $states = $this->createMock(ArticleProcessingStateReaderInterface::class);
+        $states->expects(self::never())->method('currentState');
+
+        $result = (new ArticleModerationService(
             $repository,
             new ArticleModerationPolicy,
             $this->createMock(HashtagServiceInterface::class),
             $this->createMock(ActivityRecorderInterface::class),
             $this->createMock(DeleteArticleAction::class),
+            $states,
+        ))->updateStatus(EntityId::generate(), ArticleStatus::REJECTED, $this->authenticatedUser(isAdmin: true));
+
+        self::assertTrue($result->isSuccess());
+    }
+
+    private function repositoryWith(ArticleStatus $current): ArticleRepositoryInterface&MockObject
+    {
+        $article = $this->createMock(Article::class);
+        $article->method('getStatus')->willReturn($current);
+        $article->method('getTitleJp')->willReturn(new ArticleTitle('記事'));
+
+        $repository = $this->createMock(ArticleRepositoryInterface::class);
+        $repository->method('findByPublicUid')->willReturn($article);
+
+        return $repository;
+    }
+
+    private function service(
+        ArticleRepositoryInterface $repository,
+        ?ProcessingStatus $processing = null,
+        ?ActivityRecorderInterface $recorder = null,
+    ): ArticleModerationService {
+        $states = $this->createMock(ArticleProcessingStateReaderInterface::class);
+        $states->method('currentState')->willReturn($processing === null ? null : new ProcessingStateDTO(
+            id: 1,
+            entityType: ProcessingEntityType::Article,
+            entityId: 'article',
+            taskType: ProcessingTaskType::ArticleContentProcessing->value,
+            status: $processing,
+            attempt: 1,
+            sequence: 1,
+            maxAttempts: 3,
+            contentVersion: 1,
+            metadata: null,
+            errorCode: null,
+            errorMessage: null,
+            startedAt: null,
+            finishedAt: null,
+            createdAt: null,
+            updatedAt: null,
+        ));
+
+        return new ArticleModerationService(
+            $repository,
+            new ArticleModerationPolicy,
+            $this->createMock(HashtagServiceInterface::class),
+            $recorder ?? $this->createMock(ActivityRecorderInterface::class),
+            $this->createMock(DeleteArticleAction::class),
+            $states,
         );
     }
 

@@ -117,6 +117,17 @@ class ArticleErrors
         );
     }
 
+    public static function approvalNeedsFinishedProcessing(string $articleUid): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ApprovalNeedsFinishedProcessing',
+            status: HttpStatus::CONFLICT,
+            description: 'Processing has not completed',
+            detail: "Article {$articleUid} cannot be approved before its content processing completes",
+            errorMessage: 'Processing has not completed for this article. Confirm the override to approve it anyway.',
+        );
+    }
+
     public static function processingRequeueFailed(): ResultError
     {
         return new ResultError(

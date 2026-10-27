@@ -150,6 +150,10 @@ class ArticleResourceTest extends TestCase
             ->assertHasNoActionErrors();
 
         self::assertSame(ArticleStatus::APPROVED, $article->fresh()->status);
+        self::assertSame(
+            ProcessingStatus::FAILED->value,
+            AdminActivity::query()->where('action', ActivityAction::ArticleStatusChanged)->sole()->context['approved_despite_processing'],
+        );
     }
 
     public function test_bulk_status_change_reports_the_outcome(): void
@@ -276,6 +280,7 @@ class ArticleResourceTest extends TestCase
     public function test_api_status_change_is_recorded_too(): void
     {
         $article = $this->article(ArticleStatus::PENDING);
+        $this->processing($article, ProcessingStatus::COMPLETED);
         Passport::actingAs($this->admin, ['*'], 'api');
 
         $this->postJson("/api/v1/articles/{$article->uuid}/status", ['status' => ArticleStatus::APPROVED->value])

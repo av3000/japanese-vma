@@ -206,7 +206,9 @@ final class ArticleModerationActions
     }
 
     /**
-     * @param array{status: int|string, reason?: string|null} $data
+     * The service enforces the processing rule; the checkbox is how the moderator confirms it.
+     *
+     * @param array{status: int|string, reason?: string|null, approve_anyway?: bool|null} $data
      */
     private static function changeStatus(Article $record, array $data): Result
     {
@@ -215,9 +217,14 @@ final class ArticleModerationActions
             ArticleStatus::from((int) $data['status']),
             PanelActor::current(),
             $data['reason'] ?? null,
+            (bool) ($data['approve_anyway'] ?? false),
         );
     }
 
+    /**
+     * Only decides whether to show the override checkbox. ArticleModerationService applies the
+     * same rule and is the authority.
+     */
     private static function processingUnfinished(Article $record): bool
     {
         $status = $record->getAttribute('processing_status');

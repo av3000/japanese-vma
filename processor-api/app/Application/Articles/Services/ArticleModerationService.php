@@ -5,6 +5,7 @@ namespace App\Application\Articles\Services;
 use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
 use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
@@ -16,6 +17,7 @@ use App\Domain\Articles\DTOs\ArticleModerationListResultDTO;
 use App\Domain\Articles\DTOs\ArticleStatusResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Models\Article;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -34,6 +36,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         private readonly HashtagServiceInterface $hashtagService,
         private readonly ActivityRecorderInterface $activityRecorder,
         private readonly DeleteArticleAction $deleteArticle,
+        private readonly ArticleProcessingStateReaderInterface $processingStates,
     ) {
     }
 
@@ -86,6 +89,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
         ArticleStatus $status,
         AuthenticatedUser $authenticatedUser,
         ?string $reason = null,
+        bool $approveUnfinishedProcessing = false,
     ): Result {
         if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
             return Result::failure(ArticleErrors::moderationAccessDenied());
@@ -99,8 +103,21 @@ class ArticleModerationService implements ArticleModerationServiceInterface
             }
 
             $previousStatus = $article->getStatus();
+            $context = $reason === null || trim($reason) === '' ? [] : ['reason' => trim($reason)];
 
-            $persistedStatus = DB::transaction(function () use ($article, $articleUuid, $status, $previousStatus, $authenticatedUser, $reason): ?ArticleStatus {
+            if ($status === ArticleStatus::APPROVED && $previousStatus !== ArticleStatus::APPROVED) {
+                $processing = $this->processingStates->currentState($articleUuid->value());
+
+                if ($processing === null || $processing->status !== ProcessingStatus::COMPLETED) {
+                    if (! $approveUnfinishedProcessing) {
+                        return Result::failure(ArticleErrors::approvalNeedsFinishedProcessing($articleUuid->value()));
+                    }
+
+                    $context['approved_despite_processing'] = $processing?->status->value ?? 'none';
+                }
+            }
+
+            $persistedStatus = DB::transaction(function () use ($article, $articleUuid, $status, $previousStatus, $authenticatedUser, $context): ?ArticleStatus {
                 $persistedStatus = $this->articleRepository->updateStatus($articleUuid, $status);
 
                 if ($persistedStatus !== null && $persistedStatus !== $previousStatus) {
@@ -112,7 +129,7 @@ class ArticleModerationService implements ArticleModerationServiceInterface
                         $article->getTitleJp()->value,
                         before: ['status' => $previousStatus->label()],
                         after: ['status' => $persistedStatus->label()],
-                        context: $reason === null || trim($reason) === '' ? [] : ['reason' => trim($reason)],
+                        context: $context,
                     ));
                 }
 
