@@ -131,6 +131,17 @@ class UserErrors
         );
     }
 
+    public static function accountUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Users.AccountUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Account update failed',
+            detail: 'An unexpected error occurred while changing the account',
+            errorMessage: 'The account could not be changed. Nothing was saved.',
+        );
+    }
+
     public static function roleAlreadyAssigned(string $roleName): ResultError
     {
         return new ResultError(

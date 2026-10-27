@@ -93,6 +93,17 @@ class HashtagErrors
         );
     }
 
+    public static function renameFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Hashtags.RenameFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Hashtag rename failed',
+            detail: 'The rename was rolled back; the tag is unchanged',
+            errorMessage: 'The rename failed and was rolled back. The tag is unchanged.',
+        );
+    }
+
     public static function creationFailed(): ResultError
     {
         return new ResultError(

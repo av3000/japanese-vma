@@ -18,12 +18,15 @@ use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Shared\Enums\HttpStatus;
 use App\Shared\Results\Result;
 use Closure;
+use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
  * Account administration has no API route; the panel shows it only with `users.update`. Every
- * method checks that permission before it reads or writes anything.
+ * method checks that permission before it reads or writes anything, and turns a database failure
+ * into a typed, logged 500 instead of an exception escaping into the panel.
  */
 final class UserAdminServiceTest extends TestCase
 {
@@ -66,6 +69,32 @@ final class UserAdminServiceTest extends TestCase
         self::assertTrue($result->isFailure());
         self::assertSame('Users.AdminAccessDenied', $result->getError()->code);
         self::assertSame(HttpStatus::FORBIDDEN, $result->getError()->toHttpStatus());
+    }
+
+    /**
+     * @param Closure(UserAdminService, AuthenticatedUser): Result $call
+     */
+    #[DataProvider('useCases')]
+    public function test_a_repository_failure_is_a_logged_typed_failure(Closure $call): void
+    {
+        Log::spy();
+        $accounts = $this->createMock(UserAccountRepositoryInterface::class);
+        $accounts->method(self::anything())->willThrowException(new RuntimeException('connection lost'));
+        $recorder = $this->createMock(ActivityRecorderInterface::class);
+        $recorder->expects(self::never())->method('record');
+
+        $checker = $this->createMock(ActorPermissionCheckerInterface::class);
+        $checker->method('allows')->willReturn(true);
+
+        $result = $call(
+            new UserAdminService($accounts, $this->createMock(UserRepositoryInterface::class), $recorder, new UserAdminPolicy($checker)),
+            $this->actor(),
+        );
+
+        self::assertSame('Users.AccountUpdateFailed', $result->getError()->code);
+        self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
+        self::assertStringNotContainsString('connection lost', (string) $result->getError()->detail);
+        Log::shouldHaveReceived('error')->once();
     }
 
     private function actor(): AuthenticatedUser

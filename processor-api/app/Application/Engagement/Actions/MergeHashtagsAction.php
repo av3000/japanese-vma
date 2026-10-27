@@ -45,13 +45,13 @@ final class MergeHashtagsAction
             return Result::failure(HashtagErrors::mergeIntoItself());
         }
 
-        foreach ([$sourceId, $targetId] as $hashtagId) {
-            if ($this->hashtags->findTag($hashtagId) === null) {
-                return Result::failure(HashtagErrors::notFound($hashtagId));
-            }
-        }
-
         try {
+            foreach ([$sourceId, $targetId] as $hashtagId) {
+                if ($this->hashtags->findTag($hashtagId) === null) {
+                    return Result::failure(HashtagErrors::notFound($hashtagId));
+                }
+            }
+
             $merged = DB::transaction(function () use ($sourceId, $targetId, $actor): HashtagMergeResultDTO {
                 $merged = $this->hashtags->merge($sourceId, $targetId);
 

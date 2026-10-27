@@ -117,6 +117,28 @@ class ArticleErrors
         );
     }
 
+    public static function processingRequeueFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingRequeueFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Processing requeue failed',
+            detail: 'An unexpected error occurred while requeueing article processing',
+            errorMessage: 'Processing could not be queued again. Try again in a moment.',
+        );
+    }
+
+    public static function publicityUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.PublicityUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article publicity update failed',
+            detail: 'An unexpected error occurred while updating the article publicity',
+            errorMessage: 'An unexpected error occurred while updating the article publicity',
+        );
+    }
+
     public static function processingStillRunning(string $articleUid): ResultError
     {
         return new ResultError(

@@ -18,7 +18,10 @@ use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Domain\Users\Errors\UserErrors;
 use App\Shared\Results\Result;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class UserAdminService implements UserAdminServiceInterface
 {
@@ -36,26 +39,28 @@ final class UserAdminService implements UserAdminServiceInterface
             return Result::failure(UserErrors::adminAccessDenied());
         }
 
-        if ($this->accounts->emailBelongsToAnotherAccount($account->email)) {
-            return Result::failure(UserErrors::emailAlreadyExists($account->email));
-        }
+        return $this->attempt('create', $actor, null, function () use ($account, $actor): Result {
+            if ($this->accounts->emailBelongsToAnotherAccount($account->email)) {
+                return Result::failure(UserErrors::emailAlreadyExists($account->email));
+            }
 
-        $created = DB::transaction(function () use ($account, $actor): UserAccountDTO {
-            $created = $this->accounts->create($account);
+            $created = DB::transaction(function () use ($account, $actor): UserAccountDTO {
+                $created = $this->accounts->create($account);
 
-            $this->activityRecorder->record(ActivityEntries::by(
-                $actor,
-                ActivityAction::UserCreated,
-                ActivitySubjectType::User,
-                $created->uuid->value(),
-                $created->name,
-                after: $created->activitySnapshot(),
-            ));
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::UserCreated,
+                    ActivitySubjectType::User,
+                    $created->uuid->value(),
+                    $created->name,
+                    after: $created->activitySnapshot(),
+                ));
 
-            return $created;
+                return $created;
+            });
+
+            return Result::success($created);
         });
-
-        return Result::success($created);
     }
 
     public function updateUser(EntityId $uuid, UserAccountWriteDTO $account, AuthenticatedUser $actor): Result
@@ -64,39 +69,41 @@ final class UserAdminService implements UserAdminServiceInterface
             return Result::failure(UserErrors::adminAccessDenied());
         }
 
-        $current = $this->accounts->find($uuid);
+        return $this->attempt('update', $actor, $uuid, function () use ($uuid, $account, $actor): Result {
+            $current = $this->accounts->find($uuid);
 
-        if ($current === null) {
-            return Result::failure(UserErrors::notFound($uuid->value()));
-        }
-
-        if ($this->accounts->emailBelongsToAnotherAccount($account->email, $uuid)) {
-            return Result::failure(UserErrors::emailAlreadyExists($account->email));
-        }
-
-        $emailChanged = mb_strtolower($current->email) !== mb_strtolower($account->email);
-
-        $updated = DB::transaction(function () use ($uuid, $account, $actor, $current, $emailChanged): UserAccountDTO {
-            $updated = $this->accounts->update($uuid, $account, clearEmailVerification: $emailChanged);
-            $passwordChanged = $account->password !== null;
-
-            if ($current->activitySnapshot() !== $updated->activitySnapshot() || $passwordChanged) {
-                $this->activityRecorder->record(ActivityEntries::by(
-                    $actor,
-                    ActivityAction::UserUpdated,
-                    ActivitySubjectType::User,
-                    $updated->uuid->value(),
-                    $updated->name,
-                    before: $current->activitySnapshot(),
-                    after: $updated->activitySnapshot(),
-                    context: $passwordChanged ? ['password_changed' => true] : [],
-                ));
+            if ($current === null) {
+                return Result::failure(UserErrors::notFound($uuid->value()));
             }
 
-            return $updated;
-        });
+            if ($this->accounts->emailBelongsToAnotherAccount($account->email, $uuid)) {
+                return Result::failure(UserErrors::emailAlreadyExists($account->email));
+            }
 
-        return Result::success($updated);
+            $emailChanged = mb_strtolower($current->email) !== mb_strtolower($account->email);
+
+            $updated = DB::transaction(function () use ($uuid, $account, $actor, $current, $emailChanged): UserAccountDTO {
+                $updated = $this->accounts->update($uuid, $account, clearEmailVerification: $emailChanged);
+                $passwordChanged = $account->password !== null;
+
+                if ($current->activitySnapshot() !== $updated->activitySnapshot() || $passwordChanged) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $actor,
+                        ActivityAction::UserUpdated,
+                        ActivitySubjectType::User,
+                        $updated->uuid->value(),
+                        $updated->name,
+                        before: $current->activitySnapshot(),
+                        after: $updated->activitySnapshot(),
+                        context: $passwordChanged ? ['password_changed' => true] : [],
+                    ));
+                }
+
+                return $updated;
+            });
+
+            return Result::success($updated);
+        });
     }
 
     public function markEmailVerified(EntityId $uuid, AuthenticatedUser $actor): Result
@@ -105,33 +112,35 @@ final class UserAdminService implements UserAdminServiceInterface
             return Result::failure(UserErrors::adminAccessDenied());
         }
 
-        $current = $this->accounts->find($uuid);
+        return $this->attempt('mark email verified', $actor, $uuid, function () use ($uuid, $actor): Result {
+            $current = $this->accounts->find($uuid);
 
-        if ($current === null) {
-            return Result::failure(UserErrors::notFound($uuid->value()));
-        }
+            if ($current === null) {
+                return Result::failure(UserErrors::notFound($uuid->value()));
+            }
 
-        if ($current->emailVerifiedAt !== null) {
-            return Result::success($current);
-        }
+            if ($current->emailVerifiedAt !== null) {
+                return Result::success($current);
+            }
 
-        $verified = DB::transaction(function () use ($uuid, $actor, $current): UserAccountDTO {
-            $verified = $this->accounts->markEmailVerified($uuid, CarbonImmutable::now());
+            $verified = DB::transaction(function () use ($uuid, $actor, $current): UserAccountDTO {
+                $verified = $this->accounts->markEmailVerified($uuid, CarbonImmutable::now());
 
-            $this->activityRecorder->record(ActivityEntries::by(
-                $actor,
-                ActivityAction::UserEmailVerified,
-                ActivitySubjectType::User,
-                $verified->uuid->value(),
-                $verified->name,
-                before: $current->activitySnapshot(),
-                after: $verified->activitySnapshot(),
-            ));
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::UserEmailVerified,
+                    ActivitySubjectType::User,
+                    $verified->uuid->value(),
+                    $verified->name,
+                    before: $current->activitySnapshot(),
+                    after: $verified->activitySnapshot(),
+                ));
 
-            return $verified;
+                return $verified;
+            });
+
+            return Result::success($verified);
         });
-
-        return Result::success($verified);
     }
 
     public function revokeAllTokens(EntityId $uuid, AuthenticatedUser $actor): Result
@@ -140,24 +149,47 @@ final class UserAdminService implements UserAdminServiceInterface
             return Result::failure(UserErrors::adminAccessDenied());
         }
 
-        $current = $this->accounts->find($uuid);
+        return $this->attempt('revoke tokens', $actor, $uuid, function () use ($uuid, $actor): Result {
+            $current = $this->accounts->find($uuid);
 
-        if ($current === null) {
-            return Result::failure(UserErrors::notFound($uuid->value()));
-        }
+            if ($current === null) {
+                return Result::failure(UserErrors::notFound($uuid->value()));
+            }
 
-        DB::transaction(function () use ($current, $actor): void {
-            $this->users->revokeAllTokens($current->id);
+            DB::transaction(function () use ($current, $actor): void {
+                $this->users->revokeAllTokens($current->id);
 
-            $this->activityRecorder->record(ActivityEntries::by(
-                $actor,
-                ActivityAction::UserTokensRevoked,
-                ActivitySubjectType::User,
-                $current->uuid->value(),
-                $current->name,
-            ));
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::UserTokensRevoked,
+                    ActivitySubjectType::User,
+                    $current->uuid->value(),
+                    $current->name,
+                ));
+            });
+
+            return Result::success();
         });
+    }
 
-        return Result::success();
+    /**
+     * Runs one use case after its policy check. A database or recorder failure has already rolled
+     * the transaction back, so the caller gets a typed 500 and the log keeps the cause.
+     *
+     * @param Closure(): Result $useCase
+     */
+    private function attempt(string $operation, AuthenticatedUser $actor, ?EntityId $uuid, Closure $useCase): Result
+    {
+        try {
+            return $useCase();
+        } catch (Throwable $exception) {
+            Log::error('User account '.$operation.' failed', array_filter([
+                'user_id' => $actor->id->value(),
+                'account_uuid' => $uuid?->value(),
+                'error' => $exception->getMessage(),
+            ], static fn (mixed $value): bool => $value !== null));
+
+            return Result::failure(UserErrors::accountUpdateFailed());
+        }
     }
 }

@@ -141,31 +141,41 @@ class ArticleModerationService implements ArticleModerationServiceInterface
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
-        $article = $this->articleRepository->findByPublicUid($articleUuid);
+        try {
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
 
-        if ($article === null) {
-            return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            $previous = $article->getPublicity();
+
+            if ($previous === $publicity) {
+                return Result::success($publicity);
+            }
+
+            DB::transaction(function () use ($article, $articleUuid, $publicity, $previous, $authenticatedUser): void {
+                $this->articleRepository->updatePublicity($articleUuid, $publicity);
+
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $authenticatedUser,
+                    ActivityAction::ArticlePublicityChanged,
+                    ActivitySubjectType::Article,
+                    $articleUuid->value(),
+                    $article->getTitleJp()->value,
+                    before: ['publicity' => $previous->label()],
+                    after: ['publicity' => $publicity->label()],
+                ));
+            });
+        } catch (Throwable $exception) {
+            Log::error('Article moderation publicity update failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'article_uuid' => $articleUuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::publicityUpdateFailed());
         }
-
-        $previous = $article->getPublicity();
-
-        if ($previous === $publicity) {
-            return Result::success($publicity);
-        }
-
-        DB::transaction(function () use ($article, $articleUuid, $publicity, $previous, $authenticatedUser): void {
-            $this->articleRepository->updatePublicity($articleUuid, $publicity);
-
-            $this->activityRecorder->record(ActivityEntries::by(
-                $authenticatedUser,
-                ActivityAction::ArticlePublicityChanged,
-                ActivitySubjectType::Article,
-                $articleUuid->value(),
-                $article->getTitleJp()->value,
-                before: ['publicity' => $previous->label()],
-                after: ['publicity' => $publicity->label()],
-            ));
-        });
 
         return Result::success($publicity);
     }
@@ -176,13 +186,13 @@ class ArticleModerationService implements ArticleModerationServiceInterface
             return Result::failure(ArticleErrors::moderationAccessDenied());
         }
 
-        $article = $this->articleRepository->findByPublicUid($articleUuid);
-
-        if ($article === null) {
-            return Result::failure(ArticleErrors::notFound($articleUuid->value()));
-        }
-
         try {
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
             DB::transaction(function () use ($article, $articleUuid, $authenticatedUser): void {
                 $this->activityRecorder->record(ActivityEntries::by(
                     $authenticatedUser,

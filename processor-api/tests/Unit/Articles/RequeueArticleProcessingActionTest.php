@@ -16,7 +16,9 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Shared\Enums\HttpStatus;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -53,6 +55,32 @@ final class RequeueArticleProcessingActionTest extends TestCase
         self::assertTrue($result->isFailure());
         self::assertSame('Articles.ProcessingRequeueAccessDenied', $result->getError()->code);
         self::assertSame(HttpStatus::FORBIDDEN, $result->getError()->toHttpStatus());
+        Queue::assertNothingPushed();
+    }
+
+    public function test_a_failing_reset_is_a_logged_typed_failure_and_dispatches_nothing(): void
+    {
+        Queue::fake();
+        Log::spy();
+
+        $articles = $this->createMock(ArticleRepositoryInterface::class);
+        $articles->method('findProcessingSource')->willThrowException(new RuntimeException('connection lost'));
+        $recorder = $this->createMock(ActivityRecorderInterface::class);
+        $recorder->expects(self::never())->method('record');
+        $checker = $this->createMock(ActorPermissionCheckerInterface::class);
+        $checker->method('allows')->willReturn(true);
+
+        $result = (new RequeueArticleProcessingAction(
+            $articles,
+            $this->createMock(ArticleProcessingStateReaderInterface::class),
+            $this->createMock(ProcessingStateServiceInterface::class),
+            $recorder,
+            new ArticleProcessingPolicy($checker),
+        ))->execute(EntityId::generate(), $this->actor());
+
+        self::assertSame('Articles.ProcessingRequeueFailed', $result->getError()->code);
+        self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
+        Log::shouldHaveReceived('error')->once();
         Queue::assertNothingPushed();
     }
 

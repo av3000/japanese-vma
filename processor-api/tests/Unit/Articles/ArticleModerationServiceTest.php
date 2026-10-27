@@ -12,11 +12,13 @@ use App\Application\Articles\Services\ArticleModerationService;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Shared\Enums\HttpStatus;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 /**
@@ -94,6 +96,36 @@ final class ArticleModerationServiceTest extends TestCase
         self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
         self::assertStringNotContainsString('SQLSTATE', (string) $result->getError()->errorMessage);
         self::assertStringNotContainsString('SQLSTATE', (string) $result->getError()->detail);
+    }
+
+    public function test_a_failing_publicity_change_is_a_logged_typed_failure(): void
+    {
+        Log::spy();
+        $repository = $this->createMock(ArticleRepositoryInterface::class);
+        $repository->method('findByPublicUid')->willThrowException(new \RuntimeException('connection lost'));
+
+        $result = $this->service($repository)->setPublicity(
+            EntityId::generate(),
+            PublicityStatus::PRIVATE,
+            $this->authenticatedUser(isAdmin: true),
+        );
+
+        self::assertSame('Articles.PublicityUpdateFailed', $result->getError()->code);
+        self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
+        Log::shouldHaveReceived('error')->once();
+    }
+
+    public function test_a_failing_lookup_during_removal_is_a_logged_deletion_failure(): void
+    {
+        Log::spy();
+        $repository = $this->createMock(ArticleRepositoryInterface::class);
+        $repository->method('findByPublicUid')->willThrowException(new \RuntimeException('connection lost'));
+
+        $result = $this->service($repository)->remove(EntityId::generate(), $this->authenticatedUser(isAdmin: true));
+
+        self::assertSame('Articles.DeletionFailed', $result->getError()->code);
+        self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
+        Log::shouldHaveReceived('error')->once();
     }
 
     private function service(ArticleRepositoryInterface $repository): ArticleModerationService

@@ -15,6 +15,8 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
 use App\Shared\Enums\HttpStatus;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Tests\TestCase;
 
 /**
@@ -59,6 +61,20 @@ final class HashtagManagementTest extends TestCase
         ))->execute(1, 1, $this->actor());
 
         self::assertSame('Hashtags.MergeIntoItself', $result->getError()->code);
+    }
+
+    public function test_a_failing_rename_is_a_logged_typed_failure(): void
+    {
+        Log::spy();
+        $hashtags = $this->createMock(HashtagRepositoryInterface::class);
+        $hashtags->method('findTag')->willThrowException(new RuntimeException('connection lost'));
+
+        $result = (new RenameHashtagAction($hashtags, $this->recorderNeverCalled(), $this->policy(allows: true)))
+            ->execute(1, '#grammar', $this->actor());
+
+        self::assertSame('Hashtags.RenameFailed', $result->getError()->code);
+        self::assertSame(HttpStatus::INTERNAL_SERVER_ERROR, $result->getError()->toHttpStatus());
+        Log::shouldHaveReceived('error')->once();
     }
 
     private function policy(bool $allows): HashtagManagementPolicy

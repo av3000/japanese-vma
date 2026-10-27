@@ -22,6 +22,8 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Shared\Results\Result;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Runs article content processing again for the article's current content, exactly as an edit
@@ -53,44 +55,57 @@ final class RequeueArticleProcessingAction
             return Result::failure(ArticleErrors::processingRequeueAccessDenied());
         }
 
-        $source = $this->articles->findProcessingSource($articleUuid);
+        try {
+            $source = $this->articles->findProcessingSource($articleUuid);
 
-        if ($source === null) {
-            return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            if ($source === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            $current = $this->states->currentState($articleUuid->value());
+
+            if (! $force && $current !== null && self::isRunning($current)) {
+                return Result::failure(ArticleErrors::processingStillRunning($articleUuid->value()));
+            }
+
+            /** @var ProcessingStateDTO $reset */
+            $reset = DB::transaction(function () use ($articleUuid, $actor, $force, $source, $current): ProcessingStateDTO {
+                $reset = $this->processingStates->startOrReset(
+                    ProcessingEntityType::Article,
+                    $articleUuid,
+                    ProcessArticleContentJob::TASK,
+                    $source->contentVersion,
+                );
+
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $actor,
+                    ActivityAction::ArticleReprocessRequested,
+                    ActivitySubjectType::Article,
+                    $articleUuid->value(),
+                    $source->titleJp,
+                    context: array_filter([
+                        'previous_status' => $current?->status->value,
+                        'content_version' => $source->contentVersion,
+                        'forced' => $force ?: null,
+                    ], static fn (mixed $value): bool => $value !== null),
+                ));
+
+                return $reset;
+            });
+
+            // After commit, so the worker never sees a row that could still roll back. If the
+            // dispatch itself fails, the row stays pending until the stale sweeper marks it
+            // failed, and it can be retried from the monitor.
+            ProcessArticleContentJob::dispatch($articleUuid->value(), $source->contentVersion);
+        } catch (Throwable $exception) {
+            Log::error('Article processing requeue failed', [
+                'article_uuid' => $articleUuid->value(),
+                'user_id' => $actor->id->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::processingRequeueFailed());
         }
-
-        $current = $this->states->currentState($articleUuid->value());
-
-        if (! $force && $current !== null && self::isRunning($current)) {
-            return Result::failure(ArticleErrors::processingStillRunning($articleUuid->value()));
-        }
-
-        /** @var ProcessingStateDTO $reset */
-        $reset = DB::transaction(function () use ($articleUuid, $actor, $force, $source, $current): ProcessingStateDTO {
-            $reset = $this->processingStates->startOrReset(
-                ProcessingEntityType::Article,
-                $articleUuid,
-                ProcessArticleContentJob::TASK,
-                $source->contentVersion,
-            );
-
-            $this->activityRecorder->record(ActivityEntries::by(
-                $actor,
-                ActivityAction::ArticleReprocessRequested,
-                ActivitySubjectType::Article,
-                $articleUuid->value(),
-                $source->titleJp,
-                context: array_filter([
-                    'previous_status' => $current?->status->value,
-                    'content_version' => $source->contentVersion,
-                    'forced' => $force ?: null,
-                ], static fn (mixed $value): bool => $value !== null),
-            ));
-
-            return $reset;
-        });
-
-        ProcessArticleContentJob::dispatch($articleUuid->value(), $source->contentVersion);
 
         return Result::success($reset);
     }
