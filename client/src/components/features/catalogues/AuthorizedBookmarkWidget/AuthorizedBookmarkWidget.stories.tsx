@@ -151,7 +151,95 @@ export const RemovesFromAList: Story = {
 	},
 };
 
-/** In a table row: an icon button named for the item, no visible text. */
+/**
+ * The trigger names the modal it opens (`aria-controls`) and says whether it is open
+ * (`aria-expanded`), labelled or not.
+ */
+const expectClosedTrigger = async (button: HTMLElement) => {
+	await expect(button).toHaveAttribute('aria-expanded', 'false');
+	await expect(button.getAttribute('aria-controls')).toMatch(/\S/);
+};
+
+/** The labelled trigger opens its modal: `aria-expanded` turns true and `aria-controls` names the dialog. */
+export const LabelledTriggerControlsTheModal: Story = {
+	play: async ({ canvasElement }) => {
+		const button = within(canvasElement).getByRole('button', { name: 'Save to a catalogue' });
+		await expectClosedTrigger(button);
+
+		const dialog = await openModal(canvasElement, 'Save to a catalogue');
+
+		await expect(button).toHaveAttribute('aria-expanded', 'true');
+		await expect(dialog.getByRole('link', { name: '+ Create a new list' }).closest('dialog')).toHaveAttribute(
+			'id',
+			button.getAttribute('aria-controls'),
+		);
+	},
+};
+
+/** The saved labelled trigger keeps the same contract. */
+export const LabelledTriggerSaved: Story = {
+	beforeEach: ({ msw }) => {
+		msw.use(getCatalogueForItemMockHandler({ items: listsHolding(2) }));
+	},
+	play: async ({ canvasElement }) => {
+		await expectClosedTrigger(await within(canvasElement).findByRole('button', { name: 'Saved to a catalogue' }));
+	},
+};
+
+const ICON_ONLY = {
+	label: undefined,
+	savedLabel: undefined,
+	itemLabel: '水',
+	instanceObjectType: SavedListType.KANJIS,
+};
+
+/** In a table row, not saved: an icon button named "Save 水", no visible text. */
+export const IconButtonNotSaved: Story = {
+	args: ICON_ONLY,
+	play: async ({ canvasElement, args }) => {
+		await waitFor(() => expect(args.onStateChange).toHaveBeenCalledWith({ isBookmarked: false, isKnown: false }));
+
+		const button = within(canvasElement).getByRole('button', { name: 'Save 水' });
+		await expectClosedTrigger(button);
+		await expect(button).not.toHaveTextContent('Save');
+	},
+};
+
+/** The labelled trigger in a 360px-wide rail, on a phone: nothing scrolls sideways. */
+export const LabelledOnPhone: Story = {
+	globals: { viewport: { value: 'xs' } },
+	play: async ({ canvasElement }) => {
+		await expect(window.innerWidth).toBe(360);
+		await expect(within(canvasElement).getByRole('button', { name: 'Save to a catalogue' })).toBeVisible();
+		await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+	},
+};
+
+/** Both triggers on a 1400px desktop: nothing scrolls sideways. */
+export const BothOnWideDesktop: Story = {
+	parameters: {
+		viewport: {
+			options: { wide: { name: 'wide (1400px)', styles: { width: '1400px', height: '900px' }, type: 'desktop' } },
+		},
+	},
+	globals: { viewport: { value: 'wide' } },
+	render: (args) => (
+		<>
+			<AuthorizedBookmarkWidget {...args} />
+			<AuthorizedBookmarkWidget {...args} {...ICON_ONLY} entityId={ITEM_ID + 1} />
+		</>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(window.innerWidth).toBe(1400);
+		await expect(canvas.getByRole('button', { name: 'Save to a catalogue' })).toBeVisible();
+		await expect(await canvas.findByRole('button', { name: 'Save 水' })).toBeVisible();
+		await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+	},
+};
+
+/** In a table row, saved: an icon button named "Saved: 駅". */
 export const IconButton: Story = {
 	args: {
 		label: undefined,
@@ -169,7 +257,10 @@ export const IconButton: Story = {
 		);
 	},
 	play: async ({ canvasElement }) => {
-		await expect(await within(canvasElement).findByRole('button', { name: 'Saved: 駅' })).toBeVisible();
+		const button = await within(canvasElement).findByRole('button', { name: 'Saved: 駅' });
+
+		await expect(button).toBeVisible();
+		await expectClosedTrigger(button);
 	},
 };
 

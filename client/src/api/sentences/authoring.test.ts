@@ -13,6 +13,7 @@ const createSentence = (overrides: Partial<SentenceWriteResponse> = {}): Sentenc
 	id: 77,
 	uuid: 'sentence-uuid',
 	user_id: 5,
+	author: null,
 	tatoeba_entry: null,
 	content: '水を飲みます。',
 	kanjis: [],

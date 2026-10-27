@@ -126,10 +126,26 @@ describe('sentenceSource', () => {
 		});
 	});
 
-	it('credits a member sentence to its owner or to a member', () => {
-		expect(sentenceSource({ user_id: 7, tatoeba_entry: null }, 7)).toEqual({ kind: 'own' });
-		expect(sentenceSource({ user_id: 7, tatoeba_entry: null }, 8)).toEqual({ kind: 'member' });
-		expect(sentenceSource({ user_id: 7, tatoeba_entry: null }, undefined)).toEqual({ kind: 'member' });
+	it('credits a member sentence to its owner or to a member, by the author name', () => {
+		const author = { name: 'Kenji' };
+
+		expect(sentenceSource({ user_id: 7, tatoeba_entry: null, author }, 7)).toEqual({ kind: 'own', name: 'Kenji' });
+		expect(sentenceSource({ user_id: 7, tatoeba_entry: null, author }, 8)).toEqual({
+			kind: 'member',
+			name: 'Kenji',
+		});
+		expect(sentenceSource({ user_id: 7, tatoeba_entry: null, author }, undefined)).toEqual({
+			kind: 'member',
+			name: 'Kenji',
+		});
+	});
+
+	it('leaves the name out when the payload has no author', () => {
+		expect(sentenceSource({ user_id: 7, tatoeba_entry: null, author: null }, 8)).toEqual({
+			kind: 'member',
+			name: null,
+		});
+		expect(sentenceSource({ user_id: 7, tatoeba_entry: null }, 7)).toEqual({ kind: 'own', name: null });
 	});
 
 	it('has no source for an import without an entry', () => {

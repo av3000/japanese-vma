@@ -2,13 +2,19 @@
 
 namespace App\Application\Catalogues\Services;
 
+use App\Application\Articles\Policies\ArticlePolicy;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Engagement\Actions\LoadEntityStatsAction;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Shared\Enums\{ObjectTemplateType, SavedListType};
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\Services\TemplateTypeClassifier;
-use App\Http\Models\{Radical, Kanji, Word, Sentence};
+use App\Http\Models\Kanji;
+use App\Http\Models\Radical;
+use App\Http\Models\Sentence;
+use App\Http\Models\Word;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 
 class CatalogueItemService
@@ -18,9 +24,16 @@ class CatalogueItemService
         private readonly TemplateTypeClassifier $templateTypeClassifier,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly LoadEntityStatsAction $loadStats,
-    ) {}
+        private readonly ArticlePolicy $articlePolicy,
+    ) {
+    }
 
-    public function getItems(Catalogue $catalogue): array
+    /**
+     * The catalogue's items as the viewer may see them. An article catalogue can hold
+     * articles that are private to someone else (saved while public, or private all
+     * along), so article items go through the same visibility scope as the article list.
+     */
+    public function getItems(Catalogue $catalogue, ?AuthenticatedUser $viewer): array
     {
         $listType = $catalogue->getType();
         $baseType = $this->templateTypeClassifier->getBaseType($listType) ?? $listType;
@@ -37,12 +50,16 @@ class CatalogueItemService
             SavedListType::KANJIS => $this->mapKanjis($itemIds, $savesMap),
             SavedListType::WORDS => $this->mapWords($itemIds, $savesMap),
             SavedListType::SENTENCES => $this->mapSentences($itemIds, $savesMap),
-            SavedListType::ARTICLES => $this->mapArticles($itemIds, $savesMap),
+            SavedListType::ARTICLES => $this->mapArticles($itemIds, $savesMap, $viewer),
             default => [],
         };
     }
 
-    public function isValidItemForCatalogue(Catalogue $catalogue, int $itemId): bool
+    /**
+     * An article is a valid item only if the actor may open it, so no one can add,
+     * and then read back the title of, another user's private article.
+     */
+    public function isValidItemForCatalogue(Catalogue $catalogue, int $itemId, AuthenticatedUser $actor): bool
     {
         $listType = $catalogue->getType();
         $baseType = $this->templateTypeClassifier->getBaseType($listType) ?? $listType;
@@ -52,7 +69,10 @@ class CatalogueItemService
             SavedListType::KANJIS => Kanji::query()->whereKey($itemId)->exists(),
             SavedListType::WORDS => Word::query()->whereKey($itemId)->exists(),
             SavedListType::SENTENCES => Sentence::query()->whereKey($itemId)->exists(),
-            SavedListType::ARTICLES => PersistenceArticle::query()->whereKey($itemId)->exists(),
+            SavedListType::ARTICLES => $this->catalogueItemRepository->findVisibleArticleIds(
+                [$itemId],
+                $this->articlePolicy->scopeFor($actor),
+            ) !== [],
             default => false,
         };
     }
@@ -149,9 +169,13 @@ class CatalogueItemService
             ->toArray();
     }
 
-    private function mapArticles(array $itemIds, array $savesMap): array
+    private function mapArticles(array $itemIds, array $savesMap, ?AuthenticatedUser $viewer): array
     {
-        $articles = PersistenceArticle::whereIn('id', $itemIds)->get();
+        $visibleIds = $this->catalogueItemRepository->findVisibleArticleIds(
+            $itemIds,
+            $this->articlePolicy->scopeFor($viewer),
+        );
+        $articles = PersistenceArticle::whereIn('id', $visibleIds)->get();
         $articleIds = $articles->pluck('id')->toArray();
 
         $hashtagsMap = $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE);

@@ -7,7 +7,7 @@ import type { CommentResource } from '@/api/generated/model/commentResource';
 import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import type { ProcessingStatusResource } from '@/api/generated/model/processingStatusResource';
 import { kanjiRows, repeatRows, wordRows } from '@/components/shared/DataTable/DataTable.fixtures';
-import { type AuthParameter, pageSeed, type QuerySeed } from '@/storybook/decorators';
+import { type AuthParameter, infiniteSeed, pageSeed, type QuerySeed } from '@/storybook/decorators';
 import ArticleContent from './';
 
 const signedIn = (id: number, isAdmin = false): AuthParameter => ({
@@ -101,13 +101,12 @@ const seeds = (options: { kanji?: number; words?: number; comments?: number } = 
 	return [
 		pageSeed(articleKanjisQueryKey(UUID), pageOf(repeatRows(kanjiRows, Math.min(kanji, 20)), kanji)),
 		pageSeed(articleWordsQueryKey(UUID), pageOf(repeatRows(wordRows, Math.min(words, 20)), words)),
-		{
-			queryKey: getCommentsQueryKey('article', UUID),
-			data: pageOf(
+		infiniteSeed(getCommentsQueryKey('article', UUID), [
+			pageOf(
 				Array.from({ length: Math.min(comments, 20) }, (_, index) => comment(index + 1)),
 				comments,
 			),
-		},
+		]),
 	];
 };
 

@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+	type InfiniteData,
+	type QueryKey,
+} from '@tanstack/react-query';
 import {
 	commentDestroy,
 	commentGetArticleComments,
@@ -96,6 +103,69 @@ export const getCommentsQueryKey = (parent: CommentParent, entityUuid: string): 
 
 export const getCommentRepliesCacheKey = (commentUuid: string): QueryKey =>
 	getCommentRepliesQueryKey(commentUuid, { per_page: COMMENT_PAGE_SIZE });
+
+// ---------------------------------------------------------------------------
+// The thread's pages. Show more loads the next page into the same cache entry.
+// ---------------------------------------------------------------------------
+
+/** The thread as React Query holds it: one entry per loaded page, keyed by page number. */
+export type CommentThreadPages = InfiniteData<CommentListResource, number>;
+
+export const getNextCommentPageParam = (lastPage: CommentListResource): number | undefined =>
+	lastPage.pagination.has_more ? lastPage.pagination.page + 1 : undefined;
+
+/**
+ * The loaded pages read as one thread: every comment once, in order, with the newest page's
+ * `has_more` and the first page's `total`. A comment posted after page 1 loaded shifts the server's
+ * pages, so the next page can repeat one already shown; it is kept only where it first appeared.
+ */
+export const mergeThreadPages = (data: CommentThreadPages): CommentListResource => {
+	const [first] = data.pages;
+	const last = data.pages[data.pages.length - 1];
+	const seen = new Set<number>();
+	const items = data.pages
+		.flatMap((page) => page.items)
+		.filter((item) => (seen.has(item.id) ? false : (seen.add(item.id), true)));
+
+	return { ...first, items, pagination: { ...last.pagination, total: first.pagination.total } };
+};
+
+/**
+ * Applies one of the single-thread cache rules above to every loaded page at once. The result's
+ * comments go on page 1 and later pages keep only their pagination: a refetch re-reads every page
+ * from its page number, so where the items sit does not matter, but the next page number is still
+ * read from the last page.
+ */
+export const updateThreadPages = (
+	data: CommentThreadPages,
+	update: (thread: CommentListResource) => CommentListResource,
+): CommentThreadPages => {
+	const next = update(mergeThreadPages(data));
+
+	return {
+		...data,
+		pages: data.pages.map((page, index) => ({
+			...page,
+			items: index === 0 ? next.items : [],
+			pagination: { ...page.pagination, total: next.pagination.total },
+		})),
+	};
+};
+
+/**
+ * The thread of one parent, a page at a time. `data` is the loaded pages merged into one thread;
+ * `fetchNextPage` loads the next page when `hasNextPage`.
+ */
+export const useCommentThreadQuery = (parent: CommentParent, entityUuid: string) =>
+	useInfiniteQuery({
+		queryKey: getCommentsQueryKey(parent, entityUuid),
+		queryFn: ({ pageParam }) =>
+			COMMENT_PARENTS[parent].fetchThread(entityUuid, { ...COMMENT_LIST_PARAMS, page: pageParam }),
+		initialPageParam: 1,
+		getNextPageParam: getNextCommentPageParam,
+		select: mergeThreadPages,
+		enabled: !!entityUuid,
+	});
 
 // ---------------------------------------------------------------------------
 // Cache mutators. Pure, so the cache rules can be tested without React.
@@ -242,12 +312,14 @@ export const useCreateCommentMutation = ({ parent, entityId, entityUuid }: Comme
 				...variables,
 			}),
 		onSuccess: (created, variables) => {
-			queryClient.setQueryData<CommentListResource>(queryKey, (thread) => {
-				if (thread === undefined) return thread;
+			queryClient.setQueryData<CommentThreadPages>(queryKey, (pages) => {
+				if (pages === undefined) return pages;
 
-				return variables.parent_comment_id == null
-					? prependComment(thread, created)
-					: appendReply(thread, variables.parent_comment_id, created);
+				return updateThreadPages(pages, (thread) =>
+					variables.parent_comment_id == null
+						? prependComment(thread, created)
+						: appendReply(thread, variables.parent_comment_id, created),
+				);
 			});
 
 			if (variables.parent_comment_id != null) {
@@ -264,7 +336,7 @@ export const useCreateCommentMutation = ({ parent, entityId, entityUuid }: Comme
 };
 
 interface OptimisticThreadContext {
-	previous: CommentListResource | undefined;
+	previous: CommentThreadPages | undefined;
 }
 
 export interface UpdateCommentVariables {
@@ -283,10 +355,13 @@ export const useUpdateCommentMutation = ({ parent, entityUuid }: Omit<CommentThr
 			// An in-flight read would otherwise land after the optimistic write.
 			await queryClient.cancelQueries({ queryKey });
 
-			const previous = queryClient.getQueryData<CommentListResource>(queryKey);
+			const previous = queryClient.getQueryData<CommentThreadPages>(queryKey);
 
 			if (previous !== undefined) {
-				queryClient.setQueryData<CommentListResource>(queryKey, patchCommentContent(previous, uuid, content));
+				queryClient.setQueryData<CommentThreadPages>(
+					queryKey,
+					updateThreadPages(previous, (thread) => patchCommentContent(thread, uuid, content)),
+				);
 			}
 
 			return { previous };
@@ -297,13 +372,13 @@ export const useUpdateCommentMutation = ({ parent, entityUuid }: Omit<CommentThr
 		// from a stale guess.
 		onError: (_error, _variables, context) => {
 			if (context?.previous !== undefined) {
-				queryClient.setQueryData<CommentListResource>(queryKey, context.previous);
+				queryClient.setQueryData<CommentThreadPages>(queryKey, context.previous);
 			}
 		},
 
 		onSuccess: (updated) => {
-			queryClient.setQueryData<CommentListResource>(queryKey, (thread) =>
-				thread === undefined ? thread : replaceComment(thread, updated),
+			queryClient.setQueryData<CommentThreadPages>(queryKey, (pages) =>
+				pages === undefined ? pages : updateThreadPages(pages, (thread) => replaceComment(thread, updated)),
 			);
 		},
 	});
@@ -336,10 +411,13 @@ export const useDeleteCommentMutation = ({ parent, entityUuid }: Omit<CommentThr
 		onMutate: async (target) => {
 			await queryClient.cancelQueries({ queryKey });
 
-			const previous = queryClient.getQueryData<CommentListResource>(queryKey);
+			const previous = queryClient.getQueryData<CommentThreadPages>(queryKey);
 
 			if (previous !== undefined) {
-				queryClient.setQueryData<CommentListResource>(queryKey, removeComment(previous, target));
+				queryClient.setQueryData<CommentThreadPages>(
+					queryKey,
+					updateThreadPages(previous, (thread) => removeComment(thread, target)),
+				);
 			}
 
 			return { previous };
@@ -347,7 +425,18 @@ export const useDeleteCommentMutation = ({ parent, entityUuid }: Omit<CommentThr
 
 		onError: (_error, _variables, context) => {
 			if (context?.previous !== undefined) {
-				queryClient.setQueryData<CommentListResource>(queryKey, context.previous);
+				queryClient.setQueryData<CommentThreadPages>(queryKey, context.previous);
+			}
+		},
+
+		// Pages are read by page number, so a deleted top-level comment pulls the next page's first
+		// comment onto a page already loaded; without a re-read, Show more would skip it.
+		onSuccess: async (target) => {
+			const pages = queryClient.getQueryData<CommentThreadPages>(queryKey);
+			const hasLaterPages = pages?.pages[pages.pages.length - 1]?.pagination.has_more === true;
+
+			if (target.parentCommentId === null && hasLaterPages) {
+				await queryClient.invalidateQueries({ queryKey });
 			}
 		},
 	});
@@ -370,15 +459,15 @@ export const useCommentRepliesQuery = (commentUuid: string, enabled: boolean) =>
 // ---------------------------------------------------------------------------
 
 /**
- * A thread is cached as one list, so a like patches the single matching item in
- * place instead of refetching every comment for two numbers. The target may be
- * a top-level comment or one of its loaded replies.
+ * A like patches the single matching item in the loaded pages instead of
+ * refetching every comment for two numbers. The target may be a top-level
+ * comment or one of its loaded replies.
  */
-const buildCommentLikeBinding = (queryKey: QueryKey): LikeCacheBinding<CommentListResource> => ({
+const buildCommentLikeBinding = (queryKey: QueryKey): LikeCacheBinding<CommentThreadPages> => ({
 	queryKey,
 
-	read: (thread, commentId) => {
-		for (const item of thread.items) {
+	read: (pages, commentId) => {
+		for (const item of mergeThreadPages(pages).items) {
 			if (item.id === commentId) {
 				return { is_liked: item.viewer.is_liked, likes_count: item.likes_count };
 			}
@@ -393,27 +482,32 @@ const buildCommentLikeBinding = (queryKey: QueryKey): LikeCacheBinding<CommentLi
 		return undefined;
 	},
 
-	write: (thread, commentId, next) => ({
-		...thread,
-		items: thread.items.map((item) => {
-			if (item.id === commentId) {
-				return { ...item, viewer: { ...item.viewer, is_liked: next.is_liked }, likes_count: next.likes_count };
-			}
+	write: (pages, commentId, next) =>
+		updateThreadPages(pages, (thread) => ({
+			...thread,
+			items: thread.items.map((item) => {
+				if (item.id === commentId) {
+					return {
+						...item,
+						viewer: { ...item.viewer, is_liked: next.is_liked },
+						likes_count: next.likes_count,
+					};
+				}
 
-			return {
-				...item,
-				replies: item.replies.map((reply) =>
-					reply.id === commentId
-						? {
-								...reply,
-								viewer: { ...reply.viewer, is_liked: next.is_liked },
-								likes_count: next.likes_count,
-							}
-						: reply,
-				),
-			};
-		}),
-	}),
+				return {
+					...item,
+					replies: item.replies.map((reply) =>
+						reply.id === commentId
+							? {
+									...reply,
+									viewer: { ...reply.viewer, is_liked: next.is_liked },
+									likes_count: next.likes_count,
+								}
+							: reply,
+					),
+				};
+			}),
+		})),
 });
 
 /**

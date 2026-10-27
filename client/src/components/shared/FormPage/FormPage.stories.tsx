@@ -120,26 +120,6 @@ export const WithAlert: Story = {
 	},
 };
 
-/** One column at every width, as in the Article edit modal. */
-export const Stacked: Story = {
-	args: {
-		title: 'Edit article',
-		children: (
-			<form onSubmit={(event) => event.preventDefault()} noValidate>
-				<FormLayout
-					stacked
-					aside={<FormCard title="Settings">Visibility and tags</FormCard>}
-					actions={<Actions label="Save changes" />}
-				>
-					<FormCard>
-						<ContentFields />
-					</FormCard>
-				</FormLayout>
-			</form>
-		),
-	},
-};
-
 /** A 255-character title with no spaces wraps instead of scrolling the page sideways. */
 export const LongUnbrokenTitle: Story = {
 	args: {

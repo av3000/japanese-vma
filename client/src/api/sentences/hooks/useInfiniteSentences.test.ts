@@ -8,6 +8,7 @@ const createSentenceListResponse = (overrides: Partial<SentenceListResource> = {
 			id: 1,
 			uuid: 'sentence-uuid',
 			user_id: null,
+			author: null,
 			tatoeba_entry: '1001',
 			content: '私は学生です。',
 		},

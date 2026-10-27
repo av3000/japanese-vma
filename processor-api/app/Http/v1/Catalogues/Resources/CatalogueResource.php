@@ -65,6 +65,7 @@ class CatalogueResource extends JsonResource
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
+            // Every stored item. The catalogue detail counts only the items its viewer can see.
             'items_count' => (int) ($this->itemsCount ?? 0),
             'hashtags' => HashtagResource::collection($this->hashtags),
             'engagement' => $this->stats ? new EngagementStatsResource($this->stats) : null,

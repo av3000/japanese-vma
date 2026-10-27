@@ -7,7 +7,12 @@ import { users } from '@/storybook/fixtures/users';
 import SentenceContent from './SentenceContent';
 
 const OWNER_ID = 5;
-const memberSentence = mapSentenceDetail({ ...sentenceShort, user_id: OWNER_ID, tatoeba_entry: null });
+const memberSentence = mapSentenceDetail({
+	...sentenceShort,
+	user_id: OWNER_ID,
+	author: { id: OWNER_ID, name: 'Kenji', uuid: 'user-kenji' },
+	tatoeba_entry: null,
+});
 
 /** Sentence detail in the Reading Room layout (UI-DICT-DETAIL, #352), on real sentences. */
 const meta = {
@@ -47,7 +52,19 @@ export const Owner: Story = {
 		await expect(canvas.getByRole('heading', { level: 2, name: 'Your sentence' })).toBeVisible();
 		await expect(canvas.getByRole('link', { name: /Edit sentence/ })).toBeVisible();
 		await expect(canvas.getByRole('button', { name: /Delete sentence/ })).toBeVisible();
-		await expect(canvas.getByText('Written by you')).toBeVisible();
+		await expect(canvas.getByText('Kenji')).toBeVisible();
+	},
+};
+
+/** Another member's sentence: the byline and the Source fact name its author. */
+export const ByAnotherMember: Story = {
+	args: { sentence: memberSentence },
+	parameters: { auth: 'member' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getAllByText('Kenji')).toHaveLength(2);
+		await expect(canvas.queryByRole('heading', { level: 2, name: 'Your sentence' })).toBeNull();
 	},
 };
 

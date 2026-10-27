@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Catalogues\Interfaces\Repositories;
 
+use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Catalogues\Enums\CatalogueJlptSource;
 use App\Domain\Shared\Enums\SavedListType;
 
@@ -52,6 +53,16 @@ interface CatalogueItemRepositoryInterface
      * @return array<int, int[]> map real_object_id => list_id[]
      */
     public function findCatalogueIdsByItemIds(array $catalogueIds, array $itemIds): array;
+
+    /**
+     * The given article ids that the visibility scope lets a viewer open, in no set order.
+     * An article catalogue can hold articles private to someone else.
+     *
+     * @param int[] $articleIds
+     *
+     * @return int[]
+     */
+    public function findVisibleArticleIds(array $articleIds, ArticleVisibilityScope $scope): array;
 
     public function containsItem(int $catalogueId, int $itemId): bool;
 

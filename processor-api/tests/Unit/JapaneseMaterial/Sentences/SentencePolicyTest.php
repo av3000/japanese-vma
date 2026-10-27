@@ -7,6 +7,7 @@ namespace Tests\Unit\JapaneseMaterial\Sentences;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\JapaneseMaterial\Sentences\Policies\SentencePolicy;
 use App\Domain\JapaneseMaterial\Sentences\Models\Sentence;
+use App\Domain\JapaneseMaterial\Sentences\ValueObjects\SentenceAuthor;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -73,6 +74,7 @@ class SentencePolicyTest extends TestCase
             userId: $ownerId,
             tatoebaEntry: $ownerId === null ? '1001' : null,
             content: '私は学生です。',
+            author: $ownerId === null ? null : new SentenceAuthor('Owner', new EntityId('5d0e2f3a-1b4c-4d5e-8f6a-7b8c9d0e1f2a')),
         );
     }
 }

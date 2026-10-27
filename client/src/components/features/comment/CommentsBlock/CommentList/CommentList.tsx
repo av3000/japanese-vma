@@ -2,15 +2,22 @@ import React, { useState } from 'react';
 import { useCommentRepliesQuery, type ApiComment, type ApiCommentReply } from '@/api/comments';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Badge } from '@/components/ui/badge';
 import CommentItem, { type CommentActionState } from '../CommentItem/CommentItem';
 import styles from './CommentList.module.css';
 
+export type CommentHeadingLevel = 2 | 3 | 4;
+
 interface CommentListProps {
 	comments: ApiComment[];
-	/** Thread size, from `pagination.total` - not the length of the loaded page. */
+	/** Thread size, from `pagination.total` - not the number of comments loaded so far. */
 	total: number;
+	/** Level of the count heading, so it follows the page's own outline. Defaults to 3. */
+	headingLevel?: CommentHeadingLevel;
+	/** Whether the server has another page of comments. */
 	hasMore: boolean;
+	isLoadingMore?: boolean;
+	loadMoreFailed?: boolean;
+	onShowMore?: () => void;
 	canReply: boolean;
 	stateFor: (commentId: number) => CommentActionState;
 	onLike: (commentId: number) => void;
@@ -84,10 +91,20 @@ const CommentThread: React.FC<{
 	);
 };
 
+const countFormat = new Intl.NumberFormat('en-US');
+
+/** "1 comment", "1,204 comments". */
+export const commentCountLabel = (total: number): string =>
+	`${countFormat.format(total)} ${total === 1 ? 'comment' : 'comments'}`;
+
 const CommentList: React.FC<CommentListProps> = ({
 	comments,
 	total,
+	headingLevel = 3,
 	hasMore,
+	isLoadingMore = false,
+	loadMoreFailed = false,
+	onShowMore,
 	canReply,
 	stateFor,
 	onLike,
@@ -95,13 +112,11 @@ const CommentList: React.FC<CommentListProps> = ({
 	onEdit,
 	onReply,
 }) => {
+	const Heading = `h${headingLevel}` as const;
+
 	return (
 		<div>
-			<h3 className={styles.heading}>
-				<Badge variant="secondary">{total}</Badge>
-				{'  '}
-				Comment{total !== 1 ? 's' : ''}
-			</h3>
+			<Heading className={styles.heading}>{commentCountLabel(total)}</Heading>
 
 			{comments.length === 0 ? (
 				<Alert tone="info" className={styles.empty}>
@@ -125,9 +140,17 @@ const CommentList: React.FC<CommentListProps> = ({
 					</ul>
 
 					{hasMore && (
-						<p className={styles.showing}>
-							Showing {comments.length} of {total} comments
-						</p>
+						<div className={styles.showMore}>
+							{loadMoreFailed ? (
+								<Alert tone="danger">More comments could not be loaded. Please try again.</Alert>
+							) : null}
+							<p className={styles.showing} aria-live="polite">
+								Showing {countFormat.format(comments.length)} of {commentCountLabel(total)}
+							</p>
+							<Button variant="outline" onClick={onShowMore} isLoading={isLoadingMore}>
+								Show more comments
+							</Button>
+						</div>
 					)}
 				</>
 			)}

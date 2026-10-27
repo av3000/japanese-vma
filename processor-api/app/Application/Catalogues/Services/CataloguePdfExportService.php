@@ -74,7 +74,7 @@ class CataloguePdfExportService implements CataloguePdfExportServiceInterface
             ));
         }
 
-        $items = $this->catalogueItemService->getItems($catalogue);
+        $items = $this->catalogueItemService->getItems($catalogue, $authenticatedUser);
 
         $document = new PdfDocument(
             view: $kind->view(),

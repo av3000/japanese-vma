@@ -4,7 +4,7 @@ import { getCommentsQueryKey } from '@/api/comments';
 import type { CommentResource } from '@/api/generated/model/commentResource';
 import { makeHashtags } from '@/components/features/Homepage/fixtures';
 import { LONGEST_POST_TITLE, POST_AUTHOR, makePostDetail } from '@/components/features/community/fixtures';
-import type { AuthParameter, QuerySeed } from '@/storybook/decorators';
+import { type AuthParameter, infiniteSeed, type QuerySeed } from '@/storybook/decorators';
 import PostContent from './';
 
 const signedIn = (id: number, isAdmin = false): AuthParameter => ({
@@ -35,13 +35,13 @@ const comment = (index: number): CommentResource =>
 		updated_at: '2026-09-29T10:00:00+00:00',
 	}) as CommentResource;
 
-const comments = (count: number, uuid = POST_UUID): QuerySeed => ({
-	queryKey: getCommentsQueryKey('post', uuid),
-	data: {
-		items: Array.from({ length: count }, (_, index) => comment(index + 1)),
-		pagination: { page: 1, per_page: 20, total: count, last_page: 1, has_more: false },
-	},
-});
+const comments = (count: number, uuid = POST_UUID): QuerySeed =>
+	infiniteSeed(getCommentsQueryKey('post', uuid), [
+		{
+			items: Array.from({ length: count }, (_, index) => comment(index + 1)),
+			pagination: { page: 1, per_page: 20, total: count, last_page: 1, has_more: false },
+		},
+	]);
 
 const meta = {
 	title: 'Pages/PostDetails/Content',

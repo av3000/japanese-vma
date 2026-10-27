@@ -85,12 +85,13 @@
 }
 
 /*
- * 768-1023px is the narrowest table. With the Save column, two 14em cells (the longest word and
- * reading) plus the meaning's minimum overflow it, so the cap tightens there.
+ * 768-1023px is the narrowest table: a detail page's reading column is 720px there. With the Save
+ * column, two 14em cells (the longest word and reading) plus the meaning's minimum overflow it, so
+ * the cap tightens there; three on'yomi such as キョウ、アン、コウ wrap onto a second line (#550).
  */
 @media (min-width: 768px) and (max-width: 1023px) {
 	.whole {
-		max-width: 10em;
+		max-width: 8em;
 	}
 }
 

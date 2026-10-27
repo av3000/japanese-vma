@@ -150,10 +150,17 @@
 	}
 }
 
-/* Narrowest table: low-priority columns give their width to the rest. */
+/*
+ * Narrowest table: low-priority columns give their width to the rest, and the fill column asks for
+ * less, so a table with a trailing Save column fits a 720px detail column (#550).
+ */
 @media (min-width: 768px) and (max-width: 1023px) {
 	.lowPriority {
 		display: none;
+	}
+
+	.fill {
+		min-width: 11rem;
 	}
 }
 

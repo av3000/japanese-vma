@@ -14,6 +14,7 @@ use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Http\Controllers\Controller;
 use App\Http\v1\JapaneseMaterial\Radicals\Requests\IndexRadicalRequest;
+use App\Http\v1\JapaneseMaterial\Radicals\Requests\ShowRadicalRequest;
 use App\Http\v1\JapaneseMaterial\Radicals\Resources\RadicalListResource;
 use App\Http\v1\JapaneseMaterial\Radicals\Resources\RadicalResource;
 use App\Shared\Http\TypedResults;
@@ -77,15 +78,22 @@ class RadicalController extends Controller
         return new RadicalListResource($result->getData());
     }
 
+    /**
+     * Show a radical; `include=kanjis` adds every kanji that uses it.
+     *
+     * Without the include no kanji are loaded: 木 alone has 674. Pages of a radical's
+     * kanji come from `GET /kanjis?radical_uuid=`.
+     */
     #[Response(type: 'RadicalResource')]
-    public function show(string $identifier): JsonResponse|JsonResource
+    public function show(ShowRadicalRequest $request, string $identifier): JsonResponse|JsonResource
     {
-        $result = $this->radicalService->findByIdentifier($identifier, withKanjis: true);
+        $includes = $request->includes();
+        $result = $this->radicalService->findByIdentifier($identifier, withKanjis: $includes->kanjis);
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
         }
 
-        return new RadicalResource($result->getData(), includeKanjis: true);
+        return new RadicalResource($result->getData(), includeKanjis: $includes->kanjis);
     }
 }

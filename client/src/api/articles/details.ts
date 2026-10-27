@@ -22,7 +22,7 @@ export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => 
 
 /**
  * Article detail cache key. Delegates to `articleKeys.detail` so the detail query, the like
- * mutation, the processing-status writes, the edit modal and the moderation status mutation
+ * mutation, the processing-status writes, the edit page and the moderation status mutation
  * all agree on one key.
  */
 export const getArticleDetailQueryKey = (uuid: string) => articleKeys.detail(uuid);

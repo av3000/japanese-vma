@@ -123,18 +123,23 @@ export const radicalReadingParts = (hiragana: string | null | undefined): Radica
 	return kana ? { kana, romaji: romaji || null } : null;
 };
 
-export type SentenceSource = { kind: 'tatoeba'; entry: string; href: string } | { kind: 'own' } | { kind: 'member' };
+export type SentenceSource =
+	| { kind: 'tatoeba'; entry: string; href: string }
+	| { kind: 'own'; name: string | null }
+	| { kind: 'member'; name: string | null };
 
 /**
- * Where a sentence comes from: an import from Tatoeba (no author), or a member's own sentence.
- * The payload has no author name yet (#549), so another member's sentence is credited generically.
+ * Where a sentence comes from: an import from Tatoeba (no author), or a member's sentence,
+ * credited by the author's name when the payload carries it.
  */
 export const sentenceSource = (
-	sentence: { user_id: number | null; tatoeba_entry: string | null },
+	sentence: { user_id: number | null; tatoeba_entry: string | null; author?: { name: string } | null },
 	viewerId: number | null | undefined,
 ): SentenceSource | null => {
 	if (sentence.user_id !== null) {
-		return viewerId != null && sentence.user_id === viewerId ? { kind: 'own' } : { kind: 'member' };
+		const name = presentText(sentence.author?.name);
+
+		return viewerId != null && sentence.user_id === viewerId ? { kind: 'own', name } : { kind: 'member', name };
 	}
 
 	const entry = presentText(sentence.tatoeba_entry);

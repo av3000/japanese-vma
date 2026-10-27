@@ -5,6 +5,7 @@ const createSentenceDetail = (overrides: Partial<SentenceDetailResponse> = {}): 
 	id: 10,
 	uuid: 'sentence-uuid',
 	user_id: null,
+	author: null,
 	tatoeba_entry: '5005',
 	content: '水を飲みます。',
 	kanjis: [
