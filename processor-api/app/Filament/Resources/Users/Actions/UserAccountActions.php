@@ -126,8 +126,8 @@ final class UserAccountActions
 
     /**
      * Roles the user does not hold yet. `admin` is offered only to administrators, so holding
-     * `roles.assign` is not enough to promote anyone, yourself included, to superuser. The
-     * select rejects any value it did not offer, so a crafted request cannot get around this.
+     * `roles.assign` is not enough to promote anyone, yourself included, to superuser. This is
+     * only the UX: RoleService::assignRole() enforces the same rule for every caller.
      *
      * @return array<string, string>
      */

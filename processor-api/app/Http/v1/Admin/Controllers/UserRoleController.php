@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Admin\Controllers;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
@@ -13,6 +14,7 @@ use App\Http\v1\Admin\Requests\CreateRoleRequest;
 use App\Http\v1\Admin\Requests\RemoveRoleRequest;
 use App\Http\v1\Admin\Resources\RoleResource;
 use App\Shared\Http\TypedResults;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 
 class UserRoleController extends Controller
@@ -31,7 +33,7 @@ class UserRoleController extends Controller
         $userEntityId = new EntityId($userUuid);
         $roleName = $request->getRoleName();
 
-        $result = $this->roleService->assignRole($userEntityId, $roleName, $this->currentUserProvider->currentAuthenticatedUser());
+        $result = $this->roleService->assignRole($userEntityId, $roleName, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -51,7 +53,7 @@ class UserRoleController extends Controller
         $userEntityId = new EntityId($userUuid);
         $roleName = $request->getRoleName();
 
-        $result = $this->roleService->removeRole($userEntityId, $roleName, $this->currentUserProvider->currentAuthenticatedUser());
+        $result = $this->roleService->removeRole($userEntityId, $roleName, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
@@ -118,5 +120,14 @@ class UserRoleController extends Controller
         $roles = $this->roleService->getAllRoles();
 
         return TypedResults::ok(['roles' => RoleResource::collection($roles)]);
+    }
+
+    /**
+     * Role changes are always attributed to a person, never to `system`.
+     */
+    private function requiredAuthenticatedUser(): AuthenticatedUser
+    {
+        return $this->currentUserProvider->currentAuthenticatedUser()
+            ?? throw new AuthenticationException;
     }
 }

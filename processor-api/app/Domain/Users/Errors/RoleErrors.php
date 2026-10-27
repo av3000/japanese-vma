@@ -45,6 +45,17 @@ class RoleErrors
         );
     }
 
+    public static function adminRoleRequiresAdmin(): ResultError
+    {
+        return new ResultError(
+            code: 'Roles.AdminRoleRequiresAdmin',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Only an administrator can grant the admin role.',
+            detail: 'Granting the admin role requires the acting user to be an administrator.',
+            errorMessage: 'Only an administrator can grant the admin role.',
+        );
+    }
+
     public static function cannotRemoveAdminFromAdmin(string $roleName): ResultError
     {
         return new ResultError(
