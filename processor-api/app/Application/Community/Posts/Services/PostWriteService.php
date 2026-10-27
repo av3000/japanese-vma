@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Community\Posts\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Community\Posts\Actions\CleanupPostDependenciesAction;
+use App\Application\Community\Posts\Actions\DeletePostAction;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Community\Posts\Policies\PostPolicy;
 use App\Application\Engagement\Actions\IncrementViewAction;
@@ -32,7 +32,7 @@ class PostWriteService implements PostWriteServiceInterface
         private readonly PostReadServiceInterface $postReadService,
         private readonly PostPolicy $postPolicy,
         private readonly HashtagServiceInterface $hashtagService,
-        private readonly CleanupPostDependenciesAction $cleanupPostDependencies,
+        private readonly DeletePostAction $deletePost,
         private readonly IncrementViewAction $incrementView,
     ) {
     }
@@ -122,8 +122,7 @@ class PostWriteService implements PostWriteServiceInterface
 
         try {
             DB::transaction(function () use ($post): void {
-                $this->cleanupPostDependencies->execute($post->getIdValue());
-                $this->postRepository->delete($post->getIdValue());
+                $this->deletePost->execute($post->getIdValue());
             });
 
             return Result::success();

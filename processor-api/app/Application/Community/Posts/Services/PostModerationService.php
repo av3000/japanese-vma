@@ -7,7 +7,7 @@ namespace App\Application\Community\Posts\Services;
 use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\Community\Posts\Actions\CleanupPostDependenciesAction;
+use App\Application\Community\Posts\Actions\DeletePostAction;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 use App\Application\Community\Posts\Policies\PostModerationPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
@@ -26,7 +26,7 @@ class PostModerationService implements PostModerationServiceInterface
     public function __construct(
         private readonly PostRepositoryInterface $postRepository,
         private readonly PostModerationPolicy $moderationPolicy,
-        private readonly CleanupPostDependenciesAction $cleanupPostDependencies,
+        private readonly DeletePostAction $deletePost,
         private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
@@ -107,9 +107,7 @@ class PostModerationService implements PostModerationServiceInterface
                     ],
                 ));
 
-                // Same two steps as PostWriteService::delete; the dependents live in the action.
-                $this->cleanupPostDependencies->execute($post->getIdValue());
-                $this->postRepository->delete($post->getIdValue());
+                $this->deletePost->execute($post->getIdValue());
             });
         } catch (Throwable $exception) {
             Log::error('Post moderation removal failed', [
