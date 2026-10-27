@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Application\Articles\Actions\Processing\RequeueArticleProcessingBatchAction;
 use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Processing\Enums\ProcessingEntityType;
@@ -11,7 +12,6 @@ use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Filament\Resources\Processing\Pages\ListProcessingStates;
 use App\Filament\Resources\Processing\Pages\ViewProcessingState;
-use App\Filament\Resources\Processing\ProcessingStateResource;
 use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\ProcessingState;
@@ -143,14 +143,14 @@ class ProcessingMonitorTest extends TestCase
         Queue::assertPushed(ProcessArticleContentJob::class);
     }
 
-    public function test_bulk_retry_stops_at_the_cap(): void
+    public function test_bulk_retry_refuses_selections_over_the_cap(): void
     {
-        $states = collect(range(1, ProcessingStateResource::RETRY_LIMIT + 1))
+        $states = collect(range(1, RequeueArticleProcessingBatchAction::MAX_BATCH + 1))
             ->map(fn (): ProcessingState => $this->state(ProcessingStatus::FAILED));
 
         Livewire::test(ListProcessingStates::class)
             ->callTableBulkAction('bulkRetry', $states)
-            ->assertNotified('Select at most '.ProcessingStateResource::RETRY_LIMIT.' runs to retry; '.$states->count().' were selected.');
+            ->assertNotified('Select at most '.RequeueArticleProcessingBatchAction::MAX_BATCH.' runs to retry; '.$states->count().' were selected.');
 
         Queue::assertNothingPushed();
 

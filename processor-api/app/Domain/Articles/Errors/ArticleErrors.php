@@ -128,6 +128,17 @@ class ArticleErrors
         );
     }
 
+    public static function retryBatchTooLarge(int $selected, int $max): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.RetryBatchTooLarge',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Too many runs selected',
+            detail: "{$selected} runs were selected; at most {$max} can be retried at once",
+            errorMessage: "Select at most {$max} runs to retry; {$selected} were selected.",
+        );
+    }
+
     public static function processingRequeueFailed(): ResultError
     {
         return new ResultError(

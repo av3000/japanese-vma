@@ -11,4 +11,15 @@ namespace App\Domain\Processing\Enums;
 enum ProcessingEntityType: string
 {
     case Article = 'article';
+
+    /**
+     * Whether a failed or stuck run can be queued again. Only article processing has a job to
+     * requeue today; a new entity type stays non-retryable until it has one.
+     */
+    public function isRetryable(): bool
+    {
+        return match ($this) {
+            self::Article => true,
+        };
+    }
 }

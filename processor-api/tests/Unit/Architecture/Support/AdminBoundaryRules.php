@@ -19,6 +19,7 @@ final class AdminBoundaryRules
         'App\Application\Engagement\Actions\RenameHashtagAction',
         'App\Application\Engagement\Policies\HashtagManagementPolicy',
         'App\Application\Articles\Actions\Processing\RequeueArticleProcessingAction',
+        'App\Application\Articles\Actions\Processing\RequeueArticleProcessingBatchAction',
         'App\Application\Articles\Policies\ArticleProcessingPolicy',
         'App\Application\Users\Services\UserAdminService',
         'App\Application\Users\Services\UserAdminServiceInterface',

@@ -24,6 +24,8 @@ use UnitEnum;
 /**
  * Article content processing, one row per article and task (processing_states, ADR 0001), so a
  * failed or stuck extraction is visible to operators and not only as a banner to the author.
+ *
+ * @extends Resource<ProcessingState>
  */
 class ProcessingStateResource extends Resource
 {
@@ -41,8 +43,6 @@ class ProcessingStateResource extends Resource
 
     protected static ?string $slug = 'operations/processing';
 
-    public const RETRY_LIMIT = 50;
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -57,6 +57,10 @@ class ProcessingStateResource extends Resource
 
     /**
      * Pending or processing without progress for longer than the sweeper's threshold.
+     *
+     * @param Builder<ProcessingState> $query
+     *
+     * @return Builder<ProcessingState>
      */
     public static function scopeStuck(Builder $query): Builder
     {
