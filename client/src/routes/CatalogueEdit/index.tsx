@@ -22,11 +22,13 @@ import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { FormPage } from '@/components/shared/FormPage';
 import { PageLoading } from '@/components/shared/PageLoading';
+import { useAuth } from '@/hooks/useAuth';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 
 const CatalogueEditPage = () => {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const { user } = useAuth();
 	const { catalogueId } = useParams<{ catalogueId: string }>();
 	const [apiError, setApiError] = useState<ApiError | null>(null);
 	const { data, isPending, isError } = useCatalogueShow<CatalogueDetailResource>(catalogueId ?? '', {
@@ -79,6 +81,16 @@ const CatalogueEditPage = () => {
 	}
 
 	const detailRoute = CATALOGUE_ROUTES.detail(catalogue.uuid);
+
+	// Mirrors `CataloguePolicy::canUpdate`: editing is owner-only, so anyone else is refused here
+	// exactly as the server would refuse the PUT.
+	if (user?.id !== catalogue.owner.id) {
+		return (
+			<FormPage title="Edit catalogue" size="sm" backLink={{ to: detailRoute, label: catalogue.title }}>
+				<Alert tone="danger">You do not have permission to edit this catalogue.</Alert>
+			</FormPage>
+		);
+	}
 
 	return (
 		<FormPage title="Edit catalogue" size="sm" backLink={{ to: detailRoute, label: catalogue.title }}>

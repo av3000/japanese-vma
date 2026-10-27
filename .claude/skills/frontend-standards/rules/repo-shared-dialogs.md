@@ -9,7 +9,7 @@ tags: repo, modals, dialog, accessibility
 
 **Impact: MEDIUM (one focus, escape and backdrop behaviour everywhere)**
 
-Every modal is built from `src/components/shared/DialogModal` or `src/components/shared/Modal`, opened through `useModal` or `useDialog`. Reuse an existing wrapper first: `DeleteInstanceModal`, `ConfirmModal`, `CatalogueBookmarkModal`. Do not write one-off overlay markup. `src/routes/ArticleDetails/ArticleContent/index.tsx` shows several modal controllers composed in one feature.
+Every modal is built from `src/components/shared/DialogModal` (or `Drawer` for a full-height sheet), opened through `useModal`. Reuse an existing wrapper first: `DeleteInstanceModal`, `ConfirmModal`, `CatalogueBookmarkModal`. Do not write one-off overlay markup. `src/routes/ArticleDetails/ArticleContent/index.tsx` shows several modal controllers composed in one feature.
 
 **Incorrect (hand-rolled overlay; no focus trap, no Escape, no `<dialog>` semantics):**
 

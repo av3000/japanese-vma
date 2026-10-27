@@ -62,6 +62,8 @@ export const InputTags = React.forwardRef<HTMLInputElement, InputTagsProps>(func
 	ref,
 ) {
 	const isControlled = value !== undefined;
+	// `defaultTags` is the initial value only, like `defaultValue`: a parent re-render with a new
+	// array must not reset tags the user added. Remount with a new `key` to start over.
 	const [internalTags, setInternalTags] = React.useState<string[]>(defaultTags);
 	const [inputValue, setInputValue] = React.useState<string>('');
 
@@ -69,14 +71,6 @@ export const InputTags = React.forwardRef<HTMLInputElement, InputTagsProps>(func
 	const inputId = id ?? `input-tags-${autoId}`;
 
 	const tags = isControlled ? value : internalTags;
-
-	React.useEffect(() => {
-		if (isControlled) {
-			return;
-		}
-
-		setInternalTags(defaultTags);
-	}, [defaultTags, isControlled]);
 
 	const updateTags = React.useCallback(
 		(nextTags: string[]) => {

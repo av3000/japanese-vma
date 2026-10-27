@@ -195,6 +195,23 @@ describe('AuthorizedBookmarkWidget state', () => {
 		await view.unmount();
 	});
 
+	it('retries a failed mount load when the dialog opens', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		fetchMock.mockRejectedValue(new Error('Network down'));
+		const view = await renderWithAct(widget({ loadOnMount: true }));
+		await view.flush(later);
+		const callsAfterMount = fetchMock.mock.calls.length;
+
+		fetchMock.mockResolvedValue([catalogue(1, SavedListType.KANJIS, true)]);
+		await view.flush(() => click(requireElement(view.container, 'button[aria-controls]')));
+		await view.flush(later);
+
+		expect(fetchMock).toHaveBeenCalledTimes(callsAfterMount + 1);
+		expect(label(view.container)).toBe('Saved: 水');
+		await view.unmount();
+		consoleError.mockRestore();
+	});
+
 	it('keeps the lists as the source once loaded, whatever the props say afterwards', async () => {
 		fetchMock.mockResolvedValue([catalogue(1, SavedListType.KANJIS, true)]);
 		const view = await renderWithAct(widget({ initialIsBookmarked: false }));

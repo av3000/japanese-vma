@@ -6,8 +6,6 @@ import type { PluginOption } from 'vite';
  */
 export const storyOptimizeDeps = [
 	'react-dom/client',
-	'react-redux',
-	'@reduxjs/toolkit',
 	'@tanstack/react-query-devtools',
 	// Request mocking (#333): the generated handlers pull in faker, which is large. (msw itself is
 	// external to Vitest's browser mode and must not be listed.)

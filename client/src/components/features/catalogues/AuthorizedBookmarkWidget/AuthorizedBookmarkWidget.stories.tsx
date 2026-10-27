@@ -173,7 +173,29 @@ export const IconButton: Story = {
 	},
 };
 
-/** The viewer's lists do not load. The button still works; the modal has nothing to offer but a new list. */
+/**
+ * Table rows pass `loadOnMount={false}`: the lists load when the modal opens. Until they arrive the
+ * modal says so, never "You have no lists created." to a member who has lists.
+ */
+export const LoadingInModal: Story = {
+	args: { loadOnMount: false },
+	beforeEach: ({ msw }) => {
+		msw.use(
+			getCatalogueForItemMockHandler(async () => {
+				await delay('infinite');
+
+				return { items: [] };
+			}),
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const dialog = await openModal(canvasElement, 'Save to a catalogue');
+		await expect(dialog.getByRole('status')).toHaveTextContent('Loading your lists…');
+		await expect(dialog.queryByText('You have no lists created.')).toBeNull();
+	},
+};
+
+/** The viewer's lists do not load. The modal says so instead of claiming there are no lists. */
 export const LoadError: Story = {
 	name: 'Error',
 	beforeEach: ({ msw }) => {
@@ -185,6 +207,8 @@ export const LoadError: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const dialog = await openModal(canvasElement, 'Save to a catalogue');
-		await expect(dialog.getByText('You have no lists created.')).toBeVisible();
+		// Opening retries the failed mount load, which fails again.
+		await expect(await dialog.findByRole('alert')).toHaveTextContent('Your lists could not be loaded.');
+		await expect(dialog.queryByText('You have no lists created.')).toBeNull();
 	},
 };

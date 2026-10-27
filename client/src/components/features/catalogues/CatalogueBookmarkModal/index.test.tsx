@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import { CatalogueBookmarkModal } from './index';
 
@@ -92,5 +92,32 @@ describe('CatalogueBookmarkModal', () => {
 		buttonProps.find((props) => !props.ariaLabel)?.onClick?.();
 
 		expect(onListAction).toHaveBeenCalledWith(list, 'add');
+	});
+
+	it.each([
+		[{ isLoadingLists: true }, 'Loading your lists…'],
+		[{ hasListsError: true }, 'Your lists could not be loaded.'],
+	])('shows %o instead of the empty text while the lists are not known', (props, text) => {
+		const html = renderToStaticMarkup(
+			<MemoryRouter>
+				<CatalogueBookmarkModal
+					controller={{
+						id: 'catalogue-bookmark-modal',
+						dialogRef: { current: null },
+						isOpen: true,
+						isRendered: true,
+						open: () => {},
+						close: () => {},
+					}}
+					lists={[]}
+					loadingListIds={[]}
+					onListAction={() => {}}
+					{...props}
+				/>
+			</MemoryRouter>,
+		);
+
+		expect(html).toContain(text);
+		expect(html).not.toContain('You have no lists created.');
 	});
 });

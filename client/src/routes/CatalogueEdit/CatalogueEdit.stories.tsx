@@ -82,22 +82,21 @@ export const NotFound: Story = {
 };
 
 /**
- * Another member opens the edit address. The route has no owner check: it shows the form for any
- * signed-in viewer, and the server refuses the save with a 403, which the form reports.
+ * Another member opens the edit address. The default fixture belongs to `users.member`, so the
+ * route refuses up front, as the server would refuse the save, and offers the way back.
  */
 export const NotOwner: Story = {
 	parameters: { auth: { user: users.other } },
-	beforeEach: ({ msw }) => {
-		msw.use(
-			// The default fixture belongs to `users.member`, who is not the viewer here.
-			getCatalogueUpdateMockHandler(() => failWith(403)),
-		);
-	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await changeTitleAndSave(canvas);
 
-		await expect(await canvas.findByRole('alert')).toHaveTextContent("You don't have permission to change this.");
-		await expect(currentLocation()).toBe(EDIT_PATH);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(
+			'You do not have permission to edit this catalogue.',
+		);
+		await expect(canvas.queryByLabelText('Title')).toBeNull();
+		await expect(canvas.getByRole('link', { name: 'N3 kanji for the news' })).toHaveAttribute(
+			'href',
+			`/catalogues/${CATALOGUE_UUID}`,
+		);
 	},
 };

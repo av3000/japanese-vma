@@ -9,7 +9,6 @@
 - TypeScript
 - React Router 6
 - TanStack React Query 5
-- Redux Toolkit
 - Axios
 - CSS Modules with design tokens in `src/styles` (see Styling)
 - Storybook 10 (with the Vitest and a11y addons)
@@ -24,14 +23,13 @@ The frontend is organized around routes, shared UI, and API-facing modules.
 - `src/components/` contains reusable UI and feature components.
 - `src/api/` and `src/services/` contain HTTP access and query/mutation hooks.
 - `src/providers/` contains app-wide providers such as auth and websocket context.
-- `src/store/` contains Redux Toolkit slices for the parts of the app that still use Redux-managed client state.
 - `src/storybook/` and component `*.stories.*` files support UI development and documentation.
 
 Current state matters here:
 
 - React Query is the main server-state pattern.
-- Redux is still present and actively used in parts of the app.
-- The app root wires together `QueryClientProvider`, `ReduxProvider`, router, auth, websocket, and Sentry boundaries.
+- There is no global client-state store; client state lives in components, contexts and the URL.
+- The app root wires together `QueryClientProvider`, router, auth, websocket, and Sentry boundaries.
 
 ## Local Setup
 
