@@ -135,6 +135,40 @@ class ActivityLogTest extends TestCase
         self::assertSame(['role' => 'reviewer'], $row->context);
     }
 
+    public function test_api_role_delete_writes_a_row_with_the_api_source(): void
+    {
+        Passport::actingAs($this->admin, ['*'], 'api');
+        Role::create(['name' => 'reviewer', 'guard_name' => 'api']);
+
+        $this->deleteJson('/api/v1/admin/roles/reviewer')
+            ->assertOk();
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::RoleDeleted, $row->action);
+        self::assertSame(ActivitySource::Api, $row->source);
+        self::assertSame($this->admin->id, $row->actor_id);
+        self::assertSame('reviewer', $row->changes['before']['name']);
+    }
+
+    public function test_api_role_removal_writes_a_row_on_the_user(): void
+    {
+        Passport::actingAs($this->admin, ['*'], 'api');
+        Role::create(['name' => 'reviewer', 'guard_name' => 'api']);
+        $member = $this->createUser([], 'Member');
+        $member->assignRole('reviewer');
+
+        $this->deleteJson("/api/v1/admin/users/{$member->uuid}/roles", ['role' => 'reviewer'])
+            ->assertOk();
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::UserRoleRemoved, $row->action);
+        self::assertSame(ActivitySource::Api, $row->source);
+        self::assertSame((string) $member->uuid, $row->subject_id);
+        self::assertSame(['role' => 'reviewer'], $row->context);
+    }
+
     public function test_panel_user_create_and_update_write_rows_without_password_values(): void
     {
         $this->actingAsPanelUser($this->admin);

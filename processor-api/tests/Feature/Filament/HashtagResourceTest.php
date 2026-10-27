@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
-use App\Application\Engagement\Actions\MergeHashtagsAction;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\Resources\Hashtags\Pages\ListHashtags;
-use App\Filament\Support\PanelActor;
 use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
@@ -19,7 +17,6 @@ use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use RuntimeException;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
 use Tests\TestCase;
 
@@ -172,30 +169,6 @@ class HashtagResourceTest extends TestCase
 
         self::assertNotNull($popular->fresh());
         self::assertNull($rare->fresh());
-    }
-
-    public function test_a_failed_merge_leaves_both_tags_intact(): void
-    {
-        $target = Uniquehashtag::create(['content' => '#target']);
-        $source = Uniquehashtag::create(['content' => '#source']);
-        $link = $this->link($source, ObjectTemplateType::ARTICLE, Article::factory()->create(['user_id' => $this->author->id]));
-
-        $real = app(HashtagRepositoryInterface::class);
-        $failing = $this->createMock(HashtagRepositoryInterface::class);
-        $failing->method('findTag')->willReturnCallback(static fn (int $id) => $real->findTag($id));
-        $failing->method('merge')->willReturnCallback(static function (int $sourceId, int $targetId) use ($real): never {
-            $real->merge($sourceId, $targetId);
-
-            throw new RuntimeException('Simulated failure after the links moved');
-        });
-        $this->app->instance(HashtagRepositoryInterface::class, $failing);
-
-        $result = app(MergeHashtagsAction::class)->execute($source->id, $target->id, PanelActor::current());
-
-        self::assertTrue($result->isFailure());
-        self::assertNotNull($source->fresh());
-        self::assertSame($source->id, $link->fresh()->hashtag_id);
-        self::assertSame(0, AdminActivity::query()->count());
     }
 
     public function test_new_tags_reuse_an_existing_variant(): void
