@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\Articles\Enums\ArticleOrigin;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Infrastructure\Persistence\Models\Article;
+use App\Infrastructure\Persistence\Models\ContentSource;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -53,5 +55,14 @@ class ArticleFactory extends Factory
     public function byUser(User $user): static
     {
         return $this->state(fn (): array => ['user_id' => $user->id]);
+    }
+
+    public function importedFrom(ContentSource $source, ?string $externalId = null): static
+    {
+        return $this->state(fn (): array => [
+            'origin' => ArticleOrigin::Imported,
+            'content_source_id' => $source->id,
+            'external_id' => $externalId ?? (string) Str::uuid(),
+        ]);
     }
 }
