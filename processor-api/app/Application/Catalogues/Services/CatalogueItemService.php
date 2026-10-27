@@ -16,8 +16,6 @@ use App\Http\Models\Radical;
 use App\Http\Models\Sentence;
 use App\Http\Models\Word;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Readers\ArticleListFilterBuilder;
-use Illuminate\Database\Eloquent\Builder;
 
 class CatalogueItemService
 {
@@ -27,7 +25,6 @@ class CatalogueItemService
         private readonly HashtagServiceInterface $hashtagService,
         private readonly LoadEntityStatsAction $loadStats,
         private readonly ArticlePolicy $articlePolicy,
-        private readonly ArticleListFilterBuilder $articleFilterBuilder,
     ) {
     }
 
@@ -72,7 +69,10 @@ class CatalogueItemService
             SavedListType::KANJIS => Kanji::query()->whereKey($itemId)->exists(),
             SavedListType::WORDS => Word::query()->whereKey($itemId)->exists(),
             SavedListType::SENTENCES => Sentence::query()->whereKey($itemId)->exists(),
-            SavedListType::ARTICLES => $this->visibleArticles($actor)->whereKey($itemId)->exists(),
+            SavedListType::ARTICLES => $this->catalogueItemRepository->findVisibleArticleIds(
+                [$itemId],
+                $this->articlePolicy->scopeFor($actor),
+            ) !== [],
             default => false,
         };
     }
@@ -169,17 +169,13 @@ class CatalogueItemService
             ->toArray();
     }
 
-    private function visibleArticles(?AuthenticatedUser $viewer): Builder
-    {
-        $query = PersistenceArticle::query();
-        $this->articleFilterBuilder->applyVisibilityScope($query, $this->articlePolicy->scopeFor($viewer));
-
-        return $query;
-    }
-
     private function mapArticles(array $itemIds, array $savesMap, ?AuthenticatedUser $viewer): array
     {
-        $articles = $this->visibleArticles($viewer)->whereIn('id', $itemIds)->get();
+        $visibleIds = $this->catalogueItemRepository->findVisibleArticleIds(
+            $itemIds,
+            $this->articlePolicy->scopeFor($viewer),
+        );
+        $articles = PersistenceArticle::whereIn('id', $visibleIds)->get();
         $articleIds = $articles->pluck('id')->toArray();
 
         $hashtagsMap = $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE);

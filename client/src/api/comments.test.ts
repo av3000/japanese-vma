@@ -27,7 +27,9 @@ import {
 	removeComment,
 	replaceComment,
 	updateThreadPages,
+	useDeleteCommentMutation,
 	useLikeCommentMutation,
+	type DeleteCommentVariables,
 	type CommentThreadPages,
 } from './comments';
 
@@ -395,5 +397,68 @@ describe('useLikeCommentMutation', () => {
 		await options.onMutate(1, CALLBACK_CONTEXT);
 
 		expect(readThread(queryClient)).toEqual(thread);
+	});
+});
+
+/**
+ * Comments are paged by page number, so deleting a top-level comment moves the next page's first
+ * comment onto a page already loaded. Without a re-read, Show more would skip it.
+ */
+describe('useDeleteCommentMutation', () => {
+	type DeleteCallbacks = Required<
+		Pick<UseMutationOptions<DeleteCommentVariables, unknown, DeleteCommentVariables>, 'onSuccess'>
+	>;
+
+	const useCommentDeleteHarness = (cached: CommentListResource) => {
+		const queryClient = new QueryClient();
+		queryClient.setQueryData<CommentThreadPages>(THREAD_KEY, { pages: [cached], pageParams: [1] });
+		const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+
+		let options!: DeleteCallbacks;
+		vi.mocked(useQueryClient).mockReturnValue(queryClient);
+		vi.mocked(useMutation).mockImplementation((mutationOptions: any) => {
+			options = mutationOptions;
+			return { mutate: vi.fn(), isPending: false } as never;
+		});
+
+		useDeleteCommentMutation({ parent: 'article', entityUuid: ARTICLE_UUID });
+
+		return { invalidate, options };
+	};
+
+	const pageWithMore = (hasMore: boolean): CommentListResource => ({
+		items: [createComment()],
+		pagination: { page: 1, per_page: 20, total: hasMore ? 57 : 1, last_page: hasMore ? 3 : 1, has_more: hasMore },
+	});
+
+	const root: DeleteCommentVariables = { id: 1, uuid: 'c1d7e9f0-1b2a-4c3d-8e4f-5a6b7c8d9e01', parentCommentId: null };
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('re-reads the loaded pages after a top-level delete while later pages exist', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(true));
+
+		await options.onSuccess(root, root, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: THREAD_KEY });
+	});
+
+	it('trusts the cache when every page is already loaded', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(false));
+
+		await options.onSuccess(root, root, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).not.toHaveBeenCalled();
+	});
+
+	it('trusts the cache after deleting a reply, which moves no comment between pages', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(true));
+		const reply: DeleteCommentVariables = { id: 50, uuid: 'r-50', parentCommentId: 1 };
+
+		await options.onSuccess(reply, reply, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).not.toHaveBeenCalled();
 	});
 });

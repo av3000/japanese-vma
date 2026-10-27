@@ -176,13 +176,12 @@ export const GeneralError: Story = {
 	},
 };
 
-/** The edit modal's form: one column, and an unchanged submit says so instead of sending. */
+/** The edit page's form: an unchanged submit says so instead of sending. */
 export const EditUnchanged: Story = {
 	args: {
 		initialValues: SAVED,
 		submitLabel: 'Save changes',
 		requireChanges: true,
-		stacked: true,
 		note: <p>Changing the Japanese title or text runs the kanji and word analysis again.</p>,
 	},
 	play: async ({ canvasElement, args }) => {

@@ -428,6 +428,17 @@ export const useDeleteCommentMutation = ({ parent, entityUuid }: Omit<CommentThr
 				queryClient.setQueryData<CommentThreadPages>(queryKey, context.previous);
 			}
 		},
+
+		// Pages are read by page number, so a deleted top-level comment pulls the next page's first
+		// comment onto a page already loaded; without a re-read, Show more would skip it.
+		onSuccess: async (target) => {
+			const pages = queryClient.getQueryData<CommentThreadPages>(queryKey);
+			const hasLaterPages = pages?.pages[pages.pages.length - 1]?.pagination.has_more === true;
+
+			if (target.parentCommentId === null && hasLaterPages) {
+				await queryClient.invalidateQueries({ queryKey });
+			}
+		},
 	});
 };
 

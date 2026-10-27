@@ -2,10 +2,15 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ArticleFormValues } from '@/components/features/articles/ArticleForm';
+import { articleKeys } from '@/api/articles/keys';
+import { getArticleDetailQueryKey } from '@/api/articles/details';
 import ArticleEditPage, { buildArticleUpdatePayload } from './index';
 
 const useArticleQueryMock = vi.fn();
 const capturedProps: Array<Record<string, unknown>> = [];
+const navigate = vi.fn();
+const invalidateQueries = vi.fn();
+let mutationOptions: { onSuccess?: () => void } = {};
 
 let currentUser: { id: number; isAdmin: boolean } | null = { id: 5, isAdmin: false };
 
@@ -14,7 +19,7 @@ vi.mock('react-router-dom', async () => {
 	return {
 		...actual,
 		Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
-		useNavigate: () => vi.fn(),
+		useNavigate: () => navigate,
 		useParams: () => ({ article_id: 'article-uuid' }),
 	};
 });
@@ -23,8 +28,11 @@ vi.mock('@tanstack/react-query', async () => {
 	const actual = await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
 	return {
 		...actual,
-		useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-		useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+		useQueryClient: () => ({ invalidateQueries }),
+		useMutation: (options: { onSuccess?: () => void }) => {
+			mutationOptions = options;
+			return { mutate: vi.fn(), isPending: false };
+		},
 	};
 });
 
@@ -60,6 +68,8 @@ const render = () => renderToStaticMarkup(<ArticleEditPage />);
 describe('ArticleEdit', () => {
 	beforeEach(() => {
 		capturedProps.length = 0;
+		mutationOptions = {};
+		vi.clearAllMocks();
 		currentUser = { id: 5, isAdmin: false };
 		useArticleQueryMock.mockReturnValue({ data: article, isLoading: false, isError: false });
 	});
@@ -97,8 +107,16 @@ describe('ArticleEdit', () => {
 			requireEnglishTitle: true,
 			requireChanges: true,
 		});
-		// Not `stacked`: the page has the width for the settings card beside the content.
-		expect(capturedProps[0]).not.toHaveProperty('stacked');
+	});
+
+	it('refreshes the article and the article lists after a save, then opens the article', () => {
+		render();
+
+		mutationOptions.onSuccess?.();
+
+		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getArticleDetailQueryKey('article-uuid') });
+		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: articleKeys.lists() });
+		expect(navigate).toHaveBeenCalledWith('/articles/article-uuid');
 	});
 
 	it('refuses a viewer who is not the author, inside the page', () => {

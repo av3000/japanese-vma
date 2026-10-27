@@ -51,6 +51,15 @@ class KanjiResource extends Resource
 
     protected static ?string $recordRouteKeyName = 'uuid';
 
+    /**
+     * Admins see the rows the public API hides for their '????' character (#545), so they can
+     * find them when the source data can restore them.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withoutGlobalScope(Kanji::READABLE_CHARACTER_SCOPE);
+    }
+
     public static function table(Table $table): Table
     {
         return $table

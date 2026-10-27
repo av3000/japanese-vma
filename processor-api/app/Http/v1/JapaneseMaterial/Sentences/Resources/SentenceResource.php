@@ -60,17 +60,17 @@ class SentenceResource extends JsonResource
         // second constructor argument, which WordResource types as ?ViewerCatalogueStateDTO,
         // so it throws a TypeError on any non-empty list. `words` stays an untyped array in
         // the schema; no client reads it today.
-        $authorUuid = $this->resource->getAuthorUuid();
+        $author = $this->resource->getAuthor();
 
         return [
             'id' => $this->resource->getIdValue(),
             'uuid' => $this->resource->getUuid()->value(),
             'user_id' => $this->resource->getUserId(),
             // The writer of a user-written sentence; null for imported Tatoeba sentences.
-            'author' => $authorUuid === null ? null : new AuthorResource([
+            'author' => $author === null ? null : new AuthorResource([
                 'id' => (int) $this->resource->getUserId(),
-                'name' => (string) $this->resource->getAuthorName(),
-                'uuid' => $authorUuid->value(),
+                'name' => $author->name,
+                'uuid' => $author->uuid->value(),
             ]),
             'tatoeba_entry' => $this->resource->getTatoebaEntry(),
             'content' => $this->resource->getContent(),

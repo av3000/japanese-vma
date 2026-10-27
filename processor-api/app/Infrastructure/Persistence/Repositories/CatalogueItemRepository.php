@@ -5,13 +5,33 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
+use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
 use App\Domain\Catalogues\Enums\CatalogueJlptSource;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Http\Models\Kanji;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Readers\ArticleListFilterBuilder;
 use Illuminate\Support\Facades\DB;
 
 class CatalogueItemRepository implements CatalogueItemRepositoryInterface
 {
+    public function __construct(
+        private readonly ArticleListFilterBuilder $articleFilterBuilder,
+    ) {
+    }
+
+    public function findVisibleArticleIds(array $articleIds, ArticleVisibilityScope $scope): array
+    {
+        if (empty($articleIds)) {
+            return [];
+        }
+
+        $query = PersistenceArticle::query()->whereIn('id', $articleIds);
+        $this->articleFilterBuilder->applyVisibilityScope($query, $scope);
+
+        return $query->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+    }
+
     public function findItemIdsByCatalogueId(int $catalogueId): array
     {
         return DB::table('customlist_object')

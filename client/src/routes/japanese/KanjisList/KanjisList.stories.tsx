@@ -187,8 +187,8 @@ export const Mobile: Story = {
 };
 
 /**
- * A signed-in viewer at 768px and 1023px, the narrowest table layout (#550): the Save column and
- * the tightened column caps still fit the page without a sideways scroll.
+ * A signed-in viewer at 768px, the narrowest width of the 768-1023px table layout (#550): the Save
+ * column and the tightened column caps still fit the page without a sideways scroll.
  */
 export const MemberTablet: Story = {
 	parameters: { auth: { user: users.member } },

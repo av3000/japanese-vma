@@ -59,8 +59,6 @@ export interface FormLayoutProps {
 	aside?: React.ReactNode;
 	/** Submit and Cancel. */
 	actions: React.ReactNode;
-	/** One column at every width, for forms inside a modal. */
-	stacked?: boolean;
 	/** The main column, usually one `FormCard`. */
 	children: React.ReactNode;
 	className?: string;
@@ -70,8 +68,8 @@ export interface FormLayoutProps {
  * Arranges a form's cards. DOM order is the visual order (alert, content, settings, actions), so
  * keyboard order follows what the reader sees at every width.
  */
-export const FormLayout: React.FC<FormLayoutProps> = ({ alert, aside, actions, stacked, children, className }) => (
-	<div className={classNames(styles.layout, Boolean(aside) && !stacked && styles.withAside, className)}>
+export const FormLayout: React.FC<FormLayoutProps> = ({ alert, aside, actions, children, className }) => (
+	<div className={classNames(styles.layout, Boolean(aside) && styles.withAside, className)}>
 		{alert ? <div className={styles.alert}>{alert}</div> : null}
 		<Stack gap="md" className={styles.main}>
 			{children}

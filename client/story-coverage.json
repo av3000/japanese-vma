@@ -22,7 +22,6 @@
   "src/components/shared/Link/LinkRouter.tsx": "covered-by: src/components/shared/Link/Link.stories.tsx",
   "src/routes": "not-visual",
   "src/routes/ArticleCreate": "covered-by: src/components/features/articles/ArticleForm.stories.tsx (the route only wraps it)",
-  "src/routes/ArticleEdit": "not-visual (redirects to the article page with ?edit=1)",
   "src/routes/CatalogueCreate": "covered-by: src/components/features/catalogues/CatalogueForm.stories.tsx (the route only wraps it)",
   "src/routes/CatalogueDetails/index.tsx": "covered-by: src/routes/ArticleDetails/ArticleDetails.stories.tsx (same route-state pattern)",
   "src/routes/Dashboard/dashboardTestRoute.tsx": "not-visual",
