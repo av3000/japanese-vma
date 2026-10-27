@@ -126,7 +126,7 @@ class WordMapperTest extends TestCase
 
         $this->assertSame(['auxiliary verb'], $word->getWordTypes());
         $this->assertSame([], $word->getWritingElements());
-        $this->assertSame([], $word->getReadingElements());
+        $this->assertSame(['う'], $word->getReadingElements());
         $this->assertSame([
             'indicates speculation',
             'indicates will',
@@ -134,5 +134,29 @@ class WordMapperTest extends TestCase
         ], $word->getMeanings());
         $this->assertSame($rawReadingElements, $word->getRawReadingElements());
         $this->assertSame($rawSense, $word->getRawSense());
+    }
+
+    public function test_map_to_domain_lists_every_jmdict_kanji_and_reading_element_in_source_order(): void
+    {
+        // The import's real shape: priority and restriction tags sit beside keb/reb, and
+        // each value is an object keyed "0".
+        $persistenceWord = new PersistenceWord([
+            'id' => 13,
+            'uuid' => '44444444-4444-4444-8444-444444444444',
+            'word' => '人',
+            'furigana' => 'ひと',
+            'jlpt' => '-',
+            'word_type' => 'noun (common) (futsuumeishi)|',
+            'word_k_ele' => '[[["keb",{"0":"人"}],["ke_pri",{"0":"ichi1"}]],[["keb",{"0":"他人"}]],[["keb",{"0":"人"}]]]',
+            'furigana_r_ele' => '[[["reb",{"0":"ひと"}],["re_pri",{"0":"ichi1"}]],[["reb",{"0":"ヒト"}],["re_nokanji",{}]]]',
+            'sense' => '[[["gloss",{"0":"person"}]]]',
+        ]);
+
+        $persistenceWord->id = 13;
+
+        $word = (new WordMapper)->mapToDomain($persistenceWord);
+
+        $this->assertSame(['人', '他人'], $word->getWritingElements());
+        $this->assertSame(['ひと', 'ヒト'], $word->getReadingElements());
     }
 }

@@ -133,6 +133,37 @@
 	overflow-wrap: anywhere;
 }
 
+/* Numbered senses: the native decimal markers sit in the padding. */
+.senses {
+	display: grid;
+	gap: var(--spacing-md);
+	margin: 0;
+	padding-inline-start: var(--spacing-xl);
+}
+
+/* A list item, not a grid: `display: grid` would drop the number marker. */
+.sense {
+	min-width: 0;
+	padding-inline-start: var(--spacing-2xs);
+}
+
+.sense > * + * {
+	margin-block-start: var(--spacing-3xs);
+}
+
+.sense::marker {
+	color: var(--color-neutral-600);
+	font-weight: var(--font-weight-semibold);
+}
+
+/* Part of speech and usage notes: muted, a step smaller than the glosses. */
+.senseMeta {
+	margin: 0;
+	overflow-wrap: anywhere;
+	color: var(--color-neutral-600);
+	font-size: var(--font-size-body-md);
+}
+
 .glyphs {
 	font-family: var(--font-family-ja-serif);
 	font-size: var(--font-size-heading-3);

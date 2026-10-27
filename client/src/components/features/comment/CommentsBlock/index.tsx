@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { parseApiError } from '@/api/apiError';
 import {
-	COMMENT_LIST_PARAMS,
-	COMMENT_PARENTS,
 	getCommentsQueryKey,
+	useCommentThreadQuery,
 	useCreateCommentMutation,
 	useDeleteCommentMutation,
 	useLikeCommentMutation,
@@ -18,7 +16,7 @@ import { Alert } from '@/components/shared/Alert';
 import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
 import CommentForm from './CommentForm/CommentForm';
-import CommentList from './CommentList/CommentList';
+import CommentList, { type CommentHeadingLevel } from './CommentList/CommentList';
 import styles from './CommentsBlock.module.css';
 
 interface CommentsBlockProps {
@@ -31,9 +29,20 @@ interface CommentsBlockProps {
 	entityId: number;
 	entityUuid: string;
 	isLocked?: boolean;
+	/**
+	 * Level of the block's own heading, the comment count. The page owns the "Comments" section
+	 * heading (an `h2`), so the count sits one level below it by default.
+	 */
+	headingLevel?: CommentHeadingLevel;
 }
 
-const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityUuid, isLocked = false }) => {
+const CommentsBlock: React.FC<CommentsBlockProps> = ({
+	parent,
+	entityId,
+	entityUuid,
+	isLocked = false,
+	headingLevel = 3,
+}) => {
 	const { isAuthenticated, user } = useAuth();
 
 	const queryKey = getCommentsQueryKey(parent, entityUuid);
@@ -41,11 +50,11 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 		data: thread,
 		isLoading,
 		isError,
-	} = useQuery({
-		queryKey,
-		queryFn: () => COMMENT_PARENTS[parent].fetchThread(entityUuid, COMMENT_LIST_PARAMS),
-		enabled: !!entityUuid,
-	});
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
+		isFetchNextPageError,
+	} = useCommentThreadQuery(parent, entityUuid);
 
 	const createMutation = useCreateCommentMutation({ parent, entityId, entityUuid });
 	const updateMutation = useUpdateCommentMutation({ parent, entityUuid });
@@ -124,7 +133,11 @@ const CommentsBlock: React.FC<CommentsBlockProps> = ({ parent, entityId, entityU
 				<CommentList
 					comments={thread?.items ?? []}
 					total={thread?.pagination.total ?? 0}
-					hasMore={thread?.pagination.has_more ?? false}
+					headingLevel={headingLevel}
+					hasMore={hasNextPage}
+					isLoadingMore={isFetchingNextPage}
+					loadMoreFailed={isFetchNextPageError}
+					onShowMore={() => void fetchNextPage()}
 					// Replying to a locked parent is refused by the API with a 409,
 					// so the affordance is hidden rather than offered and rejected.
 					canReply={isAuthenticated && !isLocked}

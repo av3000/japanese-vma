@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useId, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
 import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
@@ -33,18 +33,14 @@ import { isValidHttpUrl } from '@/helpers/isValidHttpUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { SavedListType } from '@/shared/constants/enums';
-import ArticleEditModal from '../ArticleEditModal';
 import styles from './ArticleContent.module.css';
 
 interface ArticleContentProps {
 	article: MappedArticle;
 }
 
-/**
- * Where the Edit action goes. Edit is still the modal on this page (`?edit=1`); #447 moves it to
- * `/articles/:id/edit`, and then only this line changes.
- */
-export const articleEditHref = (articleUuid: string) => `/articles/${articleUuid}?edit=1`;
+/** Where the Edit action goes: the edit page, like every other edit surface. */
+export const articleEditHref = (articleUuid: string) => `/articles/${articleUuid}/edit`;
 
 /** The hostname of a source link, or `null` when it is not a usable http(s) URL. */
 const sourceHostOf = (link: string | null | undefined): string | null =>
@@ -52,7 +48,6 @@ const sourceHostOf = (link: string | null | undefined): string | null =>
 
 const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
-	const [searchParams, setSearchParams] = useSearchParams();
 	const { user: currentUser, isAuthenticated } = useAuth();
 	const tagsHeadingId = useId();
 	const commentsHeadingId = useId();
@@ -63,7 +58,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
-	const editDialogRef = useRef<HTMLDialogElement | null>(null);
 
 	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
 	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
@@ -82,20 +76,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	});
 
 	const deleteMutation = useDeleteArticleMutation();
-
-	const closeEditModal = () => {
-		const next = new URLSearchParams(searchParams);
-		next.delete('edit');
-		setSearchParams(next);
-	};
-
-	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
-	const {
-		open: openEditDialog,
-		close: closeEditDialog,
-		isOpen: isEditDialogOpen,
-		isRendered: isEditDialogRendered,
-	} = editModal;
 
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
@@ -123,7 +103,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const likesCount = Number(article.engagement?.likes_count ?? 0);
 	const isOwner = currentUser?.id === article.author.id;
 	const isAdmin = Boolean(currentUser?.isAdmin);
-	const isEditOpen = isOwner && searchParams.get('edit') === '1';
 	const isProcessing = isProcessingRunning(article);
 	const sourceHost = sourceHostOf(article.source_link);
 
@@ -137,17 +116,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 
 		likeMutation.mutate(article.id);
 	};
-
-	useEffect(() => {
-		if (isEditOpen) {
-			if (!isEditDialogOpen) openEditDialog();
-			return;
-		}
-
-		if (isEditDialogOpen || isEditDialogRendered) {
-			closeEditDialog();
-		}
-	}, [isEditOpen, isEditDialogOpen, isEditDialogRendered, openEditDialog, closeEditDialog]);
 
 	// "Words" is left out, not shown as a guess, when its list could not be read.
 	const facts: DetailFact[] = [
@@ -324,8 +292,6 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 				errorMessage={pdfErrorMessage}
 				isDownloadEnabled={article?.processing_status?.status === ProcessingStatus.completed}
 			/>
-
-			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}
 		</>
 	);
 };

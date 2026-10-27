@@ -1,4 +1,4 @@
-import type { MappedRadical } from '@/api/radicals/details';
+import type { RadicalResource } from '@/api/generated/model/radicalResource';
 import { useRadicalKanjiPages } from '@/api/radicals/related';
 import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import { presentRank, presentText } from '@/components/features/japanese/dictionaryList';
@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { SavedListType } from '@/shared/constants/enums';
 
 interface RadicalContentProps {
-	radical: MappedRadical;
+	radical: RadicalResource;
 }
 
 const RadicalContent = ({ radical }: RadicalContentProps) => {

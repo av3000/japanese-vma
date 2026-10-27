@@ -21,7 +21,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** 出る for a guest: 77 glosses in one paragraph. */
+/** 出る for a guest: 77 glosses in 20 numbered senses. */
 export const Guest: Story = {
 	parameters: { auth: 'guest' },
 	play: async ({ canvasElement }) => {

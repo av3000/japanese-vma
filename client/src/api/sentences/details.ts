@@ -15,6 +15,7 @@ export const mapSentenceDetail = (sentence: SentenceDetailResponse): MappedSente
 		id: sentence.id,
 		uuid: sentence.uuid,
 		user_id: sentence.user_id,
+		author: sentence.author ?? null,
 		tatoeba_entry: sentence.tatoeba_entry,
 		content: sentence.content,
 		kanjis: sentence.kanjis ?? [],

@@ -60,7 +60,12 @@ vi.mock('@/components/features/comment/CommentsBlock', () => ({
 }));
 
 const loaded = (data: unknown) => ({ data, isLoading: false, isError: false, error: null });
-const memberSentence = { ...sentenceShort, user_id: 5, tatoeba_entry: null };
+const memberSentence = {
+	...sentenceShort,
+	user_id: 5,
+	author: { id: 5, name: 'Kenji', uuid: 'user-kenji' },
+	tatoeba_entry: null,
+};
 
 const button = (root: ParentNode, name: string) =>
 	Array.from(root.querySelectorAll('button')).find(
@@ -140,7 +145,7 @@ describe('SentenceDetails', () => {
 		expect(html).toContain('>Your sentence</h2>');
 		expect(html).toContain(`href="/sentences/${sentenceShort.uuid}/edit"`);
 		expect(html).toContain('Delete sentence');
-		expect(html).toContain('Written by you');
+		expect(html).toContain('>Kenji</strong>');
 	});
 
 	it('hides both controls from a viewer who does not own the sentence', () => {
@@ -151,7 +156,7 @@ describe('SentenceDetails', () => {
 
 		expect(html).not.toContain(`/sentences/${sentenceShort.uuid}/edit`);
 		expect(html).not.toContain('Delete sentence');
-		expect(html).toContain('Written by a member');
+		expect(html).toContain('>Kenji</strong>');
 	});
 
 	it('hides both controls on an imported sentence even for an admin', () => {

@@ -23,7 +23,7 @@ class SentenceRepository implements SentenceRepositoryInterface
 
     public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO
     {
-        $query = PersistenceSentence::query()->orderBy('id');
+        $query = PersistenceSentence::query()->with('user:id,name,uuid')->orderBy('id');
 
         $this->applyFilters($query, $criteria);
 
@@ -52,7 +52,7 @@ class SentenceRepository implements SentenceRepositoryInterface
 
     public function findByUuid(EntityId $uuid, bool $withKanjis = false, bool $withWords = false): ?DomainSentence
     {
-        $query = PersistenceSentence::query()->where('uuid', $uuid->value());
+        $query = PersistenceSentence::query()->with('user:id,name,uuid')->where('uuid', $uuid->value());
 
         if ($withKanjis) {
             $query->with('kanjis');
@@ -69,7 +69,7 @@ class SentenceRepository implements SentenceRepositoryInterface
 
     public function findByLegacyId(int $id, bool $withKanjis = false, bool $withWords = false): ?DomainSentence
     {
-        $query = PersistenceSentence::query()->whereKey($id);
+        $query = PersistenceSentence::query()->with('user:id,name,uuid')->whereKey($id);
 
         if ($withKanjis) {
             $query->with('kanjis');
@@ -93,7 +93,7 @@ class SentenceRepository implements SentenceRepositoryInterface
             'content' => $dto->content,
         ]);
 
-        return $this->sentenceMapper->mapToDomain($sentence);
+        return $this->sentenceMapper->mapToDomain($sentence->load('user:id,name,uuid'));
     }
 
     public function updateContent(int $sentenceId, SentenceWriteDTO $dto): void

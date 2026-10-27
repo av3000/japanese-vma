@@ -11,5 +11,5 @@ interface RadicalServiceInterface
 {
     public function find(RadicalQueryCriteria $criteria): Result;
 
-    public function findByIdentifier(string $identifier, bool $withKanjis = true): Result;
+    public function findByIdentifier(string $identifier, bool $withKanjis = false): Result;
 }

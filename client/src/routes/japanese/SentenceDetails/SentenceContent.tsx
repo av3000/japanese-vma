@@ -22,10 +22,15 @@ interface SentenceContentProps {
 	sentence: MappedSentenceDetail;
 }
 
-const SOURCE_FACTS: Record<SentenceSource['kind'], string> = {
-	tatoeba: 'Tatoeba',
-	own: 'You',
-	member: 'A member',
+const sourceFact = (source: SentenceSource): string => {
+	switch (source.kind) {
+		case 'tatoeba':
+			return 'Tatoeba';
+		case 'own':
+			return 'You';
+		case 'member':
+			return source.name ?? 'A member';
+	}
 };
 
 const SentenceContent = ({ sentence }: SentenceContentProps) => {
@@ -57,7 +62,7 @@ const SentenceContent = ({ sentence }: SentenceContentProps) => {
 	const facts = [
 		{ term: 'Characters', value: characterCount(sentence.content) },
 		{ term: 'Kanji', value: sentence.kanjis.length },
-		...(source ? [{ term: 'Source', value: { text: SOURCE_FACTS[source.kind] } }] : []),
+		...(source ? [{ term: 'Source', value: { text: sourceFact(source) } }] : []),
 	];
 
 	return (

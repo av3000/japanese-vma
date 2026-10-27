@@ -203,7 +203,7 @@ export const LongThread: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(await canvas.findByText('Showing 20 of 57 comments')).toBeVisible();
-		await expect(canvas.getByRole('heading', { name: /57\s+Comments/ })).toBeVisible();
+		await expect(canvas.getByRole('heading', { level: 3, name: '57 comments' })).toBeVisible();
 		await expect(canvas.queryByText('@Reader 108')).toBeNull();
 
 		await userEvent.click(canvas.getByRole('button', { name: 'Show 5 more replies' }));
@@ -375,5 +375,36 @@ export const LikesComment: Story = {
 		);
 		// The count updates optimistically, before the request lands: wait for the handler.
 		await waitFor(() => expect(likes).toEqual([{ template_id: 10, real_object_id: 1 }]));
+	},
+};
+
+/** 25 comments in pages of 20: Show more loads page 2 under page 1, then goes away. */
+export const ShowMore: Story = {
+	beforeEach: ({ msw }) => {
+		const all = Array.from({ length: 25 }, (_, index) => makeComment(index + 1));
+
+		msw.use(
+			getCommentGetArticleCommentsMockHandler(({ request }) => {
+				const page = Number(new URL(request.url).searchParams.get('page') ?? '1');
+				const items = all.slice((page - 1) * 20, page * 20);
+
+				return {
+					items,
+					pagination: { page, per_page: 20, total: 25, last_page: 2, has_more: page < 2 },
+				};
+			}),
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByText('Showing 20 of 25 comments')).toBeVisible();
+		await expect(canvas.queryByText('@Reader 21')).toBeNull();
+
+		await userEvent.click(canvas.getByRole('button', { name: 'Show more comments' }));
+
+		await expect(await canvas.findByText('@Reader 25')).toBeVisible();
+		await expect(canvas.getByText('@Reader 1')).toBeVisible();
+		await expect(canvas.queryByRole('button', { name: 'Show more comments' })).toBeNull();
+		await expect(canvas.getByRole('heading', { level: 3, name: '25 comments' })).toBeVisible();
 	},
 };

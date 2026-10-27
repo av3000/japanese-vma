@@ -81,12 +81,15 @@ describe('WordDetails', () => {
 		expect(html).toMatch(/<a href="\/words"[^>]*>.*Words<\/a>/);
 	});
 
-	it('lists every meaning, separated by semicolons', () => {
+	it('lists the meanings as numbered senses, in order', () => {
 		const html = renderToStaticMarkup(<WordDetails />);
+		const senses = html.match(/<li class="[^"]*sense[^"]*">/g) ?? [];
 
 		expect(html).toContain('>Meanings</h2>');
-		expect(html).toContain('to leave; to exit; to go out; to come out;');
-		expect(html).toContain(wordManyMeanings.meanings.at(-1) as string);
+		expect(html).toContain('<ol class=');
+		expect(senses).toHaveLength(wordManyMeanings.senses.length);
+		expect(html).toContain('>to leave; to exit; to go out; to come out; to get out</p>');
+		expect(html.indexOf('to get out')).toBeLessThan(html.indexOf('to graduate'));
 	});
 
 	it('hides the reading of a word written in kana, and shows no JLPT it does not have', () => {

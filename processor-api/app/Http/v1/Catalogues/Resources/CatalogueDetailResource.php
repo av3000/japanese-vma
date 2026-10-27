@@ -60,6 +60,7 @@ class CatalogueDetailResource extends JsonResource
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
+            // Items the viewer can see: an article catalogue leaves out articles that are private to someone else.
             'items_count' => $detail->itemsCount,
             'hashtags' => HashtagResource::collection($detail->hashtags),
             'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),

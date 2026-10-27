@@ -13,7 +13,7 @@ import type { ArticleShowParams } from '@/api/generated/model/articleShowParams'
  * `lists()` is the prefix shared by every list variant and is what invalidations target.
  * `list(params)` is the exact key one `useInfiniteArticles` call reads. `detail(uuid)` is
  * the single-article key used by the detail query, the like and status mutations, the edit
- * modal and the processing-status subscription.
+ * page and the processing-status subscription.
  */
 export const articleKeys = {
 	lists: () => getArticleIndexQueryKey(),

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, within } from 'storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { makeComment, makeReply, makeThreadComment } from '../../fixtures';
 import type { CommentActionState } from '../CommentItem/CommentItem';
 import CommentList from './CommentList';
@@ -49,7 +49,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.getByRole('heading', { name: /3\s+Comments/ })).toBeVisible();
+		await expect(canvas.getByRole('heading', { level: 3, name: '3 comments' })).toBeVisible();
 		await expect(canvas.getAllByRole('listitem')).toHaveLength(3);
 		await expect(canvas.getAllByRole('button', { name: 'Reply' })).toHaveLength(3);
 	},
@@ -73,13 +73,37 @@ export const WithReplies: Story = {
 	},
 };
 
-/** The thread is bigger than the loaded page: the heading counts the thread, a line says how many are shown. */
+/**
+ * The thread is bigger than the loaded pages: the heading counts the thread, a line says how many
+ * are shown, and Show more asks for the next page.
+ */
 export const Paged: Story = {
-	args: { total: 57, hasMore: true },
+	args: { total: 57, hasMore: true, onShowMore: fn() },
+	play: async ({ args, canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('heading', { level: 3, name: '57 comments' })).toBeVisible();
+		await expect(canvas.getByText('Showing 3 of 57 comments')).toBeVisible();
+
+		await userEvent.click(canvas.getByRole('button', { name: 'Show more comments' }));
+		await expect(args.onShowMore).toHaveBeenCalledTimes(1);
+	},
+};
+
+/** The next page failed: the reader is told, and the button stays to try again. */
+export const ShowMoreError: Story = {
+	args: { total: 57, hasMore: true, loadMoreFailed: true },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.getByRole('heading', { name: /57\s+Comments/ })).toBeVisible();
-		await expect(canvas.getByText('Showing 3 of 57 comments')).toBeVisible();
+		await expect(canvas.getByRole('alert')).toHaveTextContent('More comments could not be loaded.');
+		await expect(canvas.getByRole('button', { name: 'Show more comments' })).toBeEnabled();
+	},
+};
+
+/** A page whose outline puts comments under an `h1` gets the count as an `h2`. */
+export const HeadingLevelTwo: Story = {
+	args: { headingLevel: 2 },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('heading', { level: 2, name: '3 comments' })).toBeVisible();
 	},
 };
 
@@ -87,7 +111,7 @@ export const Empty: Story = {
 	args: { comments: [], total: 0 },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.getByRole('heading', { name: /0\s+Comments/ })).toBeVisible();
+		await expect(canvas.getByRole('heading', { level: 3, name: '0 comments' })).toBeVisible();
 		await expect(canvas.getByText('Be the first to comment')).toBeVisible();
 		await expect(canvas.queryByRole('listitem')).toBeNull();
 	},

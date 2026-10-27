@@ -33,6 +33,21 @@ export const SignedIn: Story = {
 	parameters: { auth: 'member' },
 };
 
+/**
+ * Signed in at 768px (#550): the kanji table gains its Save column inside the 720px reading column,
+ * with real readings such as 杏's キョウ、アン、コウ, and still nothing scrolls sideways.
+ */
+export const SignedInTablet: Story = {
+	parameters: { auth: 'member' },
+	globals: { viewport: { value: 'sm' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(await canvas.findByText('キョウ、アン、コウ')).toBeVisible();
+		await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+	},
+};
+
 /** 水 with its variants 氵 and 氺. */
 export const WithVariants: Story = {
 	args: { radical: { ...radicalWater, kanjis: [] } },

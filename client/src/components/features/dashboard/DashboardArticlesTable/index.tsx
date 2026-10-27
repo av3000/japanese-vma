@@ -26,7 +26,7 @@ export interface DashboardArticlesTableProps {
 	onDelete: (article: ArticleResource) => void;
 }
 
-export const articleEditPath = (uuid: string) => `/articles/${uuid}?edit=1`;
+export const articleEditPath = (uuid: string) => `/articles/${uuid}/edit`;
 
 const stat = (article: ArticleResource, key: 'views_count' | 'comments_count' | 'likes_count') =>
 	formatCount(toCount(article.engagement?.stats?.[key]));

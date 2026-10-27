@@ -84,6 +84,7 @@ const AppRoutes: React.FC = () => (
 
 		<Route element={<PrivateRoute />}>
 			<Route path="/newarticle" element={<ArticleCreatePage />} />
+			<Route path="/articles/:article_id/edit" element={<ArticleEditPage />} />
 			<Route path="/article/edit/:article_id" element={<ArticleEditPage />} />
 			<Route path="/catalogues/new" element={<CatalogueCreatePage />} />
 			<Route path="/catalogues/:catalogueId/edit" element={<CatalogueEditPage />} />

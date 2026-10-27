@@ -301,7 +301,7 @@ class CatalogueService implements CatalogueServiceInterface
 
         $this->trackView($catalogue->getIdValue(), ObjectTemplateType::LIST, $viewer);
 
-        $items = $this->catalogueItemService->getItems($catalogue);
+        $items = $this->catalogueItemService->getItems($catalogue, $authenticatedUser);
         $catalogueId = $catalogue->getIdValue();
         $stats = $this->loadCatalogueStats([$catalogueId], true)[$catalogueId];
         $hashtags = $this->hashtagService->getHashtags($catalogueId, ObjectTemplateType::LIST);
@@ -399,7 +399,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            if (! $this->catalogueItemService->isValidItemForCatalogue($catalogue, $itemId)) {
+            if (! $this->catalogueItemService->isValidItemForCatalogue($catalogue, $itemId, $authenticatedUser)) {
                 return Result::failure(CatalogueErrors::invalidItemForType($uuid->value(), $itemId));
             }
 

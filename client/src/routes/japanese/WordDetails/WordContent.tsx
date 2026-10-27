@@ -50,7 +50,7 @@ const WordContent = ({ word }: WordContentProps) => {
 					lead={lead.length > 0 ? lead.join(', ') : null}
 				/>
 			}
-			main={<EntryMeanings meanings={presentAllValues(word.meanings)} />}
+			main={<EntryMeanings senses={word.senses} meanings={presentAllValues(word.meanings)} />}
 			facts={<DetailFacts title="About this word" facts={wordFacts(word)} />}
 			actions={
 				isAuthenticated ? (

@@ -20,11 +20,17 @@ import {
 	COMMENT_PARENTS,
 	appendReply,
 	getCommentsQueryKey,
+	getNextCommentPageParam,
+	mergeThreadPages,
 	patchCommentContent,
 	prependComment,
 	removeComment,
 	replaceComment,
+	updateThreadPages,
+	useDeleteCommentMutation,
 	useLikeCommentMutation,
+	type DeleteCommentVariables,
+	type CommentThreadPages,
 } from './comments';
 
 /**
@@ -140,6 +146,50 @@ describe('getCommentsQueryKey', () => {
 	});
 });
 
+describe('thread pages', () => {
+	const page = (items: CommentResource[], number: number, hasMore: boolean): CommentListResource => ({
+		items,
+		pagination: { page: number, per_page: 2, total: 3, last_page: 2, has_more: hasMore },
+	});
+	const first = createComment({ id: 1, uuid: 'c-1' });
+	const second = createComment({ id: 2, uuid: 'c-2' });
+	const third = createComment({ id: 3, uuid: 'c-3' });
+	const twoPages: CommentThreadPages = {
+		pages: [page([first, second], 1, true), page([third], 2, false)],
+		pageParams: [1, 2],
+	};
+
+	it('asks for the next page only while the server has one', () => {
+		expect(getNextCommentPageParam(page([first], 1, true))).toBe(2);
+		expect(getNextCommentPageParam(page([first], 2, false))).toBeUndefined();
+	});
+
+	it('reads the loaded pages as one thread with the latest has_more', () => {
+		const thread = mergeThreadPages(twoPages);
+
+		expect(thread.items.map((item) => item.id)).toEqual([1, 2, 3]);
+		expect(thread.pagination).toMatchObject({ page: 2, total: 3, has_more: false });
+	});
+
+	it('shows a comment that a newer post pushed onto the next page only once', () => {
+		const shifted: CommentThreadPages = {
+			pages: [page([first, second], 1, true), page([second, third], 2, false)],
+			pageParams: [1, 2],
+		};
+
+		expect(mergeThreadPages(shifted).items.map((item) => item.id)).toEqual([1, 2, 3]);
+	});
+
+	it('applies a cache rule across pages and keeps each page number for refetch', () => {
+		const next = updateThreadPages(twoPages, (thread) => removeComment(thread, { id: 3, parentCommentId: null }));
+
+		expect(mergeThreadPages(next).items.map((item) => item.id)).toEqual([1, 2]);
+		expect(next.pages.map((p) => p.pagination.total)).toEqual([2, 2]);
+		expect(next.pages.map((p) => p.pagination.page)).toEqual([1, 2]);
+		expect(next.pageParams).toEqual([1, 2]);
+	});
+});
+
 describe('cache mutators', () => {
 	it('prepends a new comment and counts it as a conversation', () => {
 		const thread = createThread([createComment()]);
@@ -222,7 +272,7 @@ type CommentLikeOptions = UseMutationOptions<
 	{ is_liked: boolean; likes_count: number },
 	unknown,
 	number,
-	LikeToggleContext<CommentListResource>
+	LikeToggleContext<CommentThreadPages>
 >;
 
 /** The seam always sets these four; narrowing here keeps the assertions free of `!`. */
@@ -238,7 +288,7 @@ const useCommentLikeHarness = (cached?: CommentListResource) => {
 	const queryClient = new QueryClient();
 
 	if (cached) {
-		queryClient.setQueryData(THREAD_KEY, cached);
+		queryClient.setQueryData<CommentThreadPages>(THREAD_KEY, { pages: [cached], pageParams: [1] });
 	}
 
 	let options!: LikeCallbacks;
@@ -253,7 +303,11 @@ const useCommentLikeHarness = (cached?: CommentListResource) => {
 	return { queryClient, options };
 };
 
-const readThread = (queryClient: QueryClient) => queryClient.getQueryData<CommentListResource>(THREAD_KEY);
+const readThread = (queryClient: QueryClient) => {
+	const pages = queryClient.getQueryData<CommentThreadPages>(THREAD_KEY);
+
+	return pages && mergeThreadPages(pages);
+};
 
 describe('useLikeCommentMutation', () => {
 	beforeEach(() => {
@@ -343,5 +397,68 @@ describe('useLikeCommentMutation', () => {
 		await options.onMutate(1, CALLBACK_CONTEXT);
 
 		expect(readThread(queryClient)).toEqual(thread);
+	});
+});
+
+/**
+ * Comments are paged by page number, so deleting a top-level comment moves the next page's first
+ * comment onto a page already loaded. Without a re-read, Show more would skip it.
+ */
+describe('useDeleteCommentMutation', () => {
+	type DeleteCallbacks = Required<
+		Pick<UseMutationOptions<DeleteCommentVariables, unknown, DeleteCommentVariables>, 'onSuccess'>
+	>;
+
+	const useCommentDeleteHarness = (cached: CommentListResource) => {
+		const queryClient = new QueryClient();
+		queryClient.setQueryData<CommentThreadPages>(THREAD_KEY, { pages: [cached], pageParams: [1] });
+		const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+
+		let options!: DeleteCallbacks;
+		vi.mocked(useQueryClient).mockReturnValue(queryClient);
+		vi.mocked(useMutation).mockImplementation((mutationOptions: any) => {
+			options = mutationOptions;
+			return { mutate: vi.fn(), isPending: false } as never;
+		});
+
+		useDeleteCommentMutation({ parent: 'article', entityUuid: ARTICLE_UUID });
+
+		return { invalidate, options };
+	};
+
+	const pageWithMore = (hasMore: boolean): CommentListResource => ({
+		items: [createComment()],
+		pagination: { page: 1, per_page: 20, total: hasMore ? 57 : 1, last_page: hasMore ? 3 : 1, has_more: hasMore },
+	});
+
+	const root: DeleteCommentVariables = { id: 1, uuid: 'c1d7e9f0-1b2a-4c3d-8e4f-5a6b7c8d9e01', parentCommentId: null };
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('re-reads the loaded pages after a top-level delete while later pages exist', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(true));
+
+		await options.onSuccess(root, root, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).toHaveBeenCalledWith({ queryKey: THREAD_KEY });
+	});
+
+	it('trusts the cache when every page is already loaded', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(false));
+
+		await options.onSuccess(root, root, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).not.toHaveBeenCalled();
+	});
+
+	it('trusts the cache after deleting a reply, which moves no comment between pages', async () => {
+		const { invalidate, options } = useCommentDeleteHarness(pageWithMore(true));
+		const reply: DeleteCommentVariables = { id: 50, uuid: 'r-50', parentCommentId: 1 };
+
+		await options.onSuccess(reply, reply, undefined as never, CALLBACK_CONTEXT);
+
+		expect(invalidate).not.toHaveBeenCalled();
 	});
 });

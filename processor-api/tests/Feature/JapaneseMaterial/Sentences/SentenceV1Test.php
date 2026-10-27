@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\JapaneseMaterial\Sentences;
 
+use App\Infrastructure\Persistence\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -104,6 +106,32 @@ class SentenceV1Test extends TestCase
             ->assertJsonPath('content', '火を見ます。')
             ->assertJsonPath('kanjis', [])
             ->assertJsonPath('words', []);
+    }
+
+    public function test_user_written_sentence_returns_its_author_and_imported_one_null(): void
+    {
+        $this->seed(RoleSeeder::class);
+        $writer = User::factory()->create(['name' => 'Hanako']);
+        $writtenUuid = (string) Str::uuid();
+        $importedUuid = (string) Str::uuid();
+
+        $this->createSentence(id: 1, uuid: $writtenUuid, content: '猫が好きです。', tatoebaEntry: null, userId: $writer->id);
+        $this->createSentence(id: 2, uuid: $importedUuid, tatoebaEntry: '1001');
+
+        $this->getJson("/api/v1/sentences/{$writtenUuid}")
+            ->assertOk()
+            ->assertJsonPath('author.id', $writer->id)
+            ->assertJsonPath('author.name', 'Hanako')
+            ->assertJsonPath('author.uuid', $writer->uuid);
+
+        $this->getJson("/api/v1/sentences/{$importedUuid}")
+            ->assertOk()
+            ->assertJsonPath('author', null);
+
+        $this->getJson('/api/v1/sentences')
+            ->assertOk()
+            ->assertJsonPath('items.0.author.name', 'Hanako')
+            ->assertJsonPath('items.1.author', null);
     }
 
     public function test_unknown_sentence_returns_problem_response(): void

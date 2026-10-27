@@ -69,6 +69,19 @@ class StudyMaterialResourceTest extends TestCase
             ->assertCanNotSeeTableRecords([$water]);
     }
 
+    /**
+     * The public API hides the '????' rows (#545); admins still need to find them to repair them.
+     */
+    public function test_kanji_browser_still_lists_rows_with_a_corrupt_character(): void
+    {
+        $water = $this->kanji('水');
+        $corrupt = $this->kanji('????');
+
+        Livewire::test(ListKanjis::class)
+            ->assertOk()
+            ->assertCanSeeTableRecords([$water, $corrupt]);
+    }
+
     public function test_kanji_view_shows_related_words_paginated(): void
     {
         $water = $this->kanji('水', ['meaning' => 'water']);

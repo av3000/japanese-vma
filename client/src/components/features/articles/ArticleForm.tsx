@@ -52,10 +52,8 @@ interface ArticleFormProps {
 	requireChanges?: boolean;
 	/** Body of the "What happens next" note under the settings. */
 	note?: ReactNode;
-	/** The Cancel control: a link on a page, a close button in a modal. */
+	/** The Cancel control, usually a link back. */
 	cancel: ReactNode;
-	/** One column at every width, for the edit modal. */
-	stacked?: boolean;
 }
 
 const countOf = (value: string, max: number) => `${value.length} / ${max}`;
@@ -70,7 +68,6 @@ export function ArticleForm({
 	requireChanges = false,
 	note,
 	cancel,
-	stacked = false,
 }: ArticleFormProps) {
 	const schema = useMemo(() => buildArticleFormSchema({ requireEnglishTitle }), [requireEnglishTitle]);
 	const [showNoChanges, setShowNoChanges] = useState(false);
@@ -123,7 +120,6 @@ export function ArticleForm({
 	return (
 		<form onSubmit={handleSubmit(onValidSubmit)} noValidate>
 			<FormLayout
-				stacked={stacked}
 				alert={alert}
 				aside={
 					<>

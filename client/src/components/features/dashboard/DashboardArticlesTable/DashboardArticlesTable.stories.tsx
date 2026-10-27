@@ -36,7 +36,7 @@ export const EveryState: Story = {
 		await expect(args.onDelete).toHaveBeenCalledTimes(1);
 		await expect(table.getByRole('link', { name: 'Edit 却下された非公開の記事' })).toHaveAttribute(
 			'href',
-			expect.stringMatching(/\?edit=1$/),
+			expect.stringMatching(/\/edit$/),
 		);
 	},
 };
