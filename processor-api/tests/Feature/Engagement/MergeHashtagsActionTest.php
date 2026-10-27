@@ -19,6 +19,7 @@ use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
+use Tests\Support\CreatesHashtags;
 use Tests\Support\FailingActivityRecorder;
 use Tests\TestCase;
 
@@ -28,6 +29,7 @@ use Tests\TestCase;
  */
 final class MergeHashtagsActionTest extends TestCase
 {
+    use CreatesHashtags;
     use InteractsWithAdminPanel;
     use RefreshDatabase;
 
@@ -46,8 +48,8 @@ final class MergeHashtagsActionTest extends TestCase
 
     public function test_merge_moves_the_links_and_writes_one_row(): void
     {
-        $target = Uniquehashtag::create(['content' => '#jlpt']);
-        $source = Uniquehashtag::create(['content' => '#JLPT']);
+        $target = $this->hashtag('#jlpt');
+        $source = $this->hashtag('#JLPT');
         $link = $this->link($source);
 
         $result = app(MergeHashtagsAction::class)->execute($source->id, $target->id, $this->staff);
@@ -63,7 +65,7 @@ final class MergeHashtagsActionTest extends TestCase
 
     public function test_a_tag_cannot_be_merged_into_itself(): void
     {
-        $tag = Uniquehashtag::create(['content' => '#jlpt']);
+        $tag = $this->hashtag('#jlpt');
 
         $result = app(MergeHashtagsAction::class)->execute($tag->id, $tag->id, $this->staff);
 
@@ -73,7 +75,7 @@ final class MergeHashtagsActionTest extends TestCase
 
     public function test_an_unknown_tag_is_not_found(): void
     {
-        $tag = Uniquehashtag::create(['content' => '#jlpt']);
+        $tag = $this->hashtag('#jlpt');
 
         $result = app(MergeHashtagsAction::class)->execute(999_999, $tag->id, $this->staff);
 
@@ -82,8 +84,8 @@ final class MergeHashtagsActionTest extends TestCase
 
     public function test_merge_rolls_back_when_the_activity_row_fails(): void
     {
-        $target = Uniquehashtag::create(['content' => '#target']);
-        $source = Uniquehashtag::create(['content' => '#source']);
+        $target = $this->hashtag('#target');
+        $source = $this->hashtag('#source');
         $link = $this->link($source);
         $this->app->instance(ActivityRecorderInterface::class, new FailingActivityRecorder);
 
@@ -97,8 +99,8 @@ final class MergeHashtagsActionTest extends TestCase
 
     public function test_a_failed_merge_leaves_both_tags_intact(): void
     {
-        $target = Uniquehashtag::create(['content' => '#target']);
-        $source = Uniquehashtag::create(['content' => '#source']);
+        $target = $this->hashtag('#target');
+        $source = $this->hashtag('#source');
         $link = $this->link($source);
 
         $real = app(HashtagRepositoryInterface::class);

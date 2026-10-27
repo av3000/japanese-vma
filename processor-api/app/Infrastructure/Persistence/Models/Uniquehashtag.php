@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
-use App\Domain\Engagement\ValueObjects\HashtagName;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -14,17 +14,25 @@ class Uniquehashtag extends Model
 {
     protected $table = 'uniquehashtags';
 
-    protected $fillable = ['content'];
+    /**
+     * Writes set `normalized_content` from HashtagName::$key explicitly (HashtagRepository), so the
+     * key has one owner. The legacy App\Http\Models\Uniquehashtag keeps a saving hook for the
+     * legacy helpers until #149/#152 retire them.
+     */
+    protected $fillable = ['content', 'normalized_content'];
 
     /**
-     * The comparison key is derived from the content on every save, so writes that still go
-     * through the legacy helpers keep it in step too.
+     * Keys shared by more than one tag: the case and width variants still waiting to be merged.
+     *
+     * @return Builder<self>
      */
-    protected static function booted(): void
+    public static function duplicateKeys(): Builder
     {
-        static::saving(static function (Uniquehashtag $tag): void {
-            $tag->normalized_content = HashtagName::keyFor((string) $tag->content);
-        });
+        return self::query()
+            ->select('normalized_content')
+            ->whereNotNull('normalized_content')
+            ->groupBy('normalized_content')
+            ->havingRaw('COUNT(*) > 1');
     }
 
     public function hashtagEntities()

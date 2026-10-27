@@ -18,10 +18,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
+use Tests\Support\CreatesHashtags;
 use Tests\TestCase;
 
 class HashtagResourceTest extends TestCase
 {
+    use CreatesHashtags;
     use InteractsWithAdminPanel;
     use RefreshDatabase;
 
@@ -41,14 +43,14 @@ class HashtagResourceTest extends TestCase
 
     public function test_usage_counts_split_by_type_and_count_removed_links_separately(): void
     {
-        $grammar = Uniquehashtag::create(['content' => '#grammar']);
+        $grammar = $this->hashtag('#grammar');
         $articles = Article::factory()->count(2)->create(['user_id' => $this->author->id]);
         $post = Post::factory()->create(['user_id' => $this->author->id]);
         $this->link($grammar, ObjectTemplateType::ARTICLE, $articles[0]);
         $this->link($grammar, ObjectTemplateType::ARTICLE, $articles[1]);
         $this->link($grammar, ObjectTemplateType::POST, $post);
         $this->link($grammar, ObjectTemplateType::ARTICLE, Article::factory()->create(['user_id' => $this->author->id]))->delete();
-        $unused = Uniquehashtag::create(['content' => '#orphan']);
+        $unused = $this->hashtag('#orphan');
 
         Livewire::test(ListHashtags::class)
             ->assertOk()
@@ -76,10 +78,10 @@ class HashtagResourceTest extends TestCase
 
     public function test_duplicate_filter_finds_case_and_width_variants(): void
     {
-        $lower = Uniquehashtag::create(['content' => '#jlpt']);
-        $upper = Uniquehashtag::create(['content' => '#JLPT']);
-        $wide = Uniquehashtag::create(['content' => '＃ＪＬＰＴ']);
-        $other = Uniquehashtag::create(['content' => '#kanji']);
+        $lower = $this->hashtag('#jlpt');
+        $upper = $this->hashtag('#JLPT');
+        $wide = $this->hashtag('＃ＪＬＰＴ');
+        $other = $this->hashtag('#kanji');
 
         Livewire::test(ListHashtags::class)
             ->filterTable('has_duplicates')
@@ -89,7 +91,7 @@ class HashtagResourceTest extends TestCase
 
     public function test_rename_updates_the_tag_and_is_recorded(): void
     {
-        $tag = Uniquehashtag::create(['content' => '#grammer']);
+        $tag = $this->hashtag('#grammer');
 
         Livewire::test(ListHashtags::class)
             ->callTableAction('rename', $tag, ['name' => '#grammar'])
@@ -106,7 +108,7 @@ class HashtagResourceTest extends TestCase
     public function test_a_non_admin_holding_hashtags_manage_can_rename(): void
     {
         $this->actingAsPanelUser($this->createUserWithPermissions(['hashtags.manage']));
-        $tag = Uniquehashtag::create(['content' => '#grammer']);
+        $tag = $this->hashtag('#grammer');
 
         Livewire::test(ListHashtags::class)
             ->callTableAction('rename', $tag, ['name' => '#grammar'])
@@ -117,8 +119,8 @@ class HashtagResourceTest extends TestCase
 
     public function test_rename_that_collides_after_normalisation_is_refused(): void
     {
-        Uniquehashtag::create(['content' => '#jlpt']);
-        $tag = Uniquehashtag::create(['content' => '#n5']);
+        $this->hashtag('#jlpt');
+        $tag = $this->hashtag('#n5');
 
         Livewire::test(ListHashtags::class)
             ->callTableAction('rename', $tag, ['name' => '＃ＪＬＰＴ'])
@@ -130,8 +132,8 @@ class HashtagResourceTest extends TestCase
 
     public function test_merge_moves_links_retires_duplicates_and_deletes_the_source(): void
     {
-        $target = Uniquehashtag::create(['content' => '#jlpt']);
-        $source = Uniquehashtag::create(['content' => '#JLPT']);
+        $target = $this->hashtag('#jlpt');
+        $source = $this->hashtag('#JLPT');
         $shared = Article::factory()->create(['user_id' => $this->author->id]);
         $onlySource = Article::factory()->create(['user_id' => $this->author->id]);
         $this->link($target, ObjectTemplateType::ARTICLE, $shared);
@@ -157,8 +159,8 @@ class HashtagResourceTest extends TestCase
 
     public function test_bulk_merge_keeps_the_most_used_tag_by_default(): void
     {
-        $popular = Uniquehashtag::create(['content' => '#kanji']);
-        $rare = Uniquehashtag::create(['content' => '#Kanji']);
+        $popular = $this->hashtag('#kanji');
+        $rare = $this->hashtag('#Kanji');
         foreach (Article::factory()->count(2)->create(['user_id' => $this->author->id]) as $article) {
             $this->link($popular, ObjectTemplateType::ARTICLE, $article);
         }
@@ -173,7 +175,7 @@ class HashtagResourceTest extends TestCase
 
     public function test_new_tags_reuse_an_existing_variant(): void
     {
-        $existing = Uniquehashtag::create(['content' => '#jlpt']);
+        $existing = $this->hashtag('#jlpt');
 
         app(HashtagRepositoryInterface::class)->create([
             'entity_id' => Article::factory()->create(['user_id' => $this->author->id])->id,

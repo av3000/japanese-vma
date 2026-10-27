@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Domain\Engagement\DTOs\HashtagDuplicateGroupDTO;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
 use App\Domain\Engagement\DTOs\HashtagTagDTO;
@@ -29,12 +30,13 @@ class HashtagRepository implements HashtagRepositoryInterface
     public function create(array $data): void
     {
         // Reuse a tag that differs only in case or character width, so `#JLPT` and `＃jlpt` do
-        // not become two tags.
+        // not become two tags. HashtagName enforces the empty and length rules on this path too.
+        $name = HashtagName::from($data['content']);
         $uniquehashtag = Uniquehashtag::query()
-            ->where('normalized_content', HashtagName::keyFor($data['content']))
+            ->where('normalized_content', $name->key)
             ->orderBy('id')
             ->first()
-            ?? Uniquehashtag::create(['content' => trim($data['content'])]);
+            ?? Uniquehashtag::create(['content' => $name->display, 'normalized_content' => $name->key]);
 
         // Create the association
         HashtagEntity::create([
@@ -148,6 +150,7 @@ class HashtagRepository implements HashtagRepositoryInterface
     {
         $tag = Uniquehashtag::query()->findOrFail($hashtagId);
         $tag->content = $name->display;
+        $tag->normalized_content = $name->key;
         $tag->save();
 
         return $this->toTagDTO($tag);
@@ -207,8 +210,29 @@ class HashtagRepository implements HashtagRepositoryInterface
         return new HashtagTagDTO(
             id: (int) $tag->id,
             content: (string) $tag->content,
-            key: (string) ($tag->normalized_content ?? HashtagName::keyFor((string) $tag->content)),
+            key: (string) $tag->normalized_content,
         );
+    }
+
+    /**
+     * @return list<HashtagDuplicateGroupDTO>
+     */
+    public function findDuplicateGroups(): array
+    {
+        $tags = Uniquehashtag::query()
+            ->whereIn('normalized_content', Uniquehashtag::duplicateKeys())
+            ->orderBy('normalized_content')
+            ->orderBy('id')
+            ->get(['id', 'content', 'normalized_content'])
+            ->groupBy('normalized_content');
+
+        return $tags
+            ->map(static fn ($group, $key): HashtagDuplicateGroupDTO => new HashtagDuplicateGroupDTO(
+                key: (string) $key,
+                tags: $group->map(static fn (Uniquehashtag $tag): array => ['id' => (int) $tag->id, 'content' => (string) $tag->content])->values()->all(),
+            ))
+            ->values()
+            ->all();
     }
 
     private function resolveTemplateId(ObjectTemplateType $entityType): int

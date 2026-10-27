@@ -7,13 +7,15 @@ namespace Tests\Feature\Engagement;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Actions\RenameHashtagAction;
+use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\AdminActivity;
-use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
+use Tests\Support\CreatesHashtags;
 use Tests\Support\FailingActivityRecorder;
+use Tests\Support\InjectsWriteFailures;
 use Tests\TestCase;
 
 /**
@@ -21,6 +23,8 @@ use Tests\TestCase;
  */
 final class RenameHashtagActionTest extends TestCase
 {
+    use CreatesHashtags;
+    use InjectsWriteFailures;
     use InteractsWithAdminPanel;
     use RefreshDatabase;
 
@@ -36,7 +40,7 @@ final class RenameHashtagActionTest extends TestCase
 
     public function test_rename_writes_one_row(): void
     {
-        $tag = Uniquehashtag::create(['content' => '#grammer']);
+        $tag = $this->hashtag('#grammer');
 
         $result = app(RenameHashtagAction::class)->execute($tag->id, '#grammar', $this->staff);
 
@@ -57,8 +61,8 @@ final class RenameHashtagActionTest extends TestCase
 
     public function test_a_name_that_collides_after_normalisation_is_refused(): void
     {
-        Uniquehashtag::create(['content' => '#jlpt']);
-        $tag = Uniquehashtag::create(['content' => '#n5']);
+        $this->hashtag('#jlpt');
+        $tag = $this->hashtag('#n5');
 
         $result = app(RenameHashtagAction::class)->execute($tag->id, '＃ＪＬＰＴ', $this->staff);
 
@@ -69,8 +73,20 @@ final class RenameHashtagActionTest extends TestCase
 
     public function test_rename_rolls_back_when_the_activity_row_fails(): void
     {
-        $tag = Uniquehashtag::create(['content' => '#grammer']);
+        $tag = $this->hashtag('#grammer');
         $this->app->instance(ActivityRecorderInterface::class, new FailingActivityRecorder);
+
+        $result = app(RenameHashtagAction::class)->execute($tag->id, '#grammar', $this->staff);
+
+        self::assertSame('Hashtags.RenameFailed', $result->getError()->code);
+        self::assertSame('#grammer', $tag->fresh()->content);
+        self::assertSame(0, AdminActivity::query()->count());
+    }
+
+    public function test_a_failed_rename_write_leaves_the_tag_and_no_activity_row(): void
+    {
+        $tag = $this->hashtag('#grammer');
+        $this->failOn(HashtagRepositoryInterface::class, 'rename');
 
         $result = app(RenameHashtagAction::class)->execute($tag->id, '#grammar', $this->staff);
 

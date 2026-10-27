@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Domain\Engagement\DTOs\HashtagDuplicateGroupDTO;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Report-first companion to the normalised-key migration: lists tags that differ only in case
@@ -17,19 +18,11 @@ class ListDuplicateHashtags extends Command
 
     protected $description = 'List hashtags that differ only in case or character width, for merging in the admin panel';
 
-    public function handle(): int
+    public function handle(HashtagRepositoryInterface $hashtags): int
     {
-        $groups = DB::table('uniquehashtags')
-            ->select('normalized_content')
-            ->selectRaw("string_agg(content || ' (#' || id || ')', ', ' ORDER BY id) AS tags")
-            ->selectRaw('COUNT(*) AS tag_count')
-            ->whereNotNull('normalized_content')
-            ->groupBy('normalized_content')
-            ->havingRaw('COUNT(*) > 1')
-            ->orderBy('normalized_content')
-            ->get();
+        $groups = $hashtags->findDuplicateGroups();
 
-        if ($groups->isEmpty()) {
+        if ($groups === []) {
             $this->info('No duplicate hashtags.');
 
             return self::SUCCESS;
@@ -37,9 +30,13 @@ class ListDuplicateHashtags extends Command
 
         $this->table(
             ['Key', 'Tags', 'Count'],
-            $groups->map(static fn (object $group): array => [$group->normalized_content, $group->tags, $group->tag_count])->all(),
+            array_map(static fn (HashtagDuplicateGroupDTO $group): array => [
+                $group->key,
+                implode(', ', array_map(static fn (array $tag): string => "{$tag['content']} (#{$tag['id']})", $group->tags)),
+                count($group->tags),
+            ], $groups),
         );
-        $this->warn("{$groups->count()} duplicate group(s). Merge them under Community > Hashtags before the key becomes unique.");
+        $this->warn(count($groups).' duplicate group(s). Merge them under Community > Hashtags before the key becomes unique.');
 
         return self::SUCCESS;
     }

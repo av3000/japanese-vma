@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Uniquehashtag extends Model
 {
     /**
-     * Legacy hashtag helpers still create tags through this model; keep the comparison key the
-     * admin panel's duplicate finder relies on in step with them.
+     * Legacy hashtag helpers (app/Helpers/hashtags-methods.php, UpdateArticleHashtagsAction) still
+     * create tags through this model; keep the comparison key the admin panel's duplicate finder
+     * relies on in step with them. Goes away with those helpers (#149, #152).
      */
     protected static function booted(): void
     {

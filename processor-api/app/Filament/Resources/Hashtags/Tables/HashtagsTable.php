@@ -100,10 +100,7 @@ class HashtagsTable
                     ->toggle()
                     ->query(static fn (Builder $query): Builder => $query->whereIn(
                         'uniquehashtags.normalized_content',
-                        Uniquehashtag::query()
-                            ->select('normalized_content')
-                            ->groupBy('normalized_content')
-                            ->havingRaw('COUNT(*) > 1'),
+                        Uniquehashtag::duplicateKeys(),
                     )),
             ])
             ->recordActions([
