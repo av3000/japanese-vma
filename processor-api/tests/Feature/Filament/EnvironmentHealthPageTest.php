@@ -6,7 +6,7 @@ namespace Tests\Feature\Filament;
 
 use App\Application\Operations\Interfaces\HealthCheckInterface;
 use App\Application\Operations\Services\HealthCheckRunner;
-use App\Application\Operations\Services\QueueWorkerVerifier;
+use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Operations\DTOs\HealthCheckResultDTO;
 use App\Domain\Operations\Enums\HealthStatus;
@@ -120,7 +120,7 @@ class EnvironmentHealthPageTest extends TestCase
             ->callAction('runWorkerCheck')
             ->assertNotified();
 
-        $last = app(QueueWorkerVerifier::class)->lastResult();
+        $last = app(QueueWorkerVerifierInterface::class)->lastResult();
         self::assertNotNull($last);
         self::assertTrue($last->succeeded);
 
@@ -128,6 +128,19 @@ class EnvironmentHealthPageTest extends TestCase
         self::assertTrue($row->context['succeeded']);
 
         Livewire::test(EnvironmentHealth::class)->assertSee('Passed on queue default');
+    }
+
+    public function test_a_worker_check_that_cannot_reach_the_queue_shows_a_danger_notification(): void
+    {
+        $verifier = $this->createMock(QueueWorkerVerifierInterface::class);
+        $verifier->method('verify')->willThrowException(new RuntimeException('Connection refused [tcp://redis:6379]'));
+        $this->app->instance(QueueWorkerVerifierInterface::class, $verifier);
+
+        Livewire::test(EnvironmentHealth::class)
+            ->callAction('runWorkerCheck')
+            ->assertNotified('The worker check could not run: the queue or the cache is unreachable.');
+
+        self::assertSame(0, AdminActivity::query()->where('action', ActivityAction::WorkerCheckRun)->count());
     }
 
     public function test_a_non_admin_holding_operations_manage_can_run_the_check(): void

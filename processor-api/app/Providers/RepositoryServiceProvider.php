@@ -28,8 +28,13 @@ use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceR
 use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\Operations\Interfaces\Caches\QueueWorkerMarkerStoreInterface;
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
+use App\Application\Operations\Services\EnvironmentHealthService;
+use App\Application\Operations\Services\EnvironmentHealthServiceInterface;
 use App\Application\Operations\Services\HealthCheckRunner;
+use App\Application\Operations\Services\QueueWorkerVerifier;
+use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
@@ -38,6 +43,7 @@ use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
 use App\Domain\Activity\Enums\ActivitySource;
+use App\Infrastructure\Operations\CacheQueueWorkerMarkerStore;
 use App\Infrastructure\Operations\HealthChecks\DatabaseHealthCheck;
 use App\Infrastructure\Operations\HealthChecks\RedisHealthCheck;
 use App\Infrastructure\Operations\HealthChecks\ReverbConfiguredHealthCheck;
@@ -92,6 +98,9 @@ class RepositoryServiceProvider extends ServiceProvider
             strict: ! $app->isProduction(),
         ));
         $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
+        $this->app->bind(EnvironmentHealthServiceInterface::class, EnvironmentHealthService::class);
+        $this->app->bind(QueueWorkerVerifierInterface::class, QueueWorkerVerifier::class);
+        $this->app->bind(QueueWorkerMarkerStoreInterface::class, CacheQueueWorkerMarkerStore::class);
         // Order is display order on the health page.
         $this->app->bind(HealthCheckRunner::class, static fn ($app): HealthCheckRunner => new HealthCheckRunner([
             $app->make(DatabaseHealthCheck::class),

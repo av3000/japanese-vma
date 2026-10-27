@@ -24,6 +24,7 @@ final class AdminBoundaryRules
         'App\Application\Users\Services\UserAdminServiceInterface',
         'App\Application\Users\Policies\UserAdminPolicy',
         'App\Application\Operations\Services\EnvironmentHealthService',
+        'App\Application\Operations\Services\EnvironmentHealthServiceInterface',
         'App\Application\Operations\Policies\OperationsPolicy',
     ];
 

@@ -10,7 +10,7 @@ use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
 use App\Application\Operations\Policies\OperationsPolicy;
 use App\Application\Operations\Services\EnvironmentHealthService;
 use App\Application\Operations\Services\HealthCheckRunner;
-use App\Application\Operations\Services\QueueWorkerVerifier;
+use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
@@ -25,7 +25,7 @@ final class EnvironmentHealthServiceTest extends TestCase
 {
     public function test_worker_check_is_refused_without_operations_manage(): void
     {
-        $verifier = $this->createMock(QueueWorkerVerifier::class);
+        $verifier = $this->createMock(QueueWorkerVerifierInterface::class);
         $verifier->expects(self::never())->method('verify');
         $recorder = $this->createMock(ActivityRecorderInterface::class);
         $recorder->expects(self::never())->method('record');
