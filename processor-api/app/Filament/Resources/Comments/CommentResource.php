@@ -46,10 +46,7 @@ class CommentResource extends Resource
             ->with(['user:id,name', 'parentComment:id,uuid,content'])
             ->withCount('replies')
             ->addSelect([
-                'likes_count' => Like::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('likes.real_object_id', 'comments.id')
-                    ->where('likes.template_id', ObjectTemplateType::COMMENT->getLegacyId()),
+                'likes_count' => Like::countSubquery(ObjectTemplateType::COMMENT, 'comments.id'),
             ]);
     }
 

@@ -42,20 +42,12 @@ class CatalogueResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $templateId = ObjectTemplateType::LIST->getLegacyId();
-
         return parent::getEloquentQuery()
             ->with('user:id,name,uuid')
             ->withCount('items')
             ->addSelect([
-                'comments_count' => Comment::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('comments.real_object_id', 'customlists.id')
-                    ->where('comments.template_id', $templateId),
-                'likes_count' => Like::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('likes.real_object_id', 'customlists.id')
-                    ->where('likes.template_id', $templateId),
+                'comments_count' => Comment::countSubquery(ObjectTemplateType::LIST, 'customlists.id'),
+                'likes_count' => Like::countSubquery(ObjectTemplateType::LIST, 'customlists.id'),
             ]);
     }
 

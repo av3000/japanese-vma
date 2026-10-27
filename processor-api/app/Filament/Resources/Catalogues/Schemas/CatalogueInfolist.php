@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Catalogues\Schemas;
 
+use App\Application\Engagement\Interfaces\Readers\EntityEngagementReaderInterface;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\SavedListType;
 use App\Filament\Support\ClientUrls;
@@ -12,7 +13,6 @@ use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\DB;
 
 class CatalogueInfolist
 {
@@ -34,14 +34,8 @@ class CatalogueInfolist
                             ->extraAttributes(['style' => 'white-space: pre-line']),
                         TextEntry::make('hashtags')
                             ->badge()
-                            ->state(static fn (Catalogue $record): array => DB::table('hashtag_entity')
-                                ->join('uniquehashtags', 'uniquehashtags.id', '=', 'hashtag_entity.hashtag_id')
-                                ->where('hashtag_entity.entity_type_id', ObjectTemplateType::LIST->getLegacyId())
-                                ->where('hashtag_entity.entity_id', $record->id)
-                                ->whereNull('hashtag_entity.deleted_at')
-                                ->orderBy('uniquehashtags.content')
-                                ->pluck('uniquehashtags.content')
-                                ->all())
+                            ->state(static fn (Catalogue $record): array => app(EntityEngagementReaderInterface::class)
+                                ->hashtagNames(ObjectTemplateType::LIST, (int) $record->id))
                             ->placeholder('No hashtags'),
                         TextEntry::make('items_count')->label('Items'),
                         TextEntry::make('comments_count')->label('Comments'),

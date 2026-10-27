@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Articles\Schemas;
 
+use App\Application\Engagement\Interfaces\Readers\EntityEngagementReaderInterface;
+use App\Domain\Engagement\DTOs\EntityEngagementCountsDTO;
 use App\Domain\Processing\Enums\ProcessingEntityType;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\Enums\ProcessingTaskType;
@@ -17,7 +19,6 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\DB;
 
 class ArticleInfolist
 {
@@ -61,9 +62,9 @@ class ArticleInfolist
                         Section::make('Study data')
                             ->schema([
                                 TextEntry::make('kanji_count')->label('Kanji')
-                                    ->state(static fn (Article $record): int => DB::table('article_kanji')->where('article_id', $record->id)->count()),
+                                    ->state(static fn (Article $record): int => $record->kanjis()->count()),
                                 TextEntry::make('word_count')->label('Words')
-                                    ->state(static fn (Article $record): int => DB::table('article_word')->where('article_id', $record->id)->count()),
+                                    ->state(static fn (Article $record): int => $record->words()->count()),
                                 TextEntry::make('jlpt')->label('JLPT kanji')
                                     ->state(static fn (Article $record): string => sprintf(
                                         'N5 %d · N4 %d · N3 %d · N2 %d · N1 %d · other %d',
@@ -115,19 +116,28 @@ class ArticleInfolist
      */
     private static function engagementEntries(): array
     {
-        $tables = ['views' => 'Views', 'likes' => 'Likes', 'comments' => 'Comments', 'downloads' => 'Downloads'];
-        $entries = [];
+        return [
+            TextEntry::make('engagement_views')->label('Views')
+                ->state(static fn (Article $record): int => self::engagement($record)->views),
+            TextEntry::make('engagement_likes')->label('Likes')
+                ->state(static fn (Article $record): int => self::engagement($record)->likes),
+            TextEntry::make('engagement_comments')->label('Comments')
+                ->state(static fn (Article $record): int => self::engagement($record)->comments),
+            TextEntry::make('engagement_downloads')->label('Downloads')
+                ->state(static fn (Article $record): int => self::engagement($record)->downloads),
+        ];
+    }
 
-        foreach ($tables as $table => $label) {
-            $entries[] = TextEntry::make("engagement_{$table}")
-                ->label($label)
-                ->state(static fn (Article $record): int => DB::table($table)
-                    ->where('template_id', ObjectTemplateType::ARTICLE->getLegacyId())
-                    ->where('real_object_id', $record->id)
-                    ->count());
+    /**
+     * The four engagement counts, read in one query per article per render and kept on the record.
+     */
+    private static function engagement(Article $record): EntityEngagementCountsDTO
+    {
+        if (! $record->relationLoaded('adminEngagement')) {
+            $record->setRelation('adminEngagement', app(EntityEngagementReaderInterface::class)->counts(ObjectTemplateType::ARTICLE, (int) $record->id));
         }
 
-        return $entries;
+        return $record->getRelation('adminEngagement');
     }
 
     /**
@@ -135,14 +145,7 @@ class ArticleInfolist
      */
     private static function hashtags(Article $record): array
     {
-        return DB::table('hashtag_entity')
-            ->join('uniquehashtags', 'uniquehashtags.id', '=', 'hashtag_entity.hashtag_id')
-            ->where('hashtag_entity.entity_type_id', ObjectTemplateType::ARTICLE->getLegacyId())
-            ->where('hashtag_entity.entity_id', $record->id)
-            ->whereNull('hashtag_entity.deleted_at')
-            ->orderBy('uniquehashtags.content')
-            ->pluck('uniquehashtags.content')
-            ->all();
+        return app(EntityEngagementReaderInterface::class)->hashtagNames(ObjectTemplateType::ARTICLE, (int) $record->id);
     }
 
     /**

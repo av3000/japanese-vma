@@ -9,6 +9,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use Tests\Unit\Architecture\Support\AdminBoundaryRules;
+use Tests\Unit\Architecture\Support\ClassReferenceScanner;
 
 /**
  * Staff actions live in the admin panel only, and the website knows nothing about them
@@ -65,6 +66,29 @@ class AdminBoundaryTest extends TestCase
         }
 
         $this->assertNoViolations($violations);
+    }
+
+    /**
+     * Panel reads go through *ReaderInterface ports or named model scopes, never the DB facade.
+     * The Environment page only asks the facade for the driver name.
+     */
+    public function test_the_panel_never_queries_through_the_db_facade(): void
+    {
+        $allowed = ['Filament/Pages/EnvironmentHealth.php'];
+        $scanner = new ClassReferenceScanner;
+        $violations = [];
+
+        foreach ($this->filesUnder('Filament') as $relative) {
+            if (in_array($relative, $allowed, true)) {
+                continue;
+            }
+
+            foreach ($scanner->references($this->code($relative))['Illuminate\Support\Facades\DB'] ?? [] as $line) {
+                $violations[] = "{$relative}:{$line} queries through the DB facade";
+            }
+        }
+
+        $this->assertSame([], $violations, "Use a reader or a model scope instead:\n".implode("\n", $violations));
     }
 
     public function test_website_policies_grant_staff_nothing(): void

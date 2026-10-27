@@ -6,7 +6,6 @@ namespace App\Filament\Resources\Articles\Tables;
 
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Filament\Resources\Articles\Actions\ArticleModerationActions;
 use App\Filament\Resources\Articles\ArticleResource;
@@ -20,7 +19,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 
 class ArticlesTable
 {
@@ -29,9 +27,13 @@ class ArticlesTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(static fn (Builder $query): Builder => $query
-                ->select(ArticleResource::LIST_COLUMNS)
-                ->addSelect(ArticleResource::derivedColumns()))
+            ->modifyQueryUsing(static function (Builder $query): Builder {
+                /** @var Builder<Article> $query */
+                return $query
+                    ->select(ArticleResource::LIST_COLUMNS)
+                    ->withProcessingStatus()
+                    ->withHashtagCount();
+            })
             ->defaultSort('created_at', 'asc')
             ->columns([
                 TextColumn::make('title_jp')
@@ -117,37 +119,34 @@ class ArticlesTable
             ]);
     }
 
+    /**
+     * @param Builder<Article> $query
+     *
+     * @return Builder<Article>
+     */
     private static function filterByProcessing(Builder $query, ?string $value): Builder
     {
         if ($value === null || $value === '') {
             return $query;
         }
 
-        $states = static fn (QueryBuilder $states): QueryBuilder => $states
-            ->from('processing_states')
-            ->whereColumn('processing_states.entity_id', 'articles.uuid')
-            ->where('processing_states.entity_type', 'article');
-
         if ($value === self::NEVER_PROCESSED) {
-            return $query->whereNotExists($states);
+            return $query->whereProcessingStatus(null);
         }
 
-        return $query->whereExists(static fn (QueryBuilder $states_) => $states($states_)->where('processing_states.status', $value));
+        $status = ProcessingStatus::tryFrom($value);
+
+        return $status === null ? $query : $query->whereProcessingStatus($status);
     }
 
+    /**
+     * @param Builder<Article> $query
+     *
+     * @return Builder<Article>
+     */
     private static function filterByHashtag(Builder $query, ?string $tag): Builder
     {
-        if ($tag === null || trim($tag) === '') {
-            return $query;
-        }
-
-        return $query->whereExists(static fn (QueryBuilder $links): QueryBuilder => $links
-            ->from('hashtag_entity')
-            ->join('uniquehashtags', 'uniquehashtags.id', '=', 'hashtag_entity.hashtag_id')
-            ->whereColumn('hashtag_entity.entity_id', 'articles.id')
-            ->where('hashtag_entity.entity_type_id', ObjectTemplateType::ARTICLE->getLegacyId())
-            ->whereNull('hashtag_entity.deleted_at')
-            ->where('uniquehashtags.content', 'ILIKE', '%'.addcslashes(trim($tag), '%_\\').'%'));
+        return $tag === null || trim($tag) === '' ? $query : $query->taggedLike($tag);
     }
 
     /**

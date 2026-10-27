@@ -51,10 +51,7 @@ class PostResource extends Resource
             ->with('author:id,name')
             ->withCount('comments')
             ->addSelect([
-                'likes_count' => Like::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('likes.real_object_id', 'posts.id')
-                    ->where('likes.template_id', ObjectTemplateType::POST->getLegacyId()),
+                'likes_count' => Like::countSubquery(ObjectTemplateType::POST, 'posts.id'),
             ]);
     }
 

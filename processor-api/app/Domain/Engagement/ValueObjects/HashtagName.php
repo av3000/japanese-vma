@@ -46,7 +46,7 @@ final readonly class HashtagName
     /**
      * The key without the validation from(). Writes use from() and its $key. Only two readers call
      * this directly: the saving hook on the legacy Http-layer Uniquehashtag model and the panel's
-     * hashtag search, which must accept any typed text.
+     * hashtag search (the Uniquehashtag `matching` scope), which must accept any typed text.
      */
     public static function keyFor(string $value): string
     {

@@ -66,7 +66,7 @@ class HashtagResourceTest extends TestCase
             ->assertCanNotSeeTableRecords([$grammar]);
 
         Livewire::test(ListHashtags::class)
-            ->filterTable('entity_type', 'post_links')
+            ->filterTable('entity_type', ObjectTemplateType::POST->value)
             ->assertCanSeeTableRecords([$grammar])
             ->assertCanNotSeeTableRecords([$unused]);
 

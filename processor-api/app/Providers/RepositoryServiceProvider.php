@@ -15,6 +15,7 @@ use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
 
+use App\Application\Engagement\Interfaces\Readers\EntityEngagementReaderInterface;
 use App\Application\Engagement\Interfaces\Readers\EntityReferenceReaderInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
@@ -49,6 +50,7 @@ use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
+use App\Infrastructure\Persistence\Readers\DatabaseEntityEngagementReader;
 use App\Infrastructure\Persistence\Readers\DatabaseEntityReferenceReader;
 use App\Infrastructure\Persistence\Readers\DatabaseImportStatusReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
@@ -102,6 +104,7 @@ class RepositoryServiceProvider extends ServiceProvider
             $app->make('cache.store'),
         ));
         $this->app->bind(EntityReferenceReaderInterface::class, DatabaseEntityReferenceReader::class);
+        $this->app->bind(EntityEngagementReaderInterface::class, DatabaseEntityEngagementReader::class);
 
         $this->app->singleton(
             ArticleRepositoryInterface::class,
