@@ -3,6 +3,7 @@
 namespace App\Application\Comments\Interfaces\Repositories;
 
 use App\Domain\Comments\DTOs\CommentCreateDTO;
+use App\Domain\Comments\DTOs\CommentSnapshotDTO;
 use App\Domain\Comments\Models\Comment as DomainComment;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -37,6 +38,15 @@ interface CommentRepositoryInterface
      * @return int[]
      */
     public function collectDescendantIds(int $commentId): array;
+
+    /**
+     * What the activity log keeps of comments about to be deleted, in id order.
+     *
+     * @param int[] $commentIds
+     *
+     * @return list<CommentSnapshotDTO>
+     */
+    public function findSnapshotsByIds(array $commentIds): array;
 
     /**
      * Delete the given comments together with the Likes attached to them.

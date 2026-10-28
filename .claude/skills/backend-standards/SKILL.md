@@ -43,8 +43,9 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 
 - [`ARCH-domain-dependency-direction`](rules/ARCH-domain-dependency-direction.md): Domain Never Imports Application, Infrastructure or Http *(enforced by tooling)*
 
-### HIGH (13)
+### HIGH (14)
 
+- [`ARCH-admin-boundary`](rules/ARCH-admin-boundary.md): Staff Writes Go Through the Module's Moderation Service, Called Only From the Panel *(enforced by tooling)*
 - [`ARCH-business-rules-in-application`](rules/ARCH-business-rules-in-application.md): Business Rules and Ownership Checks Live in the Application Layer
 - [`ARCH-cross-module-service-interface`](rules/ARCH-cross-module-service-interface.md): Other Modules Call a *ServiceInterface That Returns Result
 - [`ARCH-domain-no-framework`](rules/ARCH-domain-no-framework.md): No HTTP, Eloquent or Query Builders in the Domain

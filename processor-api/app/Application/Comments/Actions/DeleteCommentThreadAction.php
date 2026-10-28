@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Comments\Actions;
 
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Domain\Comments\DTOs\CommentSnapshotDTO;
 
 /**
  * Removes a comment, every reply beneath it and their likes. The author's delete and a
@@ -18,15 +19,16 @@ class DeleteCommentThreadAction
     }
 
     /**
-     * @return int Number of replies removed with the comment.
+     * @return list<CommentSnapshotDTO> the replies removed with the comment, read before deleting
      */
-    public function execute(int $commentId): int
+    public function execute(int $commentId): array
     {
         // Deepest replies first, so no row is orphaned mid-transaction.
         $descendantIds = $this->commentRepository->collectDescendantIds($commentId);
+        $replies = $this->commentRepository->findSnapshotsByIds($descendantIds);
 
         $this->commentRepository->deleteWithLikesByIds([...$descendantIds, $commentId]);
 
-        return count($descendantIds);
+        return $replies;
     }
 }

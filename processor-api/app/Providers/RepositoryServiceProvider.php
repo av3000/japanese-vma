@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Application\Activity\ActivitySourceContext;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\AdminDashboard\Interfaces\Caches\AdminDashboardCacheInterface;
 use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
@@ -12,8 +13,9 @@ use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryIn
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Comments\Interfaces\Readers\CommentThreadReaderInterface;
 use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
-
 use App\Application\Community\Posts\Interfaces\Repositories\PostRepositoryInterface;
+
+use App\Application\Engagement\Interfaces\Readers\EntityEngagementReaderInterface;
 use App\Application\Engagement\Interfaces\Readers\EntityReferenceReaderInterface;
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
@@ -26,8 +28,13 @@ use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceR
 use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Application\JapaneseMaterial\Stats\Interfaces\Readers\CorpusStatsReaderInterface;
 use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Application\Operations\Interfaces\Caches\QueueWorkerMarkerStoreInterface;
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
+use App\Application\Operations\Services\EnvironmentHealthService;
+use App\Application\Operations\Services\EnvironmentHealthServiceInterface;
 use App\Application\Operations\Services\HealthCheckRunner;
+use App\Application\Operations\Services\QueueWorkerVerifier;
+use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
@@ -35,6 +42,8 @@ use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterfac
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
+use App\Domain\Activity\Enums\ActivitySource;
+use App\Infrastructure\Operations\CacheQueueWorkerMarkerStore;
 use App\Infrastructure\Operations\HealthChecks\DatabaseHealthCheck;
 use App\Infrastructure\Operations\HealthChecks\RedisHealthCheck;
 use App\Infrastructure\Operations\HealthChecks\ReverbConfiguredHealthCheck;
@@ -47,6 +56,7 @@ use App\Infrastructure\Persistence\Readers\DatabaseArticleProcessingStateReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCommentThreadReader;
 use App\Infrastructure\Persistence\Readers\DatabaseCorpusStatsReader;
 use App\Infrastructure\Persistence\Readers\DatabaseDistractorPoolReader;
+use App\Infrastructure\Persistence\Readers\DatabaseEntityEngagementReader;
 use App\Infrastructure\Persistence\Readers\DatabaseEntityReferenceReader;
 use App\Infrastructure\Persistence\Readers\DatabaseImportStatusReader;
 use App\Infrastructure\Persistence\Readers\DatabaseProcessingOwnerResolver;
@@ -79,8 +89,18 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(ProcessingStateRepositoryInterface::class, ProcessingStateRepository::class);
         $this->app->bind(ProcessingOwnerResolverInterface::class, DatabaseProcessingOwnerResolver::class);
-        $this->app->bind(ActivityRecorderInterface::class, DatabaseActivityRecorder::class);
+        // Console runs and queued jobs default to Console; requests are marked by their surface.
+        $this->app->scoped(ActivitySourceContext::class, static fn ($app): ActivitySourceContext => new ActivitySourceContext(
+            $app->runningInConsole() ? ActivitySource::Console : null,
+        ));
+        $this->app->bind(ActivityRecorderInterface::class, static fn ($app): DatabaseActivityRecorder => new DatabaseActivityRecorder(
+            $app->make(ActivitySourceContext::class),
+            strict: ! $app->isProduction(),
+        ));
         $this->app->bind(UserAccountRepositoryInterface::class, UserAccountRepository::class);
+        $this->app->bind(EnvironmentHealthServiceInterface::class, EnvironmentHealthService::class);
+        $this->app->bind(QueueWorkerVerifierInterface::class, QueueWorkerVerifier::class);
+        $this->app->bind(QueueWorkerMarkerStoreInterface::class, CacheQueueWorkerMarkerStore::class);
         // Order is display order on the health page.
         $this->app->bind(HealthCheckRunner::class, static fn ($app): HealthCheckRunner => new HealthCheckRunner([
             $app->make(DatabaseHealthCheck::class),
@@ -93,6 +113,7 @@ class RepositoryServiceProvider extends ServiceProvider
             $app->make('cache.store'),
         ));
         $this->app->bind(EntityReferenceReaderInterface::class, DatabaseEntityReferenceReader::class);
+        $this->app->bind(EntityEngagementReaderInterface::class, DatabaseEntityEngagementReader::class);
 
         $this->app->singleton(
             ArticleRepositoryInterface::class,

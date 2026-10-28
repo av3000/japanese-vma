@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Articles;
 
-use App\Domain\Processing\Enums\ProcessingEntityType;
-use App\Domain\Processing\Enums\ProcessingTaskType;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\AdminNavigationGroup;
 use App\Filament\Resources\Articles\Pages\ListArticles;
 use App\Filament\Resources\Articles\Pages\ViewArticle;
 use App\Filament\Resources\Articles\Schemas\ArticleInfolist;
 use App\Filament\Resources\Articles\Tables\ArticlesTable;
 use App\Infrastructure\Persistence\Models\Article;
-use App\Infrastructure\Persistence\Models\HashtagEntity;
-use App\Infrastructure\Persistence\Models\ProcessingState;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -26,6 +21,8 @@ use UnitEnum;
 /**
  * Review-oriented article moderation. Status and publicity changes, reprocessing and delete all
  * go through application services; authoring stays in the React client.
+ *
+ * @extends Resource<Article>
  */
 class ArticleResource extends Resource
 {
@@ -56,29 +53,8 @@ class ArticleResource extends Resource
         return parent::getEloquentQuery()
             ->with('user:id,name')
             ->select('articles.*')
-            ->addSelect(self::derivedColumns());
-    }
-
-    /**
-     * Current processing status and live hashtag count as correlated subqueries, so a page of
-     * articles costs one query rather than one per row.
-     *
-     * @return array<string, Builder>
-     */
-    public static function derivedColumns(): array
-    {
-        return [
-            'processing_status' => ProcessingState::query()
-                ->select('status')
-                ->whereColumn('processing_states.entity_id', 'articles.uuid')
-                ->where('entity_type', ProcessingEntityType::Article->value)
-                ->where('task_type', ProcessingTaskType::ArticleContentProcessing->value)
-                ->limit(1),
-            'hashtags_count' => HashtagEntity::query()
-                ->selectRaw('COUNT(*)')
-                ->whereColumn('hashtag_entity.entity_id', 'articles.id')
-                ->where('hashtag_entity.entity_type_id', ObjectTemplateType::ARTICLE->getLegacyId()),
-        ];
+            ->withProcessingStatus()
+            ->withHashtagCount();
     }
 
     public static function infolist(Schema $schema): Schema

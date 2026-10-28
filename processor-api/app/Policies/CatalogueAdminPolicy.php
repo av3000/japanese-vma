@@ -4,43 +4,27 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Infrastructure\Persistence\Models\Catalogue;
-use App\Infrastructure\Persistence\Models\User;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Panel access to catalogues. Titles, descriptions and items are edited only by their owners in
- * the React client; the panel changes publicity and deletes, and both also pass the application
- * CataloguePolicy.
+ * the React client; the panel changes publicity and deletes through
+ * CatalogueModerationServiceInterface, which applies CatalogueModerationPolicy.
  */
-class CatalogueAdminPolicy
+class CatalogueAdminPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('catalogues.view');
+        return PanelPermission::CataloguesView;
     }
 
-    public function view(User $user, Catalogue $catalogue): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('catalogues.view');
+        return PanelPermission::CataloguesUpdate;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
-    }
-
-    public function update(User $user, Catalogue $catalogue): bool
-    {
-        return $user->hasPanelPermission('catalogues.update');
-    }
-
-    public function delete(User $user, Catalogue $catalogue): bool
-    {
-        return $user->hasPanelPermission('catalogues.delete');
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+        return PanelPermission::CataloguesDelete;
     }
 }

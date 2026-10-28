@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\JapaneseMaterial\Sentences\Services;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\JapaneseMaterial\Sentences\Actions\CleanupSentenceDependenciesAction;
+use App\Application\JapaneseMaterial\Sentences\Actions\DeleteSentenceAction;
 use App\Application\JapaneseMaterial\Sentences\Actions\DeriveSentenceRelationshipsAction;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Policies\SentencePolicy;
@@ -24,7 +24,7 @@ class SentenceService implements SentenceServiceInterface
         private readonly SentenceRepositoryInterface $sentenceRepository,
         private readonly SentencePolicy $sentencePolicy,
         private readonly DeriveSentenceRelationshipsAction $deriveRelationships,
-        private readonly CleanupSentenceDependenciesAction $cleanupSentenceDependencies,
+        private readonly DeleteSentenceAction $deleteSentence,
     ) {
     }
 
@@ -138,8 +138,7 @@ class SentenceService implements SentenceServiceInterface
 
         try {
             DB::transaction(function () use ($sentence): void {
-                $this->cleanupSentenceDependencies->execute($sentence->getIdValue());
-                $this->sentenceRepository->delete($sentence->getIdValue());
+                $this->deleteSentence->execute($sentence->getIdValue());
             });
 
             return Result::success();

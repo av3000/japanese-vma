@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\Engagement\ValueObjects\HashtagName;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +29,7 @@ return new class extends Migration
             foreach ($tags as $tag) {
                 DB::table('uniquehashtags')
                     ->where('id', $tag->id)
-                    ->update(['normalized_content' => HashtagName::keyFor((string) $tag->content)]);
+                    ->update(['normalized_content' => $this->normalise((string) $tag->content)]);
             }
         });
 
@@ -43,6 +42,18 @@ return new class extends Migration
         if ($collisions > 0) {
             Log::warning("uniquehashtags: {$collisions} normalised keys are shared by more than one tag. Run `php artisan hashtags:duplicates` and merge them in the admin panel.");
         }
+    }
+
+    /**
+     * Frozen copy of HashtagName::keyFor() as it was when this migration ran. A migration must not
+     * depend on application code that can change later, or replaying it on a fresh database would
+     * store keys production never had.
+     */
+    private function normalise(string $value): string
+    {
+        $folded = Normalizer::normalize(trim($value), Normalizer::FORM_KC);
+
+        return mb_strtolower($folded === false ? trim($value) : $folded);
     }
 
     public function down(): void

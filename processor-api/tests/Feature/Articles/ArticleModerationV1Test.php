@@ -2,11 +2,15 @@
 
 namespace Tests\Feature\Articles;
 
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
+use App\Infrastructure\Persistence\Models\ProcessingState;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -181,6 +185,7 @@ class ArticleModerationV1Test extends TestCase
 
         foreach (ArticleStatus::cases() as $status) {
             $article = $this->createArticle($this->createUser(), ['status' => ArticleStatus::PENDING]);
+            $this->processing($article, ProcessingStatus::COMPLETED);
 
             $this->postJson("/api/v1/articles/{$article->uuid}/status", ['status' => $status->value])
                 ->assertOk()
@@ -189,6 +194,25 @@ class ArticleModerationV1Test extends TestCase
                 ->assertJsonPath('status_label', $status->label());
 
             $this->assertSame($status, $article->fresh()->status);
+        }
+    }
+
+    public function test_approval_is_refused_until_processing_completes(): void
+    {
+        $this->actingAsAdmin();
+
+        foreach ([null, ProcessingStatus::PENDING, ProcessingStatus::PROCESSING, ProcessingStatus::FAILED, ProcessingStatus::SUPERSEDED] as $processing) {
+            $article = $this->createArticle($this->createUser(), ['status' => ArticleStatus::PENDING]);
+
+            if ($processing !== null) {
+                $this->processing($article, $processing);
+            }
+
+            $this->postJson("/api/v1/articles/{$article->uuid}/status", ['status' => ArticleStatus::APPROVED->value])
+                ->assertConflict()
+                ->assertJsonPath('title', 'Processing has not completed');
+
+            $this->assertSame(ArticleStatus::PENDING, $article->fresh()->status);
         }
     }
 
@@ -220,6 +244,17 @@ class ArticleModerationV1Test extends TestCase
 
         $this->postJson('/api/v1/articles/not-a-uuid/status', ['status' => ArticleStatus::APPROVED->value])
             ->assertNotFound();
+    }
+
+    private function processing(PersistenceArticle $article, ProcessingStatus $status): void
+    {
+        ProcessingState::query()->create([
+            'entity_type' => ProcessingEntityType::Article,
+            'entity_id' => $article->uuid,
+            'task_type' => ProcessingTaskType::ArticleContentProcessing->value,
+            'status' => $status,
+            'attempt' => 1,
+        ]);
     }
 
     private function createUser(array $overrides = []): User

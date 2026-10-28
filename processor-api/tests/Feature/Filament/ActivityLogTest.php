@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Application\Users\Services\RoleServiceInterface;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySource;
 use App\Domain\Activity\Enums\ActivitySubjectType;
@@ -135,6 +136,51 @@ class ActivityLogTest extends TestCase
         self::assertSame(['role' => 'reviewer'], $row->context);
     }
 
+    public function test_a_change_outside_any_request_is_recorded_as_console(): void
+    {
+        app(RoleServiceInterface::class)->createRole('auditor', 'api');
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::RoleCreated, $row->action);
+        self::assertSame(ActivitySource::Console, $row->source);
+        self::assertNull($row->actor_id);
+    }
+
+    public function test_api_role_delete_writes_a_row_with_the_api_source(): void
+    {
+        Passport::actingAs($this->admin, ['*'], 'api');
+        Role::create(['name' => 'reviewer', 'guard_name' => 'api']);
+
+        $this->deleteJson('/api/v1/admin/roles/reviewer')
+            ->assertOk();
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::RoleDeleted, $row->action);
+        self::assertSame(ActivitySource::Api, $row->source);
+        self::assertSame($this->admin->id, $row->actor_id);
+        self::assertSame('reviewer', $row->changes['before']['name']);
+    }
+
+    public function test_api_role_removal_writes_a_row_on_the_user(): void
+    {
+        Passport::actingAs($this->admin, ['*'], 'api');
+        Role::create(['name' => 'reviewer', 'guard_name' => 'api']);
+        $member = $this->createUser([], 'Member');
+        $member->assignRole('reviewer');
+
+        $this->deleteJson("/api/v1/admin/users/{$member->uuid}/roles", ['role' => 'reviewer'])
+            ->assertOk();
+
+        $row = AdminActivity::query()->sole();
+
+        self::assertSame(ActivityAction::UserRoleRemoved, $row->action);
+        self::assertSame(ActivitySource::Api, $row->source);
+        self::assertSame((string) $member->uuid, $row->subject_id);
+        self::assertSame(['role' => 'reviewer'], $row->context);
+    }
+
     public function test_panel_user_create_and_update_write_rows_without_password_values(): void
     {
         $this->actingAsPanelUser($this->admin);
@@ -156,8 +202,6 @@ class ActivityLogTest extends TestCase
         Livewire::test(EditUser::class, ['record' => $created->getKey()])
             ->fillForm([
                 'name' => 'Renamed Person',
-                'password' => 'secret-password-2',
-                'password_confirmation' => 'secret-password-2',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
@@ -167,8 +211,8 @@ class ActivityLogTest extends TestCase
         self::assertSame([ActivityAction::UserCreated, ActivityAction::UserUpdated], $rows->pluck('action')->all());
         self::assertSame(['name' => 'Created Person'], $rows[1]->changes['before']);
         self::assertSame(['name' => 'Renamed Person'], $rows[1]->changes['after']);
-        self::assertSame(['password_changed' => true], $rows[1]->context);
-        self::assertTrue(Hash::check('secret-password-2', $created->fresh()->password));
+        self::assertNull($rows[1]->context);
+        self::assertTrue(Hash::check('secret-password-1', $created->fresh()->password));
 
         foreach ($rows as $row) {
             $serialised = json_encode([$row->changes, $row->context]);

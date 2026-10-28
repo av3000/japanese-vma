@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Posts\Actions;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Community\Posts\Policies\PostModerationPolicy;
 use App\Application\Community\Posts\Services\PostModerationServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Posts\PostResource;
 use App\Filament\Support\PanelActor;
@@ -26,7 +27,7 @@ final class PostModerationActions
 {
     public static function canModerate(): bool
     {
-        return PanelActor::may('posts.moderate', static fn (AuthenticatedUser $actor): bool => app(PostModerationPolicy::class)->canModerate($actor));
+        return PanelActor::may(PanelPermission::PostsModerate, static fn (AuthenticatedUser $actor): bool => app(PostModerationPolicy::class)->canModerate($actor));
     }
 
     public static function toggleLock(): Action

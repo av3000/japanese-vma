@@ -2,6 +2,7 @@
 
 namespace App\Application\Engagement\Interfaces\Repositories;
 
+use App\Domain\Engagement\DTOs\HashtagDuplicateGroupDTO;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
 use App\Domain\Engagement\DTOs\HashtagTagDTO;
@@ -28,6 +29,13 @@ interface HashtagRepositoryInterface
     public function findTagByKey(string $key, ?int $exceptId = null): ?HashtagTagDTO;
 
     public function rename(int $hashtagId, HashtagName $name): HashtagTagDTO;
+
+    /**
+     * Groups of tags that share a normalised key, ordered by key.
+     *
+     * @return list<HashtagDuplicateGroupDTO>
+     */
+    public function findDuplicateGroups(): array;
 
     /**
      * Move every link from source to target and delete source, under row locks on both tags.

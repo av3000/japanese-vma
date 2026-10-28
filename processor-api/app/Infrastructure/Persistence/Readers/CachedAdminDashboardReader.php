@@ -17,8 +17,10 @@ use Throwable;
 
 /**
  * Serves dashboard aggregates from the shared cache for five minutes. Keys are not per user, as
- * the figures are the same for every administrator. A cache outage (production cache is Upstash
- * Redis) falls back to the live read instead of breaking the dashboard.
+ * the figures are the same for every administrator. Only cache errors are swallowed: a cache
+ * outage (production cache is Upstash Redis) falls back to the live read, and a failed cache
+ * write still returns the fresh figures. An error in the live read itself propagates, and the
+ * read runs at most once per call.
  *
  * Values are cached as plain arrays so a DTO change between deploys cannot leave an
  * unserialisable entry behind.
@@ -94,12 +96,30 @@ final readonly class CachedAdminDashboardReader implements AdminDashboardCacheIn
      */
     private function remember(string $key, Closure $read): array
     {
+        $fullKey = self::KEY_PREFIX.$key;
+
         try {
-            return $this->cache->remember(self::KEY_PREFIX.$key, self::TTL_SECONDS, $read);
+            $cached = $this->cache->get($fullKey);
         } catch (Throwable $exception) {
             Log::warning('Admin dashboard cache unavailable, reading live', ['key' => $key, 'error' => $exception->getMessage()]);
 
             return $read();
         }
+
+        // Values are always arrays, so anything else (null on a miss) means read live.
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        // Outside any try: a failing live read propagates once, unchanged, and is not retried.
+        $fresh = $read();
+
+        try {
+            $this->cache->put($fullKey, $fresh, self::TTL_SECONDS);
+        } catch (Throwable $exception) {
+            Log::warning('Admin dashboard cache write failed', ['key' => $key, 'error' => $exception->getMessage()]);
+        }
+
+        return $fresh;
     }
 }

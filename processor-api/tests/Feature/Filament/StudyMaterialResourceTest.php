@@ -21,6 +21,7 @@ use App\Infrastructure\Persistence\Models\Word;
 use App\Support\JapaneseDataImport\JapaneseDataImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use RuntimeException;
@@ -152,6 +153,19 @@ class StudyMaterialResourceTest extends TestCase
         $activity = AdminActivity::query()->sole();
         self::assertSame(ActivityAction::SentenceDeleted, $activity->action);
         self::assertSame('古い文です。', $activity->changes['before']['content']);
+    }
+
+    public function test_the_panel_policy_never_updates_and_deletes_only_user_authored_sentences(): void
+    {
+        $moderator = $this->createUserWithPermissions(['study.view', 'sentences.moderate']);
+        $viewer = $this->createUserWithPermissions(['study.view']);
+        $authored = $this->sentence('私が書いた文です。', $this->createPanelUser('Writer'));
+        $imported = $this->sentence('辞書の文です。', null);
+
+        self::assertFalse(Gate::forUser($moderator)->allows('update', $authored));
+        self::assertTrue(Gate::forUser($moderator)->allows('delete', $authored));
+        self::assertFalse(Gate::forUser($moderator)->allows('delete', $imported));
+        self::assertFalse(Gate::forUser($viewer)->allows('delete', $authored));
     }
 
     public function test_sentence_removal_needs_sentences_moderate(): void

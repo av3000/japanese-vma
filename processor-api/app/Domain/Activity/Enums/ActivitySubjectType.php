@@ -34,7 +34,7 @@ enum ActivitySubjectType: string
             self::Comment => ['content', 'author', 'entity_type', 'entity_id', 'parent_comment_id'],
             self::Hashtag => ['content'],
             self::Catalogue => ['title', 'type', 'publicity', 'owner'],
-            self::Sentence => ['content', 'author_id'],
+            self::Sentence => ['content', 'author'],
             self::Environment => [],
         };
     }

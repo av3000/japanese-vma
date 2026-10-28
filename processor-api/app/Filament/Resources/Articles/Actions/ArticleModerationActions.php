@@ -8,6 +8,7 @@ use App\Application\Articles\Actions\Processing\RequeueArticleProcessingAction;
 use App\Application\Articles\Policies\ArticleModerationPolicy;
 use App\Application\Articles\Services\ArticleModerationServiceInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -34,7 +35,7 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class ArticleModerationActions
 {
-    public static function canModerate(string $permission): bool
+    public static function canModerate(PanelPermission $permission): bool
     {
         return PanelActor::may($permission, static fn (AuthenticatedUser $actor): bool => app(ArticleModerationPolicy::class)->canModerate($actor));
     }
@@ -44,7 +45,7 @@ final class ArticleModerationActions
         return Action::make('setStatus')
             ->label('Set status')
             ->icon(Heroicon::OutlinedCheckCircle)
-            ->visible(static fn (): bool => self::canModerate('articles.update'))
+            ->visible(static fn (): bool => self::canModerate(PanelPermission::ArticlesUpdate))
             ->fillForm(static fn (Article $record): array => ['status' => $record->status->value])
             ->schema(static fn (Article $record): array => self::statusSchema([$record]))
             ->action(static function (Article $record, array $data): void {
@@ -65,7 +66,7 @@ final class ArticleModerationActions
         return BulkAction::make('bulkSetStatus')
             ->label('Set status')
             ->icon(Heroicon::OutlinedCheckCircle)
-            ->visible(static fn (): bool => self::canModerate('articles.update'))
+            ->visible(static fn (): bool => self::canModerate(PanelPermission::ArticlesUpdate))
             ->schema(static fn (Collection $records): array => self::statusSchema($records->all()))
             ->deselectRecordsAfterCompletion()
             ->action(static function (Collection $records, array $data): void {
@@ -92,7 +93,7 @@ final class ArticleModerationActions
             ->color('gray')
             ->requiresConfirmation()
             ->modalDescription('Publicity is separate from the moderation status.')
-            ->visible(static fn (): bool => self::canModerate('articles.update'))
+            ->visible(static fn (): bool => self::canModerate(PanelPermission::ArticlesUpdate))
             ->action(static function (Article $record): void {
                 $target = $record->publicity === PublicityStatus::PUBLIC ? PublicityStatus::PRIVATE : PublicityStatus::PUBLIC;
                 $result = app(ArticleModerationServiceInterface::class)->setPublicity(
@@ -118,7 +119,7 @@ final class ArticleModerationActions
             ->label('Reprocess content')
             ->icon(Heroicon::OutlinedArrowPath)
             ->color('gray')
-            ->visible(static fn (): bool => PanelActor::may('operations.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::OperationsManage))
             ->schema([
                 Checkbox::make('force')
                     ->label('Retry even if a run is still reporting progress'),
@@ -147,7 +148,7 @@ final class ArticleModerationActions
             ->label('Delete')
             ->icon(Heroicon::OutlinedTrash)
             ->color('danger')
-            ->visible(static fn (): bool => self::canModerate('articles.delete'))
+            ->visible(static fn (): bool => self::canModerate(PanelPermission::ArticlesDelete))
             ->modalHeading('Delete this article?')
             ->modalDescription('The article, its comments, likes, views, downloads, hashtag links and catalogue entries are removed. This cannot be undone.')
             ->schema([
@@ -206,7 +207,9 @@ final class ArticleModerationActions
     }
 
     /**
-     * @param array{status: int|string, reason?: string|null} $data
+     * The service enforces the processing rule; the checkbox is how the moderator confirms it.
+     *
+     * @param array{status: int|string, reason?: string|null, approve_anyway?: bool|null} $data
      */
     private static function changeStatus(Article $record, array $data): Result
     {
@@ -215,9 +218,14 @@ final class ArticleModerationActions
             ArticleStatus::from((int) $data['status']),
             PanelActor::current(),
             $data['reason'] ?? null,
+            (bool) ($data['approve_anyway'] ?? false),
         );
     }
 
+    /**
+     * Only decides whether to show the override checkbox. ArticleModerationService applies the
+     * same rule and is the authority.
+     */
     private static function processingUnfinished(Article $record): bool
     {
         $status = $record->getAttribute('processing_status');

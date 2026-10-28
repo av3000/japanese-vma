@@ -53,11 +53,12 @@ class RoleService implements RoleServiceInterface
     }
 
     /**
-     * Assign a role to a user.
+     * Assign a role to a user. Granting `admin` makes the user a panel superuser, so only an admin
+     * actor may grant it, whatever permission let the caller reach this method.
      *
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function assignRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
+    public function assignRole(EntityId $userUuid, string $roleName, AuthenticatedUser $actor): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 
@@ -67,6 +68,10 @@ class RoleService implements RoleServiceInterface
 
         if (! $this->roleExists($roleName)) {
             return Result::failure(RoleErrors::invalidRole($roleName));
+        }
+
+        if ($roleName === UserRole::ADMIN->value && ! $actor->isAdmin) {
+            return Result::failure(RoleErrors::adminRoleRequiresAdmin());
         }
 
         if ($this->roleRepository->userHasRole($userUuid, $roleName)) {
@@ -93,7 +98,7 @@ class RoleService implements RoleServiceInterface
      *
      * @return Result<string> Success: User UUID, Failure: ResultError
      */
-    public function removeRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result
+    public function removeRole(EntityId $userUuid, string $roleName, AuthenticatedUser $actor): Result
     {
         $user = $this->userRepository->findByUuid($userUuid);
 

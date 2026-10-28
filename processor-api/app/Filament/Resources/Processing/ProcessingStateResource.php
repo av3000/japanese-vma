@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Processing;
 
-use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\ProcessingThresholds;
 use App\Filament\AdminNavigationGroup;
 use App\Filament\Resources\Processing\Pages\ListProcessingStates;
@@ -25,6 +24,8 @@ use UnitEnum;
 /**
  * Article content processing, one row per article and task (processing_states, ADR 0001), so a
  * failed or stuck extraction is visible to operators and not only as a banner to the author.
+ *
+ * @extends Resource<ProcessingState>
  */
 class ProcessingStateResource extends Resource
 {
@@ -42,8 +43,6 @@ class ProcessingStateResource extends Resource
 
     protected static ?string $slug = 'operations/processing';
 
-    public const RETRY_LIMIT = 50;
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -58,19 +57,19 @@ class ProcessingStateResource extends Resource
 
     /**
      * Pending or processing without progress for longer than the sweeper's threshold.
+     *
+     * @param Builder<ProcessingState> $query
+     *
+     * @return Builder<ProcessingState>
      */
     public static function scopeStuck(Builder $query): Builder
     {
-        return $query
-            ->whereIn('processing_states.status', ProcessingStatus::nonTerminalValues())
-            ->where('processing_states.updated_at', '<', CarbonImmutable::now()->subSeconds(ProcessingThresholds::STALE_AFTER_SECONDS));
+        return $query->stale(ProcessingThresholds::staleBefore(CarbonImmutable::now()));
     }
 
     public static function isStuck(ProcessingState $state): bool
     {
-        return ! $state->status->isTerminal()
-            && $state->updated_at !== null
-            && $state->updated_at->lt(CarbonImmutable::now()->subSeconds(ProcessingThresholds::STALE_AFTER_SECONDS));
+        return ProcessingThresholds::isStale($state->status, $state->updated_at, $state->created_at, CarbonImmutable::now());
     }
 
     public static function infolist(Schema $schema): Schema

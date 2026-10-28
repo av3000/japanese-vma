@@ -12,6 +12,7 @@ use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Comments\Policies\CommentModerationPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
+use App\Domain\Comments\DTOs\CommentSnapshotDTO;
 use App\Domain\Comments\Errors\CommentErrors;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Shared\Results\Result;
@@ -43,7 +44,7 @@ class CommentModerationService implements CommentModerationServiceInterface
 
         try {
             DB::transaction(function () use ($comment, $actor): void {
-                $repliesRemoved = $this->deleteCommentThread->execute($comment->getIdValue());
+                $replies = $this->deleteCommentThread->execute($comment->getIdValue());
 
                 $this->activityRecorder->record(ActivityEntries::by(
                     $actor,
@@ -58,7 +59,11 @@ class CommentModerationService implements CommentModerationServiceInterface
                         'entity_id' => $comment->getEntityId(),
                         'parent_comment_id' => $comment->getParentCommentId(),
                     ],
-                    context: ['replies_deleted' => $repliesRemoved],
+                    // Comments have no soft delete, so the replies' text survives only here.
+                    context: [
+                        'replies_deleted' => count($replies),
+                        'replies' => array_map(static fn (CommentSnapshotDTO $reply): array => $reply->toArray(), $replies),
+                    ],
                 ));
             });
         } catch (Throwable $exception) {

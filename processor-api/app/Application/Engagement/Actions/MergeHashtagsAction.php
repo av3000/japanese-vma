@@ -8,6 +8,7 @@ use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
+use App\Application\Engagement\Policies\HashtagManagementPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
 use App\Domain\Activity\Enums\ActivitySubjectType;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
@@ -27,6 +28,7 @@ final class MergeHashtagsAction
     public function __construct(
         private readonly HashtagRepositoryInterface $hashtags,
         private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly HashtagManagementPolicy $policy,
     ) {
     }
 
@@ -35,17 +37,21 @@ final class MergeHashtagsAction
      */
     public function execute(int $sourceId, int $targetId, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canManage($actor)) {
+            return Result::failure(HashtagErrors::manageAccessDenied());
+        }
+
         if ($sourceId === $targetId) {
             return Result::failure(HashtagErrors::mergeIntoItself());
         }
 
-        foreach ([$sourceId, $targetId] as $hashtagId) {
-            if ($this->hashtags->findTag($hashtagId) === null) {
-                return Result::failure(HashtagErrors::notFound($hashtagId));
-            }
-        }
-
         try {
+            foreach ([$sourceId, $targetId] as $hashtagId) {
+                if ($this->hashtags->findTag($hashtagId) === null) {
+                    return Result::failure(HashtagErrors::notFound($hashtagId));
+                }
+            }
+
             $merged = DB::transaction(function () use ($sourceId, $targetId, $actor): HashtagMergeResultDTO {
                 $merged = $this->hashtags->merge($sourceId, $targetId);
 

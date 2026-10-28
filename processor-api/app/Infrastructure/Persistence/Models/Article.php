@@ -2,12 +2,17 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingStatus;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\User;
 use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Carbon\Carbon;
 use Database\Factories\ArticleFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -106,5 +111,60 @@ class Article extends Model
     public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class, 'article_word');
+    }
+
+    /**
+     * Adds `processing_status`, the current content-processing status, as a correlated subquery.
+     */
+    public function scopeWithProcessingStatus(Builder $query): Builder
+    {
+        return $query->addSelect(['processing_status' => self::currentProcessingState()->select('status')->limit(1)]);
+    }
+
+    /**
+     * Adds `hashtags_count`, the number of hashtag links, as a correlated subquery.
+     */
+    public function scopeWithHashtagCount(Builder $query): Builder
+    {
+        return $query->addSelect(['hashtags_count' => HashtagEntity::query()
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('hashtag_entity.entity_id', 'articles.id')
+            ->where('hashtag_entity.entity_type_id', ObjectTemplateType::ARTICLE->getLegacyId())]);
+    }
+
+    /**
+     * Articles whose current processing row has the given status, or that were never processed
+     * when $status is null. Uses the same predicate as withProcessingStatus().
+     */
+    public function scopeWhereProcessingStatus(Builder $query, ?ProcessingStatus $status): Builder
+    {
+        return $status === null
+            ? $query->whereNotExists(self::currentProcessingState()->toBase())
+            : $query->whereExists(self::currentProcessingState()->where('processing_states.status', $status->value)->toBase());
+    }
+
+    /**
+     * Articles carrying a live hashtag whose text contains $tag, case-insensitively.
+     */
+    public function scopeTaggedLike(Builder $query, string $tag): Builder
+    {
+        return $query->whereExists(HashtagEntity::query()
+            ->join('uniquehashtags', 'uniquehashtags.id', '=', 'hashtag_entity.hashtag_id')
+            ->whereColumn('hashtag_entity.entity_id', 'articles.id')
+            ->where('hashtag_entity.entity_type_id', ObjectTemplateType::ARTICLE->getLegacyId())
+            ->whereNull('hashtag_entity.deleted_at')
+            ->where('uniquehashtags.content', 'ILIKE', '%'.addcslashes(trim($tag), '%_\\').'%')
+            ->toBase());
+    }
+
+    /**
+     * @return Builder<ProcessingState>
+     */
+    private static function currentProcessingState(): Builder
+    {
+        return ProcessingState::query()
+            ->whereColumn('processing_states.entity_id', 'articles.uuid')
+            ->where('processing_states.entity_type', ProcessingEntityType::Article->value)
+            ->where('processing_states.task_type', ProcessingTaskType::ArticleContentProcessing->value);
     }
 }

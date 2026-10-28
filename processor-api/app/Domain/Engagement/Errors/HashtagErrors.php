@@ -60,6 +60,17 @@ class HashtagErrors
         );
     }
 
+    public static function manageAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Hashtags.ManageAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to rename or merge hashtags",
+            errorMessage: "You don't have permission to rename or merge hashtags.",
+        );
+    }
+
     public static function mergeIntoItself(): ResultError
     {
         return new ResultError(
@@ -79,6 +90,17 @@ class HashtagErrors
             description: 'Hashtag merge failed',
             detail: 'The merge was rolled back; both tags are unchanged',
             errorMessage: 'The merge failed and was rolled back. Both tags are unchanged.',
+        );
+    }
+
+    public static function renameFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Hashtags.RenameFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Hashtag rename failed',
+            detail: 'The rename was rolled back; the tag is unchanged',
+            errorMessage: 'The rename failed and was rolled back. The tag is unchanged.',
         );
     }
 

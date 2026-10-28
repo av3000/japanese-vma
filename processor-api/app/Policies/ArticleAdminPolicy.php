@@ -4,42 +4,27 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Infrastructure\Persistence\Models\Article;
-use App\Infrastructure\Persistence\Models\User;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Panel access to articles. Authoring stays in the React client, so there is no create. Status,
- * publicity and delete additionally pass the application ArticlePolicy at the action.
+ * publicity and delete go through ArticleModerationServiceInterface, which applies
+ * ArticleModerationPolicy.
  */
-class ArticleAdminPolicy
+class ArticleAdminPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('articles.view');
+        return PanelPermission::ArticlesView;
     }
 
-    public function view(User $user, Article $article): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('articles.view');
+        return PanelPermission::ArticlesUpdate;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
-    }
-
-    public function update(User $user, Article $article): bool
-    {
-        return $user->hasPanelPermission('articles.update');
-    }
-
-    public function delete(User $user, Article $article): bool
-    {
-        return $user->hasPanelPermission('articles.delete');
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+        return PanelPermission::ArticlesDelete;
     }
 }

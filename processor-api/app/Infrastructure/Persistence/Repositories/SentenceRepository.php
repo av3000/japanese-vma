@@ -121,6 +121,16 @@ class SentenceRepository implements SentenceRepositoryInterface
         $sentence->delete();
     }
 
+    public function findAuthorName(int $sentenceId): ?string
+    {
+        $name = PersistenceSentence::query()
+            ->join('users', 'users.id', '=', 'japanese_tatoeba_sentences.user_id')
+            ->where('japanese_tatoeba_sentences.id', $sentenceId)
+            ->value('users.name');
+
+        return $name === null ? null : (string) $name;
+    }
+
     private function applyFilters(Builder $query, SentenceQueryCriteria $criteria): void
     {
         if ($criteria->keyword !== null && $criteria->keyword !== '') {

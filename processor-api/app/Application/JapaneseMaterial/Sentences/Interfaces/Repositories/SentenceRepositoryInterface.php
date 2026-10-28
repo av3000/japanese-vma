@@ -34,4 +34,10 @@ interface SentenceRepositoryInterface
     public function syncWords(int $sentenceId, array $wordIds): void;
 
     public function delete(int $sentenceId): void;
+
+    /**
+     * The author's display name, for the activity snapshot when staff remove the sentence. Null
+     * for an imported sentence or a deleted account.
+     */
+    public function findAuthorName(int $sentenceId): ?string;
 }

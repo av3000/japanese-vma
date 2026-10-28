@@ -15,9 +15,13 @@ interface RoleServiceInterface
 
     public function isAdmin(EntityId $userUuid): bool;
 
-    public function assignRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result;
+    /**
+     * Granting `admin` needs an admin actor (`Roles.AdminRoleRequiresAdmin` otherwise). The actor
+     * is required so every role change is attributed to a person in the activity log.
+     */
+    public function assignRole(EntityId $userUuid, string $roleName, AuthenticatedUser $actor): Result;
 
-    public function removeRole(EntityId $userUuid, string $roleName, ?AuthenticatedUser $actor = null): Result;
+    public function removeRole(EntityId $userUuid, string $roleName, AuthenticatedUser $actor): Result;
 
     public function createRole(string $name, ?string $guardName = null, array $permissions = [], ?AuthenticatedUser $actor = null): Result;
 

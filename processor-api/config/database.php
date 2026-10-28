@@ -1,5 +1,6 @@
 <?php
 
+use App\Application\Operations\Services\HealthCheckRunner;
 use Illuminate\Support\Str;
 
 return [
@@ -56,6 +57,25 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
+        // The health check's own connection to the same database, with a connect timeout inside
+        // the check's budget (pdo_pgsql maps PDO::ATTR_TIMEOUT to connect_timeout; its default
+        // is 30 s). Opened and purged per check, so it also proves new connections are accepted.
+        'pgsql_health' => [
+            'driver' => 'pgsql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'options' => [PDO::ATTR_TIMEOUT => (int) ceil((float) env('HEALTH_CHECK_TIMEOUT', HealthCheckRunner::BUDGET_MS / 1000))],
         ],
 
         'sqlsrv' => [
@@ -124,6 +144,21 @@ return [
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
+        ],
+
+        // The health check's PING, bounded to the check's budget. Without these, phpredis falls
+        // back to default_socket_timeout (60 s) and an unreachable host hangs the health page.
+        'health' => [
+            'url' => env('REDIS_URL'),
+            'scheme' => env('REDIS_SCHEME', 'tcp'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME', null),
+            'password' => env('REDIS_PASSWORD', null),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_DB', '0'),
+            'timeout' => (float) env('HEALTH_CHECK_TIMEOUT', HealthCheckRunner::BUDGET_MS / 1000),
+            'read_timeout' => (float) env('HEALTH_CHECK_TIMEOUT', HealthCheckRunner::BUDGET_MS / 1000),
+            'read_write_timeout' => (float) env('HEALTH_CHECK_TIMEOUT', HealthCheckRunner::BUDGET_MS / 1000),
         ],
 
     ],

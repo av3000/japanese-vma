@@ -89,8 +89,6 @@ class UserResourceTest extends TestCase
             ->fillForm([
                 'name' => 'Updated User Name',
                 'email' => 'updated-user@example.com',
-                'password' => '',
-                'password_confirmation' => '',
             ])
             ->call('save')
             ->assertHasNoFormErrors()
@@ -100,6 +98,39 @@ class UserResourceTest extends TestCase
 
         self::assertSame('Updated User Name', $user->name);
         self::assertSame('updated-user@example.com', $user->email);
+    }
+
+    public function test_the_edit_form_cannot_set_a_password(): void
+    {
+        $user = $this->createPanelUser();
+        $hash = $user->password;
+
+        Livewire::test(EditUser::class, ['record' => $user->getKey()])
+            ->assertFormFieldHidden('password')
+            ->assertFormFieldHidden('password_confirmation')
+            ->fillForm([
+                'name' => 'Still Same Password',
+                'password' => 'takeover-password',
+                'password_confirmation' => 'takeover-password',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        self::assertSame('Still Same Password', $user->fresh()->name);
+        self::assertSame($hash, $user->fresh()->password);
+    }
+
+    public function test_the_create_form_still_requires_a_confirmed_password(): void
+    {
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'New Person',
+                'email' => 'new-person@example.com',
+                'password' => 'short',
+                'password_confirmation' => 'different',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['password']);
     }
 
     public function test_admin_can_view_user_details(): void
@@ -195,6 +226,18 @@ class UserResourceTest extends TestCase
         self::assertSame(ActivityAction::UserEmailVerified, AdminActivity::query()->sole()->action);
 
         CarbonImmutable::setTestNow();
+    }
+
+    public function test_a_non_admin_holding_users_update_can_mark_an_address_verified(): void
+    {
+        $this->actingAsPanelUser($this->createUserWithPermissions(['users.view', 'users.update'], 'Support'));
+        $user = $this->createPanelUser();
+
+        Livewire::test(ViewUser::class, ['record' => $user->getKey()])
+            ->callAction('markEmailVerified')
+            ->assertNotified('Email address marked as verified.');
+
+        self::assertNotNull($user->fresh()->email_verified_at);
     }
 
     public function test_revoke_tokens_revokes_every_token_and_records_activity(): void

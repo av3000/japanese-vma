@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Comments\Actions;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Comments\Policies\CommentModerationPolicy;
 use App\Application\Comments\Services\CommentModerationServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Comments\CommentResource;
 use App\Filament\Support\PanelActor;
@@ -27,7 +28,7 @@ final class CommentModerationActions
 {
     public static function canModerate(): bool
     {
-        return PanelActor::may('comments.delete', static fn (AuthenticatedUser $actor): bool => app(CommentModerationPolicy::class)->canModerate($actor));
+        return PanelActor::may(PanelPermission::CommentsDelete, static fn (AuthenticatedUser $actor): bool => app(CommentModerationPolicy::class)->canModerate($actor));
     }
 
     public static function delete(): Action

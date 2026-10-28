@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Redis;
 
 /**
  * One PING per page view. Production Redis is Upstash, which bills per command, so the health
- * page never refreshes itself.
+ * page never refreshes itself. The PING runs on the `health` connection, whose connect and read
+ * timeouts keep an unreachable host inside the check's budget.
  */
 final class RedisHealthCheck implements HealthCheckInterface
 {
+    public const CONNECTION = 'health';
+
     public function name(): string
     {
         return 'Redis';
@@ -22,11 +25,11 @@ final class RedisHealthCheck implements HealthCheckInterface
 
     public function check(): HealthCheckResultDTO
     {
-        if (config('database.redis.default') === null) {
-            return new HealthCheckResultDTO($this->name(), HealthStatus::NotConfigured, 'No default Redis connection is configured');
+        if (config('database.redis.default') === null || config('database.redis.'.self::CONNECTION) === null) {
+            return new HealthCheckResultDTO($this->name(), HealthStatus::NotConfigured, 'No Redis health connection is configured');
         }
 
-        $reply = Redis::connection()->ping();
+        $reply = Redis::connection(self::CONNECTION)->ping();
         $ok = $reply === true || (is_string($reply) && str_contains(strtoupper($reply), 'PONG'));
 
         return new HealthCheckResultDTO(

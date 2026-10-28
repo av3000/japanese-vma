@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 /*
  * The permission catalogue is authoritative inside the Filament panel: every panel policy maps to
- * one of these names, and holding any of them grants entry to /admin. API routes stay role-gated
- * (`checkRole:admin`), and application policies still read `AuthenticatedUser::$isAdmin`; panel
- * writes therefore need both the permission and the application rule.
+ * one of these names, and holding any of them grants entry to /admin. Code checks them through the
+ * App\Application\Users\Support\PanelPermission enum, which must list exactly these names
+ * (PanelPermissionCatalogTest), so add a permission in both places and only when something checks it. API routes stay role-gated
+ * (`checkRole:admin`), and the moderation policies still read `AuthenticatedUser::$isAdmin`; panel
+ * moderation writes therefore need both the permission and the application rule. Panel-only use
+ * cases (hashtag management, processing requeue, account administration, the worker check) check
+ * the permission itself in the application layer, through ActorPermissionCheckerInterface.
  *
  * The `common` role must never hold a permission from this file - every registered user has it.
  */
@@ -30,15 +34,12 @@ return [
             'label' => 'Content',
             'permissions' => [
                 'articles.view' => 'View articles',
-                'articles.create' => 'Create articles',
                 'articles.update' => 'Update articles',
                 'articles.delete' => 'Delete articles',
                 'catalogues.view' => 'View catalogues',
-                'catalogues.create' => 'Create catalogues',
                 'catalogues.update' => 'Update catalogues',
                 'catalogues.delete' => 'Delete catalogues',
                 'comments.view' => 'View comments',
-                'comments.update' => 'Update comments',
                 'comments.delete' => 'Delete comments',
             ],
         ],
@@ -54,7 +55,7 @@ return [
             'label' => 'Study material',
             'permissions' => [
                 'study.view' => 'Browse kanji, radicals, words, and sentences',
-                'sentences.moderate' => 'Edit and delete user-authored sentences',
+                'sentences.moderate' => 'Delete user-authored sentences',
             ],
         ],
         'operations' => [

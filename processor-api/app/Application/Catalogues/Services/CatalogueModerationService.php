@@ -38,48 +38,66 @@ class CatalogueModerationService implements CatalogueModerationServiceInterface
             return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
         }
 
-        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+        try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
 
-        if (! $catalogue) {
-            return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            $previous = $catalogue->getPublicity();
+
+            if ($previous === $publicity) {
+                return Result::success($publicity);
+            }
+
+            DB::transaction(function () use ($catalogue, $publicity, $previous, $authenticatedUser): void {
+                $this->catalogueRepository->updatePublicity($catalogue->getIdValue(), $publicity);
+
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $authenticatedUser,
+                    ActivityAction::CataloguePublicityChanged,
+                    ActivitySubjectType::Catalogue,
+                    $catalogue->getUid()->value(),
+                    $catalogue->getTitle()->value,
+                    before: ['publicity' => $previous->label()],
+                    after: ['publicity' => $publicity->label()],
+                ));
+            });
+        } catch (Throwable $exception) {
+            Log::error('Catalogue moderation publicity update failed', [
+                'catalogue_uuid' => $uuid->value(),
+                'user_id' => $authenticatedUser->id->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(CatalogueErrors::publicityUpdateFailed());
         }
-
-        $previous = $catalogue->getPublicity();
-
-        if ($previous === $publicity) {
-            return Result::success($publicity);
-        }
-
-        DB::transaction(function () use ($catalogue, $publicity, $previous, $authenticatedUser): void {
-            $this->catalogueRepository->updatePublicity($catalogue->getIdValue(), $publicity);
-
-            $this->activityRecorder->record(ActivityEntries::by(
-                $authenticatedUser,
-                ActivityAction::CataloguePublicityChanged,
-                ActivitySubjectType::Catalogue,
-                $catalogue->getUid()->value(),
-                $catalogue->getTitle()->value,
-                before: ['publicity' => $previous->label()],
-                after: ['publicity' => $publicity->label()],
-            ));
-        });
 
         return Result::success($publicity);
     }
 
+    /**
+     * Refused before the lookup for anyone who is not staff, so a non-moderator cannot tell an
+     * existing uuid from a missing one. The Known-list rule needs the record and is checked after.
+     */
     public function remove(EntityId $uuid, AuthenticatedUser $authenticatedUser): Result
     {
-        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
-
-        if (! $catalogue) {
-            return Result::failure(CatalogueErrors::notFound($uuid->value()));
-        }
-
-        if (! $this->moderationPolicy->canRemove($authenticatedUser, $catalogue)) {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
             return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
         }
 
         try {
+            $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+            if (! $catalogue) {
+                return Result::failure(CatalogueErrors::notFound($uuid->value()));
+            }
+
+            if (! $this->moderationPolicy->canRemove($authenticatedUser, $catalogue)) {
+                return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+            }
+
             DB::transaction(function () use ($catalogue, $authenticatedUser): void {
                 $catalogueId = $catalogue->getIdValue();
 

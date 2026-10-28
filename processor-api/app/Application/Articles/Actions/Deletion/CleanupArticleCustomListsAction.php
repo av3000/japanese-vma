@@ -19,7 +19,7 @@ final class CleanupArticleCustomListsAction
      * ObjectTemplateType: the two taxonomies disagree (an Article is 9 in the
      * first and 1 in the second), so the enum this reaches for is not
      * interchangeable. Going through the repository keeps that choice in one
-     * place, the same way CleanupSentenceDependenciesAction does.
+     * place, the same way DeleteSentenceAction does.
      */
     public function execute(int $id): void
     {

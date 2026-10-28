@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
-use App\Application\Operations\Services\EnvironmentHealthService;
-use App\Application\Operations\Services\HealthCheckRunner;
+use App\Application\Operations\Services\EnvironmentHealthServiceInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Operations\DTOs\HealthCheckResultDTO;
+use App\Domain\Operations\DTOs\QueueWorkerCheckDTO;
 use App\Domain\Operations\Enums\HealthStatus;
 use App\Filament\AdminNavigationGroup;
 use App\Filament\Support\PanelActor;
+use App\Filament\Support\ResultNotifications;
 use BackedEnum;
 use Composer\InstalledVersions;
 use Filament\Actions\Action;
@@ -46,7 +48,7 @@ class EnvironmentHealth extends Page
 
     public static function canAccess(): bool
     {
-        return PanelActor::may('operations.view');
+        return PanelActor::may(PanelPermission::OperationsView);
     }
 
     public function mount(): void
@@ -61,15 +63,24 @@ class EnvironmentHealth extends Page
                 ->label('Run worker check')
                 ->icon(Heroicon::OutlinedPlay)
                 ->requiresConfirmation()
-                ->modalDescription('Puts one smoke job on the default queue and waits up to '.EnvironmentHealthService::WORKER_CHECK_TIMEOUT_SECONDS.' seconds for a worker to run it.')
-                ->visible(static fn (): bool => PanelActor::may('operations.manage'))
+                ->modalDescription('Puts one smoke job on the default queue and waits up to '.EnvironmentHealthServiceInterface::WORKER_CHECK_TIMEOUT_SECONDS.' seconds for a worker to run it.')
+                ->visible(static fn (): bool => PanelActor::may(PanelPermission::OperationsManage))
                 ->action(function (): void {
-                    $result = $this->service()->runWorkerCheck(PanelActor::current());
+                    $outcome = $this->service()->runWorkerCheck(PanelActor::current());
+
+                    if ($outcome->isFailure()) {
+                        ResultNotifications::failure($outcome);
+
+                        return;
+                    }
+
+                    /** @var QueueWorkerCheckDTO $result */
+                    $result = $outcome->getData();
 
                     $notification = Notification::make();
                     ($result->succeeded
                         ? $notification->success()->title("A worker ran the smoke job in {$result->waitedMs} ms.")
-                        : $notification->danger()->title('No worker ran the smoke job within '.EnvironmentHealthService::WORKER_CHECK_TIMEOUT_SECONDS.' seconds.'))
+                        : $notification->danger()->title('No worker ran the smoke job within '.EnvironmentHealthServiceInterface::WORKER_CHECK_TIMEOUT_SECONDS.' seconds.'))
                         ->send();
                 }),
         ];
@@ -77,8 +88,9 @@ class EnvironmentHealth extends Page
 
     public function content(Schema $schema): Schema
     {
-        $dependencies = $this->service()->dependencies();
-        $worker = $this->service()->lastWorkerCheck();
+        $snapshot = $this->service()->snapshot();
+        $dependencies = $snapshot->dependencies;
+        $worker = $snapshot->lastWorkerCheck;
         $latestImport = app(ImportStatusReaderInterface::class)->runs()[0] ?? null;
 
         return $schema->components([
@@ -104,13 +116,13 @@ class EnvironmentHealth extends Page
                     TextEntry::make('mail')->label('Mail')->state((string) config('mail.default')),
                     TextEntry::make('secrets')
                         ->label('Secrets')
-                        ->state(self::secretPresence())
+                        ->state($snapshot->secretPresence)
                         ->listWithLineBreaks()
                         ->columnSpanFull(),
                 ])
                 ->columns(3),
             Section::make('Connectivity')
-                ->description('Each check runs on this page view with a '.HealthCheckRunner::BUDGET_MS.' ms budget. A failed check never fails the page.')
+                ->description('Each check runs on this page view with a '.EnvironmentHealthServiceInterface::CHECK_BUDGET_MS.' ms budget. A failed check never fails the page.')
                 ->schema([
                     RepeatableEntry::make('dependencies')
                         ->hiddenLabel()
@@ -170,30 +182,8 @@ class EnvironmentHealth extends Page
         ]);
     }
 
-    /**
-     * Each secret as set or missing; the values never reach the page.
-     *
-     * @return list<string>
-     */
-    public static function secretPresence(): array
+    private function service(): EnvironmentHealthServiceInterface
     {
-        $secrets = [
-            'APP_KEY' => config('app.key'),
-            'Sentry DSN' => config('sentry.dsn'),
-            'Reverb secret' => config('broadcasting.connections.reverb.secret'),
-            'Horizon basic auth' => config('horizon.basic_auth.password'),
-            'Mail password' => config('mail.mailers.smtp.password'),
-        ];
-
-        return array_map(
-            static fn (string $name, mixed $value): string => $name.': '.(filled($value) ? 'set' : 'missing'),
-            array_keys($secrets),
-            $secrets,
-        );
-    }
-
-    private function service(): EnvironmentHealthService
-    {
-        return app(EnvironmentHealthService::class);
+        return app(EnvironmentHealthServiceInterface::class);
     }
 }

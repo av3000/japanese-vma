@@ -7,7 +7,7 @@ namespace App\Application\JapaneseMaterial\Sentences\Services;
 use App\Application\Activity\ActivityEntries;
 use App\Application\Activity\Interfaces\ActivityRecorderInterface;
 use App\Application\Auth\DTOs\AuthenticatedUser;
-use App\Application\JapaneseMaterial\Sentences\Actions\CleanupSentenceDependenciesAction;
+use App\Application\JapaneseMaterial\Sentences\Actions\DeleteSentenceAction;
 use App\Application\JapaneseMaterial\Sentences\Interfaces\Repositories\SentenceRepositoryInterface;
 use App\Application\JapaneseMaterial\Sentences\Policies\SentenceModerationPolicy;
 use App\Domain\Activity\Enums\ActivityAction;
@@ -24,7 +24,7 @@ class SentenceModerationService implements SentenceModerationServiceInterface
     public function __construct(
         private readonly SentenceRepositoryInterface $sentenceRepository,
         private readonly SentenceModerationPolicy $moderationPolicy,
-        private readonly CleanupSentenceDependenciesAction $cleanupSentenceDependencies,
+        private readonly DeleteSentenceAction $deleteSentence,
         private readonly ActivityRecorderInterface $activityRecorder,
     ) {
     }
@@ -53,12 +53,13 @@ class SentenceModerationService implements SentenceModerationServiceInterface
                     ActivitySubjectType::Sentence,
                     $sentence->getUuid()->value(),
                     mb_substr($sentence->getContent(), 0, 120),
-                    before: ['content' => $sentence->getContent(), 'author_id' => $sentence->getUserId()],
+                    before: [
+                        'content' => $sentence->getContent(),
+                        'author' => $this->sentenceRepository->findAuthorName($sentence->getIdValue()),
+                    ],
                 ));
 
-                // Same two steps as SentenceService::delete; the dependents live in the action.
-                $this->cleanupSentenceDependencies->execute($sentence->getIdValue());
-                $this->sentenceRepository->delete($sentence->getIdValue());
+                $this->deleteSentence->execute($sentence->getIdValue());
             });
         } catch (Throwable $exception) {
             Log::error('Sentence moderation removal failed', [

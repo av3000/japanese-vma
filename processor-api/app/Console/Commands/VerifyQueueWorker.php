@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Application\Operations\Services\QueueWorkerVerifier;
+use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use Illuminate\Console\Command;
 
 class VerifyQueueWorker extends Command
@@ -15,7 +15,7 @@ class VerifyQueueWorker extends Command
 
     protected $description = 'Dispatch a queue smoke job and wait for the shared cache marker to confirm a live worker consumed it';
 
-    public function handle(QueueWorkerVerifier $verifier): int
+    public function handle(QueueWorkerVerifierInterface $verifier): int
     {
         $queue = (string) $this->option('queue');
         $timeoutSeconds = max(1, (int) $this->option('timeout'));

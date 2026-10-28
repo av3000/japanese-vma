@@ -6,7 +6,7 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Application\Users\Services\UserAdminServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Users\DTOs\UserAccountWriteDTO;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Filament\Resources\Users\Actions\UserAccountActions;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Support\PanelActor;
@@ -37,10 +37,9 @@ class EditUser extends EditRecord
         /** @var User $record */
         $result = app(UserAdminServiceInterface::class)->updateUser(
             new EntityId((string) $record->uuid),
-            new UserAccountWriteDTO(
+            new UserAccountUpdateDTO(
                 name: $data['name'],
                 email: $data['email'],
-                password: filled($data['password'] ?? null) ? $data['password'] : null,
             ),
             PanelActor::current(),
         );

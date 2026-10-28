@@ -4,42 +4,27 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Infrastructure\Persistence\Models\Post;
-use App\Infrastructure\Persistence\Models\User;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Panel access to community posts. Posts are written in the React client; the panel only locks,
- * unlocks and deletes them, and those actions also pass the application PostPolicy.
+ * unlocks and deletes them through PostModerationServiceInterface, which applies
+ * PostModerationPolicy.
  */
-class PostAdminPolicy
+class PostAdminPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('posts.view');
+        return PanelPermission::PostsView;
     }
 
-    public function view(User $user, Post $post): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('posts.view');
+        return PanelPermission::PostsModerate;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
-    }
-
-    public function update(User $user, Post $post): bool
-    {
-        return $user->hasPanelPermission('posts.moderate');
-    }
-
-    public function delete(User $user, Post $post): bool
-    {
-        return $user->hasPanelPermission('posts.moderate');
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+        return PanelPermission::PostsModerate;
     }
 }

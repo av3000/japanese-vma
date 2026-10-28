@@ -20,6 +20,7 @@ use App\Infrastructure\Persistence\Models\AdminActivity;
 use App\Infrastructure\Persistence\Models\Article;
 use App\Infrastructure\Persistence\Models\Catalogue;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
+use App\Infrastructure\Persistence\Models\Kanji;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
@@ -27,6 +28,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Livewire\Livewire;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
@@ -107,12 +109,31 @@ class ArticleResourceTest extends TestCase
         $this->tag($article, 'reading');
         $this->processing($article, ProcessingStatus::FAILED, 'Extraction timed out');
 
+        foreach (['水', '火'] as $character) {
+            $kanji = Kanji::query()->forceCreate([
+                'uuid' => (string) Str::uuid(), 'kanji' => $character, 'onyomi' => '-', 'kunyomi' => '-', 'meaning' => '-',
+                'nanori' => '-', 'jlpt' => '5', 'grade' => '1', 'stroke_count' => 4, 'frequency' => 1, 'radicals' => '-', 'radical_parts' => '-',
+            ]);
+            DB::table('article_kanji')->insert(['article_id' => $article->id, 'kanji_id' => $kanji->id]);
+        }
+
+        foreach (range(1, 3) as $index) {
+            DB::table('likes')->insert([
+                'user_id' => $this->createPanelUser("Liker {$index}")->id,
+                'template_id' => ObjectTemplateType::ARTICLE->getLegacyId(),
+                'real_object_id' => $article->id,
+                'value' => 1,
+            ]);
+        }
+
         Livewire::test(ViewArticle::class, ['record' => $article->uuid])
             ->assertOk()
             ->assertSee('本文のテキスト')
             ->assertSee('reading')
             ->assertSee('Extraction timed out')
-            ->assertSee('Article Author');
+            ->assertSee('Article Author')
+            ->assertSeeInOrder(['Likes', '3', 'Comments', '0'])
+            ->assertSeeInOrder(['Kanji', '2', 'Words', '0']);
     }
 
     public function test_status_change_goes_through_the_service_and_records_the_reason(): void
@@ -150,6 +171,10 @@ class ArticleResourceTest extends TestCase
             ->assertHasNoActionErrors();
 
         self::assertSame(ArticleStatus::APPROVED, $article->fresh()->status);
+        self::assertSame(
+            ProcessingStatus::FAILED->value,
+            AdminActivity::query()->where('action', ActivityAction::ArticleStatusChanged)->sole()->context['approved_despite_processing'],
+        );
     }
 
     public function test_bulk_status_change_reports_the_outcome(): void
@@ -276,6 +301,7 @@ class ArticleResourceTest extends TestCase
     public function test_api_status_change_is_recorded_too(): void
     {
         $article = $this->article(ArticleStatus::PENDING);
+        $this->processing($article, ProcessingStatus::COMPLETED);
         Passport::actingAs($this->admin, ['*'], 'api');
 
         $this->postJson("/api/v1/articles/{$article->uuid}/status", ['status' => ArticleStatus::APPROVED->value])

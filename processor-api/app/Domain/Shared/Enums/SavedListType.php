@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Domain\Shared\Enums;
 
 enum SavedListType: int
@@ -17,7 +18,7 @@ enum SavedListType: int
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::KNOWNRADICALS => 'Known Radicals',
             self::KNOWNKANJIS => 'Known Kanji',
             self::KNOWNWORDS => 'Known Words',
@@ -32,9 +33,25 @@ enum SavedListType: int
         };
     }
 
+    /**
+     * What a catalogue of this type holds. A known list holds the same things as its custom twin;
+     * lyrics and artists have no item type yet.
+     */
+    public function itemType(): ?ObjectTemplateType
+    {
+        return match ($this) {
+            self::RADICALS, self::KNOWNRADICALS => ObjectTemplateType::RADICAL,
+            self::KANJIS, self::KNOWNKANJIS => ObjectTemplateType::KANJI,
+            self::WORDS, self::KNOWNWORDS => ObjectTemplateType::WORD,
+            self::SENTENCES, self::KNOWNSENTENCES => ObjectTemplateType::SENTENCE,
+            self::ARTICLES => ObjectTemplateType::ARTICLE,
+            self::LYRICS, self::ARTISTS => null,
+        };
+    }
+
     public function uuid(): string
     {
-        return match($this) {
+        return match ($this) {
             self::KNOWNRADICALS => '0eea67ac-2676-4b68-947f-391eab2e1416',
             self::KNOWNKANJIS => '1c3f3b1e-2dcb-4f0c-8f7a-2e5e4f3b6c9a',
             self::KNOWNWORDS => '2a4b5c6d-3e7f-4a8b-9c0d-1e2f3a4b5c6d',

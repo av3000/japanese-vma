@@ -13,8 +13,10 @@ use Throwable;
  * Runs the registered dependency checks. Shared by the admin panel's health page and, once #232
  * lands, the deep health endpoint, so both report the same checks the same way.
  *
- * Each check has a budget: checks bound their own I/O (statement or socket timeouts), and a check
- * that still overruns is reported as failed rather than left looking healthy.
+ * Each check has a budget. Bounding I/O is each check's job: the database and Redis checks use
+ * dedicated connections with connect, read and statement timeouts inside it (config/database.php
+ * `pgsql_health` and `redis.health`). This runner only measures afterwards, as a safety net: it
+ * cannot stop a slow check, but reports one that overran as failed rather than healthy.
  */
 final class HealthCheckRunner
 {

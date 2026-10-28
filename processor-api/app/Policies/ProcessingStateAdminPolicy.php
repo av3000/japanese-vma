@@ -4,43 +4,27 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Infrastructure\Persistence\Models\ProcessingState;
-use App\Infrastructure\Persistence\Models\User;
+use App\Application\Users\Support\PanelPermission;
 
 /**
  * Processing rows are written only by the jobs and the sweeper. The panel reads them with
  * `operations.view`; a retry (`operations.manage`) resets a row through the requeue action rather
  * than editing it.
  */
-class ProcessingStateAdminPolicy
+class ProcessingStateAdminPolicy extends PanelResourcePolicy
 {
-    public function viewAny(User $user): bool
+    protected function viewPermission(): PanelPermission
     {
-        return $user->hasPanelPermission('operations.view');
+        return PanelPermission::OperationsView;
     }
 
-    public function view(User $user, ProcessingState $state): bool
+    protected function updatePermission(): ?PanelPermission
     {
-        return $user->hasPanelPermission('operations.view');
+        return null;
     }
 
-    public function create(User $user): bool
+    protected function deletePermission(): ?PanelPermission
     {
-        return false;
-    }
-
-    public function update(User $user, ProcessingState $state): bool
-    {
-        return false;
-    }
-
-    public function delete(User $user, ProcessingState $state): bool
-    {
-        return false;
-    }
-
-    public function deleteAny(User $user): bool
-    {
-        return false;
+        return null;
     }
 }

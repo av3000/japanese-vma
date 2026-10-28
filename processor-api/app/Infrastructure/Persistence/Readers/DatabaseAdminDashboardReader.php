@@ -12,6 +12,7 @@ use App\Domain\AdminDashboard\DTOs\WeeklyGrowthDTO;
 use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Processing\ProcessingThresholds;
 use App\Domain\Shared\Enums\ArticleStatus;
+use App\Infrastructure\Persistence\Models\ProcessingState;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -63,26 +64,17 @@ final class DatabaseAdminDashboardReader implements AdminDashboardReaderInterfac
     public function attentionCounts(): AttentionCountsDTO
     {
         $now = CarbonImmutable::now();
-        $awaiting = ArticleStatus::awaitingReviewValues();
-        $awaitingPlaceholders = implode(', ', array_fill(0, count($awaiting), '?'));
-        $nonTerminal = ProcessingStatus::nonTerminalValues();
 
-        $counts = DB::selectOne(
-            "SELECT
-                (SELECT COUNT(*) FROM articles WHERE status IN ({$awaitingPlaceholders})) AS awaiting_review,
-                (SELECT COUNT(*) FROM processing_states
-                    WHERE status = ? AND COALESCE(finished_at, updated_at) >= ?) AS failed_last_day,
-                (SELECT COUNT(*) FROM processing_states
-                    WHERE status IN (?, ?) AND updated_at < ?) AS stuck,
-                (SELECT COUNT(*) FROM failed_jobs) AS failed_jobs",
-            [
-                ...$awaiting,
-                ProcessingStatus::FAILED->value,
-                $now->subDay(),
-                ...$nonTerminal,
-                $now->subSeconds(ProcessingThresholds::STALE_AFTER_SECONDS),
-            ],
-        );
+        // One statement of scalar subqueries; "stuck" is the shared ProcessingState::stale() rule.
+        $counts = DB::query()
+            ->selectSub(DB::table('articles')->selectRaw('COUNT(*)')->whereIn('status', ArticleStatus::awaitingReviewValues()), 'awaiting_review')
+            ->selectSub(DB::table('processing_states')
+                ->selectRaw('COUNT(*)')
+                ->where('status', ProcessingStatus::FAILED->value)
+                ->whereRaw('COALESCE(finished_at, updated_at) >= ?', [$now->subDay()]), 'failed_last_day')
+            ->selectSub(ProcessingState::query()->stale(ProcessingThresholds::staleBefore($now))->selectRaw('COUNT(*)')->toBase(), 'stuck')
+            ->selectSub(DB::table('failed_jobs')->selectRaw('COUNT(*)'), 'failed_jobs')
+            ->first();
 
         return new AttentionCountsDTO(
             articlesAwaitingReview: (int) $counts->awaiting_review,

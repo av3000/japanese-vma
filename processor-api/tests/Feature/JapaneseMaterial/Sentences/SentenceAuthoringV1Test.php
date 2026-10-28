@@ -385,6 +385,11 @@ class SentenceAuthoringV1Test extends TestCase
             {
                 $this->inner->delete($sentenceId);
             }
+
+            public function findAuthorName(int $sentenceId): ?string
+            {
+                return $this->inner->findAuthorName($sentenceId);
+            }
         });
     }
 }

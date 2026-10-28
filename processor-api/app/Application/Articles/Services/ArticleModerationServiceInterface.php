@@ -18,6 +18,11 @@ interface ArticleModerationServiceInterface
      * A change is recorded in the activity log with the optional reason; setting the status an
      * article already has records nothing.
      *
+     * Approving an article whose content processing has not completed (no row, pending,
+     * processing, failed or superseded) is refused with `Articles.ApprovalNeedsFinishedProcessing`
+     * unless $approveUnfinishedProcessing is true; an override that was needed is recorded in the
+     * activity row's context.
+     *
      * @return Result Success payload: ArticleStatusResultDTO
      */
     public function updateStatus(
@@ -25,6 +30,7 @@ interface ArticleModerationServiceInterface
         ArticleStatus $status,
         AuthenticatedUser $authenticatedUser,
         ?string $reason = null,
+        bool $approveUnfinishedProcessing = false,
     ): Result;
 
     /**

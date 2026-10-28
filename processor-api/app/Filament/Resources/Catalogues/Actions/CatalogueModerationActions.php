@@ -7,14 +7,13 @@ namespace App\Filament\Resources\Catalogues\Actions;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Catalogues\Policies\CatalogueModerationPolicy;
 use App\Application\Catalogues\Services\CatalogueModerationServiceInterface;
-use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Filament\Resources\Catalogues\CatalogueResource;
 use App\Filament\Support\PanelActor;
 use App\Filament\Support\ResultNotifications;
 use App\Infrastructure\Persistence\Models\Catalogue;
-use App\Infrastructure\Persistence\Repositories\CatalogueMapper;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 
@@ -32,7 +31,7 @@ final class CatalogueModerationActions
             ->color('gray')
             ->requiresConfirmation()
             ->visible(static fn (): bool => PanelActor::may(
-                'catalogues.update',
+                PanelPermission::CataloguesUpdate,
                 static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canModerate($actor),
             ))
             ->action(static function (Catalogue $record): void {
@@ -60,8 +59,8 @@ final class CatalogueModerationActions
             ->modalDescription('The catalogue, its items, comments, likes, views and hashtag links are removed. The items themselves stay. This cannot be undone.')
             ->modalSubmitActionLabel('Delete catalogue')
             ->visible(static fn (Catalogue $record): bool => PanelActor::may(
-                'catalogues.delete',
-                static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canRemove($actor, self::domain($record)),
+                PanelPermission::CataloguesDelete,
+                static fn (AuthenticatedUser $actor): bool => app(CatalogueModerationPolicy::class)->canRemoveType($actor, $record->type),
             ))
             ->action(static function (Catalogue $record, Action $action): void {
                 $result = app(CatalogueModerationServiceInterface::class)->remove(
@@ -73,10 +72,5 @@ final class CatalogueModerationActions
                     $action->redirect(CatalogueResource::getUrl('index'));
                 }
             });
-    }
-
-    private static function domain(Catalogue $record): DomainCatalogue
-    {
-        return app(CatalogueMapper::class)->mapToDomain($record->loadMissing('user'));
     }
 }

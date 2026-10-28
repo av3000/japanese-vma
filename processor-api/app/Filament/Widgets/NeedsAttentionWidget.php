@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Processing\ProcessingThresholds;
 use App\Filament\Resources\Articles\ArticleResource;
 use App\Filament\Resources\Processing\ProcessingStateResource;
@@ -24,7 +25,7 @@ class NeedsAttentionWidget extends StatsOverviewWidget
     public static function canView(): bool
     {
         return Filament::auth()->check()
-            && (PanelActor::may('articles.view') || PanelActor::may('operations.view'));
+            && (PanelActor::may(PanelPermission::ArticlesView) || PanelActor::may(PanelPermission::OperationsView));
     }
 
     protected function getDescription(): string

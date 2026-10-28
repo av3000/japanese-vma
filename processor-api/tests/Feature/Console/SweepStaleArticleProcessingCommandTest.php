@@ -51,6 +51,19 @@ class SweepStaleArticleProcessingCommandTest extends TestCase
         Event::assertDispatchedTimes(ProcessingStatusUpdated::class, 2);
     }
 
+    public function test_a_row_that_never_reported_progress_is_swept_by_its_creation_time(): void
+    {
+        $neverUpdated = $this->insertOperation(ProcessingStatus::PENDING, ageSeconds: 0);
+        $justCreated = $this->insertOperation(ProcessingStatus::PENDING, ageSeconds: 0);
+        DB::table('processing_states')->where('id', $neverUpdated->id)->update(['updated_at' => null, 'created_at' => now()->subSeconds(400)]);
+        DB::table('processing_states')->where('id', $justCreated->id)->update(['updated_at' => null, 'created_at' => now()->subSeconds(30)]);
+
+        Artisan::call('article-processing:sweep-stale');
+
+        $this->assertSame(ProcessingStatus::FAILED, $neverUpdated->refresh()->status);
+        $this->assertSame(ProcessingStatus::PENDING, $justCreated->refresh()->status);
+    }
+
     public function test_older_than_option_overrides_the_threshold(): void
     {
         $row = $this->insertOperation(ProcessingStatus::PROCESSING, ageSeconds: 30);

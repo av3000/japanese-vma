@@ -8,6 +8,7 @@ use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Users\DTOs\UserAccountDTO;
+use App\Domain\Users\DTOs\UserAccountUpdateDTO;
 use App\Domain\Users\DTOs\UserAccountWriteDTO;
 use App\Infrastructure\Persistence\Models\User;
 use DateTimeImmutable;
@@ -37,21 +38,17 @@ final class UserAccountRepository implements UserAccountRepositoryInterface
             'uuid' => (string) Str::uuid(),
             'name' => $account->name,
             'email' => $account->email,
-            'password' => Hash::make((string) $account->password),
+            'password' => Hash::make($account->password),
         ]);
 
         return $this->toDTO($user->refresh());
     }
 
-    public function update(EntityId $uuid, UserAccountWriteDTO $account, bool $clearEmailVerification): UserAccountDTO
+    public function update(EntityId $uuid, UserAccountUpdateDTO $account, bool $clearEmailVerification): UserAccountDTO
     {
         $user = User::query()->where('uuid', $uuid->value())->firstOrFail();
         $user->name = $account->name;
         $user->email = $account->email;
-
-        if ($account->password !== null) {
-            $user->password = Hash::make($account->password);
-        }
 
         if ($clearEmailVerification) {
             $user->email_verified_at = null;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Application\AdminDashboard\Interfaces\Readers\AdminDashboardReaderInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\AdminDashboard\DTOs\ReviewQueueItemDTO;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Filament\Resources\Articles\ArticleResource;
@@ -23,7 +24,7 @@ class ReviewQueueWidget extends TableWidget
 
     public static function canView(): bool
     {
-        return Filament::auth()->check() && PanelActor::may('articles.view');
+        return Filament::auth()->check() && PanelActor::may(PanelPermission::ArticlesView);
     }
 
     public function table(Table $table): Table

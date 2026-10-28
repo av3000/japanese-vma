@@ -173,6 +173,17 @@ class CatalogueErrors
         );
     }
 
+    public static function publicityUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.PublicityUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Catalogue publicity update failed',
+            detail: 'An unexpected error occurred while updating the catalogue publicity',
+            errorMessage: 'An unexpected error occurred while updating the catalogue publicity',
+        );
+    }
+
     public static function deletionFailed(): ResultError
     {
         return new ResultError(

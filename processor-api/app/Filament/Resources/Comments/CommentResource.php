@@ -23,7 +23,8 @@ use UnitEnum;
 
 /**
  * Recent comments across every entity type, the only place the site's comments can be seen
- * together. Delete goes through CommentService and takes the comment's replies with it.
+ * together. Delete goes through CommentModerationServiceInterface and takes the comment's replies
+ * with it.
  */
 class CommentResource extends Resource
 {
@@ -45,10 +46,7 @@ class CommentResource extends Resource
             ->with(['user:id,name', 'parentComment:id,uuid,content'])
             ->withCount('replies')
             ->addSelect([
-                'likes_count' => Like::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('likes.real_object_id', 'comments.id')
-                    ->where('likes.template_id', ObjectTemplateType::COMMENT->getLegacyId()),
+                'likes_count' => Like::countSubquery(ObjectTemplateType::COMMENT, 'comments.id'),
             ]);
     }
 

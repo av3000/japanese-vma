@@ -43,6 +43,11 @@ final readonly class HashtagName
         return new self($value);
     }
 
+    /**
+     * The key without the validation from(). Writes use from() and its $key. Only two readers call
+     * this directly: the saving hook on the legacy Http-layer Uniquehashtag model and the panel's
+     * hashtag search (the Uniquehashtag `matching` scope), which must accept any typed text.
+     */
     public static function keyFor(string $value): string
     {
         $folded = Normalizer::normalize(trim($value), Normalizer::FORM_KC);

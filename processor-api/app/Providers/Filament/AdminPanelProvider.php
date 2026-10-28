@@ -6,6 +6,7 @@ use App\Filament\AdminNavigationGroup;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Support\PanelActor;
 use App\Http\Middleware\EnsureHorizonBasicAuth;
+use App\Http\Middleware\SetActivitySource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -68,6 +69,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SetActivitySource::class.':panel',
             ])
             ->authMiddleware([
                 Authenticate::class,

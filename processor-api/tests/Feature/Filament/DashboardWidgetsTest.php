@@ -130,6 +130,8 @@ class DashboardWidgetsTest extends TestCase
         $this->processingRow(ProcessingStatus::FAILED, finishedAt: $now->subDays(2), updatedAt: $now->subDays(2));
         $this->processingRow(ProcessingStatus::PROCESSING, updatedAt: $now->subMinutes(10));
         $this->processingRow(ProcessingStatus::PENDING, updatedAt: $now->subMinute());
+        $neverUpdated = $this->processingRow(ProcessingStatus::PENDING, updatedAt: $now->subMinute());
+        DB::table('processing_states')->where('id', $neverUpdated->id)->update(['updated_at' => null, 'created_at' => $now->subHour()]);
         DB::table('failed_jobs')->insert([
             'connection' => 'redis',
             'queue' => 'default',
@@ -142,7 +144,7 @@ class DashboardWidgetsTest extends TestCase
 
         self::assertSame(2, $counts->articlesAwaitingReview);
         self::assertSame(1, $counts->processingFailedLastDay);
-        self::assertSame(1, $counts->processingStuck);
+        self::assertSame(2, $counts->processingStuck, 'the old row and the one that never reported progress');
         self::assertSame(1, $counts->failedJobs);
     }
 
@@ -266,7 +268,7 @@ class DashboardWidgetsTest extends TestCase
         ProcessingStatus $status,
         ?CarbonImmutable $finishedAt = null,
         ?CarbonImmutable $updatedAt = null,
-    ): void {
+    ): ProcessingState {
         $row = ProcessingState::query()->create([
             'entity_type' => ProcessingEntityType::Article,
             'entity_id' => (string) Str::uuid(),
@@ -276,5 +278,7 @@ class DashboardWidgetsTest extends TestCase
         ]);
         $row->timestamps = false;
         $row->forceFill(['updated_at' => $updatedAt ?? CarbonImmutable::now()])->save();
+
+        return $row;
     }
 }

@@ -6,6 +6,7 @@ namespace App\Application\Catalogues\Policies;
 
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Domain\Shared\Services\TemplateTypeClassifier;
 
 /**
@@ -30,7 +31,15 @@ class CatalogueModerationPolicy
      */
     public function canRemove(?AuthenticatedUser $authenticatedUser, Catalogue $catalogue): bool
     {
+        return $this->canRemoveType($authenticatedUser, $catalogue->getType());
+    }
+
+    /**
+     * The same rule from the catalogue's type alone, for callers that only hold the type.
+     */
+    public function canRemoveType(?AuthenticatedUser $authenticatedUser, SavedListType $type): bool
+    {
         return $this->canModerate($authenticatedUser)
-            && ! $this->templateTypeClassifier->isKnownType($catalogue->getType());
+            && ! $this->templateTypeClassifier->isKnownType($type);
     }
 }

@@ -6,8 +6,10 @@ namespace App\Filament\Resources\Hashtags\Tables;
 
 use App\Application\Engagement\Actions\MergeHashtagsAction;
 use App\Application\Engagement\Actions\RenameHashtagAction;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Engagement\DTOs\HashtagMergeResultDTO;
 use App\Domain\Engagement\ValueObjects\HashtagName;
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Filament\Resources\Hashtags\HashtagResource;
 use App\Filament\Support\PanelActor;
 use App\Filament\Support\ResultNotifications;
@@ -35,9 +37,10 @@ class HashtagsTable
             ->columns([
                 TextColumn::make('content')
                     ->label('Tag')
-                    ->searchable(query: static fn (Builder $query, string $search): Builder => $query->where(static fn (Builder $inner) => $inner
-                        ->where('uniquehashtags.content', 'ILIKE', '%'.addcslashes($search, '%_\\').'%')
-                        ->orWhere('uniquehashtags.normalized_content', 'LIKE', '%'.addcslashes(HashtagName::keyFor($search), '%_\\').'%'))),
+                    ->searchable(query: static function (Builder $query, string $search): Builder {
+                        /** @var Builder<Uniquehashtag> $query */
+                        return $query->matching($search);
+                    }),
                 TextColumn::make('active_links')
                     ->label('In use')
                     ->numeric()
@@ -45,7 +48,7 @@ class HashtagsTable
                 TextColumn::make('by_type')
                     ->label('By type')
                     ->state(static fn (Uniquehashtag $record): string => implode(' · ', array_map(
-                        static fn (string $label, $type): string => $label.' '.(int) $record->getAttribute(HashtagResource::typeColumn($type)),
+                        static fn (string $label, $type): string => $label.' '.(int) $record->getAttribute(Uniquehashtag::usageColumn($type)),
                         array_keys(HashtagResource::TAGGED_TYPES),
                         HashtagResource::TAGGED_TYPES,
                     ))),
@@ -77,33 +80,37 @@ class HashtagsTable
                 SelectFilter::make('entity_type')
                     ->label('Used on')
                     ->options(array_combine(
-                        array_map(static fn ($type): string => HashtagResource::typeColumn($type), HashtagResource::TAGGED_TYPES),
+                        array_map(static fn (ObjectTemplateType $type): string => $type->value, HashtagResource::TAGGED_TYPES),
                         array_keys(HashtagResource::TAGGED_TYPES),
                     ))
-                    ->query(static fn (Builder $query, array $data): Builder => filled($data['value'] ?? null)
-                        ? $query->whereRaw('COALESCE(usage.'.self::safeColumn($data['value']).', 0) > 0')
-                        : $query),
+                    ->query(static function (Builder $query, array $data): Builder {
+                        /** @var Builder<Uniquehashtag> $query */
+                        $type = ObjectTemplateType::tryFrom((string) ($data['value'] ?? ''));
+
+                        return $type === null ? $query : $query->usedOn($type);
+                    }),
                 Filter::make('unused')
                     ->label('Unused')
                     ->toggle()
-                    ->query(static fn (Builder $query): Builder => $query->whereRaw('COALESCE(usage.active_links, 0) = 0')),
+                    ->query(static function (Builder $query): Builder {
+                        /** @var Builder<Uniquehashtag> $query */
+                        return $query->unused();
+                    }),
                 Filter::make('minimum_usage')
                     ->schema([
                         TextInput::make('minimum')->label('Used at least')->numeric()->minValue(1),
                     ])
-                    ->query(static fn (Builder $query, array $data): Builder => filled($data['minimum'] ?? null)
-                        ? $query->whereRaw('COALESCE(usage.active_links, 0) >= ?', [(int) $data['minimum']])
-                        : $query)
+                    ->query(static function (Builder $query, array $data): Builder {
+                        /** @var Builder<Uniquehashtag> $query */
+                        return filled($data['minimum'] ?? null) ? $query->usedAtLeast((int) $data['minimum']) : $query;
+                    })
                     ->indicateUsing(static fn (array $data): ?string => filled($data['minimum'] ?? null) ? "Used at least {$data['minimum']} times" : null),
                 Filter::make('has_duplicates')
                     ->label('Has case or width variants')
                     ->toggle()
                     ->query(static fn (Builder $query): Builder => $query->whereIn(
                         'uniquehashtags.normalized_content',
-                        Uniquehashtag::query()
-                            ->select('normalized_content')
-                            ->groupBy('normalized_content')
-                            ->havingRaw('COUNT(*) > 1'),
+                        Uniquehashtag::duplicateKeys(),
                     )),
             ])
             ->recordActions([
@@ -120,7 +127,7 @@ class HashtagsTable
         return Action::make('rename')
             ->icon(Heroicon::OutlinedPencilSquare)
             ->color('gray')
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Uniquehashtag $record): array => ['name' => $record->content])
             ->schema([
                 TextInput::make('name')
@@ -142,7 +149,7 @@ class HashtagsTable
             ->label('Merge into…')
             ->icon(Heroicon::OutlinedArrowsPointingIn)
             ->color('gray')
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Uniquehashtag $record): array => ['target' => self::defaultTargetFor($record)])
             ->schema(static fn (Uniquehashtag $record): array => [
                 Select::make('target')
@@ -174,7 +181,7 @@ class HashtagsTable
         return BulkAction::make('mergeSelected')
             ->label('Merge selected')
             ->icon(Heroicon::OutlinedArrowsPointingIn)
-            ->visible(static fn (): bool => PanelActor::may('hashtags.manage'))
+            ->visible(static fn (): bool => PanelActor::may(PanelPermission::HashtagsManage))
             ->fillForm(static fn (Collection $records): array => ['target' => $records->sortByDesc('active_links')->first()?->id])
             ->schema(static fn (Collection $records): array => [
                 Select::make('target')
@@ -238,12 +245,5 @@ class HashtagsTable
             ->first();
 
         return $variant === null ? null : (int) $variant->id;
-    }
-
-    private static function safeColumn(string $column): string
-    {
-        $allowed = array_map(static fn ($type): string => HashtagResource::typeColumn($type), HashtagResource::TAGGED_TYPES);
-
-        return in_array($column, $allowed, true) ? $column : 'active_links';
     }
 }

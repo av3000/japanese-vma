@@ -39,6 +39,14 @@ class PermissionCatalogSeederTest extends TestCase
             ],
             array_keys($groups['admin']['permissions']),
         );
+        self::assertSame(
+            [
+                'articles.view', 'articles.update', 'articles.delete',
+                'catalogues.view', 'catalogues.update', 'catalogues.delete',
+                'comments.view', 'comments.delete',
+            ],
+            array_keys($groups['content']['permissions']),
+        );
         self::assertSame(['posts.view', 'posts.moderate', 'hashtags.manage'], array_keys($groups['community']['permissions']));
         self::assertSame(['study.view', 'sentences.moderate'], array_keys($groups['study']['permissions']));
         self::assertSame(['operations.view', 'operations.manage'], array_keys($groups['operations']['permissions']));
@@ -67,6 +75,23 @@ class PermissionCatalogSeederTest extends TestCase
         $this->seed(RoleSeeder::class);
 
         self::assertSame([], Role::findByName(UserRole::COMMON->value, 'api')->permissions()->pluck('name')->all());
+    }
+
+    public function test_the_pruning_migration_removes_the_unchecked_permissions_and_their_grants(): void
+    {
+        $role = Role::create(['name' => 'legacy-editor', 'guard_name' => 'api']);
+
+        foreach (['articles.create', 'catalogues.create', 'comments.update'] as $name) {
+            $role->givePermissionTo(Permission::create(['name' => $name, 'guard_name' => 'api']));
+        }
+
+        $role->givePermissionTo(Permission::create(['name' => 'articles.view', 'guard_name' => 'api']));
+
+        $migration = require database_path('migrations/2026_10_27_000000_remove_unchecked_panel_permissions.php');
+        $migration->up();
+
+        self::assertSame(['articles.view'], Permission::query()->pluck('name')->all());
+        self::assertSame(['articles.view'], $role->fresh()->permissions()->pluck('name')->all());
     }
 
     public function test_permissions_missing_from_the_catalogue_are_kept(): void

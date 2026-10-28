@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Application\Operations\Interfaces\Readers\ImportStatusReaderInterface;
+use App\Application\Users\Support\PanelPermission;
 use App\Domain\Operations\DTOs\DatasetHealthDTO;
 use App\Domain\Operations\DTOs\ImportRunDTO;
 use App\Domain\Operations\Enums\DatasetDrift;
@@ -47,7 +48,7 @@ class ImportStatus extends Page
 
     public static function canAccess(): bool
     {
-        return PanelActor::may('operations.view');
+        return PanelActor::may(PanelPermission::OperationsView);
     }
 
     public function getSubheading(): string

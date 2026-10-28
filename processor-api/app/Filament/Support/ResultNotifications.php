@@ -43,18 +43,22 @@ final class ResultNotifications
     }
 
     /**
-     * "3 changed, 1 failed", with the first few failures listed by name.
+     * "3 changed, 1 failed" (plus ", 2 skipped" when any were skipped), with the first few
+     * failures and skips listed by name.
      *
      * @param list<string> $failures "label: reason" per failed record
+     * @param list<string> $skipped "label: reason" per record left alone on purpose
      */
-    public static function bulk(int $total, array $failures, string $verb): void
+    public static function bulk(int $total, array $failures, string $verb, array $skipped = []): void
     {
-        $succeeded = $total - count($failures);
+        $succeeded = $total - count($failures) - count($skipped);
+        $title = "{$succeeded} {$verb}, ".count($failures).' failed'.($skipped === [] ? '' : ', '.count($skipped).' skipped');
+        $details = [...$failures, ...$skipped];
 
         Notification::make()
-            ->title("{$succeeded} {$verb}, ".count($failures).' failed')
-            ->body($failures === [] ? null : implode("\n", array_slice($failures, 0, 5)))
-            ->status($failures === [] ? 'success' : 'warning')
+            ->title($title)
+            ->body($details === [] ? null : implode("\n", array_slice($details, 0, 5)))
+            ->status($failures === [] && $skipped === [] ? 'success' : 'warning')
             ->send();
     }
 }

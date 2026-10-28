@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Application\Users\Support\PanelPermission;
 use App\Infrastructure\Persistence\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class EnsureHorizonBasicAuth
 {
     public const REQUEST_ATTRIBUTE = 'horizon.basic_auth_passed';
 
-    public const PANEL_PERMISSION = 'operations.view';
+    public const PANEL_PERMISSION = PanelPermission::OperationsView;
 
     public function handle(Request $request, Closure $next): Response
     {
