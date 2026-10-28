@@ -149,6 +149,11 @@ final class FakeWordRepository implements WordRepositoryInterface
         throw new LogicException('This fake only supports word extraction lookups.');
     }
 
+    public function count(WordQueryCriteria $criteria): int
+    {
+        throw new LogicException('This fake only supports word extraction lookups.');
+    }
+
     public function findByUuid(EntityId $uuid): ?Word
     {
         return null;

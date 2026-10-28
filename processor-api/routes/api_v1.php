@@ -13,6 +13,7 @@ use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
 use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
 use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
+use App\Http\v1\Search\Controllers\SearchCountsController;
 use App\Http\v1\Study\Controllers\FlashcardDeckController;
 use App\Http\v1\Study\Controllers\StudySessionController;
 use App\Http\v1\Users\Controllers\{UserController};
@@ -110,6 +111,12 @@ Route::prefix('v1')->group(function () {
     // Corpus totals for the landing page: cached for an hour server-side, five minutes in the browser.
     Route::get('japanese-material/stats', [CorpusStatsController::class, 'show'])
         ->middleware('cache.headers:public;max_age=300');
+
+    // Header search hit counts. Typing fires one request per pause, so the route has its own
+    // limiter instead of spending the shared API budget the rest of the page needs.
+    Route::get('search/counts', [SearchCountsController::class, 'index'])
+        ->withoutMiddleware('throttle:60,1')
+        ->middleware('throttle:search-counts');
 
     // Community Posts - Public Read Access
     // `identifier` is a UUID (canonical) or, transitionally, a positive legacy id.

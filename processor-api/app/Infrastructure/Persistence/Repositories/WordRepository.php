@@ -29,9 +29,7 @@ class WordRepository implements WordRepositoryInterface
 
     public function find(WordQueryCriteria $criteria): WordListResultDTO
     {
-        $query = PersistenceWord::query()->orderBy('id');
-
-        $this->applyFilters($query, $criteria);
+        $query = $this->filteredQuery($criteria)->orderBy('id');
 
         $paginator = $query->paginate(
             $criteria->pagination->per_page,
@@ -139,6 +137,23 @@ class WordRepository implements WordRepositoryInterface
             ->get()
             ->map(fn ($kanji) => $this->kanjiMapper->mapToDomain($kanji))
             ->all();
+    }
+
+    public function count(WordQueryCriteria $criteria): int
+    {
+        return $this->filteredQuery($criteria)->count();
+    }
+
+    /**
+     * The rows find() pages through, so count() always equals find()'s total.
+     */
+    private function filteredQuery(WordQueryCriteria $criteria): Builder
+    {
+        $query = PersistenceWord::query();
+
+        $this->applyFilters($query, $criteria);
+
+        return $query;
     }
 
     private function applyFilters(Builder $query, WordQueryCriteria $criteria): void

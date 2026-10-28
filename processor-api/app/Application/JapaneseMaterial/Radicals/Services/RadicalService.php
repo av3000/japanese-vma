@@ -22,6 +22,11 @@ class RadicalService implements RadicalServiceInterface
         return Result::success($this->radicalRepository->find($criteria));
     }
 
+    public function count(RadicalQueryCriteria $criteria): Result
+    {
+        return Result::success($this->radicalRepository->count($criteria));
+    }
+
     public function findByIdentifier(string $identifier, bool $withKanjis = false): Result
     {
         if (EntityId::isValid($identifier)) {

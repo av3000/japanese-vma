@@ -12,6 +12,9 @@ use App\Domain\Shared\ValueObjects\Pagination;
 
 final readonly class KanjiQueryCriteria
 {
+    /** The longest `keyword` the list accepts. The Header search counts use it too, so both agree. */
+    public const KEYWORD_MAX_LENGTH = 255;
+
     public function __construct(
         // TODO: pass in the persistence model instead of optional id parameters for each entity
         public readonly ?EntityId $articleId = null,

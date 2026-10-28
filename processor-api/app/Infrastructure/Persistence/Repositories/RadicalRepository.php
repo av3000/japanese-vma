@@ -21,9 +21,7 @@ class RadicalRepository implements RadicalRepositoryInterface
 
     public function find(RadicalQueryCriteria $criteria): RadicalListResultDTO
     {
-        $query = PersistenceRadical::query()->orderBy('id');
-
-        $this->applyFilters($query, $criteria);
+        $query = $this->filteredQuery($criteria)->orderBy('id');
 
         $paginator = $query->paginate(
             $criteria->pagination->per_page,
@@ -86,6 +84,23 @@ class RadicalRepository implements RadicalRepositoryInterface
             ->map(fn (PersistenceRadical $radical): DomainRadical => $this->radicalMapper->mapToDomain($radical))
             ->values()
             ->all();
+    }
+
+    public function count(RadicalQueryCriteria $criteria): int
+    {
+        return $this->filteredQuery($criteria)->count();
+    }
+
+    /**
+     * The rows find() pages through, so count() always equals find()'s total.
+     */
+    private function filteredQuery(RadicalQueryCriteria $criteria): Builder
+    {
+        $query = PersistenceRadical::query();
+
+        $this->applyFilters($query, $criteria);
+
+        return $query;
     }
 
     private function applyFilters(Builder $query, RadicalQueryCriteria $criteria): void

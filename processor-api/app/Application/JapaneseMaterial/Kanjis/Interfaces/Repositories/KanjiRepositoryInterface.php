@@ -20,6 +20,11 @@ interface KanjiRepositoryInterface
 
     public function find(?KanjiQueryCriteria $criteria = null): KanjiListResultDTO;
 
+    /**
+     * How many kanji find() would page through for the same criteria; pagination is ignored.
+     */
+    public function count(KanjiQueryCriteria $criteria): int;
+
     public function findIdsByCharacters(array $characters): array;
 
     /**

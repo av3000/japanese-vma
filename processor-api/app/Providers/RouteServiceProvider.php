@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -92,6 +92,11 @@ class RouteServiceProvider extends ServiceProvider
         // Stricter limit for public endpoints
         RateLimiter::for('public', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
+        });
+
+        // The Header search counts (#383): its own bucket, so typing cannot use up `api`.
+        RateLimiter::for('search-counts', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user('api')?->id ?: $request->ip());
         });
     }
 }
