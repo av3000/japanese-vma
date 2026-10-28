@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyQuery, containsJapanese, resolveScope, rowNote } from './detectScope';
+import { classifyQuery, containsJapanese, pickBestMatch, resolveScope, rowNote, type ScopeCounts } from './detectScope';
 
 describe('classifyQuery', () => {
 	it.each([
@@ -72,6 +72,76 @@ describe('resolveScope', () => {
 		],
 	] as const)('%s', (_, input, expected) => {
 		expect(resolveScope(input)).toMatchObject(expected);
+	});
+});
+
+const counts = (values: Partial<ScopeCounts>): ScopeCounts => ({
+	articles: 0,
+	kanji: 0,
+	words: 0,
+	sentences: 0,
+	radicals: 0,
+	...values,
+});
+
+describe('pickBestMatch', () => {
+	const order = ['words', 'kanji', 'radicals', 'sentences', 'articles'] as const;
+
+	it.each([
+		['the first scope in order with hits', counts({ words: 1256, kanji: 108, radicals: 1 }), 'words'],
+		['skips a leading zero', counts({ kanji: 3, articles: 9 }), 'kanji'],
+		['skips a null count', counts({ words: null, sentences: 2 }), 'sentences'],
+		['nothing when every scope is zero or null', counts({ articles: null }), null],
+	] as const)('%s', (_, values, expected) => {
+		expect(pickBestMatch(order, values)).toBe(expected);
+	});
+});
+
+describe('resolveScope with counts', () => {
+	it.each([
+		[
+			'Latin text claims the first scope with hits, in meaning order',
+			{ query: 'water', counts: counts({ words: 1256, kanji: 108, radicals: 1 }) },
+			{ scope: 'words', bestMatch: 'words', order: ['words', 'kanji', 'radicals', 'sentences', 'articles'] },
+		],
+		[
+			'a scope with hits moves to the top once Words has none',
+			{ query: 'fire', counts: counts({ kanji: 4, articles: 2 }) },
+			{ scope: 'kanji', bestMatch: 'kanji', order: ['kanji', 'words', 'radicals', 'sentences', 'articles'] },
+		],
+		[
+			'a single kanji with no kanji hits hands the claim to the next scope',
+			{ query: '水', counts: counts({ words: 312, sentences: 87, articles: null }) },
+			{ scope: 'words', bestMatch: 'words', order: ['words', 'kanji', 'articles', 'sentences', 'radicals'] },
+		],
+		[
+			'a single kanji keeps Kanji when it has hits, even with fewer than Words',
+			{ query: '水', counts: counts({ kanji: 1, words: 312 }) },
+			{ scope: 'kanji', bestMatch: 'kanji', order: ['kanji', 'articles', 'words', 'sentences', 'radicals'] },
+		],
+		[
+			'no claim and detection order when nothing has hits',
+			{ query: 'たべる', counts: counts({}) },
+			{ scope: 'words', bestMatch: null, order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
+		],
+		[
+			'a picked chip still wins over counts',
+			{ query: 'water', picked: 'articles', counts: counts({ words: 5 }) },
+			{ scope: 'articles', bestMatch: null, order: ['articles', 'kanji', 'words', 'sentences', 'radicals'] },
+		],
+	] as const)('%s', (_, input, expected) => {
+		expect(resolveScope({ picked: null, lastScope: 'articles', ...input })).toMatchObject(expected);
+	});
+
+	it('never makes a zero-count scope the best match', () => {
+		const resolution = resolveScope({
+			query: '水',
+			picked: null,
+			lastScope: 'articles',
+			counts: counts({ kanji: 0, words: 0, sentences: 3 }),
+		});
+
+		expect(resolution.bestMatch).toBe('sentences');
 	});
 });
 

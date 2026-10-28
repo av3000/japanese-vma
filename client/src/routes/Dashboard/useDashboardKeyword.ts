@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-
-/** How long the dashboard waits after the last keystroke before it searches. */
-export const SEARCH_DEBOUNCE_MS = 300;
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 /**
  * Type-ahead search whose applied value lives in the URL. The input edits a local draft; after

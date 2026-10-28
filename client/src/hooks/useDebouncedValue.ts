@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
+/** How long a search box waits after the last keystroke before it asks the server. */
+export const SEARCH_DEBOUNCE_MS = 300;
+
 /**
  * A value that trails `value` by `delayMs`. `flush` catches it up at once, for an explicit
  * submit while the user is still inside the delay.
