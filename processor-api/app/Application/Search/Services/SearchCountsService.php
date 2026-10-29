@@ -123,6 +123,7 @@ final readonly class SearchCountsService implements SearchCountsServiceInterface
      */
     private function countArticles(string $keyword, ?AuthenticatedUser $actor): Result
     {
+        // Mirrors IndexArticleRequest's `min:` rule on `q`, which counts characters; keep the two in step.
         if (mb_strlen($keyword) < SearchTerm::MIN_LENGTH) {
             return Result::success(null);
         }

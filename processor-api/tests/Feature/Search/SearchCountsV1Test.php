@@ -105,6 +105,23 @@ class SearchCountsV1Test extends TestCase
         $this->assertCountsMatchLists($counts, 'River');
     }
 
+    public function test_sentences_are_counted_like_their_list_when_they_match(): void
+    {
+        $this->createSentence('水を飲みます。', '3001');
+        $this->createSentence('水が冷たいです。', '3002');
+        $this->createSentence('火を消します。', '3003');
+        $this->createSentence('毎日歩きます。', '3101');
+
+        $byContent = $this->getJson('/api/v1/search/counts?q='.urlencode('ます'));
+        $byContent->assertOk()->assertJsonPath('sentences', 3);
+        $this->assertCountsMatchLists($byContent, 'ます');
+
+        // tatoeba_entry is the other column the sentence list matches.
+        $byEntry = $this->getJson('/api/v1/search/counts?q=300');
+        $byEntry->assertOk()->assertJsonPath('sentences', 3);
+        $this->assertCountsMatchLists($byEntry, '300');
+    }
+
     public function test_a_single_character_has_no_article_count_because_the_list_rejects_it(): void
     {
         $this->createKanji('水', 'water');

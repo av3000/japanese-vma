@@ -164,4 +164,18 @@ describe('rowNote', () => {
 		expect(notes('water')).toEqual(['searches English meanings', null, null, null, null]);
 		expect(notes('water', 'articles')).toEqual([null, null, null, null, null]);
 	});
+
+	it.each([
+		['kanji', counts({ kanji: 4 }), 'searches English meanings'],
+		['articles', counts({ articles: 2 }), null],
+		['sentences', counts({ sentences: 1 }), null],
+	] as const)(
+		'keeps the English-meanings note off a first row it does not describe (%s first)',
+		(first, hits, note) => {
+			const resolution = resolveScope({ query: 'Tokyo', picked: null, lastScope: 'articles', counts: hits });
+
+			expect(resolution.order[0]).toBe(first);
+			expect(rowNote(resolution.order[0], 0, resolution)).toBe(note);
+		},
+	);
 });

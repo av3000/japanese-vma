@@ -26,6 +26,9 @@ export const containsJapanese = (text: string): boolean => HAN.test(text) || KAN
 /** Latin text matches English meanings on kanji and words, and titles on articles. */
 const LATIN_ORDER: readonly SearchScope[] = ['words', 'kanji', 'radicals', 'sentences', 'articles'];
 
+/** The scopes whose lists match Latin text against English meanings. */
+const MEANING_SCOPES: ReadonlySet<SearchScope> = new Set(['words', 'kanji', 'radicals']);
+
 const DETECTED_SCOPE: Record<QueryKind, SearchScope | null> = {
 	empty: null,
 	kanji: 'kanji',
@@ -111,6 +114,9 @@ export const resolveScope = ({ query, picked, lastScope, counts }: ResolveScopeI
 export const rowNote = (row: SearchScope, index: number, resolution: ScopeResolution): string | null => {
 	if (resolution.kind === 'kanji' && row === 'kanji') return 'single character detected';
 	if (resolution.kind === 'japanese' && row === 'words') return 'Japanese text detected';
-	if (resolution.kind === 'latin' && !resolution.isPicked && index === 0) return 'searches English meanings';
+	// Counts can put any scope first; articles match titles and sentences match text, not meanings.
+	if (resolution.kind === 'latin' && !resolution.isPicked && index === 0 && MEANING_SCOPES.has(row)) {
+		return 'searches English meanings';
+	}
 	return null;
 };

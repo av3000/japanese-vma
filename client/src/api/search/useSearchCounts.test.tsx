@@ -13,7 +13,7 @@ vi.mock('@/api/generated/search-counts/search-counts', async () => {
 	return { ...actual, searchCountsIndex: vi.fn() };
 });
 
-const auth = vi.hoisted(() => ({ user: null as { uuid: string } | null }));
+const auth = vi.hoisted(() => ({ user: null as { uuid: string } | null, isLoading: false }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }));
 
 const COUNTS: SearchCounts = { articles: 0, kanji: 108, words: 1256, sentences: 0, radicals: 1 };
@@ -41,6 +41,7 @@ const mount = async (query: string) => {
 beforeEach(() => {
 	vi.mocked(searchCountsIndex).mockReset();
 	auth.user = null;
+	auth.isLoading = false;
 });
 
 afterEach(async () => {
@@ -59,6 +60,25 @@ describe('useSearchCounts', () => {
 
 	it('asks nothing for an empty query', async () => {
 		await mount('   ');
+
+		expect(searchCountsIndex).not.toHaveBeenCalled();
+		expect(latest.counts).toBeNull();
+	});
+
+	it('trims invisible characters the way the server does, so the echo still matches', async () => {
+		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'water', ...COUNTS });
+
+		await mount('​water​ ');
+
+		expect(searchCountsIndex).toHaveBeenCalledWith({ q: 'water' }, undefined, expect.any(AbortSignal));
+		expect(latest.counts).toEqual(COUNTS);
+	});
+
+	it('waits while a stored session restores, so the viewer is known before anything is cached', async () => {
+		auth.isLoading = true;
+		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'water', ...COUNTS });
+
+		await mount('water');
 
 		expect(searchCountsIndex).not.toHaveBeenCalled();
 		expect(latest.counts).toBeNull();

@@ -234,15 +234,6 @@
 	color: var(--color-neutral-600);
 }
 
-.visuallyHidden {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	overflow: hidden;
-	clip-path: inset(50%);
-	white-space: nowrap;
-}
-
 .note {
 	font-size: var(--font-size-body-sm);
 	color: var(--color-neutral-600);
