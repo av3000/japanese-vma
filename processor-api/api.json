@@ -3029,6 +3029,43 @@
                 }
             }
         },
+        "/search/counts": {
+            "get": {
+                "operationId": "searchCounts.index",
+                "description": "Each count equals that list's `pagination.total` for the same keyword and viewer. A\nnull count means that list rejects the keyword: articles need at least two\ncharacters, sentences and radicals take at most 100. `q` echoes the trimmed keyword\nso the client can drop an answer to a query it no longer shows.\n\nRate-limited on its own (60 a minute per user or IP), outside the shared API limit.",
+                "summary": "Per-scope hit counts for the Header search",
+                "tags": [
+                    "SearchCounts"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SearchCountsResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SearchCountsResource"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/sentences": {
             "get": {
                 "operationId": "sentence.index",
@@ -6795,6 +6832,53 @@
                     "lenient"
                 ],
                 "title": "ScriptStrictness"
+            },
+            "SearchCountsResource": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": "string"
+                    },
+                    "articles": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "kanji": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "words": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "sentences": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "radicals": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "q",
+                    "articles",
+                    "kanji",
+                    "words",
+                    "sentences",
+                    "radicals"
+                ],
+                "title": "SearchCountsResource"
             },
             "SentenceListResource": {
                 "type": "object",

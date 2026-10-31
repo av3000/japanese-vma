@@ -13,6 +13,11 @@ interface WordRepositoryInterface
 {
     public function find(WordQueryCriteria $criteria): WordListResultDTO;
 
+    /**
+     * How many words find() would page through for the same criteria; pagination is ignored.
+     */
+    public function count(WordQueryCriteria $criteria): int;
+
     public function findByUuid(EntityId $uuid): ?Word;
 
     public function findBySurface(string $surface): ?Word;

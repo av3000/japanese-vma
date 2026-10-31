@@ -15,6 +15,11 @@ interface SentenceRepositoryInterface
 {
     public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO;
 
+    /**
+     * How many sentences find() would page through for the same criteria; pagination is ignored.
+     */
+    public function count(SentenceQueryCriteria $criteria): int;
+
     public function findByUuid(EntityId $uuid, bool $withKanjis = false, bool $withWords = false): ?Sentence;
 
     public function findByLegacyId(int $id, bool $withKanjis = false, bool $withWords = false): ?Sentence;

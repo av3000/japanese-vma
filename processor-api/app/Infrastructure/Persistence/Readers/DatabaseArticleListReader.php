@@ -74,6 +74,11 @@ final readonly class DatabaseArticleListReader implements ArticleListReaderInter
         return $this->mapRows($rows, $includes);
     }
 
+    public function count(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): int
+    {
+        return $this->filterBuilder->newQuery($criteria, $scope)->count();
+    }
+
     /**
      * Eligibility, eager loads and ordering are identical for both entry points; only
      * how the page is cut differs.

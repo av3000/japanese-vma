@@ -43,6 +43,12 @@ interface ArticleListReaderInterface
     ): array;
 
     /**
+     * The total search() would report for the same criteria and scope, without
+     * loading a page.
+     */
+    public function count(ArticleQueryCriteria $criteria, ArticleVisibilityScope $scope): int;
+
+    /**
      * Disjunctive counts per dimension: each facet excludes its own active selection
      * while retaining the mandatory scope and every other filter.
      *

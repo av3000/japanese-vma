@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Radicals\Requests;
 
+use App\Domain\JapaneseMaterial\Radicals\Queries\RadicalQueryCriteria;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexRadicalRequest extends FormRequest
@@ -28,7 +29,7 @@ class IndexRadicalRequest extends FormRequest
             'catalogue_uuid' => ['nullable', 'uuid'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'keyword' => ['nullable', 'string', 'min:1', 'max:100'],
+            'keyword' => ['nullable', 'string', 'min:1', 'max:'.RadicalQueryCriteria::KEYWORD_MAX_LENGTH],
             'radical' => ['nullable', 'string', 'min:1', 'max:30'],
             'meaning' => ['nullable', 'string', 'min:1', 'max:100'],
             'hiragana' => ['nullable', 'string', 'min:1', 'max:100'],

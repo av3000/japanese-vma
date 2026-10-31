@@ -11,5 +11,12 @@ interface WordServiceInterface
 {
     public function find(WordQueryCriteria $criteria): Result;
 
+    /**
+     * The total find() reports for the same criteria, without loading a page.
+     *
+     * @return Result<int>
+     */
+    public function count(WordQueryCriteria $criteria): Result;
+
     public function findByIdentifier(string $identifier): Result;
 }

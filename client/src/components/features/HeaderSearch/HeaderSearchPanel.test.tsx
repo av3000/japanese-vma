@@ -2,12 +2,20 @@
 import { act } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SearchCounts } from '@/api/search/useSearchCounts';
 import { click, typeInto } from '@/test/formEvents';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { HeaderSearch } from './index';
 import { rememberSearch } from './recentSearches';
 
 const navigate = vi.fn();
+
+/** What the counts endpoint "answers" per trimmed query; a missing query behaves like a failed request. */
+const countsByQuery = vi.hoisted(() => new Map<string, SearchCounts>());
+
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: (query: string) => ({ counts: countsByQuery.get(query.trim()) ?? null }),
+}));
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -54,10 +62,24 @@ const submit = () => act(() => form().requestSubmit());
 beforeEach(async () => {
 	navigate.mockClear();
 	localStorage.clear();
+	countsByQuery.clear();
 });
 
 afterEach(async () => {
 	await view.unmount();
+	vi.useRealTimers();
+});
+
+/** Lets the 300 ms debounce run out, so the counts for the typed query are asked for. */
+const settle = () => act(() => vi.advanceTimersByTime(300));
+
+const counts = (values: Partial<SearchCounts>): SearchCounts => ({
+	articles: 0,
+	kanji: 0,
+	words: 0,
+	sentences: 0,
+	radicals: 0,
+	...values,
 });
 
 describe('HeaderSearchPanel', () => {
@@ -267,5 +289,104 @@ describe('HeaderSearchPanel', () => {
 		typeInto(input(), 'a');
 		key(input(), '/');
 		expect(document.activeElement).toBe(input());
+	});
+});
+
+describe('HeaderSearchPanel hit counts', () => {
+	it('shows a count per scope once the typing pauses, and lets the counts claim the best match', async () => {
+		countsByQuery.set('water', counts({ words: 1256, kanji: 108, radicals: 1 }));
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), 'water');
+
+		expect(form().textContent).not.toContain('Best match');
+		expect(options()[0].textContent).toBe('Words containing water · searches English meanings↵');
+
+		settle();
+
+		expect(chips('Search in')[0].textContent).toBe('Words Best match');
+		expect(options().map((option) => option.textContent)).toEqual([
+			'Words containing water · searches English meanings1,256 results↵',
+			'Kanji for water108 results↵',
+			'Radicals matching water1 result↵',
+			'Sentences with water0 results↵',
+			'Articles with water in the title0 results↵',
+		]);
+	});
+
+	it('never makes a zero-count scope the best match: the next scope with hits moves to the top', async () => {
+		countsByQuery.set('水', counts({ kanji: 0, words: 312, sentences: 87, articles: null }));
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), '水');
+		settle();
+
+		expect(chips('Search in')[0].textContent).toBe('Words Best match');
+		expect(options().map((option) => option.textContent)).toEqual([
+			'Words containing 水312 results↵',
+			'Kanji for 水 · single character detected0 results↵',
+			// The article list needs two characters, so it has no number, but the row still runs.
+			'Articles with 水 in the title↵',
+			'Sentences with 水87 results↵',
+			'Radicals matching 水0 results↵',
+		]);
+		submit();
+		expect(navigate).toHaveBeenCalledWith('/words?keyword=%E6%B0%B4');
+	});
+
+	it('makes no claim when no scope has hits', async () => {
+		countsByQuery.set('zzz', counts({}));
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), 'zzz');
+		settle();
+
+		expect(form().textContent).not.toContain('Best match');
+		expect(options()[0].textContent).toBe('Words containing zzz · searches English meanings0 results↵');
+	});
+
+	it('keeps the highlight on the same scope when counts reorder the rows', async () => {
+		countsByQuery.set('水', counts({ kanji: 0, words: 312 }));
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), '水');
+		key(input(), 'ArrowDown');
+		expect(activeOption()?.textContent).toBe('Articles with 水 in the title↵');
+
+		settle();
+
+		expect(options()[0].textContent).toContain('Words containing 水');
+		expect(activeOption()?.textContent).toBe('Articles with 水 in the title0 results↵');
+	});
+
+	it('shows no counts for a query the reader is still typing', async () => {
+		countsByQuery.set('wat', counts({ words: 9 }));
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), 'wat');
+		settle();
+		expect(options()[0].textContent).toContain('9 results');
+
+		typeInto(input(), 'water');
+
+		expect(options()[0].textContent).toBe('Words containing water · searches English meanings↵');
+	});
+
+	it('works on detection alone when the counts request fails', async () => {
+		await mount();
+		vi.useFakeTimers();
+		focusInput();
+		typeInto(input(), '水');
+		settle();
+
+		expect(chips('Search in')[0].textContent).toBe('Kanji Best match');
+		expect(options()[0].textContent).toBe('Kanji for 水 · single character detected↵');
+		submit();
+		expect(navigate).toHaveBeenCalledWith('/kanjis?keyword=%E6%B0%B4');
 	});
 });

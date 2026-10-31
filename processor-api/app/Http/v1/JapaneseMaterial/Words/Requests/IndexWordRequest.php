@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Words\Requests;
 
+use App\Domain\JapaneseMaterial\Words\Queries\WordQueryCriteria;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexWordRequest extends FormRequest
@@ -34,7 +35,7 @@ class IndexWordRequest extends FormRequest
             'kanji_uuid' => ['nullable', 'uuid'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'keyword' => ['nullable', 'string', 'min:1', 'max:255'],
+            'keyword' => ['nullable', 'string', 'min:1', 'max:'.WordQueryCriteria::KEYWORD_MAX_LENGTH],
             'word' => ['nullable', 'string', 'min:1', 'max:255'],
             'furigana' => ['nullable', 'string', 'min:1', 'max:255'],
             'jlpt' => ['nullable', 'string', 'min:1', 'max:20'],

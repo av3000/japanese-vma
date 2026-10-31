@@ -209,11 +209,29 @@
 	color: var(--color-neutral-600);
 }
 
-/* Takes the free width; a trailing hit count (#383) slots in between this and the Enter hint. */
+/* Takes the free width; the hit count sits between this and the Enter hint. */
 .rowText {
 	flex: 1;
 	min-width: 0;
 	overflow-wrap: anywhere;
+}
+
+/*
+ * The hit count keeps its width while counts load or fail, so the row text never jumps.
+ * 7ch fits the largest list (words, "184,938").
+ */
+.count {
+	flex: none;
+	min-width: 7ch;
+	font-size: var(--font-size-body-sm);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-neutral-700);
+	text-align: right;
+}
+
+/* A zero stays readable; it is quieter, and the digit itself says there is nothing there. */
+.countZero {
+	color: var(--color-neutral-600);
 }
 
 .note {

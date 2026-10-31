@@ -37,6 +37,7 @@ use App\Application\Operations\Services\QueueWorkerVerifier;
 use App\Application\Operations\Services\QueueWorkerVerifierInterface;
 use App\Application\Processing\Interfaces\Readers\ProcessingOwnerResolverInterface;
 use App\Application\Processing\Interfaces\Repositories\ProcessingStateRepositoryInterface;
+use App\Application\Search\Interfaces\Caches\SearchCountCacheInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
 use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
@@ -80,6 +81,7 @@ use App\Infrastructure\Persistence\Repositories\UserAccountRepository;
 use App\Infrastructure\Persistence\Repositories\UserRepository;
 use App\Infrastructure\Persistence\Repositories\ViewRepository;
 use App\Infrastructure\Persistence\Repositories\WordRepository;
+use App\Infrastructure\Search\CacheSearchCountCache;
 use App\Support\JapaneseDataImport\JapaneseDataManifest;
 use Illuminate\Support\ServiceProvider;
 
@@ -101,6 +103,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(EnvironmentHealthServiceInterface::class, EnvironmentHealthService::class);
         $this->app->bind(QueueWorkerVerifierInterface::class, QueueWorkerVerifier::class);
         $this->app->bind(QueueWorkerMarkerStoreInterface::class, CacheQueueWorkerMarkerStore::class);
+        $this->app->bind(SearchCountCacheInterface::class, CacheSearchCountCache::class);
         // Order is display order on the health page.
         $this->app->bind(HealthCheckRunner::class, static fn ($app): HealthCheckRunner => new HealthCheckRunner([
             $app->make(DatabaseHealthCheck::class),
