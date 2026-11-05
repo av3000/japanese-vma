@@ -17,7 +17,7 @@
 }
 
 .track {
-	height: var(--size-2xs, 6px);
+	height: var(--size-sm);
 	overflow: hidden;
 	border-radius: var(--border-radius-sm);
 	background: var(--color-neutral-200);

@@ -40,7 +40,7 @@
 }
 
 .error {
-	color: var(--color-text-system-danger);
+	color: var(--color-error);
 }
 
 .bar {

@@ -10,6 +10,12 @@
 	--color-error: #c82333;
 	--color-error-hover: #a71d2a;
 	--color-error-disabled: #f29ba5;
+	/* Status tints: pill and badge backgrounds. Each is its status colour mixed into white (success 10%,
+	   warning 22%, error 12%). The status's hover step as text on its tint: success 6.99:1, error 6.08:1;
+	   warning uses --color-neutral-900 text, 14.3:1. */
+	--color-success-tint: #e9f2eb;
+	--color-warning-tint: #fff1c8;
+	--color-error-tint: #f8e5e7;
 	/* Primary: ai (藍) indigo, from a two-colour scheme with shu (朱) vermilion below.
 	   Chosen over the previous orange (#e67e22, 2.85:1 white-on-button, failed AA) and over the single-red
 	   candidates because indigo carries navigation and buttons with room to spare while the red stays a

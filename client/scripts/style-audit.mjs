@@ -8,6 +8,11 @@
  *   - Bootstrap-style utility class tokens inside className strings
  *   - Tailwind-style utility class tokens inside className strings
  *   - .scss files
+ *   - undefinedCustomProperties: `var(--name)` uses with no `--name:` definition anywhere in src/ (#493)
+ *   - moduleHexColours: hex colour literals in *.module.css; colours come from 00-settings tokens (#493)
+ *
+ * Custom properties set at runtime count as defined: string keys in .ts/.tsx (`'--bg-color': …`), the
+ * `--<prefix>-<breakpoint>` names `responsiveVars('<prefix>', …)` builds, and RUNTIME_PROPERTY_PREFIXES.
  *
  * Token list policy: only class shapes that are unmistakably Bootstrap (prefixed or hyphenated, e.g.
  * `col-md-4`, `text-muted`, `btn-primary`) plus the grid pair `container`/`row` and `btn`. Plain words such
@@ -18,6 +23,7 @@
  *   node scripts/style-audit.mjs            # print report
  *   node scripts/style-audit.mjs --tokens   # print every offending token with its count
  *   node scripts/style-audit.mjs --files    # print per-file counts
+ *   node scripts/style-audit.mjs --vars     # print each undefined custom property and module hex colour
  *   node scripts/style-audit.mjs --write    # write current counts to style-budget.json
  *   node scripts/style-audit.mjs --check    # exit 1 if any count exceeds style-budget.json
  */
@@ -163,6 +169,43 @@ const files = walk(srcDir);
 const tsxFiles = files.filter((f) => /\.(tsx|ts|jsx|js)$/.test(f));
 const scssFiles = files.filter((f) => f.endsWith(".scss"));
 
+// Custom properties a library sets on its own elements at runtime.
+const RUNTIME_PROPERTY_PREFIXES = ["--radix-"];
+
+const definedProperties = new Set();
+const runtimePrefixes = new Set(RUNTIME_PROPERTY_PREFIXES);
+const propertyUses = new Map(); // name -> ["file:line", ...]
+const moduleHexColours = []; // "file:line value"
+
+// Blank out CSS comments but keep their newlines, so line numbers still match and issue references
+// such as `(#383)` are not read as hex colours.
+const stripCssComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+
+for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
+  const isCss = file.endsWith(".css");
+  const raw = readFileSync(file, "utf8");
+  const source = isCss ? stripCssComments(raw) : raw;
+  const rel = relative(root, file).replaceAll("\\", "/");
+  for (const m of source.matchAll(/responsiveVars\(\s*['"]([\w-]+)['"]/g)) runtimePrefixes.add(`--${m[1]}-`);
+  source.split(/\r?\n/).forEach((line, i) => {
+    // CSS defines with `--name:`; TS/TSX sets runtime properties as string keys, e.g. `'--bg-color': …`.
+    const definition = isCss ? /(--[\w-]+)\s*:/g : /['"](--[\w-]+)['"]\s*:/g;
+    for (const m of line.matchAll(definition)) definedProperties.add(m[1]);
+    for (const m of line.matchAll(/var\(\s*(--[\w-]+)(?=[\s,)$])/g)) {
+      if (m[1].endsWith("-")) continue; // template stem such as `var(--spacing-${token})`
+      propertyUses.set(m[1], [...(propertyUses.get(m[1]) ?? []), `${rel}:${i + 1}`]);
+    }
+    if (file.endsWith(".module.css")) {
+      for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
+    }
+  });
+}
+
+const undefinedProperties = [...propertyUses.entries()]
+  .filter(([name]) => !definedProperties.has(name))
+  .filter(([name]) => ![...runtimePrefixes].some((prefix) => name.startsWith(prefix)))
+  .sort(([a], [b]) => a.localeCompare(b));
+
 const perFile = new Map();
 const tokenCounts = { bootstrap: new Map(), tailwind: new Map() };
 const totals = {
@@ -171,6 +214,8 @@ const totals = {
   bootstrapClassTokens: 0,
   tailwindClassTokens: 0,
   scssFiles: scssFiles.length,
+  undefinedCustomProperties: undefinedProperties.length,
+  moduleHexColours: moduleHexColours.length,
 };
 
 for (const file of tsxFiles) {
@@ -226,9 +271,17 @@ function printFiles() {
   console.table(rows);
 }
 
+function printVars() {
+  console.log(`\nUndefined custom properties (${undefinedProperties.length}):`);
+  for (const [name, at] of undefinedProperties) console.log(`  ${name}  ${at.join(", ")}`);
+  console.log(`\nHex colours in *.module.css (${moduleHexColours.length}):`);
+  for (const entry of moduleHexColours) console.log(`  ${entry}`);
+}
+
 printReport();
 if (args.has("--tokens")) printTokens();
 if (args.has("--files")) printFiles();
+if (args.has("--vars")) printVars();
 
 if (args.has("--write")) {
   writeFileSync(budgetPath, JSON.stringify(totals, null, 2) + "\n");

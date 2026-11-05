@@ -220,10 +220,11 @@
 	background-color: transparent;
 }
 
+/* Body text colour, which is what this variant inherited while it pointed at undefined tokens (#493). */
 .variantSecondaryOutline {
 	background-color: transparent;
-	border-color: var(--color-secondary-black);
-	color: var(--color-secondary-black);
+	border-color: var(--color-text-primary);
+	color: var(--color-text-primary);
 }
 @media (hover: hover) {
 	.variantSecondaryOutline:hover {
@@ -231,34 +232,34 @@
 	}
 }
 .variantSecondaryOutline:active {
-	background: var(--color-secondary-black-hover);
+	background: var(--color-neutral-200);
 }
 .variantSecondaryOutline:disabled,
 .variantSecondaryOutline.disabled {
-	border-color: var(--color-secondary-black-disabled);
-	color: var(--color-secondary-black-disabled);
+	border-color: var(--color-secondary-disabled);
+	color: var(--color-secondary-disabled);
 	background-color: transparent;
 }
 
+/* Dark text on the warning amber: 10.1:1, and 6.1:1 on its hover step. White would fail. */
 .variantPending {
-	background-color: #f59e0b;
-	border-color: #f59e0b;
-	/* White on this amber is 2.14:1; the dark text token passes 4.5:1. */
+	background-color: var(--color-warning);
+	border-color: var(--color-warning);
 	color: var(--color-text-primary);
 }
 @media (hover: hover) {
 	.variantPending:hover {
-		background: #d97706;
-		border-color: #d97706;
+		background: var(--color-warning-hover);
+		border-color: var(--color-warning-hover);
 	}
 }
 .variantPending:active {
-	background: #d97706;
-	border-color: #d97706;
+	background: var(--color-warning-hover);
+	border-color: var(--color-warning-hover);
 }
 .variantPending:focus,
 .variantPending:focus-visible {
-	outline-color: #fde68a;
+	outline-color: var(--color-text-primary);
 }
 .variantPending:disabled,
 .variantPending.disabled {
@@ -321,5 +322,5 @@
 }
 .variantDanger:disabled,
 .variantDanger.disabled {
-	background-color: var(--color-danger-disabled);
+	background-color: var(--color-error-disabled);
 }

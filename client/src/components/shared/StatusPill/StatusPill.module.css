@@ -15,22 +15,20 @@
 	line-height: var(--line-height-lg);
 }
 
-/* Tone colours are token mixes with a solid fallback, all at 4.5:1 or better for the text on the
-   tint. The shu accent is not used here: it is reserved for JLPT levels. */
+/* Tone colours use the status tint tokens; the text on each tint is 4.5:1 or better (see colors.css).
+   The shu accent is not used here: it is reserved for JLPT levels. */
 .neutral {
 	--pill-bg: var(--color-neutral-200);
 	--pill-fg: var(--color-neutral-700);
 }
 
 .success {
-	--pill-bg: #eaf6ec;
-	--pill-bg: color-mix(in srgb, var(--color-success) 10%, var(--color-neutral-0));
+	--pill-bg: var(--color-success-tint);
 	--pill-fg: var(--color-success-hover);
 }
 
 .warning {
-	--pill-bg: #fff1c8;
-	--pill-bg: color-mix(in srgb, var(--color-warning) 22%, var(--color-neutral-0));
+	--pill-bg: var(--color-warning-tint);
 	--pill-fg: var(--color-neutral-900);
 }
 
@@ -40,8 +38,7 @@
 }
 
 .danger {
-	--pill-bg: #fbe7e9;
-	--pill-bg: color-mix(in srgb, var(--color-error) 12%, var(--color-neutral-0));
+	--pill-bg: var(--color-error-tint);
 	--pill-fg: var(--color-error-hover);
 }
 
