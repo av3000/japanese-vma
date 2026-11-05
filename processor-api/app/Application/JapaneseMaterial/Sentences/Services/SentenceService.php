@@ -33,6 +33,11 @@ class SentenceService implements SentenceServiceInterface
         return Result::success($this->sentenceRepository->find($criteria));
     }
 
+    public function count(SentenceQueryCriteria $criteria): Result
+    {
+        return Result::success($this->sentenceRepository->count($criteria));
+    }
+
     public function findByIdentifier(string $identifier, bool $withKanjis = true, bool $withWords = true): Result
     {
         if (EntityId::isValid($identifier)) {

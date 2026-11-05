@@ -351,6 +351,11 @@ class SentenceAuthoringV1Test extends TestCase
                 return $this->inner->find($criteria);
             }
 
+            public function count(SentenceQueryCriteria $criteria): int
+            {
+                return $this->inner->count($criteria);
+            }
+
             public function findByUuid(EntityId $uuid, bool $withKanjis = false, bool $withWords = false): ?DomainSentence
             {
                 return $this->inner->findByUuid($uuid, $withKanjis, $withWords);
