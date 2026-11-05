@@ -2,9 +2,10 @@ import { faker } from '@faker-js/faker';
 import type { Preview } from '@storybook/react-vite';
 import { mswLoader } from 'msw-storybook-addon/csf3';
 import { configure } from 'storybook/test';
-import { authSpies, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
+import { authSpies, withAppearance, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
 import { startStoryWorker, takeUnhandledRequests } from '@/storybook/msw';
 import '@/styles/global-styles';
+import { THEME_IDS, themeManifest } from '@/themes/manifest';
 
 // findBy*/waitFor give up after 1 s by default, which is too tight for ~150 story files running in
 // parallel browsers on a busy machine or CI runner. 3 s still fails fast on a real regression.
@@ -19,9 +20,31 @@ const viewport = (name: string, width: number, type: 'mobile' | 'tablet' | 'desk
 
 const preview: Preview = {
 	tags: ['autodocs'],
-	// The last decorator is the outermost, so this nests like `App.tsx`: Query > Router > Auth > Socket.
-	decorators: [withSocket, withAuth, withRouter, withQueryClient],
+	// The last decorator is the outermost, so this nests like `App.tsx`: Appearance > Query > Router > Auth > Socket.
+	decorators: [withSocket, withAuth, withRouter, withQueryClient, withAppearance],
 	globalTypes: {
+		theme: {
+			description: 'Theme (#498). A story’s `parameters.appearance.theme` wins over this.',
+			toolbar: {
+				title: 'Theme',
+				icon: 'paintbrush',
+				items: THEME_IDS.map((id) => ({ value: id, title: themeManifest[id].label })),
+				dynamicTitle: true,
+			},
+		},
+		scheme: {
+			description:
+				'Colour scheme. Ignored by a single-scheme theme; `parameters.appearance.scheme` wins over this.',
+			toolbar: {
+				title: 'Scheme',
+				icon: 'mirror',
+				items: [
+					{ value: 'light', title: 'Light', icon: 'sun' },
+					{ value: 'dark', title: 'Dark', icon: 'moon' },
+				],
+				dynamicTitle: true,
+			},
+		},
 		auth: {
 			description: 'Who is viewing. A story’s `parameters.auth` wins over this.',
 			toolbar: {
@@ -51,7 +74,7 @@ const preview: Preview = {
 			},
 		},
 	},
-	initialGlobals: { auth: 'guest', socket: 'connected' },
+	initialGlobals: { theme: 'kinari', scheme: 'light', auth: 'guest', socket: 'connected' },
 	loaders: [mswLoader(startStoryWorker)],
 	beforeEach: () => {
 		Object.values(authSpies).forEach((spy) => spy.mockClear());

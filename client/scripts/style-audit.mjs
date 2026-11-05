@@ -10,6 +10,8 @@
  *   - .scss files
  *   - undefinedCustomProperties: `var(--name)` uses with no `--name:` definition anywhere in src/ (#493)
  *   - moduleHexColours: hex colour literals in *.module.css; colours come from 00-settings tokens (#493)
+ *   - themeSelectors: `[data-theme` in CSS outside src/styles/themes/; components never name a theme (#498)
+ *   - unguardedLightDark: `light-dark(` outside `@supports (color: light-dark(#000, #fff))` (#498)
  *
  * Custom properties set at runtime count as defined: string keys in .ts/.tsx (`'--bg-color': …`), the
  * `--<prefix>-<breakpoint>` names `responsiveVars('<prefix>', …)` builds, and RUNTIME_PROPERTY_PREFIXES.
@@ -177,9 +179,43 @@ const runtimePrefixes = new Set(RUNTIME_PROPERTY_PREFIXES);
 const propertyUses = new Map(); // name -> ["file:line", ...]
 const moduleHexColours = []; // "file:line value"
 
+const THEME_STYLES_DIR = "src/styles/themes/";
+const themeSelectors = []; // "file:line"
+const unguardedLightDark = []; // "file:line"
+
 // Blank out CSS comments but keep their newlines, so line numbers still match and issue references
 // such as `(#383)` are not read as hex colours.
 const stripCssComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+
+/**
+ * Line numbers of `light-dark(` outside an `@supports (… light-dark …)` block. An unguarded custom
+ * property set to light-dark() replaces the light value and then fails at use time in a browser
+ * without light-dark(), leaving the property unset instead of falling back (#498).
+ */
+const findUnguardedLightDark = (source) => {
+  const lines = [];
+  const stack = []; // true for a block opened by a light-dark @supports
+  let line = 1;
+  let preludeStart = 0;
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+    if (c === "\n") line++;
+    if (c === "{") {
+      const prelude = source.slice(preludeStart, i);
+      stack.push(/@supports[^{]*light-dark/.test(prelude) || stack.at(-1) === true);
+      preludeStart = i + 1;
+    } else if (c === "}") {
+      stack.pop();
+      preludeStart = i + 1;
+    } else if (c === ";") {
+      preludeStart = i + 1;
+    } else if (source.startsWith("light-dark(", i) && stack.at(-1) !== true) {
+      const prelude = source.slice(preludeStart, i);
+      if (!/@supports/.test(prelude)) lines.push(line);
+    }
+  }
+  return lines;
+};
 
 for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
   const isCss = file.endsWith(".css");
@@ -198,7 +234,12 @@ for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
     if (file.endsWith(".module.css")) {
       for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
     }
+    // A theme never reaches into components: only the theme files may select on data-theme (#498).
+    if (isCss && !rel.startsWith(THEME_STYLES_DIR) && /\[data-theme\b/.test(line)) {
+      themeSelectors.push(`${rel}:${i + 1}`);
+    }
   });
+  if (isCss) unguardedLightDark.push(...findUnguardedLightDark(source).map((line) => `${rel}:${line}`));
 }
 
 const undefinedProperties = [...propertyUses.entries()]
@@ -216,6 +257,8 @@ const totals = {
   scssFiles: scssFiles.length,
   undefinedCustomProperties: undefinedProperties.length,
   moduleHexColours: moduleHexColours.length,
+  themeSelectors: themeSelectors.length,
+  unguardedLightDark: unguardedLightDark.length,
 };
 
 for (const file of tsxFiles) {
@@ -276,6 +319,10 @@ function printVars() {
   for (const [name, at] of undefinedProperties) console.log(`  ${name}  ${at.join(", ")}`);
   console.log(`\nHex colours in *.module.css (${moduleHexColours.length}):`);
   for (const entry of moduleHexColours) console.log(`  ${entry}`);
+  console.log(`\n[data-theme] selectors outside ${THEME_STYLES_DIR} (${themeSelectors.length}):`);
+  for (const entry of themeSelectors) console.log(`  ${entry}`);
+  console.log(`\nlight-dark() outside @supports (color: light-dark(#000, #fff)) (${unguardedLightDark.length}):`);
+  for (const entry of unguardedLightDark) console.log(`  ${entry}`);
 }
 
 printReport();

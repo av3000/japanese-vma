@@ -10,12 +10,12 @@
 	--color-error: #c82333;
 	--color-error-hover: #a71d2a;
 	--color-error-disabled: #f29ba5;
-	/* Status tints: pill and badge backgrounds. Each is its status colour mixed into white (success 10%,
-	   warning 22%, error 12%). The status's hover step as text on its tint: success 6.99:1, error 6.08:1;
-	   warning uses --color-neutral-900 text, 14.3:1. */
-	--color-success-tint: #e9f2eb;
-	--color-warning-tint: #fff1c8;
-	--color-error-tint: #f8e5e7;
+	/* Status tints (the --color-*-tint roles): each status colour mixed into white (success 10%, warning
+	   22%, error 12%). The status's hover step as text on its tint: success 6.99:1, error 6.08:1; warning
+	   uses --color-neutral-900 text, 14.3:1. */
+	--color-success-100: #e9f2eb;
+	--color-warning-100: #fff1c8;
+	--color-error-100: #f8e5e7;
 	/* Primary: ai (藍) indigo, from a two-colour scheme with shu (朱) vermilion below.
 	   Chosen over the previous orange (#e67e22, 2.85:1 white-on-button, failed AA) and over the single-red
 	   candidates because indigo carries navigation and buttons with room to spare while the red stays a
@@ -31,10 +31,9 @@
 	--color-primary-hover: #0f4460;
 	--color-primary-disabled: #a7c3d3;
 	--color-primary-tint: #dfe9ef;
-	/* Pills on indigo */
-	--color-pill-bg: #e8f0f5;
-	--color-pill-fg: #0f4460;
-	--color-pill-border: #c2d6e2;
+	/* Pills on indigo (the --color-pill-* roles) */
+	--color-primary-50: #e8f0f5;
+	--color-primary-150: #c2d6e2;
 
 	/* Accent: shu (朱) vermilion, the torii-gate red. Reserved for JLPT level badges, glyph covers and the
 	   JLPT bar so it always means "level". White on --color-accent 4.55:1 (AA); --color-accent-glyph is a
@@ -45,8 +44,6 @@
 	--color-accent: #d2451e;
 	--color-accent-hover: #a83618;
 	--color-accent-900: #8f2e14;
-	--color-badge-accent-bg: #fbe3d8;
-	--color-badge-accent-fg: #a83618;
 	--color-secondary-100: #f2f4f2;
 	--color-secondary-200: #e5e8e5;
 	--color-secondary-300: #d8ddd8;
@@ -64,6 +61,9 @@
 	--color-neutral-300: #dee2e6;
 	--color-neutral-400: #ced4da;
 	--color-neutral-500: #adb5bd;
+	/* Control edges: 3.32:1 on white, 3.18:1 on kinari, the WCAG 1.4.11 minimum for a field's border.
+	   --color-neutral-400 (1.4:1) was used for input borders before #498. */
+	--color-neutral-550: #868e96;
 	--color-neutral-600: #5f676e; /* = --color-secondary, see above */
 	--color-neutral-700: #495057;
 	--color-neutral-800: #343a40;
@@ -76,6 +76,15 @@
 	--color-ink: #1c1b19;
 	--color-ink-raised: #26241f;
 	--color-ink-sunken: #151412;
+	--color-ink-line: #3d3a34; /* dividers on ink: decorative, 1.5:1 */
+	--color-ink-line-strong: #7a756b; /* control edges on ink: 3.4:1 on --color-ink-raised */
+	/* Dark tints for selected and status backgrounds on ink. Each status's -disabled step reads as text
+	   on its tint at 6:1 or better; the dark contrast test checks every pair. */
+	--color-primary-ink-tint: #17303d;
+	--color-accent-ink-tint: #3a1f17;
+	--color-success-ink-tint: #1d3324;
+	--color-warning-ink-tint: #3a3010;
+	--color-error-ink-tint: #3d1d20;
 	--color-border-default: #ffffff;
 	--color-scrollbar-track: var(--color-neutral-800);
 	--color-scrollbar-thumb: var(--color-neutral-500);
@@ -83,10 +92,4 @@
 	/* The other text, link and page names are aliases of the roles, in roles.css. */
 	--color-text-primary-focus: var(--color-primary-300);
 	--color-text-primary-active: var(--color-primary-200);
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--color-border-default: #212121;
-	}
 }

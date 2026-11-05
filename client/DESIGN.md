@@ -40,7 +40,7 @@ Colour comes in three layers. Components use **roles** only; they never name a p
 | ----------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------- |
 | Surface     | `--color-surface` (the page), `-raised` (cards, panels, menus, inputs), `-sunken` (wells)                 | Backgrounds                                                                                          | Text on a coloured fill     |
 | Text        | `--color-text` (body and links), `-strong`, `-subtle`, `-muted`                                           | Text colour by emphasis                                                                              | —                           |
-| Border      | `--color-border`, `--color-border-strong`                                                                 | Dividers and control edges                                                                           | —                           |
+| Border      | `--color-border` (hairlines), `-emphasis` (panel and tile outlines), `-strong` (control edges, 3:1)       | Dividers, outlines, input and drop-zone edges                                                        | —                           |
 | Interactive | `--color-interactive`, `-hover`, `-disabled`, `-tint`; `--color-on-interactive`; `--color-focus`          | Navigation, buttons, links in UI chrome, selected state; text on an interactive fill; focus outlines | Level markers               |
 | Level       | `--color-level`, `-text`, `-glyph`, `-tint`; `--color-badge-accent-*`                                     | **JLPT level only**: `LevelBadge`, `JlptBar`, glyph covers. The accent always means "level".         | Buttons, errors, decoration |
 | Status      | `--color-success`, `--color-warning`, `--color-error` (each with `-hover`, `-disabled`, `-tint`, `-text`) | Feedback through `Alert`, `StatusPill` and form validation                                           | Branding                    |
@@ -50,7 +50,7 @@ Colour comes in three layers. Components use **roles** only; they never name a p
 - Contrast target is WCAG 2.2 AA: 4.5:1 for body text, 3:1 for large text and non-text UI. `--color-level-glyph` passes only as a fill or for large text.
 - Links default to the body text colour; mark them with underline or weight, not colour.
 - Older names (`--color-text-primary`, `--color-text-neutral-*`, `--color-text-primary-default|hover`, `--color-link*`, `--page-background-color`, `--font-family`) are aliases of the roles and are being removed (#498). Do not use them in new code. Raw palette steps (`--color-neutral-*`, `--color-primary-*`, `--color-accent-*`, `--color-secondary-*`) in component CSS are being moved to roles under the same issue; do not add new ones.
-- There is no dark scheme yet. The single `prefers-color-scheme: dark` rule in `colors.css` is a leftover, not a pattern to extend.
+- Every role has a dark value. `roles.css` sets `color-scheme` from `data-scheme` on `<html>`; the appearance store (`src/lib/appearance.ts`) and the boot script in `index.html` write that attribute. Storybook's toolbar has Theme and Scheme switches.
 
 ### Themes and schemes
 
@@ -58,7 +58,9 @@ A **scheme** is light or dark. A **theme** (kinari, sakura, sumi) changes appear
 
 - Code never compares a theme id. No `theme.id === 'sakura'` in TS, no `[data-theme='sakura']` selector in component CSS.
 - What must differ in markup is a named slot in the theme config (`theme.icons.likeOn`, `theme.logo`). What must differ in behaviour is a named flag, never the theme name.
-- Dark values use `light-dark()`, always inside `@supports (color: light-dark(#000, #fff))`. Browsers without it get kinari light colours; that is the accepted fallback.
+- Dark values use `light-dark()`, always inside `@supports (color: light-dark(#000, #fff))` (`style:audit` checks). Browsers without it get kinari light colours; that is the accepted fallback.
+- Theme data lives in `src/themes/`: `manifest.ts` (ids, schemes, `theme-color`, favicons; `index.html`'s boot script embeds it and a test keeps them equal) and `registry.ts` (slots). Read the theme through `useTheme()` and the scheme controls through `useAppearance()`.
+- `src/themes/contrast.test.ts` checks every role pair in every theme × scheme against WCAG AA. Add a pair there when you add a role.
 
 ## 4) Spacing, Size And Shape
 

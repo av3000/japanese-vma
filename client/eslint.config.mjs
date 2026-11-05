@@ -10,6 +10,19 @@ import tsEslint from "typescript-eslint";
 // Custom messages start with the rule ID so a lint error can be looked up and cited.
 const NO_DIRECT_AXIOS = "repo-no-direct-axios";
 
+// A theme changes appearance, never behaviour: code outside src/themes/ reads a slot from useTheme()
+// and never compares a theme id (STYLING-03, #498; client/DESIGN.md §3). Keep this list equal to
+// THEME_IDS in src/themes/manifest.ts; src/themes/eslintThemeIds.test.ts checks it.
+const THEME_IDS = ["kinari"];
+const THEME_ID = `/^(${THEME_IDS.join("|")})$/`;
+const THEME_NAME_CHECK =
+  "repo-theme-slots-not-names: a theme changes appearance only. Read a slot from useTheme() (or add one to src/themes/registry.ts) instead of comparing a theme id.";
+const themeNameChecks = [
+  `BinaryExpression[operator=/^[!=]==?$/] > Literal[value=${THEME_ID}]`,
+  `SwitchCase > Literal.test[value=${THEME_ID}]`,
+  `MemberExpression[computed=true] > Literal.property[value=${THEME_ID}]`,
+].map((selector) => ({ selector, message: THEME_NAME_CHECK }));
+
 const restrictedImportPaths = [
   {
     name: "@/services/axios",
@@ -85,6 +98,13 @@ export default [
         "error",
         { "ts-nocheck": true, "ts-ignore": false, "ts-expect-error": false, "ts-check": false },
       ],
+    },
+  },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/themes/**"],
+    rules: {
+      "no-restricted-syntax": ["error", ...themeNameChecks],
     },
   },
   // The transport itself and the Orval mutator are the only modules that own axios.
