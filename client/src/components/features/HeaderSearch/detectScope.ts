@@ -44,17 +44,15 @@ export type ScopeCounts = Record<SearchScope, number | null>;
 
 export interface ScopeResolution {
 	kind: QueryKind;
-	/** The scope Enter and the primary button search. */
-	scope: SearchScope;
-	/**
-	 * The scope whose chip says "Best match", only when nothing was picked. With counts it is the
-	 * first scope in detection order that has results; without them, detection's confident guess.
-	 */
-	bestMatch: SearchScope | null;
-	/** Chip and row order. */
+	/** Chip and row order. The first entry is the current scope: what the refine chips and Enter use. */
 	order: SearchScope[];
-	/** Whether a picked chip, not detection, chose `scope`. */
+	/** Whether a picked chip, not detection, put the first scope there. */
 	isPicked: boolean;
+	/**
+	 * Whether the first scope's chip says "Best match". Never for a picked chip. With counts: the
+	 * first scope has hits. Without them: detection is confident (one kanji, or Japanese text).
+	 */
+	hasBestMatch: boolean;
 }
 
 export interface ResolveScopeInput {
@@ -89,8 +87,8 @@ export const resolveScope = ({ query, picked, lastScope, counts }: ResolveScopeI
 	const allScopes = SEARCH_SCOPES.map((candidate) => candidate.value);
 
 	if (picked !== null || detected === null) {
-		const scope = picked ?? lastScope;
-		return { kind, scope, bestMatch: null, order: leadWith(scope, allScopes), isPicked: picked !== null };
+		const order = leadWith(picked ?? lastScope, allScopes);
+		return { kind, order, isPicked: picked !== null, hasBestMatch: false };
 	}
 
 	const detectedOrder = kind === 'latin' ? [...LATIN_ORDER] : leadWith(detected, allScopes);
@@ -98,13 +96,12 @@ export const resolveScope = ({ query, picked, lastScope, counts }: ResolveScopeI
 	if (counts) {
 		const best = pickBestMatch(detectedOrder, counts);
 		return best
-			? { kind, scope: best, bestMatch: best, order: leadWith(best, detectedOrder), isPicked: false }
-			: { kind, scope: detected, bestMatch: null, order: detectedOrder, isPicked: false };
+			? { kind, order: leadWith(best, detectedOrder), isPicked: false, hasBestMatch: true }
+			: { kind, order: detectedOrder, isPicked: false, hasBestMatch: false };
 	}
 
 	// Latin text matches English meanings on both Words and Kanji, so detection alone makes no claim.
-	const bestMatch = kind === 'latin' ? null : detected;
-	return { kind, scope: detected, bestMatch, order: detectedOrder, isPicked: false };
+	return { kind, order: detectedOrder, isPicked: false, hasBestMatch: kind !== 'latin' };
 };
 
 /**

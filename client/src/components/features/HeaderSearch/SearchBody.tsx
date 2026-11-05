@@ -57,9 +57,9 @@ export interface SearchBodyProps {
 
 /** Scope chips, the "Search … in" rows or recent searches, and the refine chips. */
 export const SearchBody: React.FC<SearchBodyProps> = ({ search, baseId, mode }) => {
-	const { query, hasQuery, resolution, counts, activeIndex, refine, recent } = search;
+	const { query, hasQuery, resolution, scope: currentScope, counts, activeIndex, refine, recent } = search;
 	const trimmed = query.trim();
-	const refineDefinition = SCOPE_REFINES[resolution.scope];
+	const refineDefinition = SCOPE_REFINES[currentScope];
 	const scopesLabelId = `${baseId}-scopes-label`;
 	const rowsLabelId = `${baseId}-rows-label`;
 	const recentLabelId = `${baseId}-recent-label`;
@@ -97,14 +97,14 @@ export const SearchBody: React.FC<SearchBodyProps> = ({ search, baseId, mode }) 
 				Search in
 			</p>
 			<ul className={styles.chips} aria-labelledby={scopesLabelId}>
-				{resolution.order.map((scope) => {
-					const isBest = resolution.bestMatch === scope;
+				{resolution.order.map((scope, index) => {
+					const isBest = resolution.hasBestMatch && index === 0;
 					return (
 						<li key={scope}>
 							<button
 								type="button"
 								className={styles.chip}
-								aria-pressed={resolution.scope === scope}
+								aria-pressed={currentScope === scope}
 								onClick={() => search.pickScope(scope)}
 							>
 								{isBest && <Icon name="sparkle" size="sm" />}
@@ -190,7 +190,7 @@ export const SearchBody: React.FC<SearchBodyProps> = ({ search, baseId, mode }) 
 			{refineDefinition && (
 				<>
 					<p id={refineLabelId} className={styles.label}>
-						Refine {scopeLabel(resolution.scope).toLowerCase()} · {refineDefinition.label}
+						Refine {scopeLabel(currentScope).toLowerCase()} · {refineDefinition.label}
 					</p>
 					<ul className={styles.chips} aria-labelledby={refineLabelId}>
 						{!refineDefinition.multiple && (

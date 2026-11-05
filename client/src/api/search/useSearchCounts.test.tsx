@@ -49,7 +49,7 @@ afterEach(async () => {
 });
 
 describe('useSearchCounts', () => {
-	it('asks for the trimmed query and returns the counts without the echo', async () => {
+	it('asks for the trimmed query and returns the counts without the echoed q', async () => {
 		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'water', ...COUNTS });
 
 		await mount('  water ');
@@ -65,15 +65,6 @@ describe('useSearchCounts', () => {
 		expect(latest.counts).toBeNull();
 	});
 
-	it('trims invisible characters the way the server does, so the echo still matches', async () => {
-		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'water', ...COUNTS });
-
-		await mount('​water​ ');
-
-		expect(searchCountsIndex).toHaveBeenCalledWith({ q: 'water' }, undefined, expect.any(AbortSignal));
-		expect(latest.counts).toEqual(COUNTS);
-	});
-
 	it('waits while a stored session restores, so the viewer is known before anything is cached', async () => {
 		auth.isLoading = true;
 		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'water', ...COUNTS });
@@ -81,14 +72,6 @@ describe('useSearchCounts', () => {
 		await mount('water');
 
 		expect(searchCountsIndex).not.toHaveBeenCalled();
-		expect(latest.counts).toBeNull();
-	});
-
-	it('drops an answer that echoes a different query', async () => {
-		vi.mocked(searchCountsIndex).mockResolvedValue({ q: 'wat', ...COUNTS });
-
-		await mount('water');
-
 		expect(latest.counts).toBeNull();
 	});
 

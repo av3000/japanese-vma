@@ -38,37 +38,37 @@ describe('resolveScope', () => {
 		[
 			'one kanji is a confident Kanji match',
 			{ query: '水', picked: null, lastScope: 'articles' },
-			{ scope: 'kanji', bestMatch: 'kanji', order: ['kanji', 'articles', 'words', 'sentences', 'radicals'] },
+			{ hasBestMatch: true, order: ['kanji', 'articles', 'words', 'sentences', 'radicals'] },
 		],
 		[
 			'kana is a confident Words match',
 			{ query: 'たべる', picked: null, lastScope: 'articles' },
-			{ scope: 'words', bestMatch: 'words', order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
+			{ hasBestMatch: true, order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
 		],
 		[
 			'several kanji are a confident Words match',
 			{ query: '日本', picked: null, lastScope: 'kanji' },
-			{ scope: 'words', bestMatch: 'words', order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
+			{ hasBestMatch: true, order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
 		],
 		[
 			'Latin text goes to Words with no claim, in meaning order',
 			{ query: 'water', picked: null, lastScope: 'articles' },
-			{ scope: 'words', bestMatch: null, order: ['words', 'kanji', 'radicals', 'sentences', 'articles'] },
+			{ hasBestMatch: false, order: ['words', 'kanji', 'radicals', 'sentences', 'articles'] },
 		],
 		[
 			'an empty query uses the last scope',
 			{ query: '', picked: null, lastScope: 'sentences' },
-			{ scope: 'sentences', bestMatch: null, order: ['sentences', 'articles', 'kanji', 'words', 'radicals'] },
+			{ hasBestMatch: false, order: ['sentences', 'articles', 'kanji', 'words', 'radicals'] },
 		],
 		[
 			'a picked chip overrides detection and drops the claim',
 			{ query: '水', picked: 'articles', lastScope: 'kanji' },
-			{ scope: 'articles', bestMatch: null, order: ['articles', 'kanji', 'words', 'sentences', 'radicals'] },
+			{ hasBestMatch: false, order: ['articles', 'kanji', 'words', 'sentences', 'radicals'] },
 		],
 		[
 			'a picked chip overrides the Latin order',
 			{ query: 'water', picked: 'sentences', lastScope: 'articles' },
-			{ scope: 'sentences', bestMatch: null, order: ['sentences', 'articles', 'kanji', 'words', 'radicals'] },
+			{ hasBestMatch: false, order: ['sentences', 'articles', 'kanji', 'words', 'radicals'] },
 		],
 	] as const)('%s', (_, input, expected) => {
 		expect(resolveScope(input)).toMatchObject(expected);
@@ -102,32 +102,32 @@ describe('resolveScope with counts', () => {
 		[
 			'Latin text claims the first scope with hits, in meaning order',
 			{ query: 'water', counts: counts({ words: 1256, kanji: 108, radicals: 1 }) },
-			{ scope: 'words', bestMatch: 'words', order: ['words', 'kanji', 'radicals', 'sentences', 'articles'] },
+			{ hasBestMatch: true, order: ['words', 'kanji', 'radicals', 'sentences', 'articles'] },
 		],
 		[
 			'a scope with hits moves to the top once Words has none',
 			{ query: 'fire', counts: counts({ kanji: 4, articles: 2 }) },
-			{ scope: 'kanji', bestMatch: 'kanji', order: ['kanji', 'words', 'radicals', 'sentences', 'articles'] },
+			{ hasBestMatch: true, order: ['kanji', 'words', 'radicals', 'sentences', 'articles'] },
 		],
 		[
 			'a single kanji with no kanji hits hands the claim to the next scope',
 			{ query: '水', counts: counts({ words: 312, sentences: 87, articles: null }) },
-			{ scope: 'words', bestMatch: 'words', order: ['words', 'kanji', 'articles', 'sentences', 'radicals'] },
+			{ hasBestMatch: true, order: ['words', 'kanji', 'articles', 'sentences', 'radicals'] },
 		],
 		[
 			'a single kanji keeps Kanji when it has hits, even with fewer than Words',
 			{ query: '水', counts: counts({ kanji: 1, words: 312 }) },
-			{ scope: 'kanji', bestMatch: 'kanji', order: ['kanji', 'articles', 'words', 'sentences', 'radicals'] },
+			{ hasBestMatch: true, order: ['kanji', 'articles', 'words', 'sentences', 'radicals'] },
 		],
 		[
 			'no claim and detection order when nothing has hits',
 			{ query: 'たべる', counts: counts({}) },
-			{ scope: 'words', bestMatch: null, order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
+			{ hasBestMatch: false, order: ['words', 'articles', 'kanji', 'sentences', 'radicals'] },
 		],
 		[
 			'a picked chip still wins over counts',
 			{ query: 'water', picked: 'articles', counts: counts({ words: 5 }) },
-			{ scope: 'articles', bestMatch: null, order: ['articles', 'kanji', 'words', 'sentences', 'radicals'] },
+			{ hasBestMatch: false, order: ['articles', 'kanji', 'words', 'sentences', 'radicals'] },
 		],
 	] as const)('%s', (_, input, expected) => {
 		expect(resolveScope({ picked: null, lastScope: 'articles', ...input })).toMatchObject(expected);
@@ -141,7 +141,8 @@ describe('resolveScope with counts', () => {
 			counts: counts({ kanji: 0, words: 0, sentences: 3 }),
 		});
 
-		expect(resolution.bestMatch).toBe('sentences');
+		expect(resolution.order[0]).toBe('sentences');
+		expect(resolution.hasBestMatch).toBe(true);
 	});
 });
 

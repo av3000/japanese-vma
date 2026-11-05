@@ -10,6 +10,8 @@ export interface HeaderSearchState {
 	query: string;
 	hasQuery: boolean;
 	resolution: ScopeResolution;
+	/** The current scope, `resolution.order[0]`: what the refine chips and the primary button use. */
+	scope: SearchScope;
 	/** Hits per scope for the current query, or `null` while they load, after a failure, or with no query. */
 	counts: ScopeCounts | null;
 	/** Index into `resolution.order` of the highlighted row; what Enter runs when there is a query. */
@@ -54,7 +56,7 @@ export const useHeaderSearch = (onDone?: () => void): HeaderSearchState => {
 	);
 	const hasQuery = query.trim() !== '';
 	const activeIndex = activeScope === null ? 0 : Math.max(0, resolution.order.indexOf(activeScope));
-	const scope = resolution.scope;
+	const scope = resolution.order[0];
 	const refine = refineByScope[scope] ?? [];
 
 	const setQuery = (value: string) => {
@@ -104,6 +106,7 @@ export const useHeaderSearch = (onDone?: () => void): HeaderSearchState => {
 		query,
 		hasQuery,
 		resolution,
+		scope,
 		counts,
 		activeIndex,
 		refine,
