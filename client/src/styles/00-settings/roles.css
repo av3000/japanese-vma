@@ -1,0 +1,69 @@
+/*
+ * Role tokens: what a colour or font is FOR. Components use these, never the palette steps in colors.css
+ * or the font stacks in typography.css (STYLING-03, #498; `client/DESIGN.md` §3).
+ *
+ * Every role is defined here once, on :root, with the kinari theme's light value. Other themes override
+ * roles in src/styles/themes/<id>.css; kinari dark values arrive through light-dark() in a later slice,
+ * always inside `@supports (color: light-dark(#000, #fff))`.
+ */
+:root {
+	/* Surfaces */
+	--color-surface: var(--color-kinari); /* the page */
+	--color-surface-raised: var(--color-neutral-0); /* cards, panels, menus, inputs */
+	--color-surface-sunken: var(--color-neutral-100); /* wells, table stripes, code */
+
+	/* Text */
+	--color-text: var(--color-neutral-950); /* body text, including links */
+	--color-text-strong: var(--color-neutral-900); /* headings and emphasis */
+	--color-text-subtle: var(--color-neutral-700); /* secondary text a step down from body */
+	--color-text-muted: var(--color-neutral-600); /* metadata, captions, placeholders */
+
+	/* Lines */
+	--color-border: var(--color-neutral-200); /* dividers, card and input borders */
+	--color-border-strong: var(--color-neutral-400); /* borders that must read as a control edge */
+
+	/* Interactive: links in UI chrome, buttons, selected state */
+	--color-interactive: var(--color-primary);
+	--color-interactive-hover: var(--color-primary-hover);
+	--color-interactive-disabled: var(--color-primary-disabled);
+	--color-interactive-tint: var(--color-primary-tint); /* selected and hover backgrounds */
+	--color-on-interactive: var(--color-neutral-0); /* text and icons on an interactive fill */
+	--color-focus: var(--color-primary); /* focus outlines */
+
+	/* Level: the accent, JLPT level only (`repo-accent-means-level`) */
+	--color-level: var(--color-accent); /* fills with white text */
+	--color-level-text: var(--color-accent-hover); /* level as text, badge text */
+	--color-level-glyph: var(--color-accent-glyph); /* glyph covers: a fill, never small text */
+	--color-level-tint: var(--color-accent-100); /* badge backgrounds */
+
+	/* Status text on its tint (the tints and base colours are in colors.css and are roles already) */
+	--color-success-text: var(--color-success-hover);
+	--color-warning-text: var(--color-neutral-900);
+	--color-error-text: var(--color-error-hover);
+
+	/* Like control. kinari keeps today's look: the icon takes the colour of the button it sits in. */
+	--color-like-off: currentColor;
+	--color-like-on: currentColor;
+
+	/* Type. --font-family-ja and --font-family-ja-serif in typography.css are roles already. */
+	--font-family-body: var(--font-stack-plex-sans);
+	--font-family-heading: var(--font-family-body);
+}
+
+/*
+ * Old names, kept as aliases until components move to the roles above (slice 5 of #498 deletes them).
+ * Do not use them in new code.
+ */
+:root {
+	--page-background-color: var(--color-surface);
+	--color-text-primary: var(--color-text);
+	--color-link: var(--color-text);
+	--color-link-hover: var(--color-text);
+	--color-link-visited: var(--color-text);
+	--color-text-neutral-default: var(--color-text-strong);
+	--color-text-neutral-hover: var(--color-text-subtle);
+	--color-text-neutral-active: var(--color-text-muted);
+	--color-text-primary-default: var(--color-interactive);
+	--color-text-primary-hover: var(--color-interactive-hover);
+	--font-family: var(--font-family-body);
+}

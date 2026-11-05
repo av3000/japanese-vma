@@ -68,22 +68,21 @@
 	--color-neutral-700: #495057;
 	--color-neutral-800: #343a40;
 	--color-neutral-900: #212121;
+	--color-neutral-950: #1e1f21; /* body text */
+	/* Kinari (生成り), undyed cloth: the page, a warm white instead of the cool #f8f9fa. */
+	--color-kinari: #fbfaf5;
+	/* Ink: sumi (墨), a warm near-black. The dark-scheme surfaces (#498); contrast is confirmed with the
+	   dark values. Named ink, not sumi, so it does not read as the `sumi` theme. */
+	--color-ink: #1c1b19;
+	--color-ink-raised: #26241f;
+	--color-ink-sunken: #151412;
 	--color-border-default: #ffffff;
 	--color-scrollbar-track: var(--color-neutral-800);
 	--color-scrollbar-thumb: var(--color-neutral-500);
 	--color-scrollbar-border: var(--color-neutral-900);
-	--color-text-neutral-hover: var(--color-neutral-700);
-	--color-text-neutral-default: var(--color-neutral-900);
-	--color-text-neutral-active: var(--color-neutral-600);
-	--color-text-primary: #1e1f21; /* default text, including links */
-	--color-text-primary-default: var(--color-primary);
-	--color-text-primary-hover: var(--color-primary-hover);
+	/* The other text, link and page names are aliases of the roles, in roles.css. */
 	--color-text-primary-focus: var(--color-primary-300);
 	--color-text-primary-active: var(--color-primary-200);
-	--color-link: var(--color-text-primary);
-	--color-link-hover: var(--color-text-primary);
-	--color-link-visited: var(--color-text-primary);
-	--page-background-color: #fbfaf5; /* kinari (生成り), undyed cloth: warm white instead of the cool #f8f9fa */
 }
 
 @media (prefers-color-scheme: dark) {

@@ -30,20 +30,35 @@ Each hard rule is a citable rule in the `frontend-standards` skill (`.claude/ski
 
 ## 3) Colour
 
-The palette is a two-colour Japanese scheme on a warm white page. `colors.css` documents the contrast ratios inline.
+Colour comes in three layers. Components use **roles** only; they never name a palette step or a theme.
 
-| Role                     | Tokens                                                                                                  | Use for                                                                                      | Do not use for              |
-| ------------------------ | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------- |
-| Primary, ai 藍 indigo    | `--color-primary`, `-hover`, `-disabled`, `-tint`, `-100`…`-600`, `--color-pill-*`                      | Navigation, buttons, links in UI chrome, selected state, focus tints                         | Level markers               |
-| Accent, shu 朱 vermilion | `--color-accent`, `-hover`, `-glyph`, `-100`, `-200`, `-900`, `--color-badge-accent-*`                  | **JLPT level only**: `LevelBadge`, `JlptBar`, glyph covers. The accent always means "level". | Buttons, errors, decoration |
-| Status                   | `--color-success`, `--color-warning`, `--color-error` (each with `-hover`, `-disabled`)                 | Feedback through `Alert`, `StatusPill` and form validation                                   | Branding                    |
-| Neutral                  | `--color-neutral-0`…`-900`, `--color-secondary-*`                                                       | Text, borders, surfaces, muted UI                                                            | —                           |
-| Text                     | `--color-text-primary` (default body and link text), `--color-text-neutral-*`, `--color-text-primary-*` | Text colour by state                                                                         | —                           |
-| Page                     | `--page-background-color` (kinari 生成り, warm white)                                                   | The page surface                                                                             | —                           |
+1. **Palette** (`colors.css`): the raw colours. A two-colour Japanese scheme, ai 藍 indigo and shu 朱 vermilion, on kinari 生成り (warm undyed-cloth white), plus neutrals, status colours and ink 墨 (warm near-black, the dark surface). `colors.css` documents contrast ratios inline.
+2. **Roles** (`roles.css`): what a colour is for. Each is defined once on `:root` with the kinari theme's light value.
+3. **Themes** (`src/styles/themes/<id>.css`, from #498 slice 4): override roles under `:root[data-theme='<id>']`. kinari, the default, has no file. A theme's own palette steps live only in its file.
 
-- Contrast target is WCAG 2.2 AA: 4.5:1 for body text, 3:1 for large text and non-text UI. `--color-accent-glyph` passes only as a fill or for large text.
+| Role        | Tokens                                                                                                    | Use for                                                                                              | Do not use for              |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------- |
+| Surface     | `--color-surface` (the page), `-raised` (cards, panels, menus, inputs), `-sunken` (wells)                 | Backgrounds                                                                                          | Text on a coloured fill     |
+| Text        | `--color-text` (body and links), `-strong`, `-subtle`, `-muted`                                           | Text colour by emphasis                                                                              | —                           |
+| Border      | `--color-border`, `--color-border-strong`                                                                 | Dividers and control edges                                                                           | —                           |
+| Interactive | `--color-interactive`, `-hover`, `-disabled`, `-tint`; `--color-on-interactive`; `--color-focus`          | Navigation, buttons, links in UI chrome, selected state; text on an interactive fill; focus outlines | Level markers               |
+| Level       | `--color-level`, `-text`, `-glyph`, `-tint`; `--color-badge-accent-*`                                     | **JLPT level only**: `LevelBadge`, `JlptBar`, glyph covers. The accent always means "level".         | Buttons, errors, decoration |
+| Status      | `--color-success`, `--color-warning`, `--color-error` (each with `-hover`, `-disabled`, `-tint`, `-text`) | Feedback through `Alert`, `StatusPill` and form validation                                           | Branding                    |
+| Like        | `--color-like-off`, `--color-like-on`                                                                     | The like icon (kinari: the colour of the button it sits in)                                          | —                           |
+| Component   | `--color-pill-*`                                                                                          | `Pill` on indigo                                                                                     | —                           |
+
+- Contrast target is WCAG 2.2 AA: 4.5:1 for body text, 3:1 for large text and non-text UI. `--color-level-glyph` passes only as a fill or for large text.
 - Links default to the body text colour; mark them with underline or weight, not colour.
-- There is no dark theme. The single `prefers-color-scheme: dark` rule in `colors.css` is a leftover, not a pattern to extend.
+- Older names (`--color-text-primary`, `--color-text-neutral-*`, `--color-text-primary-default|hover`, `--color-link*`, `--page-background-color`, `--font-family`) are aliases of the roles and are being removed (#498). Do not use them in new code. Raw palette steps (`--color-neutral-*`, `--color-primary-*`, `--color-accent-*`, `--color-secondary-*`) in component CSS are being moved to roles under the same issue; do not add new ones.
+- There is no dark scheme yet. The single `prefers-color-scheme: dark` rule in `colors.css` is a leftover, not a pattern to extend.
+
+### Themes and schemes
+
+A **scheme** is light or dark. A **theme** (kinari, sakura, sumi) changes appearance: colours, fonts, imagery, icons, favicon. The rule for both: **a theme or scheme never changes behaviour or which features exist.**
+
+- Code never compares a theme id. No `theme.id === 'sakura'` in TS, no `[data-theme='sakura']` selector in component CSS.
+- What must differ in markup is a named slot in the theme config (`theme.icons.likeOn`, `theme.logo`). What must differ in behaviour is a named flag, never the theme name.
+- Dark values use `light-dark()`, always inside `@supports (color: light-dark(#000, #fff))`. Browsers without it get kinari light colours; that is the accepted fallback.
 
 ## 4) Spacing, Size And Shape
 
@@ -56,7 +71,7 @@ The palette is a two-colour Japanese scheme on a warm white page. `colors.css` d
 
 ## 5) Typography
 
-- Body is IBM Plex Sans; counts, dates and readings use IBM Plex Mono (`--font-family-mono`). Both are bundled through `@fontsource` in `main.tsx` and the Storybook preview.
+- Body is IBM Plex Sans; counts, dates and readings use IBM Plex Mono (`--font-family-mono`). Both are bundled through `@fontsource` in `src/styles/global-styles.ts`, which `main.tsx` and the Storybook preview import. Components use the font roles in `roles.css` (`--font-family-body`, `--font-family-heading`) and `--font-family-ja`, `--font-family-mono`; themes override the roles.
 - Japanese text: put `lang="ja"` on the element. `03-elements/page.css` maps `[lang='ja']` to `--font-family-ja`, so you get the font stack and Japanese (not Chinese) glyph forms in one step. Do this for kanji, kana, readings and Japanese article bodies. Use `--font-family-ja-serif` only for display type.
 - Sizes: `--font-size-body-xs|sm|md|lg` and `--font-size-heading-1`…`-6`. The page body is `lg` (16px) at `--line-height-lg`; use `md`/`sm` for secondary text and metadata.
 - Weights: `--font-weight-regular`, `--font-weight-semibold`. Line heights: `--line-height-sm|md|lg`; Japanese article text uses `--line-height-japanese-article-text`.
@@ -100,6 +115,7 @@ Reuse one of these before writing new markup. Each has stories in Storybook.
 ## 8) Before You Finish A Styling Change
 
 - `npm run style:audit` is clean, and nothing new is hardcoded that has a token.
+- New colours and fonts use roles (§3), not palette steps or font stacks.
 - Stories exist or are updated for any new shared component or variant.
 - Check at 375px and at 1400px or wider, using keyboard focus as well as the mouse.
 - Japanese content has `lang="ja"`.

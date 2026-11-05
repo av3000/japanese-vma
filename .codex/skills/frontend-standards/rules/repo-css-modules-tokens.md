@@ -9,7 +9,7 @@ tags: repo, styling, css-modules, tokens
 
 **Impact: MEDIUM (one source of truth for colour, spacing and type)**
 
-Component styles live in a `*.module.css` next to the component. Every colour, spacing, radius, font size, shadow, duration and z-index that has a token uses it (`src/styles/00-settings/`). If no token fits, add one to the right settings file with a comment saying why. Only reference tokens that exist: an undefined `var(--x)` fails silently.
+Component styles live in a `*.module.css` next to the component. Every colour, spacing, radius, font size, shadow, duration and z-index that has a token uses it (`src/styles/00-settings/`). Colours and fonts use the **roles** in `roles.css` (`--color-surface-raised`, `--color-text-muted`, `--font-family-body`), never palette steps such as `--color-neutral-0` or font stacks, so themes and the dark scheme can change them. If no token fits, add one to the right settings file with a comment saying why. Only reference tokens that exist: an undefined `var(--x)` fails silently, and `npm run style:audit` counts them.
 
 **Incorrect:**
 
@@ -19,7 +19,8 @@ Component styles live in a `*.module.css` next to the component. Every colour, s
 	color: #3a3a3a;
 	border-radius: 6px;
 	z-index: 1001;
-	background: var(--color-surface-raised); /* no such token */
+	background: var(--color-neutral-0); /* a palette step, not a role */
+	border-color: var(--color-card-edge); /* no such token */
 }
 ```
 
@@ -28,11 +29,12 @@ Component styles live in a `*.module.css` next to the component. Every colour, s
 ```css
 .card {
 	padding: var(--spacing-md);
-	color: var(--color-text-primary);
+	color: var(--color-text);
 	border-radius: var(--border-radius-md);
 	z-index: var(--z-index-dropdown);
-	background: var(--color-neutral-0);
+	background: var(--color-surface-raised);
+	border-color: var(--color-border);
 }
 ```
 
-Source: `client/DESIGN.md` §2 and §4, `client/AGENTS.md` §5.
+Source: `client/DESIGN.md` §2, §3 and §4, `client/AGENTS.md` §5.
