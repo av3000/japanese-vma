@@ -15,6 +15,7 @@ use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
 use App\Http\v1\Study\Controllers\FlashcardDeckController;
 use App\Http\v1\Study\Controllers\StudySessionController;
+use App\Http\v1\Translations\Controllers\TranslationController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -126,6 +127,14 @@ Route::prefix('v1')->group(function () {
     // comment routes: a malformed segment must be a 404, not an unmapped exception.
     Route::get('catalogues/{uuid}/flashcards', [FlashcardDeckController::class, 'show'])
         ->whereUuid('uuid');
+
+    // UI translations (epic #659), public reads. `translations/locales` is registered
+    // before `translations/{locale}` on purpose: in the other order `locales` would be
+    // taken as a locale code and answer a 404 for a language called "locales".
+    // Guarded by tests/Feature/Translations/TranslationsV1Test.php
+    // ::test_locales_route_is_not_swallowed_by_the_locale_parameter
+    Route::get('translations/locales', [TranslationController::class, 'locales']);
+    Route::get('translations/{locale}', [TranslationController::class, 'show']);
 
     // ============================================
     // AUTHENTICATED ROUTES
