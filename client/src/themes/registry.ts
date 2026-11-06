@@ -11,6 +11,10 @@ import band1280Jpg from '@/assets/images/home/fuji-band-1280.jpg';
 import band1280Webp from '@/assets/images/home/fuji-band-1280.webp';
 import band1920Jpg from '@/assets/images/home/fuji-band-1920.jpg';
 import band1920Webp from '@/assets/images/home/fuji-band-1920.webp';
+import sakuraHero from '@/assets/images/themes/sakura/hero.svg';
+import sakuraMark from '@/assets/images/themes/sakura/mark.svg';
+import sumiHero from '@/assets/images/themes/sumi/hero.svg';
+import sumiMark from '@/assets/images/themes/sumi/mark.svg';
 import type { IconName } from '@/components/shared/Icon';
 import { type ThemeId, type ThemeManifestEntry, themeManifest } from './manifest';
 
@@ -65,6 +69,29 @@ const kinari: ThemeConfig = {
 	icons: { schemeLight: 'sunSolid', schemeDark: 'moonSolid', likeOff: 'thumbsUpRegular', likeOn: 'thumbsUpSolid' },
 };
 
+/** Sakura (桜): spring. A blossom mark and band, a rounded Japanese face, blossom like icons. */
+const sakura: ThemeConfig = {
+	...themeManifest.sakura,
+	logo: { src: sakuraMark, width: 640, height: 640 },
+	hero: { sources: [], src: sakuraHero, width: 1920, height: 384, credit: null },
+	icons: {
+		schemeLight: 'sakuraSunSolid',
+		schemeDark: 'sakuraMoonSolid',
+		likeOff: 'blossomRegular',
+		likeOn: 'blossomSolid',
+	},
+};
+
+/** Sumi (墨): ink painting, dark only. An ensō mark and an ink-wash band; the scheme toggle is hidden. */
+const sumi: ThemeConfig = {
+	...themeManifest.sumi,
+	logo: { src: sumiMark, width: 640, height: 640 },
+	hero: { sources: [], src: sumiHero, width: 1920, height: 384, credit: null },
+	icons: { schemeLight: 'sunSolid', schemeDark: 'moonSolid', likeOff: 'thumbsUpRegular', likeOn: 'thumbsUpSolid' },
+};
+
 export const themeRegistry: Record<ThemeId, ThemeConfig> = {
 	kinari,
+	sakura,
+	sumi,
 };

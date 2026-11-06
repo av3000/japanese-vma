@@ -9,7 +9,7 @@
 
 export type SchemeName = 'light' | 'dark';
 
-export const THEME_IDS = ['kinari'] as const;
+export const THEME_IDS = ['kinari', 'sakura', 'sumi'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DEFAULT_THEME: ThemeId = 'kinari';
@@ -45,6 +45,20 @@ export const themeManifest: Record<ThemeId, ThemeManifestEntry> = {
 		schemes: ['light', 'dark'],
 		themeColor: { light: '#fbfaf5', dark: '#1c1b19' },
 		favicon: { svg: '/themes/kinari/favicon.svg', png180: '/themes/kinari/apple-touch-icon.png' },
+	},
+	sakura: {
+		id: 'sakura',
+		label: 'Sakura',
+		schemes: ['light', 'dark'],
+		themeColor: { light: '#fdf7f8', dark: '#1e181a' },
+		favicon: { svg: '/themes/sakura/favicon.svg', png180: '/themes/sakura/apple-touch-icon.png' },
+	},
+	sumi: {
+		id: 'sumi',
+		label: 'Sumi (dark only)',
+		schemes: ['dark'],
+		themeColor: { dark: '#141311' },
+		favicon: { svg: '/themes/sumi/favicon.svg', png180: '/themes/sumi/apple-touch-icon.png' },
 	},
 };
 

@@ -231,7 +231,8 @@ for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
       if (m[1].endsWith("-")) continue; // template stem such as `var(--spacing-${token})`
       propertyUses.set(m[1], [...(propertyUses.get(m[1]) ?? []), `${rel}:${i + 1}`]);
     }
-    if (file.endsWith(".module.css")) {
+    // An @supports condition such as `(color: light-dark(#000, #fff))` tests a feature; it paints nothing.
+    if (file.endsWith(".module.css") && !/@supports/.test(line)) {
       for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
     }
     // A theme never reaches into components: only the theme files may select on data-theme (#498).

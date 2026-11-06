@@ -54,3 +54,15 @@ export const InContext: Story = {
 		await expect(states).toEqual(['off', 'on', 'on', 'count']);
 	},
 };
+
+/** Sakura: a grey outline blossom when not liked, a pink filled blossom when liked. */
+export const SakuraInContext: Story = {
+	...InContext,
+	parameters: { appearance: { theme: 'sakura', scheme: 'light' } },
+};
+export const SakuraDarkInContext: Story = {
+	...InContext,
+	parameters: { appearance: { theme: 'sakura', scheme: 'dark' } },
+};
+/** Sumi: thumbs up, gold leaf when liked. */
+export const SumiInContext: Story = { ...InContext, parameters: { appearance: { theme: 'sumi' } } };

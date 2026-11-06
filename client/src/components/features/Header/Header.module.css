@@ -383,3 +383,29 @@
 		transition: none;
 	}
 }
+
+/* Colour-scheme toggle (#498) -------------------------------------------- */
+
+.schemeToggle {
+	color: var(--color-text-strong);
+}
+
+/* Without light-dark() the page cannot change scheme, so the toggle would do nothing. */
+@supports not (color: light-dark(#000, #fff)) {
+	.schemeToggle {
+		display: none;
+	}
+}
+
+/* Under 360px the bar holds the brand (with a theme's mark) and three 48px buttons in 288px, so the
+   buttons narrow to 40px square and the gap tightens. Still well over the 24px target size. */
+@media (max-width: 359px) {
+	.bar {
+		gap: var(--spacing-xs);
+	}
+
+	.iconButton,
+	.menuButton {
+		width: var(--size-3xl);
+	}
+}

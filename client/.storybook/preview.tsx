@@ -11,7 +11,7 @@ import { THEME_IDS, themeManifest } from '@/themes/manifest';
 // parallel browsers on a busy machine or CI runner. 3 s still fails fast on a real regression.
 configure({ asyncUtilTimeout: 3000 });
 
-/** Viewport presets, from the breakpoints the CSS uses (768, 1024, 1320). */
+/** Viewport presets, from the breakpoints the CSS uses (768, 1024, 1320), plus 320px, the narrowest width. */
 const viewport = (name: string, width: number, type: 'mobile' | 'tablet' | 'desktop') => ({
 	name: `${name} (${width}px)`,
 	styles: { width: `${width}px`, height: type === 'mobile' ? '780px' : '900px' },
@@ -117,6 +117,7 @@ const preview: Preview = {
 		a11y: { test: 'error' },
 		viewport: {
 			options: {
+				xxs: viewport('xxs', 320, 'mobile'),
 				xs: viewport('xs', 360, 'mobile'),
 				sm: viewport('sm', 768, 'tablet'),
 				md: viewport('md', 1024, 'desktop'),

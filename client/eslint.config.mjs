@@ -13,7 +13,7 @@ const NO_DIRECT_AXIOS = "repo-no-direct-axios";
 // A theme changes appearance, never behaviour: code outside src/themes/ reads a slot from useTheme()
 // and never compares a theme id (STYLING-03, #498; client/DESIGN.md §3). Keep this list equal to
 // THEME_IDS in src/themes/manifest.ts; src/themes/eslintThemeIds.test.ts checks it.
-const THEME_IDS = ["kinari"];
+const THEME_IDS = ["kinari", "sakura", "sumi"];
 const THEME_ID = `/^(${THEME_IDS.join("|")})$/`;
 const THEME_NAME_CHECK =
   "repo-theme-slots-not-names: a theme changes appearance only. Read a slot from useTheme() (or add one to src/themes/registry.ts) instead of comparing a theme id.";

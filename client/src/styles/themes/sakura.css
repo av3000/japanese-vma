@@ -1,0 +1,78 @@
+/*
+ * Sakura (桜): spring. Blossom pinks on a pink-white page, a deep rose for actions, and Zen Maru Gothic,
+ * a rounded Japanese face (STYLING-03, #498). Light and dark.
+ *
+ * Only roles are overridden; the palette steps below are sakura's own and are used nowhere else.
+ * Colour roles sit inside the light-dark() @supports guard, so a browser without it gets kinari light
+ * colours with sakura's fonts and imagery. Level (the JLPT accent) and status keep kinari's values: they
+ * mean the same thing in every theme. `src/themes/contrast.test.ts` checks every pair.
+ */
+:root[data-theme='sakura'] {
+	--sakura-page: #fdf7f8;
+	--sakura-raised: #ffffff;
+	--sakura-sunken: #f8ecef;
+	--sakura-ink: #3b2a30;
+	--sakura-ink-strong: #2a1a20;
+	--sakura-ink-subtle: #5e4750;
+	--sakura-ink-muted: #7b5e69;
+	--sakura-line: #f0dde2;
+	--sakura-line-emphasis: #e3c4cc;
+	--sakura-line-strong: #a8828d; /* 3.36:1 on white */
+	--sakura-rose: #a32d55; /* white on it 6.5:1 */
+	--sakura-rose-deep: #7f1f40;
+	--sakura-rose-faded: #e3b3c3;
+	--sakura-blush: #fbe4ec;
+	--sakura-pill: #fcebf1;
+	--sakura-pill-line: #f0c4d3;
+	--sakura-blossom: #d6406c; /* the liked blossom: 4.37:1 on white */
+
+	--sakura-night: #1e181a;
+	--sakura-night-raised: #2a2124;
+	--sakura-night-sunken: #161113;
+	--sakura-night-ink: #f3e6ea;
+	--sakura-night-ink-subtle: #dcc6cd;
+	--sakura-night-ink-muted: #bfa2ac;
+	--sakura-night-line: #3e3034;
+	--sakura-night-line-emphasis: #4d3c41;
+	--sakura-night-line-strong: #8a6f78;
+	--sakura-night-rose: #f4a7bf;
+	--sakura-night-rose-light: #f9c9d7;
+	--sakura-night-rose-faded: #6b4a56;
+	--sakura-night-blush: #3e2430;
+	--sakura-night-blossom: #f58bab;
+
+	--font-family-body: 'Zen Maru Gothic', var(--font-stack-plex-sans);
+	--font-family-heading: var(--font-family-body);
+	--font-family-ja:
+		'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', Meiryo, sans-serif;
+}
+
+@supports (color: light-dark(#000, #fff)) {
+	:root[data-theme='sakura'] {
+		--color-surface: light-dark(var(--sakura-page), var(--sakura-night));
+		--color-surface-raised: light-dark(var(--sakura-raised), var(--sakura-night-raised));
+		--color-surface-sunken: light-dark(var(--sakura-sunken), var(--sakura-night-sunken));
+
+		--color-text: light-dark(var(--sakura-ink), var(--sakura-night-ink));
+		--color-text-strong: light-dark(var(--sakura-ink-strong), var(--color-neutral-0));
+		--color-text-subtle: light-dark(var(--sakura-ink-subtle), var(--sakura-night-ink-subtle));
+		--color-text-muted: light-dark(var(--sakura-ink-muted), var(--sakura-night-ink-muted));
+
+		--color-border: light-dark(var(--sakura-line), var(--sakura-night-line));
+		--color-border-emphasis: light-dark(var(--sakura-line-emphasis), var(--sakura-night-line-emphasis));
+		--color-border-strong: light-dark(var(--sakura-line-strong), var(--sakura-night-line-strong));
+
+		--color-interactive: light-dark(var(--sakura-rose), var(--sakura-night-rose));
+		--color-interactive-hover: light-dark(var(--sakura-rose-deep), var(--sakura-night-rose-light));
+		--color-interactive-disabled: light-dark(var(--sakura-rose-faded), var(--sakura-night-rose-faded));
+		--color-interactive-tint: light-dark(var(--sakura-blush), var(--sakura-night-blush));
+		--color-on-interactive: light-dark(var(--color-neutral-0), var(--sakura-night));
+		--color-focus: light-dark(var(--sakura-rose), var(--sakura-night-rose));
+		--color-pill-bg: light-dark(var(--sakura-pill), var(--sakura-night-blush));
+		--color-pill-fg: light-dark(var(--sakura-rose-deep), var(--sakura-night-rose));
+		--color-pill-border: light-dark(var(--sakura-pill-line), var(--sakura-night-rose-faded));
+
+		--color-like-off: var(--color-text-muted);
+		--color-like-on: light-dark(var(--sakura-blossom), var(--sakura-night-blossom));
+	}
+}

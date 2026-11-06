@@ -1,0 +1,51 @@
+/*
+ * Sumi (墨): ink painting. Washi-white ink on a near-black page, warm greys, gold leaf for a liked item,
+ * and Mincho headings (STYLING-03, #498). Dark only: the scheme toggle is hidden.
+ *
+ * Every colour role is set as a plain value, so sumi is dark even in a browser without light-dark().
+ * Level (the JLPT accent) and status use kinari's dark steps: they mean the same thing in every theme.
+ * `src/themes/contrast.test.ts` checks every pair.
+ */
+:root[data-theme='sumi'] {
+	color-scheme: dark;
+
+	--color-surface: #141311;
+	--color-surface-raised: #1e1d1a;
+	--color-surface-sunken: #0d0c0b;
+
+	--color-text: #e8e4dc;
+	--color-text-strong: #fffdf8;
+	--color-text-subtle: #cfc9bf;
+	--color-text-muted: #a7a197;
+
+	--color-border: #2f2d29;
+	--color-border-emphasis: #3d3a35;
+	--color-border-strong: #77716a; /* 3.5:1 on the raised surface */
+
+	--color-interactive: #d9d2c5;
+	--color-interactive-hover: #f2ede4;
+	--color-interactive-disabled: #4a4740;
+	--color-interactive-tint: #2b2924;
+	--color-on-interactive: #141311;
+	--color-focus: #d9d2c5;
+	--color-pill-bg: #2b2924;
+	--color-pill-fg: #e8e4dc;
+	--color-pill-border: #4a4740;
+
+	--color-level: var(--color-accent);
+	--color-level-text: var(--color-accent-200);
+	--color-level-glyph: var(--color-accent-glyph);
+	--color-level-tint: var(--color-accent-ink-tint);
+
+	--color-success-tint: var(--color-success-ink-tint);
+	--color-warning-tint: var(--color-warning-ink-tint);
+	--color-error-tint: var(--color-error-ink-tint);
+	--color-success-text: var(--color-success-disabled);
+	--color-warning-text: var(--color-warning-disabled);
+	--color-error-text: var(--color-error-disabled);
+
+	--color-like-off: var(--color-text-muted);
+	--color-like-on: #e0b057; /* gold leaf */
+
+	--font-family-heading: var(--font-family-ja-serif);
+}

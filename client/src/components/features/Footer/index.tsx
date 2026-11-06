@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ThemePicker } from '@/components/features/ThemePicker';
 import { Logo } from '@/components/shared/Logo';
 import { Container } from '@/components/shared/layout';
 import { NAV_SECTIONS } from '@/shared/constants/navigation';
@@ -9,7 +10,8 @@ const CONTACT_EMAIL = 'jplearning.online@gmail.com';
 
 /**
  * The site footer, derived from the flat Header: the same white surface and hairline, the brand
- * on the left, the Explore and Dictionary groups as link columns, then the dictionary licences.
+ * on the left, the Explore and Dictionary groups as link columns, then the dictionary licences, and
+ * the legal line with the theme picker (#498), which every visitor can reach on every screen size.
  *
  * The attribution paragraphs are a licence condition of the data this site is built on (JMdict,
  * Kanjidic2, JMnedict, Radkfile, Tatoeba, the JLPT lists). Keep their wording and links intact.
@@ -66,9 +68,12 @@ const Footer: React.FC = () => {
 					</p>
 				</div>
 
-				<p className={styles.legal}>
-					&copy; {currentYear} JPLearning &middot; <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-				</p>
+				<div className={styles.bottom}>
+					<p className={styles.legal}>
+						&copy; {currentYear} JPLearning &middot; <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+					</p>
+					<ThemePicker />
+				</div>
 			</Container>
 		</footer>
 	);

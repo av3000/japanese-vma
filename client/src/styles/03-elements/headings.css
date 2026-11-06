@@ -1,3 +1,9 @@
+/* The theme's heading face (#498). Zero specificity, so a component's own font-family wins; headings in
+   Japanese content keep --font-family-ja from [lang='ja']. */
+:where(h1, h2, h3, h4, h5, h6):where(:not(:lang(ja))) {
+	font-family: var(--font-family-heading);
+}
+
 h1 {
 	--font-size: clamp(var(--font-size-heading-6), 8.5vw, var(--font-size-heading-1));
 	min-height: calc(var(--font-size) * var(--line-height-md));

@@ -10,6 +10,11 @@ import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-sans/600.css';
 import '@fontsource/ibm-plex-sans/700.css';
+// Sakura's face. @font-face only downloads when something uses the family, and in unicode-range
+// subsets, so other themes fetch nothing from it.
+import '@fontsource/zen-maru-gothic/400.css';
+import '@fontsource/zen-maru-gothic/500.css';
+import '@fontsource/zen-maru-gothic/700.css';
 import '@/assets/font-awesome/css/fontawesome.min.css';
 import '@/assets/font-awesome/css/regular.min.css';
 import '@/assets/font-awesome/css/solid.min.css';

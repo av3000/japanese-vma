@@ -337,3 +337,10 @@
 		display: none;
 	}
 }
+
+/* Matches the header's other icon buttons under 360px (Header.module.css). */
+@media (max-width: 359px) {
+	.iconButton {
+		width: var(--size-3xl);
+	}
+}
