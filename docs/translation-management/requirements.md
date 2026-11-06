@@ -6,6 +6,7 @@
 | Milestone | Translation Management |
 | Status | Planned: no implementation yet |
 | Design | [2026-08-18 design specification](./2026-08-18-translation-management-design.md) (how). This document covers the what. |
+| Plan | [implementation-plan.md](./implementation-plan.md): branch model, per-story loop, story sections, run prompt |
 | Last updated | 2026-11-06 |
 
 ## 1. Goal
