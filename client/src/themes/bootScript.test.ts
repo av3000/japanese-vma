@@ -66,6 +66,24 @@ describe('index.html boot script', () => {
 		expect(run({ scheme: 'dark' })).toMatchObject({ scheme: 'dark', themeColor: '#1c1b19' });
 	});
 
+	it('follows a dark OS when nothing is saved, without setting data-scheme', () => {
+		expect(run({ osDark: true })).toMatchObject({ scheme: null, themeColor: '#1c1b19' });
+	});
+
+	it('a saved light scheme wins over a dark OS', () => {
+		expect(run({ scheme: 'light', osDark: true })).toMatchObject({ scheme: 'light', themeColor: '#fbfaf5' });
+	});
+
+	it('applies a saved theme, and forces a single-scheme theme’s scheme over a saved one', () => {
+		expect(run({ theme: 'sakura' })).toMatchObject({ theme: 'sakura', favicon: '/themes/sakura/favicon.svg' });
+		document.documentElement.removeAttribute('data-theme');
+		expect(run({ theme: 'sumi', scheme: 'light' })).toMatchObject({
+			theme: 'sumi',
+			scheme: null,
+			themeColor: '#141311',
+		});
+	});
+
 	it('ignores a scheme value it does not know', () => {
 		expect(run({ scheme: 'sepia' }).scheme).toBeNull();
 	});

@@ -48,7 +48,8 @@
 }
 
 .control:focus-visible {
-	outline: none;
+	/* Invisible here; forced-colors mode drops the box-shadow ring and paints this outline instead. */
+	outline: var(--outline-size) solid transparent;
 	border-color: var(--color-interactive);
 	box-shadow: 0 0 0 var(--outline-size) var(--color-focus-halo);
 }

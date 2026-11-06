@@ -129,6 +129,8 @@ const PAIRS: [string, string, number][] = [
 	['--color-text', '--color-interactive-tint', TEXT],
 	['--color-interactive', '--color-interactive-tint', TEXT],
 	['--color-pill-fg', '--color-pill-bg', TEXT],
+	['--color-on-warning', '--color-warning', TEXT],
+	['--color-on-warning', '--color-warning-hover', TEXT],
 	// White text on fills that keep their colour in every scheme.
 	...['--color-action-secondary', '--color-success', '--color-error', '--color-level'].map(
 		(bg): [string, string, number] => ['--color-on-fill', bg, TEXT],

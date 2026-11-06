@@ -104,6 +104,49 @@ describe('appearance store', () => {
 		expect(getAppearance()).toMatchObject({ scheme: 'dark', savedScheme: 'dark' });
 	});
 
+	it('follows a dark OS with nothing saved, without setting data-scheme', () => {
+		osDark = true;
+
+		expect(getAppearance()).toMatchObject({ scheme: 'dark', savedScheme: null });
+	});
+
+	it('updates live when the OS scheme changes and nothing is saved', () => {
+		const listener = vi.fn();
+		const unsubscribe = subscribeAppearance(listener);
+		getAppearance();
+
+		setOsDark(true);
+
+		expect(listener).toHaveBeenCalled();
+		expect(getAppearance().scheme).toBe('dark');
+		expect(document.getElementById('theme-color')?.getAttribute('content')).toBe('#1c1b19');
+		unsubscribe();
+	});
+
+	it('toggling from a dark OS to light saves light; toggling back clears it', () => {
+		osDark = true;
+		toggleScheme();
+		expect(getAppearance()).toMatchObject({ scheme: 'light', savedScheme: 'light' });
+
+		toggleScheme();
+		expect(getAppearance()).toMatchObject({ scheme: 'dark', savedScheme: null });
+		expect(localStorage.getItem(STORAGE_KEYS.scheme)).toBeNull();
+	});
+
+	it('a single-scheme theme ignores a saved scheme and the OS', () => {
+		localStorage.setItem(STORAGE_KEYS.theme, 'sumi');
+		localStorage.setItem(STORAGE_KEYS.scheme, 'light');
+
+		expect(getAppearance()).toMatchObject({
+			theme: 'sumi',
+			scheme: 'dark',
+			savedScheme: null,
+			canToggleScheme: false,
+		});
+		toggleScheme();
+		expect(getAppearance().scheme).toBe('dark');
+	});
+
 	it('an OS change re-evaluates the scheme for subscribers', () => {
 		const listener = vi.fn();
 		const unsubscribe = subscribeAppearance(listener);

@@ -53,7 +53,7 @@ export const Imported: Story = {
 		attribution: (
 			<aside
 				aria-label="Article source"
-				style={{ padding: 'var(--spacing-sm)', background: 'var(--color-neutral-100)' }}
+				style={{ padding: 'var(--spacing-sm)', background: 'var(--color-surface-sunken)' }}
 			>
 				This is an excerpt from <strong>NHK News</strong>.{' '}
 				<a href="https://www3.nhk.or.jp/news/">Read the full article on NHK News</a>

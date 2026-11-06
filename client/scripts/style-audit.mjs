@@ -240,7 +240,8 @@ for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
     if (file.endsWith(".module.css") && !/@supports/.test(line)) {
       for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
     }
-    if (isCss && !rel.startsWith(THEME_STYLES_DIR) && !rel.includes("/00-settings/")) {
+    // Inline styles in TS/TSX (stories included) count too; src/themes/ holds theme data, not styles.
+    if (!rel.startsWith(THEME_STYLES_DIR) && !rel.includes("/00-settings/") && !rel.startsWith("src/themes/")) {
       for (const m of line.matchAll(RAW_PALETTE)) rawPaletteRefs.push(`${rel}:${i + 1} ${m[1]}`);
     }
     // A theme never reaches into components: only the theme files may select on data-theme (#498).

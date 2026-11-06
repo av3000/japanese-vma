@@ -40,6 +40,7 @@
 	--color-focus-halo: var(--color-primary-100); /* the soft ring around a focused field */
 	--color-interactive-border: var(--color-primary-200); /* hover and selected edges of tiles and options */
 	--color-on-fill: var(--color-neutral-0); /* text on status, level, secondary and photo fills, which stay put */
+	--color-on-warning: var(--color-neutral-950); /* dark text on the warning amber, in every scheme: 10.1:1 */
 	--color-action-secondary: var(--color-secondary); /* the secondary button fill */
 	--color-action-secondary-hover: var(--color-secondary-hover);
 	--color-action-secondary-disabled: var(--color-secondary-disabled);
@@ -74,12 +75,12 @@
 }
 
 /*
- * The scheme. `data-scheme` on <html> is a saved choice; without it the page is light until the OS
- * scheme is followed (#498 slice 6). Native controls, scrollbars and the <dialog> backdrop follow
- * `color-scheme`. A single-scheme theme sets `color-scheme` in its own file.
+ * The scheme. With no saved choice the page follows the OS; `data-scheme` on <html> is a saved choice.
+ * Native controls, scrollbars and the <dialog> backdrop follow `color-scheme`. A single-scheme theme
+ * sets `color-scheme` in its own file.
  */
 :root {
-	color-scheme: light;
+	color-scheme: light dark;
 }
 
 :root[data-scheme='light'] {

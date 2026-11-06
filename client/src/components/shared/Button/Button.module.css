@@ -120,7 +120,7 @@
 }
 
 .variantPending:hover {
-	color: var(--color-text);
+	color: var(--color-on-warning);
 }
 
 .variantPrimary {
@@ -248,7 +248,7 @@
 .variantPending {
 	background-color: var(--color-warning);
 	border-color: var(--color-warning);
-	color: var(--color-text);
+	color: var(--color-on-warning);
 }
 @media (hover: hover) {
 	.variantPending:hover {

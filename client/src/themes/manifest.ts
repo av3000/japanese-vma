@@ -21,10 +21,11 @@ export const STORAGE_KEYS = {
 } as const;
 
 /**
- * Whether a theme with two schemes follows the OS when nothing is saved. Off until every theme has
- * been checked in both schemes (#498 slice 6); a saved choice works either way.
+ * Whether a theme with two schemes follows the OS when nothing is saved. On since every theme was
+ * checked in both schemes (#498 slice 6); turning it off keeps the page light unless a choice is saved.
+ * roles.css sets `color-scheme` to match.
  */
-export const FOLLOWS_OS_SCHEME = false;
+export const FOLLOWS_OS_SCHEME = true;
 
 export interface ThemeManifestEntry {
 	id: ThemeId;

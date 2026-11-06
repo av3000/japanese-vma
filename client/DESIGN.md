@@ -50,7 +50,8 @@ Colour comes in three layers. Components use **roles** only; they never name a p
 - Contrast target is WCAG 2.2 AA: 4.5:1 for body text, 3:1 for large text and non-text UI. `--color-level-glyph` passes only as a fill or for large text.
 - Links default to the body text colour; mark them with underline or weight, not colour.
 - Component CSS never names a palette step (`--color-neutral-*`, `--color-primary-*`, `--color-accent-*`, `--color-secondary-*`, `--color-kinari`, `--color-ink-*`); `style:audit` counts them (`rawPaletteRefs`, budget 0). The old names `--color-text-primary`, `--color-text-neutral-*`, `--color-link*`, `--page-background-color` and `--font-family` are gone (#498).
-- Every role has a dark value. `roles.css` sets `color-scheme` from `data-scheme` on `<html>`; the appearance store (`src/lib/appearance.ts`) and the boot script in `index.html` write that attribute. Storybook's toolbar has Theme and Scheme switches.
+- Every role has a dark value. `roles.css` sets `color-scheme` from `data-scheme` on `<html>`; the appearance store (`src/lib/appearance.ts`) and the boot script in `index.html` write that attribute. With nothing saved the page follows the OS scheme; the header toggle saves a choice, and toggling back to the OS scheme clears it. Storybook's toolbar has Theme and Scheme switches.
+- Forced-colors mode (Windows High Contrast) drops `box-shadow`. A focus ring drawn with `box-shadow` also sets `outline: var(--outline-size) solid transparent`, which is invisible normally and painted in forced colours. State is never colour alone (`repo-colour-not-only-cue`): the like icon changes shape, toggles carry `aria-pressed`.
 
 ### Themes and schemes
 
