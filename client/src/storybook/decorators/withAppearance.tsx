@@ -10,6 +10,7 @@ import {
 	themeManifest,
 	type ThemeId,
 } from '@/themes/manifest';
+import { themeRegistry } from '@/themes/registry';
 
 /** Pins a story to a theme and/or scheme, whatever the toolbar says. */
 export interface AppearanceParameter {
@@ -46,6 +47,7 @@ export const withAppearance: Decorator = (Story, { parameters, globals }) => {
 	const state = resolveStoryAppearance(parameters.appearance as AppearanceParameter | undefined, globals);
 
 	applyAppearance(state);
+	void themeRegistry[state.theme].loadFonts?.();
 
 	const value: AppearanceContextValue = {
 		...state,

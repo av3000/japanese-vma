@@ -35,6 +35,11 @@ export const AppearanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 	// The boot script in index.html has normally applied this already; this covers a page without it.
 	React.useEffect(() => applyAppearance(getAppearance()), []);
 
+	// A theme's own fonts load when it is chosen; until they arrive the fallback stack shows (swap).
+	React.useEffect(() => {
+		void themeRegistry[state.theme].loadFonts?.();
+	}, [state.theme]);
+
 	const value = React.useMemo(() => ({ ...state, setTheme, toggleScheme }), [state]);
 
 	return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;

@@ -46,6 +46,11 @@ export interface ThemeIcons {
 }
 
 export interface ThemeConfig extends ThemeManifestEntry {
+	/**
+	 * Loads the theme's own web fonts. Called when the theme is chosen, so their CSS is a separate chunk
+	 * that other themes never download (the font's @font-face rules alone are ~60 kB gzipped).
+	 */
+	loadFonts?: () => Promise<unknown>;
 	/** Null: the wordmark alone. */
 	logo: ThemeLogo | null;
 	hero: ThemeHero;
@@ -72,6 +77,8 @@ const kinari: ThemeConfig = {
 /** Sakura (桜): spring. A blossom mark and band, a rounded Japanese face, blossom like icons. */
 const sakura: ThemeConfig = {
 	...themeManifest.sakura,
+	loadFonts: () =>
+		Promise.all([import('@fontsource/zen-maru-gothic/400.css'), import('@fontsource/zen-maru-gothic/700.css')]),
 	logo: { src: sakuraMark, width: 640, height: 640 },
 	hero: { sources: [], src: sakuraHero, width: 1920, height: 384, credit: null },
 	icons: {

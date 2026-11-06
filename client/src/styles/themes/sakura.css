@@ -1,6 +1,7 @@
 /*
  * Sakura (桜): spring. Blossom pinks on a pink-white page, a deep rose for actions, and Zen Maru Gothic,
- * a rounded Japanese face (STYLING-03, #498). Light and dark.
+ * a rounded Japanese face (STYLING-03, #498). Light and dark. The font's CSS loads only when sakura is
+ * chosen (`loadFonts` in src/themes/registry.ts).
  *
  * Only roles are overridden; the palette steps below are sakura's own and are used nowhere else.
  * Colour roles sit inside the light-dark() @supports guard, so a browser without it gets kinari light
