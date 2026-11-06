@@ -25,17 +25,17 @@
 	justify-content: center;
 	width: var(--size-4xl);
 	height: var(--size-4xl);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-md);
-	background-color: var(--color-neutral-0);
-	color: var(--color-text-primary);
+	background-color: var(--color-surface-raised);
+	color: var(--color-text);
 	font-family: var(--font-family-ja-serif);
 	font-size: var(--font-size-heading-3);
 	text-decoration: none;
 }
 
 .glyph:hover {
-	border-color: var(--color-primary);
+	border-color: var(--color-interactive);
 }
 
 /* Words preview: word and reading, wrapping in a row like the kanji strip. */
@@ -62,7 +62,7 @@
 }
 
 .reading {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	overflow-wrap: anywhere;
 }

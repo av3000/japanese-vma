@@ -1,6 +1,6 @@
 .group {
 	margin-top: var(--spacing-md);
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
 .row {
@@ -9,7 +9,7 @@
 	align-items: center;
 	column-gap: var(--spacing-md);
 	padding-block: var(--spacing-xs);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .name {
@@ -21,7 +21,7 @@
 .value {
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	overflow-wrap: anywhere;
 }
 
@@ -36,11 +36,11 @@
 .caption {
 	margin-top: var(--spacing-xs);
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 .error {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .bar {
@@ -48,14 +48,14 @@
 	flex: none;
 	max-width: 100%;
 	height: var(--size-md);
-	background: var(--color-primary);
+	background: var(--color-interactive);
 }
 
 .square {
 	display: block;
 	flex: none;
-	background: var(--color-primary-tint);
-	border: var(--border-size-sm) solid var(--color-primary);
+	background: var(--color-interactive-tint);
+	border: var(--border-size-sm) solid var(--color-interactive);
 }
 
 .swatch {
@@ -63,8 +63,8 @@
 	flex: none;
 	width: var(--size-6xl);
 	height: var(--size-4xl);
-	background: var(--color-primary-tint);
-	border: var(--border-size-sm) solid var(--color-primary);
+	background: var(--color-interactive-tint);
+	border: var(--border-size-sm) solid var(--color-interactive);
 }
 
 .shadowSwatch {
@@ -73,7 +73,7 @@
 	width: var(--size-7xl);
 	height: var(--size-5xl);
 	margin: var(--spacing-md);
-	background: var(--color-neutral-0);
+	background: var(--color-surface-raised);
 	border-radius: var(--border-radius-md);
 }
 
@@ -82,23 +82,23 @@
 	flex: none;
 	width: var(--size-6xl);
 	height: var(--size-4xl);
-	background: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	background: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
 }
 
 .opacitySwatch {
 	display: block;
 	width: 100%;
 	height: 100%;
-	background: var(--color-primary);
+	background: var(--color-interactive);
 }
 
 .ratio {
 	display: block;
 	flex: none;
 	width: var(--size-6xl);
-	background: var(--color-primary-tint);
-	border: var(--border-size-sm) solid var(--color-primary);
+	background: var(--color-interactive-tint);
+	border: var(--border-size-sm) solid var(--color-interactive);
 }
 
 .fontSample {
@@ -115,7 +115,7 @@
 	min-width: 0;
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	overflow-wrap: anywhere;
 }
 
@@ -126,9 +126,9 @@
 	padding: var(--spacing-2xs) var(--spacing-sm);
 	font: inherit;
 	font-size: var(--font-size-body-md);
-	color: var(--color-primary);
-	background: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-primary);
+	color: var(--color-interactive);
+	background: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-interactive);
 	border-radius: var(--border-radius-sm);
 	cursor: pointer;
 }
@@ -138,7 +138,7 @@
 	flex: 1;
 	min-width: var(--size-6xl);
 	height: var(--size-xl);
-	background: var(--color-neutral-100);
+	background: var(--color-surface-sunken);
 	border-radius: var(--border-radius-xl);
 }
 
@@ -147,7 +147,7 @@
 	inset-block: var(--spacing-3xs);
 	inset-inline-start: var(--spacing-3xs);
 	width: calc(var(--size-xl) - 2 * var(--spacing-3xs));
-	background: var(--color-primary);
+	background: var(--color-interactive);
 	border-radius: 50%;
 	transition: inset-inline-start var(--token-duration) var(--token-easing);
 }

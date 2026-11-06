@@ -7,7 +7,7 @@
 
 .message {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 /* Related articles: one line each, title then likes and views. */
@@ -26,7 +26,7 @@
 	gap: var(--spacing-3xs) var(--spacing-md);
 	min-width: 0;
 	padding-block: var(--spacing-xs);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .articleTitle {
@@ -35,7 +35,7 @@
 }
 
 .articleMeta {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
 	font-variant-numeric: tabular-nums;

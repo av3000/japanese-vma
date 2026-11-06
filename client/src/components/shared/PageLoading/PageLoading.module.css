@@ -29,7 +29,7 @@
 	display: block;
 	min-height: 1rem;
 	border-radius: var(--border-radius-md);
-	background: linear-gradient(90deg, var(--color-neutral-200), var(--color-neutral-100), var(--color-neutral-200));
+	background: linear-gradient(90deg, var(--color-fill), var(--color-surface-sunken), var(--color-fill));
 	background-size: 200% 100%;
 	animation: shimmer 1.6s ease-in-out infinite;
 }

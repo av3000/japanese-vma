@@ -4,7 +4,7 @@
 	align-items: center;
 	gap: var(--spacing-2xs) var(--spacing-xs);
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 }
 
@@ -16,13 +16,13 @@
 }
 
 .name {
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	font-weight: var(--font-weight-semibold);
 	overflow-wrap: anywhere;
 }
 
 .separator {
-	color: var(--color-neutral-500);
+	color: var(--color-text-disabled);
 }
 
 .views {

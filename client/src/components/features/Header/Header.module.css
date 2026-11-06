@@ -1,8 +1,8 @@
 .header {
 	position: relative;
 	z-index: var(--z-index-header);
-	background-color: var(--color-neutral-0);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	background-color: var(--color-surface-raised);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 /* Mobile first: brand, then the search and menu buttons pushed to the right edge. */
@@ -22,14 +22,14 @@
 .brand {
 	font-size: var(--font-size-heading-4);
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-primary);
+	color: var(--color-interactive);
 	text-decoration: none;
 	white-space: nowrap;
 }
 
 .brand:hover,
 .brand:focus-visible {
-	color: var(--color-primary);
+	color: var(--color-interactive);
 }
 
 /* Shown from the collapse breakpoint only (see the bottom of this file). */
@@ -64,7 +64,7 @@
 	border-radius: var(--border-radius-sm);
 	font: inherit;
 	font-size: var(--font-size-body-md);
-	color: var(--color-text-primary);
+	color: var(--color-text);
 	text-decoration: none;
 	text-underline-offset: 0.4em;
 	white-space: nowrap;
@@ -72,12 +72,12 @@
 }
 
 .link:hover {
-	color: var(--color-link-hover);
+	color: var(--color-text);
 	text-decoration: underline var(--border-size-sm);
 }
 
 .link:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -85,14 +85,14 @@
 .linkActive,
 .linkActive:hover {
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-primary);
-	text-decoration: underline var(--border-size-md) var(--color-primary);
+	color: var(--color-interactive);
+	text-decoration: underline var(--border-size-md) var(--color-interactive);
 }
 
 .groupButton:hover,
 .groupButton[aria-expanded='true'] {
-	background-color: var(--color-neutral-100);
-	color: var(--color-text-primary);
+	background-color: var(--color-surface-sunken);
+	color: var(--color-text);
 	text-decoration: none;
 }
 
@@ -131,8 +131,8 @@
 	z-index: var(--z-index-dropdown);
 	min-width: 12.5rem;
 	padding: var(--spacing-2xs);
-	background-color: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-md);
 	box-shadow: var(--box-shadow-default);
 }
@@ -154,25 +154,25 @@
 .description {
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-regular);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	white-space: normal;
 }
 
 .divider {
 	height: var(--border-size-sm);
 	margin: var(--spacing-2xs) var(--spacing-xs);
-	background-color: var(--color-neutral-200);
+	background-color: var(--color-fill);
 }
 
 .danger,
 .danger:hover {
-	color: var(--color-error-hover);
+	color: var(--color-error-text);
 }
 
 /* Account --------------------------------------------------------------- */
 
 .accountButton {
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	font-weight: var(--font-weight-semibold);
 }
 
@@ -189,7 +189,7 @@
 	width: 8rem;
 	height: 1.5rem;
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-200);
+	background-color: var(--color-fill);
 }
 
 .socket {
@@ -210,20 +210,20 @@
 	height: var(--size-3xl);
 	padding: 0;
 	background: transparent;
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-sm);
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	cursor: pointer;
 }
 
 .iconButton:hover,
 .menuButton:hover {
-	border-color: var(--color-neutral-500);
+	border-color: var(--color-border-strong);
 }
 
 .iconButton:focus-visible,
 .menuButton:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -261,7 +261,7 @@
 	justify-content: space-between;
 	gap: var(--spacing-xs);
 	padding: var(--size-sm) var(--size-md);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .drawerNav {
@@ -280,7 +280,7 @@
 	margin: 0 0 var(--spacing-2xs);
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-regular);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .drawerList {
@@ -293,23 +293,23 @@
 	display: block;
 	padding: var(--spacing-xs) 0;
 	font-size: var(--font-size-body-lg);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 	text-decoration: none;
 }
 
 .drawerLink:hover {
-	color: var(--color-link-hover);
+	color: var(--color-text);
 }
 
 .drawerLink:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
 /* Pinned to the bottom of the drawer. */
 .drawerAccount {
 	padding: var(--spacing-sm) var(--size-md);
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
 .drawerAccountList {
@@ -354,7 +354,7 @@
 .drawerLogin {
 	padding: var(--spacing-xs);
 	font-size: var(--font-size-body-md);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 	text-align: center;
 	text-decoration: none;
 }

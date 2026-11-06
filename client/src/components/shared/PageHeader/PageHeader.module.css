@@ -25,7 +25,7 @@
 
 .meta {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	overflow-wrap: anywhere;
 }

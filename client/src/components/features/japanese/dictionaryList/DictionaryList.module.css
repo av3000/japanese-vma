@@ -14,7 +14,7 @@
 }
 
 .muted {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .visuallyHidden {
@@ -30,11 +30,11 @@
 }
 
 .missing {
-	color: var(--color-neutral-500);
+	color: var(--color-text-disabled);
 }
 
 .glyph {
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	font-family: var(--font-family-ja-serif);
 	font-size: 32px;
 	line-height: 1;
@@ -43,7 +43,7 @@
 
 .word,
 .sentence {
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	font-family: var(--font-family-ja);
 	text-decoration: none;
 }
@@ -61,7 +61,7 @@
 .glyph:hover,
 .word:hover,
 .sentence:hover {
-	color: var(--color-primary);
+	color: var(--color-interactive);
 }
 
 .word:hover,
@@ -118,7 +118,7 @@
 .pagedStatus {
 	flex-basis: 100%;
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	font-variant-numeric: tabular-nums;
 }

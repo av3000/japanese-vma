@@ -1,6 +1,6 @@
 /* The grey Library Cards surface the form cards sit on. */
 .page {
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 }
 
 /*
@@ -9,7 +9,7 @@
  * LibraryLayout does. Without :has() support only the page's own box is grey.
  */
 :global(.main-content):has(.page) {
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 }
 
 .content {
@@ -33,7 +33,7 @@
 
 .intro {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	overflow-wrap: anywhere;
 }
@@ -64,8 +64,8 @@
 .card {
 	min-width: 0;
 	padding: var(--spacing-md);
-	background-color: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-md);
 	overflow-wrap: anywhere;
 }
@@ -78,7 +78,7 @@
 
 .note {
 	padding: var(--spacing-sm) var(--spacing-md);
-	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border: var(--border-size-sm) dashed var(--color-border-strong);
 	border-radius: var(--border-radius-md);
 	overflow-wrap: anywhere;
 }
@@ -90,7 +90,7 @@
 }
 
 .noteBody {
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-md);
 }
 

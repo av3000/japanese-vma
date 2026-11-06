@@ -12,6 +12,8 @@
  *   - moduleHexColours: hex colour literals in *.module.css; colours come from 00-settings tokens (#493)
  *   - themeSelectors: `[data-theme` in CSS outside src/styles/themes/; components never name a theme (#498)
  *   - unguardedLightDark: `light-dark(` outside `@supports (color: light-dark(#000, #fff))` (#498)
+ *   - rawPaletteRefs: palette steps (`--color-neutral-*`, `-primary-*`, `-accent-*`, `-secondary-*`, `-kinari`,
+ *     `-ink-*`) or removed old names in CSS outside 00-settings and the theme files; components use roles (#498)
  *
  * Custom properties set at runtime count as defined: string keys in .ts/.tsx (`'--bg-color': …`), the
  * `--<prefix>-<breakpoint>` names `responsiveVars('<prefix>', …)` builds, and RUNTIME_PROPERTY_PREFIXES.
@@ -182,6 +184,9 @@ const moduleHexColours = []; // "file:line value"
 const THEME_STYLES_DIR = "src/styles/themes/";
 const themeSelectors = []; // "file:line"
 const unguardedLightDark = []; // "file:line"
+const rawPaletteRefs = []; // "file:line token"
+const RAW_PALETTE =
+  /var\(\s*(--color-(?:neutral|primary|accent|secondary|kinari|ink)[\w-]*|--color-text-primary[\w-]*|--color-text-neutral[\w-]*|--color-link[\w-]*|--page-background-color|--color-border-default|--font-family)(?=[\s,)])/g;
 
 // Blank out CSS comments but keep their newlines, so line numbers still match and issue references
 // such as `(#383)` are not read as hex colours.
@@ -235,6 +240,9 @@ for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
     if (file.endsWith(".module.css") && !/@supports/.test(line)) {
       for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
     }
+    if (isCss && !rel.startsWith(THEME_STYLES_DIR) && !rel.includes("/00-settings/")) {
+      for (const m of line.matchAll(RAW_PALETTE)) rawPaletteRefs.push(`${rel}:${i + 1} ${m[1]}`);
+    }
     // A theme never reaches into components: only the theme files may select on data-theme (#498).
     if (isCss && !rel.startsWith(THEME_STYLES_DIR) && /\[data-theme\b/.test(line)) {
       themeSelectors.push(`${rel}:${i + 1}`);
@@ -260,6 +268,7 @@ const totals = {
   moduleHexColours: moduleHexColours.length,
   themeSelectors: themeSelectors.length,
   unguardedLightDark: unguardedLightDark.length,
+  rawPaletteRefs: rawPaletteRefs.length,
 };
 
 for (const file of tsxFiles) {
@@ -324,6 +333,8 @@ function printVars() {
   for (const entry of themeSelectors) console.log(`  ${entry}`);
   console.log(`\nlight-dark() outside @supports (color: light-dark(#000, #fff)) (${unguardedLightDark.length}):`);
   for (const entry of unguardedLightDark) console.log(`  ${entry}`);
+  console.log(`\nPalette steps and removed names in component CSS (${rawPaletteRefs.length}):`);
+  for (const entry of rawPaletteRefs) console.log(`  ${entry}`);
 }
 
 printReport();

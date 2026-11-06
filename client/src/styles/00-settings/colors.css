@@ -78,6 +78,9 @@
 	--color-ink-sunken: #151412;
 	--color-ink-line: #3d3a34; /* dividers on ink: decorative, 1.5:1 */
 	--color-ink-line-strong: #7a756b; /* control edges on ink: 3.4:1 on --color-ink-raised */
+	--color-ink-fill-strong: #4a463f; /* a step above --color-ink-line for empty segments and placeholders */
+	--color-ink-overlay: rgba(255, 255, 255, 0.06); /* hover overlays on ink */
+	--color-ink-overlay-strong: rgba(255, 255, 255, 0.12);
 	/* Dark tints for selected and status backgrounds on ink. Each status's -disabled step reads as text
 	   on its tint at 6:1 or better; the dark contrast test checks every pair. */
 	--color-primary-ink-tint: #17303d;
@@ -85,11 +88,7 @@
 	--color-success-ink-tint: #1d3324;
 	--color-warning-ink-tint: #3a3010;
 	--color-error-ink-tint: #3d1d20;
-	--color-border-default: #ffffff;
 	--color-scrollbar-track: var(--color-neutral-800);
 	--color-scrollbar-thumb: var(--color-neutral-500);
 	--color-scrollbar-border: var(--color-neutral-900);
-	/* The other text, link and page names are aliases of the roles, in roles.css. */
-	--color-text-primary-focus: var(--color-primary-300);
-	--color-text-primary-active: var(--color-primary-200);
 }

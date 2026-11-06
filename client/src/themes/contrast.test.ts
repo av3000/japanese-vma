@@ -129,6 +129,10 @@ const PAIRS: [string, string, number][] = [
 	['--color-text', '--color-interactive-tint', TEXT],
 	['--color-interactive', '--color-interactive-tint', TEXT],
 	['--color-pill-fg', '--color-pill-bg', TEXT],
+	// White text on fills that keep their colour in every scheme.
+	...['--color-action-secondary', '--color-success', '--color-error', '--color-level'].map(
+		(bg): [string, string, number] => ['--color-on-fill', bg, TEXT],
+	),
 	['--color-badge-accent-fg', '--color-badge-accent-bg', TEXT],
 	['--color-success-text', '--color-success-tint', TEXT],
 	['--color-warning-text', '--color-warning-tint', TEXT],

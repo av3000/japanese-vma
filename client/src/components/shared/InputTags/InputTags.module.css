@@ -7,7 +7,7 @@
 .label {
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-semibold, 600);
-	color: var(--color-neutral-800);
+	color: var(--color-text-strong);
 }
 
 .inputContainer {
@@ -17,18 +17,18 @@
 	gap: var(--spacing-xs);
 	min-height: var(--size-4xl);
 	padding: var(--spacing-xs) var(--spacing-sm);
-	background-color: var(--color-neutral-0);
+	background-color: var(--color-surface-raised);
 	/* Same border and focus ring as the other form controls, so the field is visible on a white card. */
-	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border: var(--border-size-sm) solid var(--color-border-strong);
 	border-radius: var(--border-radius-sm);
 	cursor: text;
 }
 .inputContainer:hover:not([data-disabled]) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-border-strong);
 }
 .inputContainer:focus-within {
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+	border-color: var(--color-interactive);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-focus-halo);
 }
 .invalid,
 .invalid:hover:not([data-disabled]) {
@@ -41,7 +41,7 @@
 .inputContainer:focus,
 .inputContainer:focus-visible {
 	outline-width: var(--border-size-md);
-	outline-color: var(--color-neutral-900);
+	outline-color: var(--color-text-strong);
 	outline-offset: var(--border-size-sm);
 }
 
@@ -63,5 +63,5 @@
 
 .disabled {
 	cursor: not-allowed;
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 }

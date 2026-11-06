@@ -13,10 +13,10 @@
 	align-items: center;
 	gap: var(--spacing-xs);
 	padding: var(--spacing-xs) var(--spacing-sm);
-	background: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	background: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-sm);
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	font-size: var(--font-size-body-md);
 	cursor: pointer;
 }
@@ -42,5 +42,5 @@
 }
 
 .muted {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

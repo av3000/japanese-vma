@@ -29,19 +29,19 @@
 	gap: var(--spacing-xs);
 	height: var(--input-height-sm);
 	padding: 0 var(--spacing-sm);
-	border: var(--border-size-sm) solid var(--color-neutral-400);
+	border: var(--border-size-sm) solid var(--color-border-strong);
 	border-radius: var(--border-radius-sm);
-	background-color: var(--color-neutral-0);
+	background-color: var(--color-surface-raised);
 }
 
 .field:focus-within {
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+	border-color: var(--color-interactive);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-focus-halo);
 }
 
 .fieldIcon {
 	flex: none;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .input {
@@ -53,7 +53,7 @@
 	background: transparent;
 	font: inherit;
 	font-size: var(--font-size-body-lg);
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 }
 
 /* The global input:focus outline would draw a second box inside the field's own focus ring. */
@@ -63,7 +63,7 @@
 }
 
 .input::placeholder {
-	color: var(--color-neutral-500);
+	color: var(--color-text-disabled);
 }
 
 /* The field draws the focus ring; the native search "x" would sit next to the "/" hint. */
@@ -73,12 +73,12 @@
 
 .kbd {
 	padding: 0 var(--spacing-2xs);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .panel {
@@ -87,9 +87,9 @@
 	right: 0;
 	left: 0;
 	z-index: var(--z-index-dropdown);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-md);
-	background-color: var(--color-neutral-0);
+	background-color: var(--color-surface-raised);
 	box-shadow: var(--box-shadow-default);
 }
 
@@ -98,9 +98,9 @@
 	flex-wrap: wrap;
 	gap: var(--spacing-md);
 	padding: var(--spacing-xs) var(--spacing-md);
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 /* Body, shared by the panel and the drawer --------------------------------- */
@@ -112,7 +112,7 @@
 .label {
 	margin: var(--spacing-sm) 0 var(--spacing-xs);
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .label:first-child {
@@ -135,37 +135,37 @@
 	gap: var(--spacing-2xs);
 	min-height: var(--size-2xl);
 	padding: 0 var(--spacing-sm);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-lg);
-	background-color: var(--color-neutral-0);
+	background-color: var(--color-surface-raised);
 	font: inherit;
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	cursor: pointer;
 }
 
 .chip:hover {
-	border-color: var(--color-neutral-500);
-	color: var(--color-neutral-900);
+	border-color: var(--color-border-strong);
+	color: var(--color-text-strong);
 }
 
 .chip:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
 /* Fill, border and weight, so the selected chip does not rely on colour alone. */
 .chip[aria-pressed='true'] {
-	border-color: var(--color-primary-200);
-	background-color: var(--color-primary-tint);
+	border-color: var(--color-interactive-border);
+	background-color: var(--color-interactive-tint);
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-primary-hover);
+	color: var(--color-interactive-hover);
 }
 
 .bestTag {
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-regular);
-	color: var(--color-primary);
+	color: var(--color-interactive);
 }
 
 .rows {
@@ -185,28 +185,28 @@
 	background: transparent;
 	font: inherit;
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	text-align: left;
 	cursor: pointer;
 }
 
 .row:hover {
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 }
 
 .row:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: -2px;
 }
 
 .rowActive,
 .rowActive:hover {
-	background-color: var(--color-primary-tint);
+	background-color: var(--color-interactive-tint);
 }
 
 .rowIcon {
 	flex: none;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 /* Takes the free width; a trailing hit count (#383) slots in between this and the Enter hint. */
@@ -218,19 +218,19 @@
 
 .note {
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .enterHint {
 	flex: none;
 	visibility: hidden;
 	padding: 0 var(--spacing-2xs);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-0);
+	background-color: var(--color-surface-raised);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .rowActive .enterHint {
@@ -255,19 +255,19 @@
 	width: var(--size-4xl);
 	height: var(--size-3xl);
 	padding: 0;
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-sm);
 	background: transparent;
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	cursor: pointer;
 }
 
 .iconButton:hover {
-	border-color: var(--color-neutral-500);
+	border-color: var(--color-border-strong);
 }
 
 .iconButton:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -287,7 +287,7 @@
 	align-items: center;
 	gap: var(--spacing-xs);
 	padding: var(--size-sm) var(--size-md);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .drawerField {
@@ -303,12 +303,12 @@
 	background: transparent;
 	font: inherit;
 	font-size: var(--font-size-body-md);
-	color: var(--color-primary);
+	color: var(--color-interactive);
 	cursor: pointer;
 }
 
 .cancel:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -320,7 +320,7 @@
 
 .drawerFoot {
 	padding: var(--spacing-sm) var(--size-md);
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
 .drawerSubmit {

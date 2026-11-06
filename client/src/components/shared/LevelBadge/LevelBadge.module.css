@@ -18,8 +18,8 @@
 
 /* "Uncommon" (outside the JLPT lists) is informational, not a level. */
 .neutral {
-	background-color: var(--color-neutral-200);
-	color: var(--color-neutral-700);
+	background-color: var(--color-fill);
+	color: var(--color-text-subtle);
 }
 
 .count {
