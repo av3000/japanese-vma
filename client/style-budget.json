@@ -3,5 +3,10 @@
   "tailwindImports": 0,
   "bootstrapClassTokens": 0,
   "tailwindClassTokens": 0,
-  "scssFiles": 0
+  "scssFiles": 0,
+  "undefinedCustomProperties": 0,
+  "moduleHexColours": 0,
+  "themeSelectors": 0,
+  "unguardedLightDark": 0,
+  "rawPaletteRefs": 0
 }

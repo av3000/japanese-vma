@@ -1,13 +1,13 @@
 /* Even border plus a tint of the verdict colour, the same recipe as the shared Alert. */
 .feedback {
-	--feedback-accent: var(--color-neutral-500);
+	--feedback-accent: var(--color-border-strong);
 
 	padding: var(--spacing-md);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-color: color-mix(in srgb, var(--feedback-accent) 35%, transparent);
 	border-radius: var(--border-radius-md);
-	background: var(--color-neutral-0);
-	background: color-mix(in srgb, var(--feedback-accent) 8%, var(--color-neutral-0));
+	background: var(--color-surface-raised);
+	background: color-mix(in srgb, var(--feedback-accent) 8%, var(--color-surface-raised));
 }
 
 .correct {
@@ -29,21 +29,21 @@
 }
 
 .correct .mark {
-	color: var(--color-success);
+	color: var(--color-success-text);
 }
 
 .wrong .mark {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .given {
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-weight: var(--font-weight-regular);
 }
 
 .label {
 	margin: 0 0 var(--spacing-2xs);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-xs);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
@@ -58,7 +58,7 @@
 .answer {
 	padding: var(--spacing-3xs) var(--spacing-xs);
 	border-radius: var(--border-radius-sm);
-	background: var(--color-neutral-100);
+	background: var(--color-surface-sunken);
 	overflow-wrap: anywhere;
 }
 

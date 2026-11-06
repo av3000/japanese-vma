@@ -18,19 +18,19 @@
 }
 
 .richTextLink {
-	color: var(--color-text-primary-default);
+	color: var(--color-interactive);
 	display: inline;
 	text-decoration: underline;
 	transition: color var(--ease-base) var(--duration-sm);
 }
 .richTextLink:hover {
-	color: var(--color-text-primary-hover);
+	color: var(--color-interactive-hover);
 }
 .richTextLink:focus {
-	color: var(--color-text-primary-focus);
+	color: var(--color-interactive-hover);
 }
 .richTextLink:active {
-	color: var(--color-text-primary-active);
+	color: var(--color-interactive-hover);
 }
 
 .hasMinHeight {
@@ -38,10 +38,10 @@
 }
 
 .colorDefault {
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 }
 .colorDefault.link:not(span):hover {
-	color: var(--color-text-neutral-hover);
+	color: var(--color-text-subtle);
 }
 
 .sizeSm {

@@ -5,6 +5,7 @@ import DefaultAvatar from '@/assets/images/avatar-man.svg';
 import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
 import { Icon } from '@/components/shared/Icon';
+import { LikeIcon } from '@/components/shared/LikeIcon';
 import { Cluster } from '@/components/shared/layout';
 import { formatDate } from '@/helpers/date';
 import CommentForm from '../CommentForm/CommentForm';
@@ -121,7 +122,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						aria-pressed={isLiked}
 						disabled={state.isLikePending}
 					>
-						<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+						<LikeIcon liked={isLiked} />
 					</Button>
 
 					{canReply && onReply && !isReplying && (

@@ -4,10 +4,10 @@
 	align-items: center;
 	max-width: 100%;
 	padding: var(--spacing-3xs) var(--spacing-xs);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-0);
-	color: var(--color-neutral-800);
+	background-color: var(--color-surface-raised);
+	color: var(--color-text-strong);
 	font-size: var(--font-size-body-sm);
 	font-weight: var(--font-weight-semibold);
 	line-height: var(--line-height-lg);

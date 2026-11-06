@@ -3,7 +3,7 @@
 	align-items: flex-start;
 	gap: var(--spacing-md);
 	padding-block: var(--spacing-md);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .avatar {
@@ -31,12 +31,12 @@
 }
 
 .footer {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .date {
 	margin-left: auto;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-sm);
 }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLikePostMutation } from '@/api/posts/likes';
 import { Button } from '@/components/shared/Button';
-import { Icon } from '@/components/shared/Icon';
+import { LikeIcon } from '@/components/shared/LikeIcon';
 import { useAuth } from '@/hooks/useAuth';
 
 const countFormat = new Intl.NumberFormat('en-US');
@@ -45,7 +45,7 @@ const PostLikeButton: React.FC<PostLikeButtonProps> = ({ postId, detailIdentifie
 			onClick={handleClick}
 			disabled={likeMutation.isTogglingInstance(postId)}
 		>
-			<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+			<LikeIcon liked={isLiked} />
 			{`Like · ${countFormat.format(likesCount)}`}
 		</Button>
 	);

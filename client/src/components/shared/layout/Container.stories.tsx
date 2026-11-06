@@ -9,7 +9,7 @@ const SIZES = ['xs', 'sm', 'md', 'lg', 'fluid'] as const satisfies readonly Cont
 
 const filled: CSSProperties = {
 	padding: '1rem',
-	background: 'var(--color-neutral-200)',
+	background: 'var(--color-fill)',
 	borderRadius: 'var(--border-radius-sm)',
 };
 

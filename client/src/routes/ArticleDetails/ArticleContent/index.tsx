@@ -24,6 +24,7 @@ import { characterCount, DetailFacts, type DetailFact } from '@/components/share
 import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
 import { JlptBar } from '@/components/shared/JlptBar';
+import { LikeIcon } from '@/components/shared/LikeIcon';
 import { Link } from '@/components/shared/Link';
 import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
 import { VisibilityCue } from '@/components/shared/VisibilityCue';
@@ -167,7 +168,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 							disabled={likeMutation.isTogglingInstance(article.id)}
 							onClick={handleLikeClick}
 						>
-							<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+							<LikeIcon liked={isLiked} />
 							{`Like · ${likesCount}`}
 						</Button>
 						{isAuthenticated && (

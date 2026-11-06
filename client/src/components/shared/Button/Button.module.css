@@ -9,10 +9,10 @@
 	position: relative;
 	cursor: pointer;
 	text-decoration: none;
-	background-color: var(--color-primary);
+	background-color: var(--color-interactive);
 	border: var(--border-size-sm) solid transparent;
 	border-radius: var(--border-radius-md);
-	color: var(--color-neutral-0);
+	color: var(--color-on-interactive);
 	font-weight: var(--font-weight-semibold, 600);
 	line-height: var(--line-height-sm, 1.5);
 	transition:
@@ -28,14 +28,14 @@
 .button:focus,
 .button:focus-visible {
 	outline-width: var(--border-size-md);
-	outline-color: var(--color-neutral-900);
+	outline-color: var(--color-text-strong);
 	outline-offset: var(--border-size-sm);
 }
 .button:disabled,
 .button.disabled {
 	pointer-events: none;
 	cursor: not-allowed;
-	background-color: var(--color-primary-disabled);
+	background-color: var(--color-interactive-disabled);
 	opacity: 0.65;
 }
 
@@ -109,61 +109,64 @@
 
 /* Rendered as an anchor, a filled button would take the global `a:hover` text colour, which is
    dark on these dark fills. Two-part selectors beat it, and the colour is the one they rest in. */
-.variantPrimary:hover,
+.variantPrimary:hover {
+	color: var(--color-on-interactive);
+}
+
 .variantSecondary:hover,
 .variantSuccess:hover,
 .variantDanger:hover {
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 }
 
 .variantPending:hover {
-	color: var(--color-text-primary);
+	color: var(--color-on-warning);
 }
 
 .variantPrimary {
-	background-color: var(--color-primary);
-	color: var(--color-neutral-0);
+	background-color: var(--color-interactive);
+	color: var(--color-on-interactive);
 }
 @media (hover: hover) {
 	.variantPrimary:hover {
-		background: var(--color-primary-hover);
+		background: var(--color-interactive-hover);
 	}
 }
 .variantPrimary:active {
-	background: var(--color-primary-hover);
+	background: var(--color-interactive-hover);
 }
 .variantPrimary:disabled,
 .variantPrimary.disabled {
-	background-color: var(--color-primary-disabled);
+	background-color: var(--color-interactive-disabled);
 }
 
 .variantSecondary {
-	background-color: var(--color-secondary);
-	border-color: var(--color-secondary);
-	color: var(--color-neutral-0);
+	background-color: var(--color-action-secondary);
+	border-color: var(--color-action-secondary);
+	color: var(--color-on-fill);
 }
 @media (hover: hover) {
 	.variantSecondary:hover {
-		background: var(--color-secondary-hover);
-		border-color: var(--color-secondary-hover);
+		background: var(--color-action-secondary-hover);
+		border-color: var(--color-action-secondary-hover);
 	}
 }
 .variantSecondary:active {
-	background: var(--color-secondary-hover);
-	border-color: var(--color-secondary);
+	background: var(--color-action-secondary-hover);
+	border-color: var(--color-action-secondary);
 }
 .variantSecondary:focus,
 .variantSecondary:focus-visible {
-	outline-color: var(--color-secondary-200);
+	outline-color: var(--color-border);
 }
 .variantSecondary:disabled,
 .variantSecondary.disabled {
-	background-color: var(--color-secondary-disabled);
+	background-color: var(--color-action-secondary-disabled);
 }
 
 .variantSuccess {
 	background-color: var(--color-success);
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 }
 @media (hover: hover) {
 	.variantSuccess:hover {
@@ -181,84 +184,85 @@
 .variantGhost {
 	background-color: transparent;
 	border-color: transparent;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 @media (hover: hover) {
 	.variantGhost:hover {
-		background: var(--color-neutral-200-alpha);
-		color: var(--color-neutral-900);
+		background: var(--color-hover-overlay-strong);
+		color: var(--color-text-strong);
 	}
 }
 .variantGhost:active {
-	background: var(--color-neutral-200);
-	color: var(--color-neutral-900);
+	background: var(--color-fill);
+	color: var(--color-text-strong);
 }
 .variantGhost:focus,
 .variantGhost:focus-visible {
-	outline-color: var(--color-neutral-400);
+	outline-color: var(--color-border-strong);
 }
 
 .variantOutline {
 	background-color: transparent;
-	border-color: var(--color-primary);
-	color: var(--color-primary);
+	border-color: var(--color-interactive);
+	color: var(--color-interactive);
 }
 @media (hover: hover) {
 	.variantOutline:hover {
-		background-color: var(--color-primary);
-		color: var(--color-neutral-0);
+		background-color: var(--color-interactive);
+		color: var(--color-on-interactive);
 	}
 }
 .variantOutline:active {
-	background-color: var(--color-primary-hover);
-	color: var(--color-neutral-0);
+	background-color: var(--color-interactive-hover);
+	color: var(--color-on-interactive);
 }
 .variantOutline:disabled,
 .variantOutline.disabled {
-	border-color: var(--color-primary-disabled);
-	color: var(--color-primary-disabled);
+	border-color: var(--color-interactive-disabled);
+	color: var(--color-interactive-disabled);
 	background-color: transparent;
 }
 
+/* Body text colour, which is what this variant inherited while it pointed at undefined tokens (#493). */
 .variantSecondaryOutline {
 	background-color: transparent;
-	border-color: var(--color-secondary-black);
-	color: var(--color-secondary-black);
+	border-color: var(--color-text);
+	color: var(--color-text);
 }
 @media (hover: hover) {
 	.variantSecondaryOutline:hover {
-		background-color: var(--color-neutral-200-alpha);
+		background-color: var(--color-hover-overlay-strong);
 	}
 }
 .variantSecondaryOutline:active {
-	background: var(--color-secondary-black-hover);
+	background: var(--color-fill);
 }
 .variantSecondaryOutline:disabled,
 .variantSecondaryOutline.disabled {
-	border-color: var(--color-secondary-black-disabled);
-	color: var(--color-secondary-black-disabled);
+	border-color: var(--color-action-secondary-disabled);
+	color: var(--color-text-disabled);
 	background-color: transparent;
 }
 
+/* Dark text on the warning amber: 10.1:1, and 6.1:1 on its hover step. White would fail. */
 .variantPending {
-	background-color: #f59e0b;
-	border-color: #f59e0b;
-	/* White on this amber is 2.14:1; the dark text token passes 4.5:1. */
-	color: var(--color-text-primary);
+	background-color: var(--color-warning);
+	border-color: var(--color-warning);
+	color: var(--color-on-warning);
 }
 @media (hover: hover) {
 	.variantPending:hover {
-		background: #d97706;
-		border-color: #d97706;
+		background: var(--color-warning-hover);
+		border-color: var(--color-warning-hover);
 	}
 }
 .variantPending:active {
-	background: #d97706;
-	border-color: #d97706;
+	background: var(--color-warning-hover);
+	border-color: var(--color-warning-hover);
 }
 .variantPending:focus,
 .variantPending:focus-visible {
-	outline-color: #fde68a;
+	outline-color: var(--color-text);
 }
 .variantPending:disabled,
 .variantPending.disabled {
@@ -270,13 +274,13 @@
 	padding-right: 0;
 	background-color: transparent;
 	border-color: transparent;
-	color: var(--color-primary);
+	color: var(--color-interactive);
 }
 @media (hover: hover) {
 	.variantLinkButton:hover {
 		background-color: transparent;
 		border-color: transparent;
-		color: var(--color-primary-hover);
+		color: var(--color-interactive-hover);
 		text-decoration: underline;
 		text-underline-offset: 0.15em;
 	}
@@ -284,20 +288,20 @@
 .variantLinkButton:active {
 	background-color: transparent;
 	border-color: transparent;
-	color: var(--color-primary-hover);
+	color: var(--color-interactive-hover);
 }
 .variantLinkButton:focus,
 .variantLinkButton:focus-visible {
-	outline-color: var(--color-primary-100);
+	outline-color: var(--color-focus-halo);
 }
 .variantLinkButton:disabled,
 .variantLinkButton.disabled {
-	color: var(--color-primary-disabled);
+	color: var(--color-interactive-disabled);
 }
 
 .variantDanger {
 	background-color: var(--color-error);
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 }
 @media (hover: hover) {
 	.variantDanger:hover {
@@ -321,5 +325,5 @@
 }
 .variantDanger:disabled,
 .variantDanger.disabled {
-	background-color: var(--color-danger-disabled);
+	background-color: var(--color-error-disabled);
 }

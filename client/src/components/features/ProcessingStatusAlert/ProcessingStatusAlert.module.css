@@ -27,7 +27,7 @@
 
 .summary {
 	cursor: pointer;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 .detailList {
@@ -44,7 +44,7 @@
 }
 
 .detailLabel {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-weight: inherit;
 }
 

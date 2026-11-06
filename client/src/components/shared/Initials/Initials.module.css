@@ -4,8 +4,8 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: 50%;
-	background-color: var(--color-neutral-200);
-	color: var(--color-neutral-700);
+	background-color: var(--color-fill);
+	color: var(--color-text-subtle);
 	font-weight: var(--font-weight-semibold);
 	line-height: 1;
 	user-select: none;

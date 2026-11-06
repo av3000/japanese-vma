@@ -22,7 +22,7 @@ const ALIGNS = ['start', 'center', 'end', 'baseline', 'stretch'] as const satisf
 
 const box: CSSProperties = {
 	padding: '0.5rem 0.75rem',
-	background: 'var(--color-neutral-200)',
+	background: 'var(--color-fill)',
 	borderRadius: 'var(--border-radius-sm)',
 };
 
@@ -90,7 +90,7 @@ export const Alignments: Story = {
 			{ALIGNS.map((align) => (
 				<div key={align}>
 					<p style={{ margin: '0 0 0.5rem' }}>align=&quot;{align}&quot;</p>
-					<Stack align={align} gap="xs" style={{ border: '1px dashed var(--color-neutral-400)' }}>
+					<Stack align={align} gap="xs" style={{ border: '1px dashed var(--color-border-strong)' }}>
 						<div style={box}>Short</div>
 						<div style={box}>A little longer item</div>
 					</Stack>

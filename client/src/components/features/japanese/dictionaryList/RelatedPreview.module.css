@@ -26,7 +26,7 @@
 }
 
 .count {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-md);
 	font-variant-numeric: tabular-nums;
@@ -35,7 +35,7 @@
 
 .message {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 .seeAll {

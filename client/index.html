@@ -1,16 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-theme="kinari">
   <head>
     <meta charset="utf-8" />
-    <!-- <link rel="icon" href="%PUBLIC_URL%/favicon.ico" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
-    <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
+    <meta name="theme-color" id="theme-color" content="#fbfaf5" />
+    <meta name="description" content="Graded Japanese reading, with the dictionary one tap away." />
+    <link rel="icon" type="image/svg+xml" id="favicon" href="/themes/kinari/favicon.svg" />
+    <link rel="apple-touch-icon" id="touch-icon" href="/themes/kinari/apple-touch-icon.png" />
+    <!--
+      Applies the saved theme and colour scheme before the first paint, so the page never flashes the
+      wrong one (STYLING-03, #498). The map `m` is bootMap() from src/themes/manifest.ts; a unit test
+      (src/themes/bootScript.test.ts) keeps them identical and runs this script. If a CSP is added,
+      it needs this script's hash.
+    -->
+    <script>
+      (function () {
+        var m = {
+          k: ["jvma:theme", "jvma:color-scheme"],
+          d: "kinari",
+          o: true,
+          t: {
+            kinari: {
+              s: ["light", "dark"],
+              c: { light: "#fbfaf5", dark: "#1c1b19" },
+              f: "/themes/kinari/favicon.svg",
+              a: "/themes/kinari/apple-touch-icon.png",
+            },
+            sakura: {
+              s: ["light", "dark"],
+              c: { light: "#fdf7f8", dark: "#1e181a" },
+              f: "/themes/sakura/favicon.svg",
+              a: "/themes/sakura/apple-touch-icon.png",
+            },
+            sumi: {
+              s: ["dark"],
+              c: { dark: "#141311" },
+              f: "/themes/sumi/favicon.svg",
+              a: "/themes/sumi/apple-touch-icon.png",
+            },
+          },
+        };
+        function get(key) {
+          try {
+            return window.localStorage.getItem(key);
+          } catch (e) {
+            return null;
+          }
+        }
+        var stored = get(m.k[0]);
+        var id = Object.prototype.hasOwnProperty.call(m.t, stored) ? stored : m.d;
+        var theme = m.t[id];
+        var two = theme.s.length > 1;
+        var raw = get(m.k[1]);
+        var saved = two && (raw === "light" || raw === "dark") ? raw : null;
+        var os = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        var scheme = two ? saved || (m.o ? os : "light") : theme.s[0];
+        var root = document.documentElement;
+        root.setAttribute("data-theme", id);
+        if (saved) root.setAttribute("data-scheme", saved);
+        if (theme.c[scheme]) document.getElementById("theme-color").setAttribute("content", theme.c[scheme]);
+        document.getElementById("favicon").setAttribute("href", theme.f);
+        document.getElementById("touch-icon").setAttribute("href", theme.a);
+      })();
+    </script>
     <title>JPLearning</title>
   </head>
   <body>

@@ -3,8 +3,8 @@
  *
  * Responsive values are driven by custom properties set inline by the
  * components, so no per-breakpoint class explosion is needed.
- * Breakpoints follow src/styles/00-settings/breakpoints:
- *   sm 768px, md 1024px, lg 1320px
+ * Breakpoints are literal min-widths (custom properties cannot be used in media
+ * queries, so there is no token file): sm 768px, md 1024px, lg 1320px.
  */
 
 /* Container ---------------------------------------------------------- */
