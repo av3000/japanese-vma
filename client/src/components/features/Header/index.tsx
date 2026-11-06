@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { HeaderSearch } from '@/components/features/HeaderSearch';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
+import { Logo } from '@/components/shared/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { AccountMenu } from './AccountMenu';
 import styles from './Header.module.css';
@@ -57,7 +58,7 @@ const Header: React.FC = () => {
 		<header className={styles.header}>
 			<div className={styles.bar}>
 				<Link to="/" className={styles.brand}>
-					JPLearning
+					<Logo />
 				</Link>
 
 				<nav aria-label="Main" className={styles.desktopNav}>

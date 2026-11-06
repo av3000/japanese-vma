@@ -1,0 +1,25 @@
+/* The like roles are currentColor in kinari, so the icon keeps the colour of the button it sits in. */
+.like {
+	display: inline-flex;
+	flex: none;
+}
+
+.off {
+	color: var(--color-like-off);
+}
+
+.on {
+	color: var(--color-like-on);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.on > * {
+		animation: bloom var(--duration-sm) var(--ease-base);
+	}
+}
+
+@keyframes bloom {
+	50% {
+		transform: scale(1.15);
+	}
+}

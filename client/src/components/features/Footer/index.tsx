@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Logo } from '@/components/shared/Logo';
 import { Container } from '@/components/shared/layout';
 import { NAV_SECTIONS } from '@/shared/constants/navigation';
 import styles from './Footer.module.css';
@@ -22,7 +23,7 @@ const Footer: React.FC = () => {
 				<div className={styles.top}>
 					<div className={styles.brandBlock}>
 						<Link to="/" className={styles.brand}>
-							JPLearning
+							<Logo />
 						</Link>
 						<p className={styles.tagline}>Graded Japanese reading, with the dictionary one tap away.</p>
 					</div>

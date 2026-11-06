@@ -91,17 +91,17 @@ describe('PostLikeButton', () => {
 		expect(capturedButtonProps[0].disabled).toBe(true);
 	});
 
-	it('shows the unfilled icon for a viewer who has not liked the post', () => {
-		expect(renderButton(false)).toContain('thumbsUpRegular');
+	it('shows the off-state like icon for a viewer who has not liked the post', () => {
+		expect(renderButton(false)).toContain('data-state="off"');
 	});
 
-	it('shows the filled icon on load for a viewer who already liked the post', () => {
-		expect(renderButton(true)).toContain('thumbsUpSolid');
+	it('shows the on-state like icon on load for a viewer who already liked the post', () => {
+		expect(renderButton(true)).toContain('data-state="on"');
 	});
 
 	it('takes the pressed state from the cached post, not from the last toggle response', () => {
 		lastToggleResult = { is_liked: true, likes_count: 5 };
 
-		expect(renderButton(false)).toContain('thumbsUpRegular');
+		expect(renderButton(false)).toContain('data-state="off"');
 	});
 });
