@@ -56,14 +56,14 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-02 | A locale has a unique lowercase ISO 639-1 code, a name and an active flag. English is seeded and cannot be deactivated, re-coded or deleted. Non-English locales can be created, activated and deactivated. Deactivating hides a locale at runtime but keeps its overrides. There is no hard delete in the first delivery. |
 | FR-03 | `GET /api/v1/translations/locales` is public and returns the active locales, marking `en` as the fallback. It is never shadowed by the parameterised bundle route. |
 | FR-04 | `GET /api/v1/translations/{locale}` is public. It returns `{ locale, fallback_locale, messages }`, a complete flat map with non-empty overrides merged over English. `en` returns the source catalogue. An unknown or inactive locale returns a typed 404 consistent with other v1 endpoints. |
-| FR-05 | Only non-English overrides are stored, unique per (locale, key). Saving trims the value. A blank result deletes the override, and non-empty text upserts it. Values are limited to 2,000 characters. Saves for English, for unknown keys or for inactive locales are rejected and write nothing. No public write endpoint exists. |
+| FR-05 | Only non-English overrides are stored, unique per (locale, key). Saving trims the value. A blank result deletes the override, and non-empty text upserts it. Values are limited to 2,000 characters. Saves for English, for unknown keys or for inactive locales are rejected and write nothing. Each saved override records the editing user (`updated_by_user_id`). No public write endpoint exists. |
 | FR-06 | Only the two derived states exist: Translated and Missing. There is no draft, publish, stale, approval or revision state, and no status column. |
 | FR-07 | Orphans never appear in bundles or completion counts. They are left in place, and cleanup tooling is deferred. |
 | FR-08 | Completion for a locale = valid translated keys ÷ English keys. It is shown as `N of M translated · P% complete`. |
-| FR-09 | The Filament translation overview lists every English key for the selected active non-English locale, including keys with no stored row. It has search across key, English and translated text, All and Missing filters, Translated and Missing badges only, a completion line, and rows that link to the editor. |
+| FR-09 | The Filament translation overview lists every English key for the selected active non-English locale, including keys with no stored row. It has search across key, English and translated text, All and Missing filters (opening on Missing), Translated and Missing badges only, a completion line, and rows that link to the editor. |
 | FR-10 | The Filament translation editor shows the key and English text read-only, the selected locale, one textarea with the helper "Leave empty to use English", an English fallback preview when the field is empty, one "Save translation" action, and confirmation that the change is live. Saving against a removed key or a deactivated locale shows an error and writes nothing. |
 | FR-11 | The permission catalogue gains `translations.view`, `translations.update` and `locales.manage`. Access to the admin dashboard alone grants none of them. |
-| FR-12 | The React client exposes translations through one `TranslationProvider` and a `t(key)` hook. Components never fetch bundles directly. `t()` returns the key itself when the key is missing from the bundle. |
+| FR-12 | The React client exposes translations through one `TranslationProvider` and a `t(key)` hook. Components never fetch bundles directly. `t()` accepts only known keys, typed from the English snapshot, so a key typo fails type-checking. It returns the key itself when the key is missing from both the bundle and the snapshot, and warns about it in development builds only. |
 | FR-13 | The client chooses its locale in this order: the persisted choice if still active, then a supported browser base language, then `en`. The choice is persisted locally, and `<html lang>` follows the active locale. |
 | FR-14 | Changing language fetches one complete bundle and updates visible labels without a page reload. |
 | FR-15 | The header language selector is shown only when more than one locale is active. |
@@ -130,3 +130,9 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | NFR-09 | US-02, US-05 | Planned |
 
 Each story's commit updates its rows to **Delivered**. When the epic merges, this document is reviewed again. Once the code and tests show the rules on their own, it is removed or reduced.
+
+## 10. Change log
+
+| Date | Change |
+|---|---|
+| 2026-11-08 | Compared with a reference codebase's translation system (Project K). FR-05 now records the editing user, FR-09 opens the overview on Missing, and FR-12 types the keys and warns about missing keys in development builds. The decisions and their trade-offs are in [implementation-plan.md](./implementation-plan.md) §4.6. |

@@ -6,7 +6,7 @@
 | Requirements | [requirements.md](./requirements.md): FR-nn and NFR-nn are cited below |
 | Design | [2026-08-18 design specification](./2026-08-18-translation-management-design.md) |
 | Integration branch | `feature/issue-659-translations` |
-| Last updated | 2026-11-06 |
+| Last updated | 2026-11-08 (Project K comparison decisions D-K1 to D-K7, §4.6) |
 
 This is the plan for the whole epic. Each story session reads **its own section** (§5) together with **its issue**, writes a story-level plan from them, and then builds it. The issue's acceptance criteria are the contract. This plan only says how to meet them.
 
@@ -78,6 +78,40 @@ Neither session is archived or deleted. The user reads them afterwards.
 | Filament | `app/Filament/Pages/Translations/…` and `app/Filament/Resources/TranslationLocales/…`. Navigation via `AdminNavigationGroup`, access via `PanelActor::may(PanelPermission::…)`, and resource policies extend `PanelResourcePolicy`. |
 | Permissions | A new `translations` group in `config/permission-catalog.php`, plus matching cases on the `PanelPermission` enum (`TranslationsView`, `TranslationsUpdate`, `LocalesManage`). |
 
+#### Interfaces by layer (settled after the Project K comparison, §4.6)
+
+```
+Domain/Translations/
+  DTOs/TranslationBundleDTO          {locale, fallbackLocale, messages}             01
+  DTOs/TranslationCompletionDTO      {translated, total, percent}                   02
+  DTOs/TranslationRowDTO             {key, source, value|null, state}               04
+  Enums/TranslationState             Translated | Missing                           02
+  Services/TranslationResolver       pure, with no IO. The only place the override rule lives.   02
+      merge(array $source, array $overrides): array<string,string>   // override if non-empty and key in source, else source; orphans dropped
+      state(?string $override): TranslationState
+      completion(array $source, array $overrides): TranslationCompletionDTO
+  Errors/TranslationErrors           localeNotFound, localeInactive, unknownKey, sourceLocaleNotEditable, valueTooLong
+
+Application/Translations/
+  Interfaces/Sources/EnglishSourceCatalogueInterface
+      messages(): array<string,string>; find(string $key): ?string                  01
+  Interfaces/Repositories/TranslationLocaleRepositoryInterface
+      findActive(); findActiveByCode(string)                                        01
+      findByCode(string); create(string $code, string $name); setActive(string $code, bool $active)   03
+  Interfaces/Repositories/TranslationOverrideRepositoryInterface                    02
+      overridesFor(int $localeId): array<string,string>       // one query
+      upsert(int $localeId, string $key, string $value, ?int $userId): void
+      delete(int $localeId, string $key): void
+  Services/TranslationServiceInterface          read side: used by HTTP only        01
+      activeLocales(): Result; bundle(string $code): Result<TranslationBundleDTO>
+  Services/TranslationEditorServiceInterface    edit side: used by Filament only    02 / 04 / 05
+      completion(string $code): Result<TranslationCompletionDTO>                    02
+      saveOverride(string $code, string $key, string $raw, ?int $userId): Result<TranslationState>   02
+      rows(string $code, ?string $search, bool $missingOnly): Result<list<TranslationRowDTO>>        04
+```
+
+HTTP controllers depend only on `TranslationServiceInterface`, and Filament pages only on `TranslationEditorServiceInterface`. Both services build on `TranslationResolver`, so a bundle and a completion count can never disagree about what counts as translated.
+
 ### 4.2 Contract
 
 Backend first: `composer openapi` (Scramble), then `npm run orval:file` in `client/`, or run both with `npm run api:generate`. Never hand-edit `api.json` or the Orval output (`CONTRACT-api-json-orval-workflow`, `repo-generated-client-first`).
@@ -121,6 +155,20 @@ The full list is in `docs/agents/local-environment.md`. Read it in a fresh workt
   - Parallel Bash calls share a working directory.
   - A PostgreSQL unique violation aborts the transaction, so use an upsert, not insert-then-catch.
 
+### 4.6 Decisions from the Project K comparison (2026-11-08)
+
+The plan was compared with the translation system of a reference codebase, Project K. It keeps UI labels and entity content apart, as we do. Its labels are declared in code with English defaults, edited in an admin grid, served as one bundle per locale, and read in React from a context. The user accepted these decisions:
+
+| # | Decision | Lands in | Other side |
+|---|---|---|---|
+| D-K1 | Separate the read side (`TranslationService`, HTTP) from the edit side (`TranslationEditorService`, Filament), with a pure `TranslationResolver` in Domain that owns the override rule | 02, 04, 05 | One more interface. A single service would mix public reads with admin needs. |
+| D-K2 | A `TranslationKey` type generated from the English snapshot. `t(key: TranslationKey)` turns a key typo into a `tsc` error. | 06, 07 | Adding a key means re-exporting the snapshot, which P1 already requires. |
+| D-K3 | A nullable `updated_by_user_id` on `translations`, set on every save | 02, 05 | Slightly past "ordinary timestamps", though it is still not history. |
+| D-K4 | The overview opens with the Missing filter on | 04 | Someone who only wants to browse needs one click to see All. |
+| D-K5 | Development builds only: `console.warn` once per key that is missing from both the bundle and the snapshot | 06 | Console noise during the incremental migration. |
+| D-K6 | No copying English into the database. English stays code-owned. | — | English cannot be changed without a deploy. That is intended. |
+| D-K7 | No cache yet. If one is ever added, invalidate it on save by bumping a version stamp, rather than reloading on a timer. | — | Every bundle request reads the database: one query plus a merge in PHP. |
+
 ## 5. Story sections
 
 ### TRANSLATIONS-01 (#660): English catalogue, locale list and `en` bundle API
@@ -148,20 +196,22 @@ The full list is in `docs/agents/local-environment.md`. Read it in a fresh workt
 
 **Requirements:** FR-04 to FR-08, NFR-01, NFR-02, NFR-09.
 
-1. **Migration `translations`:** FK `translation_locale_id` with cascade on delete, `key` `varchar(191)`, `value` `text`, timestamps, and unique (`translation_locale_id`, `key`). Add model and factory.
-2. **Repository:**
-   - `overridesFor(localeId): array<string,string>` (one query);
-   - `upsert(localeId, key, value)` using `upsert()` on the unique index;
+1. **Migration `translations`:** FK `translation_locale_id` with cascade on delete, `key` `varchar(191)`, `value` `text`, nullable `updated_by_user_id` (FK to `users`, null on delete; D-K3), timestamps, and unique (`translation_locale_id`, `key`). Add model and factory.
+2. **`TranslationResolver`** (Domain, pure, with no IO; D-K1): `merge(source, overrides)`, `state(override)` and `completion(source, overrides)`. A key counts as translated when its override is non-empty and the key exists in English, so orphans are dropped (FR-07). `percent` is rounded down to an integer, so 1 of 4 is "25%"; record that rule in the DTO docblock. Unit-test it without the database.
+3. **`TranslationOverrideRepositoryInterface`** and its Eloquent implementation:
+   - `overridesFor(localeId): array<string,string>`, in one query;
+   - `upsert(localeId, key, value, ?userId)`, using `upsert()` on the unique index;
    - `delete(localeId, key)`.
-3. **Service:**
-   - `bundle(code)`: resolve an active locale (inactive → the same 404 as unknown), load the overrides once, and merge over English while ignoring keys not in English, so orphans are dropped (FR-07).
-   - `saveOverride(code, key, raw)`: trim. Empty → delete. More than 2,000 characters, `en`, an unknown key or an inactive locale → typed failure with no write.
-   - `completion(code)`: `{ translated, total, percent }`, with `percent` rounded down to an integer. That matches "25%" for 1 of 4. Record the rounding rule in the Result DTO docblock.
-4. **Tests:**
-   - unit, for the save rules (AC-3, AC-4) and orphan exclusion (AC-5);
-   - feature, for the merged bundle (AC-1) and inactive locale (AC-2);
-   - query count with `DB::enableQueryLog()` for 3 vs 30 keys, which must be equal (AC-6).
-5. The contract only changes if error shapes change. Regenerate if `api.json` differs.
+4. **Read side:** `TranslationService::bundle(code)` resolves an active locale (an inactive one gets the same 404 as an unknown one), loads the overrides once, and returns `TranslationResolver::merge`.
+5. **Edit side:** a new `TranslationEditorServiceInterface` and service, which Filament will use. It does not extend `TranslationService`.
+   - `saveOverride(code, key, raw, ?userId)`: trim, and delete when the result is empty. More than 2,000 characters, `en`, an unknown key or an inactive locale return a typed failure with no write. On success it returns the new `TranslationState`.
+   - `completion(code)`: delegates to the resolver.
+6. **Tests:**
+   - unit: resolver rules, including orphan exclusion (AC-5);
+   - unit: save rules (AC-3, AC-4), including `updated_by_user_id` being stored;
+   - feature: the merged bundle (AC-1) and an inactive locale (AC-2);
+   - query count with `DB::enableQueryLog()`, equal for 3 and 30 keys (AC-6).
+7. The contract only changes if the error shapes change. Regenerate if `api.json` differs.
 
 ### TRANSLATIONS-03 (#662): permissions and Filament locale management
 
@@ -184,15 +234,15 @@ The full list is in `docs/agents/local-environment.md`. Read it in a fresh workt
 
 **Requirements:** FR-06 to FR-09, FR-11, NFR-01.
 
-1. **Custom page `TranslationOverview`** (slug `translations`). `#[Url]` properties `locale`, `search`, `filter` (`all|missing`). `canAccess()` → `PanelActor::may(PanelPermission::TranslationsView)`.
-2. **Rows** come from a new service method `rows(code): list<{key, source, value|null, state}>`. It is built from the catalogue plus one overrides query. Search and filter run in PHP on that list, which is fine at a few hundred keys (assumption in the requirements, §8).
+1. **Custom page `TranslationOverview`** (slug `translations`). `#[Url]` properties `locale`, `search`, and `filter` (`all|missing`, **default `missing`**, D-K4). `canAccess()` → `PanelActor::may(PanelPermission::TranslationsView)`. The page depends only on `TranslationEditorServiceInterface`.
+2. **Rows** come from `TranslationEditorServiceInterface::rows(code, search, missingOnly): list<TranslationRowDTO>`. It is built from the catalogue plus one overrides query. Search and filter run in PHP on that list, which is fine at a few hundred keys (assumption in the requirements, §8).
    - Render with a Filament table on custom data (`Table::records()` in Filament ≥ 4) with search and a select filter.
    - If the records API cannot drive search and filter cleanly, fall back to a Blade view with a plain table, and record that in the PR.
 3. **Header:** locale select (active non-English locales only, defaulting to the first) and the subheading `N of M translated · P% complete` from `completion()`.
 4. **Badges:** `Translated` (success) and `Missing` (gray), with text always shown and colour never the only cue.
 5. **Row action:** a link to the editor (`?locale=&key=`), added once story 05 exists. Until then, show the key as plain text, so the story is complete on its own.
 6. **Tests:**
-   - Livewire tests for all rows, search on each field, Missing filter, the `1 of 4 translated · 25% complete` line with an orphan present, and a 403 without permission;
+   - Livewire tests for: the page opening on the Missing filter, all rows after switching to All, search on each field, the `1 of 4 translated · 25% complete` line with an orphan present, and a 403 without permission;
    - query count is fixed for 3 vs 30 keys.
 
 ### TRANSLATIONS-05 (#664): Filament translation editor
@@ -207,13 +257,13 @@ The full list is in `docs/agents/local-environment.md`. Read it in a fresh workt
    - a live fallback preview when the field is empty;
    - one `Save translation` action.
    The success notification reads "Saved. Live on the next page load."
-3. **Save** calls `saveOverride()`. A failure Result becomes a danger notification with no write:
+3. **Save** calls `TranslationEditorServiceInterface::saveOverride(code, key, raw, auth()->id())`, which records the translator in `updated_by_user_id` (D-K3). A failure Result becomes a danger notification with no write:
    - for a deactivated locale, "This language is no longer active. Choose an active language.";
    - for a removed key, "This key no longer exists" and the key list is refreshed.
 4. **Read-only mode:** without `translations.update`, the textarea is disabled, the action is hidden, and a direct Livewire call returns 403.
 5. Wire the story 04 row link to this page.
 6. **Tests:**
-   - save makes the next `GET /v1/translations/da` include the value, and the overview shows Translated;
+   - save makes the next `GET /v1/translations/da` include the value, stores the translator's id, and the overview shows Translated;
    - a blank save restores English and Missing;
    - deactivated locale and removed key write nothing;
    - view-only user;
@@ -228,14 +278,19 @@ The full list is in `docs/agents/local-environment.md`. Read it in a fresh workt
    - The `en` bundle comes from `en.generated.json` (no request).
    - Other bundles use the generated query hook with `placeholderData: keepPreviousData`, so labels never blank (AC-3).
    - On error: keep the last bundle and expose `error`. A small polite `role="status"` notice near the selector says "Couldn't load that language. Showing <current>."
-2. **`t(key)`** returns `bundle[key] ?? key`. The default context (no provider) uses the English snapshot, so existing tests keep working.
+2. **`t(key)`:**
+   - **Typed keys (D-K2).** Add `src/i18n/keys.ts` exporting `type TranslationKey = keyof typeof en`, built from `en.generated.json`. `t(key: TranslationKey)` makes a typo fail `npm run typecheck`. Callers that receive a key at runtime cast it once at the boundary.
+   - **Lookup order:** `bundle[key] ?? enSnapshot[key] ?? key`.
+   - **Dev warning (D-K5).** In development builds only (`import.meta.env.DEV`), `console.warn` once per key that is missing from both. Production stays silent.
+   - **Default context.** With no provider, the context uses the English snapshot, so existing tests keep working.
 3. **Effect:** `document.documentElement.lang = locale`.
 4. **`LanguageSelector`:** a native `<select>` with a visible or visually-hidden "Language" label and endonym option labels ("Dansk"). It renders nothing when only one locale is active (AC-5). Put it in the header account `<ul>` (desktop) and the `MenuDrawer` (mobile).
 5. **Tests (Vitest with MSW):**
    - resolution branches;
    - switch without reload, plus persistence and `lang`;
    - keep the previous bundle while loading and on a 500;
-   - unknown key returns the key;
+   - a key missing from both the bundle and the snapshot returns the key and warns only in dev, once;
+   - a `// @ts-expect-error` test proves that an unknown key literal does not type-check;
    - hidden with a single locale.
 6. **Stories:** `LanguageSelector` hidden, two locales, error. Update the header stories with the MSW handlers that Orval generates.
 7. Screenshots at desktop, tablet and mobile with two locales active.
