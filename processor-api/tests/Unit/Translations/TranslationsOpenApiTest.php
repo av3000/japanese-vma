@@ -38,6 +38,18 @@ class TranslationsOpenApiTest extends TestCase
         );
     }
 
+    public function test_the_bundle_documents_the_typed_404(): void
+    {
+        $notFound = $this->api()['paths']['/translations/{locale}']['get']['responses']['404'] ?? null;
+
+        $this->assertNotNull($notFound, 'The unknown or inactive locale 404 must be in api.json.');
+        $this->assertSame('Locale not found', $notFound['description']);
+        $this->assertSame(
+            '#/components/schemas/ProblemDetailsResource',
+            $notFound['content']['application/json']['schema']['$ref'] ?? null,
+        );
+    }
+
     public function test_bundle_messages_is_a_string_to_string_map(): void
     {
         $bundle = $this->api()['components']['schemas']['TranslationBundleResource'];

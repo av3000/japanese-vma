@@ -26,11 +26,20 @@ class ExportTranslationSource extends Command
 
     public function handle(EnglishSourceCatalogueInterface $catalogue, Filesystem $files): int
     {
-        $path = (string) ($this->option('path') ?: base_path('../client/src/i18n/en.generated.json'));
+        $explicitPath = (string) $this->option('path');
+        $path = $explicitPath !== '' ? $explicitPath : base_path('../client/src/i18n/en.generated.json');
         $messages = $catalogue->messages();
 
         if ($this->option('check')) {
             return $this->check($files, $path, $messages);
+        }
+
+        // The deployed container and the Docker lane hold processor-api/ only. Without this guard
+        // the default path would create ../client/... outside the app and still report success.
+        if ($explicitPath === '' && ! $files->isDirectory(dirname($path, 2))) {
+            $this->error(dirname($path, 2).' does not exist: run this from a full checkout, or pass --path.');
+
+            return self::FAILURE;
         }
 
         $files->ensureDirectoryExists(dirname($path));

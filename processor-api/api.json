@@ -3504,7 +3504,7 @@
         "/translations/{locale}": {
             "get": {
                 "operationId": "translation.show",
-                "description": "Public. `messages` holds every interface label as a flat map of dotted key to text, so a\nclient never has to resolve a missing label itself. An unknown or inactive locale answers 404.",
+                "description": "Public. `messages` holds every interface label as a flat map of dotted key to text, so a\nclient never has to resolve a missing label itself. An unknown or inactive locale answers a typed 404\n(`Translations.LocaleNotFound`); a segment that cannot be a locale code answers a plain 404.",
                 "summary": "One complete language bundle",
                 "tags": [
                     "Translation"
@@ -3526,6 +3526,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/TranslationBundleResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locale not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetailsResource"
                                 }
                             }
                         }

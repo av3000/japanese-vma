@@ -107,6 +107,48 @@ class ExportTranslationSourceCommandTest extends TestCase
         $this->artisan('translations:export-source', ['--check' => true])->assertSuccessful();
     }
 
+    public function test_export_without_a_path_refuses_to_write_when_there_is_no_client_directory(): void
+    {
+        // The deployed container and the Docker lane hold processor-api/ only. Writing to the
+        // default path there would create ../client/... outside the app and still print success.
+        $root = sys_get_temp_dir().'/jvma-no-client-'.bin2hex(random_bytes(6));
+        mkdir($root.'/processor-api', 0777, true);
+        $this->catalogue(); // load and memoise the real catalogue: moving the base path also moves resources/lang
+        $this->app->setBasePath($root.'/processor-api');
+
+        try {
+            $this->artisan('translations:export-source')->assertFailed();
+
+            $this->assertDirectoryDoesNotExist($root.'/client');
+        } finally {
+            rmdir($root.'/processor-api');
+            rmdir($root);
+        }
+    }
+
+    public function test_export_without_a_path_writes_the_client_snapshot_when_the_client_exists(): void
+    {
+        $root = sys_get_temp_dir().'/jvma-with-client-'.bin2hex(random_bytes(6));
+        mkdir($root.'/processor-api', 0777, true);
+        mkdir($root.'/client/src', 0777, true);
+        $this->catalogue(); // load and memoise the real catalogue: moving the base path also moves resources/lang
+        $this->app->setBasePath($root.'/processor-api');
+        $snapshot = $root.'/client/src/i18n/en.generated.json';
+
+        try {
+            $this->artisan('translations:export-source')->assertSuccessful();
+
+            $this->assertSame($this->catalogue(), json_decode(file_get_contents($snapshot), true));
+        } finally {
+            @unlink($snapshot);
+            @rmdir($root.'/client/src/i18n');
+            rmdir($root.'/client/src');
+            rmdir($root.'/client');
+            rmdir($root.'/processor-api');
+            rmdir($root);
+        }
+    }
+
     private function writeSnapshot(string $contents): void
     {
         mkdir(dirname($this->path), 0777, true);

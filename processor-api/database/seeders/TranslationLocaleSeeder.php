@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Translations\Models\TranslationLocale as DomainTranslationLocale;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +17,7 @@ class TranslationLocaleSeeder extends Seeder
     public function run(): void
     {
         TranslationLocale::query()->updateOrCreate(
-            ['code' => 'en'],
+            ['code' => DomainTranslationLocale::FALLBACK_CODE],
             ['name' => 'English', 'is_active' => true],
         );
     }

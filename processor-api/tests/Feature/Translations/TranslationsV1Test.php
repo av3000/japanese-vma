@@ -8,6 +8,7 @@ use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterf
 use App\Infrastructure\Persistence\Models\TranslationLocale;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class TranslationsV1Test extends TestCase
@@ -151,5 +152,35 @@ class TranslationsV1Test extends TestCase
     public function test_the_locale_code_is_matched_exactly(): void
     {
         $this->getJson('/api/v1/translations/EN')->assertNotFound();
+    }
+
+    public function test_a_region_style_code_that_is_not_a_locale_is_the_typed_404(): void
+    {
+        $this->getJson('/api/v1/translations/en-US')
+            ->assertNotFound()
+            ->assertJsonPath('title', 'Locale not found');
+    }
+
+    /**
+     * The router decodes the segment before it reaches the query. `%FF` is not valid UTF-8 and
+     * PostgreSQL rejects it, so a segment that cannot be a locale code must be turned away
+     * before any query runs: a 404, never a 500.
+     */
+    #[DataProvider('junkSegments')]
+    public function test_a_segment_that_cannot_be_a_locale_code_is_a_404_and_never_a_500(string $segment): void
+    {
+        $this->getJson('/api/v1/translations/'.$segment)->assertNotFound();
+    }
+
+    /** @return array<string, array{string}> */
+    public static function junkSegments(): array
+    {
+        return [
+            'invalid utf-8 byte' => ['%FF'],
+            'nul byte' => ['%00'],
+            'space' => ['en%20x'],
+            'too long' => ['abcdefghijklmnop'],
+            'digits' => ['12'],
+        ];
     }
 }

@@ -8,12 +8,29 @@ use App\Infrastructure\Persistence\Models\TranslationLocale;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * Non-English locales only: `en` already exists from the migration, and its code is unique.
- * The default is an active locale so a test that asks for "a language" gets one clients can see.
+ * Non-English locales only: `en` already exists from the migration, and `code` is unique.
+ *
+ * The default is an active locale, so a test that asks for "a language" gets one clients can see.
+ * One `create()` is always Danish. `count(n)` walks a list of other codes so the rows do not
+ * collide. Two separate `create()` calls both start at Danish: give the second one `code()`.
  */
 class TranslationLocaleFactory extends Factory
 {
     protected $model = TranslationLocale::class;
+
+    public function configure(): static
+    {
+        return $this->sequence(
+            ['code' => 'da', 'name' => 'Dansk'],
+            ['code' => 'sv', 'name' => 'Svenska'],
+            ['code' => 'nb', 'name' => 'Norsk bokmål'],
+            ['code' => 'fi', 'name' => 'Suomi'],
+            ['code' => 'de', 'name' => 'Deutsch'],
+            ['code' => 'fr', 'name' => 'Français'],
+            ['code' => 'es', 'name' => 'Español'],
+            ['code' => 'nl', 'name' => 'Nederlands'],
+        );
+    }
 
     public function definition(): array
     {
