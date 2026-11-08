@@ -1,3 +1,4 @@
+import * as React from 'react';
 import type { Decorator } from '@storybook/react-vite';
 import { useGlobals } from 'storybook/preview-api';
 import { applyAppearance } from '@/lib/appearance';
@@ -6,6 +7,7 @@ import {
 	DEFAULT_THEME,
 	isSchemeName,
 	isThemeId,
+	resolveScheme,
 	type SchemeName,
 	themeManifest,
 	type ThemeId,
@@ -27,12 +29,28 @@ export const resolveStoryAppearance = (
 		: isThemeId(globals.theme)
 			? globals.theme
 			: DEFAULT_THEME;
-	const { schemes } = themeManifest[theme];
 	const wanted = parameter?.scheme ?? globals.scheme;
-	const canToggleScheme = schemes.length > 1;
-	const scheme: SchemeName = !canToggleScheme ? schemes[0] : isSchemeName(wanted) ? wanted : 'light';
+	const canToggleScheme = themeManifest[theme].schemes.length > 1;
+	// The toolbar's scheme stands in for a saved choice; with none, a story shows light, not the OS.
+	const scheme = resolveScheme(theme, isSchemeName(wanted) ? wanted : null, 'light');
 
 	return { theme, scheme, savedScheme: canToggleScheme ? scheme : null, canToggleScheme };
+};
+
+/** Writes the attributes before the story paints, and loads the theme's fonts, outside render. */
+const AppearanceFrame: React.FC<{ value: AppearanceContextValue; children: React.ReactNode }> = ({
+	value,
+	children,
+}) => {
+	const { theme, scheme, savedScheme } = value;
+
+	React.useLayoutEffect(() => applyAppearance({ theme, scheme, savedScheme }), [theme, scheme, savedScheme]);
+
+	React.useEffect(() => {
+		void themeRegistry[theme].loadFonts?.();
+	}, [theme]);
+
+	return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 };
 
 /**
@@ -46,9 +64,6 @@ export const withAppearance: Decorator = (Story, { parameters, globals }) => {
 	const [, updateGlobals] = useGlobals();
 	const state = resolveStoryAppearance(parameters.appearance as AppearanceParameter | undefined, globals);
 
-	applyAppearance(state);
-	void themeRegistry[state.theme].loadFonts?.();
-
 	const value: AppearanceContextValue = {
 		...state,
 		setTheme: (theme) => updateGlobals({ theme }),
@@ -56,8 +71,8 @@ export const withAppearance: Decorator = (Story, { parameters, globals }) => {
 	};
 
 	return (
-		<AppearanceContext.Provider value={value}>
+		<AppearanceFrame value={value}>
 			<Story />
-		</AppearanceContext.Provider>
+		</AppearanceFrame>
 	);
 };

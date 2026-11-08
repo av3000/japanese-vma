@@ -5,7 +5,8 @@
  *   scheme the page follows the OS (once `FOLLOWS_OS_SCHEME` is on) and updates live.
  * - Toggling the scheme back to the OS scheme deletes the saved choice, so the user follows the OS again.
  * - Changing the theme never touches the saved scheme.
- * - If storage throws (private mode, blocked site data) the store keeps working in memory.
+ * - If storage throws (private mode, blocked site data, full) the store keeps the choice in memory.
+ * - In a browser without light-dark() a two-scheme theme stays light and the toggle is hidden.
  *
  * `index.html`'s boot script applies the same state before the first paint; `applyAppearance`
  * is the in-app equivalent and must write the same attributes.
@@ -32,45 +33,53 @@ export interface AppearanceState {
 }
 
 const OS_DARK_QUERY = '(prefers-color-scheme: dark)';
-const memory = new Map<string, string>();
+
+/** Choices this page made that storage refused to save. They win over storage until a save succeeds. */
+const unsaved = new Map<string, string | null>();
 
 const read = (key: string): string | null => {
+	if (unsaved.has(key)) {
+		return unsaved.get(key) ?? null;
+	}
+
 	try {
 		return window.localStorage.getItem(key);
 	} catch {
-		return memory.get(key) ?? null;
+		return null;
 	}
 };
 
 const write = (key: string, value: string | null) => {
-	if (value === null) {
-		memory.delete(key);
-	} else {
-		memory.set(key, value);
-	}
-
 	try {
 		if (value === null) {
 			window.localStorage.removeItem(key);
 		} else {
 			window.localStorage.setItem(key, value);
 		}
+		unsaved.delete(key);
 	} catch {
-		/* storage unavailable: the in-memory copy is enough for this page */
+		// Storage unavailable or full: keep the choice in memory for this page.
+		unsaved.set(key, value);
 	}
 };
 
 const osScheme = (): SchemeName =>
 	typeof window !== 'undefined' && window.matchMedia?.(OS_DARK_QUERY).matches ? 'dark' : 'light';
 
+/** Without light-dark() the CSS has only kinari's light values; index.html's boot script checks the same. */
+const supportsLightDark = () =>
+	typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('color', 'light-dark(#000, #fff)');
+
 const computeState = (): AppearanceState => {
 	const storedTheme = read(STORAGE_KEYS.theme);
 	const theme = isThemeId(storedTheme) ? storedTheme : DEFAULT_THEME;
 	const storedScheme = read(STORAGE_KEYS.scheme);
-	const canToggleScheme = themeManifest[theme].schemes.length > 1;
+	const canToggleScheme = themeManifest[theme].schemes.length > 1 && supportsLightDark();
 	const savedScheme = canToggleScheme && isSchemeName(storedScheme) ? storedScheme : null;
+	// A two-scheme theme in a browser without light-dark() stays light, whatever the OS says.
+	const os = canToggleScheme ? osScheme() : 'light';
 
-	return { theme, scheme: resolveScheme(theme, savedScheme, osScheme()), savedScheme, canToggleScheme };
+	return { theme, scheme: resolveScheme(theme, savedScheme, os), savedScheme, canToggleScheme };
 };
 
 /** Writes the attributes, `theme-color` and favicon links for a state. Mirrors the boot script. */
@@ -167,6 +176,6 @@ export const toggleScheme = () => {
 /** Tests only: forget the cached state so the next read starts from storage and `matchMedia`. */
 export const resetAppearanceForTests = () => {
 	state = null;
-	memory.clear();
+	unsaved.clear();
 	listeners.clear();
 };

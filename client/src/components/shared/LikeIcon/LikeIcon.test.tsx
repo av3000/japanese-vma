@@ -33,7 +33,8 @@ describe.each(THEME_IDS)('LikeIcon in %s', (theme) => {
 
 	it('draws the likeOn shape next to a count, whatever the liked state', () => {
 		const html = render(theme, { tone: 'count', liked: false });
-		expect(html).toContain('data-state="count"');
+		expect(html).toContain('data-tone="count"');
+		expect(html).not.toContain('data-state');
 		expect(html).toContain(drawing(slots.likeOn));
 	});
 });

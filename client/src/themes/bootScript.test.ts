@@ -84,6 +84,14 @@ describe('index.html boot script', () => {
 		});
 	});
 
+	it('stays light in a browser without light-dark(), whatever is saved or the OS says', () => {
+		vi.spyOn(CSS, 'supports').mockReturnValue(false);
+
+		expect(run({ scheme: 'dark', osDark: true })).toMatchObject({ scheme: null, themeColor: '#fbfaf5' });
+		document.documentElement.removeAttribute('data-theme');
+		expect(run({ theme: 'sumi' })).toMatchObject({ theme: 'sumi', themeColor: '#141311' });
+	});
+
 	it('ignores a scheme value it does not know', () => {
 		expect(run({ scheme: 'sepia' }).scheme).toBeNull();
 	});

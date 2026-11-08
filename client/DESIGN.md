@@ -59,9 +59,9 @@ A **scheme** is light or dark. A **theme** (kinari, sakura, sumi) changes appear
 
 - Code never compares a theme id. No `theme.id === 'sakura'` in TS, no `[data-theme='sakura']` selector in component CSS.
 - What must differ in markup is a named slot in the theme config (`theme.icons.likeOn`, `theme.logo`). What must differ in behaviour is a named flag, never the theme name.
-- Dark values use `light-dark()`, always inside `@supports (color: light-dark(#000, #fff))` (`style:audit` checks). Browsers without it get kinari light colours; that is the accepted fallback.
+- Dark values use `light-dark()`, always inside `@supports (color: light-dark(#000, #fff))` (`style:audit` checks). Browsers without it get kinari light colours, `color-scheme: light` and no scheme toggle; that is the accepted fallback. A single-scheme theme (sumi) sets every colour role as a plain value instead, so it keeps its own scheme there too.
 - Theme data lives in `src/themes/`: `manifest.ts` (ids, schemes, `theme-color`, favicons; `index.html`'s boot script embeds it and a test keeps them equal) and `registry.ts` (slots). Read the theme through `useTheme()` and the scheme controls through `useAppearance()`.
-- `src/themes/contrast.test.ts` checks every role pair in every theme × scheme against WCAG AA. Add a pair there when you add a role.
+- A theme sets every colour role except the level and status roles, which mean the same thing in every theme. `src/themes/contrast.test.ts` enforces that, and checks every role pair in every theme × scheme, and without `light-dark()`, against WCAG AA. A new role fails it until it is listed in `ROLE_CHECKS` with what it is drawn on, or why it is exempt.
 
 ## 4) Spacing, Size And Shape
 

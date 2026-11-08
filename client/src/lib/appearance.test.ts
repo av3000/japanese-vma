@@ -104,6 +104,27 @@ describe('appearance store', () => {
 		expect(getAppearance()).toMatchObject({ scheme: 'dark', savedScheme: 'dark' });
 	});
 
+	it('uses the unsaved choice when storage reads but will not save', () => {
+		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+			throw new Error('quota');
+		});
+
+		toggleScheme();
+		expect(getAppearance()).toMatchObject({ scheme: 'dark', savedScheme: 'dark' });
+
+		toggleScheme();
+		expect(getAppearance()).toMatchObject({ scheme: 'light', savedScheme: null });
+	});
+
+	it('stays light, with no toggle, in a browser without light-dark()', () => {
+		vi.spyOn(CSS, 'supports').mockReturnValue(false);
+		localStorage.setItem(STORAGE_KEYS.scheme, 'dark');
+		osDark = true;
+
+		expect(getAppearance()).toMatchObject({ scheme: 'light', savedScheme: null, canToggleScheme: false });
+		expect(document.documentElement.hasAttribute('data-scheme')).toBe(false);
+	});
+
 	it('follows a dark OS with nothing saved, without setting data-scheme', () => {
 		osDark = true;
 

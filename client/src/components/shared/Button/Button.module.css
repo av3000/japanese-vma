@@ -292,7 +292,7 @@
 }
 .variantLinkButton:focus,
 .variantLinkButton:focus-visible {
-	outline-color: var(--color-focus-halo);
+	outline-color: var(--color-focus);
 }
 .variantLinkButton:disabled,
 .variantLinkButton.disabled {

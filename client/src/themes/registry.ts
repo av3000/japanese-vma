@@ -57,6 +57,14 @@ export interface ThemeConfig extends ThemeManifestEntry {
 	icons: ThemeIcons;
 }
 
+/** Today's icons: sun and moon for the scheme, thumbs up for likes. */
+const DEFAULT_ICONS: ThemeIcons = {
+	schemeLight: 'sunSolid',
+	schemeDark: 'moonSolid',
+	likeOff: 'thumbsUpRegular',
+	likeOn: 'thumbsUpSolid',
+};
+
 const kinari: ThemeConfig = {
 	...themeManifest.kinari,
 	logo: null,
@@ -71,7 +79,7 @@ const kinari: ThemeConfig = {
 			href: 'https://unsplash.com/photos/mount-fuji-peak-in-black-and-white-tb49PTdW1ZM',
 		},
 	},
-	icons: { schemeLight: 'sunSolid', schemeDark: 'moonSolid', likeOff: 'thumbsUpRegular', likeOn: 'thumbsUpSolid' },
+	icons: DEFAULT_ICONS,
 };
 
 /** Sakura (桜): spring. A blossom mark and band, a rounded Japanese face, blossom like icons. */
@@ -94,7 +102,7 @@ const sumi: ThemeConfig = {
 	...themeManifest.sumi,
 	logo: { src: sumiMark, width: 640, height: 640 },
 	hero: { sources: [], src: sumiHero, width: 1920, height: 384, credit: null },
-	icons: { schemeLight: 'sunSolid', schemeDark: 'moonSolid', likeOff: 'thumbsUpRegular', likeOn: 'thumbsUpSolid' },
+	icons: DEFAULT_ICONS,
 };
 
 export const themeRegistry: Record<ThemeId, ThemeConfig> = {

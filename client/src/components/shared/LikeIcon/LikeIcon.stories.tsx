@@ -51,7 +51,8 @@ export const InContext: Story = {
 		const states = [...canvasElement.querySelectorAll('[data-icon-slot="like"]')].map((el) =>
 			el.getAttribute('data-state'),
 		);
-		await expect(states).toEqual(['off', 'on', 'on', 'count']);
+		// A likes count is not a state of the viewer, so it has no data-state.
+		await expect(states).toEqual(['off', 'on', 'on', null]);
 	},
 };
 

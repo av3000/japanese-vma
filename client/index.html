@@ -50,7 +50,9 @@
         var stored = get(m.k[0]);
         var id = Object.prototype.hasOwnProperty.call(m.t, stored) ? stored : m.d;
         var theme = m.t[id];
-        var two = theme.s.length > 1;
+        // Without light-dark() the CSS has only kinari's light values, so a two-scheme theme stays light.
+        var ld = !!(window.CSS && CSS.supports && CSS.supports("color", "light-dark(#000, #fff)"));
+        var two = ld && theme.s.length > 1;
         var raw = get(m.k[1]);
         var saved = two && (raw === "light" || raw === "dark") ? raw : null;
         var os = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";

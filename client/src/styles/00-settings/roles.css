@@ -76,19 +76,26 @@
 
 /*
  * The scheme. With no saved choice the page follows the OS; `data-scheme` on <html> is a saved choice.
- * Native controls, scrollbars and the <dialog> backdrop follow `color-scheme`. A single-scheme theme
- * sets `color-scheme` in its own file.
+ * Native controls, scrollbars and the <dialog> backdrop follow `color-scheme`. A browser without
+ * light-dark() has only the light values, so its controls stay light too. A single-scheme theme sets
+ * `color-scheme` in its own file.
  */
 :root {
-	color-scheme: light dark;
-}
-
-:root[data-scheme='light'] {
 	color-scheme: light;
 }
 
-:root[data-scheme='dark'] {
-	color-scheme: dark;
+@supports (color: light-dark(#000, #fff)) {
+	:root {
+		color-scheme: light dark;
+	}
+
+	:root[data-scheme='light'] {
+		color-scheme: light;
+	}
+
+	:root[data-scheme='dark'] {
+		color-scheme: dark;
+	}
 }
 
 /* kinari: light and dark. Every role, so a role never mixes a light value with a dark surface. */

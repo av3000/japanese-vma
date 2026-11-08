@@ -18,7 +18,8 @@ export interface LikeIconProps {
 
 /**
  * The like icon from the theme's slots (kinari: thumbs up; sakura: a blossom). The state is never
- * colour alone: the shape changes too, and the button around it carries `aria-pressed`.
+ * colour alone: the shape changes too, and the button around it carries `aria-pressed`. `data-state` is
+ * `on` or `off` on the like button's icon only; a likes count has `data-tone="count"` and no state.
  */
 export const LikeIcon: React.FC<LikeIconProps> = ({ liked = false, tone = 'state', size = 'sm', className }) => {
 	const { icons } = useTheme();
@@ -28,7 +29,8 @@ export const LikeIcon: React.FC<LikeIconProps> = ({ liked = false, tone = 'state
 		<span
 			className={classNames(styles.like, on ? styles.on : styles.off, className)}
 			data-icon-slot="like"
-			data-state={tone === 'count' ? 'count' : on ? 'on' : 'off'}
+			data-tone={tone}
+			data-state={tone === 'state' ? (on ? 'on' : 'off') : undefined}
 		>
 			<Icon size={size} name={on || tone === 'count' ? icons.likeOn : icons.likeOff} />
 		</span>
