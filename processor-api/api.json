@@ -3479,6 +3479,70 @@
                 }
             }
         },
+        "/translations/locales": {
+            "get": {
+                "operationId": "translation.locales",
+                "description": "Public. Only active locales are listed, and `is_fallback` marks English, the language every\nother bundle falls back to.",
+                "summary": "The languages the interface can be shown in",
+                "tags": [
+                    "Translation"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TranslationLocaleListResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TranslationLocaleListResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/translations/{locale}": {
+            "get": {
+                "operationId": "translation.show",
+                "description": "Public. `messages` holds every interface label as a flat map of dotted key to text, so a\nclient never has to resolve a missing label itself. An unknown or inactive locale answers a typed 404\n(`Translations.LocaleNotFound`); a segment that cannot be a locale code answers a plain 404.",
+                "summary": "One complete language bundle",
+                "tags": [
+                    "Translation"
+                ],
+                "parameters": [
+                    {
+                        "name": "locale",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TranslationBundleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TranslationBundleResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locale not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetailsResource"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/users/{uuid}": {
             "get": {
                 "operationId": "user.show",
@@ -7218,6 +7282,64 @@
                     "completed_at"
                 ],
                 "title": "StudySessionResource"
+            },
+            "TranslationBundleResource": {
+                "type": "object",
+                "properties": {
+                    "locale": {
+                        "type": "string"
+                    },
+                    "fallback_locale": {
+                        "type": "string"
+                    },
+                    "messages": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "locale",
+                    "fallback_locale",
+                    "messages"
+                ],
+                "title": "TranslationBundleResource"
+            },
+            "TranslationLocaleListResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TranslationLocaleResource"
+                        }
+                    }
+                },
+                "required": [
+                    "items"
+                ],
+                "title": "TranslationLocaleListResource"
+            },
+            "TranslationLocaleResource": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "is_fallback": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "code",
+                    "name",
+                    "is_fallback"
+                ],
+                "title": "TranslationLocaleResource"
             },
             "UpdateArticleRequest": {
                 "type": "object",

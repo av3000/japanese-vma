@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call(PermissionSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(ObjectTemplatesTableSeeder::class);
+        $this->call(TranslationLocaleSeeder::class);
         // The seeders below create sample/dev data; keep them opt-in.
         // UserTableSeeder runs through `php artisan app:setup --with-dev-users`.
         // $this->call(ArticlesTableSeeder::class);
