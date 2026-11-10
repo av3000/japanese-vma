@@ -9,6 +9,9 @@ use App\Domain\Shared\ValueObjects\Pagination;
 
 final readonly class SentenceQueryCriteria
 {
+    /** The longest `keyword` the list accepts. The Header search counts use it too, so both agree. */
+    public const KEYWORD_MAX_LENGTH = 100;
+
     public const DEFAULT_PER_PAGE = 10;
 
     public function __construct(

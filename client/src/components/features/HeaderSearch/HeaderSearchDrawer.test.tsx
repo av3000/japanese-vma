@@ -2,11 +2,19 @@
 import { act } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SearchCounts } from '@/api/search/useSearchCounts';
 import { click, typeInto } from '@/test/formEvents';
 import { renderWithAct, requireElement } from '@/test/renderWithAct';
 import { HeaderSearchDrawer } from './HeaderSearchDrawer';
 
 const navigate = vi.fn();
+
+/** What the counts endpoint "answers" per trimmed query; a missing query behaves like a failed request. */
+const countsByQuery = vi.hoisted(() => new Map<string, SearchCounts>());
+
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: (query: string) => ({ counts: countsByQuery.get(query.trim()) ?? null }),
+}));
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -54,6 +62,7 @@ const open = async () => {
 beforeEach(async () => {
 	navigate.mockClear();
 	localStorage.clear();
+	countsByQuery.clear();
 	view = await renderWithAct(
 		<MemoryRouter>
 			<HeaderSearchDrawer />
@@ -109,6 +118,18 @@ describe('HeaderSearchDrawer', () => {
 		act(() => requireElement<HTMLFormElement>(dialog(), 'form').requestSubmit());
 
 		expect(navigate).toHaveBeenCalledWith('/kanjis?keyword=%E6%B0%B4&jlpt=3');
+	});
+
+	it('shows the same counts and best match as the panel, and the primary button follows them', async () => {
+		countsByQuery.set('水', { articles: null, kanji: 0, words: 312, sentences: 87, radicals: 0 });
+		await open();
+		typeInto(input(), '水');
+		// Past the 300 ms debounce.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 320)));
+
+		expect(buttonNamed('Words Best match')).toBeDefined();
+		expect(buttonNamed('Words containing 水312 results↵')).toBeDefined();
+		expect(requireElement(dialog(), 'button[type="submit"]').textContent).toBe('Search words');
 	});
 
 	it.each([

@@ -78,6 +78,11 @@ class KanjiService implements KanjiServiceInterface
         return Result::success($this->kanjiRepository->find($criteria));
     }
 
+    public function count(KanjiQueryCriteria $criteria): Result
+    {
+        return Result::success($this->kanjiRepository->count($criteria));
+    }
+
     private function resultForKanji(?DomainKanji $kanji, string $identifier): Result
     {
         return $kanji

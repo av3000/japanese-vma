@@ -11,5 +11,12 @@ interface RadicalServiceInterface
 {
     public function find(RadicalQueryCriteria $criteria): Result;
 
+    /**
+     * The total find() reports for the same criteria, without loading a page.
+     *
+     * @return Result<int>
+     */
+    public function count(RadicalQueryCriteria $criteria): Result;
+
     public function findByIdentifier(string $identifier, bool $withKanjis = false): Result;
 }
