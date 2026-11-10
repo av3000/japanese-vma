@@ -27,6 +27,6 @@
 
 .meta {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-sm);
 }

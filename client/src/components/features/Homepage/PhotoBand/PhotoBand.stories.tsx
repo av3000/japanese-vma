@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import { PhotoBand, PHOTO_CREDIT } from './';
+import { themeRegistry } from '@/themes/registry';
+import { PhotoBand } from './';
+
+const PHOTO_CREDIT = themeRegistry.kinari.hero.credit ?? { label: '', href: '' };
 
 const meta = {
 	title: 'Features/Homepage/PhotoBand',
 	component: PhotoBand,
-	parameters: { layout: 'padded' },
+	// The credit assertion below is kinari's; other themes' hero art is covered in their own stories.
+	parameters: { layout: 'padded', appearance: { theme: 'kinari' } },
 } satisfies Meta<typeof PhotoBand>;
 
 export default meta;

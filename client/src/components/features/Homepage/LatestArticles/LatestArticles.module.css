@@ -23,7 +23,7 @@
 .date {
 	flex: none;
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	white-space: nowrap;
 }
 

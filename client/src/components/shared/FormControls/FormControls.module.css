@@ -14,7 +14,7 @@
 	display: inline-block;
 	font-size: var(--font-size-body-md);
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 }
 
 .control {
@@ -29,9 +29,9 @@
 	font: inherit;
 	font-size: var(--control-font-size);
 	line-height: var(--line-height-lg);
-	color: var(--color-neutral-700);
-	background-color: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-400);
+	color: var(--color-text-subtle);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border-strong);
 	border-radius: var(--border-radius-sm);
 	transition:
 		border-color var(--duration-sm) var(--ease-base),
@@ -39,23 +39,24 @@
 }
 
 .control::placeholder {
-	color: var(--color-neutral-500);
+	color: var(--color-text-disabled);
 	opacity: 1;
 }
 
 .control:hover:not(:disabled) {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-border-strong);
 }
 
 .control:focus-visible {
-	outline: none;
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 var(--outline-size) var(--color-primary-100);
+	/* Invisible here; forced-colors mode drops the box-shadow ring and paints this outline instead. */
+	outline: var(--outline-size) solid transparent;
+	border-color: var(--color-interactive);
+	box-shadow: 0 0 0 var(--outline-size) var(--color-focus-halo);
 }
 
 .control:disabled {
-	background-color: var(--color-neutral-100);
-	color: var(--color-neutral-500);
+	background-color: var(--color-surface-sunken);
+	color: var(--color-text-disabled);
 	cursor: not-allowed;
 }
 
@@ -105,11 +106,11 @@
 }
 
 .messageHint {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .messageError {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .messageEnd {
@@ -152,11 +153,11 @@
 	width: var(--size-md);
 	height: var(--size-md);
 	margin: 0;
-	accent-color: var(--color-primary);
+	accent-color: var(--color-interactive);
 }
 
 .checkboxInvalid {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .checkboxInvalid input {
@@ -194,7 +195,7 @@
 	padding: 0;
 	font-size: var(--font-size-body-md);
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 }
 
 .choices {
@@ -209,8 +210,8 @@
 	align-items: start;
 	gap: var(--spacing-xs);
 	padding: var(--spacing-sm);
-	background-color: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-400);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border-strong);
 	border-radius: var(--border-radius-sm);
 	cursor: pointer;
 	transition:
@@ -219,21 +220,21 @@
 }
 
 .choice:hover {
-	border-color: var(--color-neutral-600);
+	border-color: var(--color-border-strong);
 }
 
 /* The heavier border is drawn inset so the checked tile does not shift its neighbours. */
 .choiceChecked,
 .choiceChecked:hover {
-	border-color: var(--color-primary);
-	box-shadow: inset 0 0 0 1px var(--color-primary);
-	background-color: var(--color-primary-tint);
+	border-color: var(--color-interactive);
+	box-shadow: inset 0 0 0 1px var(--color-focus);
+	background-color: var(--color-interactive-tint);
 }
 
 /* The whole tile shows focus; browsers without :has() keep the radio's own focus ring instead. */
 @supports selector(:has(*)) {
 	.choice:has(:focus-visible) {
-		outline: var(--outline-size) solid var(--color-primary);
+		outline: var(--outline-size) solid var(--color-focus);
 		outline-offset: 2px;
 	}
 
@@ -253,18 +254,18 @@
 }
 
 .choiceGroup:disabled .choice:hover {
-	border-color: var(--color-neutral-400);
+	border-color: var(--color-border-strong);
 }
 
 .choiceGroup:disabled .choiceChecked {
-	border-color: var(--color-primary);
+	border-color: var(--color-interactive);
 }
 
 .choiceInput {
 	width: var(--size-md);
 	height: var(--size-md);
 	margin: var(--spacing-3xs) 0 0;
-	accent-color: var(--color-primary);
+	accent-color: var(--color-interactive);
 }
 
 .choiceText {
@@ -279,12 +280,12 @@
 	font-family: var(--font-family-ja);
 	font-size: var(--font-size-heading-4);
 	line-height: 1.2;
-	color: var(--color-neutral-800);
+	color: var(--color-text-strong);
 }
 
 .choiceLabel {
 	font-size: var(--font-size-body-md);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 }
 
 .choiceChecked .choiceLabel {
@@ -294,5 +295,5 @@
 .choiceDescription {
 	font-size: var(--font-size-body-sm);
 	line-height: var(--line-height-lg);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

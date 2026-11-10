@@ -20,6 +20,7 @@ import { DetailFacts } from '@/components/shared/DetailFacts';
 import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
 import { dominantJlptLevel, JlptBar } from '@/components/shared/JlptBar';
+import { LikeIcon } from '@/components/shared/LikeIcon';
 import { Link } from '@/components/shared/Link';
 import { VisibilityCue } from '@/components/shared/VisibilityCue';
 import { Cluster } from '@/components/shared/layout';
@@ -192,7 +193,7 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 							disabled={likeMutation.isTogglingInstance(catalogue.id)}
 							onClick={handleLikeClick}
 						>
-							<Icon size="sm" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
+							<LikeIcon liked={isLiked} />
 							{`Like · ${likesCount}`}
 						</Button>
 						{isPdfExportSupported ? (

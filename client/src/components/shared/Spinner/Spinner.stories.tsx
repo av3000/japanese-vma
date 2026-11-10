@@ -62,7 +62,7 @@ export const AllSizes: Story = {
 export const InheritsColour: Story = {
 	args: { size: 'lg' },
 	render: (args) => (
-		<div style={{ color: 'var(--color-primary)' }}>
+		<div style={{ color: 'var(--color-interactive)' }}>
 			<Framed label="Loading">
 				<Spinner {...args} />
 			</Framed>

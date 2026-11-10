@@ -54,7 +54,7 @@ const UncontrolledExample = () => {
 			<div style={{ marginTop: '8px', fontSize: '12px' }}>
 				Last `onChange` value: {lastOnChangeValue.length ? lastOnChangeValue.join(', ') : 'None'}
 			</div>
-			<div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--color-neutral-700)' }}>
+			<div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--color-text-subtle)' }}>
 				This instance manages its own tags internally (no `value` prop). `onChange` is optional.
 			</div>
 		</div>

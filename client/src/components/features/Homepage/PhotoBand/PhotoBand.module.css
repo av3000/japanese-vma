@@ -4,7 +4,7 @@
 	height: 96px;
 	overflow: hidden;
 	border-radius: var(--border-radius-md);
-	background-color: var(--color-neutral-300);
+	background-color: var(--color-fill-strong);
 }
 
 /* The files are a 5:1 crop with the summit centred horizontally, ~18% from the top. Narrow bands
@@ -26,17 +26,17 @@
 	background-color: rgba(0, 0, 0, 0.6);
 	font-size: var(--font-size-body-sm);
 	line-height: 1.4;
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 	text-decoration: none;
 }
 
 .credit:hover {
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 	text-decoration: underline;
 }
 
 .credit:focus-visible {
-	outline: var(--outline-size) solid var(--color-neutral-0);
+	outline: var(--outline-size) solid var(--color-on-fill);
 	outline-offset: 2px;
 }
 

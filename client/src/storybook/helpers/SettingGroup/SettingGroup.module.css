@@ -21,12 +21,12 @@
 }
 .variantColor .extraCell,
 .variantRadius .extraCell {
-	border: var(--border-size-sm) solid var(--color-border-default);
+	border: var(--border-size-sm) solid var(--color-surface-raised);
 	border-radius: var(--radius);
 	background-color: var(--bg-color);
 }
 .variantSpacing .extraCell {
-	background: var(--color-background-primary-default);
+	background: var(--color-interactive-border);
 }
 .variantTypography .extraCell {
 	width: auto;
@@ -35,5 +35,5 @@
 }
 
 .errorText {
-	color: var(--color-text-system-danger);
+	color: var(--color-error-text);
 }

@@ -5,6 +5,7 @@ import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { Drawer } from '@/components/shared/Drawer';
 import { Icon } from '@/components/shared/Icon';
+import { Logo } from '@/components/shared/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { AccountMenu } from './AccountMenu';
@@ -77,7 +78,7 @@ export const MenuDrawer: React.FC = () => {
 			<Drawer modal={modal} label="Navigation">
 				<div className={styles.drawerTop}>
 					<Link to="/" className={styles.brand} onClick={modal.close}>
-						JPLearning
+						<Logo />
 					</Link>
 					<button
 						type="button"

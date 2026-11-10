@@ -14,11 +14,11 @@
  * 3. Ensure the page always fills at least the entire height of the viewport.
  */
 html {
-	background-color: var(--page-background-color);
-	font-family: var(--font-family);
+	background-color: var(--color-surface);
+	font-family: var(--font-family-body);
 	font-size: var(--font-size-body-lg);
 	line-height: var(--line-height-lg);
-	color: var(--color-text-primary);
+	color: var(--color-text);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	flex: 1 1 auto;

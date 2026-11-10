@@ -1,8 +1,8 @@
 .summary {
 	padding: var(--spacing-lg);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-lg);
-	background: var(--color-neutral-0);
+	background: var(--color-surface-raised);
 }
 
 .title {
@@ -12,7 +12,7 @@
 
 .lead {
 	margin: var(--spacing-2xs) 0 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 .missed {
@@ -29,7 +29,7 @@
 	gap: var(--spacing-md);
 	align-items: center;
 	padding-block: var(--spacing-sm);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .detail {
@@ -54,26 +54,26 @@
 }
 
 .given {
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-sm);
 }
 
 .round {
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-md);
 	font-weight: var(--font-weight-regular);
 }
 
 .time {
 	margin: var(--spacing-2xs) 0 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-sm);
 	font-variant-numeric: tabular-nums;
 }
 
 .save {
 	margin: var(--spacing-xs) 0 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-sm);
 }
 

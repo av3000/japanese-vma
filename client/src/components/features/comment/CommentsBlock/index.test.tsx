@@ -329,10 +329,12 @@ describe('CommentList', () => {
 	// first test does not pay for the import inside its time limit.
 	let CommentList: typeof import('./CommentList/CommentList').default;
 
+	// Importing the real CommentList pulls in the like button, the theme registry and its assets; in a
+	// full parallel run that import can take longer than the default 10s hook timeout.
 	beforeAll(async () => {
 		({ default: CommentList } =
 			await vi.importActual<typeof import('./CommentList/CommentList')>('./CommentList/CommentList'));
-	});
+	}, 30_000);
 
 	const renderList = async (props: Record<string, unknown> = {}) => {
 		return renderToStaticMarkup(

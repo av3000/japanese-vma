@@ -12,27 +12,27 @@
 }
 
 .trigger:hover {
-	background: var(--color-neutral-100-alpha);
+	background: var(--color-hover-overlay);
 }
 
 .trigger:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
 .dot {
-	--dot-color: var(--color-neutral-500);
+	--dot-color: var(--color-text-disabled);
 	display: block;
 	width: 10px;
 	height: 10px;
 	border-radius: 50%;
 	background-color: var(--dot-color);
-	box-shadow: 0 0 0 2px var(--color-neutral-200);
+	box-shadow: 0 0 0 2px var(--color-border);
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--dot-color) 25%, transparent);
 }
 
 .success {
-	--dot-color: var(--color-success);
+	--dot-color: var(--color-success-text);
 }
 
 .pending {
@@ -40,7 +40,7 @@
 }
 
 .destructive {
-	--dot-color: var(--color-error);
+	--dot-color: var(--color-error-text);
 }
 
 .content {

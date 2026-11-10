@@ -3,8 +3,10 @@ import { Link, NavLink } from 'react-router-dom';
 import { HeaderSearch } from '@/components/features/HeaderSearch';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
+import { Logo } from '@/components/shared/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { AccountMenu } from './AccountMenu';
+import { ColorSchemeToggle } from './ColorSchemeToggle';
 import styles from './Header.module.css';
 import { MenuDrawer } from './MenuDrawer';
 import { NavGroup } from './NavGroup';
@@ -12,8 +14,8 @@ import { NAV_SECTIONS, navLinkClass } from './navigation';
 
 /**
  * The app bar on every page. From 1024px: brand, the Explore and Dictionary disclosures, the
- * search panel and the account. Below: brand, the search button and the menu button, each opening
- * a full-height drawer.
+ * search panel, the account and the colour-scheme toggle. Below: brand, the search button, the toggle
+ * and the menu button, the search and menu buttons each opening a full-height drawer.
  */
 const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -57,7 +59,7 @@ const Header: React.FC = () => {
 		<header className={styles.header}>
 			<div className={styles.bar}>
 				<Link to="/" className={styles.brand}>
-					JPLearning
+					<Logo />
 				</Link>
 
 				<nav aria-label="Main" className={styles.desktopNav}>
@@ -85,6 +87,8 @@ const Header: React.FC = () => {
 				<HeaderSearch />
 
 				{account}
+
+				<ColorSchemeToggle />
 
 				<MenuDrawer />
 			</div>

@@ -410,17 +410,17 @@ describe('ArticleContent', () => {
 		expect(capturedReviewModalProps[0].isProcessing).toBe(true);
 	});
 
-	it('renders the unfilled like icon for an article the viewer has not liked', () => {
+	it('renders the off-state like icon for an article the viewer has not liked', () => {
 		const html = renderToStaticMarkup(<ArticleContent article={createArticle()} />);
 
-		expect(html).toContain('thumbsUpRegular');
+		expect(html).toContain('data-state="off"');
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(false);
 	});
 
-	it('renders the filled like icon for an article the viewer already liked', () => {
+	it('renders the on-state like icon for an article the viewer already liked', () => {
 		const html = renderToStaticMarkup(<ArticleContent article={createArticle({ is_liked_by_viewer: true })} />);
 
-		expect(html).toContain('thumbsUpSolid');
+		expect(html).toContain('data-state="on"');
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
 	});
 

@@ -41,7 +41,7 @@
 .skeletonHead {
 	display: block;
 	border-radius: var(--border-radius-xs);
-	background: var(--color-neutral-200);
+	background: var(--color-fill);
 }
 
 .skeleton {
@@ -57,9 +57,9 @@
 
 .empty {
 	padding: var(--spacing-2xl) var(--spacing-md);
-	border: var(--border-size-sm) dashed var(--color-neutral-300);
+	border: var(--border-size-sm) dashed var(--color-border-emphasis);
 	border-radius: var(--border-radius-md);
-	background: var(--color-neutral-0);
+	background: var(--color-surface-raised);
 	text-align: center;
 }
 
@@ -71,30 +71,30 @@
 
 .emptyHint {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 /* ---------- Table, from 768px ---------- */
 
 @media (min-width: 768px) {
 	.table {
-		background: var(--color-neutral-0);
+		background: var(--color-surface-raised);
 	}
 
 	.table th,
 	.table td {
-		border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+		border-bottom: var(--border-size-sm) solid var(--color-border);
 		text-align: start;
 	}
 
 	.table th:first-child,
 	.table td:first-child {
-		border-left: var(--border-size-sm) solid var(--color-neutral-200);
+		border-left: var(--border-size-sm) solid var(--color-border);
 	}
 
 	.table th:last-child,
 	.table td:last-child {
-		border-right: var(--border-size-sm) solid var(--color-neutral-200);
+		border-right: var(--border-size-sm) solid var(--color-border);
 	}
 
 	.head th {
@@ -102,9 +102,9 @@
 		top: 0;
 		z-index: 1;
 		padding: var(--spacing-xs) var(--spacing-sm);
-		border-top: var(--border-size-sm) solid var(--color-neutral-200);
-		background: var(--color-neutral-100);
-		color: var(--color-neutral-600);
+		border-top: var(--border-size-sm) solid var(--color-border);
+		background: var(--color-surface-sunken);
+		color: var(--color-text-muted);
 		font-size: var(--font-size-body-sm);
 		font-weight: var(--font-weight-semibold);
 		white-space: nowrap;
@@ -133,7 +133,7 @@
 	}
 
 	.table > tbody > tr:not(.loadingRow):hover > * {
-		background: var(--color-neutral-100);
+		background: var(--color-surface-sunken);
 	}
 
 	.table .numeric {
@@ -194,9 +194,9 @@
 		flex-direction: column;
 		gap: var(--spacing-3xs);
 		padding: var(--spacing-sm);
-		border: var(--border-size-sm) solid var(--color-neutral-200);
+		border: var(--border-size-sm) solid var(--color-border);
 		border-radius: var(--border-radius-md);
-		background: var(--color-neutral-0);
+		background: var(--color-surface-raised);
 	}
 
 	/* The list's own layout: each cell sits in the grid area named after its column id. */
@@ -218,8 +218,8 @@
 	.mobileLabel {
 		display: inline;
 		margin-inline-end: var(--spacing-2xs);
-		color: var(--color-neutral-600);
-		font-family: var(--font-family);
+		color: var(--color-text-muted);
+		font-family: var(--font-family-body);
 		font-weight: var(--font-weight-regular);
 	}
 }

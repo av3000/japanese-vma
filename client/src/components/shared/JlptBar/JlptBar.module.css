@@ -10,7 +10,7 @@
 	font-size: var(--font-size-body-md);
 	font-variant-numeric: tabular-nums;
 	line-height: 1.2;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 .compact {
@@ -38,31 +38,31 @@
 }
 
 .level {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .segment {
 	width: 100%;
 	height: var(--jlpt-bar-height);
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-500);
+	background-color: var(--color-fill-bold);
 }
 
 /* The only use of shu in the bar: it always means "this is the article's level". */
 .dominant {
-	background-color: var(--color-accent);
+	background-color: var(--color-level);
 }
 
 .uncommon {
-	background-color: var(--color-neutral-300);
+	background-color: var(--color-fill-strong);
 }
 
 /* Weight as well as colour, so the dominant level does not rely on colour alone. */
 .itemDominant .label {
 	font-weight: var(--font-weight-semibold);
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 }
 
 .itemDominant .level {
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 }

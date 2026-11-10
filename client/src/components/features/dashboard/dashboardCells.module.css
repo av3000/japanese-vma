@@ -50,7 +50,7 @@
 	.stackedLabel {
 		display: inline;
 		margin-inline-end: var(--spacing-2xs);
-		color: var(--color-neutral-600);
+		color: var(--color-text-muted);
 		font-size: var(--font-size-body-sm);
 	}
 }

@@ -12,7 +12,7 @@
 	border: var(--border-size-sm) solid transparent;
 	border-radius: 9999px;
 	background-color: transparent;
-	color: var(--color-neutral-900);
+	color: var(--color-text-strong);
 	font-size: var(--font-size-body-sm);
 	font-weight: 500;
 	line-height: var(--line-height-lg);
@@ -35,14 +35,15 @@
 
 .badge.ghost:hover,
 .badge.outline:hover {
-	background-color: var(--color-neutral-100);
+	background-color: var(--color-surface-sunken);
 }
 
 .badge:focus-visible {
-	outline: none;
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 3px var(--color-primary-200);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
+	/* Invisible here; forced-colors mode drops the box-shadow ring and paints this outline instead. */
+	outline: var(--outline-size) solid transparent;
+	border-color: var(--color-interactive);
+	box-shadow: 0 0 0 3px var(--color-interactive-border);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 50%, transparent);
 }
 
 .badge[aria-invalid='true'] {
@@ -56,27 +57,27 @@
    (.success, .pending, .destructive) also work on plain elements. */
 
 .default {
-	--badge-hover-bg: var(--color-primary-hover);
-	background-color: var(--color-primary);
-	color: var(--color-neutral-0);
+	--badge-hover-bg: var(--color-interactive-hover);
+	background-color: var(--color-interactive);
+	color: var(--color-on-interactive);
 }
 
 .secondary {
-	--badge-hover-bg: var(--color-secondary-hover);
-	background-color: var(--color-secondary);
-	color: var(--color-neutral-0);
+	--badge-hover-bg: var(--color-action-secondary-hover);
+	background-color: var(--color-action-secondary);
+	color: var(--color-on-fill);
 }
 
 .success {
 	--badge-hover-bg: var(--color-success-hover);
 	background-color: var(--color-success);
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 }
 
 .destructive {
 	--badge-hover-bg: var(--color-error-hover);
 	background-color: var(--color-error);
-	color: var(--color-neutral-0);
+	color: var(--color-on-fill);
 }
 
 .destructive:focus-visible {
@@ -88,21 +89,21 @@
 .pending {
 	--badge-hover-bg: var(--color-warning-hover);
 	background-color: var(--color-warning);
-	color: var(--color-neutral-900);
+	color: var(--color-on-warning);
 }
 
 .outline {
-	--badge-hover-bg: var(--color-neutral-100);
-	border-color: var(--color-neutral-200);
-	color: var(--color-neutral-900);
+	--badge-hover-bg: var(--color-surface-sunken);
+	border-color: var(--color-border);
+	color: var(--color-text-strong);
 }
 
 .ghost {
-	--badge-hover-bg: var(--color-neutral-100);
+	--badge-hover-bg: var(--color-surface-sunken);
 }
 
 .link {
-	color: var(--color-primary);
+	color: var(--color-interactive);
 	text-underline-offset: 4px;
 }
 

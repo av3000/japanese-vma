@@ -36,7 +36,7 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 
 ## Rules by impact
 
-### HIGH (9)
+### HIGH (10)
 
 - [`async-public-routes-no-auth-wait`](rules/async-public-routes-no-auth-wait.md): Public Routes Do Not Wait for Auth
 - [`client-query-keys`](rules/client-query-keys.md): Query Keys Name Every Input
@@ -47,6 +47,7 @@ Frontmatter `title`, `impact` (CRITICAL, HIGH, MEDIUM or LOW), optional `impactD
 - [`repo-no-direct-axios`](rules/repo-no-direct-axios.md): No Direct axios Calls or Raw Endpoint Strings *(enforced by tooling)*
 - [`repo-no-page-owned-server-state`](rules/repo-no-page-owned-server-state.md): No Page-Owned Pagination, Search or Loading State for Server Data
 - [`repo-no-ts-nocheck`](rules/repo-no-ts-nocheck.md): No @ts-nocheck *(enforced by tooling)*
+- [`repo-theme-slots-not-names`](rules/repo-theme-slots-not-names.md): Themes Change Appearance Through Slots, Never by Name *(enforced by tooling)*
 
 ### MEDIUM (22)
 
