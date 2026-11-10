@@ -1,5 +1,6 @@
 {
   "src/components/features/Header/AccountMenu.tsx": "covered-by: src/components/features/Header/Header.stories.tsx",
+  "src/components/features/Header/ColorSchemeToggle.tsx": "covered-by: src/components/features/Header/Header.stories.tsx (SchemeToggleLight, SchemeToggleDark, Sumi, NarrowWithToggle)",
   "src/components/features/Header/MenuDrawer.tsx": "covered-by: src/components/features/Header/Header.stories.tsx",
   "src/components/features/Header/NavGroup.tsx": "covered-by: src/components/features/Header/Header.stories.tsx",
   "src/components/features/HeaderSearch/SearchBody.tsx": "covered-by: src/components/features/HeaderSearch/HeaderSearch.stories.tsx",
@@ -20,6 +21,7 @@
   "src/components/shared/Button/ButtonRouterLink.tsx": "covered-by: src/components/shared/Button/Button.stories.tsx",
   "src/components/shared/Link/LinkExternal.tsx": "covered-by: src/components/shared/Link/Link.stories.tsx",
   "src/components/shared/Link/LinkRouter.tsx": "covered-by: src/components/shared/Link/Link.stories.tsx",
+  "src/components/shared/Logo": "covered-by: src/components/features/Header/Header.stories.tsx (Sakura and Sumi show the mark; kinari the wordmark alone)",
   "src/routes": "not-visual",
   "src/routes/ArticleCreate": "covered-by: src/components/features/articles/ArticleForm.stories.tsx (the route only wraps it)",
   "src/routes/CatalogueCreate": "covered-by: src/components/features/catalogues/CatalogueForm.stories.tsx (the route only wraps it)",
