@@ -4,7 +4,7 @@
 |---|---|
 | Epic | [#659 TRANSLATIONS](https://github.com/av3000/japanese-vma/issues/659) |
 | Milestone | Translation Management |
-| Status | Planned: no implementation yet |
+| Status | In progress: US-01 delivered |
 | Design | [2026-08-18 design specification](./2026-08-18-translation-management-design.md) (how). This document covers the what. |
 | Plan | [implementation-plan.md](./implementation-plan.md): branch model, per-story loop, story sections, run prompt |
 | Last updated | 2026-11-06 |
@@ -103,10 +103,10 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 
 | Requirement | Stories | Status |
 |---|---|---|
-| FR-01 | US-01 | Planned |
-| FR-02 | US-01 (English row), US-03 | Planned |
-| FR-03 | US-01 | Planned |
-| FR-04 | US-01, US-02, US-07 (end to end) | Planned |
+| FR-01 | US-01 | Delivered |
+| FR-02 | US-01 (English row), US-03 | English row delivered (US-01); the rest planned |
+| FR-03 | US-01 | Delivered |
+| FR-04 | US-01, US-02, US-07 (end to end) | English path delivered (US-01); the rest planned |
 | FR-05 | US-02, US-05, US-07 (end to end) | Planned |
 | FR-06 | US-02, US-04 | Planned |
 | FR-07 | US-02, US-04 | Planned |
@@ -122,7 +122,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | NFR-01 | US-02, US-04 | Planned |
 | NFR-02 | US-02, US-05 | Planned |
 | NFR-03 | US-03, US-05 | Planned |
-| NFR-04 | US-01 | Planned |
+| NFR-04 | US-01 | Delivered |
 | NFR-05 | US-06 | Planned |
 | NFR-06 | US-06 | Planned |
 | NFR-07 | US-06, US-07 | Planned |

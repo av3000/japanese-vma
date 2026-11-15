@@ -56,6 +56,8 @@ use App\Application\Study\Services\FlashcardDeckService;
 use App\Application\Study\Services\FlashcardDeckServiceInterface;
 use App\Application\Study\Services\StudySessionService;
 use App\Application\Study\Services\StudySessionServiceInterface;
+use App\Application\Translations\Services\TranslationService;
+use App\Application\Translations\Services\TranslationServiceInterface;
 use App\Application\Users\Services\RoleService;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Application\Users\Services\UserAdminService;
@@ -100,5 +102,6 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(ProcessingStateServiceInterface::class, ProcessingStateService::class);
         $this->app->bind(FlashcardDeckServiceInterface::class, FlashcardDeckService::class);
         $this->app->bind(StudySessionServiceInterface::class, StudySessionService::class);
+        $this->app->bind(TranslationServiceInterface::class, TranslationService::class);
     }
 }

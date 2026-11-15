@@ -15,6 +15,7 @@ use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
 use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
 use App\Http\v1\Study\Controllers\FlashcardDeckController;
 use App\Http\v1\Study\Controllers\StudySessionController;
+use App\Http\v1\Translations\Controllers\TranslationController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -126,6 +127,21 @@ Route::prefix('v1')->group(function () {
     // comment routes: a malformed segment must be a 404, not an unmapped exception.
     Route::get('catalogues/{uuid}/flashcards', [FlashcardDeckController::class, 'show'])
         ->whereUuid('uuid');
+
+    // UI translations (epic #659), public reads. `translations/locales` is registered
+    // before `translations/{locale}` on purpose: in the other order `locales` would be
+    // taken as a locale code and answer a 404 for a language called "locales".
+    // Guarded by tests/Feature/Translations/TranslationsV1Test.php
+    // ::test_locales_route_is_not_swallowed_by_the_locale_parameter
+    //
+    // The constraint is a language code with an optional region (`da`, `en-US`). Its job is to
+    // turn junk away before a query: the router decodes the segment first, so `%FF` would
+    // reach PostgreSQL as invalid UTF-8 and answer 500. A well-formed code that is not a locale
+    // (`xx`, `EN`) still reaches the service and gets the typed 404.
+    // Guarded by ::test_a_segment_that_cannot_be_a_locale_code_is_a_404_and_never_a_500
+    Route::get('translations/locales', [TranslationController::class, 'locales']);
+    Route::get('translations/{locale}', [TranslationController::class, 'show'])
+        ->where('locale', '[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?');
 
     // ============================================
     // AUTHENTICATED ROUTES
