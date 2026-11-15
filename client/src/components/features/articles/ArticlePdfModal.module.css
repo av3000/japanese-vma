@@ -8,7 +8,7 @@
 }
 
 .action {
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border: var(--border-size-sm) solid var(--color-border);
 }
 
 .actionIcon {

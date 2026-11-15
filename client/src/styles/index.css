@@ -12,6 +12,10 @@
 @import './00-settings/spacing.css';
 @import './00-settings/typography.css';
 @import './00-settings/z-index.css';
+@import './00-settings/roles.css'; /* after the palette and font stacks it names */
+/* Themes override roles under :root[data-theme='<id>'] (#498). kinari, the default, has no file. */
+@import './themes/sakura.css';
+@import './themes/sumi.css';
 @import './02-generic/box-sizing.css';
 @import './02-generic/normalize.css';
 @import './02-generic/outline.css';

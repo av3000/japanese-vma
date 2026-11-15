@@ -8,7 +8,7 @@ const PARAGRAPH =
 	'ロシアによる軍事侵攻が長期化する中、ウクライナでは21日、伝統衣装を着て1日を過ごす「ビシバンカの日」を迎え、多くの人が伝統衣装を着て街に繰り出しました。';
 
 const Box = ({ label, lines = 1 }: { label: string; lines?: number }) => (
-	<div style={{ border: '1px dashed var(--color-neutral-400)', padding: 'var(--spacing-sm)' }}>
+	<div style={{ border: '1px dashed var(--color-border-strong)', padding: 'var(--spacing-sm)' }}>
 		<strong>{label}</strong>
 		{Array.from({ length: lines }, (_, index) => (
 			<p key={index} lang="ja" style={{ margin: 'var(--spacing-xs) 0 0' }}>
@@ -106,7 +106,9 @@ export const Wide: Story = {
 		variant: 'wide',
 		railLabel: 'About this catalogue',
 		main: (
-			<div style={{ border: '1px dashed var(--color-neutral-400)', minWidth: 920, padding: 'var(--spacing-sm)' }}>
+			<div
+				style={{ border: '1px dashed var(--color-border-strong)', minWidth: 920, padding: 'var(--spacing-sm)' }}
+			>
 				A 920px table
 			</div>
 		),

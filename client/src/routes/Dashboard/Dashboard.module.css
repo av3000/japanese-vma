@@ -9,12 +9,12 @@
 
 .summary {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-sm);
 }
 
 .summary:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -28,5 +28,5 @@
 }
 
 .muted {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

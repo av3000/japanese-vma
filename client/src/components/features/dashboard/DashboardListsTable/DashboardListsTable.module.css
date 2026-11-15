@@ -27,9 +27,9 @@
 /* A text tag, so "built in" is never carried by colour alone. */
 .builtIn {
 	padding: 0 var(--spacing-2xs);
-	border: var(--border-size-sm) solid var(--color-neutral-300);
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
 	border-radius: var(--border-radius-sm);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-xs);
 	white-space: nowrap;
 }

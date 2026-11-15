@@ -12,8 +12,8 @@
 	padding: 0;
 	overflow: hidden;
 	border: 0;
-	background-color: var(--color-neutral-0);
-	color: var(--color-text-neutral-default);
+	background-color: var(--color-surface-raised);
+	color: var(--color-text-strong);
 }
 
 .drawer[open] {

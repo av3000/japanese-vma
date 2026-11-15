@@ -176,3 +176,62 @@ export const Mobile: Story = {
 		await waitFor(() => expect(canvas.getByRole('button', { name: 'Open navigation' })).toHaveFocus());
 	},
 };
+
+/* Themes and the colour-scheme toggle (#498) ------------------------------------------------------ */
+
+const schemeToggle = (canvasElement: HTMLElement) => within(canvasElement).queryByRole('button', { name: 'Dark mode' });
+
+/** The toggle sits at the right end for guests and members. Not pressed: light is on screen. */
+export const SchemeToggleLight: Story = {
+	parameters: { auth: 'guest', appearance: { theme: 'kinari', scheme: 'light' } },
+	play: async ({ canvasElement }) => {
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('aria-pressed', 'false');
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('title', 'Switch to dark mode');
+	},
+};
+
+/** Pressed while dark is on screen; the name stays "Dark mode" and the icon shows the moon. */
+export const SchemeToggleDark: Story = {
+	parameters: { auth: signedInAs('Hanako'), appearance: { theme: 'kinari', scheme: 'dark' } },
+	play: async ({ canvasElement }) => {
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('aria-pressed', 'true');
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('title', 'Switch to light mode');
+	},
+};
+
+/** Sakura: a blossom mark before the wordmark, rose actions, and sakura's own scheme icons. */
+export const Sakura: Story = {
+	parameters: { auth: signedInAs('Hanako'), appearance: { theme: 'sakura', scheme: 'light' } },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('link', { name: 'JPLearning' })).toBeVisible();
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('aria-pressed', 'false');
+	},
+};
+
+export const SakuraDark: Story = {
+	parameters: { auth: signedInAs('Hanako'), appearance: { theme: 'sakura', scheme: 'dark' } },
+	play: async ({ canvasElement }) => {
+		await expect(schemeToggle(canvasElement)).toHaveAttribute('aria-pressed', 'true');
+	},
+};
+
+/** Sumi is dark only, so there is no toggle. The link is still named by the visible wordmark. */
+export const Sumi: Story = {
+	parameters: { auth: signedInAs('Hanako'), appearance: { theme: 'sumi' } },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('link', { name: 'JPLearning' })).toBeVisible();
+		await expect(schemeToggle(canvasElement)).toBeNull();
+	},
+};
+
+/** 320px, the narrowest supported width: brand, search, the toggle, then the menu button last. */
+export const NarrowWithToggle: Story = {
+	globals: { viewport: { value: 'xxs' } },
+	parameters: { auth: 'guest', appearance: { theme: 'sakura', scheme: 'light' } },
+	play: async ({ canvasElement }) => {
+		const toggle = schemeToggle(canvasElement);
+		const menu = within(canvasElement).getByRole('button', { name: 'Open navigation' });
+		await expect(toggle).toBeVisible();
+		await expect(toggle?.compareDocumentPosition(menu)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+	},
+};

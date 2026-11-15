@@ -11,9 +11,9 @@
 .block {
 	background: linear-gradient(
 		90deg,
-		var(--color-neutral-200) 0%,
-		var(--color-neutral-100) 50%,
-		var(--color-neutral-200) 100%
+		var(--color-fill) 0%,
+		var(--color-surface-sunken) 50%,
+		var(--color-fill) 100%
 	);
 	background-size: 200% 100%;
 	animation: skeletonShimmer 1.6s ease-in-out infinite;

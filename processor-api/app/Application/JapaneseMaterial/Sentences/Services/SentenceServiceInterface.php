@@ -14,6 +14,13 @@ interface SentenceServiceInterface
 {
     public function find(SentenceQueryCriteria $criteria): Result;
 
+    /**
+     * The total find() reports for the same criteria, without loading a page.
+     *
+     * @return Result<int>
+     */
+    public function count(SentenceQueryCriteria $criteria): Result;
+
     public function findByIdentifier(string $identifier, bool $withKanjis = true, bool $withWords = true): Result;
 
     public function create(SentenceWriteDTO $dto, AuthenticatedUser $actor): Result;

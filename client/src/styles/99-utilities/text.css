@@ -14,15 +14,15 @@
 }
 
 .u-text-muted {
-	color: var(--color-neutral-600) !important;
+	color: var(--color-text-muted) !important;
 }
 
 .u-text-danger {
-	color: var(--color-error) !important;
+	color: var(--color-error-text) !important;
 }
 
 .u-text-success {
-	color: var(--color-success) !important;
+	color: var(--color-success-text) !important;
 }
 
 .u-text-sm {

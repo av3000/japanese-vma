@@ -227,7 +227,7 @@ export const ArticleTags: Story = {
 				className="article-preview"
 				style={{
 					padding: '16px',
-					border: '1px solid var(--color-neutral-300)',
+					border: '1px solid var(--color-border-emphasis)',
 					borderRadius: '4px',
 				}}
 			>
@@ -337,7 +337,7 @@ export const MixedChipGroup: Story = {
 					gap: '8px',
 					flexWrap: 'wrap',
 					padding: '16px',
-					backgroundColor: 'var(--color-neutral-100)',
+					backgroundColor: 'var(--color-surface-sunken)',
 					borderRadius: '4px',
 				}}
 			>

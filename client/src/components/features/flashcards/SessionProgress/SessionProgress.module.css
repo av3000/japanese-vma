@@ -8,7 +8,7 @@
 	justify-content: space-between;
 	gap: var(--spacing-sm);
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-sm);
 }
 
@@ -17,16 +17,16 @@
 }
 
 .track {
-	height: var(--size-2xs, 6px);
+	height: var(--size-sm);
 	overflow: hidden;
 	border-radius: var(--border-radius-sm);
-	background: var(--color-neutral-200);
+	background: var(--color-fill);
 }
 
 .bar {
 	height: 100%;
 	border-radius: inherit;
-	background: var(--color-primary);
+	background: var(--color-interactive);
 	transition: width var(--duration-md) var(--ease-base);
 }
 

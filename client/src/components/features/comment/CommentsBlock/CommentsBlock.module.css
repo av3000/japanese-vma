@@ -1,6 +1,6 @@
 .block {
 	padding-top: var(--spacing-lg);
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
 .prompt {
@@ -11,5 +11,5 @@
 
 .hint {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

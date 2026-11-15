@@ -12,9 +12,10 @@
 }
 
 :root {
-	/* IBM Plex (OFL) is bundled through @fontsource, imported in main.tsx and the Storybook preview, so
-	   every build ships the same fonts. Sans for body text; Mono for counts, dates and readings. */
-	--font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+	/* IBM Plex (OFL) is bundled through @fontsource, imported in src/styles/global-styles.ts (used by main.tsx
+	   and the Storybook preview), so every build ships the same fonts. Sans for body text; Mono for counts,
+	   dates and readings. The body and heading font roles are in roles.css. */
+	--font-stack-plex-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 	--font-family-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 	--font-family-serif: Georgia, 'Times New Roman', serif;
 	/* Japanese stacks; put lang="ja" on Japanese content so browsers pick Japanese glyph forms. */

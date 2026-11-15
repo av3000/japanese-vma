@@ -39,21 +39,21 @@
 
 .reading {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-heading-5);
 	overflow-wrap: anywhere;
 }
 
 .lead {
 	margin: 0;
-	color: var(--color-neutral-800);
+	color: var(--color-text-strong);
 	font-size: var(--font-size-heading-5);
 	overflow-wrap: anywhere;
 }
 
 .missing {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .lead.missing {
@@ -62,7 +62,7 @@
 
 .source {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	font-size: var(--font-size-body-md);
 }
 
@@ -100,7 +100,7 @@
 }
 
 .term {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	font-weight: var(--font-weight-semibold);
 }
@@ -125,7 +125,7 @@
 }
 
 .okurigana {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .meanings {
@@ -152,7 +152,7 @@
 }
 
 .sense::marker {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-weight: var(--font-weight-semibold);
 }
 
@@ -160,7 +160,7 @@
 .senseMeta {
 	margin: 0;
 	overflow-wrap: anywhere;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 }
 
@@ -171,7 +171,7 @@
 
 .radicalNumber {
 	margin-inline-start: var(--spacing-2xs);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-sm);
 }
@@ -188,7 +188,7 @@
 }
 
 .romaji {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-md);
 }

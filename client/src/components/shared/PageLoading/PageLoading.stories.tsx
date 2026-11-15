@@ -87,7 +87,7 @@ export const CustomVisual: Story = {
 	args: {
 		label: 'Loading article.',
 		visual: (
-			<div aria-hidden="true" style={{ height: '8rem', background: 'var(--color-neutral-200)' }}>
+			<div aria-hidden="true" style={{ height: '8rem', background: 'var(--color-fill)' }}>
 				Route-specific placeholder
 			</div>
 		),

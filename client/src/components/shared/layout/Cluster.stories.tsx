@@ -23,11 +23,11 @@ const JUSTIFIES = ['start', 'center', 'end', 'between', 'around', 'evenly'] as c
 
 const box: CSSProperties = {
 	padding: '0.5rem 0.75rem',
-	background: 'var(--color-neutral-200)',
+	background: 'var(--color-fill)',
 	borderRadius: 'var(--border-radius-sm)',
 };
 
-const frame: CSSProperties = { border: '1px dashed var(--color-neutral-400)' };
+const frame: CSSProperties = { border: '1px dashed var(--color-border-strong)' };
 
 const Boxes = () => (
 	<>

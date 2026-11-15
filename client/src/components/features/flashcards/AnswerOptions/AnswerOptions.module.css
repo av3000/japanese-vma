@@ -29,8 +29,8 @@
 	width: var(--size-lg);
 	height: var(--size-lg);
 	border-radius: var(--border-radius-sm);
-	background: var(--color-neutral-100);
-	color: var(--color-neutral-700);
+	background: var(--color-surface-sunken);
+	color: var(--color-text-subtle);
 	font-family: var(--font-family-mono);
 	font-size: var(--font-size-body-xs);
 }

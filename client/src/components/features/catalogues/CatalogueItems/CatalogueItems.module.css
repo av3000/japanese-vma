@@ -11,7 +11,7 @@
 
 .message {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 /* Article catalogues ----------------------------------------------------- */
@@ -20,7 +20,7 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	border-top: var(--border-size-sm) solid var(--color-neutral-200);
+	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
 .articleRow {
@@ -29,7 +29,7 @@
 	justify-content: space-between;
 	gap: var(--spacing-sm);
 	padding-block: var(--spacing-sm);
-	border-bottom: var(--border-size-sm) solid var(--color-neutral-200);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
 }
 
 .articleText {
@@ -47,7 +47,7 @@
 .articleTags,
 .articleMeta {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-md);
 	overflow-wrap: anywhere;
 }
@@ -60,7 +60,7 @@
 	display: grid;
 	gap: var(--spacing-2xs);
 	padding: var(--spacing-lg);
-	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border: var(--border-size-sm) dashed var(--color-border-strong);
 	border-radius: var(--border-radius-md);
 	text-align: center;
 }
@@ -72,5 +72,5 @@
 
 .emptyHint {
 	margin: 0;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

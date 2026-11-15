@@ -20,6 +20,11 @@ vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
 
+// The search's hit counts are covered in HeaderSearch; here they would need a QueryClient.
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: () => ({ counts: null }),
+}));
+
 const renderHeader = () =>
 	renderToStaticMarkup(
 		<MemoryRouter>
@@ -52,6 +57,17 @@ describe('Header', () => {
 		expect(html).not.toContain('/newarticle');
 		expect(html).not.toContain('/catalogues/new');
 		expect(html).not.toContain('/newpost');
+	});
+
+	it.each([
+		['a guest', { isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }],
+		['signed in', signedIn],
+	])('shows the Dark mode toggle after the account controls for %s', (_, auth) => {
+		authState.value = auth;
+		const html = renderHeader();
+
+		expect(html).toContain('aria-label="Dark mode"');
+		expect(html.indexOf('aria-label="Dark mode"')).toBeGreaterThan(html.indexOf('aria-label="Account"'));
 	});
 
 	it('renders neutral account controls while auth is checking', () => {

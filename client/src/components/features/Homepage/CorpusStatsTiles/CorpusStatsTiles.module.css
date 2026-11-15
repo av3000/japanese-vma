@@ -12,16 +12,16 @@
 	gap: var(--spacing-3xs);
 	min-height: var(--size-6xl);
 	padding: var(--spacing-sm) var(--spacing-md);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-md);
-	background-color: var(--color-neutral-0);
-	color: var(--color-text-neutral-default);
+	background-color: var(--color-surface-raised);
+	color: var(--color-text-strong);
 	text-decoration: none;
 }
 
 a.tile:hover {
-	border-color: var(--color-primary-200);
-	color: var(--color-text-neutral-default);
+	border-color: var(--color-interactive-border);
+	color: var(--color-text-strong);
 	text-decoration: none;
 }
 
@@ -30,7 +30,7 @@ a.tile:hover .label {
 }
 
 a.tile:focus-visible {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -44,7 +44,7 @@ a.tile:focus-visible {
 
 .label {
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 @keyframes shimmer {
@@ -60,9 +60,9 @@ a.tile:focus-visible {
 	border-color: transparent;
 	background: linear-gradient(
 		90deg,
-		var(--color-neutral-200) 0%,
-		var(--color-neutral-100) 50%,
-		var(--color-neutral-200) 100%
+		var(--color-fill) 0%,
+		var(--color-surface-sunken) 50%,
+		var(--color-fill) 100%
 	);
 	background-size: 200% 100%;
 	animation: shimmer 1.6s ease-in-out infinite;

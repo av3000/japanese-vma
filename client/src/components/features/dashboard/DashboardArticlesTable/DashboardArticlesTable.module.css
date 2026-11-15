@@ -21,7 +21,7 @@
 .subtitle {
 	display: block;
 	margin-top: var(--spacing-3xs);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-sm);
 	overflow-wrap: anywhere;
 }
@@ -29,7 +29,7 @@
 .hint {
 	display: block;
 	margin-top: var(--spacing-3xs);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-xs);
 	white-space: nowrap;
 }

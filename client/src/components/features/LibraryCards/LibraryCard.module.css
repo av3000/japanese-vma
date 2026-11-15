@@ -9,8 +9,8 @@
 	grid-template-columns: 96px minmax(0, 1fr);
 	height: 100%;
 	overflow: hidden;
-	background-color: var(--color-neutral-0);
-	border: var(--border-size-sm) solid var(--color-neutral-200);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
 	border-radius: var(--border-radius-md);
 }
 
@@ -19,12 +19,12 @@
 }
 
 .card:hover {
-	border-color: var(--color-primary-200);
+	border-color: var(--color-interactive-border);
 }
 
 /* The title link covers the card, so the card shows where focus is. */
 .card:focus-within {
-	outline: var(--outline-size) solid var(--color-primary);
+	outline: var(--outline-size) solid var(--color-focus);
 	outline-offset: 2px;
 }
 
@@ -40,7 +40,7 @@
 	font-family: var(--font-family-mono);
 	font-variant-numeric: tabular-nums;
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 /* Two classes so the card beats the global h2 rules (min-height, margins, break-all hyphenation). */
@@ -60,12 +60,12 @@
 }
 
 .card .titleLink {
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 	text-decoration: none;
 }
 
 .card .titleLink:hover {
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 	text-decoration: underline;
 }
 
@@ -88,7 +88,7 @@
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 1;
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	overflow-wrap: anywhere;
 }
 
@@ -99,7 +99,7 @@
 .owner {
 	overflow: hidden;
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -129,7 +129,7 @@
 }
 
 .tagMore {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-sm);
 }
 
@@ -144,7 +144,7 @@
 	font-family: var(--font-family-mono);
 	font-variant-numeric: tabular-nums;
 	font-size: var(--font-size-body-sm);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .stat {

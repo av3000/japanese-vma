@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 import { Icon, type IconName } from '@/components/shared/Icon';
+import { LikeIcon } from '@/components/shared/LikeIcon';
 import styles from './LibraryCard.module.css';
 
 /** Tags shown before the rest collapse into "+N". */
@@ -10,6 +11,7 @@ export const MAX_CARD_TAGS = 3;
 export const CARD_STATS = {
 	views: { icon: 'eyeRegular', label: 'views' },
 	comments: { icon: 'commentSolid', label: 'comments' },
+	// The icon comes from the theme's like slot; see CardStats.
 	likes: { icon: 'thumbsUpSolid', label: 'likes' },
 	downloads: { icon: 'downloadSolid', label: 'downloads' },
 } as const satisfies Record<string, { icon: IconName; label: string }>;
@@ -96,7 +98,7 @@ export const CardStats: React.FC<{ stats: ReadonlyArray<{ kind: CardStatKind; co
 	<ul className={styles.stats} aria-label="Stats">
 		{stats.map(({ kind, count }) => (
 			<li key={kind} className={styles.stat} data-stat={kind}>
-				<Icon size="sm" name={CARD_STATS[kind].icon} />
+				{kind === 'likes' ? <LikeIcon tone="count" /> : <Icon size="sm" name={CARD_STATS[kind].icon} />}
 				{countFormat.format(count)}
 				<span className={styles.visuallyHidden}> {CARD_STATS[kind].label}</span>
 			</li>

@@ -163,3 +163,10 @@ export const Tablet: Story = {
 		await expect(await within(canvasElement).findByRole('region', { name: 'Latest articles' })).toBeVisible();
 	},
 };
+
+/* Themes (#498): the same page, so the same checks; the photo band is the theme's hero slot. */
+
+export const Sakura: Story = { ...Default, parameters: { appearance: { theme: 'sakura', scheme: 'light' } } };
+export const SakuraDark: Story = { ...Default, parameters: { appearance: { theme: 'sakura', scheme: 'dark' } } };
+export const KinariDark: Story = { ...Default, parameters: { appearance: { theme: 'kinari', scheme: 'dark' } } };
+export const Sumi: Story = { ...Default, parameters: { appearance: { theme: 'sumi' } } };

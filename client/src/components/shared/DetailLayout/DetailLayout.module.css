@@ -144,7 +144,7 @@
 	max-width: var(--measure-reading);
 	margin: var(--spacing-3xl) auto;
 	padding: var(--spacing-xl) var(--spacing-lg);
-	border: var(--border-size-sm) dashed var(--color-neutral-400);
+	border: var(--border-size-sm) dashed var(--color-border-strong);
 	border-radius: var(--border-radius-md);
 	text-align: center;
 }

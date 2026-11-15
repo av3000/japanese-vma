@@ -1,8 +1,8 @@
 .source {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 	font-size: var(--font-size-body-sm);
 }
 
 .sourceLink {
-	color: var(--color-primary);
+	color: var(--color-interactive);
 }

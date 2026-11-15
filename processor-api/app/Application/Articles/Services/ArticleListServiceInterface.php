@@ -30,6 +30,13 @@ interface ArticleListServiceInterface
     ): Result;
 
     /**
+     * The total list() reports for the same criteria and actor, and nothing else.
+     *
+     * @return Result Success data: int
+     */
+    public function count(ArticleQueryCriteria $criteria, ?AuthenticatedUser $actor = null): Result;
+
+    /**
      * The enriched rows for one page and nothing else: no total, no facets. For
      * related-Article panels that render a fixed number of rows.
      *

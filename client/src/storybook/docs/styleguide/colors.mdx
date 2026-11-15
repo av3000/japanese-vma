@@ -1,4 +1,4 @@
-import { Meta, Unstyled } from '@storybook/addon-docs/blocks';
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
 import { SettingGroup } from "@/storybook/helpers/SettingGroup";
 import "./sharedStyles.css";
 
@@ -63,17 +63,47 @@ import "./sharedStyles.css";
 <SettingGroup variables="color-warning" variant={"color"} />
 <SettingGroup variables="color-error" variant={"color"} />
 
+<h3>Page and ink</h3>
+<p>Kinari (生成り), a warm undyed-cloth white, is the page. Ink (墨), a warm near-black, is the dark-scheme surface.</p>
+<SettingGroup variables="color-kinari" variant={"color"} />
+<SettingGroup variables="color-ink" variant={"color"} />
+
 <hr />
 
-<h2>Tier 2 - Color applications</h2>
+<h2>Tier 2 - Roles</h2>
+<p>
+  What a colour is for. Components use these, never the Tier 1 steps. Each role is defined once in
+  <code>src/styles/00-settings/roles.css</code>; themes override roles, not the palette.
+</p>
 
-<h3>Text Colors</h3>
-<p>Semantic colors used for various text elements throughout the interface.</p>
+<h3>Surfaces</h3>
+<SettingGroup variables="color-surface" variant={"color"} />
+
+<h3>Text</h3>
 <SettingGroup variables="color-text" variant={"color"} />
 
-<h3>Background Colors</h3>
-<p>The page surface is kinari (生成り), a warm undyed-cloth white.</p>
-<SettingGroup variables="page-background-color" variant={"color"} />
+<h3>Fills and hover overlays</h3>
+<SettingGroup variables="color-fill" variant={"color"} />
+<SettingGroup variables="color-hover-overlay" variant={"color"} />
+
+<h3>Borders</h3>
+<SettingGroup variables="color-border" variant={"color"} />
+
+<h3>Interactive and focus</h3>
+<SettingGroup variables="color-interactive" variant={"color"} />
+<SettingGroup variables="color-on-interactive" variant={"color"} />
+<SettingGroup variables="color-focus" variant={"color"} />
+<SettingGroup variables="color-action-secondary" variant={"color"} />
+<SettingGroup variables="color-on-fill" variant={"color"} />
+
+<h3>Level (JLPT only)</h3>
+<SettingGroup variables="color-level" variant={"color"} />
+
+<h3>Like</h3>
+<p>
+  kinari draws the like icon in the colour of the button it sits in (<code>currentColor</code>).
+</p>
+<SettingGroup variables="color-like" variant={"color"} />
 
 <hr />
 
@@ -94,25 +124,25 @@ import "./sharedStyles.css";
 <p>For interactive elements, use the appropriate color variants:</p>
 <ul>
   <li>
-    Default state: Base color (e.g., <code>var(--color-primary)</code>)
+    Default state: the role (e.g., <code>var(--color-interactive)</code>)
   </li>
   <li>
-    Hover state: Hover variant (e.g., <code>var(--color-primary-hover)</code>)
+    Hover state: its hover variant (e.g., <code>var(--color-interactive-hover)</code>)
   </li>
   <li>
-    Disabled state: Disabled variant (e.g., <code>var(--color-primary-disabled)</code>)
+    Disabled state: its disabled variant (e.g., <code>var(--color-interactive-disabled)</code>)
   </li>
 </ul>
 
   <h3>CSS Variables</h3>
   <p>
-    All colors are available as CSS custom properties (variables) for use in component styles:
+    Component styles use roles, so a theme or a dark scheme can change the colour without touching the component:
   </p>
   <pre>
     {`.my-component {
-  background-color: var(--color-primary);
-  color: var(--color-neutral-0);
-  border: var(--border-size-sm) solid var(--color-primary-hover);
+  background-color: var(--color-interactive);
+  color: var(--color-on-interactive);
+  border: var(--border-size-sm) solid var(--color-interactive-hover);
 }`}
   </pre>
 </div>

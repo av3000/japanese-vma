@@ -10,6 +10,7 @@ import ScrollToTop from '@/helpers/ScrollToTop';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
 import { WebSocketProvider } from '@/providers/contexts/socket-provider';
 import AppRoutes from '@/routes/routes';
+import { AppearanceProvider } from '@/themes/AppearanceProvider';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -35,18 +36,20 @@ const AppContent = () => {
 };
 
 const App = () => (
-	<QueryClientProvider client={queryClient}>
-		<Router>
-			<AuthProvider>
-				<WebSocketProvider>
-					<Sentry.ErrorBoundary fallback={AppErrorFallback}>
-						<AppContent />
-					</Sentry.ErrorBoundary>
-				</WebSocketProvider>
-			</AuthProvider>
-		</Router>
-		<ReactQueryDevtools initialIsOpen={false} />
-	</QueryClientProvider>
+	<AppearanceProvider>
+		<QueryClientProvider client={queryClient}>
+			<Router>
+				<AuthProvider>
+					<WebSocketProvider>
+						<Sentry.ErrorBoundary fallback={AppErrorFallback}>
+							<AppContent />
+						</Sentry.ErrorBoundary>
+					</WebSocketProvider>
+				</AuthProvider>
+			</Router>
+			<ReactQueryDevtools initialIsOpen={false} />
+		</QueryClientProvider>
+	</AppearanceProvider>
 );
 
 export default App;

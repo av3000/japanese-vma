@@ -8,5 +8,5 @@
 	width: 50%;
 	height: var(--size-xl);
 	border-radius: var(--border-radius-xs);
-	background-color: var(--color-neutral-200);
+	background-color: var(--color-fill);
 }

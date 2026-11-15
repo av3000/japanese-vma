@@ -3,7 +3,7 @@ html:not(.is-component) .sbdocs-wrapper {
 }
 
 .is-component .docs-story {
-	background-color: var(--page-background-color);
+	background-color: var(--color-surface);
 }
 
 ul:not([class]) {

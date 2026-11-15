@@ -3,7 +3,10 @@ import type * as React from 'react';
 /** Spacing scale from src/styles/00-settings/spacing. */
 export type SpacingToken = 'none' | '3xs' | '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 
-/** Breakpoint names from src/styles/00-settings/breakpoints (min-width). */
+/**
+ * Breakpoint names (min-width). There is no breakpoint token file: the widths are literal in
+ * layout.module.css, sm 768px, md 1024px, lg 1320px.
+ */
 export type Breakpoint = 'base' | 'sm' | 'md' | 'lg';
 
 export type Responsive<T> = T | Partial<Record<Breakpoint, T>>;

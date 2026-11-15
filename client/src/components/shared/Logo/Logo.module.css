@@ -1,0 +1,13 @@
+/* Inherits the brand link's font, size and colour; the mark sits one cap height tall beside the text. */
+.logo {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+}
+
+.mark {
+	display: block;
+	flex: none;
+	width: auto;
+	height: 1.25em;
+}

@@ -8,6 +8,15 @@
  *   - Bootstrap-style utility class tokens inside className strings
  *   - Tailwind-style utility class tokens inside className strings
  *   - .scss files
+ *   - undefinedCustomProperties: `var(--name)` uses with no `--name:` definition anywhere in src/ (#493)
+ *   - moduleHexColours: hex colour literals in *.module.css; colours come from 00-settings tokens (#493)
+ *   - themeSelectors: `[data-theme` in CSS outside src/styles/themes/; components never name a theme (#498)
+ *   - unguardedLightDark: `light-dark(` outside `@supports (color: light-dark(#000, #fff))` (#498)
+ *   - rawPaletteRefs: palette steps (`--color-neutral-*`, `-primary-*`, `-accent-*`, `-secondary-*`, `-kinari`,
+ *     `-ink-*`) or removed old names in CSS outside 00-settings and the theme files; components use roles (#498)
+ *
+ * Custom properties set at runtime count as defined: string keys in .ts/.tsx (`'--bg-color': …`), the
+ * `--<prefix>-<breakpoint>` names `responsiveVars('<prefix>', …)` builds, and RUNTIME_PROPERTY_PREFIXES.
  *
  * Token list policy: only class shapes that are unmistakably Bootstrap (prefixed or hyphenated, e.g.
  * `col-md-4`, `text-muted`, `btn-primary`) plus the grid pair `container`/`row` and `btn`. Plain words such
@@ -18,6 +27,7 @@
  *   node scripts/style-audit.mjs            # print report
  *   node scripts/style-audit.mjs --tokens   # print every offending token with its count
  *   node scripts/style-audit.mjs --files    # print per-file counts
+ *   node scripts/style-audit.mjs --vars     # print each undefined custom property and module hex colour
  *   node scripts/style-audit.mjs --write    # write current counts to style-budget.json
  *   node scripts/style-audit.mjs --check    # exit 1 if any count exceeds style-budget.json
  */
@@ -163,6 +173,90 @@ const files = walk(srcDir);
 const tsxFiles = files.filter((f) => /\.(tsx|ts|jsx|js)$/.test(f));
 const scssFiles = files.filter((f) => f.endsWith(".scss"));
 
+// Custom properties a library sets on its own elements at runtime.
+const RUNTIME_PROPERTY_PREFIXES = ["--radix-"];
+
+const definedProperties = new Set();
+const runtimePrefixes = new Set(RUNTIME_PROPERTY_PREFIXES);
+const propertyUses = new Map(); // name -> ["file:line", ...]
+const moduleHexColours = []; // "file:line value"
+
+const THEME_STYLES_DIR = "src/styles/themes/";
+const themeSelectors = []; // "file:line"
+const unguardedLightDark = []; // "file:line"
+const rawPaletteRefs = []; // "file:line token"
+const RAW_PALETTE =
+  /var\(\s*(--color-(?:neutral|primary|accent|secondary|kinari|ink)[\w-]*|--color-text-primary[\w-]*|--color-text-neutral[\w-]*|--color-link[\w-]*|--page-background-color|--color-border-default|--font-family)(?=[\s,)])/g;
+
+// Blank out CSS comments but keep their newlines, so line numbers still match and issue references
+// such as `(#383)` are not read as hex colours.
+const stripCssComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+
+/**
+ * Line numbers of `light-dark(` outside an `@supports (… light-dark …)` block. An unguarded custom
+ * property set to light-dark() replaces the light value and then fails at use time in a browser
+ * without light-dark(), leaving the property unset instead of falling back (#498).
+ */
+const findUnguardedLightDark = (source) => {
+  const lines = [];
+  const stack = []; // true for a block opened by a light-dark @supports
+  let line = 1;
+  let preludeStart = 0;
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+    if (c === "\n") line++;
+    if (c === "{") {
+      const prelude = source.slice(preludeStart, i);
+      stack.push(/@supports[^{]*light-dark/.test(prelude) || stack.at(-1) === true);
+      preludeStart = i + 1;
+    } else if (c === "}") {
+      stack.pop();
+      preludeStart = i + 1;
+    } else if (c === ";") {
+      preludeStart = i + 1;
+    } else if (source.startsWith("light-dark(", i) && stack.at(-1) !== true) {
+      const prelude = source.slice(preludeStart, i);
+      if (!/@supports/.test(prelude)) lines.push(line);
+    }
+  }
+  return lines;
+};
+
+for (const file of files.filter((f) => /\.(css|tsx?)$/.test(f))) {
+  const isCss = file.endsWith(".css");
+  const raw = readFileSync(file, "utf8");
+  const source = isCss ? stripCssComments(raw) : raw;
+  const rel = relative(root, file).replaceAll("\\", "/");
+  for (const m of source.matchAll(/responsiveVars\(\s*['"]([\w-]+)['"]/g)) runtimePrefixes.add(`--${m[1]}-`);
+  source.split(/\r?\n/).forEach((line, i) => {
+    // CSS defines with `--name:`; TS/TSX sets runtime properties as string keys, e.g. `'--bg-color': …`.
+    const definition = isCss ? /(--[\w-]+)\s*:/g : /['"](--[\w-]+)['"]\s*:/g;
+    for (const m of line.matchAll(definition)) definedProperties.add(m[1]);
+    for (const m of line.matchAll(/var\(\s*(--[\w-]+)(?=[\s,)$])/g)) {
+      if (m[1].endsWith("-")) continue; // template stem such as `var(--spacing-${token})`
+      propertyUses.set(m[1], [...(propertyUses.get(m[1]) ?? []), `${rel}:${i + 1}`]);
+    }
+    // An @supports condition such as `(color: light-dark(#000, #fff))` tests a feature; it paints nothing.
+    if (file.endsWith(".module.css") && !/@supports/.test(line)) {
+      for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) moduleHexColours.push(`${rel}:${i + 1} ${m[0]}`);
+    }
+    // Inline styles in TS/TSX (stories included) count too; src/themes/ holds theme data, not styles.
+    if (!rel.startsWith(THEME_STYLES_DIR) && !rel.includes("/00-settings/") && !rel.startsWith("src/themes/")) {
+      for (const m of line.matchAll(RAW_PALETTE)) rawPaletteRefs.push(`${rel}:${i + 1} ${m[1]}`);
+    }
+    // A theme never reaches into components: only the theme files may select on data-theme (#498).
+    if (isCss && !rel.startsWith(THEME_STYLES_DIR) && /\[data-theme\b/.test(line)) {
+      themeSelectors.push(`${rel}:${i + 1}`);
+    }
+  });
+  if (isCss) unguardedLightDark.push(...findUnguardedLightDark(source).map((line) => `${rel}:${line}`));
+}
+
+const undefinedProperties = [...propertyUses.entries()]
+  .filter(([name]) => !definedProperties.has(name))
+  .filter(([name]) => ![...runtimePrefixes].some((prefix) => name.startsWith(prefix)))
+  .sort(([a], [b]) => a.localeCompare(b));
+
 const perFile = new Map();
 const tokenCounts = { bootstrap: new Map(), tailwind: new Map() };
 const totals = {
@@ -171,6 +265,11 @@ const totals = {
   bootstrapClassTokens: 0,
   tailwindClassTokens: 0,
   scssFiles: scssFiles.length,
+  undefinedCustomProperties: undefinedProperties.length,
+  moduleHexColours: moduleHexColours.length,
+  themeSelectors: themeSelectors.length,
+  unguardedLightDark: unguardedLightDark.length,
+  rawPaletteRefs: rawPaletteRefs.length,
 };
 
 for (const file of tsxFiles) {
@@ -226,9 +325,23 @@ function printFiles() {
   console.table(rows);
 }
 
+function printVars() {
+  console.log(`\nUndefined custom properties (${undefinedProperties.length}):`);
+  for (const [name, at] of undefinedProperties) console.log(`  ${name}  ${at.join(", ")}`);
+  console.log(`\nHex colours in *.module.css (${moduleHexColours.length}):`);
+  for (const entry of moduleHexColours) console.log(`  ${entry}`);
+  console.log(`\n[data-theme] selectors outside ${THEME_STYLES_DIR} (${themeSelectors.length}):`);
+  for (const entry of themeSelectors) console.log(`  ${entry}`);
+  console.log(`\nlight-dark() outside @supports (color: light-dark(#000, #fff)) (${unguardedLightDark.length}):`);
+  for (const entry of unguardedLightDark) console.log(`  ${entry}`);
+  console.log(`\nPalette steps and removed names in component CSS (${rawPaletteRefs.length}):`);
+  for (const entry of rawPaletteRefs) console.log(`  ${entry}`);
+}
+
 printReport();
 if (args.has("--tokens")) printTokens();
 if (args.has("--files")) printFiles();
+if (args.has("--vars")) printVars();
 
 if (args.has("--write")) {
   writeFileSync(budgetPath, JSON.stringify(totals, null, 2) + "\n");

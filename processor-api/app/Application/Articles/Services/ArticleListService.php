@@ -59,6 +59,13 @@ final readonly class ArticleListService implements ArticleListServiceInterface
         ));
     }
 
+    public function count(ArticleQueryCriteria $criteria, ?AuthenticatedUser $actor = null): Result
+    {
+        return Result::success(
+            $this->articleListReader->count($criteria, $this->articlePolicy->scopeFor($actor)),
+        );
+    }
+
     public function listItems(
         ArticleQueryCriteria $criteria,
         ArticleListIncludes $includes,

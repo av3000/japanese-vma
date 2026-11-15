@@ -19,5 +19,5 @@
 
 .gap {
 	padding-inline: var(--spacing-2xs);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }

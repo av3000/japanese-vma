@@ -26,7 +26,7 @@
 	font-family: var(--font-family-ja-serif);
 	font-size: var(--glyph-size);
 	line-height: 1;
-	color: var(--color-neutral-200);
+	color: var(--color-fill); /* a faint glyph behind the text */
 	user-select: none;
 	pointer-events: none;
 }
@@ -38,7 +38,7 @@
 	font-variant-numeric: tabular-nums;
 	font-size: var(--font-size-body-sm);
 	letter-spacing: 0.08em;
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .title {
@@ -48,7 +48,7 @@
 
 .lead {
 	margin: 0;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 }
 
 /* A dictionary entry: word, reading, gloss, the way word rows show elsewhere on the site. */
@@ -60,13 +60,13 @@
 	gap: var(--spacing-xs);
 	margin: var(--spacing-xs) 0 0;
 	font-size: var(--font-size-body-md);
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .word {
 	font-family: var(--font-family-ja-serif);
 	font-size: var(--font-size-heading-4);
-	color: var(--color-text-neutral-default);
+	color: var(--color-text-strong);
 }
 
 .reading {

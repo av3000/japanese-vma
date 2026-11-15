@@ -205,8 +205,8 @@ describe('CatalogueContent', () => {
 	it('renders the liked icon from the catalogue detail engagement payload', () => {
 		const html = renderToStaticMarkup(<CatalogueContent catalogue={createCatalogue() as any} />);
 
-		expect(html).toContain('thumbsUpSolid');
-		expect(html).not.toContain('thumbsUpRegular');
+		expect(html).toContain('data-state="on"');
+		expect(html).not.toContain('data-state="off"');
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(true);
 	});
 
@@ -256,7 +256,7 @@ describe('CatalogueContent', () => {
 			/>,
 		);
 
-		expect(html).toContain('thumbsUpRegular');
+		expect(html).toContain('data-state="off"');
 		expect(capturedLikeButtonProps[0]['aria-pressed']).toBe(false);
 	});
 

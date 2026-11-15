@@ -44,12 +44,7 @@ class KanjiRepository implements KanjiRepositoryInterface
 
     public function find(?KanjiQueryCriteria $criteria = null): KanjiListResultDTO
     {
-        $query = PersistenceKanji::query()->orderBy('id');
-
-        if ($criteria) {
-            $this->applyKanjiFilters($query, $criteria);
-            $this->applyParentEntityFilters($query, $criteria);
-        }
+        $query = $this->filteredQuery($criteria)->orderBy('id');
 
         $perPage = $criteria?->pagination?->per_page ?? Pagination::DEFAULT_PER_PAGE;
         $page = $criteria?->pagination?->page ?? Pagination::MIN_PAGE;
@@ -70,6 +65,27 @@ class KanjiRepository implements KanjiRepositoryInterface
                 'has_more' => $paginator->hasMorePages(),
             ],
         );
+    }
+
+    public function count(KanjiQueryCriteria $criteria): int
+    {
+        return $this->filteredQuery($criteria)->count();
+    }
+
+    /**
+     * The rows find() pages through, so count() always equals find()'s total. It goes through
+     * the Eloquent model, which keeps the readable-character global scope.
+     */
+    private function filteredQuery(?KanjiQueryCriteria $criteria): Builder
+    {
+        $query = PersistenceKanji::query();
+
+        if ($criteria) {
+            $this->applyKanjiFilters($query, $criteria);
+            $this->applyParentEntityFilters($query, $criteria);
+        }
+
+        return $query;
     }
 
     private function applyKanjiFilters(Builder $query, KanjiQueryCriteria $criteria): void
