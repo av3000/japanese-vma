@@ -1,4 +1,6 @@
 /.worktrees/
+# Agent run logs (start-epic-workflow): local, append-only, condensed into the epic PR.
+/.agent-runs/
 
 docs/plans/
 docs/superpowers/
