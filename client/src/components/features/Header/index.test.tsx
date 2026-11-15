@@ -20,6 +20,11 @@ vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
 
+// The search's hit counts are covered in HeaderSearch; here they would need a QueryClient.
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: () => ({ counts: null }),
+}));
+
 const renderHeader = () =>
 	renderToStaticMarkup(
 		<MemoryRouter>

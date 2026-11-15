@@ -17,6 +17,11 @@ vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
 
+// The search's hit counts are covered in HeaderSearch; here they would need a QueryClient.
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: () => ({ counts: null }),
+}));
+
 // jsdom has no showModal(); the real modal behaviour is covered by the Storybook play functions.
 const original = { showModal: HTMLDialogElement.prototype.showModal, close: HTMLDialogElement.prototype.close };
 

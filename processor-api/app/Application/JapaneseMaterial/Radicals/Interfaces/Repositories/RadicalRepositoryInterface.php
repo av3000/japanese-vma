@@ -13,6 +13,11 @@ interface RadicalRepositoryInterface
 {
     public function find(RadicalQueryCriteria $criteria): RadicalListResultDTO;
 
+    /**
+     * How many radicals find() would page through for the same criteria; pagination is ignored.
+     */
+    public function count(RadicalQueryCriteria $criteria): int;
+
     public function findByUuid(EntityId $uuid, bool $withKanjis = false): ?Radical;
 
     public function findByLegacyId(int $id, bool $withKanjis = false): ?Radical;

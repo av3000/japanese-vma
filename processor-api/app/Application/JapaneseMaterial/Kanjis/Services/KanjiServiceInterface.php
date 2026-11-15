@@ -33,6 +33,13 @@ interface KanjiServiceInterface
      */
     public function find(?KanjiQueryCriteria $criteria = null): Result;
 
+    /**
+     * The total find() reports for the same criteria, without loading a page.
+     *
+     * @return Result<int>
+     */
+    public function count(KanjiQueryCriteria $criteria): Result;
+
     // Get a single Kanji by its character.
     // @return Result<Kanji>
     public function findByCharacter(KanjiCharacter $character): Result;

@@ -23,9 +23,7 @@ class SentenceRepository implements SentenceRepositoryInterface
 
     public function find(SentenceQueryCriteria $criteria): SentenceListResultDTO
     {
-        $query = PersistenceSentence::query()->with('user:id,name,uuid')->orderBy('id');
-
-        $this->applyFilters($query, $criteria);
+        $query = $this->filteredQuery($criteria)->with('user:id,name,uuid')->orderBy('id');
 
         $paginator = $query->paginate(
             $criteria->pagination->per_page,
@@ -129,6 +127,23 @@ class SentenceRepository implements SentenceRepositoryInterface
             ->value('users.name');
 
         return $name === null ? null : (string) $name;
+    }
+
+    public function count(SentenceQueryCriteria $criteria): int
+    {
+        return $this->filteredQuery($criteria)->count();
+    }
+
+    /**
+     * The rows find() pages through, so count() always equals find()'s total.
+     */
+    private function filteredQuery(SentenceQueryCriteria $criteria): Builder
+    {
+        $query = PersistenceSentence::query();
+
+        $this->applyFilters($query, $criteria);
+
+        return $query;
     }
 
     private function applyFilters(Builder $query, SentenceQueryCriteria $criteria): void

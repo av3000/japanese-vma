@@ -22,6 +22,11 @@ class WordService implements WordServiceInterface
         return Result::success($this->wordRepository->find($criteria));
     }
 
+    public function count(WordQueryCriteria $criteria): Result
+    {
+        return Result::success($this->wordRepository->count($criteria));
+    }
+
     public function findByIdentifier(string $identifier): Result
     {
         $identifier = trim($identifier);

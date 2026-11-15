@@ -52,6 +52,8 @@ use App\Application\JapaneseMaterial\Words\Services\WordService;
 use App\Application\JapaneseMaterial\Words\Services\WordServiceInterface;
 use App\Application\Processing\Services\ProcessingStateService;
 use App\Application\Processing\Services\ProcessingStateServiceInterface;
+use App\Application\Search\Services\SearchCountsService;
+use App\Application\Search\Services\SearchCountsServiceInterface;
 use App\Application\Study\Services\FlashcardDeckService;
 use App\Application\Study\Services\FlashcardDeckServiceInterface;
 use App\Application\Study\Services\StudySessionService;
@@ -94,6 +96,7 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(CorpusStatsServiceInterface::class, CorpusStatsService::class);
         $this->app->bind(WordServiceInterface::class, WordService::class);
         $this->app->bind(WordDetailServiceInterface::class, WordDetailService::class);
+        $this->app->bind(SearchCountsServiceInterface::class, SearchCountsService::class);
 
         $this->app->bind(KanjiExtractionServiceInterface::class, KanjiExtractionService::class);
         $this->app->bind(WordExtractionServiceInterface::class, WordExtractionService::class);

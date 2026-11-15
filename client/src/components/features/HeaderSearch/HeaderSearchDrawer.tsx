@@ -29,7 +29,7 @@ export const HeaderSearchDrawer: React.FC<HeaderSearchDrawerProps> = ({ triggerR
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const modal = useModal(dialogRef, { transitionMs: 0, onOpen: () => inputRef.current?.focus() });
 	const search = useHeaderSearch(modal.close);
-	const scopeLabel = findSearchScope(search.resolution.scope).label.toLowerCase();
+	const scopeLabel = findSearchScope(search.scope).label.toLowerCase();
 
 	return (
 		<>
