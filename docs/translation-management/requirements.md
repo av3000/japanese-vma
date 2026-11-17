@@ -4,10 +4,10 @@
 |---|---|
 | Epic | [#659 TRANSLATIONS](https://github.com/av3000/japanese-vma/issues/659) |
 | Milestone | Translation Management |
-| Status | In progress: US-01 delivered |
+| Status | In progress: US-01 and US-02 delivered |
 | Design | [2026-08-18 design specification](./2026-08-18-translation-management-design.md) (how). This document covers the what. |
 | Plan | [implementation-plan.md](./implementation-plan.md): branch model, per-story loop, story sections, run prompt |
-| Last updated | 2026-11-06 |
+| Last updated | 2026-11-15 |
 
 ## 1. Goal
 
@@ -106,11 +106,11 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-01 | US-01 | Delivered |
 | FR-02 | US-01 (English row), US-03 | English row delivered (US-01); the rest planned |
 | FR-03 | US-01 | Delivered |
-| FR-04 | US-01, US-02, US-07 (end to end) | English path delivered (US-01); the rest planned |
-| FR-05 | US-02, US-05, US-07 (end to end) | Planned |
-| FR-06 | US-02, US-04 | Planned |
-| FR-07 | US-02, US-04 | Planned |
-| FR-08 | US-02, US-04 | Planned |
+| FR-04 | US-01, US-02, US-07 (end to end) | Delivered for every locale (US-01, US-02); the end-to-end proof is planned (US-07) |
+| FR-05 | US-02, US-05, US-07 (end to end) | Storage and save rules delivered in the editor service (US-02); the Filament action and end-to-end proof are planned (US-05, US-07) |
+| FR-06 | US-02, US-04 | Derived states delivered (US-02); the overview badges are planned (US-04) |
+| FR-07 | US-02, US-04 | Delivered for bundles and completion (US-02); the overview is planned (US-04) |
+| FR-08 | US-02, US-04 | Calculation delivered (US-02); the display line is planned (US-04) |
 | FR-09 | US-04 | Planned |
 | FR-10 | US-05 | Planned |
 | FR-11 | US-03, US-04, US-05 | Planned |
@@ -119,15 +119,15 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-14 | US-06, US-07 (end to end) | Planned |
 | FR-15 | US-06 | Planned |
 | FR-16 | US-07 | Planned |
-| NFR-01 | US-02, US-04 | Planned |
-| NFR-02 | US-02, US-05 | Planned |
+| NFR-01 | US-02, US-04 | Delivered for bundle and completion (US-02); the overview list is planned (US-04) |
+| NFR-02 | US-02, US-05 | Delivered for the bundle: no cache (US-02); the editor save is planned (US-05) |
 | NFR-03 | US-03, US-05 | Planned |
 | NFR-04 | US-01 | Delivered |
 | NFR-05 | US-06 | Planned |
 | NFR-06 | US-06 | Planned |
 | NFR-07 | US-06, US-07 | Planned |
 | NFR-08 | all | Planned |
-| NFR-09 | US-02, US-05 | Planned |
+| NFR-09 | US-02, US-05 | Last write wins in the upsert (US-02); the editor save is planned (US-05) |
 
 Each story's commit updates its rows to **Delivered**. When the epic merges, this document is reviewed again. Once the code and tests show the rules on their own, it is removed or reduced.
 

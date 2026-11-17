@@ -32,6 +32,13 @@ class TranslationLocaleRepository implements TranslationLocaleRepositoryInterfac
         return $locale === null ? null : $this->toDomain($locale);
     }
 
+    public function findByCode(string $code): ?DomainTranslationLocale
+    {
+        $locale = TranslationLocale::query()->where('code', $code)->first();
+
+        return $locale === null ? null : $this->toDomain($locale);
+    }
+
     private function toDomain(TranslationLocale $locale): DomainTranslationLocale
     {
         return new DomainTranslationLocale(

@@ -41,6 +41,7 @@ use App\Application\Search\Interfaces\Caches\SearchCountCacheInterface;
 use App\Application\Study\Interfaces\Readers\DistractorPoolReaderInterface;
 use App\Application\Study\Interfaces\Repositories\StudySessionRepositoryInterface;
 use App\Application\Translations\Interfaces\Repositories\TranslationLocaleRepositoryInterface;
+use App\Application\Translations\Interfaces\Repositories\TranslationOverrideRepositoryInterface;
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
 use App\Application\Users\Interfaces\Repositories\RoleRepositoryInterface;
 use App\Application\Users\Interfaces\Repositories\UserAccountRepositoryInterface;
@@ -80,6 +81,7 @@ use App\Infrastructure\Persistence\Repositories\RoleRepository;
 use App\Infrastructure\Persistence\Repositories\SentenceRepository;
 use App\Infrastructure\Persistence\Repositories\StudySessionRepository;
 use App\Infrastructure\Persistence\Repositories\TranslationLocaleRepository;
+use App\Infrastructure\Persistence\Repositories\TranslationOverrideRepository;
 use App\Infrastructure\Persistence\Repositories\UserAccountRepository;
 use App\Infrastructure\Persistence\Repositories\UserRepository;
 use App\Infrastructure\Persistence\Repositories\ViewRepository;
@@ -205,6 +207,7 @@ class RepositoryServiceProvider extends ServiceProvider
         // Epic #659: UI translations. The source catalogue is the only reader of resources/lang/en/ui.php;
         // a singleton keeps the flattened map for the rest of the request.
         $this->app->bind(TranslationLocaleRepositoryInterface::class, TranslationLocaleRepository::class);
+        $this->app->bind(TranslationOverrideRepositoryInterface::class, TranslationOverrideRepository::class);
         $this->app->singleton(
             EnglishSourceCatalogueInterface::class,
             static fn ($app): LaravelEnglishSourceCatalogue => new LaravelEnglishSourceCatalogue(
