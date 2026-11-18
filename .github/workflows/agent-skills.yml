@@ -15,6 +15,7 @@ on:
       - "docs/agents/workflow.md"
       - "scripts/sync-agent-skills.sh"
       - "scripts/lint-agent-skills.mjs"
+      - "scripts/guard-agent-merge*.mjs"
       - ".github/workflows/agent-skills.yml"
 
 permissions:
@@ -29,6 +30,9 @@ jobs:
 
       - name: Lint skills
         run: node scripts/lint-agent-skills.mjs
+
+      - name: Test the merge guard
+        run: node --test scripts/guard-agent-merge.test.mjs
 
       - name: Check the Codex mirror
         run: |

@@ -19,6 +19,8 @@ This guide maps which skills to use, in what order, for each kind of work in thi
 | `create-pull-request` | repo | Open the PR into `develop`, with an acceptance-criteria evidence table, risk, screenshots and verification |
 | `post-review-to-pr` | repo | Put a `review-branch` report on the PR as a pending review with inline comments |
 | `address-pr-review` | repo | Work through review comments on your PR: fix, clarify or decline each one, and reply to every thread |
+| `start-epic-workflow` | repo | Deliver a whole epic unattended: one story session and one review session per sub-issue, squash-merge into the epic branch, then the epic PR into `develop` |
+| `start-user-story-workflow` | repo | Deliver one story as a reviewed PR into its epic branch: plan, build test-first, check, PR, answer the review |
 | `diagnosing-bugs` | Matt Pocock plugin | Hard bugs: build a loop that reproduces the failure before theorising, then fix it with a regression test |
 | `prototype` | Matt Pocock plugin | Answer a design question with throwaway code |
 | `research` | Matt Pocock plugin | Collect facts from primary sources into a cited file (it runs a background agent, so it costs more) |
@@ -95,6 +97,7 @@ grilling ─► write-issue ─► per slice: tdd ─► commit ─► review-br
 | A bug report or request arrives from someone else | `write-issue` in check mode scores it as Ready, Borderline or Blocked and asks the blocking questions. Once Ready, it joins the main flow at step 2. |
 | Something is broken right now | `diagnosing-bugs` → regression test → `write-issue` (if no issue exists yet) → main flow from step 2.3 |
 | Review comments are waiting on your PR | `address-pr-review` |
+| An epic's stories are written and its branch is cut from `develop`, and you want it delivered while you are away | `start-epic-workflow <epic> <epic-branch>`. It runs `start-user-story-workflow` per story in its own session, a separate review session per story PR, and logs every agent action to `.agent-runs/epic-<n>.md` in the main checkout. Claude Code desktop only. |
 | Someone else's PR, or a dependency bump, needs a review | `review-branch <PR number>`, then `post-review-to-pr` |
 | A design question can't be settled by talking | `prototype` |
 | You need outside facts first (a library, an API, a hosting choice) | `research`, then take the file into `grilling` |
