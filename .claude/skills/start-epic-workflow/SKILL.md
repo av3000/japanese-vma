@@ -7,9 +7,9 @@ description: Deliver a whole japanese-vma epic, story by story, while the mainta
 
 You are the **epic agent**: you coordinate, you never write product code. Each story is built by its own story session and reviewed by its own review session. GitHub is the record of progress, and the run log is the record of what every agent did.
 
-Inputs: `<epic-issue> <epic-branch>`, for example `659 feature/issue-659-translations`. If either is missing, ask once.
+Inputs: `<epic-issue> <epic-branch>`, for example `659 feature/issue-659-translations`. If either is missing, ask once. If `<epic-branch>` is `develop`, `master` or `main`, stop: story PRs must never target a protected branch.
 
-`gh` is not on PATH. Call it from Bash exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, single-quoted and never through a variable: the project's permission rules match that spelling, so the GitHub writes this loop makes run without a prompt. Always pass a PR by its number, never its URL or branch. A merge whose PR targets `develop` or `master` is denied by the repo's merge guard hook (guard-agent-merge.mjs in the root scripts folder) whatever you do, and so are the GraphQL and REST merge calls and `gh pr edit --base`. Repo: `av3000/japanese-vma`. The code blocks below write `gh` for short.
+`gh` is not on PATH. Call it from Bash exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, single-quoted and never through a variable: the project's permission rules match that spelling, so the GitHub writes this loop makes run without a prompt. Always pass a PR by its number, never its URL or branch, and never merge through the GitHub MCP tools. The repo's merge guard hook (guard-agent-merge.mjs in the root scripts folder) denies a merge whose PR targets `develop` or `master`, the GraphQL and REST merge and ref-writing calls, and `gh pr edit --base`. It is accident prevention for an agent following this skill, not a security boundary; branch protection on GitHub is. Repo: `av3000/japanese-vma`. The code blocks below write `gh` for short.
 
 This skill needs the Claude Code desktop app's session tools (`mcp__ccd_session__start_session`, `SendMessage`). Load them with `ToolSearch` if they are deferred. Codex has no equivalent; there, stop and say so.
 
@@ -28,7 +28,17 @@ This skill needs the Claude Code desktop app's session tools (`mcp__ccd_session_
    ```
    If `blockedBy` is not available, read the `Blocked by:` line in each issue body instead.
 4. Every open sub-issue needs an `## Acceptance criteria` checklist. If one has none, stop and offer `write-issue` for it: an agent cannot meet criteria nobody wrote.
-5. **Permission rules.** Each session reads the `.claude/settings.json` committed in its own worktree, so the rules must be committed, not only present in a local checkout. Check `git show origin/<epic-branch>:.claude/settings.json`: it must allow the `gh` writes (`pr create`, `pr merge`, `issue close`, the review calls) and `git push origin`, and run the merge guard as a `PreToolUse` hook on Bash. If it is on `origin/develop` but not yet on the epic branch, the refresh in §2 step 2 brings it in; do that first. If it is missing from both, **stop**: without it the first GitHub write in a story session waits at a prompt, and nothing wakes you. Your own checkout needs the same file. Agents cannot add it; the maintainer commits it.
+5. **Permission rules and the merge guard.** Each session reads the `.claude/settings.json` committed in its own worktree, so the rules must be committed, not only present in a local checkout. If they are on `origin/develop` but not yet on the epic branch, the refresh in §2 step 2 brings them in; do that first. Then check `origin/<epic-branch>`:
+   - `git show origin/<epic-branch>:.claude/settings.json` allows the `gh` writes (`pr create`, `pr merge`, `issue close`, the review calls) and `git push origin`, denies the GitHub MCP merge tool, and runs the merge guard as a `PreToolUse` hook with the matcher `Bash|PowerShell`.
+   - `git cat-file -e origin/<epic-branch>:scripts/guard-agent-merge.mjs` succeeds. The hook ends in `|| exit 2`, so a missing script would block every Bash call.
+   - The guard denies a test payload. This needs no network:
+     ```bash
+     git show origin/<epic-branch>:scripts/guard-agent-merge.mjs > "<scratchpad>/guard-check.mjs"
+     printf '%s' '{"tool_input":{"command":"gh api graphql -f query=\"mutation { mergePullRequest(input:{}) { clientMutationId } }\""}}' \
+       | node "<scratchpad>/guard-check.mjs" | grep -q '"permissionDecision":"deny"'
+     ```
+
+   If any check fails, **stop**: without the rules the first GitHub write in a story session waits at a prompt and nothing wakes you, and without the guard nothing stops a merge into `develop`. Your own checkout needs the same file. Agents cannot add it; the maintainer commits it.
 6. Open the run log (`references/run-log.md` says where and how). Create it with its header if it does not exist. If it does, this is a resumed run: read it to see where the last run stopped, and which session ids it logged.
 
 Write a short status for the maintainer: the stories, which are done, which is next, and the branch. Then start; do not wait for a reply.
@@ -37,7 +47,7 @@ Write a short status for the maintainer: the stories, which are done, which is n
 
 Re-read the sub-issues from GitHub at the start of every pass, never from memory: a restart or a compacted context must resume at the right story.
 
-1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If open stories remain but none is unblocked, stop and report the cycle. If its PR is already open from an earlier run (`gh pr list --base <epic-branch> --state open`), resume it at the step it reached: message the story session by the `local_…` id the log recorded; if that session is gone, start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line.
+1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If open stories remain but none is unblocked, stop and report the cycle. If its PR is already open from an earlier run, resume it. Find it with `gh pr list --base <epic-branch> --state open --json number,title,body`, and count only a PR whose title starts with `[<STABLE-ID>]` or whose body says `Refs #<issue>`; any other open PR on the epic branch is not this story's, and is a stop. Resume it at the step it reached: message the story session by the `local_…` id the log recorded; if that session is gone, start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line.
 2. **Refresh the epic branch.** `start_session` cuts a worktree from the **local** `<epic-branch>`, but the story merges happen on GitHub, so bring the local ref up to `origin` on every pass:
    ```bash
    git fetch origin
@@ -70,7 +80,14 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
 
    Log its `local_…` id. It must be a session, not a subagent: `/code-review` starts its own subagents, and a subagent cannot.
 6. **Send the review back:** `SendMessage` to the story session's `local_…` id: "Run `/address-pr-review <pr>` in its unattended mode. Treat every `/code-review` comment that describes a real bug as a Warning." Wait for its report, then read the PR again for the fix commit and the thread replies.
-7. **Merge:** check the PR first. No unresolved thread may be a Critical or a Warning that was declined without a reason, the fix commit must start with the Stable ID, and CI, if it ran, must be green (story PRs into an epic branch usually get no CI). Then:
+7. **Merge:** check the PR first. Merge only when all of these hold:
+   - A review from the review session is posted on the PR. No posted review means no merge, whatever the session reported.
+   - The story session's Fix / Clarify / Decline table is in the run log, and every Critical in it is a Fix.
+   - Every Decline of a Warning has a reply on its thread that gives a reason: the rule or criterion it does not break, or the failing scenario that does not exist. "Not needed" or "out of scope" without a linked `needs-triage` issue does not count.
+   - The fix commit starts with the Stable ID and touches the files the Fix rows cite (`gh pr view <pr> --json commits,files`).
+   - CI, if it ran, is green (story PRs into an epic branch usually get no CI).
+
+   If one fails, send the story session one more `/address-pr-review <pr>` naming the gap; a second failure is a stop. Then:
    ```bash
    gh pr merge <pr> --repo av3000/japanese-vma --squash --subject "<STABLE-ID>: <outcome> (#<pr>)" --body "Refs #<issue>"
    gh issue close <issue> --repo av3000/japanese-vma --comment "Delivered in #<pr>."
@@ -85,6 +102,8 @@ Never archive, stop or delete the sessions you start. The maintainer reads them 
 Stop, write one short summary for the maintainer, log the stop, and end your turn when:
 
 - a session hits the same failure twice;
+- `start_session` is refused, for example because the app's session cap is reached: never do the story or the review in your own context instead;
+- the review session ends without a posted review (a duplicate or pending review it would not overwrite, or a failed post);
 - a required check cannot run (Docker, a lane, CI);
 - a Critical finding is declined, or the story session and the review disagree on one;
 - a story needs a scope change against its issue, or an issue has no acceptance criteria;

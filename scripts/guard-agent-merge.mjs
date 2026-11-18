@@ -1,17 +1,23 @@
 #!/usr/bin/env node
-// PreToolUse guard for Bash: agents may squash-merge story PRs into an epic
-// branch, never a PR into develop or master.
+// PreToolUse guard for Bash and PowerShell: agents may squash-merge story PRs
+// into an epic branch, never a PR into develop or master.
 //
 // .claude/settings.json allows `gh pr merge` so start-epic-workflow can run
 // unattended, but a permission rule cannot see a PR's base branch. This hook
 // can: it asks GitHub for the base of every PR the command merges and denies
-// the command when one is protected. It also denies the other ways to merge
-// that skip that check: a GraphQL merge mutation, a GraphQL query read from a
-// file, the REST merge endpoints, and changing a PR's base with `pr edit`.
+// the command when one is protected. It also denies the other ways to change
+// a protected branch that skip that check: GraphQL merge and ref mutations, a
+// GraphQL query it cannot read, the REST merge endpoints, REST writes to refs
+// and file contents, and changing a PR's base with `pr edit` or the REST API.
 //
-// It fails closed: a merge with no PR number, a base it cannot read, a payload
-// it cannot parse, or a crash all deny when the command mentions "merge".
-// Wire it in .claude/settings.json on every Bash call, as
+// This is accident prevention for an agent that follows the skills, not a
+// security boundary. A shell can always hide a command from a text check
+// (`gh p\r merge`, `X=pr; gh $X merge`, a script file). The boundary is branch
+// protection on GitHub. Within that limit it fails closed: a merge with no PR
+// number, a merge into another repository, a base it cannot read, a payload it
+// cannot parse, or a crash all deny when the command mentions "merge".
+// Wire it in .claude/settings.json as a PreToolUse hook with the matcher
+// `Bash|PowerShell`, as
 // `node "$CLAUDE_PROJECT_DIR/scripts/guard-agent-merge.mjs" || exit 2`, so a
 // hook that cannot run blocks the call instead of letting it through.
 //
@@ -30,6 +36,17 @@ const MERGE_VALUE_FLAGS = new Set([
 	'--match-head-commit', '--repo', '-R',
 ]);
 const SEPARATORS = new Set([';', '&', '|', '\n']);
+
+// GraphQL mutations that merge, or move or delete a branch ref.
+const GRAPHQL_WRITES = /\b(?:mergePullRequest|enablePullRequestAutoMerge|mergeBranch|updateRefs?|deleteRef|createCommitOnBranch)\b/;
+// A query whose text the guard cannot see: read from a file or stdin, or built by the shell.
+const GRAPHQL_OPAQUE = /\bquery=[@$]|(?:^|\s)--input\b|\$\(|`/;
+// A REST call that writes: an explicit write method, or fields (gh api then defaults to POST).
+const REST_WRITE = /(?:-X|--method)[\s=]*['"]?(?:POST|PUT|PATCH|DELETE)\b|(?:^|\s)(?:-f|-F|--field|--raw-field|--input)(?:\s|=)/i;
+// REST paths whose writes change a branch or its files.
+const REST_REF_PATHS = /\/git\/(?:refs|commits|trees|tags|blobs)\b|\/contents\/|\/branches\/[^\s/'"]+\/protection\b/;
+// A `pr merge` the segment parser could not see is only a risk inside a nested shell.
+const NESTED_SHELL = /\b(?:bash|sh|zsh|dash|pwsh|powershell)(?:\.exe)?\s+(?:-\w*c\b|-Command\b)|\beval\b|\$\(|`|\|\s*(?:bash|sh|zsh|pwsh|powershell)\b/i;
 
 // Split a shell command into segments of words, honouring quotes, so a PR
 // number inside `--subject "fix 668"` or a command after `&&` is seen for what
@@ -80,20 +97,40 @@ function mergeTarget(words) {
 	return undefined;
 }
 
+// The repository a `pr merge` names with --repo, -R or --repo=, if any.
+function mergeRepo(words) {
+	for (let i = 0; i < words.length; i += 1) {
+		if (words[i] === '--repo' || words[i] === '-R') return words[i + 1] ?? '';
+		if (words[i].startsWith('--repo=')) return words[i].slice('--repo='.length);
+	}
+	return undefined;
+}
+
 // Returns the reason to deny `command`, or null to let it run. `baseOf(n)`
 // returns the base branch of PR n and throws when it cannot be read.
 export function decide(command, baseOf) {
-	if (/\bapi\s+graphql\b/.test(command)) {
-		if (/mergePullRequest|enablePullRequestAutoMerge|mergeBranch/.test(command)) {
-			return 'A merge through the GraphQL API is not allowed for agents; use `gh pr merge <number>` on a story PR.';
+	const isApiCall = /\bgh(?:\.exe)?['"]?\s+api\b/i.test(command);
+
+	// Any `gh api` call that mentions graphql, whatever flags come before it.
+	if (isApiCall && /\bgraphql\b/.test(command)) {
+		if (GRAPHQL_WRITES.test(command)) {
+			return 'A merge or a branch change through the GraphQL API is not allowed for agents; use `gh pr merge <number>` on a story PR.';
 		}
-		if (/\bquery=@/.test(command) || /(^|\s)--input\b/.test(command)) {
-			return 'A GraphQL query read from a file or stdin cannot be checked; pass the query inline.';
+		if (GRAPHQL_OPAQUE.test(command)) {
+			return 'A GraphQL query read from a file, stdin or a shell expansion cannot be checked; pass the query inline.';
 		}
 	}
 
 	if (/pulls\/[^\s/'"]+\/merge(?![\w-])|repos\/[^\s/'"]+\/[^\s/'"]+\/merges(?![\w-])/.test(command)) {
 		return 'The REST merge endpoints are not allowed for agents; use `gh pr merge <number>` on a story PR.';
+	}
+	if (isApiCall && REST_WRITE.test(command)) {
+		if (REST_REF_PATHS.test(command)) {
+			return 'Writing branch refs, file contents or branch protection through the REST API is not allowed for agents.';
+		}
+		if (/pulls\/\d+(?=['"\s]|$)/.test(command) && /\bbase=/.test(command)) {
+			return 'Changing a PR\'s base branch is not allowed for agents: the merge guard checks the base.';
+		}
 	}
 
 	let merges = 0;
@@ -106,6 +143,10 @@ export function decide(command, baseOf) {
 			}
 			if (words[i + 1] !== 'merge') continue;
 			merges += 1;
+			const repo = mergeRepo(rest);
+			if (repo !== undefined && repo !== REPO) {
+				return `The merge guard only checks PRs in ${REPO}, so a merge in ${repo || 'another repository'} is blocked.`;
+			}
 			const target = mergeTarget(rest);
 			const number = target?.match(/^#?(\d+)$/)?.[1];
 			if (!number) {
@@ -121,10 +162,16 @@ export function decide(command, baseOf) {
 		}
 	}
 
-	// `pr merge` hidden in a quoted string or a subshell (`bash -c '...'`) was
-	// not seen as a command above, so its PR was not checked.
-	if (merges === 0 && /\bpr\s+merge\b/.test(command)) {
-		return '`gh pr merge` must be run as a plain command, not inside quotes or a subshell, so its base can be checked.';
+	// GH_REPO points every gh call at another repository, which the base lookup does not follow.
+	if (merges > 0 && /\bGH_REPO=/.test(command)) {
+		return `The merge guard only checks PRs in ${REPO}; do not set GH_REPO on a merge.`;
+	}
+
+	// `pr merge` inside a nested shell (`bash -c '...'`, `eval`, `$(...)`, a pipe
+	// into a shell) was not seen as a command above, so its PR was not checked.
+	// Plain text that only mentions it (a run-log row, a commit message) passes.
+	if (merges === 0 && /\bpr\s+merge\b/.test(command) && NESTED_SHELL.test(command)) {
+		return '`gh pr merge` must be run as a plain command, not inside a subshell or eval, so its base can be checked.';
 	}
 	return null;
 }

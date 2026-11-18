@@ -57,6 +57,24 @@ test('denies GraphQL merges and queries read from a file', () => {
 	denied(`${GH} api graphql --input payload.json`);
 });
 
+test('denies a GraphQL merge whatever flags come before graphql', () => {
+	denied(`${GH} api --paginate graphql -f query='mutation { mergePullRequest(input:{pullRequestId:"x"}) { clientMutationId } }'`);
+	denied(`${GH} api -X POST graphql -f query='mutation { mergePullRequest(input:{}) { clientMutationId } }'`);
+	denied(`gh api -H "Accept: application/json" graphql -f query='mutation { mergeBranch(input:{}) { clientMutationId } }'`);
+});
+
+test('denies GraphQL mutations that move or delete a branch ref', () => {
+	denied(`${GH} api graphql -f query='mutation { updateRef(input:{refId:"x", oid:"y"}) { clientMutationId } }'`);
+	denied(`${GH} api graphql -f query='mutation { deleteRef(input:{refId:"x"}) { clientMutationId } }'`);
+	denied(`${GH} api graphql -f query='mutation { createCommitOnBranch(input:{}) { clientMutationId } }'`);
+});
+
+test('denies a GraphQL query the guard cannot read', () => {
+	denied(`${GH} api graphql -f query="$(cat q.txt)"`);
+	denied(`${GH} api graphql -f query=$QUERY`);
+	denied(`${GH} api graphql -f query=\`cat q.txt\``);
+});
+
 test('allows the GraphQL calls the skills make', () => {
 	allowed(`${GH} api graphql -F owner=av3000 -F name=japanese-vma -F n=659 -f query='query { repository { issue { subIssues { nodes { number } } } } }'`);
 	allowed(`${GH} api graphql -F id=PRRT_1 -F body=@reply.md -f query='mutation($id:ID!, $body:String!) { addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id, body:$body}) { comment { url } } }'`);
@@ -71,6 +89,49 @@ test('denies the REST merge endpoints', () => {
 test('allows the REST calls the skills make', () => {
 	allowed(`${GH} api repos/av3000/japanese-vma/pulls/668/reviews --method POST --input review.json`);
 	allowed(`${GH} api repos/av3000/japanese-vma/pulls/668/comments --paginate`);
+});
+
+test('denies REST writes to refs, file contents, branch protection and a PR base', () => {
+	denied(`${GH} api -X PATCH repos/av3000/japanese-vma/git/refs/heads/develop -f sha=abc -F force=true`);
+	denied(`${GH} api repos/av3000/japanese-vma/git/refs -f ref=refs/heads/develop -f sha=abc`);
+	denied(`${GH} api -X PUT repos/av3000/japanese-vma/contents/README.md -f message=x -f content=eA== -f branch=develop`);
+	denied(`${GH} api -X DELETE repos/av3000/japanese-vma/branches/develop/protection`);
+	denied(`${GH} api -X PATCH repos/av3000/japanese-vma/pulls/668 -f base=develop`);
+});
+
+test('allows REST reads of refs and contents', () => {
+	allowed(`${GH} api repos/av3000/japanese-vma/git/refs/heads/develop --jq .object.sha`);
+	allowed(`${GH} api repos/av3000/japanese-vma/contents/README.md`);
+	allowed(`${GH} api -X GET repos/av3000/japanese-vma/pulls/668`);
+});
+
+test('reads the PR number wherever the flags are', () => {
+	denied(`${GH} pr merge --squash -R av3000/japanese-vma 651`);
+	denied(`${GH} pr merge --repo=av3000/japanese-vma --squash 651`);
+	allowed(`${GH} pr merge --squash --repo=av3000/japanese-vma 668 --subject "x"`);
+});
+
+test('denies a merge in another repository', () => {
+	denied(`${GH} pr merge 668 -R someone/else --squash`);
+	denied(`${GH} pr merge 668 --repo someone/else`);
+	denied(`GH_REPO=someone/else ${GH} pr merge 668 --squash`);
+});
+
+test('checks a merge from the PowerShell tool', () => {
+	denied(`& 'C:\\Program Files\\GitHub CLI\\gh.exe' pr merge 651 --squash`);
+	allowed(`& 'C:\\Program Files\\GitHub CLI\\gh.exe' pr merge 668 --squash`);
+});
+
+test('allows text that only mentions pr merge', () => {
+	allowed(`echo "| 12:00 | epic agent | pr merge blocked by the guard |" >> .agent-runs/epic-659.md`);
+	allowed(`git commit -m "explain why gh pr merge needs a number"`);
+	allowed(`${GH} pr comment 668 --body "merged with gh pr merge --squash"`);
+});
+
+test('denies a merge hidden in eval, a command substitution or a pipe into a shell', () => {
+	denied(`eval "gh pr merge 651 --squash"`);
+	denied(`echo "gh pr merge 651" | bash`);
+	denied(`X="$(gh pr merge 651)"`);
 });
 
 test('denies changing a PR base', () => {
@@ -97,6 +158,15 @@ test('the hook fails closed on a payload it cannot parse that mentions merge', (
 	const result = run('{"tool_input": {"command": "gh pr merge 651"');
 	assert.equal(result.status, 0);
 	assert.match(result.stdout, /"permissionDecision":"deny"/);
+});
+
+test('the hook denies a real payload on stdin, from Bash or PowerShell', () => {
+	for (const tool_name of ['Bash', 'PowerShell']) {
+		const command = `${GH} api graphql -f query='mutation { mergePullRequest(input:{}) { clientMutationId } }'`;
+		const result = run(JSON.stringify({ tool_name, tool_input: { command } }));
+		assert.equal(result.status, 0);
+		assert.match(result.stdout, /"permissionDecision":"deny"/);
+	}
 });
 
 test('the hook stays silent on an unparseable payload without merge, and on an allowed command', () => {
