@@ -1,6 +1,6 @@
 ---
 name: address-pr-review
-description: Work through the review comments on a japanese-vma pull request. Reads every thread first, sorts each into Fix, Clarify or Decline with a reason, shows that table before touching code, makes all fixes in one commit, replies to every thread and resolves the ones that are done. Use when the user says "address the review", "look at the comments", "handle PR feedback", "answer the review" or "check the PR threads". Writing a review is review-branch; posting one is post-review-to-pr.
+description: Work through the review comments on a japanese-vma pull request. Reads every thread first, sorts each into Fix, Clarify or Decline with a reason, shows that table before touching code (or logs it and goes on, in the unattended mode start-epic-workflow uses), makes all fixes in one commit, replies to every thread and resolves the ones that are done. Use when the user says "address the review", "look at the comments", "handle PR feedback", "answer the review" or "check the PR threads". Writing a review is review-branch; posting one is post-review-to-pr.
 ---
 
 # Address PR review
@@ -78,6 +78,14 @@ The user may override any row. Change nothing until the user confirms the table.
    ```
 
 Replies are public: send them only after the user has confirmed the table and the drafted replies, in one batch.
+
+## Unattended mode
+
+Use it only when the session was started by `start-epic-workflow` and the request says unattended: no person is there to confirm, and the maintainer chose, when starting the epic run, to have the story session act on its own table. It changes these steps and nothing else:
+
+- **§2:** a Critical whose quoted evidence does not hold is not yours to decline. Stop and report it, with the counter-evidence: the epic agent stops the run.
+- **§3:** do not wait for a confirmation. Append the table to the epic's run log, so the maintainer can read it afterwards, then go on to §4.
+- **§4:** send the replies after the push, without a confirmation. Every agent posts as the maintainer's login, so you cannot tell a person's thread from an agent's: leave every Decline thread unresolved, so the maintainer sees it.
 
 ## Stop and reconsider if you notice yourself
 

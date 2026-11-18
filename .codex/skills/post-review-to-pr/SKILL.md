@@ -1,6 +1,6 @@
 ---
 name: post-review-to-pr
-description: Post a review produced by review-branch to its GitHub pull request as one pending review, with an inline comment for every finding on a changed line and the summary in the review body. Submits only after the user confirms, and detects re-runs so the same review is never posted twice. Use when the user asks to post, publish, attach or leave a review on a PR. Producing the review is review-branch; answering comments is address-pr-review.
+description: Post a review produced by review-branch to its GitHub pull request as one pending review, with an inline comment for every finding on a changed line and the summary in the review body. Submits only after the user confirms (or at once, as a comment, in the unattended mode start-epic-workflow uses), and detects re-runs so the same review is never posted twice. Use when the user asks to post, publish, attach or leave a review on a PR. Producing the review is review-branch; answering comments is address-pr-review.
 ---
 
 # Post review to PR
@@ -78,8 +78,16 @@ Ask: **submit** or **discard**?
 
 For each Follow-up in the report, offer to file it through `write-issue` as `needs-triage`. Each issue needs its own confirmation.
 
+## Unattended mode
+
+Use it only when the session was started by `start-epic-workflow` and its brief says unattended: no person is there to answer, and the maintainer chose, when starting the epic run, to have reviews posted without a confirmation. It changes three steps and nothing else:
+
+- **§2:** a PENDING review by the current user already exists. Do not submit or discard it, because it may be the maintainer's: stop and report it. A submitted review with the same marker (§3) is also a stop: the review is already there.
+- **§6–7:** skip the question. Submit at once with `event=COMMENT`, never `REQUEST_CHANGES`: every agent posts as the maintainer's login, which is also the PR author.
+- **§8:** file nothing. Keep the follow-ups in the review body and list them in the report you end your turn with.
+
 ## Done when
 
-- The review is submitted (or discarded) with the user's explicit choice, and the review URL is reported.
+- The review is submitted (or discarded) with the user's explicit choice, or submitted as `COMMENT` in unattended mode, and the review URL is reported.
 - Every finding is either an inline comment or a bullet in the body. None is lost to a 422.
 - The body carries the `review-branch:<sha>` marker.
