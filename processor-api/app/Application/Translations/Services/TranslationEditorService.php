@@ -52,9 +52,12 @@ class TranslationEditorService implements TranslationEditorServiceInterface
         }
 
         $value = trim($raw);
-        $state = $this->resolver->state($value);
 
-        if ($value !== '' && mb_strlen($value) > self::MAX_VALUE_LENGTH) {
+        if (! mb_check_encoding($value, 'UTF-8') || str_contains($value, "\0")) {
+            return Result::failure(TranslationErrors::invalidValue());
+        }
+
+        if (mb_strlen($value) > self::MAX_VALUE_LENGTH) {
             return Result::failure(TranslationErrors::valueTooLong(self::MAX_VALUE_LENGTH));
         }
 
@@ -64,12 +67,15 @@ class TranslationEditorService implements TranslationEditorServiceInterface
             $this->overrides->upsert($locale->getIdValue(), $key, $value, $userId);
         }
 
-        return Result::success($state);
+        return Result::success($this->resolver->state($value));
     }
 
     /**
      * The locale a translator may work on: it exists, is active, and is not English.
      * Returns the failure Result when it is not.
+     *
+     * English is refused by its code before the lookup, so the refusal does not depend on an
+     * `en` row existing. The bundle's `isFallback()` compares the same constant, so the two agree.
      */
     private function editableLocale(string $code): TranslationLocale|Result
     {

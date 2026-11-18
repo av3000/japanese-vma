@@ -19,6 +19,7 @@ final class TranslationResolver
 {
     /**
      * The complete bundle: every English key, in English order, translated where an override exists.
+     * An override is served trimmed, the same way `state` judges it, whatever wrote the row.
      *
      * @param array<string, string> $source The English catalogue.
      * @param array<string, string> $overrides Stored values of one locale, orphans included.
@@ -30,7 +31,7 @@ final class TranslationResolver
         $merged = [];
 
         foreach ($source as $key => $english) {
-            $override = $overrides[$key] ?? null;
+            $override = trim($overrides[$key] ?? '');
 
             $merged[$key] = $this->state($override) === TranslationState::Translated ? $override : $english;
         }

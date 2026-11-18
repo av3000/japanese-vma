@@ -63,6 +63,18 @@ class TranslationErrors
         );
     }
 
+    /** The text has a NUL byte or is not valid UTF-8, which a PostgreSQL text column cannot store. */
+    public static function invalidValue(): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.InvalidValue',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Translation contains invalid characters',
+            detail: 'A translation must be valid UTF-8 text without NUL characters',
+            errorMessage: 'A translation must be valid UTF-8 text without NUL characters',
+        );
+    }
+
     public static function valueTooLong(int $limit): ResultError
     {
         return new ResultError(

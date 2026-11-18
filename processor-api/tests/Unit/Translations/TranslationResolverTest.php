@@ -69,6 +69,13 @@ class TranslationResolverTest extends TestCase
         $this->assertSame(self::SOURCE, $merged);
     }
 
+    public function test_a_stored_override_with_surrounding_whitespace_is_served_trimmed(): void
+    {
+        $merged = $this->resolver->merge(self::SOURCE, ['account.log_in' => " Log ind\n"]);
+
+        $this->assertSame('Log ind', $merged['account.log_in']);
+    }
+
     public function test_an_override_for_a_key_that_is_gone_from_english_is_dropped(): void
     {
         $merged = $this->resolver->merge(self::SOURCE, [

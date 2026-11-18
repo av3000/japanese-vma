@@ -137,6 +137,31 @@ class TranslationEditorServiceTest extends TestCase
         $this->assertSame(['account.log_in' => 'Log ind'], $this->overrides->overridesFor(2));
     }
 
+    /** @return array<string, array{string}> */
+    public static function unstorableValues(): array
+    {
+        return [
+            'a NUL byte inside the text' => ["Log\0ind"],
+            'invalid UTF-8' => ["Log ind \xC3\x28"],
+        ];
+    }
+
+    /** PostgreSQL rejects both in a text column; the save must fail typed instead of a 500. */
+    #[DataProvider('unstorableValues')]
+    public function test_text_postgres_cannot_store_is_rejected_and_the_old_value_stays(string $value): void
+    {
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', 1);
+        $writesBefore = $this->overrides->writes;
+
+        $result = $this->service->saveOverride('da', 'account.log_in', $value, 1);
+
+        $this->assertTrue($result->isFailure());
+        $this->assertSame('Translations.InvalidValue', $result->getError()->code);
+        $this->assertSame(HttpStatus::UNPROCESSABLE_ENTITY, $result->getError()->status);
+        $this->assertSame($writesBefore, $this->overrides->writes);
+        $this->assertSame(['account.log_in' => 'Log ind'], $this->overrides->overridesFor(2));
+    }
+
     public function test_saving_for_english_is_rejected(): void
     {
         $result = $this->service->saveOverride('en', 'account.log_in', 'Sign in', 1);
