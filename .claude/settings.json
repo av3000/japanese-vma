@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr view *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr list *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' issue view *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' api user*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr create *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr edit *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr comment *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr merge * --squash *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' issue create *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' issue close *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' api graphql *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/*/comments*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/*/reviews*)",
+      "Bash(git push origin *)",
+      "Bash(git push -u origin *)"
+    ],
+    "deny": [
+      "Bash(git push *develop*)",
+      "Bash(git push *master*)",
+      "Bash(git push *--force*)",
+      "Bash(git push *-f *)",
+      "Bash(git push *+*)",
+      "mcp__plugin_github_github__merge_pull_request",
+      "mcp__github__merge_pull_request"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-agent-merge.mjs\" || exit 2",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
