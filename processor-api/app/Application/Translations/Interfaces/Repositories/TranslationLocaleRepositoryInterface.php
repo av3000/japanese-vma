@@ -17,4 +17,10 @@ interface TranslationLocaleRepositoryInterface
 
     /** The locale with this exact code, only when it is active. */
     public function findActiveByCode(string $code): ?TranslationLocale;
+
+    /**
+     * The locale with this exact code, active or not. The edit side needs it to tell an unknown
+     * locale from a deactivated one.
+     */
+    public function findByCode(string $code): ?TranslationLocale;
 }
