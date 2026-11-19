@@ -60,6 +60,8 @@ use App\Application\Study\Services\StudySessionService;
 use App\Application\Study\Services\StudySessionServiceInterface;
 use App\Application\Translations\Services\TranslationEditorService;
 use App\Application\Translations\Services\TranslationEditorServiceInterface;
+use App\Application\Translations\Services\TranslationLocaleAdminService;
+use App\Application\Translations\Services\TranslationLocaleAdminServiceInterface;
 use App\Application\Translations\Services\TranslationService;
 use App\Application\Translations\Services\TranslationServiceInterface;
 use App\Application\Users\Services\RoleService;
@@ -109,5 +111,6 @@ class ArticlesServiceProvider extends ServiceProvider
         $this->app->bind(StudySessionServiceInterface::class, StudySessionService::class);
         $this->app->bind(TranslationServiceInterface::class, TranslationService::class);
         $this->app->bind(TranslationEditorServiceInterface::class, TranslationEditorService::class);
+        $this->app->bind(TranslationLocaleAdminServiceInterface::class, TranslationLocaleAdminService::class);
     }
 }

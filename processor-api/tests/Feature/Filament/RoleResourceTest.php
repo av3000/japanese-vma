@@ -171,7 +171,7 @@ class RoleResourceTest extends TestCase
             $component->assertSchemaComponentExists("permission-group-{$groupKey}");
         }
 
-        self::assertSame(['admin', 'content', 'community', 'study', 'operations'], $groupKeys);
+        self::assertSame(['admin', 'content', 'community', 'study', 'translations', 'operations'], $groupKeys);
     }
 
     public function test_common_role_cannot_be_given_permissions(): void

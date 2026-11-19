@@ -274,6 +274,16 @@ final class InMemoryLocales implements TranslationLocaleRepositoryInterface
 
         return null;
     }
+
+    public function create(string $code, string $name, bool $isActive): ?TranslationLocale
+    {
+        throw new \LogicException('Not used by the editor service.');
+    }
+
+    public function update(int $id, string $name, bool $isActive): TranslationLocale
+    {
+        throw new \LogicException('Not used by the editor service.');
+    }
 }
 
 /** @internal In-memory override port that counts writes, so "nothing was written" can be asserted. */
