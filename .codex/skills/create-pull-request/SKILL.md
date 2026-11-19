@@ -15,11 +15,11 @@ Open one focused PR from the current feature branch into `develop`, written so a
 4. Look for an open PR from this branch and update it instead of creating a duplicate.
 5. Leave uncommitted files out. If they look necessary for the PR to be complete, stop and tell the user; otherwise mention that they were excluded.
 6. If `develop` moved since the branch point, check whether any file changed on both sides (`comm -12` of the two `--name-only` diffs). No overlap: push as is, CI tests the merge result. Overlap: tell the user before merging anything.
-7. Collect the linked issues from `Refs #N` in the commit messages and read each with `gh issue view <n>`. If an issue has no `## Acceptance criteria` checklist, stop before pushing and offer `write-issue` to add one. Never invent criteria in the PR body. CI fails a PR whose issues have none.
+7. Collect the linked issues from `Refs #N` in the commit messages and read each with `'/c/Program Files/GitHub CLI/gh.exe' issue view <n>`. If an issue has no `## Acceptance criteria` checklist, stop before pushing and offer `write-issue` to add one. Never invent criteria in the PR body. CI fails a PR whose issues have none.
 
 ## 2. Remote safety
 
-- `gh` is not on PATH on this machine: call `C:\Program Files\GitHub CLI\gh.exe` (Bash: `'/c/Program Files/GitHub CLI/gh.exe'`). The GitHub MCP server is unreliable here; use `gh`.
+- Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs. The GitHub MCP server is unreliable here; use `gh`.
 - Never commit to, merge into, rebase, reset or force-push `develop`.
 - Push only the current branch, with an explicit refspec: `git push -u origin <branch>:<branch>`. Check `git branch --show-current` right before every commit and push; a changed working directory never changes which branch the task is on.
 - After pushing, confirm the remote branch points at local `HEAD` and that `origin/develop` did not move because of you.
@@ -45,7 +45,7 @@ A reviewer should not have to check out the branch to see the result. If the dif
 
 These match the repo's literal breakpoints (768, 1024, 1320), so the tablet shot shows the stacked layout and the desktop shot the widest one. Capture the states a reviewer would otherwise have to imagine: the normal state, plus each error, empty, loading, locked or long-text state the change touches. Skip the section only when nothing visible changed (backend-only, tests, tooling), and say so in one line under Verification.
 
-The images are uploaded with `gh pr create|edit --attach` to GitHub's own attachment store, so they stay visible after the merge and need no cleanup.
+The images are uploaded with `'/c/Program Files/GitHub CLI/gh.exe' pr create|edit --attach` to GitHub's own attachment store, so they stay visible after the merge and need no cleanup.
 
 How to capture and upload them is in `references/screenshots.md` in this skill's folder; read it when this section applies. In short: shoot the stories from section 3 at the three widths, look at every image, reference each PNG as a Markdown image in a Desktop / Tablet / Mobile table in the body file, and upload the PNGs with `--attach` in the same command that creates or edits the PR.
 
@@ -91,9 +91,9 @@ Refs #<issue>, #<issue>
 ## 6. Create and verify
 
 1. Write the body to a file and pass it with `--body-file`. Do this from Bash: PowerShell captures have flattened bodies into one line.
-2. `gh pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <file>`, adding one `--attach <png>` per screenshot when the body has a `## Screenshots` section (see `references/screenshots.md` for the working directory and path rule).
-3. Verify URL, base, head, commit count and mergeability (`gh pr view <n> --json baseRefName,headRefName,commits,mergeable`). If the Claude desktop app's `ccd_pr` tools are available, use `get_status` instead of polling checks.
-4. CI on this repo runs only on PRs to `develop`, so the PR is the first remote CI run; say so, and expect a fix-up pass.
+2. `'/c/Program Files/GitHub CLI/gh.exe' pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <file>`, adding one `--attach <png>` per screenshot when the body has a `## Screenshots` section (see `references/screenshots.md` for the working directory and path rule).
+3. Verify URL, base, head, commit count and mergeability (`'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json baseRefName,headRefName,commits,mergeable`). If the Claude desktop app's `ccd_pr` tools are available, use `get_status` instead of polling checks.
+4. CI runs on PRs into `develop` and into `feature/**` branches, not on a push to a feature branch, so the PR is the first remote CI run for this branch; say so, and expect a fix-up pass.
 5. Hand off: the PR link, the screenshot section (or why there is none), anything not verified, and the issues to close by hand after merge. If `review-branch` has not run on this branch, suggest running it before the PR is marked ready; if it ran, include its verdict line.
 
-To edit an existing PR body later, fetch it with `gh pr view <n> --json body --jq .body > body.md`, edit the file, and send it back with `gh pr edit <n> --body-file body.md`. Change only the section you are targeting (for example a re-shot Screenshots table or an updated Verification section). Every other section stays exactly as it was, byte for byte.
+To edit an existing PR body later, fetch it with `'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json body --jq .body > body.md`, edit the file, and send it back with `'/c/Program Files/GitHub CLI/gh.exe' pr edit <n> --body-file body.md`. Change only the section you are targeting (for example a re-shot Screenshots table or an updated Verification section). Every other section stays exactly as it was, byte for byte.

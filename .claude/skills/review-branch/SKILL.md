@@ -10,14 +10,14 @@ Check a diff against what was asked (the issue) and what the repo says (its rule
 ## 1. Fix the diff
 
 1. `git fetch origin`.
-2. Branch: diff `origin/develop...HEAD`. PR number: read base and head with `gh pr view <n> --json baseRefName,headRefName,headRefOid`, then diff `origin/<base>...<headRefOid>` (fetch the head first if needed).
+2. Branch: diff `origin/develop...HEAD`. PR number: read base and head with `'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json baseRefName,headRefName,headRefOid`, then diff `origin/<base>...<headRefOid>` (fetch the head first if needed).
 3. Size: **S** ≤ 5 files, **M** 6–20, **L** > 20 (`git diff --stat`).
 4. Note the areas touched (`client/`, `processor-api/`, CI, docs) and whether the diff touches an API contract (`api.json`, Requests, Resources, generated client), migrations, auth, or queues. These feed the Risk line.
 
 ## 2. Load the spec
 
 1. Collect issue numbers from `Refs #N` (and `Closes`/`Fixes`) in `git log origin/develop..HEAD` messages and, for a PR, its body.
-2. Read each with `gh issue view <n> --comments` (`gh` is at `/c/Program Files/GitHub CLI/gh.exe`). For an epic, read every sub-issue.
+2. Read each with `'/c/Program Files/GitHub CLI/gh.exe' issue view <n> --comments`. For an epic, read every sub-issue.
 3. Number the criteria per issue: `#N/AC-k`.
 4. **No issue, or an issue without acceptance criteria:** stop and offer `write-issue`. Continue only if the user says so, and then write "Spec: not checked (no acceptance criteria)" in the report.
 
