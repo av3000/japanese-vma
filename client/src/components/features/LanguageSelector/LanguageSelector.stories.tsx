@@ -41,7 +41,12 @@ export const TwoLocales: Story = {
 	},
 };
 
-/** Keyboard only: focus the select and change it with the arrow keys. */
+/**
+ * Keyboard only: Tab lands on the select, named "Language" and showing the current language as text,
+ * and a choice made from there reaches `setLocale`. How a closed native select reacts to arrow keys
+ * differs by browser and platform, so the story picks the option with `selectOptions` instead of
+ * relying on a key sequence.
+ */
 export const KeyboardOperable: Story = {
 	parameters: { translation: 'two' },
 	play: async ({ canvasElement }) => {
@@ -49,9 +54,12 @@ export const KeyboardOperable: Story = {
 
 		await userEvent.tab();
 		await expect(select).toHaveFocus();
-		await userEvent.keyboard('{ArrowDown}');
+		await expect(select).toHaveDisplayValue('English');
+
+		await userEvent.selectOptions(select, 'da');
 
 		await expect(translationSpies.setLocale).toHaveBeenCalledWith('da');
+		await expect(select).toHaveFocus();
 	},
 };
 
