@@ -23,4 +23,10 @@ interface TranslationLocaleRepositoryInterface
      * locale from a deactivated one.
      */
     public function findByCode(string $code): ?TranslationLocale;
+
+    /** Adds a language. The caller has already checked the code is free. */
+    public function create(string $code, string $name, bool $isActive): TranslationLocale;
+
+    /** Changes the name and the active flag. The code never changes. */
+    public function update(int $id, string $name, bool $isActive): TranslationLocale;
 }

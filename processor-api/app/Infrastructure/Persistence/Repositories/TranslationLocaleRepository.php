@@ -39,6 +39,23 @@ class TranslationLocaleRepository implements TranslationLocaleRepositoryInterfac
         return $locale === null ? null : $this->toDomain($locale);
     }
 
+    public function create(string $code, string $name, bool $isActive): DomainTranslationLocale
+    {
+        return $this->toDomain(TranslationLocale::query()->create([
+            'code' => $code,
+            'name' => $name,
+            'is_active' => $isActive,
+        ]));
+    }
+
+    public function update(int $id, string $name, bool $isActive): DomainTranslationLocale
+    {
+        $locale = TranslationLocale::query()->findOrFail($id);
+        $locale->update(['name' => $name, 'is_active' => $isActive]);
+
+        return $this->toDomain($locale);
+    }
+
     private function toDomain(TranslationLocale $locale): DomainTranslationLocale
     {
         return new DomainTranslationLocale(

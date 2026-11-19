@@ -15,6 +15,7 @@ use App\Infrastructure\Persistence\Models\Post;
 use App\Infrastructure\Persistence\Models\ProcessingState;
 use App\Infrastructure\Persistence\Models\Radical;
 use App\Infrastructure\Persistence\Models\Sentence;
+use App\Infrastructure\Persistence\Models\TranslationLocale;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\Word;
@@ -27,6 +28,7 @@ use App\Policies\PostAdminPolicy;
 use App\Policies\ProcessingStateAdminPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\StudyMaterialAdminPolicy;
+use App\Policies\TranslationLocaleAdminPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Spatie\Permission\Models\Role as SpatieRole;
@@ -52,6 +54,7 @@ class AuthServiceProvider extends ServiceProvider
         Word::class => StudyMaterialAdminPolicy::class,
         Sentence::class => StudyMaterialAdminPolicy::class,
         ProcessingState::class => ProcessingStateAdminPolicy::class,
+        TranslationLocale::class => TranslationLocaleAdminPolicy::class,
     ];
 
     /**

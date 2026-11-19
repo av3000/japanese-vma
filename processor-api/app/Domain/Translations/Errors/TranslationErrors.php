@@ -85,4 +85,60 @@ class TranslationErrors
             errorMessage: "A translation may have at most {$limit} characters",
         );
     }
+
+    public static function manageLocalesDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.ManageLocalesDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to manage languages",
+            errorMessage: "You don't have permission to manage languages.",
+        );
+    }
+
+    public static function invalidLocaleCode(): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.InvalidLocaleCode',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Invalid language code',
+            detail: 'A language code is two lowercase letters, such as da or sv',
+            errorMessage: 'A language code is two lowercase letters, such as da or sv.',
+        );
+    }
+
+    public static function localeCodeTaken(string $code): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.LocaleCodeTaken',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Language code already exists',
+            detail: "A language with code {$code} already exists",
+            errorMessage: "A language with code {$code} already exists.",
+        );
+    }
+
+    public static function invalidLocaleName(int $limit): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.InvalidLocaleName',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Invalid language name',
+            detail: "A language name is required and has at most {$limit} characters",
+            errorMessage: "A language name is required and has at most {$limit} characters.",
+        );
+    }
+
+    /** English is the source and the fallback: it stays active and keeps its code. */
+    public static function sourceLocaleLocked(): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.SourceLocaleLocked',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'English cannot be deactivated',
+            detail: 'English is the source and fallback language: it stays active and keeps its code',
+            errorMessage: 'English is the source and fallback language: it stays active and keeps its code.',
+        );
+    }
 }

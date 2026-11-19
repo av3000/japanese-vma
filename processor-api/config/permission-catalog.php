@@ -58,6 +58,14 @@ return [
                 'sentences.moderate' => 'Delete user-authored sentences',
             ],
         ],
+        'translations' => [
+            'label' => 'Translations',
+            'permissions' => [
+                'translations.view' => 'View translations and their completion',
+                'translations.update' => 'Edit translated text',
+                'locales.manage' => 'Add, activate and deactivate languages',
+            ],
+        ],
         'operations' => [
             'label' => 'Operations',
             'permissions' => [

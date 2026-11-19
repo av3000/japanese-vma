@@ -104,7 +104,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | Requirement | Stories | Status |
 |---|---|---|
 | FR-01 | US-01 | Delivered |
-| FR-02 | US-01 (English row), US-03 | English row delivered (US-01); the rest planned |
+| FR-02 | US-01 (English row), US-03 | Delivered |
 | FR-03 | US-01 | Delivered |
 | FR-04 | US-01, US-02, US-07 (end to end) | Delivered for every locale (US-01, US-02); the end-to-end proof is planned (US-07) |
 | FR-05 | US-02, US-05, US-07 (end to end) | Storage and save rules delivered in the editor service (US-02); the Filament action and end-to-end proof are planned (US-05, US-07) |
@@ -113,7 +113,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-08 | US-02, US-04 | Calculation delivered (US-02); the display line is planned (US-04) |
 | FR-09 | US-04 | Planned |
 | FR-10 | US-05 | Planned |
-| FR-11 | US-03, US-04, US-05 | Planned |
+| FR-11 | US-03, US-04, US-05 | Permissions and locale management delivered (US-03); the overview and editor gates are planned (US-04, US-05) |
 | FR-12 | US-06 | Planned |
 | FR-13 | US-06 | Planned |
 | FR-14 | US-06, US-07 (end to end) | Planned |
@@ -121,7 +121,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-16 | US-07 | Planned |
 | NFR-01 | US-02, US-04 | Delivered for bundle and completion (US-02); the overview list is planned (US-04) |
 | NFR-02 | US-02, US-05 | Delivered for the bundle: no cache (US-02); the editor save is planned (US-05) |
-| NFR-03 | US-03, US-05 | Planned |
+| NFR-03 | US-03, US-05 | Delivered for locale writes (US-03); the editor save is planned (US-05) |
 | NFR-04 | US-01 | Delivered |
 | NFR-05 | US-06 | Planned |
 | NFR-06 | US-06 | Planned |
