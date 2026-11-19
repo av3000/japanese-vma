@@ -40,10 +40,15 @@ Then post the plan's summary in your reply: files, tasks, the test that proves e
 - Build test-first, one behaviour at a time (`tdd`), whichever mode you use.
 - **Pushing the story branch is part of this job.** Both execution skills stop before a push to a shared branch; this skill authorises pushing your own story branch with an explicit refspec (`git push -u origin <story-branch>:<story-branch>`). It never authorises pushing the epic branch, `develop` or `master`, or merging anything.
 - A finding outside the story goes to `write-issue` as `needs-triage`, never onto this branch.
+- **Stay inside the surfaces the issue names.** When an issue says "a representative set" or "for example", the list in its acceptance criteria is the scope. Migrating more than that is a follow-up issue, not extra work on this branch.
+- **Known traps** (`docs/agents/local-environment.md` has the details):
+  - Write scripts and multi-line files with the Write tool, never with a Bash heredoc or `sed`: the Bash tool halves backslashes, which breaks PHP namespaces and regexes.
+  - `spawn EPERM` and a Vitest browser run that exits 0 after one file are sandbox limits. Try the documented fix once, then report the check as not run.
+  - A change to an endpoint follows `CONTRACT-api-json-orval-workflow` (`backend-standards`), in order: the backend source, then `composer openapi`, then `npm run orval:file`. Never edit `api.json` or the generated client by hand.
 
 ## 4. Check and commit
 
-1. Run the checks the repo requires for what you touched, from the scoped `AGENTS.md` and the epic's plan: targeted backend tests in a Docker test lane named after the story (`jvma<epic>-<nn>`), Pint on changed files, the contract regeneration when `api.json` changes, and the frontend type check, lint and targeted tests when `client/` changes. No PHPStan and no full suite unless the issue asks for them.
+1. Run the checks the repo requires for what you touched, from the scoped `AGENTS.md` and the epic's plan: targeted backend tests in a Docker test lane named after the story (`jvma<epic>-<nn>`), Pint on changed files, the contract regeneration when `api.json` changes, and, when `client/` changes, the frontend type check, ESLint, the targeted Vitest tests and `npm run build-storybook`. No PHPStan and no full suite unless the issue asks for them.
 2. A check that cannot run (Docker down, sandbox limits) is an environment limit: try the fix in `docs/agents/local-environment.md` once, then report it as not run. Never call it passing.
 3. Mark the requirement rows the story delivers as Delivered if the epic keeps a requirements traceability table.
 4. Commit once: first line `<STABLE-ID>: <outcome>`, body `Refs #<issue>`, no attribution trailers or footers. If a skill committed along the way anyway, fold those commits into this one (`git reset --soft origin/<epic-branch>`, then commit) before you push.
@@ -55,7 +60,7 @@ Then post the plan's summary in your reply: files, tasks, the test that proves e
    - **replace every `origin/develop` in it with `origin/<epic-branch>`**: the Refs it collects, the diff stat and the overlap check. Against `develop`, the range includes every story already merged into the epic branch, and the PR would claim their issues and criteria;
    - the title is `[<STABLE-ID>] <outcome>`.
 
-   Keep its acceptance-criteria evidence table, risk line, verification section and screenshots for anything visible. CI runs only on PRs into `develop`, so a story PR gets none: say so in the verification section, next to the checks you ran.
+   Keep its acceptance-criteria evidence table, risk line and verification section. **Screenshots are required for anything visible, Filament admin pages included, and an unattended run is no exemption.** Take them with Playwright from Node, as `create-pull-request` describes. If they cannot be taken, that is an environment limit: say so in the PR and in your report, never just leave them out. CI runs only on PRs into `develop`, so a story PR gets none: say so in the verification section, next to the checks you ran.
 2. Log the push and the PR.
 3. **End your turn with the report.** The epic agent receives only the first 400 characters, and your `wrap_up` recap comes first. So the recap starts with `PR #<n> <branch> <sha7>`, and the final message starts with the same line, then any check not run. Details go after that, or on the PR. Report by ending your turn, not by messaging: ending the turn is what wakes the epic agent.
 
