@@ -3,8 +3,19 @@ name: Backend quality
 on:
   push:
     branches: [develop]
+    paths:
+      - "processor-api/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [develop, "feature/**"]
+    paths:
+      - "processor-api/**"
+      - ".github/workflows/backend-ci.yml"
+
+# A new push to a PR cancels that PR's older run; push runs always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
