@@ -51,7 +51,8 @@ class TranslationOverviewPageTest extends TestCase
             ->assertCanSeeTableRecords(['account.log_in', 'common.save', 'common.cancel', 'common.submit'], inOrder: true)
             ->assertCountTableRecords(4)
             ->assertSeeTextInOrder(['account.log_in', 'Log In', 'Log ind', 'Translated'])
-            ->assertSee('Missing');
+            // The "Missing" option of the Show filter is always on the page, so assert the badge in a row.
+            ->assertSeeTextInOrder(['common.save', 'Save', 'Missing']);
     }
 
     // AC-2
@@ -103,6 +104,45 @@ class TranslationOverviewPageTest extends TestCase
     {
         Livewire::test(TranslationOverview::class, ['locale' => 'en'])->assertSet('locale', 'da');
         Livewire::test(TranslationOverview::class, ['locale' => 'xx'])->assertSet('locale', 'da');
+    }
+
+    public function test_a_language_switched_off_while_the_page_is_open_falls_back_to_the_first_one_without_an_error(): void
+    {
+        $de = TranslationLocale::query()->create(['code' => 'de', 'name' => 'Deutsch', 'is_active' => true]);
+
+        $page = Livewire::test(TranslationOverview::class, ['locale' => 'de'])->assertSet('locale', 'de');
+
+        $de->update(['is_active' => false]);
+
+        $page->call('$refresh')
+            ->assertSet('locale', 'da')
+            ->assertNotNotified()
+            ->assertSeeText('0 of 4 translated');
+    }
+
+    public function test_the_list_is_paginated_and_a_tampered_page_size_falls_back_to_the_default(): void
+    {
+        $this->useCatalogue(array_combine(
+            array_map(fn (int $i): string => sprintf('bulk.key_%02d', $i), range(1, 60)),
+            array_map(fn (int $i): string => "Label {$i}", range(1, 60)),
+        ));
+
+        $page = Livewire::test(TranslationOverview::class)
+            ->set('tableFilters.state.value', 'all')
+            ->set('tableRecordsPerPage', 25)
+            ->assertCountTableRecords(60)
+            ->assertCanSeeTableRecords(['bulk.key_01', 'bulk.key_25'])
+            ->assertCanNotSeeTableRecords(['bulk.key_26']);
+
+        $page->call('gotoPage', 2, 'page')
+            ->assertCanSeeTableRecords(['bulk.key_26', 'bulk.key_50'])
+            ->assertCanNotSeeTableRecords(['bulk.key_25', 'bulk.key_51']);
+
+        $page->call('gotoPage', 3, 'page')
+            ->assertCanSeeTableRecords(['bulk.key_51', 'bulk.key_60'])
+            ->assertCanNotSeeTableRecords(['bulk.key_50']);
+
+        $page->set('tableRecordsPerPage', 0)->call('gotoPage', 1, 'page')->assertOk()->assertCanSeeTableRecords(['bulk.key_50']);
     }
 
     // AC-4

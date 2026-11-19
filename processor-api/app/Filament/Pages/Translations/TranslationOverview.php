@@ -69,9 +69,12 @@ class TranslationOverview extends Page implements HasTable
         return PanelActor::may(PanelPermission::TranslationsView);
     }
 
+    /** @var list<TranslationLocale>|null The languages a translator can work on, read once per request. */
+    private ?array $editableLocales = null;
+
     public function mount(): void
     {
-        $this->locale = $this->resolvedLocale();
+        $this->syncLocale();
     }
 
     public function getSubheading(): ?string
@@ -142,6 +145,9 @@ class TranslationOverview extends Page implements HasTable
     private function records(?string $search, bool $missingOnly, int $page, int $perPage): LengthAwarePaginator
     {
         $rows = $this->rows($search, $missingOnly);
+        $page = max($page, 1);
+        // `tableRecordsPerPage` is a public Livewire property, so a client can set it to anything,
+        // and 0 would divide by zero in the paginator.
         $perPage = in_array($perPage, self::PAGE_OPTIONS, true) ? $perPage : self::PAGE_OPTIONS[1];
 
         return new LengthAwarePaginator(
@@ -151,10 +157,10 @@ class TranslationOverview extends Page implements HasTable
                 'source' => $row->source,
                 'value' => $row->value,
                 'state' => $row->state,
-            ], array_slice($rows, (max($page, 1) - 1) * $perPage, $perPage)),
+            ], array_slice($rows, ($page - 1) * $perPage, $perPage)),
             count($rows),
             $perPage,
-            max($page, 1),
+            $page,
         );
     }
 
@@ -163,11 +169,13 @@ class TranslationOverview extends Page implements HasTable
      */
     private function rows(?string $search, bool $missingOnly): array
     {
-        if ($this->locale === null) {
+        $locale = $this->syncLocale();
+
+        if ($locale === null) {
             return [];
         }
 
-        $result = $this->service()->rows($this->locale, $search, $missingOnly);
+        $result = $this->service()->rows($locale, $search, $missingOnly);
 
         if ($result->isFailure()) {
             ResultNotifications::failure($result);
@@ -180,11 +188,13 @@ class TranslationOverview extends Page implements HasTable
 
     private function completion(): ?TranslationCompletionDTO
     {
-        if ($this->locale === null) {
+        $locale = $this->syncLocale();
+
+        if ($locale === null) {
             return null;
         }
 
-        $result = $this->service()->completion($this->locale);
+        $result = $this->service()->completion($locale);
 
         return $result->isFailure() ? null : $result->getData();
     }
@@ -196,22 +206,34 @@ class TranslationOverview extends Page implements HasTable
     {
         $options = [];
 
-        foreach ($this->service()->editableLocales() as $locale) {
+        foreach ($this->editableLocales() as $locale) {
             $options[$locale->getCode()] = "{$locale->getName()} ({$locale->getCode()})";
         }
 
         return $options;
     }
 
-    /** The requested language when a translator can work on it, otherwise the first one. */
-    private function resolvedLocale(): ?string
+    /**
+     * Keeps `$locale` on a language a translator can work on: the requested one while it is active,
+     * otherwise the first. It runs before every read, so a language switched off in another tab
+     * never reaches the service as a failure.
+     */
+    private function syncLocale(): ?string
     {
         $codes = array_map(
             static fn (TranslationLocale $locale): string => $locale->getCode(),
-            $this->service()->editableLocales(),
+            $this->editableLocales(),
         );
 
-        return in_array($this->locale, $codes, true) ? $this->locale : ($codes[0] ?? null);
+        return $this->locale = in_array($this->locale, $codes, true) ? $this->locale : ($codes[0] ?? null);
+    }
+
+    /**
+     * @return list<TranslationLocale>
+     */
+    private function editableLocales(): array
+    {
+        return $this->editableLocales ??= $this->service()->editableLocales();
     }
 
     private function service(): TranslationEditorServiceInterface
