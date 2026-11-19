@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { authSpies, type AuthParameter } from '@/storybook/decorators';
+import { authSpies, translationSpies, type AuthParameter } from '@/storybook/decorators';
 import { users } from '@/storybook/fixtures/users';
 import Header from './';
 
@@ -233,5 +233,57 @@ export const NarrowWithToggle: Story = {
 		const menu = within(canvasElement).getByRole('button', { name: 'Open navigation' });
 		await expect(toggle).toBeVisible();
 		await expect(toggle?.compareDocumentPosition(menu)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+	},
+};
+
+/* Language selector (#665) ------------------------------------------------------------------------ */
+
+/** The select sits in the bar (from 1024px) or at the bottom of the menu drawer, whichever layout fits. */
+const languageScope = async (canvasElement: HTMLElement) =>
+	isDesktop() ? within(canvasElement) : await openMenuDrawer(canvasElement);
+
+/** With English alone the header has no selector: it renders exactly as it did before translations. */
+export const OnlyEnglish: Story = {
+	parameters: { auth: 'guest', translation: 'english' },
+	play: async ({ canvasElement }) => {
+		const scope = await languageScope(canvasElement);
+
+		await expect(scope.queryByRole('combobox', { name: 'Language' })).toBeNull();
+	},
+};
+
+/** A second language is active: the selector appears, and picking one calls `setLocale`. */
+export const TwoLanguages: Story = {
+	parameters: { auth: signedInAs('Hanako'), translation: 'two' },
+	play: async ({ canvasElement }) => {
+		const scope = await languageScope(canvasElement);
+		const select = scope.getByRole('combobox', { name: 'Language' });
+
+		await expect(select).toHaveDisplayValue('English');
+		await userEvent.selectOptions(select, 'da');
+
+		await expect(translationSpies.setLocale).toHaveBeenCalledWith('da');
+	},
+};
+
+/** Danish failed to load: a non-blocking status line, and the rest of the header still works. */
+export const LanguageLoadFailed: Story = {
+	parameters: { auth: 'guest', translation: 'error' },
+	play: async ({ canvasElement }) => {
+		const scope = await languageScope(canvasElement);
+
+		await expect(scope.getByRole('status')).toHaveTextContent("Couldn't load that language.");
+		await expect(scope.getByRole('link', { name: 'Log In' })).toBeInTheDocument();
+	},
+};
+
+/** 320px with the selector: the bar is unchanged (the selector lives in the drawer), and the drawer holds it. */
+export const NarrowWithLanguages: Story = {
+	globals: { viewport: { value: 'xxs' } },
+	parameters: { auth: 'guest', translation: 'two' },
+	play: async ({ canvasElement }) => {
+		const drawer = await openMenuDrawer(canvasElement);
+
+		await expect(drawer.getByRole('combobox', { name: 'Language' })).toBeVisible();
 	},
 };

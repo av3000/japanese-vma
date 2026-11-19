@@ -26,12 +26,14 @@ The global decorators provide React Query, the router, auth and the socket, nest
 |---|---|---|
 | `auth` | `'guest' \| 'loading' \| 'member'`, or fields to override. Passing a `user` signs that user in: `{ user: { ...users.member, id: OWNER_ID } }` | The toolbar's Viewer (guest) |
 | `socket` | `'unconfigured' \| 'connecting' \| 'connected' \| 'reconnecting' \| 'failed'`, or fields to override, such as a fake `echo` | The toolbar's Socket (connected) |
+| `translation` | `'english' \| 'two' \| 'error'`, or fields to override. `two` activates English and Danish, so the header shows the language selector; `error` is a failed Danish bundle | English only, no selector (no parameter, no provider) |
 | `router` | `{ initialEntries?: ['/kanjis?page=2'], path?: '/kanji/:kanji_id' }`. Set `path` when the component reads `useParams` | `{ initialEntries: ['/'] }` |
 | `seeds` | `QuerySeed[]`: query keys and the data the cache already holds. Build keys with the generated `get…QueryKey` helpers and the `pageSeed`/`infiniteSeed` helpers from `@/storybook/decorators` | `[]` |
 
 - A story that is *about* a viewer or a connection state (`Guest`, `Owner`, `Polling`) pins it with `parameters.auth` or `parameters.socket`. Leave the rest unpinned, so the toolbar can flip them.
 - Viewers come from `@/storybook/fixtures/users`: `users.member` is the default member, and `users.other` is a second one for owner-versus-visitor stories.
 - The auth actions are spies in `authSpies` (`login`, `register`, `logout`, `clearSessionExpired`), cleared before every story. A `play` asserts on them directly: `expect(authSpies.logout).toHaveBeenCalled()`.
+- Picking a language calls the `translationSpies.setLocale` spy, and the select follows the pick.
 - Each story gets a fresh query client: no retries, no refetch on focus, and seeded data never goes stale. A seeded story fetches nothing unless it asks for new data (another page, another filter); that request then goes to the mocked API below.
 
 ## Data in stories

@@ -114,18 +114,18 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-09 | US-04, US-05 | Delivered (the row link to the editor arrived with US-05) |
 | FR-10 | US-05 | Delivered |
 | FR-11 | US-03, US-04, US-05 | Delivered: permissions, locale management (US-03), the overview gate (US-04) and the editor gate (US-05) |
-| FR-12 | US-06 | Planned |
-| FR-13 | US-06 | Planned |
-| FR-14 | US-06, US-07 (end to end) | Planned |
-| FR-15 | US-06 | Planned |
+| FR-12 | US-06 | Delivered |
+| FR-13 | US-06 | Delivered |
+| FR-14 | US-06, US-07 (end to end) | Delivered for the provider and selector (US-06); the end-to-end proof is planned (US-07) |
+| FR-15 | US-06 | Delivered |
 | FR-16 | US-07 | Planned |
 | NFR-01 | US-02, US-04 | Delivered |
 | NFR-02 | US-02, US-05 | Delivered: no cache (US-02), and the editor save is live in the next bundle (US-05) |
 | NFR-03 | US-03, US-05 | Delivered: locale writes (US-03) and the editor save, permission-checked and shown as text (US-05) |
 | NFR-04 | US-01 | Delivered |
-| NFR-05 | US-06 | Planned |
-| NFR-06 | US-06 | Planned |
-| NFR-07 | US-06, US-07 | Planned |
+| NFR-05 | US-06 | Delivered |
+| NFR-06 | US-06 | Delivered |
+| NFR-07 | US-06, US-07 | Delivered for the header (US-06): English-only shows no selector; the migrated surfaces are planned (US-07) |
 | NFR-08 | all | Planned |
 | NFR-09 | US-02, US-05 | Delivered: last write wins in the upsert (US-02) and the editor save (US-05) |
 
