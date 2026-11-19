@@ -2,7 +2,16 @@ import { faker } from '@faker-js/faker';
 import type { Preview } from '@storybook/react-vite';
 import { mswLoader } from 'msw-storybook-addon/csf3';
 import { configure } from 'storybook/test';
-import { authSpies, withAppearance, withAuth, withQueryClient, withRouter, withSocket } from '@/storybook/decorators';
+import {
+	authSpies,
+	translationSpies,
+	withAppearance,
+	withAuth,
+	withQueryClient,
+	withRouter,
+	withSocket,
+	withTranslation,
+} from '@/storybook/decorators';
 import { startStoryWorker, takeUnhandledRequests } from '@/storybook/msw';
 import '@/styles/global-styles';
 import { THEME_IDS, themeManifest } from '@/themes/manifest';
@@ -21,7 +30,8 @@ const viewport = (name: string, width: number, type: 'mobile' | 'tablet' | 'desk
 const preview: Preview = {
 	tags: ['autodocs'],
 	// The last decorator is the outermost, so this nests like `App.tsx`: Appearance > Query > Router > Auth > Socket.
-	decorators: [withSocket, withAuth, withRouter, withQueryClient, withAppearance],
+	// Translation sits beside Auth: a story that sets `parameters.translation` gets a plain context value.
+	decorators: [withSocket, withTranslation, withAuth, withRouter, withQueryClient, withAppearance],
 	globalTypes: {
 		theme: {
 			description: 'Theme (#498). A story’s `parameters.appearance.theme` wins over this.',
@@ -78,6 +88,7 @@ const preview: Preview = {
 	loaders: [mswLoader(startStoryWorker)],
 	beforeEach: () => {
 		Object.values(authSpies).forEach((spy) => spy.mockClear());
+		Object.values(translationSpies).forEach((spy) => spy.mockClear());
 		// Generated handlers draw from faker: one seed per story keeps every run identical.
 		faker.seed(173);
 		takeUnhandledRequests();

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { HeaderSearch } from '@/components/features/HeaderSearch';
+import { LanguageSelector } from '@/components/features/LanguageSelector';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { Logo } from '@/components/shared/Logo';
@@ -14,7 +15,7 @@ import { NAV_SECTIONS, navLinkClass } from './navigation';
 
 /**
  * The app bar on every page. From 1024px: brand, the Explore and Dictionary disclosures, the
- * search panel, the account and the colour-scheme toggle. Below: brand, the search button, the toggle
+ * search panel, the account, the language selector (once a second language is active) and the colour-scheme toggle. Below: brand, the search button, the toggle
  * and the menu button, the search and menu buttons each opening a full-height drawer.
  */
 const Header: React.FC = () => {
@@ -87,6 +88,10 @@ const Header: React.FC = () => {
 				<HeaderSearch />
 
 				{account}
+
+				<div className={styles.language}>
+					<LanguageSelector />
+				</div>
 
 				<ColorSchemeToggle />
 

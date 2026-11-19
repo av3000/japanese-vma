@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import classNames from 'classnames';
+import { LanguageSelector } from '@/components/features/LanguageSelector';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { Drawer } from '@/components/shared/Drawer';
@@ -17,7 +18,7 @@ const drawerLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 /**
  * Below 1024px: the menu button and a full-height navigation drawer. Explore and Dictionary are
- * labelled flat sections; the account is pinned last (the name as a disclosure for a signed-in
+ * labelled flat sections; the language selector (when a second language is active) and the account are pinned last (the name as a disclosure for a signed-in
  * user, Sign Up and Log In for a guest). Escape or the close button returns focus to the button.
  */
 export const MenuDrawer: React.FC = () => {
@@ -109,7 +110,12 @@ export const MenuDrawer: React.FC = () => {
 					))}
 				</nav>
 
-				<div className={styles.drawerAccount}>{account}</div>
+				<div className={styles.drawerAccount}>
+					<div className={styles.drawerLanguage}>
+						<LanguageSelector notice="inline" />
+					</div>
+					{account}
+				</div>
 			</Drawer>
 		</>
 	);
