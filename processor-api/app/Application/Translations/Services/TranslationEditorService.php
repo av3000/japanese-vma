@@ -7,6 +7,8 @@ namespace App\Application\Translations\Services;
 use App\Application\Translations\Interfaces\Repositories\TranslationLocaleRepositoryInterface;
 use App\Application\Translations\Interfaces\Repositories\TranslationOverrideRepositoryInterface;
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
+use App\Domain\Translations\DTOs\TranslationRowDTO;
+use App\Domain\Translations\Enums\TranslationState;
 use App\Domain\Translations\Errors\TranslationErrors;
 use App\Domain\Translations\Models\TranslationLocale;
 use App\Domain\Translations\Services\TranslationResolver;
@@ -68,6 +70,59 @@ class TranslationEditorService implements TranslationEditorServiceInterface
         }
 
         return Result::success($this->resolver->state($value));
+    }
+
+    public function rows(string $code, ?string $search, bool $missingOnly): Result
+    {
+        $locale = $this->editableLocale($code);
+
+        if ($locale instanceof Result) {
+            return $locale;
+        }
+
+        $overrides = $this->overrides->overridesFor($locale->getIdValue());
+        $needle = $search === null ? '' : mb_strtolower(trim($search));
+        $rows = [];
+
+        foreach ($this->english->messages() as $key => $source) {
+            $state = $this->resolver->state($overrides[$key] ?? null);
+
+            if ($missingOnly && $state === TranslationState::Translated) {
+                continue;
+            }
+
+            $value = $state === TranslationState::Translated ? trim($overrides[$key]) : null;
+
+            if ($needle !== '' && ! $this->matches($needle, [$key, $source, $value])) {
+                continue;
+            }
+
+            $rows[] = new TranslationRowDTO($key, $source, $value, $state);
+        }
+
+        return Result::success($rows);
+    }
+
+    public function editableLocales(): array
+    {
+        return array_values(array_filter(
+            $this->locales->findActive(),
+            static fn (TranslationLocale $locale): bool => ! $locale->isFallback(),
+        ));
+    }
+
+    /**
+     * @param list<string|null> $haystacks
+     */
+    private function matches(string $needle, array $haystacks): bool
+    {
+        foreach ($haystacks as $haystack) {
+            if ($haystack !== null && str_contains(mb_strtolower($haystack), $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

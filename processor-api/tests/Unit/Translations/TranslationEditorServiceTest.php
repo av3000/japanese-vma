@@ -8,6 +8,7 @@ use App\Application\Translations\Interfaces\Repositories\TranslationLocaleReposi
 use App\Application\Translations\Interfaces\Repositories\TranslationOverrideRepositoryInterface;
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
 use App\Application\Translations\Services\TranslationEditorService;
+use App\Domain\Translations\DTOs\TranslationRowDTO;
 use App\Domain\Translations\Enums\TranslationState;
 use App\Domain\Translations\Models\TranslationLocale;
 use App\Domain\Translations\Services\TranslationResolver;
@@ -241,6 +242,89 @@ class TranslationEditorServiceTest extends TestCase
         $this->assertSame('Translations.SourceLocaleNotEditable', $this->service->completion('en')->getError()->code);
         $this->assertSame('Translations.LocaleInactive', $this->service->completion('sv')->getError()->code);
         $this->assertSame('Translations.LocaleNotFound', $this->service->completion('xx')->getError()->code);
+    }
+
+    // ------------------------------------------------------------ #663 rows: AC-1, AC-2, AC-3, AC-4
+
+    public function test_rows_lists_every_english_key_once_with_its_value_and_state(): void
+    {
+        $this->overrides->seed(2, ['account.log_in' => ' Log ind ', 'common.save' => '   ', 'gone.key' => 'Orphan']);
+
+        $result = $this->service->rows('da', null, false);
+
+        $this->assertTrue($result->isSuccess());
+
+        $rows = array_map(
+            static fn (TranslationRowDTO $row): array => [$row->key, $row->source, $row->value, $row->state],
+            $result->getData(),
+        );
+        $this->assertSame([
+            ['account.log_in', 'Log In', 'Log ind', TranslationState::Translated],
+            ['common.save', 'Save', null, TranslationState::Missing],
+            ['common.cancel', 'Cancel', null, TranslationState::Missing],
+            ['common.submit', 'Submit', null, TranslationState::Missing],
+        ], $rows);
+    }
+
+    public function test_rows_with_missing_only_leaves_out_translated_keys(): void
+    {
+        $this->overrides->seed(2, ['account.log_in' => 'Log ind', 'common.save' => 'Gem']);
+
+        $keys = array_map(
+            static fn (TranslationRowDTO $row): string => $row->key,
+            $this->service->rows('da', null, true)->getData(),
+        );
+
+        $this->assertSame(['common.cancel', 'common.submit'], $keys);
+    }
+
+    public function test_rows_search_matches_the_key_the_english_text_or_the_translation_in_any_case(): void
+    {
+        $this->overrides->seed(2, ['common.save' => 'Gem ændringer']);
+
+        $keysFor = fn (string $search): array => array_map(
+            static fn (TranslationRowDTO $row): string => $row->key,
+            $this->service->rows('da', $search, false)->getData(),
+        );
+
+        $this->assertSame(['account.log_in'], $keysFor('ACCOUNT.LOG'), 'matches on the key');
+        $this->assertSame(['common.cancel'], $keysFor('cANCEL'), 'matches on the English text');
+        $this->assertSame(['common.save'], $keysFor('ÆNDRINGER'), 'matches on the translated text, multi-byte letters included');
+        $this->assertSame([], $keysFor('no such text'));
+    }
+
+    public function test_rows_search_and_missing_only_combine_and_a_blank_search_changes_nothing(): void
+    {
+        $this->overrides->seed(2, ['common.save' => 'Gem']);
+
+        $this->assertCount(4, $this->service->rows('da', '  ', false)->getData());
+        $this->assertSame([], $this->service->rows('da', 'gem', true)->getData(), 'a translated key is not missing');
+    }
+
+    public function test_rows_is_refused_for_english_an_inactive_locale_and_an_unknown_one(): void
+    {
+        $this->assertSame('Translations.SourceLocaleNotEditable', $this->service->rows('en', null, false)->getError()->code);
+        $this->assertSame('Translations.LocaleInactive', $this->service->rows('sv', null, false)->getError()->code);
+        $this->assertSame('Translations.LocaleNotFound', $this->service->rows('xx', null, false)->getError()->code);
+    }
+
+    public function test_completion_with_one_valid_override_and_one_orphan_is_one_of_four_and_25_percent(): void
+    {
+        $this->overrides->seed(2, ['account.log_in' => 'Log ind', 'gone.key' => 'Orphan']);
+
+        $completion = $this->service->completion('da')->getData();
+
+        $this->assertSame([1, 4, 25], [$completion->translated, $completion->total, $completion->percent]);
+    }
+
+    public function test_editable_locales_are_the_active_non_english_ones(): void
+    {
+        $codes = array_map(
+            static fn (TranslationLocale $locale): string => $locale->getCode(),
+            $this->service->editableLocales(),
+        );
+
+        $this->assertSame(['da'], $codes);
     }
 }
 
