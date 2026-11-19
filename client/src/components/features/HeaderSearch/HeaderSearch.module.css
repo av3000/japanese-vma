@@ -227,13 +227,13 @@
 	min-width: 7ch;
 	font-size: var(--font-size-body-sm);
 	font-variant-numeric: tabular-nums;
-	color: var(--color-neutral-700);
+	color: var(--color-text-subtle);
 	text-align: right;
 }
 
 /* A zero stays readable; it is quieter, and the digit itself says there is nothing there. */
 .countZero {
-	color: var(--color-neutral-600);
+	color: var(--color-text-muted);
 }
 
 .note {
