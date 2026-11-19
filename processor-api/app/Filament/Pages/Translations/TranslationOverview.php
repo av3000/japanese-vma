@@ -127,7 +127,12 @@ class TranslationOverview extends Page implements HasTable
             ->emptyStateHeading(fn (): string => $this->locale === null ? 'No language to translate' : 'No keys match')
             ->emptyStateDescription(fn (): ?string => $this->locale === null ? 'Add and switch on a language first.' : null)
             ->columns([
-                TextColumn::make('key')->label('Key')->fontFamily('mono')->searchable()->wrap(),
+                TextColumn::make('key')
+                    ->label('Key')
+                    ->fontFamily('mono')
+                    ->searchable()
+                    ->wrap()
+                    ->url(fn (array $record): string => TranslationEditor::getUrl(['locale' => $this->locale, 'key' => $record['key']])),
                 TextColumn::make('source')->label('English')->searchable()->wrap(),
                 TextColumn::make('value')->label('Translation')->searchable()->wrap(),
                 TextColumn::make('state')

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Translations\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Translations\Interfaces\Repositories\TranslationLocaleRepositoryInterface;
 use App\Application\Translations\Interfaces\Repositories\TranslationOverrideRepositoryInterface;
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
+use App\Application\Translations\Policies\TranslationEditingPolicy;
 use App\Domain\Translations\DTOs\TranslationRowDTO;
 use App\Domain\Translations\Enums\TranslationState;
 use App\Domain\Translations\Errors\TranslationErrors;
@@ -24,6 +26,7 @@ class TranslationEditorService implements TranslationEditorServiceInterface
         private readonly TranslationOverrideRepositoryInterface $overrides,
         private readonly EnglishSourceCatalogueInterface $english,
         private readonly TranslationResolver $resolver,
+        private readonly TranslationEditingPolicy $policy,
     ) {
     }
 
@@ -41,8 +44,12 @@ class TranslationEditorService implements TranslationEditorServiceInterface
         ));
     }
 
-    public function saveOverride(string $code, string $key, string $raw, ?int $userId): Result
+    public function saveOverride(string $code, string $key, string $raw, AuthenticatedUser $actor): Result
     {
+        if (! $this->policy->canUpdate($actor)) {
+            return Result::failure(TranslationErrors::updateDenied());
+        }
+
         $locale = $this->editableLocale($code);
 
         if ($locale instanceof Result) {
@@ -66,7 +73,7 @@ class TranslationEditorService implements TranslationEditorServiceInterface
         if ($value === '') {
             $this->overrides->delete($locale->getIdValue(), $key);
         } else {
-            $this->overrides->upsert($locale->getIdValue(), $key, $value, $userId);
+            $this->overrides->upsert($locale->getIdValue(), $key, $value, $actor->id->value());
         }
 
         return Result::success($this->resolver->state($value));

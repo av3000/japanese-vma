@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
-use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
 use App\Filament\Pages\Translations\TranslationOverview;
 use App\Infrastructure\Persistence\Models\Translation;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
@@ -12,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
+use Tests\Feature\Filament\Concerns\UsesTranslationCatalogue;
 use Tests\TestCase;
 
 /**
@@ -21,6 +21,7 @@ class TranslationOverviewPageTest extends TestCase
 {
     use InteractsWithAdminPanel;
     use RefreshDatabase;
+    use UsesTranslationCatalogue;
 
     private TranslationLocale $da;
 
@@ -197,30 +198,6 @@ class TranslationOverviewPageTest extends TestCase
         };
 
         $this->assertSame($queriesFor(3), $queriesFor(30));
-    }
-
-    /**
-     * @param array<string, string> $messages
-     */
-    private function useCatalogue(array $messages): void
-    {
-        $this->app->instance(EnglishSourceCatalogueInterface::class, new class($messages) implements EnglishSourceCatalogueInterface
-        {
-            /** @param array<string, string> $messages */
-            public function __construct(private readonly array $messages)
-            {
-            }
-
-            public function messages(): array
-            {
-                return $this->messages;
-            }
-
-            public function find(string $key): ?string
-            {
-                return $this->messages[$key] ?? null;
-            }
-        });
     }
 
     private function override(string $key, string $value): void
