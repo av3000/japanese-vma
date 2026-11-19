@@ -33,9 +33,8 @@ class TranslationLocalesTable
                     ->label('Active')
                     ->disabled(static fn (TranslationLocale $record): bool => $record->code === DomainTranslationLocale::FALLBACK_CODE)
                     ->updateStateUsing(static function (TranslationLocale $record, bool $state): bool {
-                        $result = app(TranslationLocaleAdminServiceInterface::class)->update(
+                        $result = app(TranslationLocaleAdminServiceInterface::class)->setActive(
                             $record->code,
-                            $record->name,
                             $state,
                             PanelActor::current(),
                         );

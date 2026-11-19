@@ -95,6 +95,60 @@ class TranslationLocaleAdminServiceTest extends TestCase
         self::assertSame(0, $this->locales->writes);
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function invisibleNames(): iterable
+    {
+        yield 'ideographic space' => ["\u{3000}\u{3000}"];
+        yield 'no-break space' => ["\u{00A0}"];
+        yield 'zero-width space' => ["\u{200B}"];
+        yield 'mixed' => [" \u{3000}\u{200B}\t"];
+    }
+
+    #[DataProvider('invisibleNames')]
+    public function test_a_name_with_nothing_visible_in_it_is_refused(string $name): void
+    {
+        $created = $this->service()->create('sv', $name, true, $this->actor());
+        $renamed = $this->service()->update('da', $name, true, $this->actor());
+
+        self::assertSame('Translations.InvalidLocaleName', $created->getError()->code);
+        self::assertSame('Translations.InvalidLocaleName', $renamed->getError()->code);
+        self::assertSame(0, $this->locales->writes);
+    }
+
+    public function test_a_name_is_stored_without_unicode_whitespace_around_it(): void
+    {
+        $result = $this->service()->create('sv', "\u{3000}Svenska\u{00A0}", true, $this->actor());
+
+        self::assertSame('Svenska', $result->getData()->getName());
+    }
+
+    public function test_a_create_that_loses_the_race_on_the_code_gets_the_taken_message(): void
+    {
+        $this->locales->loseRaceOn('sv');
+
+        $result = $this->service()->create('sv', 'Svenska', true, $this->actor());
+
+        self::assertSame('Translations.LocaleCodeTaken', $result->getError()->code);
+    }
+
+    public function test_switching_a_language_off_keeps_the_name_stored_now(): void
+    {
+        $this->service()->update('da', 'Dansk (DK)', true, $this->actor());
+
+        $result = $this->service()->setActive('da', false, $this->actor());
+
+        self::assertFalse($result->getData()->isActive());
+        self::assertSame('Dansk (DK)', $result->getData()->getName());
+    }
+
+    public function test_set_active_refuses_to_deactivate_english_and_unknown_codes_and_missing_rights(): void
+    {
+        self::assertSame('Translations.SourceLocaleLocked', $this->service()->setActive('en', false, $this->actor())->getError()->code);
+        self::assertSame('Translations.LocaleNotFound', $this->service()->setActive('xx', true, $this->actor())->getError()->code);
+        self::assertSame('Translations.ManageLocalesDenied', $this->service(allows: false)->setActive('da', false, $this->actor())->getError()->code);
+        self::assertSame(0, $this->locales->writes);
+    }
+
     public function test_english_cannot_be_deactivated(): void
     {
         $result = $this->service()->update('en', 'English', false, $this->actor());
@@ -201,8 +255,20 @@ final class WritableLocales implements TranslationLocaleRepositoryInterface
         return null;
     }
 
-    public function create(string $code, string $name, bool $isActive): TranslationLocale
+    private ?string $raceCode = null;
+
+    /** The next create of this code finds the row already inserted by someone else. */
+    public function loseRaceOn(string $code): void
     {
+        $this->raceCode = $code;
+    }
+
+    public function create(string $code, string $name, bool $isActive): ?TranslationLocale
+    {
+        if ($code === $this->raceCode) {
+            return null;
+        }
+
         $this->writes++;
 
         return $this->locales[] = new TranslationLocale(count($this->locales) + 1, $code, $name, $isActive);

@@ -34,9 +34,9 @@ class TranslationLocaleAdminService implements TranslationLocaleAdminServiceInte
             return Result::failure(TranslationErrors::invalidLocaleCode());
         }
 
-        $name = trim($name);
+        $name = $this->cleanName($name);
 
-        if (! $this->isValidName($name)) {
+        if ($name === null) {
             return Result::failure(TranslationErrors::invalidLocaleName(self::MAX_NAME_LENGTH));
         }
 
@@ -44,7 +44,13 @@ class TranslationLocaleAdminService implements TranslationLocaleAdminServiceInte
             return Result::failure(TranslationErrors::localeCodeTaken($code));
         }
 
-        return Result::success($this->locales->create($code, $name, $isActive));
+        // The pre-check gives the common case its message; the repository answers null when a
+        // concurrent create won the unique index between the check and the insert.
+        $created = $this->locales->create($code, $name, $isActive);
+
+        return $created === null
+            ? Result::failure(TranslationErrors::localeCodeTaken($code))
+            : Result::success($created);
     }
 
     public function update(string $code, string $name, bool $isActive, AuthenticatedUser $actor): Result
@@ -64,17 +70,54 @@ class TranslationLocaleAdminService implements TranslationLocaleAdminServiceInte
             return Result::failure(TranslationErrors::sourceLocaleLocked());
         }
 
-        $name = trim($name);
+        $name = $this->cleanName($name);
 
-        if (! $this->isValidName($name)) {
+        if ($name === null) {
             return Result::failure(TranslationErrors::invalidLocaleName(self::MAX_NAME_LENGTH));
         }
 
         return Result::success($this->locales->update($locale->getIdValue(), $name, $isActive));
     }
 
-    private function isValidName(string $name): bool
+    public function setActive(string $code, bool $isActive, AuthenticatedUser $actor): Result
     {
-        return $name !== '' && mb_strlen($name) <= self::MAX_NAME_LENGTH && mb_check_encoding($name, 'UTF-8') && ! str_contains($name, "\0");
+        if (! $this->policy->canManage($actor)) {
+            return Result::failure(TranslationErrors::manageLocalesDenied());
+        }
+
+        $locale = $this->locales->findByCode($code);
+
+        if ($locale === null) {
+            return Result::failure(TranslationErrors::localeNotFound($code));
+        }
+
+        if ($locale->isFallback() && ! $isActive) {
+            return Result::failure(TranslationErrors::sourceLocaleLocked());
+        }
+
+        // The name is read here, not passed in, so a toggle never writes back a name that another
+        // administrator changed after the table was drawn.
+        return Result::success($this->locales->update($locale->getIdValue(), $locale->getName(), $isActive));
+    }
+
+    /**
+     * The name without surrounding whitespace, or null when it cannot be stored or shown.
+     *
+     * With the `u` flag, `\s` and `\p{Z}` cover U+3000 and no-break spaces and `\p{Cf}` covers
+     * zero-width characters, so a name made only of those is empty too.
+     */
+    private function cleanName(string $name): ?string
+    {
+        if (! mb_check_encoding($name, 'UTF-8') || str_contains($name, "\0")) {
+            return null;
+        }
+
+        $trimmed = preg_replace('/^[\s\p{Z}\p{Cf}]+|[\s\p{Z}\p{Cf}]+$/u', '', $name);
+
+        if ($trimmed === null || $trimmed === '' || mb_strlen($trimmed) > self::MAX_NAME_LENGTH) {
+            return null;
+        }
+
+        return $trimmed;
     }
 }

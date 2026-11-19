@@ -275,7 +275,7 @@ final class InMemoryLocales implements TranslationLocaleRepositoryInterface
         return null;
     }
 
-    public function create(string $code, string $name, bool $isActive): TranslationLocale
+    public function create(string $code, string $name, bool $isActive): ?TranslationLocale
     {
         throw new \LogicException('Not used by the editor service.');
     }

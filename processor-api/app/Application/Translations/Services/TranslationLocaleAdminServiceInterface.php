@@ -25,4 +25,12 @@ interface TranslationLocaleAdminServiceInterface
      * @return Result Success payload: TranslationLocale
      */
     public function update(string $code, string $name, bool $isActive, AuthenticatedUser $actor): Result;
+
+    /**
+     * Switches the locale with this code on or off and leaves its name as stored, so a toggle
+     * cannot overwrite a name changed elsewhere. English cannot be deactivated.
+     *
+     * @return Result Success payload: TranslationLocale
+     */
+    public function setActive(string $code, bool $isActive, AuthenticatedUser $actor): Result;
 }

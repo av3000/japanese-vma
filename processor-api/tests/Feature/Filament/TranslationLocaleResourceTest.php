@@ -99,6 +99,20 @@ class TranslationLocaleResourceTest extends TestCase
         $this->getJson('/api/v1/translations/locales')->assertJsonCount(1, 'items');
     }
 
+    public function test_the_toggle_does_not_write_back_a_name_changed_after_the_table_was_drawn(): void
+    {
+        $da = TranslationLocale::factory()->create();
+
+        $table = Livewire::test(ListTranslationLocales::class)->assertCanSeeTableRecords([$da]);
+
+        // Another administrator renames the language after this table was rendered.
+        TranslationLocale::query()->whereKey($da->getKey())->update(['name' => 'Dansk (DK)']);
+
+        $table->call('updateTableColumnState', 'is_active', (string) $da->getKey(), false);
+
+        $this->assertDatabaseHas('translation_locales', ['code' => 'da', 'name' => 'Dansk (DK)', 'is_active' => false]);
+    }
+
     public function test_the_name_and_flag_can_be_edited(): void
     {
         $da = TranslationLocale::factory()->create();
