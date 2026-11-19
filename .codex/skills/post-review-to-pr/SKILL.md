@@ -7,7 +7,7 @@ description: Post a review produced by review-branch to its GitHub pull request 
 
 Turn a `review-branch` report into a GitHub review a reader can follow on the PR page. Nothing becomes visible to others until the user confirms.
 
-`gh` lives at `/c/Program Files/GitHub CLI/gh.exe`; run it from Bash. Write every JSON payload to a file with the Write tool and pass it with `--input`, so quoting never breaks. Repo: `av3000/japanese-vma`.
+Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs. Write every JSON payload to a file with the Write tool and pass it with `--input`, so quoting never breaks. Repo: `av3000/japanese-vma`.
 
 ## 1. Input
 
@@ -16,9 +16,9 @@ Accept only a report in the `review-branch` format (`.claude/skills/review-branc
 ## 2. Metadata
 
 ```bash
-gh pr view <n> --repo av3000/japanese-vma --json number,url,headRefOid,author
-gh api user --jq .login
-gh api repos/av3000/japanese-vma/pulls/<n>/reviews --paginate
+'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --repo av3000/japanese-vma --json number,url,headRefOid,author
+'/c/Program Files/GitHub CLI/gh.exe' api user --jq .login
+'/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/<n>/reviews --paginate
 ```
 
 - If the report was made against a different commit than `headRefOid`, say so and offer to re-run `review-branch` first.
@@ -52,7 +52,7 @@ The review body ends with `<!-- review-branch:<headRefOid> -->`.
 ## 5. Create the pending review
 
 ```bash
-gh api repos/av3000/japanese-vma/pulls/<n>/reviews --method POST --input review.json
+'/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/<n>/reviews --method POST --input review.json
 ```
 
 On `422` "line could not be resolved" (the line is outside the diff), move that comment into the body as a bullet with its `path:line`, and retry once.
@@ -68,11 +68,11 @@ Ask: **submit** or **discard**?
 
 ## 7. Submit or discard
 
-- **Submit:** `gh api repos/av3000/japanese-vma/pulls/<n>/reviews/<id>/events --method POST -f event=<EVENT>`
+- **Submit:** `'/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/<n>/reviews/<id>/events --method POST -f event=<EVENT>`
   - `EVENT` is `COMMENT` by default.
   - Use `REQUEST_CHANGES` only when the verdict is **Blocked** and the current user is **not** the PR author. GitHub rejects approve and request-changes on your own PR.
   - Never `APPROVE`.
-- **Discard:** `gh api repos/av3000/japanese-vma/pulls/<n>/reviews/<id> --method DELETE`. This deletes only the pending review this run created.
+- **Discard:** `'/c/Program Files/GitHub CLI/gh.exe' api repos/av3000/japanese-vma/pulls/<n>/reviews/<id> --method DELETE`. This deletes only the pending review this run created.
 
 ## 8. Follow-ups
 

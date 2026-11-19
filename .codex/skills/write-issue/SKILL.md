@@ -74,8 +74,8 @@ An **epic** uses Problem, Design (decisions shared by every slice), a Slices tab
 
 1. Show the full title, body and labels. For an epic, show every sub-issue.
 2. Wait for the user to confirm. Creating or editing an issue is visible to others.
-3. Write each body to a file and create from Bash, where `gh` lives at `/c/Program Files/GitHub CLI/gh.exe`:
-   - `gh issue create --repo av3000/japanese-vma --title "…" --label a,b --body-file body.md`
+3. Write each body to a file and create it from Bash. Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs.
+   - `'/c/Program Files/GitHub CLI/gh.exe' issue create --repo av3000/japanese-vma --title "…" --label a,b --body-file body.md`
    - Sub-issues: add `--parent <epic>`. Order: add `--blocked-by <n>[,<n>]`.
    - An epic's Slices table needs the sub-issue numbers: create the epic, then the sub-issues, then edit the epic body.
 4. Titles: `[<STABLE-ID>] <outcome>` for slices, `[<EPIC>] <outcome>` for epics, a plain outcome otherwise.
@@ -83,7 +83,7 @@ An **epic** uses Problem, Design (decisions shared by every slice), a Slices tab
 
 ## Editing an existing issue
 
-Keep the existing body exactly as it is, byte for byte, apart from the sections you are adding or fixing. Fetch it with `gh issue view <n> --json body --jq .body > body.md`, edit the file, show the result, and send it back with `gh issue edit <n> --body-file body.md` after confirmation. Never rewrite the issue's intent.
+Keep the existing body exactly as it is, byte for byte, apart from the sections you are adding or fixing. Fetch it with `'/c/Program Files/GitHub CLI/gh.exe' issue view <n> --json body --jq .body > body.md`, edit the file, show the result, and send it back with `'/c/Program Files/GitHub CLI/gh.exe' issue edit <n> --body-file body.md` after confirmation. Never rewrite the issue's intent.
 
 ## Done when
 

@@ -83,11 +83,11 @@ Create the PR with the screenshots, or add them to an existing PR:
 ```bash
 cd <png-dir>
 attach=(); for f in *.png; do attach+=(--attach "$f"); done
-gh pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <body.md> "${attach[@]}"
-gh pr edit <n> --repo av3000/japanese-vma --body-file <body.md> "${attach[@]}"
+'/c/Program Files/GitHub CLI/gh.exe' pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <body.md> "${attach[@]}"
+'/c/Program Files/GitHub CLI/gh.exe' pr edit <n> --repo av3000/japanese-vma --body-file <body.md> "${attach[@]}"
 ```
 
-Then read the body back (`gh pr view <n> --json body --jq .body`) and check that every image URL starts with `https://github.com/user-attachments/assets/` and that no `./` path is left. Judge whether an image loads on the PR page, not by fetching the bare asset URL: that URL returns 404 without a GitHub session, while the PR page serves every viewer, logged out included, a signed image URL.
+Then read the body back (`'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json body --jq .body`) and check that every image URL starts with `https://github.com/user-attachments/assets/` and that no `./` path is left. Judge whether an image loads on the PR page, not by fetching the bare asset URL: that URL returns 404 without a GitHub session, while the PR page serves every viewer, logged out included, a signed image URL.
 
 ## 6. Embed in the PR body
 
@@ -115,7 +115,7 @@ From the built Storybook at 1400 / 768 / 360px.
 Every `--attach` run uploads new assets, even for an identical file; the body then points at the new ones and the old ones are left unreferenced, so a re-shoot never shows superseded UI:
 
 1. Re-shoot, and look at every new PNG (section 4).
-2. `gh pr view <n> --json body --jq .body > body.md`, then replace the images in the `## Screenshots` section with Markdown references to the local file names (`![…](./article-filled-1400.png)`). Leave the rest of the body as it is.
-3. From the PNG folder, run `gh pr edit` with `--attach` for every PNG, as in section 5, and read the body back.
+2. `'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json body --jq .body > body.md`, then replace the images in the `## Screenshots` section with Markdown references to the local file names (`![…](./article-filled-1400.png)`). Leave the rest of the body as it is.
+3. From the PNG folder, run `'/c/Program Files/GitHub CLI/gh.exe' pr edit` with `--attach` for every PNG, as in section 5, and read the body back.
 
 Local cleanup, right away: stop the static server, close the Playwright browser, and confirm `.playwright-mcp/` is gone from the main checkout.

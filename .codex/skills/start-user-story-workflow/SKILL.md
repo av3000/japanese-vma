@@ -9,14 +9,14 @@ You are the **story session**: you build one story and own its PR until it is me
 
 Inputs: `<issue> <epic-branch>`, for example `661 feature/issue-659-translations`, plus the run log path if the epic agent gave one. If the issue or the branch is missing, ask once.
 
-`gh` is not on PATH. Call it from Bash exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, single-quoted and never through a variable, so the project's permission rules match and the PR and review writes run without a prompt. Always pass a PR by its number. Repo: `av3000/japanese-vma`.
+Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs. Always pass a PR by its number. Repo: `av3000/japanese-vma`.
 
 **Unattended.** When the epic agent started you, nobody is watching: never end a turn on a question or a menu. Where a skill you use waits for the user, use its unattended mode, or this skill's override below. Stop with a report (the stop list at the end) instead of asking.
 
 ## 1. Set up
 
 1. Check `git branch --show-current`. You should be on a fresh story branch cut from the tip of `origin/<epic-branch>`. If you are on the epic branch itself, `develop` or `master`, create a story branch from `origin/<epic-branch>` first: nothing is committed on the epic branch directly. Then `git fetch origin` and check `git merge-base --is-ancestor origin/<epic-branch> HEAD`. If it fails, your branch was cut from a stale epic branch and is missing earlier stories: while it has no commits of its own, `git reset --hard origin/<epic-branch>`; otherwise rebase it onto `origin/<epic-branch>`.
-2. Read, in this order: the issue (`gh issue view <issue>`), its parent epic, the root `AGENTS.md` and the scoped `AGENTS.md` for every area the issue touches, any planning document the epic links (for example `docs/<feature>/implementation-plan.md` and its section for this story), and `docs/agents/local-environment.md` for a fresh worktree.
+2. Read, in this order: the issue (`'/c/Program Files/GitHub CLI/gh.exe' issue view <issue>`), its parent epic, the root `AGENTS.md` and the scoped `AGENTS.md` for every area the issue touches, any planning document the epic links (for example `docs/<feature>/implementation-plan.md` and its section for this story), and `docs/agents/local-environment.md` for a fresh worktree.
 3. If the issue has no `## Acceptance criteria`, stop and report: you cannot meet criteria nobody wrote.
 4. Append a row to the run log (`../start-epic-workflow/references/run-log.md` says where and how). If no epic agent gave you a log path, derive it from the parent epic's number.
 

@@ -9,7 +9,7 @@ You are the **epic agent**: you coordinate, you never write product code. Each s
 
 Inputs: `<epic-issue> <epic-branch>`, for example `659 feature/issue-659-translations`. If either is missing, ask once. If `<epic-branch>` is `develop`, `master` or `main`, stop: story PRs must never target a protected branch.
 
-`gh` is not on PATH. Call it from Bash exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, single-quoted and never through a variable: the project's permission rules match that spelling, so the GitHub writes this loop makes run without a prompt. Always pass a PR by its number, never its URL or branch, and never merge through the GitHub MCP tools. The repo's merge guard hook (guard-agent-merge.mjs in the root scripts folder) denies a merge whose PR targets `develop` or `master`, the GraphQL and REST merge and ref-writing calls, and `gh pr edit --base`. It is accident prevention for an agent following this skill, not a security boundary; branch protection on GitHub is. Repo: `av3000/japanese-vma`. The code blocks below write `gh` for short.
+Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs. Always pass a PR by its number, never its URL or branch, and never merge through the GitHub MCP tools. The repo's merge guard hook (guard-agent-merge.mjs in the root scripts folder) denies a merge whose PR targets `develop` or `master`, the GraphQL and REST merge and ref-writing calls, and `'/c/Program Files/GitHub CLI/gh.exe' pr edit --base`. It is accident prevention for an agent following this skill, not a security boundary; branch protection on GitHub is. Repo: `av3000/japanese-vma`.
 
 This skill needs the Claude Code desktop app's session tools (`mcp__ccd_session__start_session`, `SendMessage`). Load them with `ToolSearch` if they are deferred. Codex has no equivalent; there, stop and say so.
 
@@ -19,9 +19,9 @@ This skill needs the Claude Code desktop app's session tools (`mcp__ccd_session_
 
 1. **Your model.** `start_session` caps a child's model and effort at yours. You must run on Opus 5.5 at medium effort or higher, or the story sessions silently run on less. If you run on a smaller model, stop and say so.
 2. `git fetch origin`. The epic branch must exist on `origin`; stop if it does not. It was cut from `develop` by the maintainer; never create it yourself, and never check it out in your own worktree.
-3. Read the epic (`gh issue view <epic-issue>`) and list its sub-issues with their state and their Blocked-by links:
+3. Read the epic (`'/c/Program Files/GitHub CLI/gh.exe' issue view <epic-issue>`) and list its sub-issues with their state and their Blocked-by links:
    ```bash
-   gh api graphql -F owner=av3000 -F name=japanese-vma -F n=<epic-issue> -f query='
+   '/c/Program Files/GitHub CLI/gh.exe' api graphql -F owner=av3000 -F name=japanese-vma -F n=<epic-issue> -f query='
    query($owner:String!, $name:String!, $n:Int!) { repository(owner:$owner, name:$name) { issue(number:$n) {
      subIssues(first:50) { nodes { number title state
        blockedBy(first:20) { nodes { number state } } } } } } }'
@@ -47,7 +47,7 @@ Write a short status for the maintainer: the stories, which are done, which is n
 
 Re-read the sub-issues from GitHub at the start of every pass, never from memory: a restart or a compacted context must resume at the right story.
 
-1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If open stories remain but none is unblocked, stop and report the cycle. If its PR is already open from an earlier run, resume it. Find it with `gh pr list --base <epic-branch> --state open --json number,title,body`, and count only a PR whose title starts with `[<STABLE-ID>]` or whose body says `Refs #<issue>`; any other open PR on the epic branch is not this story's, and is a stop. Resume it at the step it reached: message the story session by the `local_…` id the log recorded; if that session is gone, start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line.
+1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If open stories remain but none is unblocked, stop and report the cycle. If its PR is already open from an earlier run, resume it. Find it with `'/c/Program Files/GitHub CLI/gh.exe' pr list --base <epic-branch> --state open --json number,title,body`, and count only a PR whose title starts with `[<STABLE-ID>]` or whose body says `Refs #<issue>`; any other open PR on the epic branch is not this story's, and is a stop. Resume it at the step it reached: message the story session by the `local_…` id the log recorded; if that session is gone, start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line.
 2. **Refresh the epic branch.** `start_session` cuts a worktree from the **local** `<epic-branch>`, but the story merges happen on GitHub, so bring the local ref up to `origin` on every pass:
    ```bash
    git fetch origin
@@ -72,7 +72,7 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
    Log the start row with the session's `local_…` id from the tool result. A resumed run needs it to reach the session.
 4. **Wait** for the session to end its turn. Do not parse its report for the PR: the 400 characters that reach you can be cut short. Stories run one at a time, so look it up:
    ```bash
-   gh pr list --repo av3000/japanese-vma --base <epic-branch> --state open --json number,headRefName,headRefOid,title
+   '/c/Program Files/GitHub CLI/gh.exe' pr list --repo av3000/japanese-vma --base <epic-branch> --state open --json number,headRefName,headRefOid,title
    ```
    There must be exactly one. Check that its commit subjects all start with the story's Stable ID. Use the report only for the checks the session could not run. If the session stopped instead, see section 3.
 5. **Start the review session:** `start_session` with `initiation: "user_asked"`, `context: "fresh"`, `model: "claude-sonnet-5-5"`, `effort: "medium"`, `use_worktree: true`, `source_branch: <story branch>`, `name: "<short id>-review"` (at most 24 characters), `wake_when_done: true`, a `background` like the story session's with "read-only review" in it, and the prompt:
@@ -84,13 +84,13 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
    - A review from the review session is posted on the PR. No posted review means no merge, whatever the session reported.
    - The story session's Fix / Clarify / Decline table is in the run log, and every Critical in it is a Fix.
    - Every Decline of a Warning has a reply on its thread that gives a reason: the rule or criterion it does not break, or the failing scenario that does not exist. "Not needed" or "out of scope" without a linked `needs-triage` issue does not count.
-   - The fix commit starts with the Stable ID and touches the files the Fix rows cite (`gh pr view <pr> --json commits,files`).
+   - The fix commit starts with the Stable ID and touches the files the Fix rows cite (`'/c/Program Files/GitHub CLI/gh.exe' pr view <pr> --json commits,files`).
    - CI, if it ran, is green (story PRs into an epic branch usually get no CI).
 
    If one fails, send the story session one more `/address-pr-review <pr>` naming the gap; a second failure is a stop. Then:
    ```bash
-   gh pr merge <pr> --repo av3000/japanese-vma --squash --subject "<STABLE-ID>: <outcome> (#<pr>)" --body "Refs #<issue>"
-   gh issue close <issue> --repo av3000/japanese-vma --comment "Delivered in #<pr>."
+   '/c/Program Files/GitHub CLI/gh.exe' pr merge <pr> --repo av3000/japanese-vma --squash --subject "<STABLE-ID>: <outcome> (#<pr>)" --body "Refs #<issue>"
+   '/c/Program Files/GitHub CLI/gh.exe' issue close <issue> --repo av3000/japanese-vma --comment "Delivered in #<pr>."
    ```
    Keep the story branch: the PR keeps the separate implementation and review commits. Tick the story in the epic body only if the epic uses a checklist.
 8. **Log** the merge and close, add your line to the story's retro, and go back to step 1.

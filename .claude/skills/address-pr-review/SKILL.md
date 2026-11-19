@@ -7,14 +7,14 @@ description: Work through the review comments on a japanese-vma pull request. Re
 
 Assess each review comment on its merits, fix what genuinely matters, and close the loop on every thread. The default failure is agreeing to please: "fixing" something you correctly judged unnecessary, just because someone raised it. A reasoned Decline is a valid answer.
 
-`gh` lives at `/c/Program Files/GitHub CLI/gh.exe`; run it from Bash. Repo: `av3000/japanese-vma`. Check `git branch --show-current` matches the PR's head branch before changing anything.
+Call `gh` exactly as `'/c/Program Files/GitHub CLI/gh.exe' <args>`: single-quoted, as the command itself, one GitHub call per Bash call. The project permission rules match only that spelling. A `PATH` export, a variable, a bare `gh`, or a call inside `$(...)` or after `&&` falls through to the auto-mode classifier, which denies GitHub writes in unattended runs. Repo: `av3000/japanese-vma`. Check `git branch --show-current` matches the PR's head branch before changing anything.
 
 ## 1. Read everything first
 
 Do not start fixing after the first comment. Fetch it all:
 
 ```bash
-gh api graphql -F owner=av3000 -F name=japanese-vma -F n=<pr> -f query='
+'/c/Program Files/GitHub CLI/gh.exe' api graphql -F owner=av3000 -F name=japanese-vma -F n=<pr> -f query='
 query($owner:String!, $name:String!, $n:Int!) {
   repository(owner:$owner, name:$name) {
     pullRequest(number:$n) {
@@ -60,13 +60,13 @@ The user may override any row. Change nothing until the user confirms the table.
 3. **Reply** to every thread, only after the push, so "fixed" is never claimed before the change exists. Fix replies name the commit SHA.
 
    ```bash
-   gh api graphql -F id=<threadId> -F body=@reply.md -f query='
+   '/c/Program Files/GitHub CLI/gh.exe' api graphql -F id=<threadId> -F body=@reply.md -f query='
    mutation($id:ID!, $body:String!) {
      addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id, body:$body}) { comment { url } }
    }'
    ```
 
-   Top-level PR comments and review bodies have no thread: answer them in one `gh pr comment <pr> --body-file reply.md`.
+   Top-level PR comments and review bodies have no thread: answer them in one `'/c/Program Files/GitHub CLI/gh.exe' pr comment <pr> --body-file reply.md`.
 4. **Resolve:**
    - Fix threads, once replied.
    - Clarify threads that need no further answer.
@@ -74,7 +74,7 @@ The user may override any row. Change nothing until the user confirms the table.
    - **Leave Decline threads from another person unresolved**, so they can answer.
 
    ```bash
-   gh api graphql -F id=<threadId> -f query='mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { isResolved } } }'
+   '/c/Program Files/GitHub CLI/gh.exe' api graphql -F id=<threadId> -f query='mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { isResolved } } }'
    ```
 
 Replies are public: send them only after the user has confirmed the table and the drafted replies, in one batch.
