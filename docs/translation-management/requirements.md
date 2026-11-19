@@ -107,27 +107,27 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-02 | US-01 (English row), US-03 | Delivered |
 | FR-03 | US-01 | Delivered |
 | FR-04 | US-01, US-02, US-07 (end to end) | Delivered for every locale (US-01, US-02); the end-to-end proof is planned (US-07) |
-| FR-05 | US-02, US-05, US-07 (end to end) | Storage and save rules delivered in the editor service (US-02); the Filament action and end-to-end proof are planned (US-05, US-07) |
+| FR-05 | US-02, US-05, US-07 (end to end) | Storage, save rules (US-02) and the Filament save action (US-05) delivered; the end-to-end proof is planned (US-07) |
 | FR-06 | US-02, US-04 | Delivered |
 | FR-07 | US-02, US-04 | Delivered |
 | FR-08 | US-02, US-04 | Delivered |
-| FR-09 | US-04 | Delivered, except the row link to the editor, which arrives with US-05 |
-| FR-10 | US-05 | Planned |
-| FR-11 | US-03, US-04, US-05 | Permissions, locale management (US-03) and the overview gate (US-04) delivered; the editor gate is planned (US-05) |
+| FR-09 | US-04, US-05 | Delivered (the row link to the editor arrived with US-05) |
+| FR-10 | US-05 | Delivered |
+| FR-11 | US-03, US-04, US-05 | Delivered: permissions, locale management (US-03), the overview gate (US-04) and the editor gate (US-05) |
 | FR-12 | US-06 | Planned |
 | FR-13 | US-06 | Planned |
 | FR-14 | US-06, US-07 (end to end) | Planned |
 | FR-15 | US-06 | Planned |
 | FR-16 | US-07 | Planned |
 | NFR-01 | US-02, US-04 | Delivered |
-| NFR-02 | US-02, US-05 | Delivered for the bundle: no cache (US-02); the editor save is planned (US-05) |
-| NFR-03 | US-03, US-05 | Delivered for locale writes (US-03); the editor save is planned (US-05) |
+| NFR-02 | US-02, US-05 | Delivered: no cache (US-02), and the editor save is live in the next bundle (US-05) |
+| NFR-03 | US-03, US-05 | Delivered: locale writes (US-03) and the editor save, permission-checked and shown as text (US-05) |
 | NFR-04 | US-01 | Delivered |
 | NFR-05 | US-06 | Planned |
 | NFR-06 | US-06 | Planned |
 | NFR-07 | US-06, US-07 | Planned |
 | NFR-08 | all | Planned |
-| NFR-09 | US-02, US-05 | Last write wins in the upsert (US-02); the editor save is planned (US-05) |
+| NFR-09 | US-02, US-05 | Delivered: last write wins in the upsert (US-02) and the editor save (US-05) |
 
 Each story's commit updates its rows to **Delivered**. When the epic merges, this document is reviewed again. Once the code and tests show the rules on their own, it is removed or reduced.
 
