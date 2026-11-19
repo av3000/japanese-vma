@@ -52,8 +52,10 @@ This skill needs the Claude Code desktop app's session tools (`mcp__ccd_session_
    If any check fails, **stop**: without the rules the first GitHub write in a story session waits at a prompt and nothing wakes you, and without the guard nothing stops a merge into `develop`. Your own checkout needs the same file. Agents cannot add it; the maintainer commits it.
 6. Open the run log (`references/run-log.md` says where and how). Create it with its header if it does not exist. If it does, this is a resumed run: read it to see where the last run stopped, and which session ids it logged.
 7. **Inherited sessions.** The app wakes you only when a session *you* started ends a turn. Check every open story PR on the epic branch and the session the log names for it (`mcp__ccd_session_mgmt__list_sessions` with `linked: true` shows which sessions are yours). For a session another agent started:
-   - **idle:** do not message it. Start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line;
+   - **idle:** do not message it. Start a resume session for its story (below);
    - **still running:** `SendMessage` it with `notify_when_idle: true` and no message, then wait for that notice.
+
+   **A resume session** is a fresh story session (§2 step 3) for a PR that already exists. The PR's head branch is usually still checked out in the old session's worktree, even when that session is gone, and Git refuses to check out one branch in two worktrees. So give it `source_branch: <PR head branch>` and `branch_name: <PR head branch>-resume`, and add the resume line to its prompt (§2 step 3). It pushes to the PR's head branch with an explicit refspec. Never archive or stop the old session to free the branch: the maintainer reads it later.
 
    Never wait on a session that cannot wake you. In the epic #659 run, this cost about 8 idle hours.
 
@@ -61,9 +63,10 @@ Write a short status for the maintainer: the stories, which are done, which is n
 
 ## 2. The loop
 
-Re-read the sub-issues from GitHub at the start of every pass, never from memory: a restart or a compacted context must resume at the right story. With the `stories` setting, consider only those issues. When they are all closed, go to §4 step 2 and stop there instead of opening the epic PR.
+Re-read the sub-issues from GitHub at the start of every pass, never from memory: a restart or a compacted context must resume at the right story. With the `stories` setting, consider only those issues. When they are all closed, go to §4: run step 1 (the final refresh) and step 2, then stop there instead of opening the epic PR.
 
-1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If open stories remain but none is unblocked, stop and report the cycle.
+1. **Pick the next story:** the lowest-numbered open sub-issue whose blockers are all closed. If no open sub-issue is left, go to §4 step 1: the last story merged on GitHub, and only that refresh brings it into the local branch the verification session is cut from. If open stories remain but none is unblocked, stop and report the cycle.
+   - **Already open from an earlier run.** If the story's PR is already open, resume it instead of starting it. Find it with `'/c/Program Files/GitHub CLI/gh.exe' pr list --repo av3000/japanese-vma --base <epic-branch> --state open --json number,title,body,headRefName`, and count only a PR whose title starts with `[<STABLE-ID>]` or whose body says `Refs #<issue>`; any other open PR on the epic branch is not this story's, and is a stop. Resume it at the step it reached: message the story session by the `local_…` id the log recorded, following §1 step 7 when another agent started it; if that session is gone, start a resume session (§1 step 7).
    - **A second story at once.** Start a second story when all of these hold:
      - `parallel` is 2 or more;
      - another open story is also unblocked;
@@ -71,7 +74,7 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
      - neither blocks the other.
 
      When in doubt, run them one at a time. Each story gets its own sessions and its own log section.
-   - **Merges stay one at a time.** Merge one story, refresh the epic branch (step 2), then check that the other PR is still `MERGEABLE` and contains `origin/<epic-branch>`. If it does not, send its story session: "Merge `origin/<epic-branch>` into your branch (a merge, not a rebase), re-run your checks, push, and report." Then run the gate again. If its PR is already open from an earlier run, resume it. Find it with `'/c/Program Files/GitHub CLI/gh.exe' pr list --base <epic-branch> --state open --json number,title,body`, and count only a PR whose title starts with `[<STABLE-ID>]` or whose body says `Refs #<issue>`; any other open PR on the epic branch is not this story's, and is a stop. Resume it at the step it reached: message the story session by the `local_…` id the log recorded; if that session is gone, start a fresh story session on the PR's head branch (`source_branch` set to it) with the brief's resume line.
+   - **Merges stay one at a time.** Merge one story, refresh the epic branch (step 2), then check that the other PR is still `MERGEABLE` and contains `origin/<epic-branch>`. If it does not, send its story session: "Merge `origin/<epic-branch>` into your branch (a merge, not a rebase), re-run your checks, push, and report." Then run the gate again.
 2. **Refresh the epic branch.** `start_session` cuts a worktree from the **local** `<epic-branch>`, but the story merges happen on GitHub, so bring the local ref up to `origin` on every pass:
    ```bash
    git fetch origin
@@ -90,9 +93,9 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
 3. **Start the story session.** First add the story's section header to the log, so the session's first row lands under it. Then `start_session` with:
    - `initiation: "user_asked"`, `context: "fresh"`, `model: <story-model>`, `effort: <story-effort>`, `use_worktree: true`, `source_branch: <epic-branch>`, `branch_name: <stable-id lowercased>`, `wake_when_done: true`;
    - `name`: a short form of the Stable ID plus `-impl`, at most 24 characters of `[a-z0-9-]`, for example `tr-02-impl`;
-   - `background` (required, at least 80 characters): "Unattended run of start-epic-workflow for epic #<epic> on branch <epic-branch>, story <STABLE-ID> (#<issue>). Run log: <absolute log path>. Nobody is watching: use the skills' unattended modes, and stop with a report instead of asking. Call every `gh` command as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, one GitHub write per Bash call, with no PATH export, no `$(...)` and no `&&` chains: the permission rules match only that spelling.";
-     The story skill carries the known traps (scripts through the Write tool, sandbox limits, the contract steps, the scope rule, screenshots). Repeating the spelling rule in the brief is deliberate: the first run lost a review post without it;
-   - `prompt`: "Run `/start-user-story-workflow <issue> <epic-branch>`. Run log: `<absolute log path>`. When you finish, end your turn with the report the skill describes; do not message me." On a resume, add: "The branch and PR #<pr> already exist; continue from where they are."
+   - `background` (required, at least 80 characters): "Unattended run of start-epic-workflow for epic #<epic> on branch <epic-branch>, story <STABLE-ID> (#<issue>). Run log: <absolute log path>. Nobody is watching: use the skills' unattended modes, and stop with a report instead of asking. Call every `gh` command as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, one GitHub write per Bash call, with no PATH export, no `$(...)` and no `&&` chains: the permission rules match only that spelling. Known traps, detailed in the story skill §3: write scripts and multi-line files with the Write tool, not heredocs; `spawn EPERM` and a Vitest run that stops after one file are sandbox limits, reported as not run; an endpoint change goes backend source, then `composer openapi`, then `npm run orval:file`; the issue's acceptance criteria are the scope; anything visible needs Storybook stories and screenshots.";
+     The spelling rule and the traps are in the brief as well as in the skills on purpose: the first run lost a review post without the rule;
+   - `prompt`: "Run `/start-user-story-workflow <issue> <epic-branch>`. Run log: `<absolute log path>`. When you finish, end your turn with the report the skill describes; do not message me." For a resume session (§1 step 7), add: "PR #<pr> already exists on branch `<PR head branch>`; continue from where it is. Your local branch is `<PR head branch>-resume`. First run `git fetch origin` and `git merge --ff-only origin/<PR head branch>`. Push only with `git push origin HEAD:<PR head branch>`, never to the `-resume` branch."
 
    Log the start row with the session's `local_…` id from the tool result. A resumed run needs it to reach the session.
 4. **Wait** for the session to end its turn. Do not parse its report for the PR: the 400 characters that reach you can be cut short. Look it up instead:
@@ -143,7 +146,7 @@ If the app holds session notes back after many automated turns in a row, the loo
 ## 4. When every story is done
 
 1. Refresh the epic branch one last time (§2 step 2).
-2. **Check the whole epic.** Each story was tested on its own, and nothing has run them together yet. Start one verification session: `start_session` with `model: <review-model>`, `effort: <review-effort>`, `use_worktree: true`, `source_branch: <epic-branch>`, `name: "<epic short id>-verify"`, `wake_when_done: true`, and the prompt:
+2. **Check the whole epic.** Each story was tested on its own, and nothing has run them together yet. Start one verification session: `start_session` with `initiation: "user_asked"`, `context: "fresh"`, `model: <review-model>`, `effort: <review-effort>`, `use_worktree: true`, `source_branch: <epic-branch>`, `name: "<epic short id>-verify"` (at most 24 characters), `wake_when_done: true`, a `background` (at least 80 characters): "Unattended read-only verification of the whole epic #<epic> on branch <epic-branch>, for start-epic-workflow. Run log: <absolute log path>. Nobody is watching: stop with a report instead of asking. Call every `gh` command as `'/c/Program Files/GitHub CLI/gh.exe' <args>`, one GitHub call per Bash call, with no PATH export, no `$(...)` and no `&&` chains.", and the prompt:
    > Read-only verification of the epic branch `<epic-branch>`. List the paths every merged story PR touched (`'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json files` for each: <PR numbers>). Run their backend tests in your own Docker test lane, plus Pint. If `client/` changed, also run tsc, ESLint, the Vitest tests for the touched paths and `npm run build-storybook`. Change no code. Append your rows to the run log `<path>`. End your turn with each check and its result line.
 
    A failing check is a stop: report it, and do not open the epic PR. With the `stories` setting, stop after this step and write the run retro.
@@ -152,7 +155,14 @@ If the app holds session notes back after many automated turns in a row, the loo
    - an acceptance-criteria table for the epic, linking each story PR;
    - `Refs #<epic>` plus every story issue;
    - the follow-ups the stories filed;
-   - `## Open review threads`: every unresolved thread on the merged story PRs, each with its link and the one-line reason it was declined. The maintainer settles them in one place instead of hunting through closed PRs. List them with the `reviewThreads { isResolved path comments { body url } }` GraphQL query for each story PR;
+   - `## Open review threads`: the unresolved threads on the merged story PRs, each with its link and the one-line reason from the story session's reply. The maintainer settles them in one place instead of hunting through closed PRs. In its unattended mode `address-pr-review` resolves every Fix thread and leaves every Decline thread unresolved, so an unresolved thread is a Decline, or a Clarify still waiting for an answer; say which. List them for each story PR:
+     ```bash
+     '/c/Program Files/GitHub CLI/gh.exe' api graphql -F owner=av3000 -F name=japanese-vma -F n=<pr> -f query='
+     query($owner:String!, $name:String!, $n:Int!) { repository(owner:$owner, name:$name) { pullRequest(number:$n) {
+       reviewThreads(first:100) { nodes { isResolved path
+         comments(first:20) { nodes { body url } } } } } } }'
+     ```
+     Keep the nodes with `isResolved: false`. Link the first comment's `url`; the last comment's `body` is the reason;
    - the verification session's result lines;
    - `## Agent run log`: the condensed log (`references/run-log.md`, "At the end").
 5. Stop. Never merge into `develop`: that is the maintainer's review.
