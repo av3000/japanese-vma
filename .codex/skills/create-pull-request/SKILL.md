@@ -93,7 +93,7 @@ Refs #<issue>, #<issue>
 1. Write the body to a file and pass it with `--body-file`. Do this from Bash: PowerShell captures have flattened bodies into one line.
 2. `'/c/Program Files/GitHub CLI/gh.exe' pr create --repo av3000/japanese-vma --base develop --head <branch> --title "…" --body-file <file>`, adding one `--attach <png>` per screenshot when the body has a `## Screenshots` section (see `references/screenshots.md` for the working directory and path rule).
 3. Verify URL, base, head, commit count and mergeability (`'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json baseRefName,headRefName,commits,mergeable`). If the Claude desktop app's `ccd_pr` tools are available, use `get_status` instead of polling checks.
-4. CI on this repo runs only on PRs to `develop`, so the PR is the first remote CI run; say so, and expect a fix-up pass.
+4. CI runs on PRs into `develop` and into `feature/**` branches, not on a push to a feature branch, so the PR is the first remote CI run for this branch; say so, and expect a fix-up pass.
 5. Hand off: the PR link, the screenshot section (or why there is none), anything not verified, and the issues to close by hand after merge. If `review-branch` has not run on this branch, suggest running it before the PR is marked ready; if it ran, include its verdict line.
 
 To edit an existing PR body later, fetch it with `'/c/Program Files/GitHub CLI/gh.exe' pr view <n> --json body --jq .body > body.md`, edit the file, and send it back with `'/c/Program Files/GitHub CLI/gh.exe' pr edit <n> --body-file body.md`. Change only the section you are targeting (for example a re-shot Screenshots table or an updated Verification section). Every other section stays exactly as it was, byte for byte.
