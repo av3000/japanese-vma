@@ -13,7 +13,7 @@ mkdir -p "$(dirname "$LOG")"
 
 ## Who writes
 
-Every agent appends its own rows: the epic agent, each story session and each review session. Sessions run one at a time, so appends do not collide. Append; never rewrite or reorder what is there. Each agent records what only it saw: an environment trap, a retry, a blocked permission, a check it could not run.
+Every agent appends its own rows: the epic agent, each story session and each review session. Two stories may run at once, so append whole rows with a single `printf '%s\n' '<row>' >> "$LOG"`. Never write back the whole file with the Write or Edit tool: that can overwrite a row another session added a moment earlier. Never rewrite or reorder what is there. Each agent records what only it saw: an environment trap, a retry, a blocked permission, a check it could not run.
 
 ## Shape
 

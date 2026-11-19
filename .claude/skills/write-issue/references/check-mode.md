@@ -4,7 +4,7 @@ Use this when asked to check, triage or "make ready" an existing issue, or when 
 
 ## 1. Read it
 
-`gh issue view <n> --comments`. For an epic, read every sub-issue too.
+`'/c/Program Files/GitHub CLI/gh.exe' issue view <n> --comments`. For an epic, read every sub-issue too.
 
 ## 2. Score three dimensions, 1 to 5
 
