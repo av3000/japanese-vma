@@ -12,6 +12,7 @@ on:
     branches:
       - develop
       - master
+      - "feature/**"
     paths:
       - "client/**"
       - "processor-api/api.json"

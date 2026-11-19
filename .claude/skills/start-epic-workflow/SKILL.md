@@ -110,7 +110,7 @@ Re-read the sub-issues from GitHub at the start of every pass, never from memory
    - The story session's Fix / Clarify / Decline table is in the run log, and every Critical in it is a Fix.
    - Every Decline of a Warning has a reply on its thread that gives a reason: the rule or criterion it does not break, or the failing scenario that does not exist. "Not needed" or "out of scope" without a linked `needs-triage` issue does not count.
    - The fix commit starts with the Stable ID and touches the files the Fix rows cite (`'/c/Program Files/GitHub CLI/gh.exe' pr view <pr> --json commits,files`).
-   - CI, if it ran, is green (story PRs into an epic branch usually get no CI).
+   - CI is green. Backend CI, Frontend CI (for `client/` or `api.json` changes), the issue-link check and the agent-skills check run on PRs into `feature/**` branches. Read them with `'/c/Program Files/GitHub CLI/gh.exe' pr checks <pr> --repo av3000/japanese-vma`. A pending run means wait: end your turn and check again when woken, or after the next session note. A red run goes back to the story session as a Fix. A PR with no checks at all, when its paths should trigger them, is a stop: the epic branch may be missing the workflow change from `develop`.
 
    If one fails, send the story session one more `/address-pr-review <pr>` naming the gap; a second failure is a stop. Then:
    ```bash
