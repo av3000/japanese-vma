@@ -40,11 +40,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Ready means: the testing env is set and Composer's autoloader loads. That takes
+    # about 0.2 s. `php artisan about`, the old check, boots the whole app over the
+    # Windows bind mount in about 8 s, past the 3 s timeout, so the runner never turned
+    # healthy and `up --wait` always failed.
+    # When the `test_vendor` volume is empty, the entrypoint runs `composer install`,
+    # which takes minutes. Failures during `start_period` do not count, so `up --wait`
+    # waits for the install.
     healthcheck:
-      test: ["CMD-SHELL", "test \"$$APP_ENV\" = \"testing\" && php artisan about > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "test \"$$APP_ENV\" = \"testing\" && php -r 'require \"vendor/autoload.php\";'"]
       interval: 5s
       timeout: 3s
       retries: 12
+      start_period: 10m
+      start_interval: 3s
 
 volumes:
   test_vendor:
