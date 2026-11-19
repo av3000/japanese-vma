@@ -108,18 +108,18 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-03 | US-01 | Delivered |
 | FR-04 | US-01, US-02, US-07 (end to end) | Delivered for every locale (US-01, US-02); the end-to-end proof is planned (US-07) |
 | FR-05 | US-02, US-05, US-07 (end to end) | Storage and save rules delivered in the editor service (US-02); the Filament action and end-to-end proof are planned (US-05, US-07) |
-| FR-06 | US-02, US-04 | Derived states delivered (US-02); the overview badges are planned (US-04) |
-| FR-07 | US-02, US-04 | Delivered for bundles and completion (US-02); the overview is planned (US-04) |
-| FR-08 | US-02, US-04 | Calculation delivered (US-02); the display line is planned (US-04) |
-| FR-09 | US-04 | Planned |
+| FR-06 | US-02, US-04 | Delivered |
+| FR-07 | US-02, US-04 | Delivered |
+| FR-08 | US-02, US-04 | Delivered |
+| FR-09 | US-04 | Delivered, except the row link to the editor, which arrives with US-05 |
 | FR-10 | US-05 | Planned |
-| FR-11 | US-03, US-04, US-05 | Permissions and locale management delivered (US-03); the overview and editor gates are planned (US-04, US-05) |
+| FR-11 | US-03, US-04, US-05 | Permissions, locale management (US-03) and the overview gate (US-04) delivered; the editor gate is planned (US-05) |
 | FR-12 | US-06 | Planned |
 | FR-13 | US-06 | Planned |
 | FR-14 | US-06, US-07 (end to end) | Planned |
 | FR-15 | US-06 | Planned |
 | FR-16 | US-07 | Planned |
-| NFR-01 | US-02, US-04 | Delivered for bundle and completion (US-02); the overview list is planned (US-04) |
+| NFR-01 | US-02, US-04 | Delivered |
 | NFR-02 | US-02, US-05 | Delivered for the bundle: no cache (US-02); the editor save is planned (US-05) |
 | NFR-03 | US-03, US-05 | Delivered for locale writes (US-03); the editor save is planned (US-05) |
 | NFR-04 | US-01 | Delivered |

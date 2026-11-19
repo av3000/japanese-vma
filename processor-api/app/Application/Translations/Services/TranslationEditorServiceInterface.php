@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Translations\Services;
 
+use App\Domain\Translations\Models\TranslationLocale;
 use App\Shared\Results\Result;
 
 /**
@@ -30,4 +31,24 @@ interface TranslationEditorServiceInterface
      * `::localeNotFound`, `::localeInactive`, `::unknownKey`, `::valueTooLong`.
      */
     public function saveOverride(string $code, string $key, string $raw, ?int $userId): Result;
+
+    /**
+     * Every English key for one locale, in English order, so a key with no stored row is listed too.
+     * Orphan overrides (keys gone from English) never appear.
+     *
+     * `$search` is matched case-insensitively against the key, the English text and the translation;
+     * null or blank searches nothing. `$missingOnly` keeps the keys without a valid translation.
+     * Built from the catalogue and one overrides query, whatever the key count.
+     *
+     * Success data: `list<TranslationRowDTO>`. Failures: `TranslationErrors::sourceLocaleNotEditable`,
+     * `::localeNotFound`, `::localeInactive`.
+     */
+    public function rows(string $code, ?string $search, bool $missingOnly): Result;
+
+    /**
+     * The locales a translator can work on: active and not English.
+     *
+     * @return list<TranslationLocale>
+     */
+    public function editableLocales(): array;
 }
