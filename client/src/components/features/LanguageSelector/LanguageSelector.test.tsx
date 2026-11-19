@@ -82,7 +82,8 @@ describe('LanguageSelector', () => {
 		// The same element, so a screen reader announces the text when it appears.
 		expect(requireElement<HTMLElement>(view.container, '[role="status"]')).toBe(status);
 		expect(status.textContent).toBe("Couldn't load that language. Showing English.");
-		expect(requireElement<HTMLSelectElement>(view.container, 'select').value).toBe('da');
+		// The select names the language on screen, so picking Dansk again is a change that retries it.
+		expect(requireElement<HTMLSelectElement>(view.container, 'select').value).toBe('en');
 		await view.unmount();
 	});
 });

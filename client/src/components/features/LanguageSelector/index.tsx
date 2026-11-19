@@ -16,7 +16,8 @@ interface LanguageSelectorProps {
  * until a second language is active (FR-15), so an English-only site looks exactly as before.
  *
  * A failed load leaves the labels as they were and says so in a polite status line, not an alert: it
- * never blocks the page (NFR-06). The status element is always present, so the announcement is made
+ * never blocks the page (NFR-06). The select then shows the language on screen, so picking the one
+ * that failed is a change again and asks for it a second time. The status element is always present, so the announcement is made
  * when its text appears.
  */
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className, notice = 'floating' }) => {
@@ -38,7 +39,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className, n
 				id={id}
 				size="sm"
 				className={styles.select}
-				value={locale}
+				value={error ? displayedLocale : locale}
 				onChange={(event) => setLocale(event.target.value)}
 			>
 				{locales.map((option) => (

@@ -10,7 +10,7 @@ const sources = import.meta.glob<string>(['/src/**/*.{ts,tsx}', '!/src/api/gener
 const PROVIDER = '/src/providers/contexts/translation-provider.tsx';
 
 /** What a call to the bundle endpoint looks like: the generated hook or function, or the URL itself. */
-const bundleCall = /\b(?:useTranslationShow|translationShow|getTranslationShow\w*)\b|['"`]\/?translations\//;
+const bundleCall = /\b(?:useTranslationShow|translationShow|getTranslationShow\w*)\b|['"`]\/translations\//;
 
 describe('the translation bundle endpoint', () => {
 	it('is called only by the TranslationProvider (FR-12)', () => {

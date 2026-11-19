@@ -7,6 +7,10 @@ export const SOURCE_LOCALE = 'en';
 /** The English snapshot: the `en` bundle, and the floor under every other one. */
 export const enSnapshot: Readonly<Record<TranslationKey, string>> = en;
 
+/** An own property only: a key such as `constructor` that arrives at runtime must not find Object.prototype. */
+const own = (messages: Readonly<Record<string, string>>, key: string): string | undefined =>
+	Object.hasOwn(messages, key) ? messages[key] : undefined;
+
 export type Translate = (key: TranslationKey) => string;
 
 const warnedKeys = new Set<string>();
@@ -35,7 +39,7 @@ const warnMissingKey = (key: string) => {
 export const createTranslate =
 	(messages: Readonly<Record<string, string>>): Translate =>
 	(key) => {
-		const value = messages[key] || enSnapshot[key];
+		const value = own(messages, key) || own(enSnapshot, key);
 
 		if (value) {
 			return value;

@@ -29,6 +29,8 @@ const localeList = (...codes: string[]) => ({
 /** How the stubbed API answers: the active locales, plus per-locale overrides for the bundle request. */
 interface Api {
 	active: string[];
+	/** The locale list request fails with a 500. */
+	listFails: boolean;
 	/** Locales whose bundle request fails with a 500. */
 	failing: Set<string>;
 	/** Locales whose bundle request waits until released. */
@@ -42,6 +44,10 @@ const bundleRequests = () => requested().filter((url) => url !== '/translations/
 
 const serve = async (config: Request) => {
 	if (config.url === '/translations/locales') {
+		if (api.listFails) {
+			throw Object.assign(new Error('Request failed with status code 500'), { response: { status: 500 } });
+		}
+
 		return localeList(...api.active);
 	}
 
@@ -69,11 +75,13 @@ const Probe = () => {
 	return <span>{latest.t('account.log_in')}</span>;
 };
 
+let queryClient: QueryClient;
+
 const mount = () => {
-	const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+	queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
 
 	return renderWithAct(
-		<QueryClientProvider client={client}>
+		<QueryClientProvider client={queryClient}>
 			<TranslationProvider>
 				<Probe />
 			</TranslationProvider>
@@ -95,7 +103,7 @@ const browserLanguages = (...languages: string[]) => {
 
 describe('TranslationProvider', () => {
 	beforeEach(() => {
-		api = { active: ['en', 'da'], failing: new Set(), held: new Map() };
+		api = { active: ['en', 'da'], listFails: false, failing: new Set(), held: new Map() };
 		customInstance.mockReset();
 		customInstance.mockImplementation(serve);
 		window.localStorage.clear();
@@ -348,6 +356,78 @@ describe('TranslationProvider', () => {
 			expect(view.container.textContent).toBe('Log In');
 			expect(latest.locales).toHaveLength(1);
 			expect(bundleRequests()).toEqual([]);
+			await view.unmount();
+		});
+	});
+
+	describe('when a later request fails or the list changes', () => {
+		it('keeps the language when a refetch of the locale list fails', async () => {
+			const view = await mount();
+			await settle(view);
+			await view.flush(() => latest.setLocale('da'));
+			await settle(view);
+
+			api.listFails = true;
+			await view.flush(() => queryClient.invalidateQueries({ queryKey: ['/translations/locales'] }));
+			await settle(view);
+
+			expect(latest.locale).toBe('da');
+			expect(view.container.textContent).toBe('Log ind');
+			expect(latest.locales).toHaveLength(2);
+			expect(latest.error).toBeNull();
+			await view.unmount();
+		});
+
+		it('shows no error when a refetch of the bundle on screen fails', async () => {
+			const view = await mount();
+			await settle(view);
+			await view.flush(() => latest.setLocale('da'));
+			await settle(view);
+
+			api.failing.add('da');
+			await view.flush(() => queryClient.invalidateQueries({ queryKey: ['/translations/da'] }));
+			await settle(view);
+
+			expect(latest.error).toBeNull();
+			expect(view.container.textContent).toBe('Log ind');
+			await view.unmount();
+		});
+
+		it('lets go of a chosen language that is deactivated, without asking for it again', async () => {
+			const view = await mount();
+			await settle(view);
+			await view.flush(() => latest.setLocale('da'));
+			await settle(view);
+			customInstance.mockClear();
+
+			api.active = ['en'];
+			await view.flush(() => queryClient.invalidateQueries({ queryKey: ['/translations/locales'] }));
+			await settle(view);
+
+			expect(latest.locale).toBe('en');
+			expect(latest.error).toBeNull();
+			expect(bundleRequests()).toEqual([]);
+			expect(view.container.textContent).toBe('Log In');
+			await view.unmount();
+		});
+
+		it('asks again when the language that failed is picked once more', async () => {
+			const view = await mount();
+			await settle(view);
+
+			api.failing.add('da');
+			await view.flush(() => latest.setLocale('da'));
+			await settle(view);
+
+			expect(latest.error).toEqual({ locale: 'da' });
+
+			api.failing.delete('da');
+			await view.flush(() => latest.setLocale('da'));
+			await settle(view);
+
+			expect(latest.error).toBeNull();
+			expect(view.container.textContent).toBe('Log ind');
+			expect(bundleRequests()).toEqual(['/translations/da', '/translations/da']);
 			await view.unmount();
 		});
 	});

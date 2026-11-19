@@ -34,6 +34,13 @@ describe('createTranslate', () => {
 		expect(createTranslate({})(unknownKey)).toBe('account.not_a_key');
 	});
 
+	it('does not read Object.prototype for a key that arrives at runtime', () => {
+		const t = createTranslate({});
+
+		expect(t('constructor' as TranslationKey)).toBe('constructor');
+		expect(t('toString' as TranslationKey)).toBe('toString');
+	});
+
 	it('warns once per missing key in a development build', () => {
 		vi.stubEnv('DEV', true);
 		const t = createTranslate({});

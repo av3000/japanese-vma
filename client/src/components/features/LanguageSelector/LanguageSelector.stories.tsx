@@ -55,14 +55,17 @@ export const KeyboardOperable: Story = {
 	},
 };
 
-/** Danish could not be loaded: the labels stay in English, and a polite status line says so. */
+/**
+ * Danish could not be loaded: the labels stay in English, a polite status line says so, and the select
+ * names the language on screen, so picking Dansk again is a change that asks for it a second time.
+ */
 export const LoadError: Story = {
 	parameters: { translation: 'error' },
 	play: async ({ canvasElement }) => {
 		await expect(within(canvasElement).getByRole('status')).toHaveTextContent(
 			"Couldn't load that language. Showing English.",
 		);
-		await expect(within(canvasElement).getByRole('combobox', { name: 'Language' })).toHaveDisplayValue('Dansk');
+		await expect(within(canvasElement).getByRole('combobox', { name: 'Language' })).toHaveDisplayValue('English');
 	},
 };
 

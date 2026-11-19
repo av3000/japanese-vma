@@ -67,9 +67,14 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 	}, [localesQuery.data]);
 
 	// Until the list says which languages are active, nothing but English is requested: asking for a
-	// language that turns out to be inactive would be a 404 and an error notice for nothing.
-	const requested = localesQuery.isSuccess
-		? (chosen ?? pickLocale({ stored, browserLanguages, activeCodes: locales.map((option) => option.code) }))
+	// language that turns out to be inactive would be a 404 and an error notice for nothing. The list
+	// counts as known while it holds data, so a refetch that fails does not drop the learner to English.
+	// A choice made this visit is checked against it again, so a language deactivated since is let go.
+	const activeCodes = localesQuery.data ? locales.map((option) => option.code) : null;
+	const requested = activeCodes
+		? chosen && activeCodes.includes(chosen)
+			? chosen
+			: pickLocale({ stored, browserLanguages, activeCodes })
 		: SOURCE_LOCALE;
 
 	const bundleQuery = useTranslationShow(requested, { query: { enabled: requested !== SOURCE_LOCALE } });
@@ -89,7 +94,10 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		setShown(fresh);
 	}
 
-	const error = bundleQuery.isError && requested !== SOURCE_LOCALE ? { locale: requested } : null;
+	// A failed background refetch of a bundle already held keeps its data and is not an error to show.
+	const failed = bundleQuery.isError && !bundleQuery.data && requested !== SOURCE_LOCALE;
+	const error = React.useMemo(() => (failed ? { locale: requested } : null), [failed, requested]);
+	const { refetch } = bundleQuery;
 
 	React.useEffect(() => {
 		document.documentElement.lang = shown.locale;
@@ -103,18 +111,21 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 			storeLocale(code);
 
+			// The same language again after a failure: nothing in the query key changes, so ask again.
+			if (code === requested && error) {
+				void refetch();
+			}
+
 			setChosen(code);
 		},
-		[locales],
+		[locales, requested, error, refetch],
 	);
 
 	const t = React.useMemo(() => createTranslate(shown.messages), [shown.messages]);
 
 	const value = React.useMemo<TranslationContextValue>(
 		() => ({ t, locale: requested, displayedLocale: shown.locale, locales, setLocale, error }),
-		// `error` is a fresh object each render; its language is what changes.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[t, requested, shown.locale, locales, setLocale, error?.locale],
+		[t, requested, shown.locale, locales, setLocale, error],
 	);
 
 	return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>;
