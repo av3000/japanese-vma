@@ -6,8 +6,13 @@ namespace Tests\Feature\Translations;
 
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
 use App\Application\Translations\Services\TranslationEditorServiceInterface;
+use App\Domain\Shared\Enums\UserRole;
+use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\Translation;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
+use App\Infrastructure\Persistence\Models\User;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -89,7 +94,16 @@ class TranslationOverridesBundleTest extends TestCase
         TranslationLocale::factory()->create();
         $this->getJson('/api/v1/translations/da')->assertJsonPath('messages', $this->english());
 
-        $saved = app(TranslationEditorServiceInterface::class)->saveOverride('da', 'common.save', ' Gem ', null);
+        $this->seed([PermissionSeeder::class, RoleSeeder::class]);
+        $admin = User::factory()->create();
+        $admin->syncRoles([UserRole::COMMON->value, UserRole::ADMIN->value]);
+
+        $saved = app(TranslationEditorServiceInterface::class)->saveOverride(
+            'da',
+            'common.save',
+            ' Gem ',
+            PassportCurrentUserProvider::authenticatedUserFor($admin->refresh()),
+        );
 
         $this->assertTrue($saved->isSuccess());
         $this->getJson('/api/v1/translations/da')->assertOk()->assertJsonPath('messages', array_merge(

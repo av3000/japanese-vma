@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Translations;
 
-use App\Application\Translations\Services\TranslationEditorService;
 use App\Application\Translations\Services\TranslationEditorServiceInterface;
 use App\Application\Users\Support\PanelPermission;
 use App\Domain\Translations\DTOs\TranslationRowDTO;
@@ -61,6 +60,20 @@ class TranslationEditor extends Page
 
     private ?string $rowsFor = null;
 
+    /** @var list<TranslationLocale>|null The languages a translator can work on, read once per request. */
+    private ?array $editableLocales = null;
+
+    /**
+     * What the field was filled with when the current language and key were loaded or last saved,
+     * so a switch can tell whether the translator has typed something that is not saved yet. They
+     * are public only so Livewire carries them between requests.
+     */
+    public ?string $loadedLocale = null;
+
+    public ?string $loadedKey = null;
+
+    public string $loadedTranslation = '';
+
     public static function canAccess(): bool
     {
         return PanelActor::may(PanelPermission::TranslationsView);
@@ -90,6 +103,11 @@ class TranslationEditor extends Page
                 ->icon(Heroicon::OutlinedArrowLeft)
                 ->color('gray')
                 ->url(fn (): string => TranslationOverview::getUrl($this->locale === null ? [] : ['locale' => $this->locale])),
+            Action::make('discardChanges')
+                ->label('Discard changes')
+                ->color('gray')
+                ->visible(fn (): bool => $this->hasUnsavedChange())
+                ->action(fn () => $this->translation = $this->loadedTranslation),
         ];
     }
 
@@ -122,14 +140,14 @@ class TranslationEditor extends Page
                 ->options(fn (): array => $this->localeOptions())
                 ->placeholder('Choose an active language')
                 ->live()
-                ->afterStateUpdated(fn () => $this->loadTranslation()),
+                ->afterStateUpdated(fn () => $this->selectionChanged()),
             Select::make('translationKey')
                 ->label('Find a key')
                 ->options(fn (): array => $this->keyOptions())
                 ->searchable()
                 ->placeholder('Search by key or English text')
                 ->live()
-                ->afterStateUpdated(fn () => $this->loadTranslation()),
+                ->afterStateUpdated(fn () => $this->selectionChanged()),
             Section::make('English source')
                 ->description('Read only. English changes only through a pull request.')
                 ->schema([
@@ -145,7 +163,6 @@ class TranslationEditor extends Page
             Textarea::make('translation')
                 ->label('Translation')
                 ->helperText('Leave empty to use English')
-                ->maxLength(TranslationEditorService::MAX_VALUE_LENGTH)
                 ->rows(5)
                 ->live(debounce: 400)
                 ->disabled(fn (): bool => ! self::canUpdate())
@@ -171,7 +188,7 @@ class TranslationEditor extends Page
             $this->locale,
             $this->translationKey,
             $this->translation,
-            PanelActor::user()->getKey(),
+            PanelActor::current(),
         );
 
         if ($result->isFailure()) {
@@ -181,6 +198,7 @@ class TranslationEditor extends Page
         }
 
         $this->translation = trim($this->translation);
+        $this->loadedTranslation = $this->translation;
         $this->rows = null;
 
         Notification::make()
@@ -205,14 +223,14 @@ class TranslationEditor extends Page
             case 'Translations.LocaleInactive':
             case 'Translations.LocaleNotFound':
                 $this->locale = null;
-                $this->translation = '';
+                $this->loadTranslation();
                 Notification::make()->danger()->title('This language is no longer active. Choose an active language.')->send();
 
                 return;
 
             case 'Translations.UnknownKey':
                 $this->translationKey = null;
-                $this->translation = '';
+                $this->loadTranslation();
                 Notification::make()->danger()->title('This key no longer exists. Choose another key.')->send();
 
                 return;
@@ -235,6 +253,37 @@ class TranslationEditor extends Page
         }
 
         $this->translation = $row?->value ?? '';
+        $this->loadedLocale = $this->locale;
+        $this->loadedKey = $this->translationKey;
+        $this->loadedTranslation = $this->translation;
+    }
+
+    /**
+     * Runs after the language or the key select changed. Switching would replace the field with the
+     * stored text of the new key, so while the field holds an unsaved change the switch is undone
+     * and the translator is told to save or discard first.
+     */
+    private function selectionChanged(): void
+    {
+        if ($this->hasUnsavedChange()) {
+            $this->locale = $this->loadedLocale;
+            $this->translationKey = $this->loadedKey;
+            Notification::make()
+                ->warning()
+                ->title('You have an unsaved change. Save it or discard it before switching.')
+                ->send();
+
+            return;
+        }
+
+        $this->loadTranslation();
+    }
+
+    private function hasUnsavedChange(): bool
+    {
+        return self::canUpdate()
+            && $this->loadedKey !== null
+            && trim($this->translation) !== trim($this->loadedTranslation);
     }
 
     private function currentRow(): ?TranslationRowDTO
@@ -300,7 +349,7 @@ class TranslationEditor extends Page
     {
         $options = [];
 
-        foreach ($this->service()->editableLocales() as $locale) {
+        foreach ($this->editableLocales() as $locale) {
             $options[$locale->getCode()] = "{$locale->getName()} ({$locale->getCode()})";
         }
 
@@ -314,8 +363,16 @@ class TranslationEditor extends Page
     {
         return array_map(
             static fn (TranslationLocale $locale): string => $locale->getCode(),
-            $this->service()->editableLocales(),
+            $this->editableLocales(),
         );
+    }
+
+    /**
+     * @return list<TranslationLocale>
+     */
+    private function editableLocales(): array
+    {
+        return $this->editableLocales ??= $this->service()->editableLocales();
     }
 
     private function service(): TranslationEditorServiceInterface

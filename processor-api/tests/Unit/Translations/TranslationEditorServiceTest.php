@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Translations;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Auth\Interfaces\Providers\ActorPermissionCheckerInterface;
 use App\Application\Translations\Interfaces\Repositories\TranslationLocaleRepositoryInterface;
 use App\Application\Translations\Interfaces\Repositories\TranslationOverrideRepositoryInterface;
 use App\Application\Translations\Interfaces\Sources\EnglishSourceCatalogueInterface;
+use App\Application\Translations\Policies\TranslationEditingPolicy;
 use App\Application\Translations\Services\TranslationEditorService;
+use App\Application\Users\Support\PanelPermission;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Translations\DTOs\TranslationRowDTO;
 use App\Domain\Translations\Enums\TranslationState;
 use App\Domain\Translations\Models\TranslationLocale;
@@ -24,6 +31,9 @@ class TranslationEditorServiceTest extends TestCase
     private InMemoryOverrides $overrides;
 
     private TranslationEditorService $service;
+
+    /** The same service for an actor who does not hold `translations.update`. */
+    private TranslationEditorService $deniedService;
 
     protected function setUp(): void
     {
@@ -42,19 +52,43 @@ class TranslationEditorServiceTest extends TestCase
         ]);
         $this->overrides = new InMemoryOverrides();
 
-        $this->service = new TranslationEditorService(
+        $this->service = $this->serviceFor($locales, $english, allows: true);
+        $this->deniedService = $this->serviceFor($locales, $english, allows: false);
+    }
+
+    private function serviceFor(InMemoryLocales $locales, InMemoryCatalogue $english, bool $allows): TranslationEditorService
+    {
+        $checker = new class($allows) implements ActorPermissionCheckerInterface
+        {
+            public function __construct(private readonly bool $allows)
+            {
+            }
+
+            public function allows(AuthenticatedUser $actor, PanelPermission $permission): bool
+            {
+                return $this->allows && $permission === PanelPermission::TranslationsUpdate;
+            }
+        };
+
+        return new TranslationEditorService(
             $locales,
             $this->overrides,
             $english,
             new TranslationResolver(),
+            new TranslationEditingPolicy($checker),
         );
+    }
+
+    private function actor(int $id): AuthenticatedUser
+    {
+        return new AuthenticatedUser(UserId::from($id), EntityId::generate(), UserName::from('Translator'), isAdmin: false);
     }
 
     // ------------------------------------------------------------ AC-3: trim, upsert, delete
 
     public function test_saving_text_trims_it_and_stores_it_with_the_acting_user(): void
     {
-        $result = $this->service->saveOverride('da', 'account.log_in', ' Log ind ', 42);
+        $result = $this->service->saveOverride('da', 'account.log_in', ' Log ind ', $this->actor(42));
 
         $this->assertTrue($result->isSuccess());
         $this->assertSame(TranslationState::Translated, $result->getData());
@@ -64,19 +98,29 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_saving_again_replaces_the_value(): void
     {
-        $this->service->saveOverride('da', 'account.log_in', 'Log ind', 1);
-        $this->service->saveOverride('da', 'account.log_in', 'Login', 2);
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', $this->actor(1));
+        $this->service->saveOverride('da', 'account.log_in', 'Login', $this->actor(2));
 
         $this->assertSame(['account.log_in' => 'Login'], $this->overrides->overridesFor(2));
         $this->assertSame(2, $this->overrides->lastUserId);
     }
 
-    public function test_a_save_without_a_known_user_stores_null(): void
+    public function test_without_translations_update_nothing_is_written_or_deleted(): void
     {
-        $this->service->saveOverride('da', 'account.log_in', 'Log ind', null);
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', $this->actor(1));
+        $writesBefore = $this->overrides->writes;
 
-        $this->assertNull($this->overrides->lastUserId);
+        foreach (['Login', ''] as $raw) {
+            $result = $this->deniedService->saveOverride('da', 'account.log_in', $raw, $this->actor(2));
+
+            $this->assertTrue($result->isFailure());
+            $this->assertSame('Translations.UpdateDenied', $result->getError()->code);
+            $this->assertSame(HttpStatus::FORBIDDEN, $result->getError()->status);
+        }
+
+        $this->assertSame($writesBefore, $this->overrides->writes);
         $this->assertSame(['account.log_in' => 'Log ind'], $this->overrides->overridesFor(2));
+        $this->assertSame(1, $this->overrides->lastUserId);
     }
 
     /** @return array<string, array{string}> */
@@ -88,9 +132,9 @@ class TranslationEditorServiceTest extends TestCase
     #[DataProvider('blankValues')]
     public function test_a_blank_value_deletes_the_existing_override(string $blank): void
     {
-        $this->service->saveOverride('da', 'account.log_in', 'Log ind', 1);
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', $this->actor(1));
 
-        $result = $this->service->saveOverride('da', 'account.log_in', $blank, 1);
+        $result = $this->service->saveOverride('da', 'account.log_in', $blank, $this->actor(1));
 
         $this->assertTrue($result->isSuccess());
         $this->assertSame(TranslationState::Missing, $result->getData());
@@ -99,7 +143,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_a_blank_value_with_nothing_stored_succeeds_as_missing(): void
     {
-        $result = $this->service->saveOverride('da', 'account.log_in', '', 1);
+        $result = $this->service->saveOverride('da', 'account.log_in', '', $this->actor(1));
 
         $this->assertTrue($result->isSuccess());
         $this->assertSame(TranslationState::Missing, $result->getData());
@@ -109,7 +153,7 @@ class TranslationEditorServiceTest extends TestCase
     {
         $value = str_repeat('å', 2000);
 
-        $result = $this->service->saveOverride('da', 'account.log_in', $value, 1);
+        $result = $this->service->saveOverride('da', 'account.log_in', $value, $this->actor(1));
 
         $this->assertTrue($result->isSuccess());
         $this->assertSame($value, $this->overrides->overridesFor(2)['account.log_in']);
@@ -119,17 +163,17 @@ class TranslationEditorServiceTest extends TestCase
     {
         $value = '  '.str_repeat('a', 2000).'  ';
 
-        $this->assertTrue($this->service->saveOverride('da', 'account.log_in', $value, 1)->isSuccess());
+        $this->assertTrue($this->service->saveOverride('da', 'account.log_in', $value, $this->actor(1))->isSuccess());
     }
 
     // ------------------------------------------------------------ AC-4: typed failures, nothing written
 
     public function test_text_over_2000_characters_is_rejected_and_the_old_value_stays(): void
     {
-        $this->service->saveOverride('da', 'account.log_in', 'Log ind', 1);
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', $this->actor(1));
         $writesBefore = $this->overrides->writes;
 
-        $result = $this->service->saveOverride('da', 'account.log_in', str_repeat('å', 2001), 1);
+        $result = $this->service->saveOverride('da', 'account.log_in', str_repeat('å', 2001), $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.ValueTooLong', $result->getError()->code);
@@ -151,10 +195,10 @@ class TranslationEditorServiceTest extends TestCase
     #[DataProvider('unstorableValues')]
     public function test_text_postgres_cannot_store_is_rejected_and_the_old_value_stays(string $value): void
     {
-        $this->service->saveOverride('da', 'account.log_in', 'Log ind', 1);
+        $this->service->saveOverride('da', 'account.log_in', 'Log ind', $this->actor(1));
         $writesBefore = $this->overrides->writes;
 
-        $result = $this->service->saveOverride('da', 'account.log_in', $value, 1);
+        $result = $this->service->saveOverride('da', 'account.log_in', $value, $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.InvalidValue', $result->getError()->code);
@@ -165,7 +209,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_saving_for_english_is_rejected(): void
     {
-        $result = $this->service->saveOverride('en', 'account.log_in', 'Sign in', 1);
+        $result = $this->service->saveOverride('en', 'account.log_in', 'Sign in', $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.SourceLocaleNotEditable', $result->getError()->code);
@@ -174,7 +218,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_saving_a_key_that_is_not_in_english_is_rejected(): void
     {
-        $result = $this->service->saveOverride('da', 'removed.old_label', 'Gammel', 1);
+        $result = $this->service->saveOverride('da', 'removed.old_label', 'Gammel', $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.UnknownKey', $result->getError()->code);
@@ -184,7 +228,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_a_blank_save_for_an_unknown_key_is_rejected_too_and_deletes_nothing(): void
     {
-        $result = $this->service->saveOverride('da', 'removed.old_label', '', 1);
+        $result = $this->service->saveOverride('da', 'removed.old_label', '', $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.UnknownKey', $result->getError()->code);
@@ -193,7 +237,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_saving_for_an_inactive_locale_is_rejected(): void
     {
-        $result = $this->service->saveOverride('sv', 'account.log_in', 'Logga in', 1);
+        $result = $this->service->saveOverride('sv', 'account.log_in', 'Logga in', $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.LocaleInactive', $result->getError()->code);
@@ -203,7 +247,7 @@ class TranslationEditorServiceTest extends TestCase
 
     public function test_saving_for_an_unknown_locale_is_rejected_as_not_found(): void
     {
-        $result = $this->service->saveOverride('xx', 'account.log_in', 'x', 1);
+        $result = $this->service->saveOverride('xx', 'account.log_in', 'x', $this->actor(1));
 
         $this->assertTrue($result->isFailure());
         $this->assertSame('Translations.LocaleNotFound', $result->getError()->code);

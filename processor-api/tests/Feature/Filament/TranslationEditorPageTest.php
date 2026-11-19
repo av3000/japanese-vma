@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Filament;
 
+use App\Application\Translations\Services\TranslationEditorServiceInterface;
 use App\Filament\Pages\Translations\TranslationEditor;
 use App\Filament\Pages\Translations\TranslationOverview;
+use App\Infrastructure\Auth\Providers\PassportCurrentUserProvider;
 use App\Infrastructure\Persistence\Models\Translation;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
 use App\Infrastructure\Persistence\Models\User;
@@ -127,19 +129,106 @@ class TranslationEditorPageTest extends TestCase
             ->assertDontSeeText('Preview while empty');
     }
 
-    public function test_english_cannot_be_chosen_and_a_tampered_english_save_writes_nothing(): void
+    public function test_english_is_never_kept_as_the_language_and_the_service_refuses_it_with_its_own_message(): void
     {
+        // The URL names English: the page falls back to the first editable language.
         $component = Livewire::withQueryParams(['locale' => 'en', 'key' => 'auth.sign_in'])
             ->test(TranslationEditor::class)
             ->assertSet('locale', 'da');
 
+        // A client that sets English anyway ends up with no language chosen, and a save writes nothing.
         $component
             ->set('locale', 'en')
-            ->set('translationKey', 'auth.sign_in')
+            ->assertSet('locale', null)
             ->set('translation', 'Hacked')
-            ->call('save');
+            ->call('save')
+            ->assertNotified('Choose a language and a key first.');
 
+        // Past the page, the service is what refuses English.
+        $result = app(TranslationEditorServiceInterface::class)->saveOverride(
+            'en',
+            'auth.sign_in',
+            'Hacked',
+            PassportCurrentUserProvider::authenticatedUserFor($this->translator),
+        );
+
+        $this->assertSame('Translations.SourceLocaleNotEditable', $result->getError()->code);
         $this->assertDatabaseCount('translations', 0);
+    }
+
+    // Review F1 (ARCH-admin-boundary): the permission is enforced by the service, not only the page
+
+    public function test_the_service_refuses_a_save_from_an_actor_without_translations_update_even_when_the_page_is_bypassed(): void
+    {
+        $viewer = $this->createUserWithPermissions(['translations.view'], 'Viewer');
+        $this->actingAsPanelUser($viewer);
+
+        $result = app(TranslationEditorServiceInterface::class)->saveOverride(
+            'da',
+            'auth.sign_in',
+            'Log ind',
+            PassportCurrentUserProvider::authenticatedUserFor($viewer),
+        );
+
+        $this->assertSame('Translations.UpdateDenied', $result->getError()->code);
+        $this->assertDatabaseCount('translations', 0);
+    }
+
+    // Review F4: switching must not silently drop what the translator typed
+
+    public function test_switching_key_or_language_with_an_unsaved_change_is_undone_until_it_is_saved_or_discarded(): void
+    {
+        $this->override('common.save', 'Gem');
+
+        Livewire::withQueryParams(['locale' => 'da', 'key' => 'auth.sign_in'])
+            ->test(TranslationEditor::class)
+            ->set('translation', 'Log ind')
+            ->set('translationKey', 'common.save')
+            ->assertNotified('You have an unsaved change. Save it or discard it before switching.')
+            ->assertSet('translationKey', 'auth.sign_in')
+            ->assertSet('translation', 'Log ind')
+            ->callAction('discardChanges')
+            ->assertSet('translation', '')
+            ->set('translationKey', 'common.save')
+            ->assertSet('translationKey', 'common.save')
+            ->assertSet('translation', 'Gem');
+    }
+
+    public function test_a_saved_change_is_no_longer_unsaved_so_switching_works_afterwards(): void
+    {
+        $this->override('common.save', 'Gem');
+
+        Livewire::withQueryParams(['locale' => 'da', 'key' => 'auth.sign_in'])
+            ->test(TranslationEditor::class)
+            ->set('translation', 'Log ind')
+            ->call('save')
+            ->set('translationKey', 'common.save')
+            ->assertSet('translationKey', 'common.save')
+            ->assertSet('translation', 'Gem');
+    }
+
+    public function test_a_viewer_who_cannot_edit_switches_freely(): void
+    {
+        $this->override('common.save', 'Gem');
+        $this->actingAsPanelUser($this->createUserWithPermissions(['translations.view'], 'Viewer'));
+
+        Livewire::withQueryParams(['locale' => 'da', 'key' => 'auth.sign_in'])
+            ->test(TranslationEditor::class)
+            ->set('translationKey', 'common.save')
+            ->assertSet('translation', 'Gem');
+    }
+
+    // Review F6: the 2,000-character limit is counted in characters by the service
+
+    public function test_text_of_2000_characters_outside_the_basic_plane_is_accepted(): void
+    {
+        Livewire::withQueryParams(['locale' => 'da', 'key' => 'auth.sign_in'])
+            ->test(TranslationEditor::class)
+            ->set('translation', str_repeat('😀', 2000))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(str_repeat('😀', 2000), Translation::query()->sole()->value);
     }
 
     // AC-4

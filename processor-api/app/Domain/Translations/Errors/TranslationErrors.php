@@ -86,6 +86,17 @@ class TranslationErrors
         );
     }
 
+    public static function updateDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Translations.UpdateDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to edit translations",
+            errorMessage: "You don't have permission to edit translations.",
+        );
+    }
+
     public static function manageLocalesDenied(): ResultError
     {
         return new ResultError(

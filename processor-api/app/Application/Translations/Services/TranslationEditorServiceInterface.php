@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Translations\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Translations\Models\TranslationLocale;
 use App\Shared\Results\Result;
 
@@ -24,13 +25,17 @@ interface TranslationEditorServiceInterface
     /**
      * Save, or clear, the translation of one key.
      *
-     * The value is trimmed. Text is upserted and records `$userId`; a blank value deletes the
+     * Needs `translations.update`: the panel hides its Save action, but this is the boundary, so a
+     * command or route calling it is refused too.
+     *
+     * The value is trimmed. Text is upserted and records the actor; a blank value deletes the
      * override, so the key falls back to English. Nothing is written on a failure.
      *
-     * Success data: the new `TranslationState`. Failures: `TranslationErrors::sourceLocaleNotEditable`,
-     * `::localeNotFound`, `::localeInactive`, `::unknownKey`, `::valueTooLong`.
+     * Success data: the new `TranslationState`. Failures: `TranslationErrors::updateDenied`,
+     * `::sourceLocaleNotEditable`, `::localeNotFound`, `::localeInactive`, `::unknownKey`,
+     * `::invalidValue`, `::valueTooLong`.
      */
-    public function saveOverride(string $code, string $key, string $raw, ?int $userId): Result;
+    public function saveOverride(string $code, string $key, string $raw, AuthenticatedUser $actor): Result;
 
     /**
      * Every English key for one locale, in English order, so a key with no stored row is listed too.
