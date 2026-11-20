@@ -32,6 +32,9 @@ enum PanelPermission: string
     case HashtagsManage = 'hashtags.manage';
     case StudyView = 'study.view';
     case SentencesModerate = 'sentences.moderate';
+    case TranslationsView = 'translations.view';
+    case TranslationsUpdate = 'translations.update';
+    case LocalesManage = 'locales.manage';
     case OperationsView = 'operations.view';
     case OperationsManage = 'operations.manage';
 }

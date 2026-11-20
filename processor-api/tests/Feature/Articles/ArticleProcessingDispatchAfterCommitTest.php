@@ -33,6 +33,15 @@ class ArticleProcessingDispatchAfterCommitTest extends TestCase
     use DatabaseTruncation;
     use SeedsBaselineData;
 
+    /**
+     * Rows a migration creates, not a seeder or a test: truncating them leaves every later
+     * `RefreshDatabase` class without the English fallback locale, because the shared migrated
+     * flag stops it re-running `migrate:fresh`. Add a table here when its migration inserts rows.
+     *
+     * @var list<string>
+     */
+    protected array $exceptTables = ['translation_locales'];
+
     protected function setUp(): void
     {
         parent::setUp();

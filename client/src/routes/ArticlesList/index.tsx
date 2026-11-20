@@ -13,6 +13,8 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { PageLoading } from '@/components/shared/PageLoading';
 import { Cluster } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { Translate } from '@/i18n/translate';
 import styles from './ArticlesList.module.css';
 import ArticlesListSkeleton from './ArticlesListSkeleton/ArticlesListSkeleton';
 import {
@@ -26,16 +28,23 @@ import {
 } from './articleListSearchParams';
 
 /** What the empty list says: a search, other filters, or no articles at all. */
-const emptyState = (state: ArticleListFilterState) => {
+const emptyState = (state: ArticleListFilterState, t: Translate) => {
 	if (state.q !== '') {
-		return { title: 'No articles match', term: state.q, hint: 'Try a shorter search, or clear the filters.' };
+		return {
+			title: t('library.empty.articles.no_match_title'),
+			term: state.q,
+			hint: t('library.empty.articles.no_match_hint'),
+		};
 	}
 
 	if (state.jlptLevels.length > 0 || state.hashtagIds.length > 0) {
-		return { title: 'No articles match these filters', hint: 'Try fewer filters, or clear them.' };
+		return {
+			title: t('library.empty.articles.filtered_title'),
+			hint: t('library.empty.articles.filtered_hint'),
+		};
 	}
 
-	return { title: 'No articles yet', hint: 'Articles you and others publish appear here.' };
+	return { title: t('library.empty.articles.none_title'), hint: t('library.empty.articles.none_hint') };
 };
 
 /**
@@ -48,6 +57,7 @@ const emptyState = (state: ArticleListFilterState) => {
 const ArticleList: React.FC = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { isAuthenticated } = useAuth();
+	const { t } = useTranslation();
 
 	const filterState = useMemo(() => parseArticleListSearchParams(searchParams), [searchParams]);
 
@@ -126,7 +136,7 @@ const ArticleList: React.FC = () => {
 		.filter(Boolean)
 		.join(' · ');
 
-	const empty = emptyState(filterState);
+	const empty = emptyState(filterState, t);
 
 	return (
 		// No per-article sockets here (#263): the polling fallback keeps badges current.

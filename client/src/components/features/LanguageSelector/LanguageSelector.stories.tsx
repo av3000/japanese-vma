@@ -1,0 +1,87 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { LanguageSelector } from '.';
+import { expect, userEvent, within } from 'storybook/test';
+import { translationSpies } from '@/storybook/decorators';
+
+/**
+ * The header's language picker (#665). It exists only while a second language is active; the real
+ * `TranslationProvider` is replaced by `parameters.translation` (see Docs/Authoring).
+ */
+const meta = {
+	title: 'Features/Navigation/LanguageSelector',
+	component: LanguageSelector,
+	parameters: { layout: 'padded' },
+} satisfies Meta<typeof LanguageSelector>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+/** English alone: nothing renders, so the header is exactly what it was before translations. */
+export const Hidden: Story = {
+	parameters: { translation: 'english' },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).queryByRole('combobox')).toBeNull();
+		await expect(canvasElement.querySelector('[role="status"]')).toBeNull();
+	},
+};
+
+/** Two languages: a labelled select naming the current one in text, options in their own language. */
+export const TwoLocales: Story = {
+	parameters: { translation: 'two' },
+	play: async ({ canvasElement }) => {
+		const select = within(canvasElement).getByRole('combobox', { name: 'Language' });
+		await expect(select).toHaveDisplayValue('English');
+		await expect(within(select).getByRole('option', { name: 'Dansk' })).toHaveAttribute('lang', 'da');
+
+		await userEvent.selectOptions(select, 'da');
+
+		await expect(translationSpies.setLocale).toHaveBeenCalledWith('da');
+		await expect(select).toHaveDisplayValue('Dansk');
+	},
+};
+
+/**
+ * Keyboard only: Tab lands on the select, named "Language" and showing the current language as text,
+ * and a choice made from there reaches `setLocale`. How a closed native select reacts to arrow keys
+ * differs by browser and platform, so the story picks the option with `selectOptions` instead of
+ * relying on a key sequence.
+ */
+export const KeyboardOperable: Story = {
+	parameters: { translation: 'two' },
+	play: async ({ canvasElement }) => {
+		const select = within(canvasElement).getByRole('combobox', { name: 'Language' });
+
+		await userEvent.tab();
+		await expect(select).toHaveFocus();
+		await expect(select).toHaveDisplayValue('English');
+
+		await userEvent.selectOptions(select, 'da');
+
+		await expect(translationSpies.setLocale).toHaveBeenCalledWith('da');
+		await expect(select).toHaveFocus();
+	},
+};
+
+/**
+ * Danish could not be loaded: the labels stay in English, a polite status line says so, and the select
+ * names the language on screen, so picking Dansk again is a change that asks for it a second time.
+ */
+export const LoadError: Story = {
+	parameters: { translation: 'error' },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('status')).toHaveTextContent(
+			"Couldn't load that language. Showing English.",
+		);
+		await expect(within(canvasElement).getByRole('combobox', { name: 'Language' })).toHaveDisplayValue('English');
+	},
+};
+
+/** The notice in the menu drawer sits under the select instead of floating. */
+export const LoadErrorInline: Story = {
+	args: { notice: 'inline' },
+	parameters: { translation: 'error' },
+	play: async ({ canvasElement }) => {
+		await expect(within(canvasElement).getByRole('status')).toHaveTextContent("Couldn't load that language.");
+	},
+};

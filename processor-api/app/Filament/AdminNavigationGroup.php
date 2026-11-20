@@ -15,6 +15,7 @@ enum AdminNavigationGroup: string implements HasLabel
     case Content = 'content';
     case Community = 'community';
     case StudyMaterial = 'study-material';
+    case Localisation = 'localisation';
     case Operations = 'operations';
 
     public function getLabel(): string
@@ -24,6 +25,7 @@ enum AdminNavigationGroup: string implements HasLabel
             self::Content => 'Content',
             self::Community => 'Community',
             self::StudyMaterial => 'Study material',
+            self::Localisation => 'Localisation',
             self::Operations => 'Operations',
         };
     }

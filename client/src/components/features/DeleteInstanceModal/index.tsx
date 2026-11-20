@@ -1,6 +1,7 @@
 import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
 import type { ModalController } from '@/hooks/useModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface DeleteInstanceModalProps {
 	controller: ModalController;
@@ -19,10 +20,12 @@ export const DeleteInstanceModal = ({
 	onDelete,
 	isProcessing,
 	title = 'Are you absolutely sure?',
-	cancelLabel = 'Cancel',
+	cancelLabel,
 	deleteLabel = 'Yes, Delete Instance',
 	ariaLabel = 'Delete instance',
 }: DeleteInstanceModalProps) => {
+	const { t } = useTranslation();
+
 	if (!controller.isRendered) return null;
 
 	return (
@@ -42,7 +45,7 @@ export const DeleteInstanceModal = ({
 			</DialogModal.Body>
 			<DialogModal.Footer>
 				<Button variant="secondary" onClick={controller.close}>
-					{cancelLabel}
+					{cancelLabel ?? t('common.cancel')}
 				</Button>
 				<Button variant="danger" onClick={onDelete} disabled={isProcessing}>
 					{isProcessing ? 'Deleting...' : deleteLabel}

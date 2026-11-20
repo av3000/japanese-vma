@@ -3,6 +3,7 @@
     "allow": [
       "Bash('/c/Program Files/GitHub CLI/gh.exe' pr view *)",
       "Bash('/c/Program Files/GitHub CLI/gh.exe' pr list *)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' pr checks *)",
       "Bash('/c/Program Files/GitHub CLI/gh.exe' issue view *)",
       "Bash('/c/Program Files/GitHub CLI/gh.exe' api user*)",
       "Bash('/c/Program Files/GitHub CLI/gh.exe' pr create *)",
