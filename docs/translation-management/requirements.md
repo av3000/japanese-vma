@@ -106,8 +106,8 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-01 | US-01 | Delivered |
 | FR-02 | US-01 (English row), US-03 | Delivered |
 | FR-03 | US-01 | Delivered |
-| FR-04 | US-01, US-02, US-07 (end to end) | Delivered: every locale (US-01, US-02), and the end-to-end proof through the migrated surfaces (US-07) |
-| FR-05 | US-02, US-05, US-07 (end to end) | Storage, save rules (US-02) and the Filament save action (US-05), and the end-to-end proof that an edited value shows on the next switch or reload (US-07) delivered |
+| FR-04 | US-01, US-02, US-07 (end to end) | Delivered: every locale (US-01, US-02); the end-to-end proof runs through the real provider with the HTTP call stubbed (US-07), and a live Filament run is still owed |
+| FR-05 | US-02, US-05, US-07 (end to end) | Storage, save rules (US-02) and the Filament save action (US-05), and the end-to-end proof that an edited value shows on the next switch or reload, run through the real provider with the HTTP call stubbed (US-07), delivered; a live Filament run is still owed |
 | FR-06 | US-02, US-04 | Delivered |
 | FR-07 | US-02, US-04 | Delivered |
 | FR-08 | US-02, US-04 | Delivered |
@@ -116,7 +116,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-11 | US-03, US-04, US-05 | Delivered: permissions, locale management (US-03), the overview gate (US-04) and the editor gate (US-05) |
 | FR-12 | US-06 | Delivered |
 | FR-13 | US-06 | Delivered |
-| FR-14 | US-06, US-07 (end to end) | Delivered: the provider and selector (US-06), and the end-to-end proof (US-07) |
+| FR-14 | US-06, US-07 (end to end) | Delivered: the provider and selector (US-06); the end-to-end proof runs with the HTTP call stubbed (US-07), and a live Filament run is still owed |
 | FR-15 | US-06 | Delivered |
 | FR-16 | US-07 | Delivered |
 | NFR-01 | US-02, US-04 | Delivered |
