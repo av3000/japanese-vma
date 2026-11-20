@@ -77,7 +77,12 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			: pickLocale({ stored, browserLanguages, activeCodes })
 		: SOURCE_LOCALE;
 
-	const bundleQuery = useTranslationShow(requested, { query: { enabled: requested !== SOURCE_LOCALE } });
+	// Always stale: the app's five-minute default would serve a translator's old wording when the learner
+	// switches away and back (NFR-02, AC-3 of #666). The cached bundle shows at once and the fresh one
+	// replaces it. No refetch on window focus: only a language switch or a reload asks again.
+	const bundleQuery = useTranslationShow(requested, {
+		query: { enabled: requested !== SOURCE_LOCALE, staleTime: 0, refetchOnWindowFocus: false },
+	});
 
 	const fresh: Bundle | null =
 		requested === SOURCE_LOCALE

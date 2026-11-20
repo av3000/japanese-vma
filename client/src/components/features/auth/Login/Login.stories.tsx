@@ -140,3 +140,17 @@ export const FollowsHomeByDefault: Story = {
 export const Mobile: Story = {
 	globals: { viewport: { value: 'xs' } },
 };
+
+/** Danish with the submit label translated: it reads "Log på" and every other label stays English. */
+export const InDanish: Story = {
+	parameters: { translation: 'danish' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await expect(canvas.getByRole('button', { name: 'Log på' })).toBeVisible();
+		await expect(canvas.getByRole('heading', { level: 1, name: 'Welcome back' })).toBeVisible();
+		await expect(canvas.getByLabelText('Email')).toBeVisible();
+		await expect(canvas.getByLabelText('Password')).toBeVisible();
+		await expect(canvas.getByRole('link', { name: 'Create an account' })).toBeVisible();
+	},
+};

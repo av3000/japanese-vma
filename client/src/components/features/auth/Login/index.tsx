@@ -9,6 +9,7 @@ import { Button } from '@/components/shared/Button';
 import { FormField, Input } from '@/components/shared/FormControls';
 import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { AuthCard } from '../AuthCard';
 import { resolveReturnTo } from '../returnTo';
 
@@ -24,6 +25,7 @@ const LoginForm: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { login, sessionExpired, clearSessionExpired, isAuthenticated } = useAuth();
+	const { t } = useTranslation();
 	const [generalError, setGeneralError] = useState<string | null>(null);
 
 	const {
@@ -70,29 +72,29 @@ const LoginForm: React.FC = () => {
 	const alert = generalError ? (
 		<Alert tone="danger">{generalError}</Alert>
 	) : sessionExpired ? (
-		<Alert tone="warning">Your session expired. Log in again to continue.</Alert>
+		<Alert tone="warning">{t('auth.login.session_expired')}</Alert>
 	) : null;
 
 	return (
 		<AuthCard
-			title="Welcome back"
+			title={t('auth.login.heading')}
 			alert={alert}
 			footer={
 				<>
-					New here?{' '}
+					{t('auth.login.new_here')}{' '}
 					<Link to="/register" state={location.state}>
-						Create an account
+						{t('auth.login.create_account')}
 					</Link>
 				</>
 			}
 		>
 			<form onSubmit={handleSubmit(onSubmit)} noValidate>
 				<Stack gap="md">
-					<FormField label="Email" id="email" error={errors.email?.message}>
+					<FormField label={t('auth.login.email')} id="email" error={errors.email?.message}>
 						{(control) => <Input type="email" autoComplete="email" {...control} {...register('email')} />}
 					</FormField>
 
-					<FormField label="Password" id="password" error={errors.password?.message}>
+					<FormField label={t('auth.login.password')} id="password" error={errors.password?.message}>
 						{(control) => (
 							<Input
 								type="password"
@@ -104,7 +106,7 @@ const LoginForm: React.FC = () => {
 					</FormField>
 
 					<Button type="submit" variant="primary" isFullWidth isLoading={isSubmitting}>
-						Log in
+						{t('auth.login.submit')}
 					</Button>
 				</Stack>
 			</form>
