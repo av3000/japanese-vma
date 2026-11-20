@@ -287,3 +287,20 @@ export const NarrowWithLanguages: Story = {
 		await expect(drawer.getByRole('combobox', { name: 'Language' })).toBeVisible();
 	},
 };
+
+/* Translated account controls (#666) -------------------------------------------------------------- */
+
+/**
+ * Danish is shown with two values saved in Filament: Log In is "Log ind", and every other label,
+ * Sign Up included, stays English.
+ */
+export const AccountInDanish: Story = {
+	parameters: { auth: 'guest', translation: 'danish' },
+	play: async ({ canvasElement }) => {
+		const scope = isDesktop() ? within(canvasElement) : await openMenuDrawer(canvasElement);
+
+		await expect(scope.getByRole('link', { name: 'Log ind' })).toHaveAttribute('href', '/login');
+		await expect(scope.queryByRole('link', { name: 'Log In' })).toBeNull();
+		await expect(scope.getByRole('link', { name: 'Sign Up' })).toHaveAttribute('href', '/register');
+	},
+};

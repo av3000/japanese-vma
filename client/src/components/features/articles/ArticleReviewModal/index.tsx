@@ -4,6 +4,7 @@ import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
 import { Select } from '@/components/shared/FormControls';
 import type { ModalController } from '@/hooks/useModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ArticleReviewModalProps {
 	controller: ModalController;
@@ -26,10 +27,12 @@ export const ArticleReviewModal = ({
 	isProcessing,
 	title = 'Review Article',
 	description = 'Change Visibility/Approval Status',
-	cancelLabel = 'Cancel',
+	cancelLabel,
 	saveLabel = 'Save Changes',
 	ariaLabel = 'Review Article',
 }: ArticleReviewModalProps) => {
+	const { t } = useTranslation();
+
 	if (!controller.isRendered) return null;
 
 	return (
@@ -59,7 +62,7 @@ export const ArticleReviewModal = ({
 			</DialogModal.Body>
 			<DialogModal.Footer>
 				<Button variant="secondary" onClick={controller.close}>
-					{cancelLabel}
+					{cancelLabel ?? t('common.cancel')}
 				</Button>
 				<Button variant="success" onClick={onSave} disabled={isProcessing}>
 					{isProcessing ? 'Saving...' : saveLabel}

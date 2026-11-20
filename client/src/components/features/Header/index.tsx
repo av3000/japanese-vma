@@ -6,6 +6,7 @@ import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
 import { Button } from '@/components/shared/Button';
 import { Logo } from '@/components/shared/Logo';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { AccountMenu } from './AccountMenu';
 import { ColorSchemeToggle } from './ColorSchemeToggle';
 import styles from './Header.module.css';
@@ -20,19 +21,20 @@ import { NAV_SECTIONS, navLinkClass } from './navigation';
  */
 const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
+	const { t } = useTranslation();
 
 	let account: React.ReactNode;
 	if (isLoading) {
 		account = (
-			<ul className={styles.account} aria-label="Account status">
+			<ul className={styles.account} aria-label={t('account.status_label')}>
 				<li>
-					<span className={styles.authPending} role="status" aria-label="Checking account status" />
+					<span className={styles.authPending} role="status" aria-label={t('account.checking_status')} />
 				</li>
 			</ul>
 		);
 	} else if (isAuthenticated && user) {
 		account = (
-			<ul className={styles.account} aria-label="Account">
+			<ul className={styles.account} aria-label={t('account.nav_label')}>
 				<li className={styles.socket}>
 					<SocketStatusIndicator />
 				</li>
@@ -41,15 +43,15 @@ const Header: React.FC = () => {
 		);
 	} else {
 		account = (
-			<ul className={styles.account} aria-label="Account">
+			<ul className={styles.account} aria-label={t('account.nav_label')}>
 				<li>
 					<NavLink className={navLinkClass} to="/login">
-						Log In
+						{t('account.log_in')}
 					</NavLink>
 				</li>
 				<li>
 					<Button to="/register" variant="primary" size="sm">
-						Sign Up
+						{t('account.sign_up')}
 					</Button>
 				</li>
 			</ul>

@@ -9,8 +9,10 @@ import { TranslationContext, type TranslationContextValue } from '@/providers/co
  * - `english`: only English is active, so no selector (the default: no decorator at all).
  * - `two`: English and Danish are active.
  * - `error`: Danish was picked, its bundle failed, and the English labels stayed.
+ * - `danish`: Danish is shown, with only the two keys in `danishBundle` translated, as when a translator
+ *   has saved two values: every other label falls back to English.
  */
-export type TranslationScenario = 'english' | 'two' | 'error';
+export type TranslationScenario = 'english' | 'two' | 'error' | 'danish';
 
 /** A scenario name, or fields to override. */
 export type TranslationParameter = TranslationScenario | Partial<TranslationContextValue>;
@@ -22,6 +24,9 @@ export const storyLocales: readonly LocaleOption[] = [
 	{ code: 'en', name: 'English' },
 	{ code: 'da', name: 'Dansk' },
 ];
+
+/** The two values the translator saved in Filament; `t()` falls back to English for the rest. */
+export const danishBundle = { 'account.log_in': 'Log ind', 'auth.login.submit': 'Log på' };
 
 const base: TranslationContextValue = {
 	t: createTranslate(enSnapshot),
@@ -36,6 +41,13 @@ export const translationScenarios: Record<TranslationScenario, TranslationContex
 	english: base,
 	two: { ...base, locales: storyLocales },
 	error: { ...base, locale: 'da', locales: storyLocales, error: { locale: 'da' } },
+	danish: {
+		...base,
+		t: createTranslate(danishBundle),
+		locale: 'da',
+		displayedLocale: 'da',
+		locales: storyLocales,
+	},
 };
 
 export const resolveTranslation = (parameter: TranslationParameter | undefined): TranslationContextValue => {

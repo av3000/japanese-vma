@@ -9,6 +9,7 @@ import { Icon } from '@/components/shared/Icon';
 import { Logo } from '@/components/shared/Logo';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
+import { useTranslation } from '@/hooks/useTranslation';
 import { AccountMenu } from './AccountMenu';
 import styles from './Header.module.css';
 import { NAV_SECTIONS } from './navigation';
@@ -23,16 +24,17 @@ const drawerLinkClass = ({ isActive }: { isActive: boolean }) =>
  */
 export const MenuDrawer: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
+	const { t } = useTranslation();
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const modal = useModal(dialogRef, { transitionMs: 0 });
 	const sectionId = React.useId();
 
 	let account: React.ReactNode;
 	if (isLoading) {
-		account = <span className={styles.authPending} role="status" aria-label="Checking account status" />;
+		account = <span className={styles.authPending} role="status" aria-label={t('account.checking_status')} />;
 	} else if (isAuthenticated && user) {
 		account = (
-			<ul className={styles.drawerAccountList} aria-label="Account">
+			<ul className={styles.drawerAccountList} aria-label={t('account.nav_label')}>
 				<li className={styles.socket}>
 					<SocketStatusIndicator />
 				</li>
@@ -49,14 +51,14 @@ export const MenuDrawer: React.FC = () => {
 		account = (
 			<div className={styles.drawerGuest}>
 				<Button to="/register" variant="primary" className={styles.drawerGuestAction} onClick={modal.close}>
-					Sign Up
+					{t('account.sign_up')}
 				</Button>
 				<Link
 					to="/login"
 					className={classNames(styles.drawerGuestAction, styles.drawerLogin)}
 					onClick={modal.close}
 				>
-					Log In
+					{t('account.log_in')}
 				</Link>
 			</div>
 		);

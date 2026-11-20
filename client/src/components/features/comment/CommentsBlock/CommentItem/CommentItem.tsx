@@ -8,6 +8,7 @@ import { Icon } from '@/components/shared/Icon';
 import { LikeIcon } from '@/components/shared/LikeIcon';
 import { Cluster } from '@/components/shared/layout';
 import { formatDate } from '@/helpers/date';
+import { useTranslation } from '@/hooks/useTranslation';
 import CommentForm from '../CommentForm/CommentForm';
 import styles from './CommentItem.module.css';
 
@@ -48,6 +49,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 	onEdit,
 	onReply,
 }) => {
+	const { t } = useTranslation();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isReplying, setIsReplying] = useState(false);
 
@@ -103,7 +105,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 						onSubmit={handleEdit}
 						isSubmitting={state.isEditPending}
 						initialValue={comment.content}
-						submitLabel="Save"
+						submitLabel={t('common.save')}
 						onCancel={() => setIsEditing(false)}
 					/>
 				) : (

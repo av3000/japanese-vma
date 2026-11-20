@@ -4,6 +4,7 @@ import { Button } from '@/components/shared/Button';
 import { Field, FieldMessage, Textarea } from '@/components/shared/FormControls';
 import { Icon } from '@/components/shared/Icon';
 import { Cluster, Stack } from '@/components/shared/layout';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MAX_CHAR_LIMIT = 1000;
 
@@ -33,6 +34,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
 	placeholder = 'Your Comment',
 	onCancel,
 }) => {
+	const { t } = useTranslation();
 	const [message, setMessage] = useState<string>(initialValue);
 	const [error, setError] = useState<string>('');
 
@@ -96,7 +98,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
 
 				{onCancel && (
 					<Button type="button" onClick={onCancel} variant="ghost" size="sm" disabled={isSubmitting}>
-						Cancel
+						{t('common.cancel')}
 					</Button>
 				)}
 			</Cluster>
