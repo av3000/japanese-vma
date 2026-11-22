@@ -6,18 +6,20 @@ namespace Tests\Feature\Filament;
 
 use App\Application\Translations\Services\TranslationLocaleAdminServiceInterface;
 use App\Filament\Resources\Roles\Pages\CreateRole;
-use App\Filament\Resources\TranslationLocales\Pages\CreateTranslationLocale;
-use App\Filament\Resources\TranslationLocales\Pages\EditTranslationLocale;
-use App\Filament\Resources\TranslationLocales\Pages\ListTranslationLocales;
+use App\Filament\Resources\TranslationLocales\Pages\ManageTranslationLocales;
 use App\Filament\Support\PanelActor;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
 use App\Infrastructure\Persistence\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\Feature\Filament\Concerns\InteractsWithAdminPanel;
 use Tests\TestCase;
 
+/**
+ * The language list is a simple resource: one page, with create and edit as modal actions on it.
+ */
 class TranslationLocaleResourceTest extends TestCase
 {
     use InteractsWithAdminPanel;
@@ -60,10 +62,9 @@ class TranslationLocaleResourceTest extends TestCase
 
     public function test_a_manager_creates_an_active_language_and_the_public_list_shows_it_at_once(): void
     {
-        Livewire::test(CreateTranslationLocale::class)
-            ->fillForm(['code' => 'da', 'name' => 'Dansk', 'is_active' => true])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(ManageTranslationLocales::class)
+            ->callAction('create', ['code' => 'da', 'name' => 'Dansk', 'is_active' => true])
+            ->assertHasNoActionErrors();
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'da', 'name' => 'Dansk', 'is_active' => true]);
 
@@ -74,10 +75,9 @@ class TranslationLocaleResourceTest extends TestCase
 
     public function test_a_language_created_without_the_flag_stays_off_the_public_list(): void
     {
-        Livewire::test(CreateTranslationLocale::class)
-            ->fillForm(['code' => 'sv', 'name' => 'Svenska'])
-            ->call('create')
-            ->assertHasNoFormErrors();
+        Livewire::test(ManageTranslationLocales::class)
+            ->callAction('create', ['code' => 'sv', 'name' => 'Svenska'])
+            ->assertHasNoActionErrors();
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'sv', 'is_active' => false]);
         $this->getJson('/api/v1/translations/locales')->assertJsonCount(1, 'items');
@@ -87,13 +87,13 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $sv = TranslationLocale::factory()->code('sv', 'Svenska')->inactive()->create();
 
-        Livewire::test(ListTranslationLocales::class)
+        Livewire::test(ManageTranslationLocales::class)
             ->assertCanSeeTableRecords([$sv])
             ->call('updateTableColumnState', 'is_active', (string) $sv->getKey(), true);
 
         $this->getJson('/api/v1/translations/locales')->assertJsonPath('items.1.code', 'sv');
 
-        Livewire::test(ListTranslationLocales::class)
+        Livewire::test(ManageTranslationLocales::class)
             ->call('updateTableColumnState', 'is_active', (string) $sv->getKey(), false);
 
         $this->getJson('/api/v1/translations/locales')->assertJsonCount(1, 'items');
@@ -103,7 +103,7 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $da = TranslationLocale::factory()->create();
 
-        $table = Livewire::test(ListTranslationLocales::class)->assertCanSeeTableRecords([$da]);
+        $table = Livewire::test(ManageTranslationLocales::class)->assertCanSeeTableRecords([$da]);
 
         // Another administrator renames the language after this table was rendered.
         TranslationLocale::query()->whereKey($da->getKey())->update(['name' => 'Dansk (DK)']);
@@ -117,11 +117,12 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $da = TranslationLocale::factory()->create();
 
-        Livewire::test(EditTranslationLocale::class, ['record' => $da->getKey()])
-            ->assertFormSet(['code' => 'da', 'name' => 'Dansk', 'is_active' => true])
-            ->fillForm(['name' => 'Dansk (DK)', 'is_active' => false])
-            ->call('save')
-            ->assertHasNoFormErrors();
+        Livewire::test(ManageTranslationLocales::class)
+            ->mountAction(TestAction::make('edit')->table($da))
+            ->assertActionDataSet(['code' => 'da', 'name' => 'Dansk', 'is_active' => true])
+            ->setActionData(['name' => 'Dansk (DK)', 'is_active' => false])
+            ->callMountedAction()
+            ->assertHasNoActionErrors();
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'da', 'name' => 'Dansk (DK)', 'is_active' => false]);
     }
@@ -132,7 +133,7 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $en = TranslationLocale::query()->where('code', 'en')->firstOrFail();
 
-        Livewire::test(ListTranslationLocales::class)
+        Livewire::test(ManageTranslationLocales::class)
             ->call('updateTableColumnState', 'is_active', (string) $en->getKey(), false);
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'en', 'is_active' => true]);
@@ -142,11 +143,8 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $en = TranslationLocale::query()->where('code', 'en')->firstOrFail();
 
-        Livewire::test(EditTranslationLocale::class, ['record' => $en->getKey()])
-            ->set('data.code', 'xx')
-            ->set('data.is_active', false)
-            ->set('data.name', 'English')
-            ->call('save');
+        Livewire::test(ManageTranslationLocales::class)
+            ->callAction(TestAction::make('edit')->table($en), ['code' => 'xx', 'is_active' => false, 'name' => 'English']);
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'en', 'is_active' => true]);
         $this->assertDatabaseMissing('translation_locales', ['code' => 'xx']);
@@ -165,10 +163,11 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $da = TranslationLocale::factory()->create();
 
-        Livewire::test(EditTranslationLocale::class, ['record' => $da->getKey()])
+        Livewire::test(ManageTranslationLocales::class)
+            ->mountAction(TestAction::make('edit')->table($da))
             ->assertFormFieldDisabled('code')
-            ->set('data.code', 'sv')
-            ->call('save');
+            ->setActionData(['code' => 'sv'])
+            ->callMountedAction();
 
         $this->assertDatabaseHas('translation_locales', ['code' => 'da']);
         $this->assertDatabaseMissing('translation_locales', ['code' => 'sv']);
@@ -176,55 +175,69 @@ class TranslationLocaleResourceTest extends TestCase
 
     // AC-4
 
-    public function test_a_code_that_is_not_two_lowercase_letters_fails_with_a_message(): void
+    public function test_a_code_that_is_not_two_lowercase_letters_fails_with_a_message_in_the_modal(): void
     {
         foreach (['DA', 'd', 'dan', 'pt-BR', 'd1'] as $code) {
-            Livewire::test(CreateTranslationLocale::class)
-                ->fillForm(['code' => $code, 'name' => 'Whatever'])
-                ->call('create')
-                ->assertHasFormErrors(['code']);
+            Livewire::test(ManageTranslationLocales::class)
+                ->callAction('create', ['code' => $code, 'name' => 'Whatever'])
+                ->assertHasActionErrors(['code'])
+                ->assertActionMounted('create');
         }
 
         $this->assertDatabaseCount('translation_locales', 1);
     }
 
-    public function test_a_code_that_already_exists_fails_with_a_message(): void
+    public function test_a_code_that_already_exists_fails_with_a_message_in_the_modal(): void
     {
         TranslationLocale::factory()->create();
 
         foreach (['da', 'en'] as $code) {
-            Livewire::test(CreateTranslationLocale::class)
-                ->fillForm(['code' => $code, 'name' => 'Duplicate'])
-                ->call('create')
-                ->assertHasFormErrors(['code']);
+            Livewire::test(ManageTranslationLocales::class)
+                ->callAction('create', ['code' => $code, 'name' => 'Duplicate'])
+                ->assertHasActionErrors(['code'])
+                ->assertActionMounted('create');
         }
 
         $this->assertDatabaseCount('translation_locales', 2);
     }
 
+    public function test_a_blank_name_on_edit_fails_with_a_message_in_the_modal(): void
+    {
+        $da = TranslationLocale::factory()->create();
+
+        Livewire::test(ManageTranslationLocales::class)
+            ->callAction(TestAction::make('edit')->table($da), ['name' => "\u{3000}"])
+            ->assertHasActionErrors(['name']);
+
+        $this->assertDatabaseHas('translation_locales', ['code' => 'da', 'name' => 'Dansk']);
+    }
+
+    public function test_create_and_edit_have_no_pages_of_their_own(): void
+    {
+        $da = TranslationLocale::factory()->create();
+
+        $this->get('/admin/translation-locales')->assertOk();
+        $this->get('/admin/translation-locales/create')->assertNotFound();
+        $this->get("/admin/translation-locales/{$da->getKey()}/edit")->assertNotFound();
+    }
+
     // AC-5
 
-    public function test_a_dashboard_only_user_gets_403_on_the_resource_pages(): void
+    public function test_a_dashboard_only_user_gets_403_on_the_resource_page(): void
     {
         $dashboardOnly = $this->createUserWithPermissions(['operations.view'], 'Dashboard Only');
-        $da = TranslationLocale::factory()->create();
         $this->actingAsPanelUser($dashboardOnly);
 
         $this->get('/admin')->assertOk();
         $this->get('/admin/translation-locales')->assertForbidden();
-        $this->get('/admin/translation-locales/create')->assertForbidden();
-        $this->get("/admin/translation-locales/{$da->getKey()}/edit")->assertForbidden();
     }
 
     public function test_a_dashboard_only_user_cannot_drive_the_create_and_edit_actions(): void
     {
         $dashboardOnly = $this->createUserWithPermissions(['operations.view'], 'Dashboard Only');
-        $da = TranslationLocale::factory()->create();
         $this->actingAsPanelUser($dashboardOnly);
 
-        Livewire::test(CreateTranslationLocale::class)->assertForbidden();
-        Livewire::test(EditTranslationLocale::class, ['record' => $da->getKey()])->assertForbidden();
-        Livewire::test(ListTranslationLocales::class)->assertForbidden();
+        Livewire::test(ManageTranslationLocales::class)->assertForbidden();
 
         $result = app(TranslationLocaleAdminServiceInterface::class)
             ->create('sv', 'Svenska', true, PanelActor::current());
@@ -245,7 +258,9 @@ class TranslationLocaleResourceTest extends TestCase
     {
         $da = TranslationLocale::factory()->create();
 
-        Livewire::test(ListTranslationLocales::class)->assertTableActionDoesNotExist('delete', record: $da);
-        Livewire::test(EditTranslationLocale::class, ['record' => $da->getKey()])->assertActionDoesNotExist('delete');
+        Livewire::test(ManageTranslationLocales::class)
+            ->assertActionDoesNotExist(TestAction::make('delete')->table($da))
+            ->mountAction(TestAction::make('edit')->table($da))
+            ->assertActionDoesNotExist('delete');
     }
 }

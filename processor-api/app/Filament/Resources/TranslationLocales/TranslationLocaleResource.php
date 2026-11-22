@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\TranslationLocales;
 
 use App\Filament\AdminNavigationGroup;
-use App\Filament\Resources\TranslationLocales\Pages\CreateTranslationLocale;
-use App\Filament\Resources\TranslationLocales\Pages\EditTranslationLocale;
-use App\Filament\Resources\TranslationLocales\Pages\ListTranslationLocales;
+use App\Filament\Resources\TranslationLocales\Pages\ManageTranslationLocales;
 use App\Filament\Resources\TranslationLocales\Schemas\TranslationLocaleForm;
 use App\Filament\Resources\TranslationLocales\Tables\TranslationLocalesTable;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
@@ -20,7 +18,8 @@ use UnitEnum;
 
 /**
  * The languages the interface can be shown in: add one, rename it, switch it on or off. Writes run
- * through TranslationLocaleAdminService; there is no delete.
+ * through TranslationLocaleAdminService; there is no delete. A simple resource: one list page, with
+ * create and edit as modals (TranslationLocaleActions).
  *
  * @extends Resource<TranslationLocale>
  */
@@ -53,9 +52,7 @@ class TranslationLocaleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListTranslationLocales::route('/'),
-            'create' => CreateTranslationLocale::route('/create'),
-            'edit' => EditTranslationLocale::route('/{record}/edit'),
+            'index' => ManageTranslationLocales::route('/'),
         ];
     }
 }

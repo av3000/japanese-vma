@@ -6,10 +6,10 @@ namespace App\Filament\Resources\TranslationLocales\Tables;
 
 use App\Application\Translations\Services\TranslationLocaleAdminServiceInterface;
 use App\Domain\Translations\Models\TranslationLocale as DomainTranslationLocale;
+use App\Filament\Resources\TranslationLocales\Actions\TranslationLocaleActions;
 use App\Filament\Support\PanelActor;
 use App\Filament\Support\ResultNotifications;
 use App\Infrastructure\Persistence\Models\TranslationLocale;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
@@ -49,7 +49,7 @@ class TranslationLocalesTable
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
+                TranslationLocaleActions::edit(),
             ]);
     }
 }
