@@ -17,7 +17,9 @@ readonly class CatalogueListDTO
         public bool $custom_only = true,
         public bool $include_stats_counts = true,
         public bool $include_hashtags = true,
-    ) {}
+        public bool $include_jlpt_levels = false,
+    ) {
+    }
 
     public static function fromRequest(array $validated): self
     {
@@ -33,6 +35,7 @@ readonly class CatalogueListDTO
             custom_only: $validated['custom_only'] ?? true,
             include_stats_counts: $validated['include_stats_counts'] ?? true,
             include_hashtags: $validated['include_hashtags'] ?? true,
+            include_jlpt_levels: $validated['include_jlpt_levels'] ?? false,
         );
     }
 }

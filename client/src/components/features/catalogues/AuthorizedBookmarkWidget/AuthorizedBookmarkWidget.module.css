@@ -1,0 +1,42 @@
+.widgetWrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+}
+
+.learned {
+	color: var(--color-success-text);
+}
+
+.notLearned {
+	color: var(--color-text-muted);
+}
+
+.compact {
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+}
+
+.knownMark {
+	color: var(--color-success-text);
+	font-size: var(--font-size-body-xs);
+	font-weight: var(--font-weight-semibold);
+	white-space: nowrap;
+}
+
+/* The rail's full-width text button: the wrapper takes the rail's width. */
+.labelled {
+	display: block;
+	width: 100%;
+}
+
+/* Under the rail's Save button: the viewer has marked the item as learned. */
+.learnedLine {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	margin: var(--spacing-xs) 0 0;
+	color: var(--color-success-text);
+	font-size: var(--font-size-body-md);
+	font-weight: var(--font-weight-semibold);
+}

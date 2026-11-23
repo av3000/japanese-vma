@@ -4,12 +4,13 @@ namespace App\Http\v1\Engagement\Resources;
 
 use App\Domain\Articles\Models\ArticleStats;
 use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Community\Posts\Models\PostStats;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class EngagementStatsSummaryResource extends JsonResource
 {
-    public function __construct(private readonly ArticleStats|CatalogueStats|null $stats)
+    public function __construct(private readonly ArticleStats|CatalogueStats|PostStats|null $stats)
     {
         parent::__construct($stats);
     }

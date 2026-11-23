@@ -1,0 +1,17 @@
+.wrapper.wrapper {
+	padding: 0 var(--spacing-xs);
+	min-height: var(--size-xl);
+}
+.wrapper.wrapper.readonly {
+	padding-right: var(--spacing-xs);
+	cursor: default;
+}
+
+.chipTitle {
+	max-width: 150px;
+	font-size: var(--font-size-body-sm);
+}
+
+.removeIcon {
+	margin-left: var(--spacing-2xs);
+}

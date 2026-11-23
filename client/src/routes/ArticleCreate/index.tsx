@@ -1,18 +1,23 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseApiError, type ApiError } from '@/api/apiError';
+import { articleKeys } from '@/api/articles/keys';
+import { applyProcessingStatus } from '@/api/articles/processingStatusCache';
 import { articleStore } from '@/api/generated/article/article';
-import type { UuidCreatedResource } from '@/api/generated/model';
+import type { ArticleCreatedResource } from '@/api/generated/model/articleCreatedResource';
 import type { StoreArticleRequest } from '@/api/generated/model/storeArticleRequest';
 import { ArticleForm, type ArticleFormValues } from '@/components/features/articles/ArticleForm';
-import { isHttpValidationProblemDetails } from '@/helpers/isHttpValidationProblemDetails';
+import { Button } from '@/components/shared/Button';
+import { FormPage } from '@/components/shared/FormPage';
+
+const ARTICLES_ROUTE = '/articles';
 
 export default function ArticleCreatePage() {
 	const qc = useQueryClient();
 	const navigate = useNavigate();
 
-	const [serverErrors, setServerErrors] = useState<Record<string, string[]> | null>(null);
-	const [status, setStatus] = useState<string | null>(null);
+	const [apiError, setApiError] = useState<ApiError | null>(null);
 
 	const initialValues = useMemo<ArticleFormValues>(() => {
 		return {
@@ -27,36 +32,28 @@ export default function ArticleCreatePage() {
 	}, []);
 
 	// TODO: add upload image feature
-	const mutation = useMutation<UuidCreatedResource, unknown, StoreArticleRequest>({
+	const mutation = useMutation<ArticleCreatedResource, unknown, StoreArticleRequest>({
 		mutationFn: (payload) => articleStore(payload),
-		onSuccess: ({ uuid }) => {
-			setStatus(null);
-			setServerErrors(null);
+		onSuccess: ({ uuid, processing_status }) => {
+			setApiError(null);
 
-			// make lists refetch so the new article appears
-			// TODO: is there a need to invalidate if we navigate and then fetch articles on navigation?
-			qc.invalidateQueries({ queryKey: ['articles'] });
+			// The server opened the `pending` row inside the create transaction (#258), so the
+			// first detail fetch already carries it. Write it into whatever cache entries exist
+			// through the shared status path; a partial detail object is deliberately NOT seeded,
+			// because the detail page renders the full resource and would break on one.
+			applyProcessingStatus(qc, uuid, processing_status);
+
+			// Every cached list variant (homepage, dashboard, discovery) must refetch so the new
+			// article shows up regardless of which one the user lands on next.
+			qc.invalidateQueries({ queryKey: articleKeys.lists() });
 
 			navigate(`/articles/${uuid}`);
 		},
-		onError: (err: any) => {
-			const data = err?.response?.data;
-
-			if (isHttpValidationProblemDetails(data)) {
-				setServerErrors(data.errors);
-				setStatus(data.title ?? 'Validation failed');
-				return;
-			}
-
-			setServerErrors(null);
-			setStatus('Something went wrong. Please try again.');
-			console.error(err);
-		},
+		onError: (error) => setApiError(parseApiError(error)),
 	});
 
 	const onSubmit = (values: ArticleFormValues) => {
-		setStatus(null);
-		setServerErrors(null);
+		setApiError(null);
 
 		const payload: StoreArticleRequest = {
 			title_jp: values.title_jp.trim(),
@@ -72,21 +69,26 @@ export default function ArticleCreatePage() {
 	};
 
 	return (
-		<div className="container">
-			<div className="row justify-content-lg-center text-center">
-				{/* TODO: Step forward would be generic reusable form, accepting fields configs with field types */}
-				<ArticleForm
-					initialValues={initialValues}
-					onSubmit={onSubmit}
-					isSubmitting={mutation.isPending}
-					submitLabel="Create"
-					serverErrors={serverErrors}
-					statusMessage={status}
-					requireTitleContent
-					requireEnglishTitle
-					requireSourceLink
-				/>
-			</div>
-		</div>
+		<FormPage title="New article" backLink={{ to: ARTICLES_ROUTE, label: 'Articles' }}>
+			<ArticleForm
+				initialValues={initialValues}
+				onSubmit={onSubmit}
+				isSubmitting={mutation.isPending}
+				submitLabel="Create article"
+				apiError={apiError}
+				requireEnglishTitle
+				note={
+					<p>
+						We analyse the Japanese text for kanji and words, usually within a minute. You can follow the
+						status on the article page and your dashboard. A reviewer may check the article.
+					</p>
+				}
+				cancel={
+					<Button variant="ghost" to={ARTICLES_ROUTE}>
+						Cancel
+					</Button>
+				}
+			/>
+		</FormPage>
 	);
 }

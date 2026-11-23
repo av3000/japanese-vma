@@ -3,24 +3,37 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsInterface;
-use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Domain\Articles\Models\Article as DomainArticle;
-
-use App\Domain\Shared\ValueObjects\{EntityId, UserId, UserName, JlptLevels};
-use App\Domain\Articles\ValueObjects\{ArticleTitle, ArticleContent, ArticleSourceUrl};
+use App\Domain\Articles\ValueObjects\ArticleContent;
+use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
+use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\JlptLevels;
+use App\Domain\Shared\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\UserName;
+use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 
 class ArticleMapper
 {
     public function __construct(
-        private readonly KanjiMapper $kanjiMapper
-    ) {}
+        private readonly KanjiMapper $kanjiMapper,
+        private readonly WordMapper $wordMapper,
+    ) {
+    }
 
     public function mapToDomain(PersistenceArticle $entity, ?ArticleIncludeOptionsInterface $options = null): DomainArticle
     {
         $domainKanjis = [];
         if ($options?->includeKanjis() && $entity->relationLoaded('kanjis')) {
             $domainKanjis = $entity->kanjis->map(
-                fn($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
+                fn ($persistenceKanji) => $this->kanjiMapper->mapToDomain($persistenceKanji)
+            )->toArray();
+        }
+
+        $domainWords = [];
+        if ($options?->includeWords() && $entity->relationLoaded('words')) {
+            $domainWords = $entity->words->map(
+                fn ($persistenceWord) => $this->wordMapper->mapToDomain($persistenceWord)
             )->toArray();
         }
 
@@ -39,16 +52,17 @@ class ArticleMapper
             $entity->publicity,
             $entity->status,
             new JlptLevels(
-                (int)$entity->n1,
-                (int)$entity->n2,
-                (int)$entity->n3,
-                (int)$entity->n4,
-                (int)$entity->n5,
-                (int)$entity->uncommon
+                (int) $entity->n1,
+                (int) $entity->n2,
+                (int) $entity->n3,
+                (int) $entity->n4,
+                (int) $entity->n5,
+                (int) $entity->uncommon
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
             kanjis: $domainKanjis,
+            words: $domainWords,
         );
     }
 
@@ -70,12 +84,12 @@ class ArticleMapper
             $entity->publicity,
             $entity->status,
             new JlptLevels(
-                (int)$entity->n1,
-                (int)$entity->n2,
-                (int)$entity->n3,
-                (int)$entity->n4,
-                (int)$entity->n5,
-                (int)$entity->uncommon
+                (int) $entity->n1,
+                (int) $entity->n2,
+                (int) $entity->n3,
+                (int) $entity->n4,
+                (int) $entity->n5,
+                (int) $entity->uncommon
             ),
             $entity->created_at->toDateTimeImmutable(),
             $entity->updated_at->toDateTimeImmutable(),
@@ -97,12 +111,12 @@ class ArticleMapper
             'source_link' => $article->getSourceUrl()->value,
             'publicity' => $article->getPublicity()->value,
             'status' => $article->getStatus()->value,
-            'n1' => (string)$article->getJlptLevels()->n1,
-            'n2' => (string)$article->getJlptLevels()->n2,
-            'n3' => (string)$article->getJlptLevels()->n3,
-            'n4' => (string)$article->getJlptLevels()->n4,
-            'n5' => (string)$article->getJlptLevels()->n5,
-            'uncommon' => (string)$article->getJlptLevels()->uncommon,
+            'n1' => (string) $article->getJlptLevels()->n1,
+            'n2' => (string) $article->getJlptLevels()->n2,
+            'n3' => (string) $article->getJlptLevels()->n3,
+            'n4' => (string) $article->getJlptLevels()->n4,
+            'n5' => (string) $article->getJlptLevels()->n5,
+            'uncommon' => (string) $article->getJlptLevels()->uncommon,
             'created_at' => $article->getCreatedAt(),
             'updated_at' => $article->getUpdatedAt(),
         ];
@@ -114,7 +128,6 @@ class ArticleMapper
      *
      * @param DomainArticle $article Domain article with updated state
      * @param PersistenceArticle $entity Existing tracked entity to update
-     * @return void
      */
     public static function mapToExistingEntity(DomainArticle $article, PersistenceArticle $entity): void
     {
@@ -127,11 +140,11 @@ class ArticleMapper
         $entity->status = $article->getStatus()->value;
 
         $jlptLevels = $article->getJlptLevels();
-        $entity->n1 = (string)$jlptLevels->n1;
-        $entity->n2 = (string)$jlptLevels->n2;
-        $entity->n3 = (string)$jlptLevels->n3;
-        $entity->n4 = (string)$jlptLevels->n4;
-        $entity->n5 = (string)$jlptLevels->n5;
-        $entity->uncommon = (string)$jlptLevels->uncommon;
+        $entity->n1 = (string) $jlptLevels->n1;
+        $entity->n2 = (string) $jlptLevels->n2;
+        $entity->n3 = (string) $jlptLevels->n3;
+        $entity->n4 = (string) $jlptLevels->n4;
+        $entity->n5 = (string) $jlptLevels->n5;
+        $entity->uncommon = (string) $jlptLevels->uncommon;
     }
 }

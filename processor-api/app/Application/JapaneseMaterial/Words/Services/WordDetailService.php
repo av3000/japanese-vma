@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\JapaneseMaterial\Words\Services;
+
+use App\Application\Articles\Services\ArticleListServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\JapaneseMaterial\Words\Interfaces\Repositories\WordRepositoryInterface;
+use App\Domain\Articles\DTOs\ArticleListIncludes;
+use App\Domain\Articles\Queries\ArticleQueryCriteria;
+use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
+use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailIncludes;
+use App\Domain\JapaneseMaterial\Words\DTOs\WordDetailResultDTO;
+use App\Domain\JapaneseMaterial\Words\Models\Word;
+use App\Domain\JapaneseMaterial\Words\ValueObjects\WordSense;
+use App\Domain\Shared\Enums\SortDirection;
+use App\Shared\Results\Result;
+
+final readonly class WordDetailService implements WordDetailServiceInterface
+{
+    private const RELATED_LIMIT = 5;
+
+    /**
+     * Every kanji a word is written with: the longest real entry has 18. The ceiling only stops a
+     * corrupt entry from fanning out to hundreds of rows.
+     */
+    private const KANJI_LIMIT = 50;
+
+    public function __construct(
+        private WordServiceInterface $wordService,
+        private WordRepositoryInterface $wordRepository,
+        private ArticleListServiceInterface $articleListService,
+    ) {
+    }
+
+    public function findByIdentifier(
+        string $identifier,
+        WordDetailIncludes $includes,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
+        $wordResult = $this->wordService->findByIdentifier($identifier);
+
+        if ($wordResult->isFailure()) {
+            return $wordResult;
+        }
+
+        /** @var Word $word */
+        $word = $wordResult->getData();
+        $wordId = $word->getIdValue();
+
+        $kanjis = $includes->kanjis
+            ? $this->wordRepository->findRelatedKanjis($wordId, self::KANJI_LIMIT)
+            : null;
+
+        $articles = $includes->articles
+            ? $this->articleListService->listItems(
+                ArticleQueryCriteria::forListing(
+                    perPage: self::RELATED_LIMIT,
+                    // Ordered by id ascending, as this panel always has been. Not a
+                    // public sort value, so it goes through the internal constructor.
+                    sort: ArticleSortCriteria::byId(SortDirection::ASC),
+                    wordIds: [$wordId],
+                ),
+                ArticleListIncludes::relatedPanel(),
+                $authenticatedUser,
+            )->getData()
+            : null;
+
+        return Result::success(new WordDetailResultDTO(
+            word: $word,
+            kanjis: $kanjis,
+            articles: $articles,
+            senses: WordSense::listFromJmdict($word->getRawSense()),
+        ));
+    }
+}

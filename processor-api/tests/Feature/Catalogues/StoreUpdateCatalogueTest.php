@@ -2,13 +2,6 @@
 
 namespace Tests\Feature\Catalogues;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
-use Spatie\Permission\Models\Role;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Catalogue as PersistenceCatalogue;
@@ -16,55 +9,37 @@ use App\Infrastructure\Persistence\Models\Comment;
 use App\Infrastructure\Persistence\Models\Download;
 use App\Infrastructure\Persistence\Models\HashtagEntity;
 use App\Infrastructure\Persistence\Models\Like;
+use App\Infrastructure\Persistence\Models\StudyAttempt;
+use App\Infrastructure\Persistence\Models\StudySession;
 use App\Infrastructure\Persistence\Models\Uniquehashtag;
 use App\Infrastructure\Persistence\Models\User;
 use App\Infrastructure\Persistence\Models\View;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
+use Tests\Support\SeedsBaselineData;
+use Tests\TestCase;
 
 class StoreUpdateCatalogueTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsBaselineData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => UserRole::COMMON->value, 'guard_name' => 'api']);
-        Role::firstOrCreate(['name' => UserRole::ADMIN->value, 'guard_name' => 'api']);
-
-        DB::table('objecttemplates')->insert([
-            [
-                'id' => ObjectTemplateType::LIST->getLegacyId(),
-                'title' => 'list',
-                'entity_type_uuid' => ObjectTemplateType::LIST->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => ObjectTemplateType::COMMENT->getLegacyId(),
-                'title' => 'comment',
-                'entity_type_uuid' => ObjectTemplateType::COMMENT->value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $this->seedBaselineData();
     }
 
     private function createUser(array $overrides = []): User
     {
-        return User::create(array_merge([
-            'name' => 'Test User',
-            'email' => Str::uuid() . '@example.com',
-            'password' => Hash::make('password'),
-            'uuid' => (string) Str::uuid(),
-        ], $overrides));
+        return User::factory()->create($overrides);
     }
 
     private function createCatalogue(User $user, array $overrides = []): PersistenceCatalogue
     {
-        return PersistenceCatalogue::create(array_merge([
-            'user_id' => $user->id,
-            'uuid' => (string) Str::uuid(),
-            'entity_type_uuid' => ObjectTemplateType::LIST->value,
+        return PersistenceCatalogue::factory()->byUser($user)->create(array_merge([
             'title' => 'Original Catalogue',
             'description' => 'Original description',
             'publicity' => false,
@@ -115,9 +90,9 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertTrue(Str::isUuid((string) $response->json('data.uuid')));
+        $this->assertTrue(Str::isUuid((string) $response->json('uuid')));
 
-        $catalogue = PersistenceCatalogue::where('uuid', $response->json('data.uuid'))->first();
+        $catalogue = PersistenceCatalogue::where('uuid', $response->json('uuid'))->first();
 
         $this->assertNotNull($catalogue);
         $this->assertSame($user->id, $catalogue->user_id);
@@ -151,13 +126,26 @@ class StoreUpdateCatalogueTest extends TestCase
     public function test_update_allows_owner_to_partially_update_and_replace_hashtags(): void
     {
         $user = $this->createUser();
+        // The type already matches its items: a catalogue that holds items cannot change type.
         $catalogue = $this->createCatalogue($user, [
             'title' => 'Before Update',
             'description' => 'Keep this description',
             'publicity' => false,
-            'type' => 5,
+            'type' => 8,
         ]);
         $this->attachHashtags($catalogue, ['#old']);
+        DB::table('customlist_object')->insert([
+            [
+                'list_id' => $catalogue->id,
+                'listtype_id' => 8,
+                'real_object_id' => 101,
+            ],
+            [
+                'list_id' => $catalogue->id,
+                'listtype_id' => 8,
+                'real_object_id' => 102,
+            ],
+        ]);
 
         Passport::actingAs($user, ['*'], 'api');
 
@@ -169,10 +157,11 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.title', 'After Update')
-            ->assertJsonPath('data.type', 8)
-            ->assertJsonPath('data.publicity', 1)
-            ->assertJsonPath('data.description', 'Keep this description');
+            ->assertJsonPath('title', 'After Update')
+            ->assertJsonPath('type', 8)
+            ->assertJsonPath('publicity', 1)
+            ->assertJsonPath('description', 'Keep this description')
+            ->assertJsonPath('items_count', 2);
 
         $catalogue->refresh();
 
@@ -184,6 +173,14 @@ class StoreUpdateCatalogueTest extends TestCase
         $hashtags = $this->getHashtagContents($catalogue);
         sort($hashtags);
         $this->assertSame(['#new1', '#new2'], $hashtags);
+
+        $responseHashtags = collect($response->json('hashtags'))
+            ->pluck('content')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['#new1', '#new2'], $responseHashtags);
     }
 
     public function test_update_allows_owner_to_make_private_catalogue_public_with_publicity_only_payload(): void
@@ -199,8 +196,8 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
             'publicity' => true,
         ])->assertStatus(200)
-            ->assertJsonPath('data.publicity', 1)
-            ->assertJsonPath('data.title', 'Original Catalogue');
+            ->assertJsonPath('publicity', 1)
+            ->assertJsonPath('title', 'Original Catalogue');
 
         $catalogue->refresh();
 
@@ -210,7 +207,7 @@ class StoreUpdateCatalogueTest extends TestCase
 
         $this->json('GET', "/api/v1/catalogues/{$catalogue->uuid}")
             ->assertStatus(200)
-            ->assertJsonPath('data.uuid', $catalogue->uuid);
+            ->assertJsonPath('uuid', $catalogue->uuid);
 
         $this->json('GET', '/api/v1/catalogues')
             ->assertStatus(200)
@@ -230,8 +227,8 @@ class StoreUpdateCatalogueTest extends TestCase
         $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
             'publicity' => false,
         ])->assertStatus(200)
-            ->assertJsonPath('data.publicity', 0)
-            ->assertJsonPath('data.title', 'Original Catalogue');
+            ->assertJsonPath('publicity', 0)
+            ->assertJsonPath('title', 'Original Catalogue');
 
         $catalogue->refresh();
 
@@ -247,6 +244,86 @@ class StoreUpdateCatalogueTest extends TestCase
             ->assertJsonMissing(['uuid' => $catalogue->uuid]);
     }
 
+    private function addItems(PersistenceCatalogue $catalogue, int $listTypeId, array $itemIds): void
+    {
+        DB::table('customlist_object')->insert(array_map(fn (int $itemId) => [
+            'list_id' => $catalogue->id,
+            'listtype_id' => $listTypeId,
+            'real_object_id' => $itemId,
+        ], $itemIds));
+    }
+
+    public function test_update_rejects_type_change_when_catalogue_has_items(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Station kanji', 'type' => 6]);
+        $this->addItems($catalogue, 6, [101, 102]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'title' => 'Station words',
+            'type' => 7,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.type.0', "The type can't be changed once the catalogue has items.")
+            ->assertJsonMissingPath('errors.title');
+
+        $catalogue->refresh();
+
+        // Nothing is written when the lock refuses the update, not even the valid title.
+        $this->assertSame(6, $catalogue->type->value);
+        $this->assertSame('Station kanji', $catalogue->title);
+    }
+
+    public function test_update_accepts_the_current_type_when_catalogue_has_items(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['title' => 'Station kanji', 'type' => 6]);
+        $this->addItems($catalogue, 6, [101]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", [
+            'title' => 'Station kanji N4',
+            'type' => 6,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('title', 'Station kanji N4')
+            ->assertJsonPath('type', 6)
+            ->assertJsonPath('items_count', 1);
+    }
+
+    public function test_update_allows_type_change_of_an_empty_catalogue(): void
+    {
+        $user = $this->createUser();
+        $catalogue = $this->createCatalogue($user, ['type' => 6]);
+
+        Passport::actingAs($user, ['*'], 'api');
+
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", ['type' => 7])
+            ->assertStatus(200)
+            ->assertJsonPath('type', 7)
+            ->assertJsonPath('items_count', 0);
+
+        $this->assertSame(7, $catalogue->refresh()->type->value);
+    }
+
+    public function test_update_type_lock_does_not_leak_to_non_owner(): void
+    {
+        $owner = $this->createUser();
+        $otherUser = $this->createUser();
+        $catalogue = $this->createCatalogue($owner, ['type' => 6]);
+        $this->addItems($catalogue, 6, [101]);
+
+        Passport::actingAs($otherUser, ['*'], 'api');
+
+        // The policy answers first, so a stranger learns nothing about the catalogue's items.
+        $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", ['type' => 7])
+            ->assertStatus(403)
+            ->assertJsonMissingPath('errors.type');
+    }
+
     public function test_update_empty_payload_returns_validation_problem(): void
     {
         $user = $this->createUser();
@@ -257,6 +334,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $response = $this->json('PUT', "/api/v1/catalogues/{$catalogue->uuid}", []);
 
         $response->assertStatus(422)
+            ->assertJsonPath('title', 'No fields to update')
             ->assertJsonPath('errors.fields.0', 'At least one field must be provided for update operation');
     }
 
@@ -298,7 +376,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $user = $this->createUser();
         Passport::actingAs($user, ['*'], 'api');
 
-        $this->json('PUT', '/api/v1/catalogues/' . (string) Str::uuid(), [
+        $this->json('PUT', '/api/v1/catalogues/'.(string) Str::uuid(), [
             'title' => 'Missing Catalogue',
         ])->assertStatus(404);
     }
@@ -351,6 +429,7 @@ class StoreUpdateCatalogueTest extends TestCase
         ]);
 
         $comment = Comment::create([
+            'uuid' => (string) Str::uuid(),
             'template_id' => ObjectTemplateType::LIST->getLegacyId(),
             'real_object_id' => $catalogue->id,
             'user_id' => $user->id,
@@ -364,10 +443,19 @@ class StoreUpdateCatalogueTest extends TestCase
             'value' => 1,
         ]);
 
+        // A learner's study history outlives the catalogue it was built from (epic #413).
+        $session = StudySession::factory()->forCatalogue($catalogue)->create();
+        StudyAttempt::factory()->for($session, 'session')->create();
+
         Passport::actingAs($user, ['*'], 'api');
 
         $this->json('DELETE', "/api/v1/catalogues/{$catalogue->uuid}")
             ->assertNoContent();
+
+        $session->refresh();
+        $this->assertNull($session->catalogue_id);
+        $this->assertSame($catalogue->type->value, $session->catalogue_type);
+        $this->assertSame(1, StudyAttempt::where('session_id', $session->id)->count());
 
         $this->assertNull(PersistenceCatalogue::find($catalogue->id));
         $this->assertSame(0, DB::table('customlist_object')->where('list_id', $catalogue->id)->count());
@@ -400,7 +488,7 @@ class StoreUpdateCatalogueTest extends TestCase
         $user = $this->createUser();
         Passport::actingAs($user, ['*'], 'api');
 
-        $this->json('DELETE', '/api/v1/catalogues/' . (string) Str::uuid())
+        $this->json('DELETE', '/api/v1/catalogues/'.(string) Str::uuid())
             ->assertStatus(404);
     }
 }

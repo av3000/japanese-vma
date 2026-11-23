@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ApiError } from '@/api/apiError';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { ChoiceGroup, FormField, Input, Textarea } from '@/components/shared/FormControls';
+import { FormCard, FormLayout, FormNote } from '@/components/shared/FormPage';
 import { InputTags } from '@/components/shared/InputTags';
+import { getFieldErrorMessages } from '@/helpers/formErrors';
+import { NO_CHANGES_MESSAGE, useApiErrorInForm } from '@/hooks/useApiErrorInForm';
+import { VISIBILITY_OPTIONS } from '@/shared/constants/visibility';
 import {
 	buildArticleFormSchema,
 	MAX_CONTENT_LENGTH,
@@ -15,54 +22,55 @@ import {
 
 export type { ArticleFormValues } from './articleFormSchema';
 
-type ArticleFormField = Extract<keyof ArticleFormValues, string>;
+type ArticleFormField = FieldPath<ArticleFormValues>;
 
-export type ArticleFormSubmitMeta = { dirtyKeys: ArticleFormField[] };
+export type ArticleFormSubmitMeta = { dirtyKeys: Extract<keyof ArticleFormValues, string>[] };
+
+/** Visual order: server errors focus the first of these that failed. */
+export const ARTICLE_FORM_FIELDS: readonly ArticleFormField[] = [
+	'title_jp',
+	'title_en',
+	'content_jp',
+	'content_en',
+	'publicity',
+	'tags',
+	'source_link',
+];
+
+/** Update requests name the tags relation `hashtags`. */
+const SERVER_FIELD_MAP: Partial<Record<string, ArticleFormField>> = { hashtags: 'tags' };
 
 interface ArticleFormProps {
 	initialValues: ArticleFormValues;
 	onSubmit: (values: ArticleFormValues, meta: ArticleFormSubmitMeta) => void;
 	isSubmitting?: boolean;
 	submitLabel: string;
-	serverErrors?: Record<string, string[]> | null;
-	statusMessage?: string | null;
-	requireTitleContent?: boolean;
-	requireSourceLink?: boolean;
+	/** The last rejected save, from `parseApiError`. */
+	apiError?: ApiError | null;
 	requireEnglishTitle?: boolean;
-	disableSubmitWhenUnchanged?: boolean;
+	/** Edit forms: an unchanged form says so instead of sending an empty update. */
+	requireChanges?: boolean;
+	/** Body of the "What happens next" note under the settings. */
+	note?: ReactNode;
+	/** The Cancel control, usually a link back. */
+	cancel: ReactNode;
 }
 
-const serverFieldToFormField: Partial<Record<string, ArticleFormField>> = {
-	hashtags: 'tags',
-};
-
-const isArticleFormField = (field: string): field is ArticleFormField => {
-	return (
-		field === 'title_jp' ||
-		field === 'title_en' ||
-		field === 'content_jp' ||
-		field === 'content_en' ||
-		field === 'source_link' ||
-		field === 'publicity' ||
-		field === 'tags'
-	);
-};
+const countOf = (value: string, max: number) => `${value.length} / ${max}`;
 
 export function ArticleForm({
 	initialValues,
 	onSubmit,
 	isSubmitting = false,
 	submitLabel,
-	serverErrors,
-	statusMessage,
-	requireTitleContent = false,
-	requireSourceLink = false,
+	apiError,
 	requireEnglishTitle = false,
-	disableSubmitWhenUnchanged = false,
+	requireChanges = false,
+	note,
+	cancel,
 }: ArticleFormProps) {
 	const schema = useMemo(() => buildArticleFormSchema({ requireEnglishTitle }), [requireEnglishTitle]);
-
-	const [focusedField, setFocusedField] = useState<ArticleFormField | null>(null);
+	const [showNoChanges, setShowNoChanges] = useState(false);
 
 	const {
 		register,
@@ -70,262 +78,193 @@ export function ArticleForm({
 		handleSubmit,
 		reset,
 		setError,
-		clearErrors,
-		formState: { errors, touchedFields, dirtyFields, isDirty, isValid },
+		formState: { errors, dirtyFields, isDirty },
 	} = useForm<ArticleFormValues>({
 		defaultValues: initialValues,
-		mode: 'onChange',
+		// Errors appear once a field is left, or on submit, and then follow every keystroke.
+		mode: 'onTouched',
 		resolver: zodResolver(schema),
 	});
 
-	const titleJpValue = useWatch({ control, name: 'title_jp' }) ?? '';
-	const titleEnValue = useWatch({ control, name: 'title_en' }) ?? '';
-	const contentJpValue = useWatch({ control, name: 'content_jp' }) ?? '';
-	const contentEnValue = useWatch({ control, name: 'content_en' }) ?? '';
-	const sourceLinkValue = useWatch({ control, name: 'source_link' }) ?? '';
+	const [titleJp, titleEn, contentJp, contentEn, sourceLink] = useWatch({
+		control,
+		name: ['title_jp', 'title_en', 'content_jp', 'content_en', 'source_link'],
+	});
 
 	useEffect(() => {
 		reset(initialValues);
 	}, [initialValues, reset]);
 
 	useEffect(() => {
-		if (!serverErrors) {
+		if (isDirty) setShowNoChanges(false);
+	}, [isDirty]);
+
+	const alertMessage = useApiErrorInForm(apiError, setError, ARTICLE_FORM_FIELDS, SERVER_FIELD_MAP);
+
+	const onValidSubmit = (values: ArticleFormValues) => {
+		if (requireChanges && !isDirty) {
+			setShowNoChanges(true);
 			return;
 		}
 
-		let generalError: string | null = null;
-
-		for (const [rawField, messages] of Object.entries(serverErrors)) {
-			const message = messages?.[0];
-			if (!message) continue;
-
-			const baseField = rawField.split('.')[0];
-			const mappedField = serverFieldToFormField[baseField] ?? baseField;
-
-			if (isArticleFormField(mappedField)) {
-				setError(mappedField, { type: 'server', message });
-				continue;
-			}
-
-			generalError ??= message;
-		}
-
-		if (generalError) {
-			setError('root' as any, { type: 'server', message: generalError });
-		}
-	}, [serverErrors, setError]);
-
-	const clearFieldAndRootErrors = (field: ArticleFormField) => {
-		clearErrors([field, 'root'] as any);
+		setShowNoChanges(false);
+		onSubmit(values, { dirtyKeys: Object.keys(dirtyFields) as ArticleFormSubmitMeta['dirtyKeys'] });
 	};
 
-	const getVisibleFieldError = (field: ArticleFormField) => {
-		const error = errors[field];
-		if (!error) return undefined;
-
-		if (focusedField === field) {
-			return undefined;
-		}
-
-		const wasTouched = Boolean((touchedFields as Partial<Record<ArticleFormField, unknown>>)[field]);
-		if (error.type === 'server' || wasTouched) {
-			return error.message;
-		}
-
-		return undefined;
-	};
-
-	const generalErrorMessage = (errors as any)?.root?.message as string | undefined;
-
-	const onValidSubmit = (values: ArticleFormValues) => {
-		const dirtyKeys = Object.keys(dirtyFields) as ArticleFormField[];
-		onSubmit(values, { dirtyKeys });
-	};
-
-	const titleJpError = getVisibleFieldError('title_jp');
-	const titleEnError = getVisibleFieldError('title_en');
-	const contentJpError = getVisibleFieldError('content_jp');
-	const contentEnError = getVisibleFieldError('content_en');
-	const sourceLinkError = getVisibleFieldError('source_link');
-	const tagsError = getVisibleFieldError('tags');
-	const publicityError = getVisibleFieldError('publicity');
-
-	const titleJpField = register('title_jp', { onChange: () => clearFieldAndRootErrors('title_jp') });
-	const titleEnField = register('title_en', { onChange: () => clearFieldAndRootErrors('title_en') });
-	const contentJpField = register('content_jp', { onChange: () => clearFieldAndRootErrors('content_jp') });
-	const contentEnField = register('content_en', { onChange: () => clearFieldAndRootErrors('content_en') });
-	const sourceLinkField = register('source_link', { onChange: () => clearFieldAndRootErrors('source_link') });
+	const alert = showNoChanges ? (
+		<Alert tone="info">{NO_CHANGES_MESSAGE}</Alert>
+	) : alertMessage ? (
+		<Alert tone="danger">{alertMessage}</Alert>
+	) : null;
 
 	return (
-		<form onSubmit={handleSubmit(onValidSubmit)} className="col-12">
-			<h4>Title (JP)</h4>
-			<input
-				className="form-control"
-				maxLength={MAX_TITLE_LENGTH}
-				{...titleJpField}
-				onFocus={() => setFocusedField('title_jp')}
-				onBlur={(e) => {
-					titleJpField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireTitleContent}
-			/>
-			<small
-				className={`d-block text-end ${titleJpValue.length >= MAX_TITLE_LENGTH ? 'text-danger' : 'text-muted'}`}
+		<form onSubmit={handleSubmit(onValidSubmit)} noValidate>
+			<FormLayout
+				alert={alert}
+				aside={
+					<>
+						<FormCard title="Settings">
+							<Controller
+								control={control}
+								name="publicity"
+								render={({ field }) => (
+									<ChoiceGroup
+										legend="Visibility"
+										name={field.name}
+										options={VISIBILITY_OPTIONS}
+										value={field.value ? 'public' : 'private'}
+										onChange={(next) => field.onChange(next === 'public')}
+										onBlur={field.onBlur}
+										inputRef={field.ref}
+										error={getFieldErrorMessages(errors.publicity)}
+									/>
+								)}
+							/>
+
+							<FormField
+								label="Tags"
+								hint={`Up to ${MAX_TAG_QUANTITY} tags, ${MAX_TAG_LENGTH} characters each. Press Enter, comma or space to add one.`}
+								error={getFieldErrorMessages(errors.tags)}
+							>
+								{(fieldControl) => (
+									<Controller
+										control={control}
+										name="tags"
+										render={({ field }) => (
+											<InputTags
+												ref={field.ref}
+												id={fieldControl.id}
+												aria-describedby={fieldControl['aria-describedby']}
+												isInvalid={fieldControl.isInvalid}
+												value={field.value}
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												maxTags={MAX_TAG_QUANTITY}
+												maxTagLength={MAX_TAG_LENGTH}
+											/>
+										)}
+									/>
+								)}
+							</FormField>
+
+							<FormField
+								label="Source link"
+								hint="Where the text comes from, for example an NHK News Web Easy article."
+								counter={countOf(sourceLink ?? '', MAX_SOURCE_LINK_LENGTH)}
+								error={getFieldErrorMessages(errors.source_link)}
+							>
+								{(fieldControl) => (
+									<Input
+										type="url"
+										inputMode="url"
+										placeholder="https://www3.nhk.or.jp/news/easy/…"
+										maxLength={MAX_SOURCE_LINK_LENGTH}
+										required
+										{...fieldControl}
+										{...register('source_link')}
+									/>
+								)}
+							</FormField>
+						</FormCard>
+						{note ? <FormNote title="What happens next">{note}</FormNote> : null}
+					</>
+				}
+				actions={
+					<>
+						<Button type="submit" variant="primary" isLoading={isSubmitting}>
+							{submitLabel}
+						</Button>
+						{cancel}
+					</>
+				}
 			>
-				{titleJpValue.length}/{MAX_TITLE_LENGTH}
-			</small>
-			{titleJpError && <div className="text-danger">{titleJpError}</div>}
-
-			<h4 className="mt-3">Title (EN)</h4>
-			<input
-				className="form-control"
-				maxLength={MAX_TITLE_LENGTH}
-				{...titleEnField}
-				onFocus={() => setFocusedField('title_en')}
-				onBlur={(e) => {
-					titleEnField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireEnglishTitle}
-			/>
-			<small
-				className={`d-block text-end ${titleEnValue.length >= MAX_TITLE_LENGTH ? 'text-danger' : 'text-muted'}`}
-			>
-				{titleEnValue.length}/{MAX_TITLE_LENGTH}
-			</small>
-			{titleEnError && <div className="text-danger">{titleEnError}</div>}
-
-			<h4 className="mt-3">Content (JP)</h4>
-			<textarea
-				className="form-control resize-none"
-				rows={7}
-				maxLength={MAX_CONTENT_LENGTH}
-				{...contentJpField}
-				onFocus={() => setFocusedField('content_jp')}
-				onBlur={(e) => {
-					contentJpField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireTitleContent}
-			/>
-			<small
-				className={`d-block text-end ${
-					contentJpValue.length >= MAX_CONTENT_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{contentJpValue.length}/{MAX_CONTENT_LENGTH}
-			</small>
-			{contentJpError && <div className="text-danger">{contentJpError}</div>}
-
-			<h4 className="mt-3">Content (EN)</h4>
-			<textarea
-				className="form-control resize-none"
-				rows={5}
-				maxLength={MAX_CONTENT_LENGTH}
-				{...contentEnField}
-				onFocus={() => setFocusedField('content_en')}
-				onBlur={(e) => {
-					contentEnField.onBlur(e);
-					setFocusedField(null);
-				}}
-			/>
-			<small
-				className={`d-block text-end ${
-					contentEnValue.length >= MAX_CONTENT_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{contentEnValue.length}/{MAX_CONTENT_LENGTH}
-			</small>
-			{contentEnError && <div className="text-danger">{contentEnError}</div>}
-
-			<h4 className="mt-3">Source Link</h4>
-			<input
-				className="form-control"
-				placeholder="https://www3.nhk.or.jp/news/easy/..."
-				maxLength={MAX_SOURCE_LINK_LENGTH}
-				{...sourceLinkField}
-				onFocus={() => setFocusedField('source_link')}
-				onBlur={(e) => {
-					sourceLinkField.onBlur(e);
-					setFocusedField(null);
-				}}
-				required={requireSourceLink}
-			/>
-			<small
-				className={`d-block text-end ${
-					sourceLinkValue.length >= MAX_SOURCE_LINK_LENGTH ? 'text-danger' : 'text-muted'
-				}`}
-			>
-				{sourceLinkValue.length}/{MAX_SOURCE_LINK_LENGTH}
-			</small>
-			{sourceLinkError && <div className="text-danger">{sourceLinkError}</div>}
-
-			<h4 className="mt-3">Tags</h4>
-			<div onFocus={() => setFocusedField('tags')} onBlur={() => setFocusedField(null)}>
-				<Controller
-					control={control}
-					name="tags"
-					render={({ field }) => (
-						<InputTags
-							value={field.value}
-							onChange={(newTags) => {
-								clearFieldAndRootErrors('tags');
-								field.onChange(newTags);
-								field.onBlur();
-							}}
-							hideLabel
-							label="Tags"
-							maxTags={MAX_TAG_QUANTITY}
-							maxTagLength={MAX_TAG_LENGTH}
-							showTagLengthCounter
-						/>
-					)}
-				/>
-			</div>
-			{tagsError && <div className="text-danger">{tagsError}</div>}
-
-			<h4 className="mt-3">Publicity</h4>
-			<Controller
-				control={control}
-				name="publicity"
-				render={({ field }) => (
-					<select
-						className="form-control"
-						value={field.value ? '1' : '0'}
-						onFocus={() => setFocusedField('publicity')}
-						onChange={(e) => {
-							clearFieldAndRootErrors('publicity');
-							field.onChange(e.target.value === '1');
-						}}
-						onBlur={(e) => {
-							field.onBlur();
-							setFocusedField(null);
-						}}
+				<FormCard>
+					<FormField
+						label="Japanese title"
+						counter={countOf(titleJp ?? '', MAX_TITLE_LENGTH)}
+						error={getFieldErrorMessages(errors.title_jp)}
 					>
-						<option value="1">Public</option>
-						<option value="0">Private</option>
-					</select>
-				)}
-			/>
-			{publicityError && <div className="text-danger">{publicityError}</div>}
+						{(fieldControl) => (
+							<Input
+								lang="ja"
+								maxLength={MAX_TITLE_LENGTH}
+								required
+								{...fieldControl}
+								{...register('title_jp')}
+							/>
+						)}
+					</FormField>
 
-			<div className="mt-4">
-				<Button
-					type="submit"
-					variant="outline"
-					disabled={isSubmitting || (disableSubmitWhenUnchanged && !isDirty) || !isValid}
-				>
-					{isSubmitting ? (
-						<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-					) : (
-						submitLabel
-					)}
-				</Button>
-			</div>
+					<FormField
+						label={requireEnglishTitle ? 'English title' : 'English title (optional)'}
+						counter={countOf(titleEn ?? '', MAX_TITLE_LENGTH)}
+						error={getFieldErrorMessages(errors.title_en)}
+					>
+						{(fieldControl) => (
+							<Input
+								maxLength={MAX_TITLE_LENGTH}
+								required={requireEnglishTitle}
+								{...fieldControl}
+								{...register('title_en')}
+							/>
+						)}
+					</FormField>
 
-			{statusMessage && <div className="text-danger mt-3">{statusMessage}</div>}
-			{generalErrorMessage && <div className="text-danger mt-3">{generalErrorMessage}</div>}
+					<FormField
+						label="Japanese text"
+						hint="The original text. No markup needed."
+						counter={countOf(contentJp ?? '', MAX_CONTENT_LENGTH)}
+						error={getFieldErrorMessages(errors.content_jp)}
+					>
+						{(fieldControl) => (
+							<Textarea
+								lang="ja"
+								rows={10}
+								maxLength={MAX_CONTENT_LENGTH}
+								required
+								{...fieldControl}
+								{...register('content_jp')}
+							/>
+						)}
+					</FormField>
+
+					<FormField
+						label="English translation (optional)"
+						hint="For learners who want to check their understanding."
+						counter={countOf(contentEn ?? '', MAX_CONTENT_LENGTH)}
+						error={getFieldErrorMessages(errors.content_en)}
+					>
+						{(fieldControl) => (
+							<Textarea
+								rows={6}
+								maxLength={MAX_CONTENT_LENGTH}
+								{...fieldControl}
+								{...register('content_en')}
+							/>
+						)}
+					</FormField>
+				</FormCard>
+			</FormLayout>
 		</form>
 	);
 }

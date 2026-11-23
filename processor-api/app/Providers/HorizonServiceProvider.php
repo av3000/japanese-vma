@@ -27,11 +27,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', function ($user = null) {
-            return request()?->attributes->get(
-                EnsureHorizonBasicAuth::REQUEST_ATTRIBUTE,
-                false
-            ) === true;
-        });
+        Gate::define('viewHorizon', static fn ($user = null): bool => EnsureHorizonBasicAuth::allows(request(), $user));
     }
 }

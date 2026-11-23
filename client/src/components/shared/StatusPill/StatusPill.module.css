@@ -1,0 +1,62 @@
+.pill {
+	--pill-bg: var(--color-fill);
+	--pill-fg: var(--color-text-subtle);
+
+	display: inline-flex;
+	align-items: flex-start;
+	gap: var(--spacing-2xs);
+	max-width: 100%;
+	padding: var(--spacing-3xs) var(--spacing-xs);
+	border-radius: var(--border-radius-lg);
+	background-color: var(--pill-bg);
+	color: var(--pill-fg);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--line-height-lg);
+}
+
+/* Tone colours use the status tint tokens; the text on each tint is 4.5:1 or better (see colors.css).
+   The shu accent is not used here: it is reserved for JLPT levels. */
+.neutral {
+	--pill-bg: var(--color-fill);
+	--pill-fg: var(--color-text-subtle);
+}
+
+.success {
+	--pill-bg: var(--color-success-tint);
+	--pill-fg: var(--color-success-text);
+}
+
+.warning {
+	--pill-bg: var(--color-warning-tint);
+	--pill-fg: var(--color-text-strong);
+}
+
+.info {
+	--pill-bg: var(--color-interactive-tint);
+	--pill-fg: var(--color-interactive-hover);
+}
+
+.danger {
+	--pill-bg: var(--color-error-tint);
+	--pill-fg: var(--color-error-text);
+}
+
+/* The icon box is one line tall, so it stays with the first line when a long label wraps. */
+.icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	width: var(--icon-size-sm);
+	height: calc(var(--font-size-body-sm) * var(--line-height-lg));
+}
+
+.icon > i {
+	width: 100%;
+	height: var(--icon-size-sm);
+}
+
+.label {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}

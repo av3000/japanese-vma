@@ -12,5 +12,9 @@ readonly class LikeFilterDTO
         public ?ObjectTemplateType $objectType = null,
         public ?string $likeValue = null, // 1 or -1 | upvote or downvote. So far only 1 is used as there is not dislike functionality
         public ?Pagination $pagination = null,
-    ) {}
+        // The viewer whose like is being looked up. Explicit so the repository does not
+        // have to reach for auth() - see ViewFilterDTO, which already carries one.
+        public ?int $userId = null,
+    ) {
+    }
 }

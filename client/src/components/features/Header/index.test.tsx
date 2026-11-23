@@ -20,6 +20,11 @@ vi.mock('@/components/features/SocketStatusIndicator', () => ({
 	default: () => <span>Socket status</span>,
 }));
 
+// The search's hit counts are covered in HeaderSearch; here they would need a QueryClient.
+vi.mock('@/api/search/useSearchCounts', () => ({
+	useSearchCounts: () => ({ counts: null }),
+}));
+
 const renderHeader = () =>
 	renderToStaticMarkup(
 		<MemoryRouter>
@@ -27,65 +32,77 @@ const renderHeader = () =>
 		</MemoryRouter>,
 	);
 
-describe('Header', () => {
-	it('renders public nav and neutral auth controls while auth is checking', () => {
-		authState.value = {
-			isAuthenticated: false,
-			isLoading: true,
-			user: null,
-			logout: vi.fn(),
-		};
+const signedIn = {
+	isAuthenticated: true,
+	isLoading: false,
+	user: { id: 1, uuid: 'user-uuid', name: 'Alana', email: 'alana@example.com', roles: [], isAdmin: false },
+	logout: vi.fn(),
+};
 
+describe('Header', () => {
+	it.each([
+		['checking', { isAuthenticated: false, isLoading: true, user: null, logout: vi.fn() }],
+		['a guest', { isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }],
+		['signed in', signedIn],
+	])('renders the Explore and Dictionary groups and the search for every auth state (%s)', (_, auth) => {
+		authState.value = auth;
 		const html = renderHeader();
 
-		expect(html).toContain('Articles');
-		expect(html).toContain('Catalogues');
-		expect(html).toContain('Japanese Material');
+		expect(html).toContain('>Explore<');
+		expect(html).toContain('>Dictionary<');
+		expect(html).toContain('href="/kanjis"');
+		expect(html).toContain('role="search"');
+		expect(html).not.toContain('Japanese Material');
+		expect(html).not.toContain('new-nav-group');
+		expect(html).not.toContain('/newarticle');
+		expect(html).not.toContain('/catalogues/new');
+		expect(html).not.toContain('/newpost');
+	});
+
+	it.each([
+		['a guest', { isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }],
+		['signed in', signedIn],
+	])('shows the Dark mode toggle after the account controls for %s', (_, auth) => {
+		authState.value = auth;
+		const html = renderHeader();
+
+		expect(html).toContain('aria-label="Dark mode"');
+		expect(html.indexOf('aria-label="Dark mode"')).toBeGreaterThan(html.indexOf('aria-label="Account"'));
+	});
+
+	it('renders neutral account controls while auth is checking', () => {
+		authState.value = { isAuthenticated: false, isLoading: true, user: null, logout: vi.fn() };
+		const html = renderHeader();
+
 		expect(html).toContain('aria-label="Checking account status"');
 		expect(html).not.toContain('Sign Up');
 		expect(html).not.toContain('Log In');
 		expect(html).not.toContain('Dashboard');
-		expect(html).not.toContain('Logged in as');
-		expect(html).not.toContain('Logout');
+		expect(html).not.toContain('Log out');
 	});
 
-	it('renders guest auth actions when auth is anonymous', () => {
-		authState.value = {
-			isAuthenticated: false,
-			isLoading: false,
-			user: null,
-			logout: vi.fn(),
-		};
-
+	it('renders Log In then Sign Up for a guest', () => {
+		authState.value = { isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() };
 		const html = renderHeader();
 
-		expect(html).toContain('Sign Up');
-		expect(html).toContain('Log In');
-		expect(html).not.toContain('Logged in as');
-		expect(html).not.toContain('Logout');
+		expect(html).toMatch(/<a[^>]*href="\/login"[^>]*>Log In<\/a>/);
+		expect(html).toMatch(/<a[^>]*href="\/register"[^>]*>Sign Up<\/a>/);
+		expect(html.indexOf('Log In')).toBeLessThan(html.indexOf('Sign Up'));
+		expect(html).not.toContain('Dashboard');
+		expect(html).not.toContain('Log out');
 	});
 
-	it('renders logged-in controls when auth is authenticated', () => {
-		authState.value = {
-			isAuthenticated: true,
-			isLoading: false,
-			user: {
-				id: 1,
-				uuid: 'user-uuid',
-				name: 'Alana',
-				email: 'alana@example.com',
-				roles: [],
-				isAdmin: false,
-			},
-			logout: vi.fn(),
-		};
-
+	it('collapses a signed-in user into their name, with Dashboard and Log out behind it', () => {
+		authState.value = signedIn;
 		const html = renderHeader();
 
-		expect(html).toContain('Dashboard');
-		expect(html).toContain('Logged in as');
 		expect(html).toContain('Alana');
-		expect(html).toContain('Logout');
+		expect(html).toContain('Dashboard');
+		expect(html).toContain('Log out');
+		expect(html).toContain('Socket status');
+		expect(html).toContain('aria-controls="account-nav-group"');
+		expect(html).not.toContain('Logged in as');
+		expect(html).not.toContain('Logout');
 		expect(html).not.toContain('Sign Up');
 		expect(html).not.toContain('Log In');
 	});

@@ -1,0 +1,32 @@
+/*
+ * Dashboard route: page shell and the list section around each tab's table.
+ * Shared by index.tsx and DashboardListSection.tsx.
+ */
+
+.page {
+	padding-block: var(--spacing-lg) var(--spacing-2xl);
+}
+
+.summary {
+	margin: 0;
+	color: var(--color-text-muted);
+	font-size: var(--font-size-body-sm);
+}
+
+.summary:focus-visible {
+	outline: var(--outline-size) solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+.loadMoreRow {
+	padding-top: var(--spacing-sm);
+}
+
+.loadMore {
+	width: 100%;
+	max-width: var(--container-xs);
+}
+
+.muted {
+	color: var(--color-text-muted);
+}

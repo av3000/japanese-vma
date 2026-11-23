@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Application\Articles\Actions\Processing;
 
 use App\Infrastructure\Persistence\Models\Article;
@@ -25,7 +26,7 @@ class ProcessWordMeaningsAction
 
         // For now, ensure words collection is available but unprocessed
         // This prevents errors in the UI while we work on the optimization
-        if (!$article->relationLoaded('words')) {
+        if (! $article->relationLoaded('words')) {
             $article->load('words');
         }
     }

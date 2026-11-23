@@ -1,0 +1,11 @@
+.page {
+	padding-block: var(--spacing-2xl);
+}
+
+.title {
+	margin-bottom: var(--spacing-md);
+}
+
+.message {
+	margin-bottom: 0;
+}

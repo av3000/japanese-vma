@@ -1,0 +1,17 @@
+.pager {
+	display: flex;
+	justify-content: center;
+	padding-block: var(--spacing-sm) var(--spacing-lg);
+}
+
+.loadMore {
+	min-width: 50%;
+}
+
+.loadMoreSpinner {
+	height: var(--size-3xl);
+}
+
+.muted {
+	color: var(--color-text-muted);
+}

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import styles from './Spinner.module.scss';
+import styles from './Spinner.module.css';
 
 interface SpinnerProps {
 	size: 'sm' | 'md' | 'lg';

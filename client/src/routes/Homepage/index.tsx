@@ -1,67 +1,38 @@
 import React from 'react';
-import FacebookIcon from '@/assets/icons/fb-icon.svg';
-import InstagramIcon from '@/assets/icons/ig-icon.svg';
-import ExploreArticleList from '@/components/features/Homepage/ExploreArticleList';
-import ExploreCatalogueList from '@/components/features/Homepage/ExploreCatalogueList';
-import { Icon } from '@/components/shared/Icon';
-import { Link } from '@/components/shared/Link';
-import { useAuth } from '@/hooks/useAuth';
-import './Homepage.scss';
+import { CorpusStatsTiles } from '@/components/features/Homepage/CorpusStatsTiles';
+import { LatestArticles } from '@/components/features/Homepage/LatestArticles';
+import { PhotoBand } from '@/components/features/Homepage/PhotoBand';
+import { PopularCatalogues } from '@/components/features/Homepage/PopularCatalogues';
+import { Container, Grid, Stack } from '@/components/shared/layout';
+import styles from './Homepage.module.css';
 
-const Homepage: React.FC = () => {
-	const { isAuthenticated } = useAuth();
+const LIST_COLUMNS = { base: 1, sm: 2 };
 
-	if (!isAuthenticated) {
-		return (
-			<div className="fullpage">
-				<div className="homepage">
-					<div className="homepage-upper-page">
-						<div className="homepage-left">
-							<div className="homepage-left-column">
-								<div className="home-hero-header">
-									<h1>
-										Learn <span className="text-brand">japanese</span> in the natural context{' '}
-									</h1>
-									<p>
-										JPLearning is the unique community and language learning environment{' '}
-										<span className="text-brand">for you</span> to find &amp; share readings and
-										material of your interest
-									</p>
-								</div>
-								<div className="home-hero-explore">
-									<a href="#readings" className="home-hero-explore-link">
-										Explore <Icon size="md" name="chevron" />
-									</a>
-								</div>
-							</div>
-						</div>
-						<div className="homepage-right">
-							<div className="home-hero-social-links float-right m-2">
-								<Link to="https://www.facebook.com/" className="mr-2">
-									<img src={FacebookIcon} alt="facebook-social-icon" />
-								</Link>
-								<Link to="https://www.instagram.com/">
-									<img src={InstagramIcon} alt="instagram-social-icon" />
-								</Link>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div className="container mt-4" id="readings">
-					<ExploreArticleList />
-					<ExploreCatalogueList />
-				</div>
+/**
+ * Landing page, the same for guests and signed-in users. Search and sign-up live in the Header;
+ * each section handles its own loading and error states.
+ */
+const Homepage: React.FC = () => (
+	<Container className={styles.page}>
+		<Stack gap="xl">
+			<div className={styles.top}>
+				<h1 className={styles.title}>Find your next reading</h1>
 			</div>
-		);
-	}
 
-	return (
-		<div className="container mt-4">
-			<h1 className="text-center">Welcome to your feed!</h1>
-			<ExploreCatalogueList />
-			<ExploreCatalogueList />
-		</div>
-	);
-};
+			<CorpusStatsTiles />
+
+			<PhotoBand />
+
+			<Grid columns={LIST_COLUMNS} gap="xl">
+				<Grid.Item span="auto">
+					<LatestArticles />
+				</Grid.Item>
+				<Grid.Item span="auto">
+					<PopularCatalogues />
+				</Grid.Item>
+			</Grid>
+		</Stack>
+	</Container>
+);
 
 export default Homepage;

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Application\JapaneseMaterial\Stats\Interfaces\Caches\CorpusStatsCacheInterface;
 use App\Support\JapaneseDataImport\JapaneseDataImporter;
 use Illuminate\Console\Command;
 use Throwable;
@@ -10,12 +11,14 @@ class ImportJapaneseData extends Command
 {
     protected $signature = 'app:import-japanese-data
         {--environment=production : Logical environment name stored in the sentinel table}
-        {--allow-rerun : Clear imported tables and run the import again even if it already completed}';
+        {--allow-rerun : Clear imported tables and run the import again even if it already completed}
+        {--discard-user-sentences : With --allow-rerun, also delete user-authored sentences, which share the sentences table}';
 
     protected $description = 'Import the Japanese dictionary datasets into the configured database';
 
     public function __construct(
         private readonly JapaneseDataImporter $importer,
+        private readonly CorpusStatsCacheInterface $corpusStatsCache,
     ) {
         parent::__construct();
     }
@@ -34,6 +37,7 @@ class ImportJapaneseData extends Command
                 output: function (string $message): void {
                     $this->line($message);
                 },
+                discardUserSentences: (bool) $this->option('discard-user-sentences'),
             );
         } catch (Throwable $exception) {
             report($exception);
@@ -51,6 +55,9 @@ class ImportJapaneseData extends Command
         foreach ($result['datasets'] as $table => $count) {
             $this->info("Imported {$count} rows into {$table}.");
         }
+
+        // The landing-page corpus totals are cached for an hour; a finished import makes them stale.
+        $this->corpusStatsCache->forget();
 
         $this->info('Japanese data import completed successfully.');
 

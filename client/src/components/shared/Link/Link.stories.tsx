@@ -1,133 +1,36 @@
-import type { Meta, StoryObj } from '@storybook/react';
-
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Link } from '../Link';
+import { linkSizes, linkWeights } from './types';
 
-const meta: Meta<typeof Link> = {
-  component: Link,
-  tags: ['autodocs'],
-};
+/**
+ * One story: every prop is a control. `to` renders a router link; set `linkUrl` to an absolute URL
+ * (and clear `to`) for the external link with its icon.
+ */
+const meta = {
+	title: 'Shared/Link',
+	component: Link,
+	args: {
+		to: '/articles',
+		children: 'All articles',
+		size: 'md',
+		weight: 'regular',
+		textLink: false,
+		richTextLink: false,
+		hasMinHeight: false,
+		hideExternalIcon: false,
+	},
+	argTypes: {
+		size: { control: 'inline-radio', options: linkSizes },
+		weight: { control: 'inline-radio', options: linkWeights },
+		to: { control: 'text' },
+		linkUrl: { control: 'text' },
+		title: { control: 'text' },
+		target: { control: 'inline-radio', options: [undefined, '_blank'] },
+	},
+} satisfies Meta<typeof Link>;
 
 export default meta;
-type Story = StoryObj<typeof Link>;
 
-export const SetUrlViaRoute: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    route: {
-      externalRoute: '/en/some-category',
-    },
-    linkUrl: '/en/some-category',
-  },
-};
+type Story = StoryObj<typeof meta>;
 
-export const SetUrlViaToSimple: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-  },
-};
-
-export const SetUrlViaToWithState: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/some-category',
-    state: {
-      externalRoute: '/en/some-category',
-    },
-  },
-};
-
-export const SetUrlViaLinkUrl: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    linkUrl: 'https://google.com',
-  },
-};
-
-export const HasTarget: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    linkUrl: 'https://google.com',
-    target: '_blank',
-  },
-};
-
-export const HasTitle: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    title: 'Links title shown on hover',
-  },
-};
-
-export const HasTextLinkStyles: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    textLink: true,
-  },
-};
-
-export const HasRichTextLinkStyles: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    richTextLink: true,
-  },
-};
-
-export const HasMinHeightStyles: Story = {
-  render: (args) => <Link {...args}>Min height to increase click area</Link>,
-  args: {
-    to: '/en/cms-demo',
-    hasMinHeight: true,
-  },
-};
-
-export const IsColorDefault: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    color: 'default',
-  },
-};
-
-export const IsSizeSm: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    size: 'sm',
-  },
-};
-
-export const IsSizeMd: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    size: 'md',
-  },
-};
-
-export const IsSizeLg: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    size: 'lg',
-  },
-};
-
-export const IsWeightRegular: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    weight: 'regular',
-  },
-};
-
-export const IsWeightBold: Story = {
-  render: (args) => <Link {...args}>Some link</Link>,
-  args: {
-    to: '/en/cms-demo',
-    weight: 'bold',
-  },
-};
+export const Playground: Story = {};

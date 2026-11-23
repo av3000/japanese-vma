@@ -1,30 +1,26 @@
 import { useParams } from 'react-router-dom';
 import { useCatalogueQuery } from '@/api/catalogues/details';
-import Spinner from '@/assets/images/spinner.gif';
+import { DetailUnavailable, unavailableMessage } from '@/components/shared/DetailLayout';
+import { PageLoading } from '@/components/shared/PageLoading';
 import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
 import CatalogueContent from './CatalogueContent';
 
 const CatalogueDetailsPage = () => {
 	const { catalogueId } = useParams<{ catalogueId: string }>();
-	const { data, isPending, isError } = useCatalogueQuery(catalogueId);
+	const { data, isPending, isError, error } = useCatalogueQuery(catalogueId);
 	const catalogue = data;
 
 	if (!catalogueId || (isPending && !catalogue)) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" />;
 	}
 
 	if (isError || !catalogue) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Catalogue not found or was deleted.</p>
-				<a href={CATALOGUE_ROUTES.list} className="btn btn-link">
-					Back to all Catalogues
-				</a>
-			</div>
+			<DetailUnavailable
+				message={unavailableMessage(error, 'catalogue')}
+				backTo={CATALOGUE_ROUTES.list}
+				backLabel="Back to Catalogues"
+			/>
 		);
 	}
 

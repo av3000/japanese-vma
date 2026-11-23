@@ -16,11 +16,11 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 ### Current Live Environment
 
-- **Frontend live hosting:** GitHub Actions workflow deploys the frontend; see `docs/frontend-github-actions-plan.md` for pipeline context.
-- **Backend live hosting:** Render hosts the live Laravel API/web service.
-- **Queue / worker runtime:** Production queue workers run on a GCP VM via Docker Compose, not on Render.
+- **Frontend live hosting:** `.github/workflows/frontend-ci.yml` builds the frontend image and triggers the Render deploy; see `docs/architecture/deployment-and-runtime.md` for the whole runtime.
+- **Backend live hosting:** Render hosts the live Laravel API/web service, pulling the backend image from GHCR.
+- **Queue / worker runtime:** The queue worker runs from Docker Compose (`processor-api/.deploy/worker/`), not on Render. No production worker host is deployed yet (#709).
 - **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
-- **Backend deployment flow:** GitLab CI builds the backend image, deploys the worker to the GCP VM over SSH, verifies the worker, then triggers the Render backend deploy.
+- **Backend deployment flow:** On a push to `master`, `.github/workflows/backend-ci.yml` builds and smoke-tests the backend image, pushes it to GHCR, runs migrations behind the `production` environment's approval when the release changes them, triggers the Render backend deploy, then verifies the live service. One-off production tasks (migrate, data import, Passport client) run from `.github/workflows/backend-operations.yml`.
 - **Rule for agents:** Treat live environment changes as cross-system work. Check backend config, worker compose/runtime, CI/CD, and docs together before proposing or implementing production changes.
 
 ## 2) Developer Experience (DX) Baseline
@@ -38,20 +38,14 @@ This file provides **repository-wide** guidance for AI agents and contributors w
   - ESLint + Prettier extensions for frontend lint/format feedback.
   - EditorConfig support.
   - PHP Intelephense (or equivalent) for Laravel navigation.
-  - Tailwind CSS IntelliSense for utility-class workflows.
 - **Before opening PRs:**
   - Run targeted checks for touched surface area first.
   - Run broader checks when practical.
   - Keep outputs and assumptions explicit in summaries.
-- **Generated API contract workflow:**
-  - When TypeScript API models or generated clients drift from backend expectations, fix the backend schema source first.
-  - Preferred order: backend Request/Resource/response annotation update → `composer openapi` → `npm run orval:file`.
-  - Run `composer openapi` and `npm run orval:file` sequentially, not in parallel, or Orval may regenerate from a stale `processor-api/api.json`.
-  - If Orval output looks wrong, inspect `processor-api/api.json` before adding frontend adapters or type coercion.
-  - Prefer fixing schema generation at the backend source even if the runtime endpoint itself appears correct.
-  - Verify the regenerated schema before trusting regenerated client types.
-  - Do not hand-edit generated API files to patch over contract problems.
-  - When a v1 endpoint is already documented and Orval already generates a usable client, prefer that generated client over adding a custom frontend wrapper. Only add a custom adapter when the endpoint is legacy, missing from the schema, or the generated client is actually unusable.
+- **Generated API contract workflow:** the rules live in the standards skills, with examples.
+  - Backend source, then `composer openapi`, then `npm run orval:file`, one after the other: `CONTRACT-api-json-orval-workflow` (`backend-standards`).
+  - Contract drift is fixed at the backend schema, never in generated files or client coercion: `repo-contract-drift-backend-first` (`frontend-standards`).
+  - A documented v1 endpoint is called through its generated client: `repo-generated-client-first` (`frontend-standards`).
 
 ## 3) How to Work in This Repository
 
@@ -75,10 +69,8 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 - **Reliability:**
   - Validate changed behavior with tests/checks where feasible.
   - If environment blocks a check, report the limitation clearly.
-  - For backend verification, use the dedicated Docker test lane from `processor-api/`: `docker compose up -d --build db-test test-runner`, then `docker compose exec test-runner composer test -- ...`.
-  - Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
-  - In the current sandboxed frontend setup, Vitest/Vite may fail at startup with `spawn EPERM` from `esbuild`; rerun the same test command outside the sandbox before treating it as an application failure.
-  - Treat that as an environment limitation to report clearly, not as a product bug to “fix” inside unrelated feature work.
+  - For backend verification, use the isolated Docker test lane: `TEST-docker-lane` in `backend-standards` holds the commands and what never to run tests against.
+  - Setting up a fresh worktree, sandbox limits (`spawn EPERM`, a Vitest browser run that exits 0 after one file) and the other known local traps: `docs/agents/local-environment.md`. Treat those as environment limitations to report, not product bugs to "fix" inside unrelated work.
 - **Safety:**
   - Do not silently alter contracts or conventions.
   - Highlight behavior-impacting changes and rollout implications.
@@ -96,16 +88,31 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 - Backend rules live in: `processor-api/AGENTS.md`
 - Frontend rules live in: `client/AGENTS.md`
-- Live backend deployment and worker behavior may involve Render, GitLab CI, GCP VM worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
+- Live backend deployment and worker behavior may involve Render, GitHub Actions, the worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
 
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
 
-## 7) Laravel AI Guidance
+## 7) Agent Workflow
 
-- Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
-- For legacy Laravel endpoint migrations into the v1 architecture, prefer `.ai/skills/legacy-to-v1-migration/`.
-- Treat `.ai/` guidance as the canonical AI workflow layer for this repository when Laravel Boost or another compatible agent setup is available.
-- Repo and scoped `AGENTS.md` constraints still take precedence over generic clean architecture advice.
+The full map (which skill to use when, the other ways in, context hygiene) is `docs/agents/workflow.md`. The rules:
+
+- **Path:** issue with numbered acceptance criteria (`write-issue`) → build one slice at a time (`tdd`) → self-review (`review-branch`) → PR into `develop` (`create-pull-request`) → optional review record on the PR (`post-review-to-pr`) → answer review comments (`address-pr-review`).
+- **Acceptance criteria are mandatory.** Every PR references at least one issue (`Refs #N`), and every referenced issue has an `## Acceptance criteria` checklist. CI enforces both.
+- **Review findings** are labelled `[Type · Criticality]`:
+  - Type: `Spec` (measured against an acceptance criterion), `Standards` (measured against a documented repo rule), `Judgement` (no written rule; the reasoning is stated).
+  - Criticality: `Critical` (blocks the merge), `Warning` (fix now, or defer with a linked issue), `Suggestion` (optional).
+- **Commits:** one per sub-issue.
+  - First line: `<Stable ID>: <outcome>`, for example `HARNESS-03: remove finished migration skills`.
+  - Body: `Refs #N`. Never `Closes`: PRs into `develop` do not auto-close issues, so close them by hand after merge.
+  - No attribution trailers or footers.
+- **Follow-ups** found mid-work become separate `needs-triage` issues, never extra changes on the current branch.
+- **Skills live in `.claude/skills/`** for Claude Code. `.codex/skills/` is a generated mirror for Codex: edit `.claude/skills/`, then run `scripts/sync-agent-skills.sh`.
+- **Precedence:**
+  - These `AGENTS.md` files win over vendor and plugin skills (Laravel Boost, Matt Pocock's skills, Vercel's).
+  - A skill's `SKILL.md` is canonical for that skill's behaviour.
+- **Backend conventions:**
+  - Always-on Laravel conventions live in `processor-api/.ai/guidelines/`.
+  - Laravel Boost copies them into `processor-api/AGENTS.md`.
 
 ## Agent skills
 
@@ -119,4 +126,4 @@ Use the default triage label vocabulary unless the repo's GitHub labels are chan
 
 ### Domain docs
 
-Use a single-context repo layout by default; read root and scoped `AGENTS.md` files as the current source of project guidance until `CONTEXT.md` or ADR docs exist. See `docs/agents/domain.md`.
+Use a single-context repo layout. Read the root and scoped `AGENTS.md` files for rules, `CONTEXT.md` for domain vocabulary, and `docs/adr/` for recorded decisions. See `docs/agents/domain.md`.

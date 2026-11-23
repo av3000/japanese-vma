@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Articles;
 
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
+use App\Domain\Processing\Enums\ProcessingStatus;
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
@@ -148,9 +149,13 @@ class UpdateArticleTest extends TestCase
             'hashtags' => ['#old'],
         ])->assertStatus(200);
 
-        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+        $response = $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
             'hashtags' => ['#new1', '#new2'],
-        ])->assertStatus(200);
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('hashtags.0.content', '#new1')
+            ->assertJsonPath('hashtags.1.content', '#new2');
 
         $hashtags = $this->getHashtagContents($article);
         sort($hashtags);
@@ -190,7 +195,7 @@ class UpdateArticleTest extends TestCase
         $this->assertSame(['#legacy'], $this->getHashtagContents($article));
     }
 
-    public function test_update_content_jp_dispatches_job(): void
+    public function test_update_content_jp_dispatches_one_job_with_the_bumped_version(): void
     {
         $user = $this->createUser();
         $article = $this->createArticle($user);
@@ -200,8 +205,96 @@ class UpdateArticleTest extends TestCase
 
         $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
             'content_jp' => 'Updated Japanese content text.',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('processing_status.status', ProcessingStatus::PENDING->value)
+            ->assertJsonPath('processing_status.type', 'article_content_processing');
+
+        $this->assertDispatchedOnceFor($article->uuid, version: 2);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 2]);
+        $this->assertDatabaseHas('processing_states', [
+            'entity_id' => $article->uuid,
+            'task_type' => 'article_content_processing',
+            'status' => ProcessingStatus::PENDING->value,
+            'content_version' => 2,
+        ]);
+    }
+
+    public function test_update_title_jp_alone_dispatches_the_job(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user, [
+            'title_jp' => '古いタイトル',
+            'content_jp' => '古い本文です。日本語の本文です。',
+        ]);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'title_jp' => '新しいタイトル',
         ])->assertStatus(200);
 
-        Bus::assertDispatched(ProcessArticleKanjisJob::class);
+        $this->assertDispatchedOnceFor($article->uuid, version: 2);
+    }
+
+    public function test_each_content_edit_bumps_the_version_again(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", ['content_jp' => '一回目の更新です。日本語の本文です。'])->assertStatus(200);
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", ['content_jp' => '二回目の更新です。日本語の本文です。'])->assertStatus(200);
+
+        Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 2);
+        Bus::assertDispatched(ProcessArticleContentJob::class, fn (ProcessArticleContentJob $job): bool => $job->contentVersion === 2);
+        Bus::assertDispatched(ProcessArticleContentJob::class, fn (ProcessArticleContentJob $job): bool => $job->contentVersion === 3);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 3]);
+    }
+
+    public function test_unchanged_japanese_fields_do_not_dispatch_or_bump(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'title_jp' => $article->title_jp,
+            'content_jp' => $article->content_jp,
+            'source_link' => 'https://example.com/updated-source',
+        ])->assertStatus(200);
+
+        Bus::assertNotDispatched(ProcessArticleContentJob::class);
+        $this->assertDatabaseHas('articles', ['uuid' => $article->uuid, 'content_version' => 1]);
+        $this->assertDatabaseMissing('processing_states', ['entity_id' => $article->uuid]);
+    }
+
+    public function test_update_metadata_only_does_not_dispatch(): void
+    {
+        $user = $this->createUser();
+        $article = $this->createArticle($user);
+
+        Passport::actingAs($user, ['*'], 'api');
+        Bus::fake();
+
+        $this->json('PUT', "/api/v1/articles/{$article->uuid}", [
+            'source_link' => 'https://example.com/updated-source',
+        ])->assertStatus(200);
+
+        Bus::assertNotDispatched(ProcessArticleContentJob::class);
+    }
+
+    private function assertDispatchedOnceFor(string $articleUuid, int $version): void
+    {
+        Bus::assertDispatchedTimes(ProcessArticleContentJob::class, 1);
+        Bus::assertDispatched(
+            ProcessArticleContentJob::class,
+            fn (ProcessArticleContentJob $job): bool => $job->articleUuid === $articleUuid && $job->contentVersion === $version,
+        );
     }
 }

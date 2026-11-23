@@ -1,8 +1,4 @@
-import {
-	catalogueAddItem,
-	catalogueForItem,
-	catalogueRemoveItem,
-} from '@/api/generated/catalogue/catalogue';
+import { catalogueAddItem, catalogueForItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import type { CatalogueForItem200ItemsItem } from '@/api/generated/model/catalogueForItem200ItemsItem';
 
 export type CatalogueForItem = CatalogueForItem200ItemsItem;
@@ -33,7 +29,16 @@ export const fetchCataloguesForItem = async (
 
 export type CatalogueForItemAction = 'add' | 'remove';
 
-export const updateCatalogueForItem = async ({
+export const deriveCatalogueWidgetState = (
+	lists: CatalogueForItem[],
+	instanceObjectType: number,
+	isKnownType?: number,
+) => ({
+	isBookmarked: lists.some((list) => list.contains_item && list.type === instanceObjectType),
+	isKnown: isKnownType ? lists.some((list) => list.contains_item && list.type === isKnownType) : false,
+});
+
+export const addOrRemoveCatalogueForItem = async ({
 	list,
 	elementId,
 	action,
@@ -51,7 +56,7 @@ export const updateCatalogueForItem = async ({
 };
 
 // Applies the optimistic local for-item change on the shared result shape.
-export const applyCatalogueForItemAction = (
+export const optimisticApplyCatalogueForItemAction = (
 	lists: CatalogueForItem[],
 	catalogueId: number,
 	action: CatalogueForItemAction,

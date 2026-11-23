@@ -1,138 +1,148 @@
-import * as React from 'react';
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CatalogueForItem } from '@/api/catalogues/cataloguesForItem';
+import { mapWordDetail } from '@/api/words/details';
+import {
+	wordKanaOnly,
+	wordManyKanji,
+	wordManyMeanings,
+} from '@/components/features/japanese/related/dictionaryDetail.fixtures';
+import { SavedListType } from '@/shared/constants/enums';
 import WordDetails from './index';
 
-const updateCatalogueForItemMock = vi.fn();
-const useNavigateMock = vi.fn();
-const bootstrapButtonProps: Array<{ onClick?: () => Promise<void> | void; variant?: string }> = [];
-
-vi.mock('react', async () => {
-	const actual = await vi.importActual<typeof import('react')>('react');
-	return {
-		...actual,
-		useState: vi.fn(actual.useState),
-	};
-});
+const useWordQueryMock = vi.fn();
+const authorizedWidgetProps: Array<Record<string, unknown>> = [];
+const relatedProps: Array<Record<string, unknown>> = [];
+let isAuthenticated = true;
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
 	return {
 		...actual,
-		Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
-		useNavigate: () => useNavigateMock,
-		useParams: () => ({ word_id: '42' }),
+		Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => (
+			<a href={to} className={className}>
+				{children}
+			</a>
+		),
+		useParams: () => ({ word_id: 'word-route-uuid' }),
 	};
 });
 
-vi.mock('react-bootstrap', () => ({
-	Button: ({
-		children,
-		onClick,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => Promise<void> | void;
-		variant?: string;
-	}) => {
-		bootstrapButtonProps.push({ onClick, variant });
-		return <button type="button">{children}</button>;
-	},
-	Modal: Object.assign(
-		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-		{
-			Header: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-			Title: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-			Body: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-			Footer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-		},
-	),
+vi.mock('@/api/words/details', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/api/words/details')>()),
+	useWordQuery: (...args: unknown[]) => useWordQueryMock(...args),
 }));
-
-vi.mock('@/api/catalogues/cataloguesForItem', async () => {
-	const actual = await vi.importActual<typeof import('@/api/catalogues/cataloguesForItem')>(
-		'@/api/catalogues/cataloguesForItem',
-	);
-	return {
-		...actual,
-		updateCatalogueForItem: (...args: unknown[]) => updateCatalogueForItemMock(...args),
-	};
-});
 
 vi.mock('@/hooks/useAuth', () => ({
-	useAuth: () => ({
-		isAuthenticated: true,
-	}),
+	useAuth: () => ({ isAuthenticated }),
 }));
 
-vi.mock('@/services/api', () => ({
-	apiCall: vi.fn(),
+vi.mock('@/components/features/catalogues/AuthorizedBookmarkWidget', () => ({
+	AuthorizedBookmarkWidget: (props: Record<string, unknown>) => {
+		authorizedWidgetProps.push(props);
+		return <div>Bookmark</div>;
+	},
 }));
 
-vi.mock('@/components/shared/Chip', () => ({
-	Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+vi.mock('@/components/features/japanese/related', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/components/features/japanese/related')>()),
+	WordRelated: (props: Record<string, unknown>) => {
+		relatedProps.push(props);
+		return <section>Related to this word</section>;
+	},
 }));
 
-vi.mock('@/assets/images/spinner.gif', () => ({
-	default: 'spinner.gif',
-}));
+vi.mock('@/assets/images/spinner.gif', () => ({ default: 'spinner.gif' }));
+
+const loaded = (data: Parameters<typeof mapWordDetail>[0]) => ({
+	data: mapWordDetail(data),
+	isLoading: false,
+	isError: false,
+	error: null,
+});
 
 describe('WordDetails', () => {
-	const list: CatalogueForItem = {
-		id: 7,
-		uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
-		title: 'Known words',
-		type: 3,
-		type_label: 'Known Words',
-		publicity: 0,
-		contains_item: false,
-	};
-
 	beforeEach(() => {
-		vi.clearAllMocks();
-		bootstrapButtonProps.length = 0;
-		updateCatalogueForItemMock.mockResolvedValue(undefined);
-		vi.mocked(React.useState).mockReset();
+		authorizedWidgetProps.length = 0;
+		relatedProps.length = 0;
+		isAuthenticated = true;
+		useWordQueryMock.mockReturnValue(loaded(wordManyMeanings));
 	});
 
-	it('uses the shared v1 for-item write helper with a numeric word id and updates known-word state by list id', async () => {
-		const setWordMock = vi.fn();
-		const setKanjisMock = vi.fn();
-		const setArticlesMock = vi.fn();
-		const setShowModalMock = vi.fn();
-		const setIsLoadingMock = vi.fn();
-		const setLoadingListIdsMock = vi.fn();
-		const setWordIsKnownMock = vi.fn();
-		let updatedLists: CatalogueForItem[] | undefined;
+	it('shows the word as the title with its reading and first meanings', () => {
+		const html = renderToStaticMarkup(<WordDetails />);
 
-		const setListsMock = vi.fn((updater: CatalogueForItem[] | ((prev: CatalogueForItem[]) => CatalogueForItem[])) => {
-			if (typeof updater === 'function') {
-				updatedLists = updater([list]);
-			}
-		});
+		expect(useWordQueryMock).toHaveBeenCalledWith('word-route-uuid');
+		expect(html).toMatch(/<h1 class="[^"]*word[^"]*" lang="ja">出る<\/h1>/);
+		expect(html).toContain('lang="ja">でる</p>');
+		expect(html).toContain('lang="en">to leave, to exit, to go out</p>');
+		expect(html).toMatch(/<a href="\/words"[^>]*>.*Words<\/a>/);
+	});
 
-		vi.mocked(React.useState)
-			.mockImplementationOnce(() => [{} as never, setWordMock])
-			.mockImplementationOnce(() => [[] as never, setKanjisMock])
-			.mockImplementationOnce(() => [[] as never, setArticlesMock])
-			.mockImplementationOnce(() => [[list] as never, setListsMock as never])
-			.mockImplementationOnce(() => [true as never, setShowModalMock])
-			.mockImplementationOnce(() => [false as never, setWordIsKnownMock])
-			.mockImplementationOnce(() => [false as never, setIsLoadingMock])
-			.mockImplementationOnce(() => [[] as never, setLoadingListIdsMock]);
+	it('lists the meanings as numbered senses, in order', () => {
+		const html = renderToStaticMarkup(<WordDetails />);
+		const senses = html.match(/<li class="[^"]*sense[^"]*">/g) ?? [];
 
+		expect(html).toContain('>Meanings</h2>');
+		expect(html).toContain('<ol class=');
+		expect(senses).toHaveLength(wordManyMeanings.senses.length);
+		expect(html).toContain('>to leave; to exit; to go out; to come out; to get out</p>');
+		expect(html.indexOf('to get out')).toBeLessThan(html.indexOf('to graduate'));
+	});
+
+	it('hides the reading of a word written in kana, and shows no JLPT it does not have', () => {
+		useWordQueryMock.mockReturnValue(loaded(wordKanaOnly));
+
+		const html = renderToStaticMarkup(<WordDetails />);
+
+		expect(html).toContain('lang="ja">どうぞ</h1>');
+		expect(html).not.toMatch(/<p[^>]*lang="ja">-<\/p>/);
+		expect(html).not.toContain('>JLPT</dt>');
+		expect(html).toMatch(/>Kanji<\/dt><dd[^>]*>0<\/dd>/);
+	});
+
+	it('shows part of speech and the kanji count in the rail', () => {
+		useWordQueryMock.mockReturnValue(loaded(wordManyKanji));
+
+		const html = renderToStaticMarkup(<WordDetails />);
+
+		expect(html).toContain('>Part of speech</dt>');
+		expect(html).toMatch(/>Kanji<\/dt><dd[^>]*>18<\/dd>/);
+		expect(relatedProps[0]).toMatchObject({ word: expect.objectContaining({ id: wordManyKanji.id }) });
+	});
+
+	it('offers a labelled Save by the numeric word id to signed-in viewers only', () => {
 		renderToStaticMarkup(<WordDetails />);
 
-		const addButton = bootstrapButtonProps.find((props) => props.variant === 'primary');
-		await addButton?.onClick?.();
-
-		expect(updateCatalogueForItemMock).toHaveBeenCalledWith({
-			list,
-			elementId: 42,
-			action: 'add',
+		expect(authorizedWidgetProps[0]).toMatchObject({
+			entityId: wordManyMeanings.id,
+			instanceObjectType: SavedListType.WORDS,
+			isKnownType: SavedListType.KNOWNWORDS,
+			label: 'Save to a catalogue',
 		});
-		expect(updatedLists).toEqual([{ ...list, contains_item: true }]);
-		expect(setWordIsKnownMock).toHaveBeenCalledWith(true);
+
+		isAuthenticated = false;
+		authorizedWidgetProps.length = 0;
+		renderToStaticMarkup(<WordDetails />);
+		expect(authorizedWidgetProps).toHaveLength(0);
+	});
+
+	it('renders the loading page, and a missing word in its own words', () => {
+		useWordQueryMock.mockReturnValueOnce({ isLoading: true, isError: false });
+		expect(renderToStaticMarkup(<WordDetails />)).toContain('data-loading-family="detail"');
+
+		const notFound = new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+			status: 404,
+			statusText: '',
+			headers: {},
+			config: { headers: new AxiosHeaders() },
+			data: {},
+		});
+		useWordQueryMock.mockReturnValueOnce({ isLoading: false, isError: true, error: notFound });
+		const html = renderToStaticMarkup(<WordDetails />);
+		expect(html).toContain('This word doesn&#x27;t exist. It may have been deleted.');
+		expect(html).toContain('href="/words"');
 	});
 });

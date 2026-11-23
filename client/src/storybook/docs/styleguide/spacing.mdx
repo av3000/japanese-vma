@@ -1,0 +1,28 @@
+import { Meta, Source, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Spacing" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Spacing</h1>
+  <div className="richTextWrapper">
+    <p>
+      One scale for every gap, margin and padding, from <code>--spacing-3xs</code> to <code>--spacing-4xl</code>. Values live in <code>src/styles/00-settings/spacing.css</code>; each bar below is drawn from the live property.
+    </p>
+    <ul>
+      <li><code>md</code> is the default gap.</li>
+      <li><code>lg</code> and <code>xl</code> separate sections.</li>
+      <li><code>xs</code> and <code>sm</code> sit inside dense controls.</li>
+      <li>The layout primitives (<code>Stack</code>, <code>Cluster</code>, <code>Grid</code>) take these names as their <code>gap</code> prop: <code>'md'</code>, <code>'lg'</code>.</li>
+    </ul>
+  </div>
+
+<h2>Scale</h2>
+<TokenGroup prefix="spacing" kind="bar" />
+
+  <h2>In a CSS Module</h2>
+<Source language="css" format={false} code={".card {\n  padding: var(--spacing-md);\n  gap: var(--spacing-xs);\n}"} />
+</div>
+</Unstyled>

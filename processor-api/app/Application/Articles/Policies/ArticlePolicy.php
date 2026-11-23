@@ -2,47 +2,30 @@
 
 namespace App\Application\Articles\Policies;
 
-use App\Application\Users\Services\RoleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Articles\Models\Article;
-
-use App\Domain\Shared\Enums\{PublicityStatus};
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\User;
+use App\Domain\Articles\ValueObjects\ArticleVisibilityScope;
+use App\Domain\Shared\Enums\PublicityStatus;
 
 class ArticlePolicy
 {
-    public function __construct(
-        private readonly RoleServiceInterface $roleService
-    ) {}
-
     /**
-     * Business rule: Determine what visibility criteria apply to a user
-     * Returns domain concepts, not database queries
+     * Derive the mandatory Article visibility scope from the actor.
+     *
+     * The scope is the only thing allowed to decide eligibility, and it is built
+     * from the authenticated actor alone, so no request parameter can widen it.
      */
-    public function getVisibilityCriteria(?User $user): array
+    public function scopeFor(?AuthenticatedUser $authenticatedUser): ArticleVisibilityScope
     {
-        if ($user === null) {
-            // Anonymous users can only see public articles
-            return [
-                'publicity' => [PublicityStatus::PUBLIC],
-                'user_id' => null
-            ];
+        if ($authenticatedUser === null) {
+            return ArticleVisibilityScope::publicOnly();
         }
 
-        // Use RoleService instead of direct hasRole
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
-            return [
-                'publicity' => 'all',
-                'user_id' => 'all'
-            ];
+        if ($authenticatedUser->isAdmin) {
+            return ArticleVisibilityScope::unrestricted();
         }
 
-        // Regular users can see public articles and their own private articles
-        return [
-            'publicity' => [PublicityStatus::PUBLIC, PublicityStatus::PRIVATE],
-            'user_id' => $user->id,
-            'access_own_private' => true
-        ];
+        return ArticleVisibilityScope::publicOrOwnedBy($authenticatedUser->id->value());
     }
 
     /**
@@ -53,7 +36,7 @@ class ArticlePolicy
      *
      * Determine if user can view an article
      */
-    public function canView(?User $user, Article $article): bool
+    public function canView(?AuthenticatedUser $authenticatedUser, Article $article): bool
     {
         // Public articles are viewable by everyone
         if ($article->getPublicity() === PublicityStatus::PUBLIC) {
@@ -61,52 +44,52 @@ class ArticlePolicy
         }
 
         // Anonymous users can't view private articles
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
         // Admins can view everything
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+        if ($authenticatedUser->isAdmin) {
             return true;
         }
 
         // Users can view their own private articles
-        return $user->id === $article->getAuthorId()->value();
+        return $authenticatedUser->id->equals($article->getAuthorId());
     }
 
     /**
      * Determine if user can delete an article
      */
-    public function canDelete(?User $user, Article $article): bool
+    public function canDelete(?AuthenticatedUser $authenticatedUser, Article $article): bool
     {
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
         // TODO: This should be allowed via permission groups Admin should inherit proper rights to delete.
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+        if ($authenticatedUser->isAdmin) {
             return true;
         }
 
-        return $user->id === $article->getAuthorId()->value();
+        return $authenticatedUser->id->equals($article->getAuthorId());
     }
 
     /**
      * Determine if user can update an article.
      * Business rule: Only the owner or admin can update articles.
      */
-    public function canUpdate(?User $user, Article $article): bool
+    public function canUpdate(?AuthenticatedUser $authenticatedUser, Article $article): bool
     {
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
         // Admins can update anything
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+        if ($authenticatedUser->isAdmin) {
             return true;
         }
 
         // Users can update their own articles
-        return $user->id === $article->getAuthorId()->value();
+        return $authenticatedUser->id->equals($article->getAuthorId());
     }
 }

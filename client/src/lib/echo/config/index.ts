@@ -2,26 +2,14 @@ import Echo, { type BroadcastDriver, type EchoOptions } from 'laravel-echo';
 import Pusher from 'pusher-js';
 import type { ConfigDefaults } from '../types';
 
-let echoInstance: Echo<BroadcastDriver> | null = null;
-let echoConfig: EchoOptions<BroadcastDriver> | null = null;
-
-const getEchoInstance = <T extends BroadcastDriver>(): Echo<T> => {
-	if (echoInstance) {
-		return echoInstance as Echo<T>;
-	}
-
-	if (!echoConfig) {
-		throw new Error('Echo has not been configured. Please call `configureEcho()`.');
-	}
-
-	echoConfig.Pusher ??= Pusher;
-
-	echoInstance = new Echo(echoConfig);
-
-	return echoInstance as Echo<T>;
-};
-
-export const configureEcho = <T extends BroadcastDriver>(config: EchoOptions<T>): void => {
+/**
+ * Build an Echo instance. A plain factory, on purpose (#253): the provider owns the instance
+ * and hands it down through React context, so there is no module-level singleton that a
+ * subscriber can read before it is configured and then never see change.
+ *
+ * Lazy-loaded by the provider so `laravel-echo` and `pusher-js` stay out of the main bundle.
+ */
+export const createEcho = <T extends BroadcastDriver>(config: EchoOptions<T>): Echo<T> => {
 	const defaults: ConfigDefaults<BroadcastDriver> = {
 		reverb: {
 			broadcaster: 'reverb',
@@ -59,16 +47,12 @@ export const configureEcho = <T extends BroadcastDriver>(config: EchoOptions<T>)
 		},
 	};
 
-	echoConfig = {
+	const merged = {
 		...defaults[config.broadcaster],
 		...config,
 	} as EchoOptions<BroadcastDriver>;
 
-	if (echoInstance) {
-		echoInstance = null;
-	}
+	merged.Pusher ??= Pusher;
+
+	return new Echo(merged) as unknown as Echo<T>;
 };
-
-export const echo = <T extends BroadcastDriver = BroadcastDriver>(): Echo<T> => getEchoInstance<T>();
-
-export const echoIsConfigured = () => echoConfig !== null;

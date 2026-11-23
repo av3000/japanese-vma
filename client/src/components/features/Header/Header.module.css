@@ -1,0 +1,411 @@
+.header {
+	position: relative;
+	z-index: var(--z-index-header);
+	background-color: var(--color-surface-raised);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
+}
+
+/* Mobile first: brand, then the search and menu buttons pushed to the right edge. */
+.bar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	padding: var(--size-sm) var(--size-md);
+}
+
+@media (min-width: 768px) {
+	.bar {
+		padding: var(--size-md) var(--size-lg);
+	}
+}
+
+.brand {
+	font-size: var(--font-size-heading-4);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-interactive);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.brand:hover,
+.brand:focus-visible {
+	color: var(--color-interactive);
+}
+
+/* Shown from the collapse breakpoint only (see the bottom of this file). */
+.desktopNav,
+.account {
+	display: none;
+}
+
+.groups,
+.account {
+	gap: var(--spacing-2xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.account {
+	align-items: center;
+	flex: none;
+}
+
+/* Links and disclosure buttons ------------------------------------------ */
+
+.link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2xs);
+	min-height: var(--size-3xl);
+	padding: 0 var(--spacing-xs);
+	background: transparent;
+	border: 0;
+	border-radius: var(--border-radius-sm);
+	font: inherit;
+	font-size: var(--font-size-body-md);
+	color: var(--color-text);
+	text-decoration: none;
+	text-underline-offset: 0.4em;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.link:hover {
+	color: var(--color-text);
+	text-decoration: underline var(--border-size-sm);
+}
+
+.link:focus-visible {
+	outline: var(--outline-size) solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* Weight plus a 2px underline, so the current page is not marked by colour alone. */
+.linkActive,
+.linkActive:hover {
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-interactive);
+	text-decoration: underline var(--border-size-md) var(--color-interactive);
+}
+
+.groupButton:hover,
+.groupButton[aria-expanded='true'] {
+	background-color: var(--color-surface-sunken);
+	color: var(--color-text);
+	text-decoration: none;
+}
+
+.chevron {
+	transition: transform var(--duration-sm) var(--ease-base);
+}
+
+.groupButton[aria-expanded='true'] .chevron {
+	transform: rotate(180deg);
+}
+
+.group {
+	position: relative;
+}
+
+/* In the menu drawer the account list opens in place, under its button. */
+.groupList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+	margin: 0;
+	padding: var(--spacing-xs) 0 0;
+	list-style: none;
+}
+
+.groupList[hidden] {
+	display: none;
+}
+
+/* In the bar the lists float under their buttons. */
+.desktopNav .groupList,
+.account .groupList {
+	position: absolute;
+	top: calc(100% + var(--spacing-2xs) + var(--spacing-3xs));
+	left: 0;
+	z-index: var(--z-index-dropdown);
+	min-width: 12.5rem;
+	padding: var(--spacing-2xs);
+	background-color: var(--color-surface-raised);
+	border: var(--border-size-sm) solid var(--color-border);
+	border-radius: var(--border-radius-md);
+	box-shadow: var(--box-shadow-default);
+}
+
+/* The account sits at the right edge, so its list opens leftwards. */
+.account .groupList {
+	right: 0;
+	left: auto;
+}
+
+.desktopNav .groupList .link,
+.account .groupList .link {
+	width: 100%;
+	min-height: 0;
+	padding: var(--spacing-xs) var(--spacing-sm);
+	text-align: left;
+}
+
+.description {
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-regular);
+	color: var(--color-text-muted);
+	white-space: normal;
+}
+
+.divider {
+	height: var(--border-size-sm);
+	margin: var(--spacing-2xs) var(--spacing-xs);
+	background-color: var(--color-fill);
+}
+
+.danger,
+.danger:hover {
+	color: var(--color-error-text);
+}
+
+/* Account --------------------------------------------------------------- */
+
+.accountButton {
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
+	font-weight: var(--font-weight-semibold);
+}
+
+/* A long name truncates rather than pushing the bar wider. */
+.userName {
+	max-width: 12rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.authPending {
+	display: inline-block;
+	width: 8rem;
+	height: 1.5rem;
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-fill);
+}
+
+.socket {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--spacing-2xs);
+}
+
+/* Mobile menu button and drawer ----------------------------------------- */
+
+.iconButton,
+.menuButton {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: var(--size-4xl);
+	height: var(--size-3xl);
+	padding: 0;
+	background: transparent;
+	border: var(--border-size-sm) solid var(--color-border-emphasis);
+	border-radius: var(--border-radius-sm);
+	color: var(--color-text-strong);
+	cursor: pointer;
+}
+
+.iconButton:hover,
+.menuButton:hover {
+	border-color: var(--color-border-strong);
+}
+
+.iconButton:focus-visible,
+.menuButton:focus-visible {
+	outline: var(--outline-size) solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+.menuBars {
+	position: relative;
+	display: block;
+	width: 18px;
+	height: 2px;
+	background: currentColor;
+	border-radius: 1px;
+}
+
+.menuBars::before,
+.menuBars::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background: currentColor;
+	border-radius: 1px;
+}
+
+.menuBars::before {
+	top: -6px;
+}
+
+.menuBars::after {
+	top: 6px;
+}
+
+.drawerTop {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-xs);
+	padding: var(--size-sm) var(--size-md);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
+}
+
+.drawerNav {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 0 var(--size-md) var(--spacing-sm);
+}
+
+.drawerSection {
+	padding-top: var(--spacing-sm);
+}
+
+.drawerHeading {
+	min-height: 0;
+	margin: 0 0 var(--spacing-2xs);
+	font-size: var(--font-size-body-sm);
+	font-weight: var(--font-weight-regular);
+	color: var(--color-text-muted);
+}
+
+.drawerList {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.drawerLink {
+	display: block;
+	padding: var(--spacing-xs) 0;
+	font-size: var(--font-size-body-lg);
+	color: var(--color-text-strong);
+	text-decoration: none;
+}
+
+.drawerLink:hover {
+	color: var(--color-text);
+}
+
+.drawerLink:focus-visible {
+	outline: var(--outline-size) solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+/* Pinned to the bottom of the drawer. */
+.drawerAccount {
+	padding: var(--spacing-sm) var(--size-md);
+	border-top: var(--border-size-sm) solid var(--color-border);
+}
+
+.drawerAccountList {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.drawerAccountGroup {
+	flex: 1;
+	min-width: 0;
+}
+
+.drawerAccountGroup > .accountButton {
+	justify-content: space-between;
+	width: 100%;
+	padding-inline: var(--spacing-sm);
+}
+
+.drawerAccountGroup .link {
+	padding-inline: 0;
+	font-size: var(--font-size-body-lg);
+}
+
+.drawerAccountGroup .divider {
+	display: none;
+}
+
+.drawerGuest {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.drawerGuestAction {
+	flex: 1;
+}
+
+.drawerLogin {
+	padding: var(--spacing-xs);
+	font-size: var(--font-size-body-md);
+	color: var(--color-text-strong);
+	text-align: center;
+	text-decoration: none;
+}
+
+/* Desktop ---------------------------------------------------------------- */
+
+/* The collapse breakpoint, set here and in HeaderSearch.module.css: below it the groups, the
+   search panel and the account move into the drawers. */
+@media (min-width: 1024px) {
+	.desktopNav {
+		display: block;
+	}
+
+	.groups,
+	.account {
+		display: flex;
+	}
+
+	.menuButton {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.chevron {
+		transition: none;
+	}
+}
+
+/* Colour-scheme toggle (#498) -------------------------------------------- */
+
+.schemeToggle {
+	color: var(--color-text-strong);
+}
+
+/* Without light-dark() the page cannot change scheme, so the toggle would do nothing. */
+@supports not (color: light-dark(#000, #fff)) {
+	.schemeToggle {
+		display: none;
+	}
+}
+
+/* Under 360px the bar holds the brand (with a theme's mark) and three 48px buttons in 288px, so the
+   buttons narrow to 40px square and the gap tightens. Still well over the 24px target size. */
+@media (max-width: 359px) {
+	.bar {
+		gap: var(--spacing-xs);
+	}
+
+	.iconButton,
+	.menuButton {
+		width: var(--size-3xl);
+	}
+}

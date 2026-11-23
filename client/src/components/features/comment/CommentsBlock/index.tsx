@@ -1,144 +1,168 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { addComment, deleteComment, fetchComments } from '@/api/comments';
-import type { ObjectTemplateType as CommentEntityType } from '@/api/generated/model/objectTemplateType';
-import type { StoreCommentRequest } from '@/api/generated/model/storeCommentRequest';
-import { LikeResponse, toggleInstanceLike } from '@/api/likes/likes';
+import { parseApiError } from '@/api/apiError';
+import {
+	getCommentsQueryKey,
+	useCommentThreadQuery,
+	useCreateCommentMutation,
+	useDeleteCommentMutation,
+	useLikeCommentMutation,
+	useUpdateCommentMutation,
+	type ApiComment,
+	type ApiCommentReply,
+	type CommentParent,
+} from '@/api/comments';
+import { Alert } from '@/components/shared/Alert';
+import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
-import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
 import CommentForm from './CommentForm/CommentForm';
-import CommentList from './CommentList/CommentList';
+import CommentList, { type CommentHeadingLevel } from './CommentList/CommentList';
+import styles from './CommentsBlock.module.css';
 
-// TODO: 'parent' naming part is confusing alittle and not read-friendly, parent of what?, use more direct naming.
 interface CommentsBlockProps {
-	readObjectType: 'article' | 'post' | 'catalogue';
-	readObjectUuid: string;
+	/**
+	 * Which kind of thing is being commented on. Selects the read transport, the
+	 * cache key and the entity template in one go, so no caller has to keep a
+	 * route segment and a template uuid in agreement.
+	 */
+	parent: CommentParent;
 	entityId: number;
-	entityType: CommentEntityType;
 	entityUuid: string;
 	isLocked?: boolean;
+	/**
+	 * Level of the block's own heading, the comment count. The page owns the "Comments" section
+	 * heading (an `h2`), so the count sits one level below it by default.
+	 */
+	headingLevel?: CommentHeadingLevel;
 }
 
 const CommentsBlock: React.FC<CommentsBlockProps> = ({
-	readObjectType,
-	readObjectUuid,
+	parent,
 	entityId,
-	entityType,
 	entityUuid,
 	isLocked = false,
+	headingLevel = 3,
 }) => {
 	const { isAuthenticated, user } = useAuth();
 
-	const queryClient = useQueryClient();
-	// TODO: query keys management should be somehow centralized
-	const queryKey = ['comments', readObjectType, entityId, { include_likes: true }];
-	const { data: comments = [], isLoading } = useQuery({
-		queryKey,
-		queryFn: () => fetchComments(readObjectType, readObjectUuid, { include_likes: true }),
-		enabled: !!readObjectUuid,
-		select: (data) => {
-			return data.items.map((comment) => ({
-				...comment,
-			}));
-		},
-	});
+	const queryKey = getCommentsQueryKey(parent, entityUuid);
+	const {
+		data: thread,
+		isLoading,
+		isError,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
+		isFetchNextPageError,
+	} = useCommentThreadQuery(parent, entityUuid);
 
-	const addMutation = useMutation({
-		mutationFn: (requestPayload: Pick<StoreCommentRequest, 'content' | 'parent_comment_id'>) =>
-			addComment(entityType, entityId, entityUuid, requestPayload),
-		onSuccess: (newComment) => {
-			queryClient.setQueryData(queryKey, (oldData: any) => {
-				if (!oldData) return oldData;
+	const createMutation = useCreateCommentMutation({ parent, entityId, entityUuid });
+	const updateMutation = useUpdateCommentMutation({ parent, entityUuid });
+	const deleteMutation = useDeleteCommentMutation({ parent, entityUuid });
+	const likeMutation = useLikeCommentMutation(queryKey);
 
-				return {
-					...oldData,
-					items: [
-						{
-							...newComment,
-							userName: user?.name,
-						},
-						...(oldData.items || []),
-					],
-				};
-			});
-		},
-	});
+	/** Which comment a failure belongs to, so one bad request does not shout on every row. */
+	const [rowError, setRowError] = useState<{ commentId: number; message: string } | null>(null);
 
-	const deleteMutation = useMutation({
-		mutationFn: (commentId: number) => deleteComment({ parentObjectType: readObjectType, parentObjectId: entityId, commentId }),
-		onMutate: async (commentId) => {
-			await queryClient.cancelQueries({ queryKey });
-			const previousComments = queryClient.getQueryData(queryKey);
+	const runOnRow = async (commentId: number, action: () => Promise<unknown>) => {
+		setRowError(null);
 
-			queryClient.setQueryData(queryKey, (oldData: any) => {
-				if (!oldData?.items) return oldData;
+		try {
+			await action();
+		} catch (error) {
+			setRowError({ commentId, message: parseApiError(error).message });
+			throw error;
+		}
+	};
 
-				return {
-					...oldData,
-					items: oldData.items.filter((c: any) => c.id !== commentId),
-				};
-			});
+	const handleEdit = (comment: ApiComment | ApiCommentReply, content: string) =>
+		runOnRow(comment.id, () => updateMutation.mutateAsync({ uuid: comment.uuid, content })).then(() => undefined);
 
-			return { previousComments };
-		},
-		onError: (_err, _vars, context) => {
-			if (context?.previousComments) {
-				queryClient.setQueryData(queryKey, context.previousComments);
-			}
-		},
-	});
-
-	// TODO: refetch only single comment that was liked
-	const likeMutation = useMutation<LikeResponse, unknown, { id: number }>({
-		mutationFn: ({ id }) =>
-			toggleInstanceLike({
-				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.COMMENT],
-				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.COMMENT],
-				instanceId: id,
+	const handleDelete = (comment: ApiComment | ApiCommentReply) => {
+		void runOnRow(comment.id, () =>
+			deleteMutation.mutateAsync({
+				id: comment.id,
+				uuid: comment.uuid,
+				parentCommentId: comment.parent_comment_id,
 			}),
+		).catch(() => undefined);
+	};
 
-		onSuccess: () => {
-			// TODO: now it refetches the whole list for comments totals/flags, perhaps we could optimize it for local update with single comment fetch
-			queryClient.invalidateQueries({ queryKey });
-		},
+	const handleReply = (rootCommentId: number, content: string) =>
+		runOnRow(rootCommentId, () => createMutation.mutateAsync({ content, parent_comment_id: rootCommentId })).then(
+			() => undefined,
+		);
 
-		onError: (err) => {
-			console.error('Like failed', err);
-		},
+	const stateFor = (commentId: number) => ({
+		isLikePending: likeMutation.isTogglingInstance(commentId),
+		isEditPending:
+			updateMutation.isPending && updateMutation.variables?.uuid === findUuid(thread?.items, commentId),
+		isDeletePending: deleteMutation.isPending && deleteMutation.variables?.id === commentId,
+		isReplyPending: createMutation.isPending && createMutation.variables?.parent_comment_id === commentId,
+		error: rowError?.commentId === commentId ? rowError.message : undefined,
 	});
 
 	return (
-		<div>
-			<hr />
+		// The parent page owns the "Comments" section and its heading; this is its content.
+		<Stack gap="md" className={styles.block}>
 			{isLocked ? (
-				<h6 className="alert alert-warning">This post is locked and new comments are not allowed.</h6>
+				<Alert tone="warning" role="status">
+					This post is locked and new comments are not allowed.
+				</Alert>
 			) : isAuthenticated && user ? (
 				<>
-					<h6>Share what's on your mind</h6>
+					<p className={styles.prompt}>Share what's on your mind</p>
 					<CommentForm
-						onSubmit={(content) => addMutation.mutateAsync({ content }).then(() => undefined)}
-						isLoading={isLoading}
+						onSubmit={(content) => createMutation.mutateAsync({ content }).then(() => undefined)}
+						isSubmitting={createMutation.isPending && createMutation.variables?.parent_comment_id == null}
 					/>
 				</>
 			) : (
-				<h6>
+				<p className={styles.prompt}>
 					You need to <Link to="/login">login</Link> to comment
-				</h6>
+				</p>
 			)}
 
-			<CommentList
-				comments={comments}
-				currentUser={user}
-				onDelete={(id) => deleteMutation.mutate(Number(id))}
-				onLike={(id) => {
-					const comment = comments.find((c) => c.id === Number(id));
-					if (comment) likeMutation.mutate({ id: Number(id) });
-				}}
-				isLoading={likeMutation.isPending}
-			/>
-		</div>
+			{isLoading ? (
+				<p className={styles.hint} role="status">
+					Loading comments…
+				</p>
+			) : isError ? (
+				<Alert tone="danger">Comments could not be loaded. Please try again.</Alert>
+			) : (
+				<CommentList
+					comments={thread?.items ?? []}
+					total={thread?.pagination.total ?? 0}
+					headingLevel={headingLevel}
+					hasMore={hasNextPage}
+					isLoadingMore={isFetchingNextPage}
+					loadMoreFailed={isFetchNextPageError}
+					onShowMore={() => void fetchNextPage()}
+					// Replying to a locked parent is refused by the API with a 409,
+					// so the affordance is hidden rather than offered and rejected.
+					canReply={isAuthenticated && !isLocked}
+					stateFor={stateFor}
+					onLike={(commentId) => likeMutation.mutate(commentId)}
+					onDelete={handleDelete}
+					onEdit={handleEdit}
+					onReply={handleReply}
+				/>
+			)}
+		</Stack>
 	);
+};
+
+/** The edit transport is keyed by uuid; pending state is asked about by numeric id. */
+const findUuid = (items: ApiComment[] | undefined, commentId: number): string | undefined => {
+	for (const item of items ?? []) {
+		if (item.id === commentId) return item.uuid;
+
+		const reply = item.replies.find((candidate) => candidate.id === commentId);
+
+		if (reply) return reply.uuid;
+	}
+
+	return undefined;
 };
 
 export default CommentsBlock;

@@ -2,36 +2,41 @@
 
 namespace App\Application\Catalogues\Services;
 
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Catalogues\Actions\DeleteCatalogueAction;
+use App\Application\Catalogues\Actions\LoadCatalogueJlptLevelsAction;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
 use App\Application\Catalogues\Interfaces\Repositories\CatalogueRepositoryInterface;
 use App\Application\Catalogues\Policies\CataloguePolicy;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
 use App\Application\Engagement\Actions\IncrementViewAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Actions\LoadEntityStatsAction;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueCriteriaDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CatalogueListItemDTO;
+use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
+use App\Domain\Catalogues\DTOs\CataloguePickerResultDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
 use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\Catalogues\Factories\CatalogueFactory;
 use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Catalogues\Models\Catalogues;
+use App\Domain\Catalogues\Models\CatalogueStats;
 use App\Domain\Catalogues\ValueObjects\CatalogueSortCriteria;
 use App\Domain\Catalogues\ValueObjects\CatalogueTitle;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\Services\TemplateTypeClassifier;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,23 +50,23 @@ class CatalogueService implements CatalogueServiceInterface
         private readonly CatalogueItemService $catalogueItemService,
         private readonly HashtagServiceInterface $hashtagService,
         private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly HashtagRepositoryInterface $hashtagRepository,
-        private readonly ViewRepositoryInterface $viewRepository,
-        private readonly LikeRepositoryInterface $likeRepository,
-        private readonly DownloadRepositoryInterface $downloadRepository,
-        private readonly CommentRepositoryInterface $commentRepository,
+        private readonly DeleteCatalogueAction $deleteCatalogue,
+        private readonly LoadEntityStatsAction $loadStats,
+        private readonly EngagementServiceInterface $engagementService,
+        private readonly LoadCatalogueJlptLevelsAction $loadJlptLevels,
+        private readonly TemplateTypeClassifier $templateTypeClassifier,
     ) {
     }
 
-    public function createCatalogue(CatalogueCreateDTO $dto, User $user): Result
+    public function createCatalogue(CatalogueCreateDTO $dto, AuthenticatedUser $authenticatedUser, Viewer $viewer): Result
     {
         try {
-            $catalogue = DB::transaction(function () use ($dto, $user) {
+            $catalogue = DB::transaction(function () use ($dto, $authenticatedUser, $viewer) {
                 $domainCatalogue = CatalogueFactory::createFromDTO(
                     $dto,
-                    new UserId($user->id),
-                    new UserName($user->name),
-                    EntityId::from($user->uuid),
+                    $authenticatedUser->id,
+                    $authenticatedUser->name,
+                    $authenticatedUser->uuid,
                 );
 
                 $createdCatalogue = $this->catalogueRepository->create($domainCatalogue);
@@ -71,7 +76,7 @@ class CatalogueService implements CatalogueServiceInterface
                         $createdCatalogue->getIdValue(),
                         ObjectTemplateType::LIST,
                         $dto->hashtags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -79,13 +84,19 @@ class CatalogueService implements CatalogueServiceInterface
                     }
                 }
 
+                $this->incrementViewAction->execute(
+                    $createdCatalogue->getIdValue(),
+                    ObjectTemplateType::LIST,
+                    $viewer,
+                );
+
                 return $createdCatalogue;
             });
 
             return Result::success($catalogue);
         } catch (\Exception $e) {
             Log::error('Catalogue creation failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -93,10 +104,10 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function getCatalogueList(CatalogueListDTO $dto, ?User $user = null): Catalogues
+    public function getCatalogueList(CatalogueListDTO $dto, ?AuthenticatedUser $authenticatedUser = null): CatalogueListResultDTO
     {
         $requestedOwnerUid = $dto->owner_uid;
-        $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($user, $requestedOwnerUid);
+        $canIndexPrivateCatalogues = $this->cataloguePolicy->canIndexPrivateCatalogues($authenticatedUser, $requestedOwnerUid);
         $publicOnly = $dto->public_only;
 
         if ($requestedOwnerUid === null) {
@@ -115,13 +126,48 @@ class CatalogueService implements CatalogueServiceInterface
             customOnly: $requestedOwnerUid === null ? true : $dto->custom_only
         );
 
-        return $this->catalogueRepository->findByCriteria($criteria);
+        $paginatedCatalogues = $this->catalogueRepository->findByCriteria($criteria);
+        $catalogues = $paginatedCatalogues->getItems();
+        $catalogueIds = array_map(
+            static fn (Catalogue $catalogue): int => $catalogue->getIdValue(),
+            $catalogues,
+        );
+
+        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
+        $statsMap = $this->loadCatalogueStats($catalogueIds, $dto->include_stats_counts);
+        $hashtagsMap = $dto->include_hashtags
+            ? $this->hashtagService->getBatchHashtags($catalogueIds, ObjectTemplateType::LIST)
+            : [];
+        // Opt-in, unlike stats and hashtags: callers that render no bar do not pay for it.
+        $jlptLevelsMap = $dto->include_jlpt_levels ? $this->loadJlptLevels->execute($catalogues) : [];
+
+        $paginator = $paginatedCatalogues->getPaginator();
+
+        return new CatalogueListResultDTO(
+            array_map(
+                static fn (Catalogue $catalogue): CatalogueListItemDTO => new CatalogueListItemDTO(
+                    catalogue: $catalogue,
+                    stats: $statsMap[$catalogue->getIdValue()] ?? null,
+                    hashtags: $hashtagsMap[$catalogue->getIdValue()] ?? [],
+                    itemsCount: $itemsCountMap[$catalogue->getIdValue()] ?? 0,
+                    jlptLevels: $jlptLevelsMap[$catalogue->getIdValue()] ?? null,
+                ),
+                $catalogues,
+            ),
+            [
+                'page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'has_more' => $paginator->hasMorePages(),
+            ],
+        );
     }
 
-    public function getCataloguesForItem(int $itemId, array $types, ?string $search, User $user): array
+    public function getCataloguesForItem(int $itemId, array $types, ?string $search, AuthenticatedUser $authenticatedUser): CataloguePickerResultDTO
     {
         $catalogues = $this->catalogueRepository->findOwnedForMembership(
-            $user->uuid,
+            $authenticatedUser->uuid->value(),
             SearchTerm::fromInputOrNull($search),
             $types,
         );
@@ -132,11 +178,17 @@ class CatalogueService implements CatalogueServiceInterface
         );
 
         $containedCatalogueIds = $this->catalogueItemRepository->findCatalogueIdsContainingItem($catalogueIds, $itemId);
+        $containedCatalogueIdsById = array_flip($containedCatalogueIds);
 
-        return [
-            'catalogues' => $catalogues,
-            'contained_catalogue_ids' => $containedCatalogueIds,
-        ];
+        return new CataloguePickerResultDTO(
+            array_map(
+                static fn (Catalogue $catalogue): CataloguePickerItemDTO => new CataloguePickerItemDTO(
+                    $catalogue,
+                    isset($containedCatalogueIdsById[$catalogue->getIdValue()]),
+                ),
+                $catalogues,
+            ),
+        );
     }
 
     public function getIdByUuid(EntityId $uuid): ?int
@@ -144,7 +196,10 @@ class CatalogueService implements CatalogueServiceInterface
         return $this->catalogueRepository->getIdByUuid($uuid);
     }
 
-    public function getCatalogue(EntityId $uuid, ?User $user = null): Result
+    /**
+     * @return Result Success data: Catalogue.
+     */
+    public function getViewableCatalogue(EntityId $uuid, ?AuthenticatedUser $authenticatedUser = null): Result
     {
         $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
 
@@ -152,25 +207,127 @@ class CatalogueService implements CatalogueServiceInterface
             return Result::failure(CatalogueErrors::notFound($uuid->value()));
         }
 
-        if (! $this->cataloguePolicy->canView($user, $catalogue)) {
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
             return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
         }
 
-        $viewer = new Viewer($user?->id, request()->ip());
+        return Result::success($catalogue);
+    }
+
+    /**
+     * @return Result Success data: int catalogue id, Failure data: ResultError
+     */
+    public function resolveItemSource(
+        EntityId $uuid,
+        SavedListType $family,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
+        $viewable = $this->getViewableCatalogue($uuid, $authenticatedUser);
+
+        if ($viewable->isFailure()) {
+            return $viewable;
+        }
+
+        /** @var Catalogue $catalogue */
+        $catalogue = $viewable->getData();
+
+        // A "known kanji" catalogue holds kanji like a kanji catalogue does.
+        $type = $catalogue->getType();
+        $heldFamily = $this->templateTypeClassifier->getBaseType($type) ?? $type;
+
+        if ($heldFamily !== $family) {
+            return Result::failure(CatalogueErrors::itemFamilyMismatch($uuid->value(), $family));
+        }
+
+        return Result::success($catalogue->getIdValue());
+    }
+
+    /**
+     * @return Result Success data: int[].
+     */
+    public function getCatalogueItemIds(int $catalogueId): Result
+    {
+        return Result::success($this->catalogueItemRepository->findItemIdsByCatalogueId($catalogueId));
+    }
+
+    /**
+     * @return Result Success data: bool.
+     */
+    public function catalogueContainsItem(int $catalogueId, int $itemId): Result
+    {
+        return Result::success($this->catalogueItemRepository->containsItem($catalogueId, $itemId));
+    }
+
+    /**
+     * @return Result<CatalogueLegacyIdentityDTO>
+     */
+    public function resolveLegacyIdentity(int $legacyId, ?AuthenticatedUser $authenticatedUser = null): Result
+    {
+        $catalogue = $this->catalogueRepository->findById($legacyId);
+
+        // Both branches answer with the same error on purpose: see
+        // CatalogueErrors::legacyIdentityNotFound().
+        if (! $catalogue || ! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
+            return Result::failure(CatalogueErrors::legacyIdentityNotFound($legacyId));
+        }
+
+        // Deliberately no trackView() and no item/stat/hashtag/engagement
+        // assembly: this endpoint exists to be cheaper than getCatalogueDetail().
+        return Result::success(
+            new CatalogueLegacyIdentityDTO(
+                id: $catalogue->getIdValue(),
+                uuid: $catalogue->getUid(),
+            )
+        );
+    }
+
+    /**
+     * @return Result<CatalogueDetailDTO>
+     */
+    public function getCatalogueDetail(
+        EntityId $uuid,
+        Viewer $viewer,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
+        $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
+
+        if (! $catalogue) {
+            return Result::failure(CatalogueErrors::notFound($uuid->value()));
+        }
+
+        if (! $this->cataloguePolicy->canView($authenticatedUser, $catalogue)) {
+            return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
+        }
+
         $this->trackView($catalogue->getIdValue(), ObjectTemplateType::LIST, $viewer);
 
-        $items = $this->catalogueItemService->getItems($catalogue);
+        $items = $this->catalogueItemService->getItems($catalogue, $authenticatedUser);
+        $catalogueId = $catalogue->getIdValue();
+        $stats = $this->loadCatalogueStats([$catalogueId], true)[$catalogueId];
+        $hashtags = $this->hashtagService->getHashtags($catalogueId, ObjectTemplateType::LIST);
+        $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
+            $catalogueId,
+            ObjectTemplateType::LIST,
+            $authenticatedUser?->id->value(),
+        );
 
         return Result::success(
             new CatalogueDetailDTO(
                 catalogue: $catalogue,
                 items: $items,
-                itemsCount: count($items)
+                itemsCount: count($items),
+                stats: $stats,
+                hashtags: $hashtags,
+                isLikedByViewer: $isLikedByViewer,
+                jlptLevels: $this->loadJlptLevels->execute([$catalogue])[$catalogueId],
             )
         );
     }
 
-    public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, User $user): Result
+    /**
+     * @return Result<CatalogueUpdateResultDTO>
+     */
+    public function updateCatalogue(EntityId $uuid, CatalogueUpdateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -179,11 +336,15 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            $updatedCatalogue = DB::transaction(function () use ($catalogue, $dto, $user) {
+            if ($this->changesTypeOfNonEmptyCatalogue($catalogue, $dto)) {
+                return Result::failure(CatalogueErrors::typeLockedByItems($uuid->value()));
+            }
+
+            $updatedCatalogue = DB::transaction(function () use ($catalogue, $dto, $authenticatedUser) {
                 $updatedCatalogue = $this->applyUpdates($catalogue, $dto);
 
                 $this->catalogueRepository->update($updatedCatalogue);
@@ -193,7 +354,7 @@ class CatalogueService implements CatalogueServiceInterface
                         $catalogue->getIdValue(),
                         ObjectTemplateType::LIST,
                         $dto->hashtags ?? [],
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -204,10 +365,19 @@ class CatalogueService implements CatalogueServiceInterface
                 return $updatedCatalogue;
             });
 
-            return Result::success($updatedCatalogue);
+            $catalogueId = $updatedCatalogue->getIdValue();
+            $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogueId]);
+
+            return Result::success(
+                new CatalogueUpdateResultDTO(
+                    catalogue: $updatedCatalogue,
+                    hashtags: $this->hashtagService->getHashtags($catalogueId, ObjectTemplateType::LIST),
+                    itemsCount: $itemsCountMap[$catalogueId] ?? 0,
+                )
+            );
         } catch (\Exception $e) {
             Log::error('Catalogue update failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'catalogue_uuid' => $uuid->value(),
                 'error' => $e->getMessage(),
             ]);
@@ -216,7 +386,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function addItemToCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    public function addItemToCatalogue(EntityId $uuid, int $itemId, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -225,11 +395,11 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            if (! $this->catalogueItemService->isValidItemForCatalogue($catalogue, $itemId)) {
+            if (! $this->catalogueItemService->isValidItemForCatalogue($catalogue, $itemId, $authenticatedUser)) {
                 return Result::failure(CatalogueErrors::invalidItemForType($uuid->value(), $itemId));
             }
 
@@ -249,7 +419,7 @@ class CatalogueService implements CatalogueServiceInterface
             Log::error('Catalogue item add failed', [
                 'catalogue_uuid' => $uuid->value(),
                 'item_id' => $itemId,
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -257,7 +427,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, User $user): Result
+    public function removeItemFromCatalogue(EntityId $uuid, int $itemId, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -266,7 +436,7 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canUpdate($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canUpdate($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
@@ -287,7 +457,7 @@ class CatalogueService implements CatalogueServiceInterface
             Log::error('Catalogue item removal failed', [
                 'catalogue_uuid' => $uuid->value(),
                 'item_id' => $itemId,
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -295,7 +465,7 @@ class CatalogueService implements CatalogueServiceInterface
         }
     }
 
-    public function deleteCatalogue(EntityId $uuid, User $user): Result
+    public function deleteCatalogue(EntityId $uuid, AuthenticatedUser $authenticatedUser): Result
     {
         try {
             $catalogue = $this->catalogueRepository->findByPublicUid($uuid);
@@ -304,28 +474,17 @@ class CatalogueService implements CatalogueServiceInterface
                 return Result::failure(CatalogueErrors::notFound($uuid->value()));
             }
 
-            if (! $this->cataloguePolicy->canDelete($user, $catalogue)) {
+            if (! $this->cataloguePolicy->canDelete($authenticatedUser, $catalogue)) {
                 return Result::failure(CatalogueErrors::accessDenied($uuid->value()));
             }
 
-            DB::transaction(function () use ($catalogue) {
-                $catalogueId = $catalogue->getIdValue();
-                $templateId = ObjectTemplateType::LIST->getLegacyId();
-
-                $this->catalogueItemRepository->deleteByCatalogueId($catalogueId);
-                $this->viewRepository->deleteByEntity($catalogueId, $templateId);
-                $this->downloadRepository->deleteByEntity($catalogueId, $templateId);
-                $this->likeRepository->deleteByEntity($catalogueId, $templateId);
-                $this->commentRepository->deleteByEntity($catalogueId, $templateId);
-                $this->hashtagRepository->deleteByEntity($catalogueId, $templateId);
-                $this->catalogueRepository->deleteById($catalogueId);
-            });
+            DB::transaction(fn () => $this->deleteCatalogue->execute($catalogue->getIdValue()));
 
             return Result::success();
         } catch (\Exception $e) {
             Log::error('Catalogue deletion failed', [
                 'catalogue_uuid' => $uuid->value(),
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -340,6 +499,56 @@ class CatalogueService implements CatalogueServiceInterface
         } catch (\Exception $e) {
             Log::error("Failed to increment view for catalogue {$id}: ".$e->getMessage());
         }
+    }
+
+    /**
+     * @param int[] $catalogueIds
+     *
+     * @return array<int, CatalogueStats>
+     */
+    private function loadCatalogueStats(array $catalogueIds, bool $includeStats): array
+    {
+        if (! $includeStats || $catalogueIds === []) {
+            return [];
+        }
+
+        $statsData = $this->loadStats->batchLoadStatsById(
+            ObjectTemplateType::LIST->getLegacyId(),
+            $catalogueIds
+        );
+
+        $statsMap = [];
+        foreach ($catalogueIds as $id) {
+            $stats = $statsData[$id] ?? [
+                'likes' => 0,
+                'downloads' => 0,
+                'views' => 0,
+                'comments' => 0,
+            ];
+            $statsMap[$id] = new CatalogueStats(
+                $stats['likes'],
+                $stats['downloads'],
+                $stats['views'],
+                $stats['comments']
+            );
+        }
+
+        return $statsMap;
+    }
+
+    /**
+     * Sending the current type again is a no-op, and an empty catalogue may change type freely.
+     */
+    private function changesTypeOfNonEmptyCatalogue(Catalogue $catalogue, CatalogueUpdateDTO $dto): bool
+    {
+        if ($dto->type === null || $dto->type === $catalogue->getType()) {
+            return false;
+        }
+
+        $catalogueId = $catalogue->getIdValue();
+        $itemsCount = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogueId])[$catalogueId] ?? 0;
+
+        return $itemsCount > 0;
     }
 
     private function applyUpdates(Catalogue $catalogue, CatalogueUpdateDTO $dto): Catalogue

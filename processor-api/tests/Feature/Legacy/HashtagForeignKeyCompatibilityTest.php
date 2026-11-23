@@ -22,7 +22,13 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
         $this->seedObjectTemplate(ObjectTemplateType::COMMENT);
     }
 
-    public function test_legacy_show_kanji_loads_article_hashtags_from_hashtag_id_column(): void
+    /**
+     * The legacy `GET api/kanji/{id}` this used to exercise was retired in
+     * RET-JPN-READ-01. The column-level compatibility it guards is unchanged,
+     * so the assertion moved to the v1 kanji detail that replaced it - the
+     * related-article hashtags there still resolve through `hashtag_entity`.
+     */
+    public function test_kanji_detail_loads_article_hashtags_from_hashtag_id_column(): void
     {
         $userId = $this->createUser();
         $kanjiId = $this->createKanji();
@@ -43,14 +49,21 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->getJson("/api/kanji/{$kanjiId}");
+        $response = $this->getJson("/api/v1/kanjis/{$kanjiId}?include=articles");
 
         $response->assertOk()
-            ->assertJsonPath('articles.data.0.id', $articleId)
-            ->assertJsonPath('articles.data.0.hashtags.0.content', '#kanji-tag');
+            ->assertJsonPath('articles.0.id', $articleId)
+            ->assertJsonPath('articles.0.hashtags.0.content', '#kanji-tag');
     }
 
-    public function test_legacy_post_search_filters_by_hashtag_using_hashtag_id_column(): void
+    /**
+     * The legacy `POST api/posts/search` this used to exercise was retired in
+     * RET-POST-01. As with the kanji case above, the column-level compatibility
+     * is unchanged, so the assertion moved to the v1 list filter that replaced
+     * it - `hashtag=` still resolves through `hashtag_entity.hashtag_id`, and
+     * the list item still carries the tag it was matched on.
+     */
+    public function test_post_list_filters_by_hashtag_using_hashtag_id_column(): void
     {
         $userId = $this->createUser();
         $postId = $this->createPost($userId);
@@ -65,13 +78,11 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->postJson('/api/posts/search', [
-            'keyword' => '#post-tag',
-        ]);
+        $response = $this->getJson('/api/v1/posts?hashtag=post-tag');
 
         $response->assertOk()
-            ->assertJsonPath('posts.data.0.id', $postId)
-            ->assertJsonPath('posts.data.0.hashtags.0.content', '#post-tag');
+            ->assertJsonPath('items.0.id', $postId)
+            ->assertJsonPath('items.0.hashtags.0.content', '#post-tag');
     }
 
     private function seedObjectTemplate(ObjectTemplateType $type): void
@@ -125,8 +136,10 @@ class HashtagForeignKeyCompatibilityTest extends TestCase
             'publicity' => true,
             'title_en' => 'Legacy article',
             'content_en' => 'Legacy article content',
-            'title_jp' => '記事',
-            'content_jp' => '記事本文',
+            'title_jp' => 'レガシーの記事',
+            // Long enough for the v1 ArticleContent invariant (10 characters);
+            // the legacy read this test used to hit never mapped to the domain.
+            'content_jp' => 'これはレガシー記事の本文です。',
             'source_link' => 'https://example.com/article',
             'n1' => '0',
             'n2' => '0',

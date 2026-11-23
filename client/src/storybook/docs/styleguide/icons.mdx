@@ -1,0 +1,28 @@
+import { Meta, Source, Unstyled } from "@storybook/addon-docs/blocks";
+import { IconGetter } from "@/storybook/helpers/IconGetter";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Icons" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Icons</h1>
+  <div className="richTextWrapper">
+    <p>
+      Every icon is an inline SVG registered in <code>src/assets/icons</code> and rendered by <code>Icon</code> from <code>components/shared/Icon</code>. The gallery below is read from that registry, so a new icon appears here without editing this page; the label is the <code>name</code> to pass.
+    </p>
+    <ul>
+      <li>Icons fill with <code>currentColor</code>, so they take the text colour of their parent.</li>
+      <li>They are decorative (<code>aria-hidden</code>). When an icon is the only content of a control, give the control an <code>aria-label</code>; otherwise keep the visible text next to the icon.</li>
+      <li><code>size</code> is <code>sm</code>, <code>md</code> or <code>lg</code>, mapped to <code>--icon-size-sm|md|lg</code>. <code>mobileSize</code> sets another size below 768px.</li>
+      <li><code>rotate</code> takes <code>90</code>, <code>180</code> or <code>270</code>.</li>
+      <li>Colour is never the only cue. Pair status and validity icons with text.</li>
+    </ul>
+    <Source language="tsx" code={`<Icon name="checkSolid" size="sm" />`} />
+  </div>
+
+  <h2>Gallery</h2>
+  <p>Shown at <code>lg</code>.</p>
+  <IconGetter />
+</div>
+</Unstyled>

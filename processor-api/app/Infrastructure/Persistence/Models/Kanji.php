@@ -2,12 +2,16 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Kanji extends Model
 {
-    protected $table = "japanese_kanji_bank_long";
+    use RoutesByUuid;
+
+    protected $table = 'japanese_kanji_bank_long';
 
     public $timestamps = false;
 
@@ -22,11 +26,11 @@ class Kanji extends Model
         'jlpt',
         'frequency',
         'radicals',
-        'radical_parts'
+        'radical_parts',
     ];
 
     protected $casts = [
-        'kanji'        => 'string',
+        'kanji' => 'string',
         'stroke_count' => 'integer',
         'frequency' => 'integer',
         // Keep these as strings since they often contain multiple values
@@ -38,10 +42,27 @@ class Kanji extends Model
         'grade' => 'string',
         'jlpt' => 'string',
         'radicals' => 'string',
-        'radical_parts' => 'string'
+        'radical_parts' => 'string',
     ];
 
-    public function words()
+    /**
+     * 303 imported rows store the character as a literal '????' (supplementary-plane kanji
+     * lost to a non-UTF-8 import, #545). They cannot become a KanjiCharacter, so every read
+     * leaves them out: the detail answers 404 and lists, relations and counts skip them.
+     * The rows stay in the table until the source data can restore them. Code that must see
+     * them, such as the admin browser or a re-import that upserts by id, opts out with
+     * `withoutGlobalScope(Kanji::READABLE_CHARACTER_SCOPE)`.
+     */
+    public const READABLE_CHARACTER_SCOPE = 'readable_character';
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(self::READABLE_CHARACTER_SCOPE, function (Builder $query): void {
+            $query->where($query->qualifyColumn('kanji'), 'not like', '%?%');
+        });
+    }
+
+    public function words(): BelongsToMany
     {
         return $this->belongsToMany(Word::class, 'japanese_kanji_word_long');
     }
@@ -51,7 +72,7 @@ class Kanji extends Model
         return $this->belongsToMany(Sentence::class, 'japanese_sentence_kanji');
     }
 
-    public function articles()
+    public function articles(): BelongsToMany
     {
         return $this->belongsToMany(Article::class, 'article_kanji');
     }

@@ -1,0 +1,68 @@
+.bar {
+	--jlpt-bar-height: 8px;
+
+	display: flex;
+	align-items: flex-end;
+	gap: var(--spacing-xs);
+	width: 100%;
+	min-width: 0;
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-body-md);
+	font-variant-numeric: tabular-nums;
+	line-height: 1.2;
+	color: var(--color-text-subtle);
+}
+
+.compact {
+	--jlpt-bar-height: 6px;
+
+	gap: var(--spacing-2xs);
+	font-size: var(--font-size-body-sm);
+}
+
+/* One level: its label above its bar. Width comes from the inline `flex-grow` (the count), but an
+   item never gets narrower than its label, so a level with one kanji still reads "N1 1". */
+.item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3xs);
+	flex-shrink: 1;
+	flex-basis: 0;
+	min-width: max-content;
+}
+
+.label {
+	display: flex;
+	gap: 0.35em;
+	white-space: nowrap;
+}
+
+.level {
+	color: var(--color-text-muted);
+}
+
+.segment {
+	width: 100%;
+	height: var(--jlpt-bar-height);
+	border-radius: var(--border-radius-xs);
+	background-color: var(--color-fill-bold);
+}
+
+/* The only use of shu in the bar: it always means "this is the article's level". */
+.dominant {
+	background-color: var(--color-level);
+}
+
+.uncommon {
+	background-color: var(--color-fill-strong);
+}
+
+/* Weight as well as colour, so the dominant level does not rely on colour alone. */
+.itemDominant .label {
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-strong);
+}
+
+.itemDominant .level {
+	color: var(--color-text-strong);
+}

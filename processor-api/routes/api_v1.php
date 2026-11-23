@@ -6,8 +6,16 @@ use App\Http\v1\Articles\Controllers\ArticleController;
 use App\Http\v1\Auth\Controllers\AuthController;
 use App\Http\v1\Catalogues\Controllers\CatalogueController;
 use App\Http\v1\Comments\Controllers\CommentController;
+use App\Http\v1\Community\Posts\Controllers\PostController;
 use App\Http\v1\Engagement\Likes\Controllers\LikeController;
 use App\Http\v1\JapaneseMaterial\Kanjis\Controllers\KanjiController;
+use App\Http\v1\JapaneseMaterial\Radicals\Controllers\RadicalController;
+use App\Http\v1\JapaneseMaterial\Sentences\Controllers\SentenceController;
+use App\Http\v1\JapaneseMaterial\Stats\Controllers\CorpusStatsController;
+use App\Http\v1\JapaneseMaterial\Words\Controllers\WordController;
+use App\Http\v1\Search\Controllers\SearchCountsController;
+use App\Http\v1\Study\Controllers\FlashcardDeckController;
+use App\Http\v1\Study\Controllers\StudySessionController;
 use App\Http\v1\Users\Controllers\{UserController};
 use Illuminate\Support\Facades\Route;
 
@@ -20,17 +28,66 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // ============================================
+    // ADMIN ARTICLE MODERATION
+    // ============================================
+    // Registered before the public routes on purpose: `articles/pending` must be
+    // matched before the public `articles/{id}` route, otherwise it resolves to
+    // ArticleController@show with an id of "pending". Do not fold this block into
+    // the ADMIN-ONLY ROUTES group further down.
+    // Guarded by tests/Feature/Articles/ArticleModerationV1Test.php
+    // ::test_pending_route_resolves_the_admin_moderation_action
+    Route::middleware(['auth:api', 'checkRole:admin'])->group(function (): void {
+        Route::get('articles/pending', [ArticleController::class, 'pending']);
+        Route::post('articles/{uuid}/status', [ArticleController::class, 'setStatus'])
+            ->whereUuid('uuid');
+    });
+
+    // ============================================
+    // CATALOGUE LEGACY ID RESOLUTION
+    // ============================================
+    // Registered before the public routes on purpose. `catalogues/{uuid}` (at
+    // the bottom of this file) carries a `whereUuid` constraint for the same
+    // reason: without it, `catalogues/legacy` matches CatalogueController@show
+    // with a uuid of "legacy", EntityId::from() throws InvalidArgumentException,
+    // and app/Exceptions/Handler.php does not map it - a 500, not a 404.
+    // Guarded by tests/Feature/Catalogues/CatalogueLegacyIdentityV1Test.php
+    // ::test_legacy_segment_is_not_consumed_as_a_catalogue_uuid
+    //
+    // The constraint is the only validation this endpoint needs: 1 to 18 digits
+    // with no leading zero. That excludes 0, `007`, and anything long enough to
+    // clamp to PHP_INT_MAX when cast, and it keeps the whole error vocabulary at
+    // a single 404 - a validation error here would tell a caller more about an
+    // id than the 404 for a private catalogue does.
+    Route::get('catalogues/legacy/{id}', [CatalogueController::class, 'resolveLegacyId'])
+        ->where('id', '[1-9][0-9]{0,17}');
+
+    // ============================================
     // PUBLIC ROUTES (No Auth Required)
     // ============================================
 
     // Articles - Public Read Access
     Route::get('articles', [ArticleController::class, 'index']);
     Route::get('articles/{id}', [ArticleController::class, 'show']);
-    Route::get('articles/{id}/words', [ArticleController::class, 'words']);
 
     // Comments - Public Read
     Route::get('articles/{uuid}/comments', [CommentController::class, 'getArticleComments']);
-    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments']);
+    Route::get('catalogues/{uuid}/comments', [CommentController::class, 'getCatalogueComments'])
+        ->whereUuid('uuid');
+    // Comment reads are UUID-only, even though `posts/{identifier}` still
+    // accepts a transitional legacy id. `whereUuid` for the same reason as the
+    // catalogue route above: without it a malformed segment reaches
+    // EntityId::from(), which throws InvalidArgumentException, and
+    // app/Exceptions/Handler.php does not map it - a 500 where the caller
+    // should see a 404.
+    Route::get('posts/{uuid}/comments', [CommentController::class, 'getPostComments'])
+        ->whereUuid('uuid');
+    Route::get('sentences/{uuid}/comments', [CommentController::class, 'getSentenceComments'])
+        ->whereUuid('uuid');
+    // Thread reads carry a bounded reply preview plus `replies_count`; this
+    // serves the rest of one comment's subtree on demand. `whereUuid` for the
+    // same reason as the routes above.
+    Route::get('comments/{uuid}/replies', [CommentController::class, 'replies'])
+        ->whereUuid('uuid');
 
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -39,8 +96,43 @@ Route::prefix('v1')->group(function () {
     Route::get('kanjis', [KanjiController::class, 'index']);
     Route::get('kanjis/{identifier}', [KanjiController::class, 'show']);
 
+    // Words
+    Route::get('words', [WordController::class, 'index']);
+    Route::get('words/{identifier}', [WordController::class, 'show']);
+
+    // Radicals
+    Route::get('radicals', [RadicalController::class, 'index']);
+    Route::get('radicals/{identifier}', [RadicalController::class, 'show']);
+
+    // Sentences
+    Route::get('sentences', [SentenceController::class, 'index']);
+    Route::get('sentences/{identifier}', [SentenceController::class, 'show']);
+
+    // Corpus totals for the landing page: cached for an hour server-side, five minutes in the browser.
+    Route::get('japanese-material/stats', [CorpusStatsController::class, 'show'])
+        ->middleware('cache.headers:public;max_age=300');
+
+    // Header search hit counts. Typing fires one request per pause, so the route has its own
+    // limiter instead of spending the shared API budget the rest of the page needs.
+    Route::get('search/counts', [SearchCountsController::class, 'index'])
+        ->withoutMiddleware('throttle:60,1')
+        ->middleware('throttle:search-counts');
+
+    // Community Posts - Public Read Access
+    // `identifier` is a UUID (canonical) or, transitionally, a positive legacy id.
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{identifier}', [PostController::class, 'show']);
+
     // Catalogues - Public Read Access
     Route::get('catalogues', [CatalogueController::class, 'index']);
+
+    // Study - a catalogue read as a flashcard deck (epic #413). Public for public
+    // catalogues; the service answers 403 for a private one. Nested under the uuid, so
+    // it neither shadows `catalogues/legacy/{id}` and `catalogues/for-item` nor is
+    // swallowed by `catalogues/{uuid}` below. `whereUuid` for the same reason as the
+    // comment routes: a malformed segment must be a 404, not an unmapped exception.
+    Route::get('catalogues/{uuid}/flashcards', [FlashcardDeckController::class, 'show'])
+        ->whereUuid('uuid');
 
     // ============================================
     // AUTHENTICATED ROUTES
@@ -58,26 +150,71 @@ Route::prefix('v1')->group(function () {
         Route::post('articles', [ArticleController::class, 'store']);
         Route::put('articles/{uuid}', [ArticleController::class, 'update']);
         Route::delete('articles/{uuid}', [ArticleController::class, 'destroy']);
-        Route::post('articles/{id}/like', [ArticleController::class, 'like']); // TODO: implement
-        Route::delete('articles/{id}/like', [ArticleController::class, 'unlike']); // TODO: implement
-        Route::post('articles/{id}/toggle-publicity', [ArticleController::class, 'togglePublicity']); // TODO: implement
+        Route::get('articles/{uuid}/kanjis-pdf', [ArticleController::class, 'exportKanjisPdf']);
+        Route::get('articles/{uuid}/words-pdf', [ArticleController::class, 'exportWordsPdf']);
+        // Publicity is a field on PUT articles/{uuid}, not an endpoint. A
+        // `toggle-publicity` route was registered here against a
+        // togglePublicity method that does not exist on this controller, so
+        // every request answered 500; RET-ART-01 removed it along with the
+        // legacy route it shadowed. `user/articles` went the same way -
+        // GET articles?author_uid= already serves it, and the dashboard calls
+        // that today. Guarded by
+        // tests/Feature/Routes/LegacyArticleRouteRetirementTest.php.
 
-        // User's Own Articles
-        Route::get('user/articles', [ArticleController::class, 'userArticles']); // TODO: implement
+        // Sentences - Authenticated Actions
+        Route::post('sentences', [SentenceController::class, 'store']);
+        Route::put('sentences/{uuid}', [SentenceController::class, 'update']);
+        Route::delete('sentences/{uuid}', [SentenceController::class, 'destroy']);
 
         // Catalogues - Authenticated Actions
         Route::post('catalogues', [CatalogueController::class, 'store']);
         Route::get('catalogues/for-item', [CatalogueController::class, 'forItem']);
-        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem']);
-        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem']);
-        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update']);
-        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy']);
+        Route::post('catalogues/{uuid}/items', [CatalogueController::class, 'addItem'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}/items/{item_id}', [CatalogueController::class, 'removeItem'])
+            ->whereUuid('uuid');
+        Route::put('catalogues/{uuid}', [CatalogueController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('catalogues/{uuid}', [CatalogueController::class, 'destroy'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/kanjis-pdf', [CatalogueController::class, 'exportKanjisPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/words-pdf', [CatalogueController::class, 'exportWordsPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/radicals-pdf', [CatalogueController::class, 'exportRadicalsPdf'])
+            ->whereUuid('uuid');
+        Route::get('catalogues/{uuid}/sentences-pdf', [CatalogueController::class, 'exportSentencesPdf'])
+            ->whereUuid('uuid');
+
+        // Community Posts - Authenticated Actions
+        // `whereUuid` for the same reason as the catalogues routes: without it a
+        // malformed segment reaches EntityId::from(), which throws
+        // InvalidArgumentException, and app/Exceptions/Handler.php does not map
+        // it - a 500 where the caller should see a 404.
+        Route::post('posts', [PostController::class, 'store']);
+        Route::put('posts/{uuid}', [PostController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('posts/{uuid}', [PostController::class, 'destroy'])
+            ->whereUuid('uuid');
 
         // Comments - Authenticated Write
         Route::post('comments', [CommentController::class, 'store']);
+        Route::put('comments/{uuid}', [CommentController::class, 'update'])
+            ->whereUuid('uuid');
+        Route::delete('comments/{uuid}', [CommentController::class, 'destroy'])
+            ->whereUuid('uuid');
 
         // Liking - instance agnostic
         Route::post('/like-instance', [LikeController::class, 'likeInstance']);
+
+        // Study sessions (epic #413): what a signed-in learner did with a deck. Visitors
+        // play public decks without any of these. A session that is not the caller's
+        // answers 404, not 403, so the endpoint cannot confirm foreign session uuids.
+        Route::post('study/sessions', [StudySessionController::class, 'store']);
+        Route::post('study/sessions/{uuid}/attempts', [StudySessionController::class, 'storeAttempt'])
+            ->whereUuid('uuid');
+        Route::post('study/sessions/{uuid}/complete', [StudySessionController::class, 'complete'])
+            ->whereUuid('uuid');
 
         // ============================================
         // ADMIN-ONLY ROUTES
@@ -96,11 +233,17 @@ Route::prefix('v1')->group(function () {
             // User Management
             Route::get('/admin/users', [AdminUserController::class, 'index']);
 
-            // Article Moderation
-            Route::post('articles/{id}/status', [ArticleController::class, 'setStatus']); // TODO: implement
-            Route::get('articles/pending', [ArticleController::class, 'pending']); // TODO: implement
+            // Community Post Moderation
+            // Legacy exposed this twice - an unguarded `post/{id}/toggleLock`
+            // and an admin `post/{id}/togglelock`. v1 keeps one route, and it
+            // takes the desired state rather than toggling.
+            Route::put('posts/{uuid}/lock', [PostController::class, 'lock'])
+                ->whereUuid('uuid');
         });
     });
 
-    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show']);
+    // The constraint keeps non-UUID segments - `legacy` above all - from being
+    // swallowed here and turned into an unmapped InvalidArgumentException.
+    Route::get('catalogues/{uuid}', [CatalogueController::class, 'show'])
+        ->whereUuid('uuid');
 });

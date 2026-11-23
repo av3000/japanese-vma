@@ -1,6 +1,8 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Container } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import styles from './PrivateRoute.module.css';
 
 const PrivateRoute: React.FC = () => {
 	const location = useLocation();
@@ -8,11 +10,9 @@ const PrivateRoute: React.FC = () => {
 
 	if (isLoading) {
 		return (
-			<div className="container py-4" role="status" aria-label="Checking session">
-				<div className="placeholder-glow">
-					<span className="placeholder col-6" />
-				</div>
-			</div>
+			<Container className={styles.page} role="status" aria-label="Checking session">
+				<span className={styles.placeholder} />
+			</Container>
 		);
 	}
 

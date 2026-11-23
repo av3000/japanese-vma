@@ -11,6 +11,7 @@ use App\Domain\Catalogues\Models\Catalogue as DomainCatalogue;
 use App\Domain\Catalogues\Models\Catalogues;
 use App\Domain\Shared\Enums\CatalogueType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Domain\Shared\ValueObjects\UserId;
@@ -57,6 +58,11 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         $entity->save();
     }
 
+    public function updatePublicity(int $catalogueId, PublicityStatus $publicity): void
+    {
+        Catalogue::whereKey($catalogueId)->update(['publicity' => $publicity === PublicityStatus::PUBLIC]);
+    }
+
     public function deleteById(int $id): bool
     {
         $entity = Catalogue::findOrFail($id);
@@ -88,10 +94,11 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
      * Performs a lightweight query returning only the ID column.
      * Useful when you need the integer ID for operations but only have the public UUID.
      *
-     * @param  EntityId  $entityUuid  The catalogue's public UUID
-     * @return int|null The catalogue's integer ID, or null if UUID not found
+     * @param EntityId $entityUuid The catalogue's public UUID
      *
      * @throws \Illuminate\Database\QueryException On database failure
+     *
+     * @return int|null The catalogue's integer ID, or null if UUID not found
      */
     public function getIdByUuid(EntityId $entityUuid): ?int
     {
@@ -115,9 +122,9 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
                     $join->on('customlists.id', '=', 'views.real_object_id')
                         ->where('views.template_id', '=', $templateId);
                 })
-                ->addSelect(DB::raw('count(views.real_object_id) as viewsTotal'))
+                ->addSelect(DB::raw('count(views.real_object_id) as views_total'))
                 ->groupBy('customlists.id')
-                ->orderBy('viewsTotal', $criteria->sort->direction->value);
+                ->orderBy('views_total', $criteria->sort->direction->value);
         } else {
             $query->orderBy($criteria->sort->field->value, $criteria->sort->direction->value);
         }
@@ -162,6 +169,13 @@ final class CatalogueRepository implements CatalogueRepositoryInterface
         $entity = Catalogue::with(['user'])
             ->where('uuid', $uuid->value())
             ->first();
+
+        return $entity ? $this->catalogueMapper->mapToDomain($entity) : null;
+    }
+
+    public function findById(int $id): ?DomainCatalogue
+    {
+        $entity = Catalogue::with(['user'])->find($id);
 
         return $entity ? $this->catalogueMapper->mapToDomain($entity) : null;
     }

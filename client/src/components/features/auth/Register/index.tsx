@@ -1,123 +1,141 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { type FieldError, useForm } from 'react-hook-form';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { parseAuthError } from '@/api/auth/authError';
+import { Alert } from '@/components/shared/Alert';
+import { Button } from '@/components/shared/Button';
+import { FormField, Input } from '@/components/shared/FormControls';
+import { Stack } from '@/components/shared/layout';
 import { useAuth } from '@/hooks/useAuth';
+import { AuthCard } from '../AuthCard';
+import { resolveReturnTo } from '../returnTo';
+import { registerSchema, type RegisterValues } from './registerSchema';
 
-interface RegisterFormProps {
-	heading: string;
-	buttonText: string;
-}
+const FIELDS = ['name', 'email', 'password', 'password_confirmation'] as const;
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ heading, buttonText }) => {
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+/**
+ * Every message on a field. `criteriaMode: 'all'` collects each broken rule under `types`, keyed by
+ * issue code, with repeated codes gathered into an array; server errors arrive the same way.
+ */
+const messagesOf = (error: FieldError | undefined): string[] => {
+	if (!error) return [];
+	if (!error.types) return error.message ? [error.message] : [];
+
+	return Object.values(error.types).flatMap((value) =>
+		typeof value === 'string' ? [value] : Array.isArray(value) ? value : [],
+	);
+};
+
+const RegisterForm: React.FC = () => {
 	const navigate = useNavigate();
-	const { register, isAuthenticated } = useAuth();
+	const location = useLocation();
+	const { register: registerAccount, isAuthenticated } = useAuth();
+	const [generalError, setGeneralError] = useState<string | null>(null);
+
+	const {
+		register,
+		handleSubmit,
+		setError,
+		formState: { errors, isSubmitting },
+	} = useForm<RegisterValues>({
+		resolver: zodResolver(registerSchema),
+		criteriaMode: 'all',
+		defaultValues: { name: '', email: '', password: '', password_confirmation: '' },
+	});
 
 	useEffect(() => {
 		if (isAuthenticated) {
-			navigate('/');
+			navigate(resolveReturnTo(location.state), { replace: true });
 		}
-	}, [isAuthenticated, navigate]);
+	}, [isAuthenticated, location.state, navigate]);
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
-		const formData = new FormData(event.currentTarget);
-
-		setIsLoading(true);
-		setError(null);
+	const onSubmit = async (values: RegisterValues) => {
+		setGeneralError(null);
 
 		try {
-			await register({
-				name: formData.get('name') as string,
-				email: formData.get('email') as string,
-				password: formData.get('password') as string,
-				password_confirmation: formData.get('password_confirmation') as string,
-			});
-			navigate('/');
-		} catch (err: any) {
-			console.error('Register error:', err);
-			setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
-		} finally {
-			setIsLoading(false);
+			await registerAccount(values);
+		} catch (error) {
+			const authError = parseAuthError(error);
+
+			setGeneralError(authError.message);
+
+			let focused = false;
+			for (const field of FIELDS) {
+				const messages = authError.fieldErrors[field];
+
+				if (messages?.length) {
+					setError(
+						field,
+						{ type: 'server', message: messages[0], types: { server: messages } },
+						{ shouldFocus: !focused },
+					);
+					focused = true;
+				}
+			}
 		}
 	};
 
 	return (
-		<div className="container">
-			<div className="row justify-content-md-center text-center mt-5">
-				<div className="col-md-6">
-					<form onSubmit={handleSubmit}>
-						<h2>{heading}</h2>
-						<h6 className="mb-5">
-							Already have an account? <Link to="/login">Login.</Link>
-						</h6>
+		<AuthCard
+			title="Create your account"
+			alert={generalError ? <Alert tone="danger">{generalError}</Alert> : null}
+			footer={
+				<>
+					Already have an account?{' '}
+					<Link to="/login" state={location.state}>
+						Log in
+					</Link>
+				</>
+			}
+		>
+			<form onSubmit={handleSubmit(onSubmit)} noValidate>
+				<Stack gap="md">
+					<FormField
+						label="Username"
+						id="name"
+						hint="Letters, numbers, underscores and hyphens. Other learners see this name."
+						error={messagesOf(errors.name)}
+					>
+						{(control) => <Input autoComplete="nickname" {...control} {...register('name')} />}
+					</FormField>
 
-						{error && <div className="alert alert-danger">{error}</div>}
+					<FormField label="Email" id="email" error={messagesOf(errors.email)}>
+						{(control) => <Input type="email" autoComplete="email" {...control} {...register('email')} />}
+					</FormField>
 
-						<label className="mt-3" htmlFor="name">
-							Username:
-						</label>
-						<input
-							className="form-control"
-							id="name"
-							name="name"
-							type="text"
-							required
-							autoComplete="username"
-						/>
+					<FormField
+						label="Password"
+						id="password"
+						hint="At least 8 characters, with upper- and lowercase letters, a number and a symbol. Passwords found in known data breaches are rejected."
+						error={messagesOf(errors.password)}
+					>
+						{(control) => (
+							<Input type="password" autoComplete="new-password" {...control} {...register('password')} />
+						)}
+					</FormField>
 
-						<label className="mt-3" htmlFor="email">
-							Email:
-						</label>
-						<input
-							className="form-control"
-							id="email"
-							name="email"
-							type="email"
-							required
-							autoComplete="email"
-						/>
+					<FormField
+						label="Confirm password"
+						id="password_confirmation"
+						error={messagesOf(errors.password_confirmation)}
+					>
+						{(control) => (
+							<Input
+								type="password"
+								autoComplete="new-password"
+								{...control}
+								{...register('password_confirmation')}
+							/>
+						)}
+					</FormField>
 
-						<label className="mt-3" htmlFor="password">
-							Password:
-						</label>
-						<input
-							className="form-control"
-							id="password"
-							name="password"
-							type="password"
-							required
-							autoComplete="new-password"
-						/>
-
-						<label className="mt-3" htmlFor="password_confirmation">
-							Confirm password:
-						</label>
-						<input
-							className="form-control"
-							id="password_confirmation"
-							name="password_confirmation"
-							type="password"
-							required
-							autoComplete="new-password"
-						/>
-
-						<button
-							type="submit"
-							className="btn btn-outline-primary col-md-3 brand-button mt-5"
-							disabled={isLoading}
-						>
-							{isLoading ? (
-								<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-							) : (
-								buttonText
-							)}
-						</button>
-					</form>
-				</div>
-			</div>
-		</div>
+					<Button type="submit" variant="primary" isFullWidth isLoading={isSubmitting}>
+						Sign up
+					</Button>
+				</Stack>
+			</form>
+		</AuthCard>
 	);
 };
 

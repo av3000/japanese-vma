@@ -1,14 +1,15 @@
 # Backend Response And Errors
 
+Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example.
+
 For v1 endpoints:
 
-- Return success responses through `App\Shared\Http\TypedResults`.
-- Return service-level failures through `App\Shared\Results\Result` and typed error classes.
-- Keep pagination, envelope shape, and include-flag behavior aligned with the nearest existing v1 module.
-- Use request validation classes to reject invalid inputs before service orchestration.
+- Success responses are a named Resource or an `App\Shared\Http\TypedResults` helper, never ad hoc JSON: `RESULT-typed-results`.
+- Service-level failures are `App\Shared\Results\Result` with typed error classes: `RESULT-result-typed-errors`.
+- Pagination, envelope shape and include flags follow the nearest v1 module: `RESULT-envelope-matches-module`.
+- A Request class rejects invalid input before the service runs: `CONTRACT-request-per-endpoint`.
 
 When changing contracts:
 
-- Make the change explicit in the task summary or implementation notes.
-- Keep legacy behavior unless a migration intentionally moves to a new v1 contract.
-- Do not mix legacy JSON patterns and v1 `TypedResults` patterns in the same endpoint family without a clear reason.
+- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1.
+- One endpoint family never mixes legacy JSON and `TypedResults`: `RESULT-no-mixed-envelopes`.

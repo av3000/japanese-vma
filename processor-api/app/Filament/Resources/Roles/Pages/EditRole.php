@@ -7,17 +7,20 @@ namespace App\Filament\Resources\Roles\Pages;
 use App\Application\Users\Services\RoleServiceInterface;
 use App\Application\Users\Support\PermissionCatalog;
 use App\Domain\Users\Models\Role as DomainRole;
+use App\Filament\Resources\Roles\Pages\Concerns\ReportsRoleServiceErrors;
 use App\Filament\Resources\Roles\RoleResource;
+use App\Filament\Support\PanelActor;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class EditRole extends EditRecord
 {
+    use ReportsRoleServiceErrors;
+
     protected static string $resource = RoleResource::class;
 
     protected function mutateFormDataBeforeFill(array $data): array
@@ -33,20 +36,18 @@ class EditRole extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        // System roles render name and guard disabled, and disabled fields are not submitted.
         /** @var Role $record */
         $result = app(RoleServiceInterface::class)->updateRole(
             $record->name,
-            $data['name'],
-            $data['guard_name'] ?? PermissionCatalog::guardName(),
+            $data['name'] ?? $record->name,
+            $data['guard_name'] ?? $record->guard_name,
             PermissionCatalog::flattenPermissionGroups($data['permission_groups'] ?? []),
+            PanelActor::current(),
         );
 
         if ($result->isFailure()) {
-            $field = $result->getError()->code === 'Roles.InvalidPermissions' ? 'permission_groups' : 'name';
-
-            throw ValidationException::withMessages([
-                $field => $result->getError()->errorMessage ?? $result->getError()->description,
-            ]);
+            $this->reportRoleServiceError($result->getError());
         }
 
         /** @var DomainRole $updatedRole */
@@ -64,7 +65,7 @@ class EditRole extends EditRecord
                 ->action(function (): void {
                     /** @var Role $record */
                     $record = $this->getRecord();
-                    $result = app(RoleServiceInterface::class)->deleteRole($record->name);
+                    $result = app(RoleServiceInterface::class)->deleteRole($record->name, PanelActor::current());
 
                     if ($result->isFailure()) {
                         Notification::make()

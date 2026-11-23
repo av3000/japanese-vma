@@ -1,27 +1,42 @@
-import { Suspense, lazy, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { downloadCataloguePdf } from '@/api/catalogues/actions';
+import { Suspense, lazy, useId, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLikeCatalogueMutation, type MappedCatalogue } from '@/api/catalogues/details';
+import { useDeleteCatalogueMutation } from '@/api/catalogues/hooks/useDeleteCatalogueMutation';
 import {
-	catalogueRemoveItem,
-	getCatalogueIndexQueryKey,
-	getCatalogueShowQueryKey,
-	useCatalogueDestroy,
+	catalogueExportKanjisPdf,
+	catalogueExportRadicalsPdf,
+	catalogueExportSentencesPdf,
+	catalogueExportWordsPdf,
 } from '@/api/generated/catalogue/catalogue';
-import type { CatalogueDetailResource } from '@/api/generated/model/catalogueDetailResource';
-import AvatarImg from '@/assets/images/avatar-woman.svg';
-import DefaultListImg from '@/assets/images/smartphone-screen-with-art-photo-gallery-application-3850271-mid.jpg';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
+import { catalogueCoverGlyph, catalogueJlptCounts } from '@/components/features/LibraryCards/coverRule';
 import { CatalogueItems } from '@/components/features/catalogues/CatalogueItems';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
+import { Byline } from '@/components/shared/Byline';
 import { Chip } from '@/components/shared/Chip';
+import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
+import { DetailFacts } from '@/components/shared/DetailFacts';
+import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
-import { formatDate } from '@/helpers';
+import { dominantJlptLevel, JlptBar } from '@/components/shared/JlptBar';
+import { LikeIcon } from '@/components/shared/LikeIcon';
+import { Link } from '@/components/shared/Link';
+import { VisibilityCue } from '@/components/shared/VisibilityCue';
+import { Cluster } from '@/components/shared/layout';
+import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
+import { japaneseLang } from '@/helpers/japaneseLang';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { CATALOGUE_ROUTES } from '@/shared/constants/catalogues';
-import { ObjectTemplateType } from '@/shared/constants/enums';
+import {
+	CATALOGUE_ROUTES,
+	type CataloguePdfExportKind,
+	isCataloguePdfExportSupported,
+	isCatalogueStudySupported,
+	resolveCataloguePdfExportKind,
+	resolveCatalogueTypeLabel,
+} from '@/shared/constants/catalogues';
+import styles from './CatalogueContent.module.css';
 
 interface CatalogueContentProps {
 	catalogue: MappedCatalogue;
@@ -29,45 +44,37 @@ interface CatalogueContentProps {
 
 const LazyCommentsBlock = lazy(() => import('@/components/features/comment/CommentsBlock'));
 
+// A lookup rather than a ternary: a kind added to CataloguePdfExportKind without a client
+// here is a type error, where a ternary would quietly export it as words.
+const pdfExportClients: Record<CataloguePdfExportKind, typeof catalogueExportKanjisPdf> = {
+	kanji: catalogueExportKanjisPdf,
+	words: catalogueExportWordsPdf,
+	radicals: catalogueExportRadicalsPdf,
+	sentences: catalogueExportSentencesPdf,
+};
+
 const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 	const navigate = useNavigate();
-	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
-	const [editMode, setEditMode] = useState(false);
+	const tagsHeadingId = useId();
+	const commentsHeadingId = useId();
+	const [isPdfPending, setIsPdfPending] = useState(false);
+	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteModal = useModal(deleteDialogRef, { id: 'catalogue-delete-modal' });
 	const isOwner = currentUser?.id === catalogue.owner.id;
 	const likesCount = Number(catalogue.engagement?.likes_count ?? 0);
 	const viewsCount = Number(catalogue.engagement?.views_count ?? 0);
 	const downloadCount = Number(catalogue.engagement?.downloads_count ?? 0);
+	const itemsCount = Number(catalogue.items_count ?? 0);
 	const likeMutation = useLikeCatalogueMutation(catalogue.uuid);
-
-	const deleteMutation = useCatalogueDestroy({
-		mutation: {
-			onSuccess: () => {
-				queryClient.invalidateQueries({ queryKey: getCatalogueIndexQueryKey() });
-				queryClient.invalidateQueries({ queryKey: getCatalogueShowQueryKey(catalogue.uuid) });
-				navigate(CATALOGUE_ROUTES.list);
-			},
-		},
-	});
-
-	const removeItemMutation = useMutation<unknown, unknown, number>({
-		mutationFn: (itemId: number) => catalogueRemoveItem(catalogue.uuid, itemId),
-		onSuccess: (_, itemId) => {
-			queryClient.setQueryData(
-				getCatalogueShowQueryKey(catalogue.uuid),
-				(old: CatalogueDetailResource | undefined) => {
-					if (!old) return old;
-					return {
-						...old,
-						items: (old.items as unknown as Array<{ id: number }>).filter((item) => item.id !== itemId),
-						items_count: Math.max(0, Number(old.items_count) - 1),
-					};
-				},
-			);
-		},
-	});
+	const deleteMutation = useDeleteCatalogueMutation();
+	const isPdfExportSupported = isCataloguePdfExportSupported(catalogue.type);
+	// Study needs cards: visitors can play a public deck (epic #413), but an empty one has nothing to play.
+	const isStudyOffered = isCatalogueStudySupported(catalogue.type) && itemsCount > 0;
+	const showStudyHint = isOwner && isCatalogueStudySupported(catalogue.type) && itemsCount === 0;
+	const typeLabel = catalogue.type_label || resolveCatalogueTypeLabel(catalogue.type);
+	const levels = catalogue.jlpt_levels;
 
 	const handleDownloadPdf = async () => {
 		if (!isAuthenticated) {
@@ -75,163 +82,188 @@ const CatalogueContent = ({ catalogue }: CatalogueContentProps) => {
 			return;
 		}
 
+		const pdfKind = resolveCataloguePdfExportKind(catalogue.type);
+		if (!pdfKind) {
+			return;
+		}
+
+		setIsPdfPending(true);
+		setPdfErrorMessage(null);
+
 		try {
-			const response = await downloadCataloguePdf(catalogue.id, catalogue.type);
+			const response = await pdfExportClients[pdfKind](catalogue.uuid, { responseType: 'blob' });
 			const file = new Blob([response], { type: 'application/pdf' });
-			window.open(URL.createObjectURL(file));
+
+			downloadFile(toDownloadFileName(catalogue.title, `catalogue-${pdfKind}`, 'pdf'), file);
 		} catch (error) {
 			console.error('Catalogue PDF download failed', error);
+			setPdfErrorMessage('The PDF could not be generated. Please try again.');
+		} finally {
+			setIsPdfPending(false);
 		}
 	};
 
 	const isLiked = catalogue.engagement?.is_liked_by_viewer ?? false;
 
+	const handleLikeClick = () => {
+		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
+		// rather than as error handling after a pointless request.
+		if (!isAuthenticated) {
+			navigate('/login');
+			return;
+		}
+
+		likeMutation.mutate(catalogue.id);
+	};
+
 	return (
-		<div className="container pb-5">
-			<div className="row justify-content-center">
-				<div className="col-lg-8">
-					<span className="row mt-4">
-						<Link to={CATALOGUE_ROUTES.list} className="tag-link">
-							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Back to Catalogues
+		<>
+			<DetailLayout
+				variant="wide"
+				railLabel="About this catalogue"
+				header={
+					<div className={styles.header}>
+						<Link to={CATALOGUE_ROUTES.list} className={styles.back}>
+							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Catalogues
 						</Link>
-					</span>
-
-					<h1 className="mt-4">{catalogue.title}</h1>
-
-					<div className="row text-muted w-100 mb-3 justify-content-between align-items-center">
-						<div className="col">
-							{formatDate(catalogue.created_at, 'ja')} <br />
-							<span>{viewsCount} views</span>
-							{isOwner && <span> | {catalogue.publicity === 1 ? 'Public' : 'Private'}</span>}
-							<br />
-							<strong>{catalogue.type_label}</strong>
-						</div>
-
-						<div className="d-flex align-items-center">
-							{isOwner && (
-								<div className="d-flex ml-2">
-									<Button
-										onClick={deleteModal.open}
-										variant="ghost"
-										hasOnlyIcon
-										aria-controls={deleteModal.id}
-										aria-expanded={deleteModal.isOpen}
-									>
-										<Icon name="trashbinSolid" size="md" />
-									</Button>
-									<Button
-										onClick={() => navigate(CATALOGUE_ROUTES.edit(catalogue.uuid))}
-										variant="ghost"
-										hasOnlyIcon
-									>
-										<Icon name="penSolid" size="md" />
-									</Button>
-								</div>
-							)}
-						</div>
-					</div>
-
-					<img className="img-fluid rounded mb-3 w-100" src={DefaultListImg} alt="Cover" />
-					<p className="lead">{catalogue.description ?? 'No description yet.'}</p>
-
-					<section className="mt-2 d-flex align-items-center flex-wrap">
-						{catalogue.hashtags?.map((tag) => (
-							<Chip className="mr-1 mb-1" readonly key={tag.id} title={tag.content}>
-								{tag.content}
-							</Chip>
-						))}
-					</section>
-
-					<hr className="my-4" />
-
-					<div className="d-flex justify-content-between align-items-center">
-						<div className="d-flex align-items-center">
-							<img src={AvatarImg} alt="user" width="40" className="rounded-circle" />
-							<p className="ml-3 mb-0">
-								Created by <strong>{catalogue.owner.name}</strong>
+						<h1 className={styles.title} lang={japaneseLang(catalogue.title)}>
+							{catalogue.title}
+						</h1>
+						{catalogue.description?.trim() ? (
+							<p className={styles.description} lang={japaneseLang(catalogue.description)}>
+								{catalogue.description}
 							</p>
-						</div>
-						<div className="d-flex align-items-center">
-							<p className="mb-0 mr-2">{likesCount}</p>
-							<Button
-								variant="ghost"
-								hasOnlyIcon
-								onClick={() => {
-									if (!isAuthenticated) {
-										navigate('/login');
-										return;
-									}
-
-									likeMutation.mutate(catalogue.id);
-								}}
-							>
-								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
-							</Button>
-							{/* TODO: use const instead of type 9 */}
-							{catalogue.type !== 9 && (
-								<Button variant="ghost" hasOnlyIcon onClick={handleDownloadPdf}>
-									<Icon size="md" name="filePdfSolid" />
-								</Button>
-							)}
-							{downloadCount > 0 && <span className="ml-2 text-muted">{downloadCount} downloads</span>}
-						</div>
+						) : null}
+						<Byline name={catalogue.owner.name} date={catalogue.created_at} views={viewsCount} />
+						{isOwner ? (
+							<Cluster gap="xs">
+								<VisibilityCue publicity={catalogue.publicity} />
+							</Cluster>
+						) : null}
 					</div>
-				</div>
-			</div>
-
-			<div className="row justify-content-center mt-5">
-				<div className="col-lg-8">
-					{catalogue.items.length > 0 ? (
-						<>
-							{isOwner && (
-								<div className="mt-3 mb-2">
-									<Button
-										onClick={() => setEditMode((current) => !current)}
-										size="sm"
-										variant={editMode ? 'success' : 'ghost'}
-									>
-										{editMode ? 'End' : 'Edit'}
-									</Button>
-								</div>
-							)}
-							<CatalogueItems
-								items={catalogue.items as unknown as unknown[]}
-								catalogueType={catalogue.type}
-								currentUser={currentUser}
-								ownerId={catalogue.owner.id}
-								editMode={editMode}
-								onRemoveItem={(itemId) => removeItemMutation.mutate(itemId)}
+				}
+				main={
+					<CatalogueItems
+						catalogueUuid={catalogue.uuid}
+						catalogueType={catalogue.type}
+						payloadItems={catalogue.items}
+						isOwner={isOwner}
+						showSave={isAuthenticated}
+					/>
+				}
+				facts={
+					<DetailFacts
+						title="In this catalogue"
+						facts={[
+							{ term: 'Items', value: itemsCount },
+							{ term: 'Views', value: viewsCount },
+							{ term: 'Downloads', value: downloadCount },
+						]}
+					>
+						<div className={styles.type}>
+							<span className={styles.typeGlyph} lang="ja" aria-hidden="true">
+								{catalogueCoverGlyph(catalogue.type)}
+							</span>
+							<span>{typeLabel}</span>
+						</div>
+						{levels && dominantJlptLevel(levels) !== null ? (
+							<JlptBar
+								size="compact"
+								levels={levels}
+								counts={catalogueJlptCounts(catalogue.type)}
+								className={styles.levels}
 							/>
-						</>
-					) : (
-						<p className="text-muted">This catalogue has no items yet.</p>
-					)}
-				</div>
-			</div>
-
-			<div className="row justify-content-center mt-5">
-				<div className="col-lg-8">
-					<Suspense fallback={null}>
-						<LazyCommentsBlock
-							readObjectType="catalogue"
-							readObjectUuid={catalogue.uuid}
-							entityId={catalogue.id}
-							entityType={ObjectTemplateType.LIST}
-							entityUuid={catalogue.uuid}
-						/>
-					</Suspense>
-				</div>
-			</div>
+						) : null}
+					</DetailFacts>
+				}
+				actions={
+					<DetailActions>
+						{isStudyOffered ? (
+							<Button variant="primary" isFullWidth to={CATALOGUE_ROUTES.study(catalogue.uuid)}>
+								Study
+							</Button>
+						) : null}
+						{showStudyHint ? (
+							<p className={styles.hint}>Add kanji, words or radicals to study this catalogue.</p>
+						) : null}
+						<Button
+							variant="outline"
+							isFullWidth
+							aria-pressed={isLiked}
+							disabled={likeMutation.isTogglingInstance(catalogue.id)}
+							onClick={handleLikeClick}
+						>
+							<LikeIcon liked={isLiked} />
+							{`Like · ${likesCount}`}
+						</Button>
+						{isPdfExportSupported ? (
+							<Button variant="outline" isFullWidth isLoading={isPdfPending} onClick={handleDownloadPdf}>
+								<Icon size="sm" name="filePdfSolid" />
+								Download PDF
+							</Button>
+						) : null}
+						{pdfErrorMessage ? <Alert tone="danger">{pdfErrorMessage}</Alert> : null}
+						{isOwner ? (
+							<DetailActionGroup heading="Your catalogue">
+								<Button variant="outline" isFullWidth to={CATALOGUE_ROUTES.edit(catalogue.uuid)}>
+									<Icon size="sm" name="penSolid" />
+									Edit catalogue
+								</Button>
+								<Button
+									variant="outline"
+									isFullWidth
+									aria-controls={deleteModal.id}
+									aria-expanded={deleteModal.isOpen}
+									onClick={deleteModal.open}
+								>
+									<Icon size="sm" name="trashbinSolid" />
+									Delete catalogue
+								</Button>
+							</DetailActionGroup>
+						) : null}
+					</DetailActions>
+				}
+				extra={
+					catalogue.hashtags && catalogue.hashtags.length > 0 ? (
+						<section aria-labelledby={tagsHeadingId}>
+							<h2 id={tagsHeadingId} className={styles.railHeading}>
+								Tags
+							</h2>
+							<Cluster as="ul" gap="2xs" className={styles.tags}>
+								{catalogue.hashtags.map((tag) => (
+									<li key={tag.id}>
+										<Chip readonly title={tag.content}>
+											{tag.content}
+										</Chip>
+									</li>
+								))}
+							</Cluster>
+						</section>
+					) : null
+				}
+				after={
+					<section aria-labelledby={commentsHeadingId} className={styles.comments}>
+						<h2 id={commentsHeadingId} className={styles.sectionHeading}>
+							Comments
+						</h2>
+						<Suspense fallback={null}>
+							<LazyCommentsBlock parent="catalogue" entityId={catalogue.id} entityUuid={catalogue.uuid} />
+						</Suspense>
+					</section>
+				}
+			/>
 
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={catalogue.title}
-				onDelete={() => deleteMutation.mutate({ uuid: catalogue.uuid })}
+				onDelete={() =>
+					deleteMutation.mutate(catalogue.uuid, { onSuccess: () => navigate(CATALOGUE_ROUTES.list) })
+				}
 				isProcessing={deleteMutation.isPending}
 				deleteLabel="Yes, Delete Catalogue"
 				ariaLabel="Delete catalogue"
 			/>
-		</div>
+		</>
 	);
 };
 

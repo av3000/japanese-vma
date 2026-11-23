@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	catalogueAddItem,
-	catalogueForItem,
-	catalogueRemoveItem,
-} from '@/api/generated/catalogue/catalogue';
+import { catalogueAddItem, catalogueForItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
 import * as cataloguesForItemModule from './cataloguesForItem';
 
 const {
-	applyCatalogueForItemAction,
+	addOrRemoveCatalogueForItem,
+	deriveCatalogueWidgetState,
+	optimisticApplyCatalogueForItemAction,
 	fetchCataloguesForItem,
 } = cataloguesForItemModule;
 
@@ -87,7 +85,7 @@ describe('cataloguesForItem', () => {
 
 	it('updates for-item state locally without exposing numeric route fallbacks', () => {
 		expect(
-			applyCatalogueForItemAction(
+			optimisticApplyCatalogueForItemAction(
 				[
 					{
 						id: 1,
@@ -133,10 +131,42 @@ describe('cataloguesForItem', () => {
 		]);
 	});
 
+	it('keeps bookmark false when an item is known but not saved', () => {
+		expect(
+			deriveCatalogueWidgetState(
+				[
+					{
+						id: 1,
+						uuid: 'saved-list',
+						title: 'Saved Words',
+						type: 7,
+						type_label: 'Words',
+						publicity: 0,
+						contains_item: false,
+					},
+					{
+						id: 2,
+						uuid: 'known-list',
+						title: 'Known Words',
+						type: 3,
+						type_label: 'Known Words',
+						publicity: 0,
+						contains_item: true,
+					},
+				],
+				7,
+				3,
+			),
+		).toEqual({
+			isBookmarked: false,
+			isKnown: true,
+		});
+	});
+
 	it('writes catalogue for-item additions through the v1 catalogue item endpoint', async () => {
 		vi.mocked(catalogueAddItem).mockResolvedValue([] as never);
 
-		await (cataloguesForItemModule as any).updateCatalogueForItem({
+		await addOrRemoveCatalogueForItem({
 			list: {
 				id: 7,
 				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',
@@ -156,7 +186,7 @@ describe('cataloguesForItem', () => {
 	it('writes catalogue for-item removals through the v1 catalogue item endpoint', async () => {
 		vi.mocked(catalogueRemoveItem).mockResolvedValue(204 as never);
 
-		await (cataloguesForItemModule as any).updateCatalogueForItem({
+		await addOrRemoveCatalogueForItem({
 			list: {
 				id: 7,
 				uuid: 'd453be67-1519-43e2-94ab-af85b79aeb31',

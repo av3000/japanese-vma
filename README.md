@@ -45,14 +45,14 @@ The backend is a Laravel 11 modular monolith moving toward a layered structure:
 - `app/Application` contains services, actions, policies, jobs, and repository interfaces
 - `app/Infrastructure/Persistence` contains Eloquent-backed repositories, mappers, and persistence models
 
-The repo currently contains both legacy routes in `processor-api/routes/api.php` and newer `v1` routes in `processor-api/routes/api_v1.php`. The docs describe this current state rather than pretending the migration is finished.
+Every HTTP contract lives in `processor-api/routes/api_v1.php`. `processor-api/routes/api.php` holds only the `api/health` probe plus a retirement ledger per legacy route family, recording each route's v1 replacement. The legacy-to-v1 migration closed with #125; the retained operational and compatibility endpoints are listed in `docs/architecture/deployment-and-runtime.md`.
 
 ### Deployment And Runtime
 
 - Frontend verification and deploy flow lives in `.github/workflows/frontend-ci.yml`.
-- Backend image build, release, and verification flow lives in `.gitlab-ci.yml`.
-- The live backend web service runs on Render.
-- Production queue workers run separately on a GCP VM via Docker Compose.
+- Backend image build, release, and verification flow lives in `.github/workflows/backend-ci.yml`; manual production tasks live in `.github/workflows/backend-operations.yml`.
+- The live backend web service runs on Render from the GHCR image.
+- Production queue workers run separately via Docker Compose; no production worker host is deployed yet (#709).
 - Upstash Redis coordinates queue and cache behavior in production.
 
 ## Getting Started
@@ -63,16 +63,14 @@ The backend is Docker-first. Detailed instructions live in [processor-api/README
 
 ```bash
 cd processor-api
+cp .env.example .env
 docker compose up -d --build
-docker compose exec laravel-app composer install
-docker compose exec laravel-app php artisan key:generate
-docker compose exec laravel-app php artisan migrate
-docker compose exec laravel-app php artisan migrate --path=database/migrations/japanese-data
-docker compose exec laravel-app php artisan passport:install
-docker compose exec laravel-app php artisan db:seed
+docker compose exec laravel-app composer setup:dev
 ```
 
-Backend tests use the dedicated MySQL test lane through `docker compose exec test-runner ...`; see [processor-api/README.md](./processor-api/README.md) for the canonical commands.
+`composer setup:dev` migrates, seeds reference data and sample users, installs Passport, and imports the Japanese dictionary. It is idempotent, so re-run it after any failure.
+
+Backend tests use the dedicated PostgreSQL test lane through `docker compose exec test-runner ...`; see [processor-api/README.md](./processor-api/README.md) for the canonical commands.
 
 Useful backend URLs once running:
 
@@ -124,11 +122,13 @@ cd processor-api
 docker compose up -d --build
 docker compose up -d db-test test-runner
 docker compose exec test-runner composer test -- tests/Feature/OperationalRoutesTest.php
-docker compose exec laravel-app vendor/bin/pint --test app
+./format-changed.ps1
 docker compose exec laravel-app vendor/bin/phpstan analyse app
 docker compose exec laravel-app php artisan route:list
 docker compose logs -f webserver
 ```
+
+`format-changed.ps1` (or `format-changed.sh`) runs Pint over the PHP files your branch changed, matching what CI checks. Run it before pushing; see [processor-api/README.md](./processor-api/README.md) for why `composer format` does not work inside the containers.
 
 ## Orval API Client
 

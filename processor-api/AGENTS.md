@@ -2,83 +2,49 @@
 
 This file defines **backend-specific** guidance for changes under `processor-api/`.
 
+**Rules live in the `backend-standards` skill** (`.claude/skills/backend-standards/`): one file per rule ID (`ARCH-`, `CONTRACT-`, `RESULT-`, `DATA-`, `TEST-`), each with an impact level and an Incorrect/Correct example from the v1 modules. This file keeps direction, environment and process, and names the rule IDs that apply. Cite a rule by its ID.
+
 ## 1) Backend Architecture Direction
 
 -   **Style:** Domain-driven modular monolith with layered responsibilities.
--   **Preferred request flow:**
-    -   Route → Controller → Request validation → DTO/Value Objects → Service/Application layer → Repository/Model → Resource/HTTP response.
 -   **Primary direction:**
     -   Keep legacy behavior stable where needed.
-    -   Prefer new/refactored work in v1 architecture/routes when practical.
+    -   Prefer new/refactored work in v1 architecture/routes when practical: `ARCH-v1-routes`.
 
 ## 2) Route & Endpoint Policy
 
--   **Legacy coexistence:**
-    -   Do not break legacy endpoints unless explicitly requested.
--   **v1 preference:**
-    -   For new/refactored endpoints, prefer `routes/api_v1.php` conventions.
--   **Route specificity:**
-    -   When adding a concrete v1 route beside a parameterized sibling such as `catalogues/{uuid}`, place the concrete route where it cannot be shadowed by the parameterized match.
--   **Migration behavior:**
-    -   Preserve existing behavior intentionally, or document intentional changes.
--   **Generic comment write contract:**
-    -   `POST /api/v1/comments` uses a generic write payload: `{ entity_type: ObjectTemplateType, entity_id, entity_uuid, content, parent_comment_id? }`.
-    -   Do not reintroduce string-name mappings like `article` or `catalogue` at the write boundary when the backend already accepts the shared enum value.
+-   Rules: `ARCH-v1-routes`, `CONTRACT-route-specificity`, `CONTRACT-comment-write-payload`.
 
 ## 3) Layering & Domain Boundaries
 
--   **Controller responsibilities:**
-    -   Coordinate request handling and mapping only.
-    -   Avoid embedding heavy business logic.
--   **Service responsibilities:**
-    -   Orchestrate business rules and use-cases.
-    -   Enforce ownership/authorization rules at appropriate layer.
--   **Repository responsibilities:**
-    -   Encapsulate persistence/data access concerns.
--   **Boundary rule:**
-    -   Keep HTTP/transport details from leaking into domain entities.
+-   Rules: `ARCH-thin-controllers`, `ARCH-business-rules-in-application`, `ARCH-domain-dependency-direction`, `ARCH-domain-no-framework`, `ARCH-cross-module-service-interface`, `ARCH-focused-actions`, `ARCH-no-speculative-layers`.
+-   Admin panel: `ARCH-admin-boundary` (website and panel policies, `{Module}ModerationService` as the only staff write path, enforced by `tests/Unit/Architecture/AdminBoundaryTest`, whose `KNOWN_VIOLATIONS` only shrinks).
+-   Persistence: `DATA-repositories-hide-persistence`, `DATA-list-readers`, `DATA-list-shape-naming`, `DATA-complete-domain-models`, `DATA-mappers-translate-shape`, `DATA-sql-in-infrastructure`.
 
 ## 4) Validation, DTO, and Identifier Conventions
 
--   **Validation:**
-    -   Prefer dedicated Request classes per endpoint.
-    -   For partial updates, validate optional fields and handle empty-update payloads explicitly.
-    -   For generic v1 comment create, validate the `entity_type` / `entity_id` / `entity_uuid` tuple directly in the request contract instead of resolving numeric IDs from UUIDs inside the service layer.
-    -   For new v1 array query params, prefer clean names like `types` over `types[]` unless legacy compatibility requires bracket syntax, because Orval preserves the literal wire name.
--   **DTOs/Value Objects:**
-    -   Use DTO contracts for operation inputs/outputs where meaningful.
-    -   Use value objects where they improve invariants and type safety.
--   **Identifiers:**
-    -   Follow existing v1 UUID/entity identifier conventions in the touched module.
-    -   Comment create currently trusts the validated `entity_type` / `entity_id` / `entity_uuid` tuple at write time; do not add per-type resolver indirection back unless the contract itself changes.
+-   Rules: `CONTRACT-request-per-endpoint`, `CONTRACT-partial-update-validation`, `CONTRACT-comment-write-payload`, `CONTRACT-clean-array-param-names`, `CONTRACT-v1-identifiers`.
 
 ## 5) Response & Error Handling
 
--   **Response consistency:**
-    -   Reuse existing module resource/response patterns.
-    -   Keep success/error envelope aligned with neighboring endpoints.
--   **Error behavior:**
-    -   Prefer explicit, typed/structured error handling patterns.
-    -   Do not hide contract-significant failures.
--   **Schema guidance:**
-    -   When a backend enum is part of the public API contract, prefer emitting it as a reusable OpenAPI schema/component so Orval can generate a shared frontend model instead of request-local aliases.
-    -   In Resource `toArray()` output, use explicit scalar casts for public API fields, especially booleans, because OpenAPI generation may otherwise infer the wrong wire type.
-    -   For lean ad hoc response shapes, Resource PHPDoc may be insufficient for nested arrays. If Scramble still collapses the generated schema incorrectly, add an explicit controller-level `#[Response(type: 'array{...}')]`.
-    -   Treat incorrect generated types as a backend schema problem first, not a frontend typing workaround.
+-   Responses and errors: `RESULT-typed-results`, `RESULT-result-typed-errors`, `RESULT-envelope-matches-module`, `RESULT-no-mixed-envelopes`.
+-   Schema and the generated client: `CONTRACT-named-resources`, `CONTRACT-resource-scalar-casts`, `CONTRACT-fix-schema-at-resource`, `CONTRACT-no-key-comments-in-toarray`, `CONTRACT-enum-schema-components`, `CONTRACT-resources-shape-only`, `CONTRACT-api-json-orval-workflow`, `TEST-openapi-schema-tests`.
+-   Backend CI re-exports `api.json` (`composer openapi` with `APP_NAME=Laravel`, `APP_URL=http://localhost`) and fails when it differs from the committed file. Export with those two values or `info.title` and `servers[0].url` will differ.
 
 ## 6) Testing & Verification Expectations
 
--   **When backend code changes:**
-    -   Run targeted PHPUnit tests for affected feature/module.
-    -   Add or update feature tests for endpoint success/failure/edge cases.
+-   **When backend code changes:** `TEST-feature-tests-per-endpoint`, run in the isolated lane per `TEST-docker-lane` (the rule holds the commands).
 -   **Verification reporting:**
     -   List exact commands run and outcomes.
     -   Clearly report environment constraints when checks are blocked.
-    -   From `processor-api/`, bring up backend test infrastructure with `docker compose up -d --build db-test test-runner`.
-    -   Run backend tests through `docker compose exec test-runner composer test -- ...` so Laravel always boots in `APP_ENV=testing` against the dedicated `db-test` MySQL service.
-    -   Use `docker compose exec test-runner composer test:prepare` when you need an explicit schema reset before a run.
-    -   Do not run DB-backed backend tests against host PHP, `laravel-app`, the main dev database, or SQLite fallbacks.
+    -   Use `composer test:prepare` in the lane when you need an explicit schema reset before a run.
+    -   More lane traps: `docs/agents/local-environment.md`.
     -   Local PHPUnit failures may also be followed by Telescope storage errors during teardown; treat those as secondary noise unless they are the first failing cause.
+-   **Code style (Pint):**
+    -   Run `./format-changed.ps1` (or `./format-changed.sh`) from `processor-api/` on the host before finalizing any PHP change. CI fails on style drift in changed files.
+    -   From a worktree, pass the lane: `./format-changed.ps1 -Lane jvma<issue>` or `LANE=jvma<issue> ./format-changed.sh`. Without it the scripts refuse to run, because the default `laravel-app` container belongs to another checkout.
+    -   Do not rely on `composer format`, `composer format:check`, or `vendor/bin/pint --dirty` inside the containers. Only `processor-api/` is bind-mounted while `.git` lives at the repository root, so `--dirty` matches nothing and reports a false `PASS 0 files`. This overrides the generic Pint guidance in the Laravel Boost block below.
+    -   Do not run `composer format:all` or `composer quality:ci` on a feature branch; the repository still carries legacy style drift and a full pass creates a large unrelated diff.
     -   If the dedicated test lane itself is unavailable, report that environment limitation clearly and still run any unit or schema checks that remain feasible.
 
 ## 7) Refactor Guardrails
@@ -92,57 +58,60 @@ This file defines **backend-specific** guidance for changes under `processor-api
 
 ## 8) AI Guidance
 
--   Repository-level Laravel AI guidance lives in `.ai/guidelines/` and `.ai/skills/`.
--   For legacy-to-v1 endpoint migrations, prefer `.ai/skills/legacy-to-v1-migration/` when the agent supports repository skills.
--   Keep this file as the source of truth for backend constraints; the skill should reinforce these rules, not override them.
+-   Always-on Laravel conventions live in `processor-api/.ai/guidelines/`. Laravel Boost copies them into the generated block below, so edit the source files rather than the block.
+-   Repo-wide skills live in the root `.claude/skills/`, mirrored to `.codex/skills/`. The agent workflow (issues, review, PRs, commit shape) is in the root `AGENTS.md` §7.
+-   Citable backend rules are in the `backend-standards` skill; `review-branch` cites them by ID.
+-   Keep this file as the source of truth for backend constraints. Rules here win over Boost-installed vendor skills (`laravel-best-practices`, `configuring-horizon`) and over the generic guidance in the generated block.
 
 <laravel-boost-guidelines>
 === .ai/backend-response-and-errors rules ===
 
 # Backend Response And Errors
 
+Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example.
+
 For v1 endpoints:
 
-- Return success responses through `App\Shared\Http\TypedResults`.
-- Return service-level failures through `App\Shared\Results\Result` and typed error classes.
-- Keep pagination, envelope shape, and include-flag behavior aligned with the nearest existing v1 module.
-- Use request validation classes to reject invalid inputs before service orchestration.
+- Success responses are a named Resource or an `App\Shared\Http\TypedResults` helper, never ad hoc JSON: `RESULT-typed-results`.
+- Service-level failures are `App\Shared\Results\Result` with typed error classes: `RESULT-result-typed-errors`.
+- Pagination, envelope shape and include flags follow the nearest v1 module: `RESULT-envelope-matches-module`.
+- A Request class rejects invalid input before the service runs: `CONTRACT-request-per-endpoint`.
 
 When changing contracts:
 
-- Make the change explicit in the task summary or implementation notes.
-- Keep legacy behavior unless a migration intentionally moves to a new v1 contract.
-- Do not mix legacy JSON patterns and v1 `TypedResults` patterns in the same endpoint family without a clear reason.
+- Contract changes are explicit, and legacy behaviour stays unless a migration moves it to v1.
+- One endpoint family never mixes legacy JSON and `TypedResults`: `RESULT-no-mixed-envelopes`.
 
 === .ai/backend-v1-architecture rules ===
 
 # Backend V1 Architecture
 
-Use this request flow for v1 Laravel endpoints:
+Each rule below is a citable rule in the `backend-standards` skill (`.claude/skills/backend-standards/rules/<ID>.md`), with an Incorrect/Correct example from the v1 modules. Open the rule file before applying it.
+
+Request flow for v1 endpoints:
 
 `routes/api_v1.php` -> v1 Controller -> Request -> DTO or Value Object -> Application Service or Policy -> Repository Interface -> Infrastructure Repository, Model, Mapper or Builder -> Resource -> `TypedResults`
 
-Keep responsibilities separated by layer:
+By layer:
 
-- `app/Domain`
-  - Put domain models, DTOs, value objects, enums, and typed errors here.
-  - Do not leak HTTP requests, responses, Eloquent models, or raw query builders into this layer.
-- `app/Application`
-  - Put use-case orchestration, policies, actions, jobs, and repository interfaces here.
-  - Keep business rules here instead of controllers.
-- `app/Infrastructure/Persistence`
-  - Put persistence models, repositories, and mappers or builders here.
-  - Encapsulate query logic and batch loading here instead of the HTTP layer.
-- `app/Http/v1`
-  - Put controllers, requests, and resources here.
-  - Keep controllers thin and focused on coordination, mapping, and returning `TypedResults`.
+- `app/Domain`: domain models, DTOs, value objects, enums and typed errors.
+  - Never imports `App\Application`, `App\Infrastructure` or `App\Http`: `ARCH-domain-dependency-direction`, enforced by `tests/Unit/Architecture/DomainLayerDependencyTest`.
+  - No HTTP requests or responses, Eloquent models or query builders: `ARCH-domain-no-framework`.
+  - List shapes are named `*QueryCriteria`, `*Includes`, `*PageDTO`, `*ListResultDTO` and `*SortCriteria`: `DATA-list-shape-naming`.
+  - Domain models are constructed complete by their mapper; per-read enrichment lives on a `*ListItemDTO` (ADR 0001): `DATA-complete-domain-models`.
+- `app/Application`: use cases, policies, actions, jobs and repository interfaces.
+  - Business rules and ownership checks live here, not in controllers: `ARCH-business-rules-in-application`.
+  - List reads with filters, facets or pagination go through a `*ReaderInterface`: `DATA-list-readers`.
+  - Anything another module calls is a `*ServiceInterface` returning `Result`: `ARCH-cross-module-service-interface`.
+  - A reusable or side-effectful step is a focused action: `ARCH-focused-actions`.
+- `app/Infrastructure/Persistence`: persistence models, repositories, mappers and builders.
+  - Repositories hide persistence and return domain shapes: `DATA-repositories-hide-persistence`.
+  - Mappers translate shape and hold no policy: `DATA-mappers-translate-shape`.
+  - The backend targets PostgreSQL only; SQL lives here, never in Domain, Application or Http: `DATA-sql-in-infrastructure`.
+- `app/Http/v1`: controllers, requests and resources.
+  - Controllers coordinate and return a Resource or `TypedResults`: `ARCH-thin-controllers`.
 
-Apply these guardrails:
-
-- Reuse nearby v1 patterns before inventing new abstractions.
-- Add a mapper or builder when the persistence shape should not leak into the domain shape.
-- Add a focused service or action when logic is reusable, side-effectful, batch-heavy, or heterogeneous.
-- Keep interface bindings explicit in service and repository providers.
+Guardrails: reuse nearby v1 patterns before adding layers (`ARCH-no-speculative-layers`).
 
 === .ai/repository rules ===
 
@@ -156,10 +125,10 @@ Use this repository as a multi-application workspace:
 
 When migrating backend endpoints:
 
-- Preserve legacy behavior intentionally. Change contracts only when requested or when the change is explicitly documented.
+- Preserve legacy behavior intentionally, and state contract changes explicitly.
 - Keep diffs focused. Do not mix endpoint migration work with unrelated refactors.
 - Treat `processor-api/AGENTS.md` as the backend source of truth for implementation constraints.
-- Use `.ai/guidelines/` for always-on conventions and `.ai/skills/` for deeper, task-specific workflows.
+- Use `.ai/guidelines/` for always-on conventions. Task-specific skills live in the repo-root `.claude/skills/`, mirrored to `.codex/skills/`.
 
 === foundation rules ===
 
@@ -172,12 +141,14 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.3
+- filament/filament (FILAMENT) - v5
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
 - laravel/passport (PASSPORT) - v12
 - laravel/prompts (PROMPTS) - v0
 - laravel/reverb (REVERB) - v1
 - laravel/telescope (TELESCOPE) - v5
+- livewire/livewire (LIVEWIRE) - v4
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
@@ -192,10 +163,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
 - `configuring-horizon` — Use this skill whenever the user mentions Horizon by name in a Laravel context. Covers the full Horizon lifecycle: installing Horizon (horizon:install, Sail setup), configuring config/horizon.php (supervisor blocks, queue assignments, balancing strategies, minProcesses/maxProcesses), fixing the dashboard (authorization via Gate::define viewHorizon, blank metrics, horizon:snapshot scheduling), and troubleshooting production issues (worker crashes, timeout chain ordering, LongWaitDetected notifications, waits config). Also covers job tagging and silencing. Do not use for generic Laravel queues without Horizon, SQS or database drivers, standalone Redis setup, Linux supervisord, Telescope, or job batching.
-- `spatie-javascript` — Apply Spatie's JavaScript coding standards for any task that creates, edits, reviews, refactors, or formats JavaScript or TypeScript code; use for variable declarations, comparisons, functions, destructuring, and Prettier configuration to align with Spatie's JS conventions.
-- `spatie-laravel-php` — Apply Spatie's Laravel and PHP coding standards for any task that creates, edits, reviews, refactors, or formats Laravel/PHP code or Blade templates; use for controllers, Eloquent models, routes, config, validation, migrations, tests, and related files to align with Laravel conventions and PSR-12.
-- `spatie-security` — Apply Spatie's security guidelines when configuring applications, databases, or servers, or when reviewing code for security concerns; use for SSL setup, CSRF protection, password hashing, database permissions, and server hardening.
-- `spatie-version-control` — Apply Spatie's version control conventions when creating commits, branches, pull requests, or managing Git repositories; use for naming repos, writing commit messages, choosing branch strategies, and merging code.
 
 ## Conventions
 
@@ -285,7 +252,7 @@ This project has domain-specific skills available. You MUST activate the relevan
 # Test Enforcement
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. In this repository, execute those commands through `docker compose exec test-runner composer test -- ...` from `processor-api/`, with a specific filename or filter.
+- Run the minimum number of tests needed to ensure code quality and speed. In this repository, never use `php artisan test`: run tests in the isolated Docker test lane from `processor-api/`, `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- ...`, with a specific filename or filter. Lane setup is in `processor-api/AGENTS.md` §6; the rules are `TEST-docker-lane` and `TEST-feature-tests-per-endpoint` in the `backend-standards` skill.
 
 === laravel/core rules ===
 
@@ -327,12 +294,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Laravel 10 Structure
 
-- Middleware typically lives in `app\Http/Middleware/` and service providers in `app\Providers/`.
+- Middleware typically lives in `app/Http/Middleware/` and service providers in `app/Providers/`.
 - There is no `bootstrap/app.php` application configuration in a Laravel 10 structure:
-    - Middleware registration happens in `app\Http/Kernel.php`
-    - Exception handling is in `app\Exceptions/Handler.php`
-    - Console commands and schedule register in `app\Console/Kernel.php`
-    - Rate limits likely exist in `RouteServiceProvider` or `app\Http/Kernel.php`
+    - Middleware registration happens in `app/Http/Kernel.php`
+    - Exception handling is in `app/Exceptions/Handler.php`
+    - Console commands and schedule register in `app/Console/Kernel.php`
+    - Rate limits likely exist in `RouteServiceProvider` or `app/Http/Kernel.php`
 
 ## Database
 
@@ -364,18 +331,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 ## Running Tests
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `docker compose exec test-runner composer test`.
-- To run all tests in a file: `docker compose exec test-runner composer test -- tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `docker compose exec test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
-
-=== spatie/guidelines-skills rules ===
-
-# Project Coding Guidelines
-
-- This codebase follows Spatie's coding guidelines.
-- Always activate the `spatie-laravel-php` skill when writing, editing, reviewing, or formatting Laravel or PHP code.
-- Always activate the `spatie-javascript` skill when writing, editing, reviewing, or formatting JavaScript or TypeScript code.
-- Always activate the `spatie-version-control` skill when creating commits, branches, or managing Git operations.
-- Always activate the `spatie-security` skill when configuring security, reviewing authentication, or setting up servers and databases.
+- Run tests in the isolated Docker test lane from `processor-api/`, never with `php artisan test`. `jvma<issue>` is a project name unique to the checkout (`TEST-docker-lane`).
+- To run all tests: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test`.
+- To run all tests in a file: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `docker compose -f docker-compose.test.yml -p jvma<issue> exec -T test-runner composer test -- --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>

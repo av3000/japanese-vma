@@ -1,0 +1,21 @@
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Z-Index" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Z-index</h1>
+  <div className="richTextWrapper">
+    <p>
+      Always use <code>--z-index-*</code> from <code>src/styles/00-settings/z-index.css</code>, never a number. The scale is relative: each layer is defined as one step above another, so to add a layer, add a token there rather than picking a number.
+    </p>
+    <p>
+      The number is what the browser resolves for each token, lowest first. The expression beside each bar is how the token is defined.
+    </p>
+  </div>
+
+  <TokenGroup prefix="z-index" kind="zIndex" />
+</div>
+</Unstyled>

@@ -16,7 +16,6 @@ RUN apt-get update \
     intl \
     mbstring \
     pcntl \
-    pdo_mysql \
     pdo_pgsql \
     pdo_sqlite \
     zip \

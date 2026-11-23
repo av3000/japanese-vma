@@ -1,6 +1,7 @@
-import { type DependencyList, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type DependencyList, useCallback, useEffect, useMemo, useRef } from 'react';
+import type Echo from 'laravel-echo';
 import { type BroadcastDriver } from 'laravel-echo';
-import { echo, echoIsConfigured } from '../config';
+import { useWebSocket } from '@/providers/contexts/socket-provider';
 import type {
 	BroadcastNotification,
 	Channel,
@@ -15,7 +16,35 @@ import type {
 } from '../types';
 import { toArray } from '../util';
 
-const channels = new Map<string, ChannelData<BroadcastDriver>>();
+/**
+ * Channel subscriptions are shared per Echo instance and reference-counted, so two components
+ * listening on the same channel open one socket subscription. Keying the cache on the instance
+ * (a WeakMap) means a new instance after reconfiguration never sees a stale entry (#253).
+ */
+const channelsByInstance = new WeakMap<Echo<BroadcastDriver>, Map<string, ChannelData<BroadcastDriver>>>();
+
+/**
+ * Releases are deferred to a microtask. React StrictMode runs effect, cleanup, effect for a
+ * mount in one synchronous pass; without the deferral the cleanup would leave the channel and
+ * the second effect would open a second subscription. A re-acquire inside the same task
+ * cancels the pending release, so every acquire still pairs with exactly one leave (#255).
+ */
+const pendingReleases = new WeakMap<Echo<BroadcastDriver>, Set<string>>();
+
+/** Test seam: how many channels the registry currently holds for an instance. */
+export const channelRegistrySizeFor = (instance: Echo<BroadcastDriver>): number =>
+	channelsByInstance.get(instance)?.size ?? 0;
+
+const channelsFor = (instance: Echo<BroadcastDriver>): Map<string, ChannelData<BroadcastDriver>> => {
+	let channels = channelsByInstance.get(instance);
+
+	if (!channels) {
+		channels = new Map();
+		channelsByInstance.set(instance, channels);
+	}
+
+	return channels;
+};
 
 const createNoopConnection = <T extends BroadcastDriver>(): Connection<T> => {
 	const noopConnection = {
@@ -38,125 +67,77 @@ const createNoopConnection = <T extends BroadcastDriver>(): Connection<T> => {
 	return noopConnection as unknown as Connection<T>;
 };
 
-const getPusherConnection = (
-	connector: unknown,
-): { bind: (event: string, callback: (payload: unknown) => void) => void; unbind: (event: string, callback: (payload: unknown) => void) => void; state?: string } | null => {
-	if (!connector || typeof connector !== 'object') {
-		return null;
-	}
-
-	if (!('pusher' in connector)) {
-		return null;
-	}
-
-	const pusher = (connector as { pusher?: unknown }).pusher;
-	if (!pusher || typeof pusher !== 'object') {
-		return null;
-	}
-
-	if (!('connection' in pusher)) {
-		return null;
-	}
-
-	const connection = (pusher as { connection?: unknown }).connection;
-	if (!connection || typeof connection !== 'object') {
-		return null;
-	}
-
-	const hasBind = 'bind' in connection && typeof (connection as { bind?: unknown }).bind === 'function';
-	const hasUnbind = 'unbind' in connection && typeof (connection as { unbind?: unknown }).unbind === 'function';
-
-	if (!hasBind || !hasUnbind) {
-		return null;
-	}
-
-	return connection as {
-		bind: (event: string, callback: (payload: unknown) => void) => void;
-		unbind: (event: string, callback: (payload: unknown) => void) => void;
-		state?: string;
-	};
-};
-
-const mapPusherState = (state: string | undefined): ConnectionStatus => {
-	switch (state) {
-		case 'initialized':
-		case 'connecting':
-			return 'connecting';
-		case 'connected':
-			return 'connected';
-		case 'unavailable':
-			return 'reconnecting';
-		case 'failed':
-			return 'failed';
-		case 'disconnected':
-			return 'disconnected';
-		default:
-			return 'disconnected';
-	}
-};
-
-const subscribeToChannel = <T extends BroadcastDriver>(channel: Channel): Connection<T> => {
-	if (!echoIsConfigured()) {
-		return createNoopConnection<T>();
-	}
-
-	const instance = echo<T>();
-
+const subscribeToChannel = <T extends BroadcastDriver>(
+	instance: Echo<BroadcastDriver>,
+	channel: Channel,
+): Connection<T> => {
 	if (channel.visibility === 'presence') {
-		return instance.join(channel.name);
+		return instance.join(channel.name) as unknown as Connection<T>;
 	}
 
 	if (channel.visibility === 'private') {
-		return instance.private(channel.name);
+		return instance.private(channel.name) as unknown as Connection<T>;
 	}
 
-	return instance.channel(channel.name);
+	return instance.channel(channel.name) as unknown as Connection<T>;
 };
 
-const leaveChannel = (channel: Channel, leaveAll: boolean): void => {
-	if (!echoIsConfigured()) {
+const acquireChannel = <T extends BroadcastDriver>(
+	instance: Echo<BroadcastDriver>,
+	channel: Channel,
+): Connection<T> => {
+	const channels = channelsFor(instance);
+	const existing = channels.get(channel.id);
+
+	if (existing) {
+		existing.count += 1;
+		pendingReleases.get(instance)?.delete(channel.id);
+
+		return existing.connection as Connection<T>;
+	}
+
+	const connection = subscribeToChannel<T>(instance, channel);
+	channels.set(channel.id, { count: 1, connection });
+
+	return connection;
+};
+
+const releaseChannel = (instance: Echo<BroadcastDriver>, channel: Channel): void => {
+	const channels = channelsFor(instance);
+	const entry = channels.get(channel.id);
+
+	if (!entry) {
+		return;
+	}
+
+	entry.count -= 1;
+
+	if (entry.count > 0) {
+		return;
+	}
+
+	let pending = pendingReleases.get(instance);
+	if (!pending) {
+		pending = new Set();
+		pendingReleases.set(instance, pending);
+	}
+	pending.add(channel.id);
+
+	queueMicrotask(() => {
+		if (!pending.has(channel.id)) {
+			return; // re-acquired before the release ran
+		}
+
+		pending.delete(channel.id);
+
+		const current = channels.get(channel.id);
+		if (!current || current.count > 0) {
+			return;
+		}
+
 		channels.delete(channel.id);
-		return;
-	}
-
-	const channelEntry = channels.get(channel.id);
-
-	if (!channelEntry) {
-		return;
-	}
-
-	channelEntry.count -= 1;
-
-	if (channelEntry.count > 0) {
-		return;
-	}
-
-	if (leaveAll) {
-		echo().leave(channel.name);
-	} else {
-		echo().leaveChannel(channel.id);
-	}
-
-	channels.delete(channel.id);
-};
-
-const resolveChannelSubscription = <T extends BroadcastDriver>(channel: Channel): Connection<T> => {
-	const existingChannel = channels.get(channel.id);
-
-	if (existingChannel) {
-		existingChannel.count += 1;
-
-		return existingChannel.connection;
-	}
-
-	const channelSubscription = subscribeToChannel<T>(channel);
-
-	channels.set(channel.id, {
-		count: 1,
-		connection: channelSubscription,
+		instance.leave(channel.name);
 	});
-
-	return channelSubscription;
 };
 
 export function useEcho<
@@ -170,7 +151,7 @@ export function useEcho<
 	dependencies?: DependencyList,
 	visibility?: TVisibility,
 ): {
-	leaveChannel: (leaveAll?: boolean) => void;
+	leaveChannel: () => void;
 	leave: () => void;
 	stopListening: () => void;
 	listen: () => void;
@@ -188,13 +169,20 @@ export function useEcho<
 	dependencies?: DependencyList,
 	visibility?: TVisibility,
 ): {
-	leaveChannel: (leaveAll?: boolean) => void;
+	leaveChannel: () => void;
 	leave: () => void;
 	stopListening: () => void;
 	listen: () => void;
 	channel: () => ChannelReturnType<TDriver, TVisibility>;
 };
 
+/**
+ * Subscribe to a channel on the provider's Echo instance and listen for events.
+ *
+ * Reactive to configuration (#253): nothing is subscribed until the provider has an instance,
+ * and when the instance or its generation changes the old subscription is torn down and a
+ * new one opened. Before the instance exists `channel()` returns a no-op connection.
+ */
 export function useEcho<
 	TPayload,
 	TDriver extends BroadcastDriver = BroadcastDriver,
@@ -206,6 +194,8 @@ export function useEcho<
 	dependencies: DependencyList = [],
 	visibility: TVisibility = 'private' as TVisibility,
 ) {
+	const { echo, generation } = useWebSocket();
+
 	const channel: Channel = useMemo(
 		() => ({
 			name: channelName,
@@ -217,70 +207,75 @@ export function useEcho<
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const callbackFunc = useCallback(callback, dependencies);
-	const listening = useRef(false);
-	const initialized = useRef(false);
-	const subscription = useRef<Connection<TDriver>>(resolveChannelSubscription<TDriver>(channel));
 
 	const eventKey = Array.isArray(event) ? JSON.stringify(event) : event;
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const events = useMemo(() => toArray(event), [eventKey]);
 
+	const subscription = useRef<Connection<TDriver> | null>(null);
+	const listening = useRef(false);
+
 	const stopListening = useCallback(() => {
-		if (!listening.current) {
+		if (!listening.current || !subscription.current) {
 			return;
 		}
 
 		events.forEach((e) => {
-			subscription.current.stopListening(e, callbackFunc);
+			subscription.current?.stopListening(e, callbackFunc);
 		});
 
 		listening.current = false;
 	}, [events, callbackFunc]);
 
 	const listen = useCallback(() => {
-		if (listening.current) {
+		if (listening.current || !subscription.current) {
 			return;
 		}
 
 		events.forEach((e) => {
-			subscription.current.listen(e, callbackFunc);
+			subscription.current?.listen(e, callbackFunc);
 		});
 
 		listening.current = true;
 	}, [events, callbackFunc]);
 
-	const tearDown = useCallback(
-		(leaveAll: boolean = false) => {
-			stopListening();
+	const tearDown = useCallback(() => {
+		stopListening();
 
-			leaveChannel(channel, leaveAll);
-		},
-		[stopListening, channel],
-	);
+		if (echo && subscription.current) {
+			releaseChannel(echo as Echo<BroadcastDriver>, channel);
+		}
+
+		subscription.current = null;
+	}, [stopListening, echo, channel]);
 
 	const leave = useCallback(() => {
-		tearDown(true);
+		tearDown();
 	}, [tearDown]);
 
 	useEffect(() => {
-		if (initialized.current) {
-			subscription.current = resolveChannelSubscription<TDriver>(channel);
+		if (!echo) {
+			return;
 		}
 
-		initialized.current = true;
-
+		subscription.current = acquireChannel<TDriver>(echo as Echo<BroadcastDriver>, channel);
 		listen();
 
-		return tearDown;
-	}, [listen, tearDown, channel]);
+		return () => {
+			tearDown();
+		};
+		// `generation` is intentionally a dependency: a new instance of the same identity must
+		// still resubscribe.
+	}, [echo, generation, channel, listen, tearDown]);
 
 	return useMemo(
 		() => ({
-			leaveChannel: tearDown,
+			leaveChannel: () => tearDown(),
 			leave,
 			stopListening,
 			listen,
-			channel: () => subscription.current as ChannelReturnType<TDriver, TVisibility>,
+			channel: () =>
+				(subscription.current ?? createNoopConnection<TDriver>()) as ChannelReturnType<TDriver, TVisibility>,
 		}),
 		[leave, listen, stopListening, tearDown],
 	);
@@ -315,7 +310,6 @@ export const useEchoNotification = <TPayload, TDriver extends BroadcastDriver = 
 	}, [eventKey]);
 
 	const listening = useRef(false);
-	const initializedRef = useRef(false);
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const memoizedCallback = useCallback(callback, dependencies);
@@ -338,12 +332,8 @@ export const useEchoNotification = <TPayload, TDriver extends BroadcastDriver = 
 			return;
 		}
 
-		if (!initializedRef.current) {
-			result.channel().notification(cb);
-		}
-
+		result.channel().notification(cb);
 		listening.current = true;
-		initializedRef.current = true;
 	}, [cb, result]);
 
 	const stopListening = useCallback(() => {
@@ -352,7 +342,6 @@ export const useEchoNotification = <TPayload, TDriver extends BroadcastDriver = 
 		}
 
 		result.channel().stopListeningForNotification(cb);
-
 		listening.current = false;
 	}, [cb, result]);
 
@@ -406,55 +395,5 @@ export const useEchoModel = <TPayload, TModel extends string, TDriver extends Br
 	);
 };
 
-export const useConnectionStatus = (): ConnectionStatus => {
-	const getConnectionStatus = (): ConnectionStatus => {
-		if (!echoIsConfigured()) {
-			return 'disconnected';
-		}
-
-		const connection = getPusherConnection(echo().connector);
-		if (!connection) {
-			return 'disconnected';
-		}
-
-		return mapPusherState(connection.state);
-	};
-
-	const [status, setStatus] = useState<ConnectionStatus>(() => getConnectionStatus());
-
-	useEffect(() => {
-		if (!echoIsConfigured()) {
-			setStatus('disconnected');
-			return;
-		}
-
-		const connection = getPusherConnection(echo().connector);
-		if (!connection) {
-			setStatus('disconnected');
-			return;
-		}
-
-		const handleStateChange = (payload: unknown) => {
-			if (typeof payload === 'string') {
-				setStatus(mapPusherState(payload));
-				return;
-			}
-
-			if (payload && typeof payload === 'object' && 'current' in payload) {
-				const current = (payload as { current?: unknown }).current;
-				if (typeof current === 'string') {
-					setStatus(mapPusherState(current));
-				}
-			}
-		};
-
-		connection.bind('state_change', handleStateChange);
-		setStatus(mapPusherState(connection.state));
-
-		return () => {
-			connection.unbind('state_change', handleStateChange);
-		};
-	}, []);
-
-	return status;
-};
+/** The provider already tracks the Pusher connection state; read it from context. */
+export const useConnectionStatus = (): ConnectionStatus => useWebSocket().connectionStatus;

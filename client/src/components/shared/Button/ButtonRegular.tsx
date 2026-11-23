@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import classNames from 'classnames';
 
-import styles from './Button.module.scss';
+import styles from './Button.module.css';
 import { useButtonClassNames } from './hooks';
 import { ButtonBaseProps } from './types';
 
@@ -41,7 +41,7 @@ export const ButtonRegular: React.FunctionComponent<ButtonRegularProps> = ({
 
   return (
     <button className={classes} type={type} disabled={disabled || isLoading} {...buttonProps}>
-      {isLoading && <span className={classNames(styles.spinner, 'u-spinner')} />}
+      {isLoading && <span className={classNames(styles.spinner, 'u-spinner')} aria-hidden="true" />}
       {isLoading === undefined ? (
         <>{children}</>
       ) : (

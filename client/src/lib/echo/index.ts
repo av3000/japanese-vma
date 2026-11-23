@@ -1,5 +1,6 @@
-export { configureEcho, echo, echoIsConfigured } from './config/index';
+export { createEcho } from './config/index';
 export {
+	channelRegistrySizeFor,
 	useConnectionStatus,
 	useEcho,
 	useEchoModel,

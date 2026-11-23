@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\JapaneseMaterial\Words\Queries;
+
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
+
+final readonly class WordQueryCriteria
+{
+    /** The longest `keyword` the list accepts. The Header search counts use it too, so both agree. */
+    public const KEYWORD_MAX_LENGTH = 255;
+
+    public const DEFAULT_PER_PAGE = 10;
+
+    public function __construct(
+        public Pagination $pagination,
+        public ?string $keyword = null,
+        public ?string $word = null,
+        public ?string $furigana = null,
+        public ?string $jlpt = null,
+        public ?int $kanjiId = null,
+        /** Words attached to one article, the list behind the article detail page (#268). */
+        public ?EntityId $articleId = null,
+        /** Words saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public ?int $catalogueId = null,
+        /** Words written with one kanji, the list behind the kanji detail page (#352). */
+        public ?EntityId $kanjiUuid = null,
+    ) {
+    }
+
+    public static function forListing(
+        int $page = Pagination::MIN_PAGE,
+        int $perPage = self::DEFAULT_PER_PAGE,
+        ?string $keyword = null,
+        ?string $word = null,
+        ?string $furigana = null,
+        ?string $jlpt = null,
+        ?int $kanjiId = null,
+        ?EntityId $articleId = null,
+        ?int $catalogueId = null,
+        ?EntityId $kanjiUuid = null,
+    ): self {
+        return new self(
+            pagination: new Pagination($page, $perPage),
+            keyword: $keyword,
+            word: $word,
+            furigana: $furigana,
+            jlpt: $jlpt,
+            kanjiId: $kanjiId,
+            articleId: $articleId,
+            catalogueId: $catalogueId,
+            kanjiUuid: $kanjiUuid,
+        );
+    }
+}

@@ -2,8 +2,9 @@
 
 namespace App\Domain\Catalogues\Errors;
 
-use App\Shared\Results\ResultError;
+use App\Domain\Shared\Enums\SavedListType;
 use App\Shared\Enums\HttpStatus;
+use App\Shared\Results\ResultError;
 
 class CatalogueErrors
 {
@@ -15,6 +16,23 @@ class CatalogueErrors
             description: 'Catalogue not found',
             detail: "Catalogue with ID {$catalogueUid} does not exist",
             errorMessage: "Catalogue with ID {$catalogueUid} does not exist",
+        );
+    }
+
+    /**
+     * Returned both when the legacy id is unknown and when the catalogue exists
+     * but the viewer may not see it. Resolving a numeric id must not confirm
+     * that a private catalogue exists, so the two cases are deliberately
+     * indistinguishable - unlike the detail endpoint, which answers 403.
+     */
+    public static function legacyIdentityNotFound(int $legacyId): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.LegacyIdentityNotFound',
+            status: HttpStatus::NOT_FOUND,
+            description: 'Catalogue not found',
+            detail: "Catalogue with legacy ID {$legacyId} does not exist",
+            errorMessage: "Catalogue with legacy ID {$legacyId} does not exist",
         );
     }
 
@@ -37,6 +55,55 @@ class CatalogueErrors
             description: 'Invalid catalogue item',
             detail: "Item {$itemId} cannot be added to catalogue {$catalogueUid}",
             errorMessage: "Item {$itemId} cannot be added to catalogue {$catalogueUid}",
+        );
+    }
+
+    public const TYPE_LOCKED_BY_ITEMS = 'Catalogues.TypeLockedByItems';
+
+    /**
+     * Items are stored as bare ids and read under the catalogue's current type, so changing the
+     * type of a catalogue that holds items would show unrelated entries in their place.
+     * `errorMessage` is written for users: the controller returns it under `errors.type`.
+     */
+    public static function typeLockedByItems(string $catalogueUid): ResultError
+    {
+        return new ResultError(
+            code: self::TYPE_LOCKED_BY_ITEMS,
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Catalogue type is locked',
+            detail: "Catalogue {$catalogueUid} has items, so its type cannot change",
+            errorMessage: "The type can't be changed once the catalogue has items.",
+        );
+    }
+
+    public const ITEM_FAMILY_MISMATCH = 'Catalogues.ItemFamilyMismatch';
+
+    /**
+     * A dictionary index was asked for the items of a catalogue that holds another kind of item.
+     * Items are bare ids read under the catalogue's type, so answering would list unrelated
+     * entries. `errorMessage` is written for users: controllers return it under the filter field.
+     */
+    public static function itemFamilyMismatch(string $catalogueUid, SavedListType $family): ResultError
+    {
+        $noun = strtolower($family->label());
+
+        return new ResultError(
+            code: self::ITEM_FAMILY_MISMATCH,
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Catalogue holds another kind of item',
+            detail: "Catalogue {$catalogueUid} does not hold {$noun}",
+            errorMessage: "This catalogue doesn't hold {$noun}.",
+        );
+    }
+
+    public static function unsupportedPdfExportKind(string $catalogueUid, string $kind): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.UnsupportedPdfExportKind',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Unsupported catalogue PDF export',
+            detail: "Catalogue {$catalogueUid} cannot be exported as {$kind} PDF",
+            errorMessage: "Catalogue {$catalogueUid} cannot be exported as {$kind} PDF",
         );
     }
 
@@ -103,6 +170,17 @@ class CatalogueErrors
             description: 'Catalogue item removal failed',
             detail: 'An unexpected error occurred while removing an item from the catalogue',
             errorMessage: 'An unexpected error occurred while removing an item from the catalogue',
+        );
+    }
+
+    public static function publicityUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Catalogues.PublicityUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Catalogue publicity update failed',
+            detail: 'An unexpected error occurred while updating the catalogue publicity',
+            errorMessage: 'An unexpected error occurred while updating the catalogue publicity',
         );
     }
 

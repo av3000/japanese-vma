@@ -17,11 +17,18 @@ use Throwable;
  */
 class JapaneseDataImporter
 {
-    private const SENTINEL_TASK = 'japanese-data-import';
+    private const SENTINEL_TASK = JapaneseDataManifest::SENTINEL_TASK;
+
+    private const SENTENCES_TABLE = 'japanese_tatoeba_sentences';
+
+    private readonly JapaneseDataManifest $manifest;
 
     public function __construct(
         private readonly LegacySqlInsertParser $parser,
-    ) {}
+        ?JapaneseDataManifest $manifest = null,
+    ) {
+        $this->manifest = $manifest ?? new JapaneseDataManifest();
+    }
 
     /**
      * @return array{
@@ -30,14 +37,19 @@ class JapaneseDataImporter
      *     datasets: array<string,int>
      * }
      */
-    public function import(string $environment, bool $allowRerun = false, ?callable $output = null): array
-    {
-        $output ??= static function (string $message): void {};
+    public function import(
+        string $environment,
+        bool $allowRerun = false,
+        ?callable $output = null,
+        bool $discardUserSentences = false,
+    ): array {
+        $output ??= static function (string $message): void {
+        };
 
         $datasets = $this->loadManifest();
         $sentinel = $this->loadSentinel($environment);
 
-        if ($sentinel !== null && !$allowRerun) {
+        if ($sentinel !== null && ! $allowRerun) {
             return [
                 'skipped' => true,
                 'message' => "Japanese data import already completed for [{$environment}].",
@@ -50,13 +62,17 @@ class JapaneseDataImporter
 
         $populatedTables = $this->findPopulatedTables($datasets);
 
-        if ($sentinel === null && !$allowRerun && $populatedTables !== []) {
+        if ($sentinel === null && ! $allowRerun && $populatedTables !== []) {
             $tableList = implode(', ', $populatedTables);
 
             throw new RuntimeException(
-                "Japanese data tables already contain rows without a sentinel record: {$tableList}. " .
+                "Japanese data tables already contain rows without a sentinel record: {$tableList}. ".
                     'Verify the environment and rerun with --allow-rerun if you intend to replace the imported data.'
             );
+        }
+
+        if ($allowRerun && ! $discardUserSentences) {
+            $this->assertNoUserAuthoredSentencesWouldBeLost($datasets);
         }
 
         if ($allowRerun) {
@@ -82,18 +98,35 @@ class JapaneseDataImporter
     }
 
     /**
+     * User-authored sentences live in the same table as the imported Tatoeba rows, and a rerun
+     * truncates that table. Refuse rather than destroy them; the caller must opt in explicitly.
+     *
+     * @param array<int,array{table:string,source:string}> $datasets
+     */
+    private function assertNoUserAuthoredSentencesWouldBeLost(array $datasets): void
+    {
+        $tables = array_column($datasets, 'table');
+
+        if (! in_array(self::SENTENCES_TABLE, $tables, true) || ! Schema::hasColumn(self::SENTENCES_TABLE, 'user_id')) {
+            return;
+        }
+
+        $userAuthored = DB::table(self::SENTENCES_TABLE)->whereNotNull('user_id')->count();
+
+        if ($userAuthored > 0) {
+            throw new RuntimeException(
+                "A rerun would delete {$userAuthored} user-authored sentence(s) from ".self::SENTENCES_TABLE.'. '.
+                    'Export or move them first, or pass --discard-user-sentences if losing them is intended.'
+            );
+        }
+    }
+
+    /**
      * @return array<int,array{table:string,source:string}>
      */
     private function loadManifest(): array
     {
-        $manifestPath = base_path('database/japanese-data-pg/manifest.php');
-        $manifest = require $manifestPath;
-
-        if (!is_array($manifest) || $manifest === []) {
-            throw new RuntimeException("Import manifest is missing or empty: {$manifestPath}");
-        }
-
-        return $manifest;
+        return $this->manifest->datasets();
     }
 
     private function loadSentinel(string $environment): ?object
@@ -106,6 +139,7 @@ class JapaneseDataImporter
 
     /**
      * @param array<int,array{table:string,source:string}> $datasets
+     *
      * @return list<string>
      */
     private function findPopulatedTables(array $datasets): array
@@ -127,10 +161,8 @@ class JapaneseDataImporter
     private function assertSourcesExist(array $datasets): void
     {
         foreach ($datasets as $dataset) {
-            $absolutePath = base_path($dataset['source']);
-
-            if (!is_file($absolutePath)) {
-                throw new RuntimeException("Missing import source file: {$absolutePath}");
+            if (! $this->manifest->sourceExists($dataset)) {
+                throw new RuntimeException("Missing import source file: {$this->manifest->sourcePath($dataset)}");
             }
         }
     }
@@ -141,7 +173,7 @@ class JapaneseDataImporter
     private function assertTargetTablesExist(array $datasets): void
     {
         foreach ($datasets as $dataset) {
-            if (!Schema::hasTable($dataset['table'])) {
+            if (! Schema::hasTable($dataset['table'])) {
                 throw new RuntimeException(
                     "Target table [{$dataset['table']}] does not exist. Run migrations before importing Japanese data."
                 );
@@ -155,7 +187,7 @@ class JapaneseDataImporter
     private function resetTables(array $datasets): void
     {
         $tableNames = array_values(array_unique(array_map(
-            static fn(array $dataset): string => $dataset['table'],
+            static fn (array $dataset): string => $dataset['table'],
             $datasets,
         )));
 
@@ -163,11 +195,11 @@ class JapaneseDataImporter
 
         if (DB::connection()->getDriverName() === 'pgsql') {
             $quotedTables = array_map(
-                fn(string $table): string => $this->quoteIdentifier($table),
+                fn (string $table): string => $this->quoteIdentifier($table),
                 $reversedTables,
             );
 
-            DB::statement('TRUNCATE TABLE ' . implode(', ', $quotedTables) . ' RESTART IDENTITY CASCADE');
+            DB::statement('TRUNCATE TABLE '.implode(', ', $quotedTables).' RESTART IDENTITY CASCADE');
 
             return;
         }
@@ -189,7 +221,7 @@ class JapaneseDataImporter
     private function importDataset(array $dataset): int
     {
         $table = $dataset['table'];
-        $sourcePath = base_path($dataset['source']);
+        $sourcePath = $this->manifest->sourcePath($dataset);
         $file = new SplFileObject($sourcePath, 'r');
         $statementBuffer = '';
         $collectingInsert = false;
@@ -198,23 +230,23 @@ class JapaneseDataImporter
         DB::beginTransaction();
 
         try {
-            while (!$file->eof()) {
+            while (! $file->eof()) {
                 $line = $file->fgets();
                 $trimmedLine = ltrim($line);
 
                 // The dump can contain non-INSERT lines; only complete INSERT statements
                 // are replayed into the target PostgreSQL table.
-                if (!$collectingInsert) {
-                    if (!str_starts_with($trimmedLine, 'INSERT INTO')) {
+                if (! $collectingInsert) {
+                    if (! str_starts_with($trimmedLine, 'INSERT INTO')) {
                         continue;
                     }
 
                     $statementBuffer = $line;
-                    $collectingInsert = !$this->statementEnded($statementBuffer);
+                    $collectingInsert = ! $this->statementEnded($statementBuffer);
 
                     // Some dumps emit a full INSERT on one line, so we can parse and
                     // insert it without entering the multi-line buffering path.
-                    if (!$collectingInsert) {
+                    if (! $collectingInsert) {
                         $rowCount += $this->processInsertStatement($table, $statementBuffer);
                         $statementBuffer = '';
                     }
@@ -268,7 +300,7 @@ class JapaneseDataImporter
         }
 
         $columns = $parsedStatement['columns'];
-        $shouldAssignUuid = Schema::hasColumn($expectedTable, 'uuid') && !in_array('uuid', $columns, true);
+        $shouldAssignUuid = Schema::hasColumn($expectedTable, 'uuid') && ! in_array('uuid', $columns, true);
         $rows = [];
 
         foreach ($parsedStatement['rows'] as $values) {
@@ -342,6 +374,6 @@ class JapaneseDataImporter
 
     private function quoteIdentifier(string $identifier): string
     {
-        return '"' . str_replace('"', '""', $identifier) . '"';
+        return '"'.str_replace('"', '""', $identifier).'"';
     }
 }

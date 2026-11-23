@@ -4,12 +4,13 @@ namespace App\Http\v1\Articles\Resources;
 
 use App\Domain\Articles\Models\Article;
 use App\Domain\Articles\Models\ArticleStats;
+use App\Domain\Processing\DTOs\ProcessingStateDTO;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\v1\Engagement\Resources\EngagementStatsSummaryResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
-use App\Http\v1\LastOperations\Resources\ProcessingStatusResource;
+use App\Http\v1\Processing\Resources\ProcessingStatusResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
-use App\Infrastructure\Persistence\Models\LastOperationState;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -37,7 +38,7 @@ class ArticleResource extends JsonResource
         ?array $options = null,
         ?ArticleStats $stats = null,
         array $hashtags = [],
-        private ?LastOperationState $lastOperation = null
+        private ?ProcessingStateDTO $processingState = null
     ) {
         parent::__construct($article);
         $this->options = $options;
@@ -57,7 +58,7 @@ class ArticleResource extends JsonResource
      *     content_preview_jp: string,
      *     content_preview_en: ?string,
      *     source_link: string,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     status: int,
      *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int},
      *     author: AuthorResource,
@@ -73,7 +74,7 @@ class ArticleResource extends JsonResource
     {
         /** @var Article $article */
         $article = $this->resource;
-        $publicity = (int) $article->getPublicity()->value;
+        $publicity = $article->getPublicity();
         $status = (int) $article->getStatus()->value;
         $jlptLevels = [
             'n1' => (int) $article->getJlptLevels()->n1,
@@ -109,14 +110,7 @@ class ArticleResource extends JsonResource
             'updated_at' => $article->getUpdatedAt()->format('c'),
             'engagement' => new EngagementStatsSummaryResource($includeStats ? $this->stats : null),
             'kanjis' => KanjiResource::collection($article->getKanjis()),
-            'processing_status' => $this->lastOperation ? new ProcessingStatusResource([
-                'id' => $this->lastOperation->id,
-                'type' => $this->lastOperation->task_type,
-                'status' => $this->lastOperation->status,
-                'metadata' => $this->lastOperation->metadata,
-                'created_at' => $this->lastOperation->created_at?->toIso8601String(),
-                'updated_at' => $this->lastOperation->updated_at?->toIso8601String(),
-            ]) : null,
+            'processing_status' => $this->processingState ? new ProcessingStatusResource($this->processingState) : null,
         ];
     }
 }

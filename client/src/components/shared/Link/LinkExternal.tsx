@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Icon } from '../Icon';
+import styles from './Link.module.css';
 import { useLinkClassNames } from './hooks';
 import { LinkBaseProps, LinkColor } from './types';
 
@@ -12,7 +13,7 @@ export interface LinkExternalProps extends LinkBaseProps, React.AnchorHTMLAttrib
 }
 
 const DefaultExternalIcon: React.FC<LinkExternalProps> = ({ size }) => (
-	<Icon className="u-ml-3xs" name="chevron" rotate="90" size={size === 'sm' ? 'sm' : 'md'} />
+	<Icon className={styles.externalIcon} name="chevron" rotate="90" size={size === 'sm' ? 'sm' : 'md'} />
 );
 
 export const LinkExternal: React.FunctionComponent<LinkExternalProps> = (props) => {

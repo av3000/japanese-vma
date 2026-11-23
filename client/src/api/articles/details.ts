@@ -1,9 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { articleShow } from '@/api/generated/article/article';
 import type { ArticleDetailResource } from '@/api/generated/model/articleDetailResource';
+import { useToggleLikeMutation, type LikeCacheBinding } from '@/api/likes/likes';
 import '@/shared/constants';
-import { ObjectTemplateType, ObjectTemplateTypeLabel, ObjectTemplateTypeLegacyId } from '@/shared/constants/enums';
-import { LikeResponse, toggleInstanceLike } from '../likes/likes';
+import { ObjectTemplateType } from '@/shared/constants/enums';
+import { detailHasNonTerminalProcessing, useProcessingRefetchInterval } from './hooks/useProcessingPolling';
+import { articleKeys } from './keys';
 
 export interface MappedArticle extends ArticleDetailResource {
 	displayName: string;
@@ -18,37 +20,57 @@ export const mapArticleDetail = (data: ArticleDetailResource): MappedArticle => 
 	formattedDate: new Date(data.created_at).toLocaleDateString(),
 });
 
+/**
+ * Article detail cache key. Delegates to `articleKeys.detail` so the detail query, the like
+ * mutation, the processing-status writes, the edit page and the moderation status mutation
+ * all agree on one key.
+ */
+export const getArticleDetailQueryKey = (uuid: string) => articleKeys.detail(uuid);
+
 export const useArticleQuery = (uuid: string | undefined) => {
+	// Polls while this article is still processing and the socket is not connected (#251).
+	const refetchInterval = useProcessingRefetchInterval(detailHasNonTerminalProcessing);
+
 	return useQuery({
-		queryKey: ['article', uuid],
+		queryKey: getArticleDetailQueryKey(uuid as string),
 		queryFn: async () => {
 			return articleShow(uuid as string);
 		},
 		enabled: !!uuid,
 		retry: false,
 		select: mapArticleDetail,
+		refetchInterval,
 	});
 };
 
-export const useLikeArticleMutation = (articleUuid: string) => {
-	const queryClient = useQueryClient();
+/**
+ * Article detail carries the viewer's own like state, so a toggle can be reflected in place
+ * instead of refetching the whole article for two numbers.
+ */
+const buildArticleLikeBinding = (articleUuid: string): LikeCacheBinding<ArticleDetailResource> => ({
+	queryKey: getArticleDetailQueryKey(articleUuid),
 
-	return useMutation<LikeResponse, unknown, number>({
-		mutationFn: (articleId: number) =>
-			toggleInstanceLike({
-				objectType: ObjectTemplateTypeLabel[ObjectTemplateType.ARTICLE],
-				objectTypeId: ObjectTemplateTypeLegacyId[ObjectTemplateType.ARTICLE],
-				instanceId: articleId,
-			}),
+	read: (article) => ({
+		is_liked: article.engagement.is_liked_by_viewer,
+		likes_count: article.engagement.likes_count,
+	}),
 
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['article', articleUuid] });
+	write: (article, _instanceId, next) => ({
+		...article,
+		engagement: {
+			...article.engagement,
+			is_liked_by_viewer: next.is_liked,
+			likes_count: next.likes_count,
 		},
+	}),
+});
 
-		onError: (err) => {
-			console.error('Like article failed', err);
-			// TODO: Figure how to inform user - perhaps general toast message.
-			// How could it be done using useReducer with  zustand
-		},
+/**
+ * Toggles the like on the article the detail route is showing. The mutation variable is the
+ * article's loaded numeric `id`; the uuid only addresses the cache.
+ */
+export const useLikeArticleMutation = (articleUuid: string) =>
+	useToggleLikeMutation({
+		template: ObjectTemplateType.ARTICLE,
+		binding: buildArticleLikeBinding(articleUuid),
 	});
-};

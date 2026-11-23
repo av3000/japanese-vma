@@ -1,0 +1,6 @@
+.session {
+	padding: var(--spacing-lg);
+	border: var(--border-size-sm) solid var(--color-border);
+	border-radius: var(--border-radius-lg);
+	background: var(--color-surface-raised);
+}

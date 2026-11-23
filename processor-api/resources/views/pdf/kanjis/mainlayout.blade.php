@@ -11,14 +11,40 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style type="text/css">
+        @font-face {
+            font-family: 'HanaMinA';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/truetype/hanazono/HanaMinA.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'IPAGothic';
+            font-style: normal;
+            font-weight: normal;
+            src: url('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf') format('truetype');
+        }
+
         body,
         html {
             margin: 0;
-            font-family: 'IPAGothic', sans-serif;
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
         }
 
-        table {
-            border-spacing: 0;
+        .japanese,
+        [lang='ja'] {
+            font-family: 'HanaMinA', 'IPAGothic', sans-serif;
+        }
+
+        p,
+        td,
+        th {
+            white-space: normal;
+        }
+
+        .article-content p {
+            word-break: break-all;
+            overflow-wrap: anywhere;
         }
 
         thead {
@@ -30,12 +56,18 @@
         }
 
         tr {
-            page-break-after: always;
+            /* Not `page-break-after: always`: that put every single row on its own page, so a
+               171-kanji export came out 171 pages long. Deliberate breaks are what
+               `.page-break` is for (see article-kanjis.blade.php). */
             page-break-inside: avoid;
         }
 
-        td {
-            padding: 0;
+        td,
+        th {
+            padding: 0.5rem;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         #kanjiTd {
@@ -43,19 +75,18 @@
         }
 
         .kanjis-table {
-            overflow-x: visible !important;
+            overflow-x: hidden !important;
         }
 
         @media print {
             table {
-                overflow: visible !important;
+                overflow: hidden !important;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- @include('pdf.kanjis.nav') -->
     <section class="text-center row">
         <div class="col-md-12 mb-5">
             @yield('links')
@@ -65,7 +96,6 @@
         @yield('content')
     </section>
     @include('pdf.kanjis.footer')
-    @include('pdf.kanjis.footer-scripts')
 </body>
 
 </html>

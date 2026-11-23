@@ -1,0 +1,98 @@
+# System Context
+
+> **Status:** Baseline; configured topology distinguished from live verification
+> **Last reviewed:** 2026-08-18
+> **Evidence baseline:** Repository working tree inspected on 2026-08-18
+> **Audience:** Engineers, operators, reviewers, and AI-assisted contributors
+
+## Purpose
+
+Japanese VMA is a browser-based Japanese learning platform. Learners browse study resources, read and publish articles, organize material in catalogues, and interact with community content. Administrators manage users and selected moderation workflows.
+
+## Context Diagram
+
+```mermaid
+flowchart LR
+    learner[Learner]
+    contributor[Content contributor]
+    admin[Administrator]
+
+    client[React client\nVite and React Router]
+    api[Laravel API\nlegacy and v1 routes]
+    postgres[(PostgreSQL)]
+    redis[(Redis\nlocal or Upstash)]
+    worker[Queue worker\nnot running in production, #709]
+    realtime[Realtime channel\nLaravel Reverb client integration]
+    pdf[PDF renderer]
+    datasets[Japanese reference datasets\nJMdict, KANJIDIC, JMnedict, Radkfile]
+
+    gha[GitHub Actions\nverification, images and deploys]
+    ghcr[GHCR\ncontainer images]
+    render[Render\nbackend web runtime]
+
+    learner --> client
+    contributor --> client
+    admin --> client
+    client --> api
+    client <--> realtime
+    api --> postgres
+    api --> redis
+    api --> pdf
+    api --> worker
+    worker --> redis
+    worker --> postgres
+    datasets --> postgres
+    gha --> client
+    gha --> ghcr
+    gha --> render
+    render --> ghcr
+```
+
+## People and Concerns
+
+| Actor | Main concerns |
+|---|---|
+| Learner | Discoverable Japanese material, readable content, saved study state, predictable navigation, and responsive pages. |
+| Content contributor | Article and community authoring, editing, processing feedback, and visibility controls. |
+| Administrator | User/role administration and moderation workflows with enforced backend authorization. |
+| Developer | Clear legacy/v1 boundaries, generated contract stability, testable modules, and safe incremental migration. |
+| Operator | Independent web/worker health, queue visibility, deploy ordering, rollback boundaries, and secret isolation. |
+
+## System Boundaries
+
+### Verified current
+
+- The React client calls generated v1 clients only; the shared `apiCall` transport and every legacy API adapter were retired (#146).
+- The Laravel backend exposes `processor-api/routes/api_v1.php` plus two unversioned operational endpoints, `api/health` and `api/broadcasting/auth`, documented in `deployment-and-runtime.md`. `processor-api/routes/api.php` otherwise holds only retirement ledger comments.
+- PostgreSQL is the dedicated database in the Docker development and test topology.
+- Redis supports cache, queue, and realtime coordination according to backend configuration.
+- Article processing jobs and PDF services are explicit application boundaries.
+
+### Verified configuration; live state not inspected
+
+- `.github/workflows/frontend-ci.yml` defines frontend verification and deployment.
+- `.github/workflows/backend-ci.yml` defines backend image creation, the gated release migration, the Render deployment trigger and live verification; `.github/workflows/backend-operations.yml` defines the manual production tasks.
+- Production guidance identifies Upstash Redis as the shared queue/cache backend.
+
+### Inferred trust boundaries
+
+- Browser-to-API traffic crosses a public network and must enforce authentication, authorization, CORS, and safe error handling at the API boundary.
+- CI systems and hosting providers hold deployment credentials not represented in source.
+- Imported Japanese datasets are trusted reference inputs but still require deterministic parsing and migration checks.
+
+## Primary Product Capabilities
+
+- Browse articles, kanji, radicals, words, sentences, and catalogues.
+- Authenticate and manage personal content.
+- Create and maintain articles and catalogues.
+- Attach Japanese study material to articles through background processing.
+- Comment, like, tag, view, and download supported entities.
+- Export supported article and catalogue study data as PDFs.
+- Browse and author community posts through legacy surfaces pending migration.
+
+## Related Views
+
+- [Application boundaries](./application-boundaries.md)
+- [Deployment and runtime](./deployment-and-runtime.md)
+- [Data and integrations](./data-and-integrations.md)
+- [Architecture description](../ai/architecture-description.md)

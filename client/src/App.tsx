@@ -1,4 +1,3 @@
-import { Provider as ReduxProvider } from 'react-redux';
 import { BrowserRouter as Router } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,9 +10,7 @@ import ScrollToTop from '@/helpers/ScrollToTop';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
 import { WebSocketProvider } from '@/providers/contexts/socket-provider';
 import AppRoutes from '@/routes/routes';
-import { configureAppStore } from '@/store/store';
-
-const store = configureAppStore();
+import { AppearanceProvider } from '@/themes/AppearanceProvider';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -39,8 +36,8 @@ const AppContent = () => {
 };
 
 const App = () => (
-	<QueryClientProvider client={queryClient}>
-		<ReduxProvider store={store}>
+	<AppearanceProvider>
+		<QueryClientProvider client={queryClient}>
 			<Router>
 				<AuthProvider>
 					<WebSocketProvider>
@@ -50,9 +47,9 @@ const App = () => (
 					</WebSocketProvider>
 				</AuthProvider>
 			</Router>
-		</ReduxProvider>
-		<ReactQueryDevtools initialIsOpen={false} />
-	</QueryClientProvider>
+			<ReactQueryDevtools initialIsOpen={false} />
+		</QueryClientProvider>
+	</AppearanceProvider>
 );
 
 export default App;

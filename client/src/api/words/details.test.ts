@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest';
+import type { WordDetailResource } from '@/api/generated/model/wordDetailResource';
+import { mapWordDetail } from './details';
+
+const baseWord: WordDetailResource = {
+	id: 42,
+	uuid: 'word-uuid',
+	word: '水',
+	furigana: 'みず',
+	jlpt: 'N5',
+	meaning: 'water',
+	meanings: ['water'],
+	word_types: ['noun'],
+	writing_elements: ['水'],
+	reading_elements: ['みず'],
+	word_type: 'noun',
+	word_k_ele: '水',
+	furigana_r_ele: 'みず',
+	sense: null,
+	viewer_catalogue_state: null,
+	senses: [],
+};
+
+describe('mapWordDetail', () => {
+	it('keeps typed related data', () => {
+		const relatedKanji = {
+			id: 1,
+			uuid: 'kanji-uuid',
+			character: '水',
+			onyomi: ['スイ'],
+			kunyomi: ['みず'],
+			meanings: ['water'],
+			nanori: [],
+			grade: '1',
+			stroke_count: 4,
+			jlpt: '5',
+			frequency: 2,
+			radicals: ['水'],
+			radical_parts: ['水'],
+			viewer_catalogue_state: null,
+		};
+		const mapped = mapWordDetail({ ...baseWord, kanjis: [relatedKanji] });
+
+		expect(mapped.kanjis).toEqual([relatedKanji]);
+	});
+
+	it('normalizes an omitted kanji list', () => {
+		expect(mapWordDetail(baseWord).kanjis).toEqual([]);
+	});
+});

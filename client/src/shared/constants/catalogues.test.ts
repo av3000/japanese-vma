@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
 	CATALOGUE_ROUTES,
 	CATALOGUE_TYPE_LABELS,
+	isCataloguePdfExportSupported,
+	isBuiltInCatalogueType,
 	isCatalogueRouteUuid,
+	parseCatalogueLegacyId,
 	isCustomCatalogueType,
+	resolveCatalogueFamily,
+	resolveCataloguePdfExportKind,
 	resolveCatalogueTypeLabel,
 } from './catalogues';
 
@@ -36,9 +41,77 @@ describe('catalogue constants', () => {
 		expect(isCustomCatalogueType(20)).toBe(false);
 	});
 
+	it('maps v1 catalogue PDF exports to supported catalogue types', () => {
+		expect(resolveCataloguePdfExportKind(2)).toBe('kanji');
+		expect(resolveCataloguePdfExportKind(6)).toBe('kanji');
+		expect(resolveCataloguePdfExportKind(3)).toBe('words');
+		expect(resolveCataloguePdfExportKind(7)).toBe('words');
+		expect(resolveCataloguePdfExportKind(1)).toBe('radicals');
+		expect(resolveCataloguePdfExportKind(5)).toBe('radicals');
+		expect(resolveCataloguePdfExportKind(4)).toBe('sentences');
+		expect(resolveCataloguePdfExportKind(8)).toBe('sentences');
+		expect(isCataloguePdfExportSupported(6)).toBe(true);
+		expect(isCataloguePdfExportSupported(5)).toBe(true);
+	});
+
+	it('leaves catalogue types the backend has no export kind for unsupported', () => {
+		// Articles, lyrics and artists: CataloguePdfExportService has no matching PdfExportKind.
+		expect(resolveCataloguePdfExportKind(9)).toBeNull();
+		expect(resolveCataloguePdfExportKind(10)).toBeNull();
+		expect(resolveCataloguePdfExportKind(11)).toBeNull();
+		expect(isCataloguePdfExportSupported(9)).toBe(false);
+	});
+
+	it.each([
+		[1, 'radicals'],
+		[5, 'radicals'],
+		[2, 'kanji'],
+		[6, 'kanji'],
+		[3, 'words'],
+		[7, 'words'],
+		[4, 'sentences'],
+		[8, 'sentences'],
+		[9, 'articles'],
+	] as const)('folds catalogue type %i into the %s family', (type, family) => {
+		expect(resolveCatalogueFamily(type)).toBe(family);
+	});
+
+	it('has no family for lyrics, artists or an unknown type', () => {
+		expect(resolveCatalogueFamily(10)).toBeNull();
+		expect(resolveCatalogueFamily(11)).toBeNull();
+		expect(resolveCatalogueFamily(0)).toBeNull();
+	});
+
 	it('treats UUID-like params as canonical identifiers and numeric params as legacy aliases', () => {
 		expect(isCatalogueRouteUuid('86f593b4-3f77-44fe-8d42-d8e993f7850b')).toBe(true);
 		expect(isCatalogueRouteUuid('42')).toBe(false);
 		expect(isCatalogueRouteUuid('not-a-uuid')).toBe(false);
+	});
+});
+
+describe('parseCatalogueLegacyId', () => {
+	it('accepts the positive in-range ids the legacy resolver route serves', () => {
+		expect(parseCatalogueLegacyId('42')).toBe(42);
+		expect(parseCatalogueLegacyId('1')).toBe(1);
+	});
+
+	it('rejects ids the route constraint excludes', () => {
+		expect(parseCatalogueLegacyId(undefined)).toBeNull();
+		expect(parseCatalogueLegacyId('')).toBeNull();
+		expect(parseCatalogueLegacyId('0')).toBeNull();
+		expect(parseCatalogueLegacyId('007')).toBeNull();
+		expect(parseCatalogueLegacyId('-1')).toBeNull();
+		expect(parseCatalogueLegacyId('4.2')).toBeNull();
+		expect(parseCatalogueLegacyId('not-a-number')).toBeNull();
+		expect(parseCatalogueLegacyId('86f593b4-3f77-44fe-8d42-d8e993f7850b')).toBeNull();
+	});
+
+	it('rejects an in-pattern id JavaScript cannot represent exactly', () => {
+		expect(parseCatalogueLegacyId('999999999999999999')).toBeNull();
+	});
+
+	it('marks only the four Known lists as built in', () => {
+		expect([1, 2, 3, 4].every(isBuiltInCatalogueType)).toBe(true);
+		expect([0, 5, 6, 7, 8, 9, 10, 11].some(isBuiltInCatalogueType)).toBe(false);
 	});
 });

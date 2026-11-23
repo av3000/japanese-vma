@@ -12,7 +12,6 @@ use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Infrastructure\Persistence\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -165,10 +164,75 @@ class RoleResourceTest extends TestCase
     {
         $groupKeys = array_keys(PermissionCatalog::groups());
 
-        Livewire::test(CreateRole::class)
+        $component = Livewire::test(CreateRole::class)
             ->assertOk();
 
-        self::assertSame(['admin', 'content'], $groupKeys);
+        foreach ($groupKeys as $groupKey) {
+            $component->assertSchemaComponentExists("permission-group-{$groupKey}");
+        }
+
+        self::assertSame(['admin', 'content', 'community', 'study', 'operations'], $groupKeys);
+    }
+
+    public function test_common_role_cannot_be_given_permissions(): void
+    {
+        $commonRole = Role::findByName(UserRole::COMMON->value, 'api');
+
+        Livewire::test(EditRole::class, [
+            'record' => $commonRole->getKey(),
+        ])
+            ->fillForm([
+                'permission_groups.admin' => ['users.view'],
+            ])
+            ->call('save')
+            ->assertNotified("The 'common' role cannot hold permissions, because every user has it.");
+
+        self::assertSame([], $commonRole->fresh()->permissions()->pluck('name')->all());
+    }
+
+    public function test_admin_role_permissions_can_be_edited_while_identity_stays_locked(): void
+    {
+        $adminRole = Role::findByName(UserRole::ADMIN->value, 'api');
+
+        Livewire::test(EditRole::class, [
+            'record' => $adminRole->getKey(),
+        ])
+            ->fillForm([
+                'permission_groups.admin' => ['users.view'],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        self::assertSame(['users.view'], $adminRole->fresh()->permissions()->pluck('name')->all());
+    }
+
+    public function test_duplicate_role_name_is_reported_on_the_name_field(): void
+    {
+        Role::create(['name' => 'editor', 'guard_name' => 'api']);
+        $other = Role::create(['name' => 'reviewer', 'guard_name' => 'api']);
+
+        Livewire::test(EditRole::class, [
+            'record' => $other->getKey(),
+        ])
+            ->fillForm(['name' => 'editor'])
+            ->call('save')
+            ->assertHasFormErrors(['name']);
+    }
+
+    public function test_user_with_only_roles_view_sees_roles_but_cannot_create_or_edit(): void
+    {
+        $viewerRole = Role::create(['name' => 'role-viewer', 'guard_name' => 'api']);
+        $viewerRole->givePermissionTo('roles.view');
+        $viewer = $this->createUser(['role-viewer']);
+
+        $this->actingAs($viewer, 'web');
+
+        Livewire::test(ListRoles::class)
+            ->assertOk()
+            ->assertActionHidden('create');
+
+        $this->get('/admin/roles/create')->assertForbidden();
+        $this->get("/admin/roles/{$viewerRole->getKey()}/edit")->assertForbidden();
     }
 
     /**
@@ -178,7 +242,7 @@ class RoleResourceTest extends TestCase
     {
         $user = User::create([
             'name' => 'Filament Role Test User',
-            'email' => Str::uuid() . '@example.com',
+            'email' => Str::uuid().'@example.com',
             'password' => Hash::make('password'),
             'uuid' => (string) Str::uuid(),
         ]);

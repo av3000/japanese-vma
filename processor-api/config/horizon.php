@@ -235,4 +235,20 @@ return [
             ],
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Basic Auth
+    |--------------------------------------------------------------------------
+    |
+    | Credentials checked by App\Http\Middleware\EnsureHorizonBasicAuth outside
+    | the local environment. Kept in config so they survive config:cache.
+    |
+    */
+
+    'basic_auth' => [
+        'username' => env('HORIZON_BASIC_AUTH_USERNAME', ''),
+        'password' => env('HORIZON_BASIC_AUTH_PASSWORD', ''),
+    ],
+
 ];

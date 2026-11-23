@@ -2,9 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Http\Models\ObjectTemplate;
-use App\Infrastructure\Persistence\Models\User;
-
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Like extends Model
@@ -33,6 +33,22 @@ class Like extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * A correlated COUNT(*) of the likes on the owning row, for `addSelect(['likes_count' => ...])`
+     * on a list query, so a page of rows costs one query.
+     *
+     * @param string $ownerColumn qualified id column of the outer query, such as `posts.id`
+     *
+     * @return Builder<self>
+     */
+    public static function countSubquery(ObjectTemplateType $type, string $ownerColumn): Builder
+    {
+        return self::query()
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('likes.real_object_id', $ownerColumn)
+            ->where('likes.template_id', $type->getLegacyId());
+    }
 
     public function objecttemplate()
     {

@@ -1,0 +1,26 @@
+.page {
+	padding-block: var(--spacing-xl) var(--spacing-3xl);
+}
+
+.top {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-md);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-heading-3);
+	text-align: center;
+}
+
+@media (min-width: 768px) {
+	.page {
+		padding-top: var(--spacing-2xl);
+	}
+
+	.title {
+		font-size: var(--font-size-heading-2);
+	}
+}

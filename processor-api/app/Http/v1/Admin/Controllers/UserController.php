@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Admin\Controllers;
 
-use App\Application\Users\Actions\GetCurrentUserAction;
-use App\Http\Controllers\Controller;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Users\Services\UserServiceInterface;
 use App\Domain\Users\Queries\UserQueryCriteria;
+use App\Http\Controllers\Controller;
 use App\Http\v1\Admin\Requests\UserIndexRequest;
 use App\Http\v1\Users\Builders\UserResponseBuilder;
-use Illuminate\Http\JsonResponse;
 use App\Shared\Http\TypedResults;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -19,14 +19,12 @@ class UserController extends Controller
     public function __construct(
         private readonly UserServiceInterface $userService,
         private readonly UserResponseBuilder $userResponseBuilder,
-        private readonly GetCurrentUserAction $getCurrentUserAction
-    ) {}
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+    ) {
+    }
 
     /**
      * Get a list of users for administration.
-     *
-     * @param UserIndexRequest $request
-     * @return JsonResponse
      */
     public function index(UserIndexRequest $request): JsonResponse
     {
@@ -42,13 +40,10 @@ class UserController extends Controller
             offset: $validatedData['offset'] ?? 0,
         );
 
-        $authenticatedUserResult = $this->getCurrentUserAction->execute();
-        $authenticatedUser = null;
-        if ($authenticatedUserResult->isSuccess()) {
-            $authenticatedUser = $authenticatedUserResult->getData();
-        }
-
-        $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
+        $paginatedUsersContextResult = $this->userService->find(
+            $criteria,
+            $this->currentUserProvider->currentAuthenticatedUser(),
+        );
 
         if ($paginatedUsersContextResult->isFailure()) {
             return TypedResults::fromError($paginatedUsersContextResult->getError());
@@ -66,7 +61,7 @@ class UserController extends Controller
         $validatedData = $request->validated();
 
         return TypedResults::ok([
-            'message' => 'deleted successfully'
+            'message' => 'deleted successfully',
         ]);
     }
 }

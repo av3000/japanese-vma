@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\v1\Users\Controllers;
 
-use App\Application\Users\Actions\GetCurrentUserAction;
-use App\Http\Controllers\Controller;
-use App\Application\Users\Services\UserServiceInterface;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
 use App\Application\Users\Policies\UserViewPolicy;
-use App\Application\Users\Services\RoleServiceInterface;
+use App\Application\Users\Services\UserServiceInterface;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Http\v1\Users\Resources\UserProfileResource;
-use App\Shared\Http\TypedResults;
 use App\Domain\Users\Errors\UserErrors;
 use App\Domain\Users\Queries\UserQueryCriteria;
+use App\Http\Controllers\Controller;
 use App\Http\v1\Admin\Requests\UserIndexRequest;
 use App\Http\v1\Users\Builders\UserResponseBuilder;
+use App\Http\v1\Users\Resources\UserProfileResource;
+use App\Shared\Http\TypedResults;
 use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
@@ -24,14 +23,14 @@ class UserController extends Controller
         private readonly UserServiceInterface $userService,
         private readonly UserViewPolicy $userViewPolicy,
         private readonly UserResponseBuilder $userResponseBuilder,
-        private readonly GetCurrentUserAction $getCurrentUserAction
-    ) {}
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+    ) {
+    }
 
     /**
      * Get a list of publicly visible users.
      *
      * @param UserIndexRequest $request Custom validation request
-     * @return JsonResponse
      */
     public function index(UserIndexRequest $request): JsonResponse
     {
@@ -45,12 +44,7 @@ class UserController extends Controller
             limit: $validatedData['limit']
         );
 
-        $authenticatedUserResult = $this->getCurrentUserAction->execute();
-        $authenticatedUser = null;
-        if ($authenticatedUserResult->isSuccess()) {
-            $authenticatedUser = $authenticatedUserResult->getData();
-        }
-
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
         $paginatedUsersContextResult = $this->userService->find($criteria, $authenticatedUser);
 
         if ($paginatedUsersContextResult->isFailure()) {
@@ -69,15 +63,12 @@ class UserController extends Controller
      * Display user profile.
      *
      * @param string $uuid User UUID
-     * @return JsonResponse
      */
     public function show(string $uuid): JsonResponse
     {
         $userUuid = EntityId::from($uuid);
 
-        // TODO: I think AuthSession service should be used here to access authorized user, not sure how userViewPolicy integrates with it, I might introduced them both for the same goal mistakenly
-        $authenticatedUser = auth('api')->user();
-
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
         $userResult = $this->userService->findByUuid($userUuid, $authenticatedUser);
 
         if ($userResult->isFailure()) {
@@ -88,7 +79,7 @@ class UserController extends Controller
         $userContext = $userResult->getData();
         $user = $userContext->user;
 
-        if (!$this->userViewPolicy->view($authenticatedUser, $user)) {
+        if (! $this->userViewPolicy->view($authenticatedUser, $user)) {
             return TypedResults::fromError(UserErrors::notAuthorized());
         }
 

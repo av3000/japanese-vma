@@ -2,63 +2,57 @@
 
 namespace App\Application\Catalogues\Policies;
 
-use App\Application\Users\Services\RoleServiceInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Catalogues\Models\Catalogue;
 use App\Domain\Shared\Enums\PublicityStatus;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Infrastructure\Persistence\Models\User;
 
 class CataloguePolicy
 {
-    public function __construct(
-        private readonly RoleServiceInterface $roleService
-    ) {}
-
-    public function canView(?User $user, Catalogue $catalogue): bool
+    public function canView(?AuthenticatedUser $authenticatedUser, Catalogue $catalogue): bool
     {
         if ($catalogue->getPublicity() === PublicityStatus::PUBLIC) {
             return true;
         }
 
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+        if ($authenticatedUser->isAdmin) {
             return true;
         }
 
-        return $user->id === $catalogue->getOwnerId()->value();
+        return $authenticatedUser->id->equals($catalogue->getOwnerId());
     }
 
-    public function canIndexPrivateCatalogues(?User $user, ?string $ownerUid): bool
+    public function canIndexPrivateCatalogues(?AuthenticatedUser $authenticatedUser, ?string $ownerUid): bool
     {
-        if ($user === null || $ownerUid === null) {
+        if ($authenticatedUser === null || $ownerUid === null) {
             return false;
         }
 
-        if ($this->roleService->isAdmin(new EntityId($user->uuid))) {
+        if ($authenticatedUser->isAdmin) {
             return true;
         }
 
-        return $user->uuid === $ownerUid;
+        return $authenticatedUser->uuid->value() === $ownerUid;
     }
 
-    public function canUpdate(?User $user, Catalogue $catalogue): bool
+    public function canUpdate(?AuthenticatedUser $authenticatedUser, Catalogue $catalogue): bool
     {
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
-        return $user->id === $catalogue->getOwnerId()->value();
+        return $authenticatedUser->id->equals($catalogue->getOwnerId());
     }
 
-    public function canDelete(?User $user, Catalogue $catalogue): bool
+    public function canDelete(?AuthenticatedUser $authenticatedUser, Catalogue $catalogue): bool
     {
-        if ($user === null) {
+        if ($authenticatedUser === null) {
             return false;
         }
 
-        return $user->id === $catalogue->getOwnerId()->value();
+        return $authenticatedUser->id->equals($catalogue->getOwnerId());
     }
 }

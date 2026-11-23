@@ -2,19 +2,20 @@
 
 namespace App\Http\v1\Catalogues\Controllers;
 
-use App\Application\Catalogues\Interfaces\Repositories\CatalogueItemRepositoryInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Application\Catalogues\Services\CataloguePdfExportServiceInterface;
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
-use App\Application\Engagement\Actions\LoadEntityStatsAction;
-use App\Application\Engagement\Services\EngagementServiceInterface;
-use App\Application\Engagement\Services\HashtagServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueCreateDTO;
 use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Catalogues\DTOs\CatalogueLegacyIdentityDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
 use App\Domain\Catalogues\DTOs\CatalogueUpdateDTO;
-use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Catalogues\Models\CatalogueStats;
-use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Catalogues\DTOs\CatalogueUpdateResultDTO;
+use App\Domain\Catalogues\Errors\CatalogueErrors;
+use App\Domain\Pdf\DTOs\PdfRenderResult;
 use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Viewer;
 use App\Http\Controllers\Controller;
 use App\Http\v1\Catalogues\Requests\IndexCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\IndexCataloguesForItemRequest;
@@ -22,26 +23,31 @@ use App\Http\v1\Catalogues\Requests\StoreCatalogueItemRequest;
 use App\Http\v1\Catalogues\Requests\StoreCatalogueRequest;
 use App\Http\v1\Catalogues\Requests\UpdateCatalogueRequest;
 use App\Http\v1\Catalogues\Resources\CatalogueDetailResource;
-use App\Http\v1\Catalogues\Resources\CatalogueForItemListResource;
-use App\Http\v1\Catalogues\Resources\CatalogueForItemResource;
+use App\Http\v1\Catalogues\Resources\CatalogueLegacyIdentityResource;
+use App\Http\v1\Catalogues\Resources\CatalogueListForItemResource;
 use App\Http\v1\Catalogues\Resources\CatalogueListResource;
 use App\Http\v1\Catalogues\Resources\CatalogueResource;
 use App\Http\v1\Shared\Resources\UuidCreatedResource;
+use App\Shared\Http\PdfResponseFactory;
 use App\Shared\Http\TypedResults;
+use App\Shared\Results\Result;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response as LaravelResponse;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class CatalogueController extends Controller
 {
     public function __construct(
         private readonly CatalogueServiceInterface $catalogueService,
-        private readonly CatalogueItemRepositoryInterface $catalogueItemRepository,
-        private readonly LoadEntityStatsAction $loadStats,
-        private readonly EngagementServiceInterface $engagementService,
-        private readonly HashtagServiceInterface $hashtagService,
-    ) {}
+        private readonly CataloguePdfExportServiceInterface $cataloguePdfExportService,
+        private readonly PdfResponseFactory $pdfResponseFactory,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+    ) {
+    }
 
     /**
      * @response CatalogueListResource
@@ -51,62 +57,12 @@ class CatalogueController extends Controller
     {
         $catalogueDTO = CatalogueListDTO::fromRequest($request->validated());
 
-        $paginatedCatalogues = $this->catalogueService->getCatalogueList($catalogueDTO, auth('api')->user());
+        $catalogueList = $this->catalogueService->getCatalogueList(
+            $catalogueDTO,
+            $this->currentUserProvider->currentAuthenticatedUser(),
+        );
 
-        $catalogueIds = array_map(fn($catalogue) => $catalogue->getIdValue(), $paginatedCatalogues->getItems());
-
-        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds($catalogueIds);
-
-        $statsMap = [];
-        if ($catalogueDTO->include_stats_counts) {
-            $statsData = $this->loadStats->batchLoadStatsById(ObjectTemplateType::LIST->getLegacyId(), $catalogueIds);
-            foreach ($catalogueIds as $id) {
-                $stats = $statsData[$id] ?? [
-                    'likes' => 0,
-                    'downloads' => 0,
-                    'views' => 0,
-                    'comments' => 0,
-                ];
-                $statsMap[$id] = new CatalogueStats(
-                    $stats['likes'],
-                    $stats['downloads'],
-                    $stats['views'],
-                    $stats['comments']
-                );
-            }
-        }
-
-        $hashtagsMap = [];
-        if ($catalogueDTO->include_hashtags) {
-            $hashtagsMap = $this->hashtagService->getBatchHashtags(
-                $catalogueIds,
-                ObjectTemplateType::LIST
-            );
-        }
-
-        $resources = [];
-        foreach ($paginatedCatalogues->getItems() as $catalogue) {
-            $id = $catalogue->getIdValue();
-            $resources[] = new CatalogueResource(
-                $catalogue,
-                $statsMap[$id] ?? null,
-                $hashtagsMap[$id] ?? [],
-                $itemsCountMap[$id] ?? 0
-            );
-        }
-
-        $paginator = $paginatedCatalogues->getPaginator();
-
-        return new CatalogueListResource([
-            'items' => $resources,
-            'pagination' => [
-                'page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
-        ]);
+        return new CatalogueListResource($catalogueList);
     }
 
     /**
@@ -130,21 +86,10 @@ class CatalogueController extends Controller
             (int) $validated['item_id'],
             $validated['types'] ?? [],
             $validated['search'] ?? null,
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
-        $containedCatalogueIds = array_flip($cataloguesForItem['contained_catalogue_ids']);
-        $resources = array_map(
-            static fn(Catalogue $catalogue): CatalogueForItemResource => new CatalogueForItemResource(
-                $catalogue,
-                isset($containedCatalogueIds[$catalogue->getIdValue()]),
-            ),
-            $cataloguesForItem['catalogues'],
-        );
-
-        return new CatalogueForItemListResource([
-            'items' => $resources,
-        ]);
+        return new CatalogueListForItemResource($cataloguesForItem);
     }
 
     /**
@@ -154,10 +99,12 @@ class CatalogueController extends Controller
     public function store(StoreCatalogueRequest $request): JsonResponse|JsonResource
     {
         $createDTO = CatalogueCreateDTO::fromRequest($request->validated());
+        $authenticatedUser = $this->requiredAuthenticatedUser();
 
         $result = $this->catalogueService->createCatalogue(
             $createDTO,
-            auth('api')->user(),
+            $authenticatedUser,
+            new Viewer($authenticatedUser->id, (string) $request->ip()),
         );
 
         if ($result->isFailure()) {
@@ -181,7 +128,7 @@ class CatalogueController extends Controller
         $result = $this->catalogueService->addItemToCatalogue(
             $catalogueUid,
             (int) $request->validated('item_id'),
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -201,7 +148,7 @@ class CatalogueController extends Controller
         $result = $this->catalogueService->removeItemFromCatalogue(
             $catalogueUid,
             $itemId,
-            auth('api')->user(),
+            $this->requiredAuthenticatedUser(),
         );
 
         if ($result->isFailure()) {
@@ -215,58 +162,51 @@ class CatalogueController extends Controller
      * @response CatalogueDetailResource
      */
     #[Response(type: 'CatalogueDetailResource')]
-    public function show(string $uuid): JsonResponse|JsonResource
+    public function show(string $uuid, Request $request): JsonResponse|JsonResource
     {
         $catalogueUid = EntityId::from($uuid);
-        $viewer = auth('api')->user();
-        $result = $this->catalogueService->getCatalogue($catalogueUid, $viewer);
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $viewer = new Viewer($authenticatedUser?->id, (string) $request->ip());
+        $detailResult = $this->catalogueService->getCatalogueDetail($catalogueUid, $viewer, $authenticatedUser);
+
+        if ($detailResult->isFailure()) {
+            return TypedResults::fromError($detailResult->getError());
+        }
+
+        /** @var CatalogueDetailDTO $detail */
+        $detail = $detailResult->getData();
+
+        return new CatalogueDetailResource($detail);
+    }
+
+    /**
+     * Resolve a legacy numeric catalogue id to its canonical UUID identity.
+     *
+     * Deliberately lean: no view is recorded and no detail payload is
+     * assembled. A catalogue the viewer may not see is reported as missing
+     * rather than forbidden, so the response cannot confirm that a private
+     * catalogue exists.
+     *
+     * The route constraint guarantees `$id` is a positive in-range integer.
+     *
+     * @response CatalogueLegacyIdentityResource
+     */
+    #[Response(type: 'CatalogueLegacyIdentityResource')]
+    public function resolveLegacyId(int $id): JsonResponse|JsonResource
+    {
+        $result = $this->catalogueService->resolveLegacyIdentity(
+            $id,
+            $this->currentUserProvider->currentAuthenticatedUser(),
+        );
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
         }
 
-        /** @var CatalogueDetailDTO $detail */
-        $detail = $result->getData();
-        $catalogue = $detail->catalogue;
+        /** @var CatalogueLegacyIdentityDTO $identity */
+        $identity = $result->getData();
 
-        $statsData = $this->loadStats->batchLoadStatsById(
-            ObjectTemplateType::LIST->getLegacyId(),
-            [$catalogue->getIdValue()]
-        );
-
-        $statsRow = $statsData[$catalogue->getIdValue()] ?? [
-            'likes' => 0,
-            'downloads' => 0,
-            'views' => 0,
-            'comments' => 0,
-        ];
-
-        $stats = new CatalogueStats(
-            $statsRow['likes'],
-            $statsRow['downloads'],
-            $statsRow['views'],
-            $statsRow['comments']
-        );
-
-        $hashtags = $this->hashtagService->getHashtags(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST
-        );
-
-        $isLikedByViewer = $this->engagementService->isEntityLikedByViewer(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST,
-            $viewer !== null
-        );
-
-        return new CatalogueDetailResource(
-            $catalogue,
-            $detail->items,
-            $stats,
-            $hashtags,
-            $detail->itemsCount,
-            $isLikedByViewer
-        );
+        return new CatalogueLegacyIdentityResource($identity);
     }
 
     /**
@@ -275,45 +215,90 @@ class CatalogueController extends Controller
     #[Response(type: 'CatalogueResource')]
     public function update(string $uuid, UpdateCatalogueRequest $request): JsonResponse|JsonResource
     {
-        if (! $request->hasAnyUpdateableFields()) {
-            return TypedResults::validationProblem(
-                ['fields' => ['At least one field must be provided for update operation']],
-                'No fields to update'
-            );
-        }
-
         $catalogueUid = EntityId::from($uuid);
         $updateDTO = CatalogueUpdateDTO::fromRequest($request->validated());
-        $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, auth('api')->user());
+        $result = $this->catalogueService->updateCatalogue($catalogueUid, $updateDTO, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
-            return TypedResults::fromError($result->getError());
+            $error = $result->getError();
+
+            // The lock is a rule about one field, so clients get it in the same shape as any 422.
+            if ($error->code === CatalogueErrors::TYPE_LOCKED_BY_ITEMS) {
+                return TypedResults::validationProblem(['type' => [(string) $error->errorMessage]]);
+            }
+
+            return TypedResults::fromError($error);
         }
 
-        $catalogue = $result->getData();
-        $hashtags = $this->hashtagService->getHashtags(
-            $catalogue->getIdValue(),
-            ObjectTemplateType::LIST
-        );
-        $itemsCountMap = $this->catalogueItemRepository->countItemsByCatalogueIds([$catalogue->getIdValue()]);
-        $itemsCount = $itemsCountMap[$catalogue->getIdValue()] ?? 0;
+        /** @var CatalogueUpdateResultDTO $updateResult */
+        $updateResult = $result->getData();
 
         return new CatalogueResource(
-            catalogue: $catalogue,
-            hashtags: $hashtags,
-            itemsCount: $itemsCount
+            catalogue: $updateResult->catalogue,
+            hashtags: $updateResult->hashtags,
+            itemsCount: $updateResult->itemsCount,
         );
     }
 
     public function destroy(string $uuid): JsonResponse
     {
         $catalogueUid = EntityId::from($uuid);
-        $result = $this->catalogueService->deleteCatalogue($catalogueUid, auth('api')->user());
+        $result = $this->catalogueService->deleteCatalogue($catalogueUid, $this->requiredAuthenticatedUser());
 
         if ($result->isFailure()) {
             return TypedResults::fromError($result->getError());
         }
 
         return TypedResults::noContent();
+    }
+
+    public function exportKanjisPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportKanjis(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
+    public function exportWordsPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportWords(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
+    public function exportRadicalsPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportRadicals(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
+    public function exportSentencesPdf(string $uuid): JsonResponse|LaravelResponse
+    {
+        return $this->pdfResult($this->cataloguePdfExportService->exportSentences(
+            EntityId::from($uuid),
+            $this->requiredAuthenticatedUser(),
+        ));
+    }
+
+    private function pdfResult(Result $result): JsonResponse|LaravelResponse
+    {
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        /** @var PdfRenderResult $pdf */
+        $pdf = $result->getData();
+
+        return $this->pdfResponseFactory->make($pdf);
+    }
+
+    private function requiredAuthenticatedUser(): AuthenticatedUser
+    {
+        return $this->currentUserProvider->currentAuthenticatedUser()
+            ?? throw new AuthenticationException;
     }
 }

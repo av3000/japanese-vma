@@ -1,0 +1,32 @@
+/* =================================
+   #OUTLINE
+   ================================= */
+/**
+ * Setting focus outline on focusable elements
+ *
+ * Inspiration:
+ * https://css-tricks.com/standardizing-focus-styles-with-css-custom-properties/
+ */
+a:focus,
+a:focus-visible,
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible,
+summary:focus,
+summary:focus-visible {
+	outline: var(--outline-size) solid currentColor;
+	outline-offset: var(--outline-size);
+}
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+summary:focus:not(:focus-visible) {
+	outline: none;
+}

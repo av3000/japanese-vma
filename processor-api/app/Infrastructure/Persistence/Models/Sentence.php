@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Infrastructure\Persistence\Models;
+
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Sentence extends Model
+{
+    use RoutesByUuid;
+
+    protected $table = 'japanese_tatoeba_sentences';
+
+    public $timestamps = false;
+
+    protected $fillable = [
+        'uuid',
+        'user_id',
+        'tatoeba_entry',
+        'content',
+    ];
+
+    protected $casts = [
+        'uuid' => 'string',
+        'user_id' => 'integer',
+        'tatoeba_entry' => 'string',
+        'content' => 'string',
+    ];
+
+    /**
+     * The author of a user-written sentence; imported Tatoeba rows have none.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function kanjis(): BelongsToMany
+    {
+        return $this->belongsToMany(Kanji::class, 'japanese_sentence_kanji');
+    }
+
+    public function words(): BelongsToMany
+    {
+        return $this->belongsToMany(Word::class, 'japanese_sentence_word');
+    }
+}

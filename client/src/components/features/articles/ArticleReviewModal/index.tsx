@@ -1,11 +1,14 @@
+import { ARTICLE_MODERATION_CHOICES } from '@/api/articles/moderation';
+import type { ArticleStatus } from '@/api/generated/model/articleStatus';
 import { Button } from '@/components/shared/Button';
 import { DialogModal } from '@/components/shared/DialogModal';
+import { Select } from '@/components/shared/FormControls';
 import type { ModalController } from '@/hooks/useModal';
 
 interface ArticleReviewModalProps {
 	controller: ModalController;
-	status: number;
-	onStatusChange: (nextStatus: number) => void;
+	status: ArticleStatus;
+	onStatusChange: (nextStatus: ArticleStatus) => void;
 	onSave: () => void;
 	isProcessing: boolean;
 	title?: string;
@@ -42,17 +45,17 @@ export const ArticleReviewModal = ({
 			</DialogModal.Header>
 			<DialogModal.Body>
 				<p>{description}</p>
-				<select
-					className="form-control"
+				<Select
+					aria-label="Article status"
 					value={status}
-					onChange={(e) => onStatusChange(Number(e.target.value))}
+					onChange={(e) => onStatusChange(Number(e.target.value) as ArticleStatus)}
 				>
-					{/* TODO: should use const values instead */}
-					<option value={0}>Pending</option>
-					<option value={1}>Review</option>
-					<option value={2}>Reject</option>
-					<option value={3}>Approve</option>
-				</select>
+					{ARTICLE_MODERATION_CHOICES.map((choice) => (
+						<option key={choice.value} value={choice.value}>
+							{choice.label}
+						</option>
+					))}
+				</Select>
 			</DialogModal.Body>
 			<DialogModal.Footer>
 				<Button variant="secondary" onClick={controller.close}>

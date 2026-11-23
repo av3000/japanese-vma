@@ -2,8 +2,8 @@
 
 namespace App\Http\v1\Catalogues\Resources;
 
-use App\Domain\Catalogues\Models\Catalogue;
-use App\Domain\Catalogues\Models\CatalogueStats;
+use App\Domain\Catalogues\DTOs\CatalogueDetailDTO;
+use App\Domain\Shared\Enums\PublicityStatus;
 use App\Http\v1\Engagement\Resources\CatalogueDetailEngagementResource;
 use App\Http\v1\Engagement\Resources\HashtagResource;
 use App\Http\v1\Shared\Resources\AuthorResource;
@@ -11,21 +11,15 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Catalogue $resource
+ * @property CatalogueDetailDTO $resource
  */
 class CatalogueDetailResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(
-        Catalogue $catalogue,
-        private array $items = [],
-        private ?CatalogueStats $stats = null,
-        private array $hashtags = [],
-        private ?int $itemsCount = null,
-        private bool $isLikedByViewer = false,
-    ) {
-        parent::__construct($catalogue);
+    public function __construct(CatalogueDetailDTO $detail)
+    {
+        parent::__construct($detail);
     }
 
     /**
@@ -36,11 +30,12 @@ class CatalogueDetailResource extends JsonResource
      *     type_label: string,
      *     title: string,
      *     description: string|null,
-     *     publicity: int,
+     *     publicity: PublicityStatus,
      *     owner: AuthorResource,
      *     items_count: int,
      *     hashtags: array<int, HashtagResource>,
      *     engagement: CatalogueDetailEngagementResource|null,
+     *     jlpt_levels: array{n1: int, n2: int, n3: int, n4: int, n5: int, uncommon: int}|null,
      *     items: array<int, mixed>,
      *     created_at: string,
      *     updated_at: string
@@ -48,8 +43,9 @@ class CatalogueDetailResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var Catalogue $catalogue */
-        $catalogue = $this->resource;
+        /** @var CatalogueDetailDTO $detail */
+        $detail = $this->resource;
+        $catalogue = $detail->catalogue;
 
         return [
             'id' => $catalogue->getIdValue(),
@@ -58,16 +54,19 @@ class CatalogueDetailResource extends JsonResource
             'type_label' => $catalogue->getTypeLabel(),
             'title' => (string) $catalogue->getTitle(),
             'description' => $catalogue->getDescription()->isEmpty() ? null : (string) $catalogue->getDescription(),
-            'publicity' => $catalogue->getPublicity()->value,
+            'publicity' => $catalogue->getPublicity(),
             'owner' => new AuthorResource([
                 'id' => $catalogue->getOwnerId()->value(),
                 'uuid' => $catalogue->getOwnerUuid()->value(),
                 'name' => $catalogue->getOwnerName()->value(),
             ]),
-            'items_count' => $this->itemsCount ?? count($this->items),
-            'hashtags' => HashtagResource::collection($this->hashtags),
-            'engagement' => $this->stats ? new CatalogueDetailEngagementResource($this->stats, $this->isLikedByViewer) : null,
-            'items' => $this->items,
+            // Items the viewer can see: an article catalogue leaves out articles that are private to someone else.
+            'items_count' => $detail->itemsCount,
+            'hashtags' => HashtagResource::collection($detail->hashtags),
+            'engagement' => new CatalogueDetailEngagementResource($detail->stats, $detail->isLikedByViewer),
+            'jlpt_levels' => CatalogueResource::jlptLevels($detail->jlptLevels),
+            // TODO: add generic items type as 'InstanceItem[]' that would be a list of kanji, words, sentences, radicals or articals type.
+            'items' => $detail->items,
             'created_at' => $catalogue->getCreatedAt()->format('c'),
             'updated_at' => $catalogue->getUpdatedAt()->format('c'),
         ];

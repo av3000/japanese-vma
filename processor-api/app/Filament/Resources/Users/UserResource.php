@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users;
 
+use App\Filament\AdminNavigationGroup;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Pages\ViewUser;
+use App\Filament\Resources\Users\RelationManagers\ArticlesRelationManager;
+use App\Filament\Resources\Users\RelationManagers\CataloguesRelationManager;
+use App\Filament\Resources\Users\RelationManagers\CommentsRelationManager;
+use App\Filament\Resources\Users\RelationManagers\PostsRelationManager;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
@@ -18,12 +23,17 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
+
+    protected static string|UnitEnum|null $navigationGroup = AdminNavigationGroup::Access;
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -52,7 +62,10 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ArticlesRelationManager::class,
+            CataloguesRelationManager::class,
+            PostsRelationManager::class,
+            CommentsRelationManager::class,
         ];
     }
 

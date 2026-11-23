@@ -4,26 +4,39 @@ declare(strict_types=1);
 
 namespace App\Http\v1\JapaneseMaterial\Kanjis\Controllers;
 
+use App\Application\Auth\Interfaces\Providers\CurrentUserProviderInterface;
+use App\Application\Catalogues\Services\CatalogueServiceInterface;
+use App\Application\Catalogues\Services\ViewerCatalogueStateService;
+use App\Application\JapaneseMaterial\Kanjis\Services\KanjiDetailServiceInterface;
 use App\Application\JapaneseMaterial\Kanjis\Services\KanjiServiceInterface;
-use App\Http\Controllers\Controller;
-use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
+use App\Domain\Catalogues\Errors\CatalogueErrors;
 use App\Domain\JapaneseMaterial\Kanjis\Queries\KanjiQueryCriteria;
+use App\Domain\Shared\Enums\SavedListType;
+use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
+use App\Http\Controllers\Controller;
 use App\Http\v1\JapaneseMaterial\Kanjis\Requests\IndexKanjiRequest;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiResource;
-use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiCollectionResource;
-use App\Shared\Enums\HttpStatus;
+use App\Http\v1\JapaneseMaterial\Kanjis\Requests\ShowKanjiRequest;
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiDetailResource;
+use App\Http\v1\JapaneseMaterial\Kanjis\Resources\KanjiListResource;
 use App\Shared\Http\TypedResults;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class KanjiController extends Controller
 {
     public function __construct(
-        private readonly KanjiServiceInterface $kanjiService
-    ) {}
+        private readonly KanjiServiceInterface $kanjiService,
+        private readonly KanjiDetailServiceInterface $kanjiDetailService,
+        private readonly ViewerCatalogueStateService $viewerCatalogueStateService,
+        private readonly CurrentUserProviderInterface $currentUserProvider,
+        private readonly CatalogueServiceInterface $catalogueService,
+    ) {
+    }
 
-    public function index(IndexKanjiRequest $request): JsonResponse
+    #[Response(type: 'KanjiListResource')]
+    public function index(IndexKanjiRequest $request): JsonResponse|JsonResource
     {
         $validatedData = $request->validated();
 
@@ -31,21 +44,50 @@ class KanjiController extends Controller
             ? EntityId::from($validatedData['article_uuid'])
             : null;
 
+        $authenticatedUser = $this->currentUserProvider->currentAuthenticatedUser();
+        $catalogueId = null;
+
+        if (isset($validatedData['catalogue_uuid'])) {
+            $source = $this->catalogueService->resolveItemSource(
+                EntityId::from($validatedData['catalogue_uuid']),
+                SavedListType::KANJIS,
+                $authenticatedUser,
+            );
+
+            if ($source->isFailure()) {
+                $error = $source->getError();
+
+                // A filter on the wrong kind of catalogue is a rule about one field, so it comes back as a 422 on it.
+                if ($error->code === CatalogueErrors::ITEM_FAMILY_MISMATCH) {
+                    return TypedResults::validationProblem(['catalogue_uuid' => [(string) $error->errorMessage]]);
+                }
+
+                return TypedResults::fromError($error);
+            }
+
+            $catalogueId = $source->getData();
+        }
+
         $criteria = KanjiQueryCriteria::forListing(
             page: $validatedData['page'] ?? Pagination::MIN_PAGE,
             perPage: $validatedData['per_page'] ?? Pagination::DEFAULT_PER_PAGE,
+            keyword: $validatedData['keyword'] ?? null,
             character: $validatedData['character'] ?? null,
             grade: $validatedData['grade'] ?? null,
             jlpt: $validatedData['jlpt'] ?? null,
             minStrokeCount: $validatedData['min_stroke_count'] ?? null,
             maxStrokeCount: $validatedData['max_stroke_count'] ?? null,
-            meanings: $validatedData['meanings'] ?? null,
-            onyomi: $validatedData['onyomi'] ?? null,
-            kunyomi: $validatedData['kunyomi'] ?? null,
+            meanings: $this->splitCsvFilter($validatedData['meanings'] ?? null),
+            onyomi: $this->splitCsvFilter($validatedData['onyomi'] ?? null),
+            kunyomi: $this->splitCsvFilter($validatedData['kunyomi'] ?? null),
             radical: $validatedData['radical'] ?? null,
             limit: $validatedData['limit'] ?? null,
             offset: $validatedData['offset'] ?? null,
             articleId: $articleId,
+            catalogueId: $catalogueId,
+            radicalUuid: isset($validatedData['radical_uuid'])
+                ? EntityId::from($validatedData['radical_uuid'])
+                : null,
         );
 
         $paginatedKanjisResult = $this->kanjiService->find($criteria);
@@ -54,40 +96,52 @@ class KanjiController extends Controller
             return TypedResults::fromError($paginatedKanjisResult->getError());
         }
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedKanjis */
-        $paginatedKanjis = $paginatedKanjisResult->getData();
+        $kanjiListResult = $paginatedKanjisResult->getData();
+        $viewerCatalogueStates = [];
 
-        return TypedResults::ok(
-            new KanjiCollectionResource($paginatedKanjis)
-        );
+        if ($request->includesViewerCatalogueState() && $authenticatedUser !== null) {
+            $viewerCatalogueStates = $this->viewerCatalogueStateService->forItems(
+                ownerUuid: $authenticatedUser->uuid,
+                itemIds: array_map(
+                    static fn ($kanji): int => $kanji->getIdValue(),
+                    $kanjiListResult->items,
+                ),
+                savedType: SavedListType::KANJIS,
+                knownType: SavedListType::KNOWNKANJIS,
+            );
+        }
+
+        return new KanjiListResource($kanjiListResult, $viewerCatalogueStates);
     }
 
-    public function show(string $identifier): JsonResponse
+    #[Response(type: 'KanjiDetailResource')]
+    public function show(string $identifier, ShowKanjiRequest $request): JsonResponse|JsonResource
     {
-        $kanjiResult = null;
-
-        if (EntityId::isValid($identifier)) {
-            $kanjiResult = $this->kanjiService->findByUuid(EntityId::from($identifier));
-        } elseif (preg_match('/^\p{Han}$/u', $identifier)) {
-            $kanjiResult = $this->kanjiService->findByCharacter(new KanjiCharacter($identifier));
-        } else {
-            return TypedResults::fromError(new \App\Shared\Results\ResultError(
-                'INVALID_IDENTIFIER',
-                HttpStatus::BAD_REQUEST,
-                'Identifier must be a valid UUID or a single Kanji character.'
-            ));
-        }
-
-
-        if ($kanjiResult->isFailure()) {
-            return TypedResults::fromError($kanjiResult->getError());
-        }
-
-        /** @var \App\Domain\JapaneseMaterial\Kanjis\Models\Kanji $kanji */
-        $kanji = $kanjiResult->getData();
-
-        return TypedResults::ok(
-            new KanjiResource($kanji)
+        $result = $this->kanjiDetailService->findByIdentifier(
+            identifier: $identifier,
+            includes: $request->includes(),
+            authenticatedUser: $this->currentUserProvider->currentAuthenticatedUser(),
         );
+
+        if ($result->isFailure()) {
+            return TypedResults::fromError($result->getError());
+        }
+
+        return new KanjiDetailResource($result->getData());
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function splitCsvFilter(?string $value): ?array
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode(',', $value)),
+            fn (string $item): bool => $item !== '',
+        ));
     }
 }

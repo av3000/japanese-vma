@@ -1,0 +1,242 @@
+<?php
+
+namespace App\Application\Articles\Services;
+
+use App\Application\Activity\ActivityEntries;
+use App\Application\Activity\Interfaces\ActivityRecorderInterface;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
+use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
+use App\Application\Articles\Policies\ArticleModerationPolicy;
+use App\Application\Auth\DTOs\AuthenticatedUser;
+use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Domain\Activity\Enums\ActivityAction;
+use App\Domain\Activity\Enums\ActivitySubjectType;
+use App\Domain\Articles\DTOs\ArticleModerationItemDTO;
+use App\Domain\Articles\DTOs\ArticleModerationListResultDTO;
+use App\Domain\Articles\DTOs\ArticleStatusResultDTO;
+use App\Domain\Articles\Errors\ArticleErrors;
+use App\Domain\Articles\Models\Article;
+use App\Domain\Processing\Enums\ProcessingStatus;
+use App\Domain\Shared\Enums\ArticleStatus;
+use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
+use App\Shared\Results\Result;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+class ArticleModerationService implements ArticleModerationServiceInterface
+{
+    public function __construct(
+        private readonly ArticleRepositoryInterface $articleRepository,
+        private readonly ArticleModerationPolicy $moderationPolicy,
+        private readonly HashtagServiceInterface $hashtagService,
+        private readonly ActivityRecorderInterface $activityRecorder,
+        private readonly DeleteArticleAction $deleteArticle,
+        private readonly ArticleProcessingStateReaderInterface $processingStates,
+    ) {
+    }
+
+    public function getPendingArticles(Pagination $pagination, AuthenticatedUser $authenticatedUser): Result
+    {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        try {
+            $articles = $this->articleRepository->findModerationQueue($pagination);
+            $items = $articles->getItems();
+            $articleIds = array_map(
+                static fn (Article $article): int => $article->getIdValue(),
+                $items,
+            );
+            $hashtagsByArticleId = $articleIds === []
+                ? []
+                : $this->hashtagService->getBatchHashtags($articleIds, ObjectTemplateType::ARTICLE);
+            $paginator = $articles->getPaginator();
+
+            return Result::success(new ArticleModerationListResultDTO(
+                items: array_map(
+                    static fn (Article $article): ArticleModerationItemDTO => new ArticleModerationItemDTO(
+                        article: $article,
+                        hashtags: $hashtagsByArticleId[$article->getIdValue()] ?? [],
+                    ),
+                    $items,
+                ),
+                pagination: [
+                    'page' => $paginator->currentPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'last_page' => $paginator->lastPage(),
+                    'has_more' => $paginator->hasMorePages(),
+                ],
+            ));
+        } catch (Throwable $exception) {
+            Log::error('Article moderation queue fetch failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::moderationQueueFetchFailed());
+        }
+    }
+
+    public function updateStatus(
+        EntityId $articleUuid,
+        ArticleStatus $status,
+        AuthenticatedUser $authenticatedUser,
+        ?string $reason = null,
+        bool $approveUnfinishedProcessing = false,
+    ): Result {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        try {
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            $previousStatus = $article->getStatus();
+            $context = $reason === null || trim($reason) === '' ? [] : ['reason' => trim($reason)];
+
+            if ($status === ArticleStatus::APPROVED && $previousStatus !== ArticleStatus::APPROVED) {
+                $processing = $this->processingStates->currentState($articleUuid->value());
+
+                if ($processing === null || $processing->status !== ProcessingStatus::COMPLETED) {
+                    if (! $approveUnfinishedProcessing) {
+                        return Result::failure(ArticleErrors::approvalNeedsFinishedProcessing($articleUuid->value()));
+                    }
+
+                    $context['approved_despite_processing'] = $processing?->status->value ?? 'none';
+                }
+            }
+
+            $persistedStatus = DB::transaction(function () use ($article, $articleUuid, $status, $previousStatus, $authenticatedUser, $context): ?ArticleStatus {
+                $persistedStatus = $this->articleRepository->updateStatus($articleUuid, $status);
+
+                if ($persistedStatus !== null && $persistedStatus !== $previousStatus) {
+                    $this->activityRecorder->record(ActivityEntries::by(
+                        $authenticatedUser,
+                        ActivityAction::ArticleStatusChanged,
+                        ActivitySubjectType::Article,
+                        $articleUuid->value(),
+                        $article->getTitleJp()->value,
+                        before: ['status' => $previousStatus->label()],
+                        after: ['status' => $persistedStatus->label()],
+                        context: $context,
+                    ));
+                }
+
+                return $persistedStatus;
+            });
+
+            if ($persistedStatus === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            return Result::success(new ArticleStatusResultDTO($articleUuid, $persistedStatus));
+        } catch (Throwable $exception) {
+            Log::error('Article moderation status update failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'article_uuid' => $articleUuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::moderationStatusUpdateFailed());
+        }
+    }
+
+    public function setPublicity(EntityId $articleUuid, PublicityStatus $publicity, AuthenticatedUser $authenticatedUser): Result
+    {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        try {
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            $previous = $article->getPublicity();
+
+            if ($previous === $publicity) {
+                return Result::success($publicity);
+            }
+
+            DB::transaction(function () use ($article, $articleUuid, $publicity, $previous, $authenticatedUser): void {
+                $this->articleRepository->updatePublicity($articleUuid, $publicity);
+
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $authenticatedUser,
+                    ActivityAction::ArticlePublicityChanged,
+                    ActivitySubjectType::Article,
+                    $articleUuid->value(),
+                    $article->getTitleJp()->value,
+                    before: ['publicity' => $previous->label()],
+                    after: ['publicity' => $publicity->label()],
+                ));
+            });
+        } catch (Throwable $exception) {
+            Log::error('Article moderation publicity update failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'article_uuid' => $articleUuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::publicityUpdateFailed());
+        }
+
+        return Result::success($publicity);
+    }
+
+    public function remove(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
+    {
+        if (! $this->moderationPolicy->canModerate($authenticatedUser)) {
+            return Result::failure(ArticleErrors::moderationAccessDenied());
+        }
+
+        try {
+            $article = $this->articleRepository->findByPublicUid($articleUuid);
+
+            if ($article === null) {
+                return Result::failure(ArticleErrors::notFound($articleUuid->value()));
+            }
+
+            DB::transaction(function () use ($article, $articleUuid, $authenticatedUser): void {
+                $this->activityRecorder->record(ActivityEntries::by(
+                    $authenticatedUser,
+                    ActivityAction::ArticleDeleted,
+                    ActivitySubjectType::Article,
+                    $articleUuid->value(),
+                    $article->getTitleJp()->value,
+                    before: [
+                        'title' => $article->getTitleJp()->value,
+                        'status' => $article->getStatus()->label(),
+                        'publicity' => $article->getPublicity()->label(),
+                        'author' => $article->getAuthorName()->value(),
+                    ],
+                ));
+
+                $this->deleteArticle->execute($article->getIdValue());
+            });
+        } catch (Throwable $exception) {
+            Log::error('Article moderation removal failed', [
+                'user_id' => $authenticatedUser->id->value(),
+                'article_uuid' => $articleUuid->value(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return Result::failure(ArticleErrors::deletionFailed());
+        }
+
+        return Result::success();
+    }
+}

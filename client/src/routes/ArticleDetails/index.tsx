@@ -1,30 +1,33 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useArticleQuery } from '@/api/articles/details';
-import Spinner from '@/assets/images/spinner.gif';
+import { DetailUnavailable, unavailableMessage } from '@/components/shared/DetailLayout';
+import { PageLoading } from '@/components/shared/PageLoading';
 import ArticleContent from './ArticleContent';
+import ArticleDetailsSkeleton from './ArticleDetailsSkeleton';
 
 const ArticleDetails: React.FC = () => {
 	const { article_id } = useParams<{ article_id: string }>();
+	const [searchParams] = useSearchParams();
 
-	const { data: article, isLoading, isError } = useArticleQuery(article_id);
+	const { data: article, isLoading, isError, error } = useArticleQuery(article_id);
+
+	// Edit used to open as a modal from `?edit=1`; old links now land on the edit page.
+	if (article_id && searchParams.get('edit') === '1') {
+		return <Navigate to={`/articles/${article_id}/edit`} replace />;
+	}
 
 	if (isLoading) {
-		return (
-			<div className="container text-center mt-5">
-				<img src={Spinner} alt="Loading..." />
-			</div>
-		);
+		return <PageLoading family="detail" visual={<ArticleDetailsSkeleton />} />;
 	}
 
 	if (isError || !article) {
 		return (
-			<div className="container mt-5 text-center">
-				<p className="lead">Article not found or was deleted.</p>
-				<a href="/articles" className="btn btn-link">
-					Back to all Articles
-				</a>
-			</div>
+			<DetailUnavailable
+				message={unavailableMessage(error, 'article')}
+				backTo="/articles"
+				backLabel="Back to Articles"
+			/>
 		);
 	}
 

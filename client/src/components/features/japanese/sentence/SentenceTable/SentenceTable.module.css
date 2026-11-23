@@ -1,0 +1,8 @@
+.source {
+	color: var(--color-text-muted);
+	font-size: var(--font-size-body-sm);
+}
+
+.sourceLink {
+	color: var(--color-interactive);
+}

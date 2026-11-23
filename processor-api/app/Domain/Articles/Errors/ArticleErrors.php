@@ -2,8 +2,8 @@
 
 namespace App\Domain\Articles\Errors;
 
-use App\Shared\Results\ResultError;
 use App\Shared\Enums\HttpStatus;
+use App\Shared\Results\ResultError;
 
 class ArticleErrors
 {
@@ -26,6 +26,39 @@ class ArticleErrors
             description: 'Access denied',
             detail: "You don't have permission to access article {$articleUid}",
             errorMessage: "You don't have permission to access article {$articleUid}",
+        );
+    }
+
+    public static function moderationAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to moderate articles",
+            errorMessage: "You don't have permission to moderate articles",
+        );
+    }
+
+    public static function moderationQueueFetchFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationQueueFetchFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article moderation queue fetch failed',
+            detail: 'An unexpected error occurred while fetching the article moderation queue',
+            errorMessage: 'An unexpected error occurred while fetching the article moderation queue',
+        );
+    }
+
+    public static function moderationStatusUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ModerationStatusUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article status update failed',
+            detail: 'An unexpected error occurred while updating the article status',
+            errorMessage: 'An unexpected error occurred while updating the article status',
         );
     }
 
@@ -59,6 +92,83 @@ class ArticleErrors
             description: 'Article deletion failed',
             detail: 'An unexpected error occurred during article deletion',
             errorMessage: 'An unexpected error occurred during article deletion',
+        );
+    }
+
+    public static function wordsFetchFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.WordsFetchFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article words fetch failed',
+            detail: 'An unexpected error occurred during article words fetching',
+            errorMessage: 'An unexpected error occurred during article words fetching',
+        );
+    }
+
+    public static function processingRequeueAccessDenied(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingRequeueAccessDenied',
+            status: HttpStatus::FORBIDDEN,
+            description: 'Access denied',
+            detail: "You don't have permission to requeue article processing",
+            errorMessage: "You don't have permission to requeue article processing.",
+        );
+    }
+
+    public static function approvalNeedsFinishedProcessing(string $articleUid): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ApprovalNeedsFinishedProcessing',
+            status: HttpStatus::CONFLICT,
+            description: 'Processing has not completed',
+            detail: "Article {$articleUid} cannot be approved before its content processing completes",
+            errorMessage: 'Processing has not completed for this article. Confirm the override to approve it anyway.',
+        );
+    }
+
+    public static function retryBatchTooLarge(int $selected, int $max): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.RetryBatchTooLarge',
+            status: HttpStatus::UNPROCESSABLE_ENTITY,
+            description: 'Too many runs selected',
+            detail: "{$selected} runs were selected; at most {$max} can be retried at once",
+            errorMessage: "Select at most {$max} runs to retry; {$selected} were selected.",
+        );
+    }
+
+    public static function processingRequeueFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingRequeueFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Processing requeue failed',
+            detail: 'An unexpected error occurred while requeueing article processing',
+            errorMessage: 'Processing could not be queued again. Try again in a moment.',
+        );
+    }
+
+    public static function publicityUpdateFailed(): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.PublicityUpdateFailed',
+            status: HttpStatus::INTERNAL_SERVER_ERROR,
+            description: 'Article publicity update failed',
+            detail: 'An unexpected error occurred while updating the article publicity',
+            errorMessage: 'An unexpected error occurred while updating the article publicity',
+        );
+    }
+
+    public static function processingStillRunning(string $articleUid): ResultError
+    {
+        return new ResultError(
+            code: 'Articles.ProcessingStillRunning',
+            status: HttpStatus::CONFLICT,
+            description: 'Processing is still running',
+            detail: "Article {$articleUid} is being processed and has reported progress recently",
+            errorMessage: 'This article is still being processed. Wait for it to finish or fail, or force the retry.',
         );
     }
 

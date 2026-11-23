@@ -6,6 +6,10 @@
 /tests
 /storage/logs
 /storage/framework
+# Dompdf's regenerated font cache. It is build output, not source, and since
+# docker-compose mounts a container-local volume here, anything baked into the
+# image at this path seeds that volume - stale cached fonts included.
+/storage/fonts
 /bootstrap/cache/*
 /.git
 /.idea

@@ -1,96 +1,98 @@
-import React from 'react';
-import { Button, Dropdown, Nav, NavDropdown, Navbar } from 'react-bootstrap';
+import * as React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { HeaderSearch } from '@/components/features/HeaderSearch';
 import SocketStatusIndicator from '@/components/features/SocketStatusIndicator';
-import './header.scss';
+import { Button } from '@/components/shared/Button';
+import { Logo } from '@/components/shared/Logo';
+import { useAuth } from '@/hooks/useAuth';
+import { AccountMenu } from './AccountMenu';
+import { ColorSchemeToggle } from './ColorSchemeToggle';
+import styles from './Header.module.css';
+import { MenuDrawer } from './MenuDrawer';
+import { NavGroup } from './NavGroup';
+import { NAV_SECTIONS, navLinkClass } from './navigation';
 
+/**
+ * The app bar on every page. From 1024px: brand, the Explore and Dictionary disclosures, the
+ * search panel, the account and the colour-scheme toggle. Below: brand, the search button, the toggle
+ * and the menu button, the search and menu buttons each opening a full-height drawer.
+ */
 const Header: React.FC = () => {
 	const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-	const handleLogout = () => {
-		logout();
-	};
+	let account: React.ReactNode;
+	if (isLoading) {
+		account = (
+			<ul className={styles.account} aria-label="Account status">
+				<li>
+					<span className={styles.authPending} role="status" aria-label="Checking account status" />
+				</li>
+			</ul>
+		);
+	} else if (isAuthenticated && user) {
+		account = (
+			<ul className={styles.account} aria-label="Account">
+				<li className={styles.socket}>
+					<SocketStatusIndicator />
+				</li>
+				<AccountMenu id="account-nav-group" name={user.name} onLogout={() => logout()} />
+			</ul>
+		);
+	} else {
+		account = (
+			<ul className={styles.account} aria-label="Account">
+				<li>
+					<NavLink className={navLinkClass} to="/login">
+						Log In
+					</NavLink>
+				</li>
+				<li>
+					<Button to="/register" variant="primary" size="sm">
+						Sign Up
+					</Button>
+				</li>
+			</ul>
+		);
+	}
 
 	return (
-		<Navbar expand="lg">
-			<Navbar.Brand as={Link} to="/">
-				JPLearning
-			</Navbar.Brand>
-			<Navbar.Toggle aria-controls="basic-navbar-nav" />
-			<Navbar.Collapse id="basic-navbar-nav">
-				<Nav className="mx-auto">
-					<Nav.Link as={Link} to="/articles">
-						Articles
-					</Nav.Link>
-					<Nav.Link as={Link} to="/catalogues">
-						Catalogues
-					</Nav.Link>
-					<NavDropdown title="Japanese Material" id="material-nav-dropdown">
-						<Dropdown.Item as={Link} to="/radicals">
-							Radicals
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/kanjis">
-							Kanjis
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/words">
-							Words
-						</Dropdown.Item>
-						<Dropdown.Item as={Link} to="/sentences">
-							Sentences
-						</Dropdown.Item>
-					</NavDropdown>
-					<Nav.Link as={Link} to="/community">
-						Community
-					</Nav.Link>
-					{isAuthenticated && (
-						<>
-							<Nav.Link as={Link} to="/dashboard">
-								Dashboard
-							</Nav.Link>
-							<NavDropdown title="New" id="new-nav-dropdown">
-								<Dropdown.Item as={Link} to="/newarticle">
-									Article
-								</Dropdown.Item>
-								<Dropdown.Item as={Link} to="/catalogues/new">
-									Catalogue
-								</Dropdown.Item>
-								<Dropdown.Divider />
-								<Dropdown.Item as={Link} to="/newpost">
-									Community Post
-								</Dropdown.Item>
-							</NavDropdown>
-						</>
-					)}
-				</Nav>
-				{isLoading ? (
-					<Nav aria-label="Account status">
-						<span className="header-auth-pending" aria-label="Checking account status" />
-					</Nav>
-				) : isAuthenticated && user ? (
-					<Nav>
-						<div className="d-flex align-items-center mr-2">
-							<SocketStatusIndicator />
-						</div>
-						<Nav.Link as={Link} to="/dashboard">
-							Logged in as <strong>{user.name}</strong>
-						</Nav.Link>
-						<Button variant="outline-danger" onClick={handleLogout} className="ml-2">
-							Logout
-						</Button>
-					</Nav>
-				) : (
-					<Nav>
-						<NavLink className="nav-link" to="/register">
-							Sign Up
-						</NavLink>
-						<NavLink className="nav-link" to="/login">
-							Log In
-						</NavLink>
-					</Nav>
-				)}
-			</Navbar.Collapse>
-		</Navbar>
+		<header className={styles.header}>
+			<div className={styles.bar}>
+				<Link to="/" className={styles.brand}>
+					<Logo />
+				</Link>
+
+				<nav aria-label="Main" className={styles.desktopNav}>
+					<ul className={styles.groups}>
+						{NAV_SECTIONS.map((section) => (
+							<NavGroup key={section.id} label={section.label} id={`${section.id}-nav-group`}>
+								{section.links.map((link) => (
+									<li key={link.to}>
+										<NavLink className={navLinkClass} to={link.to}>
+											<span>{link.label}</span>
+											{link.description && (
+												<>
+													{' '}
+													<span className={styles.description}>{link.description}</span>
+												</>
+											)}
+										</NavLink>
+									</li>
+								))}
+							</NavGroup>
+						))}
+					</ul>
+				</nav>
+
+				<HeaderSearch />
+
+				{account}
+
+				<ColorSchemeToggle />
+
+				<MenuDrawer />
+			</div>
+		</header>
 	);
 };
 

@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Domain\JapaneseMaterial\Kanjis\Models;
 
-use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\JlptLevel;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiGrade;
-use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\JlptLevel;
+use App\Domain\Shared\ValueObjects\EntityId;
 
 final readonly class Kanji
 {
+    /**
+     * @param array<int, string> $onyomi
+     * @param array<int, string> $kunyomi
+     * @param array<int, string> $meanings
+     * @param array<int, string> $nanori
+     * @param array<int, string> $radicals
+     * @param array<int, string> $radicalParts
+     */
     public function __construct(
         private int $id,
         private EntityId $uuid,
@@ -25,7 +33,8 @@ final readonly class Kanji
         private ?int $frequency,
         private array $radicals,
         private array $radicalParts,
-    ) {}
+    ) {
+    }
 
     public function getUuid(): EntityId
     {
@@ -42,21 +51,33 @@ final readonly class Kanji
         return $this->character;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getOnyomi(): array
     {
         return $this->onyomi;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getKunyomi(): array
     {
         return $this->kunyomi;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getMeanings(): array
     {
         return $this->meanings;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getNanori(): array
     {
         return $this->nanori;
@@ -82,11 +103,17 @@ final readonly class Kanji
         return $this->frequency;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getRadicals(): array
     {
         return $this->radicals;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getRadicalParts(): array
     {
         return $this->radicalParts;

@@ -2,81 +2,76 @@
 
 namespace App\Application\Articles\Services;
 
-use App\Application\Articles\Actions\Deletion\CleanupArticleCustomListsAction;
+use App\Application\Articles\Actions\Deletion\DeleteArticleAction;
+use App\Application\Articles\Interfaces\Readers\ArticleProcessingStateReaderInterface;
 use App\Application\Articles\Interfaces\Repositories\ArticleRepositoryInterface;
-use App\Application\Articles\Jobs\ProcessArticleKanjisJob;
+use App\Application\Articles\Jobs\ProcessArticleContentJob;
 use App\Application\Articles\Policies\ArticlePolicy;
-use App\Application\Comments\Interfaces\Repositories\CommentRepositoryInterface;
+use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Application\Engagement\Actions\IncrementViewAction;
-use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
-use App\Application\Engagement\Interfaces\Repositories\ViewRepositoryInterface;
+use App\Application\Engagement\Services\EngagementServiceInterface;
 use App\Application\Engagement\Services\HashtagServiceInterface;
+use App\Application\Processing\Services\ProcessingStateServiceInterface;
 use App\Domain\Articles\DTOs\ArticleCreateDTO;
-use App\Domain\Articles\DTOs\ArticleCriteriaDTO;
+use App\Domain\Articles\DTOs\ArticleCreateResultDTO;
+use App\Domain\Articles\DTOs\ArticleDetailResultDTO;
 use App\Domain\Articles\DTOs\ArticleIncludeOptionsDTO;
-use App\Domain\Articles\DTOs\ArticleListDTO;
 use App\Domain\Articles\DTOs\ArticleUpdateDTO;
+use App\Domain\Articles\DTOs\ArticleUpdateResultDTO;
 use App\Domain\Articles\Errors\ArticleErrors;
 use App\Domain\Articles\Exceptions\ArticleAccessDeniedException;
 use App\Domain\Articles\Exceptions\ArticleNotFoundException;
 use App\Domain\Articles\Factories\ArticleFactory;
 use App\Domain\Articles\Models\Article as DomainArticle;
-use App\Domain\Articles\Models\Articles;
 use App\Domain\Articles\ValueObjects\ArticleContent;
-use App\Domain\Articles\ValueObjects\ArticleSortCriteria;
 use App\Domain\Articles\ValueObjects\ArticleSourceUrl;
 use App\Domain\Articles\ValueObjects\ArticleTitle;
+use App\Domain\Processing\Enums\ProcessingEntityType;
+use App\Domain\Processing\Enums\ProcessingTaskType;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
-use App\Domain\Shared\ValueObjects\Pagination;
-use App\Domain\Shared\ValueObjects\SearchTerm;
-use App\Domain\Shared\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\UserName;
 use App\Domain\Shared\ValueObjects\Viewer;
-use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
-use App\Infrastructure\Persistence\Models\User;
 use App\Shared\Results\Result;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ArticleService implements ArticleServiceInterface
 {
+    /** Value of `articles.content_version` on a freshly created row (column default). */
+    private const INITIAL_CONTENT_VERSION = 1;
+
     public function __construct(
         private ArticleRepositoryInterface $articleRepository,
         private HashtagServiceInterface $hashtagService,
+        private EngagementServiceInterface $engagementService,
+        private ArticleProcessingStateReaderInterface $processingStateReader,
         private ArticlePolicy $articlePolicy,
         private IncrementViewAction $incrementViewAction,
-        private CleanupArticleCustomListsAction $cleanupCustomLists,
-        private HashtagRepositoryInterface $hashtagRepository,
-        private ViewRepositoryInterface $viewRepository,
-        private LikeRepositoryInterface $likeRepository,
-        private DownloadRepositoryInterface $downloadRepository,
-        private CommentRepositoryInterface $commentRepository
-    ) {}
+        private DeleteArticleAction $deleteArticle,
+        private ProcessingStateServiceInterface $processingStates,
+    ) {
+    }
 
     /**
      * Create article with hashtags atomically.
      * Validates hashtags before transaction, creates article and hashtags together.
      *
      * @param ArticleCreateDTO $dto Article data
-     * @param User $user Authenticated user
      *
      * @return Result Success data: DomainArticle, Failure data: ResultError
      */
-    public function createArticle(ArticleCreateDTO $dto, User $user): Result
+    public function createArticle(ArticleCreateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            $article = DB::transaction(function () use ($dto, $user) {
+            /** @var ArticleCreateResultDTO $created */
+            $created = DB::transaction(function () use ($dto, $authenticatedUser): ArticleCreateResultDTO {
                 // TODO: consider if should it be factory or some kind of mapper pattern?
                 $domainArticle = ArticleFactory::createFromDTO(
                     $dto,
-                    new UserId($user->id),
-                    new UserName($user->name),
-                    new EntityId($user->uuid)
+                    $authenticatedUser->id,
+                    $authenticatedUser->name,
+                    $authenticatedUser->uuid,
                 );
                 // TODO: for frontend we only need UUID/ID which can be used to redirect user to article details page where frontend fetched the article show endpoint.
                 $createdDomainArticle = $this->articleRepository->create($domainArticle);
@@ -86,7 +81,7 @@ class ArticleService implements ArticleServiceInterface
                         $createdDomainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->tags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -95,18 +90,26 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                ProcessArticleKanjisJob::dispatch(
-                    $createdDomainArticle->getUid()->value(),
-                    $dto->content_jp
+                // The processing row exists as `pending` before the response is sent, in the same
+                // transaction as the article itself (ADR 0001, point 4).
+                $processingState = $this->processingStates->startOrReset(
+                    ProcessingEntityType::Article,
+                    $createdDomainArticle->getUid(),
+                    ProcessingTaskType::ArticleContentProcessing,
+                    self::INITIAL_CONTENT_VERSION,
                 );
 
-                return $createdDomainArticle;
+                return new ArticleCreateResultDTO($createdDomainArticle, $processingState);
             });
 
-            return Result::success($article);
+            // ShouldQueueAfterCommit plus `after_commit` on the queue connections: the worker can
+            // never observe the article before it is committed.
+            ProcessArticleContentJob::dispatch($created->article->getUid()->value(), self::INITIAL_CONTENT_VERSION);
+
+            return Result::success($created);
         } catch (\Exception $e) {
             Log::error('Article creation failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'error' => $e->getMessage(),
             ]);
 
@@ -124,26 +127,51 @@ class ArticleService implements ArticleServiceInterface
      *
      * @param EntityId $articleUid Article UUID
      * @param ArticleIncludeOptionsDTO $dto Eager loading options
-     * @param User|null $user Current user
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleDetailResultDTO, Failure data: ResultError
      */
-    public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, ?User $user = null): Result
-    {
+    public function getArticle(
+        EntityId $articleUid,
+        ArticleIncludeOptionsDTO $dto,
+        Viewer $viewer,
+        ?AuthenticatedUser $authenticatedUser = null,
+    ): Result {
         $article = $this->articleRepository->findByPublicUid($articleUid, $dto);
 
         if (! $article) {
             return Result::failure(ArticleErrors::notFound($articleUid->value()));
         }
 
-        if (! $this->articlePolicy->canView($user, $article)) {
+        if (! $this->articlePolicy->canView($authenticatedUser, $article)) {
             return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
         }
 
-        $viewer = new Viewer($user?->id, request()->ip());
         $this->trackView($article->getIdValue(), ObjectTemplateType::ARTICLE, $viewer);
 
-        return Result::success($article);
+        $engagement = $this->engagementService->getSingleArticleEngagementSummary(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE,
+            $dto,
+            $authenticatedUser?->id->value(),
+        );
+
+        $hashtags = $this->hashtagService->getHashtags(
+            $article->getIdValue(),
+            ObjectTemplateType::ARTICLE
+        );
+
+        $processingState = $this->processingStateReader->currentState($article->getUid()->value());
+
+        // kanjis and words are opt-in since #268; unasked-for they come back empty, and the
+        // caller reads articles/{uuid}/kanjis and articles/{uuid}/words a page at a time.
+        return Result::success(new ArticleDetailResultDTO(
+            article: $article,
+            engagement: $engagement,
+            kanjis: $article->getKanjis(),
+            words: $article->getWords(),
+            hashtags: $hashtags,
+            processingState: $processingState,
+        ));
     }
 
     /**
@@ -166,41 +194,16 @@ class ArticleService implements ArticleServiceInterface
     }
 
     /**
-     * Get filtered, sorted, paginated list of articles with permission-based visibility.
-     *
-     * @param ArticleListDTO $dto Filter criteria
-     * @param User|null $user Current user for visibility
-     *
-     * @return Articles Domain collection with pagination metadata
-     */
-    public function getArticlesList(ArticleListDTO $dto, ?User $user = null): Articles
-    {
-        // TODO: Perhaps this should follow some filter builder pattern, or this is passing this responsibility to repository?
-        $criteriaDTO = new ArticleCriteriaDTO(
-            search: $dto->search !== null ? SearchTerm::fromInputOrNull($dto->search) : null,
-            sort: ArticleSortCriteria::fromInputOrDefault($dto->sort_by, $dto->sort_dir),
-            categoryId: $dto->category,
-            authorUid: $dto->author_uid,
-            visibilityRules: $this->articlePolicy->getVisibilityCriteria($user),
-            pagination: Pagination::fromInputOrDefault($dto->page, $dto->per_page),
-            include_kanjis: $dto->include_kanjis
-        );
-
-        return $this->articleRepository->findByCriteria($criteriaDTO);
-    }
-
-    /**
      * Update article with optional hashtag and content reprocessing.
      *
      * @param string $uid Article UUID
      * @param ArticleUpdateDTO $dto Update data
-     * @param User $user User for authorized actions
      *
-     * @return Result Success data: DomainArticle, Failure data: ResultError
+     * @return Result Success data: ArticleUpdateResultDTO, Failure data: ResultError
      *
-     * @todo Refactor to use EntityId and return DomainArticle
+     * @todo Refactor to use EntityId.
      */
-    public function updateArticle(string $uid, ArticleUpdateDTO $dto, User $user): Result
+    public function updateArticle(string $uid, ArticleUpdateDTO $dto, AuthenticatedUser $authenticatedUser): Result
     {
         $articleUid = EntityId::from($uid);
 
@@ -211,14 +214,17 @@ class ArticleService implements ArticleServiceInterface
                 return Result::failure(ArticleErrors::notFound($articleUid->value()));
             }
 
-            if (! $this->articlePolicy->canUpdate($user, $domainArticle)) {
+            if (! $this->articlePolicy->canUpdate($authenticatedUser, $domainArticle)) {
                 return Result::failure(ArticleErrors::accessDenied($articleUid->value()));
             }
 
-            $shouldReprocessContent = $dto->content_jp !== null
-                && $dto->content_jp !== $domainArticle->getContentJp()->value;
+            // Kanji come from the content, words from title + content: either field changing
+            // means the derived data is stale and one consolidated run is needed.
+            $shouldReprocess = ($dto->content_jp !== null && $dto->content_jp !== $domainArticle->getContentJp()->value)
+                || ($dto->title_jp !== null && $dto->title_jp !== $domainArticle->getTitleJp()->value);
 
-            $updatedDomainArticle = DB::transaction(function () use ($domainArticle, $dto, $user) {
+            /** @var array{0: DomainArticle, 1: int|null} $outcome */
+            $outcome = DB::transaction(function () use ($domainArticle, $dto, $authenticatedUser, $shouldReprocess): array {
                 $updatedDomainArticle = $this->applyUpdates($domainArticle, $dto);
 
                 $this->articleRepository->update($updatedDomainArticle);
@@ -228,7 +234,7 @@ class ArticleService implements ArticleServiceInterface
                         $domainArticle->getIdValue(),
                         ObjectTemplateType::ARTICLE,
                         $dto->hashtags,
-                        $user->id
+                        $authenticatedUser->id->value(),
                     );
 
                     if ($hashtagResult->isFailure()) {
@@ -236,20 +242,41 @@ class ArticleService implements ArticleServiceInterface
                     }
                 }
 
-                return $updatedDomainArticle;
+                $contentVersion = null;
+
+                if ($shouldReprocess) {
+                    $contentVersion = $this->articleRepository->bumpContentVersion($domainArticle->getIdValue());
+
+                    $this->processingStates->startOrReset(
+                        ProcessingEntityType::Article,
+                        $updatedDomainArticle->getUid(),
+                        ProcessingTaskType::ArticleContentProcessing,
+                        $contentVersion,
+                    );
+                }
+
+                return [$updatedDomainArticle, $contentVersion];
             });
 
-            if ($shouldReprocessContent) {
-                ProcessArticleKanjisJob::dispatch(
-                    $updatedDomainArticle->getUid()->value(),
-                    $dto->content_jp
-                );
+            [$updatedDomainArticle, $contentVersion] = $outcome;
+
+            if ($contentVersion !== null) {
+                ProcessArticleContentJob::dispatch($updatedDomainArticle->getUid()->value(), $contentVersion);
             }
 
-            return Result::success($updatedDomainArticle);
+            return Result::success(
+                new ArticleUpdateResultDTO(
+                    article: $updatedDomainArticle,
+                    hashtags: $this->hashtagService->getHashtags(
+                        $updatedDomainArticle->getIdValue(),
+                        ObjectTemplateType::ARTICLE
+                    ),
+                    processingState: $this->processingStateReader->currentState($updatedDomainArticle->getUid()->value()),
+                )
+            );
         } catch (\Exception $e) {
             Log::error('Article update failed', [
-                'user_id' => $user->id,
+                'user_id' => $authenticatedUser->id->value(),
                 'article_uuid' => $articleUid->value(),
                 'error' => $e->getMessage(),
             ]);
@@ -295,7 +322,7 @@ class ArticleService implements ArticleServiceInterface
                 ? ($dto->publicity ? PublicityStatus::PUBLIC : PublicityStatus::PRIVATE)
                 : $article->getPublicity(),
             $article->getStatus(),
-            $article->getJlptLevels(), // TODO: Recalculate if content changed
+            $article->getJlptLevels(), // Recomputed by ProcessArticleContentJob when content changes
             $article->getCreatedAt(),
             now()->toDateTimeImmutable(), // Always update timestamp
         );
@@ -305,32 +332,24 @@ class ArticleService implements ArticleServiceInterface
      * Delete article with full cleanup of relationships and engagement data.
      *
      * @param EntityId $articleUuid Article UUID
-     * @param User $user User requesting deletion
      *
      * @return Result Success data: null, Failure data: ResultError
      */
-    public function deleteArticle(EntityId $articleUuid, User $user): Result
+    public function deleteArticle(EntityId $articleUuid, AuthenticatedUser $authenticatedUser): Result
     {
         try {
-            DB::transaction(function () use ($articleUuid, $user) {
+            DB::transaction(function () use ($articleUuid, $authenticatedUser) {
                 $article = $this->articleRepository->findByPublicUid($articleUuid);
 
                 if (! $article) {
                     throw new ArticleNotFoundException($articleUuid->value());
                 }
 
-                if (! $this->articlePolicy->canDelete($user, $article)) {
+                if (! $this->articlePolicy->canDelete($authenticatedUser, $article)) {
                     throw new ArticleAccessDeniedException($articleUuid->value());
                 }
 
-                // Delete relationships and engagement data
-                $this->articleRepository->deleteById($article->getIdValue());
-                $this->viewRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->downloadRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->likeRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->commentRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->hashtagRepository->deleteByEntity($article->getIdValue(), ObjectTemplateType::ARTICLE->getLegacyId());
-                $this->cleanupCustomLists->execute($article->getIdValue());
+                $this->deleteArticle->execute($article->getIdValue());
             });
 
             return Result::success();
@@ -346,45 +365,5 @@ class ArticleService implements ArticleServiceInterface
 
             return Result::failure(ArticleErrors::deletionFailed());
         }
-    }
-
-    /**
-     * Get paginated kanjis for article.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator
-     */
-    public function getArticleKanjis(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
-    {
-        $pagination = new Pagination($page, $perPage);
-        $article = PersistenceArticle::findOrFail($articleId);
-
-        return $article->kanjis()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
-    }
-
-    /**
-     * Get paginated words for article.
-     *
-     * @param int $articleId Article ID
-     * @param int|null $page Page number
-     * @param int|null $perPage Items per page
-     *
-     * @return LengthAwarePaginator Eloquent paginator
-     */
-    public function getArticleWords(int $articleId, ?int $page = null, ?int $perPage = null): LengthAwarePaginator
-    {
-        $pagination = new Pagination($page, $perPage);
-        $article = PersistenceArticle::findOrFail($articleId);
-
-        return $article->words()->paginate(
-            perPage: $pagination->per_page,
-            page: $pagination->page
-        );
     }
 }

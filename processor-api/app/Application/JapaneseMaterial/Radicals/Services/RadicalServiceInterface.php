@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\JapaneseMaterial\Radicals\Services;
+
+use App\Domain\JapaneseMaterial\Radicals\Queries\RadicalQueryCriteria;
+use App\Shared\Results\Result;
+
+interface RadicalServiceInterface
+{
+    public function find(RadicalQueryCriteria $criteria): Result;
+
+    /**
+     * The total find() reports for the same criteria, without loading a page.
+     *
+     * @return Result<int>
+     */
+    public function count(RadicalQueryCriteria $criteria): Result;
+
+    public function findByIdentifier(string $identifier, bool $withKanjis = false): Result;
+}

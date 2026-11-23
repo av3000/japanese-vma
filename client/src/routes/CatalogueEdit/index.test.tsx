@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { catalogueResolveLegacyId, useCatalogueShow } from '@/api/generated/catalogue/catalogue';
 import CatalogueEditPage from './index';
-import { useCatalogueShow } from '@/api/generated/catalogue/catalogue';
-import { resolveLegacyCatalogueIdentity } from '@/api/catalogues/legacyCatalogues';
 
 const useParamsMock = vi.fn();
 const useNavigateMock = vi.fn();
@@ -32,45 +32,110 @@ vi.mock('@/api/generated/catalogue/catalogue', async () => {
 	return {
 		...actual,
 		useCatalogueShow: vi.fn(),
+		catalogueResolveLegacyId: vi.fn(),
 	};
 });
 
-vi.mock('@/api/catalogues/legacyCatalogues', async () => {
-	const actual = await vi.importActual<typeof import('@/api/catalogues/legacyCatalogues')>(
-		'@/api/catalogues/legacyCatalogues',
-	);
-	return {
-		...actual,
-		resolveLegacyCatalogueIdentity: vi.fn(),
-	};
-});
+const OWNER_ID = 7;
+let currentUser: { id: number } | null = { id: OWNER_ID };
+
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: currentUser, isAuthenticated: Boolean(currentUser) }) }));
+
+const formProps: Array<Record<string, unknown>> = [];
 
 vi.mock('@/components/features/catalogues/CatalogueForm', () => ({
-	CatalogueForm: () => <div>Catalogue form</div>,
+	CatalogueForm: (props: Record<string, unknown>) => {
+		formProps.push(props);
+		return <div>Catalogue form</div>;
+	},
 }));
 
-describe('CatalogueEditPage', () => {
-	it('loads canonical UUID edit routes directly without legacy identity resolution', () => {
-		useParamsMock.mockReturnValue({ catalogueId: 'd453be67-1519-43e2-94ab-af85b79aeb31' });
-		vi.mocked(useCatalogueShow).mockReturnValue({
-			data: {
-				catalogue: {
-					title: 'My catalogue',
-					type: 5,
-					publicity: 1,
-					hashtags: [],
-				},
-			},
-			isPending: false,
-			isError: false,
-		} as never);
+const UUID = 'd453be67-1519-43e2-94ab-af85b79aeb31';
 
-		const html = renderToStaticMarkup(<CatalogueEditPage />);
+const render = () =>
+	renderToStaticMarkup(
+		<MemoryRouter>
+			<CatalogueEditPage />
+		</MemoryRouter>,
+	);
+
+const showCatalogue = (overrides: Record<string, unknown> = {}) =>
+	vi.mocked(useCatalogueShow).mockReturnValue({
+		data: {
+			uuid: UUID,
+			title: 'My catalogue',
+			type: 5,
+			publicity: 1,
+			hashtags: [],
+			items_count: 0,
+			owner: { id: OWNER_ID, uuid: 'owner-uuid', name: 'Aki Tanaka' },
+			...overrides,
+		},
+		isPending: false,
+		isError: false,
+	} as never);
+
+describe('CatalogueEditPage', () => {
+	beforeEach(() => {
+		formProps.length = 0;
+		currentUser = { id: OWNER_ID };
+		useParamsMock.mockReturnValue({ catalogueId: UUID });
+	});
+
+	it('loads canonical UUID edit routes directly without legacy identity resolution', () => {
+		showCatalogue();
+
+		const html = render();
 
 		expect(html).toContain('Catalogue form');
-		expect(useCatalogueShow).toHaveBeenCalledWith('d453be67-1519-43e2-94ab-af85b79aeb31', {
+		expect(useCatalogueShow).toHaveBeenCalledWith(UUID, {
 			query: { enabled: true },
 		});
-		expect(resolveLegacyCatalogueIdentity).not.toHaveBeenCalled();
+		expect(catalogueResolveLegacyId).not.toHaveBeenCalled();
+	});
+
+	it('renders one h1 with links back to the catalogue and leaves the type open while it is empty', () => {
+		showCatalogue();
+
+		const html = render();
+
+		expect(html.match(/<h1[ >]/g)).toHaveLength(1);
+		expect(html).toMatch(/<h1[^>]*>Edit catalogue<\/h1>/);
+		expect(html).toContain(`href="/catalogues/${UUID}"`);
+		expect(formProps.at(-1)).toMatchObject({ isTypeLocked: false, requireChanges: true });
+	});
+
+	it('locks the type once the catalogue has items', () => {
+		showCatalogue({ items_count: 3 });
+
+		render();
+
+		expect(formProps.at(-1)).toMatchObject({ isTypeLocked: true });
+	});
+
+	it('shows a plain message inside the page when the catalogue cannot be loaded', () => {
+		vi.mocked(useCatalogueShow).mockReturnValue({ data: undefined, isPending: false, isError: true } as never);
+
+		const html = render();
+
+		expect(html).toContain('role="alert"');
+		expect(html).toContain('This catalogue could not be loaded.');
+		expect(html).toContain('href="/catalogues"');
+		expect(formProps).toHaveLength(0);
+	});
+
+	it.each([
+		['another member', { id: OWNER_ID + 1 }],
+		['a guest', null],
+	])('refuses %s instead of showing the form', (_viewer, viewer) => {
+		currentUser = viewer;
+		showCatalogue();
+
+		const html = render();
+
+		expect(html).toContain('role="alert"');
+		expect(html).toContain('You do not have permission to edit this catalogue.');
+		expect(html).toContain(`href="/catalogues/${UUID}"`);
+		expect(formProps).toHaveLength(0);
 	});
 });

@@ -9,11 +9,10 @@
 - TypeScript
 - React Router 6
 - TanStack React Query 5
-- Redux Toolkit
 - Axios
-- Bootstrap and React Bootstrap
-- Storybook 8
-- Vitest
+- CSS Modules with design tokens in `src/styles` (see Styling)
+- Storybook 10 (with the Vitest and a11y addons)
+- Vitest 5 (`unit` project, plus a `storybook` browser project)
 - Sentry
 
 ## Frontend Architecture
@@ -24,14 +23,13 @@ The frontend is organized around routes, shared UI, and API-facing modules.
 - `src/components/` contains reusable UI and feature components.
 - `src/api/` and `src/services/` contain HTTP access and query/mutation hooks.
 - `src/providers/` contains app-wide providers such as auth and websocket context.
-- `src/store/` contains Redux Toolkit slices for the parts of the app that still use Redux-managed client state.
 - `src/storybook/` and component `*.stories.*` files support UI development and documentation.
 
 Current state matters here:
 
 - React Query is the main server-state pattern.
-- Redux is still present and actively used in parts of the app.
-- The app root wires together `QueryClientProvider`, `ReduxProvider`, router, auth, websocket, and Sentry boundaries.
+- There is no global client-state store; client state lives in components, contexts and the URL.
+- The app root wires together `QueryClientProvider`, router, auth, websocket, and Sentry boundaries.
 
 ## Local Setup
 
@@ -85,6 +83,22 @@ npm run storybook
 npm run build-storybook
 ```
 
+## Storybook
+
+Run Storybook natively, not through the Docker `storybook` service: on Windows the bind mount makes the container much slower.
+
+```bash
+cd client
+npx playwright install chromium   # once, for the story tests
+npm run storybook                 # http://localhost:6006
+npm run test:storybook            # every story and play function in headless Chromium, with a11y checks
+npm run build-storybook
+```
+
+`npm test` runs only the `unit` project and never opens a browser; `npm run test:all` runs both projects.
+
+Story conventions (titles, the `auth`/`socket`/`router`/`seeds` parameters, play functions) are in Storybook under **Docs/Authoring** (`src/storybook/docs/Authoring.mdx`).
+
 ## Generate API Client
 
 ```bash
@@ -101,6 +115,17 @@ If you are new to the frontend, these files are the best starting points:
 - `src/services/axios.ts` for shared HTTP configuration
 - `src/store/store.jsx` for remaining Redux-managed state
 
+## Styling
+
+Styling is browser-native CSS: design tokens as custom properties in `src/styles/00-settings`, global element styles in `src/styles`, and one CSS Module per component. Radix powers non-modal primitives such as popovers; `<dialog>` powers modals via `src/components/shared/DialogModal`.
+
+Rules:
+
+- No Bootstrap, Tailwind, or other utility-class frameworks. Layout belongs in CSS Modules or the shared layout primitives, not in `className` strings.
+- `npm run style:audit` reports remaining Bootstrap/Tailwind class tokens and Sass files; `npm run style:audit -- --check` fails when usage exceeds `style-budget.json`. Lower the budget as you migrate files, never raise it.
+- ESLint blocks imports of the retired `react-bootstrap`, `react-router-bootstrap`, `bootstrap`, `tailwindcss`, `tailwind-merge`, `class-variance-authority`, and `tw-animate-css` packages.
+- Supported browsers are set by `build.target` in `vite.config.ts` (Baseline "widely available"). The `browserslist` block in `package.json` is not used by Vite.
+
 ## CI And Delivery
 
 Frontend verification and deployment are defined in the repository root workflow at `.github/workflows/frontend-ci.yml`.
@@ -110,7 +135,7 @@ That workflow currently:
 - uses Node 24 from `client/.nvmrc`
 - installs dependencies with `npm ci`
 - regenerates the Orval client from tracked `processor-api/api.json`
-- runs `npm run typecheck`
+- runs `npm run typecheck`, `npm run test:unit` and `npm run style:audit -- --check`
 - runs a production build with the required `VITE_*` variables
 - smoke-tests the production image
 - publishes the frontend image

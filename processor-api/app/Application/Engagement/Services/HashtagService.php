@@ -5,22 +5,26 @@ namespace App\Application\Engagement\Services;
 use App\Application\Engagement\Interfaces\Repositories\HashtagRepositoryInterface;
 use App\Domain\Engagement\DTOs\HashtagFilterDTO;
 use App\Domain\Engagement\Errors\HashtagErrors;
+use App\Domain\Engagement\ValueObjects\HashtagName;
 use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Shared\Results\Result;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Laravel\Reverb\Loggers\Log;
 
 class HashtagService implements HashtagServiceInterface
 {
     public function __construct(
         private HashtagRepositoryInterface $hashtagRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Get all hashtags for a specific entity.
      *
      * @param int $entityId The entity ID (article, list, etc.)
      * @param ObjectTemplateType $entityType The type of entity
+     *
      * @return array<object> Array of hashtag objects with properties: id, content, created_at, updated_at
      */
     public function getHashtags(int $entityId, ObjectTemplateType $entityType): array
@@ -39,7 +43,9 @@ class HashtagService implements HashtagServiceInterface
      *
      * @param array<int> $entityIds Array of entity IDs
      * @param ObjectTemplateType $entityType The type of entities
+     *
      * @return array<int, array<object>> Associative array keyed by entity_id, values are arrays of hashtag objects
+     *
      * @example [123 => [{id: 1, content: '#php'}, {id: 2, content: '#laravel'}], 456 => [{id: 3, content: '#vue'}]]
      */
     public function getBatchHashtags(array $entityIds, ObjectTemplateType $entityType): array
@@ -58,6 +64,7 @@ class HashtagService implements HashtagServiceInterface
      * @param ObjectTemplateType $entityType The type of entity
      * @param array<string> $tags Array of hashtag strings (e.g., ['#php', '#laravel'])
      * @param int $userId The user creating the hashtags
+     *
      * @return Result Success data: null (void operation), Failure data: ResultError (HashtagErrors::invalidTag or HashtagErrors::creationFailed)
      */
     public function createTagsForEntity(
@@ -67,7 +74,7 @@ class HashtagService implements HashtagServiceInterface
         int $userId
     ): Result {
         foreach ($tags as $tag) {
-            if (!$this->isValidTag($tag)) {
+            if (! $this->isValidTag($tag)) {
                 return Result::failure(HashtagErrors::invalidTag($tag));
             }
         }
@@ -79,7 +86,7 @@ class HashtagService implements HashtagServiceInterface
                         'entity_id' => $entityId,
                         'entity_type_id' => $entityType->getLegacyId(),
                         'content' => $tag,
-                        'user_id' => $userId
+                        'user_id' => $userId,
                     ]);
                 }
             });
@@ -111,7 +118,7 @@ class HashtagService implements HashtagServiceInterface
         int $userId
     ): Result {
         foreach ($tags as $tag) {
-            if (!$this->isValidTag($tag)) {
+            if (! $this->isValidTag($tag)) {
                 return Result::failure(HashtagErrors::invalidTag($tag));
             }
         }
@@ -128,7 +135,7 @@ class HashtagService implements HashtagServiceInterface
                         'entity_id' => $entityId,
                         'entity_type_id' => $entityType->getLegacyId(),
                         'content' => $tag,
-                        'user_id' => $userId
+                        'user_id' => $userId,
                     ]);
                 }
             });
@@ -156,6 +163,7 @@ class HashtagService implements HashtagServiceInterface
      * - Must not be empty after sanitization
      *
      * @param string $tag The hashtag to validate (with or without # prefix)
+     *
      * @return bool True if valid, false otherwise
      */
     private function isValidTag(string $tag): bool
@@ -171,7 +179,13 @@ class HashtagService implements HashtagServiceInterface
             }
         }
 
-        // Must have content after cleaning
-        return !empty(trim($cleaned));
+        // Must have content after cleaning, and be a valid name (not empty, not over the length).
+        try {
+            HashtagName::from($cleaned);
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+
+        return true;
     }
 }

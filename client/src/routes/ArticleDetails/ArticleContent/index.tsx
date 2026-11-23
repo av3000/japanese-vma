@@ -1,303 +1,274 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import classNames from 'classnames';
-import { setArticleStatus } from '@/api/articles/articles';
+import React, { useId, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MappedArticle, useLikeArticleMutation } from '@/api/articles/details';
 import { useArticleSubscription } from '@/api/articles/hooks/useArticleSubscription';
-import {
-	applyCatalogueForItemAction,
-	type CatalogueForItem,
-	fetchCataloguesForItem,
-	type CatalogueForItemAction,
-} from '@/api/catalogues/cataloguesForItem';
-import { articleDestroy } from '@/api/generated/article/article';
-import { catalogueAddItem, catalogueRemoveItem } from '@/api/generated/catalogue/catalogue';
-import { LastOperationStatus } from '@/api/generated/model/lastOperationStatus';
-import AvatarImg from '@/assets/images/avatar-woman.svg';
-import DefaultArticleImg from '@/assets/images/magic-mary-B5u4r8qGj88-unsplash.jpg';
+import { useDeleteArticleMutation } from '@/api/articles/hooks/useDeleteArticleMutation';
+import { useArticleStatusMutation } from '@/api/articles/moderation';
+import { isProcessingRunning, useArticleReadingStats } from '@/api/articles/readingStats';
+import { articleExportKanjisPdf, articleExportWordsPdf } from '@/api/generated/article/article';
+import type { ArticleStatus as ArticleStatusValue } from '@/api/generated/model/articleStatus';
+import { ProcessingStatus } from '@/api/generated/model/processingStatus';
 import { DeleteInstanceModal } from '@/components/features/DeleteInstanceModal';
 import ProcessingStatusAlert from '@/components/features/ProcessingStatusAlert';
+import { ArticleAttachments } from '@/components/features/articles/ArticleAttachments';
+import { ArticleBody, ArticleTitle } from '@/components/features/articles/ArticleBody';
 import { ArticlePdfModal } from '@/components/features/articles/ArticlePdfModal';
 import { ArticleReviewModal } from '@/components/features/articles/ArticleReviewModal';
-import { CatalogueBookmarkModal } from '@/components/features/catalogues/CatalogueBookmarkModal';
+import { AuthorizedBookmarkWidget } from '@/components/features/catalogues/AuthorizedBookmarkWidget';
 import CommentsBlock from '@/components/features/comment/CommentsBlock';
 import { Button } from '@/components/shared/Button';
+import { Byline } from '@/components/shared/Byline';
 import { Chip } from '@/components/shared/Chip';
+import { DetailActionGroup, DetailActions } from '@/components/shared/DetailActions';
+import { characterCount, DetailFacts, type DetailFact } from '@/components/shared/DetailFacts';
+import { DetailLayout } from '@/components/shared/DetailLayout';
 import { Icon } from '@/components/shared/Icon';
-import ArticleStatus from '@/components/ui/article-status';
-import { Badge } from '@/components/ui/badge';
+import { JlptBar } from '@/components/shared/JlptBar';
+import { LikeIcon } from '@/components/shared/LikeIcon';
+import { Link } from '@/components/shared/Link';
+import { articleStatusPill, StatusPill } from '@/components/shared/StatusPill';
+import { VisibilityCue } from '@/components/shared/VisibilityCue';
+import { Cluster } from '@/components/shared/layout';
+import { downloadFile, toDownloadFileName } from '@/helpers/downloadFile';
+import { isValidHttpUrl } from '@/helpers/isValidHttpUrl';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
-import { apiCall } from '@/services/api';
-import { BASE_URL } from '@/shared/constants';
-import { ObjectTemplateType } from '@/shared/constants/enums';
-import { HttpMethod } from '@/shared/types';
-import ArticleEditModal from '../ArticleEditModal';
-import styles from './ArticleContent.module.scss';
+import { SavedListType } from '@/shared/constants/enums';
+import styles from './ArticleContent.module.css';
 
 interface ArticleContentProps {
 	article: MappedArticle;
 }
 
+/** Where the Edit action goes: the edit page, like every other edit surface. */
+export const articleEditHref = (articleUuid: string) => `/articles/${articleUuid}/edit`;
+
+/** The hostname of a source link, or `null` when it is not a usable http(s) URL. */
+const sourceHostOf = (link: string | null | undefined): string | null =>
+	link && isValidHttpUrl(link) ? new URL(link).hostname.replace(/^www\./, '') : null;
+
 const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 	const navigate = useNavigate();
-	const [searchParams, setSearchParams] = useSearchParams();
-	const queryClient = useQueryClient();
 	const { user: currentUser, isAuthenticated } = useAuth();
+	const tagsHeadingId = useId();
+	const commentsHeadingId = useId();
 
-	const [tempStatus, setTempStatus] = useState<number>(article.status);
-	const [loadingListIds, setLoadingListIds] = useState<number[]>([]);
-	const bookmarkDialogRef = useRef<HTMLDialogElement | null>(null);
+	const [tempStatus, setTempStatus] = useState<ArticleStatusValue>(article.status as ArticleStatusValue);
+	const [pdfPendingType, setPdfPendingType] = useState<'kanji' | 'words' | null>(null);
+	const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 	const reviewDialogRef = useRef<HTMLDialogElement | null>(null);
 	const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
 	const pdfDialogRef = useRef<HTMLDialogElement | null>(null);
-	const editDialogRef = useRef<HTMLDialogElement | null>(null);
 
-	const bookmarkModal = useModal(bookmarkDialogRef, { id: 'article-bookmark-modal' });
 	const reviewModal = useModal(reviewDialogRef, { id: 'article-review-modal' });
 	const deleteModal = useModal(deleteDialogRef, { id: 'article-delete-modal' });
 	const pdfModal = useModal(pdfDialogRef, { id: 'article-pdf-modal' });
 
-	// TODO: this subscription probably should be move up to smart component, but I had issues with conditional renderins and hooks having to be called in the same order???
+	// Live processing updates write into the detail cache this page renders from.
 	useArticleSubscription(article.uuid);
 
-	const { data: userLists = [] } = useQuery({
-		queryKey: ['article-bookmarks', article.id],
-		queryFn: () => fetchCataloguesForItem(article.id),
-		enabled: isAuthenticated,
-	});
-
-	// TODO: how should this backend call passed onto - directly here or come from parent smart component?
 	const likeMutation = useLikeArticleMutation(article.uuid);
+	const readingStats = useArticleReadingStats(article);
 
-	// TODO: Should only call queries propagating up to smart component
-	// ex: statusMutation could be called from a dashboard.
-	const statusMutation = useMutation({
-		mutationFn: (status: number) => setArticleStatus(article.id.toString(), status),
-		onSuccess: (res) => {
-			queryClient.setQueryData(['article', article.uuid], (old: any) => ({
-				...old,
-				status: res.data.newStatus,
-			}));
-			reviewModal.close();
-		},
+	const statusMutation = useArticleStatusMutation(article.uuid, {
+		onSuccess: () => reviewModal.close(),
+		// Keep the select in step with the status the server still holds.
+		onError: () => setTempStatus(article.status as ArticleStatusValue),
 	});
 
-	// TODO: move up to queries, and hide API details.
-	const deleteMutation = useMutation({
-		mutationFn: () => articleDestroy(article.uuid),
-		onSuccess: () => navigate('/articles'),
-	});
+	const deleteMutation = useDeleteArticleMutation();
 
-	// TODO: move up to queries and hide API details, only passing in the params.
-	const catalogueMembershipMutation = useMutation<
-		unknown,
-		unknown,
-		{
-			list: CatalogueForItem;
-			action: CatalogueForItemAction;
-		}
-	>({
-		mutationFn: ({ list, action }: { list: CatalogueForItem; action: CatalogueForItemAction }) => {
-			if (action === 'add') {
-				return catalogueAddItem(list.uuid, { item_id: article.id });
-			}
-
-			return catalogueRemoveItem(list.uuid, article.id);
-		},
-		onSuccess: (_, { list, action }) => {
-			queryClient.setQueryData(['article-bookmarks', article.id], (oldLists = userLists) => {
-				return applyCatalogueForItemAction(oldLists as CatalogueForItem[], list.id, action);
-			});
-		},
-	});
-
-	const openEditModal = () => {
-		const next = new URLSearchParams(searchParams);
-		next.set('edit', '1');
-		setSearchParams(next);
-	};
-
-	const closeEditModal = () => {
-		const next = new URLSearchParams(searchParams);
-		next.delete('edit');
-		setSearchParams(next);
-	};
-
-	const editModal = useModal(editDialogRef, { id: 'article-edit-modal', onClose: closeEditModal });
-	const {
-		open: openEditDialog,
-		close: closeEditDialog,
-		isOpen: isEditDialogOpen,
-		isRendered: isEditDialogRendered,
-	} = editModal;
-
-	const handleListAction = async (list: CatalogueForItem, action: CatalogueForItemAction) => {
-		setLoadingListIds((prev) => [...prev, list.id]);
-		try {
-			await catalogueMembershipMutation.mutateAsync({ list, action });
-		} catch (error) {
-			console.error('List action failed', error);
-		} finally {
-			setLoadingListIds((prev) => prev.filter((id) => id !== list.id));
-		}
-	};
-
-	// TODO: Refactor to queries when backend is migrated to V1 endpoint for PDF endpoints.
-	// TODO: Should only call queries propagating up to smart component
 	const handleDownloadPdf = async (type: 'kanji' | 'words') => {
 		if (!isAuthenticated) return navigate('/login');
+
+		setPdfPendingType(type);
+		setPdfErrorMessage(null);
+
 		try {
-			const pdfType = type === 'kanji' ? 'kanjis-pdf' : 'words-pdf';
-			const url = `${BASE_URL}/api/article/${article.id}/${pdfType}`;
-			const res: any = await apiCall({ method: HttpMethod.GET, path: url, config: { responseType: 'blob' } });
+			const res =
+				type === 'kanji'
+					? await articleExportKanjisPdf(article.uuid, { responseType: 'blob' })
+					: await articleExportWordsPdf(article.uuid, { responseType: 'blob' });
 			const file = new Blob([res], { type: 'application/pdf' });
-			window.open(URL.createObjectURL(file));
+
+			downloadFile(toDownloadFileName(article.title_jp, `article-${type}`, 'pdf'), file);
 		} catch (error) {
 			console.error('PDF Download failed', error);
+			setPdfErrorMessage('The PDF could not be generated. Please try again.');
+		} finally {
+			setPdfPendingType(null);
 		}
 	};
 
-	const isBookmarked = userLists.some((list) => list.contains_item);
-	const isLiked = article.engagement?.is_liked_by_viewer;
+	const isLiked = article.engagement?.is_liked_by_viewer ?? false;
+	const likesCount = Number(article.engagement?.likes_count ?? 0);
 	const isOwner = currentUser?.id === article.author.id;
-	const isAdmin = currentUser?.isAdmin;
-	const isEditOpen = isOwner && searchParams.get('edit') === '1';
+	const isAdmin = Boolean(currentUser?.isAdmin);
+	const isProcessing = isProcessingRunning(article);
+	const sourceHost = sourceHostOf(article.source_link);
 
-	useEffect(() => {
-		if (isEditOpen) {
-			if (!isEditDialogOpen) openEditDialog();
+	const handleLikeClick = () => {
+		// The endpoint answers an anonymous caller with a 401, so the login redirect happens here
+		// rather than as error handling after a pointless request.
+		if (!isAuthenticated) {
+			navigate('/login');
 			return;
 		}
 
-		if (isEditDialogOpen || isEditDialogRendered) {
-			closeEditDialog();
-		}
-	}, [isEditOpen, isEditDialogOpen, isEditDialogRendered, openEditDialog, closeEditDialog]);
+		likeMutation.mutate(article.id);
+	};
+
+	// "Words" is left out, not shown as a guess, when its list could not be read.
+	const facts: DetailFact[] = [
+		{ term: 'Kanji', value: readingStats.kanji },
+		...(readingStats.words === undefined ? [] : [{ term: 'Words', value: readingStats.words }]),
+		{ term: 'Characters', value: characterCount(article.content_jp) },
+	];
 
 	return (
-		<div className="container pb-5">
-			<div className="row justify-content-center">
-				<div className="col-lg-8">
-					<span className="row mt-4">
-						<Link to="/articles" className="tag-link">
-							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Back to Articles
+		<>
+			<DetailLayout
+				railLabel="About this article"
+				header={
+					<div className={styles.header}>
+						<Link to="/articles" className={styles.back}>
+							<Icon name="arrowDownSolid" rotate="90" size="sm" /> Articles
 						</Link>
-					</span>
-
-					<ProcessingStatusAlert processing_status={article.processing_status} />
-
-					<h1 className="mt-4">{article.title_jp}</h1>
-
-					<div className="row text-muted w-100 mb-3 justify-content-between align-items-center">
-						<div className="col">
-							Posted on {article.formattedDate} <br />
-							<span>{article.engagement?.views_count || 0} views | </span>
-							{(isOwner || isAdmin) && (
-								<Badge variant="secondary" className="mr-2">
-									{article.publicity === 1 ? 'Public' : 'Private'}
-								</Badge>
-							)}
-							{(isOwner || isAdmin) && <ArticleStatus status={article.status} />}
-						</div>
-
-						<div className="d-flex align-items-center">
-							{isAdmin && (
+						<ArticleTitle titleJp={article.title_jp} titleEn={article.title_en} />
+						<Byline
+							name={article.author?.name}
+							date={article.created_at}
+							views={Number(article.engagement?.views_count ?? 0)}
+						/>
+						{isOwner || isAdmin ? (
+							<Cluster gap="xs" className={styles.ownerCues}>
+								<VisibilityCue publicity={article.publicity} />
+								<StatusPill {...articleStatusPill(article.status)} />
+							</Cluster>
+						) : null}
+					</div>
+				}
+				main={
+					<div className={styles.main}>
+						<ProcessingStatusAlert processing_status={article.processing_status} isOwner={isOwner} />
+						<ArticleBody contentJp={article.content_jp} contentEn={article.content_en} />
+					</div>
+				}
+				facts={
+					<DetailFacts title="In this reading" facts={facts}>
+						{readingStats.kanji ? <JlptBar levels={article.jlpt_levels} /> : null}
+					</DetailFacts>
+				}
+				actions={
+					<DetailActions>
+						<Button
+							variant="outline"
+							isFullWidth
+							aria-pressed={isLiked}
+							disabled={likeMutation.isTogglingInstance(article.id)}
+							onClick={handleLikeClick}
+						>
+							<LikeIcon liked={isLiked} />
+							{`Like · ${likesCount}`}
+						</Button>
+						{isAuthenticated && (
+							<AuthorizedBookmarkWidget
+								instanceObjectType={SavedListType.ARTICLES}
+								entityId={article.id}
+								modalTitle="Choose Articles List to add"
+								label="Save to a catalogue"
+								savedLabel="Saved to a catalogue"
+							/>
+						)}
+						<Button
+							variant="outline"
+							isFullWidth
+							aria-controls={pdfModal.id}
+							aria-expanded={pdfModal.isOpen}
+							onClick={pdfModal.open}
+						>
+							<Icon size="sm" name="filePdfSolid" />
+							Kanji &amp; words PDF
+						</Button>
+						{isOwner && (
+							<DetailActionGroup heading="Your article">
+								<Button variant="outline" isFullWidth to={articleEditHref(article.uuid)}>
+									<Icon size="sm" name="penSolid" />
+									Edit
+								</Button>
 								<Button
-									onClick={reviewModal.open}
-									variant="ghost"
-									size="md"
+									variant="outline"
+									isFullWidth
+									aria-controls={deleteModal.id}
+									aria-expanded={deleteModal.isOpen}
+									onClick={deleteModal.open}
+								>
+									<Icon size="sm" name="trashbinSolid" />
+									Delete
+								</Button>
+							</DetailActionGroup>
+						)}
+						{/* Review stays here until moderation moves to the admin panel (#184). */}
+						{isAdmin && (
+							<DetailActionGroup heading="Moderation">
+								<Button
+									variant="outline"
+									isFullWidth
 									aria-controls={reviewModal.id}
 									aria-expanded={reviewModal.isOpen}
+									onClick={reviewModal.open}
 								>
 									Review
 								</Button>
-							)}
-							{isOwner && (
-								<div className="d-flex ml-2">
-									<Button
-										onClick={deleteModal.open}
-										variant="ghost"
-										hasOnlyIcon
-										aria-controls={deleteModal.id}
-										aria-expanded={deleteModal.isOpen}
-									>
-										<Icon name="trashbinSolid" size="md" />
-									</Button>
-									<Button onClick={openEditModal} variant="ghost" hasOnlyIcon>
-										<Icon name="penSolid" size="md" />
-									</Button>
-								</div>
-							)}
+							</DetailActionGroup>
+						)}
+					</DetailActions>
+				}
+				extra={
+					article.hashtags.length > 0 || sourceHost ? (
+						<div className={styles.extra}>
+							{article.hashtags.length > 0 ? (
+								<section aria-labelledby={tagsHeadingId}>
+									<h2 id={tagsHeadingId} className={styles.railHeading}>
+										Tags
+									</h2>
+									<Cluster as="ul" gap="2xs" className={styles.tags}>
+										{article.hashtags.map((tag) => (
+											<li key={tag.id}>
+												<Chip readonly title={tag.content}>
+													{tag.content}
+												</Chip>
+											</li>
+										))}
+									</Cluster>
+								</section>
+							) : null}
+							{sourceHost ? (
+								<p className={styles.source}>
+									Source:{' '}
+									<Link linkUrl={article.source_link} rel="noopener noreferrer">
+										{sourceHost}
+									</Link>
+								</p>
+							) : null}
 						</div>
+					) : null
+				}
+				after={
+					<div className={styles.after}>
+						<ArticleAttachments
+							articleUuid={article.uuid}
+							showSave={isAuthenticated}
+							isProcessing={isProcessing}
+						/>
+						<section aria-labelledby={commentsHeadingId} className={styles.comments}>
+							<h2 id={commentsHeadingId} className={styles.sectionHeading}>
+								Comments
+							</h2>
+							<CommentsBlock parent="article" entityId={article.id} entityUuid={article.uuid} />
+						</section>
 					</div>
-
-					<img className="img-fluid rounded mb-3 w-100" src={DefaultArticleImg} alt="Cover" />
-					<p className={classNames(styles.articleParagraph, 'lead')}>{article.content_jp}</p>
-
-					<section className="mt-2 d-flex align-items-center flex-wrap">
-						{article.hashtags?.map((tag) => (
-							<Chip className="mr-1 mb-1" readonly key={tag.id} title={tag.content}>
-								{tag.content}
-							</Chip>
-						))}
-					</section>
-
-					<hr className="my-4" />
-
-					<div className="d-flex justify-content-between align-items-center">
-						<div className="d-flex align-items-center">
-							<img src={AvatarImg} alt="user" width="40" className="rounded-circle" />
-							<p className="ml-3 mb-0">
-								Created by <strong>{article.displayName}</strong>
-							</p>
-						</div>
-						<div className="d-flex align-items-center">
-							<p className="mb-0 mr-2">{article.engagement?.likes_count}</p>
-							<Button variant="ghost" hasOnlyIcon onClick={() => likeMutation.mutate(article.id)}>
-								<Icon size="md" name={isLiked ? 'thumbsUpSolid' : 'thumbsUpRegular'} />
-							</Button>
-							<Button
-								variant="ghost"
-								hasOnlyIcon
-								aria-controls={bookmarkModal.id}
-								aria-expanded={bookmarkModal.isOpen}
-								onClick={bookmarkModal.open}
-							>
-								<Icon size="md" name={isBookmarked ? 'bookmarkSolid' : 'bookmarkRegular'} />
-							</Button>
-							<Button
-								variant="ghost"
-								hasOnlyIcon
-								aria-controls={pdfModal.id}
-								aria-expanded={pdfModal.isOpen}
-								onClick={pdfModal.open}
-							>
-								<Icon size="md" name="filePdfSolid" />
-							</Button>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div className="row justify-content-center mt-5">
-				<div className="col-lg-8">
-					<CommentsBlock
-						readObjectType="article"
-						readObjectUuid={article.uuid}
-						entityId={article.id}
-						entityType={ObjectTemplateType.ARTICLE}
-						entityUuid={article.uuid}
-					/>
-				</div>
-			</div>
-
-			<CatalogueBookmarkModal
-				controller={bookmarkModal}
-				lists={userLists}
-				loadingListIds={loadingListIds}
-				onListAction={handleListAction}
+				}
 			/>
 
 			<ArticleReviewModal
@@ -311,18 +282,18 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article }) => {
 			<DeleteInstanceModal
 				controller={deleteModal}
 				instanceName={article.title_jp}
-				onDelete={() => deleteMutation.mutate()}
+				onDelete={() => deleteMutation.mutate(article.uuid, { onSuccess: () => navigate('/articles') })}
 				isProcessing={deleteMutation.isPending}
 			/>
 
 			<ArticlePdfModal
 				controller={pdfModal}
 				onDownload={handleDownloadPdf}
-				isDownloadEnabled={article?.processing_status?.status === LastOperationStatus.completed}
+				pendingType={pdfPendingType}
+				errorMessage={pdfErrorMessage}
+				isDownloadEnabled={article?.processing_status?.status === ProcessingStatus.completed}
 			/>
-
-			{editModal.isRendered && <ArticleEditModal article={article} controller={editModal} />}
-		</div>
+		</>
 	);
 };
 export default ArticleContent;

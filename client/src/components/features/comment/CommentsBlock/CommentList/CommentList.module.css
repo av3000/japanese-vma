@@ -1,0 +1,36 @@
+/* The count heading, one level under the page's "Comments" heading; keeps the h5 size at any level. */
+.heading {
+	margin-block: var(--spacing-lg);
+	min-height: auto;
+	font-size: clamp(var(--font-size-heading-6), 5vw, var(--font-size-heading-5));
+	color: var(--color-text-muted);
+}
+
+.items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.empty {
+	text-align: center;
+}
+
+.moreReplies {
+	margin-left: var(--spacing-2xl);
+	padding-block: var(--spacing-xs);
+	list-style: none;
+}
+
+.showMore {
+	display: grid;
+	justify-items: center;
+	gap: var(--spacing-sm);
+	margin-top: var(--spacing-md);
+}
+
+.showing {
+	margin: 0;
+	color: var(--color-text-muted);
+	text-align: center;
+}

@@ -2,22 +2,20 @@
 
 namespace App\Http\v1\Catalogues\Resources;
 
-use App\Domain\Catalogues\Models\Catalogue;
+use App\Domain\Catalogues\DTOs\CataloguePickerItemDTO;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Catalogue $resource
+ * @property CataloguePickerItemDTO $resource
  */
 class CatalogueForItemResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(
-        Catalogue $catalogue,
-        private readonly bool $containsItem
-    ) {
-        parent::__construct($catalogue);
+    public function __construct(CataloguePickerItemDTO $item)
+    {
+        parent::__construct($item);
     }
 
     /**
@@ -33,8 +31,9 @@ class CatalogueForItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var Catalogue $catalogue */
-        $catalogue = $this->resource;
+        /** @var CataloguePickerItemDTO $item */
+        $item = $this->resource;
+        $catalogue = $item->catalogue;
 
         return [
             'id' => $catalogue->getIdValue(),
@@ -43,7 +42,7 @@ class CatalogueForItemResource extends JsonResource
             'type' => $catalogue->getType()->value,
             'type_label' => $catalogue->getTypeLabel(),
             'publicity' => $catalogue->getPublicity()->value,
-            'contains_item' => $this->containsItem,
+            'contains_item' => $item->containsItem,
         ];
     }
 }

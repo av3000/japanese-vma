@@ -1,6 +1,8 @@
-import { useArgs } from '@storybook/preview-api';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useArgs } from 'storybook/preview-api';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from './popover';
+import storyStyles from './stories.module.css';
 
 type PopoverStoryArgs = {
 	open: boolean;
@@ -11,11 +13,10 @@ type PopoverStoryArgs = {
 
 const meta: Meta<PopoverStoryArgs> = {
 	title: 'UI/Popover',
-	tags: ['autodocs'],
 	parameters: {
 		docs: {
-			story: { inline: false },
-			canvas: { height: '500px' }, //TODO: check why doesnt apply for general popover page
+			// The popover renders in a portal, so the docs page shows each story in an iframe; `height` is the iframe's.
+			story: { inline: false, height: '500px' },
 			description: {
 				component: `
 **When to use**
@@ -48,11 +49,7 @@ export default meta;
 type TriggerButtonProps = React.ComponentProps<'button'> & { children: React.ReactNode };
 
 const TriggerButton = ({ children, ...props }: TriggerButtonProps) => (
-	<button
-		type="button"
-		className="inline-flex items-center rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
-		{...props}
-	>
+	<button type="button" className={storyStyles.triggerButton} {...props}>
 		{children}
 	</button>
 );
@@ -65,12 +62,12 @@ export const Interactive: Story = {
 			<PopoverTrigger asChild>
 				<TriggerButton>Open popover</TriggerButton>
 			</PopoverTrigger>
-			<PopoverContent align="start">
+			<PopoverContent aria-label="Popover details" align="start">
 				<PopoverHeader>
 					<PopoverTitle>Popover</PopoverTitle>
 					<PopoverDescription>Small contextual content anchored to a trigger.</PopoverDescription>
 				</PopoverHeader>
-				<div className="text-sm">This is the popover body.</div>
+				<div>This is the popover body.</div>
 			</PopoverContent>
 		</Popover>
 	),
@@ -91,12 +88,12 @@ export const Playground: Story = {
 				<PopoverTrigger asChild>
 					<TriggerButton>Toggle popover</TriggerButton>
 				</PopoverTrigger>
-				<PopoverContent align={align} sideOffset={sideOffset}>
+				<PopoverContent aria-label="Playground popover" align={align} sideOffset={sideOffset}>
 					<PopoverHeader>
 						<PopoverTitle>Playground</PopoverTitle>
 						<PopoverDescription>Use Controls to change props.</PopoverDescription>
 					</PopoverHeader>
-					<div className="text-sm">Click the trigger or toggle the `open` control.</div>
+					<div>Click the trigger or toggle the `open` control.</div>
 				</PopoverContent>
 			</Popover>
 		);
@@ -109,12 +106,12 @@ export const DefaultOpen: Story = {
 			<PopoverTrigger asChild>
 				<TriggerButton>Default open</TriggerButton>
 			</PopoverTrigger>
-			<PopoverContent align="start">
+			<PopoverContent aria-label="Default open popover" align="start">
 				<PopoverHeader>
 					<PopoverTitle>Default open</PopoverTitle>
 					<PopoverDescription>Useful for docs/snapshots.</PopoverDescription>
 				</PopoverHeader>
-				<div className="text-sm">Popover content is visible immediately.</div>
+				<div>Popover content is visible immediately.</div>
 			</PopoverContent>
 		</Popover>
 	),
@@ -126,19 +123,19 @@ export const WithHeader: Story = {
 			<PopoverTrigger asChild>
 				<TriggerButton>With header</TriggerButton>
 			</PopoverTrigger>
-			<PopoverContent align="start">
+			<PopoverContent aria-label="Processing details" align="start">
 				<PopoverHeader>
 					<PopoverTitle>Processing details</PopoverTitle>
 					<PopoverDescription>Times are shown in your local timezone.</PopoverDescription>
 				</PopoverHeader>
-				<div className="d-grid gap-2">
-					<div className="d-flex justify-content-between gap-3">
-						<span className="text-muted-foreground text-sm">Created</span>
-						<span className="text-sm">2026-02-07 20:15</span>
+				<div className={storyStyles.details}>
+					<div className={storyStyles.detailRow}>
+						<span className={storyStyles.muted}>Created</span>
+						<span>2026-02-07 20:15</span>
 					</div>
-					<div className="d-flex justify-content-between gap-3">
-						<span className="text-muted-foreground text-sm">Duration</span>
-						<span className="text-sm">12s</span>
+					<div className={storyStyles.detailRow}>
+						<span className={storyStyles.muted}>Duration</span>
+						<span>12s</span>
 					</div>
 				</div>
 			</PopoverContent>
@@ -148,13 +145,13 @@ export const WithHeader: Story = {
 
 export const Alignments: Story = {
 	render: () => (
-		<div className="d-flex gap-3 flex-wrap align-items-center">
+		<div className={storyStyles.row}>
 			<Popover>
 				<PopoverTrigger asChild>
 					<TriggerButton>Align start</TriggerButton>
 				</PopoverTrigger>
-				<PopoverContent align="start">
-					<div className="text-sm">Aligned start</div>
+				<PopoverContent aria-label="Aligned start" align="start">
+					<div>Aligned start</div>
 				</PopoverContent>
 			</Popover>
 
@@ -162,8 +159,8 @@ export const Alignments: Story = {
 				<PopoverTrigger asChild>
 					<TriggerButton>Align center</TriggerButton>
 				</PopoverTrigger>
-				<PopoverContent align="center">
-					<div className="text-sm">Aligned center</div>
+				<PopoverContent aria-label="Aligned center" align="center">
+					<div>Aligned center</div>
 				</PopoverContent>
 			</Popover>
 
@@ -171,10 +168,52 @@ export const Alignments: Story = {
 				<PopoverTrigger asChild>
 					<TriggerButton>Align end</TriggerButton>
 				</PopoverTrigger>
-				<PopoverContent align="end">
-					<div className="text-sm">Aligned end</div>
+				<PopoverContent aria-label="Aligned end" align="end">
+					<div>Aligned end</div>
 				</PopoverContent>
 			</Popover>
 		</div>
 	),
+};
+
+/** The trigger opens a named dialog; Escape closes it and returns focus; so does a click outside. */
+export const OpensAndDismisses: Story = {
+	render: () => (
+		<div>
+			<Popover>
+				<PopoverTrigger asChild>
+					<TriggerButton>Open popover</TriggerButton>
+				</PopoverTrigger>
+				<PopoverContent aria-label="Popover details" align="start">
+					<PopoverHeader>
+						<PopoverTitle>Popover</PopoverTitle>
+						<PopoverDescription>Small contextual content anchored to a trigger.</PopoverDescription>
+					</PopoverHeader>
+				</PopoverContent>
+			</Popover>
+			<p>Content outside the popover</p>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const trigger = canvas.getByRole('button', { name: 'Open popover' });
+		const queryPopover = () => within(document.body).queryByRole('dialog', { name: 'Popover details' });
+
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+		await userEvent.click(trigger);
+		const popover = await within(document.body).findByRole('dialog', { name: 'Popover details' });
+		await waitFor(() => expect(popover).toBeVisible());
+		await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(queryPopover()).not.toBeInTheDocument());
+		await waitFor(() => expect(trigger).toHaveFocus());
+
+		await userEvent.click(trigger);
+		const reopened = await within(document.body).findByRole('dialog', { name: 'Popover details' });
+		await waitFor(() => expect(reopened).toBeVisible());
+
+		await userEvent.click(canvas.getByText('Content outside the popover'));
+		await waitFor(() => expect(queryPopover()).not.toBeInTheDocument());
+	},
 };

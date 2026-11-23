@@ -2,12 +2,11 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Engagement\DTOs\{LikeCreateDTO, LikeFilterDTO};
 use App\Application\Engagement\Interfaces\Repositories\LikeRepositoryInterface;
+use App\Domain\Engagement\DTOs\LikeCreateDTO;
+use App\Domain\Engagement\DTOs\LikeFilterDTO;
 use App\Domain\Engagement\Models\Like as DomainLike;
-use App\Domain\Shared\Enums\ObjectTemplateType;
 use App\Infrastructure\Persistence\Models\Like as PersistenceLike;
-use App\Infrastructure\Persistence\Repositories\LikeMapper;
 use App\Shared\Utils\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,11 +15,33 @@ class LikeRepository implements LikeRepositoryInterface
 {
     public function __construct(
         private readonly LikeMapper $likeMapper
-    ) {}
+    ) {
+    }
 
     public function create(LikeCreateDTO $data): void
     {
-        PersistenceLike::create($data);
+        PersistenceLike::create($data->toArray());
+    }
+
+    public function createIfAbsent(LikeCreateDTO $data): bool
+    {
+        // insertOrIgnore leans on the likes_user_target_unique index rather than on a
+        // preceding SELECT, so a concurrent duplicate is dropped by the database
+        // instead of raising a QueryException the caller would have to decode.
+        $inserted = PersistenceLike::query()->insertOrIgnore([
+            $data->toArray() + ['created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        return $inserted > 0;
+    }
+
+    public function deleteForUserTarget(int $userId, int $templateId, int $realObjectId): int
+    {
+        return PersistenceLike::query()
+            ->where('user_id', $userId)
+            ->where('template_id', $templateId)
+            ->where('real_object_id', $realObjectId)
+            ->delete();
     }
 
     public function findByFilter(LikeFilterDTO $filter): ?int
@@ -84,9 +105,12 @@ class LikeRepository implements LikeRepositoryInterface
 
     public function userLikedByFilter(LikeFilterDTO $filter): bool
     {
-        $query = $this->buildBaseQuery($filter);
+        if ($filter->userId === null) {
+            return false;
+        }
 
-        return $query->where('user_id', auth('api')->user()->id)
+        return $this->buildBaseQuery($filter)
+            ->where('user_id', $filter->userId)
             ->exists(); // executes SELECT 1 ... LIMIT 1
     }
 }

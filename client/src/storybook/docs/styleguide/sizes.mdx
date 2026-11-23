@@ -1,0 +1,63 @@
+import { Meta, Unstyled } from "@storybook/addon-docs/blocks";
+import { TokenGroup } from "@/storybook/helpers/TokenGroup";
+import "./sharedStyles.css";
+
+<Meta title="Styleguide/Sizes" />
+
+<Unstyled>
+<div className="styleguide">
+  <h1>Sizes</h1>
+  <div className="richTextWrapper">
+    <p>
+      Fixed element sizes, shape and layout measures, from <code>src/styles/00-settings/sizes.css</code>. Use these instead of pixel values. Space between elements is a separate scale, see Spacing.
+    </p>
+    <p>
+      Breakpoints have no tokens because custom properties cannot be used in media queries. Use the literal <code>min-width</code> values the layout primitives use: 768px, 1024px and 1320px, mobile first.
+    </p>
+  </div>
+
+<h2>Border radius</h2>
+<TokenGroup prefix="border-radius" kind="radius" />
+
+<h2>Border width</h2>
+<TokenGroup prefix="border-size" kind="border" />
+
+<h2>Element sizes</h2>
+<p>For fixed widths and heights that are not spacing.</p>
+<TokenGroup prefix="size-" kind="square" />
+
+<h2>Icon sizes</h2>
+<p>
+  The <code>size</code> prop of <code>Icon</code> maps to these: <code>sm</code>, <code>md</code> and <code>lg</code>.
+  See Icons.
+</p>
+<TokenGroup prefix="icon-size" kind="square" />
+
+<h2>Container widths</h2>
+<p>
+  Maximum content widths, reached through the <code>Container</code> <code>size</code> prop.
+</p>
+<TokenGroup prefix="container" kind="bar" scale={0.25} />
+
+<h2>Reading layout</h2>
+<p>The reading column's measure and the rail beside it on detail pages.</p>
+<TokenGroup prefix={["measure", "rail-width"]} kind="bar" scale={0.5} />
+
+<h2>Controls and chrome</h2>
+<p>Buttons and inputs share heights so they align in one row. The outline size is the global focus outline.</p>
+<TokenGroup
+  prefix={[
+    "button-height",
+    "input-height",
+    "button-padding-x",
+    "outline-size",
+    "mobile-header-height",
+    "mobile-footer-height",
+  ]}
+  kind="bar"
+/>
+
+  <h2>Aspect ratios</h2>
+  <TokenGroup prefix="aspect-ratio" kind="aspectRatio" />
+</div>
+</Unstyled>

@@ -1,0 +1,52 @@
+.item {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-md);
+	padding-block: var(--spacing-md);
+	border-bottom: var(--border-size-sm) solid var(--color-border);
+}
+
+.avatar {
+	flex: 0 0 auto;
+	border-radius: 50%;
+}
+
+.body {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Was an h5, which broke the page's heading order; keeps the h5 look. */
+.author {
+	margin: 0;
+	font-size: clamp(var(--font-size-heading-6), 5vw, var(--font-size-heading-5));
+	line-height: var(--line-height-md);
+	font-weight: var(--font-weight-semibold);
+	overflow-wrap: anywhere;
+}
+
+.content {
+	margin: var(--spacing-xs) 0 var(--spacing-md);
+	overflow-wrap: anywhere;
+}
+
+.footer {
+	color: var(--color-text-muted);
+}
+
+.date {
+	margin-left: auto;
+	color: var(--color-text-muted);
+	font-size: var(--font-size-body-sm);
+}
+
+.reply {
+	margin-left: var(--spacing-2xl);
+}
+
+/* sm */
+@media (min-width: 768px) {
+	.reply {
+		margin-left: var(--spacing-3xl);
+	}
+}

@@ -1,0 +1,9 @@
+.control {
+	display: block;
+	width: 100%;
+	height: var(--input-height-md);
+}
+
+.controlShort {
+	width: 7rem;
+}

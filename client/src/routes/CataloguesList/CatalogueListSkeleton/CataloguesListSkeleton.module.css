@@ -1,0 +1,4 @@
+.control {
+	display: block;
+	height: var(--input-height-md);
+}

@@ -1,0 +1,16 @@
+.body {
+	padding: var(--spacing-lg);
+	text-align: center;
+}
+
+.title {
+	margin: 0;
+}
+
+.action {
+	border: var(--border-size-sm) solid var(--color-border);
+}
+
+.actionIcon {
+	margin-left: var(--spacing-xs);
+}

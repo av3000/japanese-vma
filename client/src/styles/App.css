@@ -1,0 +1,12 @@
+/* App shell: header, main, footer, with the footer pushed to the bottom on short pages.
+   Design tokens live in 00-settings; the pre-#154 alias block that used to sit here is gone. */
+.app-wrapper {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+.main-content {
+	flex: 1;
+}

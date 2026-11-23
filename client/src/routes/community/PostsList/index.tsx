@@ -1,249 +1,135 @@
-// @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+	POST_ROUTES,
+	buildPostListSearchParams,
+	parsePostListFilters,
+	useInfinitePosts,
+	type PostListFilterInput,
+	type PostListFilters,
+} from '@/api/posts/reads';
 import Spinner from '@/assets/images/spinner.gif';
-import SearchBar from '@/components/features/SearchBar';
-import PostItem from '@/components/features/community/PostItem';
+import { LibraryEmptyState, LibraryPage } from '@/components/features/LibraryCards/LibraryLayout';
+import PostCard from '@/components/features/community/PostCard';
+import PostFilters from '@/components/features/community/PostFilters';
+import { Alert } from '@/components/shared/Alert';
 import { Button } from '@/components/shared/Button';
-import { Icon } from '@/components/shared/Icon';
-import { apiCall } from '@/services/api';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { PageLoading } from '@/components/shared/PageLoading';
+import { Cluster } from '@/components/shared/layout';
+import { useAuth } from '@/hooks/useAuth';
+import styles from './PostsList.module.css';
 
-export class PostsList extends Component {
-	_isMounted = false;
-	constructor(props) {
-		super(props);
-		this.state = {
-			url: '/api/posts',
-			pagination: [],
-			posts: [],
-			paginateObject: {},
-			searchHeading: '',
-			searchTotal: '',
-			filters: [],
-			isLoading: false,
-		};
-
-		this.loadMore = this.loadMore.bind(this);
-		this.loadSearchMore = this.loadSearchMore.bind(this);
-		this.fetchQuery = this.fetchQuery.bind(this);
-		this.fetchMoreQuery = this.fetchMoreQuery.bind(this);
-		this.clearSearch = this.clearSearch.bind(this);
+/** What the empty list says: a search, other filters, or no posts at all. */
+export const emptyState = (filters: PostListFilters) => {
+	if (filters.keyword) {
+		return { title: 'No posts match', term: filters.keyword, hint: 'Try a shorter search, or clear the filters.' };
 	}
 
-	componentDidMount() {
-		this._isMounted = true;
-		this.fetchPosts(this.state.url);
+	if (filters.hashtag || filters.topic) {
+		return { title: 'No posts match these filters', hint: 'Try another topic or tag, or clear the filters.' };
 	}
 
-	clearSearch() {
-		this.setState({ isLoading: true });
-		return apiCall('get', '/api/posts')
-			.then((res) => {
-				if (this._isMounted) {
-					const newState = Object.assign({}, this.state);
-					newState.paginateObject = res.posts;
-					newState.posts = res.posts.data;
-					newState.url = res.posts.next_page_url;
+	return { title: 'No posts yet', hint: 'Questions, feedback and announcements from the community appear here.' };
+};
 
-					newState.searchHeading = '';
-					newState.searchTotal = "results total: '" + res.posts.total + "'";
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
+/** One muted line under the title: how much is shown, and which search or tag produced it. */
+export const listMeta = (filters: PostListFilters, shown: number, total: number) =>
+	[
+		`Showing ${shown} of ${total}`,
+		filters.keyword && `Results for: ${filters.keyword}`,
+		filters.hashtag && `Tagged #${filters.hashtag}`,
+	]
+		.filter(Boolean)
+		.join(' · ');
 
-	componentWillUnmount() {
-		this._isMounted = false;
-	}
+/**
+ * Community posts as Library Card rows. The URL owns every filter, so refresh, deep links and
+ * back/forward reproduce what is on screen.
+ */
+const PostsList = () => {
+	const { isAuthenticated } = useAuth();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const filters = parsePostListFilters(searchParams);
 
-	fetchPosts(givenUrl) {
-		this.setState({ isLoading: true });
-		return apiCall('get', givenUrl)
-			.then((res) => {
-				if (this._isMounted) {
-					const newState = Object.assign({}, this.state);
-					newState.paginateObject = res.posts;
-					newState.posts = [...newState.posts, ...res.posts.data];
-					newState.url = res.posts.next_page_url;
+	const { posts, total, isPending, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
+		useInfinitePosts({ filters });
 
-					newState.searchTotal = "results total: '" + res.posts.total + "'";
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
+	const handleChange = (next: PostListFilterInput) => setSearchParams(buildPostListSearchParams(next));
+	const handleReset = () => setSearchParams(new URLSearchParams());
 
-	fetchQuery(queryParams) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		newState.filters = queryParams;
-		apiCall('post', '/api/posts/search', newState.filters)
-			.then((res) => {
-				if (res.success === true) {
-					newState.paginateObject = res.posts;
-					newState.posts = res.posts.data ? res.posts.data : newState.posts;
-					newState.url = res.posts.next_page_url;
+	const newPostAction = isAuthenticated ? (
+		<Button to={POST_ROUTES.create} variant="primary">
+			New post
+		</Button>
+	) : undefined;
 
-					newState.searchHeading = res.requestedQuery;
-					newState.searchTotal = "Results total: '" + res.posts.total + "'";
-
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				newState.searchHeading = 'No results for tag: ' + newState.filters.title;
-				newState.isLoading = false;
-				this.setState(newState);
-				console.log(err);
-			});
-	}
-
-	fetchMoreQuery(givenUrl) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		apiCall('post', givenUrl, newState.filters)
-			.then((res) => {
-				newState.paginateObject = res.posts;
-				newState.posts = [...newState.posts, ...res.posts.data];
-				newState.url = res.posts.next_page_url;
-
-				newState.searchHeading = "Requested query: '" + newState.filters.title + "'";
-				newState.searchTotal = "Results total: '" + res.posts.total + "'";
-				newState.isLoading = false;
-				return newState;
-			})
-			.then((newState) => {
-				this.setState((prevState) => ({
-					...prevState,
-					...newState,
-					pagination: this.makePagination(newState.paginateObject),
-					isLoading: false,
-				}));
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	loadMore() {
-		this.fetchPosts(this.state.pagination.next_page_url);
-	}
-
-	loadSearchMore() {
-		this.fetchMoreQuery(this.state.pagination.next_page_url);
-	}
-
-	makePagination(data) {
-		return {
-			current_page: data.current_page,
-			last_page: data.last_page,
-			next_page_url: data.next_page_url,
-			prev_page_url: data.prev_page_url,
-		};
-	}
-
-	render() {
-		const { posts, isLoading } = this.state;
-
-		if (isLoading) {
-			return (
-				<div className="container text-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
-			);
-		}
-
-		const postList = posts.map((w) => {
-			return (
-				<PostItem
-					key={w.id}
-					id={w.id}
-					{...w}
-					date={w.created_at}
-					userId={w.user_id}
-					hashtags={w.hashtags.slice(0, 3)}
-					isLocked={w.locked}
-				/>
-			);
-		});
-
+	// Only the very first load has nothing to show. Filter changes and background refetches keep the
+	// previous page rendered instead of dropping back to this loader.
+	if (isPending && posts.length === 0) {
 		return (
-			<div className="container mt-3">
-				<div className="row justify-content-center">
-					<SearchBar fetchQuery={this.fetchQuery} searchType="posts" />
-				</div>
-				<div className="mt-2">
-					<div className="col-10">
-						{this.state.searchHeading ? (
-							<>
-								<Button variant="ghost" onClick={this.clearSearch}>
-									<Icon name="broomSolid" /> Clear search
-								</Button>
-								<br />
-								<h4>{this.state.searchHeading}</h4>
-							</>
-						) : (
-							''
-						)}
-						&nbsp;
-						{this.state.searchTotal ? <h4>{this.state.searchTotal}</h4> : ''}
-					</div>
-					<div className="my-3 p-3 bg-white rounded box-shadow">
-						<hr />
-						<div className="col-lg-12 col-md-10 mx-auto">{postList}</div>
-					</div>
-				</div>
-				<div className="row justify-content-center">
-					{this.state.pagination.last_page === this.state.pagination.current_page ? (
-						'no more results...'
-					) : this.state.url.includes('search') ? (
-						<Button variant="outline" className="w-50" onClick={this.loadSearchMore}>
+			<LibraryPage>
+				<PageHeader title="Community" action={newPostAction} />
+				<PageLoading family="list" />
+			</LibraryPage>
+		);
+	}
+
+	if (isError && posts.length === 0) {
+		return (
+			<LibraryPage>
+				<PageHeader title="Community" action={newPostAction} />
+				<Alert tone="danger">Posts couldn't be loaded. Please try again.</Alert>
+			</LibraryPage>
+		);
+	}
+
+	const isBackgroundRefreshing = isFetching && !isFetchingNextPage;
+
+	return (
+		<LibraryPage>
+			<PageHeader title="Community" meta={listMeta(filters, posts.length, total)} action={newPostAction} />
+
+			<PostFilters filters={filters} onChange={handleChange} onReset={handleReset} />
+
+			{isBackgroundRefreshing && (
+				<p role="status" className={styles.muted}>
+					Refreshing results…
+				</p>
+			)}
+			{isError ? <Alert tone="danger">More posts couldn't be loaded. Please try again.</Alert> : null}
+
+			{posts.length === 0 ? (
+				<LibraryEmptyState {...emptyState(filters)} />
+			) : (
+				<ul className={styles.list}>
+					{posts.map((post) => (
+						<li key={post.uuid}>
+							<PostCard post={post} />
+						</li>
+					))}
+				</ul>
+			)}
+
+			{/* The empty state already says there is nothing; "No more results" under it is noise. */}
+			{posts.length > 0 && (
+				<Cluster justify="center" className={styles.loadMore}>
+					{isFetchingNextPage ? (
+						<img src={Spinner} alt="Loading more..." className={styles.loadMoreSpinner} />
+					) : hasNextPage ? (
+						<Button
+							variant="secondary-outline"
+							className={styles.loadMoreButton}
+							onClick={() => void fetchNextPage()}
+						>
 							Load More
 						</Button>
 					) : (
-						<Button variant="outline" className="w-50" onClick={this.loadMore}>
-							Load More
-						</Button>
+						<span className={styles.muted}>No more results</span>
 					)}
-				</div>
-			</div>
-		);
-	}
-}
+				</Cluster>
+			)}
+		</LibraryPage>
+	);
+};
 
 export default PostsList;

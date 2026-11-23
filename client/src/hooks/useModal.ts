@@ -137,7 +137,8 @@ export const useModal = (
 		return () => {
 			node.removeEventListener('cancel', handleCancel);
 		};
-	}, [close, closeOnEscape, dialogRef]);
+		// isRendered: callers mount the <dialog> lazily, so re-run once the element exists.
+	}, [close, closeOnEscape, dialogRef, isRendered]);
 
 	useOnClickAway(dialogRef, close, isOpen);
 

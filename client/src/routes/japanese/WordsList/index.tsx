@@ -1,197 +1,78 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-/* eslint-disable */
-import React, { Component } from 'react';
-import Spinner from '@/assets/images/spinner.gif';
-import WordItem from '@/components/features/japanese/word/WordItem';
-import { apiCall } from '@/services/api';
-import { HttpMethod } from '@/shared/types';
-import SearchBarWords from './SearchBarWords';
+import React, { useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
+import type { ViewerCatalogueStateResource } from '@/api/generated/model/viewerCatalogueStateResource';
+import type { WordListResource } from '@/api/generated/model/wordListResource';
+import {
+	WORD_VIEWER_CATALOGUE_INCLUDE,
+	applyWordViewerCatalogueState,
+	getInfiniteWordsQueryKey,
+	useInfiniteWords,
+} from '@/api/words/hooks/useInfiniteWords';
+import type { WordListFilters } from '@/api/words/hooks/useInfiniteWords';
+import {
+	DICTIONARY_PER_PAGE,
+	DictionaryListPage,
+	KeywordFilters,
+	useKeywordSearch,
+} from '@/components/features/japanese/dictionaryList';
+import { WordTable } from '@/components/features/japanese/word/WordTable';
+import { useAuth } from '@/hooks/useAuth';
 
-export class WordList extends Component {
-	constructor() {
-		super();
-		this.state = {
-			url: '/api/words',
-			pagination: [],
-			words: [],
-			paginateObject: {},
-			searchHeading: '',
-			searchTotal: '',
-			filters: [],
-			isLoading: false,
-		};
+const getWordListFilters = (keyword: string): WordListFilters => ({
+	per_page: DICTIONARY_PER_PAGE,
+	include: WORD_VIEWER_CATALOGUE_INCLUDE,
+	...(keyword ? { keyword } : {}),
+});
 
-		this.loadMore = this.loadMore.bind(this);
-		this.loadSearchMore = this.loadSearchMore.bind(this);
-		this.fetchQuery = this.fetchQuery.bind(this);
-		this.fetchMoreQuery = this.fetchMoreQuery.bind(this);
-	}
+const WordsList: React.FC = () => {
+	const queryClient = useQueryClient();
+	const { isAuthenticated } = useAuth();
+	const { keyword, applySearch } = useKeywordSearch();
+	const queryFilters = useMemo(() => getWordListFilters(keyword), [keyword]);
+	const { words, ...query } = useInfiniteWords({ filters: queryFilters });
 
-	componentDidMount() {
-		this.fetchWords(this.state.url);
-	}
+	const handleSearch = useCallback((nextKeyword: string) => applySearch({ keyword: nextKeyword }), [applySearch]);
 
-	fetchWords(givenUrl) {
-		this.setState({ isLoading: true });
-		return apiCall(HttpMethod.GET, givenUrl)
-			.then((res) => {
-				const newState = Object.assign({}, this.state);
-				newState.paginateObject = res.words;
-				newState.words = [...newState.words, ...res.words.data];
-				newState.url = res.words.next_page_url;
-
-				newState.searchTotal = "results total: '" + res.words.total + "'";
-
-				return newState;
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-				this.setState(newState);
-			})
-			.catch((err) => {
-				console.log(err);
-				this.setState({ isLoading: false });
-			});
-	}
-
-	fetchQuery(queryParams) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		newState.filters = queryParams;
-		apiCall('post', '/api/words/search', newState.filters)
-			.then((res) => {
-				if (res.success === true) {
-					newState.paginateObject = res.words;
-					newState.words = res.words.data ? res.words.data : newState.words;
-					newState.url = res.words.next_page_url;
-
-					newState.searchHeading = res.requestedQuery;
-					newState.searchTotal = "Results total: '" + res.words.total + "'";
-					newState.isLoading = false;
-					return newState;
-				}
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-				this.setState(newState);
-			})
-			.catch((err) => {
-				this.setState(newState);
-				console.log(err);
-			});
-	}
-
-	fetchMoreQuery(givenUrl) {
-		this.setState({ isLoading: true });
-		const newState = Object.assign({}, this.state);
-		apiCall('post', givenUrl, newState.filters)
-			.then((res) => {
-				console.log(res);
-
-				newState.paginateObject = res.words;
-				newState.words = [...newState.words, ...res.words.data];
-				newState.url = res.words.next_page_url;
-
-				newState.searchTotal = "Results total: '" + res.words.total + "'";
-				newState.isLoading = false;
-				return newState;
-			})
-			.then((newState) => {
-				newState.pagination = this.makePagination(newState.paginateObject);
-				newState.isLoading = false;
-				this.setState(newState);
-			})
-			.catch((err) => {
-				this.setState({ isLoading: false });
-				console.log(err);
-			});
-	}
-
-	loadMore() {
-		this.fetchWords(this.state.pagination.next_page_url);
-	}
-
-	loadSearchMore() {
-		this.fetchMoreQuery(this.state.pagination.next_page_url);
-	}
-
-	makePagination(data) {
-		return {
-			current_page: data.current_page,
-			last_page: data.last_page,
-			next_page_url: data.next_page_url,
-			prev_page_url: data.prev_page_url,
-		};
-	}
-
-	addToList(id) {
-		console.log('add to list: ' + id);
-	}
-
-	render() {
-		const { words, isLoading } = this.state;
-
-		if (isLoading) {
-			return (
-				<div className="container text-center">
-					<img src={Spinner} alt="Loading..." />
-				</div>
+	// Stable across renders, so the table keeps its columns and untouched rows do not re-render.
+	const handleWordBookmarkStateChange = useCallback(
+		(wordId: number, state: ViewerCatalogueStateResource) => {
+			queryClient.setQueryData<InfiniteData<WordListResource>>(getInfiniteWordsQueryKey(queryFilters), (data) =>
+				applyWordViewerCatalogueState(data, wordId, state),
 			);
-		}
+		},
+		[queryClient, queryFilters],
+	);
 
-		const wordList = words ? (
-			words.map((w) => {
-				// w.meaning = w.meaning.split("|")
-				// w.meaning = w.meaning.slice(0, 3)
-				// w.meaning = w.meaning.join(", ")
+	return (
+		<DictionaryListPage
+			title="Words"
+			noun="words"
+			keyword={keyword}
+			itemCount={words.length}
+			query={query}
+			filters={
+				<KeywordFilters
+					key={keyword}
+					label="Word filters"
+					searchLabel="Search words by keyword"
+					placeholder="Word, reading or meaning"
+					defaultKeyword={keyword}
+					onSearch={handleSearch}
+				/>
+			}
+		>
+			{({ loading, empty }) => (
+				<WordTable
+					words={words}
+					loading={loading}
+					showSave={isAuthenticated}
+					empty={empty}
+					onBookmarkStateChange={handleWordBookmarkStateChange}
+				/>
+			)}
+		</DictionaryListPage>
+	);
+};
 
-				return <WordItem key={w.id} id={w.id} {...w} addToList={this.addToList.bind(this, w.id)} />;
-			})
-		) : (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<img src={Spinner} alt="spinner" />
-				</div>
-			</div>
-		);
-
-		return (
-			<div className="container mt-5">
-				<div className="row justify-content-center">
-					<SearchBarWords fetchQuery={this.fetchQuery} />
-					{/* by tag */}
-					{/* by keyword keyword */}
-					{/* by newest/popular */}
-				</div>
-				<div className="container mt-5">
-					<div className="row justify-content-center">
-						{this.state.searchHeading ? <h4>{this.state.searchHeading}</h4> : ''}
-						&nbsp;
-						{this.state.searchTotal ? <h4>{this.state.searchTotal}</h4> : ''}
-					</div>
-					<div className="row">
-						<div className="col-lg-8 col-md-10 mx-auto">{wordList}</div>
-					</div>
-				</div>
-				<div className="row justify-content-center">
-					{this.state.pagination.last_page === this.state.pagination.current_page ? (
-						'no more results...'
-					) : this.state.url.includes('search') ? (
-						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadSearchMore}>
-							Load More
-						</button>
-					) : (
-						<button className="btn btn-outline-primary brand-button w-50" onClick={this.loadMore}>
-							Load More
-						</button>
-					)}
-				</div>
-			</div>
-		);
-	}
-}
-
-export default WordList;
+export default WordsList;

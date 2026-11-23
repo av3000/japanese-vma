@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -9,6 +8,17 @@ import checker from 'vite-plugin-checker';
 export default defineConfig(({ mode }) => {
 	const isAnalyze = mode === 'analyze';
 	const isProduction = mode === 'production';
+
+	// Docker Desktop on Windows does not deliver filesystem events through the bind mount, so
+	// the container sets CHOKIDAR_USEPOLLING and the watcher has to stat the tree instead. One
+	// sweep of src/ costs ~8s over that mount, and chokidar's 100 ms default asks for it
+	// continuously - the poller then starves the same event loop that serves module transforms,
+	// which turned a cold page load into ~200s of 5-second modules. At 3 s the poller is cheap
+	// enough that cold loads match a non-polling server (11.9s vs 13.1s for 40 modules) and
+	// edits are still picked up within ~3s. Outside Docker this is all skipped: native file
+	// events are instant and free.
+	const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true';
+	const pollInterval = Number(process.env.VITE_POLL_INTERVAL) || 3000;
 
 	const manualChunks = (id: string) => {
 		if (!id.includes('node_modules')) {
@@ -24,13 +34,8 @@ export default defineConfig(({ mode }) => {
 		}
 
 		if (
-			id.includes('/react-bootstrap/') ||
-			id.includes('/bootstrap/') ||
 			id.includes('/@radix-ui/') ||
-			id.includes('/classnames/') ||
-			id.includes('/clsx/') ||
-			id.includes('/class-variance-authority/') ||
-			id.includes('/tailwind-merge/')
+			id.includes('/classnames/')
 		) {
 			return 'ui';
 		}
@@ -50,7 +55,6 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [
-			tailwindcss(),
 			checker({
 				typescript: true,
 				eslint: {
@@ -80,14 +84,18 @@ export default defineConfig(({ mode }) => {
 				'@/shared': path.resolve(__dirname, './src/shared'),
 				'@/assets': path.resolve(__dirname, './src/assets'),
 				'@/helpers': path.resolve(__dirname, './src/helpers'),
-				'@/lib': path.resolve(__dirname, '.src/lib'),
+				'@/lib': path.resolve(__dirname, './src/lib'),
 				'@/hooks': path.resolve(__dirname, './src/hooks'),
 				'@/types/*': path.resolve(__dirname, './src/types'),
-				'@/storybook': path.resolve(__dirname, './storybook'),
+				'@/storybook': path.resolve(__dirname, './src/storybook'),
 			},
 		},
 		build: {
 			outDir: 'build',
+			// Supported-browser policy (STYLING-01). Matches Baseline "widely available":
+			// current Chromium, Firefox and WebKit releases from the last ~30 months.
+			// `browserslist` in package.json is not read by Vite; this is the source of truth.
+			target: ['es2022', 'chrome107', 'edge107', 'firefox104', 'safari16'],
 			cssCodeSplit: true,
 			sourcemap: !isProduction,
 			rollupOptions: {
@@ -97,6 +105,13 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		server: {
+			watch: usePolling
+				? {
+						usePolling: true,
+						interval: pollInterval,
+						binaryInterval: pollInterval * 3,
+					}
+				: undefined,
 			proxy: {
 				'/api': {
 					target: 'http://host.docker.internal:8080',

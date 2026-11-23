@@ -1,17 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\Shared\ValueObjects;
 
 readonly class Viewer
 {
     public function __construct(
-        private ?int $userId,
-        private string $ipAddress
-    ) {}
-
-    public static function fromRequest(): self
-    {
-        return new self(auth('api')->id(), request()->ip());
+        private ?UserId $userId,
+        private string $ipAddress,
+    ) {
     }
 
     public function isAuthenticated(): bool
@@ -19,7 +17,7 @@ readonly class Viewer
         return $this->userId !== null;
     }
 
-    public function userId(): ?int
+    public function userId(): ?UserId
     {
         return $this->userId;
     }

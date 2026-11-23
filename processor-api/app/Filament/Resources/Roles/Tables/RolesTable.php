@@ -23,7 +23,10 @@ class RolesTable
                     ->sortable(),
                 TextColumn::make('permissions.name')
                     ->label('Permissions')
-                    ->badge(),
+                    ->badge()
+                    ->limitList(8)
+                    ->expandableLimitedList()
+                    ->wrap(),
                 TextColumn::make('users_count')
                     ->label('Assigned users')
                     ->sortable(),

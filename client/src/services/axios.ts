@@ -23,16 +23,32 @@ axiosInstance.interceptors.request.use(
 	},
 );
 
+/**
+ * Endpoints that answer 401 as a normal outcome and whose caller renders the failure itself:
+ * bad credentials on sign-in, and a token the server has already forgotten on sign-out. Escalating
+ * any of these to `auth:unauthorized` would replace the caller's message with a spurious
+ * "session expired" bounce.
+ *
+ * Matching on the final path segment rather than the whole URL keeps this working regardless of how
+ * much version prefix the caller carries. The generated clients send a bare path against a
+ * versioned base URL, so `login` arrives here as `/login` on one call site and `/v1/login` on
+ * another depending on how the base URL is composed; a prefix-sensitive check would silently stop
+ * suppressing one of them.
+ */
+const SELF_HANDLED_401_ENDPOINTS = ['login', 'register', 'logout'];
+
+const isSelfHandled401 = (url: string) => {
+	const [path] = url.split('?');
+	const segment = path.split('/').filter(Boolean).pop() ?? '';
+
+	return SELF_HANDLED_401_ENDPOINTS.includes(segment);
+};
+
 axiosInstance.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		if (error.response?.status === 401) {
-			const path = error.config?.url || '';
-
-			const publicEndpoints = ['/v1/login', '/v1/register'];
-			const isPublicEndpoint = publicEndpoints.some((endpoint) => path.includes(endpoint));
-
-			if (!isPublicEndpoint) {
+			if (!isSelfHandled401(error.config?.url || '')) {
 				window.dispatchEvent(new CustomEvent('auth:unauthorized'));
 			}
 		}

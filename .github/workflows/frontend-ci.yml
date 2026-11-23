@@ -1,9 +1,23 @@
 name: Frontend CI
 
+# What runs when (#687):
+# - pull request: `checks` and `stories` in parallel. `image` only when the PR touches what the
+#   production image is made of (client/.docker, the npm manifests, this file).
+# - push to develop or an epic branch: `warm-cache` only. No tests: the PR already ran them.
+#   It saves the dependency caches where later PRs can restore them.
+# - push to the default branch (a release): `image` builds the production image once, smoke-tests
+#   it, pushes that same image to GHCR, then `deploy-production` triggers Render. The checks are
+#   not re-run: the release PR into the default branch ran them on the same merged tree.
+#
+# Caches: a run can restore only caches saved on its own ref, its PR's base branch and the
+# default branch. Caches saved by a PR are visible to re-runs of that PR alone, so PRs restore
+# and never save; push runs save.
 on:
   push:
     branches:
+      - develop
       - master
+      - "feature/**"
     paths:
       - "client/**"
       - "processor-api/api.json"
@@ -12,21 +26,36 @@ on:
     branches:
       - develop
       - master
+      - "feature/**"
     paths:
       - "client/**"
       - "processor-api/api.json"
       - ".github/workflows/frontend-ci.yml"
 
+# A new push to a PR cancels that PR's older run. Push runs are never cancelled, so a release is
+# not stopped between publishing the image and triggering the deploy.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The Render deploy hook is read from `secrets.RENDER_DEPLOY_HOOK_URL` and passed through
+# `env:`, so it is masked in run logs (finding H1 in
+# docs/architecture/ci-and-containers-audit.md). Regenerate the hook in the Render dashboard
+# once, to invalidate the value that earlier runs printed while it lived in `vars`.
+
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/japanese-vma-client
+  SMOKE_IMAGE: japanese-vma-client:${{ github.sha }}
 
 jobs:
-  verify:
-    name: Verify frontend
+  checks:
+    name: Frontend checks
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     defaults:
       run:
         working-directory: client
@@ -41,15 +70,32 @@ jobs:
             exit 1
           fi
 
+          # Real-time transport variables (ADR 0002, #262) are NOT required here. These checks
+          # run on every pull request, and the Reverb service does not exist yet (#331), so
+          # demanding them would block unrelated work. The release build refuses to run without
+          # them, which is where they actually matter: a client built without them never
+          # connects and silently falls back to polling.
+          if [ -z "${{ vars.VITE_REVERB_APP_KEY }}" ] || [ -z "${{ vars.VITE_REVERB_HOST }}" ]; then
+            echo "Note: VITE_REVERB_* not set; this build would fall back to polling in production."
+          fi
+
       - name: Setup Node.js
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: client/.nvmrc
-          cache: npm
-          cache-dependency-path: client/package-lock.json
+
+      # Exact key only: a partial restore is worse than a clean install, so no restore-keys.
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
 
       - name: Install dependencies
-        run: npm ci
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Orval client
         run: npm run orval:file
@@ -57,25 +103,353 @@ jobs:
       - name: Typecheck
         env:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+          VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT || '443' }}
+          VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME || 'https' }}
         run: npm run typecheck
 
-      - name: Build frontend
+      - name: Unit tests
+        run: npm run test:unit
+
+      # Styling guardrail (STYLING-01): fails when Bootstrap/Tailwind/Sass usage grows
+      # beyond client/style-budget.json. Lower the budget as files are migrated.
+      - name: Style audit
+        run: npm run style:audit -- --check
+
+      # Story coverage guardrail (#578): fails when a component or route lands without a story
+      # and without a reasoned entry in client/story-coverage.json, or when an entry goes stale.
+      - name: Story audit
+        run: npm run story:audit -- --check
+
+      # The same `vite build` the production image runs. vite-plugin-checker runs TypeScript and
+      # ESLint during it, so this step is also where frontend lint is enforced.
+      - name: Build
         env:
           VITE_API_URL: ${{ vars.CLIENT_VITE_API_URL }}
-          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           VITE_SENTRY_ENVIRONMENT: ci
           VITE_SENTRY_RELEASE: ${{ github.sha }}
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+          VITE_REVERB_PORT: ${{ vars.VITE_REVERB_PORT || '443' }}
+          VITE_REVERB_SCHEME: ${{ vars.VITE_REVERB_SCHEME || 'https' }}
         run: npm run build
 
-      - name: Build production image
-        run: docker build --build-arg VITE_API_URL="${{ vars.CLIENT_VITE_API_URL }}" --build-arg VITE_SENTRY_DSN="${{ vars.VITE_SENTRY_DSN }}" --build-arg VITE_SENTRY_ENVIRONMENT="ci" --build-arg VITE_SENTRY_RELEASE="${{ github.sha }}" -f .docker/Dockerfile.production -t japanese-vma-client:${{ github.sha }} .
+  stories:
+    name: Story tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: client/.nvmrc
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Orval client
+        run: npm run orval:file
+
+      # The `storybook` Vitest project runs every story and play function in headless
+      # Chromium. Playwright's browser download is keyed on the exact pinned version.
+      - name: Read Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # A cache hit skips the browser download but not the system libraries it needs.
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Story tests
+        run: npm run test:storybook
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Upload Storybook
+        uses: actions/upload-artifact@v7
+        with:
+          name: storybook-static
+          path: client/storybook-static
+          retention-days: 7
+          if-no-files-found: error
+
+      # Vitest browser mode writes failure screenshots next to the story files.
+      - name: Upload story test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: story-test-screenshots
+          path: client/src/**/__screenshots__/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # A push to `feature/**` is either an epic branch (story PRs target it) or a story branch
+  # (nothing targets it). Only the first is worth caching for: saving ~400 MB per story branch
+  # would push useful caches out of the repository's 10 GB limit.
+  cache-target:
+    name: Check cache target
+    if: github.event_name == 'push' && github.ref_name != github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      warm: ${{ steps.target.outputs.warm }}
+    steps:
+      - name: Is this branch a PR base?
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ "$BRANCH" = "develop" ]; then
+            echo "warm=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          open_prs="$(gh api "repos/$REPO/pulls?base=$BRANCH&state=open&per_page=1" --jq 'length')"
+          if [ "$open_prs" -gt 0 ]; then
+            echo "warm=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No open PR targets $BRANCH; skipping the cache save."
+            echo "warm=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  warm-cache:
+    name: Warm caches
+    needs: cache-target
+    if: needs.cache-target.outputs.warm == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: client/.nvmrc
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --no-audit --no-fund
+
+      - name: Save node_modules
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: client/node_modules
+          key: ${{ steps.node-modules-cache.outputs.cache-primary-key }}
+
+      - name: Read Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      # Only the browser is cached; the PR job installs its system libraries.
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      - name: Save Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
+
+  image-changes:
+    name: Detect image changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      image: ${{ steps.files.outputs.image }}
+    steps:
+      # The image's own inputs: the Dockerfile and nginx template, the dependencies `npm ci`
+      # installs inside Alpine (they can differ from the runner's), and this workflow.
+      - name: Check changed files
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          changed="$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')"
+
+          if printf '%s\n' "$changed" | grep -Eq '^(client/\.docker/|client/package(-lock)?\.json$|\.github/workflows/frontend-ci\.yml$)'; then
+            echo "image=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No image inputs changed; the production image build is skipped."
+            echo "image=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  image:
+    name: Production image
+    needs: image-changes
+    # `!cancelled()` lets this run on a push, where `image-changes` is skipped.
+    if: >-
+      !cancelled() && (
+        (github.event_name == 'pull_request' && needs.image-changes.outputs.image == 'true') ||
+        (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IS_RELEASE: ${{ github.event_name == 'push' }}
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Ensure build variable exists
+        run: |
+          if [ -z "${{ vars.CLIENT_VITE_API_URL }}" ]; then
+            echo "CLIENT_VITE_API_URL repository variable is required."
+            exit 1
+          fi
+
+      - name: Ensure production frontend variables exist
+        if: env.IS_RELEASE == 'true'
+        run: |
+          if [ -z "${{ vars.VITE_SENTRY_DSN }}" ]; then
+            echo "VITE_SENTRY_DSN repository variable is required."
+            exit 1
+          fi
+
+          for name in VITE_REVERB_APP_KEY VITE_REVERB_HOST; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              echo "$name repository variable is required."
+              exit 1
+            fi
+          done
+
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is required."
+            exit 1
+          fi
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          VITE_REVERB_APP_KEY: ${{ vars.VITE_REVERB_APP_KEY }}
+          VITE_REVERB_HOST: ${{ vars.VITE_REVERB_HOST }}
+
+      # The Docker build context needs the generated API client, which is gitignored, so Orval
+      # runs here first.
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: client/.nvmrc
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-node${{ steps.setup-node.outputs.node-version }}-${{ hashFiles('client/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --no-audit --no-fund
+
+      # Releases save to the default branch, whose caches every branch can restore.
+      - name: Save node_modules
+        if: env.IS_RELEASE == 'true' && steps.node-modules-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: client/node_modules
+          key: ${{ steps.node-modules-cache.outputs.cache-primary-key }}
+
+      - name: Generate Orval client
+        run: npm run orval:file
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # `load: true` puts the image in the local daemon for the smoke test. On a release, that
+      # same image is then tagged and pushed, so the image that passed the smoke test is the one
+      # that ships. The Dockerfile copies package*.json before `RUN npm ci` and the source after
+      # it, so source-only changes keep the install layer. Layers are written to the GitHub
+      # Actions cache on releases only.
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          file: ./client/.docker/Dockerfile.production
+          push: false
+          load: true
+          tags: ${{ env.SMOKE_IMAGE }}
+          build-args: |
+            VITE_API_URL=${{ vars.CLIENT_VITE_API_URL }}
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+            VITE_SENTRY_ENVIRONMENT=${{ github.event_name == 'push' && 'production' || 'ci' }}
+            VITE_SENTRY_RELEASE=${{ github.sha }}
+            VITE_REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
+            VITE_REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+            VITE_REVERB_PORT=${{ vars.VITE_REVERB_PORT || '443' }}
+            VITE_REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME || 'https' }}
+          cache-from: type=gha,scope=frontend
+          cache-to: ${{ github.event_name == 'push' && 'type=gha,mode=max,scope=frontend' || '' }}
+
+      # Proves the nginx template starts on $PORT, the build output is served, and the SPA
+      # fallback answers a deep link with index.html instead of a 404.
       - name: Smoke test production image
         run: |
           docker rm -f japanese-vma-client-smoke >/dev/null 2>&1 || true
           trap 'docker rm -f japanese-vma-client-smoke >/dev/null 2>&1 || true' EXIT
 
-          docker run -d --name japanese-vma-client-smoke -e PORT=8080 -p 18080:8080 japanese-vma-client:${{ github.sha }}
+          docker run -d --name japanese-vma-client-smoke -e PORT=8080 -p 18080:8080 "$SMOKE_IMAGE"
 
           for attempt in $(seq 1 30); do
             root_status="$(curl -s -o smoke-root.html -w "%{http_code}" http://127.0.0.1:18080/ || true)"
@@ -101,85 +475,40 @@ jobs:
             exit 1
           fi
 
-  publish:
-    name: Publish frontend image
-    runs-on: ubuntu-latest
-    needs: verify
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    permissions:
-      contents: read
-      packages: write
-    defaults:
-      run:
-        working-directory: client
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Ensure production frontend variables exist
-        run: |
-          if [ -z "${{ vars.VITE_SENTRY_DSN }}" ]; then
-            echo "VITE_SENTRY_DSN repository variable is required."
-            exit 1
-          fi
-
-          if [ -z "${{ vars.RENDER_DEPLOY_HOOK_URL }}" ]; then
-            echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
-            exit 1
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: client/.nvmrc
-          cache: npm
-          cache-dependency-path: client/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Orval client
-        run: npm run orval:file
-
       - name: Log in to GHCR
+        if: env.IS_RELEASE == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./client
-          file: ./client/.docker/Dockerfile.production
-          push: true
-          build-args: |
-            VITE_API_URL=${{ vars.CLIENT_VITE_API_URL }}
-            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
-            VITE_SENTRY_ENVIRONMENT=production
-            VITE_SENTRY_RELEASE=${{ github.sha }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - name: Push frontend image
+        if: env.IS_RELEASE == 'true'
+        run: |
+          for tag in "sha-$GITHUB_SHA" latest; do
+            docker tag "$SMOKE_IMAGE" "$REGISTRY/$IMAGE_NAME:$tag"
+            docker push "$REGISTRY/$IMAGE_NAME:$tag"
+          done
 
   deploy-production:
     name: Deploy production frontend
     runs-on: ubuntu-latest
-    needs: publish
+    needs: image
     if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
       contents: read
     steps:
       - name: Ensure production deploy hook exists
         run: |
-          if [ -z "${{ vars.RENDER_DEPLOY_HOOK_URL }}" ]; then
-            echo "RENDER_DEPLOY_HOOK_URL repository variable is required."
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is required."
             exit 1
           fi
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
       - name: Trigger Render deploy
-        run: curl --fail --silent --show-error -X POST "${{ vars.RENDER_DEPLOY_HOOK_URL }}"
+        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

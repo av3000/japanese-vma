@@ -1,22 +1,54 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import FacebookIcon from '@/assets/icons/fb-icon.svg';
-import InstagramIcon from '@/assets/icons/ig-icon.svg';
-import './footer.scss';
+import { ThemePicker } from '@/components/features/ThemePicker';
+import { Logo } from '@/components/shared/Logo';
+import { Container } from '@/components/shared/layout';
+import { NAV_SECTIONS } from '@/shared/constants/navigation';
+import styles from './Footer.module.css';
 
-const currentYear = new Date().getFullYear();
+const CONTACT_EMAIL = 'jplearning.online@gmail.com';
 
-const Footer: React.FC = () => (
-	<footer className="footer">
-		<div className="u-container">
-			<div className="navbar-header">
-				<Link to="/" className="navbar-brand">
-					<h4>JPLearning</h4>
-				</Link>
-			</div>
+/**
+ * The site footer, derived from the flat Header: the same white surface and hairline, the brand
+ * on the left, the Explore and Dictionary groups as link columns, then the dictionary licences, and
+ * the legal line with the theme picker (#498), which every visitor can reach on every screen size.
+ *
+ * The attribution paragraphs are a licence condition of the data this site is built on (JMdict,
+ * Kanjidic2, JMnedict, Radkfile, Tatoeba, the JLPT lists). Keep their wording and links intact.
+ */
+const Footer: React.FC = () => {
+	const currentYear = new Date().getFullYear();
 
-			<div className="row">
-				<div className="col-lg-6 col-md-6 col-sm-12">
+	return (
+		<footer className={styles.footer}>
+			<Container>
+				<div className={styles.top}>
+					<div className={styles.brandBlock}>
+						<Link to="/" className={styles.brand}>
+							<Logo />
+						</Link>
+						<p className={styles.tagline}>Graded Japanese reading, with the dictionary one tap away.</p>
+					</div>
+
+					<nav aria-label="Footer" className={styles.nav}>
+						{NAV_SECTIONS.map((section) => (
+							<div key={section.id}>
+								<h2 className={styles.groupLabel}>{section.label}</h2>
+								<ul className={styles.links}>
+									{section.links.map((link) => (
+										<li key={link.to}>
+											<Link to={link.to} className={styles.link}>
+												{link.label}
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+						))}
+					</nav>
+				</div>
+
+				<div className={styles.attribution}>
 					<p>
 						This site uses the{' '}
 						<a href="http://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project">JMdict</a>,{' '}
@@ -24,45 +56,27 @@ const Footer: React.FC = () => (
 						<a href="http://www.edrdg.org/enamdict/enamdict_doc.html">JMnedict</a>, and{' '}
 						<a href="http://www.edrdg.org/krad/kradinf.html">Radkfile</a> dictionary files. These files are
 						the property of the Electronic Dictionary Research and Development{' '}
-						<a href="http://www.edrdg.org/">Group</a>, and are used in conformance with the Group's{' '}
+						<a href="http://www.edrdg.org/">Group</a>, and are used in conformance with the Group&apos;s{' '}
 						<a href="http://www.edrdg.org/edrdg/licence.html">licence</a>.
 					</p>
-					<br />
-				</div>
-				<div className="col-lg-6 col-md-6 col-sm-12">
 					<p>
 						Example sentences come from the <a href="http://tatoeba.org/">Tatoeba</a> project and are
 						licensed under{' '}
-						<a href="http://creativecommons.org/licenses/by/2.0/fr/">Creative Common CC-BY</a>.
-					</p>
-					<p>
-						JLPT data comes from Jonathan Waller's JLPT Resources{' '}
-						<a href="http://www.tanos.co.uk/jlpt/">page</a>.
-					</p>
-					<p>
-						Contact Us <a href="mailto:jplearning.online@gmail.com">jplearning.online@gmail.com</a> or on
-						Socials
+						<a href="http://creativecommons.org/licenses/by/2.0/fr/">Creative Common CC-BY</a>. JLPT data
+						comes from Jonathan Waller&apos;s <a href="http://www.tanos.co.uk/jlpt/">JLPT Resources</a>{' '}
+						page.
 					</p>
 				</div>
-			</div>
 
-			<div className="row  d-flex align-items-center">
-				<div className="col-12 text-center">
-					<div className="home-hero-social-links mb-2">
-						<Link to="https://www.facebook.com/" className="mr-2">
-							<img src={FacebookIcon} alt="facebook-social-icon" />
-						</Link>
-						<Link to="https://www.instagram.com/">
-							<img src={InstagramIcon} alt="instagram-social-icon" />
-						</Link>
-					</div>
-					<p className="text-muted">
-						Terms and Conditions | Copyright JPLearning &copy; {currentYear} | Privacy policy
+				<div className={styles.bottom}>
+					<p className={styles.legal}>
+						&copy; {currentYear} JPLearning &middot; <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
 					</p>
+					<ThemePicker />
 				</div>
-			</div>
-		</div>
-	</footer>
-);
+			</Container>
+		</footer>
+	);
+};
 
 export default Footer;

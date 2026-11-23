@@ -5,13 +5,25 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Models;
 
 use App\Domain\Shared\Enums\SavedListType;
+use App\Infrastructure\Persistence\Models\Concerns\RoutesByUuid;
+use Database\Factories\CatalogueFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Http\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // TODO: Should list all model fields without a nee
 class Catalogue extends Model
 {
-    protected $table = "customlists";
+    use HasFactory;
+    use RoutesByUuid;
+
+    protected static function newFactory(): CatalogueFactory
+    {
+        return CatalogueFactory::new();
+    }
+
+    protected $table = 'customlists';
 
     protected $fillable = [
         'title',
@@ -34,8 +46,13 @@ class Catalogue extends Model
         'publicity' => false,
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(CatalogueItem::class, 'list_id');
     }
 }

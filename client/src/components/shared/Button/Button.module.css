@@ -1,0 +1,329 @@
+.button {
+	--button-font-size: var(--font-size-body-md);
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-xs);
+	min-height: var(--button-height-md);
+	padding: 0 var(--button-padding-x);
+	position: relative;
+	cursor: pointer;
+	text-decoration: none;
+	background-color: var(--color-interactive);
+	border: var(--border-size-sm) solid transparent;
+	border-radius: var(--border-radius-md);
+	color: var(--color-on-interactive);
+	font-weight: var(--font-weight-semibold, 600);
+	line-height: var(--line-height-sm, 1.5);
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+/* No base hover or active style: each variant sets its own colours below. (A base
+   `.button:not(.variantLinkButton):hover` background once outranked every `.variantX:hover`.) */
+.button:hover {
+	text-decoration: none;
+}
+.button:focus,
+.button:focus-visible {
+	outline-width: var(--border-size-md);
+	outline-color: var(--color-text-strong);
+	outline-offset: var(--border-size-sm);
+}
+.button:disabled,
+.button.disabled {
+	pointer-events: none;
+	cursor: not-allowed;
+	background-color: var(--color-interactive-disabled);
+	opacity: 0.65;
+}
+
+.content {
+	display: contents;
+}
+/* While loading the label is transparent, not removed, so the button keeps its accessible name. */
+.spinner ~ .content {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+	opacity: 0;
+}
+
+.spinner {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-radius: 50%;
+	border-top-color: white;
+	animation: spin 0.8s linear infinite;
+	margin-right: var(--size-xs);
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+/* Modifiers */
+.fullWidth {
+	width: 100%;
+	justify-content: center;
+}
+
+.hasOnlyIcon {
+	flex-shrink: 0;
+	justify-content: center;
+	width: var(--button-height-md);
+	padding: 0;
+}
+.hasOnlyIcon.sizeSm {
+	width: var(--button-height-sm);
+	padding: 0;
+}
+.hasOnlyIcon.sizeLg {
+	width: calc(var(--button-height-md) * 1.25);
+	padding: 0;
+}
+
+.hasNoPaddingX,
+.hasNoPaddingX.sizeSm {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.sizeSm {
+	min-height: var(--button-height-sm);
+	padding: 0 var(--spacing-xs);
+	border-radius: var(--border-radius-sm);
+	font-size: 0.875rem;
+}
+
+.sizeLg {
+	min-height: calc(var(--button-height-md) * 1.25);
+	padding: 0 calc(var(--button-padding-x) * 1.25);
+	border-radius: var(--border-radius-md);
+	font-size: 1.125rem;
+}
+
+/* Rendered as an anchor, a filled button would take the global `a:hover` text colour, which is
+   dark on these dark fills. Two-part selectors beat it, and the colour is the one they rest in. */
+.variantPrimary:hover {
+	color: var(--color-on-interactive);
+}
+
+.variantSecondary:hover,
+.variantSuccess:hover,
+.variantDanger:hover {
+	color: var(--color-on-fill);
+}
+
+.variantPending:hover {
+	color: var(--color-on-warning);
+}
+
+.variantPrimary {
+	background-color: var(--color-interactive);
+	color: var(--color-on-interactive);
+}
+@media (hover: hover) {
+	.variantPrimary:hover {
+		background: var(--color-interactive-hover);
+	}
+}
+.variantPrimary:active {
+	background: var(--color-interactive-hover);
+}
+.variantPrimary:disabled,
+.variantPrimary.disabled {
+	background-color: var(--color-interactive-disabled);
+}
+
+.variantSecondary {
+	background-color: var(--color-action-secondary);
+	border-color: var(--color-action-secondary);
+	color: var(--color-on-fill);
+}
+@media (hover: hover) {
+	.variantSecondary:hover {
+		background: var(--color-action-secondary-hover);
+		border-color: var(--color-action-secondary-hover);
+	}
+}
+.variantSecondary:active {
+	background: var(--color-action-secondary-hover);
+	border-color: var(--color-action-secondary);
+}
+.variantSecondary:focus,
+.variantSecondary:focus-visible {
+	outline-color: var(--color-border);
+}
+.variantSecondary:disabled,
+.variantSecondary.disabled {
+	background-color: var(--color-action-secondary-disabled);
+}
+
+.variantSuccess {
+	background-color: var(--color-success);
+	color: var(--color-on-fill);
+}
+@media (hover: hover) {
+	.variantSuccess:hover {
+		background: var(--color-success-hover);
+	}
+}
+.variantSuccess:active {
+	background: var(--color-success-hover);
+}
+.variantSuccess:disabled,
+.variantSuccess.disabled {
+	background-color: var(--color-success-disabled);
+}
+
+.variantGhost {
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-text-subtle);
+}
+@media (hover: hover) {
+	.variantGhost:hover {
+		background: var(--color-hover-overlay-strong);
+		color: var(--color-text-strong);
+	}
+}
+.variantGhost:active {
+	background: var(--color-fill);
+	color: var(--color-text-strong);
+}
+.variantGhost:focus,
+.variantGhost:focus-visible {
+	outline-color: var(--color-border-strong);
+}
+
+.variantOutline {
+	background-color: transparent;
+	border-color: var(--color-interactive);
+	color: var(--color-interactive);
+}
+@media (hover: hover) {
+	.variantOutline:hover {
+		background-color: var(--color-interactive);
+		color: var(--color-on-interactive);
+	}
+}
+.variantOutline:active {
+	background-color: var(--color-interactive-hover);
+	color: var(--color-on-interactive);
+}
+.variantOutline:disabled,
+.variantOutline.disabled {
+	border-color: var(--color-interactive-disabled);
+	color: var(--color-interactive-disabled);
+	background-color: transparent;
+}
+
+/* Body text colour, which is what this variant inherited while it pointed at undefined tokens (#493). */
+.variantSecondaryOutline {
+	background-color: transparent;
+	border-color: var(--color-text);
+	color: var(--color-text);
+}
+@media (hover: hover) {
+	.variantSecondaryOutline:hover {
+		background-color: var(--color-hover-overlay-strong);
+	}
+}
+.variantSecondaryOutline:active {
+	background: var(--color-fill);
+}
+.variantSecondaryOutline:disabled,
+.variantSecondaryOutline.disabled {
+	border-color: var(--color-action-secondary-disabled);
+	color: var(--color-text-disabled);
+	background-color: transparent;
+}
+
+/* Dark text on the warning amber: 10.1:1, and 6.1:1 on its hover step. White would fail. */
+.variantPending {
+	background-color: var(--color-warning);
+	border-color: var(--color-warning);
+	color: var(--color-on-warning);
+}
+@media (hover: hover) {
+	.variantPending:hover {
+		background: var(--color-warning-hover);
+		border-color: var(--color-warning-hover);
+	}
+}
+.variantPending:active {
+	background: var(--color-warning-hover);
+	border-color: var(--color-warning-hover);
+}
+.variantPending:focus,
+.variantPending:focus-visible {
+	outline-color: var(--color-text);
+}
+.variantPending:disabled,
+.variantPending.disabled {
+	opacity: 0.65;
+}
+
+.variantLinkButton {
+	padding-left: 0;
+	padding-right: 0;
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-interactive);
+}
+@media (hover: hover) {
+	.variantLinkButton:hover {
+		background-color: transparent;
+		border-color: transparent;
+		color: var(--color-interactive-hover);
+		text-decoration: underline;
+		text-underline-offset: 0.15em;
+	}
+}
+.variantLinkButton:active {
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-interactive-hover);
+}
+.variantLinkButton:focus,
+.variantLinkButton:focus-visible {
+	outline-color: var(--color-focus);
+}
+.variantLinkButton:disabled,
+.variantLinkButton.disabled {
+	color: var(--color-interactive-disabled);
+}
+
+.variantDanger {
+	background-color: var(--color-error);
+	color: var(--color-on-fill);
+}
+@media (hover: hover) {
+	.variantDanger:hover {
+		background: var(--color-error-hover);
+	}
+}
+.variantDanger:active {
+	background: var(--color-error-hover);
+}
+@media (hover: hover) {
+	.variantDanger:hover {
+		background: var(--color-error-hover);
+	}
+}
+.variantDanger:active {
+	background: var(--color-error-hover);
+}
+.variantDanger:focus,
+.variantDanger:focus-visible {
+	outline-color: var(--color-error-hover);
+}
+.variantDanger:disabled,
+.variantDanger.disabled {
+	background-color: var(--color-error-disabled);
+}

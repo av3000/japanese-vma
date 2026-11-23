@@ -1,0 +1,16 @@
+.picker {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.label {
+	margin: 0;
+	font-size: var(--font-size-body-sm);
+	color: var(--color-text-muted);
+}
+
+.select {
+	width: auto;
+	min-width: 10rem;
+}

@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\JapaneseMaterial\Sentences\Queries;
+
+use App\Domain\Shared\ValueObjects\EntityId;
+use App\Domain\Shared\ValueObjects\Pagination;
+
+final readonly class SentenceQueryCriteria
+{
+    /** The longest `keyword` the list accepts. The Header search counts use it too, so both agree. */
+    public const KEYWORD_MAX_LENGTH = 100;
+
+    public const DEFAULT_PER_PAGE = 10;
+
+    public function __construct(
+        public Pagination $pagination,
+        public ?string $keyword = null,
+        public ?string $content = null,
+        public ?string $tatoebaEntry = null,
+        public ?int $userId = null,
+        public ?int $kanjiId = null,
+        /** Sentences saved in one catalogue, the list behind the catalogue detail page (#347). */
+        public ?int $catalogueId = null,
+        /** Sentences written with one kanji, the list behind the kanji detail page (#352). */
+        public ?EntityId $kanjiUuid = null,
+    ) {
+    }
+
+    public static function forListing(
+        int $page = Pagination::MIN_PAGE,
+        int $perPage = self::DEFAULT_PER_PAGE,
+        ?string $keyword = null,
+        ?string $content = null,
+        ?string $tatoebaEntry = null,
+        ?int $userId = null,
+        ?int $kanjiId = null,
+        ?int $catalogueId = null,
+        ?EntityId $kanjiUuid = null,
+    ): self {
+        return new self(
+            pagination: new Pagination($page, $perPage),
+            keyword: $keyword,
+            content: $content,
+            tatoebaEntry: $tatoebaEntry,
+            userId: $userId,
+            kanjiId: $kanjiId,
+            catalogueId: $catalogueId,
+            kanjiUuid: $kanjiUuid,
+        );
+    }
+}
